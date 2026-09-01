@@ -29,6 +29,7 @@ class InMemorySyncStatusRepository(
 
     private val lastSuccessAtMs = MutableStateFlow(0L)
     private val lastError = MutableStateFlow<SyncError?>(null)
+    private val unreadableChanges = MutableStateFlow(0)
 
     /** Чей аккаунт описывают время успеха и последняя ошибка. Без него они принадлежали бы всем. */
     private var owner: String? = null
@@ -50,11 +51,17 @@ class InMemorySyncStatusRepository(
                     owner = uid
                     lastSuccessAtMs.value = 0L
                     lastError.value = null
+                    unreadableChanges.value = 0
                 }
                 val counts =
                     if (uid.isNullOrBlank()) flowOf(OutboxCounts()) else store.observeCounts(uid)
-                combine(counts, lastSuccessAtMs, lastError) { c, at, error ->
-                    SyncStatus(lastSuccessAtMs = at, counts = c, lastError = error)
+                combine(counts, lastSuccessAtMs, lastError, unreadableChanges) { c, at, error, unreadable ->
+                    SyncStatus(
+                        lastSuccessAtMs = at,
+                        counts = c,
+                        lastError = error,
+                        unreadableChanges = unreadable,
+                    )
                 }
             }
             .distinctUntilChanged()
@@ -71,5 +78,9 @@ class InMemorySyncStatusRepository(
         atMs: Long,
     ) {
         lastError.value = error
+    }
+
+    override suspend fun recordUnreadableChanges(count: Int) {
+        unreadableChanges.value = count
     }
 }

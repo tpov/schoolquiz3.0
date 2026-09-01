@@ -29,6 +29,7 @@ class CatalogSyncListOrchestratorTest {
     private lateinit var questionRepo: FakeQuestionRepository
     private lateinit var syncState: FakeSyncStateRepository
     private lateinit var syncChanges: FakeCatalogSyncChangeRemoteDataSource
+    private lateinit var status: RecordingSyncStatus
     private lateinit var orchestrator: CatalogSyncListOrchestrator
 
     @BeforeTest
@@ -41,6 +42,7 @@ class CatalogSyncListOrchestratorTest {
         questionRepo = FakeQuestionRepository()
         syncState = FakeSyncStateRepository()
         syncChanges = FakeCatalogSyncChangeRemoteDataSource()
+        status = RecordingSyncStatus()
         orchestrator = CatalogSyncListOrchestrator(
             catalogRepo = catalogRepo,
             questRepo = questRepo,
@@ -50,7 +52,47 @@ class CatalogSyncListOrchestratorTest {
             questionRepo = questionRepo,
             syncStateRepo = syncState,
             syncChangeRemote = syncChanges,
+            status = status,
         )
+    }
+
+    @Test
+    fun `given the journal held records the reader could not parse then the run says how many`() = runTest {
+        // Пропуск не оставлял следа, и «backfill закончен» не следовало ни из чего (AD-11).
+        val catalogId = CatalogId("cat-1")
+        catalogRepo.nextChangedIds = setOf(catalogId)
+        syncChanges.unreadableByCatalog = mapOf(catalogId to 3)
+
+        orchestrator.sync()
+
+        assertEquals(3, status.unreadable)
+    }
+
+    @Test
+    fun `given a change record with no node id then it counts as unreadable too`() = runTest {
+        // Такая запись столь же бесполезна и по той же причине: узел, который надо перечитать,
+        // не назван. Раньше она отсеивалась молча.
+        val catalogId = CatalogId("cat-1")
+        catalogRepo.nextChangedIds = setOf(catalogId)
+        syncChanges.changesByCatalog = mapOf(
+            catalogId to listOf(
+                CatalogSyncChange(catalogId, CatalogSyncNodeType.Quest, nodeId = "", changedAtMs = 10L),
+            ),
+        )
+
+        orchestrator.sync()
+
+        assertEquals(1, status.unreadable)
+    }
+
+    @Test
+    fun `given a clean journal then the count is reported as zero, not left behind`() = runTest {
+        val catalogId = CatalogId("cat-1")
+        catalogRepo.nextChangedIds = setOf(catalogId)
+
+        orchestrator.sync()
+
+        assertEquals(0, status.unreadable, "ноль обязан быть сказан: иначе прошлое число живёт вечно")
     }
 
     @Test
@@ -215,11 +257,47 @@ private class FakeCatalogSyncChangeRemoteDataSource : CatalogSyncChangeRemoteDat
     var changesByCatalog: Map<CatalogId, List<CatalogSyncChange>> = emptyMap()
     val requests = mutableListOf<Pair<CatalogId, Long>>()
 
+    /** Записи, которые читатель не понял и отбросил, — по каталогу. */
+    var unreadableByCatalog: Map<CatalogId, Int> = emptyMap()
+
     override suspend fun fetchChangedSince(
         catalogId: CatalogId,
         cursorMs: Long,
     ): List<CatalogSyncChange> {
         requests.add(catalogId to cursorMs)
         return changesByCatalog[catalogId].orEmpty()
+    }
+
+    override suspend fun fetchPage(
+        catalogId: CatalogId,
+        cursor: SyncCursor,
+        limit: Int,
+    ): SyncChangePage<CatalogSyncChange> {
+        val changes = fetchChangedSince(catalogId, cursor.changedAtMs).take(limit)
+        val unreadable = unreadableByCatalog[catalogId] ?: 0
+        if (changes.isEmpty() && unreadable == 0) return SyncChangePage.empty()
+        return SyncChangePage(
+            changes = changes,
+            nextCursor = changes.maxOfOrNull { SyncCursor(it.changedAtMs) } ?: cursor,
+            hasMore = false,
+            unreadable = unreadable,
+        )
+    }
+}
+
+private class RecordingSyncStatus : SyncStatusRepository {
+    var unreadable: Int? = null
+
+    override fun observeStatus() = throw UnsupportedOperationException("не нужен этому тесту")
+
+    override suspend fun recordSuccess(atMs: Long) = Unit
+
+    override suspend fun recordFailure(
+        error: com.tpov.schoolquiz.shared.core.network.SyncError,
+        atMs: Long,
+    ) = Unit
+
+    override suspend fun recordUnreadableChanges(count: Int) {
+        unreadable = count
     }
 }

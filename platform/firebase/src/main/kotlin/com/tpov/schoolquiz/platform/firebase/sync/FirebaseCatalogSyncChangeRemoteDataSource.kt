@@ -75,6 +75,10 @@ class FirebaseCatalogSyncChangeRemoteDataSource(
             changes = changes,
             nextCursor = SyncCursor(last.millisField("changedAtMs") ?: cursor.changedAtMs, last.id),
             hasMore = documents.size >= limit,
+            // Три формы документа сосуществуют в журналах, и терпимость снимается только после
+            // backfill (AD-11). До тех пор пропуск обязан оставлять след — иначе о том, что
+            // backfill закончен, не узнать ниоткуда.
+            unreadable = documents.size - changes.size,
         )
     }
 }

@@ -467,7 +467,13 @@ private fun SyncStatus.summary(): String =
         else -> stringResource(R.string.settings_sync_state_never)
     }
 
-/** Пояснение под строкой — только когда есть что пояснять. */
+/**
+ * Пояснение под строкой — только когда есть что пояснять.
+ *
+ * Непрочитанные записи журнала стоят последними: с ними игроку делать нечего, ни повтор, ни
+ * «Перечитать всё» их не разберут. Но и молчать нельзя — часть содержимого осталась старой, и без
+ * этой строки она выглядела бы свежей.
+ */
 @Composable
 private fun SyncStatus.attentionNote(): String? =
     when {
@@ -475,5 +481,6 @@ private fun SyncStatus.attentionNote(): String? =
             stringResource(R.string.settings_sync_note_both, counts.conflicted, counts.quarantined)
         counts.conflicted > 0 -> stringResource(R.string.settings_sync_note_conflict, counts.conflicted)
         counts.quarantined > 0 -> stringResource(R.string.settings_sync_note_quarantine, counts.quarantined)
+        hasUnreadableChanges -> stringResource(R.string.settings_sync_note_unreadable, unreadableChanges)
         else -> null
     }

@@ -51,6 +51,7 @@
     <string name="settings_sync_state_stuck">%1$d actions need attention</string>
     <string name="settings_sync_note_conflict">%1$d changed on the server while you were away</string>
     <string name="settings_sync_note_quarantine">%1$d were refused and will not be sent</string>
+    <string name="settings_sync_note_unreadable">%1$d changes could not be read; that content stayed as it was</string>
     <string name="settings_sync_note_both">%1$d changed on the server, %2$d were refused</string>
     <string name="settings_resync">Re-read everything</string>
     <string name="settings_resync_subtitle">If content looks out of date or is missing</string>

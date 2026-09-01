@@ -16,11 +16,13 @@ import kotlinx.coroutines.flow.Flow
  * @property lastSuccessAtMs когда синхронизация последний раз прошла целиком. Ноль — ни разу.
  * @property counts сколько записей в каком состоянии.
  * @property lastError чем кончилась последняя неудачная попытка, если она была.
+ * @property unreadableChanges сколько записей журнала последний проход не смог прочесть.
  */
 data class SyncStatus(
     val lastSuccessAtMs: Long = 0L,
     val counts: OutboxCounts = OutboxCounts(),
     val lastError: SyncError? = null,
+    val unreadableChanges: Int = 0,
 ) {
     /** Есть ли что-то, что уедет само. */
     val hasPending: Boolean get() = counts.pending > 0
@@ -35,6 +37,15 @@ data class SyncStatus(
 
     /** Синхронизировались ли хоть раз. Отличается от «синхронизировались только что». */
     val hasEverSucceeded: Boolean get() = lastSuccessAtMs > 0L
+
+    /**
+     * Были ли записи журнала, которых читатель не понял.
+     *
+     * Не входит в [needsAttention]: игроку тут делать нечего — ни повтор, ни «Перечитать всё» не
+     * помогут, запись останется такой же непонятной. Сказать всё равно надо: содержимое устарело,
+     * и молчать об этом значит показывать старое как свежее.
+     */
+    val hasUnreadableChanges: Boolean get() = unreadableChanges > 0
 }
 
 /**
@@ -55,4 +66,12 @@ interface SyncStatusRepository {
         error: SyncError,
         atMs: Long,
     )
+
+    /**
+     * Сколько записей журнала проход не смог прочесть.
+     *
+     * Замещает, а не накапливает: число описывает последний проход. Накопление за всё время
+     * росло бы и после того, как backfill всё починил, и сигнал перестал бы что-либо значить.
+     */
+    suspend fun recordUnreadableChanges(count: Int)
 }

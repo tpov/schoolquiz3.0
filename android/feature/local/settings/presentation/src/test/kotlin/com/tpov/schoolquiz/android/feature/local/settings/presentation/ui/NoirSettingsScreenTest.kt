@@ -219,4 +219,38 @@ class NoirSettingsScreenTest {
 
         assertEquals(0, forceResyncCalls)
     }
+
+    @Test
+    fun `changes nobody could read are said out loud, without a red flag`() {
+        // Игроку тут делать нечего: ни повтор, ни «Перечитать всё» такую запись не разберут. Но и
+        // молчать нельзя — часть содержимого осталась старой и без этой строки выглядит свежей.
+        setContent(SyncStatus(lastSuccessAtMs = 1L, unreadableChanges = 4))
+
+        scrollTo(context.getString(R.string.settings_sync_state))
+
+        composeRule
+            .onNodeWithText(context.getString(R.string.settings_sync_note_unreadable, 4))
+            .assertExists()
+        composeRule
+            .onNodeWithText(context.getString(R.string.settings_sync_state_clean))
+            .assertExists()
+    }
+
+    @Test
+    fun `a stuck action still outranks an unreadable record`() {
+        // Порядок не случаен: застрявшее действие игрок может разрешить, непонятую запись — нет.
+        setContent(
+            SyncStatus(
+                lastSuccessAtMs = 1L,
+                counts = OutboxCounts(quarantined = 1),
+                unreadableChanges = 4,
+            ),
+        )
+
+        scrollTo(context.getString(R.string.settings_sync_state))
+
+        composeRule
+            .onNodeWithText(context.getString(R.string.settings_sync_note_quarantine, 1))
+            .assertExists()
+    }
 }

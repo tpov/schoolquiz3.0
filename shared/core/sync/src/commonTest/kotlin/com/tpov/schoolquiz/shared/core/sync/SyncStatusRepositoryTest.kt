@@ -139,4 +139,43 @@ class SyncStatusRepositoryTest {
         assertFalse(status.hasEverSucceeded)
         assertEquals(0L, status.lastSuccessAtMs)
     }
+
+    @Test
+    fun `given the journal had records nobody could read then that is said out loud`() = runTest {
+        // Пропуск не оставлял следа вовсе: `mapNotNull` отбрасывал непонятую запись, и «backfill
+        // закончен» не следовало ни из чего (AD-11). Заодно это честность перед игроком: узел,
+        // о котором сказали, а прочитать не смогли, остался прежним.
+        val repo = InMemorySyncStatusRepository(FakeStore(), flowOf("uid-1"))
+
+        repo.recordUnreadableChanges(4)
+
+        val status = repo.observeStatus().first()
+        assertEquals(4, status.unreadableChanges)
+        assertTrue(status.hasUnreadableChanges)
+        assertFalse(status.needsAttention, "игроку тут делать нечего — красным это не помечаем")
+    }
+
+    @Test
+    fun `given a later clean run then the previous unreadable count is gone`() = runTest {
+        // Замещает, а не копит: накопление за всё время росло бы и после того, как backfill всё
+        // починил, и сигнал перестал бы что-либо значить.
+        val repo = InMemorySyncStatusRepository(FakeStore(), flowOf("uid-1"))
+        repo.recordUnreadableChanges(4)
+
+        repo.recordUnreadableChanges(0)
+
+        assertFalse(repo.observeStatus().first().hasUnreadableChanges)
+    }
+
+    @Test
+    fun `given the account changes then the unreadable count goes with it`() = runTest {
+        val uid = MutableStateFlow<String?>("uid-1")
+        val repo = InMemorySyncStatusRepository(FakeStore(), uid)
+        repo.observeStatus().first()
+        repo.recordUnreadableChanges(4)
+
+        uid.value = "uid-2"
+
+        assertEquals(0, repo.observeStatus().first().unreadableChanges)
+    }
 }

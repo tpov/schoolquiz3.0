@@ -42,6 +42,13 @@ class CatalogSyncListOrchestrator(
      * снова могут пересечься.
      */
     private val gate: SyncGate = SyncGate(),
+    /**
+     * Куда сообщить, сколько записей журнала проход не понял.
+     *
+     * Необязателен: тесты и другие вызывающие остаются простыми. В приложении он есть — иначе
+     * пропуск не оставляет следа, и «backfill закончен» не следует ни из чего (AD-11).
+     */
+    private val status: SyncStatusRepository? = null,
 ) : Syncable {
 
     override suspend fun sync(): Result<Unit> = gate.withPass { syncAll() }
@@ -64,12 +71,18 @@ class CatalogSyncListOrchestrator(
             // синхронизируется никогда — а порядок здесь произвольный, по времени изменения.
             // Наружу отдаётся первая неудача, но уже после того, как все попробовали.
             var firstFailure: Throwable? = null
+            var unreadable = 0
             for (catalogId in catalogIds) {
                 syncCatalog(
                     catalogId,
                     includeQuestions = catalogId.value != ON_DEMAND_COURSES_CATALOG_ID,
-                ).onFailure { if (firstFailure == null) firstFailure = it }
+                )
+                    .onSuccess { unreadable += it }
+                    .onFailure { if (firstFailure == null) firstFailure = it }
             }
+            // Число описывает проход целиком, включая проход, который где-то упал: непрочитанное
+            // от этого не становится прочитанным.
+            status?.recordUnreadableChanges(unreadable)
             firstFailure?.let { Result.failure(it) } ?: Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
@@ -79,12 +92,13 @@ class CatalogSyncListOrchestrator(
     }
 
     suspend fun syncCatalogStructure(catalogId: CatalogId): Result<Unit> =
-        syncCatalog(catalogId, includeQuestions = false)
+        syncCatalog(catalogId, includeQuestions = false).map { }
 
+    /** @return сколько записей журнала этого каталога прочитать не удалось. */
     private suspend fun syncCatalog(
         catalogId: CatalogId,
         includeQuestions: Boolean,
-    ): Result<Unit> {
+    ): Result<Int> {
         catalogRepo.refreshByIds(setOf(catalogId)).onFailure { return Result.failure(it) }
         val cursorId = catalogSyncCursorId(catalogId)
         val cursor =
@@ -97,9 +111,13 @@ class CatalogSyncListOrchestrator(
         // приходит одним ответом, размер которого ограничен только автором.
         var at = SyncCursor(cursor)
         var pages = 0
+        var unreadable = 0
         while (pages < MAX_PAGES_PER_RUN) {
             val page = syncChangeRemote.fetchPage(catalogId, at)
             val changes = page.changes.filter { it.nodeId.isNotBlank() }
+            // Читатель отбросил непонятое ещё до нас; сюда же идут записи с пустым `id` — они
+            // столь же бесполезны и по той же причине: узел, который надо перечитать, не назван.
+            unreadable += page.unreadable + (page.changes.size - changes.size)
             // Выход по пустой странице, а не по «нет распознанных изменений»: страница, целиком
             // состоящая из битых записей, иначе останавливала бы каталог навсегда — курсор не
             // двигался, и следующий проход читал бы её же.
@@ -117,7 +135,7 @@ class CatalogSyncListOrchestrator(
             pages++
             if (!page.hasMore) break
         }
-        return Result.success(Unit)
+        return Result.success(unreadable)
     }
 
     private suspend fun shouldForceFullCourseArchiveSync(catalogId: CatalogId): Boolean =

@@ -141,6 +141,7 @@ val syncModule =
                 syncStateRepo = get<SyncStateRepository>(),
                 syncChangeRemote = get(),
                 gate = get<SyncGate>(),
+                status = get<SyncStatusRepository>(),
             )
         }
         single<LessonContentSyncOrchestrator> {
