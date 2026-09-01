@@ -215,17 +215,7 @@ private fun InitFailedContent(
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text =
-                when (reason) {
-                    RunnerUiState.InitFailureReason.AuthRequired ->
-                        stringResource(R.string.runner_error_auth_required)
-                    RunnerUiState.InitFailureReason.LessonNotFound ->
-                        stringResource(R.string.runner_error_lesson_not_found)
-                    RunnerUiState.InitFailureReason.EmptyPool ->
-                        stringResource(R.string.runner_error_empty_pool)
-                    RunnerUiState.InitFailureReason.NoValidQuestions ->
-                        stringResource(R.string.runner_error_no_valid_questions)
-                },
+            text = stringResource(reason.messageRes),
             style = NoirType.rowTitle,
         )
         TextButton(onClick = onBack) { Text(stringResource(R.string.runner_action_back)) }

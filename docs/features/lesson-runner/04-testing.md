@@ -23,7 +23,7 @@ feature: lesson-runner
 |-------|-------|
 | DT-01..DT-89 | Domain JVM (Walking Skeleton, existing) |
 | PT-01..PT-45 | Presentation unit |
-| CT-01..CT-30 | Compose UI / instrumented |
+| CT-01..CT-31 | Compose UI / instrumented |
 | IT-01..IT-09g | Integration |
 | MT-01..MT-07 | Migration |
 
@@ -147,6 +147,8 @@ All in `android/feature/lesson-runner/presentation/src/test/`.
 | PT-39 | Parser filters one invalid → attempt continues with valid-only | AC-52 |
 | PT-40 | CompleteUseCase returns SaveFailed → uiState.Result.saveWarning=true + event emitted | AC-52a |
 | PT-41 | FakeLessonRatingRepository.submitResult=failure → SaveRatingFailed event | AC-52b |
+| PT-42 | StartUseCase returns InitFailed(RedactedNotSupported) → uiState=InitFailed with that reason | E2.7 |
+| PT-43 | `InitFailureReason.messageRes` maps each of the five reasons to its own string, none shared | E2.7 |
 
 ---
 
@@ -183,6 +185,7 @@ Uses `RunFakeComponent` with controlled `MutableStateFlow<RunnerUiState>`.
 | CT-28 | SaveRatingFailed event → Snackbar shown | AC-52b |
 | CT-29 | FLAG_SECURE rotation: HARD mode + ActivityScenario.recreate() → FLAG_SECURE remains set | AC-28, AC-29 |
 | CT-30 | RunFakeComponent._events.trySend(NavigateBack) → LessonRunnerScreen calls onNavigateBack() lambda | AC-5, AC-34 |
+| CT-31 | InitFailed(RedactedNotSupported) → redacted message displayed, NoValidQuestions message absent | E2.7 |
 
 ---
 
@@ -306,8 +309,8 @@ Full template in `08-storage-model.md`.
 | 58 | static grep CI | `rg "@(Inject|HiltAndroidApp)"` |
 | 59 | static grep CI | no direct Firestore write in lesson-runner |
 | 60 | DT-01..DT-89 | Walking Skeleton domain tests |
-| 61 | PT-01..PT-41 | |
-| 62 | CT-01..CT-30 | |
+| 61 | PT-01..PT-43 | |
+| 62 | CT-01..CT-31 | |
 | 63 | build gate | `./gradlew :shared:feature:lesson-runner:domain:jvmTest` |
 | 64 | build gate | `./gradlew assemble` |
 | 65 | build gate | `./gradlew test && ./gradlew allTests` |

@@ -614,6 +614,24 @@ class LessonRunnerScreenTest {
         composeTestRule.onNodeWithText(str(R.string.runner_error_no_valid_questions)).assertIsDisplayed()
     }
 
+    // --- CT-31: GIVEN InitFailed(RedactedNotSupported) WHEN rendered THEN its own message, not CT-26's ---
+    // E2.7
+    @Test
+    fun ct31_initFailed_redactedNotSupported() {
+        val fakeComponent = RunFakeComponent(
+            MutableStateFlow(RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.RedactedNotSupported)),
+        )
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(str(R.string.runner_error_redacted_questions)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_error_no_valid_questions)).assertDoesNotExist()
+    }
+
     // --- CT-27: GIVEN Result(saveWarning=true) WHEN rendered THEN warning indicator visible ---
     // Spec AC-30
     @Test

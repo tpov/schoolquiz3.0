@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.CandidateId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
+import com.tpov.schoolquiz.shared.core.question_schema.RedactedQuestionContent
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
@@ -80,6 +81,43 @@ fun fillBlankContent(
         QuestionContent.Blank(blankId(blankId), candId(candidateId))
     },
     candidates = candidateIds.map { QuestionContent.Candidate(candId(it), "Word $it") },
+)
+
+// ── RedactedQuestionContent builders ─────────────────────────────────────────
+
+/**
+ * The public half of a single-choice question: every option is here, the pointer to the right one
+ * is not. [difficulty] is a `String?` because that is what the wire carries — see
+ * [RedactedQuestionContent.difficulty].
+ */
+fun redactedSingleChoiceContent(
+    optionIds: List<String> = listOf("A", "B", "C", "D"),
+    text: String = "Question text",
+    difficulty: String? = Difficulty.EASY.name,
+    imageUrl: String? = null,
+): RedactedQuestionContent.SingleChoice = RedactedQuestionContent.SingleChoice(
+    id = "q1",
+    difficulty = difficulty,
+    text = text,
+    imageUrl = imageUrl,
+    options = optionIds.map { RedactedQuestionContent.Row("ri-$it", "Option $it") },
+)
+
+/**
+ * The public half of an ordering question. Worth exercising separately from [redactedSingleChoiceContent]
+ * because the answer to an ordering question *is* its array order, so the emitter shuffles [items]
+ * and re-issues the ids — it is the variant that differs most from its unredacted twin.
+ */
+fun redactedOrderingContent(
+    itemIds: List<String> = listOf("A", "B", "C", "D"),
+    text: String = "Question text",
+    difficulty: String? = Difficulty.EASY.name,
+): RedactedQuestionContent.Ordering = RedactedQuestionContent.Ordering(
+    id = "q1",
+    difficulty = difficulty,
+    text = text,
+    imageUrl = null,
+    items = itemIds.map { RedactedQuestionContent.Row("ri-$it", "Item $it") },
 )
 
 // ── Lesson / Question builders ────────────────────────────────────────────────

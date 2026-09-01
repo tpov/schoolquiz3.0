@@ -340,3 +340,15 @@ AD-20 отмечал это прямо. Путь `users/{uid}/devices/{token}` �
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
   summary: The runner slice must treat an unreadable difficulty as EASY when deciding pool membership, because that is what the server pays. `QuestionDisplay.difficultyOrNull` deliberately does **not** do this — it reports what the wire says.
   evidence: `lesson-reward.js:199` is `String(content.difficulty || "EASY").toUpperCase()`, so a question with an absent or empty difficulty is allocated time and priced as easy on the server. If the client instead puts it in no pool, the server pays for a question the player was never shown. The split is deliberate: the supertype describes the payload faithfully — the spec's frozen Matrix requires "reports unknown", and an E2.4 test pins verbatim carriage — while the server-parity rule belongs where the pool is chosen, and can be tested there.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-7-redacted-refused-by-name.md`
+  summary: `dedupeTranslatedVariants` runs before the payload is parsed and always prefers the canonical variant, so a redacted canonical question hides a playable translation of itself.
+  evidence: Pre-existing — today an unparseable canonical drops the question entirely and its translation is never considered. It matters more once redaction is live, though step 9 redacts each `{id}__{lang}` variant separately, so in practice both would be withheld together. Fixing it means deduping after the parse, which moves where `codeAnswerIndex` is assigned.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-7-redacted-refused-by-name.md`
+  summary: A lesson whose questions arrived without their answers is still priced and still sold. `ObserveLessonUnlockPricesUseCase.kt:72` already parses through `parseForDisplay` and counts a redacted question's characters toward the price, so a player can see a price, spend nolics to unlock, enter, and only then be told the questions have no answers.
+  evidence: Nothing on the lesson card marks it beforehand, and the failure screen's only control is Back. Found while adding the named refusal, which makes the dead end legible without making it avoidable.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-7-redacted-refused-by-name.md`
+  summary: `RunnerQuestion.Invalid` stays dead. It is referenced nowhere and never constructed, and its `parseError: String` describes a payload that failed to parse — a redacted payload parses fine, so populating it would mean inventing a message.
+  evidence: Considered and rejected for this slice: nothing consumes `Invalid`, so constructing them would leave it functionally dead anyway, and the refusal needs a count rather than a per-question record. Its KDoc is now wrong twice over — it claims such items are filtered at init, and it describes a two-way world that is three-way after this change.

@@ -79,5 +79,15 @@ sealed interface RunnerUiState {
         LessonNotFound,
         EmptyPool,
         NoValidQuestions,
+
+        /**
+         * The questions arrived without their answer key and this client cannot yet play one. Its
+         * own case rather than a flavour of [NoValidQuestions]: broken bytes and a deliberately
+         * withheld answer are different facts, and the screen says so.
+         *
+         * Temporary, like its domain counterpart: step 9 of the E2 plan admits redacted questions
+         * to the hard pool and deletes this case with it.
+         */
+        RedactedNotSupported,
     }
 }

@@ -172,6 +172,7 @@ fun InitFailureReason.toUiReason(): RunnerUiState.InitFailureReason =
         InitFailureReason.LessonNotFound -> RunnerUiState.InitFailureReason.LessonNotFound
         InitFailureReason.EmptyPool -> RunnerUiState.InitFailureReason.EmptyPool
         InitFailureReason.NoValidQuestions -> RunnerUiState.InitFailureReason.NoValidQuestions
+        InitFailureReason.RedactedNotSupported -> RunnerUiState.InitFailureReason.RedactedNotSupported
     }
 
 fun DomainSaveError.toEventSaveError(): SaveError =

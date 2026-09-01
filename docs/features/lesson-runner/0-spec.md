@@ -502,7 +502,7 @@ commit: f2492d29
 
 - **AttemptId** — `value class AttemptId(val raw: String)`. UUID String (auto-generated при создании Attempt). Validated `raw.isNotBlank()`.
 - **RatingId** — `value class RatingId(val raw: String)`. Deterministic `sha256("$userId:$lessonId")`. Validated `raw.isNotBlank()`.
-- **InitFailureReason** — sealed: `EmptyPool | NoValidQuestions | LessonNotFound | AuthRequired`.
+- **InitFailureReason** — sealed: `EmptyPool | NoValidQuestions | RedactedNotSupported | LessonNotFound | AuthRequired`. `RedactedNotSupported` — вопросы пришли без ключа ответов (public half из `question-redaction.js`), и раннер пока не умеет их играть. Временный: step 9 плана E2 впускает redacted-вопросы в hard-пул и удаляет этот case.
 - **SaveError** — sealed: `IoFailure(throwable) | UnknownError(throwable)`. (НЕ содержит AuthRequired — userId snapshot фиксируется в `RunnerState.Ready.userId` на старте, save use cases не делают повторный auth read.)
 - **Difficulty** — enum `EASY | HARD`.
 - **Score** — Int 0..9 (validated в init); `0` = special "не показан в этой попытке"; `1`..`9` = показан, разный share правильности.
@@ -519,7 +519,7 @@ commit: f2492d29
 - **QuestionContent** — sealed (parsed by `shared/core/question-schema/QuestionContentParser`): см. ADR-0003. Импортируется из question-schema как уже типизированная sealed Question.
 - **RunnerState** — sealed:
   - `Loading` — стартовое состояние пока не загружены вопросы
-  - `InitFailed(reason: InitFailureReason)` — sealed: `EmptyPool | NoValidQuestions | LessonNotFound | AuthRequired`
+  - `InitFailed(reason: InitFailureReason)` — sealed: `EmptyPool | NoValidQuestions | RedactedNotSupported | LessonNotFound | AuthRequired`
   - `Ready(userId: String, lessonId: LessonId, lessonVersion: Long, mode: Difficulty, playOrder: List<RunnerQuestion.Valid>, eligibleSize: Int, indexInPool: Int, codeAnswer: CodeAnswer, deadlineMs: Long, seed: Long, currentDraftAnswer: UserAnswerDraft?, isPaused: Boolean)` — активное прохождение
     - `userId` — snapshot Firebase Auth UID на старте попытки (читается из `AuthRepository.currentUid()` в `StartLessonAttemptUseCase`). Save use cases используют этот snapshot, не делают повторный auth read.
     - `playOrder: List<RunnerQuestion.Valid>` — отсортированный subset в порядке показа (sortedBy `Question.order` ASC, ties broken by `Question.id`). Только `Valid`: invalid payloads уже отфильтрованы при init. (Sealed `RunnerQuestion` объявлен для будущих edge cases, но в playOrder только `.Valid`.)

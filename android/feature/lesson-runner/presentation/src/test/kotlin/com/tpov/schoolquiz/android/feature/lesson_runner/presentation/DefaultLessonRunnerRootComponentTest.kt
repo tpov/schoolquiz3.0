@@ -892,6 +892,20 @@ class DefaultLessonRunnerRootComponentTest {
         assertEquals(RunnerUiState.InitFailureReason.NoValidQuestions, uiState.reason)
     }
 
+    // ── PT-42: InitFailed(RedactedNotSupported) → uiState=InitFailed ─────────
+
+    // PT-42: GIVEN FakeStart returns InitFailed(RedactedNotSupported)
+    //        WHEN init THEN uiState is InitFailed carrying its own reason
+    @Test
+    fun `startUseCase_initFailed_redactedNotSupported_uiState_initFailed`() {
+        fakeStart.result = RunnerState.InitFailed(InitFailureReason.RedactedNotSupported)
+        val component = buildComponent()
+
+        val uiState = component.uiState.value
+        assertIs<RunnerUiState.InitFailed>(uiState)
+        assertEquals(RunnerUiState.InitFailureReason.RedactedNotSupported, uiState.reason)
+    }
+
     // ── PT-39: parser filters one invalid → attempt with valid-only ───────────
 
     // PT-39: GIVEN FakeStart returns Ready with 3-question pool (1 invalid filtered out)

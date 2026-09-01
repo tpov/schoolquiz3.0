@@ -64,6 +64,7 @@
     <string name="runner_error_lesson_not_found">Урок не знайдено</string>
     <string name="runner_error_empty_pool">Немає доступних питань</string>
     <string name="runner_error_no_valid_questions">Питання недійсні</string>
+    <string name="runner_error_redacted_questions">Питання отримано без відповідей</string>
     <string name="runner_error_save_result">Не вдалося зберегти результат</string>
     <string name="runner_error_save_rating">Не вдалося зберегти оцінку</string>
 

@@ -289,6 +289,7 @@ Presentation-level state transitions не покрытые domain State Matrix, 
 | Крестик во время прохождения | Диалог «Уверены?» → подтвердили | `AbortAttemptUseCase(state)` | `Aborted(attempt)` → pop |
 | Крестик → отмена | Диалог закрыт | — | Продолжаем прохождение |
 | `InitFailed(EmptyPool)` | Empty state + Назад | — | pop, return to LessonList |
+| `InitFailed(RedactedNotSupported)` | Empty state + Назад (своё сообщение, отличное от `NoValidQuestions` и `EmptyPool`) | — | pop, return to LessonList |
 | `InitFailed(LessonNotFound)` | Empty state + Назад | — | pop |
 | `InitFailed(AuthRequired)` | Empty state + Назад | — | pop (не navigate to login — infrastructure concern) |
 | `SaveFailed(attempt, error)` | ResultScreen + warning Snackbar | — | Кнопка Завершить доступна |
