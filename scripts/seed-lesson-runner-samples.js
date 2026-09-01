@@ -4,6 +4,7 @@
 // Requires: firebase-admin npm package in scripts/node_modules (already present).
 const admin = require('firebase-admin');
 const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json');
+const {catalogSyncChangePath, lessonContentSyncChangePath} = require('./sync-change-id');
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const now = admin.firestore.Timestamp.now();
@@ -345,7 +346,7 @@ const quest = {
     syncChange('lesson', LESSON_ID, 5),
   ].forEach((change) => {
     batch.set(
-      db.doc(`catalogs/${CATALOG_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+      db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
       change,
     );
   });
@@ -353,7 +354,7 @@ const quest = {
     .map((q, index) => syncChange('question', q.id, 6 + index))
     .forEach((change) => {
       batch.set(
-        db.doc(`lesson_content/${LESSON_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+        db.doc(lessonContentSyncChangePath(LESSON_ID, change.id)),
         change,
       );
     });

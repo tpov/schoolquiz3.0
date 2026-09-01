@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const admin = require('firebase-admin');
+const {catalogSyncChangeId, lessonContentSyncChangeId} = require('./sync-change-id');
 
 const SERVICE_ACCOUNT_PATH =
   process.env.FIREBASE_SERVICE_ACCOUNT ||
@@ -178,7 +179,7 @@ async function writeChanges(changesByCatalog) {
       const ref = db.collection('catalogs')
         .doc(catalogId)
         .collection('sync_changes')
-        .doc(`${change.changedAtMs}-${change.type}-${change.id}`);
+        .doc(catalogSyncChangeId(change.type, change.id));
       if (!DRY_RUN) {
         batch.set(ref, {
           type: change.type,
@@ -214,7 +215,7 @@ async function writeLessonContentChanges(changesByLesson) {
       const ref = db.collection('lesson_content')
         .doc(lessonId)
         .collection('sync_changes')
-        .doc(`${change.changedAtMs}-${change.type}-${change.id}`);
+        .doc(lessonContentSyncChangeId(change.id));
       if (!DRY_RUN) {
         batch.set(ref, {
           type: change.type,

@@ -5,6 +5,7 @@
 // Usage: node scripts/seed-lesson-runner-extra.js
 const admin = require('firebase-admin');
 const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json');
+const {catalogSyncChangePath, lessonContentSyncChangePath} = require('./sync-change-id');
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const now = admin.firestore.Timestamp.now();
@@ -277,7 +278,7 @@ const lessonUpdate = {
     syncChange('lesson', LESSON_ID, 2),
   ].forEach((change) => {
     batch.set(
-      db.doc(`catalogs/${CATALOG_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+      db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
       change,
     );
   });
@@ -286,7 +287,7 @@ const lessonUpdate = {
     .map((q, index) => syncChange('question', q.id, 3 + index))
     .forEach((change) => {
       batch.set(
-        db.doc(`lesson_content/${LESSON_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+        db.doc(lessonContentSyncChangePath(LESSON_ID, change.id)),
         change,
       );
     });

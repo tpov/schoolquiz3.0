@@ -223,3 +223,20 @@ AD-20 отмечал это прямо. Путь `users/{uid}/devices/{token}` �
 настройках, под подтверждением — не потому, что можно что-то потерять (ресинк лечит только сторону
 чтения и неотправленные действия не трогает), а потому, что это перекачка всего содержимого, и
 нажать её случайно на мобильном интернете обидно. Строки на трёх языках.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-hint-charge-before-check.md`
+  summary: A charge currently buys a guaranteed-correct answer on a HARD question. `spec-charges/SPEC.md:47` says a charge is spent on exactly two things — the toll for playing, and a hint on an **EASY** question — but there is no difficulty term anywhere in the hint flow: `hintEnabled` (`LessonRunnerScreen.kt:356`) does not have one, and `QuestionTypeContent` is not even given `isHard`.
+  evidence: On hard questions `revealCorrect` is false so no verdict banner appears, which hides it — but the hint still selects and submits the correct answer. Hard answers are what gate stars and certification, so this is an economy hole, not a cosmetic gap. Left out of the hint slice deliberately: its frozen Ask First reserves "any change to what a hint costs" for the user, and closing this removes something players can do today.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-hint-charge-before-check.md`
+  summary: `QuestionUiState` defaults every correct-answer field to empty (`null`, `emptySet()`, `emptyList()`, `emptyMap()`), so a question with no answer key is indistinguishable from one whose answer is legitimately empty.
+  evidence: This is the root cause the hint fix works around rather than removes — the UI has to re-derive "is there an answer here" from empty collections. It becomes load-bearing once redacted questions reach the runner, since a redacted question is precisely one with no answer key; the E2 slice that widens the runner to a common supertype should give that state a name instead.
+
+**Синк 7-1 — сиды перестали растить журнал.** Сервер пишет документ на узел с идентификатором без
+времени (`{тип}_{id}`), а шесть сид- и бэкфилл-скриптов писали `{время}-{тип}-{id}`: каждый
+повторный прогон создавал новые документы вместо перезаписи существующих, коллекция журнала росла
+неограниченно, и клиент вычитывал одно и то же изменение столько раз, сколько раз запускали сид.
+Формы сведены в общий модуль `scripts/sync-change-id.js` с тестом-стражем.
+
+Не сделано из AD-11: третья часть требования — «запись в журнал обязательна при каждом изменении
+узла» — не проверена. Есть ли на сервере пути, меняющие узел и не пишущие в журнал, не выяснено.

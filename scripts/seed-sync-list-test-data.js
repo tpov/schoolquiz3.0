@@ -13,6 +13,7 @@ if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
 }
 
 const sa = require(SERVICE_ACCOUNT_PATH);
+const {catalogSyncChangeId} = require('./sync-change-id');
 
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 
@@ -267,7 +268,7 @@ async function writeSeed(baseMs) {
       db.collection('catalogs')
         .doc(CATALOG_ID)
         .collection('sync_changes')
-        .doc(`${change.changedAtMs}-${change.type}-${change.id}`),
+        .doc(catalogSyncChangeId(change.type, change.id)),
       change,
     );
   });
@@ -308,7 +309,7 @@ async function writeIncrementalQuestionChange(previousCursorMs) {
   await db.collection('catalogs')
     .doc(CATALOG_ID)
     .collection('sync_changes')
-    .doc(`${change.changedAtMs}-${change.type}-${change.id}`)
+    .doc(catalogSyncChangeId(change.type, change.id))
     .set(change);
 
   return change;

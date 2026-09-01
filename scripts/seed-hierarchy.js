@@ -1,5 +1,6 @@
 const admin = require('firebase-admin');
 const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json');
+const {catalogSyncChangePath, lessonContentSyncChangePath} = require('./sync-change-id');
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const T = admin.firestore.Timestamp;
@@ -97,7 +98,7 @@ function syncChange(type, id, offset) {
   ].forEach((change) => {
     batch.set(
       db.doc(
-        `catalogs/${quest.catalogId}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`,
+        catalogSyncChangePath(quest.catalogId, change.type, change.id),
       ),
       change,
     );
@@ -105,7 +106,7 @@ function syncChange(type, id, offset) {
   const questionChange = syncChange('question', question.id, 6);
   batch.set(
     db.doc(
-      `lesson_content/${lesson.id}/sync_changes/${questionChange.changedAtMs}-${questionChange.type}-${questionChange.id}`,
+      lessonContentSyncChangePath(lesson.id, questionChange.id),
     ),
     questionChange,
   );
