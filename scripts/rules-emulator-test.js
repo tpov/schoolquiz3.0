@@ -141,6 +141,15 @@ async function seed() {
     await store.doc("themes/thm-1").set({id: "thm-1", sectionId: "sec-1"});
     await store.doc("lessons/les-1").set({id: "les-1", themeId: "thm-1"});
     await store.doc("questions/qst-1").set({id: "qst-1", lessonId: "les-1"});
+    await store.doc("question_keys/les-1").set({
+      id: "les-1",
+      lessonId: "les-1",
+      version: 1,
+      publicHalfRedacted: false,
+      keys: [{questionId: "qst-1", key: {version: 1, questionId: "qst-1", type: "SingleChoice", correctOptionId: "b"}}],
+      refusals: [],
+      omitted: 0,
+    });
 
     await store.doc("admin/review/lessons/les-1").set({id: "les-1"});
     await store.doc("private/author/catalogs/cat-1").set({id: "cat-1"});
@@ -475,6 +484,33 @@ async function testServerOnlyCollections() {
   await deny("configs: админ не читает", () => db("admin").doc("configs/nickname_policy").get());
   await deny("configs: разработчик не пишет", () =>
     db("developer").doc("configs/nickname_policy").update({minLength: 1}));
+
+  // question_keys — вторая половина каждого опубликованного вопроса. Строкой выше в правилах
+  // `questions` открыт всем на чтение (`allow read: if true`), поэтому единственное, что отделяет
+  // ответ от игрока, — это отказ здесь. Если правило исчезнет, ничего больше не упадёт: ключи
+  // просто станут читаемыми, а тесты останутся зелёными. Поэтому проверка именно на него.
+  await deny("question_keys: игрок не читает ключи", () => db("player").doc("question_keys/les-1").get());
+  await deny("question_keys: гость не читает ключи", () => db("guest").doc("question_keys/les-1").get());
+  await deny("question_keys: админ не читает ключи", () => db("admin").doc("question_keys/les-1").get());
+  await deny("question_keys: игрок не пишет ключи", () =>
+    db("player").doc("question_keys/les-2").set({lessonId: "les-2", keys: []}));
+  await deny("question_keys: админ не пишет ключи", () =>
+    db("admin").doc("question_keys/les-1").update({keys: []}));
+
+  // Отказ по умолчанию делает проверки выше слепыми к удалению самого правила: без блока
+  // question_keys поведение то же самое, и ни один assert не падает. Поэтому поведенческие
+  // проверки ловят не удаление, а РАСШИРЕНИЕ — catch-all или правило вложенного контента,
+  // дотянувшееся до коллекции. Само же наличие явного блока приходится закреплять текстом:
+  // строкой выше `questions` открыт всем (`allow read: if true`), и молчание здесь читалось бы
+  // как недосмотр, а не как решение.
+  const rules = fs.readFileSync(RULES_PATH, "utf8");
+  const at = rules.indexOf("match /question_keys/");
+  const block = at < 0 ? "" : rules.slice(at, at + 800);
+  results.push({
+    label: "question_keys: явный отказ присутствует в тексте правил",
+    ok: at >= 0 && block.includes("allow read, write: if false;"),
+    error: "в firestore.rules нет явного `match /question_keys/{lessonId} { allow read, write: if false; }`",
+  });
 }
 
 async function main() {

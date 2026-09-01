@@ -89,6 +89,41 @@ const STATUS = {
 };
 
 /**
+ * Every reason a refusal can carry.
+ *
+ * Exported because a refusal is not a debugging aid here — it is a record that a question's answer
+ * is still inside a world-readable payload, and whoever stores or reports one has to be able to
+ * name the case without copying a string literal out of this file. A caller comparing against a
+ * typo'd literal silently matches nothing, and the mismatch shows up as "no refusals" rather than
+ * as an error.
+ *
+ * The values are the wire format: they are written into documents and read back by people, so
+ * renaming one is a breaking change even though nothing here type-checks it.
+ */
+const REFUSAL = {
+  NOT_A_STRING: "not-a-string",
+  MALFORMED_JSON: "malformed-json",
+  NOT_AN_OBJECT: "not-an-object",
+  UNKNOWN_TYPE: "unknown-type",
+  MISSING_TEXT: "missing-text",
+  INVALID_IMAGE_URL: "invalid-image-url",
+  INVALID_DIFFICULTY: "invalid-difficulty",
+  INVALID_OPTIONS: "invalid-options",
+  MISSING_CORRECT_OPTION: "missing-correct-option",
+  DANGLING_CORRECT_OPTION: "dangling-correct-option",
+  MISSING_CORRECT_OPTIONS: "missing-correct-options",
+  EMPTY_CORRECT_OPTIONS: "empty-correct-options",
+  INVALID_ITEMS: "invalid-items",
+  DUPLICATE_ITEM_IDS: "duplicate-item-ids",
+  INVALID_CANDIDATES: "invalid-candidates",
+  DUPLICATE_CANDIDATE_IDS: "duplicate-candidate-ids",
+  INVALID_BLANKS: "invalid-blanks",
+  DUPLICATE_BLANK_IDS: "duplicate-blank-ids",
+  DANGLING_CORRECT_CANDIDATE: "dangling-correct-candidate",
+  INVALID_PROTECTED_SEGMENTS: "invalid-protected-segments",
+};
+
+/**
  * Stamped into every key.
  *
  * The `ri-`/`rc-` prefixes and the direction of `idMap` are a contract between a row written today
@@ -257,12 +292,12 @@ function resolveDifficulty(source, fallback) {
  * normalised to null.
  */
 function publicBase(source, type, difficulty) {
-  if (typeof source.text !== "string") return "missing-text";
+  if (typeof source.text !== "string") return REFUSAL.MISSING_TEXT;
   if (source.imageUrl !== undefined && source.imageUrl !== null && typeof source.imageUrl !== "string") {
-    return "invalid-image-url";
+    return REFUSAL.INVALID_IMAGE_URL;
   }
   const level = resolveDifficulty(source, difficulty);
-  if (level === DIFFICULTY_REFUSED) return "invalid-difficulty";
+  if (level === DIFFICULTY_REFUSED) return REFUSAL.INVALID_DIFFICULTY;
 
   const base = {type};
   if (typeof source.id === "string" && source.id !== "") base.id = source.id;
@@ -279,12 +314,12 @@ function publicBase(source, type, difficulty) {
  */
 function splitSingleChoice(source) {
   const options = readRows(source.options);
-  if (!options) return "invalid-options";
+  if (!options) return REFUSAL.INVALID_OPTIONS;
   const correctOptionId = source.correctOptionId;
-  if (typeof correctOptionId !== "string" || correctOptionId === "") return "missing-correct-option";
+  if (typeof correctOptionId !== "string" || correctOptionId === "") return REFUSAL.MISSING_CORRECT_OPTION;
   // A key naming an option the question does not offer cannot be checked against the public half
   // later, and a question published without a usable key is a question nobody can score.
-  if (!options.some((option) => option.id === correctOptionId)) return "dangling-correct-option";
+  if (!options.some((option) => option.id === correctOptionId)) return REFUSAL.DANGLING_CORRECT_OPTION;
   return {
     fields: {options},
     key: {type: CONTENT_TYPE.SINGLE_CHOICE, correctOptionId},
@@ -300,15 +335,15 @@ function splitSingleChoice(source) {
  */
 function splitMultipleChoice(source) {
   const options = readRows(source.options);
-  if (!options) return "invalid-options";
+  if (!options) return REFUSAL.INVALID_OPTIONS;
   const correctOptionIds = source.correctOptionIds;
-  if (!Array.isArray(correctOptionIds)) return "missing-correct-options";
+  if (!Array.isArray(correctOptionIds)) return REFUSAL.MISSING_CORRECT_OPTIONS;
   // An empty correct set is not a question with no answer, it is a question whose answer was lost
   // before it got here. Refused whole rather than published with an unanswerable key.
-  if (correctOptionIds.length === 0) return "empty-correct-options";
+  if (correctOptionIds.length === 0) return REFUSAL.EMPTY_CORRECT_OPTIONS;
   const optionIds = new Set(options.map((option) => option.id));
   for (const id of correctOptionIds) {
-    if (typeof id !== "string" || !optionIds.has(id)) return "dangling-correct-option";
+    if (typeof id !== "string" || !optionIds.has(id)) return REFUSAL.DANGLING_CORRECT_OPTION;
   }
   return {
     fields: {options},
@@ -329,8 +364,8 @@ function splitMultipleChoice(source) {
  */
 function splitOrdering(source, nextIndex) {
   const items = readRows(source.items);
-  if (!items) return "invalid-items";
-  if (!hasUniqueIds(items)) return "duplicate-item-ids";
+  if (!items) return REFUSAL.INVALID_ITEMS;
+  if (!hasUniqueIds(items)) return REFUSAL.DUPLICATE_ITEM_IDS;
 
   const shuffled = shuffle(items, nextIndex);
   const publicItems = shuffled.map((item, index) => ({id: `${ORDER_ITEM_PREFIX}${index}`, text: item.text}));
@@ -384,21 +419,21 @@ function isAnswerText(segment, answerTexts) {
  */
 function splitFillBlank(source, nextIndex) {
   const candidates = readRows(source.candidates);
-  if (!candidates) return "invalid-candidates";
-  if (!hasUniqueIds(candidates)) return "duplicate-candidate-ids";
+  if (!candidates) return REFUSAL.INVALID_CANDIDATES;
+  if (!hasUniqueIds(candidates)) return REFUSAL.DUPLICATE_CANDIDATE_IDS;
 
   const blanks = source.blanks;
-  if (!Array.isArray(blanks) || blanks.length === 0) return "invalid-blanks";
+  if (!Array.isArray(blanks) || blanks.length === 0) return REFUSAL.INVALID_BLANKS;
   const candidateIds = new Set(candidates.map((candidate) => candidate.id));
   const blankIds = [];
   const pairs = [];
   for (const blank of blanks) {
-    if (!blank || typeof blank !== "object" || Array.isArray(blank)) return "invalid-blanks";
-    if (typeof blank.id !== "string" || blank.id === "") return "invalid-blanks";
-    if (blankIds.includes(blank.id)) return "duplicate-blank-ids";
+    if (!blank || typeof blank !== "object" || Array.isArray(blank)) return REFUSAL.INVALID_BLANKS;
+    if (typeof blank.id !== "string" || blank.id === "") return REFUSAL.INVALID_BLANKS;
+    if (blankIds.includes(blank.id)) return REFUSAL.DUPLICATE_BLANK_IDS;
     const correctCandidateId = blank.correctCandidateId;
     if (typeof correctCandidateId !== "string" || !candidateIds.has(correctCandidateId)) {
-      return "dangling-correct-candidate";
+      return REFUSAL.DANGLING_CORRECT_CANDIDATE;
     }
     blankIds.push(blank.id);
     pairs.push([blank.id, correctCandidateId]);
@@ -418,9 +453,9 @@ function splitFillBlank(source, nextIndex) {
 
   if (source.protectedTextSegments !== undefined && source.protectedTextSegments !== null) {
     const segments = source.protectedTextSegments;
-    if (!Array.isArray(segments)) return "invalid-protected-segments";
+    if (!Array.isArray(segments)) return REFUSAL.INVALID_PROTECTED_SEGMENTS;
     for (const segment of segments) {
-      if (typeof segment !== "string") return "invalid-protected-segments";
+      if (typeof segment !== "string") return REFUSAL.INVALID_PROTECTED_SEGMENTS;
     }
     fields.protectedTextSegments = segments.filter((segment) => !isAnswerText(segment, answerTexts));
   }
@@ -459,20 +494,30 @@ function outcome(status, publicPayload, key, reason) {
  *
  * Nothing throws. This runs inside a publish batch, and one unreadable payload must not be able to
  * fail the publication of every other question beside it.
+ *
+ * **Both halves must come from one call.** The shuffle is drawn fresh on every invocation, and the
+ * `idMap` and `order` inside an `Ordering` or `FillBlank` key describe *that* permutation only.
+ * Calling this again to produce the public half for a key stored earlier yields a different
+ * arrangement, and `restoreContent` then returns null for every question of those two types —
+ * silently, at scoring time, long after the publish that caused it. Keep the single result and
+ * write `publicPayload` and `key` from it together, or write neither. A caller that stores only the
+ * key must record that it did (`question-key-store.js`, `publicHalfRedacted`), because a key that
+ * cannot say which generation it belongs to is worse than no key: no key fails loudly, and a
+ * mismatched one scores wrong answers correct.
  */
 function redact(payloadJson, difficulty, options) {
   if (typeof payloadJson !== "string") {
-    return outcome(STATUS.REFUSED, payloadJson, null, "not-a-string");
+    return outcome(STATUS.REFUSED, payloadJson, null, REFUSAL.NOT_A_STRING);
   }
 
   let source;
   try {
     source = JSON.parse(payloadJson);
   } catch (error) {
-    return outcome(STATUS.REFUSED, payloadJson, null, "malformed-json");
+    return outcome(STATUS.REFUSED, payloadJson, null, REFUSAL.MALFORMED_JSON);
   }
   if (!source || typeof source !== "object" || Array.isArray(source)) {
-    return outcome(STATUS.REFUSED, payloadJson, null, "not-an-object");
+    return outcome(STATUS.REFUSED, payloadJson, null, REFUSAL.NOT_AN_OBJECT);
   }
 
   if (source.type === CONTENT_TYPE.SURVEY) {
@@ -491,7 +536,7 @@ function redact(payloadJson, difficulty, options) {
   else if (source.type === CONTENT_TYPE.MULTIPLE_CHOICE) split = splitMultipleChoice(source);
   else if (source.type === CONTENT_TYPE.ORDERING) split = splitOrdering(source, nextIndex);
   else if (source.type === CONTENT_TYPE.FILL_BLANK) split = splitFillBlank(source, nextIndex);
-  else return outcome(STATUS.REFUSED, payloadJson, null, "unknown-type");
+  else return outcome(STATUS.REFUSED, payloadJson, null, REFUSAL.UNKNOWN_TYPE);
 
   if (typeof split === "string") return outcome(STATUS.REFUSED, payloadJson, null, split);
 
@@ -683,6 +728,7 @@ module.exports = {
   CONTENT_TYPE,
   REDACTED_TYPE,
   STATUS,
+  REFUSAL,
   KEY_VERSION,
   redact,
   restoreAnswer,
