@@ -2,7 +2,7 @@
 title: 'E2.5 — Publication starts writing the answer key'
 type: 'feature'
 created: '2026-09-01'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'a681181a'
 review_loop_iteration: 0
 context: []
@@ -81,3 +81,33 @@ context: []
   **Amended:** the task now specifies lists and says why. No frozen content changed — the Matrix row was already right; the task's wording contradicted it.
   **Known-bad state avoided:** a republished lesson carrying answer keys for questions it no longer has, with nothing able to clear them.
   **KEEP:** one key document per lesson rather than per question (it keeps the per-question write count unchanged, so no publication that succeeds today starts failing, and it matches how the server already reads questions); refusing rather than emitting a document Firestore would reject; and keeping `publicDocuments` a pure, IO-free function by calling the pure redactor inline.
+
+## Suggested Review Order
+
+**Why the document is shaped the way it is**
+
+- Entry point: the five decisions — one document per lesson, lists rather than maps, refusals recorded, a size ceiling, and a generation marker.
+  [`question-key-store.js:29`](../../functions/question-key-store.js#L29)
+
+- The marker that says the payload beside these keys was never redacted, and the invariant it protects: both halves must come from one `redact` call.
+  [`question-key-store.js:56`](../../functions/question-key-store.js#L56)
+
+- The 1 MiB ceiling this design trades into, charged to keys and refusals alike so a lesson cannot refuse its way past it.
+  [`question-key-store.js:108`](../../functions/question-key-store.js#L108)
+
+- Every reason a refusal can carry — a wire format, so renaming one is a breaking change.
+  [`question-key-store.js:123`](../../functions/question-key-store.js#L123)
+
+- Document ids and field names follow different Firestore rules; conflating them costs a question its key or fails the whole batch.
+  [`question-key-store.js:160`](../../functions/question-key-store.js#L160)
+
+**Where it meets publication**
+
+- The only two things this slice adds to `publicDocuments`: the key documents, and the one place a refusal is visible.
+  [`index.js:2974`](../../functions/index.js#L2974)
+
+- The deny rule, sitting directly beneath the `allow read: if true` it exists to contrast with.
+  [`firestore.rules:135`](../../firestore.rules#L135)
+
+- Emulator cases pinning that rule — note they guard a widening; deletion is caught by a separate text assertion, since Firestore denies by default.
+  [`rules-emulator-test.js:488`](../../scripts/rules-emulator-test.js#L488)
