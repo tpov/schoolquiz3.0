@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.nickname
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.LogoRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileLogo
@@ -57,7 +58,9 @@ class FirebaseLogoRemoteDataSource(
     private suspend fun call(
         name: String,
         payload: Map<String, Any?>,
-    ): Map<*, *> = functions.getHttpsCallable(name).call(payload).await().data as? Map<*, *> ?: emptyMap<String, Any?>()
+    ): Map<*, *> =
+        functions.getHttpsCallable(name)
+            .withAppTimeout().call(payload).await().data as? Map<*, *> ?: emptyMap<String, Any?>()
 
     private fun Map<*, *>.string(field: String): String? = this[field]?.toString()?.takeIf { it.isNotBlank() }
 

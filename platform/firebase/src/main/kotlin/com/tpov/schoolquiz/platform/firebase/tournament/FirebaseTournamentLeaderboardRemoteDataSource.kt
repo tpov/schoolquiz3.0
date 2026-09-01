@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.tournament
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentMetadataDto
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentOverviewDto
@@ -19,6 +20,7 @@ class FirebaseTournamentLeaderboardRemoteDataSource(
         val data =
             functions
                 .getHttpsCallable(FETCH_TOURNAMENT_OVERVIEW)
+                .withAppTimeout()
                 .call(
                     mapOf(
                         TOURNAMENT_ID to tournamentId,

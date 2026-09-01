@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.platform.firebase.verification
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.VerificationRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnVerification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.VerificationDecision
@@ -26,6 +27,7 @@ class FirebaseVerificationRemoteDataSource(
     override suspend fun submit(details: VerificationDetails) {
         functions
             .getHttpsCallable(SUBMIT)
+            .withAppTimeout()
             .call(
                 mapOf(
                     REAL_NAME to details.realName,
@@ -70,7 +72,8 @@ class FirebaseVerificationRemoteDataSource(
 
     override suspend fun pending(limit: Int): List<VerificationRequest> {
         val data =
-            functions.getHttpsCallable(FETCH_PENDING).call(mapOf(LIMIT to limit)).await().data
+            functions.getHttpsCallable(FETCH_PENDING)
+                .withAppTimeout().call(mapOf(LIMIT to limit)).await().data
         val requests = (data as? Map<*, *>)?.get(REQUESTS_FIELD) as? List<*> ?: return emptyList()
         return requests.mapNotNull { it as? Map<*, *> }.map { entry ->
             VerificationRequest(
@@ -91,6 +94,7 @@ class FirebaseVerificationRemoteDataSource(
     ) {
         functions
             .getHttpsCallable(DECIDE)
+            .withAppTimeout()
             .call(
                 buildMap {
                     put(UID, uid)

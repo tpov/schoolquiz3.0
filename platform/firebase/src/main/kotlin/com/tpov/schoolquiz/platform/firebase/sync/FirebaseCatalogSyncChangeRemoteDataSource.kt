@@ -54,7 +54,13 @@ class FirebaseCatalogSyncChangeRemoteDataSource(
                 //
                 // startAt перечитает всю миллисекунду курсора заново. Это дешевле, чем потерять
                 // запись: применение изменений идёт через refreshByIds и повтор безвреден.
-                .let { if (cursor.docId.isEmpty()) it.startAt(cursor.changedAtMs) else it.startAfter(cursor.changedAtMs, cursor.docId) }
+                .let {
+                    if (cursor.docId.isEmpty()) {
+                        it.startAt(cursor.changedAtMs)
+                    } else {
+                        it.startAfter(cursor.changedAtMs, cursor.docId)
+                    }
+                }
                 .limit(limit.toLong())
                 .get()
                 .await()

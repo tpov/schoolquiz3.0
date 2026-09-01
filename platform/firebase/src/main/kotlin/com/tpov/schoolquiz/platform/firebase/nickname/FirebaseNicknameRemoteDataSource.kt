@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.nickname
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.NicknameRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameAvailability
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
@@ -73,7 +74,9 @@ class FirebaseNicknameRemoteDataSource(
     private suspend fun call(
         name: String,
         payload: Map<String, Any>,
-    ): Map<*, *> = functions.getHttpsCallable(name).call(payload).await().data as? Map<*, *> ?: emptyMap<Any, Any>()
+    ): Map<*, *> =
+        functions.getHttpsCallable(name)
+            .withAppTimeout().call(payload).await().data as? Map<*, *> ?: emptyMap<Any, Any>()
 
     private fun Map<*, *>.string(field: String): String? = this[field]?.toString()?.takeIf { it.isNotBlank() }
 

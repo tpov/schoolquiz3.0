@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.profile
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileBootstrapRequest
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
@@ -17,6 +18,7 @@ class FirebaseProfileRemoteDataSource(
         val data =
             functions
                 .getHttpsCallable(ENSURE_USER_PROFILE)
+                .withAppTimeout()
                 .call(
                     mapOf(
                         NICKNAME to request.nickname,
@@ -35,6 +37,7 @@ class FirebaseProfileRemoteDataSource(
         val data =
             functions
                 .getHttpsCallable(UPDATE_USER_NICKNAME)
+                .withAppTimeout()
                 .call(
                     mapOf(
                         NICKNAME to nickname,
@@ -47,7 +50,9 @@ class FirebaseProfileRemoteDataSource(
     }
 
     override suspend fun leagueStanding(): LeagueStanding {
-        val data = functions.getHttpsCallable(FETCH_LEAGUE_STANDING).call(emptyMap<String, Any>()).await().data
+        val data =
+            functions.getHttpsCallable(FETCH_LEAGUE_STANDING)
+                .withAppTimeout().call(emptyMap<String, Any>()).await().data
         val map = data as? Map<*, *>
         return LeagueStanding(
             place = (map?.get(PLACE) as? Number)?.toInt() ?: 0,

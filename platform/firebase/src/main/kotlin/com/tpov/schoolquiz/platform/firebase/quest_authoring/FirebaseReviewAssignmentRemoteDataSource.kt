@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.quest_authoring
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentChangeDto
@@ -63,6 +64,7 @@ class FirebaseReviewAssignmentRemoteDataSource(
         val data =
             functions
                 .getHttpsCallable(FETCH_REVIEW_ASSIGNMENT_CHANGES)
+                .withAppTimeout()
                 .call(mapOf(CURSOR_MS to cursorMs))
                 .await()
                 .data
@@ -77,6 +79,7 @@ class FirebaseReviewAssignmentRemoteDataSource(
             val data =
                 functions
                     .getHttpsCallable(FETCH_REVIEW_ASSIGNMENTS)
+                    .withAppTimeout()
                     .call(mapOf(IDS to ids.sorted()))
                     .await()
                     .data
@@ -88,6 +91,7 @@ class FirebaseReviewAssignmentRemoteDataSource(
     override suspend fun submitReviewAction(action: SubmitReviewActionDto) {
         functions
             .getHttpsCallable(SUBMIT_REVIEW_ACTION)
+            .withAppTimeout()
             .call(action.toCallableMap())
             .await()
     }

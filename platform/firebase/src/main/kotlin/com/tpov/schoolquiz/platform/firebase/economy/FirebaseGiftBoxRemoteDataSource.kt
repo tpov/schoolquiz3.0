@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.economy
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
 import kotlinx.coroutines.tasks.await
@@ -12,6 +13,7 @@ class FirebaseGiftBoxRemoteDataSource(
         val data =
             functions
                 .getHttpsCallable(OPEN_GIFT_BOX)
+                .withAppTimeout()
                 .call()
                 .await()
                 .data

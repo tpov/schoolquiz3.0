@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.platform.firebase.quest
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.catalog.toTimestamp
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.platform.firebase.util.fetchDocumentsByIds
 import com.tpov.schoolquiz.shared.feature.quest.data.QuestRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest.data.dto.QuestDto
@@ -55,6 +56,7 @@ class FirebaseQuestRemoteDataSource(
     ) {
         functions
             .getHttpsCallable(SET_PUBLIC_QUEST_SHELF)
+            .withAppTimeout()
             .call(
                 mapOf(
                     "questId" to questId,
@@ -67,6 +69,7 @@ class FirebaseQuestRemoteDataSource(
     override suspend fun retirePublic(questId: String) {
         functions
             .getHttpsCallable(RETIRE_PUBLIC_QUEST)
+            .withAppTimeout()
             .call(mapOf("questId" to questId))
             .await()
     }

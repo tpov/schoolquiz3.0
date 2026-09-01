@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.lesson_result
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonAnswerEvent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultAttemptEvent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
@@ -14,6 +15,7 @@ class FirebaseLessonResultRemoteDataSource(
         if (attempts.isEmpty()) return
         functions
             .getHttpsCallable(SUBMIT_LESSON_RESULT_EVENTS)
+            .withAppTimeout()
             .call(mapOf(ATTEMPTS to attempts.map { it.toCallableMap() }))
             .await()
     }
@@ -22,6 +24,7 @@ class FirebaseLessonResultRemoteDataSource(
         if (ratings.isEmpty()) return
         functions
             .getHttpsCallable(SUBMIT_QUEST_RATING_EVENTS)
+            .withAppTimeout()
             .call(mapOf(RATINGS to ratings.map { it.toCallableMap() }))
             .await()
     }

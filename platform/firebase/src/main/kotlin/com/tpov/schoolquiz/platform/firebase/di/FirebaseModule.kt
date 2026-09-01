@@ -5,9 +5,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseLogoRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
