@@ -378,3 +378,23 @@ backfill.
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-8-server-scores-an-attempt.md`
   summary: The submit handler must hand `scoreAttempt` the same eligible pool the attempt was actually played against; a mismatched pool is reported as out-of-range rather than mis-scored.
   evidence: The codeAnswer's length is the pool size and each digit's position is its question's `codeAnswerIndex`, so a pool that differs from the one the client played shifts every later digit and changes the percent's denominator. Growing the string to fit an out-of-range index would silently do exactly that, which is why it is refused instead.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-9-catalog-redaction-plan.md`
+  summary: The "both halves from one `redact` call" invariant could be removed outright by making the shuffle deterministic per question — a seed derived from a server-side secret and the question id (an HMAC), so any call at any time produces the same permutation.
+  evidence: Today the shuffle draws fresh entropy, which is why keys written before a payload is redacted describe a permutation that was never published, and why the backfill's key-only mode must be superseded by a both-halves rewrite. A secret-keyed seed is unpredictable to clients (the earlier objection to `Math.random` was recoverable state, not determinism itself) and reproducible on the server. It introduces a secret to manage, so it is an architecture-spine decision, not a slice.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-9-catalog-redaction-plan.md`
+  summary: A republish of a lesson that holds an already-redacted payload would write a `keys` list without that question's key — publication assigns each per-lesson document whole into a merge batch, and list fields replace whole on republish — so the stored key for a redacted question is cleared by the next publish of its lesson.
+  evidence: Latent today: nothing writes redacted payloads yet. Found because the backfill planner withholds such lessons deliberately, which makes it stricter than the publication path it is documented as mirroring. The fix belongs in `publicDocuments`: carry forward the existing key for any question whose payload is already redacted, which requires the publish path to read `question_keys` before it writes.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-9-catalog-redaction-plan.md`
+  summary: The backfill does not reconcile against what `question_keys` already holds — a dry run cannot say which documents are new, which will be replaced, or which existing documents (lessons since deleted, or with every question archived) will be left behind as orphans.
+  evidence: The script never reads the key collection. "The second run replaces each lesson's document" holds only for lessons still present; a lesson that vanished between runs keeps its stale keys forever, the same gap already recorded for publication.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-9-catalog-redaction-plan.md`
+  summary: `scripts/` tests are in no gate — `scripts/package.json`'s `test` runs two suites by hand and `ciCheck` wires only `functions` `npm test` — so the backfill script's walk, dry-run gate and write can only be verified by an emulator session nobody automates.
+  evidence: The pure planner is gated through `functions/`; the shell is not. A `scriptsTest` Exec task beside `functionsTest`, plus an in-memory fake Firestore in the style of `scripts/content-catalog-index.test.js`, would close it.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-9-catalog-redaction-plan.md`
+  summary: Archival lives on the quest document, not the question — `setPublicQuestShelf` sets `archived` on `quests/{id}` only, and publication and every seed script write `archived: false` on questions — so a question-level filter skips almost nothing, and questions under an archived quest are keyed and counted as live.
+  evidence: The backfill honours the question flag because `questionRowFor` on the reward path reads the same field, and says in its report that quest-level archival is not consulted. Making the count mean something needs the quest → section → theme → lesson chain resolved before planning; the same chain is what a later "which lessons no longer exist" reconciliation needs, so the two belong together.

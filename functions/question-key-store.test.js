@@ -57,63 +57,9 @@ function question(id, lessonId, payload, difficulty) {
   };
 }
 
-const SINGLE = {
-  type: "SingleChoice",
-  text: "Which keyword declares a read-only binding?",
-  imageUrl: null,
-  options: [{id: "a", text: "var"}, {id: "b", text: "val"}, {id: "c", text: "lateinit"}],
-  correctOptionId: "b",
-  info: "val is the read-only one",
-};
-
-const MULTIPLE = {
-  type: "MultipleChoice",
-  text: "Which of these run on the JVM?",
-  imageUrl: null,
-  options: [
-    {id: "a", text: "Kotlin"},
-    {id: "b", text: "Swift"},
-    {id: "c", text: "Scala"},
-    {id: "d", text: "Rust"},
-  ],
-  correctOptionIds: ["a", "c"],
-};
-
-const ORDERING = {
-  type: "Ordering",
-  text: "Put the build steps in order",
-  imageUrl: null,
-  items: [
-    {id: "i1", text: "compile"},
-    {id: "i2", text: "test"},
-    {id: "i3", text: "package"},
-    {id: "i4", text: "deploy"},
-  ],
-};
-
-const FILL_BLANK = {
-  type: "FillBlank",
-  text: "___ compiles to bytecode and ___ to machine code.",
-  imageUrl: null,
-  blanks: [
-    {id: "b1", correctCandidateId: "c1"},
-    {id: "b2", correctCandidateId: "c2"},
-  ],
-  candidates: [
-    {id: "c1", text: "Kotlin"},
-    {id: "c2", text: "Rust"},
-    {id: "c3", text: "Elm"},
-  ],
-  protectedTextSegments: ["Kotlin"],
-};
-
-const SURVEY = {
-  type: "Survey",
-  text: "Which editor do you use?",
-  imageUrl: null,
-  options: [{id: "a", text: "IntelliJ"}, {id: "b", text: "VS Code"}],
-  allowMultiple: false,
-};
+// The payloads live in _question-fixtures.js so catalog-redaction-plan.test.js proves its planner
+// against the very questions this suite proves the key store against.
+const {SINGLE, MULTIPLE, ORDERING, FILL_BLANK, SURVEY} = require("./_question-fixtures");
 
 const keyOf = (document, questionId) => {
   const entry = document.keys.find((item) => item.questionId === questionId);
