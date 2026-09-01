@@ -39,6 +39,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /mutation_keys/{mutationId} {
+      // Ключи идемпотентности — серверная бухгалтерия. Клиенту незачем их читать, а запись
+      // отсюда позволила бы объявить чужую операцию выполненной и тем её отменить.
+      allow read, write: if false;
+    }
+
     match /configs/{configId} {
       // Server-owned runtime configs, including configs/nickname_policy.
       allow read, write: if false;
@@ -125,6 +131,15 @@ service cloud.firestore {
     match /themes/{themeId}       { allow read: if true; allow write: if isAdmin(); }
     match /lessons/{lessonId}     { allow read: if true; allow write: if isAdmin(); }
     match /questions/{questionId} { allow read: if true; allow write: if isAdmin(); }
+
+    match /question_keys/{lessonId} {
+      // The answer half of the questions above, one document per lesson, written by publication
+      // (functions/index.js, publicDocuments). Denied to every client, signed in or not, and the
+      // denial is deliberate rather than inherited: `questions` one line up is `allow read: if
+      // true`, and a rule that says nothing here would read as an oversight the next time somebody
+      // widens this file. Nothing legitimate needs it — scoring happens on the server.
+      allow read, write: if false;
+    }
 
     match /lesson_content/{lessonId} {
       match /sync_changes/{changeId} {

@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":shared:core:stats"))
     implementation(project(":shared:core:sync"))
     implementation(project(":shared:core:network"))
+    implementation(project(":shared:core:outbox"))
     implementation(project(":shared:core:question-schema"))
     implementation(project(":shared:core:catalog:domain"))
     implementation(project(":shared:core:catalog:data"))

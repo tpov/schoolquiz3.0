@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseLogoRemoteDataSource
@@ -17,6 +18,7 @@ import com.tpov.schoolquiz.platform.firebase.sync.FirebaseCatalogSyncChangeRemot
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseLessonContentSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.tournament.FirebaseTournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.verification.FirebaseVerificationRemoteDataSource
+import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSource
@@ -37,6 +39,11 @@ val firebaseModule =
     module {
         single<FirebaseFirestore> { FirebaseFirestore.getInstance() }
         single<FirebaseFunctions> { FirebaseFunctions.getInstance() }
+        // Единственный адрес очереди (AD-6): новая операция появляется обработчиком на сервере,
+        // а не новым путём на клиенте.
+        single<MutationTransport> {
+            FirebaseMutationTransport(functions = get(), networkMonitor = get())
+        }
         single<UserStatsDataSource> {
             FirebaseUserStatsDataSource(
                 firestore = get(),

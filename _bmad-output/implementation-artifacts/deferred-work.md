@@ -155,3 +155,35 @@ Goals split out of a larger intent, kept so nothing is quietly dropped.
 - source_spec: none
   summary: Поднять targetSdk и compileSdk до 36 и разобрать поведенческие изменения Android 15 и 16.
   evidence: Отделено от эпика 0 монетизации. Независимо выпускаемо и независимо ломаемо: миграция targetSdk меняет поведение всего приложения, а рабочее дерево сейчас несёт 223 незакоммиченных файла — при поломке будет невозможно отличить свою регрессию от чужой. Делать на чистом дереве, отдельным коммитом. История 0.3 в epics-monetisation.md.
+
+- source_spec: none
+  summary: The lesson runner calls the player's spendable resource `lives` and `hearts` in code (`RunnerUiState.lives`, `stateHolder.livesRemainingHearts`, `hintRequested()`), but the product concept is a charge — the string it renders is `runner_figure_lives` = "Charges" (`android/feature/lesson-runner/presentation/src/main/res/values/strings.xml:51`).
+  evidence: The user corrected the terminology directly. A name that means one thing in the code and another in the product is how the hint bug got written: the guard reads as "does the player have a heart left" rather than "is there a charge to spend and anything to spend it on". Renaming it through the runner would make that class of mistake harder.
+
+**Синк E4 — первая операция переехала в очередь.** Реестр `MUTATION_HANDLERS` был пуст, а
+клиентского транспорта не существовало: приёмник, движок и хранилище стояли собранными и никуда
+не подключёнными. Теперь связаны: `FirebaseMutationTransport` шлёт в единственный `submitMutation`,
+`OutboxSyncable` крутит очередь вместе с обычной синхронизацией, а разблокировка урока
+зарегистрирована как первая отложимая операция — её тело вынесено в `applyLessonUnlock` и общее
+для прямого вызова и очереди, иначе цена по двум дорогам однажды разошлась бы.
+`firestore.rules` закрыл `mutation_keys` от клиента: запись оттуда позволила бы объявить чужую
+операцию выполненной.
+
+Не переехали остальные из AD-3: действие ревьюера, перенос квеста на полку, снятие лота. Каждая —
+свой обработчик на сервере и своя реакция на карантин.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-5-answer-key-written.md`
+  summary: Nothing pins that publication actually emits a key document — delete the one line in `publicDocuments` that calls the key store and every check in the repository still passes.
+  evidence: No test requires `functions/index.js`; the module's own suite tests the module, not its call site. The right harness exists — `scripts/review-pipeline-e2e.js:412` already asserts what a publish produced — but it publishes `payload: "{}"`, which the redactor classifies `unknown-type`, so even running it could never produce a key. It also sits in no gate: `scripts/package.json`'s test script is `exit 1` and `ciCheck` does not reference it.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-5-answer-key-written.md`
+  summary: A lesson that disappears from a submission keeps its previous generation of answer keys forever — `{merge: true}` never deletes, and no document is emitted for a lesson with no questions, so nothing clears the old one.
+  evidence: Per-lesson replacement only works while the lesson is still being published. The public question documents behave the same way today (never deleted), so this matches existing behaviour rather than adding a gap — but a key outliving its question is a stored answer with nothing to answer.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-5-answer-key-written.md`
+  summary: `isStorableFieldName` may over-refuse. It applies Firestore's *document id* rules to *field names*; the Admin SDK backtick-escapes field names outside `/^[_a-zA-Z][_a-zA-Z0-9]*$/`, so a blank id like `b.1` or `b/1` is probably storable and is currently discarded.
+  evidence: Only the empty name and the `__…__` ban look like real field-name rules. Over-refusing costs a question its key with no re-derivation path, though it does show up as a visible refusal rather than a failed batch. Needs an emulator check before the ban is narrowed.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-5-answer-key-written.md`
+  summary: The publish batch has no chunking and no question-count validation, and every published question already costs four writes in it — so Firestore's 500-write cap breaks publication somewhere near 125 questions today, silently and with an opaque error.
+  evidence: `commitOperations` (`functions/index.js:2289`) exists and chunks at 450, but it commits progressively, which would destroy the atomicity that lets a payload and its key be written together. Keeping the key document per-lesson rather than per-question avoided making this worse, but the underlying ceiling is unguarded and unnoticed.

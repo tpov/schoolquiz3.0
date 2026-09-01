@@ -11,6 +11,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
+            api(project(":shared:core:outbox"))
             implementation(project(":shared:core:catalog:domain"))
             implementation(project(":shared:feature:quest:domain"))
             implementation(project(":shared:feature:section:domain"))

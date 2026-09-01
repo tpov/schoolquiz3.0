@@ -44,6 +44,8 @@ const {
   readUnlocks,
   withUnlock,
 } = require("./lesson-unlocks");
+const logger = require("firebase-functions/logger");
+const {questionKeyDocuments} = require("./question-key-store");
 const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
 const {
   LESSON_ATTEMPT_LIFE_COST,
@@ -396,7 +398,20 @@ const PRECONDITION_PENDING_DETAIL = "precondition-pending";
  * жизненный цикл ключа, резервирование и повтор отлаживаются здесь, на пустом реестре, а не под
  * первой же денежной операцией. Регистрация настоящих операций — эпик 5.
  */
-const MUTATION_HANDLERS = {};
+/**
+ * Что умеет очередь.
+ *
+ * Пусто по умолчанию и наполняется по одной операции: незнакомая операция — окончательный отказ,
+ * а не повод повторять, поэтому добавление сюда и есть решение «это действие можно отложить».
+ * Критерий отложимости — AD-3: результат выводится из синхронизированного контента, а не из
+ * состояния, которого у клиента нет.
+ *
+ * Разблокировка урока подходит: цену считает сервер из времени самого урока, повтор безопасен по
+ * набору купленного, и без сети игрок всё равно не увидит цену раньше отправки.
+ */
+const MUTATION_HANDLERS = {
+  UNLOCK_LESSON: (uid, payload) => applyLessonUnlock(uid, payload),
+};
 
 /**
  * Единственный транспорт отложенной мутации (AD-6).
@@ -1438,8 +1453,19 @@ function parseQuestionPayload(data) {
 
 exports.unlockLesson = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
-  const lessonId = stringValue(request.data && request.data.lessonId);
-  const kind = stringValue(request.data && request.data.kind) || UNLOCK_LESSON;
+  return applyLessonUnlock(uid, request.data);
+});
+
+/**
+ * Разблокировка урока — тело, общее для прямого вызова и для очереди.
+ *
+ * Одно и то же действие приезжает двумя дорогами: синхронно, пока игрок смотрит на экран, и
+ * отложенно из очереди, если сети не было. Логика обязана быть одна, иначе цена, посчитанная
+ * этими дорогами, однажды разойдётся.
+ */
+async function applyLessonUnlock(uid, payload) {
+  const lessonId = stringValue(payload && payload.lessonId);
+  const kind = stringValue(payload && payload.kind) || UNLOCK_LESSON;
   if (!lessonId) {
     throw new HttpsError("invalid-argument", "lessonId must not be blank");
   }
@@ -1501,7 +1527,7 @@ exports.unlockLesson = onCall(FUNCTION_OPTIONS, async (request) => {
   });
 
   return response;
-});
+}
 
 exports.openGiftBox = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
@@ -2935,8 +2961,36 @@ function publicDocuments(request, now) {
     documents[lessonContentSyncChangePath(question.lessonId, question.id)] =
       syncChangeDocument("question", question.id, now);
   }
+  // The other half of every question, gathered into one server-only document per lesson. The
+  // payload above is written exactly as before — this only starts producing the key beside it, so
+  // that turning redaction on later is a change to one write rather than a migration of two.
+  // Per lesson rather than per question because a question already costs four writes in this
+  // batch, and a fifth would drop the 500-write ceiling below submissions that publish today.
+  //
+  // The slice that starts publishing the redacted payload must take both halves from the SAME
+  // redact() call — the shuffle is drawn fresh each time, so a second call re-keys every Ordering
+  // and FillBlank against a permutation that was never published. Until then every document these
+  // produce says so, in publicHalfRedacted.
+  const questionKeys = questionKeyDocuments(request.questions);
+  Object.assign(documents, questionKeys.documents);
+  if (questionKeys.refusals.length > 0) {
+    // A refusal means that question's answer is still inside the payload written above, where
+    // anyone can read it. Nothing reads question_keys — the rules deny it to every client and
+    // there is no admin surface — so this log line is the only place a refusal is actually
+    // visible, and the only thing that can be alerted on. The list is capped because a log entry
+    // over Cloud Logging's size limit is dropped whole, which would be worse than a sample.
+    logger.warn("question-key: published without an answer key", {
+      questId,
+      catalogId,
+      refusalCount: questionKeys.refusals.length,
+      refusals: questionKeys.refusals.slice(0, LOGGED_REFUSAL_SAMPLE),
+    });
+  }
   return documents;
 }
+
+/** How many refused questions one publish reports by name before the count has to speak for them. */
+const LOGGED_REFUSAL_SAMPLE = 50;
 
 function syncChangeDocument(type, id, changedAtMs) {
   return {type, id, changedAtMs};

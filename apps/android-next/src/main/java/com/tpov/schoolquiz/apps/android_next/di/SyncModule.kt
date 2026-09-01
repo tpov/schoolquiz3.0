@@ -1,6 +1,17 @@
 package com.tpov.schoolquiz.apps.android_next.di
 
 import androidx.work.WorkManager
+import android.util.Log
+import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
+import com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
+import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
+import com.tpov.schoolquiz.shared.core.outbox.OutboxQuarantineRouter
+import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
+import com.tpov.schoolquiz.shared.core.outbox.QuarantineListener
+import com.tpov.schoolquiz.shared.core.persistence.OutboxDao
+import com.tpov.schoolquiz.shared.core.persistence.RoomOutboxStore
+import com.tpov.schoolquiz.shared.core.sync.OutboxSyncable
 import androidx.work.WorkerFactory
 import com.tpov.schoolquiz.platform.android_services.network.AndroidNetworkMonitor
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
@@ -40,6 +51,43 @@ val syncModule =
         // composition root рядом с планировщиком, а не в модуле фичи (AD-10).
         single<NetworkMonitor> { AndroidNetworkMonitor(androidContext()) }
         single<SyncStateRepository> { RoomSyncStateRepository(get<SyncStateDao>()) }
+
+        // Очередь отложенных действий. Движок и таблица живут в composition root, а описание
+        // самих операций — в модулях своих фич (AD-10).
+        single<OutboxStore> { RoomOutboxStore(get<OutboxDao>()) }
+        single<QuarantineListener> {
+            OutboxQuarantineRouter(
+                handlers =
+                    mapOf(
+                        // У разблокировки урока локальной половины нет: серверно-защищённые поля
+                        // локально не меняются (AD-25), поэтому откатывать нечего. Сказано явно,
+                        // чтобы не спутать с забытым обработчиком.
+                        OutboxOperations.UNLOCK_LESSON to NoLocalEffect(),
+                    ),
+                // Операция без обработчика — молчаливое расхождение, которое AD-28 запрещает.
+                onUnhandled = QuarantineListener { record ->
+                    Log.w(
+                        "Outbox",
+                        "Запись ушла в карантин, а обработчика у операции ${record.operation} нет: " +
+                            "локальное состояние могло разойтись с сервером. Причина: ${record.lastError}",
+                    )
+                },
+            )
+        }
+        single<OutboxEngine> {
+            OutboxEngine(
+                store = get<OutboxStore>(),
+                transport = get<MutationTransport>(),
+                clock = { System.currentTimeMillis() },
+                onQuarantined = get<QuarantineListener>(),
+            )
+        }
+        single<OutboxSyncable> {
+            OutboxSyncable(
+                engine = get<OutboxEngine>(),
+                currentUidProvider = { get<AuthRepository>().currentUid() },
+            )
+        }
         single<WorkManager> { WorkManager.getInstance(androidContext()) }
         single<SyncScheduler> { WorkManagerSyncScheduler(get<WorkManager>()) }
         single<SyncPreferences> { SyncPreferences(androidContext()) }
@@ -112,6 +160,8 @@ val syncModule =
                 get<UserStatsRepository>() as Syncable,
                 get<QuestPrivateSync>(),
                 get<QuestArenaSubmissionSync>(),
+                // Отложенные действия уезжают тогда же, когда приложение и так идёт к серверу.
+                get<OutboxSyncable>(),
                 get<ReviewAssignmentSync>(),
                 get<CatalogSyncListOrchestrator>(),
             )
