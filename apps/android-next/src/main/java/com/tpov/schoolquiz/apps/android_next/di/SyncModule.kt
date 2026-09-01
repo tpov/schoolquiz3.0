@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.shared.core.sync.InMemorySyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
 import com.tpov.schoolquiz.shared.core.sync.OutboxSyncable
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
+import com.tpov.schoolquiz.shared.core.sync.SyncGate
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
@@ -96,7 +97,11 @@ val syncModule =
         // Слить очередь до смены аккаунта: после переключения прежнего uid уже не узнать (AD-8).
         // Последнее средство от разъехавшегося курсора: сегодня это лечится только переустановкой
         // приложения (AD-30). Читающая сторона — контентный оркестратор, очередь не трогается.
-        single<ForceResync> { ForceResync(get<SyncStateRepository>(), get<CatalogSyncListOrchestrator>()) }
+        // Одни ворота на всё приложение: сброс курсоров и обычный проход не пересекаются.
+        single<SyncGate> { SyncGate() }
+        single<ForceResync> {
+            ForceResync(get<SyncStateRepository>(), get<CatalogSyncListOrchestrator>(), get<SyncGate>())
+        }
         single<AccountSwitchGuard> { AccountSwitchGuard(get<OutboxEngine>(), get<OutboxStore>()) }
         // Состояние синхронизации наружу (AD-14). Auth-scoped: счётчики принадлежат uid, и после
         // смены аккаунта чужие числа на экране остаться не должны.
@@ -128,6 +133,7 @@ val syncModule =
                 questionRepo = get<QuestionRepository>(),
                 syncStateRepo = get<SyncStateRepository>(),
                 syncChangeRemote = get(),
+                gate = get<SyncGate>(),
             )
         }
         single<LessonContentSyncOrchestrator> {

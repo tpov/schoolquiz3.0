@@ -15,6 +15,7 @@ package com.tpov.schoolquiz.shared.core.sync
 class ForceResync(
     private val syncStateRepo: SyncStateRepository,
     private val readSide: Syncable,
+    private val gate: SyncGate = SyncGate(),
 ) {
     /**
      * Обнуляет курсоры и запускает чтение с начала журналов.
@@ -22,8 +23,11 @@ class ForceResync(
      * Порядок обязателен: сначала сброс, потом чтение. Обратный порядок оставил бы курсор от
      * прохода, который случился до сброса, и половина журнала снова оказалась бы пропущена.
      */
-    suspend fun run(): Result<Unit> {
-        syncStateRepo.resetAllCursors()
-        return readSide.sync()
-    }
+    suspend fun run(): Result<Unit> =
+        // Через ворота: курсоры монотонны, поэтому проход, начавшийся до сброса, допишет своё
+        // старое значение уже после него — и ресинк молча не сделает ничего.
+        gate.withPass {
+            syncStateRepo.resetAllCursors()
+            readSide.sync()
+        }
 }

@@ -34,9 +34,19 @@ class CatalogSyncListOrchestrator(
     private val questionRepo: QuestionRepository,
     private val syncStateRepo: SyncStateRepository,
     private val syncChangeRemote: CatalogSyncChangeRemoteDataSource,
+    /**
+     * Ворота, общие с полным ресинком.
+     *
+     * По умолчанию свои — так тесты и другие вызывающие остаются простыми. В приложении сюда
+     * передаётся единственный экземпляр: два означали бы, что сброс курсоров и обычный проход
+     * снова могут пересечься.
+     */
+    private val gate: SyncGate = SyncGate(),
 ) : Syncable {
 
-    override suspend fun sync(): Result<Unit> {
+    override suspend fun sync(): Result<Unit> = gate.withPass { syncAll() }
+
+    private suspend fun syncAll(): Result<Unit> {
         return try {
             catalogRepo.refreshFromRemote().onFailure { return Result.failure(it) }
 
