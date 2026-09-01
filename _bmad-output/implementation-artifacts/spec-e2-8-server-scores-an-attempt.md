@@ -2,7 +2,7 @@
 title: 'E2.8 — The server scores a whole attempt from the stored key'
 type: 'feature'
 created: '2026-09-01'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'e71dc41c'
 review_loop_iteration: 0
 context: []
@@ -52,9 +52,9 @@ context: []
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `functions/attempt-scoring.js` -- new; given a lesson's questions, its key document and an attempt's answers, produce the codeAnswer, the percent, and a record of anything unscorable. Pure, composing the existing scorer and the existing reassembly rather than restating either.
-- [ ] `functions/attempt-scoring.test.js` -- new; every Matrix row, plus the property that a redacted question scored through the key gives the same digit as the same answer against the unredacted original.
-- [ ] `functions/package.json` -- add the module to `lint` and the test to `test`, leaving other sessions' entries alone.
+- [x] `functions/attempt-scoring.js` -- new; given a lesson's questions, its key document and an attempt's answers, produce the codeAnswer, the percent, and a record of anything unscorable. Pure, composing the existing scorer and the existing reassembly rather than restating either.
+- [x] `functions/attempt-scoring.test.js` -- new; every Matrix row, plus the property that a redacted question scored through the key gives the same digit as the same answer against the unredacted original.
+- [x] `functions/package.json` -- add the module to `lint` and the test to `test`, leaving other sessions' entries alone.
 
 **Acceptance Criteria:**
 - Given a lesson and an attempt, when it is scored, then every digit equals what `evaluateAnswer` gives for that answer and that question, and the percent equals `computePercentScore` of the assembled string.

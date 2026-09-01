@@ -370,3 +370,11 @@ backfill.
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-7-redacted-refused-by-name.md`
   summary: `RunnerQuestion.Invalid` stays dead. It is referenced nowhere and never constructed, and its `parseError: String` describes a payload that failed to parse — a redacted payload parses fine, so populating it would mean inventing a message.
   evidence: Considered and rejected for this slice: nothing consumes `Invalid`, so constructing them would leave it functionally dead anyway, and the refusal needs a count rather than a per-question record. Its KDoc is now wrong twice over — it claims such items are filtered at init, and it describes a two-way world that is three-way after this change.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-8-server-scores-an-attempt.md`
+  summary: A server-scored aborted attempt would score far higher than the client's. `buildCodeAnswerOnAbort` (`RunnerLogic.kt:149-154`) writes `'1'` into the positions of questions that were shown and abandoned, but produces no answer row for them — so a server given only the answers list writes `'0'` there instead, and `'0'` is dropped from the percent's denominator while `'1'` counts in it.
+  evidence: Measured: one correct answer then two abandoned questions is `"911"` → **33%** on the client and `"900"` → **100%** on the server. Blocking for the slice that makes the server the scorer: it needs either the abandoned positions sent explicitly, or a stated rule for them. `scoreAttempt` deliberately does not guess.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-8-server-scores-an-attempt.md`
+  summary: The submit handler must hand `scoreAttempt` the same eligible pool the attempt was actually played against; a mismatched pool is reported as out-of-range rather than mis-scored.
+  evidence: The codeAnswer's length is the pool size and each digit's position is its question's `codeAnswerIndex`, so a pool that differs from the one the client played shifts every later digit and changes the percent's denominator. Growing the string to fit an out-of-range index would silently do exactly that, which is why it is refused instead.
