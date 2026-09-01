@@ -13,4 +13,12 @@ interface SyncStateRepository {
 
     /** Updates the cursor for the given collection. Called after successful step completion. */
     suspend fun setCursor(collectionId: String, value: Long)
+
+    /**
+     * Обнуляет все курсоры чтения — следующий проход перечитает журналы с начала (AD-30).
+     *
+     * Только чтение. Записи очереди и локальные эффекты, которые они уже применили, не трогаются:
+     * они верны локально, и переигрывать их не нужно.
+     */
+    suspend fun resetAllCursors()
 }

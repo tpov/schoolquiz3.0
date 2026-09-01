@@ -22,4 +22,8 @@ class InMemorySyncStateRepository : SyncStateRepository {
             cursors.update { it + (collectionId to maxOf(it[collectionId] ?: 0L, value)) }
         }
     }
+
+    override suspend fun resetAllCursors() {
+        mutex.withLock { cursors.value = emptyMap() }
+    }
 }

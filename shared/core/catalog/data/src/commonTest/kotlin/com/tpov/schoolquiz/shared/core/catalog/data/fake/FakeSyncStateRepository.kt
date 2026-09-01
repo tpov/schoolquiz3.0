@@ -13,6 +13,10 @@ class FakeSyncStateRepository : SyncStateRepository {
         setCursorCalls.add(Pair(collectionId, value))
     }
 
+    override suspend fun resetAllCursors() {
+        cursors.clear()
+    }
+
     fun resetAll() {
         cursors.clear()
         setCursorCalls.clear()

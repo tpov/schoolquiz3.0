@@ -18,4 +18,10 @@ class RoomSyncStateRepository(
             dao.setCursor(collectionId, value)
         }
     }
+
+    override suspend fun resetAllCursors() {
+        mutex.withLock {
+            dao.clearAllCursors()
+        }
+    }
 }
