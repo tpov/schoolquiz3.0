@@ -49,13 +49,18 @@ class CatalogSyncListOrchestrator(
                 .map { it.id }
                 .plus(CatalogId(ON_DEMAND_COURSES_CATALOG_ID))
                 .distinctBy { it.value }
+            // Один каталог, который не читается, не отменяет остальные. Прежде выход по первой
+            // же неудаче означал, что каталог, стоящий в списке после сломанного, не
+            // синхронизируется никогда — а порядок здесь произвольный, по времени изменения.
+            // Наружу отдаётся первая неудача, но уже после того, как все попробовали.
+            var firstFailure: Throwable? = null
             for (catalogId in catalogIds) {
                 syncCatalog(
                     catalogId,
                     includeQuestions = catalogId.value != ON_DEMAND_COURSES_CATALOG_ID,
-                ).onFailure { return Result.failure(it) }
+                ).onFailure { if (firstFailure == null) firstFailure = it }
             }
-            Result.success(Unit)
+            firstFailure?.let { Result.failure(it) } ?: Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

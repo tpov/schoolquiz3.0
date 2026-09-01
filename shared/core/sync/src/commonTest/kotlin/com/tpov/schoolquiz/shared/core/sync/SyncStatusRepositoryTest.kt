@@ -101,6 +101,33 @@ class SyncStatusRepositoryTest {
     }
 
     @Test
+    fun `given the account changes then the success time and the error go with it`() = runTest {
+        // Auth-scope покрывал только счётчики: время последней удачной синхронизации и причина
+        // последней неудачи переживали смену аккаунта и показывались следующему игроку как свои.
+        val uid = MutableStateFlow<String?>("uid-1")
+        val repo = InMemorySyncStatusRepository(FakeStore(), uid)
+        repo.observeStatus().first()
+        repo.recordSuccess(atMs = 100L)
+        repo.recordFailure(SyncError.Refused("nope"), atMs = 110L)
+
+        uid.value = "uid-2"
+        val after = repo.observeStatus().first()
+
+        assertEquals(0L, after.lastSuccessAtMs, "чужое время синхронизации новому игроку не показываем")
+        assertEquals(null, after.lastError, "и чужую ошибку тоже")
+    }
+
+    @Test
+    fun `given the same account then a new subscription keeps what was recorded`() = runTest {
+        // Пара к предыдущему: сброс обязан срабатывать на смене аккаунта, а не на каждой подписке.
+        val repo = InMemorySyncStatusRepository(FakeStore(), MutableStateFlow<String?>("uid-1"))
+        repo.observeStatus().first()
+        repo.recordSuccess(atMs = 100L)
+
+        assertEquals(100L, repo.observeStatus().first().lastSuccessAtMs)
+    }
+
+    @Test
     fun `given nothing ever synced then that is distinguishable from synced long ago`() = runTest {
         val status = InMemorySyncStatusRepository(FakeStore(), flowOf("uid-1")).observeStatus().first()
 
