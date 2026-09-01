@@ -324,6 +324,12 @@ const questions = [
   questions
     .map((question, index) => syncChange('question', question.id, 6 + index))
     .forEach((change) => {
+      // В оба журнала, как пишет сервер: вопрос читается и по каталогу, и по содержимому
+      // урока, и запись только в один означает, что половина читателей об изменении не узнает.
+      batch.set(
+        db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
+        change,
+      );
       batch.set(
         db.doc(lessonContentSyncChangePath(LESSON_ID, change.id)),
         change,

@@ -104,6 +104,11 @@ function syncChange(type, id, offset) {
     );
   });
   const questionChange = syncChange('question', question.id, 6);
+  // В оба журнала, как пишет сервер: вопрос читается и по каталогу, и по содержимому урока.
+  batch.set(
+    db.doc(catalogSyncChangePath(quest.catalogId, questionChange.type, questionChange.id)),
+    questionChange,
+  );
   batch.set(
     db.doc(
       lessonContentSyncChangePath(lesson.id, questionChange.id),

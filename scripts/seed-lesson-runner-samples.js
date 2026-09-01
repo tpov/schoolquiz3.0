@@ -353,6 +353,11 @@ const quest = {
   questions
     .map((q, index) => syncChange('question', q.id, 6 + index))
     .forEach((change) => {
+      // В оба журнала, как пишет сервер.
+      batch.set(
+        db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
+        change,
+      );
       batch.set(
         db.doc(lessonContentSyncChangePath(LESSON_ID, change.id)),
         change,
