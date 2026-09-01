@@ -62,7 +62,6 @@ import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
-import com.tpov.schoolquiz.shared.core.persistence.LessonResultSyncOutboxDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestDao
 import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
@@ -72,6 +71,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
 import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
+import com.tpov.schoolquiz.shared.feature.question.domain.di.questionDomainModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
@@ -448,6 +448,10 @@ class KoinModuleWiringTest : KoinTest {
                 catalogDomainModule,
                 profileDomainModule,
                 economyDomainModule,
+                // Список уроков считает цену открытия из вопросов урока — ему нужны и репозиторий
+                // вопросов, и разборщик payload.
+                questionDomainModule,
+                questionSchemaModule,
                 questPresentationModule,
                 quizzesPresentationModule,
                 appShellPresentationModule,
@@ -657,7 +661,6 @@ class KoinModuleWiringTest : KoinTest {
     }
 
     private val testLessonResultOutboxDepsStub = module {
-        single<LessonResultSyncOutboxDao> { mock(LessonResultSyncOutboxDao::class.java) }
         single<LessonDao> { mock(LessonDao::class.java) }
         single<ThemeDao> { mock(ThemeDao::class.java) }
         single<SectionDao> { mock(SectionDao::class.java) }

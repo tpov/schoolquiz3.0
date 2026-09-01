@@ -39,16 +39,16 @@ class MainActivity : AppCompatActivity() {
 
         rootComponent = get { parametersOf(defaultComponentContext()) }
 
-        // The stored cadences are reconciled on every launch: this (re)arms the periodic workers
-        // after a force-stop or an app update, and fires the one-shot for "every launch".
         val syncScheduler = get<SyncScheduler>()
         // Живёт столько же, сколько процесс: см. AppApplication.appScopeModule.
         val appScope = get<CoroutineScope>()
         val syncPreferences = SyncPreferences(this)
         val storedFrequency = syncPreferences.read()
         val storedProfileFrequency = syncPreferences.readProfile()
-        syncScheduler.applyFrequency(storedFrequency)
-        syncScheduler.applyProfileFrequency(storedProfileFrequency)
+        // Само расписание сверяется на старте процесса (AppApplication.reconcileSyncSchedule) —
+        // процесс поднимается и без экрана. Здесь остаётся то, что и правда про запуск: «при
+        // запуске» — это открытое приложение, а не пробуждение воркером.
+        //
         // Каденции две и они независимы: «при запуске» для профиля обязано поднимать профильный
         // воркер, а не полный контентный список.
         if (storedFrequency == SyncFrequency.ON_LAUNCH) syncScheduler.enqueueManualSync()

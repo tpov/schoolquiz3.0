@@ -4,13 +4,6 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.work.Configuration
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
@@ -23,7 +16,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizze
 import com.tpov.schoolquiz.apps.android_next.di.authModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.attribution.InstallReferrerReader
-import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
+import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.platform.billing.di.billingModule
 import com.tpov.schoolquiz.platform.firebase.di.analyticsModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseCatalogModule
@@ -41,6 +34,7 @@ import com.tpov.schoolquiz.shared.core.catalog.data.di.catalogDataModule
 import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
 import com.tpov.schoolquiz.shared.core.persistence.di.persistenceModule
 import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
 import com.tpov.schoolquiz.shared.feature.economy.data.di.economyDataModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
@@ -181,37 +175,38 @@ class AppApplication : Application(), Configuration.Provider {
             )
         }
         startMeasurement()
-        val workManager = WorkManager.getInstance(this)
-        workManager.enqueueUniquePeriodicWork(
-            SyncWorker.WORK_NAME_PERIODIC,
-            ExistingPeriodicWorkPolicy.KEEP,
-            PeriodicWorkRequestBuilder<SyncWorker>(
-                SyncWorker.PERIODIC_INTERVAL.first,
-                SyncWorker.PERIODIC_INTERVAL.second,
-            )
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build(),
-                )
-                .build(),
-        )
-        // Bootstrap one-shot sync: runs ONCE after install (first-ever launch).
-        // Subsequent sync is handled by periodic WorkManager schedule + manual Sync Now.
-        val prefs = getSharedPreferences("sync_state", MODE_PRIVATE)
-        if (!prefs.getBoolean("bootstrap_done", false)) {
-            workManager.enqueueUniqueWork(
-                SyncWorker.WORK_NAME_BOOTSTRAP,
-                ExistingWorkPolicy.REPLACE,
-                OneTimeWorkRequestBuilder<SyncWorker>()
-                    .setConstraints(
-                        Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build(),
-                    )
-                    .build(),
-            )
-            prefs.edit().putBoolean("bootstrap_done", true).apply()
+        reconcileSyncSchedule()
+    }
+
+    /**
+     * Приводит фоновое расписание к тому, что выбрал игрок.
+     *
+     * Расписание ставит только планировщик. Раньше приложение планировало периодическую
+     * синхронизацию само, мимо него: `KEEP` с зашитыми сутками, на том же уникальном имени работы,
+     * которым распоряжается [SyncScheduler.applyFrequency]. Для каденций с интервалом это лишь
+     * значило, что первым словом было чужое, а вторым — верное. Для «вручную» и «при запуске»
+     * интервала нет вовсе, и планировщик такую работу **снимает** — а приложение сажало её обратно
+     * при каждом старте процесса.
+     *
+     * Хуже всего это выглядело при headless-старте: WorkManager будит процесс, `onCreate`
+     * отрабатывает, Activity не создаётся — и снять посаженное некому. Игрок, выбравший «вручную»,
+     * получал фоновую синхронизацию, которую не заказывал и которая сама себя продлевала.
+     *
+     * Здесь же, а не в Activity, потому что процесс поднимается и без неё, и сверять расписание
+     * надо на каждом старте.
+     */
+    private fun reconcileSyncSchedule() {
+        val scheduler = GlobalContext.get().get<SyncScheduler>()
+        val preferences = SyncPreferences(this)
+        scheduler.applyFrequency(preferences.read())
+        scheduler.applyProfileFrequency(preferences.readProfile())
+
+        // Разовая синхронизация после установки: ближайший периодический проход может быть через
+        // сутки, а каталог нужен сразу. Ровно один раз за установку — дальше расписание и «Синхронизировать».
+        val bootstrap = getSharedPreferences(BOOTSTRAP_PREFS, MODE_PRIVATE)
+        if (!bootstrap.getBoolean(KEY_BOOTSTRAP_DONE, false)) {
+            scheduler.enqueueManualSync()
+            bootstrap.edit().putBoolean(KEY_BOOTSTRAP_DONE, true).apply()
         }
     }
 
@@ -259,6 +254,9 @@ class AppApplication : Application(), Configuration.Provider {
     }
 
     private companion object {
+        const val BOOTSTRAP_PREFS = "sync_state"
+        const val KEY_BOOTSTRAP_DONE = "bootstrap_done"
+
         const val LOCALE_PREFS = "locale_state"
         const val KEY_FORCED_RU_RELEASED = "forced_ru_released"
     }
