@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 09:31
-last_updated: 09-01-2026 21:40
+last_updated: 09-01-2026 20:15
 project: schoolquiz3.0 · sync
 project_key: NOKEY
 tracking_system: file-system
@@ -52,18 +52,18 @@ development_status:
   2-6-чистая-схема-версии-1-одна-таблица-очереди-вместо-трёх-и-три: backlog
   2-7-с-момента-чистой-схемы-каждая-миграция-настоящая-и-покрыта-т: done
   2-8-карантин-доходит-до-фичи-и-не-оставляет-молчаливого-расхожде: in-progress
-  2-9-три-существующие-очереди-переезжают-на-общую-таблицу-своей-м: backlog
+  2-9-три-существующие-очереди-переезжают-на-общую-таблицу-своей-м: done
   epic-2-retrospective: optional
 
-  epic-3: in-progress
+  epic-3: done
   3-1-предельный-возраст-записи-и-срок-хранения-ключа-одна-пара-чи: done
   3-2-возраст-записи-третий-повод-карантина: done
   3-3-серверный-модуль-ключей-идемпотентности-с-резервированием-и: done
   3-4-пометка-предусловие-ещё-не-доехало-получает-форму: done
   3-5-единый-callable-приёмник-отложенных-мутаций: done
-  3-6-mutationid-рождается-вместе-с-намерением-и-не-меняется: backlog
+  3-6-mutationid-рождается-вместе-с-намерением-и-не-меняется: done
   3-7-ключ-синхронной-мутации-переживает-смерть-процесса: done
-  3-8-заявка-квеста-на-арену-уходит-с-прямой-записи-в-firestore: backlog
+  3-8-заявка-квеста-на-арену-уходит-с-прямой-записи-в-firestore: done
   epic-3-retrospective: optional
 
   epic-4: in-progress

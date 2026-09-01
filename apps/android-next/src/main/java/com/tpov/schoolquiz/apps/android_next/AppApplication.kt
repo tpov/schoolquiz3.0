@@ -71,6 +71,7 @@ import kotlinx.coroutines.flow.shareIn
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
+import org.koin.dsl.module
 import java.util.Locale
 
 class AppApplication : Application(), Configuration.Provider {
@@ -81,6 +82,16 @@ class AppApplication : Application(), Configuration.Provider {
      * relying on kotlinx-coroutines fallback semantics).
      */
     private val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /**
+     * Тот же самый scope, но доступный экранам.
+     *
+     * Нужен работе, которая обязана пережить экран: полное перечитывание содержимого длится
+     * дольше поворота, а отменённое на середине оставляет курсоры обнулёнными и половину журнала
+     * непрочитанной. Второй scope тут не подойдёт — смысл именно в том, что этот живёт столько же,
+     * сколько процесс.
+     */
+    private val appScopeModule = module { single<CoroutineScope> { appScope } }
 
     override val workManagerConfiguration: Configuration
         get() =
@@ -123,6 +134,7 @@ class AppApplication : Application(), Configuration.Provider {
         startKoin {
             androidContext(this@AppApplication)
             modules(
+                appScopeModule,
                 persistenceModule,
                 firebaseModule,
                 analyticsModule,

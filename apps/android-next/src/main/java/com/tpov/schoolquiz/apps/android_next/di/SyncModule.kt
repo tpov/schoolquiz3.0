@@ -26,8 +26,8 @@ import com.tpov.schoolquiz.shared.core.sync.ForceResync
 import com.tpov.schoolquiz.shared.core.sync.InMemorySyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
 import com.tpov.schoolquiz.shared.core.sync.OutboxSyncable
-import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncGate
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
@@ -100,7 +100,14 @@ val syncModule =
         // Одни ворота на всё приложение: сброс курсоров и обычный проход не пересекаются.
         single<SyncGate> { SyncGate() }
         single<ForceResync> {
-            ForceResync(get<SyncStateRepository>(), get<CatalogSyncListOrchestrator>(), get<SyncGate>())
+            ForceResync(
+                syncStateRepo = get<SyncStateRepository>(),
+                readSide = get<CatalogSyncListOrchestrator>(),
+                gate = get<SyncGate>(),
+                // Иначе «Перечитать всё» — кнопка, после которой ничего видимого не происходит.
+                status = get<SyncStatusRepository>(),
+                clock = { System.currentTimeMillis() },
+            )
         }
         single<AccountSwitchGuard> { AccountSwitchGuard(get<OutboxEngine>(), get<OutboxStore>()) }
         // Состояние синхронизации наружу (AD-14). Auth-scoped: счётчики принадлежат uid, и после

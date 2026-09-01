@@ -288,14 +288,36 @@ AD-20 отмечал это прямо. Путь `users/{uid}/devices/{token}` �
 7. **Auth-scope покрывал только счётчики.** Время последней удачной синхронизации и причина
    последней неудачи переживали смену аккаунта и показывались следующему игроку как свои.
 
+**Исправлено третьим заходом:**
+
+8. **Транспорт нарушал собственный контракт.** Ловил два конкретных типа, а обещал «неудача
+   возвращается, а не бросается»: любое третье исключение вылетало наверх и обрывало проход,
+   унося соседние записи. Теперь ловится широко, наружу проходит только отмена корутины.
+9. **«Перечитать всё» ничего не сообщало и отменялось поворотом экрана.** Исход теперь доходит до
+   состояния синхронизации, а сама работа живёт в области процесса: отменённая на середине, она
+   оставляла курсоры обнулёнными и половину журнала непрочитанной.
+
 **Осталось из подтверждённых (не мои файлы или требуют решения):**
 
 - вторая половина курсора не хранится — нужна колонка и миграция, persistence занята;
-- `send()` ловит два типа исключений и нарушает свой же контракт «неудача возвращается»;
 - таймаут доехал до 2 вызовов из 19 — синхронные покупки из AD-3 не покрыты;
 
-- итог ресинка не доходит ни до игрока, ни до состояния;
 - `UnlockPricing` не вызывается ни из одного production-файла — цель AD-3 не достигнута;
 
-- ресинк живёт в области Activity и отменяется поворотом экрана;
 - строка состояния и диалог ресинка не покрыты тестами.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
+  summary: `RedactedQuestionContent` has no invariants by design, so a corrupted store could yield a question with an empty option list that renders as unanswerable with nothing reporting it.
+  evidence: Deliberate — that type describes what arrived, not what is valid, and the emitter enforces a minimum of two rows so it cannot produce one. Only a payload written outside the emitter could. The slice that moves the runner onto the supertype needs a named failure for it rather than an empty screen.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
+  summary: A redacted question's `id` is null for effectively the whole seed corpus, and nothing in the new seam says how the runner will get one.
+  evidence: The seed corpus keeps the question id on the wrapper document, never inside `payload`; the answer key records it as `questionId`, and the parser deliberately does not apply `fallbackId` to a redacted payload. Answers and progress are keyed by question id, so the runner slice has to source it from the document.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
+  summary: The e2 plan's Step 4 and Step 5 are written against names and types that no longer exist — `parseAny`, a non-null `id`, a non-null `difficulty`, and an `info` member on the supertype. Step 5 as written will not compile.
+  evidence: The delivered shape diverged for reasons found in the code: the two hierarchies mean different types by `difficulty`, and the seed corpus has no `id` inside the payload. The plan is a planning artifact and was not updated; whoever picks up Step 5 should read the spec, not the plan.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
+  summary: `RunnerLogic.computeCharsCount` is exercised by no test for four of its five shapes — every case in `TimerComputeTest` and `SessionModeTest` builds a `SingleChoice`.
+  evidence: Found while pinning the character count on the supertype. The private function is reachable only through `computeTimer`, so the MultipleChoice, Ordering, FillBlank and Survey branches of the formula that sets every lesson timer are unasserted. The slice that moves the runner onto the supertype deletes that function; until then the gap stands.

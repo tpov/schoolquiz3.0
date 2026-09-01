@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import com.arkivanov.decompose.defaultComponentContext
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
@@ -19,6 +18,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.Defa
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.shared.core.sync.ForceResync
+import kotlinx.coroutines.CoroutineScope
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         // The stored cadences are reconciled on every launch: this (re)arms the periodic workers
         // after a force-stop or an app update, and fires the one-shot for "every launch".
         val syncScheduler = get<SyncScheduler>()
+        // Живёт столько же, сколько процесс: см. AppApplication.appScopeModule.
+        val appScope = get<CoroutineScope>()
         val syncPreferences = SyncPreferences(this)
         val storedFrequency = syncPreferences.read()
         val storedProfileFrequency = syncPreferences.readProfile()
@@ -86,7 +88,10 @@ class MainActivity : AppCompatActivity() {
                         onForceResync = {
                             // Долгая операция: перечитывается всё содержимое. Живёт в области
                             // самой Activity, чтобы уход с экрана её отменял.
-                            lifecycleScope.launch { get<ForceResync>().run() }
+                            // Не lifecycleScope: перечитывание всего содержимого длится дольше
+                            // поворота экрана, а отменённое на середине оно оставляет курсоры
+                            // обнулёнными и половину журнала непрочитанной.
+                            appScope.launch { get<ForceResync>().run() }
                         },
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = { frequency ->

@@ -1,5 +1,8 @@
 package com.tpov.schoolquiz.shared.core.sync
 
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+
 /**
  * Перечитать всё заново (AD-30).
  *
@@ -16,6 +19,14 @@ class ForceResync(
     private val syncStateRepo: SyncStateRepository,
     private val readSide: Syncable,
     private val gate: SyncGate = SyncGate(),
+    /**
+     * Куда сообщить исход.
+     *
+     * Без этого «Перечитать всё» — кнопка, после которой не происходит ничего видимого: успех
+     * неотличим от неудачи, и игрок нажимает её второй раз.
+     */
+    private val status: SyncStatusRepository? = null,
+    private val clock: () -> Long = { 0L },
 ) {
     /**
      * Обнуляет курсоры и запускает чтение с начала журналов.
@@ -28,6 +39,9 @@ class ForceResync(
         // старое значение уже после него — и ресинк молча не сделает ничего.
         gate.withPass {
             syncStateRepo.resetAllCursors()
-            readSide.sync()
+            val outcome = readSide.sync()
+            outcome
+                .onSuccess { status?.recordSuccess(clock()) }
+                .onFailure { status?.recordFailure(it.syncErrorOrNull() ?: SyncError.Unknown(it), clock()) }
         }
 }

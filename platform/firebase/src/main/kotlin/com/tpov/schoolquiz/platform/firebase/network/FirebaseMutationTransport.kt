@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.platform.firebase.network
 
 import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.functions.FirebaseFunctionsException
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
@@ -9,6 +8,7 @@ import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import kotlinx.coroutines.tasks.await
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Отправка отложенной мутации — через единственный приёмник (AD-6).
@@ -33,10 +33,21 @@ class FirebaseMutationTransport(
                 .call(record.toPayload())
                 .await()
             Result.success(Unit)
-        } catch (e: FirebaseFunctionsException) {
-            Result.failure(SyncFailure(e.toSyncError(), e))
+        } catch (e: CancellationException) {
+            // Отмена корутины — не неудача отправки, и подменять её ошибкой значит проглотить
+            // остановку. Единственное, что отсюда бросается.
+            throw e
         } catch (e: IOException) {
             Result.failure(SyncFailure(SyncError.NoNetwork, e))
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            // Ловим широко намеренно. Контракт транспорта — «неудача возвращается, а не
+            // бросается», потому что решение о повторе принимает цикл, а не вызывающий (AD-22).
+            // Ловя два конкретных типа, транспорт нарушал собственный контракт: любое третье
+            // исключение — а SDK бросает и IllegalState, и IllegalArgument, и ошибки сериализации
+            // — вылетало наверх и обрывало проход, унося с собой и соседние записи.
+            Result.failure(SyncFailure(e.toSyncError(), e))
         }
     }
 
