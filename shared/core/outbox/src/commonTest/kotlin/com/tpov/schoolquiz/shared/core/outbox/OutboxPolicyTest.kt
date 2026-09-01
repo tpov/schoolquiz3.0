@@ -102,6 +102,42 @@ class OutboxPolicyTest {
         assertFalse(decision.state.isPending, "но вслепую он не повторяется")
     }
 
+    @Test
+    fun `given a version conflict then the server version is carried into the record`() {
+        val decision = policy.onFailure(record(), SyncError.VersionConflict(7L), now)
+
+        assertEquals(7L, decision.serverVersion, "разрешать конфликт нечем без числа (AD-24)")
+        assertEquals(
+            "VersionConflict",
+            decision.lastError,
+            "в причине ветвь, а не текст сервера (AD-15)",
+        )
+    }
+
+    @Test
+    fun `given a version conflict then attempts and the pause stay untouched`() {
+        // Счётчик попыток и пауза ведут в карантин, а карантин по AD-28 откатывает локальное
+        // изменение. Расхождение версий ждёт решения игрока, а не уничтожения его работы: конфликт
+        // это не неудачная попытка, мутация доехала и была понята.
+        val queued = record(attempts = 2, nextRetryAtMs = now + 5_000)
+
+        val decision = policy.onFailure(queued, SyncError.VersionConflict(7L), now)
+
+        assertEquals(2, decision.attemptCount)
+        assertEquals(now + 5_000, decision.nextRetryAtMs)
+    }
+
+    @Test
+    fun `given a conflict without a number then the previously known version survives`() {
+        // Сервер назвал конфликт, но версию не прислал: затирать уже известное число пустотой
+        // значит терять единственное, чем автор может разрешить расхождение.
+        val known = record(state = OutboxState.CONFLICT, attempts = 1).copy(serverVersion = 7L)
+
+        val decision = policy.onFailure(known, SyncError.VersionConflict(null), now)
+
+        assertEquals(7L, decision.serverVersion)
+    }
+
     // ── Выборка ───────────────────────────────────────────────────────────────
 
     @Test
@@ -123,9 +159,44 @@ class OutboxPolicyTest {
     }
 
     @Test
-    fun `given an overaged record then it is not taken even before it fails once`() {
+    fun `given an overaged record then it is still taken into the run, but not sent`() {
+        // Возраст режет не выборку, а отправку. Пока он резал выборку, правило стояло в двух
+        // местах сразу и пересечения у них не было: перезревшую запись не выбирали, а значит и
+        // решения по ней не принимали — она оставалась невидимой навсегда.
         val old = record(createdAtMs = now - limits.maxAgeMs)
 
-        assertFalse(policy.isDue(old, now))
+        assertTrue(policy.isDue(old, now), "проход обязан её увидеть")
+        assertTrue(policy.isExpired(old, now), "и понять, что отправлять её нельзя")
+        assertEquals(OutboxState.QUARANTINED, policy.onExpired(old).state)
+        assertEquals(OutboxPolicy.EXPIRED_REASON, policy.onExpired(old).lastError)
+        assertEquals(old.attemptCount, policy.onExpired(old).attemptCount, "попытки не было")
+    }
+
+    @Test
+    fun `given a fresh record then it is not expired`() {
+        assertFalse(policy.isExpired(record(), now))
+    }
+
+    // ── Карантин, объявить который не удалось ─────────────────────────────────
+
+    @Test
+    fun `given the quarantine reaction failed then the record stays in the run with a pause`() {
+        // Помеченную карантином запись не выберет ни один следующий проход. Пока реакция фичи не
+        // выполнена, помечать нельзя — иначе откат теряется молча (AD-28).
+        val decision = policy.onFailure(record(state = OutboxState.WAITING_PRECONDITION), SyncError.Refused("no"), now)
+
+        val deferred =
+            policy.onQuarantineDeferred(
+                record = record(state = OutboxState.WAITING_PRECONDITION),
+                decision = decision,
+                nowMs = now,
+                reason = "no; quarantine handoff failed: boom",
+            )
+
+        assertTrue(deferred.state.isPending, "запись осталась в выборке")
+        assertEquals(OutboxState.WAITING_PRECONDITION, deferred.state, "и не потеряла своё состояние")
+        assertTrue(deferred.nextRetryAtMs > now, "но не крутится вплотную")
+        assertEquals(decision.attemptCount, deferred.attemptCount)
+        assertEquals("no; quarantine handoff failed: boom", deferred.lastError, "причина видна наружу")
     }
 }

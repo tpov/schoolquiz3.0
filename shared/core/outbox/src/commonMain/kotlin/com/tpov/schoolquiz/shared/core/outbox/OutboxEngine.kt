@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.core.outbox
 
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Единственный транспорт отложенной мутации (AD-6).
@@ -56,25 +57,11 @@ class OutboxEngine(
         var conflicted = 0
 
         for (record in due) {
-            val outcome = transport.send(record)
-            if (outcome.isSuccess) {
-                store.remove(record.id)
-                sent++
-                continue
-            }
-
-            val error = outcome.exceptionOrNull().syncErrorOrNull() ?: SyncError.Unknown(outcome.exceptionOrNull())
-            val decision = policy.onFailure(record, error, clock())
-            store.apply(record.id, decision)
-
-            when (decision.state) {
-                OutboxState.QUARANTINED -> {
-                    quarantined++
-                    // Ядро не имеет права трогать таблицы фичи (AD-7), поэтому только сообщает.
-                    onQuarantined.onQuarantined(record.copy(state = decision.state, lastError = decision.lastError))
-                }
-                OutboxState.CONFLICT -> conflicted++
-                else -> retried++
+            when (step(record, now)) {
+                Step.SENT -> sent++
+                Step.QUARANTINED -> quarantined++
+                Step.CONFLICTED -> conflicted++
+                Step.RETRY -> retried++
             }
         }
 
@@ -86,6 +73,82 @@ class OutboxEngine(
             conflicted = conflicted,
         )
     }
+
+    /** Что стало с одной записью. */
+    private suspend fun step(
+        record: OutboxRecord,
+        nowMs: Long,
+    ): Step {
+        if (policy.isExpired(record, nowMs)) {
+            // Перезревшую отправлять нельзя — срок хранения ключа на сервере истёк, и повтор был бы
+            // для него новой операцией (AD-1). Но и лежать она права не имеет: пока возраст резал
+            // выборку, такая запись не уезжала, в карантин не попадала и откат не звала — черновик
+            // оставался заперт, а счётчик вечно показывал «ожидает». Здесь она доходит до карантина
+            // тем же путём, что и любая другая, только без попытки.
+            return quarantine(record, policy.onExpired(record))
+        }
+
+        val outcome = transport.send(record)
+        if (outcome.isSuccess) {
+            store.remove(record.id)
+            return Step.SENT
+        }
+
+        val error = outcome.exceptionOrNull().syncErrorOrNull() ?: SyncError.Unknown(outcome.exceptionOrNull())
+        val decision = policy.onFailure(record, error, clock())
+        if (decision.state == OutboxState.QUARANTINED) return quarantine(record, decision)
+
+        store.apply(record.id, decision)
+        return if (decision.state == OutboxState.CONFLICT) Step.CONFLICTED else Step.RETRY
+    }
+
+    /**
+     * Объявляет карантин: сперва реакция фичи, и только её успех делает карантин записанным.
+     *
+     * Порядок здесь — половина смысла. Пометить запись карантинной первой значит вывести её из
+     * любой будущей выборки: упади после этого реакция, второй попытки не будет никогда — запись
+     * помечена, откат не сделан, локальное состояние разошлось с сервером молча, ровно против чего
+     * написан AD-28. Обратный порядок стоит дешевле: пока карантин не записан, запись остаётся
+     * видимой, и следующий проход повторит и её, и реакцию. Повтор отправки безопасен — ключ
+     * идемпотентности не меняется (AD-2); потерянный откат восстановить нечем.
+     *
+     * Признак «реакция не выполнена» отдельной колонкой не хранится намеренно: она потребовала бы
+     * миграции схемы ради состояния, которое уже выражено тем, что запись просто не помечена.
+     *
+     * Ядро не имеет права трогать таблицы фичи (AD-7), поэтому только сообщает.
+     */
+    private suspend fun quarantine(
+        record: OutboxRecord,
+        decision: OutboxDecision,
+    ): Step {
+        val announced =
+            record.copy(
+                state = OutboxState.QUARANTINED,
+                attemptCount = decision.attemptCount,
+                lastError = decision.lastError,
+            )
+        val reaction = runCatching { onQuarantined.onQuarantined(announced) }
+        val failure = reaction.exceptionOrNull()
+        if (failure != null) {
+            // Отмена — не отказ реакции: проход обязан оборваться целиком, а не оставить запись
+            // с отложенным карантином.
+            if (failure is CancellationException) throw failure
+            store.apply(record.id, policy.onQuarantineDeferred(record, decision, clock(), failure.describe(decision)))
+            // Считается как повтор: карантин не объявлен, но запись жива и будет разобрана снова.
+            return Step.RETRY
+        }
+        store.apply(record.id, decision)
+        return Step.QUARANTINED
+    }
+
+    /** Причина, по которой карантин не удалось объявить, — вместе с той, по которой он решён. */
+    private fun Throwable.describe(decision: OutboxDecision): String {
+        val detail = message ?: this::class.simpleName ?: "Unknown"
+        return "${decision.lastError ?: "Quarantined"}; quarantine handoff failed: $detail"
+    }
+
+    /** Исход одной записи за проход. */
+    private enum class Step { SENT, QUARANTINED, CONFLICTED, RETRY }
 
     private companion object {
         /** Сколько записей за один проход. Больше — дольше держим соединение без пользы. */
@@ -101,6 +164,10 @@ data class OutboxRunSummary(
     val quarantined: Int,
     val conflicted: Int,
 ) {
-    /** Осталась ли работа: если что-то ушло, стоит зайти ещё раз за следующей порцией. */
-    val hasMoreLikely: Boolean get() = sent > 0 && examined > 0
+    /**
+     * Осталась ли работа: если проход сдвинул хоть одну запись, стоит зайти ещё раз за следующей
+     * порцией. Карантин считается сдвигом наравне с отправкой — иначе очередь, целиком набитая
+     * перезревшими записями, разбиралась бы по одной порции за расписание.
+     */
+    val hasMoreLikely: Boolean get() = (sent > 0 || quarantined > 0) && examined > 0
 }

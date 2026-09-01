@@ -51,6 +51,7 @@ class FakeOutboxStore(
                         nextRetryAtMs = decision.nextRetryAtMs,
                         attemptCount = decision.attemptCount,
                         lastError = decision.lastError,
+                        serverVersion = decision.serverVersion,
                     )
                 }
             }
@@ -71,6 +72,35 @@ class FakeOutboxStore(
                 quarantined = mine.count { it.state == OutboxState.QUARANTINED },
             )
         }
+
+    override fun observeEntity(
+        ownerUid: String,
+        entityRef: String,
+    ): Flow<OutboxEntitySync?> = records.map { list -> list.pickForEntity(ownerUid, entityRef)?.toEntitySync() }
+
+    override suspend fun findByEntityRef(
+        ownerUid: String,
+        entityRef: String,
+    ): OutboxRecord? = records.value.pickForEntity(ownerUid, entityRef)
+
+    /** Конфликтная вперёд всех, иначе самая свежая — то же правило, что в запросе Room. */
+    private fun List<OutboxRecord>.pickForEntity(
+        ownerUid: String,
+        entityRef: String,
+    ): OutboxRecord? =
+        filter { it.ownerUid == ownerUid && it.entityRef == entityRef }
+            .sortedWith(
+                compareByDescending<OutboxRecord> { it.state == OutboxState.CONFLICT }
+                    .thenByDescending { it.createdAtMs },
+            ).firstOrNull()
+
+    private fun OutboxRecord.toEntitySync() =
+        OutboxEntitySync(
+            recordId = id,
+            state = state,
+            expectedVersion = expectedVersion,
+            serverVersion = serverVersion,
+        )
 
     override suspend fun quarantined(ownerUid: String): List<OutboxRecord> =
         records.value.filter { it.ownerUid == ownerUid && it.state == OutboxState.QUARANTINED }

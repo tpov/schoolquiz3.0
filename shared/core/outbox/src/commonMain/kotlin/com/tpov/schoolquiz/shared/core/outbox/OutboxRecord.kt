@@ -15,6 +15,9 @@ package com.tpov.schoolquiz.shared.core.outbox
  * @property entityRef ссылка на сущность для пометки «не отправлено» в интерфейсе (AD-14).
  *   Непрозрачна для ядра: разбирает её та фича, которая запись создала.
  * @property expectedVersion версия, с которой мутация уходила (AD-24). Пусто для неверсионируемых.
+ * @property serverVersion версия, которую назвал сервер, отвергая мутацию по конфликту (AD-24).
+ *   Пусто, пока конфликта не было. Хранится числом, а не в [lastError]: разрешение конфликта
+ *   опирается на конкретную версию, а разбирать её из текста запрещено (AD-15).
  * @property state единственный источник ответа «что с этой записью».
  * @property attemptCount сколько раз уже пробовали.
  * @property nextRetryAtMs когда пробовать снова.
@@ -31,6 +34,7 @@ data class OutboxRecord(
     val createdAtMs: Long,
     val entityRef: String? = null,
     val expectedVersion: Long? = null,
+    val serverVersion: Long? = null,
     val attemptCount: Int = 0,
     val nextRetryAtMs: Long = 0L,
     val lastError: String? = null,
