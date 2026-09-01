@@ -1,0 +1,146 @@
+[
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 0,
+    "price": 1
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 0,
+    "price": 1
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 720,
+    "hardAllocatedSeconds": 0,
+    "price": 53
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 720,
+    "hardAllocatedSeconds": 0,
+    "price": 1
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 480,
+    "price": 106
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 480,
+    "price": 106
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 720,
+    "hardAllocatedSeconds": 480,
+    "price": 159
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 720,
+    "hardAllocatedSeconds": 480,
+    "price": 106
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 2160,
+    "hardAllocatedSeconds": 1440,
+    "price": 477
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 2160,
+    "hardAllocatedSeconds": 1440,
+    "price": 318
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 1,
+    "hardAllocatedSeconds": 1,
+    "price": 1
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 1,
+    "hardAllocatedSeconds": 1,
+    "price": 1
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 10000,
+    "hardAllocatedSeconds": 10000,
+    "price": 2944
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 10000,
+    "hardAllocatedSeconds": 10000,
+    "price": 2208
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 360,
+    "hardAllocatedSeconds": 240,
+    "price": 80
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 360,
+    "hardAllocatedSeconds": 240,
+    "price": 53
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 5,
+    "hardAllocatedSeconds": 5,
+    "price": 1
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 5,
+    "hardAllocatedSeconds": 5,
+    "price": 1
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 720,
+    "hardAllocatedSeconds": 720,
+    "price": 212
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 720,
+    "hardAllocatedSeconds": 720,
+    "price": 159
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 1440,
+    "hardAllocatedSeconds": 0,
+    "price": 106
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 1440,
+    "hardAllocatedSeconds": 0,
+    "price": 1
+  },
+  {
+    "kind": "lesson",
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 720,
+    "price": 159
+  },
+  {
+    "kind": "hardMode",
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 720,
+    "price": 159
+  }
+]
