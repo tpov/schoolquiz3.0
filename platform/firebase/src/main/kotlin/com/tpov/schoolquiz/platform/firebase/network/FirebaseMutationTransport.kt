@@ -7,8 +7,8 @@ import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
-import java.io.IOException
 import kotlinx.coroutines.tasks.await
+import java.io.IOException
 
 /**
  * Отправка отложенной мутации — через единственный приёмник (AD-6).
@@ -24,7 +24,6 @@ class FirebaseMutationTransport(
     private val functions: FirebaseFunctions,
     private val networkMonitor: NetworkMonitor,
 ) : MutationTransport {
-
     override suspend fun send(record: OutboxRecord): Result<Unit> {
         if (!networkMonitor.isOnline()) return Result.failure(SyncFailure(SyncError.NoNetwork))
         return try {

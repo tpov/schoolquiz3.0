@@ -82,13 +82,25 @@ class OutboxSyncableTest {
     }
 
     @Test
-    fun `given the transport reports no network then the type reaches the status, not a string`() = runTest {
-        // Решать по тексту сообщения нельзя, и показывать его игроку — тоже (AD-15).
+    fun `given nothing could be delivered then the run is not recorded as a success`() = runTest {
+        // Прежде здесь стояло обратное утверждение — и это был дефект: drain по контракту не
+        // бросает, поэтому «вернулся» означало «успех», и при любом числе неудач игрок видел
+        // свежее время последней удачной синхронизации. Успех — это когда ждать больше нечего.
         val status = status()
 
         syncable("uid-1", { Result.failure(SyncFailure(SyncError.NoNetwork)) }, status).sync()
 
-        // Записи ушли в ожидание, сам проход завершился — неудачей это не считается.
+        val after = status.observeStatus().first()
+        assertEquals(0L, after.lastSuccessAtMs, "проход, который ничего не довёз, успехом не считается")
+        assertTrue(after.lastError != null, "и причина обязана быть названа")
+    }
+
+    @Test
+    fun `given everything was delivered then the success time is what the player sees`() = runTest {
+        val status = status()
+
+        syncable("uid-1", { Result.success(Unit) }, status).sync()
+
         assertEquals(now, status.observeStatus().first().lastSuccessAtMs)
     }
 

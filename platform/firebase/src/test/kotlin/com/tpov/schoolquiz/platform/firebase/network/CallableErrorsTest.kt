@@ -70,6 +70,17 @@ class CallableErrorsTest {
     }
 
     @Test
+    fun `given the server is throttling then retry, not quarantine`() {
+        // Cloud Run под нагрузкой отдаёт 429, SDK превращает его в RESOURCE_EXHAUSTED. Отнести
+        // это к отказу значит уводить мутацию в карантин при всплеске нагрузки — а карантин по
+        // AD-28 откатывает локальное изменение. Троттлинг обязан откладывать, а не уничтожать.
+        val error = forCode("RESOURCE_EXHAUSTED", "quota exceeded")
+
+        assertEquals(SyncError.Disposition.RETRY, error.disposition)
+        assertEquals("и не NoNetwork: сеть есть, врать игроку незачем", SyncError.Unknown(), error)
+    }
+
+    @Test
     fun `given permission denied then refused and never retried`() {
         assertEquals(SyncError.Disposition.QUARANTINE, forCode("PERMISSION_DENIED", "nope").disposition)
     }

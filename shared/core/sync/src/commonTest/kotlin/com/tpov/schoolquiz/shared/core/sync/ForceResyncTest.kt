@@ -43,7 +43,6 @@ class ForceResyncTest {
         val state = InMemorySyncStateRepository()
         state.setCursor("catalog_sync:cat-1", 5_000L)
         var cursorSeenBySync: Long? = null
-        val readSide = RecordingSyncable { }
 
         ForceResync(
             state,
@@ -56,7 +55,6 @@ class ForceResyncTest {
         ).run()
 
         assertEquals(0L, cursorSeenBySync, "чтение обязано начаться уже с обнулённого курсора")
-        assertEquals(0, readSide.calls)
     }
 
     @Test

@@ -47,7 +47,14 @@ class FirebaseCatalogSyncChangeRemoteDataSource(
                 .collection("sync_changes")
                 .orderBy("changedAtMs")
                 .orderBy(FieldPath.documentId())
-                .startAfter(cursor.changedAtMs, cursor.docId)
+                // Пустой docId — это не «начать после документа с пустым именем», а «в этой
+                // миллисекунде ещё ничего не прочитано». Отдать его в startAfter нельзя: Firestore
+                // достраивает путь документа из этого значения и на пустой строке падает с
+                // IllegalArgumentException, то есть каталог не синхронизировался бы вовсе.
+                //
+                // startAt перечитает всю миллисекунду курсора заново. Это дешевле, чем потерять
+                // запись: применение изменений идёт через refreshByIds и повтор безвреден.
+                .let { if (cursor.docId.isEmpty()) it.startAt(cursor.changedAtMs) else it.startAfter(cursor.changedAtMs, cursor.docId) }
                 .limit(limit.toLong())
                 .get()
                 .await()

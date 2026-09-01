@@ -85,6 +85,9 @@ class CatalogSyncListOrchestrator(
         while (pages < MAX_PAGES_PER_RUN) {
             val page = syncChangeRemote.fetchPage(catalogId, at)
             val changes = page.changes.filter { it.nodeId.isNotBlank() }
+            // Выход по пустой странице, а не по «нет распознанных изменений»: страница, целиком
+            // состоящая из битых записей, иначе останавливала бы каталог навсегда — курсор не
+            // двигался, и следующий проход читал бы её же.
             if (page.changes.isEmpty()) break
 
             if (changes.isNotEmpty()) {

@@ -82,6 +82,14 @@ internal fun syncErrorForCode(
                 refused(code, message)
             }
 
+        // Сервер занят, а не отказал. Cloud Run под нагрузкой отдаёт 429, SDK превращает его в
+        // RESOURCE_EXHAUSTED — и отнести это к отказу значит уводить мутацию в карантин при
+        // всплеске нагрузки, а карантин по AD-28 откатывает локальное изменение. Троттлинг обязан
+        // откладывать, а не уничтожать: повтор с растущей паузой и есть правильный ответ.
+        //
+        // Не NoNetwork: сеть есть, и говорить игроку «нужен интернет» было бы неправдой.
+        "RESOURCE_EXHAUSTED" -> SyncError.Unknown()
+
         // Сервер посмотрел и отказал. Повтор ничего не изменит.
         "PERMISSION_DENIED",
         "UNAUTHENTICATED",
@@ -89,7 +97,6 @@ internal fun syncErrorForCode(
         "NOT_FOUND",
         "ALREADY_EXISTS",
         "OUT_OF_RANGE",
-        "RESOURCE_EXHAUSTED",
         "UNIMPLEMENTED",
         -> refused(code, message)
 
