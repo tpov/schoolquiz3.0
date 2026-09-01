@@ -66,6 +66,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
@@ -123,6 +124,7 @@ fun AppShellScreen(
     onSyncFrequencySelected: (SyncFrequency) -> Unit = {},
     profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit = {},
+    syncStatus: SyncStatus = SyncStatus(),
     modifier: Modifier = Modifier,
 ) {
     val state by rootComponent.appShellState.collectAsStateWithLifecycle(
@@ -316,6 +318,7 @@ fun AppShellScreen(
                         onSyncFrequencySelected = onSyncFrequencySelected,
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
+                        syncStatus = syncStatus,
                     )
                     if (quizzesStack.active.instance !is QuizzesChild.Idle) {
                         val overlayModifier =
@@ -351,6 +354,7 @@ private fun AppShellContent(
     onSyncFrequencySelected: (SyncFrequency) -> Unit,
     profileSyncFrequency: SyncFrequency,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit,
+    syncStatus: SyncStatus,
 ) {
     Crossfade(
         targetState = state.activeTab,
@@ -375,6 +379,7 @@ private fun AppShellContent(
                         onSyncFrequencySelected = onSyncFrequencySelected,
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
+                        syncStatus = syncStatus,
                     )
                 }
             Tab.INTERNET ->
@@ -423,6 +428,7 @@ private fun LocalTabContent(
     onSyncFrequencySelected: (SyncFrequency) -> Unit,
     profileSyncFrequency: SyncFrequency,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit,
+    syncStatus: SyncStatus,
 ) {
     when (screen) {
         is LocalScreenComponent.Placeholder -> {
@@ -471,6 +477,7 @@ private fun LocalTabContent(
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
                         onSyncNow = { rootComponent.onSyncNow() },
+                        syncStatus = syncStatus,
                         modifier = Modifier.padding(paddingValues),
                     )
                 }

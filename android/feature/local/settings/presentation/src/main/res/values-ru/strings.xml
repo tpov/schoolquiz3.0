@@ -44,4 +44,12 @@
 
     <string name="settings_value_unset">Не установлен</string>
     <string name="settings_cd_locked">Пока недоступно</string>
+    <string name="settings_sync_state">Синхронизация</string>
+    <string name="settings_sync_state_clean">Всё отправлено</string>
+    <string name="settings_sync_state_never">Ещё ни разу не синхронизировались</string>
+    <string name="settings_sync_state_pending">Ждёт отправки: %1$d</string>
+    <string name="settings_sync_state_stuck">Требуют внимания: %1$d</string>
+    <string name="settings_sync_note_conflict">%1$d изменились на сервере, пока вас не было</string>
+    <string name="settings_sync_note_quarantine">%1$d отклонены сервером и уже не отправятся</string>
+    <string name="settings_sync_note_both">%1$d изменились на сервере, %2$d отклонены</string>
 </resources>

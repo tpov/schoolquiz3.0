@@ -16,7 +16,10 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import org.koin.android.ext.android.get
@@ -53,6 +56,10 @@ class MainActivity : AppCompatActivity() {
                     preferences.getString(DESIGN_STYLE_KEY, null).toSchoolQuizDesignStyle(),
                 )
             }
+            // Состояние синхронизации — единственное, из чего игрок узнаёт, что действия ждут
+            // отправки или что одно уже не уедет (AD-14).
+            val syncStatus by get<SyncStatusRepository>().observeStatus()
+                .collectAsStateWithLifecycle(initialValue = SyncStatus())
             var syncFrequency by remember { mutableStateOf(storedFrequency) }
             var profileSyncFrequency by remember { mutableStateOf(storedProfileFrequency) }
 
@@ -72,6 +79,7 @@ class MainActivity : AppCompatActivity() {
                                 syncScheduler.enqueueManualSync()
                             }
                         },
+                        syncStatus = syncStatus,
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = { frequency ->
                             profileSyncFrequency = frequency

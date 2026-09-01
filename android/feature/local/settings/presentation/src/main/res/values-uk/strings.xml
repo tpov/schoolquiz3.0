@@ -44,4 +44,12 @@
 
     <string name="settings_value_unset">Не встановлений</string>
     <string name="settings_cd_locked">Поки недоступно</string>
+    <string name="settings_sync_state">Синхронізація</string>
+    <string name="settings_sync_state_clean">Усе надіслано</string>
+    <string name="settings_sync_state_never">Ще жодного разу не синхронізувалися</string>
+    <string name="settings_sync_state_pending">Чекає на надсилання: %1$d</string>
+    <string name="settings_sync_state_stuck">Потребують уваги: %1$d</string>
+    <string name="settings_sync_note_conflict">%1$d змінилися на сервері, поки вас не було</string>
+    <string name="settings_sync_note_quarantine">%1$d відхилені сервером і вже не надішлються</string>
+    <string name="settings_sync_note_both">%1$d змінилися на сервері, %2$d відхилені</string>
 </resources>

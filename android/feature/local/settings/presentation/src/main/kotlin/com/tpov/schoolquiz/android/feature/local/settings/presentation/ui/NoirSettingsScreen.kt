@@ -37,6 +37,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirRow
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
@@ -45,6 +46,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
 import com.tpov.schoolquiz.android.feature.local.settings.presentation.R
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
@@ -68,6 +70,7 @@ fun NoirSettingsScreen(
     onSyncFrequencySelected: (SyncFrequency) -> Unit = {},
     profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit = {},
+    syncStatus: SyncStatus = SyncStatus(),
 ) {
     Box(modifier.fillMaxSize().noirScreenGround()) {
         LazyColumn(
@@ -79,6 +82,7 @@ fun NoirSettingsScreen(
             item { GameStatsGroup(profile) }
             item {
                 SyncGroup(
+                    status = syncStatus,
                     frequency = syncFrequency,
                     onFrequencySelected = onSyncFrequencySelected,
                     profileFrequency = profileSyncFrequency,
@@ -187,6 +191,7 @@ private fun GameStatsGroup(profile: UserProfile) {
  */
 @Composable
 private fun SyncGroup(
+    status: SyncStatus,
     frequency: SyncFrequency,
     onFrequencySelected: (SyncFrequency) -> Unit,
     profileFrequency: SyncFrequency,
@@ -230,6 +235,14 @@ private fun SyncGroup(
                 style = NoirType.rowSub.copy(color = LocalNoirAccent.current),
             )
         }
+        // Что с синхронизацией на самом деле (AD-14). До сих пор наружу не выходило ничего:
+        // игрок не мог узнать ни что действия ждут отправки, ни что одно уже не уедет.
+        SettingRow(
+            label = stringResource(R.string.settings_sync_state),
+            value = status.summary(),
+            note = status.attentionNote(),
+            valueTint = if (status.needsAttention) NoirDanger else NoirT1,
+        )
         // The empty catalog screen tells people to sync from the menu, so the action belongs here
         // where they come looking for it.
         NoirRow(onClick = onSyncNow, showDivider = false) {
@@ -393,3 +406,29 @@ private fun NoirSettingsPreview() {
         )
     }
 }
+
+/**
+ * Одна строка про состояние синхронизации.
+ *
+ * Числа раздельные (AD-14), но на экране их надо свести в одну фразу: «ждёт отправки» и «застряло»
+ * — разные вещи, и второе важнее, поэтому оно и говорится первым.
+ */
+@Composable
+private fun SyncStatus.summary(): String =
+    when {
+        needsAttention -> stringResource(R.string.settings_sync_state_stuck, counts.stuck)
+        hasPending -> stringResource(R.string.settings_sync_state_pending, counts.pending)
+        hasEverSucceeded -> stringResource(R.string.settings_sync_state_clean)
+        else -> stringResource(R.string.settings_sync_state_never)
+    }
+
+/** Пояснение под строкой — только когда есть что пояснять. */
+@Composable
+private fun SyncStatus.attentionNote(): String? =
+    when {
+        counts.conflicted > 0 && counts.quarantined > 0 ->
+            stringResource(R.string.settings_sync_note_both, counts.conflicted, counts.quarantined)
+        counts.conflicted > 0 -> stringResource(R.string.settings_sync_note_conflict, counts.conflicted)
+        counts.quarantined > 0 -> stringResource(R.string.settings_sync_note_quarantine, counts.quarantined)
+        else -> null
+    }

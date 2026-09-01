@@ -34,9 +34,10 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsR
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.sync.ProfileBootstrapSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
-import com.tpov.schoolquiz.shared.feature.lesson_runner.data.sync.LessonResultSync
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultQuarantineRollback
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestArenaSubmissionSync
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaQuarantineRollback
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestArenaOutcomeSync
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestPrivateSync
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.ReviewAssignmentSync
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
@@ -66,6 +67,11 @@ val syncModule =
                         // локально не меняются (AD-25), поэтому откатывать нечего. Сказано явно,
                         // чтобы не спутать с забытым обработчиком.
                         OutboxOperations.UNLOCK_LESSON to NoLocalEffect(),
+                        // У остальных трёх локальная половина есть, и реакция на карантин одна:
+                        // откат (AD-28). Решение принимает владеющая фича, ядро только зовёт.
+                        OutboxOperations.SUBMIT_ATTEMPT to get<LessonResultQuarantineRollback>().attempts,
+                        OutboxOperations.SUBMIT_RATING to get<LessonResultQuarantineRollback>().ratings,
+                        OutboxOperations.SUBMIT_ARENA to get<QuestArenaQuarantineRollback>(),
                     ),
                 // Операция без обработчика — молчаливое расхождение, которое AD-28 запрещает.
                 onUnhandled = QuarantineListener { record ->
@@ -153,13 +159,8 @@ val syncModule =
                 currentUidProvider = { get<AuthRepository>().currentUid() },
             )
         }
-        single<LessonResultSync> {
-            LessonResultSync(
-                outboxDao = get(),
-                remote = get(),
-                nowMs = { System.currentTimeMillis() },
-                answerDao = get(),
-            )
+        single<QuestArenaOutcomeSync> {
+            QuestArenaOutcomeSync(local = get(), remote = get(), timestampProvider = get())
         }
         single<ProfileSyncables> {
             ProfileSyncables(listOf(get<ProfileBootstrapSync>(), get<UserStatsRepository>() as Syncable))
@@ -169,14 +170,15 @@ val syncModule =
             val profileSync = get<ProfileBootstrapSync>()
             listOf(
                 profileSync,
-                get<LessonResultSync>(),
+                // Прохождения, оценки и заявки на арену уезжают общей очередью, своих
+                // отправителей у них больше нет.
+                get<OutboxSyncable>(),
                 // Refresh profile-backed local tables after result outbox pushes server rewards.
                 profileSync,
                 get<UserStatsRepository>() as Syncable,
                 get<QuestPrivateSync>(),
-                get<QuestArenaSubmissionSync>(),
-                // Отложенные действия уезжают тогда же, когда приложение и так идёт к серверу.
-                get<OutboxSyncable>(),
+                // Вердикт рецензентов движок принести не может: это чтение, а не отправка.
+                get<QuestArenaOutcomeSync>(),
                 get<ReviewAssignmentSync>(),
                 get<CatalogSyncListOrchestrator>(),
             )
