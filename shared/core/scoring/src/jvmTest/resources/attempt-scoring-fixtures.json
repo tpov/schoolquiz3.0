@@ -1,0 +1,256 @@
+{
+  "_doc": "Whole-attempt scoring fixtures: an attempt in, a codeAnswer and a percent out.\n\nEvery layer beneath this one is pinned by a shared fixture — scoring-fixtures.json holds\nassessment-scoring.js against Scoring.kt, redacted-question-fixtures.json holds\nquestion-redaction.js against RedactedQuestionContent. The composition of those layers had\nnone, and every percent assertion in its suite read `percentScore === computePercentScore(\ncodeAnswer)`, which is true for any string the module happens to build. Thirty-two green cases\ncould not see that the percent's denominator was chosen by the client. The numbers below are\nstated, not recomputed: each expected codeAnswer and percent is written out here, so a module\nthat builds a different string fails instead of agreeing with itself.\n\nRead today by functions/attempt-scoring.test.js (by relative path). The Kotlin half is the\nclient's own arithmetic — RunnerLogic.kt builds a codeAnswer digit by digit as an attempt is\nplayed and Scoring.kt turns it into a percent — so these cases are the two implementations'\nmeeting point, and the abandoned-run case is the one where they used to disagree by 66 points.\nA case added here is picked up with no edit to either suite.\n\n'payload' and 'answerPayload' are written as objects and stringified by the reader, matching how\nFirestore stores them; a string is passed through verbatim, which is how a malformed one is\nspelled. 'served' is what was actually put to the player — the attempt's subset, not the pool.",
+
+  "cases": [
+    {
+      "name": "honest-mixed",
+      "why": "The baseline every case below is measured against: five served, two right, three wrong.",
+      "questions": ["single", "single", "single", "single", "single"],
+      "served": [0, 1, 2, 3, 4],
+      "answers": [
+        {"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 1, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 2, "answerPayload": {"type": "single-choice", "selected": "a"}},
+        {"at": 3, "answerPayload": {"type": "single-choice", "selected": "a"}},
+        {"at": 4, "answerPayload": {"type": "single-choice", "selected": "a"}}
+      ],
+      "expect": {"scorable": true, "codeAnswer": "99111", "percentScore": 40, "unscorable": []}
+    },
+    {
+      "name": "junk-payloads-do-not-raise-the-percent",
+      "why": "The same attempt with the three wrong answers replaced by unparseable text. A served question is counted whatever came back for it, so this scores exactly what honest-mixed scores. It used to score 100.",
+      "questions": ["single", "single", "single", "single", "single"],
+      "served": [0, 1, 2, 3, 4],
+      "answers": [
+        {"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 1, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 2, "answerPayload": "{"},
+        {"at": 3, "answerPayload": "{"},
+        {"at": 4, "answerPayload": "{"}
+      ],
+      "expect": {
+        "scorable": true,
+        "codeAnswer": "99111",
+        "percentScore": 40,
+        "unscorable": [
+          {"questionId": "q2", "codeAnswerIndex": 2, "reason": "malformed-answer", "fault": "client"},
+          {"questionId": "q3", "codeAnswerIndex": 3, "reason": "malformed-answer", "fault": "client"},
+          {"questionId": "q4", "codeAnswerIndex": 4, "reason": "malformed-answer", "fault": "client"}
+        ]
+      }
+    },
+    {
+      "name": "omitted-answers-do-not-raise-the-percent",
+      "why": "The same attempt with the three wrong answers simply not sent. Nothing is recorded — there is nothing wrong with not answering — and the percent is unmoved. It used to score 100 with no record at all.",
+      "questions": ["single", "single", "single", "single", "single"],
+      "served": [0, 1, 2, 3, 4],
+      "answers": [
+        {"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 1, "answerPayload": {"type": "single-choice", "selected": "b"}}
+      ],
+      "expect": {"scorable": true, "codeAnswer": "99111", "percentScore": 40, "unscorable": []}
+    },
+    {
+      "name": "abandoned-run",
+      "why": "Three of five served, two answered, the third walked away from. This is buildCodeAnswerOnAbort's own arithmetic: '1' for the served-and-abandoned position, '0' for the two the subset never reached. The earlier module wrote '0' for the abandoned one and returned 100 instead of 66.",
+      "questions": ["single", "single", "single", "single", "single"],
+      "served": [0, 1, 2],
+      "answers": [
+        {"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 1, "answerPayload": {"type": "single-choice", "selected": "b"}}
+      ],
+      "expect": {"scorable": true, "codeAnswer": "99100", "percentScore": 66, "unscorable": []}
+    },
+    {
+      "name": "served-but-nothing-answered",
+      "why": "Three shown, none answered. Every position counts and every one is worth nothing.",
+      "questions": ["single", "single", "single"],
+      "served": [0, 1, 2],
+      "answers": [],
+      "expect": {"scorable": true, "codeAnswer": "111", "percentScore": 0, "unscorable": []}
+    },
+    {
+      "name": "nobody-played",
+      "why": "A lesson opened and closed. Nothing served, so nothing counts, and the percent is zero rather than undefined.",
+      "questions": ["single", "single", "single", "single", "single"],
+      "served": [],
+      "answers": [],
+      "expect": {"scorable": true, "codeAnswer": "00000", "percentScore": 0, "unscorable": []}
+    },
+    {
+      "name": "subset-is-not-a-prefix",
+      "why": "selectSubset shuffles, so the served positions are scattered through the pool rather than being its first n. Both served questions are right and the three unserved ones stay out of the average.",
+      "questions": ["single", "single", "single", "single", "single"],
+      "served": [1, 3],
+      "answers": [
+        {"at": 1, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 3, "answerPayload": {"type": "single-choice", "selected": "b"}}
+      ],
+      "expect": {"scorable": true, "codeAnswer": "09090", "percentScore": 100, "unscorable": []}
+    },
+    {
+      "name": "answering-an-unserved-question-earns-nothing",
+      "why": "A crafted attempt answering a question it was never shown. The extra answer is named and its position stays '0' — it cannot add a digit, and it cannot move the denominator either.",
+      "questions": ["single", "single"],
+      "served": [0],
+      "answers": [
+        {"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 1, "answerPayload": {"type": "single-choice", "selected": "b"}}
+      ],
+      "expect": {
+        "scorable": true,
+        "codeAnswer": "90",
+        "percentScore": 100,
+        "unscorable": [{"questionId": "q1", "codeAnswerIndex": -1, "reason": "not-served", "fault": "client"}]
+      }
+    },
+    {
+      "name": "a-claimed-index-cannot-steal-a-position",
+      "why": "normalizeLessonAnswers clamps codeAnswerIndex to zero, so a missing one arrives as 0 and would claim the first position. Placement comes from served, so the disagreeing answer is refused and its own served position is '1' — costing the answer, never the question that genuinely sits there.",
+      "questions": ["single", "single"],
+      "served": [0, 1],
+      "answers": [
+        {"at": 0, "questionId": "q1", "answerPayload": {"type": "single-choice", "selected": "b"}},
+        {"at": 0, "questionId": "q0", "answerPayload": {"type": "single-choice", "selected": "b"}}
+      ],
+      "expect": {
+        "scorable": true,
+        "codeAnswer": "91",
+        "percentScore": 50,
+        "unscorable": [{"questionId": "q1", "codeAnswerIndex": 1, "reason": "index-disagrees", "fault": "client"}]
+      }
+    },
+    {
+      "name": "a-partial-multiple-choice",
+      "why": "One of two correct options picked, nothing wrong picked: scoreDigit(1, 2) is 5, and one digit of 5 is 50 percent. A digit that is neither the floor nor full marks, so a scorer that only ever returns 1 or 9 is caught.",
+      "questions": ["multiple"],
+      "served": [0],
+      "answers": [{"at": 0, "answerPayload": {"type": "multiple-choice", "selected": ["a"]}}],
+      "expect": {"scorable": true, "codeAnswer": "5", "percentScore": 50, "unscorable": []}
+    },
+    {
+      "name": "a-partial-ordering",
+      "why": "Two of four items in place: scoreDigit(2, 4) is 5.",
+      "questions": ["ordering"],
+      "served": [0],
+      "answers": [{"at": 0, "answerPayload": {"type": "ordering", "order": ["i1", "i2", "i4", "i3"]}}],
+      "expect": {"scorable": true, "codeAnswer": "5", "percentScore": 50, "unscorable": []}
+    },
+    {
+      "name": "a-survey-is-scored-on-participation",
+      "why": "A Survey has no answer to take, so it needs no key and is scored whole. Picking anything is full marks.",
+      "questions": ["survey"],
+      "served": [0],
+      "answers": [{"at": 0, "answerPayload": {"type": "survey", "selected": ["s1"]}}],
+      "expect": {"scorable": true, "codeAnswer": "9", "percentScore": 100, "unscorable": []}
+    },
+    {
+      "name": "an-answer-of-the-wrong-shape-scores-the-floor",
+      "why": "evaluateAnswer falls through to 1 for a mismatched pair, deliberately: an old client can post a shape that no longer fits, and the attempt is still scored. Not a refusal — refusing would put the question at '0' and drop it from the denominator, which is worth more than answering it wrongly.",
+      "questions": ["single"],
+      "served": [0],
+      "answers": [{"at": 0, "answerPayload": {"type": "ordering", "order": ["i1"]}}],
+      "expect": {"scorable": true, "codeAnswer": "1", "percentScore": 0, "unscorable": []}
+    },
+    {
+      "name": "a-redacted-question-with-no-key-refuses-the-attempt",
+      "why": "Our gap, not the player's. Neither digit is honest: '1' charges them for our missing key and '0' pays them for it, so there is no number at all and the caller decides.",
+      "questions": ["orderingRedacted"],
+      "served": [0],
+      "keyDocument": {"version": 1, "lessonId": "lesson-1", "publicHalfRedacted": true, "keys": []},
+      "answers": [{"at": 0, "answerPayload": {"type": "ordering", "order": ["ri-0", "ri-1"]}}],
+      "expect": {
+        "scorable": false,
+        "codeAnswer": null,
+        "percentScore": null,
+        "unscorable": [{"questionId": "q0", "codeAnswerIndex": 0, "reason": "key-missing", "fault": "server"}]
+      }
+    },
+    {
+      "name": "a-content-type-nothing-can-score-refuses-the-attempt",
+      "why": "A stored type in neither namespace. Handing it to evaluateAnswer would fall through to the floor and charge the player for a question nothing here can read.",
+      "questions": ["diagram"],
+      "served": [0],
+      "answers": [{"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}}],
+      "expect": {
+        "scorable": false,
+        "codeAnswer": null,
+        "percentScore": null,
+        "unscorable": [{"questionId": "q0", "codeAnswerIndex": 0, "reason": "unrecognised-content", "fault": "server"}]
+      }
+    },
+    {
+      "name": "an-answer-still-in-a-lesson-believed-redacted-refuses-the-attempt",
+      "why": "The document says both halves came from one redact call, yet the payload still carries correctOptionId — so the answer is sitting in a world-readable document. This module is the only place positioned to notice.",
+      "questions": ["single"],
+      "served": [0],
+      "keyDocument": {"version": 1, "lessonId": "lesson-1", "publicHalfRedacted": true, "keys": []},
+      "answers": [{"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}}],
+      "expect": {
+        "scorable": false,
+        "codeAnswer": null,
+        "percentScore": null,
+        "unscorable": [{"questionId": "q0", "codeAnswerIndex": 0, "reason": "answer-leaked", "fault": "server"}]
+      }
+    },
+    {
+      "name": "no-served-set-means-no-percent",
+      "why": "Whether a question was put to the player is not a fact any answer carries. Without it there is no denominator, so there is no number rather than one derived from whatever the answers implied.",
+      "questions": ["single", "single"],
+      "served": null,
+      "answers": [{"at": 0, "answerPayload": {"type": "single-choice", "selected": "b"}}],
+      "expect": {
+        "scorable": false,
+        "codeAnswer": null,
+        "percentScore": null,
+        "unscorable": [{"questionId": "", "codeAnswerIndex": -1, "reason": "served-unknown", "fault": "server"}]
+      }
+    }
+  ],
+
+  "contents": {
+    "single": {
+      "type": "SingleChoice",
+      "text": "Which keyword declares a read-only binding?",
+      "imageUrl": null,
+      "options": [{"id": "a", "text": "var"}, {"id": "b", "text": "val"}],
+      "correctOptionId": "b"
+    },
+    "multiple": {
+      "type": "MultipleChoice",
+      "text": "Which of these run on the JVM?",
+      "imageUrl": null,
+      "options": [{"id": "a", "text": "Kotlin"}, {"id": "b", "text": "Swift"}, {"id": "c", "text": "Scala"}],
+      "correctOptionIds": ["a", "c"]
+    },
+    "ordering": {
+      "type": "Ordering",
+      "text": "Put the lifecycle callbacks in order",
+      "imageUrl": null,
+      "items": [
+        {"id": "i1", "text": "onCreate"},
+        {"id": "i2", "text": "onStart"},
+        {"id": "i3", "text": "onResume"},
+        {"id": "i4", "text": "onPause"}
+      ]
+    },
+    "survey": {
+      "type": "Survey",
+      "text": "How did you find this lesson?",
+      "imageUrl": null,
+      "options": [{"id": "s1", "text": "Easy"}, {"id": "s2", "text": "Hard"}],
+      "allowMultiple": false
+    },
+    "orderingRedacted": {
+      "type": "OrderingRedacted",
+      "text": "Put the lifecycle callbacks in order",
+      "imageUrl": null,
+      "items": [{"id": "ri-0", "text": "onStart"}, {"id": "ri-1", "text": "onCreate"}]
+    },
+    "diagram": {
+      "type": "Diagram",
+      "text": "A type this repo has never produced",
+      "imageUrl": null
+    }
+  }
+}

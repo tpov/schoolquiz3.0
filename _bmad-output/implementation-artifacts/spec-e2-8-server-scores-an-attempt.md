@@ -55,6 +55,8 @@ context: []
 - [x] `functions/attempt-scoring.js` -- new; given a lesson's questions, its key document and an attempt's answers, produce the codeAnswer, the percent, and a record of anything unscorable. Pure, composing the existing scorer and the existing reassembly rather than restating either.
 - [x] `functions/attempt-scoring.test.js` -- new; every Matrix row, plus the property that a redacted question scored through the key gives the same digit as the same answer against the unredacted original.
 - [x] `functions/package.json` -- add the module to `lint` and the test to `test`, leaving other sessions' entries alone.
+- [x] `shared/core/scoring/src/jvmTest/resources/attempt-scoring-fixtures.json` -- new, added during review; states each scenario's codeAnswer and percent independently, after the review found every percent assertion was recomputed from the module's own output and therefore blind to a client-chosen denominator.
+- [x] **Signature changed during review:** `scoreAttempt` now requires a `served` set (`[{codeAnswerIndex, questionId}]`) naming what was actually put to the player. Whether a question was served cannot be inferred from the answers, and inferring it let the client choose the percent's denominator. Needs human confirmation, since it changes what the wiring slice must supply.
 
 **Acceptance Criteria:**
 - Given a lesson and an attempt, when it is scored, then every digit equals what `evaluateAnswer` gives for that answer and that question, and the percent equals `computePercentScore` of the assembled string.
@@ -68,3 +70,16 @@ context: []
 - `cd functions && npm test` -- all suites pass, `attempt-scoring` among them.
 - `cd functions && npm run lint` -- passes with the new module listed.
 - `git status --short functions/index.js` -- untouched by this slice.
+
+## Suggested Review Order
+
+**Who decides the denominator**
+
+- Entry point: `served` is an input, not an inference. Whether a question was put to the player is a fact the caller holds; deriving it from what the client chose to send let a client score 100% by staying silent about its wrong answers.
+  [`attempt-scoring.js`](../../functions/attempt-scoring.js)
+
+- Client fault and server fault are different outcomes: a malformed answer is a wrong answer, a missing key means the attempt cannot be scored at all. Note the question is checked before the answer — otherwise a client could turn any server fault into a scored attempt by posting junk for the question we could not read.
+  [`attempt-scoring.js`](../../functions/attempt-scoring.js)
+
+- The fixture states every codeAnswer and percent as a literal. The previous suite asserted the percent against the same function that produced it, which is why 32 green cases could not see any of this.
+  [`attempt-scoring-fixtures.json`](../../shared/core/scoring/src/jvmTest/resources/attempt-scoring-fixtures.json)
