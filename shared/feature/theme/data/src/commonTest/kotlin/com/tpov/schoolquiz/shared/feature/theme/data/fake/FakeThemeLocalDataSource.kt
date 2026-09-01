@@ -39,8 +39,6 @@ class FakeThemeLocalDataSource : ThemeLocalDataSource {
 
     override suspend fun findById(id: String): ThemeEntity? = store[id]
 
-    override suspend fun getLocalContentsVersion(id: String): Long? = store[id]?.contentsVersion
-
     fun seed(entities: List<ThemeEntity>) {
         store.clear()
         entities.forEach { store[it.id] = it }

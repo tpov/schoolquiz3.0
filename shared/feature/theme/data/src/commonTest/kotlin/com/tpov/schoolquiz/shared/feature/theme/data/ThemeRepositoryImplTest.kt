@@ -33,17 +33,15 @@ class ThemeRepositoryImplTest {
         title: String = "Theme",
         order: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 100L,
         archived: Boolean = false,
-    ) = ThemeDto(id, sectionId, title, order, version, contentsVersion, lastModifiedAt, archived)
+    ) = ThemeDto(id, sectionId, title, order, version, lastModifiedAt, archived)
 
     private fun makeEntity(
         id: String,
         version: Long = 1L,
         title: String = "Theme",
-        contentsVersion: Long = 0L,
-    ) = ThemeEntity(id, "sec1", title, 0, version, contentsVersion, 0L, false)
+    ) = ThemeEntity(id, "sec1", title, 0, version, 0L, 0L, false)
 
     // Matrix 2 row: theme absent + not archived → inserted
     @Test
@@ -82,9 +80,9 @@ class ThemeRepositoryImplTest {
     }
 
     @Test
-    fun `when remote theme returned with same contents version then id still cascades`() = runTest {
-        fakeLocal.seed(listOf(makeEntity("t1", version = 5L, contentsVersion = 10L)))
-        fakeRemote.result = listOf(makeDto("t1", version = 5L, contentsVersion = 10L))
+    fun `when remote theme returned with unchanged version then id is still processed`() = runTest {
+        fakeLocal.seed(listOf(makeEntity("t1", version = 5L)))
+        fakeRemote.result = listOf(makeDto("t1", version = 5L))
 
         val result = repository.refreshByParents(sectionIds, 0L)
 

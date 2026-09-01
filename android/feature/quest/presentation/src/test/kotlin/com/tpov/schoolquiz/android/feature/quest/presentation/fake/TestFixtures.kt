@@ -30,7 +30,6 @@ fun buildQuest(
     averageRating = averageRating,
     averageRatingCount = averageRatingCount,
     version = version,
-    contentsVersion = 0L,
     lastModifiedAt = lastModifiedAt,
     archived = archived,
 )
@@ -49,7 +48,6 @@ fun buildCatalog(
     picturePath = picturePath,
     pictureUrl = pictureUrl,
     version = version,
-    contentsVersion = 0L,
     lastModifiedAt = 0L,
     archived = archived,
     questType = questType,

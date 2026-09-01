@@ -32,7 +32,7 @@ class SyncQuestsUseCase(
      *   When null, Query A (own quests by authorUid) is skipped; Query B (public) runs.
      * @param availableShelves Set of shelf names the current user has access to.
      *   Baseline MVP: `{"home", "arena"}`.
-     * @param catalogIdsToSync Catalog ids whose contentsVersion changed in Step 1.
+     * @param catalogIdsToSync Catalog ids reported as changed by the sync_changes journal in Step 1.
      * @param cursor           Local questsCursor (max lastModifiedAt seen so far). Default 0L.
      * @return [Result.success] containing the set of processed [QuestId]s for cascade trigger;
      *   [Result.failure] on network/permission errors.

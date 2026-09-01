@@ -205,7 +205,6 @@ class DefaultLessonRunnerRootComponentTest {
         title = "Test Lesson",
         order = order,
         version = version,
-        contentsVersion = 1L,
         lastModifiedAt = 1000L,
         top3 = top3,
         averageRating = averageRating,

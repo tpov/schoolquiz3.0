@@ -35,7 +35,6 @@ class DrillItemMapperTest {
         title = title,
         order = order,
         version = 1L,
-        contentsVersion = 0L,
         lastModifiedAt = 0L,
     )
 
@@ -51,7 +50,6 @@ class DrillItemMapperTest {
         title = title,
         order = order,
         version = 1L,
-        contentsVersion = 0L,
         lastModifiedAt = 0L,
     )
 
@@ -67,7 +65,6 @@ class DrillItemMapperTest {
         title = title,
         order = order,
         version = 1L,
-        contentsVersion = 0L,
         lastModifiedAt = 0L,
     )
 

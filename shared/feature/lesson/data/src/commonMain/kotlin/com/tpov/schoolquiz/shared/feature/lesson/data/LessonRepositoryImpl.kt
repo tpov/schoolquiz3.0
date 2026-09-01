@@ -30,9 +30,6 @@ class LessonRepositoryImpl(
     override suspend fun getById(id: LessonId): Lesson? =
         local.findById(id.value)?.toDomain()
 
-    override suspend fun getLocalContentsVersion(id: LessonId): Long? =
-        local.getLocalContentsVersion(id.value)
-
     override suspend fun refreshByIds(ids: Set<LessonId>): Result<Unit> {
         if (ids.isEmpty()) return Result.success(Unit)
         return try {

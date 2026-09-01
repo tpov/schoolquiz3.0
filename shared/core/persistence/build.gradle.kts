@@ -22,6 +22,7 @@ kotlin {
             implementation(libs.androidx.sqlite.bundled)
             implementation(project(":shared:core:question-schema"))
             implementation(project(":shared:core:leaderboard"))
+            api(project(":shared:core:outbox"))
             implementation(project(":shared:core:sync"))
             implementation(libs.kotlinx.serialization.json)
         }

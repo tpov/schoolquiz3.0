@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaSecti
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaThemeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcome
 import kotlinx.coroutines.tasks.await
 
 class FirebaseQuestArenaSubmissionRemoteDataSource(
@@ -22,9 +23,28 @@ class FirebaseQuestArenaSubmissionRemoteDataSource(
             .await()
     }
 
+    override suspend fun fetchOutcomes(ownerUid: String): List<QuestSubmissionOutcome> =
+        firestore.collection(REVIEW_REQUESTS_COLLECTION)
+            .whereEqualTo("ownerUid", ownerUid)
+            .whereIn("status", listOf(STATUS_REJECTED, STATUS_PUBLISHED))
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val draftId = doc.getString("draftId") ?: return@mapNotNull null
+                QuestSubmissionOutcome(
+                    submissionId = doc.id,
+                    draftId = draftId,
+                    status = doc.getString("status").orEmpty(),
+                    rejectionReason = doc.getString("rejectionReason"),
+                )
+            }
+
     private companion object {
         const val REVIEW_REQUESTS_COLLECTION = "quest_review_requests"
         const val REQUEST_TYPE = "SUBMIT_TO_ARENA"
+        const val STATUS_REJECTED = QuestSubmissionOutcome.STATUS_REJECTED
+        const val STATUS_PUBLISHED = QuestSubmissionOutcome.STATUS_PUBLISHED
     }
 
     private fun QuestArenaSubmissionRequest.toFirestoreMap(): Map<String, Any?> =

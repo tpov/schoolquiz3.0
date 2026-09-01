@@ -15,7 +15,6 @@ object QuestDtoMapper {
         averageRating = averageRating?.toFloat(),
         averageRatingCount = averageRatingCount,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

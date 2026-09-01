@@ -42,8 +42,7 @@ interface LessonRepository {
     /**
      * Pulls lessons for the given [themeIds] from remote and persists locally.
      *
-     * Implements cascading sync step 5: fetch with
-     * `where('themeId', 'in', batch).where('lastModifiedAt', '>', cursor)`.
+     * Fetches with `where('themeId', 'in', batch).where('lastModifiedAt', '>', cursor)`.
      * Cursor must be updated after successful refresh to max(lastModifiedAt).
      *
      * Spec: FR#14, Business Rule #8.
@@ -54,10 +53,4 @@ interface LessonRepository {
      *   as parentIds); [Result.failure] on network/permission errors.
      */
     suspend fun refreshByParents(themeIds: Set<ThemeId>, cursor: Long): Result<Set<LessonId>>
-
-    /**
-     * Returns the local [contentsVersion] for [id], or null if the lesson is absent.
-     * Used by the cascade orchestrator to detect contentsVersion changes.
-     */
-    suspend fun getLocalContentsVersion(id: LessonId): Long?
 }

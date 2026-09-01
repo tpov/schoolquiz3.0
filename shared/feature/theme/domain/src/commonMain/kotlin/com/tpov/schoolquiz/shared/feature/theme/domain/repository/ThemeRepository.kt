@@ -33,8 +33,7 @@ interface ThemeRepository {
     /**
      * Pulls themes for the given [sectionIds] from remote and persists locally.
      *
-     * Implements cascading sync step 4: fetch with
-     * `where('sectionId', 'in', batch).where('lastModifiedAt', '>', cursor)`.
+     * Fetch with `where('sectionId', 'in', batch).where('lastModifiedAt', '>', cursor)`.
      * Cursor must be updated after successful refresh to max(lastModifiedAt).
      *
      * Spec: FR#14, Business Rule #8.
@@ -45,10 +44,4 @@ interface ThemeRepository {
      *   as parentIds); [Result.failure] on network/permission errors.
      */
     suspend fun refreshByParents(sectionIds: Set<SectionId>, cursor: Long): Result<Set<ThemeId>>
-
-    /**
-     * Returns the local [contentsVersion] for [id], or null if the theme is absent.
-     * Used by the cascade orchestrator to detect contentsVersion changes.
-     */
-    suspend fun getLocalContentsVersion(id: ThemeId): Long?
 }

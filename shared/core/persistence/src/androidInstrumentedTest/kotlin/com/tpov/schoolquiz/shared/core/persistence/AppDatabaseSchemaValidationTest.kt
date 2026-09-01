@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
-import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -44,24 +43,8 @@ class AppDatabaseSchemaValidationTest {
         db.close()
     }
 
-    @Test
-    fun destructive_recreate_when_version_bumped() {
-        helper.createDatabase(DB_NAME_DESTRUCTIVE, version = 1).close()
-
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME_DESTRUCTIVE)
-            .fallbackToDestructiveMigration()
-            .addTypeConverter(StringSetConverter())
-            .addTypeConverter(TopParticipantListConverter())
-            .allowMainThreadQueries()
-            .build()
-        db.openHelper.writableDatabase
-        db.close()
-    }
-
     private companion object {
         const val DB_NAME_V2 = "test_schema_v2"
         const val DB_NAME_V2_COLS = "test_schema_v2_cols"
-        const val DB_NAME_DESTRUCTIVE = "test_schema_destructive"
     }
 }

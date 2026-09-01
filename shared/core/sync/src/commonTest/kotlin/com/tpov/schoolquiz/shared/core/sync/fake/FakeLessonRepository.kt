@@ -45,9 +45,6 @@ class FakeLessonRepository : LessonRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun getLocalContentsVersion(id: LessonId): Long? =
-        cache.value[id]?.contentsVersion
-
     fun setNextRefreshFailure(error: Throwable) { nextRefreshFailure = error }
     fun setNextRefreshByIdsFailure(error: Throwable) { nextRefreshByIdsFailure = error }
     fun setNextRefreshChanged(ids: Set<LessonId>) { nextRefreshChangedOverride = ids }

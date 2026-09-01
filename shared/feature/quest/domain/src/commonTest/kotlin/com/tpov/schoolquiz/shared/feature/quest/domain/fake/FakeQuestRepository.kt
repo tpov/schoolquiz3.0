@@ -27,8 +27,8 @@ import kotlinx.coroutines.flow.update
  * [refreshFromRemote] simulates the real Query A + Query B Firestore split:
  *
  *   **no-op guard**: if `catalogIdsToSync.isEmpty()` → returns immediately.
- *   This mirrors spec FR#14: Step 2 is only triggered when contentsVersion changed
- *   catalogs exist. Empty set means no catalog changed → skip quest sync entirely.
+ *   This mirrors spec FR#14: Step 2 is only triggered for catalogs the sync_changes
+ *   journal reported as changed. Empty set means no catalog changed → skip quest sync.
  *
  *   **Query A** (own quests in changed catalogs):
  *     `authorUid == currentUserUid && catalogId in catalogIdsToSync && lastModifiedAt > cursor`

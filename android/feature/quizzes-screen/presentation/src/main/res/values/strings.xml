@@ -32,6 +32,8 @@
     <string name="quizzes_shelf_show_arena">Show in arena shelf</string>
     <string name="quizzes_shelf_show_qualification">Show in qualification tournament</string>
     <string name="quizzes_shelf_show_world">Show in world championship</string>
+    <string name="quizzes_shelf_show_archive">Return to archive</string>
+    <string name="quizzes_shelf_retire">Unpublish everywhere</string>
     <string name="quizzes_cd_random_quest">Random quest</string>
     <string name="quizzes_share_text">Quest “%1$s” — %2$s</string>
 </resources>

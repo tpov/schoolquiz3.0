@@ -38,8 +38,6 @@ class FakeLessonLocalDataSource : LessonLocalDataSource {
 
     override suspend fun findById(id: String): LessonEntity? = store[id]
 
-    override suspend fun getLocalContentsVersion(id: String): Long? = store[id]?.contentsVersion
-
     fun seed(entities: List<LessonEntity>) {
         store.clear()
         entities.forEach { store[it.id] = it }

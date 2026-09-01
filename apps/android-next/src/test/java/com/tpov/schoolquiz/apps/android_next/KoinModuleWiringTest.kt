@@ -184,6 +184,8 @@ class KoinModuleWiringTest : KoinTest {
             object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
 
+                override fun enqueueManualProfileSync() = Unit
+
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
                 override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             }
@@ -292,7 +294,6 @@ class KoinModuleWiringTest : KoinTest {
                     questIds: Set<QuestId>,
                     cursor: Long,
                 ): Result<Set<SectionId>> = Result.success(emptySet())
-                override suspend fun getLocalContentsVersion(id: SectionId): Long? = null
             }
         }
         single<ThemeRepository> {
@@ -303,7 +304,6 @@ class KoinModuleWiringTest : KoinTest {
                     sectionIds: Set<SectionId>,
                     cursor: Long,
                 ): Result<Set<ThemeId>> = Result.success(emptySet())
-                override suspend fun getLocalContentsVersion(id: ThemeId): Long? = null
             }
         }
         single<LessonRepository> {
@@ -314,7 +314,6 @@ class KoinModuleWiringTest : KoinTest {
                     themeIds: Set<ThemeId>,
                     cursor: Long,
                 ): Result<Set<LessonId>> = Result.success(emptySet())
-                override suspend fun getLocalContentsVersion(id: LessonId): Long? = null
             }
         }
         single<QuestionRepository> {
@@ -495,6 +494,8 @@ class KoinModuleWiringTest : KoinTest {
             syncScheduler = object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
 
+                override fun enqueueManualProfileSync() = Unit
+
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
                 override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
@@ -586,6 +587,8 @@ class KoinModuleWiringTest : KoinTest {
             userStatsRepository = fakeRepo,
             syncScheduler = object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
+
+                override fun enqueueManualProfileSync() = Unit
 
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
                 override fun applyProfileFrequency(frequency: SyncFrequency) = Unit

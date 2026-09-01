@@ -46,7 +46,6 @@ class SectionDaoBoundaryTest {
                     averageRating = null,
                     averageRatingCount = 0,
                     version = 1L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 0L,
                     archived = false,
                 )
@@ -72,7 +71,6 @@ class SectionDaoBoundaryTest {
         title = title,
         order = order,
         version = version,
-        contentsVersion = 0L,
         lastModifiedAt = 0L,
         archived = archived,
     )

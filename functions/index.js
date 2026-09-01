@@ -81,14 +81,22 @@ const ACTIVE_LEVEL_WINDOW = 100;
 const ACCEPTED_TRANSLATION_SEGMENT_POINTS = 5;
 const REJECTED_TRANSLATION_SEGMENT_POINTS = -1;
 const REVIEW_PASS_LEVEL = 100;
+// Review scores run 1..3. Two clears the stage; one is a refusal, not a quiet approval.
+const REVIEW_MIN_PASSING_SCORE = 2;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PUBLIC_SCOPE = "public";
 const PRIVATE_SCOPE = "private";
 const MAX_RESULT_EVENTS_PER_CALL = 50;
 const DIRTY_RATING_READ_BATCH = 400;
 const DAILY_DIRTY_RATING_LIMIT = 5000;
-const QUEST_RATING_QUALIFICATION_USER_FIELD = "developer";
-const QUEST_RATING_QUALIFICATION_PROFILE_FIELD = "developerLevel";
+// What a quest author earns from the stars players give them. It is a reputation, not a rank:
+// it opens nothing, and no gate anywhere reads it.
+//
+// This used to be `developer` / `developerLevel` — the same field every privilege check in the
+// product reads at `> 100`. At ten points per three-star rating, eleven ratings from eleven
+// accounts made an author a developer, and anonymous sign-in makes those accounts free. The
+// arithmetic below is unchanged and still exactly reversible; only its destination moved.
+const AUTHOR_RATING_SCORE_FIELD = "authorRatingScore";
 const QUEST_RATING_QUALIFICATION_POINTS_PER_STAR = 10;
 const SHOP_ITEM_STANDARD_HEART_SLOT = "STANDARD_HEART_SLOT";
 const SHOP_ITEM_GOLD_HEART = "GOLD_HEART";
@@ -116,7 +124,9 @@ const NICKNAME_LISTINGS_COLLECTION = "nickname_listings";
 const NICKNAME_POLICY_DOC = "configs/nickname_policy";
 const LOGO_LISTINGS_COLLECTION = "logo_listings";
 const NICKNAME_GENERATION_ATTEMPTS = 20;
-const PUBLIC_QUEST_SHELVES = new Set(["home", "arena", "tournament", "tournamentFinal"]);
+// "archive" is a legitimate destination, not only a publication target: without it a course moved
+// off the archive could never be put back, and the first mistaken move would be permanent.
+const PUBLIC_QUEST_SHELVES = new Set(["home", "arena", "tournament", "tournamentFinal", "archive"]);
 
 exports.processQuestReviewRequest = onDocumentCreated(
   {...FUNCTION_OPTIONS, document: "quest_review_requests/{submissionId}"},
@@ -199,6 +209,64 @@ exports.fetchReviewAssignments = onCall(FUNCTION_OPTIONS, async (request) => {
     if (assignment) assignments.push(assignment);
   }
   return {assignments};
+});
+
+/**
+ * Sends a quest back to its author with a reason.
+ *
+ * Scoring a lesson low leaves it UNDER_REVIEW forever, which tells the author nothing and blocks
+ * the queue. Rejection is the other half: the submission stops being reviewable, the reason
+ * travels back to the author's draft, and nothing of it reaches a public shelf. Resubmission is
+ * how it comes back — the author edits and sends again, minting a new submission.
+ */
+exports.rejectReviewSubmission = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  const assignmentId = stringValue(request.data && request.data.assignmentId);
+  if (!assignmentId) throw new HttpsError("invalid-argument", "assignmentId is required");
+  const reason = stringValue(request.data && request.data.reason).trim();
+  // A rejection without a reason is indistinguishable from silence, and the author cannot act
+  // on silence.
+  if (!reason) throw new HttpsError("invalid-argument", "reason is required");
+
+  const task = await readAdminReviewLessonTask(assignmentId);
+  if (!task) throw new HttpsError("not-found", `Review assignment ${assignmentId} not found`);
+
+  const config = await readArenaReviewConfig();
+  const existingRecords = await readReviewRecords(task.lessonId);
+  // Whoever may score this lesson may refuse it: same gate, both directions. The author-exclusion
+  // and the developer exemption inside canSubmit apply here unchanged.
+  const mayJudge =
+    canSubmit(profile, task, "TESTING", config, existingRecords) ||
+    canSubmit(profile, task, "LOGIC", config, existingRecords);
+  if (!mayJudge) {
+    throw new HttpsError("permission-denied", `Reviewer ${uid} cannot judge ${assignmentId}`);
+  }
+
+  const now = Date.now();
+  const rejectedTask = {
+    ...task,
+    rejectedAtMs: now,
+    rejectedByUid: uid,
+    rejectionReason: reason,
+    status: "REJECTED",
+    changedAtMs: now,
+  };
+  const batch = db.batch();
+  writeAdminReviewLessonTasksToBatch(batch, [rejectedTask]);
+  batch.set(
+    db.collection("quest_review_requests").doc(task.submissionId),
+    {
+      status: "REJECTED",
+      rejectedAtMs: now,
+      rejectedByUid: uid,
+      rejectionReason: reason,
+      updatedAtMs: now,
+    },
+    {merge: true},
+  );
+  await batch.commit();
+  return {assignmentId, submissionId: task.submissionId, rejectedAtMs: now, reason};
 });
 
 exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -299,6 +367,100 @@ async function readAllocatedSeconds(lessonIds) {
   );
   return Object.fromEntries(entries);
 }
+
+const {
+  DECISION_EXECUTE,
+  DECISION_REPLAY,
+  DECISION_WAIT,
+  belongsTo,
+  completionRecord,
+  decideMutation,
+  reservationRecord,
+  resolveOperation,
+  validateMutation,
+} = require("./mutation-queue.js");
+
+/**
+ * Что клиент говорит в деталях, чтобы отличить «ещё нет» от «нет».
+ *
+ * Сам по себе FAILED_PRECONDITION в этом проекте означает отказ («не хватает ноликов»), поэтому
+ * повторяемое ожидание помечается отдельно. Значение обязано совпадать с
+ * PRECONDITION_PENDING_DETAIL в platform/firebase/.../network/CallableErrors.kt.
+ */
+const PRECONDITION_PENDING_DETAIL = "precondition-pending";
+
+/**
+ * Обработчики отложенных мутаций: имя операции -> async (uid, payload, nowMs) => result.
+ *
+ * Пуст намеренно. Единственный приёмник существует раньше, чем в него переезжает первое действие:
+ * жизненный цикл ключа, резервирование и повтор отлаживаются здесь, на пустом реестре, а не под
+ * первой же денежной операцией. Регистрация настоящих операций — эпик 5.
+ */
+const MUTATION_HANDLERS = {};
+
+/**
+ * Единственный транспорт отложенной мутации (AD-6).
+ *
+ * Прямая запись в Firestore из очереди запрещена: проверить ключ идемпотентности можно только там,
+ * где выполняется код. Здесь этот код и живёт.
+ *
+ * Ключ резервируется до эффекта и дописывается после (AD-1): уместить чужой обработчик в одну
+ * транзакцию с записью ключа нельзя, а повтор по зарезервированному, но не завершённому ключу
+ * никогда не считается выполненным — он ждёт, а не выполняет второй раз.
+ */
+exports.submitMutation = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+
+  const shape = validateMutation(request.data);
+  if (!shape.valid) throw new HttpsError("invalid-argument", shape.reason);
+
+  const {mutationId, operation} = shape;
+  const resolved = resolveOperation(MUTATION_HANDLERS, operation);
+  if (!resolved.known) {
+    // Клиент новее сервера. Повтор этого не изменит, поэтому отказ окончательный.
+    throw new HttpsError("invalid-argument", resolved.reason);
+  }
+
+  const now = Date.now();
+  const keyRef = db.collection("mutation_keys").doc(safeDocId(mutationId));
+
+  const gate = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(keyRef);
+    const existing = snapshot.exists ? snapshot.data() : null;
+
+    if (!belongsTo(existing, uid)) {
+      // Чужой ключ — не повтор, а попытка прочитать чужой результат.
+      return {decision: "denied"};
+    }
+
+    const verdict = decideMutation(existing, now);
+    if (verdict.decision === DECISION_REPLAY) {
+      return {decision: DECISION_REPLAY, result: verdict.result};
+    }
+    if (verdict.decision === DECISION_WAIT) {
+      return {decision: DECISION_WAIT, reason: verdict.reason};
+    }
+
+    transaction.set(keyRef, reservationRecord(mutationId, uid, operation, now));
+    return {decision: DECISION_EXECUTE, reservation: reservationRecord(mutationId, uid, operation, now)};
+  });
+
+  if (gate.decision === "denied") {
+    throw new HttpsError("permission-denied", "mutationId belongs to another account");
+  }
+  if (gate.decision === DECISION_REPLAY) {
+    return {replayed: true, result: gate.result};
+  }
+  if (gate.decision === DECISION_WAIT) {
+    // Повторяемое ожидание, а не отказ: другая попытка по тому же ключу ещё летит.
+    throw new HttpsError("failed-precondition", gate.reason, PRECONDITION_PENDING_DETAIL);
+  }
+
+  const result = await resolved.handler(uid, request.data.payload, now);
+  await keyRef.set(completionRecord(gate.reservation, result, Date.now()));
+  return {replayed: false, result: result === undefined ? null : result};
+});
 
 exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
@@ -1081,6 +1243,21 @@ exports.fetchNicknameListings = onCall(FUNCTION_OPTIONS, async (request) => {
   };
 });
 
+/**
+ * A name changes hands only between accounts that belong to somebody.
+ *
+ * The shop is the one place where a name leaves the account that earned it, and an unverified
+ * account is not yet a person as far as the app is concerned — letting one trade would make the
+ * market a laundry for names. Withdrawing your own lot is deliberately not gated: that returns a
+ * name rather than moving it, and an account that loses the tick must still be able to take its
+ * own listing down.
+ */
+function requireVerifiedForNicknameMarket(user, action) {
+  if (!hasTrophy((user || {}).trophies, TROPHY_VERIFIED)) {
+    throw new HttpsError("permission-denied", `Only verified accounts may ${action} nicknames`);
+  }
+}
+
 exports.listNicknameForSale = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
@@ -1102,6 +1279,7 @@ exports.listNicknameForSale = onCall(FUNCTION_OPTIONS, async (request) => {
       throw new HttpsError("permission-denied", "You do not own this nickname");
     }
     const user = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    requireVerifiedForNicknameMarket(user, "sell");
     // Selling the name you are wearing would leave you nameless the moment somebody bought it.
     if (canonicalNickname(user.nickname) === canonical) {
       throw new HttpsError("failed-precondition", "Switch to another nickname before selling this one");
@@ -1157,6 +1335,7 @@ exports.buyListedNickname = onCall(FUNCTION_OPTIONS, async (request) => {
     const claim = await transaction.get(claimRef);
     const buyerSnapshot = await transaction.get(buyerRef);
     const sellerSnapshot = await transaction.get(sellerRef);
+    requireVerifiedForNicknameMarket(buyerSnapshot.data(), "buy");
     // The listing is a promise about the registry; if they disagree, the registry wins.
     if (!claim.exists || stringValue((claim.data() || {}).uid) !== sellerUid) {
       throw new HttpsError("failed-precondition", "Listing no longer matches the registry");
@@ -1387,10 +1566,16 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
     }
     const nextVersion = numberValue(quest.version, 0) + 1;
     const lastModifiedAt = admin.firestore.Timestamp.fromMillis(now);
+    const previousVisibleOn = Array.isArray(quest.visibleOn)
+      ? quest.visibleOn.filter((shelf) => typeof shelf === "string")
+      : [];
     transaction.set(
       questRef,
       {
         visibleOn: [targetShelf],
+        // The flag follows the placement: a course returned to the archive reads as archived
+        // again, and a quest pulled onto a live shelf stops being filtered out as archived.
+        archived: targetShelf === "archive",
         version: nextVersion,
         lastModifiedAt,
       },
@@ -1401,6 +1586,16 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
       syncChangeDocument("quest", questId, now),
       {merge: true},
     );
+    writeShelfMoveAudit(transaction, {
+      questId,
+      catalogId,
+      actorUid: uid,
+      action: "move",
+      previousVisibleOn,
+      visibleOn: [targetShelf],
+      reason: nullableString(request.data && request.data.reason),
+      now,
+    });
     return {
       questId,
       catalogId,
@@ -1410,6 +1605,350 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
     };
   });
 });
+
+/**
+ * Takes a published quest off every shelf. The client half of removal already works — an empty
+ * visibleOn makes the sync delete the local row — so the server half is all that was missing:
+ * until this callable, the only takedown was a laptop script hardcoded to the courses catalog.
+ */
+exports.retirePublicQuest = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
+    throw new HttpsError("permission-denied", "Developer level is required");
+  }
+
+  const questId = stringValue(request.data && request.data.questId);
+  if (!questId) throw new HttpsError("invalid-argument", "questId is required");
+  const now = Date.now();
+  const questRef = db.collection("quests").doc(questId);
+
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(questRef);
+    if (!snapshot.exists) {
+      throw new HttpsError("not-found", `Quest ${questId} not found`);
+    }
+    const quest = snapshot.data() || {};
+    const catalogId = stringValue(quest.catalogId);
+    if (!catalogId) {
+      throw new HttpsError("failed-precondition", `Quest ${questId} has no catalogId`);
+    }
+    const previousVisibleOn = Array.isArray(quest.visibleOn)
+      ? quest.visibleOn.filter((shelf) => typeof shelf === "string")
+      : [];
+    const nextVersion = numberValue(quest.version, 0) + 1;
+    transaction.set(
+      questRef,
+      {
+        visibleOn: [],
+        version: nextVersion,
+        lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      },
+      {merge: true},
+    );
+    transaction.set(
+      db.doc(publicCatalogSyncChangePath(catalogId, "quest", questId)),
+      syncChangeDocument("quest", questId, now),
+      {merge: true},
+    );
+    writeShelfMoveAudit(transaction, {
+      questId,
+      catalogId,
+      actorUid: uid,
+      action: "retire",
+      previousVisibleOn,
+      visibleOn: [],
+      reason: nullableString(request.data && request.data.reason),
+      now,
+    });
+    return {questId, catalogId, version: nextVersion, changedAtMs: now};
+  });
+});
+
+// ─── Reports, verdicts and bans ────────────────────────────────────────────────────────────────
+
+const REPORT_TARGET_TYPES = new Set(["COMMENT", "QUEST", "USER", "MESSAGE"]);
+// Upholding a report pays the reporter; a rejected one costs them the same. Symmetric on purpose:
+// an asymmetry either invites spam or makes reporting too expensive to bother with.
+const REPORT_UPHELD_POINTS = 3;
+const REPORT_REJECTED_POINTS = -3;
+// How far above a moderator someone must sit to ban them. The same distance the review consensus
+// uses to decide whose opinion is the senior one.
+const MODERATOR_BAN_LEVEL_GAP = 100;
+const BAN_TERM_WEEK_MS = 7 * DAY_MS;
+const BAN_TERM_MONTH_MS = 30 * DAY_MS;
+
+/**
+ * How long a ban lasts, decided by the rank of whoever issues it rather than chosen per case.
+ * A junior moderator can only ban briefly; permanence is reserved for the most senior.
+ * Returns null for a ban that does not expire.
+ */
+function banDurationMsFor(profile) {
+  if (profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL) return null;
+  if (profile.moderatorLevel > 300) return null;
+  if (profile.moderatorLevel >= 200) return BAN_TERM_MONTH_MS;
+  return BAN_TERM_WEEK_MS;
+}
+
+/** Anyone signed in can report anything. The verdict is where judgement happens, not the filing. */
+exports.submitReport = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const targetType = stringValue(request.data && request.data.targetType).toUpperCase();
+  if (!REPORT_TARGET_TYPES.has(targetType)) {
+    throw new HttpsError("invalid-argument", `Unsupported targetType ${targetType || "<empty>"}`);
+  }
+  const targetId = stringValue(request.data && request.data.targetId);
+  if (!targetId) throw new HttpsError("invalid-argument", "targetId is required");
+  const reason = stringValue(request.data && request.data.reason).trim();
+  if (!reason) throw new HttpsError("invalid-argument", "reason is required");
+  if (targetType === "USER" && targetId === uid) {
+    throw new HttpsError("invalid-argument", "Cannot report yourself");
+  }
+
+  const now = Date.now();
+  const reportId = `${targetType.toLowerCase()}_${targetId}_${uid}`;
+  const reportRef = db.collection("reports").doc(reportId);
+  return db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(reportRef);
+    // One open report per person per thing: re-filing is not a second voice, and a decided report
+    // must not be quietly reopened by the same reporter.
+    if (existing.exists && stringValue((existing.data() || {}).status) === "OPEN") {
+      throw new HttpsError("already-exists", "You have already reported this");
+    }
+    transaction.set(
+      reportRef,
+      clean({
+        id: reportId,
+        targetType,
+        targetId,
+        reporterUid: uid,
+        reason: reason.slice(0, 1000),
+        status: "OPEN",
+        createdAtMs: now,
+        decidedAtMs: null,
+        decidedByUid: null,
+        decision: null,
+      }),
+      {merge: true},
+    );
+    return {reportId, status: "OPEN"};
+  });
+});
+
+/**
+ * A moderator rules on a report. Three outcomes, by the owner's rule: uphold, reject, or uphold
+ * and ban the author. The reporter is paid for being right and charged for being wrong, which is
+ * what stops reporting from being free.
+ */
+exports.decideReport = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  const isModerator = profile.moderatorLevel >= QUALIFIED_LEVEL;
+  const isDeveloper = profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL;
+  if (!isModerator && !isDeveloper) {
+    throw new HttpsError("permission-denied", "Moderator level is required");
+  }
+  const reportId = stringValue(request.data && request.data.reportId);
+  if (!reportId) throw new HttpsError("invalid-argument", "reportId is required");
+  const decision = stringValue(request.data && request.data.decision).toUpperCase();
+  if (!["UPHOLD", "REJECT", "UPHOLD_AND_BAN"].includes(decision)) {
+    throw new HttpsError("invalid-argument", `Unsupported decision ${decision || "<empty>"}`);
+  }
+  const note = nullableString(request.data && request.data.note);
+  const now = Date.now();
+
+  const reportSnapshot = await db.collection("reports").doc(reportId).get();
+  if (!reportSnapshot.exists) throw new HttpsError("not-found", `Report ${reportId} not found`);
+  const report = reportSnapshot.data() || {};
+  if (stringValue(report.status) !== "OPEN") {
+    throw new HttpsError("failed-precondition", "Report is already decided");
+  }
+  const reporterUid = stringValue(report.reporterUid);
+  if (reporterUid === uid) {
+    throw new HttpsError("permission-denied", "Cannot decide your own report");
+  }
+
+  let bannedUid = null;
+  let banUntilMs;
+  if (decision === "UPHOLD_AND_BAN") {
+    bannedUid = await reportTargetOwnerUid(report);
+    if (!bannedUid) {
+      throw new HttpsError("failed-precondition", "Report target has no owner to ban");
+    }
+    if (bannedUid === uid) {
+      throw new HttpsError("permission-denied", "Cannot ban yourself");
+    }
+    const targetProfile = await requireProfile(bannedUid);
+    // Banning a moderator takes seniority: a peer cannot silence a peer.
+    if (targetProfile.moderatorLevel >= QUALIFIED_LEVEL && !isDeveloper) {
+      if (profile.moderatorLevel < targetProfile.moderatorLevel + MODERATOR_BAN_LEVEL_GAP) {
+        throw new HttpsError(
+          "permission-denied",
+          "Banning a moderator needs a level at least 100 above theirs, or a developer",
+        );
+      }
+    }
+    const durationMs = banDurationMsFor(profile);
+    banUntilMs = durationMs === null ? null : now + durationMs;
+    await db.collection("users").doc(bannedUid).set(
+      clean({
+        bannedUntilMs: banUntilMs,
+        bannedByUid: uid,
+        bannedAtMs: now,
+        banReason: note || stringValue(report.reason),
+      }),
+      {merge: true},
+    );
+  }
+
+  const upheld = decision !== "REJECT";
+  await db.collection("reports").doc(reportId).set(
+    clean({
+      status: upheld ? "UPHELD" : "REJECTED",
+      decision,
+      decidedAtMs: now,
+      decidedByUid: uid,
+      deciderModeratorLevel: profile.moderatorLevel,
+      note,
+      bannedUid,
+      banUntilMs: bannedUid ? banUntilMs : null,
+    }),
+    {merge: true},
+  );
+  await addReviewerReputation(
+    reporterUid,
+    upheld ? REPORT_UPHELD_POINTS : REPORT_REJECTED_POINTS,
+  );
+  return {reportId, status: upheld ? "UPHELD" : "REJECTED", bannedUid, banUntilMs};
+});
+
+/**
+ * A senior moderator grades a decided report. Agreeing pays the original decider, overturning
+ * costs them — the same +3 / -3 the review consensus uses, and the same reputation number.
+ * Judgement about judgement is how a moderation corps stays honest without a second hierarchy.
+ */
+exports.reviewReportDecision = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  const isDeveloper = profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL;
+  const reportId = stringValue(request.data && request.data.reportId);
+  if (!reportId) throw new HttpsError("invalid-argument", "reportId is required");
+  const agrees = Boolean(request.data && request.data.agrees);
+
+  const snapshot = await db.collection("reports").doc(reportId).get();
+  if (!snapshot.exists) throw new HttpsError("not-found", `Report ${reportId} not found`);
+  const report = snapshot.data() || {};
+  const deciderUid = stringValue(report.decidedByUid);
+  if (!deciderUid) throw new HttpsError("failed-precondition", "Report is not decided yet");
+  if (deciderUid === uid) {
+    throw new HttpsError("permission-denied", "Cannot grade your own decision");
+  }
+  const deciderLevel = numberValue(report.deciderModeratorLevel, 0);
+  if (!isDeveloper && profile.moderatorLevel < deciderLevel + MODERATOR_BAN_LEVEL_GAP) {
+    throw new HttpsError(
+      "permission-denied",
+      "Grading a decision needs a level at least 100 above the decider's",
+    );
+  }
+
+  const now = Date.now();
+  await db.collection("reports").doc(reportId).set(
+    clean({
+      gradedByUid: uid,
+      gradedAtMs: now,
+      gradeAgrees: agrees,
+    }),
+    {merge: true},
+  );
+  await addReviewerReputation(deciderUid, agrees ? REPORT_UPHELD_POINTS : REPORT_REJECTED_POINTS);
+  return {reportId, deciderUid, agrees};
+});
+
+/** Who owns the thing a report points at, so a ban has somebody to land on. */
+async function reportTargetOwnerUid(report) {
+  const targetType = stringValue(report.targetType);
+  const targetId = stringValue(report.targetId);
+  if (targetType === "USER") return targetId;
+  if (targetType === "COMMENT") {
+    const snapshot = await db.collection("lessonComments").doc(targetId).get();
+    return snapshot.exists ? nullableString((snapshot.data() || {}).authorUid) : null;
+  }
+  if (targetType === "QUEST") {
+    const snapshot = await db.collection("quests").doc(targetId).get();
+    return snapshot.exists ? nullableString((snapshot.data() || {}).authorUid) : null;
+  }
+  // MESSAGE is reserved for the chat that does not exist yet — see chat-contract.md.
+  return null;
+}
+
+/**
+ * Removes one lesson comment. The comment's own rules are `update, delete: if false` for every
+ * client, so this callable — running with admin credentials — is the only takedown there is.
+ * Moderators are the audience; a developer's blanket access covers it too. The removed text is
+ * preserved in the audit record: the evidence must survive the removal, or every dispute becomes
+ * one person's word against another's.
+ */
+exports.removeLessonComment = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  const isModerator = profile.moderatorLevel >= QUALIFIED_LEVEL;
+  const isDeveloper = profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL;
+  if (!isModerator && !isDeveloper) {
+    throw new HttpsError("permission-denied", "Moderator level is required");
+  }
+  const commentId = stringValue(request.data && request.data.commentId);
+  if (!commentId) throw new HttpsError("invalid-argument", "commentId is required");
+  const reason = nullableString(request.data && request.data.reason);
+  const now = Date.now();
+  const commentRef = db.collection("lessonComments").doc(commentId);
+
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(commentRef);
+    if (!snapshot.exists) {
+      throw new HttpsError("not-found", `Comment ${commentId} not found`);
+    }
+    const comment = snapshot.data() || {};
+    transaction.set(
+      db.collection("admin").doc("moderation").collection("comment_removals").doc(`${commentId}_${now}`),
+      clean({
+        commentId,
+        lessonId: nullableString(comment.lessonId),
+        authorUid: nullableString(comment.authorUid),
+        authorNickname: nullableString(comment.authorNickname),
+        text: nullableString(comment.text),
+        actorUid: uid,
+        reason,
+        removedAtMs: now,
+      }),
+      {merge: true},
+    );
+    transaction.delete(commentRef);
+    return {commentId, removedAtMs: now};
+  });
+});
+
+/**
+ * One record per placement change, under admin/ where clients cannot write and reviewers can
+ * read. This is how "who put this on the home screen, and when?" gets an answer — including the
+ * author-triggered republish reset, the one demotion that used to happen silently.
+ */
+function writeShelfMoveAudit(transaction, options) {
+  transaction.set(
+    db.collection("admin").doc("shelf_moves").collection("moves").doc(`${options.questId}_${options.now}`),
+    clean({
+      questId: options.questId,
+      catalogId: options.catalogId,
+      actorUid: options.actorUid,
+      action: options.action,
+      previousVisibleOn: options.previousVisibleOn,
+      visibleOn: options.visibleOn,
+      reason: options.reason,
+      changedAtMs: options.now,
+    }),
+    {merge: true},
+  );
+}
 
 exports.recalculateTournamentLeaderboard = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
@@ -1916,7 +2455,7 @@ async function aggregateDirtyQuestRatingDoc(scope, dirtyDoc, now) {
         averageRating,
         averageRatingCount: count,
         qualificationTargetUid: targetUid,
-        qualificationField: QUEST_RATING_QUALIFICATION_USER_FIELD,
+        qualificationField: AUTHOR_RATING_SCORE_FIELD,
         qualificationScore,
         qualificationAppliedScore: qualificationApplication.appliedScore,
         updatedAtMs: now,
@@ -2015,7 +2554,7 @@ function writeRatingQualificationDelta(transaction, targetSnapshots, options) {
     options.previousTargetUid !== options.targetUid &&
     options.previousAppliedScore !== 0
   ) {
-    appliedDelta += writeUserQualificationLevelDelta(
+    appliedDelta += writeAuthorRatingScoreDelta(
       transaction,
       targetSnapshots,
       options.previousTargetUid,
@@ -2026,7 +2565,7 @@ function writeRatingQualificationDelta(transaction, targetSnapshots, options) {
   if (options.targetUid) {
     const previousTargetAppliedScore =
       options.previousTargetUid === options.targetUid ? options.previousAppliedScore : 0;
-    const targetDelta = writeUserQualificationLevelDelta(
+    const targetDelta = writeAuthorRatingScoreDelta(
       transaction,
       targetSnapshots,
       options.targetUid,
@@ -2039,27 +2578,23 @@ function writeRatingQualificationDelta(transaction, targetSnapshots, options) {
   return {delta: appliedDelta, appliedScore};
 }
 
-function writeUserQualificationLevelDelta(transaction, targetSnapshots, uid, delta, now) {
+function writeAuthorRatingScoreDelta(transaction, targetSnapshots, uid, delta, now) {
   if (!uid || delta === 0) return 0;
   const target = targetSnapshots.get(uid);
   if (!target) return 0;
-  const current = currentRatingQualificationLevel(target.userData, target.profileData);
+  const current = currentAuthorRatingScore(target.userData, target.profileData);
   const next = Math.max(0, current + delta);
   const appliedDelta = next - current;
   if (appliedDelta === 0) return 0;
+  // One field, at the top level of both documents. The old write also fanned the number into the
+  // `qualifications` and `qualification` maps, which is exactly what made a reputation look like a
+  // rank to every reader downstream.
   transaction.set(
     target.userRef,
     clean({
       uid,
       updatedAtMs: now,
-      [QUEST_RATING_QUALIFICATION_USER_FIELD]: next,
-      qualifications: {
-        [QUEST_RATING_QUALIFICATION_USER_FIELD]: next,
-      },
-      qualification: {
-        [QUEST_RATING_QUALIFICATION_USER_FIELD]: next,
-        [QUEST_RATING_QUALIFICATION_PROFILE_FIELD]: next,
-      },
+      [AUTHOR_RATING_SCORE_FIELD]: next,
     }),
     {merge: true},
   );
@@ -2068,22 +2603,17 @@ function writeUserQualificationLevelDelta(transaction, targetSnapshots, uid, del
     clean({
       uid,
       updatedAtMs: now,
-      [QUEST_RATING_QUALIFICATION_PROFILE_FIELD]: next,
+      [AUTHOR_RATING_SCORE_FIELD]: next,
     }),
     {merge: true},
   );
   return appliedDelta;
 }
 
-function currentRatingQualificationLevel(userData, profileData) {
-  const userQualifications = userData.qualifications || {};
-  const userQualification = userData.qualification || {};
+function currentAuthorRatingScore(userData, profileData) {
   return Math.max(
-    nonNegativeNumber(profileData[QUEST_RATING_QUALIFICATION_PROFILE_FIELD], 0),
-    nonNegativeNumber(userData[QUEST_RATING_QUALIFICATION_USER_FIELD], 0),
-    nonNegativeNumber(userQualifications[QUEST_RATING_QUALIFICATION_USER_FIELD], 0),
-    nonNegativeNumber(userQualification[QUEST_RATING_QUALIFICATION_USER_FIELD], 0),
-    nonNegativeNumber(userQualification[QUEST_RATING_QUALIFICATION_PROFILE_FIELD], 0),
+    nonNegativeNumber(profileData[AUTHOR_RATING_SCORE_FIELD], 0),
+    nonNegativeNumber(userData[AUTHOR_RATING_SCORE_FIELD], 0),
   );
 }
 
@@ -2092,6 +2622,9 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   if (!requestSnapshot.exists) return false;
   const request = normalizeRequest(requestSnapshot.data() || {}, submissionId);
   if (request.status === "PUBLISHED") return false;
+  // A rejected submission is finished. The author resubmits to try again, which mints a new
+  // submission id — this one never publishes, not even through the nightly reconcile.
+  if (request.status === "REJECTED") return false;
 
   const taskSnapshot = await db.collection("admin/review/lessons")
     .where("submissionId", "==", submissionId)
@@ -2109,6 +2642,10 @@ async function publishSubmissionIfReady(submissionId, config, now) {
     await requestSnapshot.ref.set({status: "UNDER_REVIEW", updatedAtMs: now}, {merge: true});
     return false;
   }
+  if (targetTasks.some((task) => task.rejectedAtMs)) {
+    await requestSnapshot.ref.set({status: "REJECTED", updatedAtMs: now}, {merge: true});
+    return false;
+  }
   const allReady = targetTasks.every((task) => lessonPassed(task.checks, task, config));
   if (!allReady) {
     await requestSnapshot.ref.set({status: "UNDER_REVIEW", updatedAtMs: now}, {merge: true});
@@ -2116,6 +2653,29 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   }
 
   const batch = db.batch();
+  // A republish overwrites visibleOn with the submission's target shelf, which demotes a quest a
+  // curator had placed elsewhere. That reset stays — unreviewed edits must not remain on a curated
+  // shelf — but it stops being silent: the audit names the author as the actor.
+  const existingQuest = await db.collection("quests").doc(request.draft.id).get();
+  if (existingQuest.exists) {
+    const existing = existingQuest.data() || {};
+    const previousVisibleOn = Array.isArray(existing.visibleOn)
+      ? existing.visibleOn.filter((shelf) => typeof shelf === "string")
+      : [];
+    const nextShelf = request.targetShelf;
+    if (previousVisibleOn.length !== 1 || previousVisibleOn[0] !== nextShelf) {
+      writeShelfMoveAudit(batch, {
+        questId: request.draft.id,
+        catalogId: request.draft.catalogId,
+        actorUid: request.ownerUid,
+        action: "republish",
+        previousVisibleOn,
+        visibleOn: [nextShelf],
+        reason: null,
+        now,
+      });
+    }
+  }
   writePublicHierarchyToBatch(batch, requestWithPublishedQuestions(request, targetTasks), now);
   for (const task of targetTasks) {
     writeAdminReviewLessonTasksToBatch(batch, [{...task, status: "PUBLISHED", changedAtMs: now}]);
@@ -2254,6 +2814,9 @@ function adminDocuments(tasks) {
       createdAtMs: task.createdAtMs,
       changedAtMs: task.changedAtMs,
       status: task.status || lessonReviewStatus(task.checks, task, null),
+      rejectedAtMs: task.rejectedAtMs || null,
+      rejectedByUid: task.rejectedByUid || null,
+      rejectionReason: task.rejectionReason || null,
       targetShelf: task.targetShelf,
       availableLanguages: Array.from(availableLanguages(task)).sort(),
       sourceLanguages: Array.from(task.sourceLanguages).sort(),
@@ -2431,6 +2994,10 @@ function availableTasks(profile, task, config) {
       : openTasksFor(profile, task, config);
   if (profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL) return openTasks;
 
+  // The author's own quest never shows up in their queue — canSubmit refuses it anyway, but an
+  // offer that always errors is worse than no offer.
+  if (task.ownerUid && profile.uid === task.ownerUid) return new Set();
+
   const result = new Set();
   if (profile.testerLevel >= QUALIFIED_LEVEL && openTasks.has("TESTING")) result.add("TESTING");
   if (profile.adminLevel >= QUALIFIED_LEVEL) {
@@ -2449,6 +3016,9 @@ function canSubmit(profile, task, kind, config, existingRecords) {
   if (profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL) {
     return isStageOpenForSubmit(task, kind, existingRecords, config);
   }
+  // Nobody waves their own quest through. The one exemption is above, not here: a developer's
+  // blanket access covers their own content by the owner's explicit rule, everyone else's does not.
+  if (task.ownerUid && profile.uid === task.ownerUid) return false;
   switch (kind) {
     case "TESTING":
       return (
@@ -2584,6 +3154,8 @@ function rebuildAggregate(task, records, config) {
 }
 
 function lessonReviewStatus(checks, task, config) {
+  // A rejection is terminal until the author resubmits, so it outranks the score arithmetic.
+  if (task && task.rejectedAtMs) return "REJECTED";
   return lessonPassed(checks, task, config) ? "READY_FOR_PUBLICATION" : "UNDER_REVIEW";
 }
 
@@ -2594,8 +3166,8 @@ function lessonPassed(checks, task, config) {
     Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean),
   );
   return (
-    hasTestingResult(checks) &&
-    hasLogicResult(checks) &&
+    stagePassed(checks.testingScore) &&
+    stagePassed(checks.logicScore) &&
     Array.from(required).every((language) =>
       sourceLanguages.has(normalizeLanguage(language)) ||
       numberValue(translated[language], 0) >= REVIEW_PASS_LEVEL
@@ -2825,6 +3397,9 @@ async function adminLessonSnapshotToTask(snapshot) {
     title: stringValue(data.title),
     targetShelf: targetShelfValue(data.targetShelf),
     status: stringValue(data.status, "UNDER_REVIEW"),
+    rejectedAtMs: numberValue(data.rejectedAtMs, 0) || null,
+    rejectedByUid: nullableString(data.rejectedByUid),
+    rejectionReason: nullableString(data.rejectionReason),
     createdAtMs: numberValue(data.createdAtMs, 0),
     changedAtMs: numberValue(data.changedAtMs, numberValue(data.createdAtMs, 0)),
     checks,
@@ -2861,6 +3436,9 @@ async function requireProfile(uid) {
     testerLevel: numberValue(data.testerLevel, 0),
     adminLevel: numberValue(data.adminLevel, 0),
     translatorLevel: numberValue(data.translatorLevel, 0),
+    // Loaded at last: until moderation existed, no gate read this field and requireProfile
+    // deliberately skipped it.
+    moderatorLevel: numberValue(data.moderatorLevel, 0),
     developerLevel: numberValue(data.developerLevel, 0),
     knownLanguages: stringArray(data.knownLanguages),
   };
@@ -3492,6 +4070,19 @@ function hasTestingResult(checks) {
 
 function hasLogicResult(checks) {
   return Boolean(checks.isLogicReviewed) || checks.logicScore !== null && checks.logicScore !== undefined;
+}
+
+/**
+ * A stage clears when its score reaches the pass mark. Scores run 1..3 and the mark is 2, so the
+ * lowest score is a refusal rather than an approval.
+ *
+ * Until this existed, publication asked only whether a score was PRESENT — a reviewer scoring 1
+ * published the quest exactly as a reviewer scoring 3 did, which made the whole review stage
+ * decorative. A score below the mark leaves the lesson UNDER_REVIEW indefinitely; raising it
+ * publishes without any other action, and the reject action below is the way to send it back.
+ */
+function stagePassed(score) {
+  return score !== null && score !== undefined && score >= REVIEW_MIN_PASSING_SCORE;
 }
 
 function isReadyForTranslation(checks) {

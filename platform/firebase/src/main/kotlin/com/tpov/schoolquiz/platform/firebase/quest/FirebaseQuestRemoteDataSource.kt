@@ -64,7 +64,15 @@ class FirebaseQuestRemoteDataSource(
             .await()
     }
 
+    override suspend fun retirePublic(questId: String) {
+        functions
+            .getHttpsCallable(RETIRE_PUBLIC_QUEST)
+            .call(mapOf("questId" to questId))
+            .await()
+    }
+
     private companion object {
         const val SET_PUBLIC_QUEST_SHELF = "setPublicQuestShelf"
+        const val RETIRE_PUBLIC_QUEST = "retirePublicQuest"
     }
 }

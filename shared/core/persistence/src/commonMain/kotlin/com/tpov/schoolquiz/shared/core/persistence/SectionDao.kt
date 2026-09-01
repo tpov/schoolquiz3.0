@@ -51,9 +51,6 @@ interface SectionDao {
     @Query("DELETE FROM sections WHERE id = :id")
     suspend fun deleteById(id: String)
 
-    @Query("SELECT contentsVersion FROM sections WHERE id = :id")
-    suspend fun getContentsVersion(id: String): Long?
-
     private fun SectionEntity.shouldBeReplacedBySyncList(incoming: SectionEntity): Boolean =
         version < incoming.version ||
             lastModifiedAt < incoming.lastModifiedAt ||

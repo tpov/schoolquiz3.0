@@ -34,8 +34,6 @@ class FakeSectionLocalDataSource : SectionLocalDataSource {
 
     override suspend fun findById(id: String): SectionEntity? = store[id]
 
-    override suspend fun getLocalContentsVersion(id: String): Long? = store[id]?.contentsVersion
-
     fun seed(entities: List<SectionEntity>) {
         store.clear()
         entities.forEach { store[it.id] = it }

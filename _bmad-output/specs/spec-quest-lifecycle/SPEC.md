@@ -3,6 +3,7 @@ id: SPEC-quest-lifecycle
 companions:
   - brownfield.md
   - shelf-mechanism.md
+  - chat-contract.md
   - ../../../docs/architecture/0005-quest-lifecycle.md
   - ../../../docs/architecture/0006-roles-and-qualifications.md
 sources: []
@@ -53,9 +54,14 @@ This is a mandate, not an opportunity: the app cannot ship in this state, and Go
   - **success:** A direct SDK write that creates `quests/{id}` with any shelf is refused, and so is an update that changes `visibleOn`, `archived` or `catalogId` on a quest the caller authored. A rules test asserts both.
 
 - **CAP-7 — Privilege is granted by a person, never earned by ratings.**
-  - **intent:** An admin grants a qualification to a named person with a written reason, and the recipient is told; ratings feed a separate author-reputation number that confers nothing.
-  - **success:** No volume of ratings from any number of accounts changes any privilege gate. Granting works from inside the app for every role the review pipeline needs — tester, admin, translator, developer — refuses to act on the caller themselves, and records the reason. Existing farmed levels are zeroed in the same release.
-  - **note:** This is the only way a reviewer can come to exist. Today `testerLevel`, `adminLevel`, `translatorLevel`, `moderatorLevel` and `sponsorLevel` have no award path anywhere in either generation — the aggregator is hardcoded to `developerLevel` (`functions/index.js:91`) and none of the 38 exported functions grants a level. Without CAP-7 the review workforce cannot be created except by hand in the Firestore console.
+  - **intent:** An admin grants a qualification to a named person with a written reason, and the grant is recorded; ratings feed a separate author-reputation number that confers nothing.
+  - **success:** No volume of ratings from any number of accounts changes any privilege gate. Granting works from inside the app for every role the pipeline needs — tester, translator, moderator, admin, developer — refuses to act on the caller themselves, and records target, actor, previous and new level, and the reason. Existing farmed levels are zeroed in the same release.
+  - **note:** This is the only way a reviewer can come to exist today. `testerLevel`, `adminLevel`, `translatorLevel`, `moderatorLevel` and `sponsorLevel` have no award path anywhere in either generation — the aggregator is hardcoded to `developerLevel` (`functions/index.js:91`) and none of the 38 exported functions grants a level.
+  - **relation to ADR-0006:** the ADR reserves manual granting for ADMIN and DEVELOPER only, and has TESTER, TRANSLATOR and MODERATOR earned by passing an interview quest (`docs/architecture/0006-roles-and-qualifications.md:66-80`). That path cannot ship here — `CompletionEffect` and `OfferQualification` have zero occurrences in production code, and the `SessionMode.EXAM` an interview quest would run in is never constructed outside tests. CAP-7 therefore covers all six roles manually, and the ADR's automatic path is deferred to its own spec rather than contradicted.
+
+- **CAP-18 — Two reputations, visible and powerless.**
+  - **intent:** An author sees a score earned from how players rate their quests, and a reviewer sees one earned from how their verdicts matched the senior consensus. Neither opens any door.
+  - **success:** Both numbers are readable on a profile and move as they do today — the rating arithmetic and its exact reversibility are unchanged, only the field it lands in. No gate, rule or screen grants anything on either value.
 
 - **CAP-8 — Reputation stops opening other people's identity.**
   - **intent:** Reading another user's verification data or private documents requires an explicitly granted role, never the author-reputation number.
@@ -97,6 +103,10 @@ This is a mandate, not an opportunity: the app cannot ship in this state, and Go
   - **intent:** Any moderator can ban an ordinary user; banning a moderator requires a moderator at least 100 levels above them, or a developer.
   - **success:** A moderator attempting to ban a peer at or near their own level is refused server-side; the same call from someone 100 levels above, or from a developer, succeeds. A banned user cannot post.
 
+- **CAP-19 — A ban lasts as long as the rank of whoever issued it.**
+  - **intent:** The length of a ban is decided by the banning moderator's level, not chosen per case: a junior moderator can only ban briefly, and only the most senior can ban for good.
+  - **success:** A ban issued at `moderatorLevel` 100–199 expires after 7 days; at 200–300, after a month; above 300, or by a developer, it does not expire. An expired ban stops blocking without anyone acting, and the issuing level is recorded so the term can be audited afterwards.
+
 ## Constraints
 
 - A published quest holds **exactly one** shelf. Additive placement is refused, not deferred: `LessonResultOutboxWriter.kt:113-120` picks a single shelf by priority and `functions/tournament-ranking.js:288-296` forms a tournament group only from a tournament shelf, so a quest on `{arena, tournament}` would score in no tournament at all.
@@ -116,6 +126,7 @@ This is a mandate, not an opportunity: the app cannot ship in this state, and Go
 - **Typed `QuestPhase` / `PublicationShelf` enums across the modules.** The string literals are already consistent in all six places that name shelves; the refactor touches ~35 files and buys nothing this release.
 - **Exam mode, certificates, and qualification offers.** All three are absent from production code and all three have their own specs. Out of scope here.
 - **The chat itself.** Its data shape is fixed here so moderation can be built against it, and nothing more. No chat screen, no message delivery, no chat sync ships in this spec.
+- **Interview quests as the way to earn a qualification.** ADR-0006's automatic path needs `CompletionEffect`, `OfferQualification` and a constructible `SessionMode.EXAM`, none of which exist. Manual granting stands in for all six roles here; the automatic path is a separate spec, not a thing this one half-builds.
 - **Widening the rating scale, and any Bayesian or minimum-sample ranking.** Deferred until ratings drive a decision.
 
 ## Success signal

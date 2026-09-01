@@ -29,6 +29,7 @@ val quizzesPresentationModule =
                 questionRepository = get(),
                 catalogRepository = get(),
                 setPublicQuestShelf = get(),
+                retirePublicQuest = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
                 questContentSync = contentSync?.let { it::syncQuestContent } ?: { missingSync() },
                 lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { missingSync() },

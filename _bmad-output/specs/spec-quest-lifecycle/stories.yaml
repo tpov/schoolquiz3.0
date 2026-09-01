@@ -12,21 +12,22 @@
     scripts/rules-emulator-test.js, which already has actors and quest fixtures.
 
 - id: "2"
-  title: Grant a qualification to a named person, with a reason
+  title: "[NOT THIS WORKSTREAM] Grant a qualification to a named person, with a reason"
   description: >-
-    CAP-7, first half. A new admin-gated callable sets another user's qualification level and
-    records a written reason, because today no role can be created from inside the app at all.
+    CAP-7, first half. Owned by a separate agent at the owner's direction; listed here only so the
+    dependency is visible. Until it lands, qualifications are set by hand in the Firebase console.
   spec_checkpoint: false
   invoke_dev_with: >-
-    Copy the structure of decideVerification (functions/index.js:618-666): admin-gated, refuses
-    to act on the caller, writes users/{uid} and profiles/{uid} in one transaction in the shape
-    FirebaseUserStatsDataSource.kt:88 expects. Gate on adminLevel only — a developer must not be
-    able to mint developers, so do NOT reuse requireVerifier, which also accepts developerLevel.
-    Cover every role the review pipeline needs: tester, admin, translator, developer. Legacy's
-    grant dialog is the shape worth copying for the written reason and the recipient's notice
-    (legacy/network/.../ProfileAdapter.kt:104-169); its flaw to avoid was that the write was
-    client-side. Ship this BEFORE story 3 — zeroing the farmed levels without a grant path
-    would leave nobody able to review anything.
+    DO NOT IMPLEMENT IN THIS WORKSTREAM. Notes for whoever does: copy the structure of
+    decideVerification (functions/index.js:618-666) — refuses to act on the caller, writes
+    users/{uid} and profiles/{uid} in one transaction in the shape FirebaseUserStatsDataSource.kt:88
+    expects. The gate is rank-bounded, not admin-only: DEVELOPER is the top role, since
+    developerLevel overrides TESTING, LOGIC and TRANSLATION at functions/index.js:3450-3462 while
+    adminLevel covers only the first two. So an actor may grant any role strictly below their own
+    level and never to themselves. Resolve the target by nickname through nickname_claims, which
+    already maps canonical nickname to uid (functions/index.js:2902) and is server-only.
+    Watch the threshold inconsistency: admin gates read >= 100 but developer gates read > 100, so
+    granting a developer exactly 100 silently does nothing.
 
 - id: "3"
   title: Cut the automatic path from ratings to privilege

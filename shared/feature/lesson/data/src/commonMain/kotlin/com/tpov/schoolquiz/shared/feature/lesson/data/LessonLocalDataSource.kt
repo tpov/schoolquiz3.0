@@ -10,7 +10,6 @@ interface LessonLocalDataSource {
     suspend fun upsertFromSyncList(entity: LessonEntity) = upsertByIdIfNewerVersion(entity)
     suspend fun deleteById(id: String)
     suspend fun findById(id: String): LessonEntity?
-    suspend fun getLocalContentsVersion(id: String): Long?
 }
 
 class LessonLocalDataSourceImpl(
@@ -28,6 +27,4 @@ class LessonLocalDataSourceImpl(
     override suspend fun deleteById(id: String) = dao.deleteById(id)
 
     override suspend fun findById(id: String): LessonEntity? = dao.findById(id)
-
-    override suspend fun getLocalContentsVersion(id: String): Long? = dao.getContentsVersion(id)
 }

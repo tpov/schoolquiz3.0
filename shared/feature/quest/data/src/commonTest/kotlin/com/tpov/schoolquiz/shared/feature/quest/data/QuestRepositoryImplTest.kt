@@ -37,10 +37,9 @@ class QuestRepositoryImplTest {
         archived: Boolean = false,
         visibleOn: List<String> = listOf("home"),
         catalogId: String = "c1",
-        contentsVersion: Long = 0L,
-    ) = QuestDto(id, catalogId, "uid-a", "Title $id", null, visibleOn, null, 0, version, contentsVersion, 100L, archived)
+    ) = QuestDto(id, catalogId, "uid-a", "Title $id", null, visibleOn, null, 0, version, 100L, archived)
 
-    private fun makeEntity(id: String, version: Long = 1L, contentsVersion: Long = 0L) = QuestEntity(
+    private fun makeEntity(id: String, version: Long = 1L) = QuestEntity(
         id = id,
         catalogId = "c1",
         authorUid = "uid-a",
@@ -51,7 +50,6 @@ class QuestRepositoryImplTest {
         averageRating = null,
         averageRatingCount = 0,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = 0L,
         archived = false,
     )
@@ -142,9 +140,9 @@ class QuestRepositoryImplTest {
     @Test
     fun `when refresh succeeds then upserted quest observable via local`() = runTest {
         val local = FakeQuestLocalDataSource()
-        local.seed(listOf(makeEntity("q1", contentsVersion = 1L)))
+        local.seed(listOf(makeEntity("q1")))
         val fakeRemote = FakeQuestRemoteDataSource(
-            publicResults = listOf(makeDto("q1", version = 2L, contentsVersion = 3L)),
+            publicResults = listOf(makeDto("q1", version = 2L)),
         )
         val repo = makeRepository(local = local, remote = fakeRemote)
 
@@ -158,11 +156,11 @@ class QuestRepositoryImplTest {
     }
 
     @Test
-    fun `when remote quest returned with same contents version then id still cascades`() = runTest {
+    fun `when remote quest returned with unchanged version then id still cascades`() = runTest {
         val local = FakeQuestLocalDataSource()
-        local.seed(listOf(makeEntity("q1", version = 5L, contentsVersion = 10L)))
+        local.seed(listOf(makeEntity("q1", version = 5L)))
         val fakeRemote = FakeQuestRemoteDataSource(
-            publicResults = listOf(makeDto("q1", version = 5L, contentsVersion = 10L)),
+            publicResults = listOf(makeDto("q1", version = 5L)),
         )
         val repo = makeRepository(local = local, remote = fakeRemote)
 

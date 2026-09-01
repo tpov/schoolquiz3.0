@@ -9,7 +9,6 @@ fun CatalogDto.toEntity(): CatalogEntity = CatalogEntity(
     picturePath = picturePath,
     pictureUrl = null,
     version = version,
-    contentsVersion = contentsVersion,
     lastModifiedAt = lastModifiedAt,
     archived = archived,
     iconCategoryKey = iconCategoryKey,

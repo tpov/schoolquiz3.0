@@ -47,9 +47,6 @@ interface LessonDao {
     @Query("DELETE FROM lessons WHERE id = :id")
     suspend fun deleteById(id: String)
 
-    @Query("SELECT contentsVersion FROM lessons WHERE id = :id")
-    suspend fun getContentsVersion(id: String): Long?
-
     private fun LessonEntity.shouldBeReplacedBySyncList(incoming: LessonEntity): Boolean =
         version < incoming.version ||
             lastModifiedAt < incoming.lastModifiedAt ||

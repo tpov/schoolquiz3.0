@@ -42,7 +42,6 @@ class CatalogArchiveIntegrationTest {
                     picturePath = null,
                     pictureUrl = null,
                     version = 1L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 0L,
                     archived = false,
                 ),
@@ -55,7 +54,6 @@ class CatalogArchiveIntegrationTest {
                     name = "Catalog1",
                     picturePath = null,
                     version = 2L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 500L,
                     archived = true,
                 ),
@@ -80,7 +78,6 @@ class CatalogArchiveIntegrationTest {
                     name = "Ghost",
                     picturePath = null,
                     version = 1L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 100L,
                     archived = true,
                 ),
@@ -101,13 +98,13 @@ class CatalogArchiveIntegrationTest {
     fun `when one catalog archived and another not then only archived is removed`() = runTest {
         fakeLocal.seed(
             listOf(
-                CatalogEntity(id = "keep", name = "Keep", picturePath = null, pictureUrl = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 0L, archived = false),
-                CatalogEntity(id = "remove", name = "Remove", picturePath = null, pictureUrl = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 0L, archived = false),
+                CatalogEntity(id = "keep", name = "Keep", picturePath = null, pictureUrl = null, version = 1L, lastModifiedAt = 0L, archived = false),
+                CatalogEntity(id = "remove", name = "Remove", picturePath = null, pictureUrl = null, version = 1L, lastModifiedAt = 0L, archived = false),
             ),
         )
         fakeRemote.result = Result.success(
             listOf(
-                CatalogDto(id = "remove", name = "Remove", picturePath = null, version = 2L, contentsVersion = 0L, lastModifiedAt = 600L, archived = true),
+                CatalogDto(id = "remove", name = "Remove", picturePath = null, version = 2L, lastModifiedAt = 600L, archived = true),
             ),
         )
 

@@ -21,7 +21,6 @@ fun DocumentSnapshot.toQuestDto(): QuestDto {
         averageRating = doubleField("averageRating"),
         averageRatingCount = longField("averageRatingCount")?.toInt() ?: 0,
         version = longField("version") ?: 1L,
-        contentsVersion = longField("contentsVersion") ?: 0L,
         lastModifiedAt = millisField("lastModifiedAt") ?: 0L,
         archived = booleanField("archived") ?: false,
     )

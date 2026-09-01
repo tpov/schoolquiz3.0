@@ -84,6 +84,20 @@ class QuestPrivateSyncTest {
     }
 
     private class FakeLocal : QuestAuthoringLocalDataSource {
+        val rejections = mutableListOf<Pair<String, String?>>()
+
+        override suspend fun findOwnerUidsAwaitingReview(): Set<String> = awaitingReviewOwners
+
+        var awaitingReviewOwners: Set<String> = emptySet()
+
+        override suspend fun applyRejection(
+            draftId: String,
+            reason: String?,
+            updatedAtMs: Long,
+        ) {
+            rejections += draftId to reason
+        }
+
         val synced = mutableListOf<PrivateQuestSnapshot>()
 
         override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummaryEntity>> =

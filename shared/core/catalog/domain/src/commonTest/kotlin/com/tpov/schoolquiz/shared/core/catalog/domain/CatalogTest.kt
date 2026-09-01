@@ -14,14 +14,13 @@ import kotlin.test.assertNotEquals
  * docs/features/catalog-foundation/0-spec.md § "Domain Test Scenarios".
  *
  * Also covers new scenarios from docs/features/home-and-my-quests/0-spec.md
- * § "Domain Test Scenarios" (scenarios 6-9 for version / contentsVersion / archived).
+ * § "Domain Test Scenarios" (scenarios 6-9 for version / archived).
  *
  * Covered scenarios:
  *   3-10 : init-time validation (blank id, blank name, picturePath rules)
  *   16-17: data class equality (structural equality + difference on picturePath)
  *   hq-6 : version=0 throws (version must be >= 1)
- *   hq-7 : contentsVersion=-1 throws
- *   hq-8 : valid Catalog(version=1, contentsVersion=0, archived=false) constructs
+ *   hq-8 : valid Catalog(version=1, archived=false) constructs
  *   hq-9 : valid Catalog(archived=true) constructs
  */
 class CatalogTest {
@@ -182,44 +181,24 @@ class CatalogTest {
                 name = "Name",
                 picturePath = null,
                 version = 0,
-                contentsVersion = 0,
                 archived = false,
             )
         }
         assertEquals(true, error.message?.contains("version"))
     }
 
-    // ── home-and-my-quests Scenario 7 ─────────────────────────────────────────
-    // GIVEN Catalog with contentsVersion=-1 WHEN construct THEN throws
-    @Test
-    fun `hq scenario 7 Catalog with negative contentsVersion throws IllegalArgumentException`() {
-        val error = assertFailsWith<IllegalArgumentException> {
-            Catalog(
-                id = CatalogId("id"),
-                name = "Name",
-                picturePath = null,
-                version = 1,
-                contentsVersion = -1,
-                archived = false,
-            )
-        }
-        assertEquals(true, error.message?.contains("contentsVersion"))
-    }
-
     // ── home-and-my-quests Scenario 8 ─────────────────────────────────────────
-    // GIVEN valid Catalog(version=1, contentsVersion=0, archived=false) WHEN construct THEN no exception
+    // GIVEN valid Catalog(version=1, archived=false) WHEN construct THEN no exception
     @Test
-    fun `hq scenario 8 Catalog with version 1 and contentsVersion 0 constructs without exception`() {
+    fun `hq scenario 8 Catalog with version 1 constructs without exception`() {
         val catalog = Catalog(
             id = CatalogId("surveys"),
             name = "Опросы",
             picturePath = null,
             version = 1,
-            contentsVersion = 0,
             archived = false,
         )
         assertEquals(1L, catalog.version)
-        assertEquals(0L, catalog.contentsVersion)
         assertEquals(false, catalog.archived)
     }
 
@@ -232,7 +211,6 @@ class CatalogTest {
             name = "Old Catalog",
             picturePath = null,
             version = 1,
-            contentsVersion = 0,
             archived = true,
         )
         assertEquals(true, catalog.archived)
@@ -240,14 +218,13 @@ class CatalogTest {
 
     // ── Backward-compatibility: existing tests still pass with new default fields ──
     @Test
-    fun `Catalog default fields version=1 contentsVersion=0 archived=false lastModifiedAt=0 are applied`() {
+    fun `Catalog default fields version=1 archived=false lastModifiedAt=0 are applied`() {
         val catalog = Catalog(
             id = CatalogId("surveys"),
             name = "Опросы",
             picturePath = null,
         )
         assertEquals(1L, catalog.version)
-        assertEquals(0L, catalog.contentsVersion)
         assertEquals(false, catalog.archived)
         assertEquals(0L, catalog.lastModifiedAt)
     }

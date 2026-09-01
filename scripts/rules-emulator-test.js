@@ -45,6 +45,9 @@ const ACTORS = {
   developerEdge: {profile: {developerLevel: QUALIFIED}},
   // Signed in anonymously: request.auth is non-null, but no trusted profile exists.
   anon: {profile: null, anonymous: true},
+  // Banned with no expiry, and banned with one that has already passed.
+  banned: {profile: {}, ban: {bannedAtMs: 1, bannedUntilMs: null, bannedByUid: "moderator"}},
+  bannedExpired: {profile: {}, ban: {bannedAtMs: 1, bannedUntilMs: 2, bannedByUid: "moderator"}},
 };
 
 let testEnv;
@@ -89,6 +92,7 @@ async function seed() {
         lifePointsUpdatedAtMs: 0,
         standardHearts: 5,
         qualifications: {admin: 0, developer: 0, moderator: 0, tester: 0, sponsor: 0, translater: 0},
+        ...(actor.ban || {}),
       });
       if (actor.profile) {
         await store.doc(`profiles/${uid}`).set({
@@ -157,6 +161,10 @@ async function seed() {
       canonical: "продаётся", nickname: "Продаётся", price: 5, sellerUid: "author",
     });
     await store.doc("configs/nickname_policy").set({minLength: 3});
+    await store.doc("reports/r-seed").set({
+      id: "r-seed", targetType: "COMMENT", targetId: "c-1", reporterUid: "player",
+      reason: "спам", status: "OPEN", createdAtMs: 1,
+    });
   });
 }
 
@@ -221,19 +229,23 @@ async function testQuests() {
   await allow("quests: автор читает свой черновик", () => db("author").doc("quests/draft").get());
   await deny("quests: чужой читает черновик", () => db("outsider").doc("quests/draft").get());
 
-  await allow("quests: автор создаёт свой квест", () =>
+  // Creation is closed to every client. The app writes authored content to
+  // private/{uid}/catalogs/{c}/quests/{q}; a document under /quests only ever appears from the
+  // publication pass. The last assertion is the hole this closed: the old allowlist admitted
+  // 'visibleOn', so any signed-in user could post a card onto the home shelf unreviewed.
+  await deny("quests: автор не создаёт квест напрямую", () =>
     db("author").doc("quests/fresh").set(NEW_QUEST));
   await deny("quests: создание от чужого имени", () =>
     db("outsider").doc("quests/forged").set(NEW_QUEST));
-  await deny("quests: создание с рейтингом", () =>
-    db("author").doc("quests/rated").set({...NEW_QUEST, id: "rated", averageRating: 5}));
-  await deny("quests: создание с version != 1", () =>
-    db("author").doc("quests/v9").set({...NEW_QUEST, id: "v9", version: 9}));
-  await deny("quests: создание с посторонним полем", () =>
-    db("author").doc("quests/extra").set({...NEW_QUEST, id: "extra", isFeatured: true}));
+  await deny("quests: создание сразу на витрине", () =>
+    db("author").doc("quests/onhome").set({...NEW_QUEST, id: "onhome", visibleOn: ["home"]}));
+  await deny("quests: создание сразу на арене", () =>
+    db("author").doc("quests/onarena").set({...NEW_QUEST, id: "onarena", visibleOn: ["arena"]}));
 
   await allow("quests: автор правит заголовок", () =>
     db("author").doc("quests/published").update({title: "Другой"}));
+  await allow("quests: автор правит описание и картинку", () =>
+    db("author").doc("quests/published").update({description: "Иначе", picturePath: "p.jpg"}));
   await deny("quests: чужой правит квест", () =>
     db("outsider").doc("quests/published").update({title: "Захвачено"}));
   await deny("quests: автор подменяет authorUid", () =>
@@ -244,6 +256,22 @@ async function testQuests() {
     db("author").doc("quests/published").update({contentsVersion: 99}));
   await deny("quests: автор правит рейтинг", () =>
     db("author").doc("quests/published").update({averageRating: 5}));
+
+  // Placement is server-owned. These three keys were on the update allowlist, which made the
+  // developer-only setPublicQuestShelf callable one writer of visibleOn among two.
+  await deny("quests: автор переносит свой квест на витрину", () =>
+    db("author").doc("quests/published").update({visibleOn: ["home"]}));
+  await deny("quests: автор переносит свой квест в турнир", () =>
+    db("author").doc("quests/published").update({visibleOn: ["tournament"]}));
+  await deny("quests: автор снимает свой квест с полок", () =>
+    db("author").doc("quests/published").update({visibleOn: []}));
+  await deny("quests: автор правит archived", () =>
+    db("author").doc("quests/published").update({archived: true}));
+  await deny("quests: автор переносит квест в другой каталог", () =>
+    db("author").doc("quests/published").update({catalogId: "cat-2"}));
+  // Placement stays server-owned for admins too: the callable is the only writer.
+  await deny("quests: даже админ не пишет visibleOn напрямую", () =>
+    db("admin").doc("quests/published").update({visibleOn: ["home"]}));
 
   await deny("quests: автор удаляет свой квест", () => db("author").doc("quests/draft").delete());
   await allow("quests: админ удаляет квест", () => db("admin").doc("quests/draft").delete());
@@ -385,6 +413,61 @@ async function testNicknameListings() {
     db("author").doc("nickname_listings/lot-1").delete());
 }
 
+/**
+ * Comments are the one user-generated surface: every post must name its author by uid, pinned to
+ * the signed-in user, and nobody edits or deletes directly — removal is the moderator callable.
+ */
+async function testLessonComments() {
+  const comment = (authorUid) => ({
+    lessonId: "les-1",
+    authorUid,
+    authorNickname: "Ник",
+    authorAvatarUrl: null,
+    text: "Отличный урок",
+    createdAt: 1,
+  });
+  await allow("comments: игрок пишет от своего имени", () =>
+    db("player").doc("lessonComments/c-1").set(comment("player")));
+  await deny("comments: чужой uid в авторе", () =>
+    db("player").doc("lessonComments/c-forged").set(comment("author")));
+  await deny("comments: без автора", () =>
+    db("player").doc("lessonComments/c-anon").set({
+      lessonId: "les-1", authorNickname: "Ник", text: "Без подписи", createdAt: 1,
+    }));
+  await deny("comments: гость не пишет", () =>
+    db("guest").doc("lessonComments/c-guest").set(comment(null)));
+  await allow("comments: вошедший читает", () => db("player").doc("lessonComments/c-1").get());
+  await deny("comments: автор не правит свой", () =>
+    db("player").doc("lessonComments/c-1").update({text: "Правка"}));
+  await deny("comments: автор не удаляет свой", () =>
+    db("player").doc("lessonComments/c-1").delete());
+  await deny("comments: админ не удаляет напрямую", () =>
+    db("admin").doc("lessonComments/c-1").delete());
+}
+
+async function testReportsAndBans() {
+  await deny("reports: игрок не создаёт отчёт напрямую", () =>
+    db("player").doc("reports/r-1").set({
+      targetType: "COMMENT", targetId: "c-1", reporterUid: "player", reason: "спам", status: "OPEN",
+    }));
+  await deny("reports: модератор не пишет вердикт напрямую", () =>
+    db("moderator").doc("reports/r-seed").update({status: "UPHELD"}));
+  await allow("reports: свой отчёт виден автору", () => db("player").doc("reports/r-seed").get());
+  await allow("reports: модератор видит чужой отчёт", () =>
+    db("moderator").doc("reports/r-seed").get());
+  await deny("reports: посторонний не видит чужой отчёт", () =>
+    db("outsider").doc("reports/r-seed").get());
+
+  const comment = (uid) => ({
+    lessonId: "les-1", authorUid: uid, authorNickname: uid, authorAvatarUrl: null,
+    text: "Текст", createdAt: 1,
+  });
+  await deny("бан: забаненный не пишет комментарий", () =>
+    db("banned").doc("lessonComments/c-banned").set(comment("banned")));
+  await allow("бан: истёкший бан больше не мешает", () =>
+    db("bannedExpired").doc("lessonComments/c-expired").set(comment("bannedExpired")));
+}
+
 async function testServerOnlyCollections() {
   await deny("nickname_claims: админ не читает", () => db("admin").doc("nickname_claims/claim-1").get());
   await deny("nickname_claims: игрок не пишет", () =>
@@ -418,6 +501,8 @@ async function main() {
   await testVerificationRequests();
   await testCatalogsAndTournaments();
   await testNicknameListings();
+  await testLessonComments();
+  await testReportsAndBans();
   await testServerOnlyCollections();
 
   await testEnv.cleanup();

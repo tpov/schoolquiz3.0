@@ -29,6 +29,8 @@
     <string name="quizzes_shelf_show_arena">Показать на арене</string>
     <string name="quizzes_shelf_show_qualification">Показать в отборочном</string>
     <string name="quizzes_shelf_show_world">Показать в чемпионате мира</string>
+    <string name="quizzes_shelf_show_archive">Вернуть в архив</string>
+    <string name="quizzes_shelf_retire">Снять с публикации всюду</string>
     <string name="quizzes_cd_random_quest">Случайный квест</string>
     <string name="quizzes_share_text">Квест «%1$s» — %2$s</string>
 </resources>

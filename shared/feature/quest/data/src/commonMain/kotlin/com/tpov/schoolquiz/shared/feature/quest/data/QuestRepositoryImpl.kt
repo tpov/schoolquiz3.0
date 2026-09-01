@@ -71,6 +71,16 @@ class QuestRepositoryImpl(
             Result.failure(e)
         }
 
+    override suspend fun retirePublic(questId: QuestId): Result<Unit> =
+        try {
+            remote.retirePublic(questId.value)
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
     override suspend fun refreshFromRemote(
         currentUserUid: String?,
         availableShelves: Set<String>,

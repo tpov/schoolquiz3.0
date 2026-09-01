@@ -10,7 +10,6 @@ data class QuestDto(
     val averageRating: Double?,
     val averageRatingCount: Int,
     val version: Long,
-    val contentsVersion: Long,
     val lastModifiedAt: Long,
     val archived: Boolean,
 )

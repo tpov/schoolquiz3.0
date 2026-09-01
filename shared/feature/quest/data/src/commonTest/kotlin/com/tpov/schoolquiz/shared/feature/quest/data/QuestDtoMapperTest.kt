@@ -24,10 +24,9 @@ class QuestDtoMapperTest {
         averageRating: Double? = null,
         averageRatingCount: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 0L,
         archived: Boolean = false,
-    ) = QuestDto(id, catalogId, authorUid, title, picturePath, visibleOn, averageRating, averageRatingCount, version, contentsVersion, lastModifiedAt, archived)
+    ) = QuestDto(id, catalogId, authorUid, title, picturePath, visibleOn, averageRating, averageRatingCount, version, lastModifiedAt, archived)
 
     // toEntity maps all fields correctly
     @Test
@@ -42,7 +41,6 @@ class QuestDtoMapperTest {
             averageRating = 2.7,
             averageRatingCount = 5,
             version = 3L,
-            contentsVersion = 1L,
             lastModifiedAt = 12345L,
             archived = false,
         )
@@ -57,7 +55,6 @@ class QuestDtoMapperTest {
         assertEquals("https://example.com/pic.jpg", entity.pictureUrl)
         assertEquals(setOf("home", "arena"), entity.visibleOn)
         assertEquals(3L, entity.version)
-        assertEquals(1L, entity.contentsVersion)
         assertEquals(12345L, entity.lastModifiedAt)
         assertEquals(false, entity.archived)
         assertEquals(5, entity.averageRatingCount)

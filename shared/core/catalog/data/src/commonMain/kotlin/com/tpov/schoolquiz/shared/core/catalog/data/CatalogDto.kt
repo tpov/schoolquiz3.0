@@ -5,7 +5,6 @@ data class CatalogDto(
     val name: String,
     val picturePath: String?,
     val version: Long,
-    val contentsVersion: Long,
     val lastModifiedAt: Long,
     val archived: Boolean,
     val iconCategoryKey: String? = null,

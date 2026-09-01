@@ -355,8 +355,11 @@ class AppShellScreenTest {
             syncScheduler = object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
 
+                override fun enqueueManualProfileSync() = Unit
+
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
-override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+
+                override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
             myQuestsFactory = { _, _, _ ->
                 object : MyQuestsComponent {

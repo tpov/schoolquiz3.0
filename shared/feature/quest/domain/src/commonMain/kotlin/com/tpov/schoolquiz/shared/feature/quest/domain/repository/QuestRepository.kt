@@ -107,11 +107,17 @@ interface QuestRepository {
     ): Result<Unit> = Result.success(Unit)
 
     /**
+     * Takes a published quest off every shelf. Server contract: `visibleOn = []` plus one
+     * sync_change; on the next refresh of this quest the empty shelf list deletes the local row.
+     */
+    suspend fun retirePublic(questId: QuestId): Result<Unit> = Result.success(Unit)
+
+    /**
      * Pulls quests from remote for the given filter and persists them locally.
      *
      * **No-op guard**: if [catalogIdsToSync] is empty, returns immediately without
-     * any Firestore reads. Step 2 of the cascade is only triggered when at least one
-     * catalog had its `contentsVersion` changed.
+     * any Firestore reads. Step 2 is only triggered for catalogs the `sync_changes`
+     * journal reported as changed.
      *
      * **Two independent Firestore queries** (Firebase does not support
      * `array-contains-any` + `where-in` in a single query — see spec FR#14):
@@ -156,7 +162,8 @@ interface QuestRepository {
      *                         When null, Query A (own quests by authorUid) is skipped;
      *                         only Query B (public quests by visibleOn) runs.
      * @param availableShelves shelves the current user has access to (e.g. `{"home", "arena"}`).
-     * @param catalogIdsToSync catalog ids whose `contentsVersion` changed (triggers quest pull).
+     * @param catalogIdsToSync catalog ids the `sync_changes` journal reported as changed
+     *                         (triggers quest pull).
      *                         Empty set → no-op (no Firestore reads, returns success immediately).
      * @param cursor           local questsCursor (max `lastModifiedAt` seen so far).
      * @return [Result.success] containing the set of processed [QuestId]s (passed to section sync

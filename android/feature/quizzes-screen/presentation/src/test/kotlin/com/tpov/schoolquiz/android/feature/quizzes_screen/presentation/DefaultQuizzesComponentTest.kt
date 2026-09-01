@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Stub
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import kotlinx.coroutines.Dispatchers
 import org.junit.After
@@ -88,6 +89,7 @@ class DefaultQuizzesComponentTest {
             questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
+            retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
             mainContext = Dispatchers.Unconfined,
         )

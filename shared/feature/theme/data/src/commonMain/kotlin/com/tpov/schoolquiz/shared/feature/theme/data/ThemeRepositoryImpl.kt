@@ -21,9 +21,6 @@ class ThemeRepositoryImpl(
     override suspend fun getById(id: ThemeId): Theme? =
         local.findById(id.value)?.toDomain()
 
-    override suspend fun getLocalContentsVersion(id: ThemeId): Long? =
-        local.getLocalContentsVersion(id.value)
-
     override suspend fun refreshByIds(ids: Set<ThemeId>): Result<Unit> {
         if (ids.isEmpty()) return Result.success(Unit)
         return try {

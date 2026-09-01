@@ -30,6 +30,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonReposit
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
@@ -59,6 +60,7 @@ class DefaultQuizzesComponent(
     private val questionRepository: QuestionRepository,
     private val catalogRepository: CatalogRepository,
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
+    private val retirePublicQuest: RetirePublicQuestUseCase,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
     private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
@@ -321,6 +323,7 @@ class DefaultQuizzesComponent(
                         lessonRepository,
                         questionRepository,
                         setPublicQuestShelf,
+                        retirePublicQuest,
                         questContentSync,
                         navigation,
                         mainContext,

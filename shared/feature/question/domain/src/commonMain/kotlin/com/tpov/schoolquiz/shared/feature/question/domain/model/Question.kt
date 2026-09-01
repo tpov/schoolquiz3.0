@@ -6,9 +6,8 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 /**
  * Domain entity representing a question within a [Lesson].
  *
- * Question is the **leaf** of the 6-level hierarchy — it has no children and
- * therefore no [contentsVersion]. Stored in Firestore `questions/{questionId}`
- * with a [lessonId] reference.
+ * Question is the **leaf** of the 6-level hierarchy — it has no children.
+ * Stored in Firestore `questions/{questionId}` with a [lessonId] reference.
  *
  * [payload] is a serialized JSON string conforming to ADR-0003 question schema
  * (SingleChoice, MultipleChoice, Ordering, FillBlank types). Domain layer treats
@@ -48,7 +47,6 @@ data class Question(
     val order: Int,
     /**
      * Monotonically-increasing version of this question's own fields.
-     * Leaf node — no contentsVersion.
      * Invariant: >= 1.
      */
     val version: Long,

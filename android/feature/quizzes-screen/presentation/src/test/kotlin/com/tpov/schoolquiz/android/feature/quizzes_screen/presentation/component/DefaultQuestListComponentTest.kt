@@ -21,6 +21,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
@@ -93,6 +94,7 @@ class DefaultQuestListComponentTest {
             lessonRepository = fakeLessonRepo,
             questionRepository = fakeQuestionRepo,
             setPublicQuestShelf = SetPublicQuestShelfUseCase(fakeRepo),
+            retirePublicQuest = RetirePublicQuestUseCase(fakeRepo),
             questContentSync = { questId ->
                 syncedQuestIds = syncedQuestIds + questId
                 Result.success(Unit)
@@ -128,7 +130,6 @@ class DefaultQuestListComponentTest {
         averageRating = averageRating,
         averageRatingCount = averageRatingCount,
         version = 1L,
-        contentsVersion = 0L,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )
@@ -160,7 +161,6 @@ class DefaultQuestListComponentTest {
                     title = "Section",
                     order = 0,
                     version = 1,
-                    contentsVersion = 1,
                     lastModifiedAt = 1,
                 ),
             ),
@@ -173,14 +173,13 @@ class DefaultQuestListComponentTest {
                     title = "Theme",
                     order = 0,
                     version = 1,
-                    contentsVersion = 1,
                     lastModifiedAt = 1,
                 ),
             ),
         )
         fakeLessonRepo.emit(
             listOf(
-                Lesson(lesson, themeId, "Lesson", order = 0, version = 1, contentsVersion = 1, lastModifiedAt = 1),
+                Lesson(lesson, themeId, "Lesson", order = 0, version = 1, lastModifiedAt = 1),
             ),
         )
         return lesson

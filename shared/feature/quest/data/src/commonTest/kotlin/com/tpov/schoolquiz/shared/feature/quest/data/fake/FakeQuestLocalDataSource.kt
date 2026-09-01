@@ -2,7 +2,6 @@ package com.tpov.schoolquiz.shared.feature.quest.data.fake
 
 import com.tpov.schoolquiz.shared.core.persistence.QuestEntity
 import com.tpov.schoolquiz.shared.feature.quest.data.QuestLocalDataSource
-import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -53,8 +52,6 @@ class FakeQuestLocalDataSource : QuestLocalDataSource {
     }
 
     override suspend fun findById(id: String): QuestEntity? = store[id]
-
-    suspend fun getLocalContentsVersion(id: QuestId): Long? = store[id.value]?.contentsVersion
 
     fun seed(quests: List<QuestEntity>) {
         store.clear()

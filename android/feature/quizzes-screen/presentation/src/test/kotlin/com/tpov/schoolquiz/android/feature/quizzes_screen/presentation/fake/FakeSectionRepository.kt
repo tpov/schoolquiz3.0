@@ -20,6 +20,4 @@ class FakeSectionRepository : SectionRepository {
 
     override suspend fun refreshByParents(questIds: Set<QuestId>, cursor: Long): Result<Set<SectionId>> =
         Result.success(emptySet())
-
-    override suspend fun getLocalContentsVersion(id: SectionId): Long? = null
 }

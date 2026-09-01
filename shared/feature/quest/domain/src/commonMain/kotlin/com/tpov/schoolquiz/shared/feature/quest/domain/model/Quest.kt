@@ -73,11 +73,6 @@ data class Quest(
      */
     val version: Long,
     /**
-     * Version counter tracking any changes in child entities (sections, etc.).
-     * Invariant: >= 0.
-     */
-    val contentsVersion: Long,
-    /**
      * Server-set timestamp (Unix millis) of the last write.
      * Used as delta-sync cursor: `where('lastModifiedAt', '>', localCursor)`.
      * Set by Firestore FieldValue.serverTimestamp() at write time.
@@ -130,7 +125,6 @@ data class Quest(
             "Quest.averageRatingCount must be >= 0, got $averageRatingCount"
         }
         require(version >= 1) { "Quest.version must be >= 1, got $version" }
-        require(contentsVersion >= 0) { "Quest.contentsVersion must be >= 0, got $contentsVersion" }
         require(lastModifiedAt >= 0) { "Quest.lastModifiedAt must be >= 0, got $lastModifiedAt" }
     }
 }

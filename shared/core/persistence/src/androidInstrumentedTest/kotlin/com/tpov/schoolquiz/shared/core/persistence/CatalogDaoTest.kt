@@ -64,7 +64,6 @@ class CatalogDaoTest {
             picturePath = null,
             pictureUrl = null,
             version = version,
-            contentsVersion = 0L,
             lastModifiedAt = 0L,
             archived = archived,
         ),

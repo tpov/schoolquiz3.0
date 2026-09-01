@@ -7,8 +7,14 @@ class FakeSyncScheduler : SyncScheduler {
     var enqueueManualSyncCalls: Int = 0
     var appliedFrequencies: MutableList<SyncFrequency> = mutableListOf()
 
+    var enqueueManualProfileSyncCalls: Int = 0
+
     override fun enqueueManualSync() {
         enqueueManualSyncCalls++
+    }
+
+    override fun enqueueManualProfileSync() {
+        enqueueManualProfileSyncCalls++
     }
 
     var appliedProfileFrequencies: MutableList<SyncFrequency> = mutableListOf()

@@ -84,8 +84,6 @@ class FakeLessonRepository(
         return Result.success(processedIds)
     }
 
-    override suspend fun getLocalContentsVersion(id: LessonId): Long? = cache.value[id]?.contentsVersion
-
     // ── Test helpers ──────────────────────────────────────────────────────────
 
     fun seed(lessons: List<Lesson>) { cache.value = lessons.associateBy { it.id } }

@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.platform.firebase.discussion
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
@@ -12,6 +13,7 @@ import kotlinx.coroutines.tasks.await
 
 class FirebaseLessonCommentRepository(
     private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth,
 ) : LessonCommentRepository {
     override fun observe(lessonId: LessonId): Flow<List<LessonComment>> =
         callbackFlow {
@@ -43,6 +45,12 @@ class FirebaseLessonCommentRepository(
                 .add(
                     mapOf(
                         FIELD_LESSON_ID to lessonId.value,
+                        // The rules refuse a create whose authorUid is not the signed-in uid,
+                        // so this cannot be forged — and without it there is nobody to ban.
+                        FIELD_AUTHOR_UID to
+                            requireNotNull(auth.currentUser?.uid) {
+                                "Cannot post a comment while signed out"
+                            },
                         FIELD_AUTHOR_NICKNAME to authorNickname,
                         FIELD_AUTHOR_AVATAR to authorAvatarUrl,
                         FIELD_TEXT to text,
@@ -56,6 +64,7 @@ class FirebaseLessonCommentRepository(
         LessonComment(
             id = id,
             lessonId = LessonId(getString(FIELD_LESSON_ID).orEmpty()),
+            authorUid = getString(FIELD_AUTHOR_UID),
             authorNickname = getString(FIELD_AUTHOR_NICKNAME).orEmpty(),
             authorAvatarUrl = getString(FIELD_AUTHOR_AVATAR),
             text = getString(FIELD_TEXT).orEmpty(),
@@ -65,6 +74,7 @@ class FirebaseLessonCommentRepository(
     private companion object {
         const val COLLECTION = "lessonComments"
         const val FIELD_LESSON_ID = "lessonId"
+        const val FIELD_AUTHOR_UID = "authorUid"
         const val FIELD_AUTHOR_NICKNAME = "authorNickname"
         const val FIELD_AUTHOR_AVATAR = "authorAvatarUrl"
         const val FIELD_TEXT = "text"

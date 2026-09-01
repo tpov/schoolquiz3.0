@@ -20,6 +20,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonReposit
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
@@ -50,6 +51,7 @@ class DefaultQuestListComponent(
     private val lessonRepository: LessonRepository,
     private val questionRepository: QuestionRepository,
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
+    private val retirePublicQuest: RetirePublicQuestUseCase,
     private val questContentSync: suspend (QuestId) -> Result<Unit>,
     private val navigation: StackNavigation<QuizzesConfig>,
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
@@ -150,6 +152,19 @@ class DefaultQuestListComponent(
         targetShelf: String,
     ) {
         setQuestShelf(quest, targetShelf, dismissOnSuccess = false)
+    }
+
+    override fun onRetireClick(quest: QuestDisplayItem) {
+        scope.launch {
+            retirePublicQuest(quest.id)
+                .onSuccess {
+                    // The refresh sees the empty shelf list and deletes the local row.
+                    questRepository.refreshByIds(setOf(quest.id))
+                }
+                .onFailure { error ->
+                    Log.w(TAG, "Failed to retire quest ${quest.id.value}", error)
+                }
+        }
     }
 
     private fun setQuestShelf(

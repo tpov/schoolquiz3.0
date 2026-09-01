@@ -15,7 +15,7 @@ import kotlin.test.assertNotNull
  * § "Domain Test Scenarios":
  *   3-4   : QuestId blank / valid
  *   10-17 : Quest invariants (authorUid, title, picturePath, visibleOn, averageRating,
- *            averageRatingCount, version, contentsVersion, lastModifiedAt)
+ *            averageRatingCount, version, lastModifiedAt)
  */
 class QuestValueObjectsTest {
 
@@ -144,13 +144,6 @@ class QuestValueObjectsTest {
     }
 
     @Test
-    fun `Quest with negative contentsVersion throws`() {
-        assertFailsWith<IllegalArgumentException> {
-            validQuest(contentsVersion = -1L)
-        }
-    }
-
-    @Test
     fun `Quest with negative lastModifiedAt throws`() {
         assertFailsWith<IllegalArgumentException> {
             validQuest(lastModifiedAt = -1L)
@@ -203,14 +196,12 @@ class QuestValueObjectsTest {
             averageRating = 1.5f,
             averageRatingCount = 5,
             version = 3L,
-            contentsVersion = 2L,
             lastModifiedAt = 1714000000000L,
         )
         assertEquals(setOf("home", "arena"), q.visibleOn)
         assertEquals(1.5f, q.averageRating)
         assertEquals(5, q.averageRatingCount)
         assertEquals(3L, q.version)
-        assertEquals(2L, q.contentsVersion)
         assertEquals(1714000000000L, q.lastModifiedAt)
     }
 
@@ -258,7 +249,6 @@ class QuestValueObjectsTest {
         averageRating: Float? = null,
         averageRatingCount: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 0L,
         archived: Boolean = false,
     ) = Quest(
@@ -271,7 +261,6 @@ class QuestValueObjectsTest {
         averageRating = averageRating,
         averageRatingCount = averageRatingCount,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

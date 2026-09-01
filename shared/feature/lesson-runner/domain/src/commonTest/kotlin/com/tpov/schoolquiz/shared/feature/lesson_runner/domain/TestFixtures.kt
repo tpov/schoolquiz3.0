@@ -94,7 +94,6 @@ fun makeLesson(
     title = "Test Lesson",
     order = 0,
     version = version,
-    contentsVersion = 1L,
     lastModifiedAt = 1000L,
 )
 

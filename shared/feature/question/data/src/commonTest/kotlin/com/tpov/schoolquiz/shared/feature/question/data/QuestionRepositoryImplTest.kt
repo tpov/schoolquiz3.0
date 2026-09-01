@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
  * JVM tests for QuestionRepositoryImpl.
  * Source: docs/features/home-and-my-quests/plan/phase-02/tests.md §3 (Question — leaf node)
  *
- * Question is a LEAF node — no contentsVersion, no cascade trigger.
+ * Question is a LEAF node — nothing is pulled below it.
  * Returns Result<Unit> (not Result<Set<QuestionId>>).
  */
 class QuestionRepositoryImplTest {
@@ -140,7 +140,6 @@ class QuestionRepositoryImplTest {
         assertEquals(2, fakeRemote.lastLessonIds.size)
     }
 
-    // Leaf node: no contentsVersion on QuestionEntity — verified by compilation only
     // QuestionEntity fields: id, lessonId, text, payload, language, order, version, lastModifiedAt, archived
     @Test
     fun `when multiple questions returned then all processed`() = runTest {

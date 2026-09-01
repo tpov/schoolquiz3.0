@@ -86,6 +86,20 @@ class QuestArenaSubmissionSyncTest {
         private val draft: QuestAuthoringEntityBundle?,
         private val pending: MutableList<QuestArenaSubmissionEntity>,
     ) : QuestAuthoringLocalDataSource {
+        val rejections = mutableListOf<Pair<String, String?>>()
+
+        override suspend fun findOwnerUidsAwaitingReview(): Set<String> = awaitingReviewOwners
+
+        var awaitingReviewOwners: Set<String> = emptySet()
+
+        override suspend fun applyRejection(
+            draftId: String,
+            reason: String?,
+            updatedAtMs: Long,
+        ) {
+            rejections += draftId to reason
+        }
+
         val sentIds = mutableListOf<String>()
         val failures = mutableListOf<Failure>()
 

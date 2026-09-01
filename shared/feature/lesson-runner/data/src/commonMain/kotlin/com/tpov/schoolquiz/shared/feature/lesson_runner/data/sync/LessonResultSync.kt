@@ -19,17 +19,31 @@ class LessonResultSync(
     private val answerDao: QuestionAnswerDao? = null,
 ) : Syncable {
 
+    /**
+     * Отправляет обе очереди — и не даёт одной уронить другую.
+     *
+     * Раньше здесь был живой дефект: [syncAttempts] после пометки неудачи бросал исключение, и до
+     * [syncRatings] управление не доходило вовсе. Одна устойчиво отвергаемая попытка урока
+     * навсегда останавливала отправку всех оценок квестов. Теперь каждая очередь идёт своим
+     * заходом, а наружу отдаётся первая неудача — уже после того, как обе попробовали (AD-22).
+     */
     override suspend fun sync(): Result<Unit> {
-        return try {
-            syncAttempts()
-            syncRatings()
+        val attempts = runStep { syncAttempts() }
+        val ratings = runStep { syncRatings() }
+        return attempts.exceptionOrNull()?.let { Result.failure(it) }
+            ?: ratings.exceptionOrNull()?.let { Result.failure(it) }
+            ?: Result.success(Unit)
+    }
+
+    private suspend fun runStep(block: suspend () -> Unit): Result<Unit> =
+        try {
+            block()
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
 
     private suspend fun syncAttempts() {
         val pending = outboxDao.pendingAttempts(batchSize)
@@ -42,7 +56,7 @@ class LessonResultSync(
             throw e
         } catch (e: Exception) {
             outboxDao.markAttemptsFailed(ids, e.syncError())
-            throw e
+            throw e // наверх ловит runStep: соседняя очередь всё равно пойдёт
         }
     }
 
@@ -57,7 +71,7 @@ class LessonResultSync(
             throw e
         } catch (e: Exception) {
             outboxDao.markRatingsFailed(ids, e.syncError())
-            throw e
+            throw e // наверх ловит runStep
         }
     }
 

@@ -98,7 +98,6 @@ class DefaultLessonListComponentPhase06Test {
         title = title,
         order = order,
         version = 1L,
-        contentsVersion = 0L,
         lastModifiedAt = 0L,
     )
 

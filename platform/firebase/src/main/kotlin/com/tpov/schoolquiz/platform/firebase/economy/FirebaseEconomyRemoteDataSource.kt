@@ -1,34 +1,62 @@
 package com.tpov.schoolquiz.platform.firebase.economy
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
+import com.tpov.schoolquiz.platform.firebase.network.toSyncError
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.LessonUnlockRequest
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.ShopPurchaseRequest
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import kotlinx.coroutines.tasks.await
+import java.io.IOException
 
 class FirebaseEconomyRemoteDataSource(
     private val functions: FirebaseFunctions,
+    private val networkMonitor: NetworkMonitor,
 ) : EconomyRemoteDataSource {
-    override suspend fun purchase(request: ShopPurchaseRequest): EconomyResourceBalance {
+    override suspend fun purchase(request: ShopPurchaseRequest): EconomyResourceBalance =
+        call(APPLY_SHOP_PURCHASE, mapOf(ITEM_ID to request.itemId))
+
+    override suspend fun unlockLesson(request: LessonUnlockRequest): EconomyResourceBalance =
+        call(UNLOCK_LESSON, mapOf(LESSON_ID to request.lessonId, KIND to request.kind))
+
+    /**
+     * Один путь для обоих вызовов: спросить про связь, сходить с таймаутом, прочитать неудачу
+     * как ветвь [SyncError].
+     *
+     * Проверка связи до вызова — не оптимизация, а весь смысл: без неё покупка в офлайне держит
+     * спиннер до истечения таймаута, вместо того чтобы сразу сказать, что нужен интернет.
+     */
+    private suspend fun call(
+        name: String,
+        payload: Map<String, Any>,
+    ): EconomyResourceBalance {
+        if (!networkMonitor.isOnline()) failWith(SyncError.NoNetwork)
         val data =
-            functions
-                .getHttpsCallable(APPLY_SHOP_PURCHASE)
-                .call(mapOf(ITEM_ID to request.itemId))
-                .await()
-                .data as? Map<*, *>
+            try {
+                functions
+                    .getHttpsCallable(name)
+                    .withAppTimeout()
+                    .call(payload)
+                    .await()
+                    .data as? Map<*, *>
+            } catch (e: FirebaseFunctionsException) {
+                failWith(e.toSyncError(), e)
+            } catch (e: IOException) {
+                // До сервера не доехали: ответа не было, повторять безопасно.
+                failWith(SyncError.NoNetwork, e)
+            }
         return data.map(BALANCE).toBalance()
     }
 
-    override suspend fun unlockLesson(request: LessonUnlockRequest): EconomyResourceBalance {
-        val data =
-            functions
-                .getHttpsCallable(UNLOCK_LESSON)
-                .call(mapOf(LESSON_ID to request.lessonId, KIND to request.kind))
-                .await()
-                .data as? Map<*, *>
-        return data.map(BALANCE).toBalance()
-    }
+    private fun failWith(
+        error: SyncError,
+        cause: Throwable? = null,
+    ): Nothing = throw SyncFailure(error, cause)
 
     private fun Map<*, *>?.toBalance(): EconomyResourceBalance =
         EconomyResourceBalance(

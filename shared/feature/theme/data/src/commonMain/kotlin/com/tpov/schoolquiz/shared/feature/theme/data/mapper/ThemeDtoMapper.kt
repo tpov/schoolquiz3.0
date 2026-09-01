@@ -10,7 +10,6 @@ object ThemeDtoMapper {
         title = title,
         order = order,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

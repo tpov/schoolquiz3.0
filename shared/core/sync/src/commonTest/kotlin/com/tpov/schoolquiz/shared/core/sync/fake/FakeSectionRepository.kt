@@ -50,9 +50,6 @@ class FakeSectionRepository : SectionRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun getLocalContentsVersion(id: SectionId): Long? =
-        cache.value[id]?.contentsVersion
-
     fun setNextRefreshFailure(error: Throwable) { nextRefreshFailure = error }
     fun setNextRefreshChanged(ids: Set<SectionId>) { nextRefreshChangedOverride = ids }
     fun seed(sections: List<Section>) { cache.value = sections.associateBy { it.id } }

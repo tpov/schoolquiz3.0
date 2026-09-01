@@ -63,7 +63,7 @@ class CatalogMapperTest {
     // CF-23: CatalogDto.toEntity() preserves picturePath=null
     @Test
     fun `when dto has null picturePath then toEntity returns entity with null picturePath`() {
-        val dto = CatalogDto(id = "games", name = "Игры", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 0L, archived = false)
+        val dto = CatalogDto(id = "games", name = "Игры", picturePath = null, version = 1L, lastModifiedAt = 0L, archived = false)
 
         val entity = dto.toEntity()
 
@@ -77,7 +77,6 @@ class CatalogMapperTest {
             name = "Games",
             picturePath = null,
             version = 1L,
-            contentsVersion = 0L,
             lastModifiedAt = 0L,
             archived = false,
             iconNames = listOf("VideogameAsset", "Casino"),

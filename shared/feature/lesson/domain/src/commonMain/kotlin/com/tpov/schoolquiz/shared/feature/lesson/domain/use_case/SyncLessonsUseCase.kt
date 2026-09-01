@@ -7,10 +7,8 @@ import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 /**
  * Triggers remote sync for lessons of the given themes.
  *
- * Cascading sync step 5: after themes with grown contentsVersion are synced,
- * pull their lessons.
- *
- * Spec: docs/features/home-and-my-quests/0-spec.md — FR#14 cascading sync step 5.
+ * Changed ids come from the `sync_changes` journal; this use case pulls the lessons
+ * of the themes it is handed.
  */
 class SyncLessonsUseCase(
     private val lessons: LessonRepository,

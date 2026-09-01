@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.platform.android_services.sync
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -28,6 +30,44 @@ class WorkManagerSyncSchedulerTest {
     @After
     fun tearDown() {
         WorkManagerTestInitHelper.closeWorkDatabase()
+    }
+
+    // ── Каденции две и они независимы ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `manual profile sync raises the profile worker, not the content one`() {
+        // Дефект, который это чинит: выбор «при запуске» для профиля поднимал полный контентный
+        // список вместо профильного воркера.
+        val workManager = mockk<WorkManager>(relaxed = true)
+        val request = slot<OneTimeWorkRequest>()
+        val name = slot<String>()
+        every {
+            workManager.enqueueUniqueWork(capture(name), any<ExistingWorkPolicy>(), capture(request))
+        } returns mockk(relaxed = true)
+
+        WorkManagerSyncScheduler(workManager).enqueueManualProfileSync()
+
+        assertEquals(WorkManagerSyncScheduler.WORK_NAME_PROFILE_MANUAL, name.captured)
+        assertEquals(
+            ProfileSyncWorker::class.qualifiedName,
+            request.captured.workSpec.workerClassName,
+        )
+    }
+
+    @Test
+    fun `manual profile sync does not displace a manual content sync`() {
+        // Разные имена работы: иначе один разовый проход вытеснял бы другой.
+        val workManager = mockk<WorkManager>(relaxed = true)
+        val names = mutableListOf<String>()
+        every {
+            workManager.enqueueUniqueWork(capture(names), any<ExistingWorkPolicy>(), any<OneTimeWorkRequest>())
+        } returns mockk(relaxed = true)
+
+        val scheduler = WorkManagerSyncScheduler(workManager)
+        scheduler.enqueueManualSync()
+        scheduler.enqueueManualProfileSync()
+
+        assertEquals("у разовых проходов должны быть разные имена", 2, names.distinct().size)
     }
 
     // ── Request shape: what exactly gets handed to WorkManager ────────────────────────────────

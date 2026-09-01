@@ -26,6 +26,4 @@ class FakeLessonRepository(
 
     override suspend fun refreshByParents(themeIds: Set<ThemeId>, cursor: Long): Result<Set<LessonId>> =
         Result.success(emptySet())
-
-    override suspend fun getLocalContentsVersion(id: LessonId): Long? = lessons[id.value]?.contentsVersion
 }

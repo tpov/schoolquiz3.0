@@ -131,7 +131,6 @@ class LessonContentSyncOrchestratorTest {
                     picturePath = null,
                     visibleOn = setOf("home"),
                     version = 1L,
-                    contentsVersion = 1L,
                     lastModifiedAt = 1L,
                     archived = true,
                 ),
@@ -139,17 +138,17 @@ class LessonContentSyncOrchestratorTest {
         )
         sectionRepo.seed(
             listOf(
-                Section(sectionId, questId, "Section", 0, 1L, 1L, 1L),
+                Section(sectionId, questId, "Section", 0, 1L, 1L),
             ),
         )
         themeRepo.seed(
             listOf(
-                Theme(themeId, sectionId, "Theme", 0, 1L, 1L, 1L),
+                Theme(themeId, sectionId, "Theme", 0, 1L, 1L),
             ),
         )
         lessonRepo.seed(
             listOf(
-                Lesson(lessonId, themeId, "Lesson", 0, 1L, 1L, 1L),
+                Lesson(lessonId, themeId, "Lesson", 0, 1L, 1L),
             ),
         )
     }

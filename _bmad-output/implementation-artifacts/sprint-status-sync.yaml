@@ -1,0 +1,125 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 09-01-2026 09:31
+last_updated: 09-01-2026 10:57
+project: schoolquiz3.0 · sync
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+development_status:
+  epic-1: done
+  1-1-доменный-тип-ошибки-обращения-к-серверу: done
+  1-2-детектор-связи: done
+  1-3-исключение-firebase-читается-один-раз-на-границе-и-с-таймаут: done
+  1-4-синхронное-действие-не-уходит-в-сеть-когда-сети-нет: done
+  1-5-экран-показывает-ветвь-а-не-строку: done
+  epic-1-retrospective: optional
+
+  epic-2: in-progress
+  2-1-модуль-shared-core-outbox-и-контракт-отложенного-действия: done
+  2-2-движок-прогон-не-ломается-отказ-откладывается-безнадёжное-ух: done
+  2-3-правила-firestore-перестают-требовать-contentsversion-и-тест: done
+  2-4-contentsversion-и-мёртвый-каскад-уходят-из-моделей-dto-маппе: done
+  2-5-граница-пересоздания-что-должно-доехать-и-что-теряется: backlog
+  2-6-чистая-схема-версии-1-одна-таблица-очереди-вместо-трёх-и-три: backlog
+  2-7-с-момента-чистой-схемы-каждая-миграция-настоящая-и-покрыта-т: done
+  2-8-карантин-доходит-до-фичи-и-не-оставляет-молчаливого-расхожде: in-progress
+  2-9-три-существующие-очереди-переезжают-на-общую-таблицу-своей-м: backlog
+  epic-2-retrospective: optional
+
+  epic-3: in-progress
+  3-1-предельный-возраст-записи-и-срок-хранения-ключа-одна-пара-чи: done
+  3-2-возраст-записи-третий-повод-карантина: done
+  3-3-серверный-модуль-ключей-идемпотентности-с-резервированием-и: done
+  3-4-пометка-предусловие-ещё-не-доехало-получает-форму: done
+  3-5-единый-callable-приёмник-отложенных-мутаций: done
+  3-6-mutationid-рождается-вместе-с-намерением-и-не-меняется: backlog
+  3-7-ключ-синхронной-мутации-переживает-смерть-процесса: done
+  3-8-заявка-квеста-на-арену-уходит-с-прямой-записи-в-firestore: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-числа-по-каждому-состоянию-очереди-отдельно: backlog
+  4-2-прогон-синхронизации-оставляет-след-время-успеха-и-последнюю: backlog
+  4-3-репозиторий-состояния-отдаёт-снимок-и-переживает-смену-аккау: backlog
+  4-4-конкретная-сущность-помечается-неотправленной-по-entity_ref: backlog
+  4-5-игрок-видит-состояние-синхронизации-в-шторке-и-настройках: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-отказ-сервера-помечен-как-повторяемый-или-как-окончательный: backlog
+  5-2-цена-разблокировки-урока-считается-на-клиенте-по-той-же-форм: backlog
+  5-3-разблокировка-урока-переезжает-в-очередь: backlog
+  5-4-перенос-квеста-на-полку-кладёт-в-очередь-намерение-а-не-полк: backlog
+  5-5-действие-ревьюера-переезжает-в-очередь: backlog
+  5-6-снятие-лота-с-продажи-переезжает-в-очередь: backlog
+  5-7-покупки-остаются-синхронными-и-объясняют-себя-без-сети: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-выборка-очереди-ограничена-текущим-владельцем: backlog
+  6-2-две-названные-операции-снимают-следы-прежнего-владельца: backlog
+  6-3-слив-очереди-происходит-до-signinwithcredential: backlog
+  6-4-предупреждение-оно-же-согласие-и-переключение-снимает-следы: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-журнал-приводится-к-одной-форме-документ-на-узел-id-без-врем: backlog
+  7-2-изменение-узла-пишется-в-каждый-журнал-откуда-этот-узел-чита: backlog
+  7-3-курсор-пара-changedatms-docid-во-всех-четырёх-журналах: backlog
+  7-4-выборка-изменений-ограничена-страницей-и-продолжаема: backlog
+  7-5-полный-ресинк-существует-как-операция-и-лечит-только-сторону: backlog
+  7-6-семантика-удаления-зафиксирована-тремя-способами-защитный-fa: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-сервер-назначает-version-одной-функцией-вместо-четырёх-мест: backlog
+  8-2-клиент-перестаёт-слать-localrevision-а-расхождение-черновика: backlog
+  8-3-приёмник-сверяет-expected_version-и-отвергает-устаревшую-мут: backlog
+  8-4-пришедшая-серверная-версия-сохраняется-в-записи-очереди-и-пе: backlog
+  8-5-конфликт-виден-игроку-и-разрешается-новой-мутацией-а-не-повт: backlog
+  8-6-сервер-и-сид-скрипты-перестают-писать-contentsversion: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-планировщик-умеет-ставить-профильный-воркер-разово: backlog
+  9-2-реконсиляция-на-старте-поднимает-воркер-той-каденции-которая: backlog
+  9-3-профильный-пикер-запускает-синхронизацию-сразу-как-и-контент: backlog
+  9-4-расписание-ставит-только-планировщик: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-правила-firestore-допускают-владельцу-запись-токена-устройст: backlog
+  10-2-устройство-регистрирует-свой-fcm-токен-под-текущим-аккаунтом: backlog
+  10-3-сервер-отправляет-push-по-критическим-событиям: backlog
+  10-4-push-поднимает-обычную-синхронизацию-а-не-применяет-данные-и: backlog
+  10-5-токен-снимается-при-смене-аккаунта-чужое-уведомление-не-пока: backlog
+  epic-10-retrospective: optional

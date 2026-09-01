@@ -24,6 +24,14 @@ class WorkManagerSyncScheduler(
         workManager.enqueueUniqueWork(SyncWorker.WORK_NAME_MANUAL, ExistingWorkPolicy.REPLACE, request)
     }
 
+    override fun enqueueManualProfileSync() {
+        val request =
+            OneTimeWorkRequestBuilder<ProfileSyncWorker>()
+                .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+                .build()
+        workManager.enqueueUniqueWork(WORK_NAME_PROFILE_MANUAL, ExistingWorkPolicy.REPLACE, request)
+    }
+
     override fun applyFrequency(frequency: SyncFrequency) {
         schedule(SyncWorker.WORK_NAME_PERIODIC, frequency) { periodicRequest<SyncWorker>(it) }
     }
@@ -55,4 +63,9 @@ class WorkManagerSyncScheduler(
         PeriodicWorkRequestBuilder<W>(intervalMs, TimeUnit.MILLISECONDS)
             .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
             .build()
+
+    companion object {
+        /** Своё имя работы: разовый профильный проход не должен вытеснять контентный. */
+        const val WORK_NAME_PROFILE_MANUAL = "profile_manual_sync"
+    }
 }

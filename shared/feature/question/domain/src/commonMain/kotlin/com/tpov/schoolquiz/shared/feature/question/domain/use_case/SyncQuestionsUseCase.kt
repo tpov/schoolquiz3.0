@@ -6,11 +6,11 @@ import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRep
 /**
  * Triggers remote sync for questions of the given lessons.
  *
- * Cascading sync step 6 (leaf): after lessons with grown contentsVersion are
- * synced, pull their questions.
+ * Leaf-level pull: the lesson ids to refresh come from the `sync_changes`
+ * journal; there is no parent-version cascade.
  *
- * Spec: docs/features/home-and-my-quests/0-spec.md — FR#14 cascading sync step 6.
- * Primary User Journey 5: admin adds question → cascades to leaf.
+ * Spec: docs/features/home-and-my-quests/0-spec.md — FR#14.
+ * Primary User Journey 5: admin adds question → question reaches the client.
  */
 class SyncQuestionsUseCase(
     private val questions: QuestionRepository,

@@ -71,6 +71,7 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
@@ -303,19 +304,16 @@ class QuizzesRootIntegrationTest {
                     override fun observeByQuest(questId: QuestId): Flow<List<Section>> = flowOf(emptyList())
                     override suspend fun getById(id: SectionId): Section? = null
                     override suspend fun refreshByParents(questIds: Set<QuestId>, cursor: Long): Result<Set<SectionId>> = Result.success(emptySet())
-                    override suspend fun getLocalContentsVersion(id: SectionId): Long? = null
                 },
                 themeRepository = object : ThemeRepository {
                     override fun observeBySection(sectionId: SectionId): Flow<List<Theme>> = flowOf(emptyList())
                     override suspend fun getById(id: ThemeId): Theme? = null
                     override suspend fun refreshByParents(sectionIds: Set<SectionId>, cursor: Long): Result<Set<ThemeId>> = Result.success(emptySet())
-                    override suspend fun getLocalContentsVersion(id: ThemeId): Long? = null
                 },
                 lessonRepository = object : LessonRepository {
                     override fun observeByTheme(themeId: ThemeId): Flow<List<Lesson>> = flowOf(emptyList())
                     override suspend fun getById(id: LessonId): Lesson? = null
                     override suspend fun refreshByParents(themeIds: Set<ThemeId>, cursor: Long): Result<Set<LessonId>> = Result.success(emptySet())
-                    override suspend fun getLocalContentsVersion(id: LessonId): Long? = null
                 },
                 lessonAttemptRepository = object : LessonAttemptRepository {
                     override suspend fun save(attempt: Attempt): Result<Unit> = Result.success(Unit)
@@ -356,6 +354,7 @@ class QuizzesRootIntegrationTest {
                         ReferralProgram("", emptyList())
                 },
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
+                retirePublicQuest = RetirePublicQuestUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
                 mainContext = testDispatcher,
             )

@@ -14,7 +14,7 @@ currency bought with real money.
 |---|---|---|---|
 | Gold pack purchase | Play receipt verified server-side | server constants | Forged or replayed receipt — see `purchase-verification.md` |
 | Box opening | shipped drop table | **≈0.019 gold per box** — see `box-economy.md` | Claiming an unearned opening; opening one box twice |
-| Market sale | the settling transfer | seller receives the listed price in full | Selling to a second account you control, to launder gold in |
+| Market sale | the settling transfer | seller receives the listed price **minus commission** | Selling to a second account you control, to launder gold in |
 | Leaderboard payout | server, once per season | **boxes** — table below | Rank manipulation; double payout on retry |
 | Referral settlement | server, once per season | **boxes** — 50 for six qualifying invites, plus 1% of referrals' openings | Throwaway accounts; a chain paying a player for their own openings |
 
@@ -25,19 +25,29 @@ credit — and stay outside the client entirely.
 
 | Sink | Debited by | Note |
 |---|---|---|
-| Market purchase | the settling transfer | Buyer pays price **plus 5%** |
+| Market purchase | the settling transfer | Buyer pays **exactly the listed price** |
 | Commission | the settling transfer | The 5%. Leaves circulation — this is the house's revenue |
 | Plasma slots | server, per `spec-charges` CAP-9 | Ladder **1 / 2 / 3 gold** by slot owned — six for all three. **One-time:** a bought slot then refills itself every 24 h |
 | Premium | server | Gold price independent of the money price |
 | Offer auction bid | server, at auction close | Winning bid leaves circulation; losing bids refunded |
 
+## One sink is one-time
+
+**Plasma is bought once.** Six gold buys all three slots and they refill themselves from then on, so
+it bounds how much gold a player ever needs for plasma. The sinks that keep drawing gold are the
+market commission, premium renewals and auction bids.
+
 ## The commission
 
-**5%, paid by the buyer**, on top of the seller's listed price.
+**5%, taken out of the listed price** — ratifying the shipped `splitSalePrice`.
 
-The seller receives exactly what they listed. The buyer pays 105%. The 5% is destroyed rather than
-credited anywhere, which is what makes it a transaction fee on gold that was, at some point, bought
-with real money.
+The buyer pays exactly the price on the lot. The house takes 5% of it and the seller receives the
+rest. The commission is destroyed rather than credited anywhere, which is what makes it a
+transaction fee on gold that was, at some point, bought with real money.
+
+**The rounding rule is load-bearing.** The remainder goes to the seller, so commission and seller
+share always add back to the price exactly. Rounding the two independently would mint or destroy a
+unit of gold on every other sale — invisible per trade, impossible to reconcile in aggregate.
 
 This is the only revenue line here that is not a store purchase, and the only place besides the
 auction where gold both moves and leaves circulation.
@@ -84,16 +94,15 @@ Two mechanisms, both in boxes, both from the legacy design:
 
 | Mechanism | Reward |
 |---|---|
-| Invite **six** qualifying players | **50 boxes**, once |
-| Ongoing | **1%** of every box those referrals *open*, settled at season close |
+| Invite **six** players who each open **10 boxes** | **50 boxes**, once |
+| Ongoing, uncapped | **1%** of every box opened by anyone registered under the link — one level, no chain |
 
 Openings, not grants, because the server sees openings — which is also what the legacy
 `ReferalRemote.openBoxInSeason` field counts.
 
-**The six must qualify.** Six throwaway accounts must not be worth 50 boxes. The owner reached for
-"completed the tutorial", but the product has none, so qualification becomes a threshold of opened
-boxes or accumulated experience — value undecided, and an open question in `SPEC.md`. The exposure
-is small either way: 50 boxes is about one gold.
+**The six must qualify: 10 opened boxes each.** Six throwaway accounts must not be worth 50 boxes,
+and ten openings is roughly five days of honest play per account — enough friction to make the farm
+not worth running for what is, in gold terms, about one gold.
 
 ## Invariants
 

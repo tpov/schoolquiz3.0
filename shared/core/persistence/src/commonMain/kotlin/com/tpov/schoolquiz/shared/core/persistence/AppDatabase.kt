@@ -29,10 +29,11 @@ import androidx.room.TypeConverters
         UserProfileEntity::class,
         QuestionAnswerEntity::class,
         QuestionRepetitionEntity::class,
+        OutboxEntity::class,
     ],
     // Bumped whenever the schema changes. Destructive fallback only fires on a version change —
     // leaving the number alone makes Room compare identity hashes and crash instead.
-    version = 3,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
@@ -54,4 +55,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
     abstract fun questionAnswerDao(): QuestionAnswerDao
     abstract fun questionRepetitionDao(): QuestionRepetitionDao
+
+    abstract fun outboxDao(): OutboxDao
 }

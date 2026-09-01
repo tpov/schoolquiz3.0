@@ -80,6 +80,7 @@ private data class QuestListItemActions(
     val onDownloadClick: () -> Unit,
     val onShareClick: () -> Unit,
     val onSetShelfClick: (String) -> Unit,
+    val onRetireClick: () -> Unit,
 )
 
 private val publicShelfActions =
@@ -88,6 +89,8 @@ private val publicShelfActions =
         PublicShelfAction("arena", R.string.quizzes_shelf_show_arena),
         PublicShelfAction("tournament", R.string.quizzes_shelf_show_qualification),
         PublicShelfAction("tournamentFinal", R.string.quizzes_shelf_show_world),
+        // Returning a course to the archive used to be impossible: the first move out was final.
+        PublicShelfAction("archive", R.string.quizzes_shelf_show_archive),
     )
 
 @Composable
@@ -180,6 +183,10 @@ private fun QuestListLoadedContent(
                                 expandedQuestId = null
                                 component.onSetShelfClick(quest, targetShelf)
                             },
+                            onRetireClick = {
+                                expandedQuestId = null
+                                component.onRetireClick(quest)
+                            },
                         ),
                 )
             }
@@ -237,6 +244,10 @@ private fun QuestListItem(
                         onClick = { actions.onSetShelfClick(action.shelf) },
                     )
                 }
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.quizzes_shelf_retire)) },
+                    onClick = actions.onRetireClick,
+                )
             }
         }
     }

@@ -16,7 +16,6 @@ fun DocumentSnapshot.toLessonDto(): LessonDto =
         title = getString("title") ?: "",
         order = intField("order") ?: 0,
         version = longField("version") ?: 1L,
-        contentsVersion = longField("contentsVersion") ?: 0L,
         lastModifiedAt = millisField("lastModifiedAt") ?: 0L,
         archived = booleanField("archived") ?: false,
         averageRating = doubleField("averageRating")?.toFloat(),

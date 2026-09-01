@@ -34,17 +34,15 @@ class LessonRepositoryImplTest {
         title: String = "Lesson",
         order: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 100L,
         archived: Boolean = false,
-    ) = LessonDto(id, themeId, title, order, version, contentsVersion, lastModifiedAt, archived)
+    ) = LessonDto(id, themeId, title, order, version, lastModifiedAt, archived)
 
     private fun makeEntity(
         id: String,
         version: Long = 1L,
         title: String = "Lesson",
-        contentsVersion: Long = 0L,
-    ) = LessonEntity(id, "th1", title, 0, version, contentsVersion, 0L, false)
+    ) = LessonEntity(id, "th1", title, 0, version, 0L, 0L, false)
 
     // Matrix 2 row: lesson absent + not archived → inserted
     @Test
@@ -83,9 +81,9 @@ class LessonRepositoryImplTest {
     }
 
     @Test
-    fun `when remote lesson returned with same contents version then id still cascades`() = runTest {
-        fakeLocal.seed(listOf(makeEntity("l1", version = 5L, contentsVersion = 10L)))
-        fakeRemote.result = listOf(makeDto("l1", version = 5L, contentsVersion = 10L))
+    fun `when remote lesson is unchanged then its id is still returned`() = runTest {
+        fakeLocal.seed(listOf(makeEntity("l1", version = 5L)))
+        fakeRemote.result = listOf(makeDto("l1", version = 5L))
 
         val result = repository.refreshByParents(themeIds, 0L)
 

@@ -24,4 +24,7 @@ interface QuestRemoteDataSource {
         questId: String,
         targetShelf: String,
     ) = Unit
+
+    /** Developer-only callable: empties `quests/{questId}.visibleOn`, taking it off every shelf. */
+    suspend fun retirePublic(questId: String) = Unit
 }

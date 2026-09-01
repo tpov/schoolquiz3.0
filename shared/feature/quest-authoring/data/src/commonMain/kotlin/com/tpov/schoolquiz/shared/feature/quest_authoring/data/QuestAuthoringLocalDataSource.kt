@@ -39,6 +39,19 @@ interface QuestAuthoringLocalDataSource {
         updatedAtMs: Long,
     )
 
+    /** Owner uids that have at least one draft awaiting a review verdict. */
+    suspend fun findOwnerUidsAwaitingReview(): Set<String>
+
+    /**
+     * Puts a reviewer's refusal back on the draft: editable again, with the reason attached.
+     * A published outcome needs no local write — the quest arrives through catalog sync.
+     */
+    suspend fun applyRejection(
+        draftId: String,
+        reason: String?,
+        updatedAtMs: Long,
+    )
+
     suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot)
 
     suspend fun setDraftStatus(
@@ -134,6 +147,22 @@ class QuestAuthoringLocalDataSourceImpl(
         )
     }
 
+    override suspend fun findOwnerUidsAwaitingReview(): Set<String> =
+        dao.findDraftsAwaitingReview(AWAITING_REVIEW_LIMIT).map { it.ownerUid }.toSet()
+
+    override suspend fun applyRejection(
+        draftId: String,
+        reason: String?,
+        updatedAtMs: Long,
+    ) {
+        dao.updateDraftStatusWithReason(
+            draftId = draftId,
+            status = "DRAFT",
+            rejectionReason = reason,
+            updatedAtMs = updatedAtMs,
+        )
+    }
+
     override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) {
         val incoming = snapshot.toEntityBundle()
         val existing = dao.findDraftById(incoming.draft.id)
@@ -179,6 +208,8 @@ class QuestAuthoringLocalDataSourceImpl(
         )
 
     private companion object {
+        const val AWAITING_REVIEW_LIMIT = 20
+
         val activeDraftStatuses = listOf(
             "DRAFT",
             "SAVED",

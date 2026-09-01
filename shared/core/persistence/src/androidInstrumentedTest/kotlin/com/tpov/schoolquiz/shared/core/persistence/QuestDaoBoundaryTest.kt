@@ -65,7 +65,6 @@ class QuestDaoBoundaryTest {
         averageRating = null,
         averageRatingCount = 0,
         version = version,
-        contentsVersion = 0L,
         lastModifiedAt = 0L,
         archived = archived,
     )

@@ -54,11 +54,6 @@ class ThemeDomainTest {
     }
 
     @Test
-    fun `Theme with negative contentsVersion throws`() {
-        assertFailsWith<IllegalArgumentException> { makeTheme(contentsVersion = -1L) }
-    }
-
-    @Test
     fun `Theme with negative lastModifiedAt throws`() {
         assertFailsWith<IllegalArgumentException> { makeTheme(lastModifiedAt = -1L) }
     }
@@ -177,7 +172,6 @@ class ThemeDomainTest {
         title: String = "Theme Title",
         order: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 0L,
         archived: Boolean = false,
     ) = Theme(
@@ -186,7 +180,6 @@ class ThemeDomainTest {
         title = title,
         order = order,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

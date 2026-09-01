@@ -40,7 +40,7 @@ class CatalogRepositoryImplTest {
     @Test
     fun `when refreshFromRemote succeeds then entity upserted with correct id`() = runTest {
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "a", name = "A", picturePath = "a.jpg", version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "a", name = "A", picturePath = "a.jpg", version = 1L, lastModifiedAt = 100L, archived = false)),
         )
 
         val result = repository.refreshFromRemote()
@@ -65,7 +65,7 @@ class CatalogRepositoryImplTest {
     @Test
     fun `when dto has null picturePath then urlResolver is not called and pictureUrl is null`() = runTest {
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "b", name = "B", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "b", name = "B", picturePath = null, version = 1L, lastModifiedAt = 100L, archived = false)),
         )
 
         repository.refreshFromRemote()
@@ -78,7 +78,7 @@ class CatalogRepositoryImplTest {
     @Test
     fun `when dto has catalog-pictures path then urlResolver called and pictureUrl resolved`() = runTest {
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "c", name = "C", picturePath = "catalog-pictures/cat-42.jpg", version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "c", name = "C", picturePath = "catalog-pictures/cat-42.jpg", version = 1L, lastModifiedAt = 100L, archived = false)),
         )
 
         repository.refreshFromRemote()
@@ -91,7 +91,7 @@ class CatalogRepositoryImplTest {
     @Test
     fun `when dto has picturePath without catalog-pictures prefix then urlResolver is not called`() = runTest {
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "c2", name = "C2", picturePath = "outside/folder/file.jpg", version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "c2", name = "C2", picturePath = "outside/folder/file.jpg", version = 1L, lastModifiedAt = 100L, archived = false)),
         )
 
         repository.refreshFromRemote()
@@ -104,7 +104,7 @@ class CatalogRepositoryImplTest {
     @Test
     fun `when refreshFromRemote called then upsert is performed`() = runTest {
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "d", name = "D", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "d", name = "D", picturePath = null, version = 1L, lastModifiedAt = 100L, archived = false)),
         )
 
         val result = repository.refreshFromRemote()
@@ -176,7 +176,6 @@ class CatalogRepositoryImplTest {
                     name = "Курсы",
                     picturePath = null,
                     version = 1L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 100L,
                     archived = false,
                 ),
@@ -194,9 +193,9 @@ class CatalogRepositoryImplTest {
     fun `when 3 dtos returned then all upserted`() = runTest {
         fakeRemote.result = Result.success(
             listOf(
-                CatalogDto(id = "c1", name = "C1", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false),
-                CatalogDto(id = "c2", name = "C2", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 200L, archived = false),
-                CatalogDto(id = "c3", name = "C3", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 300L, archived = false),
+                CatalogDto(id = "c1", name = "C1", picturePath = null, version = 1L, lastModifiedAt = 100L, archived = false),
+                CatalogDto(id = "c2", name = "C2", picturePath = null, version = 1L, lastModifiedAt = 200L, archived = false),
+                CatalogDto(id = "c3", name = "C3", picturePath = null, version = 1L, lastModifiedAt = 300L, archived = false),
             ),
         )
 
@@ -214,7 +213,7 @@ class CatalogRepositoryImplTest {
             listOf(CatalogEntity(id = "c1", name = "Original", picturePath = null, pictureUrl = null, version = 2L)),
         )
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "c1", name = "Updated", picturePath = null, version = 3L, contentsVersion = 0L, lastModifiedAt = 100L, archived = true)),
+            listOf(CatalogDto(id = "c1", name = "Updated", picturePath = null, version = 3L, lastModifiedAt = 100L, archived = true)),
         )
 
         repository.refreshFromRemote()
@@ -227,7 +226,7 @@ class CatalogRepositoryImplTest {
     @Test
     fun `when dto archived false absent locally then inserted`() = runTest {
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "c-new", name = "New", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "c-new", name = "New", picturePath = null, version = 1L, lastModifiedAt = 100L, archived = false)),
         )
 
         repository.refreshFromRemote()
@@ -243,7 +242,7 @@ class CatalogRepositoryImplTest {
             listOf(CatalogEntity(id = "c1", name = "Original", picturePath = null, pictureUrl = null, version = 5L, lastModifiedAt = 100L)),
         )
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "c1", name = "Original", picturePath = null, version = 5L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "c1", name = "Original", picturePath = null, version = 5L, lastModifiedAt = 100L, archived = false)),
         )
 
         repository.refreshFromRemote()
@@ -265,7 +264,6 @@ class CatalogRepositoryImplTest {
                     name = "Updated",
                     picturePath = null,
                     version = 5L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 200L,
                     archived = false,
                     iconNames = listOf("School", "Calculate"),
@@ -301,7 +299,6 @@ class CatalogRepositoryImplTest {
                     name = "Original",
                     picturePath = null,
                     version = 5L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 100L,
                     archived = false,
                     iconNames = listOf("School", "Calculate"),
@@ -336,7 +333,6 @@ class CatalogRepositoryImplTest {
                     name = "Original",
                     picturePath = "catalog-pictures/c1.jpg",
                     version = 5L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 100L,
                     archived = false,
                 ),
@@ -371,7 +367,6 @@ class CatalogRepositoryImplTest {
                     name = "Original",
                     picturePath = "catalog-pictures/c1.jpg",
                     version = 5L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 100L,
                     archived = false,
                     iconNames = listOf("School"),
@@ -390,9 +385,9 @@ class CatalogRepositoryImplTest {
     fun `when success then repository does not advance cursor`() = runTest {
         fakeRemote.result = Result.success(
             listOf(
-                CatalogDto(id = "x1", name = "X1", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false),
-                CatalogDto(id = "x2", name = "X2", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 300L, archived = false),
-                CatalogDto(id = "x3", name = "X3", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 200L, archived = false),
+                CatalogDto(id = "x1", name = "X1", picturePath = null, version = 1L, lastModifiedAt = 100L, archived = false),
+                CatalogDto(id = "x2", name = "X2", picturePath = null, version = 1L, lastModifiedAt = 300L, archived = false),
+                CatalogDto(id = "x3", name = "X3", picturePath = null, version = 1L, lastModifiedAt = 200L, archived = false),
             ),
         )
 

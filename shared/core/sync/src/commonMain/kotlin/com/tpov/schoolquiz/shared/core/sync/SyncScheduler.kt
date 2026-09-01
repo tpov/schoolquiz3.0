@@ -31,6 +31,14 @@ interface SyncScheduler {
     fun enqueueManualSync()
 
     /**
+     * Разовая синхронизация только профиля.
+     *
+     * Отдельно от [enqueueManualSync] потому, что каденции две и они независимы: выбор «при
+     * запуске» для профиля обязан поднимать профильный воркер, а не полный контентный список.
+     */
+    fun enqueueManualProfileSync()
+
+    /**
      * Reconciles the content schedule with [frequency]. Safe to call on every launch with the
      * stored value: implementations must make repeated calls with the same argument idempotent.
      */

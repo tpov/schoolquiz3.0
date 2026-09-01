@@ -26,7 +26,10 @@ data class SectionEntity(
     val title: String,
     val order: Int,
     val version: Long,
-    val contentsVersion: Long,
+    // A legacy NOT NULL column nothing reads any more: refresh is driven by the sync_changes
+    // journal, not by a version cascade. Defaulted so no caller has to name it; the column
+    // itself goes with the schema rebuild rather than through a migration of its own.
+    val contentsVersion: Long = 0L,
     val lastModifiedAt: Long,
     val archived: Boolean,
 )

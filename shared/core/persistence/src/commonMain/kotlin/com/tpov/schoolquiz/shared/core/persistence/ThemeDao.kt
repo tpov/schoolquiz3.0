@@ -47,9 +47,6 @@ interface ThemeDao {
     @Query("DELETE FROM themes WHERE id = :id")
     suspend fun deleteById(id: String)
 
-    @Query("SELECT contentsVersion FROM themes WHERE id = :id")
-    suspend fun getContentsVersion(id: String): Long?
-
     private fun ThemeEntity.shouldBeReplacedBySyncList(incoming: ThemeEntity): Boolean =
         version < incoming.version ||
             lastModifiedAt < incoming.lastModifiedAt ||

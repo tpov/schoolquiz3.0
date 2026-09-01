@@ -19,9 +19,9 @@ import kotlin.test.assertTrue
  *   scenario 5 (SectionId invariants)
  *   scenario 18 (Section.order < 0 throws)
  *   State Matrix rows for section sync (insert, upsert, skip, version guard)
- *   cascading sync scenario 30 (section sync when quest contentsVersion changed)
+ *   sync scenario 30 (section sync when the parent quest changed)
  *   scenario 41 (FakeSectionRepository: insert + cursor advance)
- *   scenario 45 (early-exit: no refreshByParents called when contentsVersion unchanged)
+ *   scenario 45 (early-exit: no refreshByParents called when no quest changed)
  */
 class SectionDomainTest {
 
@@ -47,7 +47,6 @@ class SectionDomainTest {
                 title = "Intro",
                 order = -1,
                 version = 1L,
-                contentsVersion = 0L,
                 lastModifiedAt = 0L,
             )
         }
@@ -63,7 +62,6 @@ class SectionDomainTest {
                 title = "",
                 order = 0,
                 version = 1L,
-                contentsVersion = 0L,
                 lastModifiedAt = 0L,
             )
         }
@@ -78,22 +76,6 @@ class SectionDomainTest {
                 title = "Intro",
                 order = 0,
                 version = 0L,
-                contentsVersion = 0L,
-                lastModifiedAt = 0L,
-            )
-        }
-    }
-
-    @Test
-    fun `Section with negative contentsVersion throws`() {
-        assertFailsWith<IllegalArgumentException> {
-            Section(
-                id = SectionId("s1"),
-                questId = QuestId("q1"),
-                title = "Intro",
-                order = 0,
-                version = 1L,
-                contentsVersion = -1L,
                 lastModifiedAt = 0L,
             )
         }
@@ -108,7 +90,6 @@ class SectionDomainTest {
                 title = "Intro",
                 order = 0,
                 version = 1L,
-                contentsVersion = 0L,
                 lastModifiedAt = -1L,
             )
         }
@@ -241,15 +222,15 @@ class SectionDomainTest {
         assertTrue(fake.snapshot().isEmpty(), "Section at cursor boundary should be skipped")
     }
 
-    // ── Scenario 45 : early-exit: no refreshByParents called when contentsVersion unchanged ──
+    // ── Scenario 45 : no refreshByParents call when the journal reports no changed quests ──
     @Test
-    fun `scenario 45 early-exit sectionRepository refreshByParents not called when quest contentsVersion unchanged`() = runTest {
+    fun `scenario 45 early-exit sectionRepository refreshByParents not called when no quest changed`() = runTest {
         // The early-exit is enforced at the orchestrator level (SyncWorker / use case caller).
         // This test demonstrates the SectionRepository refresh call count tracking:
         // if the orchestrator does NOT call refreshByParents, the count remains 0.
         val fake = FakeSectionRepository()
 
-        // Orchestrator checks: if quest.dto.contentsVersion <= local.contentsVersion → skip
+        // Orchestrator checks the `sync_changes` journal: no changed quests → skip.
         // We simulate this by simply NOT calling SyncSectionsUseCase.
         // The fake should have 0 calls.
         assertEquals(0, fake.refreshCallCount, "No refresh should have been called yet")
@@ -267,7 +248,6 @@ class SectionDomainTest {
         title: String = "Section Title",
         order: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 0L,
         archived: Boolean = false,
     ) = Section(
@@ -276,7 +256,6 @@ class SectionDomainTest {
         title = title,
         order = order,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

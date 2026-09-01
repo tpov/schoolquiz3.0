@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":shared:feature:economy:domain"))
+    implementation(project(":shared:core:network"))
     implementation(project(":shared:feature:internet:profile:domain"))
     implementation(project(":android:core:designsystem"))
     implementation(platform(libs.compose.bom))

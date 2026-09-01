@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Fake QuestionLocalDataSource for JVM tests.
- * NOTE: QuestionEntity has no contentsVersion — Question is a leaf node.
  */
 class FakeQuestionLocalDataSource : QuestionLocalDataSource {
 

@@ -31,8 +31,6 @@ class FakeLessonRepository : LessonRepository {
 
     override suspend fun refreshByParents(themeIds: Set<ThemeId>, cursor: Long): Result<Set<LessonId>> =
         Result.success(emptySet())
-
-    override suspend fun getLocalContentsVersion(id: LessonId): Long? = null
 }
 
 /** Empty theme shelf. */
@@ -43,8 +41,6 @@ class FakeThemeRepository : ThemeRepository {
 
     override suspend fun refreshByParents(sectionIds: Set<SectionId>, cursor: Long): Result<Set<ThemeId>> =
         Result.success(emptySet())
-
-    override suspend fun getLocalContentsVersion(id: ThemeId): Long? = null
 }
 
 /** Empty section shelf. */
@@ -58,6 +54,4 @@ class FakeSectionRepository : SectionRepository {
         questIds: Set<com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId>,
         cursor: Long,
     ): Result<Set<SectionId>> = Result.success(emptySet())
-
-    override suspend fun getLocalContentsVersion(id: SectionId): Long? = null
 }

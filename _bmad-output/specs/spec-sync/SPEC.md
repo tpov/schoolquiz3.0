@@ -2,6 +2,8 @@
 id: SPEC-sync
 companions:
   - 'brownfield.md'
+  - '../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-31/ARCHITECTURE-SPINE.md'
+  - '../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-31/epic-breakdown.md'
   - '../../../docs/architecture/0004-sync-contract.md'
   - '../../../docs/invariants.md'
 sources: []
@@ -66,7 +68,7 @@ sources: []
 
 - Клиент не пишет серверно-защищённые поля — квалификации, сертификаты, полки квестов. Даже локально они read-only.
 - Каждая операция очереди идемпотентна: повторная доставка не удваивает эффект. Образец — дедупликация по `attemptId` в `submitLessonResultEvents`.
-- Провал синхронизации означает повтор, а не откат локальной работы игрока. Принудительной потери данных нет ни в одной ветке.
+- Провал синхронизации означает повтор, а не откат локальной работы игрока. **Единственное исключение — карантин**: запись, которую сервер отверг устойчиво, терминальна, и владеющая фича обязана либо откатить своё локальное изменение, либо пометить его для игрока. Молчаливого расхождения быть не может, но и вечно висеть «сделанным» то, что сервер не принял, тоже не может. Спайн, AD-28.
 - Контракты живут в `shared/core/sync` (commonMain) без Android- и SDK-типов; платформенное — в `platform/firebase` и `platform/android-services`. Правила `.claude/rules/clean-architecture.md` и `domain-models.md` действуют.
 - Серверная часть — `functions/index.js`. Модули `server/workers/*` сегодня пусты и не считаются местом реализации без отдельного решения.
 - Инвариант 8 из `docs/invariants.md` распространяется на состояние синхронизации: user-specific Flow пересоздаётся при смене аккаунта, `emptyFlow()` для null uid запрещён.

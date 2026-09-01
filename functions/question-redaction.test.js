@@ -11,6 +11,9 @@ const {
 } = require("./question-redaction");
 const {evaluateAnswer} = require("./assessment-scoring");
 const {questionCharsCount, lessonAllocatedSeconds} = require("./lesson-reward");
+// Shared with question-redaction-wire.test.js: a fixture's `seed` refers to this exact stream, so
+// the generator cannot be allowed to exist twice. See _seeded-random.js.
+const {seeded} = require("./_seeded-random");
 
 /**
  * The suite registers itself.
@@ -21,21 +24,6 @@ const {questionCharsCount, lessonAllocatedSeconds} = require("./lesson-reward");
 const SUITE = [];
 const test = (name, fn) => SUITE.push([name, fn]);
 
-/**
- * A deterministic `Math.random` (mulberry32). Randomness is injected precisely so these tests can
- * assert on a concrete shuffle instead of on "something moved", which is a property a broken
- * shuffle satisfies too.
- */
-function seeded(seed) {
-  let state = seed >>> 0;
-  return function random() {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** An object whose keys may be anything, including `__proto__` — see the module's toPlainMap. */
 function plainMap(entries) {

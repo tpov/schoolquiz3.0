@@ -20,4 +20,6 @@ class SetPublicQuestShelfUseCase(
         )
 }
 
-private val publicShelves = setOf("home", "arena", "tournament", "tournamentFinal")
+// "archive" makes the move reversible: a course pulled out of the archive can be put back.
+// The server-side validator carries the same five values.
+private val publicShelves = setOf("home", "arena", "tournament", "tournamentFinal", "archive")

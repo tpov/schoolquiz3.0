@@ -41,7 +41,6 @@ class CatalogFirstFetchIntegrationTest {
                     name = "A",
                     picturePath = "catalog-pictures/a.jpg",
                     version = 1L,
-                    contentsVersion = 0L,
                     lastModifiedAt = 100L,
                     archived = false,
                 ),
@@ -77,10 +76,10 @@ class CatalogFirstFetchIntegrationTest {
     fun `given remote returns 4 catalogs when first sync then all 4 upserted`() = runTest {
         fakeRemote.result = Result.success(
             listOf(
-                CatalogDto(id = "c1", name = "C1", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false),
-                CatalogDto(id = "c2", name = "C2", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 200L, archived = false),
-                CatalogDto(id = "c3", name = "C3", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 300L, archived = false),
-                CatalogDto(id = "c4", name = "C4", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 400L, archived = false),
+                CatalogDto(id = "c1", name = "C1", picturePath = null, version = 1L, lastModifiedAt = 100L, archived = false),
+                CatalogDto(id = "c2", name = "C2", picturePath = null, version = 1L, lastModifiedAt = 200L, archived = false),
+                CatalogDto(id = "c3", name = "C3", picturePath = null, version = 1L, lastModifiedAt = 300L, archived = false),
+                CatalogDto(id = "c4", name = "C4", picturePath = null, version = 1L, lastModifiedAt = 400L, archived = false),
             ),
         )
 
@@ -97,7 +96,7 @@ class CatalogFirstFetchIntegrationTest {
     fun `given first sync succeeds when observeAll then emits upserted catalogs`() = runTest {
         fakeRemote.result = Result.success(
             listOf(
-                CatalogDto(id = "x", name = "X", picturePath = null, version = 1L, contentsVersion = 0L, lastModifiedAt = 50L, archived = false),
+                CatalogDto(id = "x", name = "X", picturePath = null, version = 1L, lastModifiedAt = 50L, archived = false),
             ),
         )
         repository.refreshFromRemote()
@@ -127,7 +126,7 @@ class CatalogFirstFetchIntegrationTest {
         fakeSyncState.setCursor("catalogs", 1000L)
         fakeRemote.result = Result.success(
             listOf(
-                CatalogDto(id = "b", name = "B", picturePath = null, version = 2L, contentsVersion = 0L, lastModifiedAt = 2000L, archived = false),
+                CatalogDto(id = "b", name = "B", picturePath = null, version = 2L, lastModifiedAt = 2000L, archived = false),
             ),
         )
 

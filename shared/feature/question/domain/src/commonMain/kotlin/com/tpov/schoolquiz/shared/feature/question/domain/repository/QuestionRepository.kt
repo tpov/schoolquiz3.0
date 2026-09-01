@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Domain boundary for reading and syncing [Question]s.
  *
- * Question is the leaf node — no children, no contentsVersion. Pull uses only
+ * Question is the leaf node — no children. Pull uses only the
  * `version > last` filter.
  *
  * Production implementation lives in the data layer (phase-01).
@@ -36,14 +36,11 @@ interface QuestionRepository {
     /**
      * Pulls questions for the given [lessonIds] from remote and persists locally.
      *
-     * Implements cascading sync step 6 (leaf): for lessons whose contentsVersion
-     * grew, fetch questions with
+     * Lesson ids come from the `sync_changes` journal. Fetches with
      * `where('lessonId', 'in', batch).where('lastModifiedAt', '>', cursor)`.
      * Batched in groups of <= 30 (Firestore `in`-limit).
      *
      * Cursor must be updated after successful refresh to max(lastModifiedAt).
-     *
-     * Spec: FR#14 cascading sync step 6, Business Rule #8.
      *
      * @param lessonIds set of lesson ids whose questions to pull.
      * @param cursor    local questionsCursor (max lastModifiedAt seen so far).

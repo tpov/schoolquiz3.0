@@ -10,7 +10,6 @@ interface SectionLocalDataSource {
     suspend fun upsertFromSyncList(entity: SectionEntity) = upsertByIdIfNewerVersion(entity)
     suspend fun deleteById(id: String)
     suspend fun findById(id: String): SectionEntity?
-    suspend fun getLocalContentsVersion(id: String): Long?
 }
 
 class SectionLocalDataSourceImpl(
@@ -28,6 +27,4 @@ class SectionLocalDataSourceImpl(
     override suspend fun deleteById(id: String) = dao.deleteById(id)
 
     override suspend fun findById(id: String): SectionEntity? = dao.findById(id)
-
-    override suspend fun getLocalContentsVersion(id: String): Long? = dao.getContentsVersion(id)
 }

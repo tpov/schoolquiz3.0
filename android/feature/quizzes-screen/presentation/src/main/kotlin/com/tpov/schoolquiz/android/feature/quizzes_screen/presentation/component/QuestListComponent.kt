@@ -26,4 +26,7 @@ interface QuestListComponent {
         quest: QuestDisplayItem,
         targetShelf: String,
     ) = Unit
+
+    /** Takes the quest off every shelf. Developer-gated, same as the shelf moves. */
+    fun onRetireClick(quest: QuestDisplayItem) = Unit
 }

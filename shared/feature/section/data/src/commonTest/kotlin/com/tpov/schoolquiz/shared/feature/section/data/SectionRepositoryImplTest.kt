@@ -15,10 +15,6 @@ import kotlin.test.assertTrue
 /**
  * JVM tests for SectionRepositoryImpl.
  * Source: docs/features/home-and-my-quests/plan/phase-02/tests.md §3
- *
- * OPEN QUESTION: tests.md specifies refreshByParents should return Result<Set<SectionId>>
- * for cascade trigger, but SectionRepository.refreshByParents returns Result<Unit>.
- * Tests verify side-effects instead. Pending domain interface clarification from lead.
  */
 class SectionRepositoryImplTest {
 
@@ -34,17 +30,15 @@ class SectionRepositoryImplTest {
         title: String = "Section",
         order: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 100L,
         archived: Boolean = false,
-    ) = SectionDto(id, questId, title, order, version, contentsVersion, lastModifiedAt, archived)
+    ) = SectionDto(id, questId, title, order, version, lastModifiedAt, archived)
 
     private fun makeEntity(
         id: String,
         version: Long = 1L,
         title: String = "Section",
-        contentsVersion: Long = 0L,
-    ) = SectionEntity(id, "q1", title, 0, version, contentsVersion, 0L, false)
+    ) = SectionEntity(id, "q1", title, 0, version, 0L, 0L, false)
 
     // Matrix 2.2: section absent locally + not archived → inserted
     @Test
@@ -55,8 +49,7 @@ class SectionRepositoryImplTest {
 
         assertTrue(result.isSuccess)
         assertEquals(1, fakeLocal.upsertCallsFor["s1"] ?: 0)
-        // OPEN QUESTION: tests.md expects result contains SectionId("s1")
-        // but return type is Result<Unit>. Pending domain interface update.
+        assertEquals(setOf(SectionId("s1")), result.getOrThrow())
     }
 
     // Matrix 2.3: section archived + newer version → deleted locally
@@ -85,9 +78,9 @@ class SectionRepositoryImplTest {
     }
 
     @Test
-    fun `when remote section returned with same contents version then id still cascades`() = runTest {
-        fakeLocal.seed(listOf(makeEntity("s1", version = 5L, contentsVersion = 10L)))
-        fakeRemote.result = listOf(makeDto("s1", version = 5L, contentsVersion = 10L))
+    fun `when remote section version is not newer then id is still returned`() = runTest {
+        fakeLocal.seed(listOf(makeEntity("s1", version = 5L)))
+        fakeRemote.result = listOf(makeDto("s1", version = 5L))
 
         val result = repository.refreshByParents(questIds, 0L)
 

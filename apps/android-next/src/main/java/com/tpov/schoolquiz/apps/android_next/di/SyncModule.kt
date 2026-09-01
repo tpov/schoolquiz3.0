@@ -2,10 +2,12 @@ package com.tpov.schoolquiz.apps.android_next.di
 
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
+import com.tpov.schoolquiz.platform.android_services.network.AndroidNetworkMonitor
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
 import com.tpov.schoolquiz.platform.android_services.sync.WorkManagerSyncScheduler
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.persistence.RoomSyncStateRepository
 import com.tpov.schoolquiz.shared.core.persistence.SyncStateDao
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncListOrchestrator
@@ -34,6 +36,9 @@ class ProfileSyncables(val value: List<Syncable>)
 
 val syncModule =
     module {
+        // Знание о связи платформенное, но нужно и записи, и чтению, поэтому живёт в
+        // composition root рядом с планировщиком, а не в модуле фичи (AD-10).
+        single<NetworkMonitor> { AndroidNetworkMonitor(androidContext()) }
         single<SyncStateRepository> { RoomSyncStateRepository(get<SyncStateDao>()) }
         single<WorkManager> { WorkManager.getInstance(androidContext()) }
         single<SyncScheduler> { WorkManagerSyncScheduler(get<WorkManager>()) }

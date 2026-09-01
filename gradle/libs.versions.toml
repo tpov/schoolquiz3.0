@@ -57,7 +57,7 @@ appcheck-play-integrity = "18.0.0"
 firebase-crashlytics-plugin = "3.0.2"
 
 # Monetisation & measurement
-play-billing = "7.1.1"
+play-billing = "8.0.0"
 play-install-referrer = "2.2"
 play-services-ads = "23.3.0"
 

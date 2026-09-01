@@ -135,6 +135,30 @@ interface QuestAuthoringDao {
         updatedAtMs: Long,
     )
 
+    /** Drafts whose submission is still awaiting a verdict, newest first. */
+    @Query("SELECT * FROM quest_drafts WHERE status = 'REVIEW_SENT' ORDER BY updatedAtMs DESC LIMIT :limit")
+    suspend fun findDraftsAwaitingReview(limit: Int): List<QuestDraftEntity>
+
+    /**
+     * Sends a draft back to its author with the reviewer's reason attached. Status returns to
+     * DRAFT so it is editable again; the reason stays until the next submission clears it.
+     */
+    @Query(
+        """
+        UPDATE quest_drafts
+        SET status = :status,
+            rejectionReason = :rejectionReason,
+            updatedAtMs = :updatedAtMs
+        WHERE id = :draftId
+        """,
+    )
+    suspend fun updateDraftStatusWithReason(
+        draftId: String,
+        status: String,
+        rejectionReason: String?,
+        updatedAtMs: Long,
+    )
+
     @Transaction
     suspend fun saveDraft(
         draft: QuestDraftEntity,

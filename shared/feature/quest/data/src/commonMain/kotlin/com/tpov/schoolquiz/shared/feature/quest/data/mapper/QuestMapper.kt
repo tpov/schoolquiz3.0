@@ -17,7 +17,6 @@ object QuestMapper {
         averageRating = averageRating,
         averageRatingCount = averageRatingCount,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

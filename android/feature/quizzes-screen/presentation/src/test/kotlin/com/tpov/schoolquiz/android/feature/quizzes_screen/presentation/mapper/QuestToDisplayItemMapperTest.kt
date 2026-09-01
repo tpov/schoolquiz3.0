@@ -37,7 +37,6 @@ class QuestToDisplayItemMapperTest {
         averageRating = averageRating,
         averageRatingCount = averageRatingCount,
         version = 1L,
-        contentsVersion = 0L,
         lastModifiedAt = 0L,
     )
 

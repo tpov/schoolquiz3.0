@@ -41,9 +41,10 @@ class MainActivity : AppCompatActivity() {
         val storedProfileFrequency = syncPreferences.readProfile()
         syncScheduler.applyFrequency(storedFrequency)
         syncScheduler.applyProfileFrequency(storedProfileFrequency)
-        if (storedFrequency == SyncFrequency.ON_LAUNCH || storedProfileFrequency == SyncFrequency.ON_LAUNCH) {
-            syncScheduler.enqueueManualSync()
-        }
+        // Каденции две и они независимы: «при запуске» для профиля обязано поднимать профильный
+        // воркер, а не полный контентный список.
+        if (storedFrequency == SyncFrequency.ON_LAUNCH) syncScheduler.enqueueManualSync()
+        if (storedProfileFrequency == SyncFrequency.ON_LAUNCH) syncScheduler.enqueueManualProfileSync()
 
         setContent {
             val preferences = remember { getSharedPreferences(DESIGN_PREFS_NAME, MODE_PRIVATE) }
@@ -76,6 +77,9 @@ class MainActivity : AppCompatActivity() {
                             profileSyncFrequency = frequency
                             syncPreferences.writeProfile(frequency)
                             syncScheduler.applyProfileFrequency(frequency)
+                            if (frequency == SyncFrequency.ON_LAUNCH) {
+                                syncScheduler.enqueueManualProfileSync()
+                            }
                         },
                     )
                 }

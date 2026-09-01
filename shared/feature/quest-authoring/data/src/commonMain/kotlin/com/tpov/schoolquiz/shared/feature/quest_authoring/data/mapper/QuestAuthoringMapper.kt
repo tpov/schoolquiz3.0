@@ -69,6 +69,7 @@ object QuestAuthoringMapper {
             publicQuestId = publicQuestId?.value,
             createdAtMs = createdAtMs,
             updatedAtMs = updatedAtMs,
+            rejectionReason = rejectionReason,
             isActive = isActive,
         )
 

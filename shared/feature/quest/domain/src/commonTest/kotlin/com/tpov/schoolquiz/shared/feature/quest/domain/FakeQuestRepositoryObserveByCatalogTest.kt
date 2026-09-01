@@ -151,7 +151,6 @@ class FakeQuestRepositoryObserveByCatalogTest {
         averageRating = null,
         averageRatingCount = 0,
         version = 1L,
-        contentsVersion = 0L,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

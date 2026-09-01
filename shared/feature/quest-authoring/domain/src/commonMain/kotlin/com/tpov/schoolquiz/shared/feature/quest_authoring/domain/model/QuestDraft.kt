@@ -18,6 +18,8 @@ data class QuestDraft(
     val publicQuestId: QuestId?,
     val createdAtMs: Long,
     val updatedAtMs: Long,
+    /** Why a reviewer sent this back, if the last submission was refused. */
+    val rejectionReason: String? = null,
     val isActive: Boolean,
 ) {
     init {

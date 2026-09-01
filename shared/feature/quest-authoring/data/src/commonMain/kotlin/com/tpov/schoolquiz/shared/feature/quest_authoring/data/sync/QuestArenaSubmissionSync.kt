@@ -39,11 +39,31 @@ class QuestArenaSubmissionSync(
                     return Result.failure(e)
                 }
             }
+            applyOutcomes()
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Brings the reviewers' verdicts back. Pushing the submission was only ever half the loop —
+     * without this the author never learns that their quest was refused, or why.
+     */
+    private suspend fun applyOutcomes() {
+        // The owner comes from the drafts themselves rather than from auth: this module must not
+        // depend on app-shell, and a draft awaiting review already knows whose it is.
+        for (ownerUid in local.findOwnerUidsAwaitingReview()) {
+            for (outcome in remote.fetchOutcomes(ownerUid)) {
+                if (!outcome.isRejected) continue
+                local.applyRejection(
+                    draftId = outcome.draftId,
+                    reason = outcome.rejectionReason,
+                    updatedAtMs = timestampProvider.nowMs(),
+                )
+            }
         }
     }
 

@@ -82,7 +82,9 @@ class CatalogSyncListOrchestratorTest {
         assertEquals(setOf(LessonId("lesson-1")), lessonRepo.lastRefreshByIds)
         assertEquals(1, questionRepo.refreshByIdsCallCount)
         assertEquals(setOf(QuestionId("question-1")), questionRepo.lastRefreshByIds)
-        assertEquals(160L, syncState.getCursor(catalogSyncCursorId(catalogId)))
+        // 170, а не 160: запись с пустым id прочитана и применить её нельзя никогда, поэтому
+        // курсор проходит и её. Оставаться перед ней значит перечитывать её каждый проход.
+        assertEquals(170L, syncState.getCursor(catalogSyncCursorId(catalogId)))
         assertEquals(1_000L, syncState.getCursor(CATALOG_LIST_CURSOR_ID))
     }
 

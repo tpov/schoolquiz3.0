@@ -10,7 +10,6 @@ interface ThemeLocalDataSource {
     suspend fun upsertFromSyncList(entity: ThemeEntity) = upsertByIdIfNewerVersion(entity)
     suspend fun deleteById(id: String)
     suspend fun findById(id: String): ThemeEntity?
-    suspend fun getLocalContentsVersion(id: String): Long?
 }
 
 class ThemeLocalDataSourceImpl(
@@ -28,6 +27,4 @@ class ThemeLocalDataSourceImpl(
     override suspend fun deleteById(id: String) = dao.deleteById(id)
 
     override suspend fun findById(id: String): ThemeEntity? = dao.findById(id)
-
-    override suspend fun getLocalContentsVersion(id: String): Long? = dao.getContentsVersion(id)
 }

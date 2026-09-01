@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
  * are in [nextChangedIds]. The orchestrator reads this post-refresh list to
  * determine which catalog IDs to pass to the quest sync step.
  *
- * Setting [nextChangedIds] = emptySet() simulates "catalog cv unchanged" —
+ * Setting [nextChangedIds] = emptySet() simulates "no catalog changed" —
  * observeAll returns an empty list, so the orchestrator skips quest sync.
  */
 class FakeCatalogRepository : CatalogRepository {
@@ -26,7 +26,6 @@ class FakeCatalogRepository : CatalogRepository {
     var lastRefreshByIds: Set<CatalogId> = emptySet()
     val refreshByIdsRequests = mutableListOf<Set<CatalogId>>()
     var nextChangedIds: Set<CatalogId> = emptySet()
-    var nextLocalCvMap: Map<CatalogId, Long> = emptyMap()
     private var nextRefreshFailure: Throwable? = null
 
     override fun observeAll(): Flow<List<Catalog>> =
@@ -46,7 +45,6 @@ class FakeCatalogRepository : CatalogRepository {
                 picturePath = null,
                 pictureUrl = null,
                 version = 1L,
-                contentsVersion = 1L,
                 lastModifiedAt = 1_000L,
                 archived = false,
             )
@@ -63,10 +61,6 @@ class FakeCatalogRepository : CatalogRepository {
 
     override suspend fun getById(id: CatalogId): Catalog? = cache.value[id]
 
-    fun seedWithLocalCv(catalogId: String, localCv: Long) {
-        nextLocalCvMap = nextLocalCvMap + (CatalogId(catalogId) to localCv)
-    }
-
     fun setNextRefreshFailure(error: Throwable) {
         nextRefreshFailure = error
     }
@@ -81,7 +75,6 @@ class FakeCatalogRepository : CatalogRepository {
         lastRefreshByIds = emptySet()
         refreshByIdsRequests.clear()
         nextChangedIds = emptySet()
-        nextLocalCvMap = emptyMap()
         nextRefreshFailure = null
         cache.value = emptyMap()
     }

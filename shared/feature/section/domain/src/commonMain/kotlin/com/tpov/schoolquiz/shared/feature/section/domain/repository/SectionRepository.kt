@@ -36,13 +36,13 @@ interface SectionRepository {
     /**
      * Pulls sections for the given [questIds] from remote and persists them locally.
      *
-     * Implements cascading sync step 3: for quests whose contentsVersion grew,
+     * Implements sync step 3: for quests reported changed by the `sync_changes` journal,
      * fetch sections with `where('questId', 'in', batch).where('lastModifiedAt', '>', cursor)`.
      * Batched in groups of <= 30 (Firestore `in`-limit).
      *
      * Cursor must be updated after successful refresh to max(lastModifiedAt) of returned items.
      *
-     * Spec: FR#14 cascading sync step 3, Business Rule #8.
+     * Spec: FR#14 sync step 3, Business Rule #8.
      *
      * @param questIds set of quest ids whose sections to pull.
      * @param cursor   local sectionsCursor (max lastModifiedAt seen so far).
@@ -50,10 +50,4 @@ interface SectionRepository {
      *   as parentIds); [Result.failure] on network/permission errors.
      */
     suspend fun refreshByParents(questIds: Set<QuestId>, cursor: Long): Result<Set<SectionId>>
-
-    /**
-     * Returns the local [contentsVersion] for [id], or null if the section is absent.
-     * Used by the cascade orchestrator to detect contentsVersion changes.
-     */
-    suspend fun getLocalContentsVersion(id: SectionId): Long?
 }

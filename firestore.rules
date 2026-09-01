@@ -93,27 +93,21 @@ service cloud.firestore {
       allow read: if resource.data.visibleOn.size() > 0
         || (request.auth != null && resource.data.authorUid == request.auth.uid);
 
-      // Author can create own quests; coarse field allowlist prevents arbitrary field injection.
-      // MVP: field list coarse check; strict value validation for rating/lastModifiedAt deferred.
-      // Post-MVP: Cloud Function validates rating bounds + server timestamps.
-      allow create: if request.auth != null
-        && request.resource.data.authorUid == request.auth.uid
-        && request.resource.data.keys().hasOnly([
-             'id', 'catalogId', 'authorUid', 'title', 'description',
-             'picturePath', 'visibleOn', 'archived',
-             'version', 'contentsVersion', 'lastModifiedAt',
-             'averageRating', 'averageRatingCount'
-           ])
-        && request.resource.data.version == 1
-        && request.resource.data.contentsVersion == 0
-        && !request.resource.data.keys().hasAny(['averageRating', 'averageRatingCount']);
+      // Published quests are written by the publication pass alone. The app never writes here:
+      // authored content goes to private/{uid}/catalogs/{c}/quests/{q}, and the only client call
+      // that changes a published quest is the setPublicQuestShelf callable, which runs with
+      // admin credentials. The old allowlist admitted 'visibleOn' on create, so any signed-in
+      // user could post a card straight onto the home shelf without passing review.
+      allow create: if false;
 
-      // Author can update only user-owned fields; server-managed and immutable fields blocked.
+      // Placement, archived state and catalogId are server-owned — see setPublicQuestShelf
+      // (functions/index.js) for the only path that changes them. The author keeps the fields
+      // that are theirs to write.
       allow update: if request.auth != null
         && resource.data.authorUid == request.auth.uid
         && request.resource.data.authorUid == resource.data.authorUid
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['title', 'description', 'picturePath', 'visibleOn', 'archived', 'catalogId']);
+             .hasOnly(['title', 'description', 'picturePath']);
 
       // Delete is admin-only (quest CRUD MVP placeholder; full delete flow is future work).
       allow delete: if isAdmin();
@@ -139,15 +133,26 @@ service cloud.firestore {
       }
     }
 
+    match /reports/{reportId} {
+      // Filing, deciding and grading all go through callables: the verdict pays and charges
+      // reputation, and a client that could write here could pay itself.
+      allow read: if request.auth != null
+        && (resource.data.reporterUid == request.auth.uid || isModerator());
+      allow write: if false;
+    }
+
     match /lessonComments/{commentId} {
       // Public lesson discussion: any signed-in user may read and post. Posts are immutable and
-      // field-allowlisted; the author identity is the nickname/avatar the client already holds,
-      // so no server hop is needed for a plain comment.
+      // field-allowlisted. Every comment names its author by uid, pinned to the signed-in user —
+      // without that there is nobody to report and nobody to ban. Removal is server-only, through
+      // the moderator callable; direct update/delete stays closed to everyone.
       allow read: if request.auth != null;
       allow create: if request.auth != null
+        && !isBanned()
         && request.resource.data.keys().hasOnly([
-             'lessonId', 'authorNickname', 'authorAvatarUrl', 'text', 'createdAt'
+             'lessonId', 'authorUid', 'authorNickname', 'authorAvatarUrl', 'text', 'createdAt'
            ])
+        && request.resource.data.authorUid == request.auth.uid
         && request.resource.data.lessonId is string
         && request.resource.data.lessonId.size() > 0
         && request.resource.data.text is string
@@ -188,6 +193,34 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
         && (
           get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.adminLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.developerLevel > 100
+        );
+    }
+
+    /**
+     * A banned account cannot post. The ban is server-written on users/{uid}; a null or absent
+     * `bannedUntilMs` on a banned document means the ban does not expire, which is why the field's
+     * presence — not its value — is the first thing checked.
+     */
+    function isBanned() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && 'bannedAtMs' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        && (
+          !('bannedUntilMs' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.bannedUntilMs == null
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.bannedUntilMs > request.time.toMillis()
+        );
+    }
+
+    // Moderation is its own axis: deciding reports and banning people is not reviewing content.
+    // ADR-0006 always said so ("Доступ к модерации контента → требует MODERATOR ≥ 100"); until
+    // reports existed there was nothing for the level to gate, and no rule read it.
+    function isModerator() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.moderatorLevel >= 100
           || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.developerLevel > 100
         );
     }

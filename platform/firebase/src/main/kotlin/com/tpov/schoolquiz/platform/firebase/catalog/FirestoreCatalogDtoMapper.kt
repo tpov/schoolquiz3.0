@@ -22,7 +22,6 @@ fun DocumentSnapshot.toCatalogDto(): CatalogDto? {
             name = name,
             picturePath = picturePath,
             version = longField("version") ?: 1L,
-            contentsVersion = longField("contentsVersion") ?: 0L,
             lastModifiedAt = millisField("lastModifiedAt") ?: 0L,
             archived = booleanField("archived") ?: false,
             iconCategoryKey = getString("iconCategoryKey")?.takeIf { it.isNotBlank() },

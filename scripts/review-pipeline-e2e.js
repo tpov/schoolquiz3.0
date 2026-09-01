@@ -37,16 +37,26 @@ const CATALOG_ID = "cat-review";
 const ACTORS = {
   author: {},
   player: {},
+  // A second ordinary player, kept clean of `player`'s attempt history: what an attempt pays
+  // depends on the best already set on that lesson, so scenarios about anything other than the
+  // anti-grind rule need a player who has not played it.
+  playerTwo: {},
   tester: {testerLevel: QUALIFIED},
   translatorA: {translatorLevel: QUALIFIED, knownLanguages: ["ru", "en"]},
   translatorB: {translatorLevel: 200, knownLanguages: ["ru", "en"]},
   moderator: {moderatorLevel: QUALIFIED},
+  seniorModerator: {moderatorLevel: 200},
+  topModerator: {moderatorLevel: 301},
   admin: {adminLevel: QUALIFIED},
   developer: {developerLevel: 101, knownLanguages: ["ru", "en"]},
   // isReviewer() and every function gate use `> 100`, never `>= 100`. This account sits exactly on
   // the line and must be treated as an ordinary user.
   developerEdge: {developerLevel: QUALIFIED},
   collector: {},
+  // Owns the name a full-width lookalike is checked against. It has to be an account that has
+  // never worn a name: seeded profiles carry a nickname nobody could have been handed, which the
+  // claims model reads as a name already chosen — and a second name is bought, not renamed into.
+  lookalike: {},
   applicant: {},
   applicantTwo: {},
   trader: {},
@@ -119,20 +129,23 @@ async function seedActors() {
   await db.doc("configs/arena_review").set({requiredLanguages: ["en"], updatedAtMs: Date.now()});
 }
 
-function submissionPayload(submissionId) {
+function submissionPayload(submissionId, overrides = {}) {
   const now = Date.now();
+  const lessonId = overrides.lessonId || LESSON_ID;
+  const questId = overrides.questId || QUEST_ID;
+  const draftId = overrides.draftId || "draft-review-1";
   return {
     submissionId,
-    draftId: "draft-review-1",
+    draftId,
     ownerUid: "author",
     localRevision: 1,
     requestedAtMs: now,
     targetShelf: "arena",
-    targetLessonIds: [LESSON_ID],
+    targetLessonIds: [lessonId],
     status: "PENDING",
     processed: false,
     draft: {
-      id: QUEST_ID,
+      id: questId,
       catalogId: CATALOG_ID,
       title: "Проверочный квест",
       description: "Для сквозного прогона",
@@ -142,18 +155,18 @@ function submissionPayload(submissionId) {
       createdAtMs: now,
       updatedAtMs: now,
     },
-    sections: [{id: "sec-review-1", draftId: "draft-review-1", title: "Раздел", order: 0}],
+    sections: [{id: `sec-${draftId}`, draftId, title: "Раздел", order: 0}],
     themes: [
-      {id: "thm-review-1", draftId: "draft-review-1", sectionId: "sec-review-1", title: "Тема", order: 0},
+      {id: `thm-${draftId}`, draftId, sectionId: `sec-${draftId}`, title: "Тема", order: 0},
     ],
     lessons: [
-      {id: LESSON_ID, draftId: "draft-review-1", themeId: "thm-review-1", title: "Урок", order: 0},
+      {id: lessonId, draftId, themeId: `thm-${draftId}`, title: "Урок", order: 0},
     ],
     questions: [
       {
-        id: "qst-review-1",
-        draftId: "draft-review-1",
-        lessonId: LESSON_ID,
+        id: `qst-${draftId}`,
+        draftId,
+        lessonId,
         type: "SingleChoice",
         language: "ru",
         languageLevel: 0,
@@ -260,9 +273,77 @@ async function testRoleRouting() {
       "PERMISSION_DENIED",
     );
   });
+
+  /**
+   * The author is barred from their own quest even when qualified — the level is granted for the
+   * duration of one scenario and taken back. A developer is the one exemption, by the owner's
+   * explicit rule, and the earlier developer scenarios already cover that side.
+   */
+  await scenario("автор с квалификацией не проверяет свой собственный квест", async () => {
+    await db.collection("profiles").doc("author").set({testerLevel: QUALIFIED}, {merge: true});
+    const assignments = await call("fetchReviewAssignments", "author", {ids: [LESSON_ID]});
+    assert.strictEqual(
+      (assignments.assignments || []).length, 0,
+      "своя задача не должна предлагаться автору",
+    );
+    await callFails(
+      "submitReviewAction",
+      "author",
+      {assignmentId, lessonId: LESSON_ID, kind: "TESTING", score: 3},
+      "PERMISSION_DENIED",
+    );
+    await db.collection("profiles").doc("author").set({testerLevel: 0}, {merge: true});
+  });
 }
 
 async function testReviewStages() {
+  /**
+   * The pass mark is 2 on the 1..3 scale. Before it existed, any score published — a reviewer
+   * scoring 1 approved the quest exactly as one scoring 3 did. Run on its own submission so it
+   * does not consume the reviewers' one attempt on the main quest.
+   */
+  await scenario("единица не публикует, отказ возвращает квест автору", async () => {
+    const low = {lessonId: "les-low-1", questId: "quest-low-1", draftId: "draft-low-1"};
+    await db.collection("quest_review_requests").doc("sub-low").set(
+      submissionPayload("sub-low", low),
+    );
+    await waitForProcessed("sub-low");
+    const lowAssignment = `sub-low_${low.lessonId}`;
+
+    await call("submitReviewAction", "tester", {
+      assignmentId: lowAssignment, lessonId: low.lessonId, kind: "TESTING", score: 1,
+    });
+    await call("submitReviewAction", "admin", {
+      assignmentId: lowAssignment, lessonId: low.lessonId, kind: "LOGIC", score: 1,
+    });
+    const afterScores = await db.collection("quest_review_requests").doc("sub-low").get();
+    assert.notStrictEqual(
+      (afterScores.data() || {}).status, "PUBLISHED",
+      "квест с единицами не должен публиковаться",
+    );
+    assert.ok(
+      !(await db.collection("quests").doc(low.questId).get()).exists,
+      "квест с единицами не должен появиться в публичной коллекции",
+    );
+
+    await callFails(
+      "rejectReviewSubmission", "admin", {assignmentId: lowAssignment}, "INVALID_ARGUMENT",
+    );
+    await callFails(
+      "rejectReviewSubmission", "player",
+      {assignmentId: lowAssignment, reason: "не нравится"}, "PERMISSION_DENIED",
+    );
+    await call("rejectReviewSubmission", "admin", {
+      assignmentId: lowAssignment, reason: "Один вопрос и тот без вариантов",
+    });
+    const rejected = await db.collection("quest_review_requests").doc("sub-low").get();
+    assert.strictEqual((rejected.data() || {}).status, "REJECTED");
+    assert.strictEqual(
+      (rejected.data() || {}).rejectionReason, "Один вопрос и тот без вариантов",
+      "причина отказа не доехала до автора",
+    );
+  });
+
   await scenario("тестер сдаёт проверку содержания", async () => {
     await call("submitReviewAction", "tester", {
       assignmentId, lessonId: LESSON_ID, kind: "TESTING", score: 3,
@@ -403,9 +484,13 @@ async function testResults() {
   });
 
   await scenario("повторная отправка того же результата не начисляет второй раз", async () => {
-    const attempt = attemptFor("player", "attempt-once", 60);
-    const first = await call("submitLessonResultEvents", "player", {attempts: [attempt]});
-    const second = await call("submitLessonResultEvents", "player", {attempts: [attempt]});
+    // Run by playerTwo, who has never played this lesson. The subject here is the attempt id, not
+    // the anti-grind rule: `player` already holds a best of 75 on it, and against that best a 60%
+    // run is entirely repeated percent, paid at a tenth and rounded to nothing — the first
+    // submission would earn zero and the repeat would be indistinguishable from it.
+    const attempt = attemptFor("playerTwo", "attempt-once", 60);
+    const first = await call("submitLessonResultEvents", "playerTwo", {attempts: [attempt]});
+    const second = await call("submitLessonResultEvents", "playerTwo", {attempts: [attempt]});
     assert.ok(first.reward.skillPoints > 0, "первая отправка не начислила очки");
     assert.strictEqual(second.reward.skillPoints, 0, "повтор начислил очки второй раз");
   });
@@ -683,7 +768,7 @@ async function testNicknameAvailability() {
       const result = await availability("player", variant);
       assert.strictEqual(result.available, false, `${variant} прошло как свободное`);
     }
-    await call("updateUserNickname", "collector", {nickname: "abcdef"});
+    await call("updateUserNickname", "lookalike", {nickname: "abcdef"});
     const wide = await availability("player", "ａｂｃｄｅｆ");
     assert.strictEqual(wide.available, false, "полноширинный двойник прошёл как свободный");
   });
@@ -751,9 +836,12 @@ async function testNicknameOwnership() {
   });
 
   await scenario("второе имя стоит золота", async () => {
+    // Priced by nicknameAskingPrice, the same rule the neighbouring scenarios already assume: a
+    // name of ordinary length costs one gold once the account has a name of its own. The knob in
+    // configs/nickname_policy is not what decides it — claimNickname never reads that field.
     const result = await call("claimNickname", "trader", {nickname: "ВторойНик"});
-    assert.strictEqual(result.charged, 2);
-    assert.strictEqual(await goldOf("trader"), 8);
+    assert.strictEqual(result.charged, 1);
+    assert.strictEqual(await goldOf("trader"), 9);
   });
 
   await scenario("переключение активного не отбирает прежнее имя", async () => {
@@ -867,12 +955,134 @@ async function testNicknameMarket() {
   });
 }
 
+
+// ─── Жалобы, вердикты и баны ───────────────────────────────────────────────────────────────────
+
+async function testReportsAndBans() {
+  await scenario("жалобу подаёт любой, но не на себя и не дважды", async () => {
+    await db.collection("lessonComments").doc("c-spam").set({
+      lessonId: LESSON_ID, authorUid: "author", authorNickname: "author",
+      text: "Реклама", createdAt: Date.now(),
+    });
+    await callFails("submitReport", "player", {targetType: "USER", targetId: "player", reason: "я"},
+      "INVALID_ARGUMENT");
+    await callFails("submitReport", "player", {targetType: "COMMENT", targetId: "c-spam"},
+      "INVALID_ARGUMENT");
+    const filed = await call("submitReport", "player",
+      {targetType: "COMMENT", targetId: "c-spam", reason: "реклама"});
+    assert.strictEqual(filed.status, "OPEN");
+    await callFails("submitReport", "player",
+      {targetType: "COMMENT", targetId: "c-spam", reason: "ещё раз"}, "ALREADY_EXISTS");
+  });
+
+  await scenario("решает только модератор, и не свою жалобу", async () => {
+    const reportId = "comment_c-spam_player";
+    await callFails("decideReport", "tester", {reportId, decision: "UPHOLD"}, "PERMISSION_DENIED");
+    await callFails("decideReport", "player", {reportId, decision: "UPHOLD"}, "PERMISSION_DENIED");
+  });
+
+  await scenario("подтверждённая жалоба даёт жалобщику плюс, отклонённая — минус", async () => {
+    const before = await reputationOf("player");
+    await call("decideReport", "moderator",
+      {reportId: "comment_c-spam_player", decision: "UPHOLD"});
+    const afterUphold = await reputationOf("player");
+    assert.strictEqual(afterUphold, before + 3, "за подтверждённую жалобу не начислено");
+
+    await db.collection("lessonComments").doc("c-fine").set({
+      lessonId: LESSON_ID, authorUid: "author", authorNickname: "author",
+      text: "Нормальный", createdAt: Date.now(),
+    });
+    await call("submitReport", "player",
+      {targetType: "COMMENT", targetId: "c-fine", reason: "не нравится"});
+    await call("decideReport", "moderator",
+      {reportId: "comment_c-fine_player", decision: "REJECT"});
+    assert.strictEqual(await reputationOf("player"), afterUphold - 3, "за отклонённую не списано");
+  });
+
+  await scenario("срок бана зависит от уровня выдавшего", async () => {
+    const ban = async (moderatorUid, commentId) => {
+      await db.collection("lessonComments").doc(commentId).set({
+        lessonId: LESSON_ID, authorUid: "squatter", authorNickname: "squatter",
+        text: "Плохо", createdAt: Date.now(),
+      });
+      await call("submitReport", "collector",
+        {targetType: "COMMENT", targetId: commentId, reason: "оскорбление"});
+      const result = await call("decideReport", moderatorUid,
+        {reportId: `comment_${commentId}_collector`, decision: "UPHOLD_AND_BAN"});
+      await db.collection("users").doc("squatter").set({
+        bannedAtMs: admin.firestore.FieldValue.delete(),
+        bannedUntilMs: admin.firestore.FieldValue.delete(),
+      }, {merge: true});
+      return result.banUntilMs;
+    };
+    const week = await ban("moderator", "c-ban-week");
+    const month = await ban("seniorModerator", "c-ban-month");
+    const forever = await ban("topModerator", "c-ban-forever");
+    const day = 24 * 60 * 60 * 1000;
+    assert.ok(week > Date.now() + 6 * day && week < Date.now() + 8 * day, `сотка дала ${week}`);
+    assert.ok(month > Date.now() + 29 * day, `двухсотка дала ${month}`);
+    assert.strictEqual(forever, null, "триста и выше должны банить навсегда");
+  });
+
+  await scenario("модератора банит только тот, кто на 100 выше", async () => {
+    await db.collection("lessonComments").doc("c-mod").set({
+      lessonId: LESSON_ID, authorUid: "moderator", authorNickname: "moderator",
+      text: "Спорно", createdAt: Date.now(),
+    });
+    await call("submitReport", "collector",
+      {targetType: "COMMENT", targetId: "c-mod", reason: "нарушение"});
+    await callFails("decideReport", "moderator",
+      {reportId: "comment_c-mod_collector", decision: "UPHOLD_AND_BAN"}, "PERMISSION_DENIED");
+    const result = await call("decideReport", "seniorModerator",
+      {reportId: "comment_c-mod_collector", decision: "UPHOLD_AND_BAN"});
+    assert.strictEqual(result.bannedUid, "moderator");
+    await db.collection("users").doc("moderator").set({
+      bannedAtMs: admin.firestore.FieldValue.delete(),
+      bannedUntilMs: admin.firestore.FieldValue.delete(),
+    }, {merge: true});
+  });
+
+  await scenario("старший оценивает решение модератора", async () => {
+    const before = await reputationOf("moderator");
+    await callFails("reviewReportDecision", "moderator",
+      {reportId: "comment_c-spam_player", agrees: true}, "PERMISSION_DENIED");
+    await call("reviewReportDecision", "seniorModerator",
+      {reportId: "comment_c-spam_player", agrees: true});
+    assert.strictEqual(await reputationOf("moderator"), before + 3, "согласие не начислило");
+
+    await call("reviewReportDecision", "seniorModerator",
+      {reportId: "comment_c-fine_player", agrees: false});
+    assert.strictEqual(await reputationOf("moderator"), before, "несогласие не списало");
+  });
+
+  await scenario("модератор снимает комментарий, текст сохраняется как улика", async () => {
+    await callFails("removeLessonComment", "player", {commentId: "c-spam"}, "PERMISSION_DENIED");
+    await call("removeLessonComment", "moderator", {commentId: "c-spam", reason: "реклама"});
+    assert.ok(
+      !(await db.collection("lessonComments").doc("c-spam").get()).exists,
+      "комментарий не удалён",
+    );
+    const removals = await db.collection("admin").doc("moderation")
+      .collection("comment_removals").get();
+    assert.ok(
+      removals.docs.some((doc) => (doc.data() || {}).text === "Реклама"),
+      "текст удалённого комментария не сохранён",
+    );
+  });
+}
+
+async function reputationOf(uid) {
+  const snapshot = await db.collection("profiles").doc(uid).get();
+  return Number((snapshot.data() || {}).reviewReputation) || 0;
+}
+
 async function main() {
   await seedActors();
   await testSubmission();
   await testRoleRouting();
   await testReviewStages();
   await testPublication();
+  await testReportsAndBans();
   await testResults();
   await testGiftBoxes();
   await testVerification();

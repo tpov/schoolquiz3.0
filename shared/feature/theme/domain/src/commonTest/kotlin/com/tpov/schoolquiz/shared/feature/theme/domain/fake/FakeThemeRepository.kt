@@ -84,8 +84,6 @@ class FakeThemeRepository(
         return Result.success(processedIds)
     }
 
-    override suspend fun getLocalContentsVersion(id: ThemeId): Long? = cache.value[id]?.contentsVersion
-
     // ── Test helpers ──────────────────────────────────────────────────────────
 
     fun seed(themes: List<Theme>) { cache.value = themes.associateBy { it.id } }

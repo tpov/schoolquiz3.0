@@ -15,7 +15,7 @@ import java.io.File
  * Run with: ./gradlew :shared:core:persistence:jvmTest --no-configuration-cache
  *
  * Spec coverage:
- *   MT-06: production androidMain code must not contain fallbackToDestructiveMigration
+ *   MT-06: no source set may contain fallbackToDestructiveMigration
  *   MT-07: TopParticipantListConverter roundtrip
  *   MT-07b: fromDb("") → emptyList()
  *   MT-07c: fromDb("not-json") → emptyList(), no exception
@@ -24,20 +24,24 @@ class TypeConvertersPhase02Test {
 
     private val topParticipantListConverter = TopParticipantListConverter()
 
-    // MT-06: GIVEN production androidMain source WHEN grep fallbackToDestructive THEN not in MIGRATION_3_4 or AppDatabase builder
+    // MT-06: GIVEN any source set WHEN grep fallbackToDestructiveMigration THEN no match
     @Test
-    fun `productionBuildConfig_noFallbackToDestructiveMigration_in_migration_classes`() {
-        val androidMainDir = File("src/androidMain")
-        if (!androidMainDir.exists()) return // skip if run outside project root
+    fun noSourceSet_callsFallbackToDestructiveMigration() {
+        // Widened from androidMain to every source set: a destructive fallback in a test is just
+        // as good at hiding a missing migration, and that is exactly how the schema history became
+        // fiction the first time. MigrationCoverageTest owns the same rule for the pairing gate.
+        val srcDir = File("src")
+        if (!srcDir.exists()) return // skip if run outside the module directory
 
-        val offendingFiles = androidMainDir.walkTopDown()
+        val offendingFiles = srcDir.walkTopDown()
+            .filter { it.name != "TypeConvertersPhase02Test.kt" && it.name != "MigrationCoverageTest.kt" }
             .filter { it.extension == "kt" }
             .filter { it.readText().contains("fallbackToDestructiveMigration") }
             .map { it.path }
             .toList()
 
         assertTrue(
-            "Production androidMain must not call fallbackToDestructiveMigration. Found in: $offendingFiles",
+            "No source set may call fallbackToDestructiveMigration. Found in: $offendingFiles",
             offendingFiles.isEmpty()
         )
     }

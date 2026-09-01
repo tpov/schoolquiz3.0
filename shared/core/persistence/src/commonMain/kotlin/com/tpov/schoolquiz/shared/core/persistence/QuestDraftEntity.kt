@@ -28,4 +28,9 @@ data class QuestDraftEntity(
     val createdAtMs: Long,
     val updatedAtMs: Long,
     val isActive: Boolean,
+    /**
+     * Why a reviewer sent this draft back, verbatim. Null unless the last submission was
+     * rejected; cleared when the author resubmits.
+     */
+    val rejectionReason: String? = null,
 )

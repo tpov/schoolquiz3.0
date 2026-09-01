@@ -21,9 +21,6 @@ class SectionRepositoryImpl(
     override suspend fun getById(id: SectionId): Section? =
         local.findById(id.value)?.toDomain()
 
-    override suspend fun getLocalContentsVersion(id: SectionId): Long? =
-        local.getLocalContentsVersion(id.value)
-
     override suspend fun refreshByIds(ids: Set<SectionId>): Result<Unit> {
         if (ids.isEmpty()) return Result.success(Unit)
         return try {

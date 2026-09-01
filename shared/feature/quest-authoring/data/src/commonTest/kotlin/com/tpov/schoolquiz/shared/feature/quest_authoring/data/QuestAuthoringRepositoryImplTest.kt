@@ -139,6 +139,20 @@ class QuestAuthoringRepositoryImplTest {
     }
 
     private class FakeQuestAuthoringLocalDataSource : QuestAuthoringLocalDataSource {
+        val rejections = mutableListOf<Pair<String, String?>>()
+
+        override suspend fun findOwnerUidsAwaitingReview(): Set<String> = awaitingReviewOwners
+
+        var awaitingReviewOwners: Set<String> = emptySet()
+
+        override suspend fun applyRejection(
+            draftId: String,
+            reason: String?,
+            updatedAtMs: Long,
+        ) {
+            rejections += draftId to reason
+        }
+
         val summaries = MutableStateFlow<List<QuestDraftSummaryEntity>>(emptyList())
         val draftFlow = MutableStateFlow<QuestAuthoringEntityBundle?>(null)
         var draft: QuestAuthoringEntityBundle? = null

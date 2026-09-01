@@ -101,6 +101,7 @@ dependencies {
     implementation(project(":shared:core:analytics"))
     implementation(libs.androidx.work.runtime.ktx)
     implementation(project(":shared:core:sync"))
+    implementation(project(":shared:core:network"))
 
     // Compose
     implementation(platform(libs.compose.bom))

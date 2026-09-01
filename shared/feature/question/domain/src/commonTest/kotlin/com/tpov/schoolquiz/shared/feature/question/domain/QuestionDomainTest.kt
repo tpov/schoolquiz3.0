@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
  *   scenario 20 (payload="" throws)
  *   State Matrix rows for question sync (leaf node)
  *   scenario 44 (FakeQuestionRepository: updated + new + cursor advance)
- *   Primary User Journey 5: cascade to leaf questions
+ *   Primary User Journey 5: admin adds question → question reaches the client
  */
 class QuestionDomainTest {
 
@@ -115,18 +115,7 @@ class QuestionDomainTest {
         assertEquals(true, q.archived)
     }
 
-    // ── Note: Question has no contentsVersion (leaf node) ────────────────────
-    @Test
-    fun `Question is a leaf and has no contentsVersion field`() {
-        // This test confirms the leaf invariant: reflection check that no
-        // contentsVersion property exists. We verify by confirming construction
-        // succeeds with only version, not contentsVersion.
-        val q = makeQuestion(version = 1L)
-        assertEquals(1L, q.version)
-        // No contentsVersion — would be a compile error if field existed by mistake
-    }
-
-    // ── SyncQuestionsUseCase tests (leaf cascade — PUJ 5) ────────────────────
+    // ── SyncQuestionsUseCase tests (leaf pull — PUJ 5) ───────────────────────
     @Test
     fun `SyncQuestionsUseCase inserts new question for known lessonId`() = runTest {
         val fake = FakeQuestionRepository()
@@ -194,7 +183,7 @@ class QuestionDomainTest {
         assertEquals(listOf(0, 1, 2), result.map { it.order })
     }
 
-    // ── PUJ 5: cascade to leaf (admin adds question → question in Room) ───────
+    // ── PUJ 5: admin adds question → question in Room ────────────────────────
     @Test
     fun `journey 5 admin adds question to lesson - appears in local cache after sync`() = runTest {
         val fake = FakeQuestionRepository()

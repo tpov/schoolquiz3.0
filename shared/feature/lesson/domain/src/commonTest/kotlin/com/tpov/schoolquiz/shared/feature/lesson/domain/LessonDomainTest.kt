@@ -54,11 +54,6 @@ class LessonDomainTest {
     }
 
     @Test
-    fun `Lesson with negative contentsVersion throws`() {
-        assertFailsWith<IllegalArgumentException> { makeLesson(contentsVersion = -1L) }
-    }
-
-    @Test
     fun `Lesson with negative lastModifiedAt throws`() {
         assertFailsWith<IllegalArgumentException> { makeLesson(lastModifiedAt = -1L) }
     }
@@ -188,7 +183,6 @@ class LessonDomainTest {
         title: String = "Lesson Title",
         order: Int = 0,
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 0L,
         archived: Boolean = false,
     ) = Lesson(
@@ -197,7 +191,6 @@ class LessonDomainTest {
         title = title,
         order = order,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

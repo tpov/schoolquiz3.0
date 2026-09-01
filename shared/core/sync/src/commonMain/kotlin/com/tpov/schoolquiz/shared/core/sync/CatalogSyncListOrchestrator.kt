@@ -78,12 +78,27 @@ class CatalogSyncListOrchestrator(
             } else {
                 syncStateRepo.getCursor(cursorId)
             }
-        val changes = syncChangeRemote.fetchChangedSince(catalogId, cursor)
-            .filter { it.nodeId.isNotBlank() }
-        if (changes.isEmpty()) return Result.success(Unit)
+        // Журнал читается страницами (AD-31): полная перепубликация большого курса иначе
+        // приходит одним ответом, размер которого ограничен только автором.
+        var at = SyncCursor(cursor)
+        var pages = 0
+        while (pages < MAX_PAGES_PER_RUN) {
+            val page = syncChangeRemote.fetchPage(catalogId, at)
+            val changes = page.changes.filter { it.nodeId.isNotBlank() }
+            if (page.changes.isEmpty()) break
 
-        applyChanges(changes, includeQuestions).onFailure { return Result.failure(it) }
-        syncStateRepo.setCursor(cursorId, changes.maxOf { it.changedAtMs })
+            if (changes.isNotEmpty()) {
+                applyChanges(changes, includeQuestions).onFailure { return Result.failure(it) }
+            }
+            // Курсор двигается только после успешного применения: обрыв на середине страницы
+            // означает, что следующий проход перечитает её же.
+            page.nextCursor?.let {
+                at = it
+                syncStateRepo.setCursor(cursorId, it.changedAtMs)
+            }
+            pages++
+            if (!page.hasMore) break
+        }
         return Result.success(Unit)
     }
 
@@ -150,3 +165,11 @@ class CatalogSyncListOrchestrator(
  */
 private const val ON_DEMAND_COURSES_CATALOG_ID = "courses"
 private const val ARCHIVE_SHELF = "archive"
+
+/**
+ * Сколько страниц журнала берём за один проход.
+ *
+ * Не бесконечно: журнал пополняется во время чтения, и без потолка один проход мог бы не
+ * закончиться никогда. Остаток доедет следующим заходом — курсор уже сдвинут.
+ */
+private const val MAX_PAGES_PER_RUN = 50

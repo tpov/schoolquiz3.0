@@ -39,9 +39,6 @@ class FakeThemeRepository : ThemeRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun getLocalContentsVersion(id: ThemeId): Long? =
-        cache.value[id]?.contentsVersion
-
     fun setNextRefreshFailure(error: Throwable) { nextRefreshFailure = error }
     fun setNextRefreshChanged(ids: Set<ThemeId>) { nextRefreshChangedOverride = ids }
     fun seed(themes: List<Theme>) { cache.value = themes.associateBy { it.id } }

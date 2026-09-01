@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.android.feature.economy.presentation.component
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralProgramUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
@@ -370,9 +372,21 @@ class DefaultShopComponent(
         }
     }
 
+    /**
+     * Что показать игроку.
+     *
+     * Раньше сюда уходило `message` как есть, поэтому «нет интернета» и «не хватает ноликов»
+     * выглядели одинаково. Теперь ветвь ошибки решает текст: связи нет — говорим про связь,
+     * сервер отказал — показываем его причину.
+     */
     private fun Throwable.errorDetail(): String? {
         if (this is CancellationException) throw this
-        return message?.takeIf { it.isNotBlank() }
+        return when (val error = syncErrorOrNull()) {
+            SyncError.NoNetwork -> "Нет соединения. Покупка станет доступна, когда появится интернет."
+            is SyncError.Refused -> error.reason
+            null -> message?.takeIf { it.isNotBlank() }
+            else -> "Не получилось. Попробуйте ещё раз."
+        }
     }
 }
 

@@ -509,7 +509,7 @@ class QuestUseCaseTest {
     // The fake simulates the server's cascading behavior.
     @Test
     fun `scenario 58 server invariant B quest visibleOn change causes descendants to have fresh lastModifiedAt`() = runTest {
-        // Arrange: quest with visibleOn change arrives. Server raised contentsVersion.
+        // Arrange: quest with visibleOn change arrives.
         // All child sections get fresh lastModifiedAt via Invariant B.
         val questFake = FakeQuestRepository()
 
@@ -521,14 +521,12 @@ class QuestUseCaseTest {
             catalogId = surveys,
             visibleOn = emptySet(),         // was private
             version = 1L,
-            contentsVersion = 2L,
             lastModifiedAt = 500L,
         )
-        // Quest is now public; server bumped its contentsVersion
+        // Quest is now public
         val questAfterPublish = questBeforePublish.copy(
             visibleOn = setOf("home"),
             version = 2L,
-            contentsVersion = 3L,           // bumped — triggers section sync
             lastModifiedAt = 2000L,         // fresh timestamp
         )
 
@@ -546,14 +544,8 @@ class QuestUseCaseTest {
         val snapshot = questFake.snapshot()
         assertEquals(1, snapshot.size, "Published quest must be inserted")
         assertEquals(setOf("home"), snapshot[0].visibleOn)
-        assertEquals(3L, snapshot[0].contentsVersion, "contentsVersion must be 3 (bumped by server)")
-
-        // Cascade predicate: server cv=3 > old local cv=0 (was absent) → RECURSE
-        val localQuestCv = 0L // was absent before sync
-        val serverQuestCv = snapshot[0].contentsVersion
-        val shouldSyncChildren = serverQuestCv > localQuestCv
-        assertEquals(true, shouldSyncChildren,
-            "Invariant B: newly public quest with cv>0 must trigger child sync")
+        assertEquals(2000L, snapshot[0].lastModifiedAt,
+            "Invariant B: newly public quest must carry the fresh server timestamp")
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -565,7 +557,6 @@ class QuestUseCaseTest {
         title: String = "My Quest",
         visibleOn: Set<String> = setOf("home"),
         version: Long = 1L,
-        contentsVersion: Long = 0L,
         lastModifiedAt: Long = 0L,
         archived: Boolean = false,
     ) = Quest(
@@ -578,7 +569,6 @@ class QuestUseCaseTest {
         averageRating = null,
         averageRatingCount = 0,
         version = version,
-        contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
     )

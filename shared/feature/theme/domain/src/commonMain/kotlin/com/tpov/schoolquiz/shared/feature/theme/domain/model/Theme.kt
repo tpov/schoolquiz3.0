@@ -27,11 +27,6 @@ data class Theme(
      */
     val version: Long,
     /**
-     * Version counter tracking changes in child lessons.
-     * Invariant: >= 0.
-     */
-    val contentsVersion: Long,
-    /**
      * Server-set timestamp (Unix millis) of the last write.
      * Used as delta-sync cursor: `where('lastModifiedAt', '>', localCursor)`.
      * Set by Firestore FieldValue.serverTimestamp() at write time.
@@ -48,7 +43,6 @@ data class Theme(
         require(title.isNotBlank()) { "Theme.title must not be blank" }
         require(order >= 0) { "Theme.order must be >= 0, got $order" }
         require(version >= 1) { "Theme.version must be >= 1, got $version" }
-        require(contentsVersion >= 0) { "Theme.contentsVersion must be >= 0, got $contentsVersion" }
         require(lastModifiedAt >= 0) { "Theme.lastModifiedAt must be >= 0, got $lastModifiedAt" }
     }
 }

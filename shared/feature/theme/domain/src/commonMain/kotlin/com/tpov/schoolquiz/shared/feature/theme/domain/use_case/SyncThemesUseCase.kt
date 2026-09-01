@@ -7,10 +7,10 @@ import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepositor
 /**
  * Triggers remote sync for themes of the given sections.
  *
- * Cascading sync step 4: after sections with grown contentsVersion are synced,
+ * Sync step 4: after the sections named by the `sync_changes` journal are synced,
  * pull their themes.
  *
- * Spec: docs/features/home-and-my-quests/0-spec.md — FR#14 cascading sync step 4.
+ * Spec: docs/features/home-and-my-quests/0-spec.md — FR#14 sync step 4.
  */
 class SyncThemesUseCase(
     private val themes: ThemeRepository,
@@ -18,8 +18,8 @@ class SyncThemesUseCase(
     /**
      * @param sectionIds IDs of sections whose themes need to be refreshed.
      * @param cursor     local themesCursor (max lastModifiedAt seen so far). Default 0L.
-     * @return [Result.success] containing the set of processed [ThemeId]s for cascade trigger;
-     *   [Result.failure] on error.
+     * @return [Result.success] containing the set of processed [ThemeId]s, passed to lesson sync
+     *   as parentIds; [Result.failure] on error.
      */
     suspend operator fun invoke(sectionIds: Set<SectionId>, cursor: Long = 0L): Result<Set<ThemeId>> =
         themes.refreshByParents(sectionIds, cursor)

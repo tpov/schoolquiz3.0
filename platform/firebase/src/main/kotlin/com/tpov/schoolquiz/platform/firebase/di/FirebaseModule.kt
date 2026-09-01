@@ -58,7 +58,7 @@ val firebaseModule =
             )
         }
         single<EconomyRemoteDataSource> {
-            FirebaseEconomyRemoteDataSource(functions = get())
+            FirebaseEconomyRemoteDataSource(functions = get(), networkMonitor = get())
         }
         single<GiftBoxRemoteDataSource> {
             FirebaseGiftBoxRemoteDataSource(functions = get())

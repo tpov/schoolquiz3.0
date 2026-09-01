@@ -33,13 +33,6 @@ data class Catalog(
      */
     val version: Long = 1,
     /**
-     * Monotonically-increasing counter that tracks changes to *any descendant* (quest, section, …).
-     * Invariant: >= 0. When `dto.contentsVersion > local.contentsVersion`, cascade to quests.
-     *
-     * Spec: docs/features/home-and-my-quests/0-spec.md — FR#1, Cascade sync algorithm.
-     */
-    val contentsVersion: Long = 0,
-    /**
      * Server-set timestamp (Unix millis) of the last write.
      * Used as delta-sync cursor: `where('lastModifiedAt', '>', localCursor)`.
      * Set by Firestore FieldValue.serverTimestamp() at write time.
@@ -86,7 +79,6 @@ data class Catalog(
             }
         }
         require(version >= 1) { "Catalog.version must be >= 1, got $version" }
-        require(contentsVersion >= 0) { "Catalog.contentsVersion must be >= 0, got $contentsVersion" }
         require(lastModifiedAt >= 0) { "Catalog.lastModifiedAt must be >= 0, got $lastModifiedAt" }
     }
 }

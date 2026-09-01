@@ -20,6 +20,4 @@ class FakeThemeRepository : ThemeRepository {
 
     override suspend fun refreshByParents(sectionIds: Set<SectionId>, cursor: Long): Result<Set<ThemeId>> =
         Result.success(emptySet())
-
-    override suspend fun getLocalContentsVersion(id: ThemeId): Long? = null
 }

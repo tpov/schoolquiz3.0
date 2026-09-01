@@ -51,9 +51,9 @@ balance is a fraud surface the server has to settle.
     anywhere in the path. Catalogue detail lives in `paid-catalogue.md`.
 
 - **CAP-2 — Gold is earned as well as bought, and every credit is server-authorised.**
-  - **intent:** Gold reaches an account from four automatic paths — purchase, boxes, market sales,
-    leaderboard payouts — and leaves it through four — market purchases, plasma charges, premium,
-    and offer auction bids. No path credits or debits gold on the device.
+  - **intent:** Gold reaches an account from five paths — purchase, boxes, market sales, leaderboard
+    payouts, referral settlements — and leaves it through four: market purchases, plasma slots,
+    premium, and offer auction bids. No path credits or debits gold on the device.
   - **success:** For every source and sink in `gold-flows.md`, the client-side balance after the
     operation equals the server's balance on the next read, and an offline attempt at any of them
     is refused rather than queued. A crafted client request claiming an unauthorised gold credit
@@ -71,20 +71,23 @@ balance is a fraud surface the server has to settle.
 
 - **CAP-4 — Premium sells in four durations, arrives by four routes, and never buys advantage.**
   - **intent:** Premium exists for a day, a week, a month or a year. It arrives by real-money
-    purchase, by gold, or as a box drop. Its benefits are cosmetic or personal — a golden nickname
-    in chat and on leaderboards, box multipliers, faster charge regeneration — and it feeds points
-    toward the sponsor qualification.
+    purchase, by gold, or as a box drop. All its benefits ship together — golden nickname in chat and
+    on leaderboards, box multipliers, faster charge regeneration — and it accrues sponsor-qualification
+    points, which are recorded and displayed but grant nothing at launch.
   - **success:** No premium benefit changes a score, a ranking position, or an income rate relative
     to a non-premium player. Buying premium while holding it extends rather than double-charges.
     Changing the gold price server-side takes effect without an app release.
 
 - **CAP-5 — The market trades unique items between players, and the buyer pays the house 5%.**
   - **intent:** A player sells a unique name or logo to another player for gold. The transfer moves
-    the item and the gold in one server-settled operation. The buyer pays a 5% commission on top of
-    the seller's price.
-  - **success:** After a completed sale the item has exactly one owner, the seller receives the full
-    listed price, the buyer is debited the price plus 5%, and total gold in circulation falls by
-    exactly that 5%. A sale interrupted mid-flight leaves either both sides moved or neither.
+    the item and the gold in one server-settled operation. The buyer pays exactly the listed price;
+    the house's 5% comes **out of** it and the seller receives the remainder.
+  - **success:** After a completed sale the item has exactly one owner, the buyer is debited exactly
+    the listed price, the seller is credited that price minus the commission, and the two halves add
+    back to the price exactly — no sale mints or destroys a unit of gold to rounding. Total gold in
+    circulation falls by exactly the commission. A sale interrupted mid-flight leaves either both
+    sides moved or neither. The commission is the house's only revenue line that is not a store
+    purchase.
 
 - **CAP-6 — Nothing moves until the server has verified the receipt.**
   - **intent:** A real-money purchase is verified against the store before any balance changes, and
@@ -134,8 +137,9 @@ balance is a fraud surface the server has to settle.
   - **intent:** Inviting six qualifying players pays 50 boxes once. Beyond that, a referrer receives
     1% of every box their referrals open, settled at season close.
   - **success:** The one-time award fires exactly once per referrer and only when six referrals have
-    each passed the qualifying threshold. The 1% settles per season against boxes actually opened,
-    credits each referrer once, and a referral chain cannot pay a player for their own openings.
+    each opened **10 boxes**. The 1% is uncapped and settles per season against
+    boxes opened by accounts registered under that referrer's link — one level deep, never a chain —
+    credits each referrer once, and cannot pay a player for their own openings. The percentage itself is a server constant, tunable without a release.
 
 ## Constraints
 
@@ -162,6 +166,10 @@ balance is a fraud surface the server has to settle.
   a user for installing is not. This bounds what the offers screen may carry.
 - **Every gold-moving operation is auditable**, naming the actor, the amount, and the authorising
   operation.
+- **Plasma is a one-time gold sink, not a recurring one.** `spec-charges` CAP-9 sells it as slots on
+  a `[1,2,3]` gold ladder — six gold for all three — after which slots refill themselves. This bounds
+  how much gold a player ever needs for plasma; it says nothing about revenue, which plasma has never
+  been a source of.
 - **Season payouts are denominated in boxes, not gold.** A season's full leaderboard settlement
   injects about 44 gold across 100 players. Restating the same table in gold would inject 5 000 and
   break the paid economy in one settlement.
@@ -206,15 +214,5 @@ number rather than a guess.
 
 ## Open Questions
 
-- What threshold must each of the six referrals pass to unlock the one-time 50 boxes — a count of
-  opened boxes, or an experience level? Without one, six throwaway accounts are worth 50 boxes.
-- Is the referral 1% capped per season, and does it count boxes opened by a referral's own
-  referrals or only by direct invitees?
-- What does the sponsor qualification grant? Premium feeds its points; the owner's answer is
-  "nothing yet, possibly feature access later", so it ships inert.
-- Do gold packs need a fourth, larger tier? Three tiers is an assumption, not a decision.
-- **Plasma has stopped being a recurring gold sink.** Under `spec-charges` CAP-9 it is bought as
-  slots on a 1 / 2 / 3 ladder — six gold for all three, once — and they refill themselves every
-  24 h thereafter. Of the four sinks in `gold-flows.md`, only three now drain gold on an ongoing
-  basis. Is that acceptable, or should plasma slots decay, expire, or stay consumable after all?
-  This is this spec's call; `spec-charges` follows whichever way it goes.
+- None outstanding. Every gap the owner was asked about has an answer behind it; the remaining
+  unknowns are prices, which are server constants set at launch rather than contract decisions.

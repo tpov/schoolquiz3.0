@@ -91,8 +91,6 @@ class FakeSectionRepository(
         return Result.success(processedIds)
     }
 
-    override suspend fun getLocalContentsVersion(id: SectionId): Long? = cache.value[id]?.contentsVersion
-
     // ── Test helpers ──────────────────────────────────────────────────────────
 
     fun seed(sections: List<Section>) {
