@@ -39,11 +39,15 @@ function maxLifePoints(standardHearts) {
  */
 function regenerateLifePoints(storedPoints, updatedAtMs, nowMs, maxPoints) {
   const ceiling = Math.max(0, Math.floor(Number(maxPoints) || 0));
-  const current = Math.min(Math.max(0, Math.floor(Number(storedPoints) || 0)), ceiling);
+  // Не зажимаем вниз: потолок ограничивает пополнение, а не владение. Прежде здесь стоял
+  // `Math.min`, и понижение потолка молча отбирало накопленное — игрок ничего не тратил, а очки
+  // исчезали на первом же чтении. Теперь баланс выше потолка остаётся как есть и просто не растёт,
+  // пока не опустится под него сам. То же правило действует и в клиентском `ChargeRegeneration`.
+  const current = Math.max(0, Math.floor(Number(storedPoints) || 0));
   const since = Math.max(0, Math.floor(Number(updatedAtMs) || 0));
   const now = Math.max(0, Math.floor(Number(nowMs) || 0));
 
-  if (current >= ceiling) return {points: ceiling, updatedAtMs: now};
+  if (current >= ceiling) return {points: current, updatedAtMs: Math.max(since, now)};
   if (now <= since) return {points: current, updatedAtMs: since};
 
   const gained = Math.floor((now - since) / LIFE_POINT_INTERVAL_MS);
@@ -62,8 +66,9 @@ function regenerateLifePoints(storedPoints, updatedAtMs, nowMs, maxPoints) {
  * already spent elsewhere; the server stays the authority and simply does not pay for it.
  */
 function spendLifePoints(points, cost, maxPoints) {
-  const ceiling = Math.max(0, Math.floor(Number(maxPoints) || 0));
-  const current = Math.min(Math.max(0, Math.floor(Number(points) || 0)), ceiling);
+  // `maxPoints` здесь больше ни на что не влияет: тратится то, что есть, а не то, что помещается.
+  // Параметр оставлен, чтобы не переписывать десяток мест вызова ради одного удалённого аргумента.
+  const current = Math.max(0, Math.floor(Number(points) || 0));
   const price = Math.max(0, Math.floor(Number(cost) || 0));
   if (current < price) return {affordable: false, points: current};
   return {affordable: true, points: current - price};

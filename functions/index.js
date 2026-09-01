@@ -4838,14 +4838,26 @@ function lifePointsSnapshot(user, nowMs) {
   };
 }
 
+/**
+ * Баланс, как он лежит в документе.
+ *
+ * Потолок здесь **не применяется**. Раньше прочитанное зажималось `Math.min` — и это значило, что
+ * понижение потолка молча отбирает у игрока лишнее: он купил пять слотов, потолок опустили до трёх,
+ * и два исчезли на первом же чтении, без покупки, без объявления и без возврата.
+ *
+ * Потолок ограничивает пополнение — покупку и восстановление, — а не владение. Аккаунт, у которого
+ * больше потолка, просто не растёт, пока не окажется под ним сам. Сегодня это ничего не меняет
+ * (ничей баланс потолка не превышает), но таблица настроек затем и делается серверной, чтобы
+ * потолки двигались, — и ловушку надо убрать до того, как они начнут двигаться, а не после.
+ */
 function readEconomyBalance(user) {
   return {
     hasPremium: Boolean(user.hasPremium),
     streakDays: nonNegativeInteger(user.streakDays, 0),
     stars: nonNegativeInteger(user.stars, 0),
     nolics: nonNegativeInteger(user.pointsNolics, numberValue(user.nolics, 0)),
-    standardHearts: Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS)),
-    goldHearts: Math.min(MAX_GOLD_HEARTS, nonNegativeInteger(user.goldHearts, 0)),
+    standardHearts: nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS),
+    goldHearts: nonNegativeInteger(user.goldHearts, 0),
     gold: nonNegativeInteger(user.gold, 0),
     // Part of the balance because the client applies what it is handed back wholesale. Leave the
     // set out and every purchase answers "you own no lessons", which the client then believes.

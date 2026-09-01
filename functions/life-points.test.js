@@ -73,9 +73,17 @@ function testClockSkewDoesNotGrantPoints() {
   );
 }
 
-function testStoredValueAboveCeilingIsClamped() {
-  // Losing a heart slot must not leave the balance above the new ceiling.
-  assert.strictEqual(regenerateLifePoints(500, 0, 1_000, 100).points, 100);
+function testStoredValueAboveCeilingIsKeptRatherThanConfiscated() {
+  // Прежде здесь стояло обратное утверждение — «потерянный слот не должен оставить баланс выше
+  // нового потолка», — и это было конфискацией: игрок ничего не тратил, а очки исчезали на первом
+  // же чтении. Потолок ограничивает пополнение, а не владение.
+  //
+  // Правило названо в спеке зарядов и действует по обе стороны: та же арифметика в клиентском
+  // `ChargeRegeneration`. Пока таблица настроек была зашита в код, разницы не было видно; она
+  // затем и делается серверной, чтобы потолки двигались.
+  assert.strictEqual(regenerateLifePoints(500, 0, 1_000, 100).points, 500);
+  // И расти при этом не начинает.
+  assert.strictEqual(regenerateLifePoints(500, 0, 10_000_000, 100).points, 500);
 }
 
 function testSpending() {
@@ -106,7 +114,7 @@ testRegenerationGrantsWholePointsOnly();
 testPartialProgressIsNotLost();
 testCeilingStopsAccrualAndDoesNotBankTime();
 testClockSkewDoesNotGrantPoints();
-testStoredValueAboveCeilingIsClamped();
+testStoredValueAboveCeilingIsKeptRatherThanConfiscated();
 testSpending();
 testFullTankAllowsFifteenAttempts();
 
