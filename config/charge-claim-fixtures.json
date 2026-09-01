@@ -1,0 +1,232 @@
+[
+  {
+    "name": "оплаченный пропуск",
+    "mask": "..P.",
+    "codeAnswer": "9905",
+    "standard": 0,
+    "plasma": 1,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": null,
+    "settled": {
+      "codeAnswer": "9995",
+      "paid": [
+        2
+      ],
+      "unpaid": [],
+      "standardChargesPaid": 0,
+      "plasmaChargesPaid": 1
+    }
+  },
+  {
+    "name": "пропуск без плазмы",
+    "mask": "..P.",
+    "codeAnswer": "9905",
+    "standard": 0,
+    "plasma": 0,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": null,
+    "settled": {
+      "codeAnswer": "9905",
+      "paid": [],
+      "unpaid": [
+        2
+      ],
+      "standardChargesPaid": 0,
+      "plasmaChargesPaid": 0
+    }
+  },
+  {
+    "name": "ранние заявки платятся первыми",
+    "mask": "P.PP",
+    "codeAnswer": "0000",
+    "standard": 0,
+    "plasma": 2,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": null,
+    "settled": {
+      "codeAnswer": "9090",
+      "paid": [
+        0,
+        2
+      ],
+      "unpaid": [
+        3
+      ],
+      "standardChargesPaid": 0,
+      "plasmaChargesPaid": 2
+    }
+  },
+  {
+    "name": "порядок вопросов решает",
+    "mask": "P.PP",
+    "codeAnswer": "0000",
+    "standard": 0,
+    "plasma": 1,
+    "difficulty": "HARD",
+    "order": [
+      3,
+      2,
+      0
+    ],
+    "fault": null,
+    "settled": {
+      "codeAnswer": "0009",
+      "paid": [
+        3
+      ],
+      "unpaid": [
+        0,
+        2
+      ],
+      "standardChargesPaid": 0,
+      "plasmaChargesPaid": 1
+    }
+  },
+  {
+    "name": "подсказка не поднимает цифру",
+    "mask": "S...",
+    "codeAnswer": "7999",
+    "standard": 3,
+    "plasma": 0,
+    "difficulty": "EASY",
+    "order": null,
+    "fault": null,
+    "settled": {
+      "codeAnswer": "7999",
+      "paid": [
+        0
+      ],
+      "unpaid": [],
+      "standardChargesPaid": 1,
+      "plasmaChargesPaid": 0
+    }
+  },
+  {
+    "name": "две подсказки на один заряд",
+    "mask": "S..S",
+    "codeAnswer": "7995",
+    "standard": 1,
+    "plasma": 0,
+    "difficulty": "EASY",
+    "order": null,
+    "fault": null,
+    "settled": {
+      "codeAnswer": "7995",
+      "paid": [
+        0
+      ],
+      "unpaid": [
+        3
+      ],
+      "standardChargesPaid": 1,
+      "plasmaChargesPaid": 0
+    }
+  },
+  {
+    "name": "без заявок",
+    "mask": "....",
+    "codeAnswer": "1234",
+    "standard": 5,
+    "plasma": 5,
+    "difficulty": "EASY",
+    "order": null,
+    "fault": null,
+    "settled": {
+      "codeAnswer": "1234",
+      "paid": [],
+      "unpaid": [],
+      "standardChargesPaid": 0,
+      "plasmaChargesPaid": 0
+    }
+  },
+  {
+    "name": "все пропуски оплачены",
+    "mask": "PPPP",
+    "codeAnswer": "0000",
+    "standard": 0,
+    "plasma": 4,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": null,
+    "settled": {
+      "codeAnswer": "9999",
+      "paid": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "unpaid": [],
+      "standardChargesPaid": 0,
+      "plasmaChargesPaid": 4
+    }
+  },
+  {
+    "name": "длинная попытка, плазмы на треть",
+    "mask": "P.P.P.P.P.P",
+    "codeAnswer": "09090909090",
+    "standard": 0,
+    "plasma": 2,
+    "difficulty": "HARD",
+    "order": [
+      10,
+      8,
+      6,
+      4,
+      2,
+      0
+    ],
+    "fault": null,
+    "settled": {
+      "codeAnswer": "09090909999",
+      "paid": [
+        8,
+        10
+      ],
+      "unpaid": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "standardChargesPaid": 0,
+      "plasmaChargesPaid": 2
+    }
+  },
+  {
+    "name": "своя девятка под пропуском",
+    "mask": "P...",
+    "codeAnswer": "9111",
+    "standard": 0,
+    "plasma": 1,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": "SKIP_ON_ANSWERED",
+    "settled": null
+  },
+  {
+    "name": "обычный на сложной",
+    "mask": "S...",
+    "codeAnswer": "0111",
+    "standard": 1,
+    "plasma": 0,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": "WRONG_DIFFICULTY",
+    "settled": null
+  },
+  {
+    "name": "длина не та",
+    "mask": "P..",
+    "codeAnswer": "0111",
+    "standard": 0,
+    "plasma": 1,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": "LENGTH_MISMATCH",
+    "settled": null
+  }
+]
