@@ -52,6 +52,14 @@ class DefaultLessonListComponent(
     private val economyRepository: EconomyRepository,
     private val navigation: StackNavigation<QuizzesConfig>,
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
+    /**
+     * Цена открытия каждого урока, в ноликах.
+     *
+     * Функцией, а не типом use case — по образцу [lessonContentSync] выше: вызывающие, которым
+     * цена не нужна, не обязаны её собирать. По умолчанию цен нет, и замок остаётся без числа —
+     * ровно то, чем он был до сих пор.
+     */
+    private val observeUnlockPrices: (List<LessonId>) -> Flow<Map<LessonId, Int>> = { flowOf(emptyMap()) },
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonListComponent {
     private val componentJob = SupervisorJob()
@@ -87,16 +95,22 @@ class DefaultLessonListComponent(
         val unlocksFlow = economyRepository.observeBalance().map { it.lessonUnlocks }
         scope.launch {
             lessonRepository.observeByTheme(themeId).flatMapLatest { lessons ->
+                // Цена нужна только там, где урок вообще может быть заперт. Вне курса подписки на
+                // вопросы всех уроков темы были бы работой ради числа, которое негде показать.
+                val pricesFlow =
+                    if (gatesSequentially) observeUnlockPrices(lessons.map { it.id }) else flowOf(emptyMap())
                 combine(
                     statsFlow,
                     hardCheckedSet,
                     unlocksFlow,
-                ) { stats, checkedSet, unlocks ->
+                    pricesFlow,
+                ) { stats, checkedSet, unlocks, prices ->
                     mapToUi(
                         lessons = lessons,
                         stats = stats,
                         checkedSet = checkedSet,
                         unlocks = unlocks,
+                        prices = prices,
                     )
                 }
             }
@@ -176,6 +190,7 @@ class DefaultLessonListComponent(
         stats: Map<LessonId, LessonAttemptStats>,
         checkedSet: Set<String>,
         unlocks: Set<String>,
+        prices: Map<LessonId, Int>,
     ): LessonListUiState {
         if (lessons.isEmpty()) return LessonListUiState.Empty(HierarchyLevel.LESSONS)
         val ordered = lessons.sortedBy { it.order }
@@ -212,6 +227,9 @@ class DefaultLessonListComponent(
                             LessonUnlockKind.HARD_MODE.keyFor(lesson.id.value) in unlocks,
                     isHardChecked = lesson.id.value in checkedSet,
                     access = access[lesson.id] ?: LessonAccess.OPEN,
+                    // Урок, чьи вопросы ещё не доехали, цены не получает: замок без числа честнее,
+                    // чем число, которое разойдётся с тем, что спишет сервер.
+                    unlockPriceNolics = prices[lesson.id],
                 )
             }
         return LessonListUiState.Loaded(items)

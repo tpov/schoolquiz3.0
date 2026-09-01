@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
+import com.tpov.schoolquiz.shared.feature.question.domain.use_case.ObserveLessonUnlockPricesUseCase
 import org.koin.dsl.module
 
 val quizzesPresentationModule =
@@ -33,6 +34,7 @@ val quizzesPresentationModule =
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
                 questContentSync = contentSync?.let { it::syncQuestContent } ?: { missingSync() },
                 lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { missingSync() },
+                observeLessonUnlockPrices = get<ObserveLessonUnlockPricesUseCase>()::invoke,
             )
         }
     }

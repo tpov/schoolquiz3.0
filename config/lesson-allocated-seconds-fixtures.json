@@ -1,0 +1,848 @@
+[
+  {
+    "name": "пустой урок",
+    "questions": [],
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "один лёгкий вопрос",
+    "questions": [
+      {
+        "id": "q1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 36,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "вопрос без текста упирается в минимум",
+    "questions": [
+      {
+        "id": "q1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 0
+      }
+    ],
+    "easyAllocatedSeconds": 5,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "картинка стоит сто знаков",
+    "questions": [
+      {
+        "id": "q1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 36,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "варианты ответа считаются",
+    "questions": [
+      {
+        "id": "q1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 36,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "сложность без имени считается лёгкой",
+    "questions": [
+      {
+        "id": "q1",
+        "archived": false,
+        "difficulty": "",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 36,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "архивный вопрос не считается",
+    "questions": [
+      {
+        "id": "q1",
+        "archived": true,
+        "difficulty": "EASY",
+        "charsCount": 100
+      },
+      {
+        "id": "q2",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 36,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "переводы схлопываются в один",
+    "questions": [
+      {
+        "id": "q1__ru",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      },
+      {
+        "id": "q1__en",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      },
+      {
+        "id": "q1__uk",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 36,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "два подчёркивания не язык",
+    "questions": [
+      {
+        "id": "q1__1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      },
+      {
+        "id": "q1__2",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 72,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "смешанный урок",
+    "questions": [
+      {
+        "id": "e0",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e2",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e3",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e4",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "h0",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 150
+      },
+      {
+        "id": "h1",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 150
+      },
+      {
+        "id": "h2",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 150
+      },
+      {
+        "id": "h3",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 150
+      }
+    ],
+    "easyAllocatedSeconds": 215,
+    "hardAllocatedSeconds": 144
+  },
+  {
+    "name": "ровно набор",
+    "questions": [
+      {
+        "id": "e0",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e2",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e3",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e4",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e5",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e6",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e7",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e8",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e9",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e10",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e11",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e12",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e13",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e14",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e15",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e16",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e17",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e18",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "e19",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      }
+    ],
+    "easyAllocatedSeconds": 860,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "сверх набора — среднее",
+    "questions": [
+      {
+        "id": "a0",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a2",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a3",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a4",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a5",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a6",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a7",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a8",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a9",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a10",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a11",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a12",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a13",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a14",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a15",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a16",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a17",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a18",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a19",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a20",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a21",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a22",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a23",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a24",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a25",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a26",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a27",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a28",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "a29",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 120
+      },
+      {
+        "id": "b0",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b1",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b2",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b3",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b4",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b5",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b6",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b7",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b8",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      },
+      {
+        "id": "b9",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 600
+      }
+    ],
+    "easyAllocatedSeconds": 1725,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "сложные сверх набора",
+    "questions": [
+      {
+        "id": "h0",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h1",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h2",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h3",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h4",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h5",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h6",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h7",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h8",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h9",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h10",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h11",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h12",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h13",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h14",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h15",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h16",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h17",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h18",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h19",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h20",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h21",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h22",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h23",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h24",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h25",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h26",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h27",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h28",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h29",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h30",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h31",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h32",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h33",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h34",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h35",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h36",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h37",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h38",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h39",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h40",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h41",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h42",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h43",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      },
+      {
+        "id": "h44",
+        "archived": false,
+        "difficulty": "HARD",
+        "charsCount": 200
+      }
+    ],
+    "easyAllocatedSeconds": 0,
+    "hardAllocatedSeconds": 960
+  }
+]

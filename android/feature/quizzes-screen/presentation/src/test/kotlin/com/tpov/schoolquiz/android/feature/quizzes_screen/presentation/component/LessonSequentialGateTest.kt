@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -56,6 +57,9 @@ class LessonSequentialGateTest {
     private val fakeEconomyRepo = FakeEconomyRepository()
     private val fakeNavigation = FakeStackNavigation()
 
+    /** Цены, как их посчитал бы ObserveLessonUnlockPricesUseCase из вопросов уроков. */
+    private val prices = MutableStateFlow<Map<LessonId, Int>>(emptyMap())
+
     @After
     fun tearDown() {
         if (::lifecycle.isInitialized) {
@@ -79,6 +83,7 @@ class LessonSequentialGateTest {
             authRepository = fakeAuthRepo,
             economyRepository = fakeEconomyRepo,
             navigation = fakeNavigation,
+            observeUnlockPrices = { prices },
             coroutineContext = dispatcher,
         )
     }
@@ -103,6 +108,48 @@ class LessonSequentialGateTest {
         codeAnswer = CodeAnswer("999"),
         percentScore = PercentScore(100),
     )
+
+    @Test
+    fun `a shut lesson says what it costs`() = runTest(dispatcher) {
+        // Замок рисовался без числа: цену знал только сервер, и спросить её было нельзя, не купив.
+        val component = buildComponent(QuestType.COURSE)
+        prices.value = mapOf(LessonId("l2") to 53, LessonId("l3") to 106)
+        fakeLessonRepo.emit(listOf(lesson("l1", 0), lesson("l2", 1), lesson("l3", 2)))
+        fakeAttemptRepo.emit(emptyList())
+        advanceUntilIdle()
+
+        val shown = items(component).associate { it.id to it.unlockPriceNolics }
+        assertEquals(53, shown["l2"])
+        assertEquals(106, shown["l3"])
+    }
+
+    @Test
+    fun `a lesson whose questions have not arrived shows no price at all`() = runTest(dispatcher) {
+        // Ноль обещал бы бесплатную дверь, единица — дешёвую; обе разошлись бы со списанием.
+        val component = buildComponent(QuestType.COURSE)
+        prices.value = mapOf(LessonId("l2") to 53)
+        fakeLessonRepo.emit(listOf(lesson("l1", 0), lesson("l2", 1), lesson("l3", 2)))
+        fakeAttemptRepo.emit(emptyList())
+        advanceUntilIdle()
+
+        assertEquals(null, items(component).first { it.id == "l3" }.unlockPriceNolics)
+    }
+
+    @Test
+    fun `a price that arrives after the list does still reaches the row`() = runTest(dispatcher) {
+        // Вопросы урока доезжают синхронизацией позже самого урока — цена обязана догнать список,
+        // а не остаться пустой до следующего открытия экрана.
+        val component = buildComponent(QuestType.COURSE)
+        fakeLessonRepo.emit(listOf(lesson("l1", 0), lesson("l2", 1)))
+        fakeAttemptRepo.emit(emptyList())
+        advanceUntilIdle()
+        assertEquals(null, items(component).first { it.id == "l2" }.unlockPriceNolics)
+
+        prices.value = mapOf(LessonId("l2") to 53)
+        advanceUntilIdle()
+
+        assertEquals(53, items(component).first { it.id == "l2" }.unlockPriceNolics)
+    }
 
     private fun items(component: DefaultLessonListComponent) =
         (component.uiState.value as LessonListUiState.Loaded).items

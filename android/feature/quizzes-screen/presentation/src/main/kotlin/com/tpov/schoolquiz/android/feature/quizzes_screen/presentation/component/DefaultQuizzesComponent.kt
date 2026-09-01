@@ -40,10 +40,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.ListSerializer
 
@@ -64,6 +66,8 @@ class DefaultQuizzesComponent(
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
     private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
+    /** Цена открытия уроков — передаётся вниз в список уроков, где её показывает замок. */
+    private val observeLessonUnlockPrices: (List<LessonId>) -> Flow<Map<LessonId, Int>> = { flowOf(emptyMap()) },
     private val mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, QuizzesComponent {
     private val navigation = StackNavigation<QuizzesConfig>()
@@ -348,6 +352,7 @@ class DefaultQuizzesComponent(
                         economyRepository,
                         navigation,
                         lessonContentSync,
+                        observeLessonUnlockPrices,
                         mainContext,
                     ),
                 )

@@ -81,9 +81,10 @@ fun LessonItemCard(
             // The whole trailing half of a shut row: a price and a padlock, and nothing else.
             // Stars would be zero and the mode chip meaningless, and both would only ask to be read.
             //
-            // The price is the server's to decide and the lesson does not carry it yet, so until it
-            // does the chip is the padlock alone. An empty label beside the icon read as a missing
-            // number rather than as no number.
+            // The price is still the server's to charge; the client computes the same figure from
+            // the lesson's own questions so the row can say what the tap will cost. A lesson whose
+            // questions have not arrived yet has no price, and then the chip is the padlock alone —
+            // a number that later disagreed with the charge would be worse than no number.
             NoirChip(
                 text = item.unlockPriceNolics?.toString() ?: "",
                 tone = NoirChipTone.Off,
