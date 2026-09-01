@@ -73,7 +73,7 @@ import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import java.util.Locale
 
-class AppApplication : Application(), Configuration.Provider {
+open class AppApplication : Application(), Configuration.Provider {
     /**
      * Application-scoped CoroutineScope for shared hot Flows (auth UID, etc.).
      * Survives the entire process lifetime. Dispatchers.Default — non-blocking work

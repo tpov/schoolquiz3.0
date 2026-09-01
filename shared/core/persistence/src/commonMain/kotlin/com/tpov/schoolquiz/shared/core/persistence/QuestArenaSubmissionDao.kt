@@ -36,6 +36,11 @@ interface QuestArenaSubmissionDao {
     @Query("DELETE FROM quest_arena_submission_outbox WHERE id = :submissionId")
     suspend fun delete(submissionId: String)
 
+    // No filter needed: a delivered submission is deleted (see markSent), so every row here is
+    // still waiting to go out.
+    @Query("SELECT COUNT(*) FROM quest_arena_submission_outbox")
+    suspend fun countPendingSubmissions(): Int
+
     @Transaction
     suspend fun queueSubmission(entity: QuestArenaSubmissionEntity) {
         insert(entity)

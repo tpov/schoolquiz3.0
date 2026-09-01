@@ -168,4 +168,14 @@ interface QuestAuthoringDao {
         insertQuestion(entity)
         touchDraftAfterQuestionChange(entity.draftId, entity.updatedAtMs)
     }
+
+    /**
+     * Drafts that exist only on this device.
+     *
+     * The delivered statuses are passed in rather than spelled out here: which of them mean "the
+     * server has it" is a decision of the authoring domain, and a copy of that decision buried in
+     * SQL is a copy that stops matching it.
+     */
+    @Query("SELECT COUNT(*) FROM quest_drafts WHERE status NOT IN (:deliveredStatuses)")
+    suspend fun countDraftsNotDelivered(deliveredStatuses: List<String>): Int
 }

@@ -52,6 +52,9 @@ gen/
 out/
 release/
 debug/
+# ...but an Android debug *source set* is source, not build output — it is the mechanism that keeps
+# developer-only code out of the release APK, so it has to be committed.
+!apps/android-next/src/debug/
 
 # Logs and temporary files
 *.log

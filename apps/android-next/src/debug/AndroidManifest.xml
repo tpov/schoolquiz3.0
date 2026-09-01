@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The debug build swaps in an Application that also prints the rebuild-boundary counts.
+    tools:replace is required because the main manifest already names AppApplication, and the
+    merger treats a differing android:name as a conflict rather than an override.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:name=".diagnostics.DebugApplication"
+        tools:replace="android:name" />
+
+</manifest>

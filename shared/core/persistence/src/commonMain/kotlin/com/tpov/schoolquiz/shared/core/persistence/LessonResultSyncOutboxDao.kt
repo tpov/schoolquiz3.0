@@ -69,4 +69,14 @@ interface LessonResultSyncOutboxDao {
         """,
     )
     suspend fun markRatingsFailed(ids: List<String>, error: String)
+
+    // Unsent rows only. Neither table is ever deleted from — a delivered row keeps its place and
+    // is marked with sent_at_ms — so counting every row would count a device's whole history and
+    // never reach zero. sent_at_ms is written only after the server has accepted the batch, so
+    // "still null" is exactly "the server does not have this yet".
+    @Query("SELECT COUNT(*) FROM lesson_result_attempt_outbox WHERE sent_at_ms IS NULL")
+    suspend fun countUnsentAttempts(): Int
+
+    @Query("SELECT COUNT(*) FROM quest_rating_outbox WHERE sent_at_ms IS NULL")
+    suspend fun countUnsentRatings(): Int
 }
