@@ -49,7 +49,12 @@ class RunFakeComponent(
         private set
     var nextLessonCount: Int = 0
         private set
+    /** Times the handler asked to spend, whether or not the spend succeeded. */
     var hintCount: Int = 0
+        private set
+
+    /** Charges actually taken off the state. */
+    var chargesSpent: Int = 0
         private set
     var postedComments: MutableList<String> = mutableListOf()
         private set
@@ -102,8 +107,17 @@ class RunFakeComponent(
         nextLessonCount++
     }
 
+    /**
+     * Mirrors the real component: a hint spends one charge off the Question state and is refused
+     * once the budget is empty. Returning a flat `true` made every no-charges test vacuous.
+     */
     override fun hintRequested(): Boolean {
         hintCount++
+        val current = _uiState.value as? RunnerUiState.Question ?: return false
+        val remaining = current.lives ?: return false
+        if (remaining <= 0) return false
+        _uiState.value = current.copy(lives = remaining - 1)
+        chargesSpent++
         return true
     }
 

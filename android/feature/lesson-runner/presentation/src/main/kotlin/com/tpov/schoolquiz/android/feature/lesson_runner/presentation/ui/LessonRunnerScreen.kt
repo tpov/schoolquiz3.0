@@ -297,7 +297,14 @@ private fun QuestionStateContent(
                 feedback = feedback,
                 revealCorrect = state.revealCorrect,
                 component = component,
-                livesAvailable = (state.lives ?: 0) > 0,
+                hint =
+                    rememberHintControl(
+                        qState = state.questionUiState,
+                        charges = state.lives,
+                        feedbackShown = feedback != null,
+                        questionKey = state.indexInPool,
+                        component = component,
+                    ),
                 onFeedback = { feedback = it },
             )
             FeedbackOverlay(
@@ -337,6 +344,34 @@ private fun QuestionStateContent(
     }
 }
 
+/**
+ * The hint's state for one question: whether the button is live, and a spend that succeeds at
+ * most once.
+ *
+ * The button is disabled by recomposition, which a second tap in the same frame beats, so the
+ * once-only flag is read inside the spend rather than trusted from the enabled state. It resets
+ * with [questionKey], i.e. per question.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun rememberHintControl(
+    qState: QuestionUiState,
+    charges: Int?,
+    feedbackShown: Boolean,
+    questionKey: Int,
+    component: LessonRunnerRootComponent,
+): HintControl {
+    var spent by remember(questionKey) { mutableStateOf(false) }
+    return HintControl(
+        enabled = !spent && isHintAvailable(qState, charges, feedbackShown),
+        spend = {
+            val didSpend = !spent && component.hintRequested()
+            if (didSpend) spent = true
+            didSpend
+        },
+    )
+}
+
 @Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod", "ktlint:standard:function-naming")
 @Composable
 private fun QuestionTypeContent(
@@ -345,11 +380,14 @@ private fun QuestionTypeContent(
     feedback: AnswerFeedback?,
     revealCorrect: Boolean,
     component: LessonRunnerRootComponent,
-    livesAvailable: Boolean,
+    hint: HintControl,
     onFeedback: (AnswerFeedback) -> Unit,
 ) {
-    // Hint spends a life and plays the correct answer; surveys have nothing to reveal.
-    val hintEnabled = livesAvailable && feedback == null && qState !is QuestionUiState.Survey
+    // Whether a hint exists was decided once, by isHintAvailable, before this ran. Each handler
+    // below builds its own typed draft and spends only once that draft is in hand, so a question
+    // with nothing playable to reveal can never take a charge — and the typed builders mean a
+    // handler wired to the wrong draft type does not compile.
+    val hintEnabled = hint.enabled
     when (qState) {
         is QuestionUiState.Survey ->
             SurveyContent(
@@ -401,8 +439,8 @@ private fun QuestionTypeContent(
                 feedback = feedback as? AnswerFeedback.SingleChoice,
                 hintEnabled = hintEnabled,
                 onHint = {
-                    val correctId = qState.correctOptionId
-                    if (correctId != null && component.hintRequested()) selectAndReveal(correctId)
+                    val correctId = qState.hintDraft()?.selected?.raw
+                    if (correctId != null && hint.spend()) selectAndReveal(correctId)
                 },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -435,7 +473,13 @@ private fun QuestionTypeContent(
                 feedback = feedback as? AnswerFeedback.MultipleChoice,
                 hintEnabled = hintEnabled,
                 onHint = {
-                    if (component.hintRequested()) submitWith(qState.correctIds)
+                    val draft = qState.hintDraft()
+                    if (draft != null && hint.spend()) {
+                        // The component owns the draft; without this the paid-for answer would
+                        // live only in the transient feedback, as it did before.
+                        component.onDraftChanged(draft)
+                        submitWith(draft.selected.map { it.raw }.toSet())
+                    }
                 },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -499,12 +543,13 @@ private fun QuestionTypeContent(
                 hintEnabled = hintEnabled,
                 onHint = {
                     // correctOrderIds is the content order, i.e. the right arrangement itself.
-                    if (component.hintRequested() && qState.correctOrderIds.isNotEmpty()) {
-                        val draft = UserAnswerDraft.OrderingDraft(qState.correctOrderIds.map { OptionId(it) })
+                    val draft = qState.hintDraft()
+                    if (draft != null && hint.spend()) {
+                        component.onDraftChanged(draft)
                         onFeedback(
                             AnswerFeedback.Ordering(
                                 answer = draft,
-                                orderIds = qState.correctOrderIds,
+                                orderIds = draft.order.map { it.raw },
                                 correctOrderIds = qState.correctOrderIds,
                                 revealCorrect = revealCorrect,
                             ),
@@ -576,23 +621,21 @@ private fun QuestionTypeContent(
                 feedback = feedback as? AnswerFeedback.FillBlank,
                 hintEnabled = hintEnabled,
                 onHint = {
-                    if (!component.hintRequested()) return@FillBlankContent
-                    val correctFilled =
-                        qState.correctCandidateIdsByBlankIndex.mapNotNull { (index, candidateId) ->
-                            val blankId = blanksByIndex[index]?.blankId ?: return@mapNotNull null
-                            blankId to candidateId
-                        }.toMap()
-                    onFeedback(
-                        AnswerFeedback.FillBlank(
-                            answer =
-                                UserAnswerDraft.FillBlankDraft(
-                                    correctFilled.mapKeys { BlankId(it.key) }.mapValues { CandidateId(it.value) },
-                                ),
-                            filledCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
-                            correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
-                            revealCorrect = revealCorrect,
-                        ),
-                    )
+                    val draft = qState.hintDraft()
+                    if (draft != null && hint.spend()) {
+                        component.onDraftChanged(draft)
+                        onFeedback(
+                            AnswerFeedback.FillBlank(
+                                answer = draft,
+                                // Read off what is actually submitted, not off the answer key.
+                                // Handing revealDigit() the key twice made every fill-blank hint
+                                // report a perfect 9 whatever the draft contained.
+                                filledCandidateIdsByBlankIndex = draft.filledByBlankIndex(blankParts),
+                                correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
+                                revealCorrect = revealCorrect,
+                            ),
+                        )
+                    }
                 },
                 modifier = Modifier.fillMaxSize(),
             )

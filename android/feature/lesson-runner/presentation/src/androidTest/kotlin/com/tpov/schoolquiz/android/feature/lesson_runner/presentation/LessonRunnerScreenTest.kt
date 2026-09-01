@@ -5,9 +5,12 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,23 +18,28 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.RunFakeComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.TemplatePart
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
+import com.tpov.schoolquiz.shared.core.question_schema.BlankId
+import com.tpov.schoolquiz.shared.core.question_schema.CandidateId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import androidx.compose.ui.test.onRoot
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
-import org.junit.Assert.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
 class LessonRunnerScreenTest {
@@ -71,6 +79,104 @@ class LessonRunnerScreenTest {
         isHard = isHard,
         showExitConfirmDialog = showExitConfirmDialog,
     )
+
+    // --- Hint fixtures: one per question type, hintable and not ---
+
+    private fun question(
+        qState: QuestionUiState,
+        index: Int = 0,
+        lives: Int? = 9,
+    ) = RunnerUiState.Question(
+        questionUiState = qState,
+        indexInPool = index,
+        totalInPool = 5,
+        deadlineMs = System.currentTimeMillis() + 300_000L,
+        isPaused = false,
+        isHard = false,
+        showExitConfirmDialog = false,
+        lives = lives,
+    )
+
+    private fun singleChoice(correctId: String?) = QuestionUiState.SingleChoice(
+        questionText = "Один ответ",
+        hasImage = false,
+        imageUrl = null,
+        options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
+        selectedOptionId = null,
+        correctOptionId = correctId,
+    )
+
+    private fun multipleChoice(correctIds: Set<String>) = QuestionUiState.MultipleChoice(
+        questionText = "Несколько ответов",
+        hasImage = false,
+        imageUrl = null,
+        options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
+        selectedIds = emptySet(),
+        correctIds = correctIds,
+    )
+
+    private fun ordering(correctOrder: List<String>) = QuestionUiState.Ordering(
+        questionText = "Порядок",
+        hasImage = false,
+        imageUrl = null,
+        items = listOf(OptionUi("b", "Второй"), OptionUi("a", "Первый")),
+        correctOrderIds = correctOrder,
+    )
+
+    /** [blankCount] `___` in the template; [correct] is the key the domain grades against. */
+    private fun fillBlank(
+        blankCount: Int,
+        correct: Map<Int, String>,
+    ): QuestionUiState.FillBlank {
+        val parts = mutableListOf<TemplatePart>(TemplatePart.Text("Слово "))
+        repeat(blankCount) { index ->
+            parts += TemplatePart.Blank(index = index, placeholder = "___", blankId = "b$index")
+            parts += TemplatePart.Text(" и ")
+        }
+        return QuestionUiState.FillBlank(
+            questionText = "Слово ___ и ___",
+            hasImage = false,
+            imageUrl = null,
+            templateParts = parts,
+            filledValues = emptyMap(),
+            candidates = listOf(OptionUi("x", "Икс"), OptionUi("y", "Игрек")),
+            correctCandidateIdsByBlankIndex = correct,
+        )
+    }
+
+    /** Every type that has an answer to play, with the draft each hint must submit. */
+    private val hintableTypes: List<Triple<String, QuestionUiState, UserAnswerDraft>> = listOf(
+        Triple(
+            "single choice",
+            singleChoice(correctId = "b"),
+            UserAnswerDraft.SingleChoiceDraft(OptionId("b")),
+        ),
+        Triple(
+            "multiple choice",
+            multipleChoice(correctIds = setOf("a", "b")),
+            UserAnswerDraft.MultipleChoiceDraft(setOf(OptionId("a"), OptionId("b"))),
+        ),
+        Triple(
+            "ordering",
+            ordering(correctOrder = listOf("a", "b")),
+            UserAnswerDraft.OrderingDraft(listOf(OptionId("a"), OptionId("b"))),
+        ),
+        Triple(
+            "fill blank",
+            fillBlank(blankCount = 1, correct = mapOf(0 to "x")),
+            UserAnswerDraft.FillBlankDraft(mapOf(BlankId("b0") to CandidateId("x"))),
+        ),
+    )
+
+    /** Every type with nothing to play. Fill blank's case is the one reachable in shipped data. */
+    private val unhintableTypes: List<Pair<String, QuestionUiState>> = listOf(
+        "single choice with no correct id" to singleChoice(correctId = null),
+        "multiple choice with an empty correct set" to multipleChoice(correctIds = emptySet()),
+        "ordering with an empty correct order" to ordering(correctOrder = emptyList()),
+        "fill blank the template cannot fill" to fillBlank(blankCount = 1, correct = mapOf(0 to "x", 1 to "y")),
+    )
+
+    private fun hintNode() = composeTestRule.onNodeWithText(str(R.string.runner_hint_action).uppercase())
 
     private fun resultState(
         percentScore: Int = 80,
@@ -593,5 +699,127 @@ class LessonRunnerScreenTest {
         composeTestRule.waitForIdle()
 
         assertTrue(navCalled)
+    }
+
+    // --- CT-31: GIVEN any answerable type WHEN the hint fires THEN one charge buys the answer ---
+    @Test
+    fun ct31_hint_everyAnswerableType_spendsOneCharge_andSubmitsThatAnswer() {
+        val fakeComponent = RunFakeComponent(
+            MutableStateFlow(question(hintableTypes.first().second, index = 0)),
+        )
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
+            }
+        }
+
+        hintableTypes.forEachIndexed { i, (name, qState, expectedAnswer) ->
+            fakeComponent.setState(question(qState, index = i))
+            composeTestRule.waitForIdle()
+
+            hintNode().assertIsEnabled()
+            hintNode().performClick()
+            // The verdict disables the button, so a second press must not buy a second charge.
+            // (The same-frame race is held off by the hintSpent flag, which no UI test can reach.)
+            hintNode().performClick()
+            composeTestRule.waitForIdle()
+
+            assertEquals("$name: one press, one charge", i + 1, fakeComponent.chargesSpent)
+
+            composeTestRule.mainClock.advanceTimeBy(ANSWER_FEEDBACK_SKIP_ARM_MS)
+            composeTestRule.onRoot().performClick()
+            composeTestRule.waitForIdle()
+
+            assertEquals(
+                "$name: the charge buys this answer, so this is what must be submitted",
+                expectedAnswer,
+                fakeComponent.lastAnswer,
+            )
+        }
+    }
+
+    // --- CT-32: GIVEN a type with nothing to reveal THEN the hint is dead and submits nothing ---
+    // The bug: the hint spent first and submitted whatever it found after, so the player paid a
+    // charge and was marked wrong for a hint they never got.
+    @Test
+    fun ct32_hint_onUnanswerableTypes_spendsNothing_andSubmitsNothing() {
+        val fakeComponent = RunFakeComponent(
+            MutableStateFlow(question(unhintableTypes.first().second, index = 0)),
+        )
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
+            }
+        }
+
+        unhintableTypes.forEachIndexed { i, (name, qState) ->
+            fakeComponent.setState(question(qState, index = i))
+            composeTestRule.waitForIdle()
+
+            hintNode().assertIsNotEnabled()
+            hintNode().performClick()
+            composeTestRule.waitForIdle()
+
+            assertEquals("$name: must not cost a charge", 0, fakeComponent.chargesSpent)
+            assertEquals("$name: the handler must not even ask to spend", 0, fakeComponent.hintCount)
+
+            // Had the hint fired it would have submitted its partial answer; tapping through the
+            // verdict layer is how that reaches onAnswer, and where the wrong mark would appear.
+            composeTestRule.mainClock.advanceTimeBy(ANSWER_FEEDBACK_SKIP_ARM_MS)
+            composeTestRule.onRoot().performClick()
+            composeTestRule.waitForIdle()
+
+            assertNull("$name: an unreachable hint must submit nothing", fakeComponent.lastAnswer)
+        }
+    }
+
+    // --- CT-33: GIVEN an answerable question with no charges THEN the hint is dead ---
+    @Test
+    fun ct33_hint_withNoCharges_isDead() {
+        val fakeComponent = RunFakeComponent(
+            MutableStateFlow(question(hintableTypes.first().second, lives = 0)),
+        )
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
+            }
+        }
+
+        hintNode().assertIsNotEnabled()
+        hintNode().performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals("an empty budget must not be spendable", 0, fakeComponent.chargesSpent)
+        assertEquals(0, fakeComponent.hintCount)
+    }
+
+    // --- CT-34: GIVEN a survey THEN there is no hint button at all ---
+    @Test
+    fun ct34_survey_hasNoHintButton() {
+        val survey = QuestionUiState.Survey(
+            questionText = "Опрос",
+            hasImage = false,
+            imageUrl = null,
+            options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
+            selectedIds = emptySet(),
+            allowMultiple = false,
+        )
+        val fakeComponent = RunFakeComponent(MutableStateFlow(question(survey)))
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
+            }
+        }
+
+        assertEquals(
+            "a survey has no right version to reveal, so it carries no hint affordance",
+            0,
+            composeTestRule.onAllNodesWithText(str(R.string.runner_hint_action).uppercase())
+                .fetchSemanticsNodes().size,
+        )
     }
 }

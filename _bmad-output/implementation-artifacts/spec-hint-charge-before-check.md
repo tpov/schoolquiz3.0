@@ -73,3 +73,24 @@ context: []
 **Commands:**
 - `./gradlew :android:feature:lesson-runner:presentation:test --no-configuration-cache` -- green, including the existing charge-spend tests.
 - `./gradlew ciCheck --no-configuration-cache` -- green apart from failures owned by the parallel session.
+
+## Suggested Review Order
+
+**Who decides there is a hint to sell**
+
+- Entry point: the enablement decision, pure and tested on the JVM — the wiring fix is otherwise pinned only by instrumented tests the gate compiles but never runs.
+  [`HintAnswer.kt:22`](../../android/feature/lesson-runner/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/lesson_runner/presentation/ui/HintAnswer.kt#L22)
+
+- The one reachable case: a template with fewer gaps than declared blanks yields a partial answer. Both halves matter — every gap must resolve, and the key must hold nothing beyond them, because the domain grades over every declared blank.
+  [`HintAnswer.kt:99`](../../android/feature/lesson-runner/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/lesson_runner/presentation/ui/HintAnswer.kt#L99)
+
+- The verdict now comes from the answer that was submitted; it used to compare the answer key with itself and always read perfect.
+  [`HintAnswer.kt:122`](../../android/feature/lesson-runner/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/lesson_runner/presentation/ui/HintAnswer.kt#L122)
+
+**Where the charge is spent**
+
+- One place holds the per-question spent flag, read inside the lambda — recomposition is too late to stop a same-frame second tap.
+  [`LessonRunnerScreen.kt:357`](../../android/feature/lesson-runner/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/lesson_runner/presentation/ui/LessonRunnerScreen.kt#L357)
+
+- Each type builds its own draft type, so wiring a handler to the wrong one is a compile error rather than a lit button that does nothing.
+  [`LessonRunnerScreen.kt:301`](../../android/feature/lesson-runner/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/lesson_runner/presentation/ui/LessonRunnerScreen.kt#L301)
