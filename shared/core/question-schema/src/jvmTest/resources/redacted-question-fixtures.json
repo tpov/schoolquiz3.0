@@ -1,5 +1,5 @@
 {
-  "_doc": "Shared redacted-question fixtures. Both sides read this one file: Kotlin from\nRedactedQuestionWireTest (off the jvmTest classpath) and JavaScript from\nfunctions/question-redaction-wire.test.js (by relative path). It is the only thing holding\nRedactedQuestionContent.kt and functions/question-redaction.js to the same wire shape.\n\nEvery case in \"redacted\" is a round trip through the shipped emitter. JavaScript runs\nredact(JSON.stringify(source), documentDifficulty, {random: seeded(seed), questionId}) and\nasserts the result equals 'publicPayload' character for character; Kotlin decodes\n'publicPayload' into the RedactedQuestionContent variant named by 'expectedType' and asserts it\nsurvives a round trip back out. So the emitter cannot change shape without this file changing,\nand this file cannot change without Kotlin noticing. 'seed' drives the mulberry32 generator in\nfunctions/_seeded-random.js, which both JS suites require rather than each keeping a copy.\n\n'reEncodesExactly' says which round trip is claimed. True means byte identity: Kotlin's encoder\nreproduces 'publicPayload' exactly. False means only a semantic round trip — decode, encode,\ndecode again, and the two decoded values are equal — because the emitter omits a key whose\nKotlin field has a default, and encoding writes it back out explicitly. Three such keys exist,\nand all three are shapes the real corpus produces: a payload with no 'protectedTextSegments',\none whose source carried no 'id' (every seeded question — the id lives on the wrapper document),\nand one with no 'difficulty' at all. Both kinds of case still have to decode and still have to\ncarry no answer.\n\n'difficulty' is a string here, never an enum. resolveDifficulty copies a payload's own value\nverbatim on purpose — parseQuestionPayload merges {...fallback, ...parsed}, so a payload's empty\nstring already wins downstream and substituting anything would change what the question is worth\n— so '' and 'MEDIUM' are both shapes this emitter is written to produce, and both are pinned\nbelow beside the ordinary EASY/HARD ones.\n\n'forbiddenKeys' is the list of key names no public half may carry, read by both suites so that\nneither owns it. They are matched as *keys*, walked recursively — never as substrings of the\npayload text, since 'order' and 'info' are ordinary words that appear in question prose.\n\n'parseMustSucceed' is the regression half: the ordinary and legacy payloads whose handling this\nslice must leave exactly as it was. Kotlin runs them through QuestionContentParser and asserts\nsuccess; JavaScript asserts that none of them wears a redacted discriminator, and that the\nSurvey case comes back 'not-applicable' — 'there is no redacted Survey' is a load-bearing claim\nin the Kotlin type's own KDoc.",
+  "_doc": "Shared redacted-question fixtures. Both sides read this one file: Kotlin from\nRedactedQuestionWireTest (off the jvmTest classpath) and JavaScript from\nfunctions/question-redaction-wire.test.js (by relative path). It is the only thing holding\nRedactedQuestionContent.kt and functions/question-redaction.js to the same wire shape.\n\nEvery case in \"redacted\" is a round trip through the shipped emitter. JavaScript runs\nredact(JSON.stringify(source), documentDifficulty, {random: seeded(seed), questionId}) and\nasserts the result equals 'publicPayload' character for character; Kotlin decodes\n'publicPayload' into the RedactedQuestionContent variant named by 'expectedType' and asserts it\nsurvives a round trip back out. So the emitter cannot change shape without this file changing,\nand this file cannot change without Kotlin noticing. 'seed' drives the mulberry32 generator in\nfunctions/_seeded-random.js, which both JS suites require rather than each keeping a copy.\n\n'reEncodesExactly' says which round trip is claimed. True means byte identity: Kotlin's encoder\nreproduces 'publicPayload' exactly. False means only a semantic round trip — decode, encode,\ndecode again, and the two decoded values are equal — because the emitter omits a key whose\nKotlin field has a default, and encoding writes it back out explicitly. Three such keys exist,\nand all three are shapes the real corpus produces: a payload with no 'protectedTextSegments',\none whose source carried no 'id' (every seeded question — the id lives on the wrapper document),\nand one with no 'difficulty' at all. Both kinds of case still have to decode and still have to\ncarry no answer.\n\n'difficulty' is a string here, never an enum. resolveDifficulty copies a payload's own value\nverbatim on purpose — parseQuestionPayload merges {...fallback, ...parsed}, so a payload's empty\nstring already wins downstream and substituting anything would change what the question is worth\n— so '' and 'MEDIUM' are both shapes this emitter is written to produce, and both are pinned\nbelow beside the ordinary EASY/HARD ones.\n\n'forbiddenKeys' is the list of key names no public half may carry, read by both suites so that\nneither owns it. They are matched as *keys*, walked recursively — never as substrings of the\npayload text, since 'order' and 'info' are ordinary words that appear in question prose.\n\n'parseMustSucceed' is the regression half: the ordinary and legacy payloads whose handling this\nslice must leave exactly as it was. Kotlin runs them through QuestionContentParser and asserts\nsuccess; JavaScript asserts that none of them wears a redacted discriminator, and that the\nSurvey case comes back 'not-applicable' — 'there is no redacted Survey' is a load-bearing claim\nin the Kotlin type's own KDoc.\n\n'expectedCharsCount' is what a question is worth to the timer: its own text, plus every\noption/item/candidate text, plus a flat 100 when 'imageUrl' is a non-empty string. That number\nprices the reward, the unlock and the clock, and three implementations compute it independently —\nquestionCharsCount in functions/lesson-reward.js, QuestionDisplay.charsCount in Kotlin, and\ncomputeCharsCount in RunnerLogic.kt (which exists only until the runner moves onto QuestionDisplay).\nBoth suites assert this field, so the parity is proven rather than documented. Note the image rule\nis truthiness, not nullity: an empty-string imageUrl is worth 0, which is what JavaScript already\ndid and what Kotlin's supertype now matches.\n\nThe legacy case carries no 'expectedCharsCount', and is the only case that may omit it. Its\n'options' are bare strings with no 'text' key, so questionCharsCount reads it as 0 — the count is\nnot a property of that payload alone but of the payload plus the fallbacks the parser is handed.\nBoth suites assert that the field is absent exactly on the legacy cases, so the omission cannot\nspread.",
   "forbiddenKeys": [
     "correctOptionId",
     "correctOptionIds",
@@ -13,6 +13,7 @@
     {
       "name": "single-choice: every option survives, the pointer to the right one does not",
       "expectedType": "SingleChoiceRedacted",
+      "expectedCharsCount": 57,
       "publicPayload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q-sc\",\"difficulty\":\"EASY\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}]}",
       "seed": 7,
       "questionId": "q-sc",
@@ -43,6 +44,7 @@
     {
       "name": "multiple-choice: an imageUrl string travels through, and nothing counts the correct options",
       "expectedType": "MultipleChoiceRedacted",
+      "expectedCharsCount": 153,
       "publicPayload": "{\"type\":\"MultipleChoiceRedacted\",\"id\":\"q-mc\",\"difficulty\":\"HARD\",\"text\":\"Which of these run on the JVM?\",\"imageUrl\":\"https://cdn.example.org/q-mc.png\",\"options\":[{\"id\":\"a\",\"text\":\"Kotlin\"},{\"id\":\"b\",\"text\":\"Swift\"},{\"id\":\"c\",\"text\":\"Scala\"},{\"id\":\"d\",\"text\":\"Rust\"},{\"id\":\"e\",\"text\":\"Elm\"}]}",
       "seed": 7,
       "questionId": "q-mc",
@@ -83,6 +85,7 @@
     {
       "name": "ordering: items are shuffled and re-issued ri-N, difficulty comes from the document",
       "expectedType": "OrderingRedacted",
+      "expectedCharsCount": 70,
       "publicPayload": "{\"type\":\"OrderingRedacted\",\"id\":\"q-ord\",\"difficulty\":\"HARD\",\"text\":\"Put the Kotlin compilation stages in order\",\"imageUrl\":null,\"items\":[{\"id\":\"ri-0\",\"text\":\"Parsing\"},{\"id\":\"ri-1\",\"text\":\"Codegen\"},{\"id\":\"ri-2\",\"text\":\"Lexing\"},{\"id\":\"ri-3\",\"text\":\"Analysis\"}]}",
       "seed": 3,
       "documentDifficulty": "HARD",
@@ -115,6 +118,7 @@
     {
       "name": "fill-blank: blanks become bare ids and every protected segment was an answer",
       "expectedType": "FillBlankRedacted",
+      "expectedCharsCount": 51,
       "publicPayload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q-fb\",\"difficulty\":\"EASY\",\"text\":\"***Kotlin*** targets the JVM.\",\"imageUrl\":null,\"blanks\":[\"b1\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Java\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Scala\"},{\"id\":\"rc-4\",\"text\":\"Go\"}],\"protectedTextSegments\":[]}",
       "seed": 5,
       "questionId": "q-fb",
@@ -160,6 +164,7 @@
     {
       "name": "fill-blank: two blanks, and a protected segment that gives nothing away survives",
       "expectedType": "FillBlankRedacted",
+      "expectedCharsCount": 71,
       "publicPayload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q-fb2\",\"difficulty\":\"HARD\",\"text\":\"***Kotlin*** and ***Scala*** both target the JVM.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Kotlin\"},{\"id\":\"rc-1\",\"text\":\"Go\"},{\"id\":\"rc-2\",\"text\":\"Java\"},{\"id\":\"rc-3\",\"text\":\"Scala\"},{\"id\":\"rc-4\",\"text\":\"Swift\"}],\"protectedTextSegments\":[\"both target the JVM\"]}",
       "seed": 11,
       "questionId": "q-fb2",
@@ -210,6 +215,7 @@
     {
       "name": "fill-blank: a payload that never carried protectedTextSegments publishes none",
       "expectedType": "FillBlankRedacted",
+      "expectedCharsCount": 42,
       "publicPayload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q-fb3\",\"difficulty\":\"EASY\",\"text\":\"___ targets the JVM.\",\"imageUrl\":null,\"blanks\":[\"b1\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Java\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Scala\"},{\"id\":\"rc-4\",\"text\":\"Go\"}]}",
       "reEncodesExactly": false,
       "seed": 5,
@@ -253,6 +259,7 @@
     {
       "name": "single-choice: a seed-corpus payload carries no id of its own, so the public half has none",
       "expectedType": "SingleChoiceRedacted",
+      "expectedCharsCount": 57,
       "publicPayload": "{\"type\":\"SingleChoiceRedacted\",\"difficulty\":\"EASY\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}]}",
       "reEncodesExactly": false,
       "seed": 7,
@@ -283,6 +290,7 @@
     {
       "name": "single-choice: a payload with no difficulty at all, and no document fallback to supply one",
       "expectedType": "SingleChoiceRedacted",
+      "expectedCharsCount": 49,
       "publicPayload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q-nodiff\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"}]}",
       "reEncodesExactly": false,
       "seed": 7,
@@ -308,6 +316,7 @@
     {
       "name": "single-choice: an empty-string difficulty is published verbatim, never normalised",
       "expectedType": "SingleChoiceRedacted",
+      "expectedCharsCount": 49,
       "publicPayload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q-emptydiff\",\"difficulty\":\"\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"}]}",
       "seed": 7,
       "documentDifficulty": "HARD",
@@ -334,6 +343,7 @@
     {
       "name": "single-choice: a difficulty the Difficulty enum has no case for still travels through",
       "expectedType": "SingleChoiceRedacted",
+      "expectedCharsCount": 49,
       "publicPayload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q-mediumdiff\",\"difficulty\":\"MEDIUM\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"}]}",
       "seed": 7,
       "questionId": "q-mediumdiff",
@@ -359,6 +369,7 @@
     {
       "name": "ordering: real corpus text — Cyrillic, a quote, a backslash, a newline, a tab and an emoji",
       "expectedType": "OrderingRedacted",
+      "expectedCharsCount": 130,
       "publicPayload": "{\"type\":\"OrderingRedacted\",\"id\":\"q-cyr\",\"difficulty\":\"HARD\",\"text\":\"Как экранировать \\\"\\\\n\\\" в строке?\\nПример: C:\\\\путь\\\\к\\\\файлу\\tи ещё 🧩\",\"imageUrl\":null,\"items\":[{\"id\":\"ri-0\",\"text\":\"Таб\\tи эмодзи 🚀\"},{\"id\":\"ri-1\",\"text\":\"Открыть «кавычки»\"},{\"id\":\"ri-2\",\"text\":\"Обратный слэш: \\\\\\\\\"},{\"id\":\"ri-3\",\"text\":\"Строка 1\\nСтрока 2\"}]}",
       "seed": 13,
       "questionId": "q-cyr",
@@ -393,26 +404,31 @@
     {
       "name": "ordinary SingleChoice still parses",
       "expectedType": "SingleChoice",
+      "expectedCharsCount": 49,
       "payload": "{\"type\":\"SingleChoice\",\"id\":\"q1\",\"difficulty\":\"EASY\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"}],\"correctOptionId\":\"b\"}"
     },
     {
       "name": "ordinary MultipleChoice still parses",
       "expectedType": "MultipleChoice",
+      "expectedCharsCount": 46,
       "payload": "{\"type\":\"MultipleChoice\",\"id\":\"q2\",\"difficulty\":\"HARD\",\"text\":\"Which of these run on the JVM?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"Kotlin\"},{\"id\":\"b\",\"text\":\"Swift\"},{\"id\":\"c\",\"text\":\"Scala\"}],\"correctOptionIds\":[\"a\",\"c\"]}"
     },
     {
       "name": "ordinary Ordering still parses",
       "expectedType": "Ordering",
+      "expectedCharsCount": 29,
       "payload": "{\"type\":\"Ordering\",\"id\":\"q3\",\"difficulty\":\"EASY\",\"text\":\"Put these in order\",\"imageUrl\":null,\"items\":[{\"id\":\"i1\",\"text\":\"First\"},{\"id\":\"i2\",\"text\":\"Second\"}]}"
     },
     {
       "name": "ordinary FillBlank still parses, protected segments and all",
       "expectedType": "FillBlank",
+      "expectedCharsCount": 51,
       "payload": "{\"type\":\"FillBlank\",\"id\":\"q4\",\"difficulty\":\"EASY\",\"text\":\"***Kotlin*** targets the JVM.\",\"imageUrl\":null,\"blanks\":[{\"id\":\"b1\",\"correctCandidateId\":\"c1\"}],\"candidates\":[{\"id\":\"c1\",\"text\":\"Kotlin\"},{\"id\":\"c2\",\"text\":\"Java\"},{\"id\":\"c3\",\"text\":\"Swift\"},{\"id\":\"c4\",\"text\":\"Go\"},{\"id\":\"c5\",\"text\":\"Scala\"}],\"protectedTextSegments\":[\"Kotlin\"]}"
     },
     {
       "name": "ordinary Survey still parses — it has no answer to redact, so there is no redacted Survey",
       "expectedType": "Survey",
+      "expectedCharsCount": 30,
       "payload": "{\"type\":\"Survey\",\"id\":\"q5\",\"difficulty\":\"EASY\",\"text\":\"Which do you prefer?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"Tabs\"},{\"id\":\"b\",\"text\":\"Spaces\"}]}"
     },
     {

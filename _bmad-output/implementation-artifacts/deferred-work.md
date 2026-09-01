@@ -321,3 +321,7 @@ AD-20 отмечал это прямо. Путь `users/{uid}/devices/{token}` �
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
   summary: `RunnerLogic.computeCharsCount` is exercised by no test for four of its five shapes — every case in `TimerComputeTest` and `SessionModeTest` builds a `SingleChoice`.
   evidence: Found while pinning the character count on the supertype. The private function is reachable only through `computeTimer`, so the MultipleChoice, Ordering, FillBlank and Survey branches of the formula that sets every lesson timer are unasserted. The slice that moves the runner onto the supertype deletes that function; until then the gap stands.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
+  summary: The runner slice must treat an unreadable difficulty as EASY when deciding pool membership, because that is what the server pays. `QuestionDisplay.difficultyOrNull` deliberately does **not** do this — it reports what the wire says.
+  evidence: `lesson-reward.js:199` is `String(content.difficulty || "EASY").toUpperCase()`, so a question with an absent or empty difficulty is allocated time and priced as easy on the server. If the client instead puts it in no pool, the server pays for a question the player was never shown. The split is deliberate: the supertype describes the payload faithfully — the spec's frozen Matrix requires "reports unknown", and an E2.4 test pins verbatim carriage — while the server-parity rule belongs where the pool is chosen, and can be tested there.

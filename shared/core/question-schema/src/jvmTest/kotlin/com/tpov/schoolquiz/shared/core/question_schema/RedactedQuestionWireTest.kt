@@ -370,6 +370,146 @@ class RedactedQuestionWireTest {
         )
     }
 
+    /**
+     * The display entry point reads what the emitter actually writes.
+     *
+     * The commonTest suite checks [QuestionContentParser.parseForDisplay] against payloads written
+     * by hand; this checks it against the real corpus — including the three shapes only the emitter
+     * produces (no `id`, no `difficulty`, no `protectedTextSegments`) and the Cyrillic-and-emoji
+     * case. A hand-written payload cannot go stale against the server, and that is exactly why it
+     * cannot stand in for this one.
+     */
+    @Test
+    fun `the display entry point reads every emitted payload the old ones refuse`() {
+        val failures = mutableListOf<String>()
+        for (case in fixtures.redacted) {
+            val result = parser.parseForDisplay(case.publicPayload, "fallback-id", "Fallback?", Difficulty.EASY)
+            val display = result.getOrNull()
+            if (display == null) {
+                failures += "  \"${case.name}\": ${result.exceptionOrNull()?.message}"
+                continue
+            }
+            val expected = kotlinTypeOf(case.expectedType)
+            if (display::class != expected) {
+                failures += "  \"${case.name}\": expected ${expected?.simpleName}, got ${display::class.simpleName}"
+            }
+        }
+        report("display parse", fixtures.redacted.size, failures)
+    }
+
+    /**
+     * The fallbacks belong to the legacy branch and to nothing else.
+     *
+     * A redacted payload is not legacy, so the id and difficulty passed alongside it must not
+     * colour what comes back — the emitter's verbatim `""`, `"MEDIUM"` or absent difficulty has to
+     * survive, since substituting one would move a question between the easy and hard pools and
+     * change its reward, its unlock price and its timer.
+     */
+    @Test
+    fun `the display entry point applies no fallback to an emitted payload`() {
+        val failures = mutableListOf<String>()
+        for (case in fixtures.redacted) {
+            val decoded = case.decodeOrRecord(failures) ?: continue
+            val viaEntryPoint = parser
+                .parseForDisplay(case.publicPayload, "fallback-id", "Fallback?", Difficulty.HARD)
+                .getOrNull()
+            if (viaEntryPoint != decoded) {
+                failures += "  \"${case.name}\": the entry point changed the value\n" +
+                    "    decoder:     $decoded\n    entry point: $viaEntryPoint"
+            }
+        }
+        report("fallback leak", fixtures.redacted.size, failures)
+    }
+
+    /**
+     * What a question is worth, proven across the two languages rather than within one.
+     *
+     * `expectedCharsCount` is written into the fixture from the server's own `questionCharsCount`
+     * (`functions/lesson-reward.js`), and `question-redaction-wire.test.js` asserts the server
+     * still agrees with it. This asserts Kotlin does too. Until this existed, every "the two must
+     * agree to the character" claim in this module was Kotlin checked against Kotlin, which is the
+     * one comparison that cannot catch the client and the server drifting apart — and they had
+     * drifted, over an empty-string `imageUrl`.
+     */
+    @Test
+    fun `every emitted payload is worth what the server says it is worth`() {
+        val failures = mutableListOf<String>()
+        for (case in fixtures.redacted) {
+            val decoded = case.decodeOrRecord(failures) ?: continue
+            if (decoded.charsCount != case.expectedCharsCount) {
+                failures += "  \"${case.name}\": the fixture says ${case.expectedCharsCount}, " +
+                    "charsCount says ${decoded.charsCount}"
+            }
+        }
+        report("chars count", fixtures.redacted.size, failures)
+    }
+
+    @Test
+    fun `every ordinary payload is worth what the server says it is worth`() {
+        val claimed = fixtures.parseMustSucceed.filter { it.expectedCharsCount != null }
+        assertTrue(claimed.isNotEmpty(), "No ordinary case carries an expectedCharsCount")
+        val failures = mutableListOf<String>()
+        for (case in claimed) {
+            val result = parser.parse(case.payload, "fallback-id", "Fallback?", Difficulty.EASY)
+            val content = result.getOrNull()
+            if (content == null) {
+                failures += "  \"${case.name}\": ${result.exceptionOrNull()?.message}"
+                continue
+            }
+            if (content.charsCount != case.expectedCharsCount) {
+                failures += "  \"${case.name}\": the fixture says ${case.expectedCharsCount}, " +
+                    "charsCount says ${content.charsCount}"
+            }
+        }
+        report("chars count", claimed.size, failures)
+    }
+
+    /**
+     * A case with no `expectedCharsCount` is a case nothing prices, so the omission has to be
+     * earned. The legacy payload is the one shape whose count is not a property of the payload
+     * alone — its `options` are bare strings with no `text`, so the server reads it as 0 while the
+     * parser synthesises texts from the fallbacks it is handed. The JavaScript suite asserts the
+     * same thing from its side.
+     */
+    @Test
+    fun `only the legacy cases may omit an expected chars count`() {
+        val all = fixtures.redacted.map { it.name to it.expectedCharsCount } +
+            fixtures.parseMustSucceed.map { it.name to it.expectedCharsCount }
+        val missing = all.filter { it.second == null }.map { it.first }.sorted()
+        val legacy = fixtures.parseMustSucceed.filter { it.legacy }.map { it.name }.sorted()
+
+        assertTrue(legacy.isNotEmpty(), "No legacy case in the fixture — the exemption is untested")
+        assertEquals(
+            legacy,
+            missing,
+            "The cases with no expectedCharsCount must be exactly the legacy ones",
+        )
+    }
+
+    /**
+     * The disjointness the whole dispatch rests on, checked in the direction nothing checked
+     * before.
+     *
+     * `both parse overloads refuse every emitted payload` pins one side: no redacted payload
+     * becomes a [QuestionContent]. This pins the other: no ordinary or legacy payload becomes a
+     * [RedactedQuestionContent]. Without it, a redacted variant given a colliding `@SerialName`
+     * would route an ordinary question into the redacted hierarchy and lose its answer, and every
+     * existing test would stay green.
+     */
+    @Test
+    fun `the redacted decoder refuses every ordinary and legacy payload`() {
+        val failures = mutableListOf<String>()
+        for (case in fixtures.parseMustSucceed) {
+            val decoded = try {
+                json.decodeFromString(RedactedQuestionContent.serializer(), case.payload)
+            } catch (refused: IllegalArgumentException) {
+                continue
+            }
+            failures += "  \"${case.name}\": decoded into a redacted ${decoded::class.simpleName}"
+        }
+        report("redacted refusal", fixtures.parseMustSucceed.size, failures)
+    }
+
     /** Reports every mismatch at once: a changed field drifts families of cases, not one. */
     private fun report(stage: String, total: Int, failures: List<String>) {
         assertTrue(
@@ -475,6 +615,11 @@ private data class RedactedCase(
     val name: String,
     /** The wire discriminator, e.g. `"OrderingRedacted"`. */
     val expectedType: String,
+    /**
+     * What the question is worth to the timer, written from the server's own `questionCharsCount`.
+     * Never absent on a redacted case; nullable only because one shape in the sibling array is.
+     */
+    val expectedCharsCount: Int? = null,
     /** Exactly what `redact` wrote, as a JSON string. */
     val publicPayload: String,
     /**
@@ -492,6 +637,12 @@ private data class ParseCase(
     val payload: String,
     /** The [QuestionContent] subclass this must still produce. */
     val expectedType: String,
+    /**
+     * What the payload is worth, from the server's `questionCharsCount`. Absent exactly on the
+     * legacy cases, whose count depends on the fallbacks the parser is handed rather than on the
+     * payload — asserted by its own test, so the absence cannot spread.
+     */
+    val expectedCharsCount: Int? = null,
     /** True for a pre-ADR-0003 payload, which only the enriched overload can read. */
     val legacy: Boolean = false,
 )

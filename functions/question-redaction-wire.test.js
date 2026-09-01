@@ -5,6 +5,10 @@ const fs = require("fs");
 const path = require("path");
 
 const {redact, STATUS, REDACTED_TYPE, CONTENT_TYPE} = require("./question-redaction");
+// The character count is a contract with the client, not with the redactor: the reward this
+// module's output is eventually paid from is priced off questionCharsCount, and Kotlin's
+// QuestionDisplay.charsCount is a second implementation of it. The fixture pins the two together.
+const {questionCharsCount} = require("./lesson-reward");
 // The fixtures name concrete shuffles by seed, so this generator must be the one
 // question-redaction.test.js draws from too. See _seeded-random.js.
 const {seeded} = require("./_seeded-random");
@@ -259,6 +263,59 @@ test("redact refuses the legacy payloads the parser still accepts", () => {
     }
     return null;
   });
+});
+
+test("every case is worth what the fixture says it is worth", () => {
+  // The number that prices a lesson's reward, its unlock and its clock. Kotlin computes it a
+  // second time, from the same field of the same file, so a change to either implementation that
+  // is not a change to the other one lands here rather than in a player's balance.
+  const cases = requireCases("redacted")
+    .concat(requireCases("parseMustSucceed").filter((c) => !c.legacy));
+  checkEveryCase("chars count", cases, (testCase) => {
+    const payload = testCase.publicPayload || testCase.payload;
+    const actual = questionCharsCount(JSON.parse(payload));
+    if (actual !== testCase.expectedCharsCount) {
+      return `questionCharsCount says ${actual}, the fixture says ${testCase.expectedCharsCount}`;
+    }
+    return null;
+  });
+});
+
+test("redaction does not change what a question is worth", () => {
+  // Taking the answer off must not reprice the question. The public half keeps every option,
+  // item and candidate text and drops only the pointer to the right one, so the count is
+  // invariant across redaction — and if a future emitter ever trimmed a text, this is where the
+  // player's reward would visibly move.
+  //
+  // This half of the parity lives here and not in Kotlin because `source` is the emitter's raw
+  // input, and several of these inputs are deliberately not valid QuestionContent — no `id`, no
+  // `difficulty`, an empty one, a `MEDIUM` one — since the document supplies those downstream.
+  // questionCharsCount reads a plain object and does not care; Kotlin's parser refuses them, as it
+  // should. Kotlin asserts the public half against `expectedCharsCount` instead.
+  checkEveryCase("redaction repricing", requireCases("redacted"), (testCase) => {
+    const before = questionCharsCount(testCase.source);
+    const after = questionCharsCount(JSON.parse(testCase.publicPayload));
+    if (before !== after) {
+      return `the full question is worth ${before}, its public half ${after}`;
+    }
+    return null;
+  });
+});
+
+test("only the legacy cases may omit an expected chars count", () => {
+  // A missing field is a silently unasserted case. The legacy payload is the one shape whose
+  // count is not a property of the payload alone — its `options` are bare strings with no `text`,
+  // so this module reads it as 0 while the Kotlin parser synthesises texts from the fallbacks it
+  // is handed. Every other case must carry the field.
+  const all = requireCases("redacted").concat(requireCases("parseMustSucceed"));
+  const missing = all.filter((c) => c.expectedCharsCount === undefined);
+  const legacy = all.filter((c) => c.legacy);
+  assert.ok(legacy.length > 0, "No legacy case in the fixture — the exemption would be untested");
+  assert.deepStrictEqual(
+    missing.map((c) => c.name).sort(),
+    legacy.map((c) => c.name).sort(),
+    "The cases with no expectedCharsCount must be exactly the legacy ones",
+  );
 });
 
 let failures = 0;

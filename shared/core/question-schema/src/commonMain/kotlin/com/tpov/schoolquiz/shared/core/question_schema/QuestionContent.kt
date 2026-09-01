@@ -8,15 +8,30 @@ import kotlinx.serialization.Serializable
  *
  * Invariants are enforced in each subtype's init block.
  * Domain question-runner imports only this sealed type and [QuestionContentParser].
+ *
+ * Implements [QuestionDisplay], the half of a question that is about showing it. That adds no
+ * field, no invariant and no byte: [id], [text] and [imageUrl] were already declared here and merely
+ * become overrides, while [QuestionDisplay.choiceCharsCount] and [QuestionDisplay.difficultyOrNull]
+ * are getters over what is already present. Nothing about the answer is exposed through the supertype.
  */
 @Serializable
-sealed interface QuestionContent {
+sealed interface QuestionContent : QuestionDisplay {
 
-    val id: String
+    /** Always present here, narrowing [QuestionDisplay.id], which a redacted payload may omit. */
+    override val id: String
+
+    /** Always the enum here. [difficultyOrNull] is how the display side asks for it. */
     val difficulty: Difficulty
-    val text: String
-    val imageUrl: String?
+    override val text: String
+    override val imageUrl: String?
     val info: String?
+
+    /**
+     * A question that came with its answer key always knows its difficulty, so the nullable form
+     * the display side asks for is simply [difficulty]. Declared once here rather than five times.
+     */
+    override val difficultyOrNull: Difficulty?
+        get() = difficulty
 
     @Serializable
     data class Option(val id: OptionId, val text: String)
@@ -59,6 +74,10 @@ sealed interface QuestionContent {
             require(options.size in 2..8) { "Survey.options.size must be in 2..8, got ${options.size}" }
             require(options.map { it.id }.toSet().size == options.size) { "Survey.options must have unique ids" }
         }
+
+        /** A body `val`, never a constructor parameter: it is not encoded and is not an invariant. */
+        override val choiceCharsCount: Int
+            get() = options.sumOf { it.text.length }
     }
 
     /**
@@ -85,6 +104,10 @@ sealed interface QuestionContent {
                 "SingleChoice.correctOptionId must be in options, got $correctOptionId"
             }
         }
+
+        /** A length over the labels. [correctOptionId] contributes nothing, here or ever. */
+        override val choiceCharsCount: Int
+            get() = options.sumOf { it.text.length }
     }
 
     /**
@@ -113,6 +136,10 @@ sealed interface QuestionContent {
                 "MultipleChoice.correctOptionIds must all be in options, got missing: ${correctOptionIds - optionIds}"
             }
         }
+
+        /** Every option summed, which says nothing about how many of them are correct. */
+        override val choiceCharsCount: Int
+            get() = options.sumOf { it.text.length }
     }
 
     /**
@@ -134,6 +161,13 @@ sealed interface QuestionContent {
             require(text.isNotBlank()) { "Ordering.text must not be blank" }
             require(items.size in 2..8) { "Ordering.items.size must be in 2..8, got ${items.size}" }
         }
+
+        /**
+         * A length over the item texts. Here the list order *is* the answer, which is exactly why
+         * the supertype exposes a sum and not the list: a total cannot be put back in order.
+         */
+        override val choiceCharsCount: Int
+            get() = items.sumOf { it.text.length }
     }
 
     /**
@@ -169,5 +203,14 @@ sealed interface QuestionContent {
                 "FillBlank.protectedTextSegments must not contain blank values"
             }
         }
+
+        /**
+         * The word pool, and only that. Not [protectedTextSegments]: those are answers spelled out
+         * in full, and neither the timer nor the server's `questionCharsCount` counts them. A sum
+         * rather than the texts because the authoring component writes the correct candidates
+         * first, so even the pool's order leaks.
+         */
+        override val choiceCharsCount: Int
+            get() = candidates.sumOf { it.text.length }
     }
 }

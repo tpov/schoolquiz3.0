@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.core.question_schema
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -42,6 +43,48 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
     }
 
     /**
+     * Dispatch on the payload's own discriminator, then decode with the matching hierarchy.
+     *
+     * The two hierarchies register disjoint discriminator sets — `SingleChoice` against
+     * `SingleChoiceRedacted`, and no redacted `Survey` at all — so the `type` key alone says which
+     * decoder can possibly read a payload. That set is read off [RedactedQuestionContent]'s own
+     * serializer rather than listed here, so a fifth redacted variant is routed the day it is
+     * declared instead of the day somebody remembers this file.
+     *
+     * Deciding first, rather than trying both and keeping whichever succeeded, is what makes a
+     * *broken* redacted payload diagnosable. `{"type":"FillBlankRedacted"}` with no `candidates`
+     * cannot be read by either hierarchy; reporting it through [parse]'s exception would answer
+     * "FillBlankRedacted is not a registered QuestionContent" — naming a contract the payload has
+     * nothing to do with, which is precisely the wrong-contract diagnosis the previous slice
+     * removed from the legacy branch. A payload wearing a redacted discriminator is answered by the
+     * redacted decoder, whether it succeeds or fails.
+     */
+    override fun parseForDisplay(
+        payload: String,
+        fallbackId: String,
+        fallbackText: String,
+        fallbackDifficulty: Difficulty,
+    ): Result<QuestionDisplay> {
+        if (discriminatorOf(payload) in redactedDiscriminators) return parseRedacted(payload)
+        return parse(payload, fallbackId, fallbackText, fallbackDifficulty)
+    }
+
+    /** The payload as a [RedactedQuestionContent], keeping the decoder's own failure. */
+    private fun parseRedacted(payload: String): Result<QuestionDisplay> {
+        return try {
+            Result.success(json.decodeFromString<RedactedQuestionContent>(payload))
+        } catch (e: IllegalArgumentException) {
+            // SerializationException extends IllegalArgumentException, so this one catch covers an
+            // unreadable payload and a value outside a declared type alike.
+            Result.failure(e)
+        }
+    }
+
+    /** The payload's `type`, or null when there is no readable one. */
+    private fun discriminatorOf(payload: String): String? =
+        jsonObjectOrNull(payload)?.get("type")?.jsonPrimitive?.contentOrNull
+
+    /**
      * The payload as a [JsonObject] when — and only when — its `type` is the one legacy format this
      * parser reads. Anything else, malformed input included, is not legacy and gets no fallback.
      *
@@ -49,13 +92,17 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
      * set here, it has to be dispatched, and the name says so.
      */
     private fun legacySingleChoiceOrNull(payload: String): JsonObject? {
+        val obj = jsonObjectOrNull(payload) ?: return null
+        val type = obj["type"]?.jsonPrimitive?.contentOrNull
+        return if (type == LEGACY_SINGLE_CHOICE) obj else null
+    }
+
+    /** The payload as a [JsonObject], or null when it is not a readable JSON object. */
+    private fun jsonObjectOrNull(payload: String): JsonObject? {
         return try {
-            val obj = json.decodeFromString<JsonObject>(payload)
-            val type = obj["type"]?.jsonPrimitive?.contentOrNull
-            if (type == LEGACY_SINGLE_CHOICE) obj else null
-        } catch (e: SerializationException) {
-            null
+            json.decodeFromString<JsonObject>(payload)
         } catch (e: IllegalArgumentException) {
+            // SerializationException extends IllegalArgumentException; one catch covers both.
             null
         }
     }
@@ -104,6 +151,20 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
         } catch (e: IllegalArgumentException) {
             Result.failure(e)
         }
+    }
+
+    /**
+     * The `@SerialName` of every [RedactedQuestionContent] variant, read off the sealed serializer.
+     *
+     * Derived rather than listed for the reason `RedactedQuestionWireTest.declaredVariants` gives:
+     * a hand-kept copy of the four names is a fifth variant waiting to be added and routed nowhere.
+     * A sealed serializer's descriptor is `["type": String, "value": <contextual>]`, and the
+     * contextual element's element names are the subclasses' serial names.
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    private val redactedDiscriminators: Set<String> = run {
+        val variants = RedactedQuestionContent.serializer().descriptor.getElementDescriptor(1)
+        (0 until variants.elementsCount).mapTo(mutableSetOf()) { variants.getElementName(it) }
     }
 
     private companion object {

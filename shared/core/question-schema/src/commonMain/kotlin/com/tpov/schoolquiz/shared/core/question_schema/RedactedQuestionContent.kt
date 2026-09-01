@@ -48,9 +48,16 @@ import kotlinx.serialization.Serializable
  * `info` is not a field. The emitter builds the public half from an allow-list and never copies it.
  *
  * Nothing decodes this in production yet.
+ *
+ * It implements [QuestionDisplay] — the members a question needs in order to be *shown*, which is
+ * the whole of what this type has. That does not soften point 1 above: [QuestionDisplay] carries no
+ * answer, so a [QuestionContent] is still not assignable where a [RedactedQuestionContent] is
+ * expected or the reverse, and the authoring components remain structurally unable to receive a
+ * redacted payload. It adds no field and no byte either: [id], [text] and [imageUrl] merely become
+ * overrides, [difficultyOrNull] was already here, and [QuestionDisplay.choiceCharsCount] is a getter.
  */
 @Serializable
-sealed interface RedactedQuestionContent {
+sealed interface RedactedQuestionContent : QuestionDisplay {
 
     /**
      * Null when the payload carried no id of its own — which is every question in the seed corpus,
@@ -60,7 +67,7 @@ sealed interface RedactedQuestionContent {
      * field here would refuse the public half of every seeded question. The document id is stamped
      * into the answer key instead, as `questionId`.
      */
-    val id: String?
+    override val id: String?
 
     /**
      * The difficulty **as a string, exactly as it arrived** — not a [Difficulty].
@@ -79,16 +86,16 @@ sealed interface RedactedQuestionContent {
      */
     val difficulty: String?
 
-    val text: String
+    override val text: String
 
     /** Always written by the emitter, as a string or as `null`. Hence no default: it is required. */
-    val imageUrl: String?
+    override val imageUrl: String?
 
     /**
      * [difficulty] as the enum, or null when it is absent or names something the enum has no case
      * for. A convenience for consumers, not a field: it has no backing state and is not serialized.
      */
-    val difficultyOrNull: Difficulty?
+    override val difficultyOrNull: Difficulty?
         get() = when (difficulty) {
             Difficulty.EASY.name -> Difficulty.EASY
             Difficulty.HARD.name -> Difficulty.HARD
@@ -115,7 +122,17 @@ sealed interface RedactedQuestionContent {
         override val text: String,
         override val imageUrl: String?,
         val options: List<Row>,
-    ) : RedactedQuestionContent
+    ) : RedactedQuestionContent {
+
+        /**
+         * A length over the option labels.
+         *
+         * A body `val`, never a constructor parameter: point 4 above pins the encoded key
+         * order, and a parameter here would add a key the emitter never wrote.
+         */
+        override val choiceCharsCount: Int
+            get() = options.sumOf { it.text.length }
+    }
 
     /**
      * Structurally identical to [SingleChoice], which is the point: nothing here says how many
@@ -130,7 +147,17 @@ sealed interface RedactedQuestionContent {
         override val text: String,
         override val imageUrl: String?,
         val options: List<Row>,
-    ) : RedactedQuestionContent
+    ) : RedactedQuestionContent {
+
+        /**
+         * Every option summed, still saying nothing about how many are correct.
+         *
+         * A body `val`, never a constructor parameter: point 4 above pins the encoded key
+         * order, and a parameter here would add a key the emitter never wrote.
+         */
+        override val choiceCharsCount: Int
+            get() = options.sumOf { it.text.length }
+    }
 
     /**
      * The answer to an ordering question *is* its array order, so [items] is shuffled and the ids
@@ -145,7 +172,17 @@ sealed interface RedactedQuestionContent {
         override val text: String,
         override val imageUrl: String?,
         val items: List<Row>,
-    ) : RedactedQuestionContent
+    ) : RedactedQuestionContent {
+
+        /**
+         * A length over the item labels. The emitter shuffled them; a sum cannot unshuffle.
+         *
+         * A body `val`, never a constructor parameter: point 4 above pins the encoded key
+         * order, and a parameter here would add a key the emitter never wrote.
+         */
+        override val choiceCharsCount: Int
+            get() = items.sumOf { it.text.length }
+    }
 
     /**
      * [blanks] is a list of bare ids in the order the markers appear in [text] — no
@@ -167,5 +204,15 @@ sealed interface RedactedQuestionContent {
         val blanks: List<String>,
         val candidates: List<Row>,
         val protectedTextSegments: List<String> = emptyList(),
-    ) : RedactedQuestionContent
+    ) : RedactedQuestionContent {
+
+        /**
+         * The word pool only. Not [blanks], which are bare ids, and not [protectedTextSegments].
+         *
+         * A body `val`, never a constructor parameter: point 4 above pins the encoded key
+         * order, and a parameter here would add a key the emitter never wrote.
+         */
+        override val choiceCharsCount: Int
+            get() = candidates.sumOf { it.text.length }
+    }
 }
