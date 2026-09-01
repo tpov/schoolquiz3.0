@@ -12,7 +12,9 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.outbox.QuarantineListener
 import com.tpov.schoolquiz.shared.core.persistence.OutboxDao
 import com.tpov.schoolquiz.shared.core.persistence.RoomOutboxStore
+import com.tpov.schoolquiz.shared.core.sync.InMemorySyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.OutboxSyncable
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import androidx.work.WorkerFactory
 import com.tpov.schoolquiz.platform.android_services.network.AndroidNetworkMonitor
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
@@ -85,10 +87,20 @@ val syncModule =
         }
         // Слить очередь до смены аккаунта: после переключения прежнего uid уже не узнать (AD-8).
         single<AccountSwitchGuard> { AccountSwitchGuard(get<OutboxEngine>(), get<OutboxStore>()) }
+        // Состояние синхронизации наружу (AD-14). Auth-scoped: счётчики принадлежат uid, и после
+        // смены аккаунта чужие числа на экране остаться не должны.
+        single<SyncStatusRepository> {
+            InMemorySyncStatusRepository(
+                store = get<OutboxStore>(),
+                currentUidFlow = get<AuthRepository>().observeUid(),
+            )
+        }
         single<OutboxSyncable> {
             OutboxSyncable(
                 engine = get<OutboxEngine>(),
                 currentUidProvider = { get<AuthRepository>().currentUid() },
+                status = get<SyncStatusRepository>(),
+                clock = { System.currentTimeMillis() },
             )
         }
         single<WorkManager> { WorkManager.getInstance(androidContext()) }
