@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.apps.android_next.di
 import android.util.Log
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
+import com.tpov.schoolquiz.platform.android_services.economy.PreferencesEconomyConstantsStore
 import com.tpov.schoolquiz.platform.android_services.network.AndroidNetworkMonitor
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
@@ -33,6 +34,8 @@ import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
+import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsStore
+import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.sync.ProfileBootstrapSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
@@ -109,6 +112,7 @@ val syncModule =
                 clock = { System.currentTimeMillis() },
             )
         }
+        single<EconomyConstantsStore> { PreferencesEconomyConstantsStore(androidContext()) }
         single<AccountSwitchGuard> { AccountSwitchGuard(get<OutboxEngine>(), get<OutboxStore>()) }
         // Состояние синхронизации наружу (AD-14). Auth-scoped: счётчики принадлежат uid, и после
         // смены аккаунта чужие числа на экране остаться не должны.
@@ -199,6 +203,13 @@ val syncModule =
                 // Вердикт рецензентов движок принести не может: это чтение, а не отправка.
                 get<QuestArenaOutcomeSync>(),
                 get<ReviewAssignmentSync>(),
+                // Таблица настроек экономики: цены и потолки должны меняться на сервере, без
+                // релиза. Едет вместе с содержимым, а не с профилем, — она общая, не аккаунтная.
+                object : Syncable {
+                    private val step = get<EconomyConstantsSync>()
+
+                    override suspend fun sync(): Result<Unit> = step.sync()
+                },
                 get<CatalogSyncListOrchestrator>(),
             )
         }

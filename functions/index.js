@@ -44,6 +44,7 @@ const {
   readUnlocks,
   withUnlock,
 } = require("./lesson-unlocks");
+const {readEconomyConstants} = require("./economy-constants");
 const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
 const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
@@ -124,6 +125,7 @@ const GIFT_BOX_LOGO_NAMES = [
 const NICKNAME_CLAIMS_COLLECTION = "nickname_claims";
 const NICKNAME_LISTINGS_COLLECTION = "nickname_listings";
 const NICKNAME_POLICY_DOC = "configs/nickname_policy";
+const ECONOMY_CONSTANTS_DOC = "configs/economy";
 const LOGO_LISTINGS_COLLECTION = "logo_listings";
 const NICKNAME_GENERATION_ATTEMPTS = 20;
 // "archive" is a legitimate destination, not only a publication target: without it a course moved
@@ -154,24 +156,20 @@ exports.processQuestReviewRequest = onDocumentCreated(
   },
 );
 
-exports.processPendingArenaRequests = onCall(FUNCTION_OPTIONS, async (request) => {
-  const uid = requireAuthUid(request);
-  const profile = await requireProfile(uid);
-  if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
-    throw new HttpsError("permission-denied", "Developer level is required");
-  }
-  const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 20), 100));
-  const pending = await db
-    .collection("quest_review_requests")
-    .where("processed", "==", false)
-    .limit(limit)
-    .get();
-  const results = [];
-  for (const doc of pending.docs) {
-    results.push(await processArenaRequest(normalizeRequest(doc.data(), doc.id)));
-  }
-  return {processed: results};
-});
+/*
+ * Дев-вызова `processPendingArenaRequests` здесь больше нет — намеренно.
+ *
+ * Он выбирал заявки с `processed == false` и прогонял через `processArenaRequest` их тело как есть:
+ * мимо ключа идемпотентности (ключа у него не было вовсе) и мимо сверки версии (сверка живёт в
+ * `submitMutation`, а он звал обработчик напрямую). То есть рядом с единственным проверяемым входом
+ * стоял второй, непроверяемый, и открывался он одним developerLevel.
+ *
+ * Заменять нечем и не нужно. Заявка приезжает единственным транспортом (AD-6) — `submitMutation` с
+ * операцией `quest_authoring.SUBMIT_ARENA`; упавшая попытка освобождает ключ, и повтор делает сам
+ * клиент, проходя и ключ, и сверку. Документ, застрявший в `processed == false`, — это либо строка,
+ * оставшаяся от снятой прямой записи, либо запись админского скрипта; догонять их вторым входом в
+ * рабочий код значит держать этот вход открытым постоянно ради ситуации, которой в проде нет.
+ */
 
 exports.fetchReviewAssignmentChanges = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
@@ -374,13 +372,27 @@ const {
   DECISION_EXECUTE,
   DECISION_REPLAY,
   DECISION_WAIT,
+  STATE_RESERVED,
   belongsTo,
   completionRecord,
   decideMutation,
+  parseMutationPayload,
+  readExpectedVersion,
   reservationRecord,
   resolveOperation,
   validateMutation,
+  versionConflictDetail,
+  versionVerdict,
 } = require("./mutation-queue.js");
+
+// Единственное место, где рождается новое значение version (AD-12). Ни один узел не получает
+// число, присланное клиентом, и ни одно место не считает следующую версию своим способом.
+const {
+  currentVersion: currentEntityVersion,
+  nextVersionAtPath,
+  setVersioned,
+  versionsByPath,
+} = require("./entity-version.js");
 
 /**
  * Что клиент говорит в деталях, чтобы отличить «ещё нет» от «нет».
@@ -411,7 +423,85 @@ const PRECONDITION_PENDING_DETAIL = "precondition-pending";
  */
 const MUTATION_HANDLERS = {
   UNLOCK_LESSON: (uid, payload) => applyLessonUnlock(uid, payload),
+  // Прохождение урока. Приёмник у него теперь один: очередь несёт по одному прохождению за
+  // запись, а пакетный callable остаётся для синхронной отправки — тело у обоих общее.
+  "lesson_runner.SUBMIT_ATTEMPT": (uid, payload) => applyLessonResultEvents(uid, [payload || {}]),
+  // Оценка квеста.
+  "lesson_runner.SUBMIT_RATING": (uid, payload) => applyQuestRatingEvents(uid, [payload || {}]),
+  // Заявка черновика на арену. Раньше она писалась в Firestore напрямую и проверку ключа
+  // обходила в принципе — теперь идёт тем же путём, что и всё остальное (AD-6).
+  "quest_authoring.SUBMIT_ARENA": (uid, payload) => applyArenaSubmission(uid, payload),
 };
+
+/**
+ * Чья версия сверяется с `expected_version` — по одной записи на версионируемую операцию.
+ *
+ * Ядро очереди в тело мутации не смотрит и о сущностях не знает (AD-5): какую именно сущность
+ * версионирует операция, отвечает только сама операция, и ответ живёт здесь, рядом с её
+ * обработчиком, а не внутри приёмника.
+ *
+ * Операции в реестре нет — значит, она неверсионируемая: `expected_version` от неё не ждут, а если
+ * он всё же пришёл, это несовпадение клиента с сервером, а не конфликт данных.
+ *
+ * Заявка на арену сверяется с приватным документом квеста — ровно с тем, из которого клиент читает
+ * `serverRevision` (`FirebaseQuestPrivateRemoteDataSource`). Сверять с публичным `quests/{id}`
+ * нельзя: клиент прислал бы число, прочитанное из одного документа, а сервер сравнил бы его с
+ * числом из другого. Расходиться этим двум не даёт `writeQuestVersionMirror` — публикация,
+ * перекладка по полкам и снятие с полок кладут одну и ту же назначенную версию в оба документа.
+ *
+ * Набор версий всех изменённых узлов дерева авторитетным быть не может: автор правит черновик
+ * целиком, и «моя редакция выросла из версии N» — утверждение про квест, а не про каждый урок
+ * отдельно.
+ */
+const MUTATION_VERSION_SOURCES = {
+  "quest_authoring.SUBMIT_ARENA": (uid, payload) =>
+    readPrivateQuestVersion(uid, payload && payload.draft && payload.draft.catalogId, payload && payload.draft && payload.draft.id),
+};
+
+/**
+ * Текущая версия квеста по приватному документу автора.
+ *
+ * Владелец — из авторизации, а не из тела: путь к приватному документу и есть проверка права, и
+ * подставленный в тело чужой `ownerUid` увёл бы сверку в чужое поддерево.
+ *
+ * Поля `version` в документе нет — ноль: квест ещё ни разу не публиковался, и его версии не
+ * существует. Ноль сходится с отсутствующим `expected_version` (`versionVerdict`), то есть первая
+ * публикация проходит, а вторая — уже нет.
+ */
+async function readPrivateQuestVersion(uid, catalogId, questId) {
+  const catalog = stringValue(catalogId);
+  const id = stringValue(questId);
+  if (!catalog || !id) {
+    throw new HttpsError("invalid-argument", "draft.catalogId and draft.id are required for a versioned submission");
+  }
+  const snapshot = await db.doc(privateQuestPath(uid, catalog, id)).get();
+  return currentEntityVersion(snapshot);
+}
+
+/**
+ * Заявка на арену из очереди.
+ *
+ * Владельца берём из авторизации, а не из тела: подписать чужой заявкой свой черновик — ровно то,
+ * что проверка обязана не пустить. Дальше работает тот же обработчик, что и у документа,
+ * созданного триггером, — второй копии этой логики не существует.
+ */
+async function applyArenaSubmission(uid, payload) {
+  const data = payload || {};
+  const submissionId = stringValue(data.submissionId);
+  if (!submissionId) throw new HttpsError("invalid-argument", "submissionId is required");
+  if (stringValue(data.ownerUid) && stringValue(data.ownerUid) !== uid) {
+    throw new HttpsError("permission-denied", "Submission ownerUid must match authenticated uid");
+  }
+  const request = normalizeRequest({...data, ownerUid: uid}, submissionId);
+  if (request.questions.length === 0) {
+    // Заявка без вопросов существовать не может: либо тело собрано неверно, либо это строка,
+    // перенесённая миграцией 5 → 6 из очереди, которая содержимого черновика не хранила.
+    // Повтор этого не изменит — отказ окончательный, и локальную половину откатит владеющая
+    // фича по карантину (AD-28), вернув черновик автору в редактируемое состояние.
+    throw new HttpsError("invalid-argument", "Submission carries no questions");
+  }
+  return processArenaRequest(request);
+}
 
 /**
  * Единственный транспорт отложенной мутации (AD-6).
@@ -429,6 +519,11 @@ exports.submitMutation = onCall(FUNCTION_OPTIONS, async (request) => {
 
   const shape = validateMutation(request.data);
   if (!shape.valid) throw new HttpsError("invalid-argument", shape.reason);
+
+  // Форма `expected_version` проверяется до резервирования ключа: криво собранный конверт не должен
+  // сжигать ключ, который клиенту потом нечем будет повторить.
+  const expected = readExpectedVersion(request.data);
+  if (!expected.valid) throw new HttpsError("invalid-argument", expected.reason);
 
   const {mutationId, operation} = shape;
   const resolved = resolveOperation(MUTATION_HANDLERS, operation);
@@ -472,15 +567,76 @@ exports.submitMutation = onCall(FUNCTION_OPTIONS, async (request) => {
     throw new HttpsError("failed-precondition", gate.reason, PRECONDITION_PENDING_DETAIL);
   }
 
-  const result = await resolved.handler(uid, request.data.payload, now);
+  const body = parseMutationPayload(request.data.payload);
+  if (!body.valid) throw new HttpsError("invalid-argument", body.reason);
+
+  const versionSource = MUTATION_VERSION_SOURCES[operation];
+  if (expected.expectedVersion !== null && typeof versionSource !== "function") {
+    // Клиент считает операцию версионируемой, а сервер — нет. Применить её мимо сверки значит
+    // сделать вид, что сверка была: это отказ, а не конфликт.
+    await releaseReservation(keyRef, gate.reservation);
+    throw new HttpsError("invalid-argument", `operation ${operation} carries no version`);
+  }
+  if (typeof versionSource === "function") {
+    // Сверка идёт и тогда, когда поля в конверте нет.
+    //
+    // Отсутствие `expected_version` у версионируемой операции — это утверждение «сущности ещё
+    // нет», а не разрешение пропустить проверку. Пока отсутствие означало «не сверяем», сверку
+    // выключало молчание клиента: приватный документ без поля `version` давал `serverRevision`
+    // ноль, клиент опускал поле, и мутация проходила без единой проверки — то есть не проверялось
+    // вообще ничего и никогда.
+    const verdict = versionVerdict(expected.expectedVersion, await versionSource(uid, body.payload));
+    if (verdict.conflict) {
+      // Конфликт — не отказ (AD-24): эффект не применён, версия не сдвинулась, а ключ обязан
+      // освободиться целиком. Останься он выполненным — повтор вернул бы пустой сохранённый
+      // результат как успех; останься зарезервированным — новая мутация поверх серверной версии
+      // ждала бы минуту таймаута.
+      await releaseReservation(keyRef, gate.reservation);
+      throw new HttpsError(
+        "aborted",
+        `Entity moved to version ${verdict.serverVersion}`,
+        versionConflictDetail(verdict.serverVersion),
+      );
+    }
+  }
+
+  const result = await resolved.handler(uid, body.payload, now);
   await keyRef.set(completionRecord(gate.reservation, result, Date.now()));
   return {replayed: false, result: result === undefined ? null : result};
 });
 
+/**
+ * Снимает собственное резервирование ключа.
+ *
+ * Сравнение с `reservedAtMs` обязательно: между резервированием и этим вызовом ключ мог перейти к
+ * другой попытке по таймауту брошенного резервирования, и удалить чужое значит разрешить два
+ * одновременных выполнения — ровно то, ради чего ключ и существует (AD-1).
+ */
+async function releaseReservation(keyRef, reservation) {
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(keyRef);
+    if (!snapshot.exists) return;
+    const existing = snapshot.data() || {};
+    if (existing.state !== STATE_RESERVED) return;
+    if (numberValue(existing.reservedAtMs, -1) !== numberValue(reservation.reservedAtMs, -2)) return;
+    transaction.delete(keyRef);
+  });
+}
+
 exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
-  const attempts = listMaps(request.data && request.data.attempts);
+  return applyLessonResultEvents(uid, listMaps(request.data && request.data.attempts));
+});
+
+/**
+ * Приём прохождений — тело, общее для прямого вызова и для очереди.
+ *
+ * Одно и то же действие приезжает двумя дорогами: синхронно, пока игрок смотрит на экран, и
+ * отложенно из общей очереди, если сети не было. Логика обязана быть одна: жизни, награда и
+ * турнирный зачёт, посчитанные двумя копиями, однажды разойдутся.
+ */
+async function applyLessonResultEvents(uid, attempts) {
   if (attempts.length > MAX_RESULT_EVENTS_PER_CALL) {
     throw new HttpsError("invalid-argument", `At most ${MAX_RESULT_EVENTS_PER_CALL} attempts are accepted per call`);
   }
@@ -613,12 +769,16 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
     await recalculateTournamentLeaderboard(tournamentId, now);
   }
   return {accepted: attempts.length, reward, lifePoints: remainingLifePoints};
-});
+}
 
 exports.submitQuestRatingEvents = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
-  const ratings = listMaps(request.data && request.data.ratings);
+  return applyQuestRatingEvents(uid, listMaps(request.data && request.data.ratings));
+});
+
+/** Приём оценок квеста — то же тело для прямого вызова и для очереди. */
+async function applyQuestRatingEvents(uid, ratings) {
   if (ratings.length > MAX_RESULT_EVENTS_PER_CALL) {
     throw new HttpsError("invalid-argument", `At most ${MAX_RESULT_EVENTS_PER_CALL} ratings are accepted per call`);
   }
@@ -675,7 +835,7 @@ exports.submitQuestRatingEvents = onCall(FUNCTION_OPTIONS, async (request) => {
   }
   await batch.commit();
   return {accepted: ratings.length};
-});
+}
 
 exports.aggregateQuestRatingsDaily = onSchedule(
   {...FUNCTION_OPTIONS, schedule: "every day 04:00", timeZone: "UTC"},
@@ -692,6 +852,30 @@ exports.aggregateQuestRatingsNow = onCall(FUNCTION_OPTIONS, async (request) => {
   }
   const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 200), DAILY_DIRTY_RATING_LIMIT));
   return aggregateDirtyQuestRatings(Date.now(), limit);
+});
+
+/**
+ * Таблица настроек экономики зарядов — на устройство.
+ *
+ * Коллекция `configs/` закрыта правилами: клиент читать её не может и не должен, иначе таблицу
+ * можно было бы подменить локально и торговаться с сервером о ценах. Поэтому она приезжает
+ * вызовом, который клиент делает в обычной синхронизации.
+ *
+ * Клиент присылает версию, которая у него уже есть. Совпала — не отдаём ничего, кроме этого факта:
+ * таблица меняется редко, а синхронизация идёт часто.
+ *
+ * Отсутствующий или испорченный документ вырождается в начальные значения (`economy-constants.js`),
+ * а не в нулевые потолки: нулевой потолок запер бы каждый аккаунт разом.
+ */
+exports.getEconomyConstants = onCall(FUNCTION_OPTIONS, async (request) => {
+  requireAuthUid(request);
+  const snapshot = await db.doc(ECONOMY_CONSTANTS_DOC).get();
+  const constants = readEconomyConstants(snapshot.exists ? snapshot.data() : null);
+  const known = Math.floor(Number(request.data && request.data.knownVersion));
+  if (Number.isFinite(known) && known === constants.version) {
+    return {unchanged: true, version: constants.version};
+  }
+  return {unchanged: false, ...constants};
 });
 
 exports.ensureUserProfile = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -1590,21 +1774,21 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
     if (!catalogId) {
       throw new HttpsError("failed-precondition", `Quest ${questId} has no catalogId`);
     }
-    const nextVersion = numberValue(quest.version, 0) + 1;
     const lastModifiedAt = admin.firestore.Timestamp.fromMillis(now);
     const previousVisibleOn = Array.isArray(quest.visibleOn)
       ? quest.visibleOn.filter((shelf) => typeof shelf === "string")
       : [];
-    transaction.set(
+    const assignedVersion = setVersioned(
+      transaction,
       questRef,
       {
         visibleOn: [targetShelf],
         // The flag follows the placement: a course returned to the archive reads as archived
         // again, and a quest pulled onto a live shelf stops being filtered out as archived.
         archived: targetShelf === "archive",
-        version: nextVersion,
         lastModifiedAt,
       },
+      quest.version,
       {merge: true},
     );
     transaction.set(
@@ -1612,6 +1796,13 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
       syncChangeDocument("quest", questId, now),
       {merge: true},
     );
+    writeQuestVersionMirror(transaction, {
+      ownerUid: nullableString(quest.authorUid || quest.ownerUid),
+      catalogId,
+      questId,
+      assignedVersion,
+      now,
+    });
     writeShelfMoveAudit(transaction, {
       questId,
       catalogId,
@@ -1626,7 +1817,7 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
       questId,
       catalogId,
       targetShelf,
-      version: nextVersion,
+      version: assignedVersion,
       changedAtMs: now,
     };
   });
@@ -1662,14 +1853,14 @@ exports.retirePublicQuest = onCall(FUNCTION_OPTIONS, async (request) => {
     const previousVisibleOn = Array.isArray(quest.visibleOn)
       ? quest.visibleOn.filter((shelf) => typeof shelf === "string")
       : [];
-    const nextVersion = numberValue(quest.version, 0) + 1;
-    transaction.set(
+    const assignedVersion = setVersioned(
+      transaction,
       questRef,
       {
         visibleOn: [],
-        version: nextVersion,
         lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       },
+      quest.version,
       {merge: true},
     );
     transaction.set(
@@ -1677,6 +1868,13 @@ exports.retirePublicQuest = onCall(FUNCTION_OPTIONS, async (request) => {
       syncChangeDocument("quest", questId, now),
       {merge: true},
     );
+    writeQuestVersionMirror(transaction, {
+      ownerUid: nullableString(quest.authorUid || quest.ownerUid),
+      catalogId,
+      questId,
+      assignedVersion,
+      now,
+    });
     writeShelfMoveAudit(transaction, {
       questId,
       catalogId,
@@ -1687,7 +1885,7 @@ exports.retirePublicQuest = onCall(FUNCTION_OPTIONS, async (request) => {
       reason: nullableString(request.data && request.data.reason),
       now,
     });
-    return {questId, catalogId, version: nextVersion, changedAtMs: now};
+    return {questId, catalogId, version: assignedVersion, changedAtMs: now};
   });
 });
 
@@ -2320,14 +2518,24 @@ async function processArenaRequest(request) {
   writeAdminReviewLessonTasksToBatch(batch, adminTasks);
   batch.set(
     db.collection("quest_review_requests").doc(request.submissionId),
-    {
+    clean({
+      // Тело заявки целиком, а не одна отметка об обработке.
+      //
+      // Раньше документ создавал клиент прямой записью, а триггер лишь дописывал `processed`.
+      // Прямая запись снята (AD-6), и писать сюда стало некому: без `ownerUid`, `draftId`,
+      // `draft`, `sections`, `themes`, `lessons` и `questions` публикация строит квест по пустому
+      // идентификатору (`quests/`), а автор не находит свой вердикт — выборка вердиктов идёт
+      // по `ownerUid` и требует `draftId`, и правило чтения смотрит на тот же `ownerUid`.
+      //
+      // Состав полей — ровно тот, что читает `normalizeRequest`: документ обязан пережить
+      // перезапуск и остаться единственным источником для `publishSubmissionIfReady`, которая
+      // перечитывает его спустя дни после подачи.
+      ...requestToDocument(request),
       processed: true,
       processedAtMs: now,
       lastError: null,
       status: "UNDER_REVIEW",
-      targetShelf: request.targetShelf,
-      targetLessonIds: request.targetLessonIds,
-    },
+    }),
     {merge: true},
   );
   await batch.commit();
@@ -2338,10 +2546,83 @@ async function processArenaRequest(request) {
   };
 }
 
+/**
+ * Заявка как документ — обратная сторона `normalizeRequest`.
+ *
+ * Читатель и писатель заявки живут в одном файле и обязаны знать одни и те же поля: `normalizeRequest`
+ * достаёт из документа ровно этот состав, `publishSubmissionIfReady` перечитывает документ спустя дни
+ * после подачи и строит по нему публичный квест, а выборка вердиктов автору ищет по `ownerUid` и
+ * `draftId`. Расхождение здесь не падает и не логируется — оно тихо публикует квест по пустому пути.
+ * Парность двух списков закреплена `arena-request-document.test.js`.
+ *
+ * `status` в состав не входит: его ставит тот, кто пишет (обработка — `UNDER_REVIEW`, публикация —
+ * `PUBLISHED`, отказ рецензента — `REJECTED`), и тело заявки в этом не участвует. Перезапись
+ * телом вернула бы уже отклонённую заявку в проверку.
+ */
+function requestToDocument(request) {
+  return {
+    submissionId: request.submissionId,
+    draftId: request.draftId,
+    ownerUid: request.ownerUid,
+    localRevision: request.localRevision,
+    requestedAtMs: request.requestedAtMs,
+    targetShelf: request.targetShelf,
+    targetLessonIds: request.targetLessonIds,
+    draft: request.draft,
+    sections: request.sections,
+    themes: request.themes,
+    lessons: request.lessons,
+    questions: request.questions.map(questionToDocument),
+    review: checksToCallableMap(request.review),
+  };
+}
+
 function writePrivateHierarchyToBatch(batch, request) {
   for (const [path, data] of Object.entries(privateDocuments(request))) {
     batch.set(db.doc(path), clean(data), {merge: true});
   }
+}
+
+/**
+ * Копия назначенной версии квеста в приватный документ автора.
+ *
+ * Клиент читает `serverRevision` из `private/{uid}/catalogs/{c}/quests/{q}`
+ * (`FirebaseQuestPrivateRemoteDataSource`), а сверяется `expected_version` с версией той же самой
+ * сущности. Пока публикация писала версию только в `quests/{id}`, приватный документ её не имел
+ * вовсе: `serverRevision` выходил нулевым, поле в конверт не попадало, и сверка не выполнялась ни
+ * разу. Единственная запись, которая туда её всё-таки клала, была запись рейтинга — то есть автор
+ * сверялся со счётчиком чужих звёзд.
+ *
+ * Отсюда правило: где назначается версия квеста, там же она и зеркалится. Два документа несут одно
+ * число, и «моя редакция выросла из версии N» — утверждение про квест, а не про то, из какого
+ * документа его прочитали.
+ *
+ * Отметка `changedAtMs` обязательна рядом: приватная синхронизация ходит по ней, и версия, не
+ * попавшая в ленту изменений, доехала бы до автора только со следующей его правкой.
+ *
+ * @param {*} writer батч или транзакция.
+ */
+function writeQuestVersionMirror(writer, options) {
+  const ownerUid = stringValue(options.ownerUid);
+  const catalogId = stringValue(options.catalogId);
+  const questId = stringValue(options.questId);
+  // Квест без автора зеркалить некуда. Такие документы остались от сидов, которые пишут публичное
+  // дерево напрямую и приватной половины не имеют; терять из-за них перекладку по полкам нельзя.
+  if (!ownerUid || !catalogId || !questId) return;
+  const now = options.now;
+  writer.set(
+    db.doc(privateQuestPath(ownerUid, catalogId, questId)),
+    {
+      version: options.assignedVersion,
+      changedAtMs: now,
+    },
+    {merge: true},
+  );
+  writer.set(
+    db.doc(privateSyncChangePath(ownerUid, catalogId, questId)),
+    {id: questId, type: "quest", catalogId, questId, changedAtMs: now},
+    {merge: true},
+  );
 }
 
 function writeAdminReviewLessonTasksToBatch(batch, tasks) {
@@ -2500,7 +2781,19 @@ function writeQuestRatingAggregateToWriter(writer, dirty, averageRating, average
     averageRatingCount,
     ratingUpdatedAtMs: now,
     lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
-    version: admin.firestore.FieldValue.increment(1),
+    // Рейтинг двигает СВОЙ счётчик и не трогает `version` — ни здесь, ни в приватном документе ниже.
+    //
+    // `version` означает ровно одно: «редакция содержимого сущности», и с ней сверяется
+    // `expected_version` автора. Начисление рейтинга содержимое квеста не меняет — его меняет
+    // чужой человек, поставивший звёзды. Пока рейтинг двигал `version`, автор получал конфликт за
+    // то, что его квест оценили, а приватный документ (тот самый, из которого клиент читает
+    // `serverRevision`) уезжал вперёд публичного, и приёмник сверял два несвязанных счётчика.
+    //
+    // Отдельный счётчик, а не только `lastModifiedAt`, потому что клиентский приёмник снимков
+    // сравнивает целые числа (`QuestDao.upsertByIdIfNewerVersion`), а не время: время приезжает из
+    // разных мест, и «новее» по нему — вопрос часов, а не факта. `ratingUpdatedAtMs` рядом остаётся
+    // отметкой «когда пересчитали», а не признаком новизны.
+    ratingVersion: admin.firestore.FieldValue.increment(1),
   });
   if (dirty.scope === PRIVATE_SCOPE) {
     writer.set(
@@ -2679,10 +2972,16 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   }
 
   const batch = db.batch();
+  const publishable = requestWithPublishedQuestions(request, targetTasks);
+  // Версии узлов дерева читаются здесь, до батча: батч писать умеет, а читать нет, и без этого
+  // чтения сервер не знает, какая версия у каждого узла сейчас. Первым в списке идёт сам квест —
+  // тот же снимок отвечает и на вопрос про полки ниже, второе чтение того же документа не нужно.
+  const hierarchySnapshots = await readPublicHierarchySnapshots(publishable);
+  const currentVersions = versionsByPath(hierarchySnapshots);
   // A republish overwrites visibleOn with the submission's target shelf, which demotes a quest a
   // curator had placed elsewhere. That reset stays — unreviewed edits must not remain on a curated
   // shelf — but it stops being silent: the audit names the author as the actor.
-  const existingQuest = await db.collection("quests").doc(request.draft.id).get();
+  const existingQuest = hierarchySnapshots[0];
   if (existingQuest.exists) {
     const existing = existingQuest.data() || {};
     const previousVisibleOn = Array.isArray(existing.visibleOn)
@@ -2702,7 +3001,18 @@ async function publishSubmissionIfReady(submissionId, config, now) {
       });
     }
   }
-  writePublicHierarchyToBatch(batch, requestWithPublishedQuestions(request, targetTasks), now);
+  // Версия квеста назначается один раз и здесь: её получает публичный документ, её же получает
+  // приватный. Два вызова `nextVersionAtPath` на одну карту дали бы сегодня то же число и разошлись
+  // бы в тот день, когда один из них поправят.
+  const assignedVersion = nextVersionAtPath(currentVersions, `quests/${request.draft.id}`);
+  writePublicHierarchyToBatch(batch, publishable, now, currentVersions, assignedVersion);
+  writeQuestVersionMirror(batch, {
+    ownerUid: request.ownerUid,
+    catalogId: request.draft.catalogId,
+    questId: request.draft.id,
+    assignedVersion,
+    now,
+  });
   for (const task of targetTasks) {
     writeAdminReviewLessonTasksToBatch(batch, [{...task, status: "PUBLISHED", changedAtMs: now}]);
   }
@@ -2719,6 +3029,27 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   await batch.commit();
   return true;
 }
+
+/**
+ * Читает узлы публикуемого дерева пачкой.
+ *
+ * Чтением по одному это быть не может: дерево — сотня документов, и сотня последовательных чтений
+ * растянула бы публикацию настолько, что срабатывал бы таймаут функции. `getAll` берёт их одним
+ * обращением, а порции нужны потому, что запрос с неограниченным числом ссылок упирается в предел
+ * размера самого запроса.
+ */
+async function readPublicHierarchySnapshots(request) {
+  const refs = publicHierarchyPaths(request).map((path) => db.doc(path));
+  const snapshots = [];
+  for (let index = 0; index < refs.length; index += MAX_DOCUMENTS_PER_GET) {
+    const chunk = refs.slice(index, index + MAX_DOCUMENTS_PER_GET);
+    snapshots.push(...(await db.getAll(...chunk)));
+  }
+  return snapshots;
+}
+
+/** Сколько ссылок отдаём в одно `getAll`. */
+const MAX_DOCUMENTS_PER_GET = 100;
 
 function requestWithPublishedQuestions(request, targetTasks) {
   const questionsByLesson = new Map(
@@ -2876,18 +3207,45 @@ function adminDocuments(tasks) {
   return documents;
 }
 
-function writePublicHierarchyToBatch(batch, request, now) {
-  for (const [path, data] of Object.entries(publicDocuments(request, now))) {
+function writePublicHierarchyToBatch(batch, request, now, currentVersions, assignedVersion) {
+  for (const [path, data] of Object.entries(publicDocuments(request, now, currentVersions, assignedVersion))) {
     batch.set(db.doc(path), clean(data), {merge: true});
   }
 }
 
-function publicDocuments(request, now) {
+/**
+ * Пути всех узлов публикуемого дерева — тот же список, по которому потом строятся документы.
+ *
+ * Существует ради того, чтобы версии читались ровно у тех узлов, которые батч перезапишет: список,
+ * собранный отдельно от записи, однажды разъедется с ней, и разъехавшийся узел начнёт получать
+ * версию 1 при каждой публикации.
+ */
+function publicHierarchyPaths(request) {
+  const paths = [`quests/${request.draft.id}`];
+  for (const section of request.sections) paths.push(`sections/${section.id}`);
+  for (const theme of request.themes) paths.push(`themes/${theme.id}`);
+  for (const lesson of request.lessons) paths.push(`lessons/${lesson.id}`);
+  for (const question of request.questions) paths.push(`questions/${question.id}`);
+  return paths;
+}
+
+/**
+ * Документы публикации.
+ *
+ * `currentVersions` — карта «путь -> текущая версия», прочитанная до батча: батч читать не умеет, а
+ * версию обязан назначить сервер, и притом каждому узлу свою (AD-12). Узел, которого ещё нет, в
+ * карте отсутствует и получает первую версию; узел, который уже есть, — свою плюс единицу. Одно
+ * число на всё дерево не годится: правка одного урока двигала бы версию соседнего, и клиент
+ * перекачивал бы дерево целиком на каждую запятую.
+ */
+function publicDocuments(request, now, currentVersions, assignedVersion) {
+  const versions = currentVersions || {};
   const documents = {};
   const catalogId = request.draft.catalogId;
   const questId = request.draft.id;
   const archivedRoot = request.targetShelf === "archive";
-  documents[`quests/${questId}`] = {
+  const questPath = `quests/${questId}`;
+  documents[questPath] = {
     id: questId,
     catalogId,
     authorUid: request.ownerUid,
@@ -2896,20 +3254,19 @@ function publicDocuments(request, now) {
     visibleOn: [request.targetShelf],
     averageRating: null,
     averageRatingCount: 0,
-    version: request.localRevision,
-    contentsVersion: request.localRevision,
+    version: assignedVersion,
     lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
     archived: archivedRoot,
   };
   documents[publicCatalogSyncChangePath(catalogId, "quest", questId)] = syncChangeDocument("quest", questId, now);
   for (const section of request.sections) {
-    documents[`sections/${section.id}`] = {
+    const sectionPath = `sections/${section.id}`;
+    documents[sectionPath] = {
       id: section.id,
       questId,
       title: section.title,
       order: section.order,
-      version: request.localRevision,
-      contentsVersion: request.localRevision,
+      version: nextVersionAtPath(versions, sectionPath),
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
@@ -2917,26 +3274,26 @@ function publicDocuments(request, now) {
       syncChangeDocument("section", section.id, now);
   }
   for (const theme of request.themes) {
-    documents[`themes/${theme.id}`] = {
+    const themePath = `themes/${theme.id}`;
+    documents[themePath] = {
       id: theme.id,
       sectionId: theme.sectionId,
       title: theme.title,
       order: theme.order,
-      version: request.localRevision,
-      contentsVersion: request.localRevision,
+      version: nextVersionAtPath(versions, themePath),
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
     documents[publicCatalogSyncChangePath(catalogId, "theme", theme.id)] = syncChangeDocument("theme", theme.id, now);
   }
   for (const lesson of request.lessons) {
-    documents[`lessons/${lesson.id}`] = {
+    const lessonPath = `lessons/${lesson.id}`;
+    documents[lessonPath] = {
       id: lesson.id,
       themeId: lesson.themeId,
       title: lesson.title,
       order: lesson.order,
-      version: request.localRevision,
-      contentsVersion: request.localRevision,
+      version: nextVersionAtPath(versions, lessonPath),
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
@@ -2944,7 +3301,8 @@ function publicDocuments(request, now) {
       syncChangeDocument("lesson", lesson.id, now);
   }
   for (const question of request.questions) {
-    documents[`questions/${question.id}`] = {
+    const questionPath = `questions/${question.id}`;
+    documents[questionPath] = {
       id: question.id,
       lessonId: question.lessonId,
       text: question.text,
@@ -2952,7 +3310,7 @@ function publicDocuments(request, now) {
       language: question.language,
       languageLevel: question.languageLevel,
       order: question.order,
-      version: request.localRevision,
+      version: nextVersionAtPath(versions, questionPath),
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
