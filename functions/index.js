@@ -44,7 +44,8 @@ const {
   readUnlocks,
   withUnlock,
 } = require("./lesson-unlocks");
-const {readEconomyConstants} = require("./economy-constants");
+const {activityPrice, readEconomyConstants} = require("./economy-constants");
+const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
 const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
@@ -368,6 +369,36 @@ async function readAllocatedSeconds(lessonIds) {
   return Object.fromEntries(entries);
 }
 
+/**
+ * Полки каждого квеста из пакета, прочитанные один раз перед транзакцией.
+ *
+ * Опубликованный квест лежит в `quests/{id}`, приватный — под своим владельцем; ключ различает их,
+ * потому что один и тот же `questId` может существовать в обоих местах. Отсутствующий документ
+ * отдаётся как `null`: вид тогда неизвестен, и цена берётся по самой дорогой известной ставке —
+ * выдуманный `questId` при настоящем `lessonId` иначе получал бы награду по непроверенной цене.
+ */
+async function readQuestShelves(events) {
+  const refs = new Map();
+  for (const event of events) {
+    const key = questShelfKey(event);
+    if (refs.has(key)) continue;
+    refs.set(key, event.scope === PRIVATE_SCOPE
+      ? db.doc(privateQuestPath(event.ownerUid, event.catalogId, event.questId))
+      : db.collection("quests").doc(event.questId));
+  }
+  const entries = await Promise.all(
+    [...refs].map(async ([key, ref]) => {
+      const snapshot = await ref.get();
+      return [key, snapshot.exists ? (snapshot.data() || {}) : null];
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
+function questShelfKey(event) {
+  return [normalizeScope(event.scope), event.ownerUid || "", event.catalogId, event.questId].join("\u0000");
+}
+
 const {
   DECISION_EXECUTE,
   DECISION_REPLAY,
@@ -656,6 +687,21 @@ async function applyLessonResultEvents(uid, attempts) {
   // What each lesson in this batch is worth, read once before the transaction: Firestore wants
   // every read before the first write, and a batch touches only a handful of distinct lessons.
   const allocatedByLesson = await readAllocatedSeconds(events.map((item) => item.event.lessonId));
+  // Вид попытки — а значит, её цену — решает сервер по квесту, который попытка называет
+  // (CAP-16). До сих пор единственным именем сыгранного был `sourceShelf`, и его вычисляло
+  // устройство: под прейскурантом клиент, объявивший `home` для турнира, платил бы 33 очка вместо
+  // 500. Объявление остаётся в событии как диагностика; списание от него не зависит.
+  const questsByKey = await readQuestShelves(events.map((item) => item.event));
+  const economySnapshot = await db.doc(ECONOMY_CONSTANTS_DOC).get();
+  const economy = readEconomyConstants(economySnapshot.exists ? economySnapshot.data() : null);
+  for (const item of events) {
+    const quest = questsByKey[questShelfKey(item.event)];
+    item.event.declaredSourceShelf = item.event.sourceShelf;
+    item.event.activityKind = activityKindForQuest(quest, item.event.scope);
+    // Всё, что дальше читает полку — турнирная группа, грязные оценки, — читает выведенную.
+    item.event.sourceShelf = sourceShelfForQuest(quest, item.event.scope);
+    item.event.lifeCost = activityPrice(economy, item.event.activityKind);
+  }
 
   let reward = {skillPoints: 0, nolics: 0};
   let remainingLifePoints = 0;
@@ -698,7 +744,7 @@ async function applyLessonResultEvents(uid, attempts) {
       const isNew = !existingSnapshots[index].exists;
       let lifeCharged = false;
       if (isNew && item.event.scoreVerified) {
-        const charged = spendLifePoints(life.points, LESSON_ATTEMPT_LIFE_COST, lifeCeiling);
+        const charged = spendLifePoints(life.points, item.event.lifeCost, lifeCeiling);
         if (charged.affordable) {
           life = {points: charged.points, updatedAtMs: life.updatedAtMs};
           lifeCharged = true;
