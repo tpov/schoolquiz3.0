@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.provider.DefaultRan
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.provider.DefaultRatingIdProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.RoomLessonResultOutboxWriter
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultQuarantineRollback
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.LessonAttemptRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.LessonRatingRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.AttemptIdProvider
@@ -22,13 +23,17 @@ val lessonRunnerDataModule = module {
     single<Clock> { Clock.System }
     single<LessonResultOutboxWriter> {
         RoomLessonResultOutboxWriter(
-            outboxDao = get(),
             lessonDao = get(),
             themeDao = get(),
             sectionDao = get(),
             questDao = get(),
             clock = get(),
         )
+    }
+    // Откат локальной половины при карантине — решение владеющей фичи (AD-28). Ядру он отдаётся
+    // в composition root, где собирается маршрутизатор карантина.
+    single<LessonResultQuarantineRollback> {
+        LessonResultQuarantineRollback(attemptDao = get(), ratingDao = get())
     }
     single<LessonAttemptRepository> {
         LessonAttemptRepositoryImpl(

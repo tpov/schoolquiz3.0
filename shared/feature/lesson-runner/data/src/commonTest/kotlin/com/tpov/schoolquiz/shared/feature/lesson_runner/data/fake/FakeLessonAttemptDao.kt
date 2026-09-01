@@ -1,9 +1,11 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake
 
+import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEarning
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEntity
-import com.tpov.schoolquiz.shared.core.persistence.LessonResultAttemptOutboxEntity
+import com.tpov.schoolquiz.shared.core.persistence.OUTBOX_ROW_IGNORED
+import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionEntity
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +18,9 @@ class FakeLessonAttemptDao : LessonAttemptDao {
     private val _flow = MutableStateFlow<List<LessonAttemptEntity>>(emptyList())
     var upsertCallCount = 0
         private set
+
+    /** Что лежит в таблице прохождений прямо сейчас — для сравнения «до и после». */
+    val attempts: List<LessonAttemptEntity> get() = store.toList()
 
     override suspend fun upsert(entity: LessonAttemptEntity): Long {
         upsertCallCount++
@@ -36,10 +41,31 @@ class FakeLessonAttemptDao : LessonAttemptDao {
         repetitions += entities
     }
 
-    val outboxRows = mutableListOf<LessonResultAttemptOutboxEntity>()
+    val outboxRows = mutableListOf<OutboxEntity>()
 
-    override suspend fun upsertOutboxRow(entity: LessonResultAttemptOutboxEntity) {
+    override suspend fun enqueueOutboxRow(entity: OutboxEntity): Long {
+        // Как и в Room: тот же ключ второй записи не создаёт (AD-2).
+        if (outboxRows.any { it.mutationId == entity.mutationId }) return OUTBOX_ROW_IGNORED
         outboxRows += entity
+        return outboxRows.size.toLong()
+    }
+
+    override suspend fun outboxRowState(mutationId: String): String? =
+        outboxRows.firstOrNull { it.mutationId == mutationId }?.state
+
+    /** Ставит запись в карантин, как это делает движок: помечает и оставляет лежать. */
+    fun quarantine(mutationId: String) {
+        val idx = outboxRows.indexOfFirst { it.mutationId == mutationId }
+        if (idx >= 0) outboxRows[idx] = outboxRows[idx].copy(state = OutboxState.QUARANTINED.name)
+    }
+
+    override suspend fun deleteAnswersOfAttempt(attemptId: String) {
+        answers.removeAll { it.attemptId == attemptId }
+    }
+
+    override suspend fun deleteAttempt(attemptId: String) {
+        store.removeAll { it.attemptId == attemptId }
+        _flow.value = store.toList()
     }
 
     override fun observeByLesson(userId: String, lessonId: String): Flow<List<LessonAttemptEntity>> =

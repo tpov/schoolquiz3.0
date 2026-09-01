@@ -1,42 +1,49 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox
 
+import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
+import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
-import com.tpov.schoolquiz.shared.core.persistence.LessonResultAttemptOutboxEntity
-import com.tpov.schoolquiz.shared.core.persistence.LessonResultSyncOutboxDao
+import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDao
-import com.tpov.schoolquiz.shared.core.persistence.QuestRatingOutboxEntity
+import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRating
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
+/**
+ * Строит строки общей очереди для того, что делает игрок в уроке.
+ *
+ * Строит, а не пишет: строка обязана лечь в базу той же транзакцией, что и локальное изменение
+ * (AD-23) — иначе прохождение показано как сохранённое и никогда не уедет, или уедет то, чего
+ * локально нет. Записывают её DAO фичи, здесь только собирается тело.
+ *
+ * Тело собирается целиком в момент намерения (AD-2): ключ и `payload` живут дальше сами по себе,
+ * и дочитывать что-то в момент отправки уже нельзя — движок в `payload` не смотрит.
+ */
 interface LessonResultOutboxWriter {
-    suspend fun enqueueAttempt(attempt: Attempt)
+    /** Строка очереди для прохождения вместе с ответами, которые к нему относятся. */
+    suspend fun buildAttemptRow(
+        attempt: Attempt,
+        answers: List<QuestionAnswerEntity> = emptyList(),
+    ): OutboxEntity? = null
 
-    suspend fun enqueueRating(rating: LessonRating)
-
-    /**
-     * Builds the queue row without writing it, so the caller can store it in the same transaction
-     * as the attempt itself. Enqueueing separately used to leave a saved attempt that never
-     * reached the server while the UI reported a save failure.
-     *
-     * Returns null when there is nothing to queue (no-op writer).
-     */
-    suspend fun buildAttemptRow(attempt: Attempt): LessonResultAttemptOutboxEntity? = null
+    /** Строка очереди для оценки квеста. */
+    suspend fun buildRatingRow(rating: LessonRating): OutboxEntity? = null
 
     companion object {
-        val NoOp: LessonResultOutboxWriter =
-            object : LessonResultOutboxWriter {
-                override suspend fun enqueueAttempt(attempt: Attempt) = Unit
-
-                override suspend fun enqueueRating(rating: LessonRating) = Unit
-            }
+        /** Ничего не откладывает. Для сборок и тестов, где очередь не участвует. */
+        val NoOp: LessonResultOutboxWriter = object : LessonResultOutboxWriter {}
     }
 }
 
 class RoomLessonResultOutboxWriter(
-    private val outboxDao: LessonResultSyncOutboxDao,
     private val lessonDao: LessonDao,
     private val themeDao: ThemeDao,
     private val sectionDao: SectionDao,
@@ -44,53 +51,96 @@ class RoomLessonResultOutboxWriter(
     private val clock: Clock,
 ) : LessonResultOutboxWriter {
 
-    override suspend fun enqueueAttempt(attempt: Attempt) {
-        outboxDao.upsertAttempt(buildAttemptRow(attempt))
-    }
-
-    override suspend fun buildAttemptRow(attempt: Attempt): LessonResultAttemptOutboxEntity {
+    override suspend fun buildAttemptRow(
+        attempt: Attempt,
+        answers: List<QuestionAnswerEntity>,
+    ): OutboxEntity {
         val context = resolveContentContext(attempt.lessonId.value)
-        return LessonResultAttemptOutboxEntity(
-            attemptId = attempt.id.value,
-            userId = attempt.userId,
-            scope = context.scope,
-            ownerUid = context.ownerUid,
-            catalogId = context.catalogId,
-            questId = context.questId,
-            sectionId = context.sectionId,
-            themeId = context.themeId,
-            lessonId = context.lessonId,
-            lessonVersion = attempt.lessonVersion,
-            sourceShelf = context.sourceShelf,
-            difficulty = attempt.mode.name,
-            codeAnswer = attempt.codeAnswer.raw,
-            percentScore = attempt.percentScore.raw,
-            completedAtMs = attempt.completedAt,
-            createdAtMs = clock.now().toEpochMilliseconds(),
+        val createdAtMs = clock.now().toEpochMilliseconds()
+        val payload =
+            buildJsonObject {
+                put("attemptId", attempt.id.value)
+                put("userId", attempt.userId)
+                putContext(context)
+                put("lessonVersion", attempt.lessonVersion)
+                put("difficulty", attempt.mode.name)
+                put("codeAnswer", attempt.codeAnswer.raw)
+                put("percentScore", attempt.percentScore.raw)
+                put("completedAtMs", attempt.completedAt)
+                put("createdAtMs", createdAtMs)
+                put(
+                    "answers",
+                    buildJsonArray {
+                        answers.forEach { row ->
+                            add(
+                                buildJsonObject {
+                                    put("questionId", row.questionId)
+                                    put("codeAnswerIndex", row.codeAnswerIndex)
+                                    put("score", row.score)
+                                    put("answerPayload", row.answerPayload)
+                                    put("answeredAtMs", row.answeredAtMs)
+                                    put("durationMs", row.durationMs)
+                                    put("wasTimeout", row.wasTimeout == 1)
+                                },
+                            )
+                        }
+                    },
+                )
+            }
+        return row(
+            operation = OutboxOperations.SUBMIT_ATTEMPT,
+            sourceId = attempt.id.value,
+            ownerUid = attempt.userId,
+            entityRef = LessonResultEntityRef.attempt(attempt.id.value),
+            payload = payload.toString(),
+            createdAtMs = createdAtMs,
         )
     }
 
-    override suspend fun enqueueRating(rating: LessonRating) {
+    override suspend fun buildRatingRow(rating: LessonRating): OutboxEntity {
         val context = resolveContentContext(rating.lessonId.value)
-        outboxDao.upsertRating(
-            QuestRatingOutboxEntity(
-                ratingId = rating.id.value,
-                userId = rating.userId,
-                scope = context.scope,
-                ownerUid = context.ownerUid,
-                catalogId = context.catalogId,
-                questId = context.questId,
-                sectionId = context.sectionId,
-                themeId = context.themeId,
-                lessonId = context.lessonId,
-                lessonVersion = rating.lessonVersion,
-                sourceShelf = context.sourceShelf,
-                rating = rating.rating,
-                ratedAtMs = rating.ratedAt,
-                createdAtMs = clock.now().toEpochMilliseconds(),
-            ),
+        val createdAtMs = clock.now().toEpochMilliseconds()
+        val payload =
+            buildJsonObject {
+                put("ratingId", rating.id.value)
+                put("userId", rating.userId)
+                putContext(context)
+                put("lessonVersion", rating.lessonVersion)
+                put("rating", rating.rating)
+                put("ratedAtMs", rating.ratedAt)
+                put("createdAtMs", createdAtMs)
+            }
+        return row(
+            operation = OutboxOperations.SUBMIT_RATING,
+            sourceId = rating.id.value,
+            ownerUid = rating.userId,
+            entityRef = LessonResultEntityRef.rating(rating.id.value),
+            payload = payload.toString(),
+            createdAtMs = createdAtMs,
         )
     }
+
+    private fun row(
+        operation: String,
+        sourceId: String,
+        ownerUid: String,
+        entityRef: String,
+        payload: String,
+        createdAtMs: Long,
+    ) = OutboxEntity(
+        mutationId = OutboxOperations.mutationKey(operation, sourceId),
+        ownerUid = ownerUid,
+        operation = operation,
+        payload = payload,
+        entityRef = entityRef,
+        // Ни прохождение, ни оценка не версионируются: обе создаются один раз и не редактируются.
+        expectedVersion = null,
+        state = OutboxState.WAITING.name,
+        attemptCount = 0,
+        nextRetryAtMs = 0L,
+        lastError = null,
+        createdAtMs = createdAtMs,
+    )
 
     private suspend fun resolveContentContext(lessonId: String): LessonContentContext {
         val lesson = checkNotNull(lessonDao.findById(lessonId)) { "Lesson $lessonId not found" }
@@ -120,6 +170,25 @@ class RoomLessonResultOutboxWriter(
         }
 }
 
+/**
+ * Ссылка на локальную сущность, которую эта запись очереди подтверждает (AD-14).
+ *
+ * Её же читает откат по карантину: он обязан узнать, что именно убирать, не разбирая `payload`
+ * там, где хватает ссылки.
+ */
+object LessonResultEntityRef {
+    const val ATTEMPT_PREFIX: String = "lesson_runner:attempt:"
+    const val RATING_PREFIX: String = "lesson_runner:rating:"
+
+    fun attempt(attemptId: String): String = ATTEMPT_PREFIX + attemptId
+
+    /**
+     * Форма ровно та же, что выдала миграция 5 → 6 перенесённым строкам: откат по карантину
+     * обязан узнавать и их тоже, а не только записи, поставленные уже новым писателем.
+     */
+    fun rating(ratingId: String): String = RATING_PREFIX + ratingId
+}
+
 private data class LessonContentContext(
     val scope: String,
     val ownerUid: String?,
@@ -130,6 +199,17 @@ private data class LessonContentContext(
     val lessonId: String,
     val sourceShelf: String,
 )
+
+private fun kotlinx.serialization.json.JsonObjectBuilder.putContext(context: LessonContentContext) {
+    put("scope", context.scope)
+    put("ownerUid", context.ownerUid?.let { JsonPrimitive(it) } ?: kotlinx.serialization.json.JsonNull)
+    put("catalogId", context.catalogId)
+    put("questId", context.questId)
+    put("sectionId", context.sectionId)
+    put("themeId", context.themeId)
+    put("lessonId", context.lessonId)
+    put("sourceShelf", context.sourceShelf)
+}
 
 private const val PUBLIC_SCOPE = "public"
 private const val PRIVATE_SCOPE = "private"

@@ -14,9 +14,11 @@ class LessonRatingRepositoryImpl(
 ) : LessonRatingRepository {
 
     override suspend fun submit(rating: LessonRating): Result<Unit> = runCatching {
-        val rowId = ratingLocalDao.upsert(rating.toEntity())
+        // Строка очереди собирается до транзакции, потому что читает предков урока, а пишется
+        // внутри неё: оценка не может быть сохранена, не встав при этом в очередь (AD-23).
+        val outboxRow = outboxWriter.buildRatingRow(rating)
+        val rowId = ratingLocalDao.submitWithOutbox(rating.toEntity(), outboxRow)
         check(rowId > 0) { "upsert returned unexpected rowId: $rowId" }
-        outboxWriter.enqueueRating(rating)
     }
 
     override fun hasSubmitted(userId: String, lessonId: LessonId): Flow<Boolean> =

@@ -27,7 +27,7 @@ class LessonAttemptRepositoryImpl(
         val repetitionEntities = buildRepetitionStates(attempt, answers)
         // Resolved before the transaction because it reads the lesson's ancestors; the row itself
         // is written inside it, so the attempt can never be saved without being queued.
-        val outboxRow = outboxWriter.buildAttemptRow(attempt)
+        val outboxRow = outboxWriter.buildAttemptRow(attempt, answerEntities)
 
         attemptDao.saveAttemptWithAnswers(
             attempt = attempt.toEntity(),
@@ -35,7 +35,6 @@ class LessonAttemptRepositoryImpl(
             repetitions = repetitionEntities,
             outboxRow = outboxRow,
         )
-        if (outboxRow == null) outboxWriter.enqueueAttempt(attempt)
     }
 
     /**
