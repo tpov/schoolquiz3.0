@@ -1,0 +1,124 @@
+[
+  {
+    "name": "домашняя полка",
+    "visibleOn": [
+      "home"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "home"
+    ],
+    "kind": "ORDINARY_LESSON"
+  },
+  {
+    "name": "арена",
+    "visibleOn": [
+      "arena"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "arena"
+    ],
+    "kind": "ARENA"
+  },
+  {
+    "name": "турнир",
+    "visibleOn": [
+      "tournament"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "tournament"
+    ],
+    "kind": "TOURNAMENT"
+  },
+  {
+    "name": "финал турнира",
+    "visibleOn": [
+      "tournamentFinal"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "tournamentFinal"
+    ],
+    "kind": "TOURNAMENT"
+  },
+  {
+    "name": "архив",
+    "visibleOn": [
+      "archive"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "archive"
+    ],
+    "kind": "ORDINARY_LESSON"
+  },
+  {
+    "name": "дом и турнир — по дорогой",
+    "visibleOn": [
+      "home",
+      "tournament"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "tournament",
+      "home"
+    ],
+    "kind": "TOURNAMENT"
+  },
+  {
+    "name": "архив и арена — по дорогой",
+    "visibleOn": [
+      "archive",
+      "arena"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "arena",
+      "archive"
+    ],
+    "kind": "ARENA"
+  },
+  {
+    "name": "снят со всех полок",
+    "visibleOn": [],
+    "isPrivate": false,
+    "shelves": [],
+    "kind": "ORDINARY_LESSON"
+  },
+  {
+    "name": "приватный квест",
+    "visibleOn": [],
+    "isPrivate": true,
+    "shelves": [],
+    "kind": "ORDINARY_LESSON"
+  },
+  {
+    "name": "написание прощается",
+    "visibleOn": [
+      " Tournament ",
+      "HOME",
+      "tournamentfinal"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "tournamentFinal",
+      "tournament",
+      "home"
+    ],
+    "kind": "TOURNAMENT"
+  },
+  {
+    "name": "незнакомая полка не считается",
+    "visibleOn": [
+      "shop",
+      "home"
+    ],
+    "isPrivate": false,
+    "shelves": [
+      "home"
+    ],
+    "kind": "ORDINARY_LESSON"
+  }
+]
