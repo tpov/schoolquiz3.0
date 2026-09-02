@@ -172,19 +172,69 @@ test("a served question whose document is gone is reported by id and position", 
   const scored = scoreAttempt({questions: pool.questions, served, keyDocument: null, answers});
   assert.strictEqual(
     scored.scorable,
-    false,
-    "a question we served and then lost is our gap, so the caller decides rather than being handed a number",
+    true,
+    "one absent document refused the whole attempt, which is what an invented served entry was buying",
+  );
+  assert.strictEqual(
+    scored.codeAnswer,
+    DIGIT.perfect + NO_VALID_ANSWER + DIGIT.partial,
+    "the lost position is shown-and-unanswered, and the other two are untouched",
   );
   assert.deepStrictEqual(
     scored.unscorable,
-    [{questionId: "lost", codeAnswerIndex: 1, reason: UNSCORABLE.QUESTION_MISSING, fault: FAULT.SERVER, detail: null}],
+    [{questionId: "lost", codeAnswerIndex: 1, reason: UNSCORABLE.QUESTION_MISSING, fault: FAULT.CLIENT, detail: null}],
     "the one lost question, by id and position, and nothing else held against the attempt",
   );
-  // With the document back, the same served list and the same answers score normally — nothing
-  // about the other two questions depended on the one that was gone.
+  // With the document back, the same served list and the same answers score identically — the
+  // position was already worth nothing, so finding the question again changes only the record. That
+  // is the honest price of the reclassification: a real loss costs the player that one question.
   const again = scoreAttempt({questions: whole.questions, served, keyDocument: null, answers});
   assert.strictEqual(again.scorable, true);
   assert.strictEqual(again.codeAnswer, DIGIT.perfect + NO_VALID_ANSWER + DIGIT.partial);
+  assert.deepStrictEqual(again.unscorable, []);
+  // `missing` is where a genuine loss stays visible: this module is handed the lesson's documents
+  // and can tell one that went away from an id the device made up. The scorer cannot.
+  assert.deepStrictEqual(whole.missing, []);
+});
+
+test("an invented served entry costs the player, and it is the only shape that can", () => {
+  // The exploit this pair of modules used to have. A device appends one entry naming a question no
+  // document answers to; the pool builds it as a lost question, the scorer used to call that our
+  // gap, and our gap means nothing paid *and nothing charged* — so the invented entry bought an
+  // uncharged hard attempt. Against a `'1'` it can only ever cost.
+  const documents = [document("q0"), document("q1")];
+  const honest = serve([0, "q0"], [1, "q1"]);
+  const invented = [...honest, {codeAnswerIndex: 2, questionId: "q-never-existed"}];
+  const answers = [answer("q0", 0, PERFECT), answer("q1", 1, PERFECT)];
+
+  const before = scoreAttempt({
+    questions: build({served: honest, documents}).questions,
+    served: honest,
+    keyDocument: null,
+    answers,
+  });
+  const after = scoreAttempt({
+    questions: build({served: invented, documents}).questions,
+    served: invented,
+    keyDocument: null,
+    answers,
+  });
+
+  assert.strictEqual(before.scorable, true);
+  assert.strictEqual(after.scorable, true, "the invented entry refused the attempt, which is free");
+  assert.strictEqual(before.codeAnswer, DIGIT.perfect + DIGIT.perfect);
+  assert.strictEqual(after.codeAnswer, DIGIT.perfect + DIGIT.perfect + NO_VALID_ANSWER);
+  assert.ok(
+    after.percentScore < before.percentScore,
+    `inventing an entry did not cost: ${before.percentScore} -> ${after.percentScore}`,
+  );
+  assert.strictEqual(before.percentScore, 100);
+  assert.strictEqual(after.percentScore, 66);
+
+  // And it is chargeable, which is the half that makes it a cost rather than a refund.
+  const attempt = {paymentRule: attemptIntake.PAYMENT_RULE.SERVER_SCORED};
+  assert.strictEqual(attemptIntake.isPayable(attempt, after), true);
+  assert.strictEqual(attemptIntake.withServerScore(attempt, after).percentScore, 66);
 });
 
 test("a translated variant is its own question, not a copy of the canonical one", () => {

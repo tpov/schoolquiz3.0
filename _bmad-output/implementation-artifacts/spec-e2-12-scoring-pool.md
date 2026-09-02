@@ -94,3 +94,5 @@ context: []
 
 - A pool spanning two lessons, or holding one id twice, has meaningless positions and is refused rather than scored.
   [`scoring-pool.js:95`](../../functions/scoring-pool.js#L95)
+
+- **Superseded.** The change-log entry above argued a lost question must refuse the attempt rather than become a `'0'` that rewards or a `'1'` that punishes. That weighed fairness to the player and missed the incentive: refusing also cancels the charge, so the shape was worth *more* to a dishonest client than answering honestly — one invented `served` entry bought a free hard attempt. `spec-e2-14-close-the-chain.md` reverses it: the position scores `'1'`, which costs an honest player one question in a rare case and costs a dishonest one every question they invent. The reasoning above is kept because it is where the trade was first weighed, not because it stands.

@@ -52,10 +52,16 @@ const {UNSCORABLE} = require("./attempt-scoring");
  * Leaving its position out and shrinking the pool would slide every later question one place left.
  * Leaving the position in but taking the question out of `served` would make its digit `'0'` —
  * "the player was never shown this" — which is a better story for us than for them. So the position
- * stays, the id is reported, and `scoreAttempt` reaches its own `QUESTION_MISSING` for it: a server
- * fault, named by id and position, which is the honest description of a question we served and then
- * lost. Every other served question is still in the pool at its own position, so nothing about the
- * rest of the attempt depends on the one we could not find.
+ * stays, the id is reported, and `scoreAttempt` reaches its own `QUESTION_MISSING` for it: a scored
+ * position — shown, no valid answer — named by id and position. Every other served question is
+ * still in the pool at its own position, so nothing about the rest of the attempt depends on the one
+ * we could not find.
+ *
+ * The `missing` list this returns is where a genuine loss is actually visible. The scorer is handed
+ * `served` and a pool and cannot tell a document that went away from an id the device made up; this
+ * module is handed the lesson's documents and can. It reports; it does not judge — a refusal here
+ * would take the whole attempt down for one absent document, which is the outcome an invented entry
+ * was buying.
  *
  * ---
  *

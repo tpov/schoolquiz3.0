@@ -53,11 +53,13 @@ const {redact, STATUS} = require("./question-redaction");
  *    and takes the whole batch down. Both are refused and recorded, which is the failure mode this
  *    module exists to have instead.
  *
- * 5. **The document says which generation it belongs to.** See `publicHalfRedacted`.
+ * 5. **The document says which generation it belongs to, and the caller is the one who knows.**
+ *    See `publicHalfRedacted`.
  *
  * ---
  *
- * **Invariant for whoever turns redaction on: both halves must come from ONE `redact` call.**
+ * **Invariant: both halves come from ONE `redact` call, and this module is what makes that
+ * possible.**
  *
  * `redact` draws a fresh shuffle every time it is invoked. The `idMap` and `order` inside an
  * `Ordering` or `FillBlank` key describe *that* permutation and no other, so calling `redact` a
@@ -65,8 +67,12 @@ const {redact, STATUS} = require("./question-redaction");
  * returns null for every one of those questions — silently, at scoring time, long after publish.
  * Split once, write both halves from the single result, or do not split at all.
  *
- * This slice writes only the key, which is exactly the case that invariant warns about, so every
- * document it produces says so in `publicHalfRedacted`.
+ * That was advice nobody could follow while this module called `redact` for itself and kept only
+ * the key: a caller wanting the matching public half had no way to get it except to call `redact`
+ * again, which is the very thing the invariant forbids. So the halves come back beside the keys —
+ * `publicPayloads`, one entry per stored key, from the same call the key came from. A caller
+ * publishing those and saying so (`publicHalfRedacted: true`) has a lesson that scores; a caller
+ * publishing anything else has invented a permutation nobody was shown.
  */
 
 /** Server-only collection. `firestore.rules` denies it read and write to every client. */
@@ -81,19 +87,24 @@ const KEY_COLLECTION = "question_keys";
 const DOCUMENT_VERSION = 1;
 
 /**
- * Whether the payload published beside these keys was itself redacted.
+ * What `publicHalfRedacted` says when the caller says nothing: the payload beside these keys went
+ * out whole.
  *
- * `false` for every document this slice writes, and it is not decoration. The keys here were
- * harvested from payloads that went out whole, so the shuffle each `Ordering` and `FillBlank` key
- * records is one nobody has been shown: `idMap` maps `ri-0…` onto original ids for an arrangement
- * that exists only inside this document. A reader that treats such a key as describing the
- * published question will translate answers against the wrong permutation.
+ * This is a fact about the *caller*, not about this module — only whoever writes the public
+ * document knows which half it wrote — so it is an option, and this is its default. The default is
+ * the safe one in the only direction that matters. Claiming `false` when the published half was in
+ * fact redacted costs a scored attempt: `attempt-scoring.js` refuses the payload as
+ * `KEY_GENERATION`, loudly, with nothing paid. Claiming `true` when it was not costs the answer
+ * itself: the key describes a shuffle nobody was shown, `restoreContent` reassembles a question
+ * against the wrong permutation, and wrong answers score correct. So a caller that says nothing
+ * gets the refusal, never the mis-score.
  *
- * So this field is what lets a later reader tell the two generations apart — and what makes it
- * possible to find and rewrite this one. A key that cannot say which generation it belongs to is
- * worse than no key at all, because no key fails loudly and a mismatched one scores wrong answers
- * correct. The slice that starts publishing redacted payloads writes both halves from a single
- * `redact` call and sets this true.
+ * The field is not decoration either way. A key harvested from a payload that went out whole
+ * records an arrangement that exists only inside this document: `idMap` maps `ri-0…` onto original
+ * ids for a permutation nobody has been shown. This field is what lets a later reader tell the two
+ * generations apart — and what makes it possible to find and rewrite the first one. A key that
+ * cannot say which generation it belongs to is worse than no key at all, because no key fails
+ * loudly and a mismatched one scores wrong answers correct.
  */
 const PUBLIC_HALF_REDACTED = false;
 
@@ -222,22 +233,33 @@ function detailOf(value) {
  * @param questions the questions as `normalizeQuestion` leaves them — `id`, `payload` and
  *   `difficulty` are the fields read here. `difficulty` is only a fallback for a payload that
  *   carries none of its own, and it arrives as `""` for most published questions.
- * @param options `{random, indices}`. `random` is forwarded to `redact` so a test can name one
- *   concrete shuffle. `indices` lets a caller say where each question sat in a larger list, so a
- *   refusal points at the submission rather than at this slice of it; without it, positions in
- *   `questions` are used.
- * @returns `{id, lessonId, version, publicHalfRedacted, keys, refusals, omitted}`. `keys` pairs a
- *   question id with its key; `refusals` pairs a position and question id with why there is none;
- *   `omitted` counts records that did not fit. All three are always present: empty is what clears
- *   the previous generation on a republish.
+ * @param options `{random, indices, publicHalfRedacted}`. `random` is forwarded to `redact` so a
+ *   test can name one concrete shuffle. `indices` lets a caller say where each question sat in a
+ *   larger list, so a refusal points at the submission rather than at this slice of it; without it,
+ *   positions in `questions` are used. `publicHalfRedacted` is the caller's statement about the
+ *   payload it is publishing beside these keys — `true` only if it publishes the `publicPayloads`
+ *   returned here. Anything but a literal `true` means `PUBLIC_HALF_REDACTED`.
+ * @returns `{document, publicPayloads}` — deliberately two things rather than one.
+ *   - `document` is `{id, lessonId, version, publicHalfRedacted, keys, refusals, omitted}` and is
+ *     exactly what goes to Firestore. `keys` pairs a question id with its key; `refusals` pairs a
+ *     position and question id with why there is none; `omitted` counts records that did not fit.
+ *     All three are always present: empty is what clears the previous generation on a republish.
+ *   - `publicPayloads` is `[{questionId, payload}]`, one entry per **stored key**, in `keys` order,
+ *     and it is not part of the document — it is the other half, for the caller to publish. Its
+ *     pairing with `keys` is the point: a question whose key was refused has no entry here, because
+ *     publishing a redacted half for a key that was never stored leaves a question nobody can score.
+ *     A question with no answer to take — a Survey — has none either; there is nothing to replace,
+ *     and the caller publishes what it already had.
  */
 function lessonKeyDocument(lessonId, questions, options) {
   const list = Array.isArray(questions) ? questions : [];
   const random = options && typeof options.random === "function" ? options.random : undefined;
   const indices = options && Array.isArray(options.indices) ? options.indices : null;
   const positionOf = (at) => (indices && Number.isInteger(indices[at]) ? indices[at] : at);
+  const publicHalfRedacted = options && options.publicHalfRedacted === true;
 
   const keys = [];
+  const publicPayloads = [];
   const refusals = [];
   const claimed = new Set();
   let used = 0;
@@ -302,29 +324,45 @@ function lessonKeyDocument(lessonId, questions, options) {
     used += size;
     claimed.add(questionId);
     keys.push(entry);
+    // The half that belongs to the key just stored, from the same `redact` call, pushed in the same
+    // breath so the two lists cannot drift apart. Not measured against the budget: it is not going
+    // into the document. See the invariant in the header.
+    publicPayloads.push({questionId, payload: outcome.publicPayload});
   }
 
   return {
-    id: lessonId,
-    lessonId,
-    version: DOCUMENT_VERSION,
-    publicHalfRedacted: PUBLIC_HALF_REDACTED,
-    keys,
-    refusals,
-    omitted,
+    document: {
+      id: lessonId,
+      lessonId,
+      version: DOCUMENT_VERSION,
+      publicHalfRedacted: publicHalfRedacted ? true : PUBLIC_HALF_REDACTED,
+      keys,
+      refusals,
+      omitted,
+    },
+    publicPayloads,
   };
 }
 
 /**
  * Groups a publication's questions by lesson and returns the key documents as `path → data`, the
- * shape `publicDocuments` already speaks, alongside every refusal for the caller to log.
+ * shape `publicDocuments` already speaks, alongside the public halves those keys describe and every
+ * refusal for the caller to log.
  *
  * The refusals come back rather than staying in the documents alone because nothing reads that
  * collection: the rules deny it to every client and there is no admin surface, so "recorded" and
  * "visible" are not the same thing. Each returned record is a stored refusal plus its `lessonId`,
  * so a log line names the document to go and look at.
  *
- * @returns `{documents, refusals}`
+ * The public halves come back for a different reason: `redact` is called in here, once per
+ * question, and its shuffle is unrepeatable. A caller that wants to publish the half a stored key
+ * describes has exactly one chance to be handed it, and this is it.
+ *
+ * @param options `{random, publicHalfRedacted}`, both forwarded to `lessonKeyDocument`. Pass
+ *   `publicHalfRedacted: true` only when publishing the `publicPayloads` this returns; a caller
+ *   that keys without publishing — the catalog backfill — passes nothing and keeps the old stamp.
+ * @returns `{documents, publicPayloads, refusals}`. `publicPayloads` is
+ *   `[{lessonId, questionId, payload}]`, one per stored key, grouped by lesson like `documents`.
  */
 function questionKeyDocuments(questions, options) {
   const list = Array.isArray(questions) ? questions : [];
@@ -354,12 +392,15 @@ function questionKeyDocuments(questions, options) {
   }
 
   const documents = {};
+  const publicPayloads = [];
   for (const [lessonId, bucket] of byLesson.entries()) {
-    const document = lessonKeyDocument(lessonId, bucket.questions, {
+    const {document, publicPayloads: halves} = lessonKeyDocument(lessonId, bucket.questions, {
       random: options && options.random,
       indices: bucket.indices,
+      publicHalfRedacted: options && options.publicHalfRedacted,
     });
     documents[keyDocumentPath(lessonId)] = document;
+    for (const half of halves) publicPayloads.push({lessonId, ...half});
     for (const record of document.refusals) refusals.push({lessonId, ...record});
     if (document.omitted > 0) {
       refusals.push({
@@ -371,7 +412,7 @@ function questionKeyDocuments(questions, options) {
       });
     }
   }
-  return {documents, refusals};
+  return {documents, publicPayloads, refusals};
 }
 
 module.exports = {

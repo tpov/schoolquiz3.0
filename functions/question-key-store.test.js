@@ -4,6 +4,7 @@ const assert = require("assert");
 const {
   KEY_COLLECTION,
   DOCUMENT_VERSION,
+  PUBLIC_HALF_REDACTED,
   MAX_DOCUMENT_BYTES,
   MAX_DOCUMENT_ID_BYTES,
   REASON,
@@ -37,6 +38,15 @@ const test = (name, fn) => SUITE.push([name, fn]);
  * invisible when it happens, because the cases still pass against the new stream.
  */
 const opts = (seed) => ({random: seeded(seed === undefined ? 7 : seed)});
+
+/**
+ * The stored half alone.
+ *
+ * `lessonKeyDocument` returns `{document, publicPayloads}` — what Firestore is handed, and the
+ * public halves the stored keys describe, both out of one `redact` call per question. Most cases
+ * below are about the document; the cases about the pairing call `lessonKeyDocument` itself.
+ */
+const keyDocument = (...args) => lessonKeyDocument(...args).document;
 
 /** Firestore's own hard limit on one document. MAX_DOCUMENT_BYTES budgets underneath it. */
 const FIRESTORE_DOCUMENT_LIMIT = 1048576;
@@ -77,7 +87,7 @@ const reasonOf = (document, questionId) => {
 // lesson, holding a key per question id".
 
 test("every splittable type contributes its key to the one lesson document", () => {
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q1", "lesson-1", SINGLE),
     question("q2", "lesson-1", MULTIPLE),
     question("q3", "lesson-1", ORDERING),
@@ -109,7 +119,7 @@ test("the shuffle mapping in a key is a complete permutation of the question's o
   // idMap is the only field the shuffle produces, and the only one that has to survive a round
   // trip: lose or duplicate an entry and the reissued id a player's answer arrives under maps to
   // nothing, or to the wrong row. Asserted per type because they re-issue under different prefixes.
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q-ord", "lesson-1", ORDERING),
     question("q-fb", "lesson-1", FILL_BLANK),
   ], opts());
@@ -134,16 +144,140 @@ test("the shuffle mapping in a key is a complete permutation of the question's o
   );
 });
 
-test("the document says the payload beside it was never redacted", () => {
+test("a caller that says nothing gets the safe stamp: the payload beside these keys went out whole", () => {
   // The shuffle these keys record was drawn for a public half that was not published, so nothing
   // has been shown it. Without this field a later reader cannot tell such a key from one written
   // alongside a matching redacted payload, and would translate answers against the wrong
   // permutation — scoring wrong answers correct.
-  const document = lessonKeyDocument("lesson-1", [question("q1", "lesson-1", ORDERING)], opts());
+  const document = keyDocument("lesson-1", [question("q1", "lesson-1", ORDERING)], opts());
+  assert.strictEqual(document.publicHalfRedacted, PUBLIC_HALF_REDACTED);
   assert.strictEqual(document.publicHalfRedacted, false);
   assert.ok("publicHalfRedacted" in document, "the generation marker must be present, not implied");
   const {documents} = questionKeyDocuments([question("q1", "lesson-1", SINGLE)], opts());
   assert.strictEqual(documents["question_keys/lesson-1"].publicHalfRedacted, false);
+});
+
+test("the stamp is the caller's statement, and only a literal true is one", () => {
+  // Whether the published half was redacted is a fact about the caller's own write, and no amount
+  // of looking at the questions can tell this module which half went out. So it is stated, and
+  // every statement that is not exactly `true` falls back to the safe answer — a truthy string or a
+  // `1` from some future config reader must not be able to claim a generation by accident. The two
+  // errors are not symmetric: a wrong `false` is refused loudly at scoring time (`KEY_GENERATION`),
+  // a wrong `true` scores wrong answers correct and says nothing.
+  const questions = [question("q1", "lesson-1", ORDERING)];
+  const stamped = (publicHalfRedacted) =>
+    keyDocument("lesson-1", questions, {...opts(), publicHalfRedacted}).publicHalfRedacted;
+
+  assert.strictEqual(stamped(true), true);
+  for (const stated of [false, undefined, null, 0, 1, "true", "yes", {}, []]) {
+    assert.strictEqual(stamped(stated), false, `${json(stated)} claimed a generation`);
+  }
+
+  // And the same statement, through the function publication actually calls.
+  const {documents} = questionKeyDocuments(questions, {...opts(), publicHalfRedacted: true});
+  assert.strictEqual(documents["question_keys/lesson-1"].publicHalfRedacted, true);
+  // Everything else about the two documents is the same, so the stamp is the only thing that moved.
+  assert.deepStrictEqual(
+    {...documents["question_keys/lesson-1"], publicHalfRedacted: false},
+    keyDocument("lesson-1", questions, opts()),
+  );
+});
+
+// --------------------------------------------------------------------------------------------
+// Matrix: "Halves come out together | the store called for a lesson | it returns the public half it
+// keyed for each question, so a caller cannot publish a different one".
+
+test("the public half of every stored key comes back with it", () => {
+  const questions = [
+    question("q1", "lesson-1", SINGLE),
+    question("q2", "lesson-1", MULTIPLE),
+    question("q3", "lesson-1", ORDERING),
+    question("q4", "lesson-1", FILL_BLANK),
+    question("q-survey", "lesson-1", SURVEY),
+  ];
+  const {document, publicPayloads} = lessonKeyDocument("lesson-1", questions, opts());
+
+  // One per stored key, in key order. The survey has no key and so no half: there is nothing to
+  // replace, and the caller publishes what it already had.
+  assert.deepStrictEqual(
+    publicPayloads.map((half) => half.questionId),
+    document.keys.map((entry) => entry.questionId),
+  );
+  assert.deepStrictEqual(publicPayloads.map((half) => half.questionId), ["q1", "q2", "q3", "q4"]);
+
+  // Each half is a redacted shape with the answer gone, and — the point of returning them at all —
+  // it describes the very permutation the key beside it records. `redact` draws a fresh shuffle per
+  // call, so a caller that produced these itself would be publishing an arrangement these keys do
+  // not describe, and `restoreContent` would reassemble the wrong question or none at all.
+  const halfOf = (id) => JSON.parse(publicPayloads.find((half) => half.questionId === id).payload);
+  assert.strictEqual(halfOf("q1").type, "SingleChoiceRedacted");
+  assert.strictEqual(halfOf("q1").correctOptionId, undefined, "the answer was published");
+  assert.strictEqual(halfOf("q2").correctOptionIds, undefined, "the answers were published");
+
+  const itemTexts = new Map(ORDERING.items.map((item) => [item.id, item.text]));
+  for (const item of halfOf("q3").items) {
+    assert.strictEqual(
+      item.text,
+      itemTexts.get(keyOf(document, "q3").idMap[item.id]),
+      `${item.id} carries the text of a row the key maps elsewhere`,
+    );
+  }
+  const candidateTexts = new Map(FILL_BLANK.candidates.map((row) => [row.id, row.text]));
+  for (const candidate of halfOf("q4").candidates) {
+    assert.strictEqual(
+      candidate.text,
+      candidateTexts.get(keyOf(document, "q4").idMap[candidate.id]),
+      `${candidate.id} carries the text of a candidate the key maps elsewhere`,
+    );
+  }
+
+  // The halves are not in the document. They are the other half of the write, not part of this one,
+  // and storing them would put the published payload inside the server-only collection twice over.
+  assert.ok(!("publicPayloads" in document), "the halves were written into the key document");
+});
+
+test("a question whose key was refused gets no public half either", () => {
+  // The pairing is with the *stored* key, not with the split. A redacted half published for a key
+  // that was never filed is a question nobody can score — `KEY_MISSING`, our gap, nothing paid — so
+  // a refusal takes the half down with it and the caller publishes the payload it already had.
+  const questions = [
+    question("q1", "lesson-1", ORDERING),
+    // A blank id Firestore will not take as a field name: the split succeeds, the key does not fit.
+    question("q2", "lesson-1", {
+      ...FILL_BLANK,
+      blanks: [{id: "b.1", correctCandidateId: "c1"}, {id: "b2", correctCandidateId: "c2"}],
+    }),
+    // Nothing to split at all.
+    question("q3", "lesson-1", {...SINGLE, correctOptionId: "zzz"}),
+    // A second claim on an id already keyed.
+    question("q1", "lesson-1", MULTIPLE),
+  ];
+  const {document, publicPayloads} = lessonKeyDocument("lesson-1", questions, opts());
+
+  assert.deepStrictEqual(document.keys.map((entry) => entry.questionId), ["q1"]);
+  assert.deepStrictEqual(publicPayloads.map((half) => half.questionId), ["q1"]);
+  assert.deepStrictEqual(
+    document.refusals.map((record) => record.reason),
+    [REASON.UNSTORABLE_FIELD_NAME, REFUSAL.DANGLING_CORRECT_OPTION, REASON.DUPLICATE_QUESTION_ID],
+  );
+});
+
+test("the halves come back from the flat call too, named by lesson", () => {
+  const {documents, publicPayloads} = questionKeyDocuments([
+    question("a1", "lesson-1", SINGLE),
+    question("b1", "lesson-2", ORDERING),
+    question("a2", "lesson-1", MULTIPLE),
+    // A lesson id Firestore will not take: refused before any key is built, so no half either.
+    question("c1", "les/son", SINGLE),
+  ], opts());
+
+  assert.deepStrictEqual(
+    publicPayloads.map((half) => [half.lessonId, half.questionId]),
+    [["lesson-1", "a1"], ["lesson-1", "a2"], ["lesson-2", "b1"]],
+  );
+  // Grouped by lesson exactly as `documents` is, and one half per key across every lesson.
+  const keyed = Object.values(documents).flatMap((document) => document.keys.length);
+  assert.strictEqual(publicPayloads.length, keyed.reduce((sum, count) => sum + count, 0));
 });
 
 test("the document is addressed by lesson, in the server-only collection", () => {
@@ -158,7 +292,7 @@ test("the document is addressed by lesson, in the server-only collection", () =>
 // and no refusal recorded either".
 
 test("a Survey leaves no trace at all", () => {
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q1", "lesson-1", SINGLE),
     question("q-survey", "lesson-1", SURVEY),
   ], opts());
@@ -171,7 +305,7 @@ test("a Survey leaves no trace at all", () => {
 
 test("a lesson of nothing but surveys still writes its document", () => {
   // Empty lists are not nothing: on a republish they are what clears the previous generation.
-  const document = lessonKeyDocument("lesson-1", [question("q-survey", "lesson-1", SURVEY)], opts());
+  const document = keyDocument("lesson-1", [question("q-survey", "lesson-1", SURVEY)], opts());
   assert.deepStrictEqual(document.keys, []);
   assert.deepStrictEqual(document.refusals, []);
   assert.strictEqual(document.lessonId, "lesson-1");
@@ -194,7 +328,7 @@ test("every kind of refusal is recorded by id and by reason", () => {
       REFUSAL.DANGLING_CORRECT_CANDIDATE],
     ["q-bad-difficulty", {...SINGLE, difficulty: 3}, REFUSAL.INVALID_DIFFICULTY],
   ];
-  const document = lessonKeyDocument(
+  const document = keyDocument(
     "lesson-1",
     cases.map(([id, payload]) => question(id, "lesson-1", payload)),
     opts(),
@@ -213,7 +347,7 @@ test("every kind of refusal is recorded by id and by reason", () => {
 });
 
 test("a payload that is not JSON at all is refused, not thrown", () => {
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q-malformed", "lesson-1", "{not json"),
     question("q-empty", "lesson-1", ""),
     question("q-array", "lesson-1", "[1, 2]"),
@@ -228,7 +362,7 @@ test("a payload that is not JSON at all is refused, not thrown", () => {
 });
 
 test("a question with no id is refused rather than filed under nothing", () => {
-  const document = lessonKeyDocument("lesson-1", [question("", "lesson-1", SINGLE)], opts());
+  const document = keyDocument("lesson-1", [question("", "lesson-1", SINGLE)], opts());
   assert.deepStrictEqual(document.keys, []);
   assert.strictEqual(reasonOf(document, ""), REASON.MISSING_QUESTION_ID);
 });
@@ -237,7 +371,7 @@ test("a refusal with no question id is still findable, by position", () => {
   // Ids come from a client-submitted draft through stringValue, so several refusals can share the
   // empty string. Without the position they are one indistinguishable heap and nobody can go and
   // look at the question that caused any of them.
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q-ok", "lesson-1", SINGLE),
     null,
     undefined,
@@ -301,7 +435,7 @@ test("every refusal stored in a document also comes back for the caller to log",
 });
 
 test("an already-redacted payload is recorded, because this document is not where its answer is", () => {
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q-done", "lesson-1", {
       type: "SingleChoiceRedacted",
       text: "already split",
@@ -315,7 +449,7 @@ test("an already-redacted payload is recorded, because this document is not wher
 test("a second question claiming an id already taken is refused, not silently first-wins", () => {
   // Ids come from a client-submitted draft, so nothing upstream makes them unique. Keeping both
   // would leave which answer a lookup finds decided by array order.
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q1", "lesson-1", SINGLE),
     question("q1", "lesson-1", MULTIPLE),
     question("q2", "lesson-1", SINGLE),
@@ -398,7 +532,7 @@ test("a blank id Firestore cannot store costs that question its key, not the who
       ...FILL_BLANK,
       blanks: [{id: blankId, correctCandidateId: "c1"}, {id: "b2", correctCandidateId: "c2"}],
     };
-    const document = lessonKeyDocument("lesson-1", [
+    const document = keyDocument("lesson-1", [
       question("q-bad-blank", "lesson-1", payload),
       question("q-ok", "lesson-1", SINGLE),
     ], opts());
@@ -418,7 +552,7 @@ test("a blank id Firestore cannot store costs that question its key, not the who
 
 test("an author-supplied detail is cut before it is stored or logged", () => {
   const blankId = `b.${"x".repeat(5000)}`;
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q-long", "lesson-1", {
       ...FILL_BLANK,
       blanks: [{id: blankId, correctCandidateId: "c1"}, {id: "b2", correctCandidateId: "c2"}],
@@ -431,7 +565,7 @@ test("an author-supplied detail is cut before it is stored or logged", () => {
 
 test("no key that is emitted carries a field name Firestore would throw out", () => {
   // The guard has to hold over whole documents, not just the maps somebody remembered to check.
-  const document = lessonKeyDocument("lesson-1", [
+  const document = keyDocument("lesson-1", [
     question("q1", "lesson-1", SINGLE),
     question("q2", "lesson-1", MULTIPLE),
     question("q3", "lesson-1", ORDERING),
@@ -473,7 +607,7 @@ test("a lesson too large for one document refuses by name instead of failing the
   for (let index = 0; index < 14; index += 1) {
     questions.push(question(`q${index}`, "lesson-1", heavyMultipleChoice(`t${index}`)));
   }
-  const document = lessonKeyDocument("lesson-1", questions, opts());
+  const document = keyDocument("lesson-1", questions, opts());
 
   assert.ok(document.keys.length > 0, "the ceiling must not refuse everything");
   assert.ok(document.keys.length < questions.length, "the ceiling must actually bite");
@@ -503,7 +637,7 @@ test("refusals are charged to the same budget, and what will not fit is counted"
   for (let index = 0; index < 4000; index += 1) {
     questions.push(question(`bad${index}`, "lesson-1", "{not json"));
   }
-  const document = lessonKeyDocument("lesson-1", questions, opts());
+  const document = keyDocument("lesson-1", questions, opts());
 
   assert.ok(document.omitted > 0, "records that did not fit must be counted");
   assert.ok(document.refusals.length < 4000, "refusals cannot all have fit");
@@ -534,11 +668,11 @@ test("keys and refusals are lists, which is what makes a republish a replacement
   // answer to a deleted question sitting beside the answer to the one that replaced it. Firestore
   // replaces an array whole, so the shape is the mechanism — assert it, or a later refactor to a
   // map passes every other case in this file.
-  const first = lessonKeyDocument("lesson-1", [
+  const first = keyDocument("lesson-1", [
     question("q1", "lesson-1", SINGLE),
     question("q-gone", "lesson-1", MULTIPLE),
   ], opts());
-  const second = lessonKeyDocument("lesson-1", [question("q1", "lesson-1", MULTIPLE)], opts());
+  const second = keyDocument("lesson-1", [question("q1", "lesson-1", MULTIPLE)], opts());
 
   assert.ok(Array.isArray(first.keys) && Array.isArray(first.refusals));
   assert.ok(Array.isArray(second.keys) && Array.isArray(second.refusals));
@@ -603,10 +737,10 @@ test("input that is not a list is nothing to publish, not a crash", () => {
   for (const value of [null, undefined, {}, 7, "questions", true]) {
     assert.deepStrictEqual(
       questionKeyDocuments(value, opts()),
-      {documents: {}, refusals: []},
+      {documents: {}, publicPayloads: [], refusals: []},
       `questionKeyDocuments(${String(value)}) should be empty, not thrown`,
     );
-    const document = lessonKeyDocument("lesson-1", value, opts());
+    const document = keyDocument("lesson-1", value, opts());
     assert.deepStrictEqual(document.keys, []);
     assert.deepStrictEqual(document.refusals, []);
   }
@@ -623,7 +757,7 @@ test("a question with no lesson id is refused, not filed under nothing", () => {
 });
 
 test("nothing to publish is no document, not an empty one", () => {
-  assert.deepStrictEqual(questionKeyDocuments([], opts()), {documents: {}, refusals: []});
+  assert.deepStrictEqual(questionKeyDocuments([], opts()), {documents: {}, publicPayloads: [], refusals: []});
 });
 
 // --------------------------------------------------------------------------------------------
@@ -668,11 +802,11 @@ test("a question shaped exactly as normalizeQuestion leaves it still gets a key"
   // And the per-lesson entry point with no options object at all, which is what a caller reaching
   // past questionKeyDocuments would do. Reading `options.random` off undefined throws here, and a
   // throw during batch assembly fails the whole publish.
-  const bare = lessonKeyDocument("les-1", [normalized]);
+  const bare = keyDocument("les-1", [normalized]);
   assert.deepStrictEqual(bare.refusals, []);
   assert.strictEqual(keyOf(bare, "qst-1").correctOptionId, "b");
-  assert.strictEqual(lessonKeyDocument("les-1", [normalized], undefined).keys.length, 1);
-  assert.strictEqual(lessonKeyDocument("les-1", [normalized], {}).keys.length, 1);
+  assert.strictEqual(keyDocument("les-1", [normalized], undefined).keys.length, 1);
+  assert.strictEqual(keyDocument("les-1", [normalized], {}).keys.length, 1);
 });
 
 test("the document's difficulty decides nothing about whether a question gets a key", () => {
@@ -685,7 +819,7 @@ test("the document's difficulty decides nothing about whether a question gets a 
   assert.ok("difficulty" in withDifficulty, "the fixture must genuinely carry the field");
 
   for (const fallback of ["", "HARD", undefined, null, 3]) {
-    const document = lessonKeyDocument("lesson-1", [
+    const document = keyDocument("lesson-1", [
       question("q-has", "lesson-1", withDifficulty, fallback),
       question("q-lacks", "lesson-1", withoutDifficulty, fallback),
       question("q-bad", "lesson-1", {...SINGLE, difficulty: 3}, fallback),

@@ -8,11 +8,9 @@ const {NOT_SHOWN, NO_VALID_ANSWER, MAX_RECORDS, FAULT, FAULT_OF, UNSCORABLE, sco
   require("./attempt-scoring");
 const {evaluateAnswer, computePercentScore} = require("./assessment-scoring");
 const {
-  redact,
   restoreContent,
   translateSubmittedAnswer,
   KEY_VERSION,
-  STATUS,
   CONTENT_TYPE,
 } = require("./question-redaction");
 const {lessonKeyDocument, PUBLIC_HALF_REDACTED, DOCUMENT_VERSION} = require("./question-key-store");
@@ -304,52 +302,58 @@ test("answers arriving in any order score identically, and the newest duplicate 
 // ---------------------------------------------------------------------------------------------
 
 /**
- * A lesson whose key document comes from `lessonKeyDocument` and whose public payloads come from
- * the same shuffle.
+ * A lesson whose key document and public payloads both come out of one `lessonKeyDocument` call.
  *
- * Both halves must come from one `redact` call, and `lessonKeyDocument` keeps only the key. So the
- * public halves are drawn from a second generator seeded identically and consumed in the same
- * order, and every key is asserted equal to the one the document holds — which is what makes that
- * "same call" claim checkable rather than assumed.
+ * Nothing here is hand-edited any more. The store used to keep only the key, so this fixture drew
+ * the public halves from a second generator seeded identically and then overrode
+ * `publicHalfRedacted` by hand — a fixture describing a world no exported function could build. The
+ * store now states the stamp on the caller's word and hands back the half it keyed, so the fixture
+ * is the store's own output and the "both halves from one call" invariant is structural rather than
+ * re-derived and asserted.
  *
- * The override of `publicHalfRedacted` is asserted against the exported constant, so the day the
- * redaction slice flips it to true this fixture fails and gets revisited rather than passing either
- * way. That was the hole in the earlier suite: it built the document as a literal with a bare
- * `true`, so flipping the constant changed nothing, and returning `keys` as a map changed nothing
- * either — while the reader would then have refused every redacted question in the corpus.
+ * `staleDocument` is the same lesson keyed the way the catalog backfill keys it — same questions,
+ * same shuffle, no published half, so the default stamp. It is what proves the guard still guards:
+ * identical keys, and the scorer must still refuse them.
  */
 function redactedLesson(specs, seed) {
   const questions = specs.map(({id, payload}) => question(id, payload));
-  const document = lessonKeyDocument("lesson-1", questions, {random: rng(seed)});
+  const published = lessonKeyDocument("lesson-1", questions, {
+    random: rng(seed),
+    publicHalfRedacted: true,
+  });
+  const backfilled = lessonKeyDocument("lesson-1", questions, {random: rng(seed)});
 
-  assert.strictEqual(
-    PUBLIC_HALF_REDACTED,
-    false,
-    "question-key-store now publishes redacted halves; this fixture overrides publicHalfRedacted " +
-    "on the assumption that it does not, and must be rebuilt from the store's own output instead.",
+  assert.strictEqual(published.document.version, DOCUMENT_VERSION);
+  assert.deepStrictEqual(
+    published.document.refusals,
+    [],
+    "the store refused a question this fixture needs",
   );
-  assert.strictEqual(document.version, DOCUMENT_VERSION);
-  assert.deepStrictEqual(document.refusals, [], "the store refused a question this fixture needs");
+  assert.strictEqual(published.document.publicHalfRedacted, true, "the stated stamp was not written");
+  assert.strictEqual(
+    backfilled.document.publicHalfRedacted,
+    PUBLIC_HALF_REDACTED,
+    "a caller that said nothing did not get the safe default",
+  );
+  // Same seed, same call sequence: the two documents differ in the stamp and in nothing else, which
+  // is what makes `staleDocument` a generation mismatch rather than a different shuffle.
+  assert.deepStrictEqual(backfilled.document.keys, published.document.keys);
 
-  const mirror = rng(seed);
   const publicQuestions = [];
   const keyById = new Map();
-  for (const {id, payload} of specs) {
-    const outcome = redact(json(payload), "", {questionId: id, random: mirror});
-    assert.strictEqual(outcome.status, STATUS.REDACTED, `${id}: ${outcome.reason}`);
-    const stored = document.keys.find((entry) => entry.questionId === id);
+  for (const {id} of specs) {
+    const stored = published.document.keys.find((entry) => entry.questionId === id);
     assert.ok(stored, `${id} has no key in the document the store built`);
-    // The invariant, checked rather than trusted: this public half and that stored key describe one
-    // and the same shuffle.
-    assert.deepStrictEqual(stored.key, outcome.key, `${id}: the two halves are from different calls`);
-    publicQuestions.push({id, lessonId: "lesson-1", difficulty: "", payload: outcome.publicPayload});
-    keyById.set(id, outcome.key);
+    const half = published.publicPayloads.find((entry) => entry.questionId === id);
+    assert.ok(half, `${id} was keyed but its public half did not come back`);
+    publicQuestions.push({id, lessonId: "lesson-1", difficulty: "", payload: half.payload});
+    keyById.set(id, stored.key);
   }
 
   return {
     questions: publicQuestions,
-    keyDocument: {...document, publicHalfRedacted: true},
-    staleDocument: document,
+    keyDocument: published.document,
+    staleDocument: backfilled.document,
     keyById,
   };
 }
@@ -471,9 +475,11 @@ test("an ordering answer is translated exactly once", () => {
   assert.notStrictEqual(evaluateAnswer(ORDERING, doubled), expected);
 });
 
-test("the generation the store actually writes today is never applied", () => {
-  // `lessonKeyDocument`'s own output, unmodified: publicHalfRedacted false, keys describing a
-  // shuffle nobody was shown. Against a redacted payload that is our gap, not a score.
+test("the backfill's generation is never applied to a published half", () => {
+  // `lessonKeyDocument`'s output for a caller that keyed without publishing: publicHalfRedacted
+  // false, keys describing a shuffle nobody was shown. Against a redacted payload that is our gap,
+  // not a score — even though these are byte for byte the keys that would score it if the document
+  // said the halves had been published. That is the whole of what the stamp is for.
   const lesson = redactedLesson([{id: "q0", payload: ORDERING}], 15);
   const result = scoreAttempt({
     questions: lesson.questions,
@@ -591,7 +597,7 @@ test("two keys for one question are ambiguous, and an unknown key version is ref
 // Faults, pools, budgets
 // ---------------------------------------------------------------------------------------------
 
-test("every reason is classified, and only server faults stop the attempt being scored", () => {
+test("every reason is classified, and a fault during the walk stops the attempt only when it is ours", () => {
   for (const reason of Object.values(UNSCORABLE)) {
     assert.ok(FAULT_OF[reason], `${reason} has no fault`);
     assert.ok(Object.values(FAULT).includes(FAULT_OF[reason]), `${reason} has an unknown fault`);
@@ -701,8 +707,28 @@ test("a served set that does not fit the pool is refused before any position is 
     const result = scoreAttempt({questions: pool, served, keyDocument: null, answers: []});
     assert.strictEqual(result.scorable, false, json(served));
     assert.strictEqual(result.unscorable[0].reason, UNSCORABLE.SERVED_MALFORMED, json(served));
+    // Unscorable, and the client's fault: every field of `served` comes off the device, and a
+    // position outside the pool is not something the server can produce. Filed as a server fault
+    // it made the crafted body free — under the server-scored payment rule our own gap means
+    // nothing paid *and nothing charged*, so `codeAnswerIndex: 5` bought an uncharged attempt.
+    assert.strictEqual(result.unscorable[0].fault, FAULT.CLIENT, json(served));
   }
-  // A served question the pool does not hold is a different defect and gets its own name.
+  assert.strictEqual(FAULT_OF[UNSCORABLE.SERVED_MALFORMED], FAULT.CLIENT);
+  // …and unscorable all the same: the refusal turns on the list being unreadable, not on the fault.
+  // Nothing may be walked while `served` is still the reason string `readServed` handed back.
+  const crafted = scoreAttempt({
+    questions: pool,
+    served: [{codeAnswerIndex: 999, questionId: "q0"}],
+    keyDocument: null,
+    answers: [answer("q0", 0, ANSWERS.SingleChoice.perfect)],
+  });
+  assert.strictEqual(crafted.scorable, false);
+  assert.strictEqual(crafted.codeAnswer, null);
+  assert.strictEqual(crafted.percentScore, null);
+  assert.deepStrictEqual(crafted.unscorable.map((record) => record.reason), [UNSCORABLE.SERVED_MALFORMED]);
+  // A served question the pool does not hold is a different defect and gets its own name — and,
+  // unlike the ones above, it is readable: the list is a list, the position is inside the pool, and
+  // only the question behind it is absent. So it is scored rather than refused. See the next case.
   const missing = scoreAttempt({
     questions: pool,
     served: [{codeAnswerIndex: 0, questionId: "q-nowhere"}],
@@ -710,6 +736,48 @@ test("a served set that does not fit the pool is refused before any position is 
     answers: [],
   });
   assert.strictEqual(missing.unscorable[0].reason, UNSCORABLE.QUESTION_MISSING);
+  assert.strictEqual(missing.scorable, true);
+});
+
+test("a served entry naming no question costs its position and never cancels the attempt", () => {
+  // The shape this reclassification exists to price. Filed as our own gap it refused the attempt,
+  // and under the server-scored payment rule a refusal means nothing paid *and nothing charged* —
+  // so appending one made-up entry was strictly cheaper than playing the lesson. It is now what it
+  // looks like from here: a position that was shown and produced no valid answer.
+  assert.strictEqual(FAULT_OF[UNSCORABLE.QUESTION_MISSING], FAULT.CLIENT);
+
+  const pool = [0, 1].map((at) => question(`q${at}`, SINGLE));
+  const answers = [
+    answer("q0", 0, ANSWERS.SingleChoice.perfect),
+    answer("q1", 1, ANSWERS.SingleChoice.perfect),
+  ];
+  const honest = scoreAttempt({questions: pool, served: servedAt(0, 1), keyDocument: null, answers});
+  // The pool is what `scoring-pool.js` builds for the same crafted list: a filler stands at the
+  // invented position, under an id no served entry can name.
+  const padded = [...pool, question("/unserved/2", SINGLE)];
+  const invented = scoreAttempt({
+    questions: padded,
+    served: [...servedAt(0, 1), {codeAnswerIndex: 2, questionId: "q-invented"}],
+    keyDocument: null,
+    answers,
+  });
+
+  assert.strictEqual(honest.codeAnswer, "99");
+  assert.strictEqual(honest.percentScore, 100);
+  assert.strictEqual(invented.scorable, true, "the invented entry refused the attempt, which is free");
+  assert.strictEqual(invented.codeAnswer, `99${NO_VALID_ANSWER}`);
+  assert.strictEqual(invented.percentScore, 66);
+  assert.ok(invented.percentScore < honest.percentScore, "inventing an entry did not cost anything");
+  assert.deepStrictEqual(invented.unscorable, [{
+    questionId: "q-invented",
+    codeAnswerIndex: 2,
+    reason: UNSCORABLE.QUESTION_MISSING,
+    fault: FAULT.CLIENT,
+    detail: null,
+  }]);
+  // The digit is never the '0' that would drop the position from the denominator, which is the one
+  // treatment that would have paid the liar rather than charged them.
+  assert.strictEqual(invented.codeAnswer.includes(NOT_SHOWN), false);
 });
 
 test("records are bounded, and what did not fit is counted", () => {

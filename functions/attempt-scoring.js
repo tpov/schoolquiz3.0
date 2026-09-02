@@ -71,6 +71,14 @@ const {DOCUMENT_VERSION, REASON: KEY_STORE_REASON} = require("./question-key-sto
  * therefore driven by whether the input could be *read*, and `FAULT_OF` answers the other question
  * separately.
  *
+ * **And a shape a client can send must never be cheaper than playing.** That is the test every
+ * entry in `FAULT_OF` has to pass, and `QUESTION_MISSING` — a `served` entry naming a question the
+ * pool does not hold — used to fail it. Read as our loss it refused the attempt, and refusing costs
+ * the player nothing, so one invented entry bought the same free hard attempt. It is now a scored
+ * position: shown, no valid answer, `'1'`, still recorded by id and position so a real loss stays
+ * visible. Inventing an entry now lowers the percent instead of cancelling the charge, and the
+ * price of that is one question against an honest player on the rare occasion we did lose one.
+ *
  * ---
  *
  * Four further decisions carry the file:
@@ -172,6 +180,22 @@ const UNSCORABLE = {
   MALFORMED_ANSWER: "malformed-answer",
   /** The answer claims a position other than the one its question was served at. */
   INDEX_DISAGREES: "index-disagrees",
+  /**
+   * A question named by `served` is not in the pool.
+   *
+   * Recorded here rather than among our own gaps, and the reason is the same one that puts
+   * `SERVED_MALFORMED` on this side of the line: `served` comes off the device, so at this layer an
+   * invented entry and a question we genuinely lost are the same input, and only one of the two
+   * outcomes is safe against the invented one. Refusing the attempt — which is what a server fault
+   * does — means nothing paid **and nothing charged**, so a single made-up entry bought a free hard
+   * attempt. A `'1'` costs the honest player one question in the rare case we really did lose it,
+   * and costs the dishonest one every question they invent.
+   *
+   * It is still recorded, by id and position, so a genuine loss stays visible to whoever reads the
+   * attempt. `scoring-pool.js` reports the same question in its own `missing` list, from the side
+   * that can tell a lost document from an id that never existed.
+   */
+  QUESTION_MISSING: "question-missing",
 
   // ----- the attempt cannot be scored at all; our gap, except where the entry says otherwise -----
   /** No `served` was supplied, so there is no denominator and no honest percent to return. */
@@ -188,8 +212,6 @@ const UNSCORABLE = {
   SERVED_MALFORMED: "served-malformed",
   /** The pool has a question with no id, or two questions with one id. */
   POOL_MALFORMED: "pool-malformed",
-  /** A question named by `served` is not in the pool. */
-  QUESTION_MISSING: "question-missing",
   /** The question's stored `payload` is not a JSON object. */
   MALFORMED_QUESTION: "malformed-question",
   /** A stored `type` neither `QuestionContent` nor `redact` produces. Nothing here can score it. */
@@ -246,6 +268,11 @@ const FAULT_OF = {
   [UNSCORABLE.DUPLICATE_QUESTION]: FAULT.CLIENT,
   [UNSCORABLE.MALFORMED_ANSWER]: FAULT.CLIENT,
   [UNSCORABLE.INDEX_DISAGREES]: FAULT.CLIENT,
+  // The same reasoning as `SERVED_MALFORMED` below, one door along. A served id no document
+  // answers to is either a question we lost or one the device made up, and nothing here can tell
+  // them apart. Filed as ours it refused the attempt — nothing paid and nothing charged — so one
+  // invented entry was worth more than playing honestly. See the reason's own note.
+  [UNSCORABLE.QUESTION_MISSING]: FAULT.CLIENT,
 
   [UNSCORABLE.SERVED_UNKNOWN]: FAULT.SERVER,
   // The client's, not ours: `served` is entirely device-supplied, and a position outside the pool
@@ -253,7 +280,6 @@ const FAULT_OF = {
   // its life point back — nothing paid, and nothing charged either.
   [UNSCORABLE.SERVED_MALFORMED]: FAULT.CLIENT,
   [UNSCORABLE.POOL_MALFORMED]: FAULT.SERVER,
-  [UNSCORABLE.QUESTION_MISSING]: FAULT.SERVER,
   [UNSCORABLE.MALFORMED_QUESTION]: FAULT.SERVER,
   [UNSCORABLE.UNRECOGNISED_CONTENT]: FAULT.SERVER,
   [UNSCORABLE.ANSWER_LEAKED]: FAULT.SERVER,
@@ -595,6 +621,9 @@ function scoreAttempt(input) {
 
     const question = pool.byId.get(questionId);
     if (question === undefined) {
+      // Shown, and no question behind it to score — so the '1' above stands, and the position is
+      // named rather than dropped. Recorded as the client's, because refusing the attempt here made
+      // an invented `served` entry cheaper than playing it. See UNSCORABLE.QUESTION_MISSING.
       records.add(questionId, at, UNSCORABLE.QUESTION_MISSING, null);
       continue;
     }

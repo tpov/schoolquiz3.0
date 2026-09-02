@@ -25,6 +25,15 @@ const {canonicalQuestionId} = require("./lesson-reward");
  *    not record: the archived questions it is never shown, the Surveys it deliberately says nothing
  *    about, and the payload facts a report needs — difficulty, dialect, translation.
  *
+ *    One thing it does *not* say to the store, and the silence is the point: this pass writes no
+ *    public half. `publicHalfRedacted` is the caller's statement about the payload it publishes
+ *    beside the keys, and a backfill publishes none — the catalog's questions stay exactly as they
+ *    are stored, answers and all. So no statement is made, the documents keep the safe default, and
+ *    a scorer that later meets one of these keys against a redacted payload refuses it instead of
+ *    translating answers through a permutation nobody was ever shown. The `publicPayloads` the
+ *    store hands back are discarded here for the same reason — publishing them is a different pass,
+ *    and one that would have to say so.
+ *
  * 2. **A Survey is what is left.** The key store's contract is that a question producing neither a
  *    key nor a refusal is a Survey and nothing else (`question-key-store.js`, decision 3). So the
  *    not-applicable count is the remainder per lesson: questions handed over, minus keys, minus

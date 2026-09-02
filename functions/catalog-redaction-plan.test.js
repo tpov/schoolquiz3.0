@@ -2,7 +2,12 @@
 
 const assert = require("assert");
 const {DIFFICULTY, WITHHELD, planCatalogRedaction} = require("./catalog-redaction-plan");
-const {REASON, keyDocumentPath, questionKeyDocuments} = require("./question-key-store");
+const {
+  REASON,
+  PUBLIC_HALF_REDACTED,
+  keyDocumentPath,
+  questionKeyDocuments,
+} = require("./question-key-store");
 const {REFUSAL, REDACTED_TYPE, CONTENT_TYPE} = require("./question-redaction");
 const {SINGLE, MULTIPLE, ORDERING, FILL_BLANK, SURVEY, LEGACY_SINGLE_CHOICE} = require("./_question-fixtures");
 const {seeded} = require("./_seeded-random");
@@ -138,6 +143,25 @@ test("the documents are the key store's own, over the non-archived questions in 
     keyDocumentPath("lesson-c"),
   ]);
   assert.ok(keyIds(plan.documents[keyDocumentPath("lesson-b")]).includes("q10"), "the difficulty-carrying row is keyed");
+});
+
+test("a backfill publishes no half, so every document it plans keeps the safe stamp", () => {
+  // `publicHalfRedacted` is a statement about the payload the caller writes beside the keys, and
+  // this pass writes none — the catalog's questions stay exactly as they are stored. Saying `true`
+  // here would tell a later scorer to translate answers through a permutation nobody has been shown
+  // and score wrong answers correct; saying nothing gets the refusal instead.
+  const plan = planCatalogRedaction(mixedCatalog(), opts());
+  assert.ok(Object.keys(plan.documents).length > 0, "no documents were planned, so this proves nothing");
+  for (const [path, document] of Object.entries(plan.documents)) {
+    assert.strictEqual(document.publicHalfRedacted, PUBLIC_HALF_REDACTED, path);
+    assert.strictEqual(document.publicHalfRedacted, false, path);
+  }
+  // And the public halves the store now hands back are not smuggled into the plan either: nothing
+  // here publishes them, so nothing here carries them.
+  assert.strictEqual("publicPayloads" in plan, false);
+  for (const document of Object.values(plan.documents)) {
+    assert.strictEqual("publicPayloads" in document, false);
+  }
 });
 
 test("each lesson's document is what publication would write for that lesson alone", () => {

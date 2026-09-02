@@ -1101,14 +1101,25 @@ test("the served this module returns is the shape scoreAttempt takes, and the ru
   assert.deepStrictEqual(scored.unscorable.map((record) => record.fault), [FAULT.CLIENT]);
   assert.strictEqual(isPayable(attempt, scored), true);
 
-  // The same attempt against a pool of the same size that no longer holds q1: our gap — the
-  // question `served` names is not filed where the lesson says it is — unscorable, and unpaid.
+  // The same attempt against a pool of the same size that no longer holds q1. The question `served`
+  // names is not filed where the lesson says it is — recorded by name, scored as shown-and-
+  // unanswered, and still charged. Refusing here would have cost nothing, which is what made a
+  // made-up served entry worth sending.
   const renamed = pool.map((question) => (question.id === "q1" ? {...question, id: "q-elsewhere"} : question));
   const gap = scoreAttempt({questions: renamed, served: attempt.served, keyDocument: null, answers: attempt.answers});
-  assert.strictEqual(gap.scorable, false);
+  assert.strictEqual(gap.scorable, true);
   assert.deepStrictEqual(gap.unscorable.map((record) => record.reason), [UNSCORABLE.QUESTION_MISSING]);
-  assert.ok(gap.unscorable.some((record) => record.fault === FAULT.SERVER));
-  assert.strictEqual(isPayable(attempt, gap), false);
+  assert.ok(gap.unscorable.every((record) => record.fault === FAULT.CLIENT));
+  assert.strictEqual(gap.codeAnswer, "911");
+  assert.strictEqual(isPayable(attempt, gap), true);
+
+  // A gap that really is ours still stops the payment: an unreadable stored payload is nothing the
+  // device can have caused, and nothing is paid or charged on it.
+  const unreadable = pool.map((question) => (question.id === "q1" ? {...question, payload: "{"} : question));
+  const ours = scoreAttempt({questions: unreadable, served: attempt.served, keyDocument: null, answers: attempt.answers});
+  assert.strictEqual(ours.scorable, false);
+  assert.ok(ours.unscorable.some((record) => record.fault === FAULT.SERVER));
+  assert.strictEqual(isPayable(attempt, ours), false);
 
   // And served absent on the device-scored kind is what scoreAttempt calls unknown — the wiring step
   // must never hand a null through as if it were a list.
