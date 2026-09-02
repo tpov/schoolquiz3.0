@@ -228,5 +228,27 @@
     "order": null,
     "fault": "LENGTH_MISMATCH",
     "settled": null
+  },
+  {
+    "name": "два порока — слово одно с обеих сторон",
+    "mask": ".P.S",
+    "codeAnswer": "0900",
+    "standard": 1,
+    "plasma": 1,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": "SKIP_ON_ANSWERED",
+    "settled": null
+  },
+  {
+    "name": "пропуск в конце, подсказка не по сложности раньше",
+    "mask": "S..P",
+    "codeAnswer": "1110",
+    "standard": 1,
+    "plasma": 1,
+    "difficulty": "HARD",
+    "order": null,
+    "fault": "WRONG_DIFFICULTY",
+    "settled": null
   }
 ]

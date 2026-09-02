@@ -844,5 +844,43 @@
     ],
     "easyAllocatedSeconds": 0,
     "hardAllocatedSeconds": 960
+  },
+  {
+    "name": "кириллический суффикс — не язык",
+    "questions": [
+      {
+        "id": "q1__ру",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      },
+      {
+        "id": "q1__en",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 72,
+    "hardAllocatedSeconds": 0
+  },
+  {
+    "name": "дефис в суффиксе — язык",
+    "questions": [
+      {
+        "id": "q1__pt-BR",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      },
+      {
+        "id": "q1__en",
+        "archived": false,
+        "difficulty": "EASY",
+        "charsCount": 100
+      }
+    ],
+    "easyAllocatedSeconds": 36,
+    "hardAllocatedSeconds": 0
   }
 ]

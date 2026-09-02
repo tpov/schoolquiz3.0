@@ -74,6 +74,14 @@ class ChargeRegenerationTest {
     }
 
     @Test
+    fun `given fewer slots than the maximum then the tank is the slots, not the maximum`() {
+        // Лестница продаёт слоты по одному: аккаунт с тремя слотами не восстанавливается до десяти.
+        val after = balance(0).regenerated(standard, nowMs = 100 * hour, ownedSlots = 3)
+
+        assertEquals(3, after.wholeCharges)
+    }
+
+    @Test
     fun `given plasma then a whole charge takes a day`() {
         val plasma = ChargeRules.PLASMA_BOOTSTRAP
 

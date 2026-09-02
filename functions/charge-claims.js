@@ -136,38 +136,50 @@ function settleClaims(mask, codeAnswer, standardAvailable, plasmaAvailable, orde
  * Проверка перерасхода одного вида заряда над окном, которое покрывает пакет попыток.
  *
  * Потолок — максимум, который аккаунт мог держать к концу окна: что было в базе плюс сколько
- * успело восстановиться, но не выше `maxOwned`. Сверх него — запас на расхождение часов, тоже в
- * зарядах. Всё, что заявлено выше, — излишек. Он и так не оплачен (см. `settleClaims`) — запись
- * не наказывает второй раз, она для оператора.
+ * успело восстановиться, но не выше бака. Считается в **очках**, а в заряды переводится один раз
+ * в самом конце: округлять порознь то, что лежало, и то, что натекло, значило бы терять по
+ * неполному заряду с каждой стороны — и честная заявка, которую баланс покрывает, попадала бы в
+ * запись как перерасход.
+ *
+ * Бак — купленные слоты, не выше `maxOwned`; баланс выше бака не отбирается и считается тем, что
+ * аккаунт действительно держал (понижение потолка не конфискует). Сверх бака — запас на
+ * расхождение часов, тоже в очках восстановления. Всё, что заявлено выше, — излишек. Он и так не
+ * оплачен (см. `settleClaims`): запись не наказывает второй раз, она для оператора.
  *
  * Медленная синхронизация — не подделка: неделя офлайн даёт длинное окно, и потолок растёт с ним.
  *
  * @param storedPoints очки в базе на момент `storedUpdatedAtMs`
  * @param rules правила вида: `maxOwned`, `regenMs`
+ * @param ownedSlots сколько слотов у аккаунта куплено; по умолчанию — весь `maxOwned`
  * @param pointsPerCharge очков в заряде
  */
 function overspendVerdict({
-  claimed, storedPoints, storedUpdatedAtMs, windowEndMs, rules, clockSkewToleranceMs, pointsPerCharge,
+  claimed, storedPoints, storedUpdatedAtMs, windowEndMs, rules, ownedSlots, clockSkewToleranceMs,
+  pointsPerCharge,
 }) {
   const perCharge = Math.max(1, Math.floor(Number(pointsPerCharge) || 100));
   const maxOwned = Math.max(0, Math.floor(Number(rules && rules.maxOwned) || 0));
+  const slots = ownedSlots === undefined || ownedSlots === null ?
+    maxOwned : Math.max(0, Math.floor(Number(ownedSlots) || 0));
   const regenMs = Math.max(0, Math.floor(Number(rules && rules.regenMs) || 0));
-  const held = Math.floor(Math.max(0, Number(storedPoints) || 0) / perCharge);
+  const heldPoints = Math.max(0, Math.floor(Number(storedPoints) || 0));
   const elapsedMs = Math.max(0, Math.floor(Number(windowEndMs) || 0) - Math.floor(Number(storedUpdatedAtMs) || 0));
-  const regenerated = regenMs > 0 ? Math.floor(elapsedMs / regenMs) : 0;
-  // Баланс выше потолка не отбирается (economy: понижение потолка не конфискует), и здесь он тоже
-  // считается тем, что аккаунт действительно держал.
-  const ceiling = Math.max(held, Math.min(maxOwned, held + regenerated));
-  const skewAllowance = regenMs > 0 ?
-    Math.floor(Math.max(0, Number(clockSkewToleranceMs) || 0) / regenMs) : 0;
-  const allowance = ceiling + skewAllowance;
+  const regeneratedPoints = regenMs > 0 ? Math.floor((elapsedMs * perCharge) / regenMs) : 0;
+  const tankPoints = Math.min(slots, maxOwned) * perCharge;
+  const ceilingPoints = Math.max(heldPoints, Math.min(tankPoints, heldPoints + regeneratedPoints));
+  const skewPoints = regenMs > 0 ?
+    Math.floor((Math.max(0, Number(clockSkewToleranceMs) || 0) * perCharge) / regenMs) : 0;
   const claims = Math.max(0, Math.floor(Number(claimed) || 0));
+  const ceiling = Math.floor(ceilingPoints / perCharge);
+  const allowance = Math.floor((ceilingPoints + skewPoints) / perCharge);
   return {
     claimed: claims,
-    held,
-    regenerated,
+    held: Math.floor(heldPoints / perCharge),
+    heldPoints,
+    regenerated: Math.floor(regeneratedPoints / perCharge),
+    regeneratedPoints,
     ceiling,
-    skewAllowance,
+    skewAllowance: allowance - ceiling,
     allowance,
     surplus: Math.max(0, claims - allowance),
   };

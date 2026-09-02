@@ -157,6 +157,40 @@ testAHintTakesPaymentButKeepsTheDigitThePlayerAnswered();
 testAClientThatScoredItsOwnSkipIsRefused();
 testTheWrongKindForTheDifficultyIsRefused();
 testAMalformedMaskIsRefusedNotPartlyPaid();
+function testFractionsAreNotDroppedTwice() {
+  // Полтора заряда в базе и ещё шесть десятых натекло — вместе два целых, и две заявки честны.
+  // Порознь округлив, потолок вышел бы в один, и честного игрока записали бы как перерасход.
+  const verdict = overspendVerdict({
+    claimed: 2,
+    storedPoints: 150,
+    storedUpdatedAtMs: 0,
+    windowEndMs: Math.floor(DEFAULTS.standard.regenMs * 0.6),
+    rules: DEFAULTS.standard,
+    clockSkewToleranceMs: 0,
+    pointsPerCharge: POINTS_PER_CHARGE,
+  });
+  assert.strictEqual(verdict.ceiling, 2);
+  assert.strictEqual(verdict.surplus, 0);
+}
+
+function testTheTankIsTheSlotsOwnedNotTheMaximum() {
+  // Лестница продаёт слоты по одному: аккаунт с тремя слотами не мог держать десять.
+  const verdict = overspendVerdict({
+    claimed: 5,
+    storedPoints: 0,
+    storedUpdatedAtMs: 0,
+    windowEndMs: 100 * HOUR,
+    rules: DEFAULTS.standard,
+    ownedSlots: 3,
+    clockSkewToleranceMs: 0,
+    pointsPerCharge: POINTS_PER_CHARGE,
+  });
+  assert.strictEqual(verdict.ceiling, 3);
+  assert.strictEqual(verdict.surplus, 2);
+}
+
+testFractionsAreNotDroppedTwice();
+testTheTankIsTheSlotsOwnedNotTheMaximum();
 testTheOfflineReplayIsCaughtOnce();
 testASlowSyncIsNotFraud();
 testClockSkewToleranceIsMeasuredInRegenerationNotInCharges();

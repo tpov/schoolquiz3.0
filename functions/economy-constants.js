@@ -30,10 +30,19 @@ const ACTIVITY_KINDS = [
   "TOURNAMENT",
 ];
 
+/**
+ * Целое неотрицательное число из документа — или начальное значение.
+ *
+ * Только настоящее число: `Number(null)`, `Number("")`, `Number(false)` и `Number([])` — это ноль,
+ * и прежняя версия принимала их за него. Ноль здесь — не «пусто», а нулевой потолок, который
+ * запирает каждый аккаунт, или бесплатная попытка. Пустое поле должно значить «как было».
+ */
 function nonNegativeInt(value, fallback) {
-  const number = Math.floor(Number(value));
-  return Number.isFinite(number) && number >= 0 ? number : fallback;
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  const number = Math.floor(value);
+  return number >= 0 ? number : fallback;
 }
+
 
 function ladder(value, fallback) {
   if (!Array.isArray(value) || value.length === 0) return fallback;
@@ -77,8 +86,14 @@ function activityPrices(value) {
  */
 function readEconomyConstants(document) {
   const source = document && typeof document === "object" ? document : {};
+  // Настоящая таблица начинается с единицы. Документ без версии — оператор забыл её поставить —
+  // всё равно обязан побеждать загрузочную копию: у той версия ноль, и клиент, присылающий ноль,
+  // иначе получал бы «то же самое» вечно, пока сервер уже списывает по новой таблице.
+  const stored = document && typeof document === "object";
+  const version = Math.max(stored ? 1 : 0, nonNegativeInt(source.version, DEFAULTS.version));
   return {
-    version: nonNegativeInt(source.version, DEFAULTS.version),
+    version,
+
     standard: chargeRules(source.standard, DEFAULTS.standard),
     plasma: chargeRules(source.plasma, DEFAULTS.plasma),
     activityPrices: activityPrices(source.activityPrices),

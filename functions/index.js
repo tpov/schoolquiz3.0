@@ -382,17 +382,32 @@ async function readQuestShelves(events) {
   for (const event of events) {
     const key = questShelfKey(event);
     if (refs.has(key)) continue;
+    // Идентификатор с косой чертой — не имя документа, а путь: Firestore упал бы на нём, и вместе
+    // с ним весь пакет. Такого квеста нет — и он считается отсутствующим, то есть неизвестным видом
+    // по самой дорогой ставке, а не поводом уронить честные попытки рядом.
+    if (!isSingleDocumentId(event.questId) || !isSingleDocumentId(event.catalogId) ||
+        (event.scope === PRIVATE_SCOPE && !isSingleDocumentId(event.ownerUid))) {
+      refs.set(key, null);
+      continue;
+    }
     refs.set(key, event.scope === PRIVATE_SCOPE
       ? db.doc(privateQuestPath(event.ownerUid, event.catalogId, event.questId))
       : db.collection("quests").doc(event.questId));
   }
   const entries = await Promise.all(
     [...refs].map(async ([key, ref]) => {
+      if (!ref) return [key, null];
       const snapshot = await ref.get();
       return [key, snapshot.exists ? (snapshot.data() || {}) : null];
     }),
   );
   return Object.fromEntries(entries);
+}
+
+/** Годится ли строка в имя одного документа Firestore. */
+function isSingleDocumentId(value) {
+  const id = stringValue(value);
+  return id.length > 0 && id.length <= 1500 && !id.includes("/") && id !== "." && id !== "..";
 }
 
 function questShelfKey(event) {

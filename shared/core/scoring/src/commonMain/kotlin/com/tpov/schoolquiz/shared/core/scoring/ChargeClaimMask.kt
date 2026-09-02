@@ -74,8 +74,10 @@ fun ChargeClaimMask.validateAgainst(
 ): ClaimMaskFault? {
     if (raw.length != codeAnswer.raw.length) return ClaimMaskFault.LENGTH_MISMATCH
     val allowed = if (difficulty == Difficulty.EASY) ChargeClaimMask.STANDARD else ChargeClaimMask.PLASMA
-    if (raw.any { it != ChargeClaimMask.NONE && it != allowed }) return ClaimMaskFault.WRONG_DIFFICULTY
+    // По позициям, слева направо, — в том же порядке, что и сервер: маска с двумя пороками обязана
+    // быть названа одним и тем же словом с обеих сторон.
     raw.forEachIndexed { index, claim ->
+        if (claim != ChargeClaimMask.NONE && claim != allowed) return ClaimMaskFault.WRONG_DIFFICULTY
         if (claim == ChargeClaimMask.PLASMA && codeAnswer.raw[index] != '0') return ClaimMaskFault.SKIP_ON_ANSWERED
     }
     return null

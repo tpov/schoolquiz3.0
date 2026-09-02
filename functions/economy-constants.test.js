@@ -90,6 +90,26 @@ function testTheServerDefaultsAreTheSharedFileVerbatim() {
   });
 }
 
+function testAnEmptyFieldMeansAsBeforeNotZero() {
+  // Number(null), Number(""), Number(false), Number([]) — всё ноль, и ноль здесь запирает аккаунт.
+  for (const empty of [null, "", false, [], "0", true]) {
+    const constants = readEconomyConstants({standard: {maxOwned: empty}, activityPrices: {TOURNAMENT: empty}});
+    assert.strictEqual(constants.standard.maxOwned, 10, `пустое ${JSON.stringify(empty)} стало потолком`);
+    assert.strictEqual(constants.activityPrices.TOURNAMENT, 500, `пустое ${JSON.stringify(empty)} стало ценой`);
+  }
+}
+
+function testAStoredTableAlwaysOutranksTheBootstrapCopy() {
+  // Документ без версии обязан побеждать копию с версией ноль: иначе клиент, присылающий ноль,
+  // получал бы «то же самое» вечно, пока сервер уже списывает по новой таблице.
+  assert.strictEqual(readEconomyConstants({}).version, 1);
+  assert.strictEqual(readEconomyConstants({version: 0}).version, 1);
+  assert.strictEqual(readEconomyConstants({version: 7}).version, 7);
+  assert.strictEqual(readEconomyConstants(null).version, 0, "а отсутствующий документ — это и есть копия");
+}
+
+testAnEmptyFieldMeansAsBeforeNotZero();
+testAStoredTableAlwaysOutranksTheBootstrapCopy();
 testTheServerDefaultsAreTheSharedFileVerbatim();
 testAMissingDocumentDegradesToTheInitialValues();
 testAMalformedDocumentDegradesFieldByField();

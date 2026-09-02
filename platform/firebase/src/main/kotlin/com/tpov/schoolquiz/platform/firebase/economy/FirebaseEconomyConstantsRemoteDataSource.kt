@@ -26,7 +26,10 @@ class FirebaseEconomyConstantsRemoteDataSource(
                 .withAppTimeout()
                 .call(mapOf(KNOWN_VERSION to knownVersion))
                 .await()
-                .data as? Map<*, *> ?: return EconomyConstantsResponse.Unchanged
+                .data as? Map<*, *>
+                // Ответ не той формы — это неудача, а не «у тебя то же самое»: иначе сломанный
+                // сервер выглядел бы как удачная синхронизация, и таблица не обновлялась бы никогда.
+                ?: error("getEconomyConstants returned no table")
 
         if (data[UNCHANGED] == true) return EconomyConstantsResponse.Unchanged
         return EconomyConstantsResponse.Table(data.toEconomyConstants())
@@ -71,7 +74,9 @@ private fun Map<*, *>?.toRules(fallback: ChargeRules): ChargeRules {
             ?.let { name -> ShopCurrency.entries.firstOrNull { it.name == name } }
             ?: fallback.currency
     return ChargeRules(
-        maxOwned = longOr(this["maxOwned"], fallback.maxOwned.toLong()).toInt(),
+        // Не `toInt()`: число выше Int.MAX_VALUE молча завернулось бы в маленькое, а потолок из
+        // четырёх миллиардов — это опечатка оператора, а не пять зарядов.
+        maxOwned = longOr(this["maxOwned"], fallback.maxOwned.toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
         regenMs = longOr(this["regenMs"], fallback.regenMs),
         priceLadder = ladder,
         currency = currency,
@@ -83,7 +88,7 @@ private fun Map<*, *>?.toRules(fallback: ChargeRules): ChargeRules {
 
 private fun Map<*, *>?.toPrices(fallback: Map<ActivityKind, Int>): Map<ActivityKind, Int> =
     ActivityKind.entries.associateWith { kind ->
-        longOr(this?.get(kind.name), fallback.getValue(kind).toLong()).toInt()
+        longOr(this?.get(kind.name), fallback.getValue(kind).toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
 /** Firebase отдаёт числа то `Int`, то `Long`, то `Double`; отрицательное здесь бессмысленно. */

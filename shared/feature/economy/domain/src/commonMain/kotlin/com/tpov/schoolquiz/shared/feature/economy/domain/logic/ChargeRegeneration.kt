@@ -42,8 +42,16 @@ data class ChargeBalance(
 fun ChargeBalance.regenerated(
     rules: ChargeRules,
     nowMs: Long,
+    /**
+     * Сколько слотов у аккаунта куплено.
+     *
+     * Восстанавливается то, чем аккаунт владеет, а не всё, что можно купить: лестница цен продаёт
+     * слоты по одному, и `maxOwned` — предел покупки, а не размер бака у каждого. Ниже потолка
+     * бак ограничен слотами; выше — потолком (понижение не конфискует, но и не доливает).
+     */
+    ownedSlots: Int = rules.maxOwned,
 ): ChargeBalance {
-    val ceiling = rules.maxOwned * EconomyConstants.POINTS_PER_CHARGE
+    val ceiling = minOf(ownedSlots, rules.maxOwned).coerceAtLeast(0) * EconomyConstants.POINTS_PER_CHARGE
     // Не зажимаем вниз: то, что уже есть, принадлежит игроку.
     if (points >= ceiling) return copy(updatedAtMs = maxOf(updatedAtMs, nowMs))
     if (!rules.regenerates || nowMs <= updatedAtMs) return this

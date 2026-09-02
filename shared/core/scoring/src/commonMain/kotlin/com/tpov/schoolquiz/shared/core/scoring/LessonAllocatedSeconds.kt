@@ -94,7 +94,9 @@ object LessonAllocatedSeconds {
         val separator = id.lastIndexOf("__")
         if (separator <= 0 || separator >= id.length - 3) return id
         val suffix = id.substring(separator + 2)
-        val isLanguage = suffix.length in 2..8 && suffix.all { it.isLetter() || it == '-' }
+        // Только латиница и дефис — ровно `[A-Za-z-]` сервера. `isLetter()` принял бы и кириллицу,
+        // и `q1__ру` схлопнулся бы здесь, но не там: урок стоил бы на устройстве меньше, чем спишут.
+        val isLanguage = suffix.length in 2..8 && suffix.all { it in 'A'..'Z' || it in 'a'..'z' || it == '-' }
         return if (isLanguage) id.substring(0, separator) else id
     }
 
