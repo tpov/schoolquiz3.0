@@ -402,3 +402,7 @@ backfill.
 - source_spec: `_bmad-output/specs/spec-charges/SPEC.md` (CAP-11, история 12; открытый вопрос 4)
   summary: Sweep подделываемых балансов невозможен без журнала начислений — сначала ledger, потом сверка.
   evidence: `functions/index.js` `writeUserProgressDelta` пишет только `FieldValue.increment` в `users/{uid}`; событие попытки хранит вход награды, но не сумму (`attemptReward` не сохраняется); `generateGiftBoxReward` — случайный бросок без записи; `buyStandardHeart`/`buyGoldHeart` не журналируются. Историю, из которой можно пересчитать нолики, никто не писал. Прежде чем сравнивать, нужен append-only `ledger/{uid}/entries`, который пишет каждая транзакция, трогающая нолики, skill или заряды.
+
+- source_spec: `_bmad-output/specs/spec-charges/SPEC.md` (CAP-13; ревью ядер, линза паритета)
+  summary: `StartLessonAttemptUseCase.canonicalQuestionId` считает суффикс языком по `isLetter()`, а сервер — только по `[A-Za-z-]`; `q1__ру` схлопывается в раннере и не схлопывается на сервере.
+  evidence: Та же расходимость в `LessonAllocatedSeconds.kt` уже устранена и пиннится фикстурой «кириллический суффикс — не язык»; копия в раннере осталась — модуль `shared/feature/lesson-runner/domain` правит другая сессия. Одна строка и тест; делать, когда модуль освободится, и вынести правило в одно место (`shared/core/scoring`), чтобы третьей копии не появилось.
