@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.scoring.computePercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.toServedQuestions
 import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonRatingRepository
@@ -40,7 +41,10 @@ class CompleteAttemptUseCase(
             percentScore = percentScore,
         )
 
-        val saveResult = attemptRepository.save(attempt, state.answers)
+        // Every question dealt into the play order is served. The server drops the list today; once
+        // the wiring step reads it, each digit will be placed from here rather than from the client's
+        // word on which positions were shown.
+        val saveResult = attemptRepository.save(attempt, state.answers, state.playOrder.toServedQuestions())
         if (saveResult.isFailure) {
             val error = saveResult.exceptionOrNull()
                 ?.let { SaveError.IoFailure(it) }

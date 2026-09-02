@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRating
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
@@ -28,10 +29,23 @@ import kotlinx.serialization.json.put
  * и дочитывать что-то в момент отправки уже нельзя — движок в `payload` не смотрит.
  */
 interface LessonResultOutboxWriter {
-    /** Строка очереди для прохождения вместе с ответами, которые к нему относятся. */
+    /**
+     * Строка очереди для прохождения вместе с ответами, которые к нему относятся, и списком
+     * вопросов, сданных в порядок показа.
+     *
+     * [served] — весь порядок показа, а не только достигнутое: недостигнутые при выходе вопросы тоже
+     * здесь, потому что `buildCodeAnswerOnAbort` уже поставил им `'1'` и считает показанными. Сервер
+     * сегодня поле отбрасывает; когда шаг подключения начнёт его читать, цифры встанут по этому
+     * списку, а не по слову клиента о том, какие позиции были показаны. Список живёт только в теле
+     * очереди; строка прохождения его не несёт.
+     *
+     * `null` — список не передан, и ключа в теле не будет: для сервера это «неизвестно», а не
+     * «ничего не показано». Пустой список — именно «ничего не показано» — пишется как `[]`.
+     */
     suspend fun buildAttemptRow(
         attempt: Attempt,
         answers: List<QuestionAnswerEntity> = emptyList(),
+        served: List<ServedQuestion>? = null,
     ): OutboxEntity? = null
 
     /** Строка очереди для оценки квеста. */
@@ -54,7 +68,9 @@ class RoomLessonResultOutboxWriter(
     override suspend fun buildAttemptRow(
         attempt: Attempt,
         answers: List<QuestionAnswerEntity>,
+        served: List<ServedQuestion>?,
     ): OutboxEntity {
+        served?.let { requireConsistent(attempt, answers, it) }
         val context = resolveContentContext(attempt.lessonId.value)
         val createdAtMs = clock.now().toEpochMilliseconds()
         val payload =
@@ -86,6 +102,23 @@ class RoomLessonResultOutboxWriter(
                         }
                     },
                 )
+                // Ключ только когда список передан: отсутствие — «неизвестно», `[]` — «ничего».
+                // Те же два поля, что и у строк ответов: по ним сервер и сопоставит одно с другим.
+                served?.let { list ->
+                    put(
+                        "served",
+                        buildJsonArray {
+                            list.forEach { question ->
+                                add(
+                                    buildJsonObject {
+                                        put("questionId", question.questionId.value)
+                                        put("codeAnswerIndex", question.codeAnswerIndex)
+                                    },
+                                )
+                            }
+                        },
+                    )
+                }
             }
         return row(
             operation = OutboxOperations.SUBMIT_ATTEMPT,
@@ -118,6 +151,30 @@ class RoomLessonResultOutboxWriter(
             payload = payload.toString(),
             createdAtMs = createdAtMs,
         )
+    }
+
+    /**
+     * Тело замораживается здесь (AD-2), и это последнее дешёвое место сверить список с цифрами
+     * рядом. Нарушение всплывает как `SaveFailed` на устройстве — `save` оборачивает писателя в
+     * `runCatching` — а не как карантин недели спустя.
+     */
+    private fun requireConsistent(
+        attempt: Attempt,
+        answers: List<QuestionAnswerEntity>,
+        served: List<ServedQuestion>,
+    ) {
+        val poolSize = attempt.codeAnswer.raw.length
+        served.forEach { question ->
+            require(question.codeAnswerIndex < poolSize) {
+                "served position ${question.codeAnswerIndex} is outside a codeAnswer of length $poolSize"
+            }
+        }
+        val servedPairs = served.map { it.questionId.value to it.codeAnswerIndex }.toSet()
+        answers.forEach { row ->
+            require((row.questionId to row.codeAnswerIndex) in servedPairs) {
+                "answer for ${row.questionId} at ${row.codeAnswerIndex} names a question that was not served there"
+            }
+        }
     }
 
     private fun row(
