@@ -50,6 +50,7 @@ const {
   activityPrice,
   clientEconomyConstants,
   readEconomyConstants,
+  regenMsFor,
   slotPrice,
 } = require("./economy-constants");
 const {
@@ -63,7 +64,6 @@ const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
 const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
 const {
-  LESSON_ATTEMPT_LIFE_COST,
   maxLifePoints,
   regenerateLifePoints,
   spendLifePoints,
@@ -782,12 +782,15 @@ async function applyLessonResultEvents(uid, attempts) {
     // Бак — купленные слоты, не выше потолка из таблицы; темп восстановления — тоже из неё.
     const ownedSlots = nonNegativeInteger(userData.standardHearts, MAX_STANDARD_HEARTS);
     const lifeCeiling = maxLifePoints(Math.min(ownedSlots, economy.standard.maxOwned));
+    // Премиум восстанавливается быстрее — если так говорит таблица; ручка стоит рядом с периодом,
+    // потому что спека запрещает периоду быть голой константой.
+    const hasPremium = numberValue(userData.premiumUntilMs, 0) > now || Boolean(userData.hasPremium);
     let life = regenerateLifePoints(
       numberValue(userData.lifePoints, lifeCeiling),
       numberValue(userData.lifePointsUpdatedAtMs, now),
       now,
       lifeCeiling,
-      economy.standard.regenMs / POINTS_PER_CHARGE,
+      regenMsFor(economy.standard, hasPremium) / POINTS_PER_CHARGE,
     );
 
     const delta = {skillPoints: 0, nolics: 0};
@@ -1004,7 +1007,7 @@ exports.ensureUserProfile = onCall(FUNCTION_OPTIONS, async (request) => {
     authStatus: authProfileStatus(request),
     allowNicknameUpgrade: false,
   });
-  return profileResponse(result);
+  return profileResponse(result, await readEconomyConstantsDocument());
 });
 
 exports.updateUserNickname = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -1023,7 +1026,7 @@ exports.updateUserNickname = onCall(FUNCTION_OPTIONS, async (request) => {
     authStatus: authProfileStatus(request),
     allowNicknameUpgrade: true,
   });
-  return profileResponse(result);
+  return profileResponse(result, await readEconomyConstantsDocument());
 });
 
 /**
@@ -4936,7 +4939,13 @@ function profileStatus(authStatus, isVerified) {
   return authStatus === "REGISTERED" ? "REGISTERED" : "ANONYMOUS";
 }
 
-function profileResponse(result) {
+/**
+ * Профиль наружу.
+ *
+ * Таблица настроек — параметром: бак и темп восстановления в ответе обязаны совпадать с теми, по
+ * которым сервер спишет попытку.
+ */
+function profileResponse(result, economy) {
   const user = result.publicProfile;
   const profile = result.trustedProfile;
   return {
@@ -4956,7 +4965,7 @@ function profileResponse(result) {
     goldHearts: numberValue(user.goldHearts, 0),
     // Life points are reported already regenerated, so the client can show the real balance
     // without repeating the clock arithmetic. maxLifePoints lets it render the gauge.
-    ...lifePointsSnapshot(user, Date.now()),
+    ...lifePointsSnapshot(user, Date.now(), economy),
     boxCount: numberValue(user.boxCount, 0),
     boxStreakDays: numberValue(user.boxStreakDays, 0),
     nextBoxAtMs: numberValue(user.nextBoxAtMs, 0),
@@ -4985,21 +4994,28 @@ function profileResponse(result) {
  * Current life balance for a stored user document, brought up to date at `nowMs`.
  * Read-only: it never writes back, so the value is regenerated again on the next read.
  */
-function lifePointsSnapshot(user, nowMs) {
-  const ceiling = maxLifePoints(
-    Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS)),
-  );
+/**
+ * Снимок бака, каким его показывает профиль.
+ *
+ * Потолок и темп — из таблицы, как и в списании: иначе профиль рисовал бы одну шкалу, а попытка
+ * списывала бы по другой. `lessonAttemptLifeCost` больше не отдаётся: плоской цены попытки нет —
+ * она зависит от вида активности, и вид называет сервер (CAP-16). Клиент это поле не читал.
+ */
+function lifePointsSnapshot(user, nowMs, economy) {
+  const rules = economy && economy.standard ? economy.standard : readEconomyConstants(null).standard;
+  const ceiling = maxLifePoints(Math.min(nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS), rules.maxOwned));
+  const hasPremium = numberValue(user.premiumUntilMs, 0) > nowMs || Boolean(user.hasPremium);
   const life = regenerateLifePoints(
     numberValue(user.lifePoints, ceiling),
     numberValue(user.lifePointsUpdatedAtMs, nowMs),
     nowMs,
     ceiling,
+    regenMsFor(rules, hasPremium) / POINTS_PER_CHARGE,
   );
   return {
     lifePoints: life.points,
     maxLifePoints: ceiling,
     lifePointsUpdatedAtMs: life.updatedAtMs,
-    lessonAttemptLifeCost: LESSON_ATTEMPT_LIFE_COST,
   };
 }
 

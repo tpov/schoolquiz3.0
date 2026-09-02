@@ -33,7 +33,7 @@ class PreferencesEconomyConstantsStoreTest {
                     regenMs = 1_800_000L,
                     priceLadder = listOf(500L, 900L),
                 ),
-                plasma = EconomyConstants.BOOTSTRAP.plasma.copy(maxOwned = 4),
+                plasma = EconomyConstants.BOOTSTRAP.plasma.copy(maxOwned = 4, premiumRegenDivisor = 3),
                 activityPrices = EconomyConstants.BOOTSTRAP_PRICES + (ActivityKind.TOURNAMENT to 750),
                 clockSkewToleranceMs = 30_000L,
                 auditEnabled = false,
@@ -49,6 +49,8 @@ class PreferencesEconomyConstantsStoreTest {
         assertEquals(arrived.standard.currency, read.standard.currency)
         assertEquals(4, read.plasma.maxOwned)
         assertEquals(true, read.plasma.requiresSettledAccount)
+        assertEquals(3, read.plasma.premiumRegenDivisor)
+        assertEquals(1, read.standard.premiumRegenDivisor)
         assertEquals(750, read.priceOf(ActivityKind.TOURNAMENT))
         assertEquals(33, read.priceOf(ActivityKind.ORDINARY_LESSON))
         assertEquals(30_000L, read.clockSkewToleranceMs)

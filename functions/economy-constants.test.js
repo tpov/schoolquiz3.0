@@ -183,6 +183,18 @@ function testAnEmptyRungIsNotAFreeSlot() {
   assert.deepStrictEqual(constants.plasma.priceLadder, DEFAULTS.plasma.priceLadder);
 }
 
+function testPremiumRegeneratesFasterOnlyIfTheTableSaysSo() {
+  const {regenMsFor} = require("./economy-constants");
+  const stock = readEconomyConstants(null);
+  assert.strictEqual(regenMsFor(stock.standard, true), stock.standard.regenMs, "делитель 1 — не быстрее");
+  const twice = readEconomyConstants({standard: {premiumRegenDivisor: 2}});
+  assert.strictEqual(regenMsFor(twice.standard, true), stock.standard.regenMs / 2);
+  assert.strictEqual(regenMsFor(twice.standard, false), stock.standard.regenMs, "без премиума — как есть");
+  const zero = readEconomyConstants({standard: {premiumRegenDivisor: 0}});
+  assert.strictEqual(zero.standard.premiumRegenDivisor, 1, "ноль не делитель");
+}
+
+testPremiumRegeneratesFasterOnlyIfTheTableSaysSo();
 testAnEmptyRungIsNotAFreeSlot();
 testAnEmptyFieldMeansAsBeforeNotZero();
 testAStoredTableAlwaysOutranksTheBootstrapCopy();

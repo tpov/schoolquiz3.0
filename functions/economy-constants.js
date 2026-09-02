@@ -74,7 +74,23 @@ function chargeRules(value, fallback) {
       source.currency : fallback.currency,
     requiresSettledAccount: typeof source.requiresSettledAccount === "boolean" ?
       source.requiresSettledAccount : fallback.requiresSettledAccount,
+    // Во сколько раз быстрее восстанавливается премиальный аккаунт. Единица — не быстрее: пока
+    // монетизация не решила, продаёт ли она ускорение, ручка стоит на месте, но она есть, и ни один
+    // период восстановления не голая константа (ограничение спеки зарядов).
+    premiumRegenDivisor: Math.max(1, nonNegativeInt(source.premiumRegenDivisor, fallback.premiumRegenDivisor || 1)),
   };
+}
+
+/**
+ * Период восстановления одного заряда для этого аккаунта.
+ *
+ * Премиум делит период на ручку из таблицы; без премиума — как есть. Ноль здесь невозможен:
+ * делитель не меньше единицы, период — как записан.
+ */
+function regenMsFor(rules, hasPremium) {
+  const regenMs = Math.max(0, Math.floor(Number(rules && rules.regenMs) || 0));
+  const divisor = Math.max(1, Math.floor(Number(rules && rules.premiumRegenDivisor) || 1));
+  return hasPremium ? Math.floor(regenMs / divisor) : regenMs;
 }
 
 function activityPrices(value) {
@@ -218,5 +234,6 @@ module.exports = {
   activityPrice,
   clientEconomyConstants,
   readEconomyConstants,
+  regenMsFor,
   slotPrice,
 };

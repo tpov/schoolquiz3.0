@@ -53,8 +53,15 @@ data class UserProfile(
     /** Ceiling: every owned heart slot holds [LIFE_POINTS_PER_HEART] points. */
     val maxLifePoints: Int get() = standardHearts * LIFE_POINTS_PER_HEART
 
-    /** Whether the player can still pay for a lesson attempt. */
-    val canAffordLessonAttempt: Boolean get() = lifePoints >= LESSON_ATTEMPT_LIFE_COST
+    /**
+     * Хватает ли на попытку, которая стоит [pricePoints].
+     *
+     * Цену называет вызывающий, а не эта модель: плоской цены попытки больше нет — обычный урок,
+     * арена, контрольная, экзамен и турнир стоят по-разному, и прейскурант живёт в серверной
+     * таблице (`EconomyConstants.priceOf`). Здесь стояло сравнение с зашитой тридцать тройкой, и
+     * после прейскуранта оно означало бы «хватает на турнир», когда хватает только на урок.
+     */
+    fun canAfford(pricePoints: Int): Boolean = lifePoints >= pricePoints
 
     init {
         require(uid.isNotBlank() || status == ProfileStatus.OFFLINE) {
@@ -79,7 +86,6 @@ data class UserProfile(
         const val LIFE_POINTS_PER_HEART = 100
 
         /** Cost of one lesson attempt, from the legacy price list. */
-        const val LESSON_ATTEMPT_LIFE_COST = 33
 
         /** Mirrors TROPHY_VERIFIED in functions/trophies.js. */
         const val TROPHY_VERIFIED = "verified"

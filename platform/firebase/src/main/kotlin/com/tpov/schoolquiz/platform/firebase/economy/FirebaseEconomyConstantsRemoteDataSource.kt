@@ -83,6 +83,10 @@ private fun Map<*, *>?.toRules(fallback: ChargeRules): ChargeRules {
         requiresSettledAccount =
             this["requiresSettledAccount"] as? Boolean
                 ?: fallback.requiresSettledAccount,
+        premiumRegenDivisor =
+            longOr(this["premiumRegenDivisor"], fallback.premiumRegenDivisor.toLong())
+                .coerceIn(1L, Int.MAX_VALUE.toLong())
+                .toInt(),
     )
 }
 

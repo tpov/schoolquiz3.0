@@ -106,10 +106,19 @@ data class ChargeRules(
     val priceLadder: List<Long>,
     val currency: ShopCurrency,
     val requiresSettledAccount: Boolean = false,
+    /**
+     * Во сколько раз быстрее восстанавливается премиальный аккаунт.
+     *
+     * Единица — не быстрее. Ручка стоит здесь, а не в коде, потому что спека зарядов запрещает
+     * периоду восстановления быть голой константой: монетизация продаёт ускорение как премиум, и
+     * решает она, а не сборка.
+     */
+    val premiumRegenDivisor: Int = 1,
 ) {
     init {
         require(maxOwned >= 0) { "ChargeRules.maxOwned must be non-negative, got $maxOwned" }
         require(regenMs >= 0L) { "ChargeRules.regenMs must be non-negative, got $regenMs" }
+        require(premiumRegenDivisor >= 1) { "ChargeRules.premiumRegenDivisor must be at least 1, got $premiumRegenDivisor" }
         require(priceLadder.isNotEmpty()) { "лестница цен не может быть пустой: слот нельзя купить даром" }
         require(priceLadder.all { it >= 0L }) { "цена слота не может быть отрицательной" }
     }
@@ -125,6 +134,9 @@ data class ChargeRules(
 
     /** Восстанавливается ли этот вид сам. */
     val regenerates: Boolean get() = regenMs > 0L
+
+    /** Период восстановления одного заряда для этого аккаунта: премиум делит его на ручку. */
+    fun regenMsFor(hasPremium: Boolean): Long = if (hasPremium) regenMs / premiumRegenDivisor else regenMs
 
     companion object {
         /**

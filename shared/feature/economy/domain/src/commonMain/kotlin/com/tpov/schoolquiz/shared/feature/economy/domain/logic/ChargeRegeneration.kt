@@ -50,13 +50,15 @@ fun ChargeBalance.regenerated(
      * бак ограничен слотами; выше — потолком (понижение не конфискует, но и не доливает).
      */
     ownedSlots: Int = rules.maxOwned,
+    /** Премиум восстанавливается быстрее — если таблица так говорит (`premiumRegenDivisor`). */
+    hasPremium: Boolean = false,
 ): ChargeBalance {
     val ceiling = minOf(ownedSlots, rules.maxOwned).coerceAtLeast(0) * EconomyConstants.POINTS_PER_CHARGE
     // Не зажимаем вниз: то, что уже есть, принадлежит игроку.
     if (points >= ceiling) return copy(updatedAtMs = maxOf(updatedAtMs, nowMs))
     if (!rules.regenerates || nowMs <= updatedAtMs) return this
 
-    val intervalMs = rules.regenMs / EconomyConstants.POINTS_PER_CHARGE
+    val intervalMs = rules.regenMsFor(hasPremium) / EconomyConstants.POINTS_PER_CHARGE
     // Заряд, восстанавливающийся быстрее, чем очко в миллисекунду, — не ускорение, а деление на
     // ноль. Такой настройке отвечаем мгновенным полным баком, а не падением.
     if (intervalMs <= 0L) return copy(points = ceiling, updatedAtMs = nowMs)

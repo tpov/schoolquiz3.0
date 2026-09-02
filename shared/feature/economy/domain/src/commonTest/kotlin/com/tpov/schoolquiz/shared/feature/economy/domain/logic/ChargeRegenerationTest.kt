@@ -82,6 +82,16 @@ class ChargeRegenerationTest {
     }
 
     @Test
+    fun `given a premium account then it regenerates faster only if the table says so`() {
+        // Делитель — ручка таблицы, не константа: монетизация решает, продаёт ли она ускорение.
+        val twice = standard.copy(premiumRegenDivisor = 2)
+
+        assertEquals(2, balance(0).regenerated(twice, nowMs = hour, hasPremium = true).wholeCharges)
+        assertEquals(1, balance(0).regenerated(twice, nowMs = hour, hasPremium = false).wholeCharges)
+        assertEquals(1, balance(0).regenerated(standard, nowMs = hour, hasPremium = true).wholeCharges, "единица — не быстрее")
+    }
+
+    @Test
     fun `given plasma then a whole charge takes a day`() {
         val plasma = ChargeRules.PLASMA_BOOTSTRAP
 

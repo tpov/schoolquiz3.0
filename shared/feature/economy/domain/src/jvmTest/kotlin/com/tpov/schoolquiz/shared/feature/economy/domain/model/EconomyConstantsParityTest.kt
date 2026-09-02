@@ -60,6 +60,7 @@ class EconomyConstantsParityTest {
             priceLadder = rungs,
             currency = ShopCurrency.valueOf(currency),
             requiresSettledAccount = settled,
+            premiumRegenDivisor = number("premiumRegenDivisor").toInt(),
         )
     }
 

@@ -64,8 +64,11 @@ class FirebaseEconomyRemoteDataSource(
             streakDays = long(STREAK_DAYS).toInt().coerceAtLeast(0),
             stars = long(STARS).coerceAtLeast(0L),
             nolics = long(NOLICS).coerceAtLeast(0L),
-            standardHearts = long(STANDARD_HEARTS).toInt().coerceIn(0, EconomyResourceBalance.MaxStandardHearts),
-            goldHearts = long(GOLD_HEARTS).toInt().coerceIn(0, EconomyResourceBalance.MaxGoldHearts),
+            // Не зажимаем потолком сборки: потолок живёт в серверной таблице и может быть выше. Ответ
+            // на покупку третьего плазменного слота с `goldHearts = 3` здесь превращался бы в единицу,
+            // и купленное исчезало бы с экрана в ту же секунду.
+            standardHearts = long(STANDARD_HEARTS).toInt().coerceAtLeast(0),
+            goldHearts = long(GOLD_HEARTS).toInt().coerceAtLeast(0),
             gold = long(GOLD).coerceAtLeast(0L),
             lessonUnlocks = stringSet(LESSON_UNLOCKS),
         )

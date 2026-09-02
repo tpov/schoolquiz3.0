@@ -53,6 +53,7 @@ class PreferencesEconomyConstantsStore(context: Context) : EconomyConstantsStore
             .put("priceLadder", priceLadder.joinToString(","))
             .put("currency", currency.name)
             .put("requiresSettledAccount", requiresSettledAccount)
+            .put("premiumRegenDivisor", premiumRegenDivisor)
 
     private fun JSONObject.toConstants(): EconomyConstants =
         EconomyConstants(
@@ -74,6 +75,8 @@ class PreferencesEconomyConstantsStore(context: Context) : EconomyConstantsStore
             priceLadder = getString("priceLadder").split(",").map { it.trim().toLong() },
             currency = ShopCurrency.valueOf(getString("currency")),
             requiresSettledAccount = getBoolean("requiresSettledAccount"),
+            // Записи до появления ручки читаются как «не быстрее»; отбрасывать их целиком незачем.
+            premiumRegenDivisor = optInt("premiumRegenDivisor", 1),
         )
 
     private companion object {

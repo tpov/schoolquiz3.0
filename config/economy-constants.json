@@ -3,16 +3,28 @@
   "standard": {
     "maxOwned": 10,
     "regenMs": 3600000,
-    "priceLadder": [1000, 2000, 5000, 10000, 20000],
+    "priceLadder": [
+      1000,
+      2000,
+      5000,
+      10000,
+      20000
+    ],
     "currency": "NOLICS",
-    "requiresSettledAccount": false
+    "requiresSettledAccount": false,
+    "premiumRegenDivisor": 1
   },
   "plasma": {
     "maxOwned": 3,
     "regenMs": 86400000,
-    "priceLadder": [1, 2, 3],
+    "priceLadder": [
+      1,
+      2,
+      3
+    ],
     "currency": "GOLD",
-    "requiresSettledAccount": true
+    "requiresSettledAccount": true,
+    "premiumRegenDivisor": 1
   },
   "activityPrices": {
     "ORDINARY_LESSON": 33,
