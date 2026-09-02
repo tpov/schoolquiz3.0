@@ -3,6 +3,7 @@
 const {HttpsError} = require("firebase-functions/v2/https");
 const {recomputePercentScore, isWellFormedCodeAnswer} = require("./result-verification");
 const {FAULT} = require("./attempt-scoring");
+const {noClaims, validateClaimMask} = require("./charge-claims");
 
 /**
  * Reads one submitted attempt and decides who scored it, before anything is paid for it.
@@ -371,6 +372,13 @@ function readDeviceScoredAttempt(data, event, attemptId, carriesDigits) {
   // A mismatch means the payload was crafted: keep the event for analysis, pay nothing.
   const expectedPercentScore = recomputePercentScore(codeAnswer);
   const answers = normalizeLessonAnswers(data.answers);
+  // Заявки на заряды — строкой той же длины рядом с цифрами. Испорченная маска отвергается сразу:
+  // это не перерасход, а искажённый payload, и платить по нему частично нельзя (CAP-3).
+  const chargeClaims = stringValue(data.chargeClaims) || noClaims(codeAnswer.length);
+  const claimFault = validateClaimMask(chargeClaims, codeAnswer, difficulty);
+  if (claimFault) {
+    throw new HttpsError("invalid-argument", `chargeClaims is malformed: ${claimFault}`);
+  }
   const served = validateServed(data.served);
   // The same treatment for the other claim the device makes about itself. No served list is not a
   // disagreement — it is a client from before E2.10, and it has nothing to disagree with.
@@ -383,6 +391,7 @@ function readDeviceScoredAttempt(data, event, attemptId, carriesDigits) {
     attemptId,
     difficulty,
     codeAnswer,
+    chargeClaims,
     percentScore,
     expectedPercentScore,
     scoreVerified: expectedPercentScore === percentScore,

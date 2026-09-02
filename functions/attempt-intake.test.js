@@ -91,11 +91,15 @@ function loadIndexHelpers() {
 
 const LEGACY = loadIndexHelpers();
 const {stringValue, numberValue, nonNegativeEventTime, normalizeContentEvent, normalizeLessonAnswers} = LEGACY;
+// Разбор маски заявок живёт в своём чистом модуле, а не в `index.js`, поэтому берётся оттуда
+// же, откуда его берёт `index.js`, — иначе замороженная копия не запустится.
+const {noClaims, validateClaimMask} = require("./charge-claims");
 
 // ─── Today's normaliser, frozen ─────────────────────────────────────────────────────────────────
 //
 // A verbatim copy of `normalizeLessonResultAttemptEvent` as `index.js` declares it at the spec's
-// baseline (commit 0a5ed533). It closes over the helpers cut out of `index.js` above, so what runs
+// baseline, refreshed when the charge-claim mask joined the intake. It closes over the helpers
+// cut out of `index.js` above, so what runs
 // here is today's code and nothing of this suite's own. No line numbers are quoted: what pins this
 // copy to the original is the byte comparison below, and a citation that drifts is worse than none.
 //
@@ -130,12 +134,20 @@ function normalizeLessonResultAttemptEvent(data, authUid) {
   // A mismatch means the payload was crafted: keep the event for analysis, pay nothing.
   const expectedPercentScore = recomputePercentScore(codeAnswer);
   const answers = normalizeLessonAnswers(data.answers);
+  // Заявки на заряды — строкой той же длины рядом с цифрами. Испорченная маска отвергается сразу:
+  // это не перерасход, а искажённый payload, и платить по нему частично нельзя (CAP-3).
+  const chargeClaims = stringValue(data.chargeClaims) || noClaims(codeAnswer.length);
+  const claimFault = validateClaimMask(chargeClaims, codeAnswer, difficulty);
+  if (claimFault) {
+    throw new HttpsError("invalid-argument", `chargeClaims is malformed: ${claimFault}`);
+  }
   return {
     answers,
     ...event,
     attemptId,
     difficulty,
     codeAnswer,
+    chargeClaims,
     percentScore,
     expectedPercentScore,
     scoreVerified: expectedPercentScore === percentScore,
@@ -143,7 +155,6 @@ function normalizeLessonResultAttemptEvent(data, authUid) {
     createdAtMs: nonNegativeEventTime(data.createdAtMs),
   };
 }
-
 /** Every message today's intake can refuse an attempt with. The fixture set must reach them all. */
 const TODAYS_REJECTIONS = [
   "Attempt userId must match authenticated uid",
