@@ -131,6 +131,37 @@ function testABalanceAboveTheCeilingCountsAsHeld() {
   assert.strictEqual(verdict.surplus, 0);
 }
 
+function testTheCeilingFollowsTheSlotsTheAccountActuallyOwns() {
+  // Считать по одному `maxOwned` — значит не обвинить того, кто заявил больше, чем его слоты
+  // вмещают: купил один слот, заявил три, а потолок из таблицы говорит «три, всё в порядке».
+  const oneSlot = overspendVerdict({
+    claimed: 3, storedPoints: POINTS_PER_CHARGE, storedUpdatedAtMs: 0, windowEndMs: 0,
+    rules: DEFAULTS.plasma, ownedSlots: 1, clockSkewToleranceMs: 0, pointsPerCharge: POINTS_PER_CHARGE,
+  });
+  assert.strictEqual(oneSlot.ceiling, 1);
+  assert.strictEqual(oneSlot.surplus, 2);
+
+  // Без указания слотов поведение прежнее — потолок из таблицы.
+  const unspecified = overspendVerdict({
+    claimed: 3, storedPoints: POINTS_PER_CHARGE, storedUpdatedAtMs: 0, windowEndMs: 0,
+    rules: DEFAULTS.plasma, clockSkewToleranceMs: 0, pointsPerCharge: POINTS_PER_CHARGE,
+  });
+  assert.strictEqual(unspecified.ceiling, 1, "в базе лежал один заряд, восстановиться не успело");
+}
+
+function testPremiumIsNotAuditedForWhatTheServerItselfPaid() {
+  // Премиум восстанавливается вдвое быстрее — за сутки два заряда, а не один. Считать потолок по
+  // обычному периоду значило бы записать в перерасход то, что сервер только что начислил.
+  const day = 24 * HOUR;
+  const audited = overspendVerdict({
+    claimed: 2, storedPoints: 0, storedUpdatedAtMs: 0, windowEndMs: day,
+    rules: {...DEFAULTS.plasma, maxOwned: 3}, ownedSlots: 3,
+    regenMs: DEFAULTS.plasma.regenMs / 2, clockSkewToleranceMs: 0, pointsPerCharge: POINTS_PER_CHARGE,
+  });
+  assert.strictEqual(audited.regenerated, 2);
+  assert.strictEqual(audited.surplus, 0);
+}
+
 function testTheRecordReconstructsTheFindingWithoutTheAttempts() {
   const verdict = overspendVerdict({
     claimed: 6, storedPoints: 300, storedUpdatedAtMs: 0, windowEndMs: 24 * HOUR,
@@ -213,6 +244,8 @@ testTheOfflineReplayIsCaughtOnce();
 testASlowSyncIsNotFraud();
 testClockSkewToleranceIsMeasuredInRegenerationNotInCharges();
 testABalanceAboveTheCeilingCountsAsHeld();
+testTheCeilingFollowsTheSlotsTheAccountActuallyOwns();
+testPremiumIsNotAuditedForWhatTheServerItselfPaid();
 testTheRecordReconstructsTheFindingWithoutTheAttempts();
 
 console.log("charge-claims.test.js OK");

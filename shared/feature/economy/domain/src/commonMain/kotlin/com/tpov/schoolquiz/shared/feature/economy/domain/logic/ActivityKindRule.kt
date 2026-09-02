@@ -52,7 +52,10 @@ object ActivityKindRule {
     }
 
     private fun normalizeShelf(value: String): String? {
-        val lower = value.trim().lowercase()
+        // `trim()` в Kotlin режет по `Char.isWhitespace()`, а `String.prototype.trim` в JS — ещё и
+        // BOM (U+FEFF). Полка, приехавшая с ним, была бы турниром для сервера и обычным уроком
+        // здесь: цена на экране разошлась бы со списанием на пятистах очках.
+        val lower = value.trim { it.isWhitespace() || it == '\uFEFF' }.lowercase()
         if (lower == "tournamentfinal") return "tournamentFinal"
         return SHELF_PRECEDENCE.firstOrNull { it == lower }
     }

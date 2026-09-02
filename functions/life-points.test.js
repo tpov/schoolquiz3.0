@@ -121,6 +121,22 @@ function testTheIntervalCanComeFromTheTable() {
   assert.strictEqual(regenerateLifePoints(0, 0, 30 * 60 * 1000, 500).points, 50, "без интервала — прежний час");
 }
 
+function testAZeroIntervalMeansNoRegenerationNotTheLegacyOne() {
+  // Ноль в таблице — «этот вид не восстанавливается». Прежде `|| LIFE_POINT_INTERVAL_MS` съедал
+  // его и заводил начисление раз в 36 секунд там, где восстановление отключили, — а клиент в том
+  // же случае не начислял ничего.
+  assert.deepStrictEqual(
+    regenerateLifePoints(0, 0, 10_000_000, 500, 0),
+    {points: 0, updatedAtMs: 0},
+  );
+  assert.deepStrictEqual(
+    regenerateLifePoints(120, 5_000, 10_000_000, 500, 0),
+    {points: 120, updatedAtMs: 5_000},
+    "и уже накопленное не трогается",
+  );
+}
+
+testAZeroIntervalMeansNoRegenerationNotTheLegacyOne();
 testTheIntervalCanComeFromTheTable();
 testStoredValueAboveCeilingIsKeptRatherThanConfiscated();
 testSpending();

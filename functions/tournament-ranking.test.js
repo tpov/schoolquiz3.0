@@ -234,13 +234,15 @@ function testTournamentResultKeepsPercentAndAttemptIdentity() {
 function testTimeBreaksAPercentTieAndNothingMore() {
   // Ровно случай из CAP-10: два стопроцентных прогона по одному уроку, быстрый впереди.
   const group = (groupId, results) => ({groupId, weight: 1, results});
+  // Имена подобраны против алфавита: пройди время мимо, и запасной порядок по userId дал бы
+  // ["a-slow", "z-fast"], то есть тест зеленел бы, ничего не проверяя.
   const table = calculateTournamentLeaderboard([
     group("g1", [
-      {userId: "fast", percent: 100, elapsedMs: 30_000},
-      {userId: "slow", percent: 100, elapsedMs: 90_000},
+      {userId: "a-slow", percent: 100, elapsedMs: 90_000},
+      {userId: "z-fast", percent: 100, elapsedMs: 30_000},
     ]),
   ]).leaderboard.map((entry) => entry.userId);
-  assert.deepStrictEqual(table, ["fast", "slow"]);
+  assert.deepStrictEqual(table, ["z-fast", "a-slow"]);
 
   // И только ничьей: тот, кто ответил лучше, остаётся выше, как бы медленно он ни отвечал.
   const byPercent = calculateTournamentLeaderboard([
@@ -256,11 +258,11 @@ function testAnUnmeasuredRunRanksBehindMeasuredOnes() {
   // Без замера время неизвестно, а не равно нулю: иначе старая попытка объявлялась бы мгновенной.
   const table = calculateTournamentLeaderboard([
     {groupId: "g1", weight: 1, results: [
-      {userId: "measured", percent: 100, elapsedMs: 120_000},
-      {userId: "unmeasured", percent: 100},
+      {userId: "z-measured", percent: 100, elapsedMs: 120_000},
+      {userId: "a-unmeasured", percent: 100},
     ]},
   ]).leaderboard;
-  assert.deepStrictEqual(table.map((entry) => entry.userId), ["measured", "unmeasured"]);
+  assert.deepStrictEqual(table.map((entry) => entry.userId), ["z-measured", "a-unmeasured"]);
   assert.strictEqual(table[1].averageElapsedMs, Number.POSITIVE_INFINITY);
 }
 

@@ -139,6 +139,9 @@ function normalizeTournamentResult(result) {
     percent,
     weight: resultWeight(result.weight),
     completedAtMs: finiteNumber(result.completedAtMs || result.finishedAtMs || result.updatedAtMs, 0),
+    // Без этого поля разрыв ничьи по времени был мёртв: нормализация роняла его до того, как
+    // таблица его увидит, и все прогоны выглядели неизмеренными. Ноль — «не мерили».
+    elapsedMs: Math.max(0, finiteNumber(result.elapsedMs || result.durationMs, 0)),
   };
 }
 

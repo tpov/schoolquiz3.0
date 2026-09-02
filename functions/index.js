@@ -431,6 +431,8 @@ async function writeOverspendRecords(uid, inputs, now) {
       storedUpdatedAtMs: side.storedUpdatedAtMs,
       windowEndMs: now,
       rules: side.rules,
+      ownedSlots: side.ownedSlots,
+      regenMs: regenMsFor(side.rules, inputs.hasPremium),
       clockSkewToleranceMs: inputs.economy.clockSkewToleranceMs,
       pointsPerCharge: POINTS_PER_CHARGE,
     });
@@ -855,6 +857,7 @@ async function applyLessonResultEvents(uid, attempts) {
       plasmaCeiling,
       regenMsFor(plasmaRules, hasPremium) / POINTS_PER_CHARGE,
     );
+    const settledAttemptIds = new Set();
     let standardClaimed = 0;
     let plasmaClaimed = 0;
     const claimedAttemptIds = [];
@@ -868,7 +871,12 @@ async function applyLessonResultEvents(uid, attempts) {
       // codeAnswer, and the player still has the life points it costs. The game is offline-first,
       // so a legitimate attempt can arrive with an empty tank — it is stored either way, and the
       // flag records whether it was charged.
-      const isNew = !existingSnapshots[index].exists;
+      // Один и тот же `attemptId` дважды в одном пакете — это одна попытка, а не две: снимки
+      // читались до первой записи, поэтому обе выглядели бы новыми, и плата, расчёт и награда
+      // прошли бы по каждой.
+      const seenInBatch = settledAttemptIds.has(item.event.attemptId);
+      settledAttemptIds.add(item.event.attemptId);
+      const isNew = !existingSnapshots[index].exists && !seenInBatch;
       let lifeCharged = false;
       if (isNew && item.event.scoreVerified) {
         const charged = spendLifePoints(life.points, item.event.lifeCost, lifeCeiling);
@@ -903,6 +911,14 @@ async function applyLessonResultEvents(uid, attempts) {
         item.event.standardChargesPaid = settled.standardChargesPaid;
         item.event.plasmaChargesPaid = settled.plasmaChargesPaid;
         item.event.chargeClaimsUnpaid = settled.unpaid.length;
+        // Присланные значения остаются рядом под своими именами, а рабочие — замещаются: иначе
+        // оплаченный пропуск поднимал бы только сохранённую строку, а награда, лучший результат,
+        // рейтинги активности и турнирная запись считались бы по неподнятой. Платят и ранжируют
+        // по тому, за что взяли деньги.
+        item.event.submittedCodeAnswer = item.event.codeAnswer;
+        item.event.submittedPercentScore = item.event.percentScore;
+        item.event.codeAnswer = settled.codeAnswer;
+        item.event.percentScore = item.event.settledPercentScore;
       }
 
       transaction.set(
@@ -912,10 +928,6 @@ async function applyLessonResultEvents(uid, attempts) {
           ...item.content,
           receivedAtMs: now,
           schemaVersion: 1,
-          // Послерасчётные значения замещают присланные: оплаченный пропуск — верный ответ.
-          ...(item.event.settledCodeAnswer ?
-            {codeAnswer: item.event.settledCodeAnswer, percentScore: item.event.settledPercentScore} :
-            {}),
           // Повтор той же попытки (прямой вызов, не очередь) не переписывает, была ли она
           // оплачена: запись о перерасходе и сверка балансов будут читать именно это поле.
           lifeCharged: isNew ? lifeCharged : Boolean((existingSnapshots[index].data() || {}).lifeCharged),
@@ -979,8 +991,22 @@ async function applyLessonResultEvents(uid, attempts) {
         now,
       ),
       attemptIds: claimedAttemptIds,
-      standard: {claimed: standardClaimed, storedPoints: storedLifePoints, storedUpdatedAtMs: storedLifeUpdatedAtMs, rules: economy.standard},
-      plasma: {claimed: plasmaClaimed, storedPoints: storedPlasmaPoints, storedUpdatedAtMs: storedPlasmaUpdatedAtMs, rules: economy.plasma},
+      hasPremium,
+      standard: {
+        claimed: standardClaimed,
+        storedPoints: storedLifePoints,
+        storedUpdatedAtMs: storedLifeUpdatedAtMs,
+        rules: economy.standard,
+        ownedSlots,
+      },
+      plasma: {
+        claimed: plasmaClaimed,
+        storedPoints: storedPlasmaPoints,
+        storedUpdatedAtMs: storedPlasmaUpdatedAtMs,
+        rules: economy.plasma,
+        ownedSlots: nonNegativeInteger(userData.goldHearts, 0),
+      },
+
     };
   });
   // Перерасход. Излишек и так не оплачен — запись для оператора, а не второе наказание, и
