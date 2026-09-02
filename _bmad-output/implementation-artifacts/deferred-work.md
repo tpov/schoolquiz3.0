@@ -398,3 +398,7 @@ backfill.
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-9-catalog-redaction-plan.md`
   summary: Archival lives on the quest document, not the question — `setPublicQuestShelf` sets `archived` on `quests/{id}` only, and publication and every seed script write `archived: false` on questions — so a question-level filter skips almost nothing, and questions under an archived quest are keyed and counted as live.
   evidence: The backfill honours the question flag because `questionRowFor` on the reward path reads the same field, and says in its report that quest-level archival is not consulted. Making the count mean something needs the quest → section → theme → lesson chain resolved before planning; the same chain is what a later "which lessons no longer exist" reconciliation needs, so the two belong together.
+
+- source_spec: `_bmad-output/specs/spec-charges/SPEC.md` (CAP-11, история 12; открытый вопрос 4)
+  summary: Sweep подделываемых балансов невозможен без журнала начислений — сначала ledger, потом сверка.
+  evidence: `functions/index.js` `writeUserProgressDelta` пишет только `FieldValue.increment` в `users/{uid}`; событие попытки хранит вход награды, но не сумму (`attemptReward` не сохраняется); `generateGiftBoxReward` — случайный бросок без записи; `buyStandardHeart`/`buyGoldHeart` не журналируются. Историю, из которой можно пересчитать нолики, никто не писал. Прежде чем сравнивать, нужен append-only `ledger/{uid}/entries`, который пишет каждая транзакция, трогающая нолики, skill или заряды.

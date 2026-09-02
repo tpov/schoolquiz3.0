@@ -9,8 +9,8 @@ fun UserStatsEntity.toBalance(): EconomyResourceBalance =
         streakDays = streakDays.coerceAtLeast(0),
         stars = stars.coerceAtLeast(0L),
         nolics = nolics.coerceAtLeast(0L),
-        standardHearts = standardHearts.coerceIn(0, EconomyResourceBalance.MaxStandardHearts),
-        goldHearts = goldHearts.coerceIn(0, EconomyResourceBalance.MaxGoldHearts),
+        standardHearts = standardHearts.coerceAtLeast(0),
+        goldHearts = goldHearts.coerceAtLeast(0),
         gold = gold.coerceAtLeast(0L),
         lessonUnlocks = lessonUnlocks,
     )
@@ -21,8 +21,8 @@ fun UserStatsEntity.mergeWithBalance(balance: EconomyResourceBalance): UserStats
         streakDays = balance.streakDays.coerceAtLeast(0),
         stars = balance.stars.coerceAtLeast(0L),
         nolics = balance.nolics.coerceAtLeast(0L),
-        standardHearts = balance.standardHearts.coerceIn(0, EconomyResourceBalance.MaxStandardHearts),
-        goldHearts = balance.goldHearts.coerceIn(0, EconomyResourceBalance.MaxGoldHearts),
+        standardHearts = balance.standardHearts.coerceAtLeast(0),
+        goldHearts = balance.goldHearts.coerceAtLeast(0),
         gold = balance.gold.coerceAtLeast(0L),
         // Union, never replace. Unlocks are monotone on both sides — the server adds with
         // arrayUnion and nothing ever un-buys one — so the two sets can only be behind, never
@@ -40,8 +40,8 @@ fun EconomyResourceBalance.toNewUserStatsEntity(uid: String): UserStatsEntity =
         streakDays = streakDays.coerceAtLeast(0),
         stars = stars.coerceAtLeast(0L),
         nolics = nolics.coerceAtLeast(0L),
-        standardHearts = standardHearts.coerceIn(0, EconomyResourceBalance.MaxStandardHearts),
-        goldHearts = goldHearts.coerceIn(0, EconomyResourceBalance.MaxGoldHearts),
+        standardHearts = standardHearts.coerceAtLeast(0),
+        goldHearts = goldHearts.coerceAtLeast(0),
         gold = gold.coerceAtLeast(0L),
         currentSkill = 0,
         testerLevel = 0,

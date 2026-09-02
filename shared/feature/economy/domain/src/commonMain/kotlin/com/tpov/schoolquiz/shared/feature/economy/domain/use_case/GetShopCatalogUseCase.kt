@@ -1,5 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.economy.domain.use_case
 
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ChargeRules
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
+import com.tpov.schoolquiz.shared.feature.economy.domain.logic.canBuySlot
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
@@ -13,7 +16,17 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice
  * Titles and availability wording are resolved in the UI from [ShopItemId]; the domain carries
  * neither, so no language leaks past this boundary.
  */
-class GetShopCatalogUseCase {
+/**
+ * Витрина магазина.
+ *
+ * Цены слотов и потолки берутся из таблицы настроек, которой владеет сервер: подкрутить лестницу
+ * или потолок должно быть решением на сервере, а не сборкой. До первой синхронизации таблица —
+ * загрузочная копия; она же и подставляется по умолчанию, чтобы тесты и вызывающие без таблицы
+ * остались простыми.
+ */
+class GetShopCatalogUseCase(
+    private val constants: () -> EconomyConstants = { EconomyConstants.BOOTSTRAP },
+) {
     fun execute(balance: EconomyResourceBalance): List<ShopCatalogItem> =
         listOf(
             standardHeartSlot(balance),
@@ -26,28 +39,36 @@ class GetShopCatalogUseCase {
         )
 
     private fun standardHeartSlot(balance: EconomyResourceBalance): ShopCatalogItem {
-        val maxed = balance.standardHearts >= EconomyResourceBalance.MaxStandardHearts
+        val rules = constants().standard
         return ShopCatalogItem(
             id = ShopItemId.STANDARD_HEART_SLOT,
             title = "",
             description = "",
             category = ShopItemCategory.RESOURCES,
-            price = ShopPrice(standardHeartCost(balance.standardHearts), ShopCurrency.NOLICS),
-            isAvailable = !maxed,
+            price = ShopPrice(rules.slotPrice(balance.standardHearts), rules.currency),
+            // Понижённый потолок не отбирает купленное, но и купить сверх него не даёт.
+            isAvailable = rules.canBuySlot(balance.standardHearts),
+            nextPrice = rules.nextSlotPrice(balance.standardHearts),
         )
     }
 
     private fun goldHeart(balance: EconomyResourceBalance): ShopCatalogItem {
-        val maxed = balance.goldHearts >= EconomyResourceBalance.MaxGoldHearts
+        // Лестница `1, 2, 3` золотом вместо плоских десяти: все три стоят шесть, один раз.
+        val rules = constants().plasma
         return ShopCatalogItem(
             id = ShopItemId.GOLD_HEART,
             title = "",
             description = "",
             category = ShopItemCategory.RESOURCES,
-            price = ShopPrice(GOLD_HEART_COST, ShopCurrency.GOLD),
-            isAvailable = !maxed,
+            price = ShopPrice(rules.slotPrice(balance.goldHearts), rules.currency),
+            isAvailable = rules.canBuySlot(balance.goldHearts),
+            nextPrice = rules.nextSlotPrice(balance.goldHearts),
         )
     }
+
+    /** Цена покупки после этой — или `null`, если после этой будет потолок. */
+    private fun ChargeRules.nextSlotPrice(owned: Int): ShopPrice? =
+        if (canBuySlot(owned) && canBuySlot(owned + 1)) ShopPrice(slotPrice(owned + 1), currency) else null
 
     private fun quizSlot(): ShopCatalogItem =
         ShopCatalogItem(
@@ -101,14 +122,7 @@ class GetShopCatalogUseCase {
         )
 
     companion object {
-        private val STANDARD_HEART_COSTS = listOf(1_000L, 2_000L, 5_000L, 10_000L, 20_000L)
-        private const val GOLD_HEART_COST = 10L
         private const val QUIZ_SLOT_COST = 1_000L
         private const val AD_REWARD_BOX_COST = 5L
-
-        fun standardHeartCost(currentHearts: Int): Long {
-            val index = currentHearts.coerceIn(0, STANDARD_HEART_COSTS.lastIndex)
-            return STANDARD_HEART_COSTS[index]
-        }
     }
 }

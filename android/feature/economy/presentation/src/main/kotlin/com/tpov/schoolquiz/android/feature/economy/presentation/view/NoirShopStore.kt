@@ -39,11 +39,9 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
-import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 
 /**
  * The store shelf.
@@ -264,19 +262,17 @@ private fun ShopCatalogItem.stateLine(state: ShopViewState): String? =
     when (id) {
         ShopItemId.STANDARD_HEART_SLOT -> {
             val base = stringResource(R.string.shop_state_you_have, state.balance.standardHearts)
-            val maxed = state.balance.standardHearts >= EconomyResourceBalance.MaxStandardHearts
-            if (maxed) {
+            // Потолок и лестница живут в серверной таблице; экран узнаёт и то и другое от
+            // элемента витрины, а не из чисел в сборке.
+            val next = nextPrice
+            if (!isAvailable) {
                 base + stringResource(R.string.shop_state_maxed_suffix)
-            } else {
+            } else if (next != null) {
                 // The card's price is this purchase; the line under the title answers the next one,
                 // from the same ladder of costs — so a card never prints one number twice.
-                base +
-                    stringResource(
-                        R.string.shop_state_next_suffix,
-                        GetShopCatalogUseCase
-                            .standardHeartCost(state.balance.standardHearts + 1)
-                            .groupedByThousands(),
-                    )
+                base + stringResource(R.string.shop_state_next_suffix, next.amount.groupedByThousands())
+            } else {
+                base
             }
         }
         ShopItemId.GOLD_HEART -> stringResource(R.string.shop_state_gold_hearts, state.balance.goldHearts)

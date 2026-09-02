@@ -24,6 +24,8 @@ class EconomyConstantsRepositoryImpl(
 
     override fun observe(): Flow<EconomyConstants> = state.asStateFlow()
 
+    override fun current(): EconomyConstants = state.value
+
     override suspend fun refresh(): Result<Unit> =
         try {
             when (val response = remote.fetch(state.value.version)) {

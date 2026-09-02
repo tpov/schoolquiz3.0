@@ -18,6 +18,14 @@ data class EconomyResourceBalance(
     val lessonUnlocks: Set<String> = emptySet(),
 ) {
     companion object {
+        /**
+         * С чем начинает свежий аккаунт — не потолок.
+         *
+         * Потолок живёт в серверной таблице (`EconomyConstants.standard.maxOwned`) и может быть
+         * любым; зажимать баланс этими числами нельзя — понижение потолка не конфискует, а сборка
+         * не обязана знать, сколько слотов сервер продал. Здесь только стартовый бак: столько же
+         * даёт сервер аккаунту, у которого поля ещё не было.
+         */
         const val MaxStandardHearts = 5
         const val MaxGoldHearts = 1
 
