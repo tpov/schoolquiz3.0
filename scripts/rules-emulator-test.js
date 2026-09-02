@@ -152,6 +152,7 @@ async function seed() {
     });
 
     await store.doc("admin/review/lessons/les-1").set({id: "les-1"});
+    await store.doc("audit/charge_overspend/records/player_PLASMA_1").set({uid: "player", surplus: 3});
     await store.doc("private/author/catalogs/cat-1").set({id: "cat-1"});
     await store.doc("quest_review_requests/req-1").set({ownerUid: "author", processed: false});
     await store.doc("verification_requests/author").set({
@@ -318,6 +319,18 @@ async function testReviewHierarchy() {
   await deny("admin/**: аноним не читает", () => db("anon").doc("admin/review/lessons/les-1").get());
   await deny("admin/**: админ не пишет", () =>
     db("admin").doc("admin/review/lessons/les-1").update({hacked: true}));
+
+  // Вывод античита закрыт и от разработчика: показать подделывающему, что именно его выдало, —
+  // значит объяснить, как подделывать дальше, а честному игроку это обвинение, которого он не
+  // запрашивал. Читает оператор из консоли, пишет сервер админским SDK мимо правил.
+  await deny("audit/**: разработчик 101 не читает", () =>
+    db("developer").doc("audit/charge_overspend/records/player_PLASMA_1").get());
+  await deny("audit/**: ревьюер не читает", () =>
+    db("tester").doc("audit/charge_overspend/records/player_PLASMA_1").get());
+  await deny("audit/**: сам обвинённый не читает", () =>
+    db("player").doc("audit/charge_overspend/records/player_PLASMA_1").get());
+  await deny("audit/**: никто не пишет", () =>
+    db("admin").doc("audit/charge_overspend/records/player_PLASMA_1").set({surplus: 0}));
 
   await allow("private/**: владелец читает своё", () =>
     db("author").doc("private/author/catalogs/cat-1").get());

@@ -108,6 +108,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /audit/{document=**} {
+      // Записи о перерасходе зарядов: audit/charge_overspend/records/{uid}_{вид}_{конец окна}.
+      //
+      // Закрыто и на чтение — в отличие от `admin/` выше, куда рецензент заглядывает по своей
+      // квалификации. Здесь лежит вывод античита: кому, когда и по какой арифметике не заплатили.
+      // Дать это читать с устройства значит показать подделывающему, что именно его выдало, а
+      // честному — обвинение, которого он не запрашивал. Читает оператор из консоли, пишет сервер.
+      allow read, write: if false;
+    }
+
+
     match /quest_review_requests/{requestId} {
       // Client only creates an outbox request. Processing/copying is server-only.
       allow create: if request.auth != null
