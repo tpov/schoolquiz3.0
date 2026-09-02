@@ -6,6 +6,7 @@ const {
   FAULT_LENGTH_MISMATCH,
   FAULT_SKIP_ON_ANSWERED,
   FAULT_WRONG_DIFFICULTY,
+  askedOrder,
   countClaims,
   noClaims,
   overspendRecord,
@@ -149,6 +150,23 @@ function testTheRecordReconstructsTheFindingWithoutTheAttempts() {
   }
 }
 
+function testTheAskedOrderComesFromTheClockNotFromThePosition() {
+  // Раннер тасует набор: позиция в строке порядку показа не соответствует, а платить надо за
+  // самые ранние заявки.
+  const answers = [
+    {codeAnswerIndex: 3, answeredAtMs: 10},
+    {codeAnswerIndex: 0, answeredAtMs: 30},
+    {codeAnswerIndex: 2, answeredAtMs: 20},
+  ];
+  assert.deepStrictEqual(askedOrder(answers), [3, 2, 0]);
+  assert.deepStrictEqual(askedOrder(null), [], "без ответов порядок неизвестен");
+
+  // И этот порядок действительно решает, кому достанется единственный заряд.
+  const settled = settleClaims("P.PP", "0000", 0, 1, askedOrder(answers));
+  assert.deepStrictEqual(settled.paid, [3]);
+}
+
+testTheAskedOrderComesFromTheClockNotFromThePosition();
 testAPaidSkipBecomesFullyCorrect();
 testAnUnpaidSkipStaysUnansweredWhichIsWhatItWas();
 testTheEarliestClaimsArePaidFirst();

@@ -73,6 +73,23 @@ function countClaims(mask) {
 }
 
 /**
+ * Порядок, в котором вопросы задавались, — по времени ответа.
+ *
+ * Частичная оплата платит за самые ранние заявки, а не за произвольное подмножество, и «раннее»
+ * значит «спрошенное раньше», а не «стоящее левее в строке»: раннер тасует набор, и позиция в
+ * строке порядку показа не соответствует. Ответов может не быть вовсе — тогда порядок строки и
+ * есть единственный известный, и `settleClaims` берёт его сам.
+ *
+ * @param answers строки ответов попытки: `codeAnswerIndex` и `answeredAtMs`
+ */
+function askedOrder(answers) {
+  return (Array.isArray(answers) ? answers : [])
+    .slice()
+    .sort((a, b) => (Number(a && a.answeredAtMs) || 0) - (Number(b && b.answeredAtMs) || 0))
+    .map((answer) => Math.floor(Number(answer && answer.codeAnswerIndex) || 0));
+}
+
+/**
  * Списывает заявки в пределах того, что есть, в порядке `order`.
  *
  * Порядок обязателен: частичная оплата платит за самые ранние заявки, а не за произвольное
@@ -232,6 +249,7 @@ module.exports = {
   FAULT_WRONG_DIFFICULTY,
   FAULT_SKIP_ON_ANSWERED,
   OVERSPEND_AUDIT_PATH,
+  askedOrder,
   countClaims,
   noClaims,
   overspendRecord,

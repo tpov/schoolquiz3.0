@@ -60,6 +60,16 @@ const {
 } = require("./purchase-settlement");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
+const {
+  OVERSPEND_AUDIT_PATH,
+  askedOrder,
+  countClaims,
+  noClaims,
+  overspendRecord,
+  overspendVerdict,
+  settleClaims,
+  validateClaimMask,
+} = require("./charge-claims");
 const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
 const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
@@ -404,6 +414,43 @@ async function readAllocatedSeconds(lessonIds) {
  * пути и подтверждает приватную область только если действительно там лежит. Ни того ни другого —
  * вид неизвестен, и цена берётся по самой дорогой известной ставке.
  */
+/**
+ * Пишет записи о перерасходе — по одной на вид заряда, у которого он есть.
+ *
+ * Обоснование внутри записи, а не выводимое из неё: оператор читает её, не перечитывая попытки.
+ */
+async function writeOverspendRecords(uid, inputs, now) {
+  if (!inputs || !inputs.attemptIds.length) return;
+  if (inputs.economy.auditEnabled === false) return;
+  const kinds = [["STANDARD", inputs.standard], ["PLASMA", inputs.plasma]];
+  for (const [kind, side] of kinds) {
+    if (side.claimed <= 0) continue;
+    const verdict = overspendVerdict({
+      claimed: side.claimed,
+      storedPoints: side.storedPoints,
+      storedUpdatedAtMs: side.storedUpdatedAtMs,
+      windowEndMs: now,
+      rules: side.rules,
+      clockSkewToleranceMs: inputs.economy.clockSkewToleranceMs,
+      pointsPerCharge: POINTS_PER_CHARGE,
+    });
+    if (verdict.surplus <= 0) continue;
+    const record = overspendRecord({
+      uid,
+      chargeKind: kind,
+      windowStartMs: inputs.windowStartMs,
+      windowEndMs: now,
+      storedPoints: side.storedPoints,
+      storedUpdatedAtMs: side.storedUpdatedAtMs,
+      constantsVersion: inputs.economy.version,
+      verdict,
+      attemptIds: inputs.attemptIds,
+      recordedAtMs: now,
+    });
+    await db.doc(`${OVERSPEND_AUDIT_PATH}/${record.id}`).set(record, {merge: true});
+  }
+}
+
 async function readLessonContexts(events) {
   const pending = new Map();
   for (const event of events) {
@@ -762,6 +809,7 @@ async function applyLessonResultEvents(uid, attempts) {
 
   let reward = {skillPoints: 0, nolics: 0};
   let remainingLifePoints = 0;
+  let overspendInputs = null;
   const touchedTournamentIds = new Set();
   await db.runTransaction(async (transaction) => {
     // Firestore requires every read before the first write.
@@ -785,6 +833,8 @@ async function applyLessonResultEvents(uid, attempts) {
     // Премиум восстанавливается быстрее — если так говорит таблица; ручка стоит рядом с периодом,
     // потому что спека запрещает периоду быть голой константой.
     const hasPremium = numberValue(userData.premiumUntilMs, 0) > now || Boolean(userData.hasPremium);
+    const storedLifePoints = numberValue(userData.lifePoints, lifeCeiling);
+    const storedLifeUpdatedAtMs = numberValue(userData.lifePointsUpdatedAtMs, now);
     let life = regenerateLifePoints(
       numberValue(userData.lifePoints, lifeCeiling),
       numberValue(userData.lifePointsUpdatedAtMs, now),
@@ -792,6 +842,22 @@ async function applyLessonResultEvents(uid, attempts) {
       lifeCeiling,
       regenMsFor(economy.standard, hasPremium) / POINTS_PER_CHARGE,
     );
+
+    // Плазма — такой же бак, как обычный заряд: слоты в `goldHearts`, накопленное в очках.
+    const plasmaRules = economy.plasma;
+    const plasmaCeiling = Math.min(nonNegativeInteger(userData.goldHearts, 0), plasmaRules.maxOwned) * POINTS_PER_CHARGE;
+    const storedPlasmaPoints = numberValue(userData.plasmaPoints, plasmaCeiling);
+    const storedPlasmaUpdatedAtMs = numberValue(userData.plasmaPointsUpdatedAtMs, now);
+    let plasma = regenerateLifePoints(
+      numberValue(userData.plasmaPoints, plasmaCeiling),
+      numberValue(userData.plasmaPointsUpdatedAtMs, now),
+      now,
+      plasmaCeiling,
+      regenMsFor(plasmaRules, hasPremium) / POINTS_PER_CHARGE,
+    );
+    let standardClaimed = 0;
+    let plasmaClaimed = 0;
+    const claimedAttemptIds = [];
 
     const delta = {skillPoints: 0, nolics: 0};
     // The activity ratings the profile radar draws. Counted from the same attempts that pay, so a
@@ -812,6 +878,33 @@ async function applyLessonResultEvents(uid, attempts) {
         }
       }
 
+      // Заявки на заряды. Платится тем, что есть, в порядке, в котором вопросы задавались, и только
+      // оплаченный пропуск засчитывается верным — неоплаченный оставляет `0`, то есть вопрос
+      // считается неотвеченным, чем он и был. Повтор той же попытки не платит второй раз.
+      const settled = isNew ?
+        settleClaims(
+          item.event.chargeClaims,
+          item.event.codeAnswer,
+          Math.floor(life.points / POINTS_PER_CHARGE),
+          Math.floor(plasma.points / POINTS_PER_CHARGE),
+          askedOrder(item.event.answers),
+        ) :
+        null;
+      if (settled) {
+        life = {points: life.points - settled.standardChargesPaid * POINTS_PER_CHARGE, updatedAtMs: life.updatedAtMs};
+        plasma = {points: plasma.points - settled.plasmaChargesPaid * POINTS_PER_CHARGE, updatedAtMs: plasma.updatedAtMs};
+        standardClaimed += countClaims(item.event.chargeClaims).standard;
+        plasmaClaimed += countClaims(item.event.chargeClaims).plasma;
+        claimedAttemptIds.push(item.event.attemptId);
+        // Строка и процент, сохранённые на попытке, — послерасчётные: оплаченный пропуск и есть
+        // верный ответ. Присланные клиентом остаются рядом, чтобы расхождение было видно.
+        item.event.settledCodeAnswer = settled.codeAnswer;
+        item.event.settledPercentScore = recomputePercentScore(settled.codeAnswer);
+        item.event.standardChargesPaid = settled.standardChargesPaid;
+        item.event.plasmaChargesPaid = settled.plasmaChargesPaid;
+        item.event.chargeClaimsUnpaid = settled.unpaid.length;
+      }
+
       transaction.set(
         item.ref,
         clean({
@@ -819,6 +912,10 @@ async function applyLessonResultEvents(uid, attempts) {
           ...item.content,
           receivedAtMs: now,
           schemaVersion: 1,
+          // Послерасчётные значения замещают присланные: оплаченный пропуск — верный ответ.
+          ...(item.event.settledCodeAnswer ?
+            {codeAnswer: item.event.settledCodeAnswer, percentScore: item.event.settledPercentScore} :
+            {}),
           // Повтор той же попытки (прямой вызов, не очередь) не переписывает, была ли она
           // оплачена: запись о перерасходе и сверка балансов будут читать именно это поле.
           lifeCharged: isNew ? lifeCharged : Boolean((existingSnapshots[index].data() || {}).lifeCharged),
@@ -866,6 +963,8 @@ async function applyLessonResultEvents(uid, attempts) {
         uid,
         lifePoints: life.points,
         lifePointsUpdatedAtMs: life.updatedAtMs,
+        plasmaPoints: plasma.points,
+        plasmaPointsUpdatedAtMs: plasma.updatedAtMs,
         updatedAtMs: now,
         lessonBest,
       },
@@ -873,7 +972,20 @@ async function applyLessonResultEvents(uid, attempts) {
     );
     reward = delta;
     remainingLifePoints = life.points;
+    overspendInputs = {
+      economy,
+      windowStartMs: events.reduce(
+        (earliest, item) => Math.min(earliest, nonNegativeEventTime(item.event.completedAtMs) || now),
+        now,
+      ),
+      attemptIds: claimedAttemptIds,
+      standard: {claimed: standardClaimed, storedPoints: storedLifePoints, storedUpdatedAtMs: storedLifeUpdatedAtMs, rules: economy.standard},
+      plasma: {claimed: plasmaClaimed, storedPoints: storedPlasmaPoints, storedUpdatedAtMs: storedPlasmaUpdatedAtMs, rules: economy.plasma},
+    };
   });
+  // Перерасход. Излишек и так не оплачен — запись для оператора, а не второе наказание, и
+  // медленная синхронизация не подделка: окно длинное, и потолок растёт вместе с ним.
+  await writeOverspendRecords(uid, overspendInputs, now);
   for (const tournamentId of touchedTournamentIds) {
     await recalculateTournamentLeaderboard(tournamentId, now);
   }
@@ -4191,12 +4303,20 @@ function normalizeLessonResultAttemptEvent(data, authUid) {
   // A mismatch means the payload was crafted: keep the event for analysis, pay nothing.
   const expectedPercentScore = recomputePercentScore(codeAnswer);
   const answers = normalizeLessonAnswers(data.answers);
+  // Заявки на заряды — строкой той же длины рядом с цифрами. Испорченная маска отвергается сразу:
+  // это не перерасход, а искажённый payload, и платить по нему частично нельзя (CAP-3).
+  const chargeClaims = stringValue(data.chargeClaims) || noClaims(codeAnswer.length);
+  const claimFault = validateClaimMask(chargeClaims, codeAnswer, difficulty);
+  if (claimFault) {
+    throw new HttpsError("invalid-argument", `chargeClaims is malformed: ${claimFault}`);
+  }
   return {
     answers,
     ...event,
     attemptId,
     difficulty,
     codeAnswer,
+    chargeClaims,
     percentScore,
     expectedPercentScore,
     scoreVerified: expectedPercentScore === percentScore,
