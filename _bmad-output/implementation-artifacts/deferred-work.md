@@ -441,7 +441,7 @@ backfill.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-10-served-questions.md`
   summary: Translated-variant ids reach the wire unresolved — `dedupeTranslatedVariants` can put `q1__uk` into the play order when the canonical is absent locally, so `served.questionId` (and, pre-existing, the answer rows) name the variant, and the server-side scorer matches ids exactly against the pool it is handed.
-  evidence: For `answers` this drops one row; for `served` it makes the whole attempt unscorable as "not in the pool". The client's pool depends on what it had downloaded, which the server cannot know, so the wiring step has to decide which side canonicalises — most likely the server, by mapping any `{id}__{lang}` to its canonical before scoring, since the answer key is the same for every variant.
+  evidence: **Resolved while specifying E2.11:** no canonicalisation is needed. Each translated variant is its own question document with its own key entry (the key store keys `q07__ru` beside `q07`), so a served `q1__uk` matches its own key. What the wiring step must do instead is build the scoring pool from `served` — the dealt ids at their positions, padded with `'0'` — rather than from the lesson's full document list, because the client's play order was deduped and the server's document list is not.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-10-served-questions.md`
   summary: Attempts queued before this change — and the rows `Migration5to6` lifts from the old `lesson_result_attempt_outbox` — carry no `served`, which the server-side scorer reads as `SERVED_UNKNOWN` and refuses.

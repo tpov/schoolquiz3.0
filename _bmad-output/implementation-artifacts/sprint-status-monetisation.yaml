@@ -29,20 +29,20 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 09-01-2026 10:12
+last_updated: 09-02-2026 01:55
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 development_status:
-  epic-0: backlog
-  0-1-запросить-продление-в-play-console: backlog
+  epic-0: in-progress
+  0-1-запросить-продление-в-play-console: backlog  # действие владельца в Play Console, разработкой не закрывается
   0-2-поднять-play-billing-до-8-затем-до-9: done
   0-3-поднять-targetsdk-и-compilesdk-до-36: backlog  # отложена в deferred-work.md — делать на чистом дереве
   epic-0-retrospective: optional
 
-  epic-1: backlog
-  1-1-серверная-проверка-чека: backlog
+  epic-1: in-progress
+  1-1-серверная-проверка-чека: review
   1-2-клиент-гасит-покупку-только-после-подтверждения: backlog
   1-3-обработчик-возвратов-и-отзывов: backlog
   1-4-паки-золота-на-одной-полке: backlog
@@ -56,7 +56,7 @@ development_status:
   2-4-премиум-без-преимущества: backlog
   epic-2-retrospective: optional
 
-  epic-3: backlog
+  epic-3: backlog  # риск: 01.09 AdMob перебросил на страницу «аккаунт закрыт» (admob.google.com/signup/info/account-closed) — без живого аккаунта AdMob эпик реализуем только до показа рекламы
   3-1-награду-подтверждает-сеть-а-не-телефон: backlog
   3-2-пять-реклам-одна-коробка-потолок-держит-сервер: backlog
   3-3-купленная-коробка-и-заработанная-одинаковы: backlog

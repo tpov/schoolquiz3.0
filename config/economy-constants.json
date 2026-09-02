@@ -21,6 +21,11 @@
     "FINAL_EXAM": 300,
     "TOURNAMENT": 500
   },
+  "goldPacks": {
+    "gold_pack_small": 10,
+    "gold_pack_medium": 60,
+    "gold_pack_large": 150
+  },
   "clockSkewToleranceMs": 0,
   "auditEnabled": true
 }

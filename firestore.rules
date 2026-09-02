@@ -29,6 +29,15 @@ service cloud.firestore {
         allow read: if false;
         allow write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Receipts: what the server credited and why — one document per settlement, written by
+      // verifyPurchase in the same transaction as the balance change. The owner reads them; that
+      // is how "you were credited 60 gold" reaches the device. Nobody writes: a client that could
+      // write a receipt could tell itself it had been paid.
+      match /receipts/{receiptId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
     }
 
     match /verification_requests/{userId} {
@@ -56,6 +65,20 @@ service cloud.firestore {
     match /mutation_keys/{mutationId} {
       // Ключи идемпотентности — серверная бухгалтерия. Клиенту незачем их читать, а запись
       // отсюда позволила бы объявить чужую операцию выполненной и тем её отменить.
+      allow read, write: if false;
+    }
+
+    match /purchase_settlements/{settlementId} {
+      // One document per Play purchase token (keyed by its sha256), written by verifyPurchase in
+      // the same transaction as the gold. It is what makes a re-delivered token credit nothing the
+      // second time. Server bookkeeping: readable, it would expose another account's purchases;
+      // writable, it would let a token be marked settled — or unsettled — by hand.
+      allow read, write: if false;
+    }
+
+    match /purchase_audit/{auditId} {
+      // Who was credited what, for which token, under which version of configs/economy. Written
+      // once by the server per settlement; nothing in the app reads it.
       allow read, write: if false;
     }
 

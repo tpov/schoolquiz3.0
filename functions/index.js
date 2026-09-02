@@ -44,7 +44,18 @@ const {
   readUnlocks,
   withUnlock,
 } = require("./lesson-unlocks");
-const {activityPrice, readEconomyConstants} = require("./economy-constants");
+const {
+  ECONOMY_CONSTANTS_DOC,
+  activityPrice,
+  clientEconomyConstants,
+  readEconomyConstants,
+} = require("./economy-constants");
+const {
+  SETTLEMENT_OUTCOME_REFUSE,
+  SETTLEMENT_OUTCOME_UNAVAILABLE,
+  settlePurchase,
+} = require("./purchase-settlement");
+const {createPlayDeveloperApi} = require("./play-developer-api");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
@@ -78,6 +89,16 @@ const FUNCTION_OPTIONS = {
   maxInstances: 1,
   labels: {"schoolquiz-runtime": "node22"},
 };
+/**
+ * Functions that move money get their own cap.
+ *
+ * `maxInstances` is per function, and one 2nd-gen instance serves up to 80 concurrent requests, so
+ * the global 1 is not a bottleneck for anything this app sees today. It is still one instance:
+ * when it is busy, cold-starting a second is not an option, and a purchase is the one call where
+ * the player is watching the spinner while Play and Firestore take their turns. Two is headroom
+ * for that call alone, and small enough to fit the region's CPU quota alongside everything else.
+ */
+const MONETARY_FUNCTION_OPTIONS = {...FUNCTION_OPTIONS, maxInstances: 2};
 const QUALIFIED_LEVEL = 100;
 const DEVELOPER_ALL_ACCESS_LEVEL = 100;
 const TRANSLATION_REVIEW_LEVEL_GAP = 100;
@@ -126,7 +147,6 @@ const GIFT_BOX_LOGO_NAMES = [
 const NICKNAME_CLAIMS_COLLECTION = "nickname_claims";
 const NICKNAME_LISTINGS_COLLECTION = "nickname_listings";
 const NICKNAME_POLICY_DOC = "configs/nickname_policy";
-const ECONOMY_CONSTANTS_DOC = "configs/economy";
 const LOGO_LISTINGS_COLLECTION = "logo_listings";
 const NICKNAME_GENERATION_ATTEMPTS = 20;
 // "archive" is a legitimate destination, not only a publication target: without it a course moved
@@ -936,7 +956,8 @@ exports.getEconomyConstants = onCall(FUNCTION_OPTIONS, async (request) => {
   if (Number.isFinite(known) && known === constants.version) {
     return {unchanged: true, version: constants.version};
   }
-  return {unchanged: false, ...constants};
+  // Белым списком: размеры паков золота (`goldPacks`) остаются на сервере.
+  return {unchanged: false, ...clientEconomyConstants(constants)};
 });
 
 exports.ensureUserProfile = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -1656,6 +1677,51 @@ exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
   });
   return response;
 });
+
+/**
+ * Verifies a Play receipt and credits the gold pack it paid for — exactly once.
+ *
+ * The client's purchase is a claim; Play's answer is the fact. So the order is fixed: ask Play,
+ * credit, confirm, and only then does the client consume. Anything credited on the device would be
+ * forgeable; anything consumed before crediting would lose the player's money, because Play never
+ * returns a consumed token.
+ *
+ * This is the wiring and nothing else: who is calling, what they depend on, how an outcome becomes
+ * an answer. The decision is pure (purchase-verification.js) and the money path — the Play call
+ * and the one transaction that writes gold, settlement, receipt and audit together — runs without
+ * firebase-admin (purchase-settlement.js), so both are tested without it. A refusal carries a
+ * machine-readable `reasonCode` in its details; the client branches on the code, people and
+ * analytics on the reason.
+ */
+exports.verifyPurchase = onCall(MONETARY_FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const outcome = await settlePurchase({
+    db,
+    playApi: playDeveloperApi(),
+    now: Date.now(),
+    uid,
+    payload: request.data || {},
+    readGold: (data) => readEconomyBalance(data).gold,
+    log: logger,
+  });
+  if (outcome.kind === SETTLEMENT_OUTCOME_REFUSE) {
+    throw new HttpsError(outcome.code, outcome.reason, {reasonCode: outcome.reasonCode});
+  }
+  if (outcome.kind === SETTLEMENT_OUTCOME_UNAVAILABLE) {
+    throw new HttpsError("unavailable", outcome.reason);
+  }
+  return outcome.response;
+});
+
+/**
+ * The Play client is built on first use, not at load: every function in this file shares the
+ * module, and most of them never talk to Play.
+ */
+let playDeveloperApiClient = null;
+function playDeveloperApi() {
+  if (!playDeveloperApiClient) playDeveloperApiClient = createPlayDeveloperApi();
+  return playDeveloperApiClient;
+}
 
 /**
  * Buys a lesson open, or buys its hard mode.
