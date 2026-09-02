@@ -33,7 +33,6 @@ const {
 const {
   recomputePercentScore,
   attemptActivityCounts,
-  isWellFormedCodeAnswer,
 } = require("./result-verification");
 const {
   UNLOCK_LESSON,
@@ -68,10 +67,19 @@ const {
   overspendRecord,
   overspendVerdict,
   settleClaims,
-  validateClaimMask,
 } = require("./charge-claims");
 const logger = require("firebase-functions/logger");
-const {questionKeyDocuments} = require("./question-key-store");
+const {isStorableDocumentId, keyDocumentPath, questionKeyDocuments} = require("./question-key-store");
+// Приём прохождений: чтение тела, сборка пула, оценка и правило оплаты. Все четыре — чистые,
+// без `firebase-admin`; всё, что читает Firestore, живёт здесь (`readLessonScoringSources`).
+const {
+  PAYMENT_RULE,
+  SCORING_AUTHORITY,
+  readSubmittedAttempt,
+  withServerScore,
+} = require("./attempt-intake");
+const {buildScoringPool} = require("./scoring-pool");
+const {FAULT, scoreAttempt} = require("./attempt-scoring");
 const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
 const {
   maxLifePoints,
@@ -379,24 +387,411 @@ function lessonBestKey(lessonId, difficulty) {
 }
 
 /**
- * Allocated seconds per lesson, both difficulties, for the distinct lessons named.
+ * A lesson's published questions, whole, for every distinct lesson named.
  *
- * Read from the lesson's own questions rather than taken from the client: a caller that could
- * name its lesson's worth could name any reward it liked.
+ * One query per lesson serving two readers: the allocated-time sum a batch is rewarded by, and the
+ * pool a server-scored attempt is judged against. They want the same documents in two shapes, and
+ * ran the same query twice, five lines apart, until this took the query off both of them.
+ *
+ * Strict on purpose. A question query that fails takes the whole call down, exactly as it did when
+ * only the reward read it: the reward is computed from these documents, and a lesson that came back
+ * empty because Firestore was unavailable would pay a smaller reward silently where today the call
+ * fails and the client retries. The reads this file added on top — the answer keys and a private
+ * lesson's own questions — are caught per lesson instead, because there a failure has a safe
+ * answer: the attempt is not scored, and so is neither paid nor charged.
  */
-async function readAllocatedSeconds(lessonIds) {
+async function readLessonQuestions(lessonIds) {
   const distinct = [...new Set(lessonIds.filter(Boolean).map(String))];
   const entries = await Promise.all(
     distinct.map(async (lessonId) => {
       const snapshot = await db.collection("questions").where("lessonId", "==", lessonId).get();
-      const contents = snapshot.docs.map((doc) => questionRowFor(doc));
-      return [lessonId, {
-        easy: lessonAllocatedSeconds(contents, false),
-        hard: lessonAllocatedSeconds(contents, true),
-      }];
+      return [lessonId, snapshot.docs.map(questionDocumentFor)];
     }),
   );
-  return Object.fromEntries(entries);
+  return new Map(entries);
+}
+
+/** One stored question as a plain document, id included — the shape both readers narrow from. */
+function questionDocumentFor(doc) {
+  return {...(doc.data() || {}), id: doc.id};
+}
+
+/**
+ * Allocated seconds per lesson, both difficulties, from the questions already read.
+ *
+ * Derived from the lesson's own questions rather than taken from the client: a caller that could
+ * name its lesson's worth could name any reward it liked.
+ */
+function allocatedSecondsFrom(questionsByLesson) {
+  const allocated = {};
+  for (const [lessonId, documents] of questionsByLesson) {
+    const contents = documents.map(questionRowFrom);
+    allocated[lessonId] = {
+      easy: lessonAllocatedSeconds(contents, false),
+      hard: lessonAllocatedSeconds(contents, true),
+    };
+  }
+  return allocated;
+}
+
+/**
+ * How many records one attempt names in a log line before the count speaks for the rest. The same
+ * bound, and the same reason, as the publication path's own sample: a log entry over Cloud
+ * Logging's size limit is dropped whole, which is worse than a sample beside a count.
+ */
+const LOGGED_SCORING_SAMPLE = 20;
+
+/**
+ * Why a lesson was not read, when it was not.
+ *
+ * A state of its own, and never `documents: []`. An empty lesson and an unread one score
+ * identically — every served position a filler, every digit `'1'` — and only one of the two is the
+ * player's business. Collapsing them charged full price for a zero the server had caused.
+ */
+const LESSON_UNREAD = {
+  /** The read itself failed: permission, a deadline, an index that is not there. */
+  READ_FAILED: "lesson-read-failed",
+  /** The lesson's own path could not be assembled from the ids the attempt carries. */
+  UNUSABLE_PATH: "unusable-lesson-path",
+  /** Nothing was read for this lesson at all — reachable only through a bug in this file. */
+  NOT_READ: "lesson-not-read",
+};
+
+/** A lesson whose keys and questions could not be read. Same keys as a read one. */
+function unreadLesson(failure) {
+  return {keyDocument: null, documents: [], failure};
+}
+
+/**
+ * The lesson documents the server needs to score the attempts that asked it to.
+ *
+ * Read here, beside the questions the reward is priced from, and for the same reason: Firestore
+ * wants every read before the first write, and these are reads. One entry per **distinct lesson**,
+ * so fifty attempts on one lesson cost one key document and — for a private lesson — one question
+ * query. A lesson no attempt asked the server to score is not read at all.
+ *
+ * Keyed by `lessonContextKey`, the same scope-qualified key `readLessonContexts` uses, and not by
+ * the bare `lessonId`: that id comes off the device, and a public and a private lesson may both be
+ * called `lesson-1`. Keyed by the id alone, whichever was read first would have answered for both,
+ * and one player's questions would have scored another player's attempt.
+ *
+ * @returns a `Map` from `lessonContextKey(event)` to `{keyDocument, documents, failure}`.
+ */
+async function readLessonScoringSources(events, questionsByLesson) {
+  const pending = new Map();
+  for (const item of events) {
+    if (item.event.paymentRule !== PAYMENT_RULE.SERVER_SCORED) continue;
+    const key = lessonContextKey(item.event);
+    if (!pending.has(key)) pending.set(key, readLessonScoringSource(item.event, questionsByLesson));
+  }
+  const entries = await Promise.all([...pending].map(async ([key, promise]) => [key, await promise]));
+  return new Map(entries);
+}
+
+/**
+ * One lesson's keys and questions, in its own scope, with a failure kept as a failure.
+ *
+ * Caught per lesson rather than left to the `Promise.all` above: a permission error or a deadline
+ * on one lesson's key document would otherwise reject out of the handler and take the other
+ * forty-nine attempts in the batch — device-scored ones included — down with it. Here it costs its
+ * own attempt, which is then neither paid for nor charged.
+ */
+async function readLessonScoringSource(event, questionsByLesson) {
+  try {
+    const [keyDocument, documents] = await Promise.all([
+      readLessonKeyDocument(event.lessonId),
+      readScopedLessonQuestions(event, questionsByLesson),
+    ]);
+    if (documents === null) return unreadLesson(LESSON_UNREAD.UNUSABLE_PATH);
+    return {keyDocument, documents, failure: null};
+  } catch (error) {
+    logger.error("attempt-scoring: a lesson could not be read", {
+      lessonId: event.lessonId,
+      scope: normalizeScope(event.scope),
+      message: error && error.message ? String(error.message).slice(0, 500) : String(error),
+    });
+    return unreadLesson(LESSON_UNREAD.READ_FAILED);
+  }
+}
+
+/** The lesson's answer keys, or null for a lesson that has none. Only publication writes these. */
+async function readLessonKeyDocument(lessonId) {
+  // `db.doc` throws on an id Firestore will not take, and an id the key store could never have
+  // written under is simply a lesson with no keys — which the scorer already has an answer for.
+  if (!isStorableDocumentId(lessonId)) return null;
+  const snapshot = await db.doc(keyDocumentPath(lessonId)).get();
+  return snapshot.exists ? snapshot.data() || null : null;
+}
+
+/**
+ * A lesson's questions, from wherever that lesson keeps them.
+ *
+ * A public lesson's are in the top-level `questions` collection and have already been read for the
+ * whole batch. A private one's are not there at all: only the public publish path writes that copy,
+ * and a private quest's questions live under its own owner's tree. Reading a private lesson from
+ * the public collection returned nothing, every served question was missing, and the player was
+ * charged full price for a zero — so scope decides the path, exactly as `resolveLessonContext`
+ * already has it decide.
+ *
+ * @returns the documents, or `null` when this lesson was not read at all — never `[]` for that.
+ */
+async function readScopedLessonQuestions(event, questionsByLesson) {
+  if (normalizeScope(event.scope) !== PRIVATE_SCOPE) {
+    const documents = questionsByLesson instanceof Map
+      ? questionsByLesson.get(event.lessonId)
+      : undefined;
+    return documents === undefined ? null : documents;
+  }
+  const ids = [event.ownerUid, event.catalogId, event.questId, event.sectionId, event.themeId, event.lessonId];
+  if (!ids.every(isSingleDocumentId)) return null;
+  const snapshot = await db.collection(`${privateLessonPath(...ids)}/questions`).get();
+  return snapshot.docs.map(questionDocumentFor);
+}
+
+/**
+ * The score already on file for every server-scored attempt in this batch that has one.
+ *
+ * A submitted attempt arrives twice whenever the offline queue redelivers it, and the second
+ * delivery is scored against **today's** questions and keys. A question republished in between
+ * moves the digits, so a replay could lower a percent the player had already been paid for, while
+ * `lessonBest` and the tournament row kept the original — one attempt with two scores and no way
+ * to tell which was charged for. So a replay is not re-scored at all: the stored numbers stand.
+ *
+ * Advisory, and only ever in the safe direction. A document that is here is certainly a replay —
+ * these are written, never deleted — so skipping the scoring is sound. A document that is not may
+ * still turn out to exist inside the transaction, and the write guards that case separately.
+ *
+ * @returns a `Map` keyed by the batch item, so nothing is matched up by an id the client chose.
+ */
+async function readStoredAttemptScores(events) {
+  const replays = new Map();
+  const pending = events.filter((item) => item.event.paymentRule === PAYMENT_RULE.SERVER_SCORED);
+  await Promise.all(pending.map(async (item) => {
+    try {
+      const snapshot = await item.ref.get();
+      const stored = storedScoreFields(snapshot);
+      if (stored.codeAnswer !== undefined) replays.set(item, stored);
+    } catch (error) {
+      // Not knowing means scoring it, which is what happened before this read existed. The
+      // transaction still refuses to charge twice, and the write still keeps the stored score.
+      logger.warn("attempt-scoring: could not check whether an attempt was already stored", {
+        attemptId: item.event.attemptId,
+        message: error && error.message ? String(error.message).slice(0, 500) : String(error),
+      });
+    }
+  }));
+  return replays;
+}
+
+/**
+ * The score a stored attempt already carries, or nothing when it carries none.
+ *
+ * `{}` rather than defaults on purpose: it is spread over a document being written, and a
+ * `codeAnswer: ""` invented here would erase the one that is actually on file.
+ */
+function storedScoreFields(snapshot) {
+  const data = snapshot && snapshot.exists ? snapshot.data() || {} : null;
+  if (data === null || typeof data.codeAnswer !== "string") return {};
+  return {codeAnswer: data.codeAnswer, percentScore: numberValue(data.percentScore, 0)};
+}
+
+/**
+ * Scores one attempt against what its lesson holds, or answers with nothing for an attempt the
+ * device scored itself.
+ *
+ * Pure: the lesson's keys and questions arrive in `sources`, already read.
+ *
+ * @returns `null` for a device-scored attempt — there is nothing here to decide about one.
+ *   Otherwise `{unread, pool, scoring}`. `unread` names why the lesson was never read, and then
+ *   both others are null; `scoring` is null for a lesson that was read but could not be made into
+ *   a pool. Every one of those is an attempt nobody can score, which `withServerScore` and
+ *   `isPayable` read as "pay nothing, charge nothing".
+ */
+function serverScoringFor(event, sources) {
+  if (event.paymentRule !== PAYMENT_RULE.SERVER_SCORED) return null;
+  const source = sources instanceof Map ? sources.get(lessonContextKey(event)) : undefined;
+  if (source === undefined) return {unread: LESSON_UNREAD.NOT_READ, pool: null, scoring: null};
+  if (source.failure !== null) return {unread: source.failure, pool: null, scoring: null};
+  const pool = buildScoringPool({
+    lessonId: event.lessonId,
+    lessonVersion: event.lessonVersion,
+    served: event.served,
+    documents: source.documents,
+  });
+  if (!pool.built) return {unread: null, pool, scoring: null};
+  return {
+    unread: null,
+    pool,
+    scoring: scoreAttempt({
+      questions: pool.questions,
+      served: event.served,
+      keyDocument: source.keyDocument,
+      answers: event.answers,
+    }),
+  };
+}
+
+/**
+ * Fills in the server's own digits for every attempt that asked for them, and settles what each
+ * attempt in the batch may be paid for.
+ *
+ * Reads nothing and writes nothing: the lesson documents arrive in `sources` and the outcome lands
+ * on the items. Every attempt is decided **on its own** — an attempt the server could not score
+ * leaves the other forty-nine exactly as they were, which is the whole of the batch's contract.
+ *
+ * A server-scored attempt also leaves here with a charge-claim mask of its own. The mask has to be
+ * the length of the digits, and on this path the digits are the server's — the intake refuses a
+ * mask sent against them by name — so an empty mask of the right length is the only one there is.
+ * Without it `settleClaims` throws on the length check, inside the transaction, taking the batch.
+ */
+function applyServerScoring(events, sources, replays) {
+  for (const item of events) {
+    const replayed = replays instanceof Map ? replays.get(item) : undefined;
+    if (replayed !== undefined) {
+      // Already stored, already decided. `isNew` refuses the charge either way; this refuses the
+      // re-score, so the numbers a player was paid on cannot move underneath them.
+      item.payable = false;
+      item.event = {
+        ...item.event,
+        codeAnswer: replayed.codeAnswer,
+        percentScore: replayed.percentScore,
+        chargeClaims: noClaims(replayed.codeAnswer.length),
+      };
+      continue;
+    }
+    const outcome = serverScoringFor(item.event, sources);
+    const scoring = outcome === null ? null : outcome.scoring;
+    const {payable, ...event} = withServerScore(item.event, scoring);
+    item.payable = payable === true;
+    item.event = event;
+    if (outcome === null) {
+      reportDeviceScoredAttempt(item);
+      continue;
+    }
+    item.event.chargeClaims = noClaims(item.event.codeAnswer.length);
+    reportServerScoredAttempt(item, outcome, scoring);
+  }
+}
+
+/**
+ * What a server-scored attempt cost, when it cost anything.
+ *
+ * Logged on the payable path too, and that is the point of it. A lesson whose questions were
+ * accidentally emptied of all but one charges every player who touches it, hands them a percent
+ * built from `'1'`s, and is a completely ordinary paid attempt from the transaction's side.
+ * `pool.missing` is the only place that loss is visible at all.
+ *
+ * The reasons are filtered to the server's own, because those are the ones that make an attempt
+ * unpayable and the client's are ordinary play. Counts travel beside every sample: the records are
+ * capped, and `scoring.omitted` says how many did not fit — two hundred client faults evict every
+ * server fault there was, and the line would otherwise report no reasons at all.
+ */
+function reportServerScoredAttempt(item, outcome, scoring) {
+  const missing = outcome.pool === null ? [] : outcome.pool.missing;
+  const records = scoring === null ? [] : scoring.unscorable;
+  const omitted = scoring === null ? 0 : scoring.omitted;
+  if (item.payable && missing.length === 0 && records.length === 0 && omitted === 0) return;
+  const serverFaults = records.filter((record) => record && record.fault === FAULT.SERVER);
+  logger.warn("attempt-scoring: a hard attempt the server scored did not come out clean", {
+    attemptId: item.event.attemptId,
+    lessonId: item.event.lessonId,
+    payable: item.payable,
+    unread: outcome.unread,
+    poolReason: outcome.pool === null ? null : outcome.pool.reason,
+    poolDetail: outcome.pool === null ? null : outcome.pool.detail,
+    versionDrift: outcome.pool === null ? null : outcome.pool.versionDrift,
+    missingCount: missing.length,
+    missingQuestions: missing.slice(0, LOGGED_SCORING_SAMPLE),
+    unscorableCount: records.length,
+    // Records past `MAX_RECORDS` were dropped by the scorer, so the reasons below are a sample of
+    // a sample whenever this is not zero.
+    omitted,
+    serverFaultCount: serverFaults.length,
+    serverFaultReasons: [...new Set(serverFaults.map((record) => record.reason))]
+      .slice(0, LOGGED_SCORING_SAMPLE),
+  });
+}
+
+/**
+ * The one device-scored outcome worth a line: an attempt whose percent follows from its own digits
+ * and whose served list does not.
+ *
+ * `servedVerified` became a payment condition the moment this handler started reading bodies
+ * through the intake, and the client has been sending `served` since E2.10. A client bug that
+ * misbuilds the list would otherwise stop paying every player who has it, silently and with nothing
+ * anywhere to say why. Nothing else about a device-scored attempt is logged: a crafted percent is
+ * today's rule, refused today's way, and it was not logged before either.
+ */
+function reportDeviceScoredAttempt(item) {
+  if (item.payable) return;
+  if (item.event.scoreVerified !== true || item.event.servedVerified !== false) return;
+  logger.warn("attempt-intake: a device-scored attempt was refused payment on its served list", {
+    attemptId: item.event.attemptId,
+    lessonId: item.event.lessonId,
+    codeAnswerLength: stringValue(item.event.codeAnswer).length,
+    servedCount: Array.isArray(item.event.served) ? item.event.served.length : null,
+    answerCount: Array.isArray(item.event.answers) ? item.event.answers.length : null,
+  });
+}
+
+/**
+ * The fields `result_events` holds, in the order a document carries them.
+ *
+ * An allowlist, not a denylist. The intake and this handler both hang their own working state on
+ * the event — the payment rule, whether it was evaluated, what the lesson resolved to — and a
+ * denylist stores every field either of them grows next, by default, forever. Named here, a new
+ * field reaches storage only when somebody decides it should.
+ *
+ * `served` is on the list deliberately: it is the sole authority on which question sat at which
+ * position, and without it a score the server charged real money for cannot be re-derived or
+ * disputed. `scoringAuthority` is on it for the same reason — otherwise the only mark of a
+ * server-scored attempt is the *absence* of `scoreVerified`, which is indistinguishable from a row
+ * written before that field existed.
+ */
+const STORED_ATTEMPT_FIELDS = [
+  // The intake's, device-scored and server-scored alike.
+  "answers",
+  "userId",
+  "scope",
+  "ownerUid",
+  "catalogId",
+  "questId",
+  "sectionId",
+  "themeId",
+  "lessonId",
+  "lessonVersion",
+  "sourceShelf",
+  "attemptId",
+  "difficulty",
+  "codeAnswer",
+  "chargeClaims",
+  "percentScore",
+  "expectedPercentScore",
+  "scoreVerified",
+  "completedAtMs",
+  "createdAtMs",
+  "served",
+  "scoringAuthority",
+  // What this handler resolved before the transaction opened.
+  "declaredSourceShelf",
+  "resolvedQuestId",
+  "activityKind",
+  "lifeCost",
+  // What settlement decided inside it.
+  "settledCodeAnswer",
+  "settledPercentScore",
+  "standardChargesPaid",
+  "plasmaChargesPaid",
+  "chargeClaimsUnpaid",
+];
+
+/** The attempt as `result_events` stores it: the fields above, and nothing this file decides by. */
+function storedAttemptFields(event) {
+  const stored = {};
+  for (const field of STORED_ATTEMPT_FIELDS) {
+    if (event[field] !== undefined) stored[field] = event[field];
+  }
+  return stored;
 }
 
 /**
@@ -778,7 +1173,10 @@ async function applyLessonResultEvents(uid, attempts) {
 
   const now = Date.now();
   const events = attempts.map((item) => {
-    const event = normalizeLessonResultAttemptEvent(item, uid);
+    // Тело читает `attempt-intake.js`: для устройства, посчитавшего себя само, — сегодняшний путь
+    // проверка в проверку и сообщение в сообщение; для сложной попытки без цифр — заявка на то,
+    // чтобы посчитал сервер. Кто именно считает, говорит `paymentRule`.
+    const event = readSubmittedAttempt(item, uid);
     const content = contentKeysForEvent(event);
     const ref = db
       .collection(scopedCollection("result_events", event.scope))
@@ -787,15 +1185,26 @@ async function applyLessonResultEvents(uid, attempts) {
       .doc(safeDocId(event.attemptId));
     return {event, content, ref};
   });
-  // What each lesson in this batch is worth, read once before the transaction: Firestore wants
-  // every read before the first write, and a batch touches only a handful of distinct lessons.
-  const allocatedByLesson = await readAllocatedSeconds(events.map((item) => item.event.lessonId));
-  // Вид попытки — а значит, её цену — решает сервер по квесту, который попытка называет
-  // (CAP-16). До сих пор единственным именем сыгранного был `sourceShelf`, и его вычисляло
-  // устройство: под прейскурантом клиент, объявивший `home` для турнира, платил бы 33 очка вместо
-  // 500. Объявление остаётся в событии как диагностика; списание от него не зависит.
-  const contexts = await readLessonContexts(events.map((item) => item.event));
-  const economy = await readEconomyConstantsDocument();
+  // Everything this batch has to read, read before the transaction opens: Firestore wants every
+  // read before the first write. Together rather than one after another — none of the four depends
+  // on another's answer, and serialised they were four round trips where one would do.
+  const [questionsByLesson, contexts, economy, replays] = await Promise.all([
+    // What each lesson in this batch is worth, and what a server-scored attempt is judged against.
+    readLessonQuestions(events.map((item) => item.event.lessonId)),
+    // Вид попытки — а значит, её цену — решает сервер по квесту, который попытка называет
+    // (CAP-16). До сих пор единственным именем сыгранного был `sourceShelf`, и его вычисляло
+    // устройство: под прейскурантом клиент, объявивший `home` для турнира, платил бы 33 очка
+    // вместо 500. Объявление остаётся в событии как диагностика; списание от него не зависит.
+    readLessonContexts(events.map((item) => item.event)),
+    readEconomyConstantsDocument(),
+    // Какие из серверных попыток уже лежат: повтор не пересчитывается заново.
+    readStoredAttemptScores(events),
+  ]);
+  const allocatedByLesson = allocatedSecondsFrom(questionsByLesson);
+  // Попытки, которые сервер считает сам, считаются здесь — в том же слоте и по той же причине:
+  // ключи урока и вопросы приватного урока это чтения. Ни одно из них не выполняется, пока в
+  // пакете нет ни одной такой попытки, поэтому сегодняшний пакет стоит ровно столько же.
+  applyServerScoring(events, await readLessonScoringSources(events, questionsByLesson), replays);
   for (const item of events) {
     const context = contexts[lessonContextKey(item.event)];
     item.event.declaredSourceShelf = item.event.sourceShelf;
@@ -864,13 +1273,17 @@ async function applyLessonResultEvents(uid, attempts) {
     // replayed or unpaid submission cannot inflate them either.
     const ratings = {questions: 0, correct: 0, quizzes: 0};
     events.forEach((item, index) => {
-      // An attempt is paid for only when it is new, its percentScore follows from its own
-      // codeAnswer, and the player still has the life points it costs. The game is offline-first,
-      // so a legitimate attempt can arrive with an empty tank — it is stored either way, and the
-      // flag records whether it was charged.
+      // An attempt is paid for only when it is new, the intake's own payment rule holds for it,
+      // and the player still has the life points it costs. The game is offline-first, so a
+      // legitimate attempt can arrive with an empty tank — it is stored either way, and the flag
+      // records whether it was charged.
+      //
+      // `payable` is that rule already evaluated (`isPayable`, through `withServerScore`): for a
+      // device-scored attempt it is today's `scoreVerified` and the served list agreeing with the
+      // digits; for a server-scored one it is "the server scored it, with no gap of its own".
       const isNew = !existingSnapshots[index].exists;
       let lifeCharged = false;
-      if (isNew && item.event.scoreVerified) {
+      if (isNew && item.payable) {
         const charged = spendLifePoints(life.points, item.event.lifeCost, lifeCeiling);
         if (charged.affordable) {
           life = {points: charged.points, updatedAtMs: life.updatedAtMs};
@@ -908,10 +1321,18 @@ async function applyLessonResultEvents(uid, attempts) {
       transaction.set(
         item.ref,
         clean({
-          ...item.event,
+          ...storedAttemptFields(item.event),
           ...item.content,
           receivedAtMs: now,
           schemaVersion: 1,
+          // Повтор серверного прохождения хранит счёт, который уже лежит. Пересчёт идёт по
+          // сегодняшним вопросам и ключам, и переопубликованный вопрос сдвинул бы процент, за
+          // который игроку уже заплатили, — а `lessonBest` и турнирная строка остались бы с
+          // первым. Одна попытка не может иметь два счёта. `readStoredAttemptScores` обычно уже
+          // остановил пересчёт до транзакции; это — та же защита на снимке, который решает.
+          ...(!isNew && item.event.scoringAuthority === SCORING_AUTHORITY.SERVER ?
+            storedScoreFields(existingSnapshots[index]) :
+            {}),
           // Послерасчётные значения замещают присланные: оплаченный пропуск — верный ответ.
           ...(item.event.settledCodeAnswer ?
             {codeAnswer: item.event.settledCodeAnswer, percentScore: item.event.settledPercentScore} :
@@ -1898,11 +2319,15 @@ function playDeveloperApi() {
  * payload does not — so the row, not the content, is what can be deduplicated.
  */
 function questionRowFor(doc) {
-  const data = doc.data() || {};
+  return questionRowFrom(questionDocumentFor(doc));
+}
+
+/** The same row from a document already read, so one query can serve the reward and the scorer. */
+function questionRowFrom(document) {
   return {
-    id: doc.id,
-    archived: data.archived === true,
-    content: parseQuestionPayload(data),
+    id: document.id,
+    archived: document.archived === true,
+    content: parseQuestionPayload(document),
   };
 }
 
@@ -4257,73 +4682,23 @@ function normalizeRequest(data, fallbackSubmissionId) {
   };
 }
 
-/**
- * Per-question answers that came with an attempt.
- *
- * Kept permissive on purpose: a malformed row is dropped rather than failing the whole attempt,
- * because these answers feed statistics, not rewards — losing one is far better than rejecting a
- * legitimately played lesson.
+/*
+ * `normalizeLessonAnswers` stood here, beside the intake that was its only caller. Both left when
+ * `applyLessonResultEvents` started reading bodies through `attempt-intake.js`, which carries its
+ * own verbatim copy. The canonical text a test can pin that copy to now lives in
+ * `_legacy-intake-fixture.js` rather than as a declaration here that nothing calls.
  */
-function normalizeLessonAnswers(value) {
-  return listMaps(value)
-    .map((item) => ({
-      questionId: stringValue(item.questionId),
-      codeAnswerIndex: Math.max(0, numberValue(item.codeAnswerIndex, 0)),
-      score: Math.max(0, Math.min(9, numberValue(item.score, 0))),
-      answerPayload: stringValue(item.answerPayload),
-      answeredAtMs: nonNegativeEventTime(item.answeredAtMs),
-      durationMs: Math.max(0, numberValue(item.durationMs, 0)),
-      wasTimeout: Boolean(item.wasTimeout),
-    }))
-    .filter((item) => item.questionId !== "");
-}
 
-function normalizeLessonResultAttemptEvent(data, authUid) {
-  const userId = stringValue(data.userId, authUid);
-  if (userId !== authUid) {
-    throw new HttpsError("permission-denied", "Attempt userId must match authenticated uid");
-  }
-  const event = normalizeContentEvent(data, authUid);
-  const attemptId = stringValue(data.attemptId);
-  if (!attemptId) throw new HttpsError("invalid-argument", "attemptId is required");
-  const percentScore = numberValue(data.percentScore, null);
-  if (percentScore === null || percentScore < 0 || percentScore > 100) {
-    throw new HttpsError("invalid-argument", "percentScore must be in 0..100");
-  }
-  const codeAnswer = stringValue(data.codeAnswer);
-  if (!isWellFormedCodeAnswer(codeAnswer)) {
-    throw new HttpsError("invalid-argument", "codeAnswer must contain digits only");
-  }
-  const difficulty = stringValue(data.difficulty, "EASY").toUpperCase();
-  if (difficulty !== "EASY" && difficulty !== "HARD") {
-    throw new HttpsError("invalid-argument", "difficulty must be EASY or HARD");
-  }
-  // The client always derives percentScore from codeAnswer (CompleteAttemptUseCase and
-  // AbortAttemptUseCase are the only two paths), so an honest attempt always matches.
-  // A mismatch means the payload was crafted: keep the event for analysis, pay nothing.
-  const expectedPercentScore = recomputePercentScore(codeAnswer);
-  const answers = normalizeLessonAnswers(data.answers);
-  // Заявки на заряды — строкой той же длины рядом с цифрами. Испорченная маска отвергается сразу:
-  // это не перерасход, а искажённый payload, и платить по нему частично нельзя (CAP-3).
-  const chargeClaims = stringValue(data.chargeClaims) || noClaims(codeAnswer.length);
-  const claimFault = validateClaimMask(chargeClaims, codeAnswer, difficulty);
-  if (claimFault) {
-    throw new HttpsError("invalid-argument", `chargeClaims is malformed: ${claimFault}`);
-  }
-  return {
-    answers,
-    ...event,
-    attemptId,
-    difficulty,
-    codeAnswer,
-    chargeClaims,
-    percentScore,
-    expectedPercentScore,
-    scoreVerified: expectedPercentScore === percentScore,
-    completedAtMs: nonNegativeEventTime(data.completedAtMs),
-    createdAtMs: nonNegativeEventTime(data.createdAtMs),
-  };
-}
+/*
+ * `normalizeLessonResultAttemptEvent` stood here until `applyLessonResultEvents` started reading
+ * bodies through `attempt-intake.js`. Its device-scored path lives on there check for check and
+ * message for message; the pre-swap text is kept as the frozen reference in
+ * `attempt-intake.test.js`, which still runs both over the same fixtures.
+ *
+ * `normalizeLessonAnswers` above is deliberately left in place: `attempt-intake.js` copies it
+ * verbatim and `attempt-intake.test.js` compares the two source texts, so this declaration is what
+ * that copy is pinned to.
+ */
 
 function normalizeQuestRatingEvent(data, authUid) {
   const userId = stringValue(data.userId, authUid);

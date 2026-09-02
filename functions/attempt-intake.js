@@ -93,9 +93,9 @@ const {noClaims, validateClaimMask} = require("./charge-claims");
  * server-scored attempt leaves here with `codeAnswer: null` and `percentScore: null`, and a
  * consumer that passed those on would read four "shown" questions out of the string `"null"`.
  *
- * Nothing calls this yet, and nothing here scores anything — that is `attempt-scoring.js`, and the
- * `served` this module returns is the exact shape it takes. Pure, free of `firebase-admin`, and
- * testable with plain `node`.
+ * `applyLessonResultEvents` reads every submitted attempt through this module. Nothing here scores
+ * anything — that is `attempt-scoring.js`, and the `served` this module returns is the exact shape
+ * it takes. Pure, free of `firebase-admin`, and testable with plain `node`.
  */
 
 const PUBLIC_SCOPE = "public";
@@ -158,6 +158,8 @@ const REJECTION = {
   EASY_WITHOUT_DIGITS: () => "an EASY attempt must carry codeAnswer and percentScore",
   HARD_WITHOUT_SERVED: () => "a HARD attempt without codeAnswer must carry served",
   DIFFICULTY_NOT_A_STRING: () => "difficulty must be sent as a string",
+  CHARGE_CLAIMS_NOT_SCORED_HERE: () =>
+    "chargeClaims cannot be sent with an attempt the server scores",
   SERVED_NOT_A_LIST: () => "served must be a list of {questionId, codeAnswerIndex}",
   SERVED_TOO_LONG: (length) => `served has ${length} entries; at most ${MAX_SERVED_ENTRIES} are accepted`,
   SERVED_ENTRY_NOT_AN_OBJECT: (index) => `served[${index}] must be an object`,
@@ -422,6 +424,17 @@ function readServerScoredAttempt(data, event, attemptId) {
   const difficulty = readDifficulty(data);
   if (difficulty !== "HARD") throw invalid(REJECTION.EASY_WITHOUT_DIGITS());
   if (data.served === undefined || data.served === null) throw invalid(REJECTION.HARD_WITHOUT_SERVED());
+  // Refused by name rather than dropped. A charge mask is positional and the same length as the
+  // digits, and on this path the digits do not exist yet — the server writes them. So a mask sent
+  // here cannot be honoured: there is nothing to line it up against. It cannot be quietly
+  // overwritten either, because plasma skips are claimed on hard attempts and server-scored
+  // attempts are hard-only, so this is exactly where a client would try to make one. Silently
+  // replacing it with an empty mask would take the player's claim and say nothing; the whole point
+  // of a claim is that its outcome is visible. Whichever slice decides how a skip is claimed
+  // against a score the server computes will replace this refusal with an answer.
+  if (data.chargeClaims !== undefined && data.chargeClaims !== null && String(data.chargeClaims) !== "") {
+    throw invalid(REJECTION.CHARGE_CLAIMS_NOT_SCORED_HERE());
+  }
   const served = validateServed(data.served);
   const answers = normalizeLessonAnswers(data.answers);
   return {

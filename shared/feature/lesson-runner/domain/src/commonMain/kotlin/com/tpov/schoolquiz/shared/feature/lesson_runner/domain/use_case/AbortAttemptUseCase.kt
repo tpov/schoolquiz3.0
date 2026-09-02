@@ -43,6 +43,8 @@ class AbortAttemptUseCase(
         // The whole play order is served, not just the reached part: buildCodeAnswerOnAbort gave the
         // unreached questions '1' above, so they count as shown, and the served list has to say the
         // same — sending only the reached ones would shrink the denominator and inflate the percent.
+        // The server checks exactly that (`servedVerified`), and an attempt whose list disagrees
+        // with its digits is stored, marked and paid nothing.
         val saveResult = attemptRepository.save(attempt, state.answers, state.playOrder.toServedQuestions(), state.chargeClaimsOrEmpty())
         if (saveResult.isFailure) {
             val error = saveResult.exceptionOrNull()

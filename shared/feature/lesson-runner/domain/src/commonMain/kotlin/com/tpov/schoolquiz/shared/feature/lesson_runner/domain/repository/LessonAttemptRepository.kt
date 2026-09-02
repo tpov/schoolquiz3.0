@@ -45,9 +45,10 @@ interface LessonAttemptRepository {
      *
      * This is the form production callers use. [served] is the attempt's whole play order — every
      * question dealt into it, counted as shown whether or not the player reached it, per
-     * `buildCodeAnswerOnAbort`. The server drops the field today; once the wiring step reads it,
-     * each digit will be placed from this list instead of from the client's word on which positions
-     * were shown. Only the queued body carries it; the attempt row does not.
+     * `buildCodeAnswerOnAbort`. The server reads it: every digit of a hard attempt it scores itself
+     * is placed from this list, and on an attempt this device scored the list is checked against the
+     * digits — one that disagrees is stored, marked and paid nothing. Only the queued body carries
+     * it; the attempt row does not.
      *
      * Defaults to [save] with answers so fakes that only care about attempts keep working.
      */

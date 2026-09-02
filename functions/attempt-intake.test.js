@@ -45,6 +45,7 @@ const FIXED_NOW = 1_700_000_000_000;
 
 const INDEX_SOURCE = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
 const INTAKE_SOURCE = fs.readFileSync(path.join(__dirname, "attempt-intake.js"), "utf8");
+const FIXTURE_SOURCE = fs.readFileSync(path.join(__dirname, "_legacy-intake-fixture.js"), "utf8");
 
 // ─── Cutting functions out of source text ───────────────────────────────────────────────────────
 
@@ -64,26 +65,46 @@ function extractFunction(source, name) {
   return source.slice(start + 1, end + 2);
 }
 
-/** The helpers the legacy path reads through, and which `attempt-intake.js` copies verbatim. */
+/**
+ * The helpers the legacy path reads through, and which `attempt-intake.js` copies verbatim, each
+ * beside the file that holds the text its copy is pinned to.
+ *
+ * Seven are still live in `index.js`, so pinning to them is pinning to running code.
+ * `normalizeLessonAnswers` is not: its only caller was the intake this module replaced, and a
+ * declaration kept in `index.js` purely so this suite could point at it would be dead code that
+ * looks deletable and takes the pin with it when someone deletes it. Its canonical text lives in
+ * `_legacy-intake-fixture.js`, which this suite keeps honest from the other side — see
+ * `FIXTURE_HELPERS`.
+ */
 const VERBATIM_HELPERS = [
-  "stringValue",
-  "nullableString",
-  "numberValue",
-  "listMaps",
-  "nonNegativeEventTime",
-  "normalizeScope",
-  "normalizeContentEvent",
-  "normalizeLessonAnswers",
+  ["stringValue", () => INDEX_SOURCE],
+  ["nullableString", () => INDEX_SOURCE],
+  ["numberValue", () => INDEX_SOURCE],
+  ["listMaps", () => INDEX_SOURCE],
+  ["nonNegativeEventTime", () => INDEX_SOURCE],
+  ["normalizeScope", () => INDEX_SOURCE],
+  ["normalizeContentEvent", () => INDEX_SOURCE],
+  ["normalizeLessonAnswers", () => FIXTURE_SOURCE],
 ];
 
-/** The helpers as `index.js` declares them, evaluated in a scope of their own. */
+/**
+ * The helpers the fixture carries so that its `normalizeLessonAnswers` can run and be read.
+ *
+ * Compared against `index.js`, where all four are live. Without this the fixture would be a copy
+ * pinned to nothing, free to drift from the server while still agreeing with the intake's copy —
+ * which is the exact failure the whole byte-for-byte apparatus exists to prevent.
+ */
+const FIXTURE_HELPERS = ["stringValue", "numberValue", "listMaps", "nonNegativeEventTime"];
+
+/** The helpers as their canonical sources declare them, evaluated in a scope of their own. */
 function loadIndexHelpers() {
+  const names = VERBATIM_HELPERS.map(([name]) => name);
   const body = [
     "\"use strict\";",
     "const PUBLIC_SCOPE = \"public\";",
     "const PRIVATE_SCOPE = \"private\";",
-    ...VERBATIM_HELPERS.map((name) => extractFunction(INDEX_SOURCE, name)),
-    `return {${VERBATIM_HELPERS.join(", ")}};`,
+    ...VERBATIM_HELPERS.map(([name, source]) => extractFunction(source(), name)),
+    `return {${names.join(", ")}};`,
   ].join("\n");
   // eslint-disable-next-line no-new-func
   return new Function("HttpsError", body)(HttpsError);
@@ -355,28 +376,63 @@ const BYTE_FOR_BYTE_FIXTURES = [
 
 // ═══ 1. Today's path, to the byte ═══════════════════════════════════════════════════════════════
 
-test("the verbatim helper copies in attempt-intake.js match index.js byte for byte", () => {
-  for (const name of VERBATIM_HELPERS) {
+test("the verbatim helper copies in attempt-intake.js match their originals byte for byte", () => {
+  for (const [name, source] of VERBATIM_HELPERS) {
     assert.strictEqual(
       extractFunction(INTAKE_SOURCE, name),
-      extractFunction(INDEX_SOURCE, name),
-      `${name} in attempt-intake.js has drifted from index.js`,
+      extractFunction(source(), name),
+      `${name} in attempt-intake.js has drifted from the text it is pinned to`,
     );
   }
+  // The fixture's own copies, against the live originals — so the file the eighth helper is pinned
+  // to cannot itself drift away from the server unnoticed.
+  for (const name of FIXTURE_HELPERS) {
+    assert.strictEqual(
+      extractFunction(FIXTURE_SOURCE, name),
+      extractFunction(INDEX_SOURCE, name),
+      `${name} in _legacy-intake-fixture.js has drifted from index.js`,
+    );
+  }
+  // And it is a fixture, not a second implementation: nothing may call it but a test.
+  assert.ok(
+    !/require\(["'][^"']*_legacy-intake-fixture/.test(INDEX_SOURCE),
+    "index.js requires the frozen fixture; it is a record of what was, not code to run",
+  );
   for (const line of ["const PUBLIC_SCOPE = \"public\";", "const PRIVATE_SCOPE = \"private\";"]) {
     assert.ok(INDEX_SOURCE.includes(line), `index.js no longer declares ${line}`);
     assert.ok(INTAKE_SOURCE.includes(line), `attempt-intake.js no longer declares ${line}`);
   }
 });
 
-test("the frozen reference is still today's intake", () => {
-  assert.strictEqual(
-    extractFunction(INDEX_SOURCE, "normalizeLessonResultAttemptEvent"),
-    normalizeLessonResultAttemptEvent.toString(),
-    "normalizeLessonResultAttemptEvent in index.js differs from the frozen copy in this suite. " +
-      "If today's intake changed on purpose, refresh the copy and re-check every fixture; " +
-      "if the intake was swapped over to readSubmittedAttempt, retire this assertion — the copy " +
-      "then stands as the pre-swap reference and nothing else here needs to change.",
+/**
+ * Retired: `the frozen reference is still today's intake`.
+ *
+ * It compared the copy above against `normalizeLessonResultAttemptEvent` in `index.js` and existed
+ * for exactly one purpose — to go red the moment the handler was swapped over, so that a copy
+ * claiming to be "today" could not quietly stop being it. `applyLessonResultEvents` now reads its
+ * bodies through `readSubmittedAttempt` and that function no longer exists, so the assertion has
+ * nothing left to compare and its job is done.
+ *
+ * What replaced it is the case below. The copy above is no longer "today's intake" — it is the
+ * **pre-swap reference**, the last text the old handler ran, and the fixture comparison that
+ * follows is what still proves the module reproduces it. That comparison is only worth anything
+ * while the swap holds, so the swap itself is what is now pinned: `index.js` must call
+ * `readSubmittedAttempt` and must not declare an intake of its own. A second intake reappearing —
+ * restored by a merge, or written fresh — is the one way the fixture comparison below could go on
+ * passing while the handler judged attempts by something else entirely.
+ */
+test("index.js reads submitted attempts through this module and declares no intake of its own", () => {
+  assert.ok(
+    INDEX_SOURCE.includes("readSubmittedAttempt(item, uid)"),
+    "applyLessonResultEvents no longer reads attempts through readSubmittedAttempt. The frozen " +
+      "copy below is the pre-swap reference for an intake index.js has stopped using; find what " +
+      "reads bodies now and pin that instead of this suite passing on a comparison to nothing.",
+  );
+  assert.ok(
+    !/\nfunction normalizeLessonResultAttemptEvent\(/.test(INDEX_SOURCE),
+    "index.js declares normalizeLessonResultAttemptEvent again. Either the swap was reverted — in " +
+      "which case restore the byte-for-byte source comparison this case replaced — or there are " +
+      "now two intakes, and the fixture comparison below proves nothing about the one that runs.",
   );
 });
 
@@ -677,6 +733,31 @@ test("server-scored: a sparse served list — the honest shape of a hard attempt
     served: [{codeAnswerIndex: 4, questionId: "q4"}, {codeAnswerIndex: 5, questionId: "q5"}],
   }), UID);
   assert.deepStrictEqual(late.served.map((entry) => entry.codeAnswerIndex), [4, 5]);
+});
+
+test("server-scored: a charge mask is refused by name rather than dropped", () => {
+  // A mask is positional and as long as the digits, and on this path the digits do not exist yet.
+  // Nothing here can honour it, and overwriting it in silence would take a claim the player made
+  // and answer nothing — on the one difficulty where plasma skips are actually claimed.
+  assert.strictEqual(
+    REJECTION.CHARGE_CLAIMS_NOT_SCORED_HERE(),
+    "chargeClaims cannot be sent with an attempt the server scores",
+  );
+  for (const chargeClaims of ["....P", ".", "PPPPP", 7]) {
+    expectRejection(
+      () => readSubmittedAttempt(serverScoredBody({chargeClaims}), UID),
+      REJECTION.CHARGE_CLAIMS_NOT_SCORED_HERE(),
+    );
+  }
+  // An absent, null or empty mask is not a claim, and is what every body will actually carry.
+  for (const chargeClaims of [undefined, null, ""]) {
+    const attempt = readSubmittedAttempt(serverScoredBody({chargeClaims}), UID);
+    assert.strictEqual(attempt.scoringAuthority, SCORING_AUTHORITY.SERVER);
+    assert.ok(!("chargeClaims" in attempt), "the intake invented a mask it has no digits for");
+  }
+  // Untouched on the device-scored path: there the mask is checked against real digits, as today.
+  const device = readSubmittedAttempt(body({chargeClaims: "S...".slice(0, DIGITS.length)}), UID);
+  assert.strictEqual(device.chargeClaims.length, DIGITS.length);
 });
 
 test("server-scored: a difficulty that is not a string is refused, on the new path only", () => {
@@ -1147,6 +1228,7 @@ const REJECTION_ARGUMENTS = {
   EASY_WITHOUT_DIGITS: [],
   HARD_WITHOUT_SERVED: [],
   DIFFICULTY_NOT_A_STRING: [],
+  CHARGE_CLAIMS_NOT_SCORED_HERE: [],
   SERVED_NOT_A_LIST: [],
   SERVED_TOO_LONG: [MAX_SERVED_ENTRIES + 1],
   SERVED_ENTRY_NOT_AN_OBJECT: [1],

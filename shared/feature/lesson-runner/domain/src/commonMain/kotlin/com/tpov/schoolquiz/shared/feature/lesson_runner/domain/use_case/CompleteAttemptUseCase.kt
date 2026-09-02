@@ -42,9 +42,11 @@ class CompleteAttemptUseCase(
             percentScore = percentScore,
         )
 
-        // Every question dealt into the play order is served. The server drops the list today; once
-        // the wiring step reads it, each digit will be placed from here rather than from the client's
-        // word on which positions were shown.
+        // Every question dealt into the play order is served. The server reads this list: it places
+        // every digit of a hard attempt it scores itself, and on an attempt this device scored it is
+        // checked against the digits — a list that disagrees with them is stored, marked and paid
+        // nothing (`servedVerified` in `functions/attempt-intake.js`). A list built wrong here is a
+        // list that stops paying the player, so it is not a diagnostic field.
         val saveResult = attemptRepository.save(attempt, state.answers, state.playOrder.toServedQuestions(), state.chargeClaimsOrEmpty())
         if (saveResult.isFailure) {
             val error = saveResult.exceptionOrNull()

@@ -8,8 +8,8 @@ const {UNSCORABLE} = require("./attempt-scoring");
  * `scoreAttempt` wants a flat list of questions whose *length* is the length of the codeAnswer and
  * whose entries are keyed by `id`. What the server has is a lesson's question documents out of
  * Firestore — a different shape, a different membership, and no positions at all. Nothing turned
- * one into the other, so the handler that will call the scorer would have written that translation
- * inline, in a file no test reaches.
+ * one into the other, so the handler that calls the scorer would have written that translation
+ * inline, in a file no test reaches. `serverScoringFor` in `index.js` calls this instead.
  *
  * ---
  *

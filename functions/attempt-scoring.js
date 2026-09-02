@@ -20,8 +20,9 @@ const {DOCUMENT_VERSION, REASON: KEY_STORE_REASON} = require("./question-key-sto
  * Nothing turned the three into the two numbers the rest of the server runs on, so every caller
  * that wanted them would have composed the three for itself — and composed them differently.
  *
- * Nothing calls it yet. The submit handler starts calling it when the client stops sending a score
- * of its own; until then it is pure, free of `firebase-admin`, and testable with plain `node`.
+ * `applyLessonResultEvents` calls it, through `serverScoringFor`, for every submitted attempt that
+ * carried no score of its own. It stays pure, free of `firebase-admin`, and testable with plain
+ * `node`: the handler reads the lesson's questions and keys and hands them over as arguments.
  *
  * ---
  *
@@ -198,6 +199,21 @@ const UNSCORABLE = {
   QUESTION_MISSING: "question-missing",
 
   // ----- the attempt cannot be scored at all; our gap, except where the entry says otherwise -----
+  /**
+   * Not one question the attempt was dealt is in the pool.
+   *
+   * The sibling of `QUESTION_MISSING`, and the reason the two are different reasons: one served id
+   * with no document behind it is indistinguishable from an id the device invented, so it is filed
+   * against the client and costs that one position a `'1'`. A pool that answers to **none** of them
+   * is not that. A client can invent a few entries; it cannot make an entire lesson vanish, and the
+   * shapes that produce this are all ours — a lesson read from the wrong collection, a query that
+   * came back empty, a republish that moved every document.
+   *
+   * Filed as ours it refuses the attempt: nothing paid **and nothing charged**. Left as the
+   * client's it did the opposite — every position `'1'`, `scorable: true`, a percent of zero, and
+   * the player charged full price for a run the server simply failed to read.
+   */
+  LESSON_MISSING: "lesson-missing",
   /** No `served` was supplied, so there is no denominator and no honest percent to return. */
   SERVED_UNKNOWN: "served-unknown",
   /**
@@ -273,6 +289,10 @@ const FAULT_OF = {
   // them apart. Filed as ours it refused the attempt — nothing paid and nothing charged — so one
   // invented entry was worth more than playing honestly. See the reason's own note.
   [UNSCORABLE.QUESTION_MISSING]: FAULT.CLIENT,
+
+  // Ours, unlike its sibling above: no device can empty a lesson, so a pool holding none of the
+  // questions an attempt was dealt is a read of ours that went wrong. See the reason's own note.
+  [UNSCORABLE.LESSON_MISSING]: FAULT.SERVER,
 
   [UNSCORABLE.SERVED_UNKNOWN]: FAULT.SERVER,
   // The client's, not ours: `served` is entirely device-supplied, and a position outside the pool
@@ -609,6 +629,16 @@ function scoreAttempt(input) {
     return refused(records);
   }
   const publicHalfRedacted = keyDocument !== null && keyDocument.publicHalfRedacted === true;
+
+  // Before a single position is decided: a pool that answers to none of the questions this attempt
+  // was dealt is not a client inventing entries, it is a lesson we failed to read, and the walk
+  // below would turn it into a fully scored `'1111…'` at zero percent — charged, and filed against
+  // the player. One missing question out of several stays `QUESTION_MISSING` and stays the
+  // client's, because there the invented entry and the lost document are still the same input.
+  if (served.length > 0 && served.every(({questionId}) => !pool.byId.has(questionId))) {
+    records.add("", -1, UNSCORABLE.LESSON_MISSING, quote(served.length));
+    return refused(records);
+  }
 
   const servedIds = new Set(served.map((entry) => entry.questionId));
   const byQuestionId = readAnswers(answers, servedIds, records);
