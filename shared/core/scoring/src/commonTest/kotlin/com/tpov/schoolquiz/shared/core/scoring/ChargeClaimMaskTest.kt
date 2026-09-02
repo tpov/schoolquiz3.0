@@ -10,6 +10,20 @@ import kotlin.test.assertNull
 class ChargeClaimMaskTest {
 
     @Test
+    fun `a claim lands on the position it was made for, and twice is once`() {
+        val once = ChargeClaimMask.none(4).with(2, ChargeClaimMask.Claim.PLASMA_SKIP)
+
+        assertEquals("..P.", once.raw)
+        assertEquals("..P.", once.with(2, ChargeClaimMask.Claim.PLASMA_SKIP).raw)
+        assertEquals("S.P.", once.with(0, ChargeClaimMask.Claim.STANDARD_HINT).raw)
+    }
+
+    @Test
+    fun `a claim outside the mask is refused rather than silently dropped`() {
+        assertFailsWith<IllegalArgumentException> { ChargeClaimMask.none(2).with(5, ChargeClaimMask.Claim.STANDARD_HINT) }
+    }
+
+    @Test
     fun `given a paid skip then the position becomes fully correct`() {
         val settled = settleClaims(ChargeClaimMask("..P."), CodeAnswer("9905"), standardAvailable = 0, plasmaAvailable = 1)
 

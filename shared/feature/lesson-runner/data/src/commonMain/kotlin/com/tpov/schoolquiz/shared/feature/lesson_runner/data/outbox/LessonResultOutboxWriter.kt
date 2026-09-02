@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox
 
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
@@ -46,6 +47,7 @@ interface LessonResultOutboxWriter {
         attempt: Attempt,
         answers: List<QuestionAnswerEntity> = emptyList(),
         served: List<ServedQuestion>? = null,
+        claims: ChargeClaimMask? = null,
     ): OutboxEntity? = null
 
     /** Строка очереди для оценки квеста. */
@@ -69,6 +71,7 @@ class RoomLessonResultOutboxWriter(
         attempt: Attempt,
         answers: List<QuestionAnswerEntity>,
         served: List<ServedQuestion>?,
+        claims: ChargeClaimMask?,
     ): OutboxEntity {
         served?.let { requireConsistent(attempt, answers, it) }
         val context = resolveContentContext(attempt.lessonId.value)
@@ -84,6 +87,9 @@ class RoomLessonResultOutboxWriter(
                 put("percentScore", attempt.percentScore.raw)
                 put("completedAtMs", attempt.completedAt)
                 put("createdAtMs", createdAtMs)
+                // Ключ только когда заявки есть: попытка без них обязана выглядеть на сервере ровно
+                // так же, как выглядела до появления маски.
+                claims?.takeIf { it.hasClaims }?.let { put("chargeClaims", it.raw) }
                 put(
                     "answers",
                     buildJsonArray {

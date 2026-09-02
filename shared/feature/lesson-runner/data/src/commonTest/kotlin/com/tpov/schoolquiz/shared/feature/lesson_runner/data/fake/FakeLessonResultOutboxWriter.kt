@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake
 
 import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
@@ -17,6 +18,8 @@ class FakeLessonResultOutboxWriter : LessonResultOutboxWriter {
         val answers: List<QuestionAnswerEntity>,
         /** `null` — список не передан вовсе, что для сервера «неизвестно», а не «ничего». */
         val served: List<ServedQuestion>?,
+        /** Заявки на заряды; `null` или пустая маска — трат не было. */
+        val claims: ChargeClaimMask? = null,
     )
 
     val attemptCalls = mutableListOf<AttemptCall>()
@@ -26,8 +29,9 @@ class FakeLessonResultOutboxWriter : LessonResultOutboxWriter {
         attempt: Attempt,
         answers: List<QuestionAnswerEntity>,
         served: List<ServedQuestion>?,
+        claims: ChargeClaimMask?,
     ): OutboxEntity? {
-        attemptCalls += AttemptCall(attempt, answers, served)
+        attemptCalls += AttemptCall(attempt, answers, served, claims)
         return null
     }
 }

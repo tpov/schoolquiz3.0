@@ -16,12 +16,14 @@ import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.autoAnswerOnTimeout
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.claimCharge
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeBestStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeHardUnlocked
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTimer
@@ -251,11 +253,28 @@ class DefaultLessonRunnerRootComponent(
         }
     }
 
+    /**
+     * Игрок тратит заряд, чтобы увидеть ответ.
+     *
+     * Локально уменьшается только показанное число: сам заряд списывает сервер при отправке
+     * результата (CAP-3), а здесь остаётся заявка — отметка в маске против позиции этого вопроса.
+     * Без неё трата не доезжала бы вовсе: до сих пор она жила в памяти экрана и исчезала вместе с
+     * ним.
+     *
+     * Заявка ставится только на лёгкой попытке. Подсказку покупает обычный заряд, а на сложном
+     * вопросе тратится плазменный — и он не показывает ответ, а пропускает вопрос (CAP-1). Пока
+     * такого управления нет, сложная попытка ведёт себя как прежде и не тарифицируется: заявить
+     * пропуск там, где ответ был показан, значит соврать серверу.
+     */
     @Suppress("ReturnCount")
     override fun hintRequested(): Boolean {
         val current = stateHolder.uiState.value as? RunnerUiState.Question ?: return false
         val remaining = current.lives ?: return false
         if (remaining <= 0) return false
+        val ready = stateHolder.domainState as? RunnerState.Ready ?: return false
+        if (ready.mode == Difficulty.EASY) {
+            stateHolder.domainState = claimCharge(ready, ChargeClaimMask.Claim.STANDARD_HINT)
+        }
         val updated = remaining - 1
         stateHolder.livesRemainingHearts = updated
         stateHolder.uiState.value = current.copy(lives = updated)

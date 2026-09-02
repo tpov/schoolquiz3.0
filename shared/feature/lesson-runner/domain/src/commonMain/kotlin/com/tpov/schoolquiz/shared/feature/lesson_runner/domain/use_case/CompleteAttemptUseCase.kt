@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case
 
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.chargeClaimsOrEmpty
 import com.tpov.schoolquiz.shared.core.scoring.computePercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
@@ -44,7 +45,7 @@ class CompleteAttemptUseCase(
         // Every question dealt into the play order is served. The server drops the list today; once
         // the wiring step reads it, each digit will be placed from here rather than from the client's
         // word on which positions were shown.
-        val saveResult = attemptRepository.save(attempt, state.answers, state.playOrder.toServedQuestions())
+        val saveResult = attemptRepository.save(attempt, state.answers, state.playOrder.toServedQuestions(), state.chargeClaimsOrEmpty())
         if (saveResult.isFailure) {
             val error = saveResult.exceptionOrNull()
                 ?.let { SaveError.IoFailure(it) }

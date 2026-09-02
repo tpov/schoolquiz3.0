@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository
 
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeBestStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeHardUnlocked
@@ -55,6 +56,20 @@ interface LessonAttemptRepository {
         answers: List<AnsweredQuestion>,
         served: List<ServedQuestion>,
     ): Result<Unit> = save(attempt, answers)
+
+    /**
+     * То же плюс [claims] — заявки на заряды по позициям `codeAnswer`.
+     *
+     * Заявка едет только в строку очереди, в той же транзакции, что и сама попытка: иначе перезапуск
+     * между сохранением и отправкой стирал бы её, и подсказка оказывалась бы бесплатной. В таблице
+     * попыток заявке места не нужно — локально её никто не читает, платит по ней сервер.
+     */
+    suspend fun save(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+        served: List<ServedQuestion>,
+        claims: ChargeClaimMask?,
+    ): Result<Unit> = save(attempt, answers, served)
 
     /**
      * Observes all attempts for [userId] + [lessonId], sorted by completedAt DESC.

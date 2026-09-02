@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
@@ -146,6 +147,35 @@ fun selectSubset(
  * Unanswered subset positions (indexInPool and beyond) → '1'.
  * Out-of-subset positions remain '0'. Already answered positions stay as-is.
  */
+/**
+ * Заявки, сделанные в этом прогоне, — пустая маска, если ни одной.
+ *
+ * Пустую отдаём, а не `null`: маска той же длины, что `codeAnswer`, и сервер сверяет длины.
+ */
+fun RunnerState.Ready.chargeClaimsOrEmpty(): ChargeClaimMask =
+    chargeClaims ?: ChargeClaimMask.none(codeAnswer.raw.length)
+
+/**
+ * Отмечает заявку на заряд за текущий вопрос.
+ *
+ * Вид определяет сложность попытки, а не вызывающий: обычный заряд покупает подсказку на лёгком
+ * вопросе, плазменный — пропуск сложного, и перепутать их значит заявить пропуск там, где ответ был
+ * показан (CAP-1). Списания здесь не происходит: это заявка, и платит по ней сервер при отправке.
+ */
+fun claimCharge(
+    state: RunnerState.Ready,
+    claim: ChargeClaimMask.Claim,
+): RunnerState.Ready {
+    val expected =
+        when (state.mode) {
+            Difficulty.EASY -> ChargeClaimMask.Claim.STANDARD_HINT
+            Difficulty.HARD -> ChargeClaimMask.Claim.PLASMA_SKIP
+        }
+    require(claim == expected) { "На попытке ${state.mode} заявка бывает только $expected, получено $claim" }
+    val index = state.playOrder[state.indexInPool].codeAnswerIndex
+    return state.copy(chargeClaims = state.chargeClaimsOrEmpty().with(index, claim))
+}
+
 fun buildCodeAnswerOnAbort(state: RunnerState.Ready): CodeAnswer {
     val chars = state.codeAnswer.raw.toCharArray()
     for (i in state.indexInPool until state.playOrder.size) {

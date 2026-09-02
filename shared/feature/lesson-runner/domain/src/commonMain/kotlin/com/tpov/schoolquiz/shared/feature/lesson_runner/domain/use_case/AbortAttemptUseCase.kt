@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case
 
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.chargeClaimsOrEmpty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.buildCodeAnswerOnAbort
 import com.tpov.schoolquiz.shared.core.scoring.computePercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
@@ -42,7 +43,7 @@ class AbortAttemptUseCase(
         // The whole play order is served, not just the reached part: buildCodeAnswerOnAbort gave the
         // unreached questions '1' above, so they count as shown, and the served list has to say the
         // same — sending only the reached ones would shrink the denominator and inflate the percent.
-        val saveResult = attemptRepository.save(attempt, state.answers, state.playOrder.toServedQuestions())
+        val saveResult = attemptRepository.save(attempt, state.answers, state.playOrder.toServedQuestions(), state.chargeClaimsOrEmpty())
         if (saveResult.isFailure) {
             val error = saveResult.exceptionOrNull()
                 ?.let { SaveError.IoFailure(it) }

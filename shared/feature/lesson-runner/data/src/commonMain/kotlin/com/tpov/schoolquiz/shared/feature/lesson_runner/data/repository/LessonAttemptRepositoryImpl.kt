@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository
 
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionEntity
@@ -21,16 +22,24 @@ class LessonAttemptRepositoryImpl(
     private val repetitionDao: QuestionRepetitionDao? = null,
 ) : LessonAttemptRepository {
 
-    override suspend fun save(attempt: Attempt): Result<Unit> = persist(attempt, emptyList(), served = null)
+    override suspend fun save(attempt: Attempt): Result<Unit> =
+        persist(attempt, emptyList(), served = null, claims = null)
 
     override suspend fun save(attempt: Attempt, answers: List<AnsweredQuestion>): Result<Unit> =
-        persist(attempt, answers, served = null)
+        persist(attempt, answers, served = null, claims = null)
 
     override suspend fun save(
         attempt: Attempt,
         answers: List<AnsweredQuestion>,
         served: List<ServedQuestion>,
-    ): Result<Unit> = persist(attempt, answers, served)
+    ): Result<Unit> = persist(attempt, answers, served, claims = null)
+
+    override suspend fun save(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+        served: List<ServedQuestion>,
+        claims: ChargeClaimMask?,
+    ): Result<Unit> = persist(attempt, answers, served, claims)
 
     /**
      * [served] is null only through the two fake-only conveniences above: they queue a body without
@@ -40,13 +49,14 @@ class LessonAttemptRepositoryImpl(
         attempt: Attempt,
         answers: List<AnsweredQuestion>,
         served: List<ServedQuestion>?,
+        claims: ChargeClaimMask?,
     ): Result<Unit> = runCatching {
         val answerEntities = answers.map { it.toEntity(attempt) }
         val repetitionEntities = buildRepetitionStates(attempt, answers)
         // Resolved before the transaction because it reads the lesson's ancestors; the row itself
         // is written inside it, so the attempt can never be saved without being queued. The served
         // list goes only into that row: the attempt row keeps its shape.
-        val outboxRow = outboxWriter.buildAttemptRow(attempt, answerEntities, served)
+        val outboxRow = outboxWriter.buildAttemptRow(attempt, answerEntities, served, claims)
 
         attemptDao.saveAttemptWithAnswers(
             attempt = attempt.toEntity(),

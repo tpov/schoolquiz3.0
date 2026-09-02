@@ -30,6 +30,29 @@ value class ChargeClaimMask(val raw: String) {
 
     val hasClaims: Boolean get() = raw.any { it != NONE }
 
+    /**
+     * Заявка одного вида, с её символом в маске.
+     *
+     * Перечислением, а не голым `Char`: заявку ставит раннер, а вид её решает сложность попытки, и
+     * перепутать `S` с `P` в вызове — это заявить пропуск там, где была подсказка.
+     */
+    enum class Claim(val symbol: Char) {
+        /** Обычный заряд: подсказка на лёгком вопросе. */
+        STANDARD_HINT(ChargeClaimMask.STANDARD),
+
+        /** Плазменный заряд: пропуск сложного вопроса. */
+        PLASMA_SKIP(ChargeClaimMask.PLASMA),
+    }
+
+    /** Ставит заявку [claim] на позицию [index]. Повторная заявка на ту же позицию не удваивается. */
+    fun with(
+        index: Int,
+        claim: Claim,
+    ): ChargeClaimMask {
+        require(index in raw.indices) { "index $index is outside the mask of length ${raw.length}" }
+        return ChargeClaimMask(raw.toCharArray().also { it[index] = claim.symbol }.concatToString())
+    }
+
     companion object {
         const val NONE: Char = '.'
         const val STANDARD: Char = 'S'

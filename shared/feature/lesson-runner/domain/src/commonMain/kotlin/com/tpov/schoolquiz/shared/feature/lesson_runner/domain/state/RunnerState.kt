@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
@@ -53,6 +54,14 @@ sealed interface RunnerState {
         val questionStartedAtMs: Long = 0L,
         /** Answers recorded so far, persisted together with the attempt when the lesson ends. */
         val answers: List<AnsweredQuestion> = emptyList(),
+        /**
+         * Заявки на заряды по позициям [codeAnswer] — `null`, пока ни одной не было.
+         *
+         * Заявка, а не списание (CAP-3): игрок нажал «потратить заряд», а списывает сервер при
+         * отправке результата. Хранится рядом с цифрами, а не внутри них: `codeAnswer` остаётся
+         * цифрами, и попытка без заявок ведёт себя ровно как сегодня.
+         */
+        val chargeClaims: ChargeClaimMask? = null,
     ) : RunnerState
 
     /** Terminal success: attempt saved, optional rating prompt shown. */
