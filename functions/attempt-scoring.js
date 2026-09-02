@@ -62,6 +62,15 @@ const {DOCUMENT_VERSION, REASON: KEY_STORE_REASON} = require("./question-key-sto
  * `percentScore` both null, and the caller decides — the way `question-key-store.js` returns its
  * refusals rather than acting on them. There is no number to be accidentally paid on.
  *
+ * Unscorable and *whose fault* are two questions, not one. `SERVED_MALFORMED` is the case that
+ * proves it: a `served` list the device made up — a position outside the pool, a repeated id —
+ * leaves no denominator, so the attempt is refused; but nothing the server does can produce it, so
+ * the fault is the client's. Filed as a server fault it made a crafted body free: under the
+ * server-scored payment rule a server fault means nothing paid **and nothing charged**, so
+ * `codeAnswerIndex: 999` bought an uncharged hard attempt, logged as our own gap. The refusal is
+ * therefore driven by whether the input could be *read*, and `FAULT_OF` answers the other question
+ * separately.
+ *
  * ---
  *
  * Four further decisions carry the file:
@@ -164,10 +173,18 @@ const UNSCORABLE = {
   /** The answer claims a position other than the one its question was served at. */
   INDEX_DISAGREES: "index-disagrees",
 
-  // ----- our gap: the attempt cannot be scored at all -----
+  // ----- the attempt cannot be scored at all; our gap, except where the entry says otherwise -----
   /** No `served` was supplied, so there is no denominator and no honest percent to return. */
   SERVED_UNKNOWN: "served-unknown",
-  /** `served` was supplied but is not a list of `{codeAnswerIndex, questionId}` inside the pool. */
+  /**
+   * `served` was supplied but is not a list of `{codeAnswerIndex, questionId}` inside the pool.
+   *
+   * Filed under our gaps because the attempt cannot be scored either way, but the *fault* is the
+   * client's: every field of `served` comes off the device, and nothing the server does can produce
+   * a position outside its own pool. See `FAULT_OF` — this reason is the one entry in this block
+   * that is not a server fault, and the split matters, because a server fault means the player is
+   * not charged. `codeAnswerIndex: 999` used to buy an uncharged hard attempt filed as our failure.
+   */
   SERVED_MALFORMED: "served-malformed",
   /** The pool has a question with no id, or two questions with one id. */
   POOL_MALFORMED: "pool-malformed",
@@ -231,7 +248,10 @@ const FAULT_OF = {
   [UNSCORABLE.INDEX_DISAGREES]: FAULT.CLIENT,
 
   [UNSCORABLE.SERVED_UNKNOWN]: FAULT.SERVER,
-  [UNSCORABLE.SERVED_MALFORMED]: FAULT.SERVER,
+  // The client's, not ours: `served` is entirely device-supplied, and a position outside the pool
+  // is a crafted body, not a gap on our side. Filed as a server fault it bought the crafted attempt
+  // its life point back — nothing paid, and nothing charged either.
+  [UNSCORABLE.SERVED_MALFORMED]: FAULT.CLIENT,
   [UNSCORABLE.POOL_MALFORMED]: FAULT.SERVER,
   [UNSCORABLE.QUESTION_MISSING]: FAULT.SERVER,
   [UNSCORABLE.MALFORMED_QUESTION]: FAULT.SERVER,
@@ -544,12 +564,19 @@ function scoreAttempt(input) {
   const pool = readPool(questions);
   const served = readServed(input && input.served, questions.length);
   const keys = readKeys(keyDocument);
-  for (const [value, id] of [[pool, ""], [served, ""], [keys, ""]]) {
-    if (typeof value === "string") records.add(id, -1, value, null);
-  }
   // A pool, a subset or a document that is not what it claims makes every position below
   // meaningless, so the walk is not attempted at all rather than reported position by position.
-  if (records.blocked) return refused(records);
+  // Whether it is refused turns on being *unreadable*, not on whose fault that is: `served` outside
+  // the pool is the client's fault and still leaves no denominator to divide by. Reading `blocked`
+  // here instead would walk `served` while it is still the reason string `readServed` returned.
+  let unreadable = false;
+  for (const value of [pool, served, keys]) {
+    if (typeof value === "string") {
+      records.add("", -1, value, null);
+      unreadable = true;
+    }
+  }
+  if (unreadable) return refused(records);
 
   if (keyDocument !== null && pool.lessonId !== "" && keyDocument.lessonId !== pool.lessonId) {
     records.add("", -1, UNSCORABLE.DOCUMENT_MISMATCHED, quote(keyDocument.lessonId));
