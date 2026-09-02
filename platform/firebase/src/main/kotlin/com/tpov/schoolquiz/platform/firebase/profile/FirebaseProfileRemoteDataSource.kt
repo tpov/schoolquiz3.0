@@ -79,6 +79,8 @@ class FirebaseProfileRemoteDataSource(
             // Already regenerated server-side, so the client shows it as-is.
             lifePoints = long(LIFE_POINTS).toInt().coerceAtLeast(0),
             lifePointsUpdatedAtMs = long(LIFE_POINTS_UPDATED_AT_MS).coerceAtLeast(0L),
+            plasmaPoints = long(PLASMA_POINTS).toInt().coerceAtLeast(0),
+            plasmaPointsUpdatedAtMs = long(PLASMA_POINTS_UPDATED_AT_MS).coerceAtLeast(0L),
             activityRatings =
                 ProfileActivityRatings(
                     questionsAsked = long(RATING_QUESTIONS).toInt().coerceAtLeast(0),
@@ -148,6 +150,8 @@ class FirebaseProfileRemoteDataSource(
         const val GOLD_HEARTS = "goldHearts"
         const val LIFE_POINTS = "lifePoints"
         const val LIFE_POINTS_UPDATED_AT_MS = "lifePointsUpdatedAtMs"
+        const val PLASMA_POINTS = "plasmaPoints"
+        const val PLASMA_POINTS_UPDATED_AT_MS = "plasmaPointsUpdatedAtMs"
         const val BOX_COUNT = "boxCount"
         const val BOX_STREAK_DAYS = "boxStreakDays"
         const val NEXT_BOX_AT_MS = "nextBoxAtMs"

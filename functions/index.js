@@ -1710,6 +1710,7 @@ exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
         nolics: balance.nolics,
         standardHearts: balance.standardHearts,
         goldHearts: balance.goldHearts,
+        plasmaPoints: balance.plasmaPoints,
         gold: balance.gold,
       }),
       {merge: true},
@@ -4755,6 +4756,10 @@ async function upsertUserProfile(uid, options) {
       pointsNolics: numberValue(existingUser.pointsNolics, 0),
       standardHearts: numberValue(existingUser.standardHearts, 5),
       goldHearts: numberValue(existingUser.goldHearts, 0),
+      // Слоты и заряд в них — раздельно, как у обычного заряда: без этих двух полей плазме нечего
+      // восстанавливать.
+      plasmaPoints: numberValue(existingUser.plasmaPoints, numberValue(existingUser.goldHearts, 0) * POINTS_PER_CHARGE),
+      plasmaPointsUpdatedAtMs: numberValue(existingUser.plasmaPointsUpdatedAtMs, options.now),
       gold: numberValue(existingUser.gold, 0),
       pointsSkill: numberValue(existingUser.pointsSkill, 0),
       boxCount: boxState.boxCount,
@@ -4966,6 +4971,7 @@ function profileResponse(result, economy) {
     // Life points are reported already regenerated, so the client can show the real balance
     // without repeating the clock arithmetic. maxLifePoints lets it render the gauge.
     ...lifePointsSnapshot(user, Date.now(), economy),
+    ...plasmaSnapshot(user, Date.now(), economy),
     boxCount: numberValue(user.boxCount, 0),
     boxStreakDays: numberValue(user.boxStreakDays, 0),
     nextBoxAtMs: numberValue(user.nextBoxAtMs, 0),
@@ -4994,6 +5000,36 @@ function profileResponse(result, economy) {
  * Current life balance for a stored user document, brought up to date at `nowMs`.
  * Read-only: it never writes back, so the value is regenerated again on the next read.
  */
+/**
+ * Снимок плазмы.
+ *
+ * Плазма устроена как обычный заряд и хранится так же: `goldHearts` — сколько слотов куплено,
+ * `plasmaPoints` — сколько в них накоплено. До сих пор счётчика очков и отметки времени у неё не
+ * было вовсе, и «плазма восстанавливается за сутки» существовало только на бумаге: `goldHearts`
+ * означал сразу и вместимость, и заряд, а значит восстанавливать было нечего.
+ *
+ * Аккаунт, у которого поля ещё нет, начинает полным — как и с обычным зарядом: поле появилось
+ * позже него, и наказывать за это сутками ожидания не за что.
+ */
+function plasmaSnapshot(user, nowMs, economy) {
+  const rules = economy && economy.plasma ? economy.plasma : readEconomyConstants(null).plasma;
+  const slots = Math.min(nonNegativeInteger(user.goldHearts, 0), rules.maxOwned);
+  const ceiling = slots * POINTS_PER_CHARGE;
+  const hasPremium = numberValue(user.premiumUntilMs, 0) > nowMs || Boolean(user.hasPremium);
+  const plasma = regenerateLifePoints(
+    numberValue(user.plasmaPoints, ceiling),
+    numberValue(user.plasmaPointsUpdatedAtMs, nowMs),
+    nowMs,
+    ceiling,
+    regenMsFor(rules, hasPremium) / POINTS_PER_CHARGE,
+  );
+  return {
+    plasmaPoints: plasma.points,
+    maxPlasmaPoints: ceiling,
+    plasmaPointsUpdatedAtMs: plasma.updatedAtMs,
+  };
+}
+
 /**
  * Снимок бака, каким его показывает профиль.
  *
@@ -5039,6 +5075,7 @@ function readEconomyBalance(user) {
     nolics: nonNegativeInteger(user.pointsNolics, numberValue(user.nolics, 0)),
     standardHearts: nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS),
     goldHearts: nonNegativeInteger(user.goldHearts, 0),
+    plasmaPoints: nonNegativeInteger(user.plasmaPoints, nonNegativeInteger(user.goldHearts, 0) * POINTS_PER_CHARGE),
     gold: nonNegativeInteger(user.gold, 0),
     // Part of the balance because the client applies what it is handed back wholesale. Leave the
     // set out and every purchase answers "you own no lessons", which the client then believes.
@@ -5092,10 +5129,14 @@ function buyGoldHeart(balance, rules) {
   if (balance.gold < price) {
     throw new HttpsError("failed-precondition", "Not enough gold");
   }
+  // Купленный слот приходит заряженным. Обычный заряд покупается за нолики и ждёт наполнения час;
+  // плазма стоит золота и наполняется сутки, и отдать за деньги пустой слот на сутки — это продать
+  // ожидание. Ёмкость постоянна, поэтому платят один раз, а ждут только за следующий заряд.
   return {
     ...balance,
     gold: balance.gold - price,
     goldHearts: balance.goldHearts + 1,
+    plasmaPoints: nonNegativeInteger(balance.plasmaPoints, 0) + POINTS_PER_CHARGE,
   };
 }
 

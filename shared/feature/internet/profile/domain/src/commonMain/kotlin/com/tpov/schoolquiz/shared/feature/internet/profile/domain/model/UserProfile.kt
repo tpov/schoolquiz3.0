@@ -30,6 +30,14 @@ data class UserProfile(
     val lifePoints: Int = standardHearts * LIFE_POINTS_PER_HEART,
     val lifePointsUpdatedAtMs: Long = 0L,
     /**
+     * Плазма: [goldHearts] — сколько слотов куплено, эти очки — сколько в них накоплено.
+     *
+     * Раздельно по той же причине, что и у обычного заряда: одно число не может значить сразу и
+     * вместимость, и остаток, а плазма восстанавливается — за сутки на заряд.
+     */
+    val plasmaPoints: Int = goldHearts * LIFE_POINTS_PER_HEART,
+    val plasmaPointsUpdatedAtMs: Long = 0L,
+    /**
      * What a person says about themselves so a human can check who they are.
      *
      * Personal data, and kept deliberately small — a name, a birthday, a city and a way to reach
@@ -52,6 +60,12 @@ data class UserProfile(
 
     /** Ceiling: every owned heart slot holds [LIFE_POINTS_PER_HEART] points. */
     val maxLifePoints: Int get() = standardHearts * LIFE_POINTS_PER_HEART
+
+    /** Потолок плазмы: каждый купленный слот держит [LIFE_POINTS_PER_HEART] очков. */
+    val maxPlasmaPoints: Int get() = goldHearts * LIFE_POINTS_PER_HEART
+
+    /** Сколько целых плазменных зарядов показать игроку. Дробную плазму потратить нельзя. */
+    val plasmaCharges: Int get() = plasmaPoints / LIFE_POINTS_PER_HEART
 
     /**
      * Хватает ли на попытку, которая стоит [pricePoints].
@@ -78,6 +92,8 @@ data class UserProfile(
         require(nextBoxAtMs >= 0) { "nextBoxAtMs must be non-negative" }
         require(premiumUntilMs >= 0) { "premiumUntilMs must be non-negative" }
         require(lifePoints >= 0) { "lifePoints must be non-negative" }
+        require(plasmaPoints >= 0) { "plasmaPoints must be non-negative" }
+        require(plasmaPointsUpdatedAtMs >= 0) { "plasmaPointsUpdatedAtMs must be non-negative" }
         require(lifePointsUpdatedAtMs >= 0) { "lifePointsUpdatedAtMs must be non-negative" }
     }
 
