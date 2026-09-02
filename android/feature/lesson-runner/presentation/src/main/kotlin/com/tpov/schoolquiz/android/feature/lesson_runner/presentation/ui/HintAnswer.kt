@@ -8,12 +8,20 @@ import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 
 /**
- * Whether the hint is live for [qState] right now, given [charges] left and whether the verdict
- * is already on screen.
+ * Whether the hint is live for [qState] right now, given the question's difficulty
+ * ([isHard]), the [charges] left, and whether the verdict is already on screen.
  *
  * The one decision, kept out of the Composable so a JVM test can pin it: the screen must not
  * re-derive any part of it. A hint exists only when [buildHintDraft] can produce a complete,
  * playable answer, so a charge is never spent on a question with nothing to reveal.
+ *
+ * **Easy only.** `spec-charges/SPEC.md:29,47` names the sinks: "A **standard** charge is spent on
+ * exactly two things — the toll for playing an activity, and a hint on an EASY question", and
+ * "a standard charge never touches a hard question". Hard answers gate stars, the hard unlock and
+ * certification, so a bought answer there is not a hint but a forged result. [isHard] has no
+ * default on purpose: the rule must not be defaulted away by a call site that forgets it.
+ * `RunnerUiState.Question.revealCorrect` being false on hard is not this rule — it only suppresses
+ * the verdict banner while the answer is still submitted.
  *
  * Note on wording: when this is false the button is still drawn — dimmed and unclickable, exactly
  * as it looks with no charges left. "Not offered" throughout this feature means disabled, not
@@ -21,9 +29,10 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerD
  */
 internal fun isHintAvailable(
     qState: QuestionUiState,
+    isHard: Boolean,
     charges: Int?,
     feedbackShown: Boolean,
-): Boolean = (charges ?: 0) > 0 && !feedbackShown && buildHintDraft(qState) != null
+): Boolean = !isHard && (charges ?: 0) > 0 && !feedbackShown && buildHintDraft(qState) != null
 
 /**
  * The answer the hint plays: the complete correct draft for [qState], or null when there is

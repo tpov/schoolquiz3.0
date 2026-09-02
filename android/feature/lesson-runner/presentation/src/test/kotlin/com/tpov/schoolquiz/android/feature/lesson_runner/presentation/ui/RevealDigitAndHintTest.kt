@@ -372,8 +372,9 @@ class BuildHintDraftTest {
  * The wiring decision, on the JVM.
  *
  * `ciCheck` only *compiles* instrumented tests, so the screen's Compose tests pin nothing the
- * gate runs. [isHintAvailable] holds the whole enablement rule — charges, verdict on screen, and
- * whether an answer exists — so restoring any part of the original bug fails here, under `test`.
+ * gate runs. [isHintAvailable] holds the whole enablement rule — difficulty, charges, verdict on
+ * screen, and whether an answer exists — so restoring any part of the original bug fails here,
+ * under `test`.
  */
 class HintAvailabilityTest {
 
@@ -476,11 +477,41 @@ class HintAvailabilityTest {
         )
 
     @Test
-    fun `an answerable question with a charge and no verdict offers the hint`() {
+    fun `an answerable easy question with a charge and no verdict offers the hint`() {
         hintable.forEach { (name, state) ->
             assertTrue(
-                isHintAvailable(state, charges = 1, feedbackShown = false),
+                isHintAvailable(state, isHard = false, charges = 1, feedbackShown = false),
                 "$name must offer the hint",
+            )
+        }
+    }
+
+    /**
+     * The rule this class exists for: `spec-charges/SPEC.md:29,47` gives a standard charge two
+     * sinks, and the hint one is an easy-question affordance. Hard answers gate stars, the hard
+     * unlock and certification, so no charge may buy one — for any question type, however
+     * answerable it is and however many charges are in hand.
+     */
+    @Test
+    fun `a hard question never offers the hint, whatever else is true`() {
+        hintable.forEach { (name, state) ->
+            assertFalse(
+                isHintAvailable(state, isHard = true, charges = 1, feedbackShown = false),
+                "$name is hard, so no charge may buy its answer",
+            )
+            assertFalse(
+                isHintAvailable(state, isHard = true, charges = 99, feedbackShown = false),
+                "$name is hard, so a full wallet changes nothing",
+            )
+        }
+    }
+
+    @Test
+    fun `a hard question with nothing to reveal is dead for both reasons`() {
+        unhintable.forEach { (name, state) ->
+            assertFalse(
+                isHintAvailable(state, isHard = true, charges = 3, feedbackShown = false),
+                "$name is hard and has no answer to play",
             )
         }
     }
@@ -489,7 +520,7 @@ class HintAvailabilityTest {
     fun `a question with nothing to reveal never offers the hint`() {
         unhintable.forEach { (name, state) ->
             assertFalse(
-                isHintAvailable(state, charges = 3, feedbackShown = false),
+                isHintAvailable(state, isHard = false, charges = 3, feedbackShown = false),
                 "$name has no answer to play, so the hint must stay dead even with charges in hand",
             )
         }
@@ -498,15 +529,58 @@ class HintAvailabilityTest {
     @Test
     fun `no charges means no hint`() {
         hintable.forEach { (name, state) ->
-            assertFalse(isHintAvailable(state, charges = 0, feedbackShown = false), "$name, zero charges")
-            assertFalse(isHintAvailable(state, charges = null, feedbackShown = false), "$name, unknown charges")
+            assertFalse(
+                isHintAvailable(state, isHard = false, charges = 0, feedbackShown = false),
+                "$name, zero charges",
+            )
+            assertFalse(
+                isHintAvailable(state, isHard = false, charges = null, feedbackShown = false),
+                "$name, unknown charges",
+            )
         }
     }
 
     @Test
     fun `a verdict already on screen means no hint`() {
         hintable.forEach { (name, state) ->
-            assertFalse(isHintAvailable(state, charges = 3, feedbackShown = true), "$name, verdict shown")
+            assertFalse(
+                isHintAvailable(state, isHard = false, charges = 3, feedbackShown = true),
+                "$name, verdict shown",
+            )
+        }
+    }
+
+    /**
+     * Easy is untouched by this rule: across the whole grid of the other terms, an easy question
+     * answers exactly what it answered before difficulty was one of them. The expectations here
+     * are written out rather than recomputed from the same expression the function uses, so a
+     * change to that expression shows up as a failure instead of being copied into the check.
+     */
+    @Test
+    fun `on easy the decision is unchanged across every other term`() {
+        val chargeGrid = listOf(null to false, 0 to false, 1 to true, 3 to true)
+        hintable.forEach { (name, state) ->
+            chargeGrid.forEach { (charges, hasCharge) ->
+                assertEquals(
+                    hasCharge,
+                    isHintAvailable(state, isHard = false, charges = charges, feedbackShown = false),
+                    "$name, easy, charges=$charges, no verdict",
+                )
+                assertFalse(
+                    isHintAvailable(state, isHard = false, charges = charges, feedbackShown = true),
+                    "$name, easy, charges=$charges, verdict on screen",
+                )
+            }
+        }
+        unhintable.forEach { (name, state) ->
+            chargeGrid.forEach { (charges, _) ->
+                listOf(false, true).forEach { feedbackShown ->
+                    assertFalse(
+                        isHintAvailable(state, isHard = false, charges = charges, feedbackShown = feedbackShown),
+                        "$name, easy, charges=$charges, feedbackShown=$feedbackShown",
+                    )
+                }
+            }
         }
     }
 }

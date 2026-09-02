@@ -290,6 +290,7 @@ private fun QuestionStateContent(
                 hint =
                     rememberHintControl(
                         qState = state.questionUiState,
+                        isHard = state.isHard,
                         charges = state.lives,
                         feedbackShown = feedback != null,
                         questionKey = state.indexInPool,
@@ -346,6 +347,7 @@ private fun QuestionStateContent(
 @Composable
 private fun rememberHintControl(
     qState: QuestionUiState,
+    isHard: Boolean,
     charges: Int?,
     feedbackShown: Boolean,
     questionKey: Int,
@@ -353,7 +355,7 @@ private fun rememberHintControl(
 ): HintControl {
     var spent by remember(questionKey) { mutableStateOf(false) }
     return HintControl(
-        enabled = !spent && isHintAvailable(qState, charges, feedbackShown),
+        enabled = !spent && isHintAvailable(qState, isHard, charges, feedbackShown),
         spend = {
             val didSpend = !spent && component.hintRequested()
             if (didSpend) spent = true
@@ -373,10 +375,11 @@ private fun QuestionTypeContent(
     hint: HintControl,
     onFeedback: (AnswerFeedback) -> Unit,
 ) {
-    // Whether a hint exists was decided once, by isHintAvailable, before this ran. Each handler
-    // below builds its own typed draft and spends only once that draft is in hand, so a question
-    // with nothing playable to reveal can never take a charge — and the typed builders mean a
-    // handler wired to the wrong draft type does not compile.
+    // Whether a hint exists was decided once, by isHintAvailable, before this ran — difficulty
+    // included, so no branch below repeats the easy-only rule. Each handler builds its own typed
+    // draft and spends only once that draft is in hand, so a question with nothing playable to
+    // reveal can never take a charge — and the typed builders mean a handler wired to the wrong
+    // draft type does not compile.
     val hintEnabled = hint.enabled
     when (qState) {
         is QuestionUiState.Survey ->

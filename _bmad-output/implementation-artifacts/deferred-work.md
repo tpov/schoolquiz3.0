@@ -473,3 +473,7 @@ backfill.
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-11-attempt-intake.md`
   summary: What the queue does when the intake rejects a replayed body is undecided — a queued `lesson_runner.SUBMIT_ATTEMPT` whose `served` cannot be read would be `invalid-argument` on every replay.
   evidence: The intake reserves `invalid-argument` for a body that cannot be read at all (a lie is kept and marked instead), so a rejection is final by construction; the queue engine has to treat it as quarantine (AD-28), not retry. One sentence in the wiring step and a queue-level test settle it.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-hint-easy-only.md`
+  summary: On a hard question the hint button is still drawn, dimmed, with nothing saying why — the same way it looks when the player has no charges left, so the two unavailable states are indistinguishable.
+  evidence: The convention this screen already uses is "not offered means disabled, not absent", and the slice's Never clause forbade adding a player-facing message. Now that a hint is documented as an easy-question affordance, hiding the control on hard — or giving the dimmed state a reason — is a design decision worth taking deliberately rather than inheriting.
