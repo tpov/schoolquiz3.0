@@ -80,8 +80,8 @@ function sourceShelfForQuest(quest, scope) {
 /**
  * Вид попытки по квесту.
  *
- * Возвращает `null`, если квеста нет: документ удалён, а попытка на него ссылается. Это не «обычный
- * урок» и не пропуск оплаты — `activityPrice` в `economy-constants.js` считает неизвестный вид по
+ * Возвращает `null`, если квеста нет — в любой области: документ удалён или его никогда не было, а
+ * попытка на него ссылается. Это не «обычный урок» и не пропуск оплаты — `activityPrice` в `economy-constants.js` считает неизвестный вид по
  * самой дорогой известной ставке. Иначе выдуманный `questId` при настоящем `lessonId` получал бы
  * награду за урок по цене, которую никто не проверял.
  *
@@ -91,8 +91,10 @@ function sourceShelfForQuest(quest, scope) {
  * этот модуль — то место, куда их разрешение встанет, когда сессии появятся.
  */
 function activityKindForQuest(quest, scope) {
-  if (scope === PRIVATE_SCOPE) return ORDINARY_LESSON;
+  // Квеста нет — вид неизвестен, в любой области. Раньше приватная область отвечала «обычный урок»
+  // не глядя, и объявить `private` значило купить самую дешёвую цену для чего угодно.
   if (!quest || typeof quest !== "object") return null;
+  if (scope === PRIVATE_SCOPE) return ORDINARY_LESSON;
   const shelves = shelvesOf(quest);
   if (shelves.length === 0) return ORDINARY_LESSON;
   return KIND_BY_SHELF[shelves[0]];

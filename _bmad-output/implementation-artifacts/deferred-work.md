@@ -465,3 +465,7 @@ backfill.
 - source_spec: `_bmad-output/specs/spec-charges/SPEC.md` (CAP-13; ревью ядер, линза паритета)
   summary: `StartLessonAttemptUseCase.canonicalQuestionId` считает суффикс языком по `isLetter()`, а сервер — только по `[A-Za-z-]`; `q1__ру` схлопывается в раннере и не схлопывается на сервере.
   evidence: Та же расходимость в `LessonAllocatedSeconds.kt` уже устранена и пиннится фикстурой «кириллический суффикс — не язык»; копия в раннере осталась — модуль `shared/feature/lesson-runner/domain` правит другая сессия. Одна строка и тест; делать, когда модуль освободится, и вынести правило в одно место (`shared/core/scoring`), чтобы третьей копии не появилось.
+
+- source_spec: `_bmad-output/specs/spec-charges/SPEC.md` (ревью ядер, волна 2)
+  summary: Три находки оставлены: (1) сфабрикованный codeAnswer из девяток собирает награду — закрывается серверной оценкой по ключам (`attempt-scoring.js` соседней сессии), пока она не подключена; (2) `lessonAttemptLifeCost` в ответе профиля — плоская константа, клиент её не читает; (3) витрина строит каталог только по балансу и не перечитывает таблицу, пока открыта.
+  evidence: `functions/index.js` `normalizeLessonResultAttemptEvent` сверяет процент только с самим codeAnswer; `lifePointsSnapshot` отдаёт `LESSON_ATTEMPT_LIFE_COST`; `DefaultShopComponent` пересобирает `items` в `observeBalance.collect`, таблица приходит отдельным потоком. Первое — чужая история в работе, второе — снять при переименовании, третье — объединить потоки баланса и таблицы, когда компонент освободится.

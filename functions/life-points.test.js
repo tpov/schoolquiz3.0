@@ -114,6 +114,14 @@ testRegenerationGrantsWholePointsOnly();
 testPartialProgressIsNotLost();
 testCeilingStopsAccrualAndDoesNotBankTime();
 testClockSkewDoesNotGrantPoints();
+function testTheIntervalCanComeFromTheTable() {
+  // Полчаса на заряд вместо часа — операторское решение, и оно доезжает сюда без релиза.
+  const halfHourPerCharge = (30 * 60 * 1000) / LIFE_POINTS_PER_HEART;
+  assert.strictEqual(regenerateLifePoints(0, 0, 30 * 60 * 1000, 500, halfHourPerCharge).points, 100);
+  assert.strictEqual(regenerateLifePoints(0, 0, 30 * 60 * 1000, 500).points, 50, "без интервала — прежний час");
+}
+
+testTheIntervalCanComeFromTheTable();
 testStoredValueAboveCeilingIsKeptRatherThanConfiscated();
 testSpending();
 testFullTankAllowsFifteenAttempts();

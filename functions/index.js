@@ -46,9 +46,11 @@ const {
 } = require("./lesson-unlocks");
 const {
   ECONOMY_CONSTANTS_DOC,
+  POINTS_PER_CHARGE,
   activityPrice,
   clientEconomyConstants,
   readEconomyConstants,
+  slotPrice,
 } = require("./economy-constants");
 const {
   SETTLEMENT_OUTCOME_REFUSE,
@@ -125,10 +127,8 @@ const AUTHOR_RATING_SCORE_FIELD = "authorRatingScore";
 const QUEST_RATING_QUALIFICATION_POINTS_PER_STAR = 10;
 const SHOP_ITEM_STANDARD_HEART_SLOT = "STANDARD_HEART_SLOT";
 const SHOP_ITEM_GOLD_HEART = "GOLD_HEART";
-const STANDARD_HEART_SLOT_COSTS = [1000, 2000, 5000, 10000, 20000];
 const MAX_STANDARD_HEARTS = 5;
 const MAX_GOLD_HEARTS = 1;
-const GOLD_HEART_COST = 10;
 const GIFT_BOX_STREAK_TARGET_DAYS = 10;
 const MAX_TOURNAMENT_GROUPS_PER_RECALC = 1000;
 const MAX_TOURNAMENT_RESULTS_PER_GROUP = 1000;
@@ -390,48 +390,69 @@ async function readAllocatedSeconds(lessonIds) {
 }
 
 /**
- * Полки каждого квеста из пакета, прочитанные один раз перед транзакцией.
+ * Квест, к которому на самом деле принадлежит каждый урок из пакета, — прочитанный один раз
+ * перед транзакцией.
  *
- * Опубликованный квест лежит в `quests/{id}`, приватный — под своим владельцем; ключ различает их,
- * потому что один и тот же `questId` может существовать в обоих местах. Отсутствующий документ
- * отдаётся как `null`: вид тогда неизвестен, и цена берётся по самой дорогой известной ставке —
- * выдуманный `questId` при настоящем `lessonId` иначе получал бы награду по непроверенной цене.
+ * Цена берётся по квесту, награда — по уроку, и раньше эти двое были двумя независимыми полями
+ * payload: клиент называл `questId` любого домашнего квеста (или объявлял область приватной) и
+ * `lessonId` самого большого турнирного урока — и получал полную награду за него по цене обычного
+ * урока. Поэтому квест здесь выводится **из урока**: опубликованный урок знает свою тему, тема —
+ * раздел, раздел — квест, и объявленный `questId` в цене не участвует вовсе.
+ *
+ * Опубликованный урок побеждает объявленную область: если `lessons/{lessonId}` существует, попытка
+ * оценивается по его квесту, что бы клиент ни написал в `scope`. Приватный урок ищется по своему
+ * пути и подтверждает приватную область только если действительно там лежит. Ни того ни другого —
+ * вид неизвестен, и цена берётся по самой дорогой известной ставке.
  */
-async function readQuestShelves(events) {
-  const refs = new Map();
+async function readLessonContexts(events) {
+  const pending = new Map();
   for (const event of events) {
-    const key = questShelfKey(event);
-    if (refs.has(key)) continue;
-    // Идентификатор с косой чертой — не имя документа, а путь: Firestore упал бы на нём, и вместе
-    // с ним весь пакет. Такого квеста нет — и он считается отсутствующим, то есть неизвестным видом
-    // по самой дорогой ставке, а не поводом уронить честные попытки рядом.
-    if (!isSingleDocumentId(event.questId) || !isSingleDocumentId(event.catalogId) ||
-        (event.scope === PRIVATE_SCOPE && !isSingleDocumentId(event.ownerUid))) {
-      refs.set(key, null);
-      continue;
-    }
-    refs.set(key, event.scope === PRIVATE_SCOPE
-      ? db.doc(privateQuestPath(event.ownerUid, event.catalogId, event.questId))
-      : db.collection("quests").doc(event.questId));
+    const key = lessonContextKey(event);
+    if (!pending.has(key)) pending.set(key, resolveLessonContext(event));
   }
-  const entries = await Promise.all(
-    [...refs].map(async ([key, ref]) => {
-      if (!ref) return [key, null];
-      const snapshot = await ref.get();
-      return [key, snapshot.exists ? (snapshot.data() || {}) : null];
-    }),
-  );
+  const entries = await Promise.all([...pending].map(async ([key, promise]) => [key, await promise]));
   return Object.fromEntries(entries);
+}
+
+async function resolveLessonContext(event) {
+  const unknown = {scope: normalizeScope(event.scope), questId: "", quest: null, resolved: false};
+  if (isSingleDocumentId(event.lessonId)) {
+    const lesson = await db.doc(`lessons/${event.lessonId}`).get();
+    if (lesson.exists) {
+      const themeId = stringValue((lesson.data() || {}).themeId);
+      const theme = isSingleDocumentId(themeId) ? await db.doc(`themes/${themeId}`).get() : null;
+      const sectionId = theme && theme.exists ? stringValue((theme.data() || {}).sectionId) : "";
+      const section = isSingleDocumentId(sectionId) ? await db.doc(`sections/${sectionId}`).get() : null;
+      const questId = section && section.exists ? stringValue((section.data() || {}).questId) : "";
+      const quest = isSingleDocumentId(questId) ? await db.collection("quests").doc(questId).get() : null;
+      return {
+        scope: PUBLIC_SCOPE,
+        questId,
+        quest: quest && quest.exists ? (quest.data() || {}) : null,
+        resolved: true,
+      };
+    }
+  }
+  const ids = [event.ownerUid, event.catalogId, event.questId, event.sectionId, event.themeId, event.lessonId];
+  if (normalizeScope(event.scope) === PRIVATE_SCOPE && ids.every(isSingleDocumentId)) {
+    const lesson = await db.doc(privateLessonPath(...ids)).get();
+    if (lesson.exists) {
+      const quest = await db.doc(privateQuestPath(event.ownerUid, event.catalogId, event.questId)).get();
+      return {scope: PRIVATE_SCOPE, questId: event.questId, quest: quest.exists ? (quest.data() || {}) : null, resolved: true};
+    }
+  }
+  return unknown;
+}
+
+function lessonContextKey(event) {
+  return [normalizeScope(event.scope), event.ownerUid || "", event.catalogId, event.questId,
+    event.sectionId, event.themeId, event.lessonId].join("\u0000");
 }
 
 /** Годится ли строка в имя одного документа Firestore. */
 function isSingleDocumentId(value) {
   const id = stringValue(value);
   return id.length > 0 && id.length <= 1500 && !id.includes("/") && id !== "." && id !== "..";
-}
-
-function questShelfKey(event) {
-  return [normalizeScope(event.scope), event.ownerUid || "", event.catalogId, event.questId].join("\u0000");
 }
 
 const {
@@ -726,15 +747,16 @@ async function applyLessonResultEvents(uid, attempts) {
   // (CAP-16). До сих пор единственным именем сыгранного был `sourceShelf`, и его вычисляло
   // устройство: под прейскурантом клиент, объявивший `home` для турнира, платил бы 33 очка вместо
   // 500. Объявление остаётся в событии как диагностика; списание от него не зависит.
-  const questsByKey = await readQuestShelves(events.map((item) => item.event));
-  const economySnapshot = await db.doc(ECONOMY_CONSTANTS_DOC).get();
-  const economy = readEconomyConstants(economySnapshot.exists ? economySnapshot.data() : null);
+  const contexts = await readLessonContexts(events.map((item) => item.event));
+  const economy = await readEconomyConstantsDocument();
   for (const item of events) {
-    const quest = questsByKey[questShelfKey(item.event)];
+    const context = contexts[lessonContextKey(item.event)];
     item.event.declaredSourceShelf = item.event.sourceShelf;
-    item.event.activityKind = activityKindForQuest(quest, item.event.scope);
+    // Квест — тот, к которому урок принадлежит на самом деле; объявленный остаётся в записи.
+    item.event.resolvedQuestId = context.questId;
+    item.event.activityKind = activityKindForQuest(context.quest, context.scope);
     // Всё, что дальше читает полку — турнирная группа, грязные оценки, — читает выведенную.
-    item.event.sourceShelf = sourceShelfForQuest(quest, item.event.scope);
+    item.event.sourceShelf = sourceShelfForQuest(context.quest, context.scope);
     item.event.lifeCost = activityPrice(economy, item.event.activityKind);
   }
 
@@ -757,14 +779,15 @@ async function applyLessonResultEvents(uid, attempts) {
     // The player's best on each lesson, kept beside the balance so paying for improvement needs
     // no aggregate of its own and no second read.
     const lessonBest = {...(userData.lessonBest || {})};
-    const lifeCeiling = maxLifePoints(
-      Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(userData.standardHearts, MAX_STANDARD_HEARTS)),
-    );
+    // Бак — купленные слоты, не выше потолка из таблицы; темп восстановления — тоже из неё.
+    const ownedSlots = nonNegativeInteger(userData.standardHearts, MAX_STANDARD_HEARTS);
+    const lifeCeiling = maxLifePoints(Math.min(ownedSlots, economy.standard.maxOwned));
     let life = regenerateLifePoints(
       numberValue(userData.lifePoints, lifeCeiling),
       numberValue(userData.lifePointsUpdatedAtMs, now),
       now,
       lifeCeiling,
+      economy.standard.regenMs / POINTS_PER_CHARGE,
     );
 
     const delta = {skillPoints: 0, nolics: 0};
@@ -793,7 +816,9 @@ async function applyLessonResultEvents(uid, attempts) {
           ...item.content,
           receivedAtMs: now,
           schemaVersion: 1,
-          lifeCharged,
+          // Повтор той же попытки (прямой вызов, не очередь) не переписывает, была ли она
+          // оплачена: запись о перерасходе и сверка балансов будут читать именно это поле.
+          lifeCharged: isNew ? lifeCharged : Boolean((existingSnapshots[index].data() || {}).lifeCharged),
         }),
         {merge: true},
       );
@@ -948,10 +973,20 @@ exports.aggregateQuestRatingsNow = onCall(FUNCTION_OPTIONS, async (request) => {
  * Отсутствующий или испорченный документ вырождается в начальные значения (`economy-constants.js`),
  * а не в нулевые потолки: нулевой потолок запер бы каждый аккаунт разом.
  */
+/**
+ * Таблица настроек, как её читает сервер: отсутствующий или испорченный документ вырождается в
+ * начальные значения, а документ без своего номера версии получает время последней записи —
+ * иначе две правки подряд были бы одной версией, и вторая до устройств не доехала бы.
+ */
+async function readEconomyConstantsDocument() {
+  const snapshot = await db.doc(ECONOMY_CONSTANTS_DOC).get();
+  const writtenAtMs = snapshot.exists && snapshot.updateTime ? snapshot.updateTime.toMillis() : 0;
+  return readEconomyConstants(snapshot.exists ? snapshot.data() : null, writtenAtMs);
+}
+
 exports.getEconomyConstants = onCall(FUNCTION_OPTIONS, async (request) => {
   requireAuthUid(request);
-  const snapshot = await db.doc(ECONOMY_CONSTANTS_DOC).get();
-  const constants = readEconomyConstants(snapshot.exists ? snapshot.data() : null);
+  const constants = await readEconomyConstantsDocument();
   const known = Math.floor(Number(request.data && request.data.knownVersion));
   if (Number.isFinite(known) && known === constants.version) {
     return {unchanged: true, version: constants.version};
@@ -1652,11 +1687,14 @@ exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
 
   const userRef = db.collection("users").doc(uid);
   const now = Date.now();
+  // Цена назначается по таблице, действующей в момент, когда сервер принимает покупку, — а не по
+  // той, по которой клиент нарисовал витрину (economy-constants.md).
+  const economy = await readEconomyConstantsDocument();
   let response = null;
   await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(userRef);
     const current = readEconomyBalance(snapshot.exists ? snapshot.data() || {} : {});
-    const balance = applyShopPurchaseToBalance(current, itemId);
+    const balance = applyShopPurchaseToBalance(current, itemId, economy);
     transaction.set(
       userRef,
       clean({
@@ -4992,22 +5030,28 @@ function readEconomyBalance(user) {
   };
 }
 
-function applyShopPurchaseToBalance(balance, itemId) {
+function applyShopPurchaseToBalance(balance, itemId, economy) {
   switch (itemId) {
     case SHOP_ITEM_STANDARD_HEART_SLOT:
-      return buyStandardHeart(balance);
+      return buyStandardHeart(balance, economy.standard);
     case SHOP_ITEM_GOLD_HEART:
-      return buyGoldHeart(balance);
+      return buyGoldHeart(balance, economy.plasma);
     default:
       throw new HttpsError("invalid-argument", `Unsupported shop item ${itemId}`);
   }
 }
 
-function buyStandardHeart(balance) {
-  if (balance.standardHearts >= MAX_STANDARD_HEARTS) {
+/**
+ * Слот обычного заряда — по лестнице и потолку из таблицы.
+ *
+ * Понижённый потолок не отбирает купленное (`readEconomyBalance` не зажимает), но и купить сверх
+ * него не даёт — иначе понижение не значило бы ничего.
+ */
+function buyStandardHeart(balance, rules) {
+  if (balance.standardHearts >= rules.maxOwned) {
     throw new HttpsError("failed-precondition", "Standard hearts are already full");
   }
-  const price = standardHeartSlotCost(balance.standardHearts);
+  const price = slotPrice(rules, balance.standardHearts);
   if (balance.nolics < price) {
     throw new HttpsError("failed-precondition", "Not enough nolics");
   }
@@ -5018,23 +5062,25 @@ function buyStandardHeart(balance) {
   };
 }
 
-function buyGoldHeart(balance) {
-  if (balance.goldHearts >= MAX_GOLD_HEARTS) {
+/**
+ * Плазменный заряд — по лестнице золотом `1, 2, 3` из таблицы, а не по плоским десяти.
+ *
+ * Витрина уже показывала лестницу из таблицы, а сервер списывал десять и запирал на одном:
+ * игрок видел «1 золота», а платил десять.
+ */
+function buyGoldHeart(balance, rules) {
+  if (balance.goldHearts >= rules.maxOwned) {
     throw new HttpsError("failed-precondition", "Gold hearts are already full");
   }
-  if (balance.gold < GOLD_HEART_COST) {
+  const price = slotPrice(rules, balance.goldHearts);
+  if (balance.gold < price) {
     throw new HttpsError("failed-precondition", "Not enough gold");
   }
   return {
     ...balance,
-    gold: balance.gold - GOLD_HEART_COST,
+    gold: balance.gold - price,
     goldHearts: balance.goldHearts + 1,
   };
-}
-
-function standardHeartSlotCost(currentHearts) {
-  const index = Math.min(Math.max(0, currentHearts), STANDARD_HEART_SLOT_COSTS.length - 1);
-  return STANDARD_HEART_SLOT_COSTS[index];
 }
 
 function nonNegativeInteger(value, fallback) {

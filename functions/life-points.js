@@ -37,7 +37,10 @@ function maxLifePoints(standardHearts) {
  * next point survives; at the ceiling it jumps to now, otherwise an idle account would build up
  * a backlog and refill instantly after spending.
  */
-function regenerateLifePoints(storedPoints, updatedAtMs, nowMs, maxPoints) {
+function regenerateLifePoints(storedPoints, updatedAtMs, nowMs, maxPoints, intervalMs) {
+  // Интервал приходит из серверной таблицы (`standard.regenMs / POINTS_PER_CHARGE`); без него —
+  // прежняя константа, чтобы вызывающие, которым таблица недоступна, не изменились.
+  const perPointMs = Math.max(1, Math.floor(Number(intervalMs) || LIFE_POINT_INTERVAL_MS));
   const ceiling = Math.max(0, Math.floor(Number(maxPoints) || 0));
   // Не зажимаем вниз: потолок ограничивает пополнение, а не владение. Прежде здесь стоял
   // `Math.min`, и понижение потолка молча отбирало накопленное — игрок ничего не тратил, а очки
@@ -50,12 +53,12 @@ function regenerateLifePoints(storedPoints, updatedAtMs, nowMs, maxPoints) {
   if (current >= ceiling) return {points: current, updatedAtMs: Math.max(since, now)};
   if (now <= since) return {points: current, updatedAtMs: since};
 
-  const gained = Math.floor((now - since) / LIFE_POINT_INTERVAL_MS);
+  const gained = Math.floor((now - since) / perPointMs);
   if (gained <= 0) return {points: current, updatedAtMs: since};
 
   const points = Math.min(ceiling, current + gained);
   if (points >= ceiling) return {points: ceiling, updatedAtMs: now};
-  return {points, updatedAtMs: since + (points - current) * LIFE_POINT_INTERVAL_MS};
+  return {points, updatedAtMs: since + (points - current) * perPointMs};
 }
 
 /**

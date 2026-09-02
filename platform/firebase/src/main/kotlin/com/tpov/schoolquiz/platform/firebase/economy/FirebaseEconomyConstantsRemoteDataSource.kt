@@ -50,7 +50,7 @@ class FirebaseEconomyConstantsRemoteDataSource(
  * же осторожность проявляет и сервер, читая документ, — здесь она вторая линия, на случай если
  * между ними окажется версия постарше.
  */
-private fun Map<*, *>.toEconomyConstants(): EconomyConstants {
+internal fun Map<*, *>.toEconomyConstants(): EconomyConstants {
     val fallback = EconomyConstants.BOOTSTRAP
     return EconomyConstants(
         version = longOr(this["version"], fallback.version),
@@ -64,11 +64,11 @@ private fun Map<*, *>.toEconomyConstants(): EconomyConstants {
 
 private fun Map<*, *>?.toRules(fallback: ChargeRules): ChargeRules {
     if (this == null) return fallback
+    // Как на сервере: одна испорченная ступень отменяет всю лестницу, а не выпадает из неё. Иначе
+    // устройство показывало бы цену по укороченной лестнице, а сервер списывал бы по начальной.
+    val rungs = (this["priceLadder"] as? List<*>)?.map { wholeOrNull(it) }
     val ladder =
-        (this["priceLadder"] as? List<*>)
-            ?.mapNotNull { (it as? Number)?.toLong()?.takeIf { rung -> rung >= 0L } }
-            ?.takeIf { it.isNotEmpty() }
-            ?: fallback.priceLadder
+        if (rungs.isNullOrEmpty() || rungs.any { it == null || it < 0L }) fallback.priceLadder else rungs.map { it!! }
     val currency =
         (this["currency"] as? String)
             ?.let { name -> ShopCurrency.entries.firstOrNull { it.name == name } }
@@ -91,8 +91,21 @@ private fun Map<*, *>?.toPrices(fallback: Map<ActivityKind, Int>): Map<ActivityK
         longOr(this?.get(kind.name), fallback.getValue(kind).toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
-/** Firebase отдаёт числа то `Int`, то `Long`, то `Double`; отрицательное здесь бессмысленно. */
+/**
+ * Firebase отдаёт числа то `Int`, то `Long`, то `Double`; отрицательное здесь бессмысленно.
+ *
+ * Дробное округляется вниз, как `Math.floor` на сервере: `-0.5` — это `-1` и отказ, а не ноль и
+ * согласие. `toLong()` резал бы к нулю и принимал бы отрицательную дробь за пустой потолок.
+ */
 private fun longOr(
     value: Any?,
     fallback: Long,
-): Long = (value as? Number)?.toLong()?.takeIf { it >= 0L } ?: fallback
+): Long = wholeOrNull(value)?.takeIf { it >= 0L } ?: fallback
+
+private fun wholeOrNull(value: Any?): Long? =
+    when (value) {
+        is Int -> value.toLong()
+        is Long -> value
+        is Number -> value.toDouble().takeIf { it.isFinite() }?.let { kotlin.math.floor(it).toLong() }
+        else -> null
+    }

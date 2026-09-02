@@ -31,8 +31,10 @@ function testAQuestOnSeveralShelvesIsChargedAsTheDearest() {
 
 function testAPrivateQuestIsAnOrdinaryLessonAndStaysPrivateDownstream() {
   // Приватный квест полок не имеет, и документ у него в другом месте; вид ясен без чтения.
-  assert.strictEqual(activityKindForQuest(null, "private"), ORDINARY_LESSON);
-  assert.strictEqual(sourceShelfForQuest(null, "private"), "private");
+  assert.strictEqual(activityKindForQuest({visibleOn: []}, "private"), ORDINARY_LESSON);
+  assert.strictEqual(sourceShelfForQuest({visibleOn: []}, "private"), "private");
+  // Объявить `private` — не значит купить самую дешёвую цену: без документа вид неизвестен.
+  assert.strictEqual(activityKindForQuest(null, "private"), null);
 }
 
 function testADelistedQuestIsAnOrdinaryLessonWithNoShelfToRouteBy() {
