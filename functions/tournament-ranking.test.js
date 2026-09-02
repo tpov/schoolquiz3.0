@@ -214,6 +214,7 @@ function testTournamentResultKeepsPercentAndAttemptIdentity() {
     questId: "quest-1",
     catalogId: "school",
     difficulty: "hard",
+    answers: [{durationMs: 4000}, {durationMs: 2500}, {durationMs: 0}],
   });
 
   assert.deepStrictEqual(result, {
@@ -221,11 +222,46 @@ function testTournamentResultKeepsPercentAndAttemptIdentity() {
     attemptId: "attempt-1",
     percent: 87,
     completedAtMs: 1234,
+    // Время отвечания, сложенное из самих ответов; нулевая длительность — «не мерили», а не ноль.
+    elapsedMs: 6500,
     lessonId: "lesson-1",
     questId: "quest-1",
     catalogId: "school",
     difficulty: "HARD",
   });
+}
+
+function testTimeBreaksAPercentTieAndNothingMore() {
+  // Ровно случай из CAP-10: два стопроцентных прогона по одному уроку, быстрый впереди.
+  const group = (groupId, results) => ({groupId, weight: 1, results});
+  const table = calculateTournamentLeaderboard([
+    group("g1", [
+      {userId: "fast", percent: 100, elapsedMs: 30_000},
+      {userId: "slow", percent: 100, elapsedMs: 90_000},
+    ]),
+  ]).leaderboard.map((entry) => entry.userId);
+  assert.deepStrictEqual(table, ["fast", "slow"]);
+
+  // И только ничьей: тот, кто ответил лучше, остаётся выше, как бы медленно он ни отвечал.
+  const byPercent = calculateTournamentLeaderboard([
+    group("g1", [
+      {userId: "slowButRight", percent: 100, elapsedMs: 600_000},
+      {userId: "quickButWrong", percent: 40, elapsedMs: 1_000},
+    ]),
+  ]).leaderboard.map((entry) => entry.userId);
+  assert.deepStrictEqual(byPercent, ["slowButRight", "quickButWrong"]);
+}
+
+function testAnUnmeasuredRunRanksBehindMeasuredOnes() {
+  // Без замера время неизвестно, а не равно нулю: иначе старая попытка объявлялась бы мгновенной.
+  const table = calculateTournamentLeaderboard([
+    {groupId: "g1", weight: 1, results: [
+      {userId: "measured", percent: 100, elapsedMs: 120_000},
+      {userId: "unmeasured", percent: 100},
+    ]},
+  ]).leaderboard;
+  assert.deepStrictEqual(table.map((entry) => entry.userId), ["measured", "unmeasured"]);
+  assert.strictEqual(table[1].averageElapsedMs, Number.POSITIVE_INFINITY);
 }
 
 function seededShuffle(values, seed) {
@@ -259,5 +295,7 @@ testNoisySevenRoundSimulationKeepsStrongPlayersNearTop();
 testTournamentAttemptUsesHourlyLessonGroup();
 testTournamentAttemptIgnoresNonTournamentShelf();
 testTournamentResultKeepsPercentAndAttemptIdentity();
+testTimeBreaksAPercentTieAndNothingMore();
+testAnUnmeasuredRunRanksBehindMeasuredOnes();
 
 console.log("tournament-ranking tests passed");

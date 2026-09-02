@@ -2558,6 +2558,9 @@ function tournamentResultData(data, fallbackUserId) {
     questionCount: nullableNumber(firstDefined(data.questionCount, data.totalQuestions, data.answeredCount)),
     weight: nullableNumber(data.weight),
     completedAtMs: nullableNumber(firstDefined(data.completedAtMs, data.finishedAtMs, data.updatedAtMs)),
+    // Время отвечания — разрыв ничьей по проценту (CAP-10). Читается обратно, иначе пересчёт
+    // таблицы видел бы его только у тех результатов, что лежат в самой группе, а не в документах.
+    elapsedMs: nullableNumber(firstDefined(data.elapsedMs, data.durationMs)),
   });
 }
 

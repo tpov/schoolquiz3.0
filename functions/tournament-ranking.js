@@ -25,6 +25,10 @@ function calculateTournamentLeaderboard(groups, options = {}) {
       const stats = playerStats(players, result.userId);
       stats.groupsPlayed += 1;
       stats.percentSum += result.percent;
+      if (Number.isFinite(result.elapsedMs) && result.elapsedMs > 0) {
+        stats.elapsedSum += result.elapsedMs;
+        stats.elapsedCount += 1;
+      }
       stats.groupIds.add(group.groupId);
     }
     for (let i = 0; i < group.results.length; i++) {
@@ -63,6 +67,11 @@ function calculateTournamentLeaderboard(groups, options = {}) {
       ratingPercent: round(ratingPercent, 4),
       ratingPoints: Math.round(ratingBase + ratingPercent * ratingScale),
       averagePercent: round(stats.percentSum / Math.max(1, stats.groupsPlayed), 4),
+      // Без единого замера время неизвестно, а не равно нулю: бесконечность ставит такого игрока
+      // позади всех, у кого замер есть, вместо того чтобы объявить его самым быстрым.
+      averageElapsedMs: stats.elapsedCount > 0 ?
+        Math.round(stats.elapsedSum / stats.elapsedCount) :
+        Number.POSITIVE_INFINITY,
       groupsPlayed: stats.groupsPlayed,
       comparisons: stats.comparisons,
       uniqueOpponents: stats.opponents.size,
@@ -161,6 +170,10 @@ function playerStats(players, userId) {
     players.set(userId, {
       groupsPlayed: 0,
       percentSum: 0,
+      // Прогоны без замера времени не считаются вовсе: усреднять их с нулём значило бы объявить
+      // старую попытку мгновенной и поставить её впереди всех.
+      elapsedSum: 0,
+      elapsedCount: 0,
       comparisons: 0,
       opponents: new Set(),
       groupIds: new Set(),
@@ -279,6 +292,11 @@ function compareLeaderboardEntries(left, right) {
     right.averagePercent - left.averagePercent ||
     right.groupsPlayed - left.groupsPlayed ||
     right.uniqueOpponents - left.uniqueOpponents ||
+    // Время — только разрыв ничьей, и стоит оно ниже всего содержательного: выше процента оно
+    // подняло бы того, кто ответил хуже, но быстрее, а выше числа групп — того, про кого известно
+    // меньше. Здесь оно решает ровно тот случай, ради которого заведено: два одинаковых прогона
+    // по одному уроку, и быстрый впереди. Меньше — лучше, отсюда обратный порядок вычитания.
+    left.averageElapsedMs - right.averageElapsedMs ||
     left.userId.localeCompare(right.userId);
 }
 
@@ -330,11 +348,31 @@ function tournamentResultForAttempt(attempt) {
     attemptId,
     percent: clamp(percent, 0, 100),
     completedAtMs: Math.max(0, finiteNumber(attempt.completedAtMs, 0)),
+    // Сколько игрок на самом деле отвечал. Считается из времён самих ответов, а не из разницы
+    // «начал — закончил»: пауза, сворачивание и дорога до следующего вопроса временем ответа не
+    // являются, и наказывать за них тем, что чужой прогон объявят быстрее, не за что.
+    elapsedMs: attemptElapsedMs(attempt),
     lessonId: stringValue(attempt.lessonId),
     questId: stringValue(attempt.questId),
     catalogId: stringValue(attempt.catalogId),
     difficulty: stringValue(attempt.difficulty, "EASY").toUpperCase(),
   };
+}
+
+/**
+ * Время попытки — сумма времён её ответов.
+ *
+ * Ноль, когда мерить нечего: попытка без ответов или из клиента, который длительности ещё не слал.
+ * Ноль здесь значит «неизвестно», и лидерборд обращается с ним как с неизвестным, а не как с нулём.
+ */
+function attemptElapsedMs(attempt) {
+  const answers = attempt && Array.isArray(attempt.answers) ? attempt.answers : [];
+  let total = 0;
+  for (const answer of answers) {
+    const durationMs = finiteNumber(answer && answer.durationMs, 0);
+    if (durationMs > 0) total += durationMs;
+  }
+  return Math.round(total);
 }
 
 function normalizeTournamentShelf(sourceShelf) {
@@ -387,6 +425,7 @@ module.exports = {
   ALGORITHM_VERSION,
   calculateTournamentLeaderboard,
   DEFAULT_GROUP_WINDOW_MS,
+  attemptElapsedMs,
   isTournamentShelf,
   tournamentGroupForAttempt,
   tournamentIdForShelf,
