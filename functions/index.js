@@ -61,6 +61,7 @@ const {
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const {PAYMENT_RULE, isPayable, readSubmittedAttempt} = require("./attempt-intake");
+const {CURRENCY, LEDGER_PATH, REASON, ledgerEntries} = require("./currency-ledger");
 const {
   OVERSPEND_AUDIT_PATH,
   askedOrder,
@@ -848,6 +849,7 @@ async function applyLessonResultEvents(uid, attempts) {
 
   let reward = {skillPoints: 0, nolics: 0};
   let remainingLifePoints = 0;
+  const ledgerRows = [];
   let overspendInputs = null;
   const touchedTournamentIds = new Set();
   await db.runTransaction(async (transaction) => {
@@ -895,6 +897,9 @@ async function applyLessonResultEvents(uid, attempts) {
       regenMsFor(plasmaRules, hasPremium) / POINTS_PER_CHARGE,
     );
     const settledAttemptIds = new Set();
+    // Строки книги собираются внутри транзакции и пишутся ею же: движение и его запись обязаны
+    // либо случиться вместе, либо не случиться вовсе.
+    ledgerRows.length = 0;
     let standardClaimed = 0;
     let plasmaClaimed = 0;
     const claimedAttemptIds = [];
@@ -977,6 +982,33 @@ async function applyLessonResultEvents(uid, attempts) {
         {merge: true},
       );
 
+      // Что это прохождение сдвинуло в балансах — строкой на каждую валюту. Без книги баланс
+      // меняется приращением, и после записи «плюс двенадцать» неоткуда вывести заново: сверка
+      // (CAP-11) тогда не может проверить нолики и очки навыка, ей не с чем сравнивать.
+      if (isNew) {
+        ledgerRows.push(...ledgerEntries({
+          uid,
+          reason: REASON.ATTEMPT_TOLL,
+          sourceId: item.event.attemptId,
+          atMs: now,
+          deltas: {[CURRENCY.STANDARD_CHARGE_POINTS]: lifeCharged ? -item.event.lifeCost : 0},
+          details: {lessonId: item.event.lessonId, activityKind: item.event.activityKind},
+        }));
+        if (settled) {
+          ledgerRows.push(...ledgerEntries({
+            uid,
+            reason: REASON.CHARGE_CLAIM,
+            sourceId: item.event.attemptId,
+            atMs: now,
+            deltas: {
+              [CURRENCY.STANDARD_CHARGE_POINTS]: -settled.standardChargesPaid * POINTS_PER_CHARGE,
+              [CURRENCY.PLASMA_CHARGE_POINTS]: -settled.plasmaChargesPaid * POINTS_PER_CHARGE,
+            },
+            details: {unpaid: settled.unpaid.length},
+          }));
+        }
+      }
+
       if (lifeCharged) {
         // Paid on improvement: percent taken for the first time counts double, percent already
         // earned counts a tenth. Replaying a lesson you know is not a way to earn.
@@ -996,6 +1028,17 @@ async function applyLessonResultEvents(uid, attempts) {
         if (percent > previousBestPercent) lessonBest[bestKey] = percent;
         delta.skillPoints += itemReward.skillPoints;
         delta.nolics += itemReward.nolics;
+        ledgerRows.push(...ledgerEntries({
+          uid,
+          reason: REASON.ATTEMPT_REWARD,
+          sourceId: item.event.attemptId,
+          atMs: now,
+          deltas: {
+            [CURRENCY.NOLICS]: itemReward.nolics,
+            [CURRENCY.SKILL_POINTS]: itemReward.skillPoints,
+          },
+          details: {lessonId: item.event.lessonId, percent, previousBestPercent},
+        }));
         const counts = attemptActivityCounts(item.event.codeAnswer);
         ratings.questions += counts.questions;
         ratings.correct += counts.correct;
@@ -1010,6 +1053,9 @@ async function applyLessonResultEvents(uid, attempts) {
     }
     if (ratings.quizzes > 0) {
       writeActivityRatingsDelta(transaction, uid, ratings, now);
+    }
+    for (const entry of ledgerRows) {
+      transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
     }
     transaction.set(
       userRef,
@@ -1878,6 +1924,22 @@ exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
     const snapshot = await transaction.get(userRef);
     const current = readEconomyBalance(snapshot.exists ? snapshot.data() || {} : {});
     const balance = applyShopPurchaseToBalance(current, itemId, economy);
+    // Покупка слота — движение сразу двух валют: платы и того, что за неё дали. Идентификатор
+    // выводится из момента и предмета: та же покупка, переигранная транзакцией, — одна строка.
+    for (const entry of ledgerEntries({
+      uid,
+      reason: REASON.SLOT_PURCHASE,
+      sourceId: `${itemId}_${now}`,
+      atMs: now,
+      deltas: {
+        [CURRENCY.NOLICS]: balance.nolics - current.nolics,
+        [CURRENCY.GOLD]: balance.gold - current.gold,
+        [CURRENCY.PLASMA_CHARGE_POINTS]: balance.plasmaPoints - current.plasmaPoints,
+      },
+      details: {itemId, standardHearts: balance.standardHearts, goldHearts: balance.goldHearts},
+    })) {
+      transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+    }
     transaction.set(
       userRef,
       clean({
