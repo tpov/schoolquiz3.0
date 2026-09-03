@@ -61,7 +61,36 @@ const {
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const {PAYMENT_RULE, isPayable, readSubmittedAttempt} = require("./attempt-intake");
-const {CURRENCY, LEDGER_PATH, REASON, ledgerEntries} = require("./currency-ledger");
+const {
+  CURRENCY,
+  LEDGER_PATH,
+  RECONCILIATION_PATH,
+  REASON,
+  SWEPT_CURRENCIES,
+  isReportable,
+  ledgerEntries,
+  reconcile,
+  reconciliationRecord,
+} = require("./currency-ledger");
+const {
+  OVERSPEND_AUDIT_PATH,
+  askedOrder,
+  countClaims,
+  noClaims,
+  overspendRecord,
+  overspendVerdict,
+  settleClaims,
+  validateClaimMask,
+} = require("./charge-claims");
+const {ADMIN_REVIEW_SYNC_CHANGES, writeSyncChanges} = require("./sync-changes");
+const {readReviewAssignmentChanges, resolveReviewAssignments} = require("./review-journal");
+const {
+  planHierarchyPrune,
+  planPrivateHierarchyPrune,
+  writePrivateHierarchyPruneToBatch,
+} = require("./hierarchy-prune");
+const logger = require("firebase-functions/logger");
+const {questionKeyDocuments} = require("./question-key-store");
 const {
   OVERSPEND_AUDIT_PATH,
   askedOrder,
@@ -366,6 +395,79 @@ exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
     published,
   };
 });
+
+/** Сколько аккаунтов сверяем за один прогон. Остальные дождутся следующего: сверка не срочная. */
+const MAX_RECONCILED_ACCOUNTS_PER_RUN = 200;
+
+/**
+ * Сверка подделываемых балансов с книгой движений (CAP-11).
+ *
+ * Раз в сутки, ночью, и не блокируя игру: читает движения аккаунта, складывает их по валюте и
+ * сравнивает с записанным балансом. Расхождение записывается находкой — не приговором. Баланс не
+ * трогается: чинить его задним числом значило бы отобрать у честного игрока то, что ему начислила
+ * ошибка сервера, а находка для того и нужна, чтобы сначала посмотреть.
+ *
+ * Золото и плазма не проверяются: их сторожат по каждой операции, и неправильное число там —
+ * неправильные деньги, а не расхождение в учёте.
+ *
+ * Аккаунт, начавшийся раньше книги, не обвиняется: до первой строки движения были, а записи о них
+ * нет. Запас в сутки прощает книге опоздание в пределах одного прогона этой же функции.
+ */
+exports.reconcileCurrencyBalancesDaily = onSchedule(
+  {...FUNCTION_OPTIONS, schedule: "every day 04:00", timeZone: "UTC"},
+  async () => {
+    const now = Date.now();
+    // Порциями и по одному аккаунту: сверка не должна ни блокировать игру, ни читать всю книгу
+    // разом. Кого проверять — те, у кого за сутки было хоть одно движение: у остальных баланс не
+    // менялся, и сверять нечего.
+    const movedUids = new Set();
+    const recent = await db.collection(LEDGER_PATH)
+      .where("atMs", ">", now - DAY_MS)
+      .limit(MAX_RECONCILED_ACCOUNTS_PER_RUN * 8)
+      .get();
+    for (const doc of recent.docs) {
+      const uid = stringValue((doc.data() || {}).uid);
+      if (uid) movedUids.add(uid);
+      if (movedUids.size >= MAX_RECONCILED_ACCOUNTS_PER_RUN) break;
+    }
+
+    for (const uid of movedUids) {
+      await reconcileOneAccount(uid, now);
+    }
+  },
+);
+
+async function reconcileOneAccount(uid, now) {
+  const [userSnapshot, entrySnapshot] = await Promise.all([
+    db.collection("users").doc(uid).get(),
+    db.collection(LEDGER_PATH).where("uid", "==", uid).get(),
+  ]);
+  if (!userSnapshot.exists) return;
+  const user = userSnapshot.data() || {};
+  const entries = entrySnapshot.docs.map((doc) => doc.data() || {});
+  const accountCreatedAtMs = numberValue(user.createdAtMs, 0);
+
+  for (const currency of SWEPT_CURRENCIES) {
+    const finding = reconcile({
+      uid,
+      currency,
+      storedBalance: storedBalanceOf(user, currency),
+      entries,
+      atMs: now,
+    });
+    if (!isReportable(finding, {accountCreatedAtMs, graceMs: DAY_MS})) continue;
+    const record = reconciliationRecord(finding, now);
+    await db.doc(`${RECONCILIATION_PATH}/${record.id}`).set(record, {merge: true});
+  }
+}
+
+/** Где лежит баланс каждой сверяемой валюты. Одно место на валюту, чтобы сверка не гадала. */
+function storedBalanceOf(user, currency) {
+  if (currency === CURRENCY.NOLICS) return nonNegativeInteger(user.pointsNolics, numberValue(user.nolics, 0));
+  if (currency === CURRENCY.SKILL_POINTS) return nonNegativeInteger(user.pointsSkill, 0);
+  if (currency === CURRENCY.STANDARD_CHARGE_POINTS) return nonNegativeInteger(user.lifePoints, 0);
+  return 0;
+}
 
 exports.reconcileQuestReviewDaily = onSchedule(
   {...FUNCTION_OPTIONS, schedule: "every day 03:00", timeZone: "UTC"},

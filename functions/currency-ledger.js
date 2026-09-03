@@ -172,14 +172,73 @@ function reconcile({uid, currency, storedBalance, entries, coversFromMs, atMs}) 
   };
 }
 
+/** Куда пишутся находки сверки. Та же закрытая ветка, что и записи о перерасходе. */
+const RECONCILIATION_PATH = "audit/currency_reconciliation/findings";
+
+/**
+ * Валюты, которые сверка проверяет.
+ *
+ * Только подделываемые (CAP-11): нолики, очки навыка, очки обычных зарядов. Золото и плазму сверка
+ * не трогает — их сторожат по каждой операции, и лезть в них расписанием значило бы чинить деньги
+ * задним числом там, где неправильное число уже неправильные деньги.
+ */
+const SWEPT_CURRENCIES = [CURRENCY.NOLICS, CURRENCY.SKILL_POINTS, CURRENCY.STANDARD_CHARGE_POINTS];
+
+/**
+ * Стоит ли находка того, чтобы её записать.
+ *
+ * Ноль — не находка. И расхождение у аккаунта, чья книга началась позже, чем он сам, — тоже: до
+ * первой строки движения были, а записи о них нет, и разница объясняется этим, а не игроком.
+ * `graceMs` — сколько времени после первой строки книга ещё считается неполной.
+ */
+function isReportable(finding, {accountCreatedAtMs, graceMs} = {}) {
+  if (!finding || finding.gap === 0) return false;
+  if (finding.entryCount === 0) return false;
+  const created = whole(accountCreatedAtMs);
+  const grace = Math.max(0, whole(graceMs));
+  // Книга началась позже аккаунта — часть его истории в неё не попала.
+  if (created > 0 && finding.coversFromMs > created + grace) return false;
+  return true;
+}
+
+/**
+ * Находка в том виде, в каком её читает оператор.
+ *
+ * Обоснование внутри: аккаунт, валюта, что записано, что следует из движений, разница, сколько
+ * движений сложено и с какого момента книга их видит. Перечитывать книгу, чтобы понять запись, не
+ * нужно — это то же правило, что и у записи о перерасходе.
+ */
+function reconciliationRecord(finding, atMs) {
+  const at = Math.max(0, whole(atMs));
+  return {
+    id: `${finding.uid}_${finding.currency}_${at}`,
+    uid: finding.uid,
+    currency: finding.currency,
+    storedBalance: finding.storedBalance,
+    derivedBalance: finding.derivedBalance,
+    gap: finding.gap,
+    entryCount: finding.entryCount,
+    coversFromMs: finding.coversFromMs,
+    reason:
+      `Баланс ${finding.currency} записан как ${finding.storedBalance}, а из ${finding.entryCount} ` +
+      `движений следует ${finding.derivedBalance}; разница ${finding.gap}. ` +
+      `Книга видит движения с ${finding.coversFromMs}.`,
+    recordedAtMs: at,
+  };
+}
+
 module.exports = {
   CURRENCY,
   CURRENCIES,
   LEDGER_PATH,
+  RECONCILIATION_PATH,
+  SWEPT_CURRENCIES,
   REASON,
   REASONS,
   derivedBalance,
+  isReportable,
   ledgerEntries,
   ledgerEntry,
   reconcile,
+  reconciliationRecord,
 };

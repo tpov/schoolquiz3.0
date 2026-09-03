@@ -4,6 +4,9 @@ const assert = require("assert");
 const {
   CURRENCY,
   REASON,
+  SWEPT_CURRENCIES,
+  isReportable,
+  reconciliationRecord,
   derivedBalance,
   ledgerEntries,
   ledgerEntry,
@@ -103,6 +106,50 @@ function testMovementsOfAnotherCurrencyAreNotCountedIn() {
   assert.strictEqual(reconcile({uid: UID, currency: CURRENCY.NOLICS, storedBalance: 12, entries: mixed}).gap, 0);
 }
 
+function testTheSweepTouchesOnlyForgeableBalances() {
+  // Золото и плазма — деньги: их сторожат по каждой операции, а не чинят расписанием задним числом.
+  assert.deepStrictEqual(
+    SWEPT_CURRENCIES.slice().sort(),
+    [CURRENCY.NOLICS, CURRENCY.SKILL_POINTS, CURRENCY.STANDARD_CHARGE_POINTS].sort(),
+  );
+  assert.ok(!SWEPT_CURRENCIES.includes(CURRENCY.GOLD));
+  assert.ok(!SWEPT_CURRENCIES.includes(CURRENCY.PLASMA_CHARGE_POINTS));
+}
+
+function testAnAccountOlderThanTheBookIsNotAccused() {
+  // До первой строки движения были, а записи о них нет. Разница объясняется этим, а не игроком.
+  const gap = {uid: UID, currency: CURRENCY.NOLICS, gap: 500, entryCount: 3, coversFromMs: 9000};
+
+  assert.strictEqual(isReportable(gap, {accountCreatedAtMs: 1000}), false, "аккаунт старше книги");
+  assert.strictEqual(isReportable(gap, {accountCreatedAtMs: 9000}), true, "книга с ним ровесница");
+  // Запас прощает книге небольшое опоздание: она началась на секунду позже аккаунта, и это ещё не
+  // повод считать её неполной.
+  assert.strictEqual(isReportable(gap, {accountCreatedAtMs: 8000, graceMs: 5000}), true);
+  assert.strictEqual(isReportable(gap, {accountCreatedAtMs: 8000, graceMs: 0}), false, "без запаса — опоздала");
+  assert.strictEqual(isReportable({...gap, gap: 0}, {accountCreatedAtMs: 9000}), false, "ноль — не находка");
+  assert.strictEqual(isReportable({...gap, entryCount: 0}, {accountCreatedAtMs: 9000}), false, "нечего складывать");
+  assert.strictEqual(isReportable(null), false);
+}
+
+function testTheFindingReconstructsItselfWithoutTheBook() {
+  const finding = reconcile({
+    uid: UID, currency: CURRENCY.NOLICS, storedBalance: 5000,
+    entries: [row({delta: 12, sourceId: "a1", atMs: 1000})], atMs: 4000,
+  });
+  const record = reconciliationRecord(finding, 4000);
+
+  assert.strictEqual(record.id, `${UID}_${CURRENCY.NOLICS}_4000`);
+  assert.strictEqual(record.gap, 4988);
+  assert.ok(record.reason.includes("разница 4988"), record.reason);
+  assert.ok(record.reason.includes("движений следует 12"), record.reason);
+  for (const field of ["storedBalance", "derivedBalance", "gap", "entryCount", "coversFromMs"]) {
+    assert.strictEqual(record[field], finding[field], `в записи нет ${field}`);
+  }
+}
+
+testTheSweepTouchesOnlyForgeableBalances();
+testAnAccountOlderThanTheBookIsNotAccused();
+testTheFindingReconstructsItselfWithoutTheBook();
 testAMovementCarriesItsReasonAndItsAction();
 testTheIdIsDerivedSoAReplayIsOneMovementNotTwo();
 testNothingIsRecordedWhenThereIsNothingToRecord();
