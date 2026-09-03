@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 09-02-2026 01:55
+last_updated: 09-02-2026 20:55
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -43,7 +43,7 @@ development_status:
 
   epic-1: in-progress
   1-1-серверная-проверка-чека: review
-  1-2-клиент-гасит-покупку-только-после-подтверждения: backlog
+  1-2-клиент-гасит-покупку-только-после-подтверждения: review
   1-3-обработчик-возвратов-и-отзывов: backlog
   1-4-паки-золота-на-одной-полке: backlog
   1-5-воронка-магазина-видна: backlog

@@ -6,9 +6,11 @@ import com.tpov.schoolquiz.shared.feature.economy.data.EconomyLocalDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.economy.data.GiftBoxRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.economy.data.RoomEconomyLocalDataSource
+import com.tpov.schoolquiz.shared.feature.economy.data.UnsettledPurchaseSettler
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyConstantsRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.module.Module
@@ -34,6 +36,17 @@ fun economyDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): M
             GiftBoxRepositoryImpl(
                 remote = get(),
                 profileRepository = get(),
+            )
+        }
+        // Живёт столько же, сколько процесс: покупка, оплаченная и не начисленная, должна
+        // дорешаться и при headless-старте. Scope — общий app scope из composition root.
+        single {
+            UnsettledPurchaseSettler(
+                currentUidFlow = currentUidFlow,
+                networkMonitor = get(),
+                billing = get(),
+                settlePurchase = get(),
+                scope = get<CoroutineScope>(),
             )
         }
     }

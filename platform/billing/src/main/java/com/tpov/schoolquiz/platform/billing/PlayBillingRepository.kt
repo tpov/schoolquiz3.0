@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.billing
 
 import android.content.Context
+import android.util.Log
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -77,6 +78,10 @@ class PlayBillingRepository(
     private val client: BillingClient =
         BillingClient.newBuilder(context)
             .setListener(purchasesListener)
+            // Play reconnects on its own from Billing 8. Without it every dropped connection had
+            // to be caught and retried by hand, and a retry racing an in-flight call is exactly
+            // where a purchase goes missing.
+            .enableAutoServiceReconnection()
             .enablePendingPurchases(
                 PendingPurchasesParams.newBuilder().enableOneTimeProducts().build(),
             )
@@ -84,7 +89,10 @@ class PlayBillingRepository(
 
     private val connectionMutex = Mutex()
 
-    /** Connects if needed. Play drops the connection freely, so every call goes through here. */
+    /**
+     * Opens the first connection. Reconnects after a drop are Play's job now
+     * (`enableAutoServiceReconnection`), so this only covers the cold start.
+     */
     private suspend fun ensureConnected(): Boolean =
         connectionMutex.withLock {
             if (client.isReady) return true
@@ -135,12 +143,20 @@ class PlayBillingRepository(
             )
         }
         val products = response.productDetailsList.orEmpty().mapNotNull { it.toStoreProduct() }
-        return Result.success(products)
+        return productsOrFailure(ids, products)
     }
 
     override fun observeUnsettledPurchases(): Flow<List<BillingPurchase>> = unsettled.asStateFlow()
 
-    override suspend fun purchase(productId: StoreProductId): BillingOutcome {
+    /**
+     * @param buyerId the buyer tag the server will compare against, already hashed by the caller.
+     *   Not the raw uid: Play stores this value, shows it in the console and puts it in exported
+     *   reports.
+     */
+    override suspend fun purchase(
+        productId: StoreProductId,
+        buyerId: String,
+    ): BillingOutcome {
         if (!ensureConnected()) return BillingOutcome.Unavailable("Billing service unavailable")
 
         val activity =
@@ -164,6 +180,15 @@ class PlayBillingRepository(
                                 .build(),
                         ),
                     )
+                    // Binds the purchase to the account that is paying. Play returns it to the
+                    // server as `obfuscatedExternalAccountId`, which is how a token presented by
+                    // somebody else is refused instead of credited.
+                    //
+                    // Passed through, not computed here: the value has to match what the server
+                    // computes byte for byte, and `BillingFlowParams` has no getter, so a value
+                    // built at this line could never be read back by a test. Hashing happens where
+                    // a test can see it (`BuyerTag`, wired in `billingModule`).
+                    .setObfuscatedAccountId(buyerId)
                     .build()
 
             val launch = client.launchBillingFlow(activity, flowParams)
@@ -193,24 +218,46 @@ class PlayBillingRepository(
         }
     }
 
+    override suspend fun refreshUnsettledPurchases(): Result<Unit> = refreshUnsettled()
+
     /**
      * Re-reads what the store still holds.
      *
      * Call after every purchase and every consume, and once at startup — this is how a purchase
      * that was paid for but never credited comes back for another settlement attempt.
+     *
+     * Failing to ask is reported rather than swallowed. Both failures here are ordinary and
+     * temporary — the store's process is not bound yet on a cold start, or it answers with a
+     * transport error — but a caller that cannot tell them from "the queue is empty" will read a
+     * stale queue and decide there is nothing to settle, which is how a paid purchase goes
+     * unnoticed for a whole session.
      */
-    suspend fun refreshUnsettled() {
-        if (!ensureConnected()) return
+    suspend fun refreshUnsettled(): Result<Unit> {
+        if (!ensureConnected()) {
+            return Result.failure(IllegalStateException("Billing service unavailable"))
+        }
         val params =
             QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.INAPP)
                 .build()
         val result = client.queryPurchasesAsync(params)
-        if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) return
-        unsettled.value =
-            result.purchasesList
-                .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
-                .flatMap { it.toBillingPurchases() }
+        if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+            return Result.failure(
+                IllegalStateException("queryPurchases: ${result.billingResult.debugMessage}"),
+            )
+        }
+        val purchased = result.purchasesList.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+        val known = purchased.flatMap { it.toBillingPurchases() }
+        // A paid, unconsumed purchase whose SKU this build does not know — a pack added to the
+        // console for a newer version, or a renamed one — is dropped by the mapping. Keep the drop;
+        // lose the silence, because an unsettleable purchase that nothing can even count is a
+        // player who paid and sees nothing at all.
+        val unknown = purchased.sumOf { it.products.size } - known.size
+        if (unknown > 0) {
+            Log.w(TAG, "$unknown unconsumed purchase(s) name a product this build does not know")
+        }
+        unsettled.value = known
+        return Result.success(Unit)
     }
 
     private suspend fun loadProductDetails(productId: StoreProductId): ProductDetails? {
@@ -305,4 +352,35 @@ class PlayBillingRepository(
             currency = offer.priceCurrencyCode,
         )
     }
+
+    private companion object {
+        const val TAG = "PlayBilling"
+    }
+}
+
+/**
+ * Decides what a store answer of "here is what I know about those products" is worth.
+ *
+ * A SKU asked for and not returned is not an empty shelf — it is a product that exists in the code
+ * and not in Play Console, and the shelf cannot show a price for it. Failing names the mistake;
+ * succeeding with a short list hides it behind a shelf that is quietly missing an item.
+ *
+ * The check is per SKU rather than "did anything at all come back". Three packs with two of them
+ * unconfigured is the ordinary way this goes wrong — a half-finished console — and a rule that only
+ * fires when *every* product is missing is silent in exactly that case.
+ *
+ * Free function over plain values so it can be tested without the Play SDK, which does not
+ * initialise in a JVM test.
+ */
+internal fun productsOrFailure(
+    requested: Set<StoreProductId>,
+    returned: List<StoreProduct>,
+): Result<List<StoreProduct>> {
+    val missing = requested - returned.map { it.id }.toSet()
+    if (missing.isEmpty()) return Result.success(returned)
+    return Result.failure(
+        IllegalStateException(
+            "Products not available in the store: " + missing.joinToString { it.playSku },
+        ),
+    )
 }

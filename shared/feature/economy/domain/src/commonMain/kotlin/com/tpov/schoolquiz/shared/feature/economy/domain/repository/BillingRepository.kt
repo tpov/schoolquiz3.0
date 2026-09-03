@@ -36,8 +36,32 @@ interface BillingRepository {
      */
     fun observeUnsettledPurchases(): Flow<List<BillingPurchase>>
 
-    /** Launches the store's purchase flow and suspends until it resolves one way or another. */
-    suspend fun purchase(productId: StoreProductId): BillingOutcome
+    /**
+     * Launches the store's purchase flow and suspends until it resolves one way or another.
+     *
+     * [buyerId] tags the purchase with the account that is paying, so the server can refuse a token
+     * presented by somebody else. It is an opaque, non-reversible identifier derived from the uid —
+     * the store shows it in the console and it must not be a login, an e-mail or the uid itself.
+     */
+    suspend fun purchase(
+        productId: StoreProductId,
+        buyerId: String,
+    ): BillingOutcome
+
+    /**
+     * Re-asks the store what it still holds, refreshing [observeUnsettledPurchases].
+     *
+     * Needed because the queue is Play's: after a cold start, after an account change, and after
+     * the network comes back, the only way to learn about a purchase that was paid for and never
+     * credited is to ask again.
+     *
+     * Returns a failure when the store could not be asked — the store's own process can be
+     * unavailable for a moment, and that moment is often a cold start right after it updated
+     * itself, which is exactly when an unsettled purchase is waiting. A silent no-op here would
+     * leave the caller reading a stale, usually empty queue and concluding there is nothing to
+     * settle, so the difference between "nothing to do" and "could not ask" has to survive.
+     */
+    suspend fun refreshUnsettledPurchases(): Result<Unit>
 
     /**
      * Tells the store the purchase has been granted, so the user can buy it again.

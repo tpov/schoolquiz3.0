@@ -73,8 +73,18 @@ import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
 import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
 import com.tpov.schoolquiz.shared.feature.question.domain.di.questionDomainModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseVerification
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.BillingRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.PurchaseVerifier
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.ServerBalanceRefresher
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.BuyGoldPackUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SettlePurchaseUseCase
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.di.leaderboardDataModule
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentOverviewDto
@@ -353,6 +363,107 @@ class KoinModuleWiringTest : KoinTest {
         }
     }
 
+    /**
+     * What the purchase path needs from platform modules this test cannot start.
+     *
+     * `billingModule` needs an Android Application and `firebaseModule` needs a live Firebase, so
+     * the three ports the settlement use cases depend on are stubbed here. The production modules
+     * stay honestly *required*: if the app ever stops binding one of them, the wiring assertions
+     * below still fail, which is the whole point of this test.
+     */
+    /**
+     * Что состоянию синхронизации нужно снизу и чего в JVM-тесте нет.
+     *
+     * Очередь живёт в Room, след прогона — тоже; ни то, ни другое без Android-контекста не
+     * поднимается. Заглушены здесь ровно эти два порта, а сама привязка `SyncStatusRepository`
+     * берётся production-модулем [syncStatusModule] — не заглушкой. Пропадёт привязка в корне, и
+     * тест сборки графа упадёт: ровно тем падением, которое разбор эпика нашёл вручную.
+     */
+    private val testSyncPortsStubModule = module {
+        single<OutboxStore> {
+            object : OutboxStore {
+                override suspend fun enqueue(record: OutboxRecord): OutboxRecord = record
+
+                override suspend fun dueRecords(
+                    ownerUid: String,
+                    nowMs: Long,
+                    limit: Int,
+                ): List<OutboxRecord> = emptyList()
+
+                override suspend fun apply(id: Long, decision: OutboxDecision) = Unit
+
+                override suspend fun remove(id: Long) = Unit
+
+                override fun observeCounts(ownerUid: String): Flow<OutboxCounts> = flowOf(OutboxCounts())
+
+                override fun observeEntity(ownerUid: String, entityRef: String): Flow<OutboxEntitySync> =
+                    flowOf(OutboxEntitySync.None)
+
+                override suspend fun findByEntityRef(ownerUid: String, entityRef: String): OutboxRecord? = null
+
+                override suspend fun quarantined(ownerUid: String): List<OutboxRecord> = emptyList()
+
+                override suspend fun countPending(ownerUid: String): Int = 0
+
+                override suspend fun forget(ownerUid: String) = Unit
+            }
+        }
+        single<SyncRunTraceStore> {
+            object : SyncRunTraceStore {
+                override fun observeTraces(ownerUid: String): Flow<Map<SyncRunKind, SyncRunTrace>> =
+                    flowOf(emptyMap())
+
+                override suspend fun recordSuccess(ownerUid: String, kind: SyncRunKind, atMs: Long) = Unit
+
+                override suspend fun recordFailure(ownerUid: String, kind: SyncRunKind, error: SyncError) = Unit
+            }
+        }
+    }
+
+    private val testPurchaseStubsModule = module {
+        single<NetworkMonitor> {
+            object : NetworkMonitor {
+                override fun observeOnline(): Flow<Boolean> = flowOf(true)
+
+                override suspend fun isOnline(): Boolean = true
+            }
+        }
+        single<BillingRepository> {
+            object : BillingRepository {
+                override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> =
+                    Result.success(emptyList())
+
+                override fun observeUnsettledPurchases(): Flow<List<BillingPurchase>> =
+                    flowOf(emptyList())
+
+                override suspend fun purchase(
+                    productId: StoreProductId,
+                    buyerId: String,
+                ): BillingOutcome = BillingOutcome.Cancelled
+
+                override suspend fun consume(purchaseToken: String): Result<Unit> =
+                    Result.success(Unit)
+
+                override suspend fun isAvailable(): Boolean = false
+
+                override suspend fun refreshUnsettledPurchases(): Result<Unit> = Result.success(Unit)
+            }
+        }
+        single<PurchaseVerifier> {
+            object : PurchaseVerifier {
+                override suspend fun verify(
+                    purchaseToken: String,
+                    productId: StoreProductId,
+                ): PurchaseVerification = PurchaseVerification.Pending(productId)
+            }
+        }
+        single<ServerBalanceRefresher> {
+            object : ServerBalanceRefresher {
+                override suspend fun refresh(): Result<Unit> = Result.success(Unit)
+            }
+        }
+    }
+
     @Before
     fun setUp() {
         kotlinx.coroutines.Dispatchers.setMain(testDispatcher)
@@ -441,19 +552,24 @@ class KoinModuleWiringTest : KoinTest {
                 testSyncSchedulerModule,
                 testTournamentLeaderboardRemoteModule,
                 testRepositoryStubsModule,
+                testPurchaseStubsModule,
+                testSyncPortsStubModule,
                 appShellDataModule(),
                 leaderboardDataModule,
                 questDomainModule,
                 questAuthoringDomainModule,
                 catalogDomainModule,
                 profileDomainModule,
-                economyDomainModule,
+                economyDomainModule(buyerTag = { it }),
                 // Список уроков считает цену открытия из вопросов урока — ему нужны и репозиторий
                 // вопросов, и разборщик payload.
                 questionDomainModule,
                 questionSchemaModule,
                 questPresentationModule,
                 quizzesPresentationModule,
+                // Состояние синхронизации корень требует без умолчания — привязка идёт
+                // production-модулем, а не заглушкой теста.
+                syncStatusModule,
                 appShellPresentationModule,
             )
         }
@@ -465,6 +581,55 @@ class KoinModuleWiringTest : KoinTest {
             lifecycle.stop()
             lifecycle.destroy()
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Story 1.2: the purchase path resolves end to end
+    // -----------------------------------------------------------------------
+
+    /**
+     * Both purchase use cases resolve from `economyDomainModule` given the ports the platform
+     * modules bind in production. A missing binding here is a paying player getting nothing.
+     */
+    @Test
+    fun `economyDomainModule resolves the purchase use cases`() {
+        startKoin {
+            modules(testPurchaseStubsModule, economyDomainModule(buyerTag = { it }))
+        }
+
+        assertNotNull(getKoin().get<SettlePurchaseUseCase>())
+        assertNotNull(getKoin().get<BuyGoldPackUseCase>())
+    }
+
+    /**
+     * The composition root, not economy, supplies the balance refresher — and it must actually
+     * supply one, or a credited purchase never shows up on the player's balance.
+     */
+    @Test
+    fun `economyGlueModule binds the server balance refresher onto user stats`() = runTest {
+        val refreshed = MutableStateFlow(0)
+        val userStats = module {
+            single<UserStatsRepository> {
+                object : UserStatsRepository {
+                    override fun observeStats(): Flow<UserStats> = flowOf(UserStats.guest())
+
+                    override suspend fun currentStats(): UserStats = UserStats.guest()
+
+                    override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+
+                    override suspend fun refreshProfile(): Result<Unit> {
+                        refreshed.value++
+                        return Result.success(Unit)
+                    }
+                }
+            }
+        }
+        startKoin { modules(userStats, economyGlueModule) }
+
+        val result = getKoin().get<ServerBalanceRefresher>().refresh()
+
+        assertTrue(result.isSuccess)
+        assertEquals(1, refreshed.value)
     }
 
     // -----------------------------------------------------------------------
