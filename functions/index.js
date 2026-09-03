@@ -82,25 +82,6 @@ const {
   settleClaims,
   validateClaimMask,
 } = require("./charge-claims");
-const {ADMIN_REVIEW_SYNC_CHANGES, writeSyncChanges} = require("./sync-changes");
-const {readReviewAssignmentChanges, resolveReviewAssignments} = require("./review-journal");
-const {
-  planHierarchyPrune,
-  planPrivateHierarchyPrune,
-  writePrivateHierarchyPruneToBatch,
-} = require("./hierarchy-prune");
-const logger = require("firebase-functions/logger");
-const {questionKeyDocuments} = require("./question-key-store");
-const {
-  OVERSPEND_AUDIT_PATH,
-  askedOrder,
-  countClaims,
-  noClaims,
-  overspendRecord,
-  overspendVerdict,
-  settleClaims,
-  validateClaimMask,
-} = require("./charge-claims");
 const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
 const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
