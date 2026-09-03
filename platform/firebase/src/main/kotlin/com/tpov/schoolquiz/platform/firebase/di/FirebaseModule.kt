@@ -6,11 +6,10 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
+import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
-import com.tpov.schoolquiz.platform.firebase.network.namingFailures
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseLogoRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
@@ -69,38 +68,38 @@ val firebaseModule =
                 auth = FirebaseAuth.getInstance(),
             )
         }
-        single<EconomyConstantsRemoteDataSource> { FirebaseEconomyConstantsRemoteDataSource(get()).namingFailures() }
+        single<EconomyConstantsRemoteDataSource> { FirebaseEconomyConstantsRemoteDataSource(get()) }
         single<EconomyRemoteDataSource> {
             FirebaseEconomyRemoteDataSource(functions = get(), networkMonitor = get())
         }
-        single<GiftBoxRemoteDataSource> {
-            FirebaseGiftBoxRemoteDataSource(functions = get())
-        }
-        // Денежный вызов: прямой и синхронный, не через приёмник отложенных мутаций (ADM-5).
+        // Проверка чека — денежный вызов, поэтому знает про связь: офлайн отказывает названной
+        // причиной, а не держит спиннер до истечения таймаута (ADM-5).
         single<PurchaseVerifier> {
             FirebasePurchaseVerifier(functions = get(), networkMonitor = get())
+        }
+        single<GiftBoxRemoteDataSource> {
+            FirebaseGiftBoxRemoteDataSource(functions = get())
         }
         single<LessonResultRemoteDataSource> {
             FirebaseLessonResultRemoteDataSource(functions = get())
         }
         single<CatalogSyncChangeRemoteDataSource> {
-            FirebaseCatalogSyncChangeRemoteDataSource(firestore = get(), policy = get()).namingFailures()
+            FirebaseCatalogSyncChangeRemoteDataSource(firestore = get())
         }
         single<LessonContentSyncChangeRemoteDataSource> {
-            FirebaseLessonContentSyncChangeRemoteDataSource(firestore = get(), policy = get()).namingFailures()
+            FirebaseLessonContentSyncChangeRemoteDataSource(firestore = get())
         }
         single<QuestArenaSubmissionRemoteDataSource> {
-            FirebaseQuestArenaSubmissionRemoteDataSource(firestore = get()).namingFailures()
+            FirebaseQuestArenaSubmissionRemoteDataSource(firestore = get())
         }
         single<QuestPrivateRemoteDataSource> {
             FirebaseQuestPrivateRemoteDataSource(
                 firestore = get(),
                 auth = FirebaseAuth.getInstance(),
-                policy = get(),
-            ).namingFailures()
+            )
         }
         single<ReviewAssignmentRemoteDataSource> {
-            FirebaseReviewAssignmentRemoteDataSource(functions = get(), policy = get()).namingFailures()
+            FirebaseReviewAssignmentRemoteDataSource(functions = get())
         }
         single<TournamentLeaderboardRemoteDataSource> {
             FirebaseTournamentLeaderboardRemoteDataSource(functions = get())

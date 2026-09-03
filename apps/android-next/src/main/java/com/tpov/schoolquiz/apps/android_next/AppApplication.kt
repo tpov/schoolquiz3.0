@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.apps.android_next
 
 import android.app.Application
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.work.Configuration
@@ -37,6 +38,9 @@ import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
 import com.tpov.schoolquiz.shared.feature.economy.data.di.economyDataModule
+import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
+import com.tpov.schoolquiz.platform.billing.BuyerTag
+import com.tpov.schoolquiz.shared.feature.economy.data.UnsettledPurchaseSettler
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.di.leaderboardDataModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.di.profileDataModule
@@ -167,7 +171,16 @@ class AppApplication : Application(), Configuration.Provider {
                 questionDomainModule,
                 questionSchemaModule,
                 profileDomainModule,
-                economyDomainModule,
+                economyDomainModule(
+                    currentUidFlow = { sharedAuthUidFlow },
+                    // Метку покупателя несёт магазин, а сравнивает её сервер: обе стороны
+                    // считают sha-256 от uid, и любое расхождение отклоняет каждую покупку.
+                    buyerTag = BuyerTag::of,
+                    log = { message, error -> Log.w("Purchases", message, error) },
+                ),
+                // Экономика знает, что баланс надо перечитать с сервера, но не знает, где он
+                // живёт. Composition root — единственное место, которому можно знать обе фичи.
+                economyGlueModule,
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,
@@ -176,6 +189,7 @@ class AppApplication : Application(), Configuration.Provider {
         }
         startMeasurement()
         reconcileSyncSchedule()
+        startPurchaseSettlement()
     }
 
     /**
@@ -195,6 +209,18 @@ class AppApplication : Application(), Configuration.Provider {
      * Здесь же, а не в Activity, потому что процесс поднимается и без неё, и сверять расписание
      * надо на каждом старте.
      */
+    /**
+     * Дорешает покупки, оплаченные и не начисленные (Story 1.2).
+     *
+     * Здесь, а не в Activity: процесс, убитый между оплатой и начислением, поднимется в следующий
+     * раз как угодно — в том числе headless, без единого экрана, — и покупка обязана дорешаться
+     * всё равно. Досеттлер сам пересоздаёт подписку при смене аккаунта и при возвращении связи,
+     * поэтому запустить его достаточно один раз.
+     */
+    private fun startPurchaseSettlement() {
+        GlobalContext.get().get<UnsettledPurchaseSettler>().start()
+    }
+
     private fun reconcileSyncSchedule() {
         val scheduler = GlobalContext.get().get<SyncScheduler>()
         val preferences = SyncPreferences(this)
