@@ -168,17 +168,23 @@ function settleClaims(mask, codeAnswer, standardAvailable, plasmaAvailable, orde
  * @param storedPoints очки в базе на момент `storedUpdatedAtMs`
  * @param rules правила вида: `maxOwned`, `regenMs`
  * @param ownedSlots сколько слотов у аккаунта куплено; по умолчанию — весь `maxOwned`
+ * @param regenMs период восстановления для ЭТОГО аккаунта; по умолчанию — период из правил
  * @param pointsPerCharge очков в заряде
  */
 function overspendVerdict({
   claimed, storedPoints, storedUpdatedAtMs, windowEndMs, rules, ownedSlots, clockSkewToleranceMs,
-  pointsPerCharge,
+  pointsPerCharge, regenMs: regenMsForAccount,
 }) {
   const perCharge = Math.max(1, Math.floor(Number(pointsPerCharge) || 100));
   const maxOwned = Math.max(0, Math.floor(Number(rules && rules.maxOwned) || 0));
   const slots = ownedSlots === undefined || ownedSlots === null ?
     maxOwned : Math.max(0, Math.floor(Number(ownedSlots) || 0));
-  const regenMs = Math.max(0, Math.floor(Number(rules && rules.regenMs) || 0));
+  // Период — этого аккаунта, а не вида вообще: премиум восстанавливается быстрее, и сервер сам
+  // ему это платит. Считать потолок по базовому периоду значило бы записать в перерасход заряды,
+  // которые сервер только что начислил.
+  const regenMs = regenMsForAccount === undefined || regenMsForAccount === null ?
+    Math.max(0, Math.floor(Number(rules && rules.regenMs) || 0)) :
+    Math.max(0, Math.floor(Number(regenMsForAccount) || 0));
   const heldPoints = Math.max(0, Math.floor(Number(storedPoints) || 0));
   const elapsedMs = Math.max(0, Math.floor(Number(windowEndMs) || 0) - Math.floor(Number(storedUpdatedAtMs) || 0));
   const regeneratedPoints = regenMs > 0 ? Math.floor((elapsedMs * perCharge) / regenMs) : 0;

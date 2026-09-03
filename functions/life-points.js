@@ -38,9 +38,19 @@ function maxLifePoints(standardHearts) {
  * a backlog and refill instantly after spending.
  */
 function regenerateLifePoints(storedPoints, updatedAtMs, nowMs, maxPoints, intervalMs) {
-  // Интервал приходит из серверной таблицы (`standard.regenMs / POINTS_PER_CHARGE`); без него —
-  // прежняя константа, чтобы вызывающие, которым таблица недоступна, не изменились.
-  const perPointMs = Math.max(1, Math.floor(Number(intervalMs) || LIFE_POINT_INTERVAL_MS));
+  // Интервал приходит из серверной таблицы (`standard.regenMs / POINTS_PER_CHARGE`). Отсутствие
+  // аргумента и ноль — разные вещи: аргумента нет у вызывающих, которым таблица недоступна, и они
+  // считают по прежней константе; ноль означает «этот вид не восстанавливается» и обязан ничего не
+  // начислять. Прежде `|| LIFE_POINT_INTERVAL_MS` съедал ноль и втихую заводил восстановление
+  // раз в 36 секунд там, где его отключили, — а клиентский `ChargeRegeneration` в том же случае
+  // не начисляет ничего.
+  const givenInterval = intervalMs === undefined || intervalMs === null ? LIFE_POINT_INTERVAL_MS : Math.floor(Number(intervalMs));
+  if (!Number.isFinite(givenInterval) || givenInterval <= 0) {
+    const held = Math.max(0, Math.floor(Number(storedPoints) || 0));
+    const since = Math.max(0, Math.floor(Number(updatedAtMs) || 0));
+    return {points: held, updatedAtMs: since};
+  }
+  const perPointMs = givenInterval;
   const ceiling = Math.max(0, Math.floor(Number(maxPoints) || 0));
   // Не зажимаем вниз: потолок ограничивает пополнение, а не владение. Прежде здесь стоял
   // `Math.min`, и понижение потолка молча отбирало накопленное — игрок ничего не тратил, а очки

@@ -826,6 +826,8 @@ async function writeOverspendRecords(uid, inputs, now) {
       storedUpdatedAtMs: side.storedUpdatedAtMs,
       windowEndMs: now,
       rules: side.rules,
+      ownedSlots: side.ownedSlots,
+      regenMs: regenMsFor(side.rules, inputs.hasPremium),
       clockSkewToleranceMs: inputs.economy.clockSkewToleranceMs,
       pointsPerCharge: POINTS_PER_CHARGE,
     });
@@ -1264,6 +1266,7 @@ async function applyLessonResultEvents(uid, attempts) {
       plasmaCeiling,
       regenMsFor(plasmaRules, hasPremium) / POINTS_PER_CHARGE,
     );
+    const settledAttemptIds = new Set();
     let standardClaimed = 0;
     let plasmaClaimed = 0;
     const claimedAttemptIds = [];
@@ -1281,7 +1284,13 @@ async function applyLessonResultEvents(uid, attempts) {
       // `payable` is that rule already evaluated (`isPayable`, through `withServerScore`): for a
       // device-scored attempt it is today's `scoreVerified` and the served list agreeing with the
       // digits; for a server-scored one it is "the server scored it, with no gap of its own".
-      const isNew = !existingSnapshots[index].exists;
+      //
+      // Один и тот же `attemptId` дважды в одном пакете — это одна попытка, а не две: снимки
+      // читались до первой записи, поэтому обе выглядели бы новыми, и плата, расчёт и награда
+      // прошли бы по каждой.
+      const seenInBatch = settledAttemptIds.has(item.event.attemptId);
+      settledAttemptIds.add(item.event.attemptId);
+      const isNew = !existingSnapshots[index].exists && !seenInBatch;
       let lifeCharged = false;
       if (isNew && item.payable) {
         const charged = spendLifePoints(life.points, item.event.lifeCost, lifeCeiling);
@@ -1316,6 +1325,14 @@ async function applyLessonResultEvents(uid, attempts) {
         item.event.standardChargesPaid = settled.standardChargesPaid;
         item.event.plasmaChargesPaid = settled.plasmaChargesPaid;
         item.event.chargeClaimsUnpaid = settled.unpaid.length;
+        // Присланные значения остаются рядом под своими именами, а рабочие — замещаются: иначе
+        // оплаченный пропуск поднимал бы только сохранённую строку, а награда, лучший результат,
+        // рейтинги активности и турнирная запись считались бы по неподнятой. Платят и ранжируют
+        // по тому, за что взяли деньги.
+        item.event.submittedCodeAnswer = item.event.codeAnswer;
+        item.event.submittedPercentScore = item.event.percentScore;
+        item.event.codeAnswer = settled.codeAnswer;
+        item.event.percentScore = item.event.settledPercentScore;
       }
 
       transaction.set(
@@ -1330,12 +1347,11 @@ async function applyLessonResultEvents(uid, attempts) {
           // который игроку уже заплатили, — а `lessonBest` и турнирная строка остались бы с
           // первым. Одна попытка не может иметь два счёта. `readStoredAttemptScores` обычно уже
           // остановил пересчёт до транзакции; это — та же защита на снимке, который решает.
+          //
+          // Послерасчётные значения сюда больше не подставляются: с b89924c3 они замещают
+          // рабочие сразу после расчёта, до записи.
           ...(!isNew && item.event.scoringAuthority === SCORING_AUTHORITY.SERVER ?
             storedScoreFields(existingSnapshots[index]) :
-            {}),
-          // Послерасчётные значения замещают присланные: оплаченный пропуск — верный ответ.
-          ...(item.event.settledCodeAnswer ?
-            {codeAnswer: item.event.settledCodeAnswer, percentScore: item.event.settledPercentScore} :
             {}),
           // Повтор той же попытки (прямой вызов, не очередь) не переписывает, была ли она
           // оплачена: запись о перерасходе и сверка балансов будут читать именно это поле.
@@ -1400,8 +1416,22 @@ async function applyLessonResultEvents(uid, attempts) {
         now,
       ),
       attemptIds: claimedAttemptIds,
-      standard: {claimed: standardClaimed, storedPoints: storedLifePoints, storedUpdatedAtMs: storedLifeUpdatedAtMs, rules: economy.standard},
-      plasma: {claimed: plasmaClaimed, storedPoints: storedPlasmaPoints, storedUpdatedAtMs: storedPlasmaUpdatedAtMs, rules: economy.plasma},
+      hasPremium,
+      standard: {
+        claimed: standardClaimed,
+        storedPoints: storedLifePoints,
+        storedUpdatedAtMs: storedLifeUpdatedAtMs,
+        rules: economy.standard,
+        ownedSlots,
+      },
+      plasma: {
+        claimed: plasmaClaimed,
+        storedPoints: storedPlasmaPoints,
+        storedUpdatedAtMs: storedPlasmaUpdatedAtMs,
+        rules: economy.plasma,
+        ownedSlots: nonNegativeInteger(userData.goldHearts, 0),
+      },
+
     };
   });
   // Перерасход. Излишек и так не оплачен — запись для оператора, а не второе наказание, и
@@ -2983,6 +3013,9 @@ function tournamentResultData(data, fallbackUserId) {
     questionCount: nullableNumber(firstDefined(data.questionCount, data.totalQuestions, data.answeredCount)),
     weight: nullableNumber(data.weight),
     completedAtMs: nullableNumber(firstDefined(data.completedAtMs, data.finishedAtMs, data.updatedAtMs)),
+    // Время отвечания — разрыв ничьей по проценту (CAP-10). Читается обратно, иначе пересчёт
+    // таблицы видел бы его только у тех результатов, что лежат в самой группе, а не в документах.
+    elapsedMs: nullableNumber(firstDefined(data.elapsedMs, data.durationMs)),
   });
 }
 

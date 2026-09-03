@@ -64,6 +64,14 @@ class ActivityKindParityTest {
     }
 
     @Test
+    fun `given a shelf with an invisible byte-order mark then it is still that shelf`() {
+        // `String.prototype.trim` на сервере режет BOM, `Char.isWhitespace` в Kotlin — нет. Полка
+        // с ним была бы турниром для сервера и обычным уроком здесь, то есть 500 очков против 33.
+        assertEquals(ActivityKind.TOURNAMENT, ActivityKindRule.of(listOf("\uFEFFtournament")))
+        assertEquals(listOf("home"), ActivityKindRule.shelvesOf(listOf(" \uFEFF HOME \uFEFF ")))
+    }
+
+    @Test
     fun `given the shared fixtures then the shelves are ordered the same way`() {
         // Порядок и есть правило: первая полка — самая дорогая, и по ней считается цена.
         val mismatches =
