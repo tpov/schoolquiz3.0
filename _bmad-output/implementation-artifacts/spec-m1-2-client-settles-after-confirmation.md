@@ -2,7 +2,7 @@
 title: 'M1.2 — The client consumes a purchase only after the server confirms it'
 type: 'feature'
 created: '2026-09-02'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'a691e4420a76100ba11ed5cb7dea04b071874459'
 review_loop_iteration: 0
 story_key: '1-2-клиент-гасит-покупку-только-после-подтверждения'
