@@ -61,6 +61,16 @@ class SettlePurchaseUseCase(
      * queue for the settler to try again.
      */
     suspend operator fun invoke(purchase: BillingPurchase): Result<PurchaseOutcome> {
+        val first = settleOrAwait(purchase)
+        // The settlement we were waiting on was cancelled — an account change or a screen closing
+        // took its owner down, not anything about this purchase. The waiter's own scope is fine, so
+        // it takes ownership and settles rather than telling a player who is standing at the till
+        // that their purchase failed.
+        if (first.exceptionOrNull() is SettlementInterrupted) return settleOrAwait(purchase)
+        return first
+    }
+
+    private suspend fun settleOrAwait(purchase: BillingPurchase): Result<PurchaseOutcome> {
         val token = purchase.purchaseToken
         val own = CompletableDeferred<Result<PurchaseOutcome>>()
         val running = guard.withLock { inFlight.getOrPut(token) { own } }

@@ -147,6 +147,7 @@ import org.koin.test.KoinTest
 import org.mockito.Mockito.mock
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
@@ -560,7 +561,7 @@ class KoinModuleWiringTest : KoinTest {
                 questAuthoringDomainModule,
                 catalogDomainModule,
                 profileDomainModule,
-                economyDomainModule(buyerTag = { it }),
+                economyDomainModule(currentUidFlow = { flowOf("uid-test") }, buyerTag = { "tag($it)" }),
                 // Список уроков считает цену открытия из вопросов урока — ему нужны и репозиторий
                 // вопросов, и разборщик payload.
                 questionDomainModule,
@@ -594,11 +595,18 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `economyDomainModule resolves the purchase use cases`() {
         startKoin {
-            modules(testPurchaseStubsModule, economyDomainModule(buyerTag = { it }))
+            modules(testPurchaseStubsModule, economyDomainModule(currentUidFlow = { flowOf("uid-test") }, buyerTag = { "tag($it)" }))
         }
 
         assertNotNull(getKoin().get<SettlePurchaseUseCase>())
         assertNotNull(getKoin().get<BuyGoldPackUseCase>())
+        // One instance, not one per caller: the use case holds the guard that keeps a token from
+        // being settled twice, and a guard handed out fresh to each caller guards nothing.
+        assertSame(
+            getKoin().get<SettlePurchaseUseCase>(),
+            getKoin().get<SettlePurchaseUseCase>(),
+            "the settlement use case must be a single — its guard is shared state",
+        )
     }
 
     /**

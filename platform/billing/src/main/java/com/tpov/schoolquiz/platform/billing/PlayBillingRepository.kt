@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -59,17 +60,19 @@ class PlayBillingRepository(
     /**
      * Completes the suspended [purchase] call when Play reports back.
      *
-     * Guarded by [purchaseMutex] so two overlapping flows cannot resolve each other's
-     * continuation — Play delivers results to one process-wide listener with no request id.
+     * [purchaseMutex] keeps two flows from overlapping — Play delivers results to one process-wide
+     * listener with no request id — but the listener runs on Play's thread, not the caller's, so
+     * the handoff itself is atomic rather than mutex-guarded. A plain field would let the listener
+     * read a stale null and leave `purchase()` suspended forever *while still holding the mutex*,
+     * which would make every later purchase in that process hang too.
      */
-    private var pendingPurchase: CompletableDeferred<BillingOutcome>? = null
+    private val pendingPurchase = AtomicReference<CompletableDeferred<BillingOutcome>?>(null)
     private val purchaseMutex = Mutex()
 
     private val purchasesListener =
         PurchasesUpdatedListener { result, purchases ->
             val outcome = toOutcome(result, purchases)
-            pendingPurchase?.complete(outcome)
-            pendingPurchase = null
+            pendingPurchase.getAndSet(null)?.complete(outcome)
             if (!purchases.isNullOrEmpty()) {
                 scope.launch { refreshUnsettled() }
             }
@@ -169,7 +172,7 @@ class PlayBillingRepository(
 
         return purchaseMutex.withLock {
             val deferred = CompletableDeferred<BillingOutcome>()
-            pendingPurchase = deferred
+            pendingPurchase.set(deferred)
 
             val flowParams =
                 BillingFlowParams.newBuilder()
@@ -193,7 +196,7 @@ class PlayBillingRepository(
 
             val launch = client.launchBillingFlow(activity, flowParams)
             if (launch.responseCode != BillingClient.BillingResponseCode.OK) {
-                pendingPurchase = null
+                pendingPurchase.compareAndSet(deferred, null)
                 BillingOutcome.Failed(
                     code = launch.responseCode.toString(),
                     message = launch.debugMessage.orEmpty(),
@@ -247,12 +250,15 @@ class PlayBillingRepository(
             )
         }
         val purchased = result.purchasesList.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
-        val known = purchased.flatMap { it.toBillingPurchases() }
+        // Sorted, because the queue is compared by equality to decide whether anything changed and
+        // the store promises no order: the same set arriving shuffled would read as a change and
+        // send the settler round again against Play for nothing.
+        val known = purchased.mapNotNull { it.toBillingPurchase() }.sortedBy { it.purchaseToken }
         // A paid, unconsumed purchase whose SKU this build does not know — a pack added to the
         // console for a newer version, or a renamed one — is dropped by the mapping. Keep the drop;
         // lose the silence, because an unsettleable purchase that nothing can even count is a
         // player who paid and sees nothing at all.
-        val unknown = purchased.sumOf { it.products.size } - known.size
+        val unknown = purchased.size - known.size
         if (unknown > 0) {
             Log.w(TAG, "$unknown unconsumed purchase(s) name a product this build does not know")
         }
@@ -291,7 +297,7 @@ class PlayBillingRepository(
                             ?.let { BillingOutcome.Pending(it) }
                             ?: BillingOutcome.Failed("UNKNOWN_SKU", "Pending purchase of an unknown product")
                     else ->
-                        purchase.toBillingPurchases().firstOrNull()
+                        purchase.toBillingPurchase()
                             ?.let { BillingOutcome.Purchased(it) }
                             ?: BillingOutcome.Failed("UNKNOWN_SKU", "Purchase of an unknown product")
                 }
@@ -300,7 +306,7 @@ class PlayBillingRepository(
             BillingClient.BillingResponseCode.USER_CANCELED -> BillingOutcome.Cancelled
 
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED ->
-                BillingOutcome.AlreadyOwned(purchases?.firstOrNull()?.toBillingPurchases()?.firstOrNull())
+                BillingOutcome.AlreadyOwned(purchases?.firstOrNull()?.toBillingPurchase())
 
             BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
             BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
@@ -320,25 +326,34 @@ class PlayBillingRepository(
         products.firstNotNullOfOrNull { StoreProductId.fromSku(it) }
 
     /**
-     * One Play purchase can carry several products, so it maps to a list.
+     * One store purchase becomes at most one [BillingPurchase] — the first product this build knows.
+     *
+     * A store purchase can name several products, but a token is settled against a single SKU: the
+     * server asks Play about one product per token and records one settlement for it. Mapping the
+     * token to several rows would promise a credit for the second product that nothing can ever
+     * deliver — it would be verified, find the token already settled, and replay the first
+     * product's answer. Refusing to split is the honest shape; a purchase naming more than one
+     * known product is reported rather than silently halved.
      *
      * Price is not on [Purchase] — Play does not put it there. It stays 0 here and the server
      * reads the real amount from the Play Developer API when it verifies the token, which is the
      * only place the number can be trusted anyway.
      */
-    private fun Purchase.toBillingPurchases(): List<BillingPurchase> =
-        products.mapNotNull { sku ->
-            StoreProductId.fromSku(sku)?.let { id ->
-                BillingPurchase(
-                    productId = id,
-                    purchaseToken = purchaseToken,
-                    orderId = orderId,
-                    isAcknowledged = isAcknowledged,
-                    priceMicros = 0L,
-                    currency = "",
-                )
-            }
+    private fun Purchase.toBillingPurchase(): BillingPurchase? {
+        val known = products.mapNotNull { StoreProductId.fromSku(it) }
+        if (known.size > 1) {
+            Log.w(TAG, "a purchase names ${known.size} known products; settling only the first")
         }
+        val id = known.firstOrNull() ?: return null
+        return BillingPurchase(
+            productId = id,
+            purchaseToken = purchaseToken,
+            orderId = orderId,
+            isAcknowledged = isAcknowledged,
+            priceMicros = 0L,
+            currency = "",
+        )
+    }
 
     private fun ProductDetails.toStoreProduct(): StoreProduct? {
         val id = StoreProductId.fromSku(productId) ?: return null

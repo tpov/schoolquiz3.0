@@ -9,7 +9,6 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUse
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SettlePurchaseUseCase
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -21,7 +20,11 @@ import org.koin.dsl.module
  * смены пользователя покупка уедет с чужой меткой.
  */
 fun economyDomainModule(
-    currentUidFlow: () -> Flow<String?> = { flowOf(null) },
+    /**
+     * No default, for the same reason [buyerTag] has none: a module built with a flow that never
+     * names an account fails every purchase with "no signed-in account", and it fails it silently.
+     */
+    currentUidFlow: () -> Flow<String?>,
     /**
      * How an account id becomes the tag the store carries. Required, with no default on purpose:
      * a tag that quietly stopped being hashed would make the server refuse every real purchase,

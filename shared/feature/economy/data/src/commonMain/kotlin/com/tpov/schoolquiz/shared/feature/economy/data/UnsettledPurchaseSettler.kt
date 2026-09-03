@@ -21,6 +21,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Finishes purchases that were paid for and never credited (Story 1.2).
@@ -48,17 +49,7 @@ class UnsettledPurchaseSettler(
     private val billing: BillingRepository,
     private val settlePurchase: SettlePurchaseUseCase,
     private val scope: CoroutineScope,
-    private val retryDelayMs: Long = INITIAL_RETRY_DELAY_MS,
-    private val maxRetryDelayMs: Long = MAX_RETRY_DELAY_MS,
-    /**
-     * How many times in a row a round may fail before this account stops trying on a timer.
-     *
-     * Without a bound a token the server keeps refusing to settle — or a server that keeps
-     * answering "try later" — becomes a call generator that never gives up. The next account
-     * change, reconnection or queue change starts it over, which is the right moment: something
-     * about the situation actually changed.
-     */
-    private val maxRetryRounds: Int = MAX_RETRY_ROUNDS,
+    private val retry: RetryPolicy = RetryPolicy(),
     private val log: (String, Throwable?) -> Unit = { _, _ -> },
 ) {
 
@@ -105,8 +96,10 @@ class UnsettledPurchaseSettler(
      */
     private suspend fun settleWhileOnline(uid: String) = coroutineScope {
         val queue = billing.observeUnsettledPurchases()
+        // How many times each token has been attempted while this account has been online. Cleared
+        // with the scope, so a reconnection or an account change starts everyone over.
+        val attempts = mutableMapOf<String, Int>()
         var backoffMs = 0L
-        var failedRounds = 0
 
         while (isActive) {
             if (backoffMs > 0L) delay(backoffMs)
@@ -117,28 +110,46 @@ class UnsettledPurchaseSettler(
             // reading past it.
             val refreshed = refreshQueue()
             val snapshot = queue.first()
-            val settleable = if (refreshed) snapshot.filterNot { isRefused(uid, it.purchaseToken) } else emptyList()
-            val worthRetrying = !refreshed || settleAll(uid, settleable)
+            val settleable =
+                if (refreshed) {
+                    snapshot.filterNot {
+                        isRefused(uid, it.purchaseToken) ||
+                            (attempts[it.purchaseToken] ?: 0) >= retry.maxRounds
+                    }
+                } else {
+                    emptyList()
+                }
+            settleable.forEach { attempts[it.purchaseToken] = (attempts[it.purchaseToken] ?: 0) + 1 }
+            val unfinished = !refreshed || settleAll(uid, settleable)
 
             // Something arrived while we were working: go again now rather than sleeping through it.
             if (queue.first() != snapshot) {
                 backoffMs = 0L
-                failedRounds = 0
                 continue
             }
 
-            if (worthRetrying && ++failedRounds < maxRetryRounds) {
+            if (unfinished && settleable.isNotEmpty()) {
                 backoffMs = nextBackoff(backoffMs)
                 continue
             }
 
-            // Either everything settled, or this account has failed often enough that trying again
-            // on a timer is just noise. Both mean the same thing: stop asking until the store's
-            // queue actually changes. A bound is what keeps a permanently failing token from
-            // becoming a call generator — the next account change or reconnection starts it over.
             backoffMs = 0L
-            failedRounds = 0
-            queue.drop(1).first()
+            val stillWorthWaking =
+                snapshot.any {
+                    !isRefused(uid, it.purchaseToken) &&
+                        (attempts[it.purchaseToken] ?: 0) < retry.maxRounds
+                }
+            if (stillWorthWaking || (!refreshed && snapshot.isEmpty())) {
+                // Bounded: the queue changes only when a new purchase arrives or a settled one is
+                // consumed, so a purchase the server keeps answering PENDING — or a store that
+                // could not be asked at all — would otherwise be waited on forever.
+                withTimeoutOrNull(retry.coolDownMs) { queue.drop(1).first() }
+            } else {
+                // Nothing left that this account can act on. Only a real event — a new purchase, a
+                // reconnection, another account — is worth waking for, and each of those restarts
+                // this scope from the top.
+                queue.drop(1).first()
+            }
         }
     }
 
@@ -198,12 +209,34 @@ class UnsettledPurchaseSettler(
     }
 
     private fun nextBackoff(current: Long): Long =
-        if (current <= 0L) retryDelayMs else (current * 2).coerceAtMost(maxRetryDelayMs)
+        if (current <= 0L) retry.firstDelayMs else (current * 2).coerceAtMost(retry.maxDelayMs)
 
     private companion object {
-        const val INITIAL_RETRY_DELAY_MS = 30_000L
-        const val MAX_RETRY_DELAY_MS = 15 * 60_000L
-        const val MAX_RETRY_ROUNDS = 3
         const val REFRESH_FAILED = "the store's purchase queue could not be re-read"
     }
 }
+
+/**
+ * How hard to keep trying, and how long to wait before looking again.
+ *
+ * One object rather than three parameters because the three numbers only make sense together: a
+ * cap with no cool-down is a settlement abandoned for the life of the process, and a cool-down with
+ * no cap is a call generator.
+ *
+ * @property firstDelayMs the pause after the first failed round; doubles from there.
+ * @property maxDelayMs the ceiling that doubling stops at.
+ * @property maxRounds how many rounds in a row may fail before the account stops trying on a timer.
+ *   Without it a token the server keeps refusing becomes a paid callable fired at every flap.
+ * @property coolDownMs how long to sleep after giving up, before looking again anyway.
+ *   Load-bearing: the store's queue only changes when a *new* purchase arrives or a settled one is
+ *   consumed, so without this the loop would park on a purchase it had failed to settle and nothing
+ *   the app or the server did could ever wake it — the player would wait for a restart. It is also
+ *   what eventually credits a purchase the server answered PENDING, since a payment settling
+ *   server-side changes nothing the device can observe.
+ */
+data class RetryPolicy(
+    val firstDelayMs: Long = 30_000L,
+    val maxDelayMs: Long = 15 * 60_000L,
+    val maxRounds: Int = 3,
+    val coolDownMs: Long = 15 * 60_000L,
+)

@@ -64,10 +64,19 @@ class BuyGoldPackUseCase(
             // error. When Play declines to say *which* purchase, re-reading the queue is what makes
             // it visible to the settler.
             is BillingOutcome.AlreadyOwned ->
-                outcome.purchase?.let { settlePurchase(it) }
+                // Through the same guard as an ordinary purchase: what the store re-delivers here
+                // is by definition an older purchase, and it may well be a different pack.
+                outcome.purchase?.let { settleBought(productId, it) }
                     ?: run {
-                        billing.refreshUnsettledPurchases()
-                        Result.failure(IllegalStateException(ALREADY_OWNED_UNIDENTIFIED))
+                        // The recovery *is* the re-read: it is what makes the purchase visible to
+                        // the settler. If even that could not be done, saying it was re-queued
+                        // would be a promise nothing kept.
+                        val reQueued = billing.refreshUnsettledPurchases().isSuccess
+                        Result.failure(
+                            IllegalStateException(
+                                if (reQueued) ALREADY_OWNED_UNIDENTIFIED else ALREADY_OWNED_UNREACHABLE,
+                            ),
+                        )
                     }
 
             is BillingOutcome.Unavailable -> Result.failure(IllegalStateException(outcome.reason))
@@ -114,5 +123,10 @@ class BuyGoldPackUseCase(
         const val ALREADY_OWNED_UNIDENTIFIED =
             "The store reports this product is already owned but did not name the purchase; " +
                 "it was re-queued for settlement"
+
+        /** Worse than the above: the purchase exists, and nothing could even be asked about it. */
+        const val ALREADY_OWNED_UNREACHABLE =
+            "The store reports this product is already owned but could not be asked which purchase; " +
+                "it will be picked up when the store answers again"
     }
 }
