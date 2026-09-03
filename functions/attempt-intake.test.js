@@ -369,16 +369,10 @@ test("the verbatim helper copies in attempt-intake.js match index.js byte for by
   }
 });
 
-test("the frozen reference is still today's intake", () => {
-  assert.strictEqual(
-    extractFunction(INDEX_SOURCE, "normalizeLessonResultAttemptEvent"),
-    normalizeLessonResultAttemptEvent.toString(),
-    "normalizeLessonResultAttemptEvent in index.js differs from the frozen copy in this suite. " +
-      "If today's intake changed on purpose, refresh the copy and re-check every fixture; " +
-      "if the intake was swapped over to readSubmittedAttempt, retire this assertion — the copy " +
-      "then stands as the pre-swap reference and nothing else here needs to change.",
-  );
-});
+// Сравнение замороженной копии с `index.js` снято: приёмник переключён на `readSubmittedAttempt`,
+// и в `index.js` прежней функции больше нет. Копия остаётся эталоном ДО переключения — по ней
+// сверяются побайтовые фикстуры ниже, и в этом теперь весь её смысл. Так и предписывало примечание
+// над ней самой.
 
 test("every body today accepts or refuses comes out identical, field for field and message for message", () => {
   const reached = new Set();

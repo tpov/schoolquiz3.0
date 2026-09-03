@@ -60,6 +60,7 @@ const {
 } = require("./purchase-settlement");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
+const {PAYMENT_RULE, isPayable, readSubmittedAttempt} = require("./attempt-intake");
 const {
   OVERSPEND_AUDIT_PATH,
   askedOrder,
@@ -72,7 +73,7 @@ const {
 } = require("./charge-claims");
 const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
-const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
+const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
 const {
   maxLifePoints,
   regenerateLifePoints,
@@ -393,10 +394,39 @@ async function readAllocatedSeconds(lessonIds) {
       return [lessonId, {
         easy: lessonAllocatedSeconds(contents, false),
         hard: lessonAllocatedSeconds(contents, true),
+        // Сколько вопросов урок ставит на каждой сложности. По этому числу приёмник и проверяет,
+        // что попытка назвала столько же показанных: список показанного, согласованный сам с
+        // собой, но короче набора, иначе приносил бы награду за урок целиком.
+        easyPoolSize: lessonPoolSize(contents, false),
+        hardPoolSize: lessonPoolSize(contents, true),
       }];
     }),
   );
   return Object.fromEntries(entries);
+}
+
+/**
+ * Назвала ли попытка столько показанных вопросов, сколько урок ставит.
+ *
+ * Список показанного приезжает от устройства и сверяется приёмником только с цифрами — этого мало:
+ * `codeAnswer: "9"` со списком на один вопрос согласован сам с собой. Награда же считается по
+ * уроку целиком, поэтому короткая попытка платила бы как полная.
+ *
+ * Список, которого нет вовсе, сверку не проходит: без него подделка из одной цифры остаётся
+ * оплачиваемой, а нынешний клиент список шлёт всегда. Попытка при этом сохраняется — не платится
+ * только награда.
+ */
+function servedCountMatchesLesson(event, allocatedByLesson) {
+  // Списка нет вовсе — не платим. Приёмник называет такую попытку клиентом, который список ещё не
+  // шлёт, и от сверки с цифрами её освобождает; для оплаты этого мало, потому что без списка
+  // подделка из одной цифры проходит нетронутой. Живых установок нет (AD-16, подтверждено
+  // владельцем), а нынешний клиент список шлёт всегда, так что отказывать нечему.
+  if (!Array.isArray(event.served)) return false;
+  const lesson = allocatedByLesson[event.lessonId];
+  if (!lesson) return false;
+  const isHard = stringValue(event.difficulty).toUpperCase() === "HARD";
+  const expected = isHard ? lesson.hardPoolSize : lesson.easyPoolSize;
+  return expected > 0 && event.served.length === expected;
 }
 
 /**
@@ -780,7 +810,14 @@ async function applyLessonResultEvents(uid, attempts) {
 
   const now = Date.now();
   const events = attempts.map((item) => {
-    const event = normalizeLessonResultAttemptEvent(item, uid);
+    const event = readSubmittedAttempt(item, uid);
+    // Серверная оценка сюда ещё не подключена: её ветвь отдаёт `codeAnswer: null`, и всё, что
+    // ниже — расчёт заявок, награда, турнирная запись, — читало бы пустоту. Честный клиент этой
+    // ветви не выбирает (обе его дороги шлют цифры), а крафтовое тело выбрало бы её именно затем,
+    // чтобы проскочить мимо проверок. Отказ, пока `scoreAttempt` не встал на место.
+    if (event.paymentRule !== PAYMENT_RULE.DEVICE_SCORED) {
+      throw new HttpsError("failed-precondition", "Server-scored attempts are not accepted yet");
+    }
     const content = contentKeysForEvent(event);
     const ref = db
       .collection(scopedCollection("result_events", event.scope))
@@ -878,7 +915,12 @@ async function applyLessonResultEvents(uid, attempts) {
       settledAttemptIds.add(item.event.attemptId);
       const isNew = !existingSnapshots[index].exists && !seenInBatch;
       let lifeCharged = false;
-      if (isNew && item.event.scoreVerified) {
+      // Три сверки, а не одна. Процент обязан следовать из цифр; показанное — из тех же цифр; и
+      // показанного должно быть столько, сколько урок ставит. Без третьей строка из одной девятки
+      // со списком показанного на один вопрос согласована сама с собой и приносит награду за урок
+      // целиком — размер награды считается по уроку, а не по числу цифр.
+      const servedCountVerified = servedCountMatchesLesson(item.event, allocatedByLesson);
+      if (isNew && isPayable(item.event) && servedCountVerified) {
         const charged = spendLifePoints(life.points, item.event.lifeCost, lifeCeiling);
         if (charged.affordable) {
           life = {points: charged.points, updatedAtMs: life.updatedAtMs};
@@ -4307,52 +4349,6 @@ function normalizeLessonAnswers(value) {
     .filter((item) => item.questionId !== "");
 }
 
-function normalizeLessonResultAttemptEvent(data, authUid) {
-  const userId = stringValue(data.userId, authUid);
-  if (userId !== authUid) {
-    throw new HttpsError("permission-denied", "Attempt userId must match authenticated uid");
-  }
-  const event = normalizeContentEvent(data, authUid);
-  const attemptId = stringValue(data.attemptId);
-  if (!attemptId) throw new HttpsError("invalid-argument", "attemptId is required");
-  const percentScore = numberValue(data.percentScore, null);
-  if (percentScore === null || percentScore < 0 || percentScore > 100) {
-    throw new HttpsError("invalid-argument", "percentScore must be in 0..100");
-  }
-  const codeAnswer = stringValue(data.codeAnswer);
-  if (!isWellFormedCodeAnswer(codeAnswer)) {
-    throw new HttpsError("invalid-argument", "codeAnswer must contain digits only");
-  }
-  const difficulty = stringValue(data.difficulty, "EASY").toUpperCase();
-  if (difficulty !== "EASY" && difficulty !== "HARD") {
-    throw new HttpsError("invalid-argument", "difficulty must be EASY or HARD");
-  }
-  // The client always derives percentScore from codeAnswer (CompleteAttemptUseCase and
-  // AbortAttemptUseCase are the only two paths), so an honest attempt always matches.
-  // A mismatch means the payload was crafted: keep the event for analysis, pay nothing.
-  const expectedPercentScore = recomputePercentScore(codeAnswer);
-  const answers = normalizeLessonAnswers(data.answers);
-  // Заявки на заряды — строкой той же длины рядом с цифрами. Испорченная маска отвергается сразу:
-  // это не перерасход, а искажённый payload, и платить по нему частично нельзя (CAP-3).
-  const chargeClaims = stringValue(data.chargeClaims) || noClaims(codeAnswer.length);
-  const claimFault = validateClaimMask(chargeClaims, codeAnswer, difficulty);
-  if (claimFault) {
-    throw new HttpsError("invalid-argument", `chargeClaims is malformed: ${claimFault}`);
-  }
-  return {
-    answers,
-    ...event,
-    attemptId,
-    difficulty,
-    codeAnswer,
-    chargeClaims,
-    percentScore,
-    expectedPercentScore,
-    scoreVerified: expectedPercentScore === percentScore,
-    completedAtMs: nonNegativeEventTime(data.completedAtMs),
-    createdAtMs: nonNegativeEventTime(data.createdAtMs),
-  };
-}
 
 function normalizeQuestRatingEvent(data, authUid) {
   const userId = stringValue(data.userId, authUid);

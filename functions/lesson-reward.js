@@ -187,6 +187,28 @@ function canonicalQuestionId(id) {
  *
  * @param questions rows of {id, content}; content is the parsed payload
  */
+/**
+ * Сколько вопросов урок реально ставит игроку на этой сложности.
+ *
+ * Тот же отбор, что и у отведённого времени — другой сложности нет, архивные исчезли, переводы
+ * схлопнулись, — и та же граница набора. Число нужно приёмнику: попытка обязана назвать столько же
+ * показанных вопросов, сколько урок ставит. Иначе строка из одной цифры со списком показанного на
+ * один вопрос согласована сама с собой и приносит награду за урок целиком.
+ */
+function lessonPoolSize(questions, isHard) {
+  if (!Array.isArray(questions)) return 0;
+  const wanted = isHard ? "HARD" : "EASY";
+  const seenCanonical = new Set();
+  for (const question of questions) {
+    if (!question) continue;
+    if (question.archived === true) continue;
+    const content = question.content || question;
+    if (String((content && content.difficulty) || "EASY").toUpperCase() !== wanted) continue;
+    seenCanonical.add(canonicalQuestionId(question.id || (content && content.id)));
+  }
+  return Math.min(POOL_SIZE, seenCanonical.size);
+}
+
 function lessonAllocatedSeconds(questions, isHard) {
   if (!Array.isArray(questions)) return 0;
   const wanted = isHard ? "HARD" : "EASY";
@@ -218,6 +240,7 @@ module.exports = {
   questionCharsCount,
   questionAllocatedSeconds,
   lessonAllocatedSeconds,
+  lessonPoolSize,
   TARIFF_BANDS,
   NEW_PERCENT_MULTIPLIER,
   REPEAT_MULTIPLIER,

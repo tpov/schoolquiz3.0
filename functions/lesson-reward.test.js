@@ -8,6 +8,7 @@ const {
   questionCharsCount,
   questionAllocatedSeconds,
   lessonAllocatedSeconds,
+  lessonPoolSize,
   weightedPercent,
   attemptPoints,
   attemptReward,
@@ -246,4 +247,24 @@ testFallingShortOfYourBestPaysOnlyTheRepeatRate();
 testUnlockPriceEqualsOnePerfectFirstPass();
 testUnlockPriceNeverFree();
 testUnlockPriceGrowsWithTheLesson();
+function testLessonPoolSizeCountsWhatThePlayerIsActuallyAsked() {
+  const q = (id, difficulty) => ({id, content: {difficulty, text: "x".repeat(50)}});
+
+  // Столько, сколько есть, пока их меньше набора; дальше — граница набора.
+  assert.strictEqual(lessonPoolSize(Array.from({length: 7}, (_, i) => q(`q${i}`, "EASY")), false), 7);
+  assert.strictEqual(lessonPoolSize(Array.from({length: 40}, (_, i) => q(`q${i}`, "EASY")), false), POOL_SIZE);
+
+  // Тот же отбор, что и у отведённого времени: другая сложность, архив и переводы не считаются.
+  assert.strictEqual(lessonPoolSize([q("q1", "EASY"), q("q1__ru", "EASY"), q("q1__en", "EASY")], false), 1);
+  assert.strictEqual(lessonPoolSize([q("q1", "EASY"), q("q2", "HARD")], true), 1);
+  assert.strictEqual(
+    lessonPoolSize([{...q("q1", "EASY"), archived: true}, q("q2", "EASY")], false),
+    1,
+    "архивный вопрос игроку не ставят",
+  );
+  assert.strictEqual(lessonPoolSize(null, false), 0);
+}
+
+testLessonPoolSizeCountsWhatThePlayerIsActuallyAsked();
+
 console.log("lesson-reward.test.js OK");
