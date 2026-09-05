@@ -17,6 +17,12 @@ while [ $# -gt 0 ]; do case "$1" in
 esac; done
 [ "$MODE" = audit ] || [ "$MODE" = author ] || { echo "mode: audit|author"; exit 2; }
 [ ${#THEMES[@]} -gt 0 ] || { echo "укажи темы или --all"; exit 2; }
+# ПРЕДОХРАНИТЕЛЬ: платный адрес api.z.ai запрещён, если явно не разрешён. Weekend Build/Start Plan живут на zcode.z.ai/…/zcode-plan.
+BASEURL=$(python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.zcode/cli/config.json')))['provider']['zai']['options'].get('baseURL',''))" 2>/dev/null)
+case "$BASEURL" in
+  *zcode-plan*) echo "биллинг: ZCode Start Plan ($BASEURL)";;
+  *) [ "${ALLOW_PAID:-0}" = 1 ] || { echo "СТОП: CLI настроен на платный адрес $BASEURL (не Start Plan). Запуск с ALLOW_PAID=1 только осознанно."; exit 3; };;
+esac
 LOGDIR="$HERE/run/$SUBJ"; mkdir -p "$LOGDIR"
 echo "[$MODE] $SUBJ: ${#THEMES[@]} тем, параллельно $JOBS → логи $LOGDIR"
 
