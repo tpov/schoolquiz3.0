@@ -1,14 +1,24 @@
 'use strict';
 
-const path = require('path');
 const admin = require('firebase-admin');
+const {syncChangeWrites} = require('../../functions/sync-changes');
 
-const SERVICE_ACCOUNT_PATH = '/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json';
+// Ключ сервис-аккаунта проекта school-quiz-89336951. Путь переопределяется переменной окружения.
+const SERVICE_ACCOUNT_PATH =
+  process.env.SCHOOL_QUIZ_SERVICE_ACCOUNT ||
+  process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+  '/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json';
 
 let initialized = false;
 function ensureInit() {
   if (initialized) return;
+  if (!require('fs').existsSync(SERVICE_ACCOUNT_PATH)) {
+    throw new Error(`Ключ сервис-аккаунта не найден: ${SERVICE_ACCOUNT_PATH}\nУкажите SCHOOL_QUIZ_SERVICE_ACCOUNT=/путь/к/school-quiz-89336951-....json`);
+  }
   const sa = require(SERVICE_ACCOUNT_PATH);
+  if (sa.project_id !== 'school-quiz-89336951') {
+    throw new Error(`Ключ не от того проекта: ${sa.project_id} (ожидался school-quiz-89336951). Путь: ${SERVICE_ACCOUNT_PATH}`);
+  }
   admin.initializeApp({ credential: admin.credential.cert(sa) });
   initialized = true;
 }
@@ -20,7 +30,17 @@ const BATCH_OP_LIMIT = 400;
 
 const mkPayload = (obj) => JSON.stringify(obj);
 
-const syncChange = (type, id, changedAtMs) => ({ type, id, changedAtMs });
+/**
+ * Записи журнала для одного узла — через `BatchWriter`, который сбрасывает батч по мере
+ * наполнения и потому обязан получать записи по одной и с ожиданием.
+ */
+async function writeSyncChangesWith(writer, db, node, changedAtMs) {
+  const writes = syncChangeWrites(node, changedAtMs);
+  for (const write of writes) {
+    await writer.set(db.doc(write.path), write.data);
+  }
+  return writes;
+}
 
 class BatchWriter {
   constructor(db) {
@@ -72,7 +92,7 @@ module.exports = {
   LANGUAGE,
   BATCH_OP_LIMIT,
   mkPayload,
-  syncChange,
+  writeSyncChangesWith,
   BatchWriter,
   admin,
 };

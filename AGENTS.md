@@ -15,3 +15,7 @@ Architecture defaults:
 - New presentation state holders are Decompose `Component`s, not AndroidX `ViewModel`s, unless an ADR/phase says otherwise.
 - Compose screens render state and emit callbacks; do not resolve Koin or call repositories/use cases directly from screens.
 - Skills and deep workflows are lazy-loaded from `.claude/skills` and `.claude/commands`; do not preload them unless the task needs them.
+
+## Quest content pipeline (scripts/seed-bulk)
+- Generation, audit and seeding of school quests are documented in `.zcode/AGENTS.md` and the skills under `.zcode/skills/quest-*`.
+- Per-theme gate: `node scripts/seed-bulk/gate-lesson.js <subject> <s>-<t>` → `GATE: CLEAN`; per-quest: `node scripts/seed-bulk/format-for-firebase.js data/school/quest-<subject>.js` → `ALL INVARIANTS OK`.
