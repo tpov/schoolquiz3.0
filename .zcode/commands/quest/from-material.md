@@ -3,6 +3,8 @@ description: Сгенерировать квест из материала по�
 argument-hint: <путь к материалу или ссылка> [название предмета, объём]
 skills: quest-pipeline, quest-design, quest-author, quest-audit
 ---
+Репозиторий проекта: /Users/tpov/schoolquiz3.0 — сначала выполни `cd /Users/tpov/schoolquiz3.0/scripts/seed-bulk` и загрузи скилл quest-pipeline.
+
 Материал и пожелания: $ARGUMENTS
 
 Действуй как в /quest:new, но с отличиями:

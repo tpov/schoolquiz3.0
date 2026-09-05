@@ -3,6 +3,8 @@ description: Спроектировать и сгенерировать новы
 argument-hint: <предмет или тема курса> [объём, аудитория, язык, источники]
 skills: quest-pipeline, quest-design, quest-author, quest-audit
 ---
+Репозиторий проекта: /Users/tpov/schoolquiz3.0 — сначала выполни `cd /Users/tpov/schoolquiz3.0/scripts/seed-bulk` и загрузи скилл quest-pipeline.
+
 Задача: сделать новый квест по запросу: $ARGUMENTS
 
 Работай по конвейеру из скилла quest-pipeline, рабочий каталог `scripts/seed-bulk/`.
