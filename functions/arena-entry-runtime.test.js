@@ -158,6 +158,15 @@ test("server-selected random is free; missing independent approval refuses befor
   assert.deepEqual(structuredClone([...store.documents]), before);
 });
 
+test("a reviewed Arena lesson may belong to a course kept in the on-demand archive", async () => {
+  store.reset(world());
+  store.documents.set("quests/quest", {...store.documents.get("quests/quest"), archived: true});
+  const ticket = await issue("archive-course");
+  assert.equal(ticket.lessonId, "lesson");
+  assert.equal((await submit(completion(ticket))).receipts[0].status, "SETTLED");
+  assert.equal(store.documents.get("quests/quest").archived, true);
+});
+
 test("new Arena attempts cannot bypass ticket payments through the old result endpoint; old history is preserved only", async () => {
   store.reset(world());
   const payload = {attemptId: "without-ticket", userId: uid, lessonId: "lesson", lessonVersion: 1,

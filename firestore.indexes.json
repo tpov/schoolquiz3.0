@@ -9,5 +9,8 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {"collectionGroup": "course_tournament_source_banks", "fieldPath": "bankJson", "indexes": []},
+    {"collectionGroup": "course_tournament_source_banks", "fieldPath": "proofJson", "indexes": []}
+  ]
 }

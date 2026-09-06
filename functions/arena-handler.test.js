@@ -77,6 +77,24 @@ test("real lesson promotion pays each milestone once and leaves the archive pare
   assert.equal(store.documents.get("catalogs/catalog/sync_changes/lesson_lesson").type, "lesson");
 });
 
+test("archive course marker does not retire its reviewed lesson; actual retirement and archived descendants do", async () => {
+  const course = {catalogId: "catalog", authorUid: "author", visibleOn: ["archive"], archived: true};
+  store.reset(world({"quests/quest": course}));
+  assert.equal((await move("arena", "archive-child")).status, "APPLIED");
+  assert.deepEqual(store.documents.get("quests/quest"), course);
+  for (const patch of [
+    {"quests/quest": {...course, visibleOn: []}},
+    {"themes/theme": {sectionId: "section", archived: true}},
+    {"sections/section": {questId: "quest", archived: true}},
+  ]) {
+    store.reset(world({"quests/quest": course, ...patch}));
+    const rejected = await move("arena", "unpublished-child");
+    assert.equal(rejected.status, "REJECTED");
+    assert.equal(store.documents.get("lesson_placements/lesson").shelf, "review");
+    assert.equal(store.documents.get("lesson_placements/lesson").lastRejection.code, "LESSON_NOT_PUBLISHED");
+  }
+});
+
 test("queued rating waits for settlement and changes one lesson only, with an immutable replay receipt", async () => {
   store.reset(world());
   const data = {mutationId: "rate", lessonId: "lesson", attemptId: "played", rating: 3};

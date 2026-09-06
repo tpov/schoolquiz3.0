@@ -345,7 +345,10 @@ async function loadArenaLessonContext(transaction, lessonId) {
     sectionId: theme.sectionId, themeId: lesson.themeId,
     questType: stringValue(catalog.questType || quest.questType, "REGULAR").toUpperCase(),
     contentVersion: lesson.version, publishedAtMs: nonNegativeInteger(lesson.publishedAtMs, 0),
-    published: !lesson.archived && !theme.archived && !section.archived && !quest.archived,
+    // At the course root archived=true is also the existing on-demand library marker.
+    // A retired course has no archive shelf; archived descendants remain unavailable.
+    published: !lesson.archived && !theme.archived && !section.archived &&
+      (!quest.archived || stringArray(quest.visibleOn).includes("archive")),
     reviewApproved, nextChangeAtMs: nonNegativeInteger(change.changedAtMs, 0) + 1};
 }
 

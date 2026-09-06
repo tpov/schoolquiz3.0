@@ -105,6 +105,20 @@ service cloud.firestore {
     match /arena_ticket_cancellations/{document=**} { allow read, write: if false; }
     match /arena_royalty_accounts/{document=**} { allow read, write: if false; }
 
+    // The event itself contains future forms and its seed. Even an organizer must use the
+    // allowlisted callable view; owning an event/session never grants access to its answer bank.
+    match /course_tournament_events/{document=**} { allow read, write: if false; }
+    match /course_tournament_operations/{document=**} { allow read, write: if false; }
+    match /course_tournament_sessions/{document=**} { allow read, write: if false; }
+    match /course_tournament_keys/{document=**} { allow read, write: if false; }
+    match /course_tournament_funding/{document=**} { allow read, write: if false; }
+    match /course_tournament_session_operations/{document=**} { allow read, write: if false; }
+    match /course_tournament_answer_ingress/{document=**} { allow read, write: if false; }
+    match /course_tournament_verified_runs/{document=**} { allow read, write: if false; }
+    match /course_tournament_rankings/{document=**} { allow read, write: if false; }
+    match /course_tournament_bank_preparations/{document=**} { allow read, write: if false; }
+    match /course_tournament_source_banks/{document=**} { allow read, write: if false; }
+
     match /purchase_notifications/{messageId} {
       // One document per Play notification message, written by playPurchaseNotifications. It is
       // what makes a re-delivered message take nothing back a second time, and what tells a message

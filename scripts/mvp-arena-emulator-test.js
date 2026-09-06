@@ -36,6 +36,14 @@ function call(actor, method, data) {
     .then((value) => value.result);
 }
 async function user(actor) { return (await db.doc(`users/${actor.uid}`).get()).data(); }
+async function clientDocumentStatus(actor, path, patch) {
+  const url = `http://schoolquiz-mvp-firebase:8080/v1/projects/${PROJECT}/databases/(default)/documents/${path}`;
+  const response = await fetch(url, {method: patch ? "PATCH" : "GET", headers: {
+    authorization: `Bearer ${actor.token}`, "content-type": "application/json",
+  }, ...(patch ? {body: JSON.stringify(patch)} : {}), signal: AbortSignal.timeout(15_000)});
+  await response.arrayBuffer();
+  return response.status;
+}
 async function prepare(actor, key, extra = {}) {
   const result = await call(actor, "prepareArenaEntry", {requestId: `${runId}-${key}`, mode: "SELECTED",
     lessonId: names.lesson, difficulty: "HARD", ...extra});
@@ -68,7 +76,7 @@ async function main() {
       [`profiles/${actor.uid}`, {uid: actor.uid, adminLevel: actor === curator ? 100 : 0}],
     ]),
     [`catalogs/${names.catalog}`, {questType: "REGULAR"}],
-    [`quests/${names.quest}`, {catalogId: names.catalog, authorUid: author.uid, visibleOn: ["archive"]}],
+    [`quests/${names.quest}`, {catalogId: names.catalog, authorUid: author.uid, visibleOn: ["archive"], archived: true}],
     [`sections/${names.section}`, {questId: names.quest}],
     [`themes/${names.theme}`, {sectionId: names.section}],
     [`lessons/${names.lesson}`, {themeId: names.theme, version: 1, publishedAtMs: now - 2000,
@@ -169,6 +177,39 @@ async function main() {
   assert.equal((await user(author)).boxCount, authorBefore + 35);
   assert.deepEqual((await db.doc(`quests/${names.quest}`).get()).data().visibleOn, ["archive"]);
   results.push("latest lesson rating replaces one vote; Tournament/Home bonuses cannot be collected twice");
+
+  assert.equal(await clientDocumentStatus(player, `users/${player.uid}`), 200);
+  for (const path of [`users/${author.uid}`, `arena_entry_tickets/${ticket.ticketId}`,
+    `question_keys/${names.lesson}`, `premium_accounts/${player.uid}`]) {
+    assert.equal(await clientDocumentStatus(player, path), 403, `Private client read must be denied: ${path}`);
+  }
+  assert.equal(await clientDocumentStatus(player, `users/${player.uid}`, {
+    fields: {nolics: {integerValue: "999999999"}},
+  }), 403);
+  results.push("real security rules allow own wallet reads but deny wallet minting and private keys/tickets");
+
+  const {TOURNAMENT_PATHS} = require("../functions/tournament-service");
+  const {SESSION_OPERATIONS, SESSION_INGRESS, VERIFIED_RUNS} = require("../functions/tournament-session");
+  const {QUALIFICATION_RANKINGS} = require("../functions/tournament-qualification-freeze");
+  const {SOURCE_BANKS, PREPARATIONS} = require("../functions/tournament-source-bank");
+  const privateCollections = [...Object.values(TOURNAMENT_PATHS), SESSION_OPERATIONS, SESSION_INGRESS,
+    VERIFIED_RUNS, QUALIFICATION_RANKINGS, SOURCE_BANKS, PREPARATIONS];
+  const privateRows = db.batch();
+  for (const collection of privateCollections) {
+    privateRows.create(db.doc(`${collection}/privacy-${runId}`), {
+      testFixture: runId, ownerUid: player.uid, organizerUid: player.uid, privateMarker: "synthetic-private-value",
+    });
+  }
+  await privateRows.commit();
+  for (const actor of [player, curator]) {
+    for (const collection of privateCollections) {
+      const path = `${collection}/privacy-${runId}`;
+      assert.equal(await clientDocumentStatus(actor, path), 403, `Owner/admin must not read ${collection}`);
+      assert.equal(await clientDocumentStatus(actor, path, {fields: {status: {stringValue: "SETTLED"}}}), 403,
+        `Owner/admin must not modify ${collection}`);
+    }
+  }
+  results.push("all 11 tournament private collections deny owner/admin reads and writes under real security rules");
 
   console.log(JSON.stringify({status: "PASS", projectId: PROJECT, runId, checks: results,
     retainedSyntheticFixtures: true}, null, 2));
