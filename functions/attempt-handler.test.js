@@ -182,6 +182,7 @@ test("the document handed to transaction.set is the one the schema says", async 
   assert.strictEqual(write.merge, true);
 
   assert.deepStrictEqual(Object.keys(write.data).slice().sort(), [
+    "aborted",
     "answers",
     "attemptId",
     "activityKind",
@@ -190,6 +191,7 @@ test("the document handed to transaction.set is the one the schema says", async 
     "chargeClaimsUnpaid",
     "codeAnswer",
     "completedAtMs",
+    "completed",
     "createdAtMs",
     "declaredSourceShelf",
     "difficulty",
@@ -204,6 +206,7 @@ test("the document handed to transaction.set is the one the schema says", async 
     "questContentKey",
     "questId",
     "receivedAtMs",
+    "requestFingerprint",
     "resolvedQuestId",
     "schemaVersion",
     "scope",
@@ -212,6 +215,7 @@ test("the document handed to transaction.set is the one the schema says", async 
     "served",
     "settledCodeAnswer",
     "settledPercentScore",
+    "settlementReceipt",
     "sourceShelf",
     "standardChargesPaid",
     "themeId",
@@ -264,8 +268,10 @@ test("an attempt the server could not score is stored, and costs the player noth
   const stored = storedAttempt("server-1");
   assert.ok(stored, "the event was not kept");
   assert.strictEqual(stored.data.lifeCharged, false);
-  assert.strictEqual(stored.data.codeAnswer, "");
-  assert.strictEqual(stored.data.percentScore, 0);
+  assert.strictEqual(stored.data.codeAnswer, null);
+  assert.strictEqual(stored.data.percentScore, null);
+  assert.strictEqual(result.receipts[0].status, "UNSCORABLE");
+  assert.strictEqual(result.receipts[0].percentScore, null);
 });
 
 test("a self-consistent one-question payload cannot collect a whole lesson reward", async () => {
@@ -336,25 +342,87 @@ test("a replay the advisory read could not check is still not re-scored over", a
   assert.notStrictEqual(PERCENT, 57, "the two scores are the same, so this case proves nothing");
 });
 
-test("the replay guard is scoped to the attempts the server scores", async () => {
-  // Deliberately not applied to a device-scored replay. There the digits come from the body, and a
-  // resubmission of the same attemptId overwrites the stored ones — which is exactly what happened
-  // before this slice, and changing it would change what a device-scored attempt is stored as. It
-  // is not free money either way: `isNew` is false, so nothing is charged and nothing is paid.
+test("a changed device-scored replay cannot overwrite its original settlement", async () => {
   await submit([deviceScoredBody({attemptId: "device-1"})]);
   assert.strictEqual(storedAttempt("device-1").data.percentScore, PERCENT);
   const chargedTo = store.documents.get(`users/${UID}`).lifePoints;
 
-  await functions.submitLessonResultEvents.run({
+  await assert.rejects(functions.submitLessonResultEvents.run({
     auth: {uid: UID},
     data: {attempts: [deviceScoredBody({attemptId: "device-1", codeAnswer: "99999", percentScore: 100})]},
-  });
+  }), (error) => error.code === "invalid-argument");
 
   const after = storedAttempt("device-1");
-  assert.strictEqual(after.data.codeAnswer, "99999", "today's device-scored replay stopped writing");
-  assert.strictEqual(after.data.percentScore, 100);
+  assert.strictEqual(after.data.codeAnswer, CODE_ANSWER);
+  assert.strictEqual(after.data.percentScore, PERCENT);
   assert.strictEqual(after.data.lifeCharged, true, "the replay rewrote whether the first was paid");
   assert.strictEqual(store.documents.get(`users/${UID}`).lifePoints, chargedTo, "charged twice");
+});
+
+test("lost-response replay returns the original receipt and never rewrites the event", async () => {
+  const body = serverScoredBody({completionKind: "COMPLETED"});
+  const first = await submit([body]);
+  assert.equal(first.receipts[0].completed, true);
+  assert.equal(first.receipts[0].status, "SETTLED");
+  assert.equal(first.receipts[0].lifePointsSpent, LIFE_COST);
+  assert.deepEqual(first.receipts[0].reward, first.reward);
+  const before = structuredClone(storedAttempt(body.attemptId).data);
+  store.documents.delete("questions/q-order");
+  store.writes = [];
+  const replay = await functions.submitLessonResultEvents.run({auth: {uid: UID}, data: {attempts: [body]}});
+  assert.deepEqual(replay.receipts, first.receipts);
+  assert.deepEqual(replay.reward, {skillPoints: 0, nolics: 0});
+  assert.deepEqual(storedAttempt(body.attemptId).data, before);
+  assert.equal(store.writes.filter((row) => row.path.startsWith("result_events")).length, 0);
+});
+
+test("duplicate ids in one batch settle once; conflicting duplicates settle nothing", async () => {
+  const body = serverScoredBody();
+  const result = await submit([body, body]);
+  assert.equal(result.lifePoints, FULL_TANK - LIFE_COST);
+  assert.deepEqual(result.receipts[0], result.receipts[1]);
+  assert.deepEqual(result.reward, result.receipts[0].reward);
+  store.reset(world());
+  await assert.rejects(functions.submitLessonResultEvents.run({auth: {uid: UID}, data: {attempts: [
+    body, {...body, completedAtMs: body.completedAtMs + 1},
+  ]}}), (error) => error.code === "invalid-argument");
+  assert.equal(store.writes.length, 0);
+});
+
+test("another account cannot reuse a global attempt id to read or alter the receipt", async () => {
+  const body = serverScoredBody();
+  await submit([body]);
+  const before = structuredClone(storedAttempt(body.attemptId).data);
+  store.documents.set("profiles/other", {uid: "other"});
+  store.documents.set("users/other", {uid: "other", lifePoints: FULL_TANK, standardHearts: 5});
+  await assert.rejects(functions.submitLessonResultEvents.run({auth: {uid: "other"}, data: {attempts: [
+    {...body, userId: "other"},
+  ]}}), (error) => error.code === "permission-denied");
+  assert.deepEqual(storedAttempt(body.attemptId).data, before);
+});
+
+test("rejected activity cannot spend hint charges; explicit abort is free", async () => {
+  const rejected = await submit([deviceScoredBody({difficulty: "EASY", chargeClaims: "S...."})]);
+  assert.equal(rejected.lifePoints, FULL_TANK);
+  assert.equal(rejected.receipts[0].lifePointsSpent, 0);
+  const aborted = await submit([serverScoredBody({completionKind: "ABORTED"})]);
+  assert.equal(aborted.lifePoints, FULL_TANK);
+  assert.equal(aborted.receipts[0].completed, false);
+  assert.deepEqual(aborted.receipts[0].reward, {skillPoints: 0, nolics: 0});
+});
+
+test("old stored attempts are not upgraded into newly confirmed completions", async () => {
+  const body = serverScoredBody();
+  await submit([body]);
+  const old = storedAttempt(body.attemptId);
+  delete old.data.settlementReceipt;
+  delete old.data.requestFingerprint;
+  store.documents.set(old.path, old.data);
+  const result = await functions.submitLessonResultEvents.run({auth: {uid: UID}, data: {attempts: [body]}});
+  assert.equal(result.receipts[0].status, "LEGACY_RECORDED");
+  assert.equal(result.receipts[0].completed, false);
+  assert.equal(result.receipts[0].percentScore, null);
+  assert.equal(result.receipts[0].lifePointsSpent, 0);
 });
 
 test("a device-scored attempt whose served list disagrees is kept, marked and not charged", async () => {
@@ -402,7 +470,51 @@ test("one attempt on a lesson nobody can read leaves the rest of the batch alone
   assert.strictEqual(storedAttempt("device-1").data.lifeCharged, true);
   assert.strictEqual(storedAttempt("server-1").data.lifeCharged, true);
   assert.strictEqual(storedAttempt("server-lost").data.lifeCharged, false);
-  assert.strictEqual(storedAttempt("server-lost").data.codeAnswer, "");
+  assert.strictEqual(storedAttempt("server-lost").data.codeAnswer, null);
+});
+
+test("queue loses completion acknowledgement after payment, then recovers the original receipt", async () => {
+  store.reset(world());
+  const request = {auth: {uid: UID}, data: {mutationId: "receipt-queue-1",
+    operation: "lesson_runner.SUBMIT_ATTEMPT", payload: JSON.stringify(serverScoredBody())}};
+  const key = "mutation_keys/2ac154d7801a_receipt-queue-1";
+  let keyCommits = 0;
+  store.fail = (kind, path) => kind === "commit" && path === key && ++keyCommits === 2 ? "lost acknowledgement" : null;
+  await assert.rejects(functions.submitMutation.run(request), /lost acknowledgement/);
+  store.fail = null;
+  const receipt = structuredClone(storedAttempt("attempt-1").data.settlementReceipt);
+  assert.equal(store.documents.get(`users/${UID}`).lifePoints, FULL_TANK - LIFE_COST);
+  const reservation = store.documents.get(key);
+  assert.equal(reservation.state, "reserved");
+  store.documents.set(key, {...reservation, reservedAtMs: 0});
+  const recovered = await functions.submitMutation.run(request);
+  assert.deepEqual(recovered.result.receipts, [receipt]);
+  assert.equal(store.documents.get(`users/${UID}`).lifePoints, FULL_TANK - LIFE_COST);
+  assert.equal(store.documents.get(key).state, "completed");
+  // Generic envelope cleanup does not delete the permanent attempt receipt.
+  store.documents.delete(key);
+  const lateReplay = await functions.submitMutation.run(request);
+  assert.deepEqual(lateReplay.result.receipts, [receipt]);
+  assert.equal(store.documents.get(`users/${UID}`).lifePoints, FULL_TANK - LIFE_COST);
+});
+
+test("a mutation key freezes operation and payload, and invalid JSON never reserves it", async () => {
+  store.reset(world());
+  const request = {auth: {uid: UID}, data: {mutationId: "receipt-queue-2",
+    operation: "lesson_runner.SUBMIT_ATTEMPT", payload: JSON.stringify(serverScoredBody())}};
+  await assert.rejects(functions.submitMutation.run({...request, data: {...request.data, payload: "{"}}),
+    (error) => error.code === "invalid-argument");
+  assert.equal(store.writes.length, 0);
+  const original = await functions.submitMutation.run(request);
+  for (const data of [
+    {...request.data, operation: "lesson_runner.SUBMIT_RATING"},
+    {...request.data, payload: JSON.stringify(serverScoredBody({completedAtMs: 1}))},
+  ]) {
+    await assert.rejects(functions.submitMutation.run({...request, data}), (error) => error.code === "invalid-argument");
+  }
+  const replay = await functions.submitMutation.run(request);
+  assert.equal(replay.replayed, true);
+  assert.deepEqual(replay.result, original.result);
 });
 
 test("the charge is one whole activity price, and the balance is written back", async () => {

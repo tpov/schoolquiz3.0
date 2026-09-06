@@ -211,6 +211,7 @@ function createFirestoreStub(seed, options) {
       const pending = [];
       const transaction = {
         get: async (ref) => {
+          if (pending.length > 0) throw new Error("Firestore transaction read after write");
           record("read", ref.path);
           maybeFail("read", ref.path);
           return snapshotFor(ref.path);
@@ -223,6 +224,9 @@ function createFirestoreStub(seed, options) {
         },
       };
       const result = await body(transaction);
+      // Validate every simulated commit failure before applying any of its writes: no partial
+      // fake commit may make a broken money transaction look correct.
+      for (const [path] of pending) maybeFail("commit", path);
       for (const [path, data, writeOptions] of pending) writeDocument(path, data, writeOptions);
       return result;
     },

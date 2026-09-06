@@ -106,6 +106,7 @@ const {
 } = require("./attempt-intake");
 const {buildScoringPool} = require("./scoring-pool");
 const {FAULT, scoreAttempt} = require("./attempt-scoring");
+const {STATUS: ATTEMPT_STATUS, attemptFingerprint, attemptReceipt, replayFault} = require("./attempt-receipt");
 const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
 const {
   maxLifePoints,
@@ -1283,15 +1284,24 @@ exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
     throw new HttpsError("invalid-argument", resolved.reason);
   }
 
+  const body = parseMutationPayload(request.data.payload);
+  if (!body.valid) throw new HttpsError("invalid-argument", body.reason);
+  const requestFingerprint = attemptFingerprint(uid, {operation, payload: body.payload, expectedVersion: expected.expectedVersion});
+
   const now = Date.now();
   const keyRef = db.collection("mutation_keys").doc(safeDocId(mutationId));
 
   const gate = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(keyRef);
     const existing = snapshot.exists ? snapshot.data() : null;
+    if (existing && existing.uid === uid && (existing.operation !== operation ||
+        (existing.requestFingerprint && existing.requestFingerprint !== requestFingerprint))) {
+      throw new HttpsError("invalid-argument", "mutationId cannot be reused for another operation or payload");
+    }
     // Решение — чистое (`gateVerdict`); транзакции остаётся только записать резервирование.
     const verdict = gateVerdict(existing, uid, mutationId, operation, now);
     if (verdict.decision === DECISION_EXECUTE) {
+      verdict.reservation.requestFingerprint = requestFingerprint;
       transaction.set(keyRef, verdict.reservation);
     }
     return verdict;
@@ -1307,9 +1317,6 @@ exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
     // Повторяемое ожидание, а не отказ: другая попытка по тому же ключу ещё летит.
     throw new HttpsError("failed-precondition", gate.reason, PRECONDITION_PENDING_DETAIL);
   }
-
-  const body = parseMutationPayload(request.data.payload);
-  if (!body.valid) throw new HttpsError("invalid-argument", body.reason);
 
   const versionSource = MUTATION_VERSION_SOURCES[operation];
   if (expected.expectedVersion !== null && typeof versionSource !== "function") {
@@ -1353,7 +1360,14 @@ exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
     await releaseReservation(keyRef, gate.reservation);
     throw error;
   }
-  await keyRef.set(completionRecord(gate.reservation, result, Date.now()));
+  // A slow worker may have lost its lease. It must not overwrite a newer reservation/result.
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(keyRef);
+    const current = snapshot.exists ? snapshot.data() || {} : {};
+    if (current.state !== STATE_RESERVED || current.reservedAtMs !== gate.reservation.reservedAtMs ||
+        current.requestFingerprint !== requestFingerprint) return;
+    transaction.set(keyRef, completionRecord(gate.reservation, result, Date.now()));
+  });
   return {replayed: false, result: result === undefined ? null : result};
 });
 
@@ -1395,18 +1409,32 @@ async function applyLessonResultEvents(uid, attempts) {
   if (attempts.length === 0) return {accepted: 0};
 
   const now = Date.now();
+  const fingerprints = new Map();
   const events = attempts.map((item) => {
     // Тело читает `attempt-intake.js`: для устройства, посчитавшего себя само, — сегодняшний путь
     // проверка в проверку и сообщение в сообщение; для сложной попытки без цифр — заявка на то,
     // чтобы посчитал сервер. Кто именно считает, говорит `paymentRule`.
     const event = readSubmittedAttempt(item, uid);
+    const fingerprint = attemptFingerprint(uid, item);
+    if (fingerprints.has(event.attemptId) && fingerprints.get(event.attemptId) !== fingerprint) {
+      throw new HttpsError("invalid-argument", "Conflicting payloads for one attemptId");
+    }
+    fingerprints.set(event.attemptId, fingerprint);
+    if (!Number.isSafeInteger(event.lessonVersion)) throw new HttpsError("invalid-argument", "lessonVersion must be an integer");
+    // Legacy queued records cannot prove completion rather than an abort. The new client must
+    // explicitly name the terminal outcome; this field alone never bypasses scoring/count checks.
+    if (item.completionKind != null && !["COMPLETED", "ABORTED"].includes(item.completionKind)) {
+      throw new HttpsError("invalid-argument", "Unknown completionKind");
+    }
+    event.completed = item.completionKind === "COMPLETED";
+    event.aborted = item.completionKind === "ABORTED";
     const content = contentKeysForEvent(event);
     const ref = db
       .collection(scopedCollection("result_events", event.scope))
       .doc(eventBucketId(event.attemptId))
       .collection("events")
       .doc(safeDocId(event.attemptId));
-    return {event, content, ref};
+    return {event, content, ref, fingerprint};
   });
   // Everything this batch has to read, read before the transaction opens: Firestore wants every
   // read before the first write. Together rather than one after another — none of the four depends
@@ -1441,6 +1469,7 @@ async function applyLessonResultEvents(uid, attempts) {
 
   let reward = {skillPoints: 0, nolics: 0};
   let remainingLifePoints = 0;
+  let receipts = [];
   const ledgerRows = [];
   let overspendInputs = null;
   const touchedTournamentIds = new Set();
@@ -1488,7 +1517,7 @@ async function applyLessonResultEvents(uid, attempts) {
       plasmaCeiling,
       regenMsFor(plasmaRules, hasPremium) / POINTS_PER_CHARGE,
     );
-    const settledAttemptIds = new Set();
+    const receiptsByAttempt = new Map();
     // Строки книги собираются внутри транзакции и пишутся ею же: движение и его запись обязаны
     // либо случиться вместе, либо не случиться вовсе.
     ledgerRows.length = 0;
@@ -1513,14 +1542,28 @@ async function applyLessonResultEvents(uid, attempts) {
       // Один и тот же `attemptId` дважды в одном пакете — это одна попытка, а не две: снимки
       // читались до первой записи, поэтому обе выглядели бы новыми, и плата, расчёт и награда
       // прошли бы по каждой.
-      const seenInBatch = settledAttemptIds.has(item.event.attemptId);
-      settledAttemptIds.add(item.event.attemptId);
-      const isNew = !existingSnapshots[index].exists && !seenInBatch;
+      if (receiptsByAttempt.has(item.event.attemptId)) return;
+      const existing = existingSnapshots[index].exists ? existingSnapshots[index].data() || {} : null;
+      if (existing) {
+        const fault = replayFault(existing, item.event, item.fingerprint);
+        if (fault) throw new HttpsError(fault === "OWNER_MISMATCH" ? "permission-denied" : "invalid-argument",
+          "Attempt identity cannot be reused for another submission");
+        const receipt = existing.settlementReceipt || attemptReceipt({
+          event: existing, status: ATTEMPT_STATUS.LEGACY,
+          settledAtMs: nonNegativeInteger(existing.receivedAtMs, 0),
+        });
+        receiptsByAttempt.set(item.event.attemptId, receipt);
+        // A response lost after the economic commit must not lose the leaderboard refresh too.
+        const group = existing.lifeCharged ? tournamentGroupForAttempt(existing) : null;
+        if (group) touchedTournamentIds.add(group.tournamentId);
+        return;
+      }
+      const isNew = true;
       let lifeCharged = false;
       // Preserve the independent full-lesson guard from the sync branch, in addition to E2's
       // server scoring decision. A self-consistent one-question payload is not a full lesson.
       const servedCountVerified = servedCountMatchesLesson(item.event, allocatedByLesson);
-      if (isNew && item.payable && servedCountVerified) {
+      if (isNew && item.payable && servedCountVerified && !item.event.aborted) {
         const charged = spendLifePoints(life.points, item.event.lifeCost, lifeCeiling);
         if (charged.affordable) {
           life = {points: charged.points, updatedAtMs: life.updatedAtMs};
@@ -1531,7 +1574,7 @@ async function applyLessonResultEvents(uid, attempts) {
       // Заявки на заряды. Платится тем, что есть, в порядке, в котором вопросы задавались, и только
       // оплаченный пропуск засчитывается верным — неоплаченный оставляет `0`, то есть вопрос
       // считается неотвеченным, чем он и был. Повтор той же попытки не платит второй раз.
-      const settled = isNew ?
+      const settled = isNew && lifeCharged ?
         settleClaims(
           item.event.chargeClaims,
           item.event.codeAnswer,
@@ -1563,31 +1606,6 @@ async function applyLessonResultEvents(uid, attempts) {
         item.event.percentScore = item.event.settledPercentScore;
       }
 
-      transaction.set(
-        item.ref,
-        clean({
-          ...storedAttemptFields(item.event),
-          ...item.content,
-          receivedAtMs: now,
-          schemaVersion: 1,
-          // Повтор серверного прохождения хранит счёт, который уже лежит. Пересчёт идёт по
-          // сегодняшним вопросам и ключам, и переопубликованный вопрос сдвинул бы процент, за
-          // который игроку уже заплатили, — а `lessonBest` и турнирная строка остались бы с
-          // первым. Одна попытка не может иметь два счёта. `readStoredAttemptScores` обычно уже
-          // остановил пересчёт до транзакции; это — та же защита на снимке, который решает.
-          //
-          // Послерасчётные значения сюда больше не подставляются: с b89924c3 они замещают
-          // рабочие сразу после расчёта, до записи.
-          ...(!isNew && item.event.scoringAuthority === SCORING_AUTHORITY.SERVER ?
-            storedScoreFields(existingSnapshots[index]) :
-            {}),
-          // Повтор той же попытки (прямой вызов, не очередь) не переписывает, была ли она
-          // оплачена: запись о перерасходе и сверка балансов будут читать именно это поле.
-          lifeCharged: isNew ? lifeCharged : Boolean((existingSnapshots[index].data() || {}).lifeCharged),
-        }),
-        {merge: true},
-      );
-
       // Что это прохождение сдвинуло в балансах — строкой на каждую валюту. Без книги баланс
       // меняется приращением, и после записи «плюс двенадцать» неоткуда вывести заново: сверка
       // (CAP-11) тогда не может проверить нолики и очки навыка, ей не с чем сравнивать.
@@ -1615,6 +1633,7 @@ async function applyLessonResultEvents(uid, attempts) {
         }
       }
 
+      let itemReward = {skillPoints: 0, nolics: 0};
       if (lifeCharged) {
         // Paid on improvement: percent taken for the first time counts double, percent already
         // earned counts a tenth. Replaying a lesson you know is not a way to earn.
@@ -1622,7 +1641,7 @@ async function applyLessonResultEvents(uid, attempts) {
         const previousBestPercent = numberValue(lessonBest[bestKey], 0);
         const isHard = stringValue(item.event.difficulty).toUpperCase() === "HARD";
         const percent = numberValue(item.event.percentScore, 0);
-        const itemReward = attemptReward({
+        itemReward = attemptReward({
           previousBestPercent,
           percent,
           isHard,
@@ -1652,6 +1671,28 @@ async function applyLessonResultEvents(uid, attempts) {
         const tournamentId = writeTournamentAttemptToTransaction(transaction, item.event, item.content, now);
         if (tournamentId) touchedTournamentIds.add(tournamentId);
       }
+      const status = lifeCharged ? ATTEMPT_STATUS.SETTLED :
+        item.event.paymentRule === PAYMENT_RULE.SERVER_SCORED && !item.payable ?
+          ATTEMPT_STATUS.UNSCORABLE : ATTEMPT_STATUS.REJECTED;
+      const receipt = attemptReceipt({
+        event: item.event, status, settledAtMs: now,
+        lifePointsSpent: lifeCharged ? item.event.lifeCost + (settled ? settled.standardChargesPaid * POINTS_PER_CHARGE : 0) : 0,
+        plasmaPointsSpent: settled ? settled.plasmaChargesPaid * POINTS_PER_CHARGE : 0,
+        reward: itemReward,
+      });
+      receiptsByAttempt.set(item.event.attemptId, receipt);
+      transaction.set(item.ref, clean({
+        ...storedAttemptFields(item.event),
+        ...item.content,
+        ...(status === ATTEMPT_STATUS.UNSCORABLE ? {codeAnswer: null, percentScore: null} : {}),
+        completed: receipt.completed,
+        aborted: item.event.aborted,
+        receivedAtMs: now,
+        schemaVersion: 1,
+        lifeCharged,
+        requestFingerprint: item.fingerprint,
+        settlementReceipt: receipt,
+      }), {merge: true});
     });
 
     if (delta.skillPoints > 0 || delta.nolics > 0) {
@@ -1677,6 +1718,7 @@ async function applyLessonResultEvents(uid, attempts) {
       {merge: true},
     );
     reward = delta;
+    receipts = events.map((item) => receiptsByAttempt.get(item.event.attemptId));
     remainingLifePoints = life.points;
     overspendInputs = {
       economy,
@@ -1708,7 +1750,7 @@ async function applyLessonResultEvents(uid, attempts) {
   for (const tournamentId of touchedTournamentIds) {
     await recalculateTournamentLeaderboard(tournamentId, now);
   }
-  return {accepted: attempts.length, reward, lifePoints: remainingLifePoints};
+  return {accepted: attempts.length, reward, lifePoints: remainingLifePoints, receipts};
 }
 
 exports.submitQuestRatingEvents = onCall(CALLABLE_OPTIONS, async (request) => {
