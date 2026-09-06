@@ -729,14 +729,91 @@ test("a served set that does not fit the pool is refused before any position is 
   // A served question the pool does not hold is a different defect and gets its own name — and,
   // unlike the ones above, it is readable: the list is a list, the position is inside the pool, and
   // only the question behind it is absent. So it is scored rather than refused. See the next case.
+  // One of the two, not both: a pool holding neither is `LESSON_MISSING` and is refused, which the
+  // boundary case below owns.
   const missing = scoreAttempt({
     questions: pool,
-    served: [{codeAnswerIndex: 0, questionId: "q-nowhere"}],
+    served: [{codeAnswerIndex: 0, questionId: "q-nowhere"}, {codeAnswerIndex: 1, questionId: "q1"}],
     keyDocument: null,
     answers: [],
   });
   assert.strictEqual(missing.unscorable[0].reason, UNSCORABLE.QUESTION_MISSING);
   assert.strictEqual(missing.scorable, true);
+});
+
+test("a pool holding none of the served questions is our gap, and is refused", () => {
+  // The player-harm side of the reclassification that made `QUESTION_MISSING` the client's. A
+  // lesson read from the wrong collection, or a query that came back empty, produced a pool of
+  // nothing but fillers: every position walked to `'1'`, the attempt scored, and the player was
+  // charged full price for a zero the server's own read had caused.
+  assert.strictEqual(FAULT_OF[UNSCORABLE.LESSON_MISSING], FAULT.SERVER);
+
+  const pool = [0, 1].map((at) => question(`q${at}`, SINGLE));
+  const answers = [
+    answer("q0", 0, ANSWERS.SingleChoice.perfect),
+    answer("q1", 1, ANSWERS.SingleChoice.perfect),
+  ];
+  // The pool `scoring-pool.js` builds when the lesson's documents came back empty: one filler per
+  // served position, under ids no served entry can name.
+  const fillers = [0, 1].map((at) => ({id: `/unserved/${at}`, lessonId: "lesson-1", payload: null}));
+  const lost = scoreAttempt({questions: fillers, served: servedAt(0, 1), keyDocument: null, answers});
+
+  assert.strictEqual(lost.scorable, false, "an unreadable lesson still produced a score");
+  assert.strictEqual(lost.codeAnswer, null, "the player was given digits for a lesson we lost");
+  assert.strictEqual(lost.percentScore, null);
+  assert.deepStrictEqual(lost.unscorable, [{
+    questionId: "",
+    codeAnswerIndex: -1,
+    reason: UNSCORABLE.LESSON_MISSING,
+    fault: FAULT.SERVER,
+    detail: "2",
+  }]);
+
+  // The same attempt against the real pool, for contrast: nothing about the answers changed.
+  const found = scoreAttempt({questions: pool, served: servedAt(0, 1), keyDocument: null, answers});
+  assert.strictEqual(found.scorable, true);
+  assert.strictEqual(found.codeAnswer, "99");
+});
+
+test("all but one missing is still the client's, and still scores", () => {
+  // The boundary, and the reason the two reasons are different reasons. A device can append entries
+  // it was never dealt; it cannot empty a lesson. So "some are missing" keeps the treatment that is
+  // safe against the invented entry — a `'1'` at that position, the attempt scored and charged —
+  // and only "none of them are there" is read as our own failure.
+  const pool = [question("q0", SINGLE)];
+  const fillers = [1, 2].map((at) => ({id: `/unserved/${at}`, lessonId: "lesson-1", payload: null}));
+  const served = [
+    {codeAnswerIndex: 0, questionId: "q0"},
+    {codeAnswerIndex: 1, questionId: "q-invented"},
+    {codeAnswerIndex: 2, questionId: "q-also-invented"},
+  ];
+  const result = scoreAttempt({
+    questions: [...pool, ...fillers],
+    served,
+    keyDocument: null,
+    answers: [answer("q0", 0, ANSWERS.SingleChoice.perfect)],
+  });
+
+  assert.strictEqual(result.scorable, true, "two invented entries cancelled the attempt");
+  assert.strictEqual(result.codeAnswer, "911");
+  assert.deepStrictEqual(
+    result.unscorable.map((record) => [record.reason, record.fault]),
+    [
+      [UNSCORABLE.QUESTION_MISSING, FAULT.CLIENT],
+      [UNSCORABLE.QUESTION_MISSING, FAULT.CLIENT],
+    ],
+  );
+
+  // Take the one real question away and the same list becomes our gap instead.
+  const emptied = scoreAttempt({
+    questions: [{id: "/unserved/0", lessonId: "lesson-1", payload: null}, ...fillers],
+    served,
+    keyDocument: null,
+    answers: [answer("q0", 0, ANSWERS.SingleChoice.perfect)],
+  });
+  assert.strictEqual(emptied.scorable, false);
+  assert.strictEqual(emptied.unscorable[0].reason, UNSCORABLE.LESSON_MISSING);
+  assert.strictEqual(emptied.unscorable[0].fault, FAULT.SERVER);
 });
 
 test("a served entry naming no question costs its position and never cancels the attempt", () => {
