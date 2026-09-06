@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeAuthRepository
@@ -41,6 +43,7 @@ class EdgeCasesTest {
         authRepository = authRepo,
         clock = clock,
         randomSeedProvider = { 12345L },
+        attemptIdProvider = { AttemptId("start-attempt") },
     )
 
     // ── Test 58: EmptyPool ─────────────────────────────────────────────────────
@@ -90,7 +93,7 @@ class EdgeCasesTest {
         val result = startUseCase(LessonId("lesson1"), Difficulty.EASY)
         assertIs<RunnerState.Ready>(result, "Spec scenario #60: valid exists → Ready")
         assertEquals(1, result.eligibleSize, "Spec scenario #60: only valid question counted; codeAnswer.length=1")
-        assertEquals(1, result.codeAnswer.raw.length, "codeAnswer.length == eligibleSize == 1")
+        assertEquals(1, requireNotNull(result.codeAnswer).raw.length, "codeAnswer.length == eligibleSize == 1")
     }
 
     // ── Test 61: configuration change simulation ───────────────────────────────
@@ -109,7 +112,7 @@ class EdgeCasesTest {
         val restored = original.copy()
         assertEquals(original.seed, restored.seed, "Spec scenario #61: seed preserved")
         assertEquals(original.indexInPool, restored.indexInPool, "indexInPool preserved")
-        assertEquals(original.codeAnswer.raw, restored.codeAnswer.raw, "codeAnswer preserved")
+        assertEquals(requireNotNull(original.codeAnswer).raw, requireNotNull(restored.codeAnswer).raw, "codeAnswer preserved")
         assertEquals(original.deadlineMs, restored.deadlineMs, "deadlineMs preserved")
         assertEquals(original.currentDraftAnswer, restored.currentDraftAnswer, "draft preserved")
     }

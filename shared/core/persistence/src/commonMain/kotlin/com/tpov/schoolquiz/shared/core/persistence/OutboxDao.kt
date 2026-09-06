@@ -4,6 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -41,7 +43,7 @@ interface OutboxDao {
         WHERE owner_uid = :ownerUid
           AND state IN ('WAITING', 'WAITING_PRECONDITION')
           AND next_retry_at_ms <= :nowMs
-          AND (:nowMs - created_at_ms) < :maxAgeMs
+          AND ((:nowMs - created_at_ms) < :maxAgeMs OR operation IN (:permanentReceiptOperations))
         ORDER BY created_at_ms ASC
         LIMIT :limit
         """,
@@ -51,6 +53,7 @@ interface OutboxDao {
         nowMs: Long,
         maxAgeMs: Long,
         limit: Int,
+        permanentReceiptOperations: Set<String> = OutboxOperations.permanentReceiptOperations,
     ): List<OutboxEntity>
 
     /**
@@ -66,6 +69,7 @@ interface OutboxDao {
         WHERE owner_uid = :ownerUid
           AND state IN ('WAITING', 'WAITING_PRECONDITION')
           AND (:nowMs - created_at_ms) >= :maxAgeMs
+          AND operation NOT IN (:permanentReceiptOperations)
         ORDER BY created_at_ms ASC
         LIMIT :limit
         """,
@@ -75,6 +79,7 @@ interface OutboxDao {
         nowMs: Long,
         maxAgeMs: Long,
         limit: Int,
+        permanentReceiptOperations: Set<String> = OutboxOperations.permanentReceiptOperations,
     ): List<OutboxEntity>
 
     /**
@@ -210,6 +215,73 @@ interface OutboxDao {
     /** Записи прежнего владельца после смены аккаунта уезжать не должны (AD-8). */
     @Query("DELETE FROM outbox WHERE owner_uid = :ownerUid")
     suspend fun deleteAllOf(ownerUid: String)
+
+    /** A durable local presentation marker is never sent by the engine. */
+    @Query(
+        "SELECT * FROM outbox WHERE owner_uid = :ownerUid AND operation = :operation " +
+            "AND state = 'SYNCHRONOUS' ORDER BY id LIMIT 1",
+    )
+    suspend fun findSynchronousIntent(
+        ownerUid: String,
+        operation: String,
+    ): OutboxEntity?
+
+    @Query(
+        "SELECT * FROM outbox WHERE owner_uid = :ownerUid AND operation = :operation " +
+            "AND state = 'SYNCHRONOUS' ORDER BY id LIMIT 1",
+    )
+    fun observeSynchronousIntent(
+        ownerUid: String,
+        operation: String,
+    ): Flow<OutboxEntity?>
+
+    /** Serialized Room transaction: competing repository instances reuse the first intent. */
+    @Transaction
+    suspend fun reserveSynchronousIntent(
+        delivery: OutboxEntity,
+        marker: OutboxEntity,
+    ): OutboxEntity {
+        require(delivery.state == "WAITING" && marker.state == "SYNCHRONOUS")
+        require(delivery.ownerUid == marker.ownerUid && delivery.operation == marker.operation)
+        require(delivery.entityRef == marker.entityRef && delivery.payload == marker.payload)
+        require(delivery.expectedVersion == marker.expectedVersion)
+        require(delivery.mutationId != marker.mutationId)
+        findSynchronousIntent(delivery.ownerUid, delivery.operation)?.let { return it }
+        check(receiptCountForMutation(delivery.mutationId) == 0) { "A new intent cannot reuse a historical receipt" }
+        val markerId = insert(marker)
+        check(markerId > 0L) { "Local presentation marker identity collision" }
+        check(insert(delivery) > 0L) { "Delivery identity already exists without its marker" }
+        return marker.copy(id = markerId)
+    }
+
+    @Query(
+        "SELECT COUNT(*) FROM mutation_receipts WHERE owner_uid = :ownerUid " +
+            "AND mutation_id = :mutationId AND operation = :operation AND entity_ref = :entityRef",
+    )
+    suspend fun matchingReceiptCount(
+        ownerUid: String,
+        mutationId: String,
+        operation: String,
+        entityRef: String,
+    ): Int
+
+    @Query("SELECT COUNT(*) FROM mutation_receipts WHERE mutation_id = :mutationId")
+    suspend fun receiptCountForMutation(mutationId: String): Int
+
+    /** UI acknowledgement removes only the matching owner's marker, never receipt/history. */
+    @Transaction
+    suspend fun acknowledgeSynchronousIntent(
+        ownerUid: String,
+        markerId: Long,
+        mutationId: String,
+    ): Boolean {
+        val marker = findById(markerId) ?: return false
+        if (marker.ownerUid != ownerUid || marker.state != "SYNCHRONOUS") return false
+        val ref = marker.entityRef ?: return false
+        if (matchingReceiptCount(ownerUid, mutationId, marker.operation, ref) != 1) return false
+        delete(markerId)
+        return true
+    }
 }
 
 /** Строка с остатком владельца. `SUM` по пустой выборке даёт `NULL`, поэтому поля обнуляемые. */

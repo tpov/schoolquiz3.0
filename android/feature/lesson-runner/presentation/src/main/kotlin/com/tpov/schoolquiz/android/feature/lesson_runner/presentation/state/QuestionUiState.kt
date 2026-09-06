@@ -4,6 +4,8 @@ sealed interface QuestionUiState {
     val questionText: String
     val hasImage: Boolean
     val info: String?
+    /** False means key fields are absent, not an empty but valid answer key. */
+    val hasLocalAnswerKey: Boolean
 
     data class SingleChoice(
         override val questionText: String,
@@ -13,6 +15,7 @@ sealed interface QuestionUiState {
         val selectedOptionId: String?,
         val correctOptionId: String? = null,
         override val info: String? = null,
+        override val hasLocalAnswerKey: Boolean = true,
     ) : QuestionUiState
 
     data class MultipleChoice(
@@ -23,6 +26,7 @@ sealed interface QuestionUiState {
         val selectedIds: Set<String>,
         val correctIds: Set<String> = emptySet(),
         override val info: String? = null,
+        override val hasLocalAnswerKey: Boolean = true,
     ) : QuestionUiState
 
     /** Survey: options with no correct answer, so nothing is ever marked right or wrong. */
@@ -34,6 +38,7 @@ sealed interface QuestionUiState {
         val selectedIds: Set<String>,
         val allowMultiple: Boolean,
         override val info: String? = null,
+        override val hasLocalAnswerKey: Boolean = false,
     ) : QuestionUiState
 
     data class Ordering(
@@ -43,6 +48,7 @@ sealed interface QuestionUiState {
         val items: List<OptionUi>,
         val correctOrderIds: List<String> = emptyList(),
         override val info: String? = null,
+        override val hasLocalAnswerKey: Boolean = true,
     ) : QuestionUiState
 
     data class FillBlank(
@@ -54,6 +60,7 @@ sealed interface QuestionUiState {
         val candidates: List<OptionUi> = emptyList(),
         val correctCandidateIdsByBlankIndex: Map<Int, String> = emptyMap(),
         override val info: String? = null,
+        override val hasLocalAnswerKey: Boolean = true,
     ) : QuestionUiState
 }
 

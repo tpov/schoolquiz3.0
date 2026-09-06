@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEarning
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEntity
+import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptIntentEntity
 import com.tpov.schoolquiz.shared.core.persistence.OUTBOX_ROW_IGNORED
 import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
@@ -21,6 +22,24 @@ class FakeLessonAttemptDao : LessonAttemptDao {
 
     /** Что лежит в таблице прохождений прямо сейчас — для сравнения «до и после». */
     val attempts: List<LessonAttemptEntity> get() = store.toList()
+    val intents = mutableMapOf<String, LessonAttemptIntentEntity>()
+
+    override suspend fun findAttempt(attemptId: String): LessonAttemptEntity? =
+        store.firstOrNull { it.attemptId == attemptId }
+
+    override suspend fun findAttemptAnswers(attemptId: String): List<QuestionAnswerEntity> =
+        answers.filter { it.attemptId == attemptId }
+
+    override suspend fun findAttemptIntent(attemptId: String): LessonAttemptIntentEntity? = intents[attemptId]
+
+    override suspend fun findQueuedAttemptIntent(mutationId: String): OutboxEntity? =
+        outboxRows.firstOrNull { it.mutationId == mutationId }
+
+    override suspend fun insertAttemptIntent(entity: LessonAttemptIntentEntity): Long {
+        if (intents.containsKey(entity.attemptId)) return -1L
+        intents[entity.attemptId] = entity
+        return intents.size.toLong()
+    }
 
     override suspend fun upsert(entity: LessonAttemptEntity): Long {
         upsertCallCount++

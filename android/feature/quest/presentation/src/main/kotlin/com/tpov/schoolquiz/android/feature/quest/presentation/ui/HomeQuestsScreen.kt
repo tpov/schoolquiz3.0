@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.android.feature.quest.presentation.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -145,9 +146,12 @@ private fun HomeQuestsContent(
                 )
         }
 
-        if (state.giftBoxCount > 0 && state.giftBoxOpening !is HomeGiftBoxOpeningState.Opening) {
+        if ((state.giftBoxCount > 0 || state.hasPendingGiftBoxOpening) &&
+            state.giftBoxOpening !is HomeGiftBoxOpeningState.Opening
+        ) {
             GiftBoxFab(
                 count = state.giftBoxCount,
+                pending = state.hasPendingGiftBoxOpening,
                 onClick = onGiftBoxFabClick,
                 modifier =
                     Modifier
@@ -315,6 +319,7 @@ private fun GiftBoxFab(
     count: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    pending: Boolean = false,
 ) {
     val accent = LocalNoirAccent.current
     val fabShape = RoundedCornerShape(18.dp)
@@ -337,7 +342,10 @@ private fun GiftBoxFab(
         ) {
             Icon(
                 imageVector = Icons.Default.CardGiftcard,
-                contentDescription = stringResource(R.string.quest_cd_open_box),
+                contentDescription =
+                    stringResource(
+                        if (pending) R.string.quest_box_resume else R.string.quest_cd_open_box,
+                    ),
                 tint = NoirInk,
                 modifier = Modifier.size(26.dp),
             )
@@ -355,7 +363,7 @@ private fun GiftBoxFab(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = count.toString(),
+                text = if (pending) "…" else count.toString(),
                 style = NoirType.num.copy(color = accent, fontSize = 11.sp, fontWeight = FontWeight.Bold),
             )
         }
@@ -368,6 +376,7 @@ private fun GiftBoxOpeningOverlay(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    BackHandler { if (opening !is HomeGiftBoxOpeningState.Opening) onDismiss() }
     Box(
         modifier = modifier.background(Color.Black.copy(alpha = SCRIM_ALPHA)),
         contentAlignment = Alignment.Center,
@@ -494,6 +503,9 @@ private fun GiftBoxOverlayBody(opening: HomeGiftBoxOpeningState) {
                 text =
                     when (val reason = opening.reason) {
                         HomeGiftBoxFailure.NoBoxes -> stringResource(R.string.quest_error_no_boxes)
+                        HomeGiftBoxFailure.NetworkRequired -> stringResource(R.string.quest_box_network_required)
+                        HomeGiftBoxFailure.Pending -> stringResource(R.string.quest_box_pending)
+                        HomeGiftBoxFailure.RequiresAttention -> stringResource(R.string.quest_box_attention)
                         is HomeGiftBoxFailure.Unexpected ->
                             reason.detail ?: stringResource(R.string.quest_error_box_generic)
                     },

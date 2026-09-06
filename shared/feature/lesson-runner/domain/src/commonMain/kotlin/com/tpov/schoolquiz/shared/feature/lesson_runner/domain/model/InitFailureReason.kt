@@ -7,13 +7,11 @@ sealed interface InitFailureReason {
 
     /**
      * The questions that would have been played arrived without their answer key — the public half
-     * that `functions/question-redaction.js` publishes — and this client cannot yet play one.
+     * that `functions/question-redaction.js` publishes — without a supported start capability.
      *
-     * **Temporary, and named so.** `RedactedNotSupported` says "the runner does not support these
-     * yet", not "this lesson is redacted": step 9 of the E2 plan admits redacted questions into the
-     * hard pool and deletes this case along with the branch in `StartLessonAttemptUseCase` that
-     * returns it. Whoever does that should expect to remove this declaration, its two presentation
-     * mirrors and its string in all three locales, not to repurpose them.
+     * Raw HARD is supported. This temporary gate remains for ordinary raw EASY (the legacy
+     * intake requires a keyed local result) and public payloads with unknown difficulty.
+     * Ticket-backed EASY retains its key and hints; ticket admission is a separate start path.
      *
      * Distinct from [NoValidQuestions] on purpose. That one means the bytes are broken and nobody
      * can read them; this one means they were read perfectly well and the answer was deliberately

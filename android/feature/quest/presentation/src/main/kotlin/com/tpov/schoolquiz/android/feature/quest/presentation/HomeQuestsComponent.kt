@@ -39,6 +39,7 @@ data class HomeQuestsUiState(
     val giftBoxCount: Int = 0,
     val giftBoxStreakDays: Int = 0,
     val giftBoxOpening: HomeGiftBoxOpeningState? = null,
+    val hasPendingGiftBoxOpening: Boolean = false,
     /** The lesson the player was last mid-way through, or null when there is nothing to resume. */
     val continueLesson: ContinueLessonUi? = null,
 )
@@ -70,11 +71,13 @@ sealed interface HomeGiftBoxOpeningState {
         val reward: GiftBoxReward,
         val remainingBoxCount: Int,
         val profileSynced: Boolean,
+        val openingId: String? = null,
     ) : HomeGiftBoxOpeningState
 
     data class Failed(
         val reason: HomeGiftBoxFailure,
         val remainingBoxCount: Int,
+        val openingId: String? = null,
     ) : HomeGiftBoxOpeningState
 }
 
@@ -83,6 +86,12 @@ sealed interface HomeGiftBoxOpeningState {
  */
 sealed interface HomeGiftBoxFailure {
     data object NoBoxes : HomeGiftBoxFailure
+
+    data object NetworkRequired : HomeGiftBoxFailure
+
+    data object Pending : HomeGiftBoxFailure
+
+    data object RequiresAttention : HomeGiftBoxFailure
 
     /** Unexpected backend failure; [detail] is raw technical data, not curated copy. */
     data class Unexpected(

@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeAuthRepository
@@ -37,6 +39,7 @@ class CodeAnswerConstructionTest {
         authRepository = authRepo,
         clock = clock,
         randomSeedProvider = { 12345L },
+        attemptIdProvider = { AttemptId("start-attempt") },
     )
 
     private fun addEasyQuestion(id: String, lessonId: String = "lesson1", order: Int = 0) {
@@ -62,7 +65,7 @@ class CodeAnswerConstructionTest {
         val state = startUseCase(LessonId("lesson1"), Difficulty.EASY) as RunnerState.Ready
 
         assertEquals(5, state.eligibleSize, "Spec scenario #13: eligibleSize = 5")
-        assertEquals(5, state.codeAnswer.raw.length, "Spec scenario #13: codeAnswer.length = 5")
+        assertEquals(5, requireNotNull(state.codeAnswer).raw.length, "Spec scenario #13: codeAnswer.length = 5")
         assertEquals(5, state.playOrder.size, "Spec scenario #13: all 5 in pool (min(20,5)=5)")
 
         // Answer all 5 questions to verify no '0' after completion
@@ -72,7 +75,7 @@ class CodeAnswerConstructionTest {
             currentState = submitAnswer(currentState, answer, nowMs = 1_000_000L)
         }
         assertTrue(
-            currentState.codeAnswer.raw.none { it == '0' },
+            requireNotNull(currentState.codeAnswer).raw.none { it == '0' },
             "Spec scenario #13: нет '0' after all 5 shown and answered",
         )
     }
@@ -88,7 +91,7 @@ class CodeAnswerConstructionTest {
         val state = startUseCase(LessonId("lesson1"), Difficulty.EASY) as RunnerState.Ready
 
         assertEquals(50, state.eligibleSize, "Spec scenario #14: eligibleSize = 50")
-        assertEquals(50, state.codeAnswer.raw.length, "Spec scenario #14: codeAnswer.length = 50")
+        assertEquals(50, requireNotNull(state.codeAnswer).raw.length, "Spec scenario #14: codeAnswer.length = 50")
         assertEquals(20, state.playOrder.size, "Spec scenario #14: subset = 20")
 
         // Simulate answering all 20 subset questions
@@ -98,8 +101,8 @@ class CodeAnswerConstructionTest {
             currentState = submitAnswer(currentState, answer, nowMs = 1_000_000L)
         }
 
-        val nonZero = currentState.codeAnswer.raw.count { it != '0' }
-        val zeros = currentState.codeAnswer.raw.count { it == '0' }
+        val nonZero = requireNotNull(currentState.codeAnswer).raw.count { it != '0' }
+        val zeros = requireNotNull(currentState.codeAnswer).raw.count { it == '0' }
         assertEquals(20, nonZero, "Spec scenario #14: exactly 20 non-zero digits (shown questions)")
         assertEquals(30, zeros, "Spec scenario #14: 30 '0' digits (out-of-subset)")
     }
@@ -116,7 +119,7 @@ class CodeAnswerConstructionTest {
         val state = startUseCase(LessonId("lesson1"), Difficulty.EASY) as RunnerState.Ready
 
         assertEquals(50, state.eligibleSize, "Spec scenario #15: only EASY counted → eligibleSize=50")
-        assertEquals(50, state.codeAnswer.raw.length, "Spec scenario #15: codeAnswer.length=50")
+        assertEquals(50, requireNotNull(state.codeAnswer).raw.length, "Spec scenario #15: codeAnswer.length=50")
         assertEquals(Difficulty.EASY, state.mode, "Spec scenario #15: mode=EASY")
     }
 
@@ -132,7 +135,7 @@ class CodeAnswerConstructionTest {
         val state = startUseCase(LessonId("lesson1"), Difficulty.HARD) as RunnerState.Ready
 
         assertEquals(50, state.eligibleSize, "Spec scenario #16: only HARD counted → eligibleSize=50")
-        assertEquals(50, state.codeAnswer.raw.length, "Spec scenario #16: codeAnswer.length=50")
+        assertEquals(50, requireNotNull(state.codeAnswer).raw.length, "Spec scenario #16: codeAnswer.length=50")
         assertEquals(Difficulty.HARD, state.mode, "Spec scenario #16: mode=HARD")
     }
 

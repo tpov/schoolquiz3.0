@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
 import com.tpov.schoolquiz.shared.core.outbox.OutboxLimits
+import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRemainder
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRemainderSource
@@ -54,9 +55,23 @@ class RoomOutboxStore(
         nowMs: Long,
         limit: Int,
     ): List<OutboxRecord> {
-        val expired = dao.expired(ownerUid, nowMs, limits.maxAgeMs, limit)
+        val expired =
+            dao.expired(
+                ownerUid,
+                nowMs,
+                limits.maxAgeMs,
+                limit,
+                permanentReceiptOperations = OutboxOperations.permanentReceiptOperations,
+            )
         if (expired.size >= limit) return expired.map { it.toRecord() }
-        val due = dao.due(ownerUid, nowMs, limits.maxAgeMs, limit - expired.size)
+        val due =
+            dao.due(
+                ownerUid,
+                nowMs,
+                limits.maxAgeMs,
+                limit - expired.size,
+                permanentReceiptOperations = OutboxOperations.permanentReceiptOperations,
+            )
         return (expired + due).map { it.toRecord() }
     }
 

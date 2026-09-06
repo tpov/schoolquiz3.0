@@ -81,4 +81,15 @@
     </plurals>
     <string name="runner_discussion_title">Discussion</string>
     <string name="runner_discussion_open">Open →</string>
+    <string name="runner_settlement_pending">Waiting for server confirmation. Score and rewards are not confirmed yet.</string>
+    <string name="runner_settlement_confirmed">Completion confirmed by the server</string>
+    <string name="runner_settlement_accounting_only">Score and charges confirmed; completion is not confirmed.</string>
+    <string name="runner_settlement_unscorable">The server saved this attempt without a score. It is not a zero.</string>
+    <string name="runner_settlement_rejected">The server did not accept this attempt.</string>
+    <string name="runner_settlement_legacy">Legacy record: no server scoring proof is available.</string>
+    <string name="runner_settlement_invalid">Server confirmation could not be verified. Result is unknown.</string>
+    <string name="runner_settlement_account_unavailable">Sign in to the account that played this attempt to see its confirmation.</string>
+    <string name="runner_settlement_charges">Regular charge: −%1$d points · Plasma: −%2$d points</string>
+    <string name="runner_settlement_skill_points">Skill points</string>
+    <string name="runner_settlement_nolics">Nolics</string>
 </resources>

@@ -24,21 +24,19 @@ val lessonRunnerDomainModule =
                 authRepository = get(),
                 clock = get(),
                 randomSeedProvider = get(),
+                attemptIdProvider = get(),
             )
         }
         factory {
             CompleteAttemptUseCase(
                 attemptRepository = get(),
-                ratingRepository = get(),
                 clock = get(),
-                attemptIdProvider = get(),
             )
         }
         factory {
             AbortAttemptUseCase(
                 attemptRepository = get(),
                 clock = get(),
-                attemptIdProvider = get(),
             )
         }
         factory {

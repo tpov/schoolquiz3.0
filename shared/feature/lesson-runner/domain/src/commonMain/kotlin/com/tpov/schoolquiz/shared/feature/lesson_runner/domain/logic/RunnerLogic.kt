@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionDisplay
 import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.Stars
@@ -10,6 +11,7 @@ import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
 import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.core.scoring.evaluateAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RawAnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
@@ -33,7 +35,20 @@ fun submitAnswer(
     wasTimeout: Boolean = false,
 ): RunnerState.Ready {
     val currentQuestion = state.playOrder[state.indexInPool]
-    val score = evaluateAnswer(currentQuestion.content, answer)
+    if (state.codeAnswer == null) {
+        val raw = RawAnsweredQuestion(
+            questionId = currentQuestion.sourceId,
+            codeAnswerIndex = currentQuestion.codeAnswerIndex,
+            answer = answer,
+            answeredAtMs = nowMs,
+            durationMs = if (state.questionStartedAtMs > 0L) {
+                (nowMs - state.questionStartedAtMs).coerceAtLeast(0L)
+            } else 0L,
+            wasTimeout = wasTimeout,
+        )
+        return advanceRaw(state.copy(rawAnswers = state.rawAnswers + raw), nowMs)
+    }
+    val score = evaluateAnswer(checkNotNull(currentQuestion.content as? QuestionContent), answer)
 
     val codeAnswerChars = state.codeAnswer.raw.toCharArray()
     codeAnswerChars[currentQuestion.codeAnswerIndex] = ('0' + score.raw)
@@ -94,7 +109,13 @@ fun autoAnswerOnTimeout(
     nowMs: Long,
 ): RunnerState.Ready {
     val currentQuestion = state.playOrder[state.indexInPool]
-    val answer = generateTimeoutAnswer(currentQuestion.content, state.currentDraftAnswer, randomSeed)
+    if (state.codeAnswer == null) {
+        // Preserve only input the player actually entered; silence is omission, not a guessed key.
+        val answer = state.currentDraftAnswer.toRawAnswerOrNull()
+        return if (answer == null) advanceRaw(state, nowMs)
+        else submitAnswer(state, answer, nowMs, wasTimeout = true)
+    }
+    val answer = generateTimeoutAnswer(checkNotNull(currentQuestion.content as? QuestionContent), state.currentDraftAnswer, randomSeed)
     return submitAnswer(state, answer, nowMs, wasTimeout = true)
 }
 
@@ -119,12 +140,12 @@ fun computeHardUnlocked(attempts: List<Attempt>): Boolean =
  * Formula: max(5, round(charsCount × k)); +100 chars if image present.
  */
 fun computeTimer(
-    content: QuestionContent,
+    content: QuestionDisplay,
     mode: Difficulty,
     coefficients: TimerCoefficients,
     sessionMode: SessionMode = SessionMode.LEARNING,
 ): TimerDuration {
-    val charsCount = computeCharsCount(content)
+    val charsCount = content.charsCount
     val base =
         when (mode) {
             Difficulty.EASY -> coefficients.kEasy
@@ -139,11 +160,11 @@ fun computeTimer(
  * Selects a random subset of [eligible] using [seed].
  * Size = min([poolSize], eligible.size). Returned list order is shuffled (caller sorts for playOrder).
  */
-fun selectSubset(
-    eligible: List<RunnerQuestion.Valid>,
+fun <T : RunnerQuestion.Playable> selectSubset(
+    eligible: List<T>,
     poolSize: Int,
     seed: Long,
-): List<RunnerQuestion.Valid> {
+): List<T> {
     if (eligible.isEmpty()) return emptyList()
     val count = minOf(poolSize, eligible.size)
     return eligible.shuffled(Random(seed)).take(count)
@@ -155,7 +176,7 @@ fun selectSubset(
  * Пустую отдаём, а не `null`: маска той же длины, что `codeAnswer`, и сервер сверяет длины.
  */
 fun RunnerState.Ready.chargeClaimsOrEmpty(): ChargeClaimMask =
-    chargeClaims ?: ChargeClaimMask.none(codeAnswer.raw.length)
+    chargeClaims ?: ChargeClaimMask.none(eligibleSize)
 
 /**
  * Отмечает заявку на заряд за текущий вопрос.
@@ -168,6 +189,7 @@ fun claimCharge(
     state: RunnerState.Ready,
     claim: ChargeClaimMask.Claim,
 ): RunnerState.Ready {
+    require(state.codeAnswer != null) { "Raw attempts need a server-authorized charge protocol" }
     val expected =
         when (state.mode) {
             Difficulty.EASY -> ChargeClaimMask.Claim.STANDARD_HINT
@@ -179,25 +201,30 @@ fun claimCharge(
 }
 
 fun buildCodeAnswerOnAbort(state: RunnerState.Ready): CodeAnswer {
-    val chars = state.codeAnswer.raw.toCharArray()
+    val chars = requireNotNull(state.codeAnswer) { "Unscored abort has no local digit string" }.raw.toCharArray()
     for (i in state.indexInPool until state.playOrder.size) {
         chars[state.playOrder[i].codeAnswerIndex] = '1'
     }
     return CodeAnswer(String(chars))
 }
 
-/** Total character count for timer formula: text + option/item/candidate texts + optional +100. */
-private fun computeCharsCount(content: QuestionContent): Int {
-    val imageBonus = if (content.imageUrl != null) 100 else 0
-    val optionChars =
-        when (content) {
-            is QuestionContent.SingleChoice -> content.options.sumOf { it.text.length }
-            is QuestionContent.MultipleChoice -> content.options.sumOf { it.text.length }
-            is QuestionContent.Ordering -> content.items.sumOf { it.text.length }
-            is QuestionContent.FillBlank -> content.candidates.sumOf { it.text.length }
-            is QuestionContent.Survey -> content.options.sumOf { it.text.length }
-        }
-    return content.text.length + optionChars + imageBonus
+private fun advanceRaw(state: RunnerState.Ready, nowMs: Long): RunnerState.Ready {
+    val nextIndex = state.indexInPool + 1
+    val deadline = state.playOrder.getOrNull(nextIndex)?.let {
+        nowMs + computeTimer(it.content, state.mode, TimerCoefficients.Default, state.sessionMode).seconds * 1000L
+    } ?: state.deadlineMs
+    return state.copy(indexInPool = nextIndex, deadlineMs = deadline,
+        currentDraftAnswer = null, questionStartedAtMs = nowMs)
+}
+
+/** Raw timeout never completes a partial answer from hidden correct counts or ordering. */
+private fun UserAnswerDraft?.toRawAnswerOrNull(): UserAnswer? = when (this) {
+    null -> null
+    is UserAnswerDraft.SingleChoiceDraft -> selected?.let { UserAnswer.SingleChoiceAnswer(it) }
+    is UserAnswerDraft.MultipleChoiceDraft -> UserAnswer.MultipleChoiceAnswer(selected)
+    is UserAnswerDraft.OrderingDraft -> UserAnswer.OrderingAnswer(order)
+    is UserAnswerDraft.FillBlankDraft -> UserAnswer.FillBlankAnswer(filled.mapNotNull { (id, value) -> value?.let { id to it } }.toMap())
+    is UserAnswerDraft.SurveyDraft -> UserAnswer.SurveyAnswer(selected)
 }
 
 /** Generates a deterministic random answer for [content] using [seed]. */

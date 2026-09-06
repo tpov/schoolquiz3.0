@@ -30,7 +30,7 @@ class AutoAnswerTest {
         // After auto-answer, the score for this question is recorded (codeAnswer updated)
         // The auto answer must be one of the 4 options → digit in 1..9
         assertTrue(
-            resultState.codeAnswer.raw[state.playOrder[currentIndex].codeAnswerIndex] in '1'..'9',
+            requireNotNull(resultState.codeAnswer).raw[state.playOrder[currentIndex].codeAnswerIndex] in '1'..'9',
             "Spec scenario #44: auto-answer yields a score digit (1..9) for the question",
         )
     }
@@ -62,7 +62,7 @@ class AutoAnswerTest {
         val resultState = autoAnswerOnTimeout(state, randomSeed = 42L, nowMs = nowMs)
         val codeAnswerIndex = state.playOrder[state.indexInPool].codeAnswerIndex
         assertTrue(
-            resultState.codeAnswer.raw[codeAnswerIndex] in '1'..'9',
+            requireNotNull(resultState.codeAnswer).raw[codeAnswerIndex] in '1'..'9',
             "Spec scenario #46: Ordering auto-answer → score digit recorded",
         )
     }
@@ -80,7 +80,7 @@ class AutoAnswerTest {
         val resultState = autoAnswerOnTimeout(state, randomSeed = 42L, nowMs = nowMs)
         val codeAnswerIndex = state.playOrder[state.indexInPool].codeAnswerIndex
         assertTrue(
-            resultState.codeAnswer.raw[codeAnswerIndex] in '1'..'9',
+            requireNotNull(resultState.codeAnswer).raw[codeAnswerIndex] in '1'..'9',
             "Spec scenario #47: FillBlank auto-answer → score digit recorded",
         )
     }
@@ -94,8 +94,8 @@ class AutoAnswerTest {
         val result1 = autoAnswerOnTimeout(state, randomSeed = 999L, nowMs = nowMs)
         val result2 = autoAnswerOnTimeout(state, randomSeed = 999L, nowMs = nowMs)
         assertEquals(
-            result1.codeAnswer.raw,
-            result2.codeAnswer.raw,
+            requireNotNull(result1.codeAnswer).raw,
+            requireNotNull(result2.codeAnswer).raw,
             "Same seed → deterministic auto-answer",
         )
     }

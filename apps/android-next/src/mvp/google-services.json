@@ -1,0 +1,17 @@
+{
+  "project_info": {
+    "project_number": "123456789000",
+    "project_id": "demo-schoolquiz-mvp",
+    "firebase_url": "https://demo-schoolquiz-mvp-default-rtdb.firebaseio.com",
+    "storage_bucket": "demo-schoolquiz-mvp.appspot.com"
+  },
+  "client": [{
+    "client_info": {
+      "mobilesdk_app_id": "1:123456789000:android:0000000000000000000000",
+      "android_client_info": {"package_name": "com.tpov.schoolquiz.mvp"}
+    },
+    "api_key": [{"current_key": "AIzaSyDemoOnlySchoolQuizMvpEmulator000000"}],
+    "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+  }],
+  "configuration_version": "1"
+}

@@ -49,13 +49,12 @@ class FailureSemanticsTest {
         authRepository = authRepo,
         clock = clock,
         randomSeedProvider = { 12345L },
+        attemptIdProvider = attemptIdProvider,
     )
 
     private val completeUseCase get() = CompleteAttemptUseCase(
         attemptRepository = attemptRepo,
-        ratingRepository = ratingRepo,
         clock = clock,
-        attemptIdProvider = attemptIdProvider,
     )
 
     private val submitRatingUseCase get() = SubmitLessonRatingUseCase(
@@ -94,7 +93,7 @@ class FailureSemanticsTest {
         lessonRepo.addLesson(makeLesson(id = "lesson1", version = 1L))
         ratingRepo.submitResult = Result.failure(RuntimeException("network error"))
 
-        val result = submitRatingUseCase("user1", LessonId("lesson1"), rating = 2)
+        val result = submitRatingUseCase("user1", LessonId("lesson1"), attemptId = AttemptId("rating-attempt"), rating = 2)
 
         assertTrue(result.isFailure, "Spec scenario #73: submit failure → Result.failure")
         val hasSubmitted = ratingRepo.hasSubmitted("user1", LessonId("lesson1")).first()

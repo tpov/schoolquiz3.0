@@ -11,16 +11,20 @@ import com.tpov.schoolquiz.platform.android_services.sync.WorkManagerSyncSchedul
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.outbox.AccountSwitchGuard
+import com.tpov.schoolquiz.shared.core.outbox.MutationReceiptStore
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxQuarantineRouter
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRemainderSource
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.outbox.OwnerTraces
 import com.tpov.schoolquiz.shared.core.outbox.QuarantineListener
+import com.tpov.schoolquiz.shared.core.persistence.MutationReceiptDao
 import com.tpov.schoolquiz.shared.core.persistence.OutboxDao
 import com.tpov.schoolquiz.shared.core.persistence.OwnerRowsDao
+import com.tpov.schoolquiz.shared.core.persistence.RoomMutationReceiptStore
 import com.tpov.schoolquiz.shared.core.persistence.RoomOutboxStore
 import com.tpov.schoolquiz.shared.core.persistence.RoomOwnerTraces
 import com.tpov.schoolquiz.shared.core.persistence.RoomSyncRunTraceStore
@@ -121,6 +125,7 @@ val syncModule =
         // самих операций — в модулях своих фич (AD-10).
         single { RoomOutboxStore(get<OutboxDao>()) }
         single<OutboxStore> { get<RoomOutboxStore>() }
+        single<MutationReceiptStore> { RoomMutationReceiptStore(get<MutationReceiptDao>()) }
         // Остаток по всем пяти состояниям и список владельцев, оставивших строки, — вопрос смены
         // аккаунта (AD-8). Та же реализация, другой смысл: выборка «что поедет» на него не отвечает.
         single<OutboxRemainderSource> { get<RoomOutboxStore>() }
@@ -140,6 +145,7 @@ val syncModule =
                         // реакция на карантин та же: откат (AD-28). Решение принимает владеющая
                         // фича, ядро только зовёт.
                         OutboxOperations.SUBMIT_ATTEMPT to get<LessonResultQuarantineRollback>().attempts,
+                        OutboxOperations.OPEN_GIFT_BOX to com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect(),
                         OutboxOperations.SUBMIT_RATING to get<LessonResultQuarantineRollback>().ratings,
                         OutboxOperations.SUBMIT_ARENA to get<QuestArenaQuarantineRollback>(),
                         // Перенос квеста на полку: локальной половины нет (AD-25), последствие
@@ -171,6 +177,8 @@ val syncModule =
                 transport = get<MutationTransport>(),
                 clock = { System.currentTimeMillis() },
                 onQuarantined = get<QuarantineListener>(),
+                receipts = get<MutationReceiptStore>(),
+                sessions = get<OutboxSessionProvider>(),
             )
         }
         // Слить очередь до смены аккаунта: после переключения прежнего uid уже не узнать (AD-8).

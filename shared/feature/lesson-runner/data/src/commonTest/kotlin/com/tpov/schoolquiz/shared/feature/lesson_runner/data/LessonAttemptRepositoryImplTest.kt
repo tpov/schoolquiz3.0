@@ -1,6 +1,9 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
+import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
@@ -11,12 +14,15 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake.FakeContentHie
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake.FakeLessonAttemptDao
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake.FakeLessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.LessonAttemptRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -26,6 +32,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -151,6 +159,55 @@ class LessonAttemptRepositoryImplTest {
         assertEquals(0, dao.upsertCallCount)
         assertTrue(dao.attempts.isEmpty())
         assertTrue(dao.answers.isEmpty())
+        assertTrue(dao.outboxRows.isEmpty())
+    }
+
+    @Test
+    fun explicitTerminalIntentIsFrozenWithAttemptAndAnswersWithoutChangingTheRoomRow() = runTest {
+        for (kind in AttemptCompletionKind.entries) {
+            val dao = FakeLessonAttemptDao()
+            val repository = LessonAttemptRepositoryImpl(dao, FakeContentHierarchy.roomWriter())
+            val attempt = makeAttempt(lessonId = FakeContentHierarchy.LESSON_ID)
+            val served = listOf(ServedQuestion(QuestionId("q-0"), 0))
+
+            assertTrue(repository.save(attempt, emptyList(), served, null, kind).isSuccess)
+
+            assertEquals(attempt.id.value, dao.attempts.single().attemptId)
+            val queued = Json.parseToJsonElement(dao.outboxRows.single().payload).jsonObject
+            assertEquals(attempt.id.value, queued.getValue("attemptId").jsonPrimitive.content)
+            assertEquals(kind.name, queued.getValue("completionKind").jsonPrimitive.content)
+        }
+    }
+
+    @Test
+    fun historicalSaveHasUnknownCompletionKindRatherThanInventedCompletedFlag() = runTest {
+        val dao = FakeLessonAttemptDao()
+        val repository = LessonAttemptRepositoryImpl(dao, FakeContentHierarchy.roomWriter())
+        val attempt = makeAttempt(lessonId = FakeContentHierarchy.LESSON_ID, codeAnswer = "9")
+
+        assertTrue(repository.save(attempt).isSuccess)
+
+        val queued = Json.parseToJsonElement(dao.outboxRows.single().payload).jsonObject
+        assertFalse("completionKind" in queued, "even a historical 100% score cannot prove completed vs aborted")
+    }
+
+    @Test
+    fun cancellationPropagatesWithoutSavingAnAttemptOrManufacturingSaveFailure() = runTest {
+        val dao = FakeLessonAttemptDao()
+        val cancellingWriter = object : LessonResultOutboxWriter {
+            override suspend fun buildAttemptRow(
+                attempt: Attempt,
+                answers: List<QuestionAnswerEntity>,
+                served: List<ServedQuestion>?,
+                claims: ChargeClaimMask?,
+                completionKind: AttemptCompletionKind?,
+            ): OutboxEntity? = throw CancellationException("screen closed")
+        }
+        val repository = LessonAttemptRepositoryImpl(dao, cancellingWriter)
+
+        assertFailsWith<CancellationException> { repository.save(makeAttempt()) }
+
+        assertTrue(dao.attempts.isEmpty())
         assertTrue(dao.outboxRows.isEmpty())
     }
 

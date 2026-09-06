@@ -49,13 +49,12 @@ class LessonVersionTest {
         authRepository = authRepo,
         clock = clock,
         randomSeedProvider = { 12345L },
+        attemptIdProvider = attemptIdProvider,
     )
 
     private val completeUseCase = CompleteAttemptUseCase(
         attemptRepository = attemptRepo,
-        ratingRepository = ratingRepo,
         clock = clock,
-        attemptIdProvider = attemptIdProvider,
     )
 
     private val submitRatingUseCase get() = SubmitLessonRatingUseCase(
@@ -136,10 +135,11 @@ class LessonVersionTest {
         // Spec scenario #57: rating.lessonVersion = fresh lesson.version at submit time
         setupLesson(version = 7L)
 
-        val result = submitRatingUseCase("user1", lessonId, rating = 2)
+        val result = submitRatingUseCase("user1", lessonId, attemptId = AttemptId("rating-attempt"), rating = 2)
         assertEquals(true, result.isSuccess, "submit should succeed")
 
         val submitted = ratingRepo.submittedRatings.first()
         assertEquals(7L, submitted.lessonVersion, "Spec scenario #57: rating.lessonVersion = 7 (fresh read)")
+        assertEquals(AttemptId("rating-attempt"), submitted.attemptId, "rating must retain its completion proof")
     }
 }

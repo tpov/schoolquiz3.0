@@ -7,6 +7,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.activity.compose)
     implementation(project(":shared:feature:quest:domain"))
     implementation(project(":shared:feature:section:domain"))
     implementation(project(":shared:feature:theme:domain"))

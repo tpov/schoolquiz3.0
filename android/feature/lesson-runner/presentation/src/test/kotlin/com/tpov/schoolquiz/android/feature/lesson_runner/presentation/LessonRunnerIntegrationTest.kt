@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation
 
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.instancekeeper.InstanceKeeperDispatcher
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
@@ -7,6 +9,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeServerAttemptSettlementRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAbortAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptSyncMarkRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptFixtures
@@ -97,7 +100,7 @@ class LessonRunnerIntegrationTest {
         startAttemptUseCase: suspend (LessonId, Difficulty, SessionMode) -> RunnerState = fakeStart::invoke,
         completeAttemptUseCase: suspend (RunnerState.Ready) -> RunnerState = fakeComplete::invoke,
         abortAttemptUseCase: suspend (RunnerState.Ready) -> RunnerState = fakeAbort::invoke,
-        submitRatingUseCase: suspend (String, LessonId, Int) -> Result<Unit> = fakeSubmitRating::invoke,
+        submitRatingUseCase: suspend (String, LessonId, AttemptId, Int) -> Result<Unit> = fakeSubmitRating::invoke,
     ): DefaultLessonRunnerRootComponent {
         val lifecycle = LifecycleRegistry()
         lifecycles.add(lifecycle)
@@ -119,6 +122,7 @@ class LessonRunnerIntegrationTest {
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
             attemptSyncMarks = FakeAttemptSyncMarkRepository(),
+            attemptSettlements = FakeServerAttemptSettlementRepository(),
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
             mainContext = Dispatchers.Unconfined,
@@ -159,6 +163,7 @@ class LessonRunnerIntegrationTest {
         questions: Int = 5,
         indexInPool: Int = 0,
     ) = RunnerState.Ready(
+        attemptId = AttemptId("attempt-ready"),
         userId = "user1",
         lessonId = LessonId("lesson1"),
         lessonVersion = 5L,

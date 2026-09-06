@@ -1,57 +1,92 @@
 package com.tpov.schoolquiz.platform.firebase.economy
 
-import com.google.firebase.functions.FirebaseFunctions
-import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxReceipt
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxReceiptStatus
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
-import kotlinx.coroutines.tasks.await
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.longOrNull
 
-class FirebaseGiftBoxRemoteDataSource(
-    private val functions: FirebaseFunctions,
-) : GiftBoxRemoteDataSource {
-    override suspend fun openGiftBox(): GiftBoxReward {
-        val data =
-            functions
-                .getHttpsCallable(OPEN_GIFT_BOX)
-                .withAppTimeout()
-                .call()
-                .await()
-                .data
-        return (data as? Map<*, *>).toGiftBoxReward()
+/** Typed reader for the persisted callable wire. This adapter no longer performs a second RPC. */
+class FirebaseGiftBoxRemoteDataSource : GiftBoxRemoteDataSource {
+    override fun openingFromReceipt(
+        payloadJson: String,
+        ownerUid: String,
+        openingId: String,
+    ): GiftBoxReceipt {
+        val envelope = Json.parseToJsonElement(payloadJson) as? JsonObject ?: error("Missing envelope")
+        val replayed = envelope["replayed"] as? JsonPrimitive ?: error("Missing replay marker")
+        check(!replayed.isString && replayed.booleanOrNull != null)
+        val result = envelope.objectAt("result")
+        check(result.number("schemaVersion") == 1L)
+        check(result.text("ownerUid") == ownerUid && result.text("operationId") == openingId)
+        check(result.text("kind") == "OPEN")
+        val status = GiftBoxReceiptStatus.valueOf(result.text("status"))
+        result.number("boxCount")
+        result.number("earnedBoxes")
+        result.number("boxStreakDays")
+        result.number("nextBoxAtMs")
+        result.number("nextBonusBoxAtMs")
+        result.number("premiumUntilMs")
+        val reward =
+            when (status) {
+                GiftBoxReceiptStatus.OPENED -> {
+                    check(result.number("openedBoxes") == 1L)
+                    result.reward()
+                }
+                GiftBoxReceiptStatus.NO_BOXES -> {
+                    check(result.number("openedBoxes") == 0L && result.number("boxCount") == 0L)
+                    check(!result.containsKey("reward"))
+                    null
+                }
+            }
+        return GiftBoxReceipt(openingId, ownerUid, status, reward)
     }
 
-    private fun Map<*, *>?.toGiftBoxReward(): GiftBoxReward {
-        val type = string(TYPE)
-        val amount = long(AMOUNT).coerceAtLeast(0L)
-        return when (type) {
-            ADD_NOLICS -> GiftBoxReward.Nolics(amount)
-            ADD_GOLD -> GiftBoxReward.Gold(amount)
-            DATE_PREMIUM -> GiftBoxReward.Premium(amount)
-            LOGO -> GiftBoxReward.Logo(itemName = string(ITEM_NAME).ifBlank { "Logo" }, amount = amount)
-            TROPHY -> GiftBoxReward.Trophy(amount)
-            else -> error("Unknown gift box reward type: $type")
+    private fun JsonObject.reward(): GiftBoxReward {
+        val reward = objectAt("reward")
+        val amount = reward.number("amount").also { check(it > 0) }
+        return when (reward.text("type")) {
+            "addNolics" -> GiftBoxReward.Nolics(amount)
+            "addGold" -> {
+                val credit = objectAt("goldCredit")
+                val gross = credit.number("gross")
+                val net = credit.number("net")
+                val cleared = credit.number("shortfallCleared")
+                check(gross == amount && net <= gross && cleared == gross - net)
+                check(credit.number("goldAfter") - credit.number("goldBefore") == net)
+                check(credit.number("shortfallBefore") - credit.number("shortfallAfter") == cleared)
+                // The overlay says "credited": debt-cleared gold is not spendable gold.
+                GiftBoxReward.Gold(net)
+            }
+            "datePremium" -> GiftBoxReward.Premium(amount)
+            "logo" -> GiftBoxReward.Logo(reward.text("itemName"), amount)
+            "trophy" -> {
+                reward.text("itemName")
+                GiftBoxReward.Trophy(amount)
+            }
+            else -> error("Unsupported gift box reward")
         }
     }
 
-    private fun Map<*, *>?.string(field: String): String = this?.get(field)?.toString().orEmpty()
+    private fun JsonObject.objectAt(key: String) = get(key) as? JsonObject ?: error("Missing $key")
 
-    private fun Map<*, *>?.long(field: String): Long =
-        when (val value = this?.get(field)) {
-            is Long -> value
-            is Int -> value.toLong()
-            is Number -> value.toLong()
-            else -> 0L
-        }
+    private fun JsonObject.text(key: String): String {
+        val value = get(key) as? JsonPrimitive ?: error("Missing $key")
+        check(value.isString && value.content.isNotBlank())
+        return value.content
+    }
+
+    private fun JsonObject.number(key: String): Long {
+        val value = get(key) as? JsonPrimitive ?: error("Missing $key")
+        check(!value.isString)
+        return checkNotNull(value.longOrNull).also { check(it in 0..MAX_SAFE_INTEGER) }
+    }
 
     private companion object {
-        const val OPEN_GIFT_BOX = "openGiftBox"
-        const val TYPE = "type"
-        const val AMOUNT = "amount"
-        const val ITEM_NAME = "itemName"
-        const val ADD_NOLICS = "addNolics"
-        const val ADD_GOLD = "addGold"
-        const val DATE_PREMIUM = "datePremium"
-        const val LOGO = "logo"
-        const val TROPHY = "trophy"
+        const val MAX_SAFE_INTEGER = 9_007_199_254_740_991L
     }
 }

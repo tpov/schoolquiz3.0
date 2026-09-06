@@ -1,10 +1,12 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.di
 
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
+import com.tpov.schoolquiz.shared.core.outbox.MutationReceiptStore
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultQuarantineRollback
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.OutboxAttemptSyncMarkRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.OutboxServerAttemptSettlementRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.RoomLessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.provider.DefaultAttemptIdProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.provider.DefaultRandomSeedProvider
@@ -17,6 +19,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.RatingId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.AttemptSyncMarkRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonRatingRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
 import kotlinx.datetime.Clock
 import org.koin.dsl.module
 
@@ -54,6 +57,12 @@ val lessonRunnerDataModule =
                 attemptDao = get(),
                 outboxWriter = get(),
                 repetitionDao = get(),
+            )
+        }
+        single<ServerAttemptSettlementRepository> {
+            OutboxServerAttemptSettlementRepository(
+                receipts = get<MutationReceiptStore>(),
+                currentUidFlow = { get<AuthRepository>().observeUid() },
             )
         }
         single<LessonRatingRepository> {

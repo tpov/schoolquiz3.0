@@ -265,7 +265,7 @@ private fun QuestionStateContent(
             onTimeout = {
                 if (feedback == null) {
                     val timeoutFeedback =
-                        buildTimeoutFeedback(
+                        if (state.serverScored) null else buildTimeoutFeedback(
                             qState = state.questionUiState,
                             currentDraft = state.currentDraft,
                             seed = state.indexInPool.toLong() xor state.deadlineMs,
@@ -285,7 +285,7 @@ private fun QuestionStateContent(
                 qState = state.questionUiState,
                 currentDraft = state.currentDraft,
                 feedback = feedback,
-                revealCorrect = state.revealCorrect,
+                revealCorrect = state.revealCorrect && state.questionUiState.hasLocalAnswerKey,
                 component = component,
                 hint =
                     rememberHintControl(
@@ -718,6 +718,7 @@ private fun buildTimeoutFeedback(
     seed: Long,
     revealCorrect: Boolean,
 ): AnswerFeedback? {
+    if (!qState.hasLocalAnswerKey && qState !is QuestionUiState.Survey) return null
     val random = Random(seed)
     return when (qState) {
         is QuestionUiState.Survey ->

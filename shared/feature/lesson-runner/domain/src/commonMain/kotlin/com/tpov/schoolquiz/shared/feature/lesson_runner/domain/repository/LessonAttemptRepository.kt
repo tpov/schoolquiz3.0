@@ -6,7 +6,9 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeBest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeHardUnlocked
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,12 +19,16 @@ data class LessonAttemptStats(
 )
 
 interface LessonAttemptRepository {
+    /** Durable raw intent + queue only; never creates scored history or repetition rows. */
+    suspend fun saveUnscored(intent: UnscoredTerminalIntent): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Raw terminal persistence is not configured"))
+
     /**
      * Persists [attempt] to Room.
      * Returns [Result.failure] on IO error; caller transitions to SaveFailed state.
      *
      * Fake-only convenience: the one form every fake overrides. Production callers must use the
-     * three-argument [save] — a body queued through this one carries no served list, which the
+     * terminal [save] with explicit completionKind — this form carries no served list, which the
      * server will read as "unknown" once the wiring step looks for it.
      */
     suspend fun save(attempt: Attempt): Result<Unit>
@@ -35,7 +41,7 @@ interface LessonAttemptRepository {
      * statistics and survey distributions are built from.
      *
      * Fake-only convenience, like the one-argument form: production callers must use the
-     * three-argument [save]. Defaults to [save] so fakes that only care about attempts keep working.
+     * terminal [save] with explicit completionKind. Defaults to [save] for simple fakes.
      */
     suspend fun save(
         attempt: Attempt,
@@ -45,7 +51,7 @@ interface LessonAttemptRepository {
     /**
      * Persists [attempt], its [answers] and the questions it [served], in one transaction.
      *
-     * This is the form production callers use. [served] is the attempt's whole play order — every
+     * Legacy served-only form. [served] is the attempt's whole play order — every
      * question dealt into it, counted as shown whether or not the player reached it, per
      * `buildCodeAnswerOnAbort`. The server reads it: every digit of a hard attempt it scores itself
      * is placed from this list, and on an attempt this device scored the list is checked against the
@@ -73,6 +79,20 @@ interface LessonAttemptRepository {
         served: List<ServedQuestion>,
         claims: ChargeClaimMask?,
     ): Result<Unit> = save(attempt, answers, served)
+
+    /**
+     * Production terminal save: [completionKind] joins served/claims in the immutable queued body
+     * within the same transaction as the attempt and its answers. Historical overloads omit it.
+     * It is not reconstructed from Room later, so no schema migration or legacy backfill is needed.
+     * The default is only for simple fakes; the production repository overrides this form.
+     */
+    suspend fun save(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+        served: List<ServedQuestion>,
+        claims: ChargeClaimMask?,
+        completionKind: AttemptCompletionKind,
+    ): Result<Unit> = save(attempt, answers, served, claims)
 
     /**
      * Observes all attempts for [userId] + [lessonId], sorted by completedAt DESC.

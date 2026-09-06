@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case
 
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRating
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RatingId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonRatingRepository
@@ -11,6 +12,7 @@ import kotlinx.datetime.Clock
  * Submits a lesson rating from the result screen.
  *
  * [userId] is passed explicitly (from completed attempt snapshot) to avoid auth race.
+ * [attemptId] comes from that same completed snapshot; the server checks its settled receipt.
  * [rating] must be in 1..3.
  * lessonVersion fetched fresh from [lessonRepository] at submit time (for analytics).
  *
@@ -25,6 +27,7 @@ class SubmitLessonRatingUseCase(
     suspend operator fun invoke(
         userId: String,
         lessonId: LessonId,
+        attemptId: AttemptId,
         rating: Int,
     ): Result<Unit> {
         if (rating !in 1..3) {
@@ -46,6 +49,7 @@ class SubmitLessonRatingUseCase(
                 lessonVersion = lesson.version,
                 rating = rating,
                 ratedAt = nowMs,
+                attemptId = attemptId,
             )
 
         return ratingRepository.submit(lessonRating)

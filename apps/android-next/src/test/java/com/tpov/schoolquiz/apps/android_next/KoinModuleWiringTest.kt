@@ -10,12 +10,15 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
-import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
-import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
@@ -24,31 +27,49 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
+import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
+import com.tpov.schoolquiz.apps.android_next.di.syncStatusModule
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
-import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
-import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
-import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
-import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
-import com.tpov.schoolquiz.apps.android_next.di.syncStatusModule
 import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.outbox.MutationReceipt
+import com.tpov.schoolquiz.shared.core.outbox.MutationReceiptStore
 import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
+import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
+import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
+import com.tpov.schoolquiz.shared.core.persistence.LessonDao
+import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
+import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
+import com.tpov.schoolquiz.shared.core.persistence.QuestDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
+import com.tpov.schoolquiz.shared.core.persistence.SectionDao
+import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
+import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
+import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
+import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
+import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
+import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
+import com.tpov.schoolquiz.shared.core.stats.RawUserStats
+import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
+import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncRun
 import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
 import com.tpov.schoolquiz.shared.core.sync.SyncRunTrace
 import com.tpov.schoolquiz.shared.core.sync.SyncRunTraceStore
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
-import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
-import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
-import com.tpov.schoolquiz.shared.core.stats.RawUserStats
-import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
 import com.tpov.schoolquiz.shared.feature.app_shell.data.AuthRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.app_shell.data.UserStatsRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
@@ -62,44 +83,20 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
-import com.tpov.schoolquiz.shared.feature.lesson.data.outbox.LessonUnlockQuarantineRollback
-import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
-import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
-import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonUnlockOutcome
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
-import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
-import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonUnlockQueue
-import com.tpov.schoolquiz.shared.feature.lesson.data.di.lessonDataModule
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
-import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
-import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
-import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
-import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
-import com.tpov.schoolquiz.shared.core.persistence.LessonDao
-import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
-import com.tpov.schoolquiz.shared.core.persistence.QuestDao
-import com.tpov.schoolquiz.shared.core.persistence.SectionDao
-import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
-import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
-import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
-import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
-import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
-import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
-import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
-import com.tpov.schoolquiz.shared.feature.question.domain.di.questionDomainModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseVerification
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.BillingRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.PurchaseVerifier
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.ServerBalanceRefresher
@@ -112,19 +109,30 @@ import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.Tourn
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDomainModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
+import com.tpov.schoolquiz.shared.feature.lesson.data.di.lessonDataModule
+import com.tpov.schoolquiz.shared.feature.lesson.data.outbox.LessonUnlockQuarantineRollback
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonUnlockOutcome
+import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonUnlockQueue
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDataModule
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonCommentRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDomainKoinAdapter
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.AttemptIdProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.RandomSeedProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.RatingIdProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonCommentRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.SubmitLessonRatingUseCase
-import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
-import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
-import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
+import com.tpov.schoolquiz.shared.feature.quest.domain.di.questDomainModule
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di.questAuthoringDomainModule
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
@@ -133,10 +141,10 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraf
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
-import com.tpov.schoolquiz.shared.feature.quest.domain.di.questDomainModule
-import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
-import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
-import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+import com.tpov.schoolquiz.shared.feature.question.domain.di.questionDomainModule
+import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
+import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
+import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
@@ -169,15 +177,9 @@ import org.koin.test.KoinTest
 import org.mockito.Mockito.mock
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertSame
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
-import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 
 /**
  * Smoke tests: Koin module graph resolves without errors.
@@ -188,254 +190,360 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepos
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class KoinModuleWiringTest : KoinTest {
-
     private val testScheduler = TestCoroutineScheduler()
     private val testDispatcher = UnconfinedTestDispatcher(testScheduler)
 
-    private val testDataSourceModule = module {
-        single<UserStatsDataSource> {
-            object : UserStatsDataSource {
-                override fun observeRaw() = emptyFlow<RawUserStats>()
-                override suspend fun fetchRaw() = RawUserStats()
-            }
-        }
-    }
+    private val testDataSourceModule =
+        module {
+            single<UserStatsDataSource> {
+                object : UserStatsDataSource {
+                    override fun observeRaw() = emptyFlow<RawUserStats>()
 
-    private val testDaoModule = module {
-        single<UserStatsDao> {
-            object : UserStatsDao {
-                override fun observeByUid(uid: String) = emptyFlow<UserStatsEntity?>()
-                override suspend fun findByUid(uid: String): UserStatsEntity? = null
-                override suspend fun upsert(entity: UserStatsEntity) {}
-                override suspend fun updateDeveloperLevel(uid: String, value: Int) {}
-
-                override suspend fun enqueueOutboxRow(entity: OutboxEntity): Long = 1L
-
-                override suspend fun outboxRowState(mutationId: String): String? = null
-
-                override suspend fun deleteOutboxRow(mutationId: String) {}
-
-                override suspend fun undeliveredPayloads(
-                    ownerUid: String,
-                    operation: String,
-                ): List<String> = emptyList()
-
-                override fun observeQuarantinedEntityRefs(
-                    ownerUid: String,
-                    operation: String,
-                ) = flowOf(emptyList<String>())
-            }
-        }
-    }
-
-    private val testSyncSchedulerModule = module {
-        single<SyncScheduler> {
-            object : SyncScheduler {
-                override fun enqueueManualSync() = Unit
-
-                override fun enqueueManualProfileSync() = Unit
-
-                override fun applyFrequency(frequency: SyncFrequency) = Unit
-                override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
-            }
-        }
-    }
-
-    private val testTournamentLeaderboardRemoteModule = module {
-        single<TournamentLeaderboardRemoteDataSource> {
-            object : TournamentLeaderboardRemoteDataSource {
-                override suspend fun fetchOverview(
-                    tournamentId: String,
-                    limit: Int,
-                ): TournamentOverviewDto =
-                    TournamentOverviewDto(
-                        tournament =
-                            TournamentSummaryDto(
-                                id = tournamentId,
-                                sourceShelf = tournamentId,
-                                title = "Test tournament",
-                                stageLabel = "Test stage",
-                                updatedAtMs = 0L,
-                                leaderboardUpdatedAtMs = 0L,
-                            ),
-                        metadata = null,
-                        leaderboard = emptyList(),
-                        participants = emptyList(),
-                        currentUserEntry = null,
-                        currentUserParticipant = null,
-                    )
-            }
-        }
-    }
-
-    private val testRepositoryStubsModule = module {
-        single<EconomyRepository> {
-            object : EconomyRepository {
-                override fun observeBalance(): Flow<EconomyResourceBalance> =
-                    flowOf(EconomyResourceBalance())
-
-                override suspend fun currentBalance(): EconomyResourceBalance = EconomyResourceBalance()
-
-                override suspend fun purchase(itemId: ShopItemId): Result<ShopPurchaseResult> =
-                    Result.failure(UnsupportedOperationException("not expected"))
-
-                override suspend fun unlockLesson(
-                    lessonId: String,
-                    kind: LessonUnlockKind,
-                ): Result<EconomyResourceBalance> =
-                    Result.failure(UnsupportedOperationException("not expected"))
-
-                override suspend fun referralProgram(): ReferralProgram = ReferralProgram("", emptyList())
-            }
-        }
-        single<QuestRepository> {
-            object : QuestRepository {
-                override fun observeMyQuests(authorUid: String, catalogId: CatalogId?) =
-                    flowOf(emptyList<Quest>())
-                override fun observeByCatalog(catalogId: CatalogId, shelf: String) =
-                    flowOf(emptyList<Quest>())
-                override fun observeByShelf(shelf: String) = flowOf(emptyList<Quest>())
-                override suspend fun getById(id: QuestId): Quest? = null
-                override suspend fun refreshFromRemote(
-                    currentUserUid: String?,
-                    availableShelves: Set<String>,
-                    catalogIdsToSync: Set<CatalogId>,
-                    cursor: Long,
-                ): Result<Set<QuestId>> = Result.success(emptySet())
-            }
-        }
-        single<QuestAuthoringRepository> {
-            object : QuestAuthoringRepository {
-                override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummary>> =
-                    flowOf(emptyList())
-
-                override fun observeDraft(draftId: QuestDraftId): Flow<QuestAuthoringBundle?> =
-                    flowOf(null)
-
-                override suspend fun getDraft(draftId: QuestDraftId): QuestAuthoringBundle? = null
-
-                override suspend fun getActiveDraft(ownerUid: String): QuestAuthoringBundle? = null
-
-                var activatedDraftId: QuestDraftId? = null
-
-                override suspend fun activateDraft(
-                    ownerUid: String,
-                    draftId: QuestDraftId,
-                ): Result<Unit> {
-                    activatedDraftId = draftId
-                    return Result.success(Unit)
+                    override suspend fun fetchRaw() = RawUserStats()
                 }
+            }
+        }
 
-                override suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit> = Result.success(Unit)
+    private val testDaoModule =
+        module {
+            single<UserStatsDao> {
+                object : UserStatsDao {
+                    override fun observeByUid(uid: String) = emptyFlow<UserStatsEntity?>()
 
-                override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> = Result.success(Unit)
+                    override suspend fun findByUid(uid: String): UserStatsEntity? = null
 
-                override fun observeDraftConflict(
-                    ownerUid: String,
-                    draftId: QuestDraftId,
-                ): Flow<QuestDraftConflict?> = flowOf(null)
+                    override suspend fun upsert(entity: UserStatsEntity) {}
 
-                override suspend fun resolveDraftConflict(
-                    ownerUid: String,
-                    draftId: QuestDraftId,
-                ): Result<Unit> = Result.success(Unit)
+                    override suspend fun updateDeveloperLevel(
+                        uid: String,
+                        value: Int,
+                    ) {}
 
-                override suspend fun setDraftStatus(
-                    draftId: QuestDraftId,
-                    status: QuestDraftStatus,
-                    updatedAtMs: Long,
-                ): Result<Unit> = Result.success(Unit)
-            }
-        }
-        single<CatalogRepository> {
-            object : CatalogRepository {
-                override fun observeAll() = flowOf(emptyList<Catalog>())
-                override suspend fun refreshFromRemote(): Result<Set<CatalogId>> =
-                    Result.success(emptySet())
-                override suspend fun getById(id: CatalogId): Catalog? = null
-            }
-        }
-        single<SectionRepository> {
-            object : SectionRepository {
-                override fun observeByQuest(questId: QuestId) = flowOf(emptyList<Section>())
-                override suspend fun getById(id: SectionId): Section? = null
-                override suspend fun refreshByParents(
-                    questIds: Set<QuestId>,
-                    cursor: Long,
-                ): Result<Set<SectionId>> = Result.success(emptySet())
-            }
-        }
-        single<ThemeRepository> {
-            object : ThemeRepository {
-                override fun observeBySection(sectionId: SectionId) = flowOf(emptyList<Theme>())
-                override suspend fun getById(id: ThemeId): Theme? = null
-                override suspend fun refreshByParents(
-                    sectionIds: Set<SectionId>,
-                    cursor: Long,
-                ): Result<Set<ThemeId>> = Result.success(emptySet())
-            }
-        }
-        single<LessonRepository> {
-            object : LessonRepository {
-                override fun observeByTheme(themeId: ThemeId) = flowOf(emptyList<Lesson>())
-                override suspend fun getById(id: LessonId): Lesson? = null
-                override suspend fun refreshByParents(
-                    themeIds: Set<ThemeId>,
-                    cursor: Long,
-                ): Result<Set<LessonId>> = Result.success(emptySet())
-            }
-        }
-        // Очередь разблокировок — порт фичи lesson. Здесь заглушка, как и у соседних
-        // репозиториев; что её действительно связывает production-модуль фичи, проверяет
-        // `lessonDataModule binds the lesson unlock queue` ниже.
-        single<LessonUnlockQueue> {
-            object : LessonUnlockQueue {
-                override suspend fun queueUnlock(
-                    ownerUid: String,
-                    lessonId: LessonId,
-                    kindWireName: String,
-                    priceNolics: Int,
-                ): Result<LessonUnlockOutcome> = Result.success(LessonUnlockOutcome.Opened)
+                    override suspend fun enqueueOutboxRow(entity: OutboxEntity): Long = 1L
 
-                override fun observeRefusedUnlocks(ownerUid: String) = flowOf(emptySet<LessonId>())
+                    override suspend fun outboxRowState(mutationId: String): String? = null
+
+                    override suspend fun deleteOutboxRow(mutationId: String) {}
+
+                    override suspend fun undeliveredPayloads(
+                        ownerUid: String,
+                        operation: String,
+                    ): List<String> = emptyList()
+
+                    override fun observeQuarantinedEntityRefs(
+                        ownerUid: String,
+                        operation: String,
+                    ) = flowOf(emptyList<String>())
+                }
             }
         }
-        single<QuestionRepository> {
-            object : QuestionRepository {
-                override fun observeByLesson(lessonId: LessonId) = flowOf(emptyList<Question>())
-                override suspend fun getById(id: QuestionId): Question? = null
-                override suspend fun refreshByParents(
-                    lessonIds: Set<LessonId>,
-                    cursor: Long,
-                ): Result<Unit> = Result.success(Unit)
+
+    private val testSyncSchedulerModule =
+        module {
+            single<SyncScheduler> {
+                object : SyncScheduler {
+                    override fun enqueueManualSync() = Unit
+
+                    override fun enqueueManualProfileSync() = Unit
+
+                    override fun applyFrequency(frequency: SyncFrequency) = Unit
+
+                    override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+                }
             }
         }
-        single<LessonAttemptRepository> {
-            object : LessonAttemptRepository {
-                override suspend fun save(attempt: Attempt): Result<Unit> = Result.success(Unit)
-                override fun observeByLesson(userId: String, lessonId: LessonId): Flow<List<Attempt>> = flowOf(emptyList())
-                override fun observeAllByUser(userId: String): Flow<List<Attempt>> = flowOf(emptyList())
+
+    private val testTournamentLeaderboardRemoteModule =
+        module {
+            single<TournamentLeaderboardRemoteDataSource> {
+                object : TournamentLeaderboardRemoteDataSource {
+                    override suspend fun fetchOverview(
+                        tournamentId: String,
+                        limit: Int,
+                    ): TournamentOverviewDto =
+                        TournamentOverviewDto(
+                            tournament =
+                                TournamentSummaryDto(
+                                    id = tournamentId,
+                                    sourceShelf = tournamentId,
+                                    title = "Test tournament",
+                                    stageLabel = "Test stage",
+                                    updatedAtMs = 0L,
+                                    leaderboardUpdatedAtMs = 0L,
+                                ),
+                            metadata = null,
+                            leaderboard = emptyList(),
+                            participants = emptyList(),
+                            currentUserEntry = null,
+                            currentUserParticipant = null,
+                        )
+                }
             }
         }
-        single<ProfileRepository> {
-            object : ProfileRepository {
-                override fun observeCurrentProfile(): Flow<UserProfile> = flowOf(UserProfile.offline())
-                override suspend fun currentProfile(): UserProfile = UserProfile.offline()
-                override suspend fun ensureCurrentProfile(): Result<UserProfile> = Result.success(UserProfile.offline())
-                override suspend fun updateNickname(nickname: String): Result<UserProfile> =
-                    Result.success(UserProfile.offline().copy(nickname = nickname))
+
+    private val testRepositoryStubsModule =
+        module {
+            single<EconomyRepository> {
+                object : EconomyRepository {
+                    override fun observeBalance(): Flow<EconomyResourceBalance> = flowOf(EconomyResourceBalance())
+
+                    override suspend fun currentBalance(): EconomyResourceBalance = EconomyResourceBalance()
+
+                    override suspend fun purchase(itemId: ShopItemId): Result<ShopPurchaseResult> =
+                        Result.failure(UnsupportedOperationException("not expected"))
+
+                    override suspend fun unlockLesson(
+                        lessonId: String,
+                        kind: LessonUnlockKind,
+                    ): Result<EconomyResourceBalance> = Result.failure(UnsupportedOperationException("not expected"))
+
+                    override suspend fun referralProgram(): ReferralProgram = ReferralProgram("", emptyList())
+                }
+            }
+            single<QuestRepository> {
+                object : QuestRepository {
+                    override fun observeMyQuests(
+                        authorUid: String,
+                        catalogId: CatalogId?,
+                    ) = flowOf(emptyList<Quest>())
+
+                    override fun observeByCatalog(
+                        catalogId: CatalogId,
+                        shelf: String,
+                    ) = flowOf(emptyList<Quest>())
+
+                    override fun observeByShelf(shelf: String) = flowOf(emptyList<Quest>())
+
+                    override suspend fun getById(id: QuestId): Quest? = null
+
+                    override suspend fun refreshFromRemote(
+                        currentUserUid: String?,
+                        availableShelves: Set<String>,
+                        catalogIdsToSync: Set<CatalogId>,
+                        cursor: Long,
+                    ): Result<Set<QuestId>> = Result.success(emptySet())
+                }
+            }
+            single<QuestAuthoringRepository> {
+                object : QuestAuthoringRepository {
+                    override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummary>> =
+                        flowOf(emptyList())
+
+                    override fun observeDraft(draftId: QuestDraftId): Flow<QuestAuthoringBundle?> = flowOf(null)
+
+                    override suspend fun getDraft(draftId: QuestDraftId): QuestAuthoringBundle? = null
+
+                    override suspend fun getActiveDraft(ownerUid: String): QuestAuthoringBundle? = null
+
+                    var activatedDraftId: QuestDraftId? = null
+
+                    override suspend fun activateDraft(
+                        ownerUid: String,
+                        draftId: QuestDraftId,
+                    ): Result<Unit> {
+                        activatedDraftId = draftId
+                        return Result.success(Unit)
+                    }
+
+                    override suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit> = Result.success(Unit)
+
+                    override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> = Result.success(Unit)
+
+                    override fun observeDraftConflict(
+                        ownerUid: String,
+                        draftId: QuestDraftId,
+                    ): Flow<QuestDraftConflict?> = flowOf(null)
+
+                    override suspend fun resolveDraftConflict(
+                        ownerUid: String,
+                        draftId: QuestDraftId,
+                    ): Result<Unit> = Result.success(Unit)
+
+                    override suspend fun setDraftStatus(
+                        draftId: QuestDraftId,
+                        status: QuestDraftStatus,
+                        updatedAtMs: Long,
+                    ): Result<Unit> = Result.success(Unit)
+                }
+            }
+            single<CatalogRepository> {
+                object : CatalogRepository {
+                    override fun observeAll() = flowOf(emptyList<Catalog>())
+
+                    override suspend fun refreshFromRemote(): Result<Set<CatalogId>> = Result.success(emptySet())
+
+                    override suspend fun getById(id: CatalogId): Catalog? = null
+                }
+            }
+            single<SectionRepository> {
+                object : SectionRepository {
+                    override fun observeByQuest(questId: QuestId) = flowOf(emptyList<Section>())
+
+                    override suspend fun getById(id: SectionId): Section? = null
+
+                    override suspend fun refreshByParents(
+                        questIds: Set<QuestId>,
+                        cursor: Long,
+                    ): Result<Set<SectionId>> = Result.success(emptySet())
+                }
+            }
+            single<ThemeRepository> {
+                object : ThemeRepository {
+                    override fun observeBySection(sectionId: SectionId) = flowOf(emptyList<Theme>())
+
+                    override suspend fun getById(id: ThemeId): Theme? = null
+
+                    override suspend fun refreshByParents(
+                        sectionIds: Set<SectionId>,
+                        cursor: Long,
+                    ): Result<Set<ThemeId>> = Result.success(emptySet())
+                }
+            }
+            single<LessonRepository> {
+                object : LessonRepository {
+                    override fun observeByTheme(themeId: ThemeId) = flowOf(emptyList<Lesson>())
+
+                    override suspend fun getById(id: LessonId): Lesson? = null
+
+                    override suspend fun refreshByParents(
+                        themeIds: Set<ThemeId>,
+                        cursor: Long,
+                    ): Result<Set<LessonId>> = Result.success(emptySet())
+                }
+            }
+            // Очередь разблокировок — порт фичи lesson. Здесь заглушка, как и у соседних
+            // репозиториев; что её действительно связывает production-модуль фичи, проверяет
+            // `lessonDataModule binds the lesson unlock queue` ниже.
+            single<LessonUnlockQueue> {
+                object : LessonUnlockQueue {
+                    override suspend fun queueUnlock(
+                        ownerUid: String,
+                        lessonId: LessonId,
+                        kindWireName: String,
+                        priceNolics: Int,
+                    ): Result<LessonUnlockOutcome> = Result.success(LessonUnlockOutcome.Opened)
+
+                    override fun observeRefusedUnlocks(ownerUid: String) = flowOf(emptySet<LessonId>())
+                }
+            }
+            single<QuestionRepository> {
+                object : QuestionRepository {
+                    override fun observeByLesson(lessonId: LessonId) = flowOf(emptyList<Question>())
+
+                    override suspend fun getById(id: QuestionId): Question? = null
+
+                    override suspend fun refreshByParents(
+                        lessonIds: Set<LessonId>,
+                        cursor: Long,
+                    ): Result<Unit> = Result.success(Unit)
+                }
+            }
+            single<LessonAttemptRepository> {
+                object : LessonAttemptRepository {
+                    override suspend fun save(attempt: Attempt): Result<Unit> = Result.success(Unit)
+
+                    override fun observeByLesson(
+                        userId: String,
+                        lessonId: LessonId,
+                    ): Flow<List<Attempt>> =
+                        flowOf(
+                            emptyList(),
+                        )
+
+                    override fun observeAllByUser(userId: String): Flow<List<Attempt>> = flowOf(emptyList())
+                }
+            }
+            single<ProfileRepository> {
+                object : ProfileRepository {
+                    override fun observeCurrentProfile(): Flow<UserProfile> = flowOf(UserProfile.offline())
+
+                    override suspend fun currentProfile(): UserProfile = UserProfile.offline()
+
+                    override suspend fun ensureCurrentProfile(): Result<UserProfile> =
+                        Result.success(
+                            UserProfile.offline(),
+                        )
+
+                    override suspend fun updateNickname(nickname: String): Result<UserProfile> =
+                        Result.success(UserProfile.offline().copy(nickname = nickname))
+                }
+            }
+            single<GiftBoxRepository> {
+                object : GiftBoxRepository {
+                    override suspend fun openGiftBox(): Result<GiftBoxOpening> =
+                        Result.failure(IllegalStateException("No gift boxes available"))
+                }
+            }
+            single<LessonRunnerComponentFactory> {
+                LessonRunnerComponentFactory { _, _, _, _ -> error("Not wired in KoinModuleWiringTest") }
             }
         }
-        single<GiftBoxRepository> {
-            object : GiftBoxRepository {
-                override suspend fun openGiftBox(): Result<GiftBoxOpening> =
-                    Result.failure(IllegalStateException("No gift boxes available"))
+
+    /**
+     * Что состоянию синхронизации нужно снизу и чего в JVM-тесте нет.
+     *
+     * Очередь живёт в Room, след прогона — тоже; ни то, ни другое без Android-контекста не
+     * поднимается. Заглушены здесь ровно эти два порта, а сама привязка `SyncStatusRepository`
+     * берётся production-модулем [syncStatusModule] — не заглушкой. Пропадёт привязка в корне, и
+     * тест сборки графа упадёт: ровно тем падением, которое разбор эпика нашёл вручную.
+     */
+    private val testSyncPortsStubModule =
+        module {
+            single<OutboxStore> {
+                object : OutboxStore {
+                    override suspend fun enqueue(record: OutboxRecord): OutboxRecord = record
+
+                    override suspend fun dueRecords(
+                        ownerUid: String,
+                        nowMs: Long,
+                        limit: Int,
+                    ): List<OutboxRecord> = emptyList()
+
+                    override suspend fun apply(
+                        id: Long,
+                        decision: OutboxDecision,
+                    ) = Unit
+
+                    override suspend fun remove(id: Long) = Unit
+
+                    override fun observeCounts(ownerUid: String): Flow<OutboxCounts> = flowOf(OutboxCounts())
+
+                    override fun observeEntity(
+                        ownerUid: String,
+                        entityRef: String,
+                    ): Flow<OutboxEntitySync> = flowOf(OutboxEntitySync.None)
+
+                    override suspend fun findByEntityRef(
+                        ownerUid: String,
+                        entityRef: String,
+                    ): OutboxRecord? = null
+
+                    override suspend fun quarantined(ownerUid: String): List<OutboxRecord> = emptyList()
+
+                    override suspend fun countPending(ownerUid: String): Int = 0
+
+                    override suspend fun forget(ownerUid: String) = Unit
+                }
+            }
+            single<SyncRunTraceStore> {
+                object : SyncRunTraceStore {
+                    override fun observeTraces(ownerUid: String): Flow<Map<SyncRunKind, SyncRunTrace>> =
+                        flowOf(emptyMap())
+
+                    override suspend fun recordSuccess(
+                        ownerUid: String,
+                        kind: SyncRunKind,
+                        atMs: Long,
+                    ) = Unit
+
+                    override suspend fun recordFailure(
+                        ownerUid: String,
+                        kind: SyncRunKind,
+                        error: SyncError,
+                    ) = Unit
+                }
             }
         }
-        single<LessonRunnerComponentFactory> {
-            LessonRunnerComponentFactory { _, _, _, _ -> error("Not wired in KoinModuleWiringTest") }
-        }
-    }
 
     /**
      * What the purchase path needs from platform modules this test cannot start.
@@ -445,98 +553,48 @@ class KoinModuleWiringTest : KoinTest {
      * stay honestly *required*: if the app ever stops binding one of them, the wiring assertions
      * below still fail, which is the whole point of this test.
      */
-    /**
-     * Что состоянию синхронизации нужно снизу и чего в JVM-тесте нет.
-     *
-     * Очередь живёт в Room, след прогона — тоже; ни то, ни другое без Android-контекста не
-     * поднимается. Заглушены здесь ровно эти два порта, а сама привязка `SyncStatusRepository`
-     * берётся production-модулем [syncStatusModule] — не заглушкой. Пропадёт привязка в корне, и
-     * тест сборки графа упадёт: ровно тем падением, которое разбор эпика нашёл вручную.
-     */
-    private val testSyncPortsStubModule = module {
-        single<OutboxStore> {
-            object : OutboxStore {
-                override suspend fun enqueue(record: OutboxRecord): OutboxRecord = record
+    private val testPurchaseStubsModule =
+        module {
+            single<NetworkMonitor> {
+                object : NetworkMonitor {
+                    override fun observeOnline(): Flow<Boolean> = flowOf(true)
 
-                override suspend fun dueRecords(
-                    ownerUid: String,
-                    nowMs: Long,
-                    limit: Int,
-                ): List<OutboxRecord> = emptyList()
+                    override suspend fun isOnline(): Boolean = true
+                }
+            }
+            single<BillingRepository> {
+                object : BillingRepository {
+                    override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> =
+                        Result.success(emptyList())
 
-                override suspend fun apply(id: Long, decision: OutboxDecision) = Unit
+                    override fun observeUnsettledPurchases(): Flow<List<BillingPurchase>> = flowOf(emptyList())
 
-                override suspend fun remove(id: Long) = Unit
+                    override suspend fun purchase(
+                        productId: StoreProductId,
+                        buyerId: String,
+                    ): BillingOutcome = BillingOutcome.Cancelled
 
-                override fun observeCounts(ownerUid: String): Flow<OutboxCounts> = flowOf(OutboxCounts())
+                    override suspend fun consume(purchaseToken: String): Result<Unit> = Result.success(Unit)
 
-                override fun observeEntity(ownerUid: String, entityRef: String): Flow<OutboxEntitySync> =
-                    flowOf(OutboxEntitySync.None)
+                    override suspend fun isAvailable(): Boolean = false
 
-                override suspend fun findByEntityRef(ownerUid: String, entityRef: String): OutboxRecord? = null
-
-                override suspend fun quarantined(ownerUid: String): List<OutboxRecord> = emptyList()
-
-                override suspend fun countPending(ownerUid: String): Int = 0
-
-                override suspend fun forget(ownerUid: String) = Unit
+                    override suspend fun refreshUnsettledPurchases(): Result<Unit> = Result.success(Unit)
+                }
+            }
+            single<PurchaseVerifier> {
+                object : PurchaseVerifier {
+                    override suspend fun verify(
+                        purchaseToken: String,
+                        productId: StoreProductId,
+                    ): PurchaseVerification = PurchaseVerification.Pending(productId)
+                }
+            }
+            single<ServerBalanceRefresher> {
+                object : ServerBalanceRefresher {
+                    override suspend fun refresh(): Result<Unit> = Result.success(Unit)
+                }
             }
         }
-        single<SyncRunTraceStore> {
-            object : SyncRunTraceStore {
-                override fun observeTraces(ownerUid: String): Flow<Map<SyncRunKind, SyncRunTrace>> =
-                    flowOf(emptyMap())
-
-                override suspend fun recordSuccess(ownerUid: String, kind: SyncRunKind, atMs: Long) = Unit
-
-                override suspend fun recordFailure(ownerUid: String, kind: SyncRunKind, error: SyncError) = Unit
-            }
-        }
-    }
-
-    private val testPurchaseStubsModule = module {
-        single<NetworkMonitor> {
-            object : NetworkMonitor {
-                override fun observeOnline(): Flow<Boolean> = flowOf(true)
-
-                override suspend fun isOnline(): Boolean = true
-            }
-        }
-        single<BillingRepository> {
-            object : BillingRepository {
-                override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> =
-                    Result.success(emptyList())
-
-                override fun observeUnsettledPurchases(): Flow<List<BillingPurchase>> =
-                    flowOf(emptyList())
-
-                override suspend fun purchase(
-                    productId: StoreProductId,
-                    buyerId: String,
-                ): BillingOutcome = BillingOutcome.Cancelled
-
-                override suspend fun consume(purchaseToken: String): Result<Unit> =
-                    Result.success(Unit)
-
-                override suspend fun isAvailable(): Boolean = false
-
-                override suspend fun refreshUnsettledPurchases(): Result<Unit> = Result.success(Unit)
-            }
-        }
-        single<PurchaseVerifier> {
-            object : PurchaseVerifier {
-                override suspend fun verify(
-                    purchaseToken: String,
-                    productId: StoreProductId,
-                ): PurchaseVerification = PurchaseVerification.Pending(productId)
-            }
-        }
-        single<ServerBalanceRefresher> {
-            object : ServerBalanceRefresher {
-                override suspend fun refresh(): Result<Unit> = Result.success(Unit)
-            }
-        }
-    }
 
     @Before
     fun setUp() {
@@ -590,20 +648,21 @@ class KoinModuleWiringTest : KoinTest {
     }
 
     @Test
-    fun `appShellDataModule binds AuthRepository as AuthRepositoryImpl with shared currentUidFlow`() = runTest {
-        val uidSource = MutableStateFlow<String?>("user-A")
-        startKoin {
-            modules(testDataSourceModule, testDaoModule, appShellDataModule { uidSource.asStateFlow() })
+    fun `appShellDataModule binds AuthRepository as AuthRepositoryImpl with shared currentUidFlow`() =
+        runTest {
+            val uidSource = MutableStateFlow<String?>("user-A")
+            startKoin {
+                modules(testDataSourceModule, testDaoModule, appShellDataModule { uidSource.asStateFlow() })
+            }
+
+            val auth = getKoin().get<AuthRepository>()
+            // currentUid() returns the real Firebase UID without LOCAL_UID substitution
+            assertEquals("user-A", auth.currentUid())
+
+            // observeUid() reflects the same source as UserStatsRepositoryImpl.currentUidFlow
+            uidSource.value = null
+            assertNull(auth.currentUid())
         }
-
-        val auth = getKoin().get<AuthRepository>()
-        // currentUid() returns the real Firebase UID without LOCAL_UID substitution
-        assertEquals("user-A", auth.currentUid())
-
-        // observeUid() reflects the same source as UserStatsRepositoryImpl.currentUidFlow
-        uidSource.value = null
-        assertNull(auth.currentUid())
-    }
 
     // -----------------------------------------------------------------------
     // Story 4.2: пишущая сторона следа прогона тоже собрана
@@ -617,43 +676,53 @@ class KoinModuleWiringTest : KoinTest {
      * чтении каталога или профиля не доходило до экрана вообще, оставаясь в `Log.w`.
      */
     @Test
-    fun `syncStatusModule binds the writer of the run trace, not only its reader`() = runTest {
-        val written = MutableStateFlow<Map<SyncRunKind, SyncRunTrace>>(emptyMap())
-        val recordingTrace = module {
-            single<SyncRunTraceStore> {
-                object : SyncRunTraceStore {
-                    override fun observeTraces(ownerUid: String): Flow<Map<SyncRunKind, SyncRunTrace>> = written
+    fun `syncStatusModule binds the writer of the run trace, not only its reader`() =
+        runTest {
+            val written = MutableStateFlow<Map<SyncRunKind, SyncRunTrace>>(emptyMap())
+            val recordingTrace =
+                module {
+                    single<SyncRunTraceStore> {
+                        object : SyncRunTraceStore {
+                            override fun observeTraces(ownerUid: String): Flow<Map<SyncRunKind, SyncRunTrace>> = written
 
-                    override suspend fun recordSuccess(ownerUid: String, kind: SyncRunKind, atMs: Long) {
-                        written.value = written.value + (kind to SyncRunTrace(lastSuccessAtMs = atMs))
-                    }
+                            override suspend fun recordSuccess(
+                                ownerUid: String,
+                                kind: SyncRunKind,
+                                atMs: Long,
+                            ) {
+                                written.value = written.value + (kind to SyncRunTrace(lastSuccessAtMs = atMs))
+                            }
 
-                    override suspend fun recordFailure(ownerUid: String, kind: SyncRunKind, error: SyncError) {
-                        val before = written.value[kind] ?: SyncRunTrace()
-                        written.value = written.value + (kind to before.copy(lastError = error))
+                            override suspend fun recordFailure(
+                                ownerUid: String,
+                                kind: SyncRunKind,
+                                error: SyncError,
+                            ) {
+                                val before = written.value[kind] ?: SyncRunTrace()
+                                written.value = written.value + (kind to before.copy(lastError = error))
+                            }
+                        }
                     }
                 }
+            startKoin {
+                modules(
+                    testDataSourceModule,
+                    testDaoModule,
+                    appShellDataModule { MutableStateFlow<String?>("uid-A").asStateFlow() },
+                    testSyncPortsStubModule,
+                    recordingTrace,
+                    syncStatusModule,
+                )
             }
-        }
-        startKoin {
-            modules(
-                testDataSourceModule,
-                testDaoModule,
-                appShellDataModule { MutableStateFlow<String?>("uid-A").asStateFlow() },
-                testSyncPortsStubModule,
-                recordingTrace,
-                syncStatusModule,
+
+            getKoin().get<SyncRun>().run(SyncRunKind.CONTENT, emptyList())
+
+            val snapshot = getKoin().get<SyncStatusRepository>().observeStatus().first()
+            assertTrue(
+                snapshot.lastSuccessAtMs > 0L,
+                "прогон записал успех, но экран его не видит — пишущая и читающая стороны разошлись",
             )
         }
-
-        getKoin().get<SyncRun>().run(SyncRunKind.CONTENT, emptyList())
-
-        val snapshot = getKoin().get<SyncStatusRepository>().observeStatus().first()
-        assertTrue(
-            snapshot.lastSuccessAtMs > 0L,
-            "прогон записал успех, но экран его не видит — пишущая и читающая стороны разошлись",
-        )
-    }
 
     // -----------------------------------------------------------------------
     // Phase-07 H5: full-stack wiring — all 3 modules
@@ -718,7 +787,12 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `economyDomainModule resolves the purchase use cases`() {
         startKoin {
-            modules(testPurchaseStubsModule, economyDomainModule(currentUidFlow = { flowOf("uid-test") }, buyerTag = { "tag($it)" }))
+            modules(
+                testPurchaseStubsModule,
+                economyDomainModule(currentUidFlow = {
+                    flowOf("uid-test")
+                }, buyerTag = { "tag($it)" }),
+            )
         }
 
         assertNotNull(getKoin().get<SettlePurchaseUseCase>())
@@ -737,31 +811,33 @@ class KoinModuleWiringTest : KoinTest {
      * supply one, or a credited purchase never shows up on the player's balance.
      */
     @Test
-    fun `economyGlueModule binds the server balance refresher onto user stats`() = runTest {
-        val refreshed = MutableStateFlow(0)
-        val userStats = module {
-            single<UserStatsRepository> {
-                object : UserStatsRepository {
-                    override fun observeStats(): Flow<UserStats> = flowOf(UserStats.guest())
+    fun `economyGlueModule binds the server balance refresher onto user stats`() =
+        runTest {
+            val refreshed = MutableStateFlow(0)
+            val userStats =
+                module {
+                    single<UserStatsRepository> {
+                        object : UserStatsRepository {
+                            override fun observeStats(): Flow<UserStats> = flowOf(UserStats.guest())
 
-                    override suspend fun currentStats(): UserStats = UserStats.guest()
+                            override suspend fun currentStats(): UserStats = UserStats.guest()
 
-                    override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+                            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
 
-                    override suspend fun refreshProfile(): Result<Unit> {
-                        refreshed.value++
-                        return Result.success(Unit)
+                            override suspend fun refreshProfile(): Result<Unit> {
+                                refreshed.value++
+                                return Result.success(Unit)
+                            }
+                        }
                     }
                 }
-            }
+            startKoin { modules(userStats, economyGlueModule) }
+
+            val result = getKoin().get<ServerBalanceRefresher>().refresh()
+
+            assertTrue(result.isSuccess)
+            assertEquals(1, refreshed.value)
         }
-        startKoin { modules(userStats, economyGlueModule) }
-
-        val result = getKoin().get<ServerBalanceRefresher>().refresh()
-
-        assertTrue(result.isSuccess)
-        assertEquals(1, refreshed.value)
-    }
 
     // -----------------------------------------------------------------------
     // Phase-07: system back event at LOCAL root
@@ -772,100 +848,147 @@ class KoinModuleWiringTest : KoinTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `system back event emitted at LOCAL root`() = runTest {
-        val fakeStats = MutableStateFlow(UserStats.guest())
-        val fakeRepo = object : UserStatsRepository {
-            override fun observeStats(): Flow<UserStats> = fakeStats.asStateFlow()
-            override suspend fun currentStats(): UserStats = fakeStats.value
-            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
-            override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
+    fun `system back event emitted at LOCAL root`() =
+        runTest {
+            val fakeStats = MutableStateFlow(UserStats.guest())
+            val fakeRepo =
+                object : UserStatsRepository {
+                    override fun observeStats(): Flow<UserStats> = fakeStats.asStateFlow()
+
+                    override suspend fun currentStats(): UserStats = fakeStats.value
+
+                    override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+
+                    override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
+                }
+            val lifecycle = LifecycleRegistry()
+            lifecycle.resume()
+            val testCtx = DefaultComponentContext(lifecycle)
+
+            val component =
+                DefaultRootComponent(
+                    componentContext = testCtx,
+                    initUseCase = InitializeAppShellUseCase(fakeRepo),
+                    navigateUseCase = NavigateUseCase(),
+                    observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
+                    retapUseCase = OnTabRetapUseCase(),
+                    userStatsRepository = fakeRepo,
+                    syncScheduler =
+                        object : SyncScheduler {
+                            override fun enqueueManualSync() = Unit
+
+                            override fun enqueueManualProfileSync() = Unit
+
+                            override fun applyFrequency(frequency: SyncFrequency) = Unit
+
+                            override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+                        },
+                    // Умолчания у этого параметра нет: забытая проводка состояния не компилируется.
+                    syncStatusRepository =
+                        object : SyncStatusRepository {
+                            override fun observeStatus(): Flow<SyncStatus> = flowOf(SyncStatus())
+
+                            override suspend fun recordSuccess(
+                                kind: SyncRunKind,
+                                atMs: Long,
+                            ) = Unit
+
+                            override suspend fun recordFailure(
+                                kind: SyncRunKind,
+                                error: SyncError,
+                                atMs: Long,
+                            ) = Unit
+
+                            override suspend fun recordUnreadableChanges(
+                                journal: String,
+                                count: Int,
+                            ) = Unit
+                        },
+                    homeQuestsFactory = { _, _, _ ->
+                        object : HomeQuestsComponent {
+                            override val state = MutableStateFlow(HomeQuestsUiState())
+
+                            override fun onCatalogClick(
+                                id: CatalogId,
+                                name: String,
+                            ) = Unit
+
+                            override fun onContinueClick() = Unit
+                        }
+                    },
+                    myQuestsFactory = { _, _, _ ->
+                        object : MyQuestsComponent {
+                            override val state = MutableStateFlow(MyQuestsUiState())
+
+                            override fun onCatalogSelected(id: CatalogId?) = Unit
+
+                            override fun onCreateQuestClick() = Unit
+
+                            override fun onQuestClick(quest: QuestDisplayItem) = Unit
+
+                            override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
+                        }
+                    },
+                    quizzesFactory = { _ ->
+                        object : QuizzesComponent {
+                            override val childStack: Value<ChildStack<QuizzesConfig, QuizzesChild>> =
+                                MutableValue(
+                                    ChildStack(
+                                        active = Child.Created(QuizzesConfig.Idle, QuizzesChild.Idle),
+                                        backStack = emptyList(),
+                                    ),
+                                )
+
+                            override fun openLessonRunner(lessonId: String) = Unit
+
+                            override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
+                            override val currentCatalogIcons:
+                                StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
+                                MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
+
+                            override fun openQuestList(
+                                catalogId: CatalogId,
+                                catalogName: String,
+                            ) = Unit
+
+                            override fun openCourseArena() = Unit
+
+                            override fun openCourseArchive() = Unit
+
+                            override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
+
+                            override fun openPublicQuestShelfCatalog(
+                                targetShelf: String,
+                                forcedHardMode: Boolean?,
+                            ) = Unit
+
+                            override fun openSectionList(
+                                questId: QuestId,
+                                breadcrumbs: List<BreadcrumbRoot>,
+                            ) = Unit
+
+                            override fun dismissQuizzes() = Unit
+
+                            override fun popToLevel(uiLevel: Int) = Unit
+
+                            override fun popCurrentChild() = Unit
+                        }
+                    },
+                )
+
+            val events = mutableListOf<RootEvent>()
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    component.events.toList(events)
+                }
+
+            component.onDestination(Destination.Back)
+
+            job.cancel()
+            lifecycle.stop()
+            lifecycle.destroy()
+            assertTrue(events.any { it == RootEvent.SystemBack }, "Expected SystemBack in $events")
         }
-        val lifecycle = LifecycleRegistry()
-        lifecycle.resume()
-        val testCtx = DefaultComponentContext(lifecycle)
-
-        val component = DefaultRootComponent(
-            componentContext = testCtx,
-            initUseCase = InitializeAppShellUseCase(fakeRepo),
-            navigateUseCase = NavigateUseCase(),
-            observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
-            retapUseCase = OnTabRetapUseCase(),
-            userStatsRepository = fakeRepo,
-            syncScheduler = object : SyncScheduler {
-                override fun enqueueManualSync() = Unit
-
-                override fun enqueueManualProfileSync() = Unit
-
-                override fun applyFrequency(frequency: SyncFrequency) = Unit
-                override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
-            },
-            // Умолчания у этого параметра нет: забытая проводка состояния не компилируется.
-            syncStatusRepository = object : SyncStatusRepository {
-                override fun observeStatus(): Flow<SyncStatus> = flowOf(SyncStatus())
-
-                override suspend fun recordSuccess(kind: SyncRunKind, atMs: Long) = Unit
-
-                override suspend fun recordFailure(kind: SyncRunKind, error: SyncError, atMs: Long) = Unit
-
-                override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
-            },
-            homeQuestsFactory = { _, _, _ ->
-                object : HomeQuestsComponent {
-                    override val state = MutableStateFlow(HomeQuestsUiState())
-                    override fun onCatalogClick(id: CatalogId, name: String) = Unit
-                    override fun onContinueClick() = Unit
-                }
-            },
-            myQuestsFactory = { _, _, _ ->
-                object : MyQuestsComponent {
-                    override val state = MutableStateFlow(MyQuestsUiState())
-                    override fun onCatalogSelected(id: CatalogId?) = Unit
-                    override fun onCreateQuestClick() = Unit
-                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
-                    override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
-                }
-            },
-            quizzesFactory = { _ ->
-                object : QuizzesComponent {
-                    override val childStack: Value<ChildStack<QuizzesConfig, QuizzesChild>> =
-                        MutableValue(
-                            ChildStack(
-                                active = Child.Created(QuizzesConfig.Idle, QuizzesChild.Idle),
-                                backStack = emptyList(),
-                            )
-                        )
-                    override fun openLessonRunner(lessonId: String) = Unit
-                    override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
-                    override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
-                        MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
-                    override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
-                    override fun openCourseArena() = Unit
-                    override fun openCourseArchive() = Unit
-                    override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
-                    override fun openPublicQuestShelfCatalog(
-                        targetShelf: String,
-                        forcedHardMode: Boolean?,
-                    ) = Unit
-                    override fun openSectionList(questId: QuestId, breadcrumbs: List<BreadcrumbRoot>) = Unit
-                    override fun dismissQuizzes() = Unit
-                    override fun popToLevel(uiLevel: Int) = Unit
-                    override fun popCurrentChild() = Unit
-                }
-            },
-        )
-
-        val events = mutableListOf<RootEvent>()
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            component.events.toList(events)
-        }
-
-        component.onDestination(Destination.Back)
-
-        job.cancel()
-        lifecycle.stop()
-        lifecycle.destroy()
-        assertTrue(events.any { it == RootEvent.SystemBack }, "Expected SystemBack in $events")
-    }
 
     // -----------------------------------------------------------------------
     // Phase-07: deep link stub — no exception
@@ -878,85 +1001,130 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `deep link stub no crash`() {
         val fakeStats = MutableStateFlow(UserStats.guest())
-        val fakeRepo = object : UserStatsRepository {
-            override fun observeStats(): Flow<UserStats> = fakeStats.asStateFlow()
-            override suspend fun currentStats(): UserStats = fakeStats.value
-            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
-            override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
-        }
+        val fakeRepo =
+            object : UserStatsRepository {
+                override fun observeStats(): Flow<UserStats> = fakeStats.asStateFlow()
+
+                override suspend fun currentStats(): UserStats = fakeStats.value
+
+                override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+
+                override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
+            }
         val lifecycle = LifecycleRegistry()
         lifecycle.resume()
         val testCtx = DefaultComponentContext(lifecycle)
 
-        val component = DefaultRootComponent(
-            componentContext = testCtx,
-            initUseCase = InitializeAppShellUseCase(fakeRepo),
-            navigateUseCase = NavigateUseCase(),
-            observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
-            retapUseCase = OnTabRetapUseCase(),
-            userStatsRepository = fakeRepo,
-            syncScheduler = object : SyncScheduler {
-                override fun enqueueManualSync() = Unit
+        val component =
+            DefaultRootComponent(
+                componentContext = testCtx,
+                initUseCase = InitializeAppShellUseCase(fakeRepo),
+                navigateUseCase = NavigateUseCase(),
+                observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
+                retapUseCase = OnTabRetapUseCase(),
+                userStatsRepository = fakeRepo,
+                syncScheduler =
+                    object : SyncScheduler {
+                        override fun enqueueManualSync() = Unit
 
-                override fun enqueueManualProfileSync() = Unit
+                        override fun enqueueManualProfileSync() = Unit
 
-                override fun applyFrequency(frequency: SyncFrequency) = Unit
-                override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
-            },
-            // Умолчания у этого параметра нет: забытая проводка состояния не компилируется.
-            syncStatusRepository = object : SyncStatusRepository {
-                override fun observeStatus(): Flow<SyncStatus> = flowOf(SyncStatus())
+                        override fun applyFrequency(frequency: SyncFrequency) = Unit
 
-                override suspend fun recordSuccess(kind: SyncRunKind, atMs: Long) = Unit
+                        override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+                    },
+                // Умолчания у этого параметра нет: забытая проводка состояния не компилируется.
+                syncStatusRepository =
+                    object : SyncStatusRepository {
+                        override fun observeStatus(): Flow<SyncStatus> = flowOf(SyncStatus())
 
-                override suspend fun recordFailure(kind: SyncRunKind, error: SyncError, atMs: Long) = Unit
+                        override suspend fun recordSuccess(
+                            kind: SyncRunKind,
+                            atMs: Long,
+                        ) = Unit
 
-                override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
-            },
-            homeQuestsFactory = { _, _, _ ->
-                object : HomeQuestsComponent {
-                    override val state = MutableStateFlow(HomeQuestsUiState())
-                    override fun onCatalogClick(id: CatalogId, name: String) = Unit
-                    override fun onContinueClick() = Unit
-                }
-            },
-            myQuestsFactory = { _, _, _ ->
-                object : MyQuestsComponent {
-                    override val state = MutableStateFlow(MyQuestsUiState())
-                    override fun onCatalogSelected(id: CatalogId?) = Unit
-                    override fun onCreateQuestClick() = Unit
-                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
-                    override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
-                }
-            },
-            quizzesFactory = { _ ->
-                object : QuizzesComponent {
-                    override val childStack: Value<ChildStack<QuizzesConfig, QuizzesChild>> =
-                        MutableValue(
-                            ChildStack(
-                                active = Child.Created(QuizzesConfig.Idle, QuizzesChild.Idle),
-                                backStack = emptyList(),
+                        override suspend fun recordFailure(
+                            kind: SyncRunKind,
+                            error: SyncError,
+                            atMs: Long,
+                        ) = Unit
+
+                        override suspend fun recordUnreadableChanges(
+                            journal: String,
+                            count: Int,
+                        ) = Unit
+                    },
+                homeQuestsFactory = { _, _, _ ->
+                    object : HomeQuestsComponent {
+                        override val state = MutableStateFlow(HomeQuestsUiState())
+
+                        override fun onCatalogClick(
+                            id: CatalogId,
+                            name: String,
+                        ) = Unit
+
+                        override fun onContinueClick() = Unit
+                    }
+                },
+                myQuestsFactory = { _, _, _ ->
+                    object : MyQuestsComponent {
+                        override val state = MutableStateFlow(MyQuestsUiState())
+
+                        override fun onCatalogSelected(id: CatalogId?) = Unit
+
+                        override fun onCreateQuestClick() = Unit
+
+                        override fun onQuestClick(quest: QuestDisplayItem) = Unit
+
+                        override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
+                    }
+                },
+                quizzesFactory = { _ ->
+                    object : QuizzesComponent {
+                        override val childStack: Value<ChildStack<QuizzesConfig, QuizzesChild>> =
+                            MutableValue(
+                                ChildStack(
+                                    active = Child.Created(QuizzesConfig.Idle, QuizzesChild.Idle),
+                                    backStack = emptyList(),
+                                ),
                             )
-                        )
-                    override fun openLessonRunner(lessonId: String) = Unit
-                    override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
-                    override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
-                        MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
-                    override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
-                    override fun openCourseArena() = Unit
-                    override fun openCourseArchive() = Unit
-                    override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
-                    override fun openPublicQuestShelfCatalog(
-                        targetShelf: String,
-                        forcedHardMode: Boolean?,
-                    ) = Unit
-                    override fun openSectionList(questId: QuestId, breadcrumbs: List<BreadcrumbRoot>) = Unit
-                    override fun dismissQuizzes() = Unit
-                    override fun popToLevel(uiLevel: Int) = Unit
-                    override fun popCurrentChild() = Unit
-                }
-            },
-        )
+
+                        override fun openLessonRunner(lessonId: String) = Unit
+
+                        override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
+                        override val currentCatalogIcons:
+                            StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
+                            MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
+
+                        override fun openQuestList(
+                            catalogId: CatalogId,
+                            catalogName: String,
+                        ) = Unit
+
+                        override fun openCourseArena() = Unit
+
+                        override fun openCourseArchive() = Unit
+
+                        override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
+
+                        override fun openPublicQuestShelfCatalog(
+                            targetShelf: String,
+                            forcedHardMode: Boolean?,
+                        ) = Unit
+
+                        override fun openSectionList(
+                            questId: QuestId,
+                            breadcrumbs: List<BreadcrumbRoot>,
+                        ) = Unit
+
+                        override fun dismissQuizzes() = Unit
+
+                        override fun popToLevel(uiLevel: Int) = Unit
+
+                        override fun popCurrentChild() = Unit
+                    }
+                },
+            )
 
         component.onDeepLink(DeepLink("schoolquiz://test"))
 
@@ -966,37 +1134,57 @@ class KoinModuleWiringTest : KoinTest {
 
     // ── Phase-07: IT-09 — Koin module wiring tests ───────────────────────────
 
-    private val testLessonAttemptDaoStub = module {
-        single<LessonAttemptDao> { mock(LessonAttemptDao::class.java) }
-        // The attempt repository now advances the repetition schedule alongside the attempt.
-        single<QuestionRepetitionDao> { mock(QuestionRepetitionDao::class.java) }
-    }
+    private val testLessonAttemptDaoStub =
+        module {
+            single<LessonAttemptDao> { mock(LessonAttemptDao::class.java) }
+            // The attempt repository now advances the repetition schedule alongside the attempt.
+            single<QuestionRepetitionDao> { mock(QuestionRepetitionDao::class.java) }
+        }
 
-    private val testLessonRatingLocalDaoStub = module {
-        single<LessonRatingLocalDao> { mock(LessonRatingLocalDao::class.java) }
-    }
+    private val testLessonRatingLocalDaoStub =
+        module {
+            single<LessonRatingLocalDao> { mock(LessonRatingLocalDao::class.java) }
+        }
 
-    private val testLessonResultOutboxDepsStub = module {
-        single<LessonDao> { mock(LessonDao::class.java) }
-        single<ThemeDao> { mock(ThemeDao::class.java) }
-        single<SectionDao> { mock(SectionDao::class.java) }
-        single<QuestDao> { mock(QuestDao::class.java) }
-        // Пометка «не отправлено» на прохождении спрашивает очередь по `entity_ref`. Настоящая
-        // привязка живёт в syncModule, который здесь не поднимается: он тянет базу.
-        single<OutboxStore> { mock(OutboxStore::class.java) }
-    }
+    private val testLessonResultOutboxDepsStub =
+        module {
+            single<LessonDao> { mock(LessonDao::class.java) }
+            single<ThemeDao> { mock(ThemeDao::class.java) }
+            single<SectionDao> { mock(SectionDao::class.java) }
+            single<QuestDao> { mock(QuestDao::class.java) }
+            // Пометка «не отправлено» на прохождении спрашивает очередь по `entity_ref`. Настоящая
+            // привязка живёт в syncModule, который здесь не поднимается: он тянет базу.
+            single<OutboxStore> { mock(OutboxStore::class.java) }
+            // Production supplies the durable receipt store in syncModule. This fixture loads
+            // only feature modules and must not manufacture a server-confirmed attempt.
+            single<MutationReceiptStore> {
+                object : MutationReceiptStore {
+                    override suspend fun persist(receipt: MutationReceipt) = error("Read-only wiring fixture")
 
-    private val testRunnerRepositoryStubs = module {
-        single<QuestionRepository> { mock(QuestionRepository::class.java) }
-        single<LessonRepository> { mock(LessonRepository::class.java) }
-        single<AuthRepository> { mock(AuthRepository::class.java) }
-        // The discussion sits on the result screen, so building the runner needs this binding even
-        // in tests that never open a comment. The app supplies it from firebaseLessonCommentModule,
-        // which is a platform module and cannot be started here.
-        single<LessonCommentRepository> { mock(LessonCommentRepository::class.java) }
-    }
+                    override suspend fun find(
+                        ownerUid: String,
+                        mutationId: String,
+                    ): MutationReceipt? = null
 
-    /** The runner reads lives from the profile; tests that never touch it still need the binding. */
+                    override fun observeEntity(
+                        ownerUid: String,
+                        entityRef: String,
+                    ): Flow<List<MutationReceipt>> = flowOf(emptyList())
+                }
+            }
+        }
+
+    private val testRunnerRepositoryStubs =
+        module {
+            single<QuestionRepository> { mock(QuestionRepository::class.java) }
+            single<LessonRepository> { mock(LessonRepository::class.java) }
+            single<AuthRepository> { mock(AuthRepository::class.java) }
+            // The discussion sits on the result screen, so building the runner needs this binding even
+            // in tests that never open a comment. The app supplies it from firebaseLessonCommentModule,
+            // which is a platform module and cannot be started here.
+            single<LessonCommentRepository> { mock(LessonCommentRepository::class.java) }
+        }
+
     /**
      * Analytics for the wiring tests.
      *
@@ -1004,22 +1192,30 @@ class KoinModuleWiringTest : KoinTest {
      * have. Binding the no-op here keeps the production module honestly *requiring* a tracker —
      * if the app ever stops providing one, this test still fails, which is its whole job.
      */
-    private val testAnalyticsStub = module {
-        single<AnalyticsTracker> { NoOpAnalyticsTracker }
-    }
+    private val testAnalyticsStub =
+        module {
+            single<AnalyticsTracker> { NoOpAnalyticsTracker }
+        }
 
-    private val testProfileRepositoryStub = module {
-        single<ProfileRepository> {
-            object : ProfileRepository {
-                override fun observeCurrentProfile(): Flow<UserProfile> = flowOf(UserProfile.offline())
-                override suspend fun currentProfile(): UserProfile = UserProfile.offline()
-                override suspend fun ensureCurrentProfile(): Result<UserProfile> =
-                    Result.success(UserProfile.offline())
-                override suspend fun updateNickname(nickname: String): Result<UserProfile> =
-                    Result.success(UserProfile.offline().copy(nickname = nickname))
+    /** The runner reads lives from the profile; tests that never touch it still need the binding. */
+    private val testProfileRepositoryStub =
+        module {
+            single<ProfileRepository> {
+                object : ProfileRepository {
+                    override fun observeCurrentProfile(): Flow<UserProfile> = flowOf(UserProfile.offline())
+
+                    override suspend fun currentProfile(): UserProfile = UserProfile.offline()
+
+                    override suspend fun ensureCurrentProfile(): Result<UserProfile> =
+                        Result.success(
+                            UserProfile.offline(),
+                        )
+
+                    override suspend fun updateNickname(nickname: String): Result<UserProfile> =
+                        Result.success(UserProfile.offline().copy(nickname = nickname))
+                }
             }
         }
-    }
 
     // ── IT-09a ────────────────────────────────────────────────────────────────
 
@@ -1031,7 +1227,12 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `it09a lessonAttemptRepository resolves from lessonRunnerDataModule`() {
         startKoin {
-            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, testLessonResultOutboxDepsStub, lessonRunnerDataModule)
+            modules(
+                testLessonAttemptDaoStub,
+                testLessonRatingLocalDaoStub,
+                testLessonResultOutboxDepsStub,
+                lessonRunnerDataModule,
+            )
         }
         assertNotNull(getKoin().get<LessonAttemptRepository>())
     }
@@ -1046,7 +1247,12 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `it09b lessonRatingRepository resolves from lessonRunnerDataModule`() {
         startKoin {
-            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, testLessonResultOutboxDepsStub, lessonRunnerDataModule)
+            modules(
+                testLessonAttemptDaoStub,
+                testLessonRatingLocalDaoStub,
+                testLessonResultOutboxDepsStub,
+                lessonRunnerDataModule,
+            )
         }
         assertNotNull(getKoin().get<LessonRatingRepository>())
     }
@@ -1069,7 +1275,8 @@ class KoinModuleWiringTest : KoinTest {
     // ── IT-09d ────────────────────────────────────────────────────────────────
 
     /**
-     * IT-09d: GIVEN lessonRunnerDomainKoinAdapter WHEN get<CompleteAttemptUseCase> / AbortAttemptUseCase / SubmitLessonRatingUseCase
+     * IT-09d: GIVEN lessonRunnerDomainKoinAdapter WHEN resolving CompleteAttemptUseCase,
+     * AbortAttemptUseCase and SubmitLessonRatingUseCase
      * THEN each resolves without exception.
      * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09d
      */
@@ -1095,7 +1302,8 @@ class KoinModuleWiringTest : KoinTest {
     // ── IT-09e ────────────────────────────────────────────────────────────────
 
     /**
-     * IT-09e: GIVEN lessonRunnerPresentationModule + deps WHEN get<LessonRunnerRootComponent>(parametersOf(ctx, LessonId("l1"), EASY))
+     * IT-09e: GIVEN lessonRunnerPresentationModule + deps WHEN resolving LessonRunnerRootComponent
+     * with parametersOf(ctx, LessonId("l1"), EASY)
      * THEN resolves to DefaultLessonRunnerRootComponent without exception.
      * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09e
      */
@@ -1121,9 +1329,10 @@ class KoinModuleWiringTest : KoinTest {
         }
 
         try {
-            val component = getKoin().get<LessonRunnerRootComponent> {
-                parametersOf(ctx, LessonId("l1"), Difficulty.EASY, SessionMode.LEARNING)
-            }
+            val component =
+                getKoin().get<LessonRunnerRootComponent> {
+                    parametersOf(ctx, LessonId("l1"), Difficulty.EASY, SessionMode.LEARNING)
+                }
             assertNotNull(component)
             assertTrue(component is DefaultLessonRunnerRootComponent)
         } finally {

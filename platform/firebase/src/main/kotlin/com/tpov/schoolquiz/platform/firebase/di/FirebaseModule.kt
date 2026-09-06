@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSo
 import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
+import com.tpov.schoolquiz.platform.firebase.network.FirebaseOutboxSessionProvider
 import com.tpov.schoolquiz.platform.firebase.network.namingFailures
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseLogoRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
@@ -22,6 +23,7 @@ import com.tpov.schoolquiz.platform.firebase.sync.FirebaseLessonContentSyncChang
 import com.tpov.schoolquiz.platform.firebase.tournament.FirebaseTournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.verification.FirebaseVerificationRemoteDataSource
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSource
@@ -44,6 +46,7 @@ val firebaseModule =
     module {
         single<FirebaseFirestore> { FirebaseFirestore.getInstance() }
         single<FirebaseFunctions> { FirebaseFunctions.getInstance() }
+        single<OutboxSessionProvider> { FirebaseOutboxSessionProvider(FirebaseAuth.getInstance()) }
         // Единственный адрес очереди (AD-6): новая операция появляется обработчиком на сервере,
         // а не новым путём на клиенте.
         single<MutationTransport> {
@@ -74,7 +77,7 @@ val firebaseModule =
             FirebaseEconomyRemoteDataSource(functions = get(), networkMonitor = get())
         }
         single<GiftBoxRemoteDataSource> {
-            FirebaseGiftBoxRemoteDataSource(functions = get())
+            FirebaseGiftBoxRemoteDataSource()
         }
         // Денежный вызов: прямой и синхронный, не через приёмник отложенных мутаций (ADM-5).
         single<PurchaseVerifier> {

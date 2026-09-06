@@ -6,11 +6,14 @@ import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RawAnsweredQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 
 /**
  * State machine for the lesson runner lifecycle.
@@ -31,18 +34,21 @@ sealed interface RunnerState {
      * [indexInPool] sentinel value [playOrder.size] means last answer was submitted;
      * component must call CompleteAttemptUseCase immediately.
      *
-     * [eligibleSize] = length of codeAnswer = total questions of [mode] difficulty
+     * [eligibleSize] = length of the eventual codeAnswer = total questions of [mode] difficulty
      * in this lesson (after archive filter + parse filter), NOT subset size.
      */
     data class Ready(
+        /** Created once at START and retained through every state copy and terminal save. */
+        val attemptId: AttemptId,
         val userId: String,
         val lessonId: LessonId,
         val lessonVersion: Long,
         val mode: Difficulty,
-        val playOrder: List<RunnerQuestion.Valid>,
+        val playOrder: List<RunnerQuestion.Playable>,
         val eligibleSize: Int,
         val indexInPool: Int,
-        val codeAnswer: CodeAnswer,
+        /** Local score only. Null means the WHOLE attempt is server-scored, never zero. */
+        val codeAnswer: CodeAnswer?,
         val deadlineMs: Long,
         val seed: Long,
         val currentDraftAnswer: UserAnswerDraft?,
@@ -53,6 +59,8 @@ sealed interface RunnerState {
         val questionStartedAtMs: Long = 0L,
         /** Answers recorded so far, persisted together with the attempt when the lesson ends. */
         val answers: List<AnsweredQuestion> = emptyList(),
+        /** Raw answers are kept separate from locally scored history. */
+        val rawAnswers: List<RawAnsweredQuestion> = emptyList(),
         /**
          * Заявки на заряды по позициям [codeAnswer] — `null`, пока ни одной не было.
          *
@@ -71,6 +79,17 @@ sealed interface RunnerState {
 
     /** Terminal: user exited mid-session; attempt saved with partial codeAnswer. */
     data class Aborted(val attempt: Attempt) : RunnerState
+
+    /** Durable raw request, not a scored Attempt. Receipt observation may subsequently confirm it. */
+    data class PendingCompletion(val intent: UnscoredTerminalIntent) : RunnerState
+
+    /** Aborted raw request cannot become a completion or rating prompt. */
+    data class PendingAbort(val intent: UnscoredTerminalIntent) : RunnerState
+
+    data class PendingSaveFailed(
+        val intent: UnscoredTerminalIntent,
+        val error: SaveError,
+    ) : RunnerState
 
     /** Terminal: attempt constructed but Room write failed. */
     data class SaveFailed(

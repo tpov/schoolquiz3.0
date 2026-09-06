@@ -1,14 +1,20 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data
 
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake.FakeContentHierarchy
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake.FakeLessonRatingLocalDao
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.LessonRatingRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRating
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RatingId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -57,5 +63,29 @@ class LessonRatingRepositoryImplTest {
         val result = repo.hasSubmitted("u1", LessonId("l2")).take(1).first()
 
         assertFalse(result, "hasSubmitted must be false for different lessonId")
+    }
+
+    @Test
+    fun ratingAttemptProofIsFrozenInTheSameQueuedSubmissionAsTheLocalFlag() = runTest {
+        val dao = FakeLessonRatingLocalDao()
+        val repository = LessonRatingRepositoryImpl(dao, FakeContentHierarchy.roomWriter())
+        val rating = makeRating(lessonId = FakeContentHierarchy.LESSON_ID)
+            .copy(attemptId = AttemptId("completed-attempt"))
+
+        assertTrue(repository.submit(rating).isSuccess)
+
+        val queued = Json.parseToJsonElement(dao.outboxRows.single().payload).jsonObject
+        assertEquals("completed-attempt", queued.getValue("attemptId").jsonPrimitive.content)
+        assertEquals(rating.userId, queued.getValue("userId").jsonPrimitive.content)
+        assertEquals(rating.lessonId.value, queued.getValue("lessonId").jsonPrimitive.content)
+        assertTrue(repository.hasSubmitted(rating.userId, rating.lessonId).first())
+    }
+
+    @Test
+    fun legacyRatingDoesNotInventAttemptProof() = runTest {
+        val writer = FakeContentHierarchy.roomWriter()
+        val rating = makeRating(lessonId = FakeContentHierarchy.LESSON_ID)
+        val queued = Json.parseToJsonElement(writer.buildRatingRow(rating).payload).jsonObject
+        assertFalse("attemptId" in queued)
     }
 }

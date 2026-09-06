@@ -16,11 +16,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,7 +42,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
@@ -72,23 +69,19 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Runn
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
 
-private const val PERFECT_SCORE = 100
-private const val HARD_REWARD_MULTIPLIER = 2
-private const val NOLICS_PERCENT_STEP = 10
 
 // Accuracy chart geometry, lifted from the design's SVG (viewBox 340×120 rendered at 104×44):
 // the plot spans x 10..330, score digits 1..9 sit on nine levels 11.5 units apart with '9' on
 // y=14, and hairline gridlines cross at y=14/60/106.
 
-// Best-mark scale, from the same design: a 34px block holding a 5px track, a 2×14 tick at the
-// best mark, and the label hanging under the tick's position.
-private const val BEST_SCALE_HEIGHT_DP = 34
-private const val BEST_TRACK_HEIGHT_DP = 5
-private const val BEST_FILL_ALPHA = 0.65f
 
 // Chart paint, straight from the design: success wash under the line (0.10), danger wash above
 // it (0.08), the stroke at three-quarter accent with a heavier head dot.
@@ -112,8 +105,6 @@ fun ResultContent(
     modifier: Modifier = Modifier,
 ) {
     val isHard = state.mode == Difficulty.HARD
-    val earnedExperience = resultExperienceReward(state.percentScore.raw, state.mode)
-    val earnedNolics = resultNolicsReward(state.percentScore.raw, state.mode)
     var discussionOpen by remember { mutableStateOf(false) }
 
     Column(
@@ -134,9 +125,6 @@ fun ResultContent(
 
         ResultScoreCard(
             state = state,
-            isHard = isHard,
-            earnedExperience = earnedExperience,
-            earnedNolics = earnedNolics,
         )
 
         if (state.saveWarning) {
@@ -163,7 +151,7 @@ fun ResultContent(
                 )
         }
 
-        if (state.showRatingPrompt) {
+        if (state.canSubmitRating) {
             RatingPromptSection(
                 ratingSubmissionState = state.ratingSubmissionState,
                 onSubmitRating = onSubmitRating,
@@ -177,7 +165,12 @@ fun ResultContent(
 
         DiscussionRow(count = comments.size, onOpen = { discussionOpen = true })
 
-        state.advice?.let { AdviceSection(advice = it) }
+        // Existing advice is local. Show it only when the server confirms the exact same answers.
+        if (state.serverSettlement.isConfirmedCompletion &&
+            state.serverSettlement.codeAnswer?.raw?.map { it - '0' } == state.questionScores
+        ) {
+            state.advice?.let { AdviceSection(advice = it) }
+        }
 
         Spacer(Modifier.weight(1f))
         Row(
@@ -312,11 +305,9 @@ private fun discussionCountWording(count: Int): String {
 @Composable
 private fun ResultScoreCard(
     state: RunnerUiState.Result,
-    isHard: Boolean,
-    earnedExperience: Int,
-    earnedNolics: Int,
 ) {
-    val tone = if (isHard) NoirDanger else NoirSuccess
+    val settlement = state.serverSettlement
+    val tone = if (settlement.isConfirmedCompletion) NoirSuccess else NoirT3
     Column(
         Modifier
             .fillMaxWidth()
@@ -336,26 +327,23 @@ private fun ResultScoreCard(
         Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 16.dp)) {
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                 Text(
-                    text = state.percentScore.raw.toString(),
+                    text = state.displayedPercentScore?.raw?.toString() ?: "—",
                     style = NoirType.num.copy(fontSize = 64.sp, fontWeight = FontWeight.Bold, color = NoirT1),
                 )
-                Text(
-                    "%",
-                    style = NoirType.num.copy(fontSize = 20.sp, color = NoirT2),
-                    modifier = Modifier.padding(bottom = 6.dp),
-                )
+                if (state.displayedPercentScore != null) {
+                    Text(
+                        "%",
+                        style = NoirType.num.copy(fontSize = 20.sp, color = NoirT2),
+                        modifier = Modifier.padding(bottom = 6.dp),
+                    )
+                }
             }
-            BestMarkScale(
-                current = state.percentScore.raw,
-                best = state.userBestPercentScore,
-                isHard = isHard,
+            Text(
+                text = stringResource(settlementStatusText(settlement)),
+                style = NoirType.rowSub.copy(color = tone),
             )
         }
-        ResultRewardStrip(
-            state = state,
-            earnedExperience = earnedExperience,
-            earnedNolics = earnedNolics,
-        )
+        if (settlement.hasAccountingProof) ResultRewardStrip(state)
     }
 }
 
@@ -369,10 +357,12 @@ private fun ResultScoreCard(
 @Composable
 private fun ResultRewardStrip(
     state: RunnerUiState.Result,
-    earnedExperience: Int,
-    earnedNolics: Int,
 ) {
-    Row(
+    val reward = state.displayedReward ?: return
+    val settlement = state.serverSettlement
+    val lifePointsSpent = settlement.lifePointsSpent ?: return
+    val plasmaPointsSpent = settlement.plasmaPointsSpent ?: return
+    Column(
         Modifier
             .fillMaxWidth()
             .background(Color.Black.copy(alpha = 0.22f))
@@ -380,9 +370,17 @@ private fun ResultRewardStrip(
                 drawRect(color = NoirGlassStroke, size = Size(size.width, 1.dp.toPx()))
             },
     ) {
-        RewardCell(NoirIcons.Star, "+$earnedExperience", LocalNoirAccent.current)
-        RewardCell(NoirIcons.Nolic, "+$earnedNolics", LocalNoirAccent.current)
-        state.livesRemainingHearts?.let { RewardCell(NoirIcons.Bolt, "−1", NoirDanger) }
+        Row(Modifier.fillMaxWidth()) {
+            RewardCell(NoirIcons.Star, "+${reward.skillPoints}", LocalNoirAccent.current,
+                stringResource(R.string.runner_settlement_skill_points))
+            RewardCell(NoirIcons.Nolic, "+${reward.nolics}", LocalNoirAccent.current,
+                stringResource(R.string.runner_settlement_nolics))
+        }
+        Text(
+            stringResource(R.string.runner_settlement_charges, lifePointsSpent, plasmaPointsSpent),
+            style = NoirType.rowSub.copy(color = NoirT2),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+        )
     }
 }
 
@@ -392,6 +390,7 @@ private fun RowScope.RewardCell(
     icon: ImageVector,
     value: String,
     tint: Color,
+    label: String,
 ) {
     Row(
         Modifier
@@ -403,7 +402,7 @@ private fun RowScope.RewardCell(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(14.dp))
+        Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(14.dp))
         Text(value, style = NoirType.num.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = NoirT1))
     }
 }
@@ -411,60 +410,6 @@ private fun RowScope.RewardCell(
 /** How far the corner wash reaches across the card, as a share of its longest side. */
 private const val SCORE_WASH_REACH = 1.32f
 
-/**
- * This attempt against your own best.
- *
- * The tick is the number worth beating, and it is the player's own — a leaderboard says who is
- * ahead, this says whether today went better than last time. The label hangs off the tick so the
- * two read as one mark, not as a caption under the bar.
- */
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun BestMarkScale(
-    current: Int,
-    best: Int,
-    isHard: Boolean,
-) {
-    val accent = if (isHard) NoirDanger else LocalNoirAccent.current
-    Box(Modifier.fillMaxWidth().height(BEST_SCALE_HEIGHT_DP.dp)) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(BEST_TRACK_HEIGHT_DP.dp)
-                .clip(NoirShapePill)
-                .background(NoirS2),
-        )
-        Box(
-            Modifier
-                .fillMaxWidth(current.coerceIn(0, PERFECT_SCORE) / PERFECT_SCORE.toFloat())
-                .height(BEST_TRACK_HEIGHT_DP.dp)
-                .clip(NoirShapePill)
-                .background(accent.copy(alpha = BEST_FILL_ALPHA)),
-        )
-        if (best > 0) {
-            Box(Modifier.fillMaxWidth(best.coerceIn(0, PERFECT_SCORE) / PERFECT_SCORE.toFloat())) {
-                Box(
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .width(2.dp)
-                        .height(14.dp)
-                        .background(NoirT2),
-                )
-                Text(
-                    stringResource(R.string.runner_result_best, best),
-                    style =
-                        NoirType.kicker.copy(
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.12.em,
-                            color = NoirT2,
-                        ),
-                    modifier = Modifier.align(Alignment.TopEnd).offset(x = (-6).dp, y = 16.dp),
-                )
-            }
-        }
-    }
-}
 
 /**
  * The lesson's discussion: the comments people left, and a one-line field to add one.
@@ -587,21 +532,20 @@ private fun CommentRow(comment: LessonComment) {
     }
 }
 
-private fun resultExperienceReward(
-    percent: Int,
-    mode: Difficulty,
-): Int {
-    val multiplier = if (mode == Difficulty.HARD) HARD_REWARD_MULTIPLIER else 1
-    return percent.coerceIn(0, PERFECT_SCORE) * multiplier
-}
-
-private fun resultNolicsReward(
-    percent: Int,
-    mode: Difficulty,
-): Int {
-    val multiplier = if (mode == Difficulty.HARD) HARD_REWARD_MULTIPLIER else 1
-    return (percent.coerceIn(0, PERFECT_SCORE) / NOLICS_PERCENT_STEP) * multiplier
-}
+internal fun settlementStatusText(settlement: ServerAttemptSettlement): Int =
+    when (settlement.state) {
+        ServerAttemptSettlementState.PENDING -> R.string.runner_settlement_pending
+        ServerAttemptSettlementState.SETTLED -> when {
+            settlement.isConfirmedCompletion -> R.string.runner_settlement_confirmed
+            settlement.hasAccountingProof -> R.string.runner_settlement_accounting_only
+            else -> R.string.runner_settlement_invalid
+        }
+        ServerAttemptSettlementState.UNSCORABLE -> R.string.runner_settlement_unscorable
+        ServerAttemptSettlementState.REJECTED -> R.string.runner_settlement_rejected
+        ServerAttemptSettlementState.LEGACY_RECORDED -> R.string.runner_settlement_legacy
+        ServerAttemptSettlementState.INVALID_RECEIPT -> R.string.runner_settlement_invalid
+        ServerAttemptSettlementState.ACCOUNT_UNAVAILABLE -> R.string.runner_settlement_account_unavailable
+    }
 
 @Suppress("FunctionNaming", "UnusedPrivateMember", "MagicNumber", "ktlint:standard:function-naming")
 @Preview(showBackground = true)
@@ -612,6 +556,18 @@ private fun ResultContentPreview() {
             state =
                 RunnerUiState.Result(
                     percentScore = PercentScore(85),
+                    serverSettlement = ServerAttemptSettlement(
+                        state = ServerAttemptSettlementState.SETTLED,
+                        receiptId = "preview-receipt",
+                        codeAnswer = CodeAnswer("9"),
+                        percentScore = PercentScore(100),
+                        completed = true,
+                        settledAtMs = 0L,
+                        lifePointsSpent = 50L,
+                        plasmaPointsSpent = 0L,
+                        reward = ServerAttemptReward(skillPoints = 100L, nolics = 10L),
+                        ownerVerified = true,
+                    ),
                     mode = Difficulty.EASY,
                     completedAt = 0L,
                     hardUnlocked = false,

@@ -29,7 +29,6 @@ import org.junit.Test
  * читающий проход шёл по ним и просил у сервера чужие документы, получая отказ правила.
  */
 class OwnerTracesPersistenceTest {
-
     private lateinit var db: AppDatabase
     private lateinit var syncState: SyncStateDao
     private lateinit var store: RoomOutboxStore
@@ -40,17 +39,19 @@ class OwnerTracesPersistenceTest {
 
     @Before
     fun setUp() {
-        db = Room.inMemoryDatabaseBuilder<AppDatabase>()
-            .setDriver(BundledSQLiteDriver())
-            .setQueryCoroutineContext(Dispatchers.Unconfined)
-            .addTypeConverter(StringSetConverter())
-            .addTypeConverter(TopParticipantListConverter())
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder<AppDatabase>()
+                .setDriver(BundledSQLiteDriver())
+                .setQueryCoroutineContext(Dispatchers.Unconfined)
+                .addTypeConverter(StringSetConverter())
+                .addTypeConverter(TopParticipantListConverter())
+                .build()
         syncState = db.syncStateDao()
         store = RoomOutboxStore(db.outboxDao())
-        traces = RoomOwnerTraces(db.ownerRowsDao()) { uid ->
-            listOf("private_quests:$uid", "review_assignments:$uid")
-        }
+        traces =
+            RoomOwnerTraces(db.ownerRowsDao()) { uid ->
+                listOf("private_quests:$uid", "review_assignments:$uid")
+            }
     }
 
     @After
@@ -59,231 +60,252 @@ class OwnerTracesPersistenceTest {
     }
 
     @Test
-    fun personalCursorsOfThePreviousOwnerAreDeletedAndTheSharedOnesStay() = runTest {
-        syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
-        syncState.setCursor("review_assignments:$previous", SyncCursor(6_000L))
-        syncState.setCursor("private_quests:$next", SyncCursor(7_000L))
-        syncState.setCursor("catalog_sync:cat-1", SyncCursor(8_000L))
-        syncState.setCursor("catalogs", SyncCursor(9_000L))
+    fun personalCursorsOfThePreviousOwnerAreDeletedAndTheSharedOnesStay() =
+        runTest {
+            syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
+            syncState.setCursor("review_assignments:$previous", SyncCursor(6_000L))
+            syncState.setCursor("private_quests:$next", SyncCursor(7_000L))
+            syncState.setCursor("catalog_sync:cat-1", SyncCursor(8_000L))
+            syncState.setCursor("catalogs", SyncCursor(9_000L))
 
-        traces.forget(previous)
+            traces.forget(previous)
 
-        assertNull("удалена строка, а не записан ноль", cursorOf("private_quests:$previous"))
-        assertNull(cursorOf("review_assignments:$previous"))
-        assertEquals(SyncCursor(7_000L), cursorOf("private_quests:$next"))
-        assertEquals(SyncCursor(8_000L), cursorOf("catalog_sync:cat-1"))
-        assertEquals(SyncCursor(9_000L), cursorOf("catalogs"))
-    }
-
-    @Test
-    fun afterTheCursorIsGoneTheNextPassMayWriteAnyValueIncludingASmallerOne() = runTest {
-        syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
-
-        traces.forget(previous)
-        syncState.setCursor("private_quests:$previous", SyncCursor(1_000L))
-
-        assertEquals(SyncCursor(1_000L), cursorOf("private_quests:$previous"))
-    }
+            assertNull("удалена строка, а не записан ноль", cursorOf("private_quests:$previous"))
+            assertNull(cursorOf("review_assignments:$previous"))
+            assertEquals(SyncCursor(7_000L), cursorOf("private_quests:$next"))
+            assertEquals(SyncCursor(8_000L), cursorOf("catalog_sync:cat-1"))
+            assertEquals(SyncCursor(9_000L), cursorOf("catalogs"))
+        }
 
     @Test
-    fun theTracesOperationDoesNotTouchTheQueue() = runTest {
-        store.enqueue(record("m-1", previous))
+    fun afterTheCursorIsGoneTheNextPassMayWriteAnyValueIncludingASmallerOne() =
+        runTest {
+            syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
 
-        traces.forget(previous)
+            traces.forget(previous)
+            syncState.setCursor("private_quests:$previous", SyncCursor(1_000L))
 
-        assertEquals(1, store.countPending(previous))
-    }
+            assertEquals(SyncCursor(1_000L), cursorOf("private_quests:$previous"))
+        }
 
     @Test
-    fun localRowsOfThePreviousOwnerAreDeletedWithHisCursors() = runTest {
-        // Перечень истории 6.2 целиком: каждая таблица с колонкой владельца получает по строке
-        // прежнего и по строке нового. После снятия следов у прежнего не остаётся ни одной, у
-        // нового — все.
-        seedOwnedRows(previous)
-        seedOwnedRows(next)
-        syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
+    fun theTracesOperationDoesNotTouchTheQueue() =
+        runTest {
+            store.enqueue(record("m-1", previous))
 
-        traces.forget(previous)
+            traces.forget(previous)
 
-        OwnerScopedTables.ALL
-            .filter { it.cleanedBy == OwnerCleanup.TRACES }
-            .forEach { table ->
+            assertEquals(1, store.countPending(previous))
+        }
+
+    @Test
+    fun localRowsOfThePreviousOwnerAreDeletedWithHisCursors() =
+        runTest {
+            // Перечень истории 6.2 целиком: каждая таблица с колонкой владельца получает по строке
+            // прежнего и по строке нового. После снятия следов у прежнего не остаётся ни одной, у
+            // нового — все.
+            seedOwnedRows(previous)
+            seedOwnedRows(next)
+            syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
+
+            traces.forget(previous)
+
+            OwnerScopedTables.ALL
+                .filter { it.cleanedBy == OwnerCleanup.TRACES }
+                .forEach { table ->
+                    assertEquals(
+                        "строки прежнего владельца остались в ${table.table}",
+                        0,
+                        countIn(table.table, table.ownerColumn, previous),
+                    )
+                    assertEquals(
+                        "строки нового владельца пропали из ${table.table}",
+                        1,
+                        countIn(table.table, table.ownerColumn, next),
+                    )
+                }
+        }
+
+    @Test
+    fun theDraftTreeOfThePreviousOwnerGoesWithTheDraftAndTheOtherTreeStays() =
+        runTest {
+            // У веток дерева колонки владельца нет — они режутся по родителю. Пока их не резал никто,
+            // на устройстве оставались вопросы и уроки неопубликованного черновика чужого игрока.
+            seedOwnedRows(previous)
+            seedOwnedRows(next)
+
+            traces.forget(previous)
+
+            listOf("draft_sections", "draft_themes", "draft_lessons", "draft_questions").forEach { table ->
                 assertEquals(
-                    "строки прежнего владельца остались в ${table.table}",
+                    "ветка $table прежнего владельца осталась",
                     0,
-                    countIn(table.table, table.ownerColumn, previous),
+                    countIn(table, "draftId", "draft-$previous"),
                 )
-                assertEquals(
-                    "строки нового владельца пропали из ${table.table}",
-                    1,
-                    countIn(table.table, table.ownerColumn, next),
-                )
+                assertEquals("ветка $table нового владельца пропала", 1, countIn(table, "draftId", "draft-$next"))
             }
-    }
-
-    @Test
-    fun theDraftTreeOfThePreviousOwnerGoesWithTheDraftAndTheOtherTreeStays() = runTest {
-        // У веток дерева колонки владельца нет — они режутся по родителю. Пока их не резал никто,
-        // на устройстве оставались вопросы и уроки неопубликованного черновика чужого игрока.
-        seedOwnedRows(previous)
-        seedOwnedRows(next)
-
-        traces.forget(previous)
-
-        listOf("draft_sections", "draft_themes", "draft_lessons", "draft_questions").forEach { table ->
-            assertEquals("ветка $table прежнего владельца осталась", 0, countIn(table, "draftId", "draft-$previous"))
-            assertEquals("ветка $table нового владельца пропала", 1, countIn(table, "draftId", "draft-$next"))
         }
-    }
 
     @Test
-    fun theTracesOperationDoesNotTouchSharedContent() = runTest {
-        // Общий контент от аккаунта не зависит: каталоги и уроки остаются на месте.
-        seedOwnedRows(previous)
-        db.catalogDao().insertOrReplace(catalog())
+    fun theTracesOperationDoesNotTouchSharedContent() =
+        runTest {
+            // Общий контент от аккаунта не зависит: каталоги и уроки остаются на месте.
+            seedOwnedRows(previous)
+            db.catalogDao().insertOrReplace(catalog())
 
-        traces.forget(previous)
+            traces.forget(previous)
 
-        assertEquals(1, countIn("catalogs", "id", "cat-1"))
-    }
-
-    @Test
-    fun theNamedLossesComeFromTheRegistryAndNameOnlyWhatHasNoServerTwin() = runTest {
-        assertEquals(
-            listOf(
-                OwnerDataKind.ANSWER_HISTORY,
-                OwnerDataKind.REPETITION_SCHEDULE,
-                OwnerDataKind.UNPUBLISHED_QUEST_DRAFTS,
-            ),
-            traces.namedLosses,
-        )
-        assertTrue(
-            "названо только то, чего сервер не хранит",
-            OwnerScopedTables.ALL.filter { it.namedToPlayer != null }.none { it.hasServerTwin },
-        )
-    }
-
-    @Test
-    fun forgettingTheQueueRemovesEveryStateOfTheOwnerAndNothingOfTheOther() = runTest {
-        val states = listOf("WAITING", "WAITING_PRECONDITION", "CONFLICT", "QUARANTINED", "SYNCHRONOUS")
-        states.forEachIndexed { i, state ->
-            val queued = store.enqueue(record("m-$i", previous))
-            db.outboxDao().applyDecision(queued.id, state, 0L, 1, null, null)
+            assertEquals(1, countIn("catalogs", "id", "cat-1"))
         }
-        store.enqueue(record("m-other", next))
-        syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
-
-        store.forget(previous)
-
-        assertEquals(0, countIn("outbox", "owner_uid", previous))
-        assertEquals(1, countIn("outbox", "owner_uid", next))
-        assertEquals(
-            "очередь — не курсоры: их снимает другая операция",
-            SyncCursor(5_000L),
-            cursorOf("private_quests:$previous"),
-        )
-    }
 
     @Test
-    fun theRemainderCountsEveryStateSeparatelyAndOnlyThisOwner() = runTest {
-        // Остаток считается тем же перечнем, что удаляет `forget`: пять состояний, не два.
-        val states = listOf("WAITING", "WAITING", "WAITING_PRECONDITION", "CONFLICT", "QUARANTINED", "SYNCHRONOUS")
-        states.forEachIndexed { i, state ->
-            val queued = store.enqueue(record("m-$i", previous))
-            db.outboxDao().applyDecision(queued.id, state, 0L, 1, null, null)
+    fun theNamedLossesComeFromTheRegistryAndNameOnlyWhatHasNoServerTwin() =
+        runTest {
+            assertEquals(
+                listOf(
+                    OwnerDataKind.ANSWER_HISTORY,
+                    OwnerDataKind.REPETITION_SCHEDULE,
+                    OwnerDataKind.UNPUBLISHED_QUEST_DRAFTS,
+                ),
+                traces.namedLosses,
+            )
+            assertTrue(
+                "названо только то, чего сервер не хранит",
+                OwnerScopedTables.ALL.filter { it.namedToPlayer != null }.none { it.hasServerTwin },
+            )
         }
-        store.enqueue(record("m-other", next))
-
-        assertEquals(
-            OutboxRemainder(
-                waiting = 2,
-                waitingPrecondition = 1,
-                conflicted = 1,
-                quarantined = 1,
-                synchronous = 1,
-            ),
-            store.remainderOf(previous),
-        )
-        assertEquals(OutboxRemainder(waiting = 1), store.remainderOf(next))
-    }
 
     @Test
-    fun anUnknownStateNameCountsAsQuarantinedSoItIsStillWarnedAbout() = runTest {
-        // Строка из будущей версии не уедет — но исчезнет вместе с аккаунтом, значит про неё надо
-        // предупредить. Читатель уже считает такую запись карантинной; остаток считает так же.
-        val queued = store.enqueue(record("m-future", previous))
-        db.outboxDao().applyDecision(queued.id, "SOMETHING_NEW", 0L, 1, null, null)
+    fun forgettingTheQueueRemovesEveryStateOfTheOwnerAndNothingOfTheOther() =
+        runTest {
+            val states = listOf("WAITING", "WAITING_PRECONDITION", "CONFLICT", "QUARANTINED", "SYNCHRONOUS")
+            states.forEachIndexed { i, state ->
+                val queued = store.enqueue(record("m-$i", previous))
+                db.outboxDao().applyDecision(queued.id, state, 0L, 1, null, null)
+            }
+            store.enqueue(record("m-other", next))
+            syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
 
-        assertEquals(OutboxRemainder(quarantined = 1), store.remainderOf(previous))
-    }
+            store.forget(previous)
 
-    @Test
-    fun theQueueNamesItsOwnersWhenThereIsNoSessionToAsk() = runTest {
-        store.enqueue(record("m-1", previous))
-        store.enqueue(record("m-2", previous))
-        store.enqueue(record("m-3", next))
-
-        assertEquals(setOf(previous, next), store.ownersWithRecords().toSet())
-    }
-
-    @Test
-    fun theLocalRowsNameTheirOwnerEvenWhenTheQueueIsEmpty() = runTest {
-        // Пустая очередь — обычное стационарное состояние: запись уехала и исчезла, а черновик
-        // остался лежать. Пока набор владельцев спрашивался у одной очереди, прежний владелец жил
-        // на устройстве вечно, а читающий проход просил у сервера его документы и получал отказ.
-        seedOwnedRows(previous, withQueueRow = false)
-
-        assertTrue("очередь и правда пуста", store.ownersWithRecords().isEmpty())
-        assertEquals(listOf(previous), traces.ownersWithTraces())
-    }
+            assertEquals(0, countIn("outbox", "owner_uid", previous))
+            assertEquals(1, countIn("outbox", "owner_uid", next))
+            assertEquals(
+                "очередь — не курсоры: их снимает другая операция",
+                SyncCursor(5_000L),
+                cursorOf("private_quests:$previous"),
+            )
+        }
 
     @Test
-    fun theOwnersAreNamedOnceEachAndTheOtherOneIsNamedToo() = runTest {
-        seedOwnedRows(previous, withQueueRow = false)
-        seedOwnedRows(next, withQueueRow = false)
+    fun theRemainderCountsEveryStateSeparatelyAndOnlyThisOwner() =
+        runTest {
+            // Остаток считается тем же перечнем, что удаляет `forget`: пять состояний, не два.
+            val states = listOf("WAITING", "WAITING", "WAITING_PRECONDITION", "CONFLICT", "QUARANTINED", "SYNCHRONOUS")
+            states.forEachIndexed { i, state ->
+                val queued = store.enqueue(record("m-$i", previous))
+                db.outboxDao().applyDecision(queued.id, state, 0L, 1, null, null)
+            }
+            store.enqueue(record("m-other", next))
 
-        assertEquals(listOf(previous, next), traces.ownersWithTraces().sorted())
-    }
-
-    @Test
-    fun afterTheTracesAreGoneNobodyIsNamed() = runTest {
-        seedOwnedRows(previous, withQueueRow = false)
-
-        traces.forget(previous)
-
-        assertTrue("следы сняты — называть некого", traces.ownersWithTraces().isEmpty())
-    }
-
-    @Test
-    fun theNamedLossesOfAnOwnerAreOnlyTheOnesHeActuallyHas() = runTest {
-        // Предупреждение — это согласие. Называть историю ответов игроку, у которого её нет, значит
-        // спрашивать не про то, что удаляется.
-        db.questAuthoringDao().insertDraft(draft(previous))
-
-        assertEquals(listOf(OwnerDataKind.UNPUBLISHED_QUEST_DRAFTS), traces.lossesOf(previous))
-        assertTrue("у другого владельца нет ничего", traces.lossesOf(next).isEmpty())
-    }
+            assertEquals(
+                OutboxRemainder(
+                    waiting = 2,
+                    waitingPrecondition = 1,
+                    conflicted = 1,
+                    quarantined = 1,
+                    synchronous = 1,
+                ),
+                store.remainderOf(previous),
+            )
+            assertEquals(OutboxRemainder(waiting = 1), store.remainderOf(next))
+        }
 
     @Test
-    fun everyKindWithoutAServerTwinIsFoundWhenItIsThere() = runTest {
-        seedOwnedRows(previous, withQueueRow = false)
+    fun anUnknownStateNameCountsAsQuarantinedSoItIsStillWarnedAbout() =
+        runTest {
+            // Строка из будущей версии не уедет — но исчезнет вместе с аккаунтом, значит про неё надо
+            // предупредить. Читатель уже считает такую запись карантинной; остаток считает так же.
+            val queued = store.enqueue(record("m-future", previous))
+            db.outboxDao().applyDecision(queued.id, "SOMETHING_NEW", 0L, 1, null, null)
 
-        assertEquals(OwnerScopedTables.NAMED_TO_PLAYER, traces.lossesOf(previous))
-    }
+            assertEquals(OutboxRemainder(quarantined = 1), store.remainderOf(previous))
+        }
 
     @Test
-    fun rowsWithAServerTwinAreNotNamedToThePlayer() = runTest {
-        // Профиль, статистика, задания ревью и локальные оценки вернутся после входа: снимать их
-        // надо, а спрашивать про них не о чем.
-        db.userProfileDao().upsert(userProfile(previous))
-        db.userStatsDao().upsert(userStats(previous))
-        db.reviewAssignmentDao().insertAll(listOf(reviewAssignment(previous)))
-        db.lessonRatingLocalDao().upsert(LessonRatingSubmittedLocalEntity(previous, "lesson-1", 1L))
-        db.lessonAttemptDao().upsert(lessonAttempt(previous))
+    fun theQueueNamesItsOwnersWhenThereIsNoSessionToAsk() =
+        runTest {
+            store.enqueue(record("m-1", previous))
+            store.enqueue(record("m-2", previous))
+            store.enqueue(record("m-3", next))
 
-        assertTrue("названо только то, чего сервер не хранит", traces.lossesOf(previous).isEmpty())
-        assertEquals("но забыть его всё равно есть кому", listOf(previous), traces.ownersWithTraces())
-    }
+            assertEquals(setOf(previous, next), store.ownersWithRecords().toSet())
+        }
+
+    @Test
+    fun theLocalRowsNameTheirOwnerEvenWhenTheQueueIsEmpty() =
+        runTest {
+            // Пустая очередь — обычное стационарное состояние: запись уехала и исчезла, а черновик
+            // остался лежать. Пока набор владельцев спрашивался у одной очереди, прежний владелец жил
+            // на устройстве вечно, а читающий проход просил у сервера его документы и получал отказ.
+            seedOwnedRows(previous, withQueueRow = false)
+
+            assertTrue("очередь и правда пуста", store.ownersWithRecords().isEmpty())
+            assertEquals(listOf(previous), traces.ownersWithTraces())
+        }
+
+    @Test
+    fun theOwnersAreNamedOnceEachAndTheOtherOneIsNamedToo() =
+        runTest {
+            seedOwnedRows(previous, withQueueRow = false)
+            seedOwnedRows(next, withQueueRow = false)
+
+            assertEquals(listOf(previous, next), traces.ownersWithTraces().sorted())
+        }
+
+    @Test
+    fun afterTheTracesAreGoneNobodyIsNamed() =
+        runTest {
+            seedOwnedRows(previous, withQueueRow = false)
+
+            traces.forget(previous)
+
+            assertTrue("следы сняты — называть некого", traces.ownersWithTraces().isEmpty())
+        }
+
+    @Test
+    fun theNamedLossesOfAnOwnerAreOnlyTheOnesHeActuallyHas() =
+        runTest {
+            // Предупреждение — это согласие. Называть историю ответов игроку, у которого её нет, значит
+            // спрашивать не про то, что удаляется.
+            db.questAuthoringDao().insertDraft(draft(previous))
+
+            assertEquals(listOf(OwnerDataKind.UNPUBLISHED_QUEST_DRAFTS), traces.lossesOf(previous))
+            assertTrue("у другого владельца нет ничего", traces.lossesOf(next).isEmpty())
+        }
+
+    @Test
+    fun everyKindWithoutAServerTwinIsFoundWhenItIsThere() =
+        runTest {
+            seedOwnedRows(previous, withQueueRow = false)
+
+            assertEquals(OwnerScopedTables.NAMED_TO_PLAYER, traces.lossesOf(previous))
+        }
+
+    @Test
+    fun rowsWithAServerTwinAreNotNamedToThePlayer() =
+        runTest {
+            // Профиль, статистика, задания ревью и локальные оценки вернутся после входа: снимать их
+            // надо, а спрашивать про них не о чем.
+            db.userProfileDao().upsert(userProfile(previous))
+            db.userStatsDao().upsert(userStats(previous))
+            db.reviewAssignmentDao().insertAll(listOf(reviewAssignment(previous)))
+            db.lessonRatingLocalDao().upsert(LessonRatingSubmittedLocalEntity(previous, "lesson-1", 1L))
+            db.lessonAttemptDao().upsert(lessonAttempt(previous))
+
+            assertTrue("названо только то, чего сервер не хранит", traces.lossesOf(previous).isEmpty())
+            assertEquals("но забыть его всё равно есть кому", listOf(previous), traces.ownersWithTraces())
+        }
 
     private suspend fun cursorOf(collectionId: String): SyncCursor? = syncState.find(collectionId)?.toCursor()
 
@@ -316,6 +338,27 @@ class OwnerTracesPersistenceTest {
         db.lessonRatingLocalDao().upsert(LessonRatingSubmittedLocalEntity(owner, "lesson-1", 1L))
         // След прогона — такая же личная строка владельца, как остальные (история 4.2).
         db.syncRunTraceDao().recordSuccess(owner, SyncRunKind.CONTENT.column(), atMs = 1_000L)
+        db.mutationReceiptDao().persist(
+            MutationReceiptEntity(
+                owner,
+                "receipt-$owner",
+                "lesson_runner.SUBMIT_ATTEMPT",
+                "lesson_runner:attempt:attempt-$owner",
+                "{}",
+                1_000L,
+            ),
+        )
+        db.lessonAttemptDao().insertAttemptIntent(
+            LessonAttemptIntentEntity(
+                "attempt-$owner",
+                owner,
+                "intent-$owner",
+                "lesson_runner.SUBMIT_ATTEMPT",
+                "{}",
+                "lesson_runner:attempt:attempt-$owner",
+                null,
+            ),
+        )
         if (withQueueRow) store.enqueue(record("m-seed-$owner", owner))
     }
 

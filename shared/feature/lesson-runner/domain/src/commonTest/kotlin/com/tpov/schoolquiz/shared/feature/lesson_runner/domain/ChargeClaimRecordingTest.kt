@@ -30,7 +30,7 @@ class ChargeClaimRecordingTest {
         // Сервер сверяет длины: маска короче `codeAnswer` — испорченный payload, а не «без заявок».
         val state = ready()
 
-        assertEquals(state.codeAnswer.raw.length, state.chargeClaimsOrEmpty().raw.length)
+        assertEquals(requireNotNull(state.codeAnswer).raw.length, state.chargeClaimsOrEmpty().raw.length)
         assertEquals(false, state.chargeClaimsOrEmpty().hasClaims)
     }
 

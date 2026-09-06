@@ -4,10 +4,8 @@ import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeClock
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonAttemptRepository
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.selectSubset
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.submitAnswer
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.toServedQuestions
@@ -33,20 +31,15 @@ import kotlin.test.assertTrue
 class ServedQuestionsTest {
 
     private val attemptRepo = FakeLessonAttemptRepository()
-    private var idCounter = 0
-    private val idProvider = { AttemptId("attempt-${idCounter++}") }
 
     private val completeUseCase = CompleteAttemptUseCase(
         attemptRepository = attemptRepo,
-        ratingRepository = FakeLessonRatingRepository(),
         clock = FakeClock(),
-        attemptIdProvider = idProvider,
     )
 
     private val abortUseCase = AbortAttemptUseCase(
         attemptRepository = attemptRepo,
         clock = FakeClock(),
-        attemptIdProvider = idProvider,
     )
 
     private val lastSave: FakeLessonAttemptRepository.Save

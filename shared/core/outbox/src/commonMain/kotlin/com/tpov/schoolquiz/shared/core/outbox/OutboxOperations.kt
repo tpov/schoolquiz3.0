@@ -29,6 +29,12 @@ object OutboxOperations {
     /** Прохождение урока. Пространство имён владеющей фичи. */
     const val SUBMIT_ATTEMPT: String = "lesson_runner.SUBMIT_ATTEMPT"
 
+    /** Online-created box opening; retries resolve the same permanent server operation. */
+    const val OPEN_GIFT_BOX: String = "economy.OPEN_GIFT_BOX"
+
+    /** Shared by lifetime policy, transport classification and Room's parameterized queries. */
+    val permanentReceiptOperations: Set<String> = setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX)
+
     /** Оценка квеста, поставленная после урока. */
     const val SUBMIT_RATING: String = "lesson_runner.SUBMIT_RATING"
 

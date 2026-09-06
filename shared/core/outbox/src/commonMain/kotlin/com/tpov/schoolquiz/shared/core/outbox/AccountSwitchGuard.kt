@@ -76,6 +76,20 @@ class AccountSwitchGuard(
         }
     }
 
+    /** Sign-in and cleanup use the same pass mutex: no acknowledged old-owner write can race it. */
+    suspend fun switchAndForget(
+        previousUids: List<String>,
+        signIn: suspend () -> String,
+    ): String =
+        engine.withoutPasses {
+            val newUid = signIn()
+            previousUids.filter { it.isNotBlank() && it != newUid }.distinct().forEach { owner ->
+                store.forget(owner)
+                traces.forget(owner)
+            }
+            newUid
+        }
+
     /**
      * Кого предстоит забыть — по следам, а не по одной очереди.
      *

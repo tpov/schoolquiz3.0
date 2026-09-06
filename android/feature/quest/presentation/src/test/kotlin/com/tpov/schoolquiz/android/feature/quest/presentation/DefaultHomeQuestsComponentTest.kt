@@ -7,7 +7,6 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
-import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonAttemptRepository
@@ -15,18 +14,21 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonRep
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeThemeRepository
-import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxFailureReason
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpeningException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PendingGiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -53,7 +55,6 @@ import kotlin.test.assertTrue
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultHomeQuestsComponentTest {
-
     private val testScheduler = TestCoroutineScheduler()
     private val testDispatcher = UnconfinedTestDispatcher(testScheduler)
     private lateinit var lifecycle: LifecycleRegistry
@@ -82,6 +83,7 @@ class DefaultHomeQuestsComponentTest {
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
         profileRepo: FakeProfileRepository = FakeProfileRepository(),
         giftBoxRepo: FakeGiftBoxRepository = FakeGiftBoxRepository(),
+        authRepo: FakeAuthRepository = FakeAuthRepository(),
         onCatalogDrillDown: (CatalogId, String) -> Unit = { _, _ -> },
         onResumeLesson: (LessonId) -> Unit = {},
     ) = DefaultHomeQuestsComponent(
@@ -96,85 +98,96 @@ class DefaultHomeQuestsComponentTest {
         themeRepository = FakeThemeRepository(),
         sectionRepository = FakeSectionRepository(),
         questRepository = FakeQuestRepository(),
-        authRepository = FakeAuthRepository(),
+        authRepository = authRepo,
         mainContext = testDispatcher,
     )
 
     // ── AC#21 — catalogs from repository appear in state ─────────────────────
 
     @Test
-    fun `when observeCatalogs emits then state catalogs updated`() = runTest {
-        val catalogRepo = FakeCatalogRepository()
-        catalogRepo.emit(listOf(
-            buildCatalog(id = "cat1", name = "Catalog 1"),
-            buildCatalog(id = "cat2", name = "Catalog 2"),
-        ))
+    fun `when observeCatalogs emits then state catalogs updated`() =
+        runTest {
+            val catalogRepo = FakeCatalogRepository()
+            catalogRepo.emit(
+                listOf(
+                    buildCatalog(id = "cat1", name = "Catalog 1"),
+                    buildCatalog(id = "cat2", name = "Catalog 2"),
+                ),
+            )
 
-        val component = buildComponent(catalogRepo = catalogRepo)
+            val component = buildComponent(catalogRepo = catalogRepo)
 
-        val catalogs = component.state.value.catalogs
-        assertEquals(2, catalogs.size, "both catalogs must appear in state")
-        assertTrue(catalogs.any { it.id == CatalogId("cat1") })
-        assertTrue(catalogs.any { it.id == CatalogId("cat2") })
-    }
+            val catalogs = component.state.value.catalogs
+            assertEquals(2, catalogs.size, "both catalogs must appear in state")
+            assertTrue(catalogs.any { it.id == CatalogId("cat1") })
+            assertTrue(catalogs.any { it.id == CatalogId("cat2") })
+        }
 
     // ── AC#22 — archived catalog not in state ────────────────────────────────
 
     @Test
-    fun `when catalog is archived then it is not in state`() = runTest {
-        val catalogRepo = FakeCatalogRepository()
-        catalogRepo.emit(listOf(
-            buildCatalog(id = "active", archived = false),
-            buildCatalog(id = "archived", archived = true),
-        ))
+    fun `when catalog is archived then it is not in state`() =
+        runTest {
+            val catalogRepo = FakeCatalogRepository()
+            catalogRepo.emit(
+                listOf(
+                    buildCatalog(id = "active", archived = false),
+                    buildCatalog(id = "archived", archived = true),
+                ),
+            )
 
-        val component = buildComponent(catalogRepo = catalogRepo)
+            val component = buildComponent(catalogRepo = catalogRepo)
 
-        val catalogs = component.state.value.catalogs
-        assertEquals(1, catalogs.size, "archived catalog must be excluded")
-        assertEquals(CatalogId("active"), catalogs.first().id)
-    }
+            val catalogs = component.state.value.catalogs
+            assertEquals(1, catalogs.size, "archived catalog must be excluded")
+            assertEquals(CatalogId("active"), catalogs.first().id)
+        }
 
     @Test
-    fun `course catalogs are not shown in home`() = runTest {
-        val catalogRepo = FakeCatalogRepository()
-        catalogRepo.emit(listOf(
-            buildCatalog(id = "school", name = "Школа"),
-            buildCatalog(id = "courses", name = "Курсы", questType = QuestType.COURSE),
-        ))
+    fun `course catalogs are not shown in home`() =
+        runTest {
+            val catalogRepo = FakeCatalogRepository()
+            catalogRepo.emit(
+                listOf(
+                    buildCatalog(id = "school", name = "Школа"),
+                    buildCatalog(id = "courses", name = "Курсы", questType = QuestType.COURSE),
+                ),
+            )
 
-        val component = buildComponent(catalogRepo = catalogRepo)
+            val component = buildComponent(catalogRepo = catalogRepo)
 
-        val catalogs = component.state.value.catalogs
-        assertEquals(1, catalogs.size, "courses catalog is opened from archive, not home")
-        assertEquals(CatalogId("school"), catalogs.first().id)
-    }
+            val catalogs = component.state.value.catalogs
+            assertEquals(1, catalogs.size, "courses catalog is opened from archive, not home")
+            assertEquals(CatalogId("school"), catalogs.first().id)
+        }
 
     // ── Late catalog emission updates state reactively ────────────────────────
 
     @Test
-    fun `when catalog emitted after construction then state updates`() = runTest {
-        val catalogRepo = FakeCatalogRepository()
-        val component = buildComponent(catalogRepo = catalogRepo)
+    fun `when catalog emitted after construction then state updates`() =
+        runTest {
+            val catalogRepo = FakeCatalogRepository()
+            val component = buildComponent(catalogRepo = catalogRepo)
 
-        assertTrue(component.state.value.catalogs.isEmpty(), "initial state must be empty")
+            assertTrue(component.state.value.catalogs.isEmpty(), "initial state must be empty")
 
-        catalogRepo.emit(listOf(buildCatalog(id = "cat1")))
+            catalogRepo.emit(listOf(buildCatalog(id = "cat1")))
 
-        assertEquals(1, component.state.value.catalogs.size, "state must update on late emission")
-        assertEquals(CatalogId("cat1"), component.state.value.catalogs.first().id)
-    }
+            assertEquals(1, component.state.value.catalogs.size, "state must update on late emission")
+            assertEquals(CatalogId("cat1"), component.state.value.catalogs.first().id)
+        }
 
     // ── Empty catalog list → not stuck in loading ─────────────────────────────
 
     @Test
-    fun `when catalog list is empty then state is empty and not loading`() = runTest {
-        val component = buildComponent(catalogRepo = FakeCatalogRepository())
+    fun `when catalog list is empty then state is empty and not loading`() =
+        runTest {
+            val component = buildComponent(catalogRepo = FakeCatalogRepository())
 
-        val state = component.state.value
-        assertTrue(state.catalogs.isEmpty(), "empty store → empty catalog list")
-        assertFalse(state.isLoading, "must not be stuck in loading state on empty data")
-    }
+            val state = component.state.value
+            assertTrue(state.catalogs.isEmpty(), "empty store → empty catalog list")
+            assertFalse(state.isLoading, "must not be stuck in loading state on empty data")
+        }
 
     // ── HC-U-01 — onCatalogClick invokes onCatalogDrillDown lambda ─────────────
     // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md HC-U-01
@@ -182,22 +195,24 @@ class DefaultHomeQuestsComponentTest {
     // THEN lambda invoked with (CatalogId("cat-1"), "Mathematics")
 
     @Test
-    fun `when onCatalogClick called then onCatalogDrillDown lambda invoked with correct catalogId and catalogName`() = runTest {
-        var capturedId: CatalogId? = null
-        var capturedName: String? = null
+    fun `when onCatalogClick called then onCatalogDrillDown lambda invoked with correct catalogId and catalogName`() =
+        runTest {
+            var capturedId: CatalogId? = null
+            var capturedName: String? = null
 
-        val component = buildComponent(
-            onCatalogDrillDown = { id, name ->
-                capturedId = id
-                capturedName = name
-            },
-        )
+            val component =
+                buildComponent(
+                    onCatalogDrillDown = { id, name ->
+                        capturedId = id
+                        capturedName = name
+                    },
+                )
 
-        component.onCatalogClick(CatalogId("cat-1"), "Mathematics")
+            component.onCatalogClick(CatalogId("cat-1"), "Mathematics")
 
-        assertEquals(CatalogId("cat-1"), capturedId, "lambda must receive the clicked catalog id")
-        assertEquals("Mathematics", capturedName, "lambda must receive the name passed from UI")
-    }
+            assertEquals(CatalogId("cat-1"), capturedId, "lambda must receive the clicked catalog id")
+            assertEquals("Mathematics", capturedName, "lambda must receive the name passed from UI")
+        }
 
     // ── HC-U-02 — blank name is forwarded as-is ────────────────────────────────
     // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md HC-U-02
@@ -205,22 +220,24 @@ class DefaultHomeQuestsComponentTest {
     // THEN lambda invoked; capturedName == "" (screen resolves blank to localized fallback)
 
     @Test
-    fun `when onCatalogClick called with blank name then catalogName is forwarded unchanged`() = runTest {
-        var capturedId: CatalogId? = null
-        var capturedName: String? = null
+    fun `when onCatalogClick called with blank name then catalogName is forwarded unchanged`() =
+        runTest {
+            var capturedId: CatalogId? = null
+            var capturedName: String? = null
 
-        val component = buildComponent(
-            onCatalogDrillDown = { id, name ->
-                capturedId = id
-                capturedName = name
-            },
-        )
+            val component =
+                buildComponent(
+                    onCatalogDrillDown = { id, name ->
+                        capturedId = id
+                        capturedName = name
+                    },
+                )
 
-        component.onCatalogClick(CatalogId("cat-1"), "")
+            component.onCatalogClick(CatalogId("cat-1"), "")
 
-        assertEquals(CatalogId("cat-1"), capturedId, "lambda must receive the clicked id even if name is blank")
-        assertEquals("", capturedName, "blank name must be forwarded; the screen resolves the fallback label")
-    }
+            assertEquals(CatalogId("cat-1"), capturedId, "lambda must receive the clicked id even if name is blank")
+            assertEquals("", capturedName, "blank name must be forwarded; the screen resolves the fallback label")
+        }
 
     // ── HC-U-03 — lambda is only side-effect, no double invocation ────────────
     // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md HC-U-03
@@ -229,48 +246,109 @@ class DefaultHomeQuestsComponentTest {
     // THEN lambda invoked exactly once
 
     @Test
-    fun `when onCatalogClick called once then lambda invoked exactly once`() = runTest {
-        var invocationCount = 0
+    fun `when onCatalogClick called once then lambda invoked exactly once`() =
+        runTest {
+            var invocationCount = 0
 
-        val component = buildComponent(
-            onCatalogDrillDown = { _, _ -> invocationCount++ },
-        )
+            val component =
+                buildComponent(
+                    onCatalogDrillDown = { _, _ -> invocationCount++ },
+                )
 
-        component.onCatalogClick(CatalogId("cat-1"), "Mathematics")
+            component.onCatalogClick(CatalogId("cat-1"), "Mathematics")
 
-        assertEquals(1, invocationCount, "onCatalogDrillDown must be invoked exactly once per click")
-    }
-
-    @Test
-    fun `when profile has boxes then gift box count appears in state`() = runTest {
-        val profileRepo = FakeProfileRepository(UserProfile.offline().copy(boxCount = 2, boxStreakDays = 7))
-        val component = buildComponent(profileRepo = profileRepo)
-
-        assertEquals(2, component.state.value.giftBoxCount)
-        assertEquals(7, component.state.value.giftBoxStreakDays)
-    }
+            assertEquals(1, invocationCount, "onCatalogDrillDown must be invoked exactly once per click")
+        }
 
     @Test
-    fun `when gift box opened then state shows reward and remaining count`() = runTest {
-        val profileRepo = FakeProfileRepository(UserProfile.offline().copy(boxCount = 1))
-        val giftBoxRepo =
-            FakeGiftBoxRepository(
-                Result.success(
-                    GiftBoxOpening(
-                        reward = GiftBoxReward.Nolics(500),
-                        profileSynced = true,
-                        remainingBoxCount = 0,
+    fun `when profile has boxes then gift box count appears in state`() =
+        runTest {
+            val profileRepo = FakeProfileRepository(UserProfile.offline().copy(boxCount = 2, boxStreakDays = 7))
+            val component = buildComponent(profileRepo = profileRepo)
+
+            assertEquals(2, component.state.value.giftBoxCount)
+            assertEquals(7, component.state.value.giftBoxStreakDays)
+        }
+
+    @Test
+    fun `when gift box opened then state shows reward and remaining count`() =
+        runTest {
+            val profileRepo = FakeProfileRepository(UserProfile.offline().copy(boxCount = 1))
+            val giftBoxRepo =
+                FakeGiftBoxRepository(
+                    Result.success(
+                        GiftBoxOpening(
+                            reward = GiftBoxReward.Nolics(500),
+                            profileSynced = true,
+                            remainingBoxCount = 0,
+                        ),
                     ),
-                ),
-            )
-        val component = buildComponent(profileRepo = profileRepo, giftBoxRepo = giftBoxRepo)
+                )
+            val component = buildComponent(profileRepo = profileRepo, giftBoxRepo = giftBoxRepo)
 
-        component.onGiftBoxFabClick()
+            component.onGiftBoxFabClick()
 
-        val opening = component.state.value.giftBoxOpening as HomeGiftBoxOpeningState.Opened
-        assertEquals(GiftBoxReward.Nolics(500), opening.reward)
-        assertEquals(0, opening.remainingBoxCount)
-    }
+            val opening = component.state.value.giftBoxOpening as HomeGiftBoxOpeningState.Opened
+            assertEquals(GiftBoxReward.Nolics(500), opening.reward)
+            assertEquals(0, opening.remainingBoxCount)
+        }
+
+    @Test
+    fun `pending result is restored with zero boxes and only dismissal acknowledges it`() =
+        runTest {
+            val repo =
+                FakeGiftBoxRepository(
+                    Result.success(
+                        GiftBoxOpening(GiftBoxReward.Nolics(500), true, 0, "opening-1", "A"),
+                    ),
+                )
+            repo.pending.value = PendingGiftBoxOpening("opening-1", "A", true)
+            val component = buildComponent(giftBoxRepo = repo, authRepo = FakeAuthRepository("A"))
+            assertEquals(0, component.state.value.giftBoxCount)
+            assertTrue(component.state.value.hasPendingGiftBoxOpening)
+            assertTrue(component.state.value.giftBoxOpening is HomeGiftBoxOpeningState.Opened)
+            assertEquals(0, repo.opens)
+            assertEquals(emptyList(), repo.acknowledged)
+            component.onGiftBoxDismiss()
+            assertEquals(listOf("opening-1"), repo.acknowledged)
+            assertFalse(component.state.value.hasPendingGiftBoxOpening)
+        }
+
+    @Test
+    fun `dismissing uncertain result keeps recovery reachable at zero boxes`() =
+        runTest {
+            val repo =
+                FakeGiftBoxRepository(
+                    Result.failure(
+                        GiftBoxOpeningException(GiftBoxFailureReason.PENDING, "opening-1", "A"),
+                    ),
+                )
+            repo.pending.value = PendingGiftBoxOpening("opening-1", "A", false)
+            val component = buildComponent(giftBoxRepo = repo, authRepo = FakeAuthRepository("A"))
+            component.onGiftBoxDismiss()
+            assertTrue(component.state.value.hasPendingGiftBoxOpening)
+            assertEquals(null, component.state.value.giftBoxOpening)
+            component.onGiftBoxFabClick()
+            assertTrue(component.state.value.giftBoxOpening is HomeGiftBoxOpeningState.Failed)
+            assertEquals(0, repo.opens)
+        }
+
+    @Test
+    fun `component destruction never acknowledges an undisplayed or shown result`() =
+        runTest {
+            val repo =
+                FakeGiftBoxRepository(
+                    Result.success(
+                        GiftBoxOpening(GiftBoxReward.Nolics(500), true, 0, "opening-1", "A"),
+                    ),
+                )
+            repo.pending.value = PendingGiftBoxOpening("opening-1", "A", true)
+            buildComponent(giftBoxRepo = repo, authRepo = FakeAuthRepository("A"))
+            lifecycle.stop()
+            lifecycle.destroy()
+            assertEquals(emptyList(), repo.acknowledged)
+            assertEquals("opening-1", repo.pending.value?.openingId)
+        }
 }
 
 private class FakeProfileRepository(
@@ -292,5 +370,24 @@ private class FakeGiftBoxRepository(
     private val result: Result<GiftBoxOpening> =
         Result.failure(IllegalStateException("No gift boxes available")),
 ) : GiftBoxRepository {
-    override suspend fun openGiftBox(): Result<GiftBoxOpening> = result
+    val pending = MutableStateFlow<PendingGiftBoxOpening?>(null)
+    val acknowledged = mutableListOf<String>()
+    var opens = 0
+
+    override suspend fun openGiftBox(): Result<GiftBoxOpening> {
+        opens++
+        return result
+    }
+
+    override fun observePendingOpening(): Flow<PendingGiftBoxOpening?> = pending
+
+    override suspend fun resumePendingOpening(): Result<GiftBoxOpening>? = if (pending.value == null) null else result
+
+    override suspend fun acknowledgeOpening(openingId: String): Result<Boolean> {
+        val saved = pending.value ?: return Result.success(false)
+        if (!saved.receiptAvailable || saved.openingId != openingId) return Result.success(false)
+        acknowledged += openingId
+        pending.value = null
+        return Result.success(true)
+    }
 }

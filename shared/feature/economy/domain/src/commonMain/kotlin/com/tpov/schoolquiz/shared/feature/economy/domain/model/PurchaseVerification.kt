@@ -36,7 +36,7 @@ sealed interface PurchaseVerification {
  * for the log, not for a branch and not for the screen. Matching on text would break the moment a
  * message is reworded or the interface is translated, which is exactly why the code exists.
  *
- * The eleven named entries mirror `REASON_CODES` in `functions/purchase-verification.js` one for
+ * The named entries mirror `REASON_CODES` in `functions/purchase-verification.js` one for
  * one. [UNKNOWN] covers a code this build has not heard of yet — a newer server refusing for a
  * newer reason is still a refusal, and treating it as one is safer than treating it as a success.
  */
@@ -52,6 +52,7 @@ enum class PurchaseRefusalCode {
     CONSUMPTION_STATE_UNKNOWN,
     QUANTITY_UNREADABLE,
     REQUEST_INVALID,
+    PREMIUM_QUANTITY_UNSUPPORTED,
 
     /** The server named a reason this build does not know. Still a refusal. */
     UNKNOWN,

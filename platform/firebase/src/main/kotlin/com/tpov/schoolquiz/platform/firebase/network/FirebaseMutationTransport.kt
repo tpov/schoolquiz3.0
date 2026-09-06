@@ -1,10 +1,13 @@
 package com.tpov.schoolquiz.platform.firebase.network
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
+import com.tpov.schoolquiz.shared.core.outbox.MutationResponse
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
+import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import kotlinx.coroutines.tasks.await
 import java.io.IOException
@@ -24,19 +27,33 @@ class FirebaseMutationTransport(
     private val functions: FirebaseFunctions,
     private val networkMonitor: NetworkMonitor,
 ) : MutationTransport {
-    override suspend fun send(record: OutboxRecord): Result<Unit> {
+    override suspend fun send(record: OutboxRecord): Result<MutationResponse> {
         if (!networkMonitor.isOnline()) return Result.failure(SyncFailure(SyncError.NoNetwork))
         return try {
-            functions
-                .getHttpsCallable(SUBMIT_MUTATION)
-                .withAppTimeout()
-                .call(record.toPayload())
-                .await()
-            Result.success(Unit)
+            val response =
+                functions
+                    .getHttpsCallable(SUBMIT_MUTATION)
+                    .withAppTimeout()
+                    .call(record.toPayload())
+                    .await()
+            Result.success(MutationResponse(mutationResponseJson(response.data)))
         } catch (e: CancellationException) {
             // Отмена корутины — не неудача отправки, и подменять её ошибкой значит проглотить
             // остановку. Единственное, что отсюда бросается.
             throw e
+        } catch (e: FirebaseFunctionsException) {
+            Result.failure(
+                SyncFailure(
+                    mutationErrorForCode(
+                        record.operation,
+                        e.code.name,
+                        e.message,
+                        e.details,
+                        e.cause is IOException,
+                    ),
+                    e,
+                ),
+            )
         } catch (e: IOException) {
             Result.failure(SyncFailure(SyncError.NoNetwork, e))
         } catch (
@@ -71,5 +88,26 @@ class FirebaseMutationTransport(
         const val OPERATION = "operation"
         const val PAYLOAD = "payload"
         const val EXPECTED_VERSION = "expectedVersion"
+    }
+}
+
+/** A permission/deployment/auth problem must not silently roll back a held financial attempt.
+ * Persistent failures require explicit user cancellation/recovery; only structurally invalid
+ * payloads are terminal. The distinction is the SDK code, never the error message text.
+ */
+internal fun mutationErrorForCode(
+    operation: String,
+    code: String,
+    message: String?,
+    details: Any?,
+    causedByIo: Boolean = false,
+): SyncError {
+    val mapped = syncErrorForCode(code, message, details, causedByIo)
+    return if (operation in OutboxOperations.permanentReceiptOperations && mapped is SyncError.Refused &&
+        code != "INVALID_ARGUMENT" && code != "OUT_OF_RANGE"
+    ) {
+        SyncError.Unknown()
+    } else {
+        mapped
     }
 }

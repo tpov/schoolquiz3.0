@@ -36,7 +36,7 @@ data class ServedQuestion(
  * dealt in. Only [RunnerQuestion.Valid] can be dealt, which is what keeps the `-1` placeholder
  * index of an unparsed question out of this list.
  */
-fun List<RunnerQuestion.Valid>.toServedQuestions(): List<ServedQuestion> {
+fun List<RunnerQuestion.Playable>.toServedQuestions(): List<ServedQuestion> {
     val served =
         map { ServedQuestion(questionId = it.sourceId, codeAnswerIndex = it.codeAnswerIndex) }
             .sortedBy { it.codeAnswerIndex }

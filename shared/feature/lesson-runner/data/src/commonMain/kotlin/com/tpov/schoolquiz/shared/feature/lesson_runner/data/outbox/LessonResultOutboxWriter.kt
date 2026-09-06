@@ -10,9 +10,13 @@ import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
 import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRating
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
@@ -30,6 +34,9 @@ import kotlinx.serialization.json.put
  * и дочитывать что-то в момент отправки уже нельзя — движок в `payload` не смотрит.
  */
 interface LessonResultOutboxWriter {
+    /** Raw-only wire body: absence of numeric scores means unknown, never zero. */
+    suspend fun buildUnscoredAttemptRow(intent: UnscoredTerminalIntent): OutboxEntity? = null
+
     /**
      * Строка очереди для прохождения вместе с ответами, которые к нему относятся, и списком
      * вопросов, сданных в порядок показа.
@@ -48,9 +55,10 @@ interface LessonResultOutboxWriter {
         answers: List<QuestionAnswerEntity> = emptyList(),
         served: List<ServedQuestion>? = null,
         claims: ChargeClaimMask? = null,
+        completionKind: AttemptCompletionKind? = null,
     ): OutboxEntity? = null
 
-    /** Строка очереди для оценки квеста. */
+    /** Строка очереди для оценки урока; attemptId позволяет серверу проверить завершение. */
     suspend fun buildRatingRow(rating: LessonRating): OutboxEntity? = null
 
     companion object {
@@ -66,11 +74,53 @@ class RoomLessonResultOutboxWriter(
     private val questDao: QuestDao,
     private val clock: Clock,
 ) : LessonResultOutboxWriter {
+    override suspend fun buildUnscoredAttemptRow(intent: UnscoredTerminalIntent): OutboxEntity {
+        // The ordinary raw route currently has no charge protocol; ticket binding is a later route.
+        require(intent.identity.mode == com.tpov.schoolquiz.shared.core.question_schema.Difficulty.HARD)
+        require(!intent.claims.hasClaims) { "Raw legacy HARD cannot claim unbacked charges" }
+        val context = resolveContentContext(intent.identity.lessonId.value)
+        val payload = buildJsonObject {
+            put("attemptId", intent.identity.id.value)
+            put("userId", intent.identity.userId)
+            putContext(context)
+            put("lessonVersion", intent.identity.lessonVersion)
+            put("difficulty", intent.identity.mode.name)
+            put("completionKind", intent.completionKind.name)
+            put("completedAtMs", intent.endedAtMs)
+            put("createdAtMs", intent.endedAtMs)
+            put("answers", buildJsonArray {
+                intent.answers.forEach { answer -> add(buildJsonObject {
+                    put("questionId", answer.questionId.value)
+                    put("codeAnswerIndex", answer.codeAnswerIndex)
+                    put("answerPayload", rawAnswerJson.encodeToString(UserAnswer.serializer(), answer.answer))
+                    put("answeredAtMs", answer.answeredAtMs)
+                    put("durationMs", answer.durationMs)
+                    put("wasTimeout", answer.wasTimeout)
+                }) }
+            })
+            put("served", buildJsonArray {
+                intent.served.forEach { question -> add(buildJsonObject {
+                    put("questionId", question.questionId.value)
+                    put("codeAnswerIndex", question.codeAnswerIndex)
+                }) }
+            })
+        }
+        return row(
+            operation = OutboxOperations.SUBMIT_ATTEMPT,
+            sourceId = intent.identity.id.value,
+            ownerUid = intent.identity.userId,
+            entityRef = LessonResultEntityRef.attempt(intent.identity.id.value),
+            payload = payload.toString(),
+            createdAtMs = intent.endedAtMs,
+        )
+    }
+
     override suspend fun buildAttemptRow(
         attempt: Attempt,
         answers: List<QuestionAnswerEntity>,
         served: List<ServedQuestion>?,
         claims: ChargeClaimMask?,
+        completionKind: AttemptCompletionKind?,
     ): OutboxEntity {
         served?.let { requireConsistent(attempt, answers, it) }
         val context = resolveContentContext(attempt.lessonId.value)
@@ -86,6 +136,8 @@ class RoomLessonResultOutboxWriter(
                 put("percentScore", attempt.percentScore.raw)
                 put("completedAtMs", attempt.completedAt)
                 put("createdAtMs", createdAtMs)
+                // Missing in old payloads means unknown, never implicitly COMPLETED.
+                completionKind?.let { put("completionKind", it.name) }
                 // Ключ только когда заявки есть: попытка без них обязана выглядеть на сервере ровно
                 // так же, как выглядела до появления маски.
                 claims?.takeIf { it.hasClaims }?.let { put("chargeClaims", it.raw) }
@@ -141,6 +193,7 @@ class RoomLessonResultOutboxWriter(
         val payload =
             buildJsonObject {
                 put("ratingId", rating.id.value)
+                rating.attemptId?.let { put("attemptId", it.value) }
                 put("userId", rating.userId)
                 putContext(context)
                 put("lessonVersion", rating.lessonVersion)
@@ -278,3 +331,5 @@ private const val PRIVATE_SCOPE = "private"
 private const val ARENA_SHELF = "arena"
 private const val HOME_SHELF = "home"
 private const val ARCHIVE_SHELF = "archive"
+
+private val rawAnswerJson = Json { encodeDefaults = true }

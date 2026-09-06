@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeAuthRepository
@@ -15,6 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 /**
  * A question whose answer key has been removed fails by its own name.
@@ -47,6 +50,7 @@ class RedactedQuestionTest {
         authRepository = authRepo,
         clock = clock,
         randomSeedProvider = { 12345L },
+        attemptIdProvider = { AttemptId("start-attempt") },
     )
 
     // ── Matrix row: every question redacted ──────────────────────────────────
@@ -103,15 +107,13 @@ class RedactedQuestionTest {
             result.playOrder.map { it.sourceId.value }.sorted(),
             "only the questions that kept their answer key are offered",
         )
-        assertEquals("00", result.codeAnswer.raw, "the code is sized to the playable pool")
+        assertEquals("00", requireNotNull(result.codeAnswer).raw, "the code is sized to the playable pool")
     }
 
     // ── Matrix row: some redacted, none playable for this difficulty ─────────
 
     @Test
-    fun `a redacted hard question is why hard is unplayable`() = runTest {
-        // The easy question is readable and fine; it is simply not what was opened. The hard pool is
-        // empty because the one hard question had its answer key removed, so that is what is said.
+    fun `a redacted hard question starts a raw server-scored attempt`() = runTest {
         lessonRepo.addLesson(makeLesson(id = "lesson1"))
         val easyPlayable = makeQuestion(id = "q1", order = 0)
         val redactedHard = makeQuestion(id = "q2", order = 1)
@@ -121,8 +123,40 @@ class RedactedQuestionTest {
 
         val result = startUseCase(LessonId("lesson1"), Difficulty.HARD)
 
-        assertIs<RunnerState.InitFailed>(result)
-        assertEquals(InitFailureReason.RedactedNotSupported, result.reason)
+        assertIs<RunnerState.Ready>(result)
+        assertNull(result.codeAnswer)
+        assertEquals(listOf("q2"), result.playOrder.map { it.sourceId.value })
+        assertTrue(result.answers.isEmpty() && result.rawAnswers.isEmpty())
+    }
+
+    @Test
+    fun `mixed hard pool keeps both public and keyed questions but no local score`() = runTest {
+        lessonRepo.addLesson(makeLesson(id = "lesson1"))
+        val keyed = makeQuestion(id = "q1", order = 0)
+        val public = makeQuestion(id = "q2", order = 1)
+        parser.addResponse(keyed.payload, singleChoiceContent(difficulty = Difficulty.HARD))
+        parser.addRedacted(public.payload, redactedOrderingContent(difficulty = "HARD"))
+        questionRepo.setQuestions(listOf(keyed, public))
+        val result = assertIs<RunnerState.Ready>(startUseCase(LessonId("lesson1"), Difficulty.HARD))
+        assertEquals(listOf("q1", "q2"), result.playOrder.map { it.sourceId.value }.sorted())
+        assertEquals(listOf(0, 1), result.playOrder.map { it.codeAnswerIndex }.sorted())
+        assertNull(result.codeAnswer)
+    }
+
+    @Test
+    fun `public hard subset remains deterministic and keeps full pool positions`() = runTest {
+        lessonRepo.addLesson(makeLesson(id = "lesson1"))
+        val questions = (0 until 30).map { makeQuestion(id = "q$it", order = it) }
+        questions.forEach { parser.addRedacted(it.payload, redactedSingleChoiceContent(difficulty = "HARD")) }
+        questionRepo.setQuestions(questions)
+        val first = assertIs<RunnerState.Ready>(startUseCase(LessonId("lesson1"), Difficulty.HARD))
+        val second = assertIs<RunnerState.Ready>(startUseCase(LessonId("lesson1"), Difficulty.HARD))
+        assertEquals(30, first.eligibleSize)
+        assertEquals(20, first.playOrder.size)
+        assertEquals(first.playOrder, second.playOrder)
+        assertEquals(20, first.playOrder.map { it.sourceId }.toSet().size)
+        first.playOrder.forEach { assertEquals(it.order, it.codeAnswerIndex) }
+        assertNull(first.codeAnswer)
     }
 
     // ── The difficulty scoping: a redacted question must explain *this* pool ──

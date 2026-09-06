@@ -7,6 +7,8 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Runn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.TemplatePart
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionDisplay
+import com.tpov.schoolquiz.shared.core.question_schema.RedactedQuestionContent
 import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
@@ -35,11 +37,67 @@ fun RunnerState.Ready.toQuestionUiState(lives: Int? = null): RunnerUiState.Quest
         deadlineMs = deadlineMs,
         isPaused = isPaused,
         isHard = mode == Difficulty.HARD,
-        revealCorrect = sessionMode.revealsCorrectAnswer(mode),
+        revealCorrect = codeAnswer != null && sessionMode.revealsCorrectAnswer(mode),
         showExitConfirmDialog = false,
         currentDraft = currentDraftAnswer,
         lives = lives,
+        serverScored = codeAnswer == null,
     )
+}
+
+fun QuestionDisplay.toQuestionUiState(
+    draft: UserAnswerDraft? = null,
+    shuffleSeed: Long? = null,
+): QuestionUiState = when (this) {
+    is QuestionContent -> toQuestionUiState(draft, shuffleSeed)
+    is RedactedQuestionContent -> toPublicQuestionUiState(draft, shuffleSeed)
+    else -> error("Unsupported public question display")
+}
+
+private fun RedactedQuestionContent.toPublicQuestionUiState(
+    draft: UserAnswerDraft?,
+    shuffleSeed: Long?,
+): QuestionUiState {
+    val safeImage = imageUrl?.takeIf { it.startsWith("https://") }
+    return when (this) {
+        is RedactedQuestionContent.SingleChoice -> QuestionUiState.SingleChoice(
+            questionText = text, hasImage = !imageUrl.isNullOrEmpty(), imageUrl = safeImage,
+            options = options.map { OptionUi(it.id, it.text) }.shuffledForDisplay(shuffleSeed, SINGLE_CHOICE_SHUFFLE_SALT),
+            selectedOptionId = (draft as? UserAnswerDraft.SingleChoiceDraft)?.selected?.raw,
+            hasLocalAnswerKey = false,
+        )
+        is RedactedQuestionContent.MultipleChoice -> QuestionUiState.MultipleChoice(
+            questionText = text, hasImage = !imageUrl.isNullOrEmpty(), imageUrl = safeImage,
+            options = options.map { OptionUi(it.id, it.text) }.shuffledForDisplay(shuffleSeed, MULTIPLE_CHOICE_SHUFFLE_SALT),
+            selectedIds = (draft as? UserAnswerDraft.MultipleChoiceDraft)?.selected?.map { it.raw }?.toSet().orEmpty(),
+            hasLocalAnswerKey = false,
+        )
+        is RedactedQuestionContent.Ordering -> {
+            val byId = items.associateBy { it.id }
+            val draftIds = (draft as? UserAnswerDraft.OrderingDraft)?.order?.map { it.raw }
+            val displayItems = if (draftIds != null && draftIds.size == items.size && draftIds.toSet() == byId.keys) {
+                draftIds.map { id -> OptionUi(id, byId.getValue(id).text) }
+            } else items.map { OptionUi(it.id, it.text) }.shuffledForDisplay(shuffleSeed, ORDERING_SHUFFLE_SALT)
+            QuestionUiState.Ordering(
+                questionText = text, hasImage = !imageUrl.isNullOrEmpty(), imageUrl = safeImage,
+                items = displayItems, hasLocalAnswerKey = false,
+            )
+        }
+        is RedactedQuestionContent.FillBlank -> {
+            val candidateById = candidates.associateBy { it.id }
+            val filled = (draft as? UserAnswerDraft.FillBlankDraft)?.filled?.mapNotNull { (id, candidate) ->
+                val index = blanks.indexOf(id.raw).takeIf { it >= 0 } ?: return@mapNotNull null
+                val label = candidateById[candidate?.raw]?.text ?: return@mapNotNull null
+                index to label
+            }?.toMap().orEmpty()
+            QuestionUiState.FillBlank(
+                questionText = text, hasImage = !imageUrl.isNullOrEmpty(), imageUrl = safeImage,
+                templateParts = parseTemplatePartsFromIds(text, blanks), filledValues = filled,
+                candidates = candidates.map { OptionUi(it.id, it.text) }.shuffledForDisplay(shuffleSeed, FILL_BLANK_SHUFFLE_SALT),
+                hasLocalAnswerKey = false,
+            )
+        }
+    }
 }
 
 fun QuestionContent.toQuestionUiState(
@@ -184,13 +242,15 @@ fun DomainSaveError.toEventSaveError(): SaveError =
 private fun parseTemplateParts(
     text: String,
     blanks: List<ContentBlank>,
-): List<TemplatePart> {
+): List<TemplatePart> = parseTemplatePartsFromIds(text, blanks.map { it.id.raw })
+
+private fun parseTemplatePartsFromIds(text: String, blanks: List<String>): List<TemplatePart> {
     val segments = text.split("___")
     val result = mutableListOf<TemplatePart>()
     segments.forEachIndexed { idx, segment ->
         if (segment.isNotEmpty()) result.add(TemplatePart.Text(segment))
         if (idx < segments.size - 1 && idx < blanks.size) {
-            result.add(TemplatePart.Blank(index = idx, placeholder = "___", blankId = blanks[idx].id.raw))
+            result.add(TemplatePart.Blank(index = idx, placeholder = "___", blankId = blanks[idx]))
         }
     }
     if (result.isEmpty()) result.add(TemplatePart.Text(text))

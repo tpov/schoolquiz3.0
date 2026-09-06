@@ -63,6 +63,7 @@ internal fun buildHintDraft(qState: QuestionUiState): UserAnswerDraft? =
 /** Null unless the correct option is known and is one the player can actually see. */
 @Suppress("ReturnCount")
 internal fun QuestionUiState.SingleChoice.hintDraft(): UserAnswerDraft.SingleChoiceDraft? {
+    if (!hasLocalAnswerKey) return null
     val correctId = correctOptionId ?: return null
     if (options.none { it.id == correctId }) return null
     return UserAnswerDraft.SingleChoiceDraft(OptionId(correctId))
@@ -71,6 +72,7 @@ internal fun QuestionUiState.SingleChoice.hintDraft(): UserAnswerDraft.SingleCho
 /** Null unless there is a correct set and every id in it is on screen. */
 @Suppress("ReturnCount")
 internal fun QuestionUiState.MultipleChoice.hintDraft(): UserAnswerDraft.MultipleChoiceDraft? {
+    if (!hasLocalAnswerKey) return null
     if (correctIds.isEmpty()) return null
     val onScreen = options.map { it.id }.toSet()
     if (correctIds.any { it !in onScreen }) return null
@@ -86,6 +88,7 @@ internal fun QuestionUiState.MultipleChoice.hintDraft(): UserAnswerDraft.Multipl
  */
 @Suppress("ReturnCount")
 internal fun QuestionUiState.Ordering.hintDraft(): UserAnswerDraft.OrderingDraft? {
+    if (!hasLocalAnswerKey) return null
     if (correctOrderIds.isEmpty()) return null
     if (correctOrderIds.size != items.size) return null
     if (correctOrderIds.toSet() != items.map { it.id }.toSet()) return null
@@ -106,6 +109,7 @@ internal fun QuestionUiState.Ordering.hintDraft(): UserAnswerDraft.OrderingDraft
  */
 @Suppress("ReturnCount")
 internal fun QuestionUiState.FillBlank.hintDraft(): UserAnswerDraft.FillBlankDraft? {
+    if (!hasLocalAnswerKey) return null
     val blanks = templateParts.filterIsInstance<TemplatePart.Blank>()
     if (blanks.isEmpty()) return null
     if (blanks.size != correctCandidateIdsByBlankIndex.size) return null

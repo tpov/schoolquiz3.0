@@ -14,6 +14,8 @@ data class LessonRating(
     val lessonVersion: Long,
     val rating: Int,
     val ratedAt: Long,
+    /** Completion proof for the new queued payload; null only for historical/fake callers. */
+    val attemptId: AttemptId? = null,
 ) {
     init {
         require(userId.isNotBlank()) { "LessonRating.userId must not be blank" }

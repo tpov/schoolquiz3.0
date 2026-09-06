@@ -11,9 +11,9 @@ import kotlin.test.assertTrue
  * ведут ровно три дороги — порог попыток, отказ сервера и предельный возраст.
  */
 class OutboxPolicyTest {
-
     private val limits = OutboxLimits()
     private val policy = OutboxPolicy(limits)
+
     // Заведомо больше предельного возраста записи, иначе «сейчас минус возраст» уходит в минус.
     private val now = 30L * 24 * 60 * 60 * 1000
 

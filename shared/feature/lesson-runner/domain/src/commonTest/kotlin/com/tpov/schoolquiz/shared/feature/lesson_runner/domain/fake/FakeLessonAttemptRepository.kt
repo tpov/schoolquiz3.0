@@ -1,21 +1,31 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake
 
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 class FakeLessonAttemptRepository : LessonAttemptRepository {
+    val rawIntents = mutableListOf<UnscoredTerminalIntent>()
+
+    override suspend fun saveUnscored(intent: UnscoredTerminalIntent): Result<Unit> {
+        if (saveResult.isSuccess) rawIntents += intent
+        return saveResult
+    }
 
     /** One call to the three-argument save — everything the use cases hand the repository. */
     data class Save(
         val attempt: Attempt,
         val answers: List<AnsweredQuestion>,
         val served: List<ServedQuestion>,
+        val completionKind: AttemptCompletionKind? = null,
     )
 
     private val stored = MutableStateFlow<List<Attempt>>(emptyList())
@@ -32,9 +42,24 @@ class FakeLessonAttemptRepository : LessonAttemptRepository {
         attempt: Attempt,
         answers: List<AnsweredQuestion>,
         served: List<ServedQuestion>,
+    ): Result<Unit> = persist(attempt, answers, served, completionKind = null)
+
+    override suspend fun save(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+        served: List<ServedQuestion>,
+        claims: ChargeClaimMask?,
+        completionKind: AttemptCompletionKind,
+    ): Result<Unit> = persist(attempt, answers, served, completionKind)
+
+    private fun persist(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+        served: List<ServedQuestion>,
+        completionKind: AttemptCompletionKind?,
     ): Result<Unit> {
         saveCallCount++
-        lastSave = Save(attempt, answers, served)
+        lastSave = Save(attempt, answers, served, completionKind)
         if (saveResult.isSuccess) {
             stored.value = stored.value + attempt
         }

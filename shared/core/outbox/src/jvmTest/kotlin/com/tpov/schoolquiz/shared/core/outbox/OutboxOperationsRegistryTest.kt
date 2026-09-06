@@ -23,7 +23,6 @@ import kotlin.test.assertTrue
  * Поэтому реестр читается текстом. JVM-тест, а не общий: файл с диска общий код не видит.
  */
 class OutboxOperationsRegistryTest {
-
     private val source: String by lazy {
         val file = File("../../../functions/index.js")
         assertTrue(file.exists(), "нет приёмника мутаций: ${file.absolutePath}")
@@ -49,6 +48,7 @@ class OutboxOperationsRegistryTest {
         setOf(
             OutboxOperations.UNLOCK_LESSON,
             OutboxOperations.SUBMIT_ATTEMPT,
+            OutboxOperations.OPEN_GIFT_BOX,
             OutboxOperations.SUBMIT_RATING,
             OutboxOperations.SUBMIT_ARENA,
             OutboxOperations.SUBMIT_REVIEW,
@@ -82,10 +82,11 @@ class OutboxOperationsRegistryTest {
     fun `given the registry then no key is spelled as a bare identifier the file redefines`() {
         // `UNLOCK_LESSON:` — литерал, и работает; `[UNLOCK_LESSON]:` — импортированная константа
         // со значением "lesson", и не работает. Разница в двух скобках.
-        val computed = Regex("""^\s{2}\[[A-Za-z0-9_.]+]:""", RegexOption.MULTILINE)
-            .findAll(source.substringAfter("const MUTATION_HANDLERS = {").substringBefore("\n};"))
-            .map { it.value.trim() }
-            .toList()
+        val computed =
+            Regex("""^\s{2}\[[A-Za-z0-9_.]+]:""", RegexOption.MULTILINE)
+                .findAll(source.substringAfter("const MUTATION_HANDLERS = {").substringBefore("\n};"))
+                .map { it.value.trim() }
+                .toList()
 
         assertEquals(emptyList(), computed, "ключ реестра, посчитанный из переменной: $computed")
     }

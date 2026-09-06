@@ -55,7 +55,7 @@ class AnsweredQuestionRecordingTest {
 
         val answered = next.answers.single()
         assertEquals(9, answered.score.raw)
-        assertEquals('9', next.codeAnswer.raw[answered.codeAnswerIndex])
+        assertEquals('9', requireNotNull(next.codeAnswer).raw[answered.codeAnswerIndex])
     }
 
     @Test

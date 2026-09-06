@@ -20,7 +20,6 @@ import kotlin.test.assertTrue
  * объявление — это не запись в таблице.
  */
 class OutboxOperationProducersTest {
-
     private val repoRoot = File("../../../")
 
     /** Имя константы и её значение: имя нужно, чтобы найти обращение через `OutboxOperations.`. */
@@ -28,6 +27,7 @@ class OutboxOperationProducersTest {
         listOf(
             "UNLOCK_LESSON" to OutboxOperations.UNLOCK_LESSON,
             "SUBMIT_ATTEMPT" to OutboxOperations.SUBMIT_ATTEMPT,
+            "OPEN_GIFT_BOX" to OutboxOperations.OPEN_GIFT_BOX,
             "SUBMIT_RATING" to OutboxOperations.SUBMIT_RATING,
             "SUBMIT_ARENA" to OutboxOperations.SUBMIT_ARENA,
             "SUBMIT_REVIEW" to OutboxOperations.SUBMIT_REVIEW,

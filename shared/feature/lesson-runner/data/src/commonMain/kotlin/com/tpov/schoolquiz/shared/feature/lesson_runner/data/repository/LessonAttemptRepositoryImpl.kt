@@ -11,9 +11,12 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResult
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.SpacedRepetition
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.map
 
 class LessonAttemptRepositoryImpl(
@@ -21,6 +24,14 @@ class LessonAttemptRepositoryImpl(
     private val outboxWriter: LessonResultOutboxWriter = LessonResultOutboxWriter.NoOp,
     private val repetitionDao: QuestionRepetitionDao? = null,
 ) : LessonAttemptRepository {
+    override suspend fun saveUnscored(intent: UnscoredTerminalIntent): Result<Unit> =
+        runCatching {
+            val row = checkNotNull(outboxWriter.buildUnscoredAttemptRow(intent)) {
+                "Raw attempt requires a configured outbox writer"
+            }
+            attemptDao.saveUnscoredAttemptIntent(intent.identity.id.value, intent.identity.userId, row)
+        }.onFailure { if (it is CancellationException) throw it }
+
     override suspend fun save(attempt: Attempt): Result<Unit> =
         persist(attempt, emptyList(), served = null, claims = null)
 
@@ -42,6 +53,14 @@ class LessonAttemptRepositoryImpl(
         claims: ChargeClaimMask?,
     ): Result<Unit> = persist(attempt, answers, served, claims)
 
+    override suspend fun save(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+        served: List<ServedQuestion>,
+        claims: ChargeClaimMask?,
+        completionKind: AttemptCompletionKind,
+    ): Result<Unit> = persist(attempt, answers, served, claims, completionKind)
+
     /**
      * [served] is null only through the two fake-only conveniences above: they queue a body without
      * the key, which the server reads as "unknown" rather than as "nothing was shown".
@@ -51,6 +70,7 @@ class LessonAttemptRepositoryImpl(
         answers: List<AnsweredQuestion>,
         served: List<ServedQuestion>?,
         claims: ChargeClaimMask?,
+        completionKind: AttemptCompletionKind? = null,
     ): Result<Unit> =
         runCatching {
             val answerEntities = answers.map { it.toEntity(attempt) }
@@ -58,7 +78,7 @@ class LessonAttemptRepositoryImpl(
             // Resolved before the transaction because it reads the lesson's ancestors; the row itself
             // is written inside it, so the attempt can never be saved without being queued. The served
             // list goes only into that row: the attempt row keeps its shape.
-            val outboxRow = outboxWriter.buildAttemptRow(attempt, answerEntities, served, claims)
+            val outboxRow = outboxWriter.buildAttemptRow(attempt, answerEntities, served, claims, completionKind)
 
             attemptDao.saveAttemptWithAnswers(
                 attempt = attempt.toEntity(),
@@ -66,6 +86,8 @@ class LessonAttemptRepositoryImpl(
                 repetitions = repetitionEntities,
                 outboxRow = outboxRow,
             )
+        }.onFailure { error ->
+            if (error is CancellationException) throw error
         }
 
     /**

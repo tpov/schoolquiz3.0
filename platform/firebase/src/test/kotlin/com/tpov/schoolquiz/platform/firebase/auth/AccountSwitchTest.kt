@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.platform.firebase.push.DeviceTokenRelease
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.outbox.AccountSwitchGuard
+import com.tpov.schoolquiz.shared.core.outbox.MutationResponse
 import com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect
 import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
@@ -13,6 +14,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxPolicy
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRemainder
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRemainderSource
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.outbox.OwnerDataKind
@@ -43,7 +45,6 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AccountSwitchTest {
-
     private val previous = "uid-A"
     private val arrived = "uid-B"
 
@@ -60,11 +61,14 @@ class AccountSwitchTest {
             store = store,
             transport = { record ->
                 log += "send:${record.mutationId}"
-                transport(record)
+                transport(record).map { MutationResponse("{}") }
             },
             clock = { now },
             onQuarantined = NoLocalEffect(),
+            receipts = FakeMutationReceiptStore(),
+            sessions = { OutboxSession(previous, 0) },
         )
+
     /**
      * Личные следы вне очереди: кто их оставил и что именно потеряет.
      *
@@ -127,18 +131,19 @@ class AccountSwitchTest {
     )
 
     @Test
-    fun `given the queue drains then the switch completes at once and the traces go after the sign-in`() = runTest {
-        store.seed(record(1))
+    fun `given the queue drains then the switch completes at once and the traces go after the sign-in`() =
+        runTest {
+            store.seed(record(1))
 
-        val outcome = switch.begin(previous, signIn())
+            val outcome = switch.begin(previous, signIn())
 
-        assertEquals(GoogleLinkOutcome.Switched, outcome)
-        assertEquals(
-            listOf("send:m-1", "release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"),
-            log,
-        )
-        assertFalse(switch.hasPending)
-    }
+            assertEquals(GoogleLinkOutcome.Switched, outcome)
+            assertEquals(
+                listOf("send:m-1", "release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"),
+                log,
+            )
+            assertFalse(switch.hasPending)
+        }
 
     @Test
     fun `given something stays unsent then nothing is signed in or removed and the question carries the numbers`() =
@@ -165,114 +170,123 @@ class AccountSwitchTest {
         }
 
     @Test
-    fun `given only a conflict is left then the switch still stops and asks`() = runTest {
-        // Пока остаток считался выборкой «что поедет», такой игрок входил в чужой аккаунт без
-        // единого вопроса, а его конфликтная правка исчезала молча.
-        store.seed(record(1, state = OutboxState.CONFLICT))
+    fun `given only a conflict is left then the switch still stops and asks`() =
+        runTest {
+            // Пока остаток считался выборкой «что поедет», такой игрок входил в чужой аккаунт без
+            // единого вопроса, а его конфликтная правка исчезала молча.
+            store.seed(record(1, state = OutboxState.CONFLICT))
 
-        val outcome = switch.begin(previous, signIn())
+            val outcome = switch.begin(previous, signIn())
 
-        val loss = (outcome as GoogleLinkOutcome.SwitchAwaitsConsent).loss
-        assertEquals(1, loss.conflicted)
-        assertTrue(log.none { it == "signIn" })
-        assertTrue(switch.hasPending)
-    }
-
-    @Test
-    fun `given no session but rows of the previous owner then the switch asks and later forgets him`() = runTest {
-        // `auth.currentUser == null` приходит сюда пустой строкой. Прежний владелец при этом есть —
-        // его знает очередь, и его строки обязаны быть сняты после входа.
-        store.seed(record(1, state = OutboxState.QUARANTINED))
-
-        val outcome = switch.begin("", signIn())
-
-        assertEquals(1, (outcome as GoogleLinkOutcome.SwitchAwaitsConsent).loss.quarantined)
-        assertTrue("без сессии сливать некому", log.isEmpty())
-
-        switch.confirm()
-
-        assertEquals(
-            listOf("release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"),
-            log,
-        )
-    }
-
-    @Test
-    fun `given the player declines then the previous account stays and nothing is touched`() = runTest {
-        store.seed(record(1))
-        transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
-        switch.begin(previous, signIn())
-        log.clear()
-
-        switch.decline()
-
-        assertTrue(log.isEmpty())
-        assertEquals(1, store.countPending(previous))
-        assertFalse(switch.hasPending)
-        // И очередь продолжает обрабатываться под прежним владельцем — как только пройдёт пауза,
-        // которую поставила неудачная попытка: отказ игрока запись не тронул, она просто ждёт.
-        transport = { Result.success(Unit) }
-        now += OutboxPolicy().backoffMs(1) + 1
-        val summary = engine.drain(previous)
-        assertEquals(1, summary.sent)
-    }
-
-    @Test
-    fun `given the player confirms then the order is sign-in, queue, traces`() = runTest {
-        store.seed(record(1))
-        transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
-        switch.begin(previous, signIn())
-        log.clear()
-
-        val outcome = switch.confirm()
-
-        assertEquals(GoogleLinkOutcome.Switched, outcome)
-        assertEquals(listOf("release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"), log)
-        assertEquals(0, store.countPending(previous))
-        assertFalse(switch.hasPending)
-    }
-
-    @Test
-    fun `given the arrival is the same account then nothing of his is removed`() = runTest {
-        // Вход в тот самый аккаунт, чьи строки лежат в очереди, — не потеря, а возвращение.
-        store.seed(record(1, owner = arrived))
-        transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
-        switch.begin(arrived, signIn())
-        log.clear()
-
-        switch.confirm()
-
-        assertTrue("свои же строки не удаляются", log.none { it.startsWith("forget-") })
-        assertEquals(1, store.countPending(arrived))
-    }
-
-    @Test
-    fun `given the screen goes away right after the confirmation then the switch still finishes`() = runTest {
-        // Экран профиля живёт до первого ухода с него, а между входом и снятием следов лежит сеть.
-        // Отменённое ожидание не отменяет уже начатый вход Firebase — и не должно оставлять
-        // аккаунт сменённым, а строки прежнего владельца на месте.
-        store.seed(record(1))
-        transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
-        val networkIsSlow = CompletableDeferred<Unit>()
-        switch.begin(previous) {
-            log += "signIn"
-            networkIsSlow.await()
-            arrived
+            val loss = (outcome as GoogleLinkOutcome.SwitchAwaitsConsent).loss
+            assertEquals(1, loss.conflicted)
+            assertTrue(log.none { it == "signIn" })
+            assertTrue(switch.hasPending)
         }
-        log.clear()
 
-        val screen = launch { switch.confirm() }
-        advanceUntilIdle()
-        screen.cancel()
-        networkIsSlow.complete(Unit)
-        switchScope.advanceUntilIdle()
+    @Test
+    fun `given no session but rows of the previous owner then the switch asks and later forgets him`() =
+        runTest {
+            // `auth.currentUser == null` приходит сюда пустой строкой. Прежний владелец при этом есть —
+            // его знает очередь, и его строки обязаны быть сняты после входа.
+            store.seed(record(1, state = OutboxState.QUARANTINED))
 
-        assertEquals(
-            listOf("release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"),
-            log,
-        )
-        assertEquals(0, store.countPending(previous))
-    }
+            val outcome = switch.begin("", signIn())
+
+            assertEquals(1, (outcome as GoogleLinkOutcome.SwitchAwaitsConsent).loss.quarantined)
+            assertTrue("без сессии сливать некому", log.isEmpty())
+
+            switch.confirm()
+
+            assertEquals(
+                listOf("release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"),
+                log,
+            )
+        }
+
+    @Test
+    fun `given the player declines then the previous account stays and nothing is touched`() =
+        runTest {
+            store.seed(record(1))
+            transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
+            switch.begin(previous, signIn())
+            log.clear()
+
+            switch.decline()
+
+            assertTrue(log.isEmpty())
+            assertEquals(1, store.countPending(previous))
+            assertFalse(switch.hasPending)
+            // И очередь продолжает обрабатываться под прежним владельцем — как только пройдёт пауза,
+            // которую поставила неудачная попытка: отказ игрока запись не тронул, она просто ждёт.
+            transport = { Result.success(Unit) }
+            now += OutboxPolicy().backoffMs(1) + 1
+            val summary = engine.drain(previous)
+            assertEquals(1, summary.sent)
+        }
+
+    @Test
+    fun `given the player confirms then the order is sign-in, queue, traces`() =
+        runTest {
+            store.seed(record(1))
+            transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
+            switch.begin(previous, signIn())
+            log.clear()
+
+            val outcome = switch.confirm()
+
+            assertEquals(GoogleLinkOutcome.Switched, outcome)
+            assertEquals(
+                listOf("release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"),
+                log,
+            )
+            assertEquals(0, store.countPending(previous))
+            assertFalse(switch.hasPending)
+        }
+
+    @Test
+    fun `given the arrival is the same account then nothing of his is removed`() =
+        runTest {
+            // Вход в тот самый аккаунт, чьи строки лежат в очереди, — не потеря, а возвращение.
+            store.seed(record(1, owner = arrived))
+            transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
+            switch.begin(arrived, signIn())
+            log.clear()
+
+            switch.confirm()
+
+            assertTrue("свои же строки не удаляются", log.none { it.startsWith("forget-") })
+            assertEquals(1, store.countPending(arrived))
+        }
+
+    @Test
+    fun `given the screen goes away right after the confirmation then the switch still finishes`() =
+        runTest {
+            // Экран профиля живёт до первого ухода с него, а между входом и снятием следов лежит сеть.
+            // Отменённое ожидание не отменяет уже начатый вход Firebase — и не должно оставлять
+            // аккаунт сменённым, а строки прежнего владельца на месте.
+            store.seed(record(1))
+            transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
+            val networkIsSlow = CompletableDeferred<Unit>()
+            switch.begin(previous) {
+                log += "signIn"
+                networkIsSlow.await()
+                arrived
+            }
+            log.clear()
+
+            val screen = launch { switch.confirm() }
+            advanceUntilIdle()
+            screen.cancel()
+            networkIsSlow.complete(Unit)
+            switchScope.advanceUntilIdle()
+
+            assertEquals(
+                listOf("release:$previous", "signIn", "forget-queue:$previous", "forget-traces:$previous"),
+                log,
+            )
+            assertEquals(0, store.countPending(previous))
+        }
 
     @Test
     fun `given the player confirmed but the sign-in failed then nothing is removed and the token comes back`() =
@@ -291,35 +305,38 @@ class AccountSwitchTest {
         }
 
     @Test
-    fun `given nothing is pending then confirm refuses`() = runTest {
-        val failure = runCatching { switch.confirm() }.exceptionOrNull()
+    fun `given nothing is pending then confirm refuses`() =
+        runTest {
+            val failure = runCatching { switch.confirm() }.exceptionOrNull()
 
-        // Без ожидающего переключения подтверждать нечего — это ошибка вызывающего, не игрока.
-        assertTrue(failure is IllegalStateException)
-        assertTrue(log.isEmpty())
-    }
-
-    @Test
-    fun `given confirm is called twice then the second one has nothing to do`() = runTest {
-        store.seed(record(1))
-        transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
-        switch.begin(previous, signIn())
-        switch.confirm()
-        log.clear()
-
-        val second = runCatching { switch.confirm() }
-
-        assertTrue(second.isFailure)
-        assertTrue(log.isEmpty())
-    }
+            // Без ожидающего переключения подтверждать нечего — это ошибка вызывающего, не игрока.
+            assertTrue(failure is IllegalStateException)
+            assertTrue(log.isEmpty())
+        }
 
     @Test
-    fun `given no previous account and an empty queue then nothing is flushed and nothing is removed`() = runTest {
-        val outcome = switch.begin("", signIn())
+    fun `given confirm is called twice then the second one has nothing to do`() =
+        runTest {
+            store.seed(record(1))
+            transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) }
+            switch.begin(previous, signIn())
+            switch.confirm()
+            log.clear()
 
-        assertEquals(GoogleLinkOutcome.Switched, outcome)
-        assertEquals("забывать некого — и токен снимать не с кого", listOf("signIn"), log)
-    }
+            val second = runCatching { switch.confirm() }
+
+            assertTrue(second.isFailure)
+            assertTrue(log.isEmpty())
+        }
+
+    @Test
+    fun `given no previous account and an empty queue then nothing is flushed and nothing is removed`() =
+        runTest {
+            val outcome = switch.begin("", signIn())
+
+            assertEquals(GoogleLinkOutcome.Switched, outcome)
+            assertEquals("забывать некого — и токен снимать не с кого", listOf("signIn"), log)
+        }
 
     @Test
     fun `given an empty queue but local drafts of the previous owner then the switch asks and later forgets him`() =
@@ -345,28 +362,30 @@ class AccountSwitchTest {
         }
 
     @Test
-    fun `given local rows and a decline then the previous owner keeps everything`() = runTest {
-        left[previous] = listOf(OwnerDataKind.ANSWER_HISTORY)
+    fun `given local rows and a decline then the previous owner keeps everything`() =
+        runTest {
+            left[previous] = listOf(OwnerDataKind.ANSWER_HISTORY)
 
-        switch.begin("", signIn())
-        switch.decline()
+            switch.begin("", signIn())
+            switch.decline()
 
-        assertFalse("вопрос снят вместе с удерживаемым входом", switch.hasPending)
-        assertTrue("отказ не удаляет ничего", log.isEmpty())
-        assertEquals(listOf(OwnerDataKind.ANSWER_HISTORY), left[previous])
-    }
+            assertFalse("вопрос снят вместе с удерживаемым входом", switch.hasPending)
+            assertTrue("отказ не удаляет ничего", log.isEmpty())
+            assertEquals(listOf(OwnerDataKind.ANSWER_HISTORY), left[previous])
+        }
 
     private fun signInFailing(): suspend () -> String = signIn(Result.failure(SyncFailure(SyncError.NoNetwork)))
 
     @Test
-    fun `given a clean queue and a failing sign-in then the traces stay`() = runTest {
-        store.seed(record(1))
+    fun `given a clean queue and a failing sign-in then the traces stay`() =
+        runTest {
+            store.seed(record(1))
 
-        val failure = runCatching { switch.begin(previous, signInFailing()) }.exceptionOrNull()
+            val failure = runCatching { switch.begin(previous, signInFailing()) }.exceptionOrNull()
 
-        assertTrue(failure is SyncFailure)
-        assertEquals(listOf("send:m-1", "release:$previous", "signIn", "reclaim:$previous"), log)
-    }
+            assertTrue(failure is SyncFailure)
+            assertEquals(listOf("send:m-1", "release:$previous", "signIn", "reclaim:$previous"), log)
+        }
 }
 
 /**
@@ -396,8 +415,7 @@ private class InMemoryOutboxStore(
         ownerUid: String,
         nowMs: Long,
         limit: Int,
-    ): List<OutboxRecord> =
-        records.value.filter { it.ownerUid == ownerUid && policy.isDue(it, nowMs) }.take(limit)
+    ): List<OutboxRecord> = records.value.filter { it.ownerUid == ownerUid && policy.isDue(it, nowMs) }.take(limit)
 
     override suspend fun apply(
         id: Long,

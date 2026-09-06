@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di.quest
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
 import com.tpov.schoolquiz.apps.android_next.di.authModule
 import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
+import com.tpov.schoolquiz.apps.android_next.di.isolatedMvpBillingModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.attribution.InstallReferrerReader
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
@@ -34,6 +35,7 @@ import com.tpov.schoolquiz.platform.firebase.initializeFirebaseSecurity
 import com.tpov.schoolquiz.platform.firebase.push.DeviceTokenRegistrar
 import com.tpov.schoolquiz.platform.firebase.push.pushModule
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.analytics.UserProperty
 import com.tpov.schoolquiz.shared.core.catalog.data.di.catalogDataModule
 import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
@@ -92,6 +94,7 @@ class AppApplication : Application(), Configuration.Provider {
      * сколько процесс.
      */
     private val appScopeModule = module { single<CoroutineScope> { appScope } }
+    private val isolatedAnalyticsModule = module { single<AnalyticsTracker> { NoOpAnalyticsTracker } }
 
     override val workManagerConfiguration: Configuration
         get() =
@@ -106,6 +109,7 @@ class AppApplication : Application(), Configuration.Provider {
             app = this,
             useDebugAppCheckProvider = BuildConfig.DEBUG,
             appCheckDebugSecret = BuildConfig.FIREBASE_APP_CHECK_DEBUG_SECRET,
+            useEmulators = BuildConfig.MVP_EMULATORS,
         )
         val auth = FirebaseAuth.getInstance()
         // Ensure every user has a Firebase identity (anonymous) before any feature
@@ -137,8 +141,8 @@ class AppApplication : Application(), Configuration.Provider {
                 appScopeModule,
                 persistenceModule,
                 firebaseModule,
-                analyticsModule,
-                billingModule,
+                if (BuildConfig.MVP_EMULATORS) isolatedAnalyticsModule else analyticsModule,
+                if (BuildConfig.MVP_EMULATORS) isolatedMvpBillingModule else billingModule,
                 authModule,
                 firebaseCatalogModule,
                 firebaseQuestModule,
@@ -192,10 +196,12 @@ class AppApplication : Application(), Configuration.Provider {
                 pushModule(nowMs = { System.currentTimeMillis() }),
             )
         }
-        startMeasurement()
         reconcileSyncSchedule()
-        registerDeviceToken()
-        startPurchaseSettlement()
+        if (!BuildConfig.MVP_EMULATORS) {
+            startMeasurement()
+            registerDeviceToken()
+            startPurchaseSettlement()
+        }
     }
 
     /**

@@ -85,4 +85,15 @@
     </plurals>
     <string name="runner_discussion_title">Обсуждение</string>
     <string name="runner_discussion_open">Открыть →</string>
+    <string name="runner_settlement_pending">Ожидаем подтверждение сервера. Оценка и награды пока не подтверждены.</string>
+    <string name="runner_settlement_confirmed">Завершение подтверждено сервером</string>
+    <string name="runner_settlement_accounting_only">Оценка и списания подтверждены; завершение не подтверждено.</string>
+    <string name="runner_settlement_unscorable">Сервер сохранил попытку без оценки. Это не ноль.</string>
+    <string name="runner_settlement_rejected">Сервер не принял эту попытку.</string>
+    <string name="runner_settlement_legacy">Старая запись: серверного подтверждения оценки нет.</string>
+    <string name="runner_settlement_invalid">Не удалось проверить подтверждение сервера. Результат неизвестен.</string>
+    <string name="runner_settlement_account_unavailable">Войдите в аккаунт, в котором была пройдена попытка, чтобы увидеть подтверждение.</string>
+    <string name="runner_settlement_charges">Обычный заряд: −%1$d очк. · Плазма: −%2$d очк.</string>
+    <string name="runner_settlement_skill_points">Очки навыка</string>
+    <string name="runner_settlement_nolics">Нолики</string>
 </resources>

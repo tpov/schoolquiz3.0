@@ -19,21 +19,19 @@ val lessonRunnerDomainKoinAdapter =
                 authRepository = get(),
                 clock = get(),
                 randomSeedProvider = get<RandomSeedProvider>()::next,
+                attemptIdProvider = get<AttemptIdProvider>()::next,
             )
         }
         factory<CompleteAttemptUseCase> {
             CompleteAttemptUseCase(
                 attemptRepository = get(),
-                ratingRepository = get(),
                 clock = get(),
-                attemptIdProvider = get<AttemptIdProvider>()::next,
             )
         }
         factory<AbortAttemptUseCase> {
             AbortAttemptUseCase(
                 attemptRepository = get(),
                 clock = get(),
-                attemptIdProvider = get<AttemptIdProvider>()::next,
             )
         }
         factory<SubmitLessonRatingUseCase> {

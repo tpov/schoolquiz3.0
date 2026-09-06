@@ -47,12 +47,12 @@ class StateMachineTest {
         authRepository = authRepo,
         clock = clock,
         randomSeedProvider = { 12345L },
+        attemptIdProvider = attemptIdProvider,
     )
 
     private val abortUseCase = AbortAttemptUseCase(
         attemptRepository = attemptRepo,
         clock = clock,
-        attemptIdProvider = attemptIdProvider,
     )
 
     private fun setupValidLesson(id: String = "lesson1") {
@@ -170,7 +170,7 @@ class StateMachineTest {
         )
         val answer = UserAnswer.SingleChoiceAnswer(selected = optId("A"))
         val result = submitAnswer(state, answer, nowMs = 1_000_000L)
-        assertEquals('9', result.codeAnswer.raw[2], "Score written at codeAnswerIndex=2")
-        assertEquals('0', result.codeAnswer.raw[0], "Other positions unchanged")
+        assertEquals('9', requireNotNull(result.codeAnswer).raw[2], "Score written at codeAnswerIndex=2")
+        assertEquals('0', requireNotNull(result.codeAnswer).raw[0], "Other positions unchanged")
     }
 }

@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTimer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.selectSubset
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
@@ -37,6 +38,7 @@ class StartLessonAttemptUseCase(
     private val authRepository: AuthRepository,
     private val clock: Clock,
     private val randomSeedProvider: () -> Long,
+    private val attemptIdProvider: () -> AttemptId,
     private val timerCoefficients: TimerCoefficients = TimerCoefficients.Default,
 ) {
     suspend operator fun invoke(
@@ -79,7 +81,7 @@ class StartLessonAttemptUseCase(
             return RunnerState.InitFailed(InitFailureReason.NoValidQuestions)
         }
 
-        val eligible = valids.filter { it.content.difficulty == mode }
+        val eligible = valids.filter { it.content.difficultyOrNull == mode }
 
         // Priority 2: nothing left to play at this difficulty, and questions that might have filled
         // it were withheld. Sits above EmptyPool because "there are none for this difficulty" is
@@ -96,7 +98,7 @@ class StartLessonAttemptUseCase(
 
         // Assign codeAnswerIndex per sorted eligible position (full pool, not subset)
         val sorted = eligible.sortedWith(compareBy({ it.order }, { it.sourceId.value }))
-        val indexed = sorted.mapIndexed { idx, rq -> rq.copy(codeAnswerIndex = idx) }
+        val indexed = sorted.mapIndexed { idx, rq -> rq.withCodeAnswerIndex(idx) }
         val eligibleSize = indexed.size
 
         // Random subset (deterministic via seed)
@@ -107,13 +109,16 @@ class StartLessonAttemptUseCase(
         // for question presentation. codeAnswerIndex on each item preserves stable code position.
         val playOrder = subset
 
-        val initialCodeAnswer = CodeAnswer("0".repeat(eligibleSize))
+        // A mixed attempt is server-scored in its entirety. No partially trusted score is emitted.
+        val initialCodeAnswer =
+            if (playOrder.any { it is RunnerQuestion.Redacted }) null else CodeAnswer("0".repeat(eligibleSize))
 
         val nowMs = clock.now().toEpochMilliseconds()
         val firstDuration = computeTimer(playOrder.first().content, mode, timerCoefficients, sessionMode)
         val deadlineMs = nowMs + firstDuration.seconds * 1000L
 
         return RunnerState.Ready(
+            attemptId = attemptIdProvider(),
             userId = userId,
             lessonId = lessonId,
             lessonVersion = lesson.version,
@@ -167,7 +172,7 @@ private fun String.canonicalQuestionId(): String {
  */
 private sealed interface ParsedQuestion {
     /** An ordinary question, with its answer key, ready for the pool. */
-    data class Playable(val question: RunnerQuestion.Valid) : ParsedQuestion
+    data class Playable(val question: RunnerQuestion.Playable) : ParsedQuestion
 
     /**
      * A question whose answer key was removed. [difficulty] is nullable because the wire form is a
@@ -211,7 +216,16 @@ private fun QuestionContentParser.readForRunner(
                     content = display,
                 ),
             )
-        is RedactedQuestionContent -> ParsedQuestion.Redacted(display.difficultyOrNull)
+        is RedactedQuestionContent ->
+            // Existing non-ticket intake accepts raw HARD with a served list. EASY still needs
+            // a ticket-backed start (or a local key); unknown difficulty must never default to it.
+            if (display.difficultyOrNull == Difficulty.HARD) {
+                ParsedQuestion.Playable(
+                    RunnerQuestion.Redacted(question.id, question.order, -1, display),
+                )
+            } else {
+                ParsedQuestion.Redacted(display.difficultyOrNull)
+            }
         else ->
             error(
                 "QuestionContentParser returned an unrecognised QuestionDisplay: ${display::class.simpleName}",

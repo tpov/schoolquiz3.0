@@ -4,8 +4,11 @@ import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsRepositor
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsSync
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyLocalDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.economy.data.GiftBoxIntentStore
 import com.tpov.schoolquiz.shared.feature.economy.data.GiftBoxRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.economy.data.OutboxGiftBoxDelivery
 import com.tpov.schoolquiz.shared.feature.economy.data.RoomEconomyLocalDataSource
+import com.tpov.schoolquiz.shared.feature.economy.data.RoomGiftBoxIntentStore
 import com.tpov.schoolquiz.shared.feature.economy.data.UnsettledPurchaseSettler
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyConstantsRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
@@ -13,9 +16,13 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepos
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.datetime.Clock
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 fun economyDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): Module =
     module {
         single<EconomyLocalDataSource> { RoomEconomyLocalDataSource(get()) }
@@ -32,10 +39,20 @@ fun economyDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): M
             EconomyConstantsRepositoryImpl(remote = get(), store = get())
         }
         single { EconomyConstantsSync(get()) }
+        single<GiftBoxIntentStore> { RoomGiftBoxIntentStore(get()) }
         single<GiftBoxRepository> {
             GiftBoxRepositoryImpl(
                 remote = get(),
                 profileRepository = get(),
+                intents = get(),
+                receipts = get(),
+                engine = OutboxGiftBoxDelivery(get()),
+                sessions = get(),
+                network = get(),
+                scheduler = get(),
+                currentUidFlow = currentUidFlow,
+                newOpeningId = { Uuid.random().toString() },
+                clock = { Clock.System.now().toEpochMilliseconds() },
             )
         }
         // Живёт столько же, сколько процесс: покупка, оплаченная и не начисленная, должна

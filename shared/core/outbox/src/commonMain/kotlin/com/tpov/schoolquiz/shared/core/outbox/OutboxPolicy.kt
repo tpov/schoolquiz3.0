@@ -49,7 +49,7 @@ class OutboxPolicy(
                 serverVersion = record.serverVersion,
             )
         }
-        if (attempt >= limits.maxAttempts || isExpired(record, nowMs)) {
+        if (!record.hasPermanentServerReceipt && (attempt >= limits.maxAttempts || isExpired(record, nowMs))) {
             return OutboxDecision(
                 state = OutboxState.QUARANTINED,
                 nextRetryAtMs = 0L,
@@ -95,7 +95,7 @@ class OutboxPolicy(
     fun isExpired(
         record: OutboxRecord,
         nowMs: Long,
-    ): Boolean = nowMs - record.createdAtMs >= limits.maxAgeMs
+    ): Boolean = !record.hasPermanentServerReceipt && nowMs - record.createdAtMs >= limits.maxAgeMs
 
     /**
      * Решение по перезревшей записи: карантин без единой попытки отправки.
@@ -153,6 +153,11 @@ class OutboxPolicy(
             is SyncError.Unknown -> throwable?.message ?: "Unknown"
             else -> this::class.simpleName ?: "Unknown"
         }
+
+    // Attempt receipts survive the generic mutation-key TTL. An old offline settlement must
+    // reach that permanent receipt instead of being rolled back by a client age/attempt limit.
+    private val OutboxRecord.hasPermanentServerReceipt: Boolean
+        get() = operation in OutboxOperations.permanentReceiptOperations
 
     companion object {
         /** Причина карантина по возрасту. Отличима от отказа сервера и от порога попыток. */

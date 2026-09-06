@@ -72,6 +72,12 @@ interface OwnerRowsDao {
     @Query("DELETE FROM sync_run_trace WHERE owner_uid = :uid")
     suspend fun deleteSyncRunTrace(uid: String)
 
+    @Query("DELETE FROM mutation_receipts WHERE owner_uid = :uid")
+    suspend fun deleteMutationReceipts(uid: String)
+
+    @Query("DELETE FROM lesson_attempt_intents WHERE owner_uid = :uid")
+    suspend fun deleteLessonAttemptIntents(uid: String)
+
     /**
      * Снимает названные курсоры — удалением строки, а не записью нуля.
      *
@@ -105,6 +111,8 @@ interface OwnerRowsDao {
         UNION SELECT user_id FROM question_repetition
         UNION SELECT user_id FROM lesson_rating_submitted_local
         UNION SELECT owner_uid FROM sync_run_trace
+        UNION SELECT owner_uid FROM mutation_receipts
+        UNION SELECT owner_uid FROM lesson_attempt_intents
         """,
     )
     suspend fun ownersWithTraces(): List<String>
@@ -146,6 +154,8 @@ interface OwnerRowsDao {
         deleteQuestionRepetition(uid)
         deleteLessonRatingsSubmitted(uid)
         deleteSyncRunTrace(uid)
+        deleteMutationReceipts(uid)
+        deleteLessonAttemptIntents(uid)
         if (privateCursorIds.isNotEmpty()) deleteCursors(privateCursorIds)
     }
 }
@@ -213,6 +223,20 @@ object OwnerScopedTables {
             // Очередь: её судьбу решает первая операция, а не эта. Названа, чтобы страж не считал
             // её забытой.
             OwnerScopedTable("outbox", "owner_uid", OwnerCleanup.QUEUE, hasServerTwin = false, namedToPlayer = null),
+            OwnerScopedTable(
+                "mutation_receipts",
+                "owner_uid",
+                OwnerCleanup.TRACES,
+                hasServerTwin = true,
+                namedToPlayer = null,
+            ),
+            OwnerScopedTable(
+                "lesson_attempt_intents",
+                "owner_uid",
+                OwnerCleanup.TRACES,
+                hasServerTwin = false,
+                namedToPlayer = null,
+            ),
             OwnerScopedTable(
                 "review_assignments",
                 "ownerUid",

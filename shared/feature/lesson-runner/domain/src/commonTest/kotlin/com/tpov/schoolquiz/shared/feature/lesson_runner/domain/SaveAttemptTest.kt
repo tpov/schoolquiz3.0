@@ -3,8 +3,6 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeClock
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonAttemptRepository
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonRatingRepository
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
@@ -23,21 +21,15 @@ class SaveAttemptTest {
 
     private val clock = FakeClock()
     private val attemptRepo = FakeLessonAttemptRepository()
-    private val ratingRepo = FakeLessonRatingRepository()
-    private var idCounter = 0
-    private val idProvider = { AttemptId("attempt-${idCounter++}") }
 
     private val completeUseCase = CompleteAttemptUseCase(
         attemptRepository = attemptRepo,
-        ratingRepository = ratingRepo,
         clock = clock,
-        attemptIdProvider = idProvider,
     )
 
     private val abortUseCase = AbortAttemptUseCase(
         attemptRepository = attemptRepo,
         clock = clock,
-        attemptIdProvider = idProvider,
     )
 
     // ── Test 52 ───────────────────────────────────────────────────────────────

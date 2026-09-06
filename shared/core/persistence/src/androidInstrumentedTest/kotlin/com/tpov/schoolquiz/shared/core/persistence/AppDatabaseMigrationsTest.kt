@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.shared.core.persistence
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration10to11
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration11to12
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -33,12 +35,12 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationsTest {
-
     @get:Rule
-    val helper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        AppDatabase::class.java,
-    )
+    val helper =
+        MigrationTestHelper(
+            InstrumentationRegistry.getInstrumentation(),
+            AppDatabase::class.java,
+        )
 
     @Test
     fun migrate_1_to_2_validates_against_exported_schema() {
@@ -562,6 +564,73 @@ class AppDatabaseMigrationsTest {
     }
 
     @Test
+    fun migrate_10_to_11_adds_receipts_without_changing_pending_actions_or_cursors() {
+        helper.createDatabase(DB_NAME, version = 10).use { db ->
+            db.execSQL("INSERT INTO sync_state (collectionId, cursor, doc_id) VALUES ('catalogs', 99, 'last-doc')")
+            db.execSQL(
+                """
+                INSERT INTO outbox (mutation_id, owner_uid, operation, payload, entity_ref,
+                    expected_version, server_version, state, attempt_count, next_retry_at_ms, last_error, created_at_ms)
+                VALUES ('pending-1', 'uid-A', 'lesson_runner.SUBMIT_ATTEMPT', '{"attemptId":"a-1"}',
+                    'lesson_runner:attempt:a-1', NULL, NULL, 'WAITING', 4, 12, 'offline', 1)
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 11, true, Migration10to11).use { db ->
+            db.query(
+                "SELECT payload, state, attempt_count, next_retry_at_ms FROM outbox WHERE mutation_id = 'pending-1'",
+            ).use {
+                    c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("{\"attemptId\":\"a-1\"}", c.getString(0))
+                assertEquals("WAITING", c.getString(1))
+                assertEquals(4, c.getInt(2))
+                assertEquals(12L, c.getLong(3))
+            }
+            db.query("SELECT cursor, doc_id FROM sync_state WHERE collectionId = 'catalogs'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(99L, c.getLong(0))
+                assertEquals("last-doc", c.getString(1))
+            }
+            db.query("SELECT COUNT(*) FROM mutation_receipts").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+        }
+    }
+
+    @Test
+    fun migrate_11_to_12_preserves_legacy_attempts_and_receipts_without_inventing_terminal_proof() {
+        helper.createDatabase(DB_NAME, version = 11).use { db ->
+            db.execSQL(
+                "INSERT INTO lesson_attempts (attempt_id, user_id, lesson_id, lesson_version, is_hard, " +
+                    "code_answer, percent_score, completed_at) " +
+                    "VALUES ('legacy-1', 'uid-A', 'lesson-1', 1, 0, '9', 100, 9)",
+            )
+            db.execSQL(
+                "INSERT INTO mutation_receipts (owner_uid, mutation_id, operation, entity_ref, payload_json, " +
+                    "received_at_ms) VALUES ('uid-A', 'm-1', 'lesson_runner.SUBMIT_ATTEMPT', NULL, " +
+                    "'{\"result\":{\"completed\":false}}', 10)",
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 12, true, Migration11to12).use { db ->
+            db.query("SELECT code_answer, completed_at FROM lesson_attempts WHERE attempt_id = 'legacy-1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("9", c.getString(0))
+                assertEquals(9L, c.getLong(1))
+            }
+            db.query("SELECT payload_json FROM mutation_receipts WHERE mutation_id = 'm-1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("{\"result\":{\"completed\":false}}", c.getString(0))
+            }
+            db.query("SELECT COUNT(*) FROM lesson_attempt_intents").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+        }
+    }
+
+    @Test
     fun migrate_all_the_way_from_1_validates_against_the_current_schema() {
         helper.createDatabase(DB_NAME, version = 1).close()
 
@@ -579,6 +648,8 @@ class AppDatabaseMigrationsTest {
             Migration7to8,
             Migration8to9,
             Migration9to10,
+            Migration10to11,
+            Migration11to12,
         ).close()
     }
 
@@ -586,13 +657,14 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 10
+        const val CURRENT_VERSION = 12
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
-        val OLD_QUEUE_TABLES = listOf(
-            "lesson_result_attempt_outbox",
-            "quest_rating_outbox",
-            "quest_arena_submission_outbox",
-        )
+        val OLD_QUEUE_TABLES =
+            listOf(
+                "lesson_result_attempt_outbox",
+                "quest_rating_outbox",
+                "quest_arena_submission_outbox",
+            )
     }
 }

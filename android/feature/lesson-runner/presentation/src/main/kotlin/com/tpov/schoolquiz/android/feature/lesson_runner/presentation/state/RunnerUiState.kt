@@ -5,6 +5,9 @@ import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 
 sealed interface RunnerUiState {
@@ -31,22 +34,25 @@ sealed interface RunnerUiState {
          * than guessing. Server-side charging is out of scope here.
          */
         val lives: Int? = null,
+        /** Raw timeouts submit only actual input, never a key-dependent guessed answer. */
+        val serverScored: Boolean = false,
     ) : RunnerUiState
 
     data class Result(
-        val percentScore: PercentScore,
+        /** Provisional local calculation; result UI must use serverSettlement for score/reward. */
+        val percentScore: PercentScore?,
         val mode: Difficulty,
         val completedAt: Long,
         val hardUnlocked: Boolean,
         val bestStarsRawTenths: Int,
         /** Stars earned in THIS attempt (spec §148), distinct from best stars across all attempts. */
-        val currentAttemptStarsRawTenths: Int,
+        val currentAttemptStarsRawTenths: Int?,
         val lessonAverageRating: Float?,
         val lessonRatingCount: Int,
         val top3: List<TopParticipant>,
         val userAttemptCount: Int,
-        val userAveragePercentScore: Int,
-        val userBestPercentScore: Int = percentScore.raw,
+        val userAveragePercentScore: Int?,
+        val userBestPercentScore: Int? = percentScore?.raw,
         /** What to study next, or null when the run was good enough not to need telling. */
         val advice: ResultAdvice? = null,
         /**
@@ -60,6 +66,7 @@ sealed interface RunnerUiState {
          */
         val livesRemainingHearts: Int? = null,
         val livesMaxHearts: Int? = null,
+        /** Local intent only. Render/submit the prompt exclusively through canSubmitRating. */
         val showRatingPrompt: Boolean,
         val saveWarning: Boolean,
         /**
@@ -70,7 +77,19 @@ sealed interface RunnerUiState {
          */
         val syncMark: AttemptSyncMark = AttemptSyncMark.NONE,
         val ratingSubmissionState: RatingSubmissionState = RatingSubmissionState.Idle,
-    ) : RunnerUiState
+        val attemptId: AttemptId? = null,
+        val serverSettlement: ServerAttemptSettlement = ServerAttemptSettlement(ServerAttemptSettlementState.PENDING),
+    ) : RunnerUiState {
+        val displayedPercentScore: PercentScore?
+            get() = serverSettlement.takeIf { it.hasAccountingProof }?.percentScore
+
+        val displayedReward
+            get() = serverSettlement.takeIf { it.hasAccountingProof }?.reward
+
+        val canSubmitRating: Boolean
+            get() = showRatingPrompt && !saveWarning && syncMark != AttemptSyncMark.QUARANTINED &&
+                serverSettlement.canQueueRating
+    }
 
     sealed interface RatingSubmissionState {
         data object Idle : RatingSubmissionState
@@ -89,12 +108,11 @@ sealed interface RunnerUiState {
         NoValidQuestions,
 
         /**
-         * The questions arrived without their answer key and this client cannot yet play one. Its
+         * These public questions lack a supported start capability (raw EASY or unknown difficulty). Its
          * own case rather than a flavour of [NoValidQuestions]: broken bytes and a deliberately
          * withheld answer are different facts, and the screen says so.
          *
-         * Temporary, like its domain counterpart: step 9 of the E2 plan admits redacted questions
-         * to the hard pool and deletes this case with it.
+         * Raw HARD is supported; this gate must not imply that its keys should be downloaded.
          */
         RedactedNotSupported,
     }

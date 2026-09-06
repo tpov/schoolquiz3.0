@@ -22,7 +22,6 @@ import kotlin.test.assertTrue
  * Every row of the story's matrix that ends inside this use case has a test here.
  */
 class SettlePurchaseUseCaseTest {
-
     private val journal = mutableListOf<String>()
     private val billing = FakeBillingRepository(journal = journal)
     private val verifier = FakePurchaseVerifier(journal = journal)
@@ -100,13 +99,13 @@ class SettlePurchaseUseCaseTest {
     fun `a refusal is a success carrying the code and consumes nothing`() =
         runTest {
             verifier.fails("t-1") {
-                PurchaseRefusedException(PurchaseRefusalCode.SKU_NOT_SOLD, "sku is not sold")
+                PurchaseRefusedException(PurchaseRefusalCode.PREMIUM_QUANTITY_UNSUPPORTED, "one premium item only")
             }
 
             val result = settle(billingPurchase(token = "t-1"))
 
             assertEquals(
-                PurchaseOutcome.Refused(PurchaseRefusalCode.SKU_NOT_SOLD),
+                PurchaseOutcome.Refused(PurchaseRefusalCode.PREMIUM_QUANTITY_UNSUPPORTED),
                 result.getOrNull(),
             )
             assertEquals(emptyList(), billing.consumedTokens)

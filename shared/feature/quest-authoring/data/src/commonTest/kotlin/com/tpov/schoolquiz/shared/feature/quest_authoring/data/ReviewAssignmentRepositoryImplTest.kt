@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxPolicy
 import com.tpov.schoolquiz.shared.core.outbox.OutboxQuarantineRouter
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.outbox.QuarantineListener
@@ -42,51 +43,58 @@ import kotlin.test.fail
  * строка задания не трогается, callable не зовётся. Карантин — пометка по `entity_ref`, не откат.
  */
 class ReviewAssignmentRepositoryImplTest {
+    @Test
+    fun offline_submitLeavesOneQueueRowAndTouchesNothingElse() =
+        runTest {
+            val local = FakeLocal(listOf(assignmentEntity()))
+            val outbox = FakeOutboxStore()
+            val repository = ReviewAssignmentRepositoryImpl(local, outbox)
+            val before = repository.observeAssignments(OWNER).first()
+
+            val result = repository.queueReviewAction(submission(score = 2))
+
+            assertEquals(Result.success(Unit), result)
+            val row = outbox.all.single()
+            assertEquals(OutboxOperations.SUBMIT_REVIEW, row.operation)
+            assertEquals("quest_authoring.SUBMIT_REVIEW", row.operation)
+            assertEquals("quest_authoring.ASSIGNMENT:assignment-1", row.entityRef)
+            assertEquals("quest_authoring-SUBMIT_REVIEW-review-action-1", row.mutationId)
+            assertEquals(OutboxState.WAITING, row.state)
+            assertNull(row.expectedVersion, "задание клиентом не версионируется: предусловие проверяет сервер (AD-27)")
+            assertEquals(REQUESTED_AT_MS, row.createdAtMs)
+
+            // Локальная строка задания не менялась — ни записью, ни содержимым.
+            assertEquals(0, local.writes, "локальная половина пуста (AD-25)")
+            assertEquals(before, repository.observeAssignments(OWNER).first())
+            assertEquals(
+                ReviewAssignmentSyncState.PENDING,
+                repository.observeAssignmentSync(OWNER, "assignment-1").first(),
+            )
+        }
 
     @Test
-    fun offline_submitLeavesOneQueueRowAndTouchesNothingElse() = runTest {
-        val local = FakeLocal(listOf(assignmentEntity()))
-        val outbox = FakeOutboxStore()
-        val repository = ReviewAssignmentRepositoryImpl(local, outbox)
-        val before = repository.observeAssignments(OWNER).first()
+    fun payload_isTheSerialisedCommandWithAFormatVersion() =
+        runTest {
+            val outbox = FakeOutboxStore()
+            val repository = ReviewAssignmentRepositoryImpl(FakeLocal(), outbox)
 
-        val result = repository.queueReviewAction(submission(score = 2))
+            repository.queueReviewAction(submission(score = 3))
 
-        assertEquals(Result.success(Unit), result)
-        val row = outbox.all.single()
-        assertEquals(OutboxOperations.SUBMIT_REVIEW, row.operation)
-        assertEquals("quest_authoring.SUBMIT_REVIEW", row.operation)
-        assertEquals("quest_authoring.ASSIGNMENT:assignment-1", row.entityRef)
-        assertEquals("quest_authoring-SUBMIT_REVIEW-review-action-1", row.mutationId)
-        assertEquals(OutboxState.WAITING, row.state)
-        assertNull(row.expectedVersion, "задание клиентом не версионируется: предусловие проверяет сервер (AD-27)")
-        assertEquals(REQUESTED_AT_MS, row.createdAtMs)
-
-        // Локальная строка задания не менялась — ни записью, ни содержимым.
-        assertEquals(0, local.writes, "локальная половина пуста (AD-25)")
-        assertEquals(before, repository.observeAssignments(OWNER).first())
-        assertEquals(ReviewAssignmentSyncState.PENDING, repository.observeAssignmentSync(OWNER, "assignment-1").first())
-    }
-
-    @Test
-    fun payload_isTheSerialisedCommandWithAFormatVersion() = runTest {
-        val outbox = FakeOutboxStore()
-        val repository = ReviewAssignmentRepositoryImpl(FakeLocal(), outbox)
-
-        repository.queueReviewAction(submission(score = 3))
-
-        val payload = Json.parseToJsonElement(outbox.all.single().payload).jsonObject
-        assertEquals(SubmitReviewOutboxWriter.FORMAT_VERSION, payload.getValue("formatVersion").jsonPrimitive.content.toInt())
-        assertEquals("review-action-1", payload.getValue("actionId").jsonPrimitive.content)
-        assertEquals("assignment-1", payload.getValue("assignmentId").jsonPrimitive.content)
-        assertEquals("lesson-1", payload.getValue("lessonId").jsonPrimitive.content)
-        assertEquals("TESTING", payload.getValue("kind").jsonPrimitive.content)
-        assertEquals(3, payload.getValue("score").jsonPrimitive.content.toInt())
-        assertEquals(JsonNull, payload.getValue("language"))
-        assertEquals(JsonNull, payload.getValue("targetReviewId"))
-        assertEquals(0, payload.getValue("translatedQuestions").jsonArray.size)
-        assertEquals(0, payload.getValue("segmentResults").jsonArray.size)
-    }
+            val payload = Json.parseToJsonElement(outbox.all.single().payload).jsonObject
+            assertEquals(
+                SubmitReviewOutboxWriter.FORMAT_VERSION,
+                payload.getValue("formatVersion").jsonPrimitive.content.toInt(),
+            )
+            assertEquals("review-action-1", payload.getValue("actionId").jsonPrimitive.content)
+            assertEquals("assignment-1", payload.getValue("assignmentId").jsonPrimitive.content)
+            assertEquals("lesson-1", payload.getValue("lessonId").jsonPrimitive.content)
+            assertEquals("TESTING", payload.getValue("kind").jsonPrimitive.content)
+            assertEquals(3, payload.getValue("score").jsonPrimitive.content.toInt())
+            assertEquals(JsonNull, payload.getValue("language"))
+            assertEquals(JsonNull, payload.getValue("targetReviewId"))
+            assertEquals(0, payload.getValue("translatedQuestions").jsonArray.size)
+            assertEquals(0, payload.getValue("segmentResults").jsonArray.size)
+        }
 
     @Test
     fun theSameIntentAlwaysGetsTheSameKey_andAnotherIntentAnotherOne() {
@@ -100,51 +108,70 @@ class ReviewAssignmentRepositoryImplTest {
     }
 
     @Test
-    fun nothingQueued_answersNoneNotNull() = runTest {
-        val repository = ReviewAssignmentRepositoryImpl(FakeLocal(), FakeOutboxStore())
+    fun nothingQueued_answersNoneNotNull() =
+        runTest {
+            val repository = ReviewAssignmentRepositoryImpl(FakeLocal(), FakeOutboxStore())
 
-        assertEquals(ReviewAssignmentSyncState.NONE, repository.observeAssignmentSync(OWNER, "assignment-1").first())
-    }
-
-    @Test
-    fun serverRefusal_quarantinesTheRowAndMarksTheAssignment_withoutTouchingItsRow() = runTest {
-        val local = FakeLocal(listOf(assignmentEntity()))
-        val outbox = FakeOutboxStore()
-        val repository = ReviewAssignmentRepositoryImpl(local, outbox)
-        repository.queueReviewAction(submission(score = 2))
-        val refusing = MutationTransport { Result.failure(SyncFailure(SyncError.Refused("assignment reassigned"))) }
-        val engine =
-            OutboxEngine(
-                store = outbox,
-                transport = refusing,
-                clock = { REQUESTED_AT_MS + 1 },
-                onQuarantined =
-                    OutboxQuarantineRouter(
-                        handlers = mapOf(OutboxOperations.SUBMIT_REVIEW to ReviewActionQuarantine()),
-                        onUnhandled = QuarantineListener { fail("обработчик фичи должен быть найден по operation") },
-                    ),
+            assertEquals(
+                ReviewAssignmentSyncState.NONE,
+                repository.observeAssignmentSync(OWNER, "assignment-1").first(),
             )
-
-        val summary = engine.drain(OWNER)
-
-        assertEquals(1, summary.quarantined)
-        // Запрос по entity_ref отвечает «карантин» (история 4.4) …
-        assertEquals(ReviewAssignmentSyncState.QUARANTINED, repository.observeAssignmentSync(OWNER, "assignment-1").first())
-        // … счётчик карантинных растёт на единицу (история 4.5) …
-        assertEquals(1, outbox.observeCounts(OWNER).first().quarantined)
-        // … а строка задания как лежала, так и лежит: откатывать нечего (AD-25).
-        assertEquals(0, local.writes)
-        assertEquals(listOf(assignmentEntity()), local.assignments.value)
-    }
+        }
 
     @Test
-    fun otherAccountsRow_isNotThisAccountsMark() = runTest {
-        val outbox = FakeOutboxStore()
-        val repository = ReviewAssignmentRepositoryImpl(FakeLocal(), outbox)
-        repository.queueReviewAction(submission(score = 2))
+    fun serverRefusal_quarantinesTheRowAndMarksTheAssignment_withoutTouchingItsRow() =
+        runTest {
+            val local = FakeLocal(listOf(assignmentEntity()))
+            val outbox = FakeOutboxStore()
+            val repository = ReviewAssignmentRepositoryImpl(local, outbox)
+            repository.queueReviewAction(submission(score = 2))
+            val refusing = MutationTransport { Result.failure(SyncFailure(SyncError.Refused("assignment reassigned"))) }
+            val engine =
+                OutboxEngine(
+                    store = outbox,
+                    receipts = FakeMutationReceiptStore(),
+                    sessions = { OutboxSession(OWNER, 0) },
+                    transport = refusing,
+                    clock = { REQUESTED_AT_MS + 1 },
+                    onQuarantined =
+                        OutboxQuarantineRouter(
+                            handlers = mapOf(OutboxOperations.SUBMIT_REVIEW to ReviewActionQuarantine()),
+                            onUnhandled =
+                                QuarantineListener {
+                                    fail(
+                                        "обработчик фичи должен быть найден по operation",
+                                    )
+                                },
+                        ),
+                )
 
-        assertEquals(ReviewAssignmentSyncState.NONE, repository.observeAssignmentSync("someone-else", "assignment-1").first())
-    }
+            val summary = engine.drain(OWNER)
+
+            assertEquals(1, summary.quarantined)
+            // Запрос по entity_ref отвечает «карантин» (история 4.4) …
+            assertEquals(
+                ReviewAssignmentSyncState.QUARANTINED,
+                repository.observeAssignmentSync(OWNER, "assignment-1").first(),
+            )
+            // … счётчик карантинных растёт на единицу (история 4.5) …
+            assertEquals(1, outbox.observeCounts(OWNER).first().quarantined)
+            // … а строка задания как лежала, так и лежит: откатывать нечего (AD-25).
+            assertEquals(0, local.writes)
+            assertEquals(listOf(assignmentEntity()), local.assignments.value)
+        }
+
+    @Test
+    fun otherAccountsRow_isNotThisAccountsMark() =
+        runTest {
+            val outbox = FakeOutboxStore()
+            val repository = ReviewAssignmentRepositoryImpl(FakeLocal(), outbox)
+            repository.queueReviewAction(submission(score = 2))
+
+            assertEquals(
+                ReviewAssignmentSyncState.NONE,
+                repository.observeAssignmentSync("someone-else", "assignment-1").first(),
+            )
+        }
 
     private fun submission(
         id: String = "review-action-1",

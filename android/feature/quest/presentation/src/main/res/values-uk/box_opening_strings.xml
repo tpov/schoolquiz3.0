@@ -1,0 +1,6 @@
+<resources>
+    <string name="quest_box_network_required">Для відкриття коробки потрібен інтернет.</string>
+    <string name="quest_box_pending">Відкриття збережено. Перевіримо результат, коли з’явиться зв’язок. Повторна перевірка не відкриє другу коробку.</string>
+    <string name="quest_box_attention">Це відкриття потребує перевірки. Збережений результат не видалено.</string>
+    <string name="quest_box_resume">Продовжити відкриття</string>
+</resources>

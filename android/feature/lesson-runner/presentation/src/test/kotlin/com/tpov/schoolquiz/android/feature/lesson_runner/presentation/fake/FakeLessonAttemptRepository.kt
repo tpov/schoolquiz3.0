@@ -2,12 +2,19 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake
 
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 class FakeLessonAttemptRepository : LessonAttemptRepository {
+    val rawIntents = mutableListOf<UnscoredTerminalIntent>()
+
+    override suspend fun saveUnscored(intent: UnscoredTerminalIntent): Result<Unit> {
+        if (saveResult.isSuccess) rawIntents += intent
+        return saveResult
+    }
 
     private val stored = MutableStateFlow<List<Attempt>>(emptyList())
     var saveCallCount: Int = 0

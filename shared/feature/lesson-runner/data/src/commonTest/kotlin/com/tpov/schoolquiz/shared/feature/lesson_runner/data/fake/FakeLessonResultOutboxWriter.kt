@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
 
 /**
@@ -20,6 +21,7 @@ class FakeLessonResultOutboxWriter : LessonResultOutboxWriter {
         val served: List<ServedQuestion>?,
         /** Заявки на заряды; `null` или пустая маска — трат не было. */
         val claims: ChargeClaimMask? = null,
+        val completionKind: AttemptCompletionKind? = null,
     )
 
     val attemptCalls = mutableListOf<AttemptCall>()
@@ -30,8 +32,9 @@ class FakeLessonResultOutboxWriter : LessonResultOutboxWriter {
         answers: List<QuestionAnswerEntity>,
         served: List<ServedQuestion>?,
         claims: ChargeClaimMask?,
+        completionKind: AttemptCompletionKind?,
     ): OutboxEntity? {
-        attemptCalls += AttemptCall(attempt, answers, served, claims)
+        attemptCalls += AttemptCall(attempt, answers, served, claims, completionKind)
         return null
     }
 }

@@ -37,6 +37,7 @@ val lessonRunnerPresentationModule =
                 lessonRepository = get(),
                 attemptRepository = get(),
                 attemptSyncMarks = get(),
+                attemptSettlements = get(),
                 profileRepository = get<ProfileRepository>(),
                 commentRepository = get<LessonCommentRepository>(),
                 getResultAdvice = GetResultAdviceUseCase(lessonRepository = get()),

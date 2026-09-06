@@ -4,7 +4,7 @@ import com.tpov.schoolquiz.shared.core.scoring.computePercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.buildCodeAnswerOnAbort
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.chargeClaimsOrEmpty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.toServedQuestions
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
@@ -22,16 +22,18 @@ import kotlinx.datetime.Clock
 class AbortAttemptUseCase(
     private val attemptRepository: LessonAttemptRepository,
     private val clock: Clock,
-    private val attemptIdProvider: () -> AttemptId,
 ) {
     suspend operator fun invoke(state: RunnerState.Ready): RunnerState {
         val nowMs = clock.now().toEpochMilliseconds()
+        if (state.codeAnswer == null) {
+            return saveUnscoredTerminal(state, AttemptCompletionKind.ABORTED, nowMs, attemptRepository)
+        }
         val finalCodeAnswer = buildCodeAnswerOnAbort(state)
         val percentScore = computePercentScore(finalCodeAnswer)
 
         val attempt =
             Attempt(
-                id = attemptIdProvider(),
+                id = state.attemptId,
                 userId = state.userId,
                 lessonId = state.lessonId,
                 lessonVersion = state.lessonVersion,
@@ -52,6 +54,7 @@ class AbortAttemptUseCase(
                 state.answers,
                 state.playOrder.toServedQuestions(),
                 state.chargeClaimsOrEmpty(),
+                AttemptCompletionKind.ABORTED,
             )
         if (saveResult.isFailure) {
             val error =

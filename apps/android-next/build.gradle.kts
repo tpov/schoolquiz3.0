@@ -37,6 +37,7 @@ android {
         applicationId = "com.tpov.schoolquiz"
         versionCode = 1
         versionName = "0.1.0"
+        buildConfigField("boolean", "MVP_EMULATORS", "false")
     }
 
     buildTypes {
@@ -48,6 +49,14 @@ android {
             )
         }
         named("release") {
+            buildConfigField("String", "FIREBASE_APP_CHECK_DEBUG_SECRET", "\"\"")
+        }
+        create("mvp") {
+            initWith(getByName("debug"))
+            matchingFallbacks += listOf("debug")
+            applicationIdSuffix = ".mvp"
+            versionNameSuffix = "-isolated"
+            buildConfigField("boolean", "MVP_EMULATORS", "true")
             buildConfigField("String", "FIREBASE_APP_CHECK_DEBUG_SECRET", "\"\"")
         }
     }

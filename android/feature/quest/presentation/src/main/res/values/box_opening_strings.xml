@@ -1,0 +1,6 @@
+<resources>
+    <string name="quest_box_network_required">Connect to the internet to start opening a box.</string>
+    <string name="quest_box_pending">This opening is saved. Its result will be checked when you reconnect. No second box will be opened by retrying.</string>
+    <string name="quest_box_attention">This opening needs attention. Its saved result has not been discarded.</string>
+    <string name="quest_box_resume">Continue opening</string>
+</resources>

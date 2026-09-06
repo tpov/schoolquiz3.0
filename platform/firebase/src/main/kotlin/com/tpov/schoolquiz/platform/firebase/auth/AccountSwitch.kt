@@ -97,7 +97,7 @@ class AccountSwitch(
             // правило владельца документ уже не отдаст (Story 10.5). Не удалось — вход не
             // блокируется, токен допишется под новым uid, а чужое сообщение отсеет сервис приёма.
             owners.forEach { deviceTokenRelease.release(it) }
-            val newUid =
+            switchGuard.switchAndForget(owners) {
                 try {
                     signIn()
                 } catch (
@@ -110,10 +110,7 @@ class AccountSwitch(
                     owners.forEach { deviceTokenRelease.reclaim(it) }
                     throw error
                 }
-            // Только после удавшегося входа: записи очереди, потом личные следы (история 6.4).
-            // Новый владелец в перечень не попадает: вход в тот же аккаунт, чьи строки лежат в
-            // очереди, — не потеря, а возвращение.
-            switchGuard.forgetAfterSwitch(owners.filter { it != newUid })
+            }
             GoogleLinkOutcome.Switched
         }.await()
 }

@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
+import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -33,6 +34,58 @@ interface LessonAttemptDao {
     @Query("SELECT state FROM outbox WHERE mutation_id = :mutationId")
     suspend fun outboxRowState(mutationId: String): String?
 
+    @Query("SELECT * FROM lesson_attempts WHERE attempt_id = :attemptId")
+    suspend fun findAttempt(attemptId: String): LessonAttemptEntity?
+
+    @Query("SELECT * FROM question_answers WHERE attempt_id = :attemptId ORDER BY question_id")
+    suspend fun findAttemptAnswers(attemptId: String): List<QuestionAnswerEntity>
+
+    @Query("SELECT * FROM lesson_attempt_intents WHERE attempt_id = :attemptId")
+    suspend fun findAttemptIntent(attemptId: String): LessonAttemptIntentEntity?
+
+    @Query("SELECT * FROM outbox WHERE mutation_id = :mutationId")
+    suspend fun findQueuedAttemptIntent(mutationId: String): OutboxEntity?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAttemptIntent(entity: LessonAttemptIntentEntity): Long
+
+    /** Persists an immutable unscored terminal request and its outbox row, not a scored result. */
+    @Transaction
+    suspend fun saveUnscoredAttemptIntent(
+        attemptId: String,
+        ownerUid: String,
+        outboxRow: OutboxEntity,
+    ) {
+        // Raw answers are already frozen in payload. Never create a successful attempt or a
+        // QuestionAnswerEntity with a made-up numeric score just to fit the old schema.
+        if (attemptId.isBlank() || ownerUid.isBlank() || outboxRow.ownerUid != ownerUid ||
+            outboxRow.operation != OutboxOperations.SUBMIT_ATTEMPT ||
+            outboxRow.mutationId != OutboxOperations.mutationKey(OutboxOperations.SUBMIT_ATTEMPT, attemptId) ||
+            outboxRow.entityRef != "lesson_runner:attempt:$attemptId"
+        ) throw AttemptIntentConflict()
+        val previous = findAttempt(attemptId)
+        val previousAnswers = findAttemptAnswers(attemptId)
+        val marker = findAttemptIntent(attemptId)
+        val queued = findQueuedAttemptIntent(outboxRow.mutationId)
+        if (previous != null || previousAnswers.isNotEmpty()) throw AttemptIntentConflict()
+
+        val incoming = outboxRow.attemptIntent(attemptId)
+        if (marker != null) {
+            if (marker != incoming) throw AttemptIntentConflict()
+            if (queued != null) {
+                if (queued.attemptIntent(attemptId) != incoming) throw AttemptIntentConflict()
+                requireOutboxIntentQueued(OUTBOX_ROW_IGNORED, queued.mutationId, queued.state)
+            }
+            // Marker survives ACK. Identical retry must not re-enqueue, rewrite or reset backoff.
+            return
+        }
+        // A queued-only legacy body is not evidence of this new raw-only persistence protocol.
+        if (queued != null) throw AttemptIntentConflict()
+        if (outboxRow.state != "WAITING") throw AttemptIntentConflict()
+        if (insertAttemptIntent(incoming) == OUTBOX_ROW_IGNORED) throw AttemptIntentConflict()
+        if (enqueueOutboxRow(outboxRow) == OUTBOX_ROW_IGNORED) throw AttemptIntentConflict()
+    }
+
     /**
      * Stores a finished attempt: the attempt itself, the answers behind it, the repetition
      * schedule those answers move, and the row that will carry it all to the server.
@@ -52,6 +105,38 @@ interface LessonAttemptDao {
         repetitions: List<QuestionRepetitionEntity>,
         outboxRow: OutboxEntity? = null,
     ) {
+        // The first terminal body is immutable across process death, transport retry and ACK.
+        // The response receipt cannot substitute for it: a receipt does not contain the request.
+        val previous = findAttempt(attempt.attemptId)
+        val marker = findAttemptIntent(attempt.attemptId)
+        val queued = outboxRow?.let { findQueuedAttemptIntent(it.mutationId) }
+        if (outboxRow != null && outboxRow.ownerUid != attempt.userId) throw AttemptIntentConflict()
+        if (previous != null || marker != null || queued != null) {
+            if (previous != attempt || findAttemptAnswers(attempt.attemptId) != answers.sortedBy { it.questionId }) {
+                throw AttemptIntentConflict()
+            }
+            if (outboxRow == null) return // Legacy local-only retry never creates a server intent.
+            val incoming = outboxRow.attemptIntent(attempt.attemptId)
+            if (marker != null) {
+                if (marker != incoming) throw AttemptIntentConflict()
+            } else if (queued?.attemptIntent(attempt.attemptId) != incoming) {
+                // A legacy row without its original pending request is not completion proof.
+                throw AttemptIntentConflict()
+            }
+            if (queued != null) {
+                if (queued.attemptIntent(attempt.attemptId) != incoming) throw AttemptIntentConflict()
+                requireOutboxIntentQueued(OUTBOX_ROW_IGNORED, queued.mutationId, queued.state)
+            }
+            if (marker == null && insertAttemptIntent(incoming) == OUTBOX_ROW_IGNORED) {
+                throw AttemptIntentConflict()
+            }
+            return // Do not rewrite answers, repetition schedule or transport retry metadata.
+        }
+        outboxRow?.let {
+            if (insertAttemptIntent(it.attemptIntent(attempt.attemptId)) == OUTBOX_ROW_IGNORED) {
+                throw AttemptIntentConflict()
+            }
+        }
         upsert(attempt)
         if (answers.isNotEmpty()) upsertAnswers(answers)
         if (repetitions.isNotEmpty()) upsertRepetitions(repetitions)

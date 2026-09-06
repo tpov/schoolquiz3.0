@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.shared.core.outbox
 
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
@@ -14,7 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 fun interface MutationTransport {
     /** Отправляет запись. Неудача возвращается как `Result.failure`, а не бросается. */
-    suspend fun send(record: OutboxRecord): Result<Unit>
+    suspend fun send(record: OutboxRecord): Result<MutationResponse>
 }
 
 /**
@@ -42,8 +44,16 @@ class OutboxEngine(
     private val policy: OutboxPolicy = OutboxPolicy(),
     private val clock: () -> Long,
     private val onQuarantined: QuarantineListener,
+    private val receipts: MutationReceiptStore,
+    private val sessions: OutboxSessionProvider,
     private val batchSize: Int = DEFAULT_BATCH,
+    private val maxBatchesPerRun: Int = DEFAULT_MAX_BATCHES,
 ) {
+    init {
+        require(batchSize in 1..DEFAULT_BATCH) { "batchSize must be between 1 and 50" }
+        require(maxBatchesPerRun in 1..DEFAULT_MAX_BATCHES) { "maxBatchesPerRun must be between 1 and 100" }
+    }
+
     /**
      * Один проход за раз.
      *
@@ -70,7 +80,10 @@ class OutboxEngine(
 
     private suspend fun drainLocked(ownerUid: String): OutboxRunSummary {
         val now = clock()
-        val due = store.dueRecords(ownerUid, now, batchSize)
+        val session =
+            sessions.current()?.takeIf { it.ownerUid == ownerUid && ownerUid.isNotBlank() }
+                ?: return OutboxRunSummary(0, 0, 0, 0, 0)
+        val seen = mutableSetOf<Long>()
         var sent = 0
         var retried = 0
         var quarantined = 0
@@ -80,19 +93,32 @@ class OutboxEngine(
         // восстанавливать ветвь разбором этого текста запрещено.
         var lastError: SyncError? = null
 
-        for (record in due) {
-            val outcome = step(record, now)
-            outcome.error?.let { lastError = it }
-            when (outcome.step) {
-                Step.SENT -> sent++
-                Step.QUARANTINED -> quarantined++
-                Step.CONFLICTED -> conflicted++
-                Step.RETRY -> retried++
+        for (page in 0 until maxBatchesPerRun) {
+            currentCoroutineContext().ensureActive()
+            if (sessions.current() != session) break
+            // A failed local receipt write may leave a due row unchanged. Widen the prefix to
+            // look past all rows already examined, so it cannot hide the next page or spin.
+            val due =
+                store.dueRecords(ownerUid, now, seen.size + batchSize)
+                    .filter { it.id !in seen }.take(batchSize)
+            if (due.isEmpty()) break
+            for (record in due) {
+                currentCoroutineContext().ensureActive()
+                if (sessions.current() != session) break
+                seen += record.id
+                val outcome = step(record, now, session)
+                outcome.error?.let { lastError = it }
+                when (outcome.step) {
+                    Step.SENT -> sent++
+                    Step.QUARANTINED -> quarantined++
+                    Step.CONFLICTED -> conflicted++
+                    Step.RETRY -> retried++
+                }
             }
         }
 
         return OutboxRunSummary(
-            examined = due.size,
+            examined = seen.size,
             sent = sent,
             retried = retried,
             quarantined = quarantined,
@@ -105,7 +131,20 @@ class OutboxEngine(
     private suspend fun step(
         record: OutboxRecord,
         nowMs: Long,
+        session: OutboxSession,
     ): StepOutcome {
+        if (record.ownerUid != session.ownerUid) return StepOutcome(Step.RETRY, null)
+        // After a crash between receipt persistence and queue removal, acknowledge the durable
+        // response locally. No repeat network call, TTL check or feature rollback is necessary.
+        val cached =
+            try {
+                receipts.find(record.ownerUid, record.mutationId)
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                return StepOutcome(Step.RETRY, SyncError.Unknown(error))
+            }
+        if (sessions.current() != session) return StepOutcome(Step.RETRY, null)
+        if (cached != null) return acknowledge(record, cached, session, persist = false)
         if (policy.isExpired(record, nowMs)) {
             // Перезревшую отправлять нельзя — срок хранения ключа на сервере истёк, и повтор был бы
             // для него новой операцией (AD-1). Но и лежать она права не имеет: пока возраст резал
@@ -117,12 +156,26 @@ class OutboxEngine(
         }
 
         val outcome = transport.send(record)
+        if (sessions.current() != session) return StepOutcome(Step.RETRY, null)
         if (outcome.isSuccess) {
-            store.remove(record.id)
-            return StepOutcome(Step.SENT, error = null)
+            return acknowledge(
+                record,
+                MutationReceipt(
+                    record.ownerUid,
+                    record.mutationId,
+                    record.operation,
+                    record.entityRef,
+                    outcome.getOrThrow().payloadJson,
+                    clock(),
+                ),
+                session,
+                persist = true,
+            )
         }
 
-        val error = outcome.exceptionOrNull().syncErrorOrNull() ?: SyncError.Unknown(outcome.exceptionOrNull())
+        val failure = outcome.exceptionOrNull()
+        if (failure is CancellationException) throw failure
+        val error = failure.syncErrorOrNull() ?: SyncError.Unknown(failure)
         val decision = policy.onFailure(record, error, clock())
         if (decision.state == OutboxState.QUARANTINED) return quarantine(record, decision, error)
 
@@ -130,6 +183,37 @@ class OutboxEngine(
         val step = if (decision.state == OutboxState.CONFLICT) Step.CONFLICTED else Step.RETRY
         return StepOutcome(step, error)
     }
+
+    private suspend fun acknowledge(
+        record: OutboxRecord,
+        receipt: MutationReceipt,
+        session: OutboxSession,
+        persist: Boolean,
+    ): StepOutcome =
+        try {
+            check(
+                receipt.ownerUid == record.ownerUid && receipt.mutationId == record.mutationId &&
+                    receipt.operation == record.operation && receipt.entityRef == record.entityRef,
+            ) {
+                "Receipt identity does not match the pending mutation"
+            }
+            if (sessions.current() != session) {
+                StepOutcome(Step.RETRY, null)
+            } else {
+                if (persist) receipts.persist(receipt)
+                if (sessions.current() != session) {
+                    StepOutcome(Step.RETRY, null)
+                } else {
+                    store.remove(record.id)
+                    StepOutcome(Step.SENT, null)
+                }
+            }
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
+            // The server effect has succeeded. Storage failure must never enter the transport's
+            // max-attempt/age quarantine path, which would roll back an already settled action.
+            StepOutcome(Step.RETRY, SyncError.Unknown(error))
+        }
 
     /**
      * Объявляет карантин: сперва реакция фичи, и только её успех делает карантин записанным.
@@ -192,8 +276,9 @@ class OutboxEngine(
     )
 
     private companion object {
-        /** Сколько записей за один проход. Больше — дольше держим соединение без пользы. */
+        /** Page size, not the total number of records drained by one run. */
         const val DEFAULT_BATCH = 50
+        const val DEFAULT_MAX_BATCHES = 100
     }
 }
 

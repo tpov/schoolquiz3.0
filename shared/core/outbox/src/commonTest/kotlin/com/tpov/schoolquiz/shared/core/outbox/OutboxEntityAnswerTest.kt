@@ -2,11 +2,11 @@ package com.tpov.schoolquiz.shared.core.outbox
 
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
 
 /**
  * Ответ очереди про одну сущность (AD-14): что показывать на её экране.
@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.runTest
  * порядок, в котором терминальное перевешивает ожидание.
  */
 class OutboxEntityAnswerTest {
-
     private val now = 1_700_000_000_000L
     private val ref = "lesson_runner:attempt:a1"
 
@@ -36,60 +35,66 @@ class OutboxEntityAnswerTest {
     )
 
     @Test
-    fun `given nothing is queued for the reference then the answer says so, and is not emptiness`() = runTest {
-        val store = FakeOutboxStore()
+    fun `given nothing is queued for the reference then the answer says so, and is not emptiness`() =
+        runTest {
+            val store = FakeOutboxStore()
 
-        val answer = store.observeEntity("uid-1", "lesson_runner:attempt:absent").first()
+            val answer = store.observeEntity("uid-1", "lesson_runner:attempt:absent").first()
 
-        assertEquals(OutboxEntitySync.None, answer)
-    }
-
-    @Test
-    fun `given a waiting record and a quarantined one then the answer is quarantine`() = runTest {
-        val store = FakeOutboxStore()
-        // Карантинная легла раньше, ждущая позже: по свежести выиграла бы ждущая, и терминальное
-        // состояние спряталось бы за ней.
-        store.seed(
-            record("m-old", state = OutboxState.QUARANTINED, createdAtMs = now).copy(id = 1L),
-            record("m-new", state = OutboxState.WAITING, createdAtMs = now + 1_000L).copy(id = 2L),
-        )
-
-        val answer = store.observeEntity("uid-1", ref).first()
-
-        assertTrue(answer is OutboxEntitySync.Queued)
-        assertEquals(OutboxState.QUARANTINED, answer.state)
-        assertEquals(1L, answer.recordId)
-    }
+            assertEquals(OutboxEntitySync.None, answer)
+        }
 
     @Test
-    fun `given a conflict alongside quarantine then the conflict still comes first`() = runTest {
-        val store = FakeOutboxStore()
-        store.seed(
-            record("m-conflict", state = OutboxState.CONFLICT, createdAtMs = now).copy(id = 1L),
-            record("m-quarantined", state = OutboxState.QUARANTINED, createdAtMs = now + 1_000L).copy(id = 2L),
-        )
-
-        val answer = store.observeEntity("uid-1", ref).first()
-
-        assertTrue(answer is OutboxEntitySync.Queued)
-        assertEquals(OutboxState.CONFLICT, answer.state, "по конфликту игроку решать — он вперёд всех")
-    }
-
-    @Test
-    fun `given the pass could not deliver then the run summary names the branch, not a text`() = runTest {
-        val store = FakeOutboxStore()
-        store.seed(record("m-1").copy(id = 1L))
-        val engine =
-            OutboxEngine(
-                store = store,
-                transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) },
-                clock = { now },
-                onQuarantined = NoLocalEffect(),
+    fun `given a waiting record and a quarantined one then the answer is quarantine`() =
+        runTest {
+            val store = FakeOutboxStore()
+            // Карантинная легла раньше, ждущая позже: по свежести выиграла бы ждущая, и терминальное
+            // состояние спряталось бы за ней.
+            store.seed(
+                record("m-old", state = OutboxState.QUARANTINED, createdAtMs = now).copy(id = 1L),
+                record("m-new", state = OutboxState.WAITING, createdAtMs = now + 1_000L).copy(id = 2L),
             )
 
-        val summary = engine.drain("uid-1")
+            val answer = store.observeEntity("uid-1", ref).first()
 
-        assertEquals(1, summary.retried)
-        assertEquals(SyncError.NoNetwork, summary.lastError, "ветвь названа целиком, а не текстом (AD-15)")
-    }
+            assertTrue(answer is OutboxEntitySync.Queued)
+            assertEquals(OutboxState.QUARANTINED, answer.state)
+            assertEquals(1L, answer.recordId)
+        }
+
+    @Test
+    fun `given a conflict alongside quarantine then the conflict still comes first`() =
+        runTest {
+            val store = FakeOutboxStore()
+            store.seed(
+                record("m-conflict", state = OutboxState.CONFLICT, createdAtMs = now).copy(id = 1L),
+                record("m-quarantined", state = OutboxState.QUARANTINED, createdAtMs = now + 1_000L).copy(id = 2L),
+            )
+
+            val answer = store.observeEntity("uid-1", ref).first()
+
+            assertTrue(answer is OutboxEntitySync.Queued)
+            assertEquals(OutboxState.CONFLICT, answer.state, "по конфликту игроку решать — он вперёд всех")
+        }
+
+    @Test
+    fun `given the pass could not deliver then the run summary names the branch, not a text`() =
+        runTest {
+            val store = FakeOutboxStore()
+            store.seed(record("m-1").copy(id = 1L))
+            val engine =
+                OutboxEngine(
+                    store = store,
+                    receipts = FakeMutationReceiptStore(),
+                    sessions = { OutboxSession("uid-1", 0) },
+                    transport = { Result.failure(SyncFailure(SyncError.NoNetwork)) },
+                    clock = { now },
+                    onQuarantined = NoLocalEffect(),
+                )
+
+            val summary = engine.drain("uid-1")
+
+            assertEquals(1, summary.retried)
+            assertEquals(SyncError.NoNetwork, summary.lastError, "ветвь названа целиком, а не текстом (AD-15)")
+        }
 }

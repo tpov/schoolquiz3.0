@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.platform.firebase.economy
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusalCode
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusedException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseVerification
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
 import org.junit.Assert.assertEquals
@@ -19,6 +20,60 @@ import java.io.File
  * purchase gets consumed.
  */
 class PurchaseVerificationMappingTest {
+    @Test
+    fun `premium quantity refusal is named and cannot become a credited purchase`() {
+        val failure =
+            purchaseFailureFrom(
+                "FAILED_PRECONDITION",
+                mapOf("reasonCode" to "PREMIUM_QUANTITY_UNSUPPORTED"),
+                "one item only",
+            )
+        assertTrue(failure is PurchaseRefusedException)
+        assertEquals(PurchaseRefusalCode.PREMIUM_QUANTITY_UNSUPPORTED, (failure as PurchaseRefusedException).code)
+    }
+
+    @Test
+    fun `paid unknown SKU remains retryable after server configuration is repaired`() {
+        val failure =
+            purchaseFailureFrom(
+                "FAILED_PRECONDITION",
+                mapOf("reasonCode" to "SKU_NOT_SOLD"),
+                "repair config and retry",
+            )
+        assertTrue(failure is SyncFailure)
+        assertEquals(SyncError.Disposition.RETRY, (failure as SyncFailure).error.disposition)
+        val other =
+            purchaseFailureFrom(
+                "FAILED_PRECONDITION",
+                mapOf("reasonCode" to "SKU_MISMATCH"),
+                "SKU_NOT_SOLD",
+            )
+        assertTrue(other is PurchaseRefusedException)
+    }
+
+    @Test
+    fun `premium catchup and entitlement corruption stay retryable without a named refusal`() {
+        for (message in listOf("catch-up checkpoint", "entitlement provenance inconsistent")) {
+            val failure = purchaseFailureFrom("UNAVAILABLE", null, message)
+            assertTrue(failure is SyncFailure)
+            assertEquals(SyncError.Disposition.RETRY, (failure as SyncFailure).error.disposition)
+        }
+    }
+
+    @Test
+    fun `unsupported entitlement kind never becomes a zero gold credit`() {
+        for (kind in listOf("PREMIUM", "FUTURE_KIND", 3)) {
+            val error =
+                runCatching {
+                    purchaseVerificationFrom(
+                        mapOf("status" to "CREDITED", "productKind" to kind, "goldGranted" to 0),
+                        StoreProductId.GOLD_PACK_SMALL,
+                    )
+                }.exceptionOrNull()
+            assertTrue(error is SyncFailure)
+            assertEquals(SyncError.Disposition.RETRY, (error as SyncFailure).error.disposition)
+        }
+    }
 
     @Test
     fun `a credited answer carries the granted amount and the settlement id`() {

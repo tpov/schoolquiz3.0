@@ -7,6 +7,10 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxFailureReason
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpeningException
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PendingGiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
@@ -19,17 +23,18 @@ import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepositor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -66,6 +71,8 @@ class DefaultHomeQuestsComponent(
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + mainContext)
     private val giftBoxOpening = MutableStateFlow<HomeGiftBoxOpeningState?>(null)
+    private val pendingGiftBox = MutableStateFlow<PendingGiftBoxOpening?>(null)
+    private var giftBoxRequest: Job? = null
 
     private val continueLesson = MutableStateFlow<ContinueLessonUi?>(null)
 
@@ -144,7 +151,7 @@ class DefaultHomeQuestsComponent(
         combine(
             observeCatalogs(),
             observeProfile(),
-            giftBoxOpening,
+            combine(giftBoxOpening, pendingGiftBox) { opening, pending -> opening to pending },
             continueLesson,
             questCounts,
         ) { catalogs, profile, opening, resume, counts ->
@@ -160,7 +167,8 @@ class DefaultHomeQuestsComponent(
                         },
                 giftBoxCount = profile.boxCount,
                 giftBoxStreakDays = profile.boxStreakDays,
-                giftBoxOpening = opening,
+                giftBoxOpening = opening.first,
+                hasPendingGiftBoxOpening = opening.second != null,
                 continueLesson = resume,
             )
         }
@@ -172,6 +180,21 @@ class DefaultHomeQuestsComponent(
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
+        scope.launch {
+            openGiftBoxUseCase.observePending().collectLatest { pending ->
+                val previousOwner = pendingGiftBox.value?.ownerUid
+                pendingGiftBox.value = pending
+                if (pending == null || (previousOwner != null && previousOwner != pending.ownerUid)) {
+                    giftBoxRequest?.cancel()
+                    giftBoxOpening.value = null
+                }
+                if (pending != null && giftBoxRequest?.isActive != true &&
+                    giftBoxOpening.value !is HomeGiftBoxOpeningState.Opening
+                ) {
+                    startGiftBox(resume = true)
+                }
+            }
+        }
     }
 
     override fun onContinueClick() {
@@ -181,34 +204,73 @@ class DefaultHomeQuestsComponent(
 
     override fun onGiftBoxFabClick() {
         val current = state.value
-        if (current.giftBoxCount <= 0 || current.giftBoxOpening is HomeGiftBoxOpeningState.Opening) return
+        if ((current.giftBoxCount <= 0 && !current.hasPendingGiftBoxOpening) || giftBoxRequest?.isActive == true) return
+        startGiftBox(resume = current.hasPendingGiftBoxOpening)
+    }
 
-        giftBoxOpening.value = HomeGiftBoxOpeningState.Opening(startedBoxCount = current.giftBoxCount)
-        scope.launch {
-            val result = openGiftBoxUseCase.execute()
-            giftBoxOpening.update {
-                result.fold(
-                    onSuccess = { opening ->
-                        val fallbackRemaining = (current.giftBoxCount - 1).coerceAtLeast(0)
-                        HomeGiftBoxOpeningState.Opened(
-                            reward = opening.reward,
-                            remainingBoxCount = opening.remainingBoxCount ?: fallbackRemaining,
-                            profileSynced = opening.profileSynced,
-                        )
-                    },
-                    onFailure = { error ->
-                        HomeGiftBoxOpeningState.Failed(
-                            reason = error.toGiftBoxFailure(),
-                            remainingBoxCount = current.giftBoxCount,
-                        )
-                    },
-                )
+    private fun startGiftBox(resume: Boolean) {
+        val count = state.value.giftBoxCount
+        giftBoxOpening.value = HomeGiftBoxOpeningState.Opening(startedBoxCount = count)
+        giftBoxRequest =
+            scope.launch {
+                val owner = authRepository.currentUid()
+                val result = if (resume) openGiftBoxUseCase.resumePending() else openGiftBoxUseCase.execute()
+                if (authRepository.currentUid() != owner) return@launch
+                if (result == null) {
+                    giftBoxOpening.value = null
+                    return@launch
+                }
+                val receiptOwner =
+                    result.getOrNull()?.ownerUid
+                        ?: (result.exceptionOrNull() as? GiftBoxOpeningException)?.ownerUid
+                if (receiptOwner != null && receiptOwner != owner) return@launch
+                showGiftBoxResult(result, count)
             }
-        }
+    }
+
+    private fun showGiftBoxResult(
+        result: Result<GiftBoxOpening>,
+        previousCount: Int,
+    ) {
+        giftBoxOpening.value =
+            result.fold(
+                onSuccess = { opening ->
+                    HomeGiftBoxOpeningState.Opened(
+                        reward = opening.reward,
+                        // A recovered old reward must not subtract from today's profile count.
+                        remainingBoxCount = opening.remainingBoxCount ?: state.value.giftBoxCount,
+                        profileSynced = opening.profileSynced,
+                        openingId = opening.openingId,
+                    )
+                },
+                onFailure = { error ->
+                    HomeGiftBoxOpeningState.Failed(
+                        error.toGiftBoxFailure(),
+                        previousCount,
+                        (error as? GiftBoxOpeningException)?.openingId,
+                    )
+                },
+            )
     }
 
     override fun onGiftBoxDismiss() {
-        giftBoxOpening.value = null
+        val shown = giftBoxOpening.value
+        if (shown is HomeGiftBoxOpeningState.Opening) return
+        val id =
+            when (shown) {
+                is HomeGiftBoxOpeningState.Opened -> shown.openingId
+                is HomeGiftBoxOpeningState.Failed -> shown.openingId
+                else -> null
+            }
+        if (id == null) {
+            giftBoxOpening.value = null
+            return
+        }
+        scope.launch {
+            openGiftBoxUseCase.acknowledge(id)
+            if (giftBoxOpening.value == shown) giftBoxOpening.value = null
+            // An uncertain/invalid receipt stays marked, but must not trap navigation behind an overlay.
+        }
     }
 
     override fun onCatalogClick(
@@ -221,10 +283,13 @@ class DefaultHomeQuestsComponent(
 
     private fun Throwable.toGiftBoxFailure(): HomeGiftBoxFailure {
         if (this is CancellationException) throw this
-        return if (message.orEmpty().contains("No gift boxes", ignoreCase = true)) {
-            HomeGiftBoxFailure.NoBoxes
-        } else {
-            HomeGiftBoxFailure.Unexpected(detail = message?.takeIf { it.isNotBlank() })
+        return when ((this as? GiftBoxOpeningException)?.reason) {
+            GiftBoxFailureReason.NO_BOXES -> HomeGiftBoxFailure.NoBoxes
+            GiftBoxFailureReason.OFFLINE -> HomeGiftBoxFailure.NetworkRequired
+            GiftBoxFailureReason.PENDING -> HomeGiftBoxFailure.Pending
+            GiftBoxFailureReason.RECEIPT_INVALID, GiftBoxFailureReason.REQUIRES_ATTENTION ->
+                HomeGiftBoxFailure.RequiresAttention
+            else -> HomeGiftBoxFailure.Unexpected(detail = null)
         }
     }
 }

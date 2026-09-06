@@ -85,4 +85,15 @@
     </plurals>
     <string name="runner_discussion_title">Обговорення</string>
     <string name="runner_discussion_open">Відкрити →</string>
+    <string name="runner_settlement_pending">Очікуємо підтвердження сервера. Оцінка й нагороди поки не підтверджені.</string>
+    <string name="runner_settlement_confirmed">Завершення підтверджено сервером</string>
+    <string name="runner_settlement_accounting_only">Оцінку й списання підтверджено; завершення не підтверджено.</string>
+    <string name="runner_settlement_unscorable">Сервер зберіг спробу без оцінки. Це не нуль.</string>
+    <string name="runner_settlement_rejected">Сервер не прийняв цю спробу.</string>
+    <string name="runner_settlement_legacy">Старий запис: серверного підтвердження оцінки немає.</string>
+    <string name="runner_settlement_invalid">Не вдалося перевірити підтвердження сервера. Результат невідомий.</string>
+    <string name="runner_settlement_account_unavailable">Увійдіть в акаунт, у якому виконано спробу, щоб побачити підтвердження.</string>
+    <string name="runner_settlement_charges">Звичайний заряд: −%1$d балів · Плазма: −%2$d балів</string>
+    <string name="runner_settlement_skill_points">Бали навички</string>
+    <string name="runner_settlement_nolics">Ноліки</string>
 </resources>

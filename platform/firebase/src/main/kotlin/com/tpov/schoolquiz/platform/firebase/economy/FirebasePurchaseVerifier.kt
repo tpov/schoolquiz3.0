@@ -2,7 +2,7 @@ package com.tpov.schoolquiz.platform.firebase.economy
 
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
-import com.tpov.schoolquiz.platform.firebase.network.toSyncError
+import com.tpov.schoolquiz.platform.firebase.network.syncErrorForCode
 import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
@@ -47,7 +47,7 @@ class FirebasePurchaseVerifier(
             } catch (e: FirebaseFunctionsException) {
                 // A refusal and a failed call are different things: the first is an answer with a
                 // reason, the second leaves the purchase unsettled and worth retrying.
-                throw purchaseRefusalFrom(e.details, e.message) ?: SyncFailure(e.toSyncError(), e)
+                throw purchaseFailureFrom(e.code.name, e.details, e.message, e.cause is IOException)
             } catch (e: IOException) {
                 // Never reached the server, so nothing was decided. Safe to present again.
                 throw SyncFailure(SyncError.NoNetwork, e)
@@ -100,7 +100,13 @@ internal fun purchaseVerificationFrom(
     }
 
     return when (val status = data?.get(FIELD_STATUS) as? String) {
-        STATUS_CREDITED ->
+        STATUS_CREDITED -> {
+            // This catalog still models gold packs only. A newer entitlement response must not
+            // become a misleading zero-gold receipt and consume an unrecognised purchase.
+            val kind = data[FIELD_PRODUCT_KIND]
+            if (kind != null && kind != PRODUCT_GOLD) {
+                throw unreadable("verifyPurchase returned an unsupported product kind")
+            }
             PurchaseVerification.Credited(
                 productId = productId,
                 // Refusing to guess here for the same reason the unknown status refuses: an amount
@@ -112,6 +118,7 @@ internal fun purchaseVerificationFrom(
                         ?: throw unreadable("verifyPurchase credited an unreadable amount"),
                 settlementId = data[FIELD_SETTLEMENT_ID] as? String ?: "",
             )
+        }
 
         STATUS_PENDING -> PurchaseVerification.Pending(productId)
 
@@ -120,6 +127,20 @@ internal fun purchaseVerificationFrom(
 }
 
 private fun unreadable(message: String): SyncFailure = SyncFailure(SyncError.Unknown(IllegalStateException(message)))
+
+/** Exact wire codes determine whether Play should re-deliver the still-unconsumed token. */
+internal fun purchaseFailureFrom(
+    code: String,
+    details: Any?,
+    message: String?,
+    causedByIo: Boolean = false,
+): Exception {
+    val refusal = purchaseRefusalFrom(details, message)
+    // An already-paid SKU missing from config may become recognised after a config repair.
+    // A terminal refusal would make UnsettledPurchaseSettler stop retrying it for this session.
+    if (refusal?.code == PurchaseRefusalCode.SKU_NOT_SOLD) return SyncFailure(SyncError.Unknown())
+    return refusal ?: SyncFailure(syncErrorForCode(code, message, details, causedByIo))
+}
 
 /**
  * Turns a callable failure into a refusal, when the server named a reason.
@@ -161,6 +182,8 @@ private const val FIELD_STATUS = "status"
 private const val FIELD_GOLD_GRANTED = "goldGranted"
 private const val FIELD_SETTLEMENT_ID = "settlementId"
 private const val FIELD_REASON_CODE = "reasonCode"
+private const val FIELD_PRODUCT_KIND = "productKind"
+private const val PRODUCT_GOLD = "GOLD"
 
 private const val STATUS_CREDITED = "CREDITED"
 private const val STATUS_PENDING = "PENDING"
