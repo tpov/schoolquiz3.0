@@ -1,8 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.data
 
 import com.tpov.schoolquiz.shared.core.persistence.DraftQuestionEntity
-import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionDao
-import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionEntity
+import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestAuthoringDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
@@ -20,32 +19,36 @@ interface QuestAuthoringLocalDataSource {
 
     suspend fun getActiveDraft(ownerUid: String): QuestAuthoringEntityBundle?
 
+    /** Делает выбранный черновик активным — тем, который откроет редактор. */
+    suspend fun activateDraft(
+        ownerUid: String,
+        draftId: String,
+    )
+
     suspend fun saveDraft(bundle: QuestAuthoringEntityBundle)
 
     suspend fun upsertQuestion(question: DraftQuestionEntity)
 
-    suspend fun queueArenaSubmission(submission: QuestArenaSubmissionEntity)
-
-    suspend fun findPendingArenaSubmissions(limit: Int): List<QuestArenaSubmissionEntity>
-
-    suspend fun markArenaSubmissionFailure(
-        submissionId: String,
-        message: String?,
-    )
-
-    suspend fun markArenaSubmissionSent(
-        submissionId: String,
+    /**
+     * Кладёт заявку в общую очередь и запирает черновик одной транзакцией (AD-23).
+     *
+     * Строка приходит готовой: собирает её писатель фичи, а ядро в её тело не смотрит (AD-7).
+     */
+    suspend fun queueArenaSubmission(
+        outboxRow: OutboxEntity,
         draftId: String,
-        updatedAtMs: Long,
+        requestedAtMs: Long,
     )
 
     /** Owner uids that have at least one draft awaiting a review verdict. */
     suspend fun findOwnerUidsAwaitingReview(): Set<String>
 
-    /**
-     * Puts a reviewer's refusal back on the draft: editable again, with the reason attached.
-     * A published outcome needs no local write — the quest arrives through catalog sync.
-     */
+    /** Заявку опубликовали: черновик выходит из ожидания рецензии и получает свой терминальный статус. */
+    suspend fun applyPublication(
+        draftId: String,
+        updatedAtMs: Long,
+    )
+
     suspend fun applyRejection(
         draftId: String,
         reason: String?,
@@ -59,13 +62,22 @@ interface QuestAuthoringLocalDataSource {
         status: String,
         updatedAtMs: Long,
     )
+
+    /**
+     * Снимает отвергнутую заявку и ставит вместо неё новую — одной транзакцией вместе со статусом
+     * черновика (AD-23, AD-24).
+     */
+    suspend fun resolveArenaConflict(
+        conflictedRowId: Long,
+        replacement: OutboxEntity,
+        draftId: String,
+        updatedAtMs: Long,
+    )
 }
 
 class QuestAuthoringLocalDataSourceImpl(
     private val dao: QuestAuthoringDao,
-    private val submissionDao: QuestArenaSubmissionDao,
 ) : QuestAuthoringLocalDataSource {
-
     override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummaryEntity>> =
         dao.observeDraftSummaries(ownerUid)
 
@@ -94,11 +106,19 @@ class QuestAuthoringLocalDataSourceImpl(
     }
 
     override suspend fun getActiveDraft(ownerUid: String): QuestAuthoringEntityBundle? {
-        val draft = dao.findActiveDraft(
-            ownerUid = ownerUid,
-            activeStatuses = activeDraftStatuses,
-        ) ?: return null
+        val draft =
+            dao.findActiveDraft(
+                ownerUid = ownerUid,
+                activeStatuses = activeDraftStatuses,
+            ) ?: return null
         return buildBundle(draft)
+    }
+
+    override suspend fun activateDraft(
+        ownerUid: String,
+        draftId: String,
+    ) {
+        dao.activateDraft(ownerUid = ownerUid, draftId = draftId)
     }
 
     override suspend fun saveDraft(bundle: QuestAuthoringEntityBundle) {
@@ -115,40 +135,32 @@ class QuestAuthoringLocalDataSourceImpl(
         dao.upsertQuestion(question)
     }
 
-    override suspend fun queueArenaSubmission(submission: QuestArenaSubmissionEntity) {
-        submissionDao.queueSubmission(submission)
-        dao.updateDraftStatus(
-            draftId = submission.draftId,
-            status = "REVIEW_QUEUED",
-            updatedAtMs = submission.requestedAtMs,
-        )
-    }
-
-    override suspend fun findPendingArenaSubmissions(limit: Int): List<QuestArenaSubmissionEntity> =
-        submissionDao.findPending(limit)
-
-    override suspend fun markArenaSubmissionFailure(
-        submissionId: String,
-        message: String?,
-    ) {
-        submissionDao.markFailure(submissionId, message)
-    }
-
-    override suspend fun markArenaSubmissionSent(
-        submissionId: String,
+    override suspend fun queueArenaSubmission(
+        outboxRow: OutboxEntity,
         draftId: String,
-        updatedAtMs: Long,
+        requestedAtMs: Long,
     ) {
-        submissionDao.markSent(submissionId)
-        dao.updateDraftStatus(
+        dao.queueArenaSubmission(
+            outboxRow = outboxRow,
             draftId = draftId,
-            status = "REVIEW_SENT",
-            updatedAtMs = updatedAtMs,
+            updatedAtMs = requestedAtMs,
         )
     }
 
     override suspend fun findOwnerUidsAwaitingReview(): Set<String> =
         dao.findDraftsAwaitingReview(AWAITING_REVIEW_LIMIT).map { it.ownerUid }.toSet()
+
+    override suspend fun applyPublication(
+        draftId: String,
+        updatedAtMs: Long,
+    ) {
+        dao.updateDraftStatusWithReason(
+            draftId = draftId,
+            status = "PUBLISHED",
+            rejectionReason = null,
+            updatedAtMs = updatedAtMs,
+        )
+    }
 
     override suspend fun applyRejection(
         draftId: String,
@@ -163,19 +175,48 @@ class QuestAuthoringLocalDataSourceImpl(
         )
     }
 
+    /**
+     * Кладёт приехавший приватный квест поверх локального черновика — или объявляет расхождение.
+     *
+     * Расхождение меряется серверными версиями, и только ими (AD-12, AD-24): конфликт — это когда
+     * сервер ушёл вперёд той версии, на которой автор остановился. Прежнее правило сравнивало
+     * счётчик локальных правок с серверной версией и потому объявляло конфликт за сам факт
+     * работы: десять раз сохранил черновик — десять правок против четвёртой версии, и вот тебе
+     * «расхождение», которого никто не создавал.
+     *
+     * Грязный черновик, под которым сервер не сдвинулся, не перезаписывается: приехало то же
+     * самое, что автор уже видел, а его несохранённая работа новее. Молча заменить её снимком
+     * значило бы отнять ровно то, ради чего очередь и существует.
+     */
     override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) {
         val incoming = snapshot.toEntityBundle()
         val existing = dao.findDraftById(incoming.draft.id)
-        if (existing != null &&
-            existing.localRevision > snapshot.serverRevision &&
-            existing.status in localDirtyStatuses
-        ) {
-            dao.updateDraftStatus(
-                draftId = existing.id,
-                status = "CONFLICT",
-                updatedAtMs = snapshot.changedAtMs,
+        val merge =
+            privateQuestMerge(
+                localStatus = existing?.status,
+                knownServerRevision = existing?.serverRevision,
+                incomingServerRevision = snapshot.serverRevision,
             )
-            return
+        when (merge) {
+            PrivateQuestMerge.CONFLICT -> {
+                dao.updateDraftStatus(
+                    draftId = requireNotNull(existing).id,
+                    status = "CONFLICT",
+                    updatedAtMs = snapshot.changedAtMs,
+                )
+                return
+            }
+
+            PrivateQuestMerge.KEEP_LOCAL -> return
+            PrivateQuestMerge.ADOPT_SERVER_REVISION -> {
+                dao.updateDraftServerRevision(
+                    draftId = requireNotNull(existing).id,
+                    serverRevision = requireNotNull(snapshot.serverRevision),
+                    updatedAtMs = snapshot.changedAtMs,
+                )
+                return
+            }
+            PrivateQuestMerge.SAVE -> Unit
         }
         dao.saveDraft(
             draft = incoming.draft,
@@ -198,6 +239,20 @@ class QuestAuthoringLocalDataSourceImpl(
         )
     }
 
+    override suspend fun resolveArenaConflict(
+        conflictedRowId: Long,
+        replacement: OutboxEntity,
+        draftId: String,
+        updatedAtMs: Long,
+    ) {
+        dao.resolveArenaConflict(
+            conflictedRowId = conflictedRowId,
+            replacement = replacement,
+            draftId = draftId,
+            updatedAtMs = updatedAtMs,
+        )
+    }
+
     private suspend fun buildBundle(draft: QuestDraftEntity): QuestAuthoringEntityBundle =
         QuestAuthoringEntityBundle(
             draft = draft,
@@ -210,18 +265,13 @@ class QuestAuthoringLocalDataSourceImpl(
     private companion object {
         const val AWAITING_REVIEW_LIMIT = 20
 
-        val activeDraftStatuses = listOf(
-            "DRAFT",
-            "SAVED",
-            "SYNC_PENDING",
-            "SYNCED",
-            "CONFLICT",
-        )
-        val localDirtyStatuses = setOf(
-            "DRAFT",
-            "SAVED",
-            "SYNC_PENDING",
-            "REVIEW_QUEUED",
-        )
+        val activeDraftStatuses =
+            listOf(
+                "DRAFT",
+                "SAVED",
+                "SYNC_PENDING",
+                "SYNCED",
+                "CONFLICT",
+            )
     }
 }

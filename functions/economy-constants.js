@@ -8,7 +8,7 @@
  * коллекция закрыта для клиентов правилами, и читает её только сервер, как уже читает
  * `configs/nickname_policy` и `configs/arena_review`.
  *
- * Начальные значения продублированы в `config/economy-constants.json` и в Kotlin
+ * Начальные значения продублированы в `functions/config/economy-constants.json` и в Kotlin
  * (`EconomyConstants.BOOTSTRAP`), потому что устройство, которое ещё ни разу не синхронизировалось,
  * обязано запуститься. Файл — единственный источник для обеих сторон, и оба набора тестов его
  * читают: разойдутся — упадёт сборка.
@@ -19,7 +19,7 @@
  * Чистый модуль: тестируется без firebase-admin.
  */
 
-const DEFAULTS = require("../config/economy-constants.json");
+const DEFAULTS = require("./config/economy-constants.json");
 // Форма SKU объявлена там, где решается, что по нему начислять: одно определение на оба модуля.
 const {SKU_PATTERN} = require("./purchase-verification");
 

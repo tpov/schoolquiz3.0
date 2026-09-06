@@ -36,8 +36,18 @@ data class ProfileUiState(
     val nicknamesUnreachable: Boolean = false,
     /** The name a switch is in flight for, so only that row shows as busy. */
     val switchingNickname: String? = null,
-    /** True while the Google account sheet is up or the link is in flight. */
+    /**
+     * True while the Google account sheet is up, the link is in flight, or the switch is waiting
+     * on the player's answer — the button stays busy until the account question is settled.
+     */
     val isLinkingGoogle: Boolean = false,
+    /**
+     * The question shown before switching to another account, or null when there is none.
+     *
+     * Present only when the previous account still holds unsent work: switching would lose it, so
+     * the switch waits here until the player confirms or declines (AD-8).
+     */
+    val pendingAccountSwitch: AccountSwitchWarning? = null,
 ) {
     /**
      * Whether the Google linking flow may be started.

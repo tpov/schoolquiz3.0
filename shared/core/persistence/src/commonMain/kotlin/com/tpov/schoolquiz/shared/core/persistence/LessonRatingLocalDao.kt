@@ -9,12 +9,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LessonRatingLocalDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: LessonRatingSubmittedLocalEntity): Long
 
     @Query("SELECT COUNT(*) > 0 FROM lesson_rating_submitted_local WHERE user_id = :userId AND lesson_id = :lessonId")
-    fun hasSubmitted(userId: String, lessonId: String): Flow<Boolean>
+    fun hasSubmitted(
+        userId: String,
+        lessonId: String,
+    ): Flow<Boolean>
 
     /**
      * Ставит оценку в общую очередь (AD-5).
@@ -57,5 +59,8 @@ interface LessonRatingLocalDao {
 
     /** Откат по карантину: оценки, которой сервер не принял, локально быть не должно (AD-28). */
     @Query("DELETE FROM lesson_rating_submitted_local WHERE user_id = :userId AND lesson_id = :lessonId")
-    suspend fun delete(userId: String, lessonId: String)
+    suspend fun delete(
+        userId: String,
+        lessonId: String,
+    )
 }

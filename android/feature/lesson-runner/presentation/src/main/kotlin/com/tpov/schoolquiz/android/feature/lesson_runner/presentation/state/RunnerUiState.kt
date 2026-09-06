@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 
 sealed interface RunnerUiState {
@@ -61,6 +62,13 @@ sealed interface RunnerUiState {
         val livesMaxHearts: Int? = null,
         val showRatingPrompt: Boolean,
         val saveWarning: Boolean,
+        /**
+         * Что очередь знает про это прохождение (AD-14): ждёт отправки, ушло в карантин или
+         * ждать нечего. Приезжает ответом ядра по `entity_ref`, а не чтением таблицы очереди
+         * этой фичей — и не `Boolean`, потому что карантин и ожидание игроку говорятся разными
+         * словами.
+         */
+        val syncMark: AttemptSyncMark = AttemptSyncMark.NONE,
         val ratingSubmissionState: RatingSubmissionState = RatingSubmissionState.Idle,
     ) : RunnerUiState
 

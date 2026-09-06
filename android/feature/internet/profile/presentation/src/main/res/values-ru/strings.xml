@@ -70,6 +70,47 @@
     <string name="profile_message_nickname_updated">Ник обновлён</string>
     <string name="profile_message_google_linked">Аккаунт привязан, прогресс сохранён</string>
     <string name="profile_message_google_switched">Вход выполнен в существующий аккаунт — прогресс гостя остался на нём</string>
-    <string name="profile_message_google_switched_with_unsent">Вход выполнен в существующий аккаунт — часть последних действий не успела уйти на сервер и уже не отправится</string>
+
+    <!-- Вопрос перед сменой аккаунта: что будет потеряно (AD-8). -->
+    <string name="profile_switch_warning_title">Сменить аккаунт?</string>
+    <!-- Строка на каждое состояние, а не одна сумма: «6 действий» скрывает конфликт, ждущий вас. -->
+    <plurals name="profile_switch_warning_waiting">
+        <item quantity="one">%d действие ещё ждёт отправки</item>
+        <item quantity="few">%d действия ещё ждут отправки</item>
+        <item quantity="many">%d действий ещё ждут отправки</item>
+        <item quantity="other">%d действия ещё ждут отправки</item>
+    </plurals>
+    <plurals name="profile_switch_warning_waiting_precondition">
+        <item quantity="one">%d действие ждёт, пока доедет предыдущее</item>
+        <item quantity="few">%d действия ждут, пока доедет предыдущее</item>
+        <item quantity="many">%d действий ждут, пока доедет предыдущее</item>
+        <item quantity="other">%d действия ждут, пока доедет предыдущее</item>
+    </plurals>
+    <plurals name="profile_switch_warning_conflicted">
+        <item quantity="one">%d действие разошлось с сервером и ждёт вашего решения</item>
+        <item quantity="few">%d действия разошлись с сервером и ждут вашего решения</item>
+        <item quantity="many">%d действий разошлись с сервером и ждут вашего решения</item>
+        <item quantity="other">%d действия разошлись с сервером и ждут вашего решения</item>
+    </plurals>
+    <plurals name="profile_switch_warning_quarantined">
+        <item quantity="one">%d действие не удалось окончательно и отправлено не будет</item>
+        <item quantity="few">%d действия не удались окончательно и отправлены не будут</item>
+        <item quantity="many">%d действий не удались окончательно и отправлены не будут</item>
+        <item quantity="other">%d действия не удались окончательно и отправлены не будут</item>
+    </plurals>
+    <plurals name="profile_switch_warning_synchronous">
+        <item quantity="one">%d действие ушло на сервер, и его судьба ещё неизвестна</item>
+        <item quantity="few">%d действия ушли на сервер, и их судьба ещё неизвестна</item>
+        <item quantity="many">%d действий ушли на сервер, и их судьба ещё неизвестна</item>
+        <item quantity="other">%d действия ушли на сервер, и их судьба ещё неизвестна</item>
+    </plurals>
+    <string name="profile_switch_warning_unsent_unknown">Часть последних действий не ушла на сервер и будет потеряна — сколько именно, сосчитать не удалось</string>
+    <string name="profile_switch_warning_data_title">Это хранится только на устройстве и не вернётся:</string>
+    <string name="profile_switch_warning_data_answer_history">история ваших ответов</string>
+    <string name="profile_switch_warning_data_repetition_schedule">расписание повторов</string>
+    <string name="profile_switch_warning_data_quest_drafts">неопубликованные черновики квестов</string>
+    <string name="profile_switch_warning_irreversible">Подтверждение удалит их безвозвратно. Отказ оставит вас в текущем аккаунте, ничего не будет удалено.</string>
+    <string name="profile_switch_warning_confirm">Сменить и потерять</string>
+    <string name="profile_switch_warning_decline">Остаться</string>
     <string name="profile_message_sync_failed">Не удалось синхронизировать профиль</string>
 </resources>

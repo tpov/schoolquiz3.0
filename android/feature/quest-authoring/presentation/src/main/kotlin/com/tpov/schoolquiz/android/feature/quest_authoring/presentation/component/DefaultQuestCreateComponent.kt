@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.re
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.restoreFillBlankAuthorText
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.upsertFillBlankAnswerMarker
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.mapper.toAuthoringDisplayItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DraftConflictUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DraftQuestionListItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankAnswerItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
@@ -51,9 +52,13 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQues
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARCHIVE_TARGET_SHELF
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARENA_TARGET_SHELF
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmissionRejection
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftConflictUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ResolveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
@@ -96,6 +101,8 @@ class DefaultQuestCreateComponent(
     private val getActiveQuestDraft: GetActiveQuestDraftUseCase,
     private val saveDraftQuestion: SaveDraftQuestionUseCase,
     private val submitQuestDraftToArena: SubmitQuestDraftToArenaUseCase,
+    private val observeQuestDraftConflict: ObserveQuestDraftConflictUseCase,
+    private val resolveQuestDraftConflict: ResolveQuestDraftConflictUseCase,
     private val questionContentParser: QuestionContentParser,
     private val questRepository: QuestRepository,
     private val sectionRepository: SectionRepository,
@@ -114,6 +121,7 @@ class DefaultQuestCreateComponent(
     private var sectionsJob: Job? = null
     private var themesJob: Job? = null
     private var lessonsJob: Job? = null
+    private var conflictJob: Job? = null
 
     override val state: StateFlow<QuestCreateUiState> = _state.asStateFlow()
 
@@ -276,6 +284,60 @@ class DefaultQuestCreateComponent(
                         }
                     }
                 }
+        }
+    }
+
+    /**
+     * Принять серверную версию и отправить работу заново (AD-24).
+     *
+     * Прежняя заявка не повторяется: её ключ сервер уже видел и отверг, повтор по нему не применит
+     * ничего (AD-2). Уходит новая мутация с новым ключом, а прежняя запись снимается — обе
+     * половины одной транзакцией на стороне данных.
+     *
+     * Конфликт без названной сервером версии отклоняется здесь, а не только прячется с экрана:
+     * новая мутация ушла бы с пустой ожидаемой версией, то есть вообще без сверки, — ровно то, от
+     * чего конфликт и защищает. Такое расхождение снимает следующий снимок с сервера.
+     */
+    override fun onResubmitOverServerVersionClick() {
+        val uid = ownerUid
+        val draftId = activeBundle?.draft?.id
+        val conflict = _state.value.draftConflict
+        val serverVersion = conflict?.serverVersion
+        if (uid == null || draftId == null || conflict == null) {
+            _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready)) }
+            return
+        }
+        if (serverVersion == null) {
+            _state.update {
+                it.copy(errorMessage = UiMessage.Res(R.string.qa_conflict_unknown_version_hint))
+            }
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(isSubmittingToArena = true, errorMessage = null, arenaMessage = null) }
+            val result = resolveQuestDraftConflict(uid, draftId)
+            if (result.isSuccess) {
+                refreshActiveDraft(uid)
+                _state.update {
+                    it.copy(
+                        isSubmittingToArena = false,
+                        errorMessage = null,
+                        arenaMessage =
+                            UiMessage.Res(
+                                R.string.qa_conflict_resubmitted,
+                                listOf(serverVersion),
+                            ),
+                    )
+                }
+            } else {
+                _state.update {
+                    it.copy(
+                        isSubmittingToArena = false,
+                        errorMessage = UiMessage.Res(R.string.qa_conflict_resolve_failed),
+                        arenaMessage = null,
+                    )
+                }
+            }
         }
     }
 
@@ -1030,12 +1092,49 @@ class DefaultQuestCreateComponent(
                 activeBundle?.applyStructureToState(it, editor) ?: it.copy(activeDraftTitle = null, editor = null)
             }
             activeBundle?.draft?.catalogId?.let(::observeQuestsForCatalog)
+            observeDraftConflict(uid, activeBundle?.draft?.id)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
             activeBundle = null
+            observeDraftConflict(uid, draftId = null)
             _state.update { it.copy(activeDraftTitle = null, editor = null) }
         }
+    }
+
+    /**
+     * Держит на экране ответ очереди по этому черновику (AD-14, AD-24).
+     *
+     * Поток, а не разовый запрос: конфликт появляется не по нажатию автора, а когда прогон очереди
+     * получает отказ по версии, — и экран, открытый в этот момент, обязан об этом узнать.
+     */
+    private fun observeDraftConflict(
+        uid: String,
+        draftId: QuestDraftId?,
+    ) {
+        conflictJob?.cancel()
+        if (draftId == null) {
+            _state.update { it.copy(draftConflict = null) }
+            return
+        }
+        conflictJob =
+            scope.launch {
+                observeQuestDraftConflict(uid, draftId)
+                    .catch { _state.update { current -> current.copy(draftConflict = null) } }
+                    .collect { conflict ->
+                        _state.update { current ->
+                            current.copy(
+                                draftConflict =
+                                    conflict?.let {
+                                        DraftConflictUiState(
+                                            serverVersion = it.serverVersion,
+                                            expectedVersion = it.expectedVersion,
+                                        )
+                                    },
+                            )
+                        }
+                    }
+            }
     }
 
     private fun QuestAuthoringBundle.applyStructureToState(
@@ -1480,9 +1579,34 @@ private fun QuestCreateUiState.structureValidationErrorRes(): Int? =
         else -> null
     }
 
+/**
+ * Подпись отказа по его причине.
+ *
+ * Прежде сюда попадал любой `IllegalArgumentException` и превращался в одну строку про
+ * недостающие вопросы. Автору с готовым квестом, отклонённым по состоянию черновика,
+ * предлагалось чинить исправные вопросы — сообщение уводило от настоящей причины. Теперь
+ * каждая причина названа своим типом на стороне domain и своей подписью здесь.
+ */
 private fun Throwable?.arenaSubmissionErrorMessage(): UiMessage =
-    when {
-        this is IllegalArgumentException -> UiMessage.Res(R.string.qa_error_arena_missing_questions)
+    when (this) {
+        is QuestArenaSubmissionRejection.DraftNotFound ->
+            UiMessage.Res(R.string.qa_error_arena_draft_missing)
+
+        is QuestArenaSubmissionRejection.DraftNotSubmittable ->
+            UiMessage.Res(R.string.qa_error_arena_draft_not_submittable)
+
+        is QuestArenaSubmissionRejection.UnsupportedTargetShelf ->
+            UiMessage.Res(R.string.qa_error_arena_bad_shelf)
+
+        is QuestArenaSubmissionRejection.NoLessonsChosen ->
+            UiMessage.Res(R.string.qa_error_no_lessons_in_node)
+
+        is QuestArenaSubmissionRejection.LessonOutsideDraft ->
+            UiMessage.Res(R.string.qa_error_arena_foreign_lesson)
+
+        is QuestArenaSubmissionRejection.LessonNotReady ->
+            UiMessage.Res(R.string.qa_error_arena_missing_questions)
+
         else -> this?.message?.let(UiMessage::Raw) ?: UiMessage.Res(R.string.qa_error_arena_enqueue_failed)
     }
 

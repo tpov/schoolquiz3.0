@@ -118,7 +118,6 @@ async function seed() {
       visibleOn: ["ru"],
       archived: false,
       version: 3,
-      contentsVersion: 2,
       lastModifiedAt: 1,
     });
     await store.doc("quests/draft").set({
@@ -131,7 +130,6 @@ async function seed() {
       visibleOn: [],
       archived: false,
       version: 1,
-      contentsVersion: 0,
       lastModifiedAt: 1,
     });
 
@@ -229,7 +227,6 @@ const NEW_QUEST = {
   visibleOn: [],
   archived: false,
   version: 1,
-  contentsVersion: 0,
   lastModifiedAt: 1,
 };
 
@@ -262,8 +259,10 @@ async function testQuests() {
     db("author").doc("quests/published").update({authorUid: "outsider"}));
   await deny("quests: автор правит version", () =>
     db("author").doc("quests/published").update({version: 99}));
-  await deny("quests: автор правит contentsVersion", () =>
-    db("author").doc("quests/published").update({contentsVersion: 99}));
+  // Список разрешённых полей — белый, и проверять его надо тем, чего в нём нет. Раньше здесь
+  // стоял `contentsVersion`: поле умерло вместе с эпиком 8, и тест перестал что-либо значить.
+  await deny("quests: автор дописывает поле не из белого списка", () =>
+    db("author").doc("quests/published").update({smuggled: 99}));
   await deny("quests: автор правит рейтинг", () =>
     db("author").doc("quests/published").update({averageRating: 5}));
 
@@ -342,8 +341,18 @@ async function testReviewHierarchy() {
     db("author").doc("private/author/catalogs/cat-1").update({hacked: true}));
 }
 
+/**
+ * Заявка на арену — серверная запись.
+ *
+ * Create для клиента закрыт целиком: правило не выполняет кода и вторую доставку той же заявки от
+ * первой не отличает, а триггер на созданный документ обрабатывал такую заявку без ключа
+ * идемпотентности вообще (AD-6). Единственный путь — обработчик quest_authoring.SUBMIT_ARENA,
+ * который пишет отсюда с правами Admin SDK, и правила ему не писаны.
+ *
+ * Чтение осталось: именно так вердикт доходит до автора.
+ */
 async function testReviewRequests() {
-  await allow("review_requests: автор создаёт свою заявку", () =>
+  await deny("review_requests: автор не создаёт заявку напрямую", () =>
     db("author").doc("quest_review_requests/req-mine").set({ownerUid: "author", processed: false}));
   await deny("review_requests: заявка от чужого имени", () =>
     db("outsider").doc("quest_review_requests/req-forged").set({ownerUid: "author", processed: false}));
@@ -526,6 +535,34 @@ async function testServerOnlyCollections() {
   });
 }
 
+/**
+ * users/{uid}/devices/{token} — адреса доставки push (Story 10.1, AD-20).
+ *
+ * Владелец пишет и удаляет только свои: чужой токен иначе можно было бы подменить и увести чужие
+ * уведомления себе. Читает только сервер через Admin SDK, у которого правил нет, — поэтому чтение
+ * закрыто всем, включая владельца; понадобится показать список устройств — открыть отдельно.
+ * Сама коллекция — технический реестр, не содержательные данные, и это единственный путь под
+ * users/{uid}, который сервер имеет право удалять (мёртвый токен).
+ */
+async function testDevices() {
+  await allow("devices: владелец пишет свой токен", () =>
+    db("player").doc("users/player/devices/tok-1").set({updatedAtMs: 1}));
+  await deny("devices: чужой не пишет под чужим uid", () =>
+    db("outsider").doc("users/player/devices/tok-x").set({updatedAtMs: 1}));
+  await deny("devices: гость не пишет", () =>
+    db("guest").doc("users/player/devices/tok-g").set({updatedAtMs: 1}));
+  await deny("devices: чужой не читает", () => db("outsider").doc("users/player/devices/tok-1").get());
+  // Строже, чем «читает только владелец»: читает только сервер. Закреплено, чтобы послабление
+  // было решением, а не случайностью.
+  await deny("devices: даже владелец не читает — только сервер", () =>
+    db("player").doc("users/player/devices/tok-1").get());
+  await allow("devices: владелец удаляет свой токен", () =>
+    db("player").doc("users/player/devices/tok-1").delete());
+  // Сам документ users/{uid} остаётся закрытым: подколлекция не открыла родителя.
+  await deny("devices: правило подколлекции не открыло запись в users/{uid}", () =>
+    db("player").doc("users/player").update({gold: 999}));
+}
+
 async function main() {
   const host = process.env.FIRESTORE_EMULATOR_HOST;
   if (!host) {
@@ -542,6 +579,7 @@ async function main() {
   await seed();
 
   await testUsers();
+  await testDevices();
   await testProfiles();
   await testQuests();
   await testNestedContent();

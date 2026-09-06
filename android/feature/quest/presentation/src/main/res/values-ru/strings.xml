@@ -35,4 +35,6 @@
     <string name="quest_cd_create_quest">Создать квест</string>
     <string name="quest_draft_label">Черновик</string>
     <string name="quest_questions_count">Вопросов: %1$d</string>
+    <string name="quest_draft_returned">Возвращён: %1$s</string>
+    <string name="quest_draft_returned_delivery">не удалось отправить на сервер, попробуйте ещё раз</string>
 </resources>

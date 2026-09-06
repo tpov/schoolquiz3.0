@@ -193,8 +193,8 @@ class PrimaryUserJourneyTest {
         assertTrue(state.localState.stack.backStack.isEmpty())
         assertFalse(state.isDrawerOpen)
 
-        // Internet: guest stats → first visible = Profile
-        assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
+        // Internet: guest stats → first visible = Arena (порог арены снят)
+        assertEquals(InternetConfig.ArenaRoot, state.internetState.stack.active)
         // Events: guest stats → public qualifier is first visible
         assertEquals(EventsConfig.QualifierTournamentRoot, state.eventsState.stack.active)
         assertEquals(DrawerSection.EventsSection.QualifierTournament, state.eventsState.activeSection)

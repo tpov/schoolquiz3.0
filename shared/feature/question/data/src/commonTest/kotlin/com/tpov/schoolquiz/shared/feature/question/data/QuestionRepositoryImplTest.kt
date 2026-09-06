@@ -6,9 +6,11 @@ import com.tpov.schoolquiz.shared.feature.question.data.dto.QuestionDto
 import com.tpov.schoolquiz.shared.feature.question.data.fake.FakeQuestionLocalDataSource
 import com.tpov.schoolquiz.shared.feature.question.data.fake.FakeQuestionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -54,17 +56,19 @@ class QuestionRepositoryImplTest {
         assertEquals(1, fakeLocal.upsertCallsFor["q1"] ?: 0)
     }
 
-    // Matrix 2 row EDGE: question archived + newer version → deleted
+    // AC 7.6 / AD-26: `archived` СКРЫВАЕТ узел, а не стирает. Прежде здесь стояло `deleted`, и
+    // архивация уносила у игрока скачанное вместе с прогрессом по каскаду FK.
     @Test
-    fun `when question archived and newer version then deleted`() = runTest {
+    fun `when question archived and newer version then hidden but kept`() = runTest {
         fakeLocal.seed(listOf(makeEntity("q1", version = 1L)))
         fakeRemote.result = listOf(makeDto("q1", version = 2L, archived = true))
 
         val result = repository.refreshByParents(lessonIds, 0L)
 
         assertTrue(result.isSuccess)
-        assertTrue(fakeLocal.deletedIds.contains("q1"))
-        assertNull(fakeLocal.findById("q1"))
+        assertTrue(fakeLocal.deletedIds.isEmpty(), "archived скрывает узел, а не удаляет его (AD-26)")
+        assertNotNull(fakeLocal.findById("q1"))
+        assertTrue(repository.observeByLesson(LessonId("ls1")).first().none { it.id.value == "q1" }, "скрытый узел игроку не показывается")
     }
 
     // Matrix 2 row: version equal → upsert called but entity not overwritten
@@ -192,14 +196,17 @@ class QuestionRepositoryImplTest {
     }
 
     @Test
-    fun `refreshByIds deletes archived concrete question`() = runTest {
+    fun `refreshByIds hides an archived concrete question and keeps its row`() = runTest {
+        // Строка и связанные с ней ответы игрока остаются в базе (AC 7.6): удаление вопроса
+        // унесло бы прогресс, а `archived` про это не говорит — он говорит «не показывать».
         fakeLocal.seed(listOf(makeEntity("q-archived", version = 1L)))
         fakeRemote.fetchByIdsResult = listOf(makeDto(id = "q-archived", version = 2L, archived = true))
 
         val result = repository.refreshByIds(setOf(QuestionId("q-archived")))
 
         assertTrue(result.isSuccess)
-        assertTrue(fakeLocal.deletedIds.contains("q-archived"))
-        assertNull(fakeLocal.findById("q-archived"))
+        assertTrue(fakeLocal.deletedIds.isEmpty())
+        assertNotNull(fakeLocal.findById("q-archived"))
+        assertTrue(repository.observeByLesson(LessonId("ls1")).first().none { it.id.value == "q-archived" })
     }
 }

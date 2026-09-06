@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ReturnCount:LessonUnlockQuarantineRollback.kt$LessonUnlockQuarantineRollback$override suspend fun onQuarantined(record: OutboxRecord)</ID>
+    <ID>TooGenericExceptionCaught:LessonRepositoryImpl.kt$LessonRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OutboxLessonUnlockQueue.kt$OutboxLessonUnlockQueue$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -22,7 +22,11 @@ interface VerificationRepository {
     suspend fun pending(limit: Int = DEFAULT_PENDING_LIMIT): List<VerificationRequest>
 
     /** Nobody decides their own. A rejection should carry a reason the applicant can act on. */
-    suspend fun decide(uid: String, decision: VerificationDecision, reason: String? = null)
+    suspend fun decide(
+        uid: String,
+        decision: VerificationDecision,
+        reason: String? = null,
+    )
 
     companion object {
         const val DEFAULT_PENDING_LIMIT = 20

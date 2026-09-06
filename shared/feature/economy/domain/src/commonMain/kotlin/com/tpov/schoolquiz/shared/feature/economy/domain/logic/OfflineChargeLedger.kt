@@ -72,7 +72,10 @@ data class OfflineChargeLedger(
     ): ClaimOutcome {
         val current = line(kind)
         return when {
-            rules.requiresSettledAccount && hasUnsettledClaims -> ClaimOutcome.Refused(ClaimRefusal.WAITING_FOR_SETTLEMENT)
+            rules.requiresSettledAccount && hasUnsettledClaims ->
+                ClaimOutcome.Refused(
+                    ClaimRefusal.WAITING_FOR_SETTLEMENT,
+                )
             current.available <= 0 -> ClaimOutcome.Refused(ClaimRefusal.NOTHING_LEFT)
             else -> ClaimOutcome.Accepted(with(kind, current.copy(runClaims = current.runClaims + 1)))
         }

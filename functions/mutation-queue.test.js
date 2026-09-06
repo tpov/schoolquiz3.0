@@ -129,6 +129,31 @@ testAMutationWithoutAKeyIsRejected();
 testAKeyWithOddCharactersOrLengthIsRejected();
 testAKeyBelongsToTheAccountThatCreatedIt();
 
+// Вердикт приёмника — то же решение, что принимала транзакция `submitMutation`, но чистое.
+{
+  const {DECISION_DENIED, gateVerdict} = require("./mutation-queue");
+
+  const fresh = gateVerdict(null, UID, "m-1", "quest.SET_SHELF", NOW);
+  assert.strictEqual(fresh.decision, DECISION_EXECUTE);
+  assert.strictEqual(fresh.reservation.state, STATE_RESERVED, "выполнение начинается с резервирования ключа");
+  assert.strictEqual(fresh.reservation.mutationId, "m-1");
+  assert.strictEqual(fresh.reservation.operation, "quest.SET_SHELF");
+
+  const completed = completionRecord(fresh.reservation, {cancelled: true}, NOW);
+  const replay = gateVerdict(completed, UID, "m-1", "quest.SET_SHELF", NOW + 1);
+  assert.strictEqual(replay.decision, DECISION_REPLAY);
+  assert.deepStrictEqual(replay.result, {cancelled: true});
+  assert.strictEqual(replay.reservation, null, "повтор ничего не резервирует");
+
+  const inFlight = gateVerdict(fresh.reservation, UID, "m-1", "quest.SET_SHELF", NOW + 1);
+  assert.strictEqual(inFlight.decision, DECISION_WAIT);
+
+  // Владелец проверяется раньше состояния: чужой выполненный ключ не отдаёт чужой результат.
+  const foreign = gateVerdict(completed, "someone-else", "m-1", "quest.SET_SHELF", NOW + 1);
+  assert.strictEqual(foreign.decision, DECISION_DENIED);
+  assert.strictEqual(foreign.result, null);
+}
+
 console.log("mutation-queue.test.js: all tests passed");
 
 // Незнакомая операция — окончательный отказ, а не повод повторять.
@@ -152,4 +177,154 @@ console.log("mutation-queue.test.js: all tests passed");
   assert.strictEqual(injected.known, false, "унаследованное свойство не обработчик");
 
   console.log("resolveOperation: all tests passed");
+}
+
+// Тело приезжает строкой: очередь хранит его как есть и в него не смотрит (AD-5, AD-7).
+{
+  const {parseMutationPayload} = require("./mutation-queue.js");
+
+  const fromString = parseMutationPayload('{"lessonId":"lesson-1","kind":"UNLOCK_LESSON"}');
+  assert.strictEqual(fromString.valid, true, "строка с корректным JSON обязана разбираться");
+  assert.strictEqual(fromString.payload.lessonId, "lesson-1");
+
+  // Синхронный вызов того же обработчика тело строкой не заворачивает.
+  const fromObject = parseMutationPayload({lessonId: "lesson-2"});
+  assert.strictEqual(fromObject.valid, true);
+  assert.strictEqual(fromObject.payload.lessonId, "lesson-2");
+
+  const missing = parseMutationPayload(undefined);
+  assert.strictEqual(missing.valid, true, "пустое тело — не ошибка формы");
+  assert.deepStrictEqual(missing.payload, {});
+
+  // Сломанное тело обязано отличаться от пустого: иначе обработчик получит {} и молча
+  // выполнит операцию не над тем, что игрок имел в виду.
+  const broken = parseMutationPayload("{not json");
+  assert.strictEqual(broken.valid, false, "неразбираемое тело — отказ, а не пустой объект");
+  assert.strictEqual(broken.payload, null);
+
+  const notAnObject = parseMutationPayload("[1,2,3]");
+  assert.strictEqual(notAnObject.valid, false, "массив телом мутации не является");
+
+  const scalar = parseMutationPayload("42");
+  assert.strictEqual(scalar.valid, false, "число телом мутации не является");
+
+  const tooLong = parseMutationPayload('{"a":"' + "x".repeat(1024 * 1024) + '"}');
+  assert.strictEqual(tooLong.valid, false, "тело сверх потолка не разбирается вовсе");
+
+  console.log("parseMutationPayload: all tests passed");
+}
+
+// ─── Сверка expected_version (история 8.3) ────────────────────────────────────────────────────
+{
+  const {
+    STATE_COMPLETED: COMPLETED,
+    STATE_RESERVED: RESERVED,
+    VERSION_CONFLICT_DETAIL,
+    decideMutation: decide,
+    readExpectedVersion,
+    reservationRecord: reserve,
+    completionRecord: complete,
+    versionConflictDetail,
+    versionVerdict,
+  } = require("./mutation-queue.js");
+
+  // Поля нет. По форме это законно, и разбирает случай приёмник: у операции без версионируемой
+  // сущности он сверку не зовёт вовсе, у версионируемой — зовёт, и молчание значит «сущности ещё
+  // нет». Молчание, означающее «не сверяй», выключало бы всю сверку тем, что клиент промолчал.
+  const absent = readExpectedVersion({mutationId: "m-1", operation: "UNLOCK_LESSON"});
+  assert.strictEqual(absent.valid, true);
+  assert.strictEqual(absent.expectedVersion, null);
+  assert.strictEqual(versionVerdict(absent.expectedVersion, 0).conflict, false, "сущности нет — создание проходит");
+  assert.strictEqual(
+    versionVerdict(absent.expectedVersion, 6).conflict,
+    true,
+    "сущность уже есть, а клиент её версии не знает — это конфликт, а не разрешение писать поверх",
+  );
+  assert.strictEqual(versionVerdict(absent.expectedVersion, 6).serverVersion, 6, "клиенту нужно чем разрешать");
+
+  // Ноль на проводе означает ровно то же, что молчание. Ни один клиент его не шлёт — его модель
+  // требует serverRevision либо отсутствующим, либо >= 1, — но принять его и сверить одинаково
+  // дешевле, чем держать две несовпадающие ветки для одного утверждения «сущности ещё нет».
+  const zero = readExpectedVersion({expectedVersion: 0});
+  assert.strictEqual(zero.expectedVersion, 0);
+  assert.strictEqual(versionVerdict(zero.expectedVersion, 0).checked, true);
+  assert.strictEqual(versionVerdict(zero.expectedVersion, 0).conflict, false);
+  assert.strictEqual(versionVerdict(zero.expectedVersion, 1).conflict, true, "документ уже создан кем-то");
+  assert.deepStrictEqual(
+    versionVerdict(null, 1),
+    versionVerdict(0, 1),
+    "молчание и явный ноль обязаны решаться одинаково",
+  );
+
+  // Оба написания принимаются, но противоречить друг другу не имеют права.
+  assert.strictEqual(readExpectedVersion({expected_version: 5}).expectedVersion, 5);
+  assert.strictEqual(readExpectedVersion({expectedVersion: 5, expected_version: 5}).expectedVersion, 5);
+  assert.strictEqual(readExpectedVersion({expectedVersion: 5, expected_version: 6}).valid, false);
+
+  // Кривое значение — отказ формы, а не молчаливая мутация мимо сверки.
+  assert.strictEqual(readExpectedVersion({expectedVersion: "five"}).valid, false);
+  assert.strictEqual(readExpectedVersion({expectedVersion: 1.5}).valid, false);
+  assert.strictEqual(readExpectedVersion({expectedVersion: -1}).valid, false);
+  assert.strictEqual(readExpectedVersion({expectedVersion: true}).valid, false);
+
+  // Версия совпала — эффект применяется.
+  const fresh = versionVerdict(5, 5);
+  assert.strictEqual(fresh.conflict, false);
+  assert.strictEqual(fresh.serverVersion, 5);
+
+  // Версия устарела — конфликт, и сервер обязан сказать, куда он ушёл.
+  const stale = versionVerdict(5, 6);
+  assert.strictEqual(stale.conflict, true);
+  assert.strictEqual(stale.serverVersion, 6, "клиенту нужно чем разрешать конфликт");
+  const detail = versionConflictDetail(stale.serverVersion);
+  assert.strictEqual(detail.code, VERSION_CONFLICT_DETAIL);
+  assert.strictEqual(detail.serverVersion, 6, "версия — отдельным полем, а не в тексте сообщения");
+
+  // Конфликт без номера: сервер версии не знает — поля нет вовсе, а не ноль. Ноль уговорил бы
+  // клиента показать «отправить поверх версии 0», и та отправка вернулась бы тем же конфликтом.
+  const numberless = versionConflictDetail(0);
+  assert.strictEqual(numberless.code, VERSION_CONFLICT_DETAIL);
+  assert.strictEqual(Object.prototype.hasOwnProperty.call(numberless, "serverVersion"), false, "нет номера — нет поля");
+  const junk = versionConflictDetail("not a number");
+  assert.strictEqual(Object.prototype.hasOwnProperty.call(junk, "serverVersion"), false, "мусор — тоже не номер");
+  assert.notStrictEqual(VERSION_CONFLICT_DETAIL, "precondition-pending", "пометки обязаны различаться");
+
+  // Клиент, ушедший вперёд сервера, — тоже расхождение, а не успех.
+  assert.strictEqual(versionVerdict(7, 6).conflict, true);
+
+  // Повтор отклонённой мутации: ключ не остаётся ни выполненным, ни зарезервированным, поэтому
+  // вторая попытка снова доходит до сверки и снова получает конфликт — и хранилище выполненных
+  // ключей по-прежнему её не содержит.
+  const store = new Map();
+  const now = 1_800_000_000_000;
+  function receive(mutationId, expectedVersion, serverVersion, at) {
+    const verdict = decide(store.get(mutationId) || null, at);
+    if (verdict.decision !== DECISION_EXECUTE) return {outcome: verdict.decision};
+    const reservation = reserve(mutationId, UID, "quest_authoring.SUBMIT_ARENA", at);
+    store.set(mutationId, reservation);
+    const check = versionVerdict(expectedVersion, serverVersion);
+    if (check.conflict) {
+      store.delete(mutationId);
+      return {outcome: "conflict", serverVersion: check.serverVersion};
+    }
+    store.set(mutationId, complete(reservation, {published: true}, at));
+    return {outcome: "applied"};
+  }
+
+  const firstAttempt = receive("m-conflict", 5, 6, now);
+  assert.strictEqual(firstAttempt.outcome, "conflict");
+  assert.strictEqual(store.has("m-conflict"), false, "отклонённый ключ не остаётся зарезервированным");
+
+  const secondAttempt = receive("m-conflict", 5, 6, now + 1000);
+  assert.strictEqual(secondAttempt.outcome, "conflict", "повтор устаревшей мутации снова конфликт");
+  const completedKeys = [...store.entries()].filter(([, record]) => record.state === COMPLETED);
+  assert.deepStrictEqual(completedKeys, [], "хранилище выполненных ключей отклонённой мутации не знает");
+  assert.strictEqual([...store.values()].some((record) => record.state === RESERVED), false);
+
+  // А та же мутация, пересобранная поверх серверной версии, проходит и записывается выполненной.
+  const resolvedAttempt = receive("m-resolved", secondAttempt.serverVersion, 6, now + 2000);
+  assert.strictEqual(resolvedAttempt.outcome, "applied");
+  assert.strictEqual(store.get("m-resolved").state, COMPLETED);
+
+  console.log("expected_version: all tests passed");
 }

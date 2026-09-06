@@ -37,7 +37,6 @@ package com.tpov.schoolquiz.shared.core.question_schema
  * the move is a type change rather than a design.
  */
 interface QuestionDisplay {
-
     /**
      * Null only for a redacted payload whose source carried no id of its own — which is every
      * question in the seed corpus, where the id lives on the wrapper document. See

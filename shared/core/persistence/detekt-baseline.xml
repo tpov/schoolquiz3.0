@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:LessonAttemptDao.kt$LessonAttemptEarning$100</ID>
+    <ID>ReturnCount:UserStatsDao.kt$UserStatsDao$@Transaction suspend fun rollbackLessonUnlock( uid: String, unlockKey: String, refundNolics: Long, ): Boolean</ID>
+    <ID>ReturnCount:UserStatsDao.kt$UserStatsDao$@Transaction suspend fun unlockLessonWithOutbox( uid: String, unlockKey: String, priceNolics: Long, outboxRow: OutboxEntity, ): LessonUnlockLocalResult</ID>
+    <ID>SwallowedException:TopParticipantListConverter.kt$TopParticipantListConverter$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TopParticipantListConverter.kt$TopParticipantListConverter$e: Exception</ID>
+    <ID>TooManyFunctions:LessonAttemptDao.kt$LessonAttemptDao</ID>
+    <ID>TooManyFunctions:OutboxDao.kt$OutboxDao</ID>
+    <ID>TooManyFunctions:OwnerRowsDao.kt$OwnerRowsDao</ID>
+    <ID>TooManyFunctions:QuestAuthoringDao.kt$QuestAuthoringDao</ID>
+    <ID>TooManyFunctions:QuestDao.kt$QuestDao</ID>
+    <ID>TooManyFunctions:ReviewAssignmentDao.kt$ReviewAssignmentDao</ID>
+    <ID>TooManyFunctions:UserStatsDao.kt$UserStatsDao</ID>
+  </CurrentIssues>
+</SmellBaseline>

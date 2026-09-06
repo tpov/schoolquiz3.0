@@ -20,27 +20,23 @@ enum class CatalogSyncNodeType {
 }
 
 interface CatalogSyncChangeRemoteDataSource {
-    suspend fun fetchChangedSince(catalogId: CatalogId, cursorMs: Long): List<CatalogSyncChange>
-
     /**
-     * Одна страница журнала, начиная сразу после [cursor] (AD-31).
+     * Одна страница журнала `catalogs/{catalogId}/sync_changes`, начиная сразу после [cursor]
+     * (AD-31).
      *
      * Читать журнал целиком нельзя: полная перепубликация большого курса приходит одним ответом,
-     * и его размер ограничен только тем, сколько успел изменить автор. Реализация по умолчанию
-     * оставлена ради фейков в тестах — прод обязан её переопределить.
+     * и его размер ограничен только тем, сколько успел изменить автор. Продолжение — по паре
+     * «время, id документа», а не по одному времени: две записи в одну миллисекунду иначе
+     * сливались бы.
      *
-     * Она же отдаёт [SyncChangePage.unreadable] нулём, потому что считать нечего: сюда приходит
-     * уже разобранное. Реализация, которая разбирает документы сама, обязана назвать это число —
+     * Реализация, которая разбирает документы сама, обязана назвать [SyncChangePage.unreadable] —
      * терпимость к трём формам снимается только когда видно, что пропусков не осталось (AD-11).
      */
     suspend fun fetchPage(
         catalogId: CatalogId,
         cursor: SyncCursor,
         limit: Int = SYNC_PAGE_SIZE,
-    ): SyncChangePage<CatalogSyncChange> {
-        val changes = fetchChangedSince(catalogId, cursor.changedAtMs).take(limit)
-        return changes.toPage(limit) { SyncCursor(it.changedAtMs) }
-    }
+    ): SyncChangePage<CatalogSyncChange>
 }
 
 data class LessonContentSyncChange(
@@ -51,40 +47,13 @@ data class LessonContentSyncChange(
 )
 
 interface LessonContentSyncChangeRemoteDataSource {
-    suspend fun fetchChangedSince(lessonId: LessonId, cursorMs: Long): List<LessonContentSyncChange>
-
-    /** Одна страница журнала урока. См. [CatalogSyncChangeRemoteDataSource.fetchPage]. */
+    /** Одна страница журнала `lesson_content/{lessonId}/sync_changes`. См. [CatalogSyncChangeRemoteDataSource.fetchPage]. */
     suspend fun fetchPage(
         lessonId: LessonId,
         cursor: SyncCursor,
         limit: Int = SYNC_PAGE_SIZE,
-    ): SyncChangePage<LessonContentSyncChange> {
-        val changes = fetchChangedSince(lessonId, cursor.changedAtMs).take(limit)
-        return changes.toPage(limit) { SyncCursor(it.changedAtMs) }
-    }
+    ): SyncChangePage<LessonContentSyncChange>
 }
-
-/**
- * Собирает страницу из прочитанного.
- *
- * Полная страница означает «скорее всего есть ещё»: журнал мог кончиться ровно на границе, и
- * лишний пустой заход дешевле пропущенной записи.
- */
-fun <T> List<T>.toPage(
-    limit: Int,
-    cursorOf: (T) -> SyncCursor,
-): SyncChangePage<T> =
-    if (isEmpty()) {
-        SyncChangePage.empty()
-    } else {
-        SyncChangePage(
-            changes = this,
-            // Максимум, а не последний: порядок гарантирует запрос, но фейк в тесте — нет, и
-            // курсор, вставший ниже уже прочитанного, отдал бы те же записи снова.
-            nextCursor = maxOf { cursorOf(it) },
-            hasMore = size >= limit,
-        )
-    }
 
 const val CATALOG_LIST_CURSOR_ID: String = "catalogs"
 

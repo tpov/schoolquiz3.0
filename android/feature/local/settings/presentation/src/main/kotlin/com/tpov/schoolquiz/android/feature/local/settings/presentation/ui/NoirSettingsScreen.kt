@@ -46,8 +46,10 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
 import com.tpov.schoolquiz.android.feature.local.settings.presentation.R
+import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.formatSyncTimestamp
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
@@ -251,12 +253,38 @@ private fun SyncGroup(
         }
         // Что с синхронизацией на самом деле (AD-14). До сих пор наружу не выходило ничего:
         // игрок не мог узнать ни что действия ждут отправки, ни что одно уже не уедет.
+        //
+        // Верхняя строка отвечает на «когда в последний раз получилось», и только на него.
         SettingRow(
             label = stringResource(R.string.settings_sync_state),
-            value = status.summary(),
-            note = status.attentionNote(),
-            valueTint = if (status.needsAttention) NoirDanger else NoirT1,
+            value =
+                if (status.hasEverSucceeded) {
+                    formatSyncTimestamp(status.lastSuccessAtMs)
+                } else {
+                    stringResource(R.string.settings_sync_state_never)
+                },
+            note =
+                if (status.hasUnreadableChanges) {
+                    stringResource(R.string.settings_sync_note_unreadable, status.unreadableChanges)
+                } else {
+                    null
+                },
         )
+        // Дальше — числа, каждое в своей строке (AD-14). Общей суммы тут нет намеренно: «7
+        // ожидает» одинаково выглядит и когда всё уедет само, и когда шесть записей из семи уже
+        // не уедут никогда.
+        SyncCountRow(R.string.settings_sync_count_waiting, status.counts.waiting)
+        SyncCountRow(R.string.settings_sync_count_waiting_precondition, status.counts.waitingPrecondition)
+        SyncCountRow(R.string.settings_sync_count_conflicted, status.counts.conflicted, tint = NoirDanger)
+        SyncCountRow(R.string.settings_sync_count_quarantined, status.counts.quarantined, tint = NoirDanger)
+        // Причина последней неудачи — доменной ветвью, а не текстом от сервера (AD-15).
+        status.lastError?.let { error ->
+            SettingRow(
+                label = stringResource(R.string.settings_sync_error),
+                value = error.label(),
+                valueTint = NoirDanger,
+            )
+        }
         // The empty catalog screen tells people to sync from the menu, so the action belongs here
         // where they come looking for it.
         NoirRow(onClick = onSyncNow) {
@@ -453,34 +481,36 @@ private fun NoirSettingsPreview() {
 }
 
 /**
- * Одна строка про состояние синхронизации.
+ * Один счётчик — одна строка, одна ресурсная константа, одно число (AD-14).
  *
- * Числа раздельные (AD-14), но на экране их надо свести в одну фразу: «ждёт отправки» и «застряло»
- * — разные вещи, и второе важнее, поэтому оно и говорится первым.
+ * Ноль не показывается: «Отклонены сервером: 0» — это не факт о синхронизации, а строка ради
+ * симметрии, и на экране, где важно заметить единицу, она мешает.
  */
 @Composable
-private fun SyncStatus.summary(): String =
-    when {
-        needsAttention -> stringResource(R.string.settings_sync_state_stuck, counts.stuck)
-        hasPending -> stringResource(R.string.settings_sync_state_pending, counts.pending)
-        hasEverSucceeded -> stringResource(R.string.settings_sync_state_clean)
-        else -> stringResource(R.string.settings_sync_state_never)
+private fun SyncCountRow(
+    textRes: Int,
+    count: Int,
+    tint: androidx.compose.ui.graphics.Color = NoirT1,
+) {
+    if (count <= 0) return
+    NoirRow {
+        Text(stringResource(textRes, count), style = NoirType.rowTitle.copy(color = tint))
     }
+}
 
 /**
- * Пояснение под строкой — только когда есть что пояснять.
+ * Почему последняя попытка не удалась — своей строкой на каждую ветвь (AD-15).
  *
- * Непрочитанные записи журнала стоят последними: с ними игроку делать нечего, ни повтор, ни
- * «Перечитать всё» их не разберут. Но и молчать нельзя — часть содержимого осталась старой, и без
- * этой строки она выглядела бы свежей.
+ * `when` исчерпывающий и без `else`: шестая ветвь `SyncError` не соберётся, пока для неё не
+ * решено, что показать игроку. Ни `reason`, ни `throwable.message`, ни имя класса сюда не
+ * попадают — это текст сервера и стектрейс, а не фраза для человека.
  */
 @Composable
-private fun SyncStatus.attentionNote(): String? =
-    when {
-        counts.conflicted > 0 && counts.quarantined > 0 ->
-            stringResource(R.string.settings_sync_note_both, counts.conflicted, counts.quarantined)
-        counts.conflicted > 0 -> stringResource(R.string.settings_sync_note_conflict, counts.conflicted)
-        counts.quarantined > 0 -> stringResource(R.string.settings_sync_note_quarantine, counts.quarantined)
-        hasUnreadableChanges -> stringResource(R.string.settings_sync_note_unreadable, unreadableChanges)
-        else -> null
+private fun SyncError.label(): String =
+    when (this) {
+        SyncError.NoNetwork -> stringResource(R.string.settings_sync_error_no_network)
+        SyncError.PreconditionNotMet -> stringResource(R.string.settings_sync_error_precondition)
+        is SyncError.Refused -> stringResource(R.string.settings_sync_error_refused)
+        is SyncError.VersionConflict -> stringResource(R.string.settings_sync_error_version_conflict)
+        is SyncError.Unknown -> stringResource(R.string.settings_sync_error_unknown)
     }

@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:TapProgress.kt$TapProgress$9</ID>
+  </CurrentIssues>
+</SmellBaseline>

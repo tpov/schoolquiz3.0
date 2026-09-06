@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:KotlinxSerializationQuestionContentParser.kt$KotlinxSerializationQuestionContentParser$8</ID>
+    <ID>MagicNumber:QuestionContent.kt$QuestionContent.FillBlank$10</ID>
+    <ID>MagicNumber:QuestionContent.kt$QuestionContent.FillBlank$3</ID>
+    <ID>MagicNumber:QuestionContent.kt$QuestionContent.FillBlank$5</ID>
+    <ID>MagicNumber:QuestionContent.kt$QuestionContent.MultipleChoice$8</ID>
+    <ID>MagicNumber:QuestionContent.kt$QuestionContent.Ordering$8</ID>
+    <ID>MagicNumber:QuestionContent.kt$QuestionContent.SingleChoice$8</ID>
+    <ID>MagicNumber:QuestionContent.kt$QuestionContent.Survey$8</ID>
+    <ID>ReturnCount:KotlinxSerializationQuestionContentParser.kt$KotlinxSerializationQuestionContentParser$override fun parse( payload: String, fallbackId: String, fallbackText: String, fallbackDifficulty: Difficulty, ): Result&lt;QuestionContent&gt;</ID>
+    <ID>ReturnCount:KotlinxSerializationQuestionContentParser.kt$KotlinxSerializationQuestionContentParser$private fun parseLegacySingleChoice( obj: JsonObject, fallbackId: String, fallbackText: String, fallbackDifficulty: Difficulty, ): Result&lt;QuestionContent&gt;</ID>
+    <ID>SwallowedException:KotlinxSerializationQuestionContentParser.kt$KotlinxSerializationQuestionContentParser$e: IllegalArgumentException</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,20 +1,12 @@
 const admin = require('firebase-admin');
 const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json');
-const {catalogSyncChangePath, lessonContentSyncChangePath} = require('./sync-change-id');
+const {writeSyncChanges} = require('../functions/sync-changes');
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const T = admin.firestore.Timestamp;
 const now = T.now();
 const baseMs = now.toMillis();
 const AUTHOR = 'seed-author-uid';
-
-function syncChange(type, id, offset) {
-  return {
-    type,
-    id,
-    changedAtMs: baseMs + offset,
-  };
-}
 
 (async () => {
   const quest = {
@@ -27,7 +19,6 @@ function syncChange(type, id, offset) {
     averageRating: null,
     averageRatingCount: 0,
     version: 1,
-    contentsVersion: 1,
     lastModifiedAt: now,
     archived: true,
   };
@@ -37,7 +28,6 @@ function syncChange(type, id, offset) {
     title: 'Синтаксис',
     order: 0,
     version: 1,
-    contentsVersion: 1,
     lastModifiedAt: now,
     archived: false,
   };
@@ -47,7 +37,6 @@ function syncChange(type, id, offset) {
     title: 'Переменные и типы',
     order: 0,
     version: 1,
-    contentsVersion: 1,
     lastModifiedAt: now,
     archived: false,
   };
@@ -57,7 +46,6 @@ function syncChange(type, id, offset) {
     title: 'val и var',
     order: 0,
     version: 1,
-    contentsVersion: 1,
     lastModifiedAt: now,
     archived: false,
   };
@@ -77,9 +65,8 @@ function syncChange(type, id, offset) {
     archived: false,
   };
 
-  // Bump parent contentsVersion + lastModifiedAt for cascade recurse predicate
+  // Bump parent lastModifiedAt for cascade recurse predicate
   const catalogUpd = {
-    contentsVersion: admin.firestore.FieldValue.increment(1),
     lastModifiedAt: now,
   };
 
@@ -89,37 +76,24 @@ function syncChange(type, id, offset) {
   batch.set(db.doc('themes/' + theme.id), theme);
   batch.set(db.doc('lessons/' + lesson.id), lesson);
   batch.set(db.doc('questions/' + question.id), question);
+  // Журнал — той же функцией и по тому же объявлению, что и сервер: документ на узел, id без
+  // времени, тело из трёх полей. Повторный прогон переписывает те же документы, а не добавляет
+  // новые. Вопрос уходит в оба журнала — каталожный и своего урока — потому что так объявлено,
+  // а не потому что сид об этом помнит. Приватной половины у сидового квеста нет: `ownerUid: null`.
+  const catalogId = quest.catalogId;
   [
-    syncChange('catalog', quest.catalogId, 1),
-    syncChange('quest', quest.id, 2),
-    syncChange('section', section.id, 3),
-    syncChange('theme', theme.id, 4),
-    syncChange('lesson', lesson.id, 5),
-  ].forEach((change) => {
-    batch.set(
-      db.doc(
-        catalogSyncChangePath(quest.catalogId, change.type, change.id),
-      ),
-      change,
-    );
-  });
-  const questionChange = syncChange('question', question.id, 6);
-  // В оба журнала, как пишет сервер: вопрос читается и по каталогу, и по содержимому урока.
-  batch.set(
-    db.doc(catalogSyncChangePath(quest.catalogId, questionChange.type, questionChange.id)),
-    questionChange,
-  );
-  batch.set(
-    db.doc(
-      lessonContentSyncChangePath(lesson.id, questionChange.id),
-    ),
-    questionChange,
-  );
+    {kind: 'catalog', id: catalogId, catalogId},
+    {kind: 'quest', id: quest.id, catalogId, ownerUid: null},
+    {kind: 'section', id: section.id, catalogId},
+    {kind: 'theme', id: theme.id, catalogId},
+    {kind: 'lesson', id: lesson.id, catalogId},
+    {kind: 'question', id: question.id, catalogId, lessonId: lesson.id},
+  ].forEach((node, offset) => writeSyncChanges(batch, db, node, baseMs + offset + 1));
   batch.update(db.doc('catalogs/' + quest.catalogId), catalogUpd);
   await batch.commit();
 
   console.log('Seeded hierarchy:');
-  console.log('  catalog:  courses (contentsVersion bumped)');
+  console.log('  catalog:  courses (lastModifiedAt bumped)');
   console.log('  quest:    ' + quest.id + ' [authorUid=' + quest.authorUid + ', visibleOn=' + quest.visibleOn.join(',') + ']');
   console.log('  section:  ' + section.id + ' (questId=' + section.questId + ')');
   console.log('  theme:    ' + theme.id + ' (sectionId=' + theme.sectionId + ')');

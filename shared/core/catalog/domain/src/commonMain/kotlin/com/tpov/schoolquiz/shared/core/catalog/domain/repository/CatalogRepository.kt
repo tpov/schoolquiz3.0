@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
  * Spec: docs/features/catalog-foundation/0-spec.md — Feature Domain Contract.
  */
 interface CatalogRepository {
-
     /**
      * Observes the locally cached list of catalogs sorted by `id.value` ASC.
      *

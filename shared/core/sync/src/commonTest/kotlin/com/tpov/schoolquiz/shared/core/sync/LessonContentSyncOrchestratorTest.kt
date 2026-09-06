@@ -32,8 +32,9 @@ class LessonContentSyncOrchestratorTest {
     private lateinit var lessonRepo: FakeLessonRepository
     private lateinit var questionRepo: FakeQuestionRepository
     private lateinit var syncState: FakeSyncStateRepository
-    private lateinit var catalogChanges: FakeCatalogSyncChangeRemoteDataSourceForLessonContent
+    private lateinit var catalogChanges: FakeCatalogJournal
     private lateinit var lessonChanges: FakeLessonContentSyncChangeRemoteDataSource
+    private lateinit var status: RecordingSyncStatus
     private lateinit var orchestrator: LessonContentSyncOrchestrator
 
     @BeforeTest
@@ -45,8 +46,9 @@ class LessonContentSyncOrchestratorTest {
         lessonRepo = FakeLessonRepository()
         questionRepo = FakeQuestionRepository()
         syncState = FakeSyncStateRepository()
-        catalogChanges = FakeCatalogSyncChangeRemoteDataSourceForLessonContent()
+        catalogChanges = FakeCatalogJournal()
         lessonChanges = FakeLessonContentSyncChangeRemoteDataSource()
+        status = RecordingSyncStatus()
         val catalogSync = CatalogSyncListOrchestrator(
             catalogRepo = catalogRepo,
             questRepo = questRepo,
@@ -66,7 +68,32 @@ class LessonContentSyncOrchestratorTest {
             questionRepo = questionRepo,
             syncStateRepo = syncState,
             syncChangeRemote = lessonChanges,
+            status = status,
         )
+    }
+
+    @Test
+    fun `given the lesson journal held records nobody could read then the run says how many`() = runTest {
+        // Число выбрасывалось `.map { }`: изменение вопроса не применялось, и об этом нигде не
+        // говорилось — ровно то «выглядит как изменений нет», которое 7.6 требует убрать (AD-11).
+        val lessonId = LessonId("lesson-1")
+        lessonChanges.changesByLesson = mapOf(
+            lessonId to listOf(
+                LessonContentSyncChange(lessonId, CatalogSyncNodeType.Question, "", 10L),
+                LessonContentSyncChange(lessonId, CatalogSyncNodeType.Lesson, "not-a-question", 11L),
+            ),
+        )
+
+        orchestrator.syncLessonContent(lessonId)
+
+        assertEquals(2, status.byJournal[SyncJournals.LESSON_CONTENT])
+    }
+
+    @Test
+    fun `given a clean lesson journal then zero is said out loud`() = runTest {
+        orchestrator.syncLessonContent(LessonId("lesson-1"))
+
+        assertEquals(0, status.byJournal[SyncJournals.LESSON_CONTENT], "иначе прошлое число живёт вечно")
     }
 
     @Test
@@ -77,7 +104,7 @@ class LessonContentSyncOrchestratorTest {
         val themeId = ThemeId("theme-1")
         val lessonId = LessonId("lesson-1")
         seedPath(catalogId, questId, sectionId, themeId, lessonId)
-        catalogChanges.changesByCatalog = mapOf(
+        catalogChanges.docs = mapOf(
             catalogId to listOf(
                 catalogChange(catalogId, CatalogSyncNodeType.Lesson, lessonId.value, 100L),
                 catalogChange(catalogId, CatalogSyncNodeType.Question, "ignored-question", 110L),
@@ -93,10 +120,10 @@ class LessonContentSyncOrchestratorTest {
         val result = orchestrator.syncLessonContent(lessonId)
 
         assertTrue(result.isSuccess)
-        assertEquals(listOf(catalogId to 0L), catalogChanges.requests)
+        assertEquals(listOf(catalogId to SyncCursor.BEGINNING), catalogChanges.requests)
         assertEquals(setOf(QuestionId("question-1"), QuestionId("question-2")), questionRepo.lastRefreshByIds)
-        assertEquals(110L, syncState.getCursor(catalogSyncCursorId(catalogId)))
-        assertEquals(210L, syncState.getCursor(lessonContentSyncCursorId(lessonId)))
+        assertEquals(SyncCursor(110L, "question_ignored-question"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(210L, "question-2"), syncState.getCursor(lessonContentSyncCursorId(lessonId)))
     }
 
     @Test
@@ -105,13 +132,69 @@ class LessonContentSyncOrchestratorTest {
         lessonChanges.changesByLesson = mapOf(
             lessonId to listOf(lessonChange(lessonId, "question-1", 200L)),
         )
-        syncState.setCursor(lessonContentSyncCursorId(lessonId), 50L)
+        syncState.setCursor(lessonContentSyncCursorId(lessonId), SyncCursor(50L, "question-0"))
         questionRepo.setNextRefreshByIdsFailure(IllegalStateException("boom"))
 
         val result = orchestrator.syncLessonContent(lessonId)
 
         assertTrue(result.isFailure)
-        assertEquals(50L, syncState.getCursor(lessonContentSyncCursorId(lessonId)))
+        assertEquals(SyncCursor(50L, "question-0"), syncState.getCursor(lessonContentSyncCursorId(lessonId)))
+    }
+
+    @Test
+    fun `sync lesson content reads two questions written in the same millisecond, second run reads neither`() = runTest {
+        val lessonId = LessonId("lesson-1")
+        lessonChanges.changesByLesson = mapOf(
+            lessonId to listOf(
+                lessonChange(lessonId, "question-a", 200L),
+                lessonChange(lessonId, "question-b", 200L),
+            ),
+        )
+
+        orchestrator.syncLessonContent(lessonId)
+        assertEquals(setOf(QuestionId("question-a"), QuestionId("question-b")), questionRepo.lastRefreshByIds)
+        assertEquals(SyncCursor(200L, "question-b"), syncState.getCursor(lessonContentSyncCursorId(lessonId)))
+        val callsAfterFirstRun = questionRepo.refreshByIdsCallCount
+
+        orchestrator.syncLessonContent(lessonId)
+
+        assertEquals(callsAfterFirstRun, questionRepo.refreshByIdsCallCount)
+        assertEquals(listOf(SyncCursor.BEGINNING, SyncCursor(200L, "question-b")), lessonChanges.requests)
+    }
+
+    @Test
+    fun `sync lesson content continues from the first of two same-millisecond questions`() = runTest {
+        val lessonId = LessonId("lesson-1")
+        lessonChanges.changesByLesson = mapOf(
+            lessonId to listOf(
+                lessonChange(lessonId, "question-a", 200L),
+                lessonChange(lessonId, "question-b", 200L),
+            ),
+        )
+        syncState.setCursor(lessonContentSyncCursorId(lessonId), SyncCursor(200L, "question-a"))
+
+        orchestrator.syncLessonContent(lessonId)
+
+        assertEquals(setOf(QuestionId("question-b")), questionRepo.lastRefreshByIds)
+    }
+
+    @Test
+    fun `sync lesson content reads the journal page by page`() = runTest {
+        val lessonId = LessonId("lesson-1")
+        lessonChanges.pageSize = 2
+        lessonChanges.changesByLesson = mapOf(
+            lessonId to listOf(
+                lessonChange(lessonId, "question-1", 200L),
+                lessonChange(lessonId, "question-2", 210L),
+                lessonChange(lessonId, "question-3", 220L),
+            ),
+        )
+
+        orchestrator.syncLessonContent(lessonId)
+
+        assertEquals(listOf(SyncCursor.BEGINNING, SyncCursor(210L, "question-2")), lessonChanges.requests)
+        assertEquals(2, questionRepo.refreshByIdsCallCount)
+        assertEquals(SyncCursor(220L, "question-3"), syncState.getCursor(lessonContentSyncCursorId(lessonId)))
     }
 
     private fun seedPath(
@@ -158,8 +241,11 @@ class LessonContentSyncOrchestratorTest {
         type: CatalogSyncNodeType,
         nodeId: String,
         changedAtMs: Long,
-    ): CatalogSyncChange =
-        CatalogSyncChange(catalogId, type, nodeId, changedAtMs)
+    ): JournalDoc =
+        JournalDoc(
+            cursor = SyncCursor(changedAtMs, "${type.name.lowercase()}_$nodeId"),
+            change = CatalogSyncChange(catalogId, type, nodeId, changedAtMs),
+        )
 
     private fun lessonChange(
         lessonId: LessonId,
@@ -169,25 +255,23 @@ class LessonContentSyncOrchestratorTest {
         LessonContentSyncChange(lessonId, CatalogSyncNodeType.Question, nodeId, changedAtMs)
 }
 
+/** Журнал урока в памяти: id документа — id вопроса, как пишет сервер; страница после пары. */
 private class FakeLessonContentSyncChangeRemoteDataSource : LessonContentSyncChangeRemoteDataSource {
     var changesByLesson: Map<LessonId, List<LessonContentSyncChange>> = emptyMap()
+    var pageSize: Int = SYNC_PAGE_SIZE
+    val requests = mutableListOf<SyncCursor>()
 
-    override suspend fun fetchChangedSince(
+    override suspend fun fetchPage(
         lessonId: LessonId,
-        cursorMs: Long,
-    ): List<LessonContentSyncChange> =
-        changesByLesson[lessonId].orEmpty().filter { it.changedAtMs > cursorMs }
-}
-
-private class FakeCatalogSyncChangeRemoteDataSourceForLessonContent : CatalogSyncChangeRemoteDataSource {
-    var changesByCatalog: Map<CatalogId, List<CatalogSyncChange>> = emptyMap()
-    val requests = mutableListOf<Pair<CatalogId, Long>>()
-
-    override suspend fun fetchChangedSince(
-        catalogId: CatalogId,
-        cursorMs: Long,
-    ): List<CatalogSyncChange> {
-        requests.add(catalogId to cursorMs)
-        return changesByCatalog[catalogId].orEmpty().filter { it.changedAtMs > cursorMs }
+        cursor: SyncCursor,
+        limit: Int,
+    ): SyncChangePage<LessonContentSyncChange> {
+        requests += cursor
+        val size = minOf(limit, pageSize)
+        val slice = changesByLesson[lessonId].orEmpty()
+            .sortedBy { SyncCursor(it.changedAtMs, it.nodeId) }
+            .filter { SyncCursor(it.changedAtMs, it.nodeId) > cursor }
+            .take(size)
+        return journalPage(slice, size, { SyncCursor(it.changedAtMs, it.nodeId) }, { it })
     }
 }

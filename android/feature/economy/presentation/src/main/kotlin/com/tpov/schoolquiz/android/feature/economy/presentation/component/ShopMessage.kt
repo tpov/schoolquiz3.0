@@ -16,7 +16,11 @@ sealed interface ShopMessage {
 
     data class NicknameListed(val price: Long) : ShopMessage
 
-    data object ListingCancelled : ShopMessage
+    /**
+     * Taking a lot down was queued, not done: it travels on its own, and the lot leaves the window
+     * once the server has removed it and the window is refreshed.
+     */
+    data object ListingCancelQueued : ShopMessage
 
     data class NicknameBought(val commission: Long) : ShopMessage
 

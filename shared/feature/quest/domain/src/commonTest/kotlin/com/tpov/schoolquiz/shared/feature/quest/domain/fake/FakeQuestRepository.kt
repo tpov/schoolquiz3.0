@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.shared.feature.quest.domain.fake
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestShelfChange
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestShelfSyncState
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,6 +79,30 @@ class FakeQuestRepository(
     /** How many times [refreshFromRemote] was called (includes no-op calls). */
     var refreshCallCount: Int = 0
         private set
+
+    /** Намерения переноса, отданные в очередь, — в порядке поступления. */
+    val queuedShelfChanges = mutableListOf<QuestShelfChange>()
+
+    /** Что очередь «знает» про перенос квеста; тест выставляет ожидание или карантин. */
+    private val shelfSyncStates = MutableStateFlow<Map<QuestId, QuestShelfSyncState>>(emptyMap())
+
+    override suspend fun queueShelfChange(change: QuestShelfChange): Result<Unit> {
+        queuedShelfChanges += change
+        shelfSyncStates.update { it + (change.questId to QuestShelfSyncState.PENDING) }
+        return Result.success(Unit)
+    }
+
+    override fun observeShelfChangeState(
+        ownerUid: String,
+        questId: QuestId,
+    ): Flow<QuestShelfSyncState> = shelfSyncStates.map { it[questId] ?: QuestShelfSyncState.NONE }
+
+    fun setShelfChangeState(
+        questId: QuestId,
+        state: QuestShelfSyncState,
+    ) {
+        shelfSyncStates.update { it + (questId to state) }
+    }
 
     // ── QuestRepository implementation ────────────────────────────────────────
 

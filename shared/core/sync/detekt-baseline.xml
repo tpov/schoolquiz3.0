@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:CatalogSyncListOrchestrator.kt$CatalogSyncListOrchestrator$( private val catalogRepo: CatalogRepository, private val questRepo: QuestRepository, private val sectionRepo: SectionRepository, private val themeRepo: ThemeRepository, private val lessonRepo: LessonRepository, private val questionRepo: QuestionRepository, private val syncStateRepo: SyncStateRepository, private val syncChangeRemote: CatalogSyncChangeRemoteDataSource, /** * Ворота, общие с полным ресинком. * * По умолчанию свои — так тесты и другие вызывающие остаются простыми. В приложении сюда * передаётся единственный экземпляр: два означали бы, что сброс курсоров и обычный проход * снова могут пересечься. */ private val gate: SyncGate = SyncGate(), /** * Куда сообщить, сколько записей журнала проход не понял. * * Необязателен: тесты и другие вызывающие остаются простыми. В приложении он есть — иначе * пропуск не оставляет следа, и «backfill закончен» не следует ни из чего (AD-11). */ private val status: SyncStatusRepository? = null, /** * Строгость разбора журнала — общая на все четыре (AD-11). До backfill старые формы терпятся * и считаются, после — останавливают проход, и курсор через них не проходит. */ private val policy: JournalReadPolicy = JournalReadPolicy.TOLERANT, )</ID>
+    <ID>LongParameterList:LessonContentSyncOrchestrator.kt$LessonContentSyncOrchestrator$( private val catalogSync: CatalogSyncListOrchestrator, private val lessonRepo: LessonRepository, private val themeRepo: ThemeRepository, private val sectionRepo: SectionRepository, private val questRepo: QuestRepository, private val questionRepo: QuestionRepository, private val syncStateRepo: SyncStateRepository, private val syncChangeRemote: LessonContentSyncChangeRemoteDataSource, /** * Куда сообщить, сколько записей журнала урока проход не понял. * * Прежде это число здесь выбрасывалось `.map { }`, и экран показывал ноль, пока журнал урока * был полон записей старой формы: пропуск снова не оставлял следа (AD-11). */ private val status: SyncStatusRepository? = null, /** Строгость разбора — общая на все четыре журнала (AD-11). */ private val policy: JournalReadPolicy = JournalReadPolicy.TOLERANT, )</ID>
+    <ID>LoopWithTooManyJumpStatements:SyncJournal.kt$while</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.DAILY$1000</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.DAILY$24L</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.DAILY$60</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.EVERY_3_DAYS$1000</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.EVERY_3_DAYS$24</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.EVERY_3_DAYS$3L</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.EVERY_3_DAYS$60</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.WEEKLY$1000</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.WEEKLY$24</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.WEEKLY$60</ID>
+    <ID>MagicNumber:SyncScheduler.kt$SyncFrequency.WEEKLY$7L</ID>
+    <ID>MagicNumber:SyncTimeFormat.kt$10</ID>
+    <ID>MaxLineLength:CatalogSyncChange.kt$LessonContentSyncChangeRemoteDataSource$/** Одна страница журнала `lesson_content/{lessonId}/sync_changes`. См. [CatalogSyncChangeRemoteDataSource.fetchPage]. */</ID>
+    <ID>ReturnCount:CatalogSyncListOrchestrator.kt$CatalogSyncListOrchestrator$private suspend fun applyChanges( changes: List&lt;CatalogSyncChange&gt;, includeQuestions: Boolean, ): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:LessonContentSyncOrchestrator.kt$LessonContentSyncOrchestrator$private suspend fun refreshContainingStructure(lessonId: LessonId): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:OutboxSyncable.kt$OutboxSyncable$override suspend fun sync(): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:SyncJournal.kt$suspend fun &lt;T&gt; SyncStateRepository.syncJournal( cursorId: String, startAt: SyncCursor? = null, maxPages: Int = MAX_PAGES_PER_RUN, policy: JournalReadPolicy = JournalReadPolicy.TOLERANT, isReadable: (T) -&gt; Boolean = { true }, fetch: suspend (SyncCursor) -&gt; SyncChangePage&lt;T&gt;, apply: suspend (List&lt;T&gt;) -&gt; Result&lt;Unit&gt;, ): Result&lt;Int&gt;</ID>
+    <ID>TooGenericExceptionCaught:CatalogSyncListOrchestrator.kt$CatalogSyncListOrchestrator$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LessonContentSyncOrchestrator.kt$LessonContentSyncOrchestrator$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

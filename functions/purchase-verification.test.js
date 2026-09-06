@@ -25,13 +25,17 @@ const {
   SETTLEMENT_PENDING,
   SETTLEMENT_REFUSE,
   SETTLEMENT_REPLAY,
+  SHORTFALL_FIELD,
   STATUS_CREDITED,
   STATUS_PENDING,
+  STATUS_REFUNDED,
   accountIdFor,
   auditRecord,
   decideSettlement,
+  goldAfterClawback,
   purchaseFromLookup,
   readProductPurchase,
+  readShortfall,
   receiptRecord,
   settlementGate,
   settlementId,
@@ -180,7 +184,7 @@ function testASettlementThatIsNotCreditedIsRefusedRatherThanReplayed() {
   // Возврат (история 1.3) переведёт запись из «начислено» в своё состояние. Повторять по такой
   // записи ответ «начислено» значило бы дать погасить то, за что деньги уже вернули.
   const {settlement} = settle(decide());
-  const refunded = {...settlement, status: "REFUNDED"};
+  const refunded = {...settlement, status: STATUS_REFUNDED};
 
   assertRefused(settlementGate(refunded, UID), "failed-precondition", REASON_SETTLEMENT_NOT_CREDITED, "gate");
   assertRefused(decide({existing: refunded}), "failed-precondition", REASON_SETTLEMENT_NOT_CREDITED, "decide");
@@ -188,6 +192,31 @@ function testASettlementThatIsNotCreditedIsRefusedRatherThanReplayed() {
   assertRefused(
     settlementGate(refunded, "someone-else"), "permission-denied", REASON_TOKEN_OWNED_BY_ANOTHER_ACCOUNT, "foreign",
   );
+}
+
+function testAClawbackStopsAtZeroAndTheRestBecomesADebt() {
+  // Золото неотрицательно всегда (ADM-19): минусовой баланс пришлось бы разбирать каждому, кто его
+  // читает, а таких мест больше, чем возвратов за всю историю. Невозвращаемое — недостача.
+  assert.deepStrictEqual(goldAfterClawback(200, 60), {gold: 140, shortfall: 0}, "хватило");
+  assert.deepStrictEqual(goldAfterClawback(20, 60), {gold: 0, shortfall: 40}, "потрачено — остаток за игроком");
+  assert.deepStrictEqual(goldAfterClawback(0, 60), {gold: 0, shortfall: 60}, "снимать было нечего");
+  assert.deepStrictEqual(goldAfterClawback(60, 60), {gold: 0, shortfall: 0}, "ровно");
+
+  // Мусор в балансе или в сумме не рождает ни минуса, ни дробей.
+  assert.deepStrictEqual(goldAfterClawback(-5, 60), {gold: 0, shortfall: 60});
+  assert.deepStrictEqual(goldAfterClawback(200, -60), {gold: 200, shortfall: 0});
+  assert.deepStrictEqual(goldAfterClawback("200", "60"), {gold: 140, shortfall: 0});
+  assert.deepStrictEqual(goldAfterClawback(200.9, 60.9), {gold: 140, shortfall: 0});
+  assert.deepStrictEqual(goldAfterClawback(undefined, undefined), {gold: 0, shortfall: 0});
+
+  // Долг читается из документа тем же правилом: целый, неотрицательный, отсутствующий — ноль.
+  assert.strictEqual(SHORTFALL_FIELD, "goldShortfall");
+  assert.strictEqual(readShortfall({[SHORTFALL_FIELD]: 40}), 40);
+  assert.strictEqual(readShortfall({}), 0);
+  assert.strictEqual(readShortfall(null), 0);
+  assert.strictEqual(readShortfall({[SHORTFALL_FIELD]: -40}), 0);
+  assert.strictEqual(readShortfall({[SHORTFALL_FIELD]: "40"}), 40);
+  assert.strictEqual(readShortfall({[SHORTFALL_FIELD]: "сорок"}), 0);
 }
 
 function testAPendingPurchaseGrantsNothingAndIsNotAnError() {
@@ -522,9 +551,12 @@ function testTheCallableIsWiredTheWayTheSpecSays() {
   // что в deferred-actions.test.js. Путь денег целиком исполняется в purchase-settlement.test.js;
   // здесь только договор обвязки: свой предел инстансов, делегирование, никакого `increment`.
   const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
-  const start = source.indexOf("exports.verifyPurchase = onCall(MONETARY_FUNCTION_OPTIONS");
+  const start = source.indexOf("exports.verifyPurchase = onCall(MONETARY_CALLABLE_OPTIONS");
   assert.ok(start > 0, "verifyPurchase объявлен со своим пределом инстансов");
   assert.match(source, /const MONETARY_FUNCTION_OPTIONS = \{\s*\.\.\.FUNCTION_OPTIONS,\s*maxInstances: [2-9]/);
+  // Предел инстансов наследуется набором для вызываемых: у денежного вызова он должен остаться
+  // своим, а не общим, даже после того как вызываемым понадобился отдельный набор настроек.
+  assert.match(source, /const MONETARY_CALLABLE_OPTIONS = \{\s*\.\.\.MONETARY_FUNCTION_OPTIONS/);
 
   const body = source.slice(start, source.indexOf("\nexports.", start + 1));
   assert.ok(body.includes("settlePurchase("), "вызов делегирует purchase-settlement.js");
@@ -535,6 +567,7 @@ testAVerifiedUnseenTokenIsCreditedFromTheServerTable();
 testTheSameTokenAgainReplaysTheStoredAnswerAndMovesNothing();
 testAReplayOfARecordWithoutAStoredResponseRebuildsItFromTheRecord();
 testASettlementThatIsNotCreditedIsRefusedRatherThanReplayed();
+testAClawbackStopsAtZeroAndTheRestBecomesADebt();
 testAPendingPurchaseGrantsNothingAndIsNotAnError();
 testACanceledPurchaseIsRefused();
 testATokenPlayDoesNotKnowIsRefused();

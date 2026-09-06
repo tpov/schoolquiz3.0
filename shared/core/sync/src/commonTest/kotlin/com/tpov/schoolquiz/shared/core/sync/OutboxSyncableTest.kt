@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.core.sync
 
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
+import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect
 import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
@@ -13,15 +14,17 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 
 /**
- * Очередь как участник обычной синхронизации — и единственный источник того, что игрок вообще
- * узнаёт про её ход. До сих пор наружу не выходило ничего, кроме `Log.w`.
+ * Очередь как участник обычной синхронизации.
+ *
+ * Свой след она не пишет: успех — свойство всего прогона, и записывает его [SyncRun]. Здесь
+ * проверяется ровно то, что шаг обязан рассказать прогону: довёз он или нет и по какой ветви.
  */
 class OutboxSyncableTest {
 
@@ -41,13 +44,19 @@ class OutboxSyncableTest {
 
         override fun observeCounts(ownerUid: String): Flow<OutboxCounts> = flowOf(OutboxCounts())
 
-        override fun observeEntity(ownerUid: String, entityRef: String): Flow<OutboxEntitySync?> = flowOf(null)
+        override fun observeEntity(ownerUid: String, entityRef: String): Flow<OutboxEntitySync> =
+            flowOf(OutboxEntitySync.None)
 
         override suspend fun findByEntityRef(ownerUid: String, entityRef: String): OutboxRecord? = null
 
         override suspend fun quarantined(ownerUid: String): List<OutboxRecord> = emptyList()
 
         override suspend fun countPending(ownerUid: String): Int = records.size
+
+        /** Вторая операция AD-8: после согласия на смену аккаунта записи прежнего владельца снимаются. */
+        override suspend fun forget(ownerUid: String) {
+            records.removeAll { it.ownerUid == ownerUid }
+        }
     }
 
     private fun record() =
@@ -61,87 +70,83 @@ class OutboxSyncableTest {
             createdAtMs = now,
         )
 
+    private fun noNetwork() =
+        syncable("uid-1", MutationTransport { Result.failure(SyncFailure(SyncError.NoNetwork)) })
+
     private fun syncable(
         uid: String?,
         transport: MutationTransport,
-        status: SyncStatusRepository,
         store: OutboxStore = Store(mutableListOf(record())),
     ) = OutboxSyncable(
         engine = OutboxEngine(store, transport, clock = { now }, onQuarantined = NoLocalEffect()),
         currentUidProvider = { uid },
-        status = status,
-        clock = { now },
     )
 
-    private fun status(store: OutboxStore = Store(mutableListOf())) =
-        InMemorySyncStatusRepository(store, flowOf("uid-1"))
-
     @Test
-    fun `given the run goes through then the success time is recorded`() = runTest {
-        val status = status()
-
-        val result = syncable("uid-1", { Result.success(Unit) }, status).sync()
+    fun `given the run goes through then the step reports success`() = runTest {
+        val result = syncable("uid-1", MutationTransport { Result.success(Unit) }).sync()
 
         assertTrue(result.isSuccess)
-        assertEquals(now, status.observeStatus().first().lastSuccessAtMs)
     }
 
     @Test
-    fun `given nothing could be delivered then the run is not recorded as a success`() = runTest {
+    fun `given nothing could be delivered then the step reports failure, not success`() = runTest {
         // Прежде здесь стояло обратное утверждение — и это был дефект: drain по контракту не
-        // бросает, поэтому «вернулся» означало «успех», и при любом числе неудач игрок видел
-        // свежее время последней удачной синхронизации. Успех — это когда ждать больше нечего.
-        val status = status()
+        // бросает, поэтому «вернулся» означало «успех», и при любом числе неудач прогон считался
+        // прошедшим. Успех — это когда ждать больше нечего.
+        val result = noNetwork().sync()
 
-        syncable("uid-1", { Result.failure(SyncFailure(SyncError.NoNetwork)) }, status).sync()
-
-        val after = status.observeStatus().first()
-        assertEquals(0L, after.lastSuccessAtMs, "проход, который ничего не довёз, успехом не считается")
-        assertTrue(after.lastError != null, "и причина обязана быть названа")
+        assertTrue(result.isFailure, "проход, который ничего не довёз, успехом не считается")
     }
 
     @Test
-    fun `given everything was delivered then the success time is what the player sees`() = runTest {
-        val status = status()
+    fun `given the pass could not deliver then the branch travels up, not the text`() = runTest {
+        // Ровно то, что игрок увидит строкой причины: ветвь, а не `throwable.message` (AD-15).
+        val result = noNetwork().sync()
 
-        syncable("uid-1", { Result.success(Unit) }, status).sync()
-
-        assertEquals(now, status.observeStatus().first().lastSuccessAtMs)
+        assertEquals(SyncError.NoNetwork, result.syncErrorOrNull())
     }
 
     @Test
-    fun `given no account then nothing is drained and nothing is recorded`() = runTest {
-        val status = status()
+    fun `given a refusal then the branch is refusal, and it is not the network branch`() = runTest {
+        val refused = MutationTransport { Result.failure(SyncFailure(SyncError.Refused("нет золота"))) }
+
+        val result = syncable("uid-1", refused).sync()
+
+        assertEquals(SyncError.Refused("нет золота"), result.syncErrorOrNull())
+    }
+
+    @Test
+    fun `given no account then nothing is drained and the step does not fail the run`() = runTest {
         var attempts = 0
 
-        val result = syncable(null, { attempts++; Result.success(Unit) }, status).sync()
+        val result = syncable(null, MutationTransport { attempts++; Result.success(Unit) }).sync()
 
         assertTrue(result.isSuccess)
         assertEquals(0, attempts)
-        assertEquals(0L, status.observeStatus().first().lastSuccessAtMs, "прохода не было — и отметки нет")
     }
 
     @Test
     fun `given a blank uid then it is treated as no account`() = runTest {
         var attempts = 0
 
-        syncable("   ", { attempts++; Result.success(Unit) }, status()).sync()
+        syncable("   ", MutationTransport { attempts++; Result.success(Unit) }).sync()
 
         assertEquals(0, attempts)
     }
 
     @Test
-    fun `given the store itself throws then the failure is reported and typed`() = runTest {
+    fun `given the store itself throws then the failure travels up as is`() = runTest {
         val broken =
             object : OutboxStore by Store(mutableListOf()) {
                 override suspend fun dueRecords(ownerUid: String, nowMs: Long, limit: Int): List<OutboxRecord> =
                     throw IllegalStateException("database is gone")
             }
-        val status = status()
 
-        val result = syncable("uid-1", { Result.success(Unit) }, status, broken).sync()
+        val result = syncable("uid-1", { Result.success(Unit) }, broken).sync()
 
         assertTrue(result.isFailure)
-        assertTrue(status.observeStatus().first().lastError is SyncError.Unknown)
+        // Ветви у отказа хранилища нет — её назовёт прогон, и это будет «неизвестно», а не текст.
+        assertNull(result.syncErrorOrNull())
     }
 }

@@ -10,6 +10,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
+            // Время постановки в очередь — от общих часов, тело записи — строкой JSON (ядро в него не смотрит).
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
             implementation(project(":shared:feature:quest:domain"))
             implementation(project(":shared:core:catalog:domain"))
             implementation(project(":shared:core:catalog:data"))

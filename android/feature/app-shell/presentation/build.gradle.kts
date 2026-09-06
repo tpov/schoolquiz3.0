@@ -4,6 +4,12 @@ plugins {
 
 android {
     namespace = "com.tpov.schoolquiz.android.feature.app_shell.presentation"
+    testOptions {
+        unitTests {
+            // Тест шторки разрешает строки из ресурсов, а не пишет их литералами.
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -37,6 +43,10 @@ dependencies {
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.bundles.testing.unit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
     testImplementation(project(":shared:feature:section:domain"))
     testImplementation(project(":shared:feature:theme:domain"))
     testImplementation(project(":shared:feature:lesson:domain"))

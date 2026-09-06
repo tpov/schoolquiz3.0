@@ -5,7 +5,7 @@ data class EconomyResourceBalance(
     val streakDays: Int = 0,
     val stars: Long = 0L,
     val nolics: Long = 0L,
-    val standardHearts: Int = MaxStandardHearts,
+    val standardHearts: Int = MAX_STANDARD_HEARTS,
     val goldHearts: Int = 0,
     val gold: Long = 0L,
     /**
@@ -26,8 +26,8 @@ data class EconomyResourceBalance(
          * не обязана знать, сколько слотов сервер продал. Здесь только стартовый бак: столько же
          * даёт сервер аккаунту, у которого поля ещё не было.
          */
-        const val MaxStandardHearts = 5
-        const val MaxGoldHearts = 1
+        const val MAX_STANDARD_HEARTS = 5
+        const val MAX_GOLD_HEARTS = 1
 
         fun guest(): EconomyResourceBalance = EconomyResourceBalance()
     }

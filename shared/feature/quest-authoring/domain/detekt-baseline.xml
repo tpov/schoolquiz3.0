@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>TooGenericExceptionCaught:CreateQuestDraftUseCase.kt$CreateQuestDraftUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GetActiveQuestDraftUseCase.kt$GetActiveQuestDraftUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GetArenaReadinessUseCase.kt$GetArenaReadinessUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SaveDraftQuestionUseCase.kt$SaveDraftQuestionUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SubmitQuestDraftToArenaUseCase.kt$SubmitQuestDraftToArenaUseCase$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

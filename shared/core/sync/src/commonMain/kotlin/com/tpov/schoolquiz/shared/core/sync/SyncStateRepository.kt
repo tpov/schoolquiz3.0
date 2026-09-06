@@ -1,18 +1,29 @@
 package com.tpov.schoolquiz.shared.core.sync
 
 /**
- * Repository for tracking sync progress.
+ * Где остановилось чтение каждого журнала.
  *
- * Production implementation stores cursors in Room. The sync-list orchestrator
- * keeps one cursor for the catalog list and one cursor per catalog change list.
+ * Продовая реализация хранит курсоры в Room. Ключи — по одному на область чтения: список
+ * каталогов, контент каталога, вопросы урока, приватные квесты автора, задания на ревью.
+ *
+ * Курсор — пара `(changedAtMs, docId)`, а не одно число (AD-31). Одно число теряло записи,
+ * сделанные в одну миллисекунду: курсор вставал на неё, следующий проход просил «строго больше»,
+ * и вторая запись не читалась никогда. Пара хранится и сравнивается целиком — лексикографически.
  */
 interface SyncStateRepository {
+    /** Курсор области. [SyncCursor.BEGINNING], если ничего ещё не читали или курсор сброшен. */
+    suspend fun getCursor(collectionId: String): SyncCursor
 
-    /** Returns the current cursor for the given collection. Returns 0 if never set. */
-    suspend fun getCursor(collectionId: String): Long
-
-    /** Updates the cursor for the given collection. Called after successful step completion. */
-    suspend fun setCursor(collectionId: String, value: Long)
+    /**
+     * Двигает курсор вперёд после успешного применения страницы.
+     *
+     * Монотонен по паре: значение меньше или равное сохранённому не записывается. Два прохода,
+     * наложившиеся во времени, иначе откатили бы курсор друг друга.
+     */
+    suspend fun setCursor(
+        collectionId: String,
+        cursor: SyncCursor,
+    )
 
     /**
      * Обнуляет все курсоры чтения — следующий проход перечитает журналы с начала (AD-30).

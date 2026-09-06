@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:DefaultHomeQuestsComponent.kt$DefaultHomeQuestsComponent$( componentContext: ComponentContext, private val observeCatalogs: ObserveCatalogsUseCase, private val observeProfile: ObserveCurrentProfileUseCase, private val openGiftBoxUseCase: OpenGiftBoxUseCase, private val onCatalogDrillDown: (CatalogId, String) -&gt; Unit, private val onResumeLesson: (LessonId) -&gt; Unit, private val attemptRepository: LessonAttemptRepository, private val lessonRepository: LessonRepository, private val themeRepository: ThemeRepository, private val sectionRepository: SectionRepository, private val questRepository: QuestRepository, private val authRepository: AuthRepository, mainContext: CoroutineContext = Dispatchers.Main.immediate, )</ID>
+    <ID>LongParameterList:HomeQuestsScreen.kt$( state: HomeQuestsUiState, onCatalogClick: (CatalogId, String) -&gt; Unit, onContinueClick: () -&gt; Unit, onGiftBoxFabClick: () -&gt; Unit, onGiftBoxDismiss: () -&gt; Unit, canManagePublicShelves: Boolean, onAddPublicQuestClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>MagicNumber:DefaultHomeQuestsComponent.kt$10</ID>
+    <ID>MagicNumber:DefaultHomeQuestsComponent.kt$100</ID>
+    <ID>MagicNumber:DefaultHomeQuestsComponent.kt$11</ID>
+    <ID>MagicNumber:DefaultHomeQuestsComponent.kt$14</ID>
+    <ID>MagicNumber:DefaultHomeQuestsComponent.kt$4</ID>
+    <ID>MagicNumber:HomeQuestsScreen.kt$0xFF2E2E36</ID>
+    <ID>MaxLineLength:FakeHierarchyRepositories.kt$FakeSectionRepository$override</ID>
+    <ID>ReturnCount:DefaultHomeQuestsComponent.kt$DefaultHomeQuestsComponent$private suspend fun resolveContinueLesson(attempts: List&lt;Attempt&gt;): ContinueLessonUi?</ID>
+  </CurrentIssues>
+</SmellBaseline>

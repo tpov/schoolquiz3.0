@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CatalogDao {
-
     @Query("SELECT * FROM catalogs WHERE archived = 0 ORDER BY id ASC")
     fun observeAll(): Flow<List<CatalogEntity>>
 

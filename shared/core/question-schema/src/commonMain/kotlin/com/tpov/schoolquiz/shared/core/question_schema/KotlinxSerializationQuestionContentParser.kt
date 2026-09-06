@@ -10,7 +10,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 
 class KotlinxSerializationQuestionContentParser : QuestionContentParser {
-
     private val json = Json { ignoreUnknownKeys = true }
 
     override fun parse(payload: String): Result<QuestionContent> {
@@ -114,27 +113,32 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
         fallbackDifficulty: Difficulty,
     ): Result<QuestionContent> {
         return try {
-            val optionTexts = obj["options"]?.jsonArray?.map { it.jsonPrimitive.content }
-                ?: return Result.failure(SerializationException("Legacy single-choice missing 'options'"))
-            val correctIndex = obj["correctIndex"]?.jsonPrimitive?.int
-                ?: return Result.failure(SerializationException("Legacy single-choice missing 'correctIndex'"))
+            val optionTexts =
+                obj["options"]?.jsonArray?.map { it.jsonPrimitive.content }
+                    ?: return Result.failure(SerializationException("Legacy single-choice missing 'options'"))
+            val correctIndex =
+                obj["correctIndex"]?.jsonPrimitive?.int
+                    ?: return Result.failure(SerializationException("Legacy single-choice missing 'correctIndex'"))
 
             if (optionTexts.size !in 2..8) {
                 return Result.failure(
-                    IllegalArgumentException("Legacy single-choice options count must be 2..8, got ${optionTexts.size}")
+                    IllegalArgumentException(
+                        "Legacy single-choice options count must be 2..8, got ${optionTexts.size}",
+                    ),
                 )
             }
             if (correctIndex !in optionTexts.indices) {
                 return Result.failure(
                     IllegalArgumentException(
-                        "Legacy single-choice correctIndex=$correctIndex out of [0, ${optionTexts.size})"
-                    )
+                        "Legacy single-choice correctIndex=$correctIndex out of [0, ${optionTexts.size})",
+                    ),
                 )
             }
 
-            val options = optionTexts.mapIndexed { idx, text ->
-                QuestionContent.Option(id = OptionId("opt-$idx"), text = text)
-            }
+            val options =
+                optionTexts.mapIndexed { idx, text ->
+                    QuestionContent.Option(id = OptionId("opt-$idx"), text = text)
+                }
 
             Result.success(
                 QuestionContent.SingleChoice(
@@ -144,7 +148,7 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
                     imageUrl = null,
                     options = options,
                     correctOptionId = OptionId("opt-$correctIndex"),
-                )
+                ),
             )
         } catch (e: SerializationException) {
             Result.failure(e)
@@ -162,10 +166,11 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
      * contextual element's element names are the subclasses' serial names.
      */
     @OptIn(ExperimentalSerializationApi::class)
-    private val redactedDiscriminators: Set<String> = run {
-        val variants = RedactedQuestionContent.serializer().descriptor.getElementDescriptor(1)
-        (0 until variants.elementsCount).mapTo(mutableSetOf()) { variants.getElementName(it) }
-    }
+    private val redactedDiscriminators: Set<String> =
+        run {
+            val variants = RedactedQuestionContent.serializer().descriptor.getElementDescriptor(1)
+            (0 until variants.elementsCount).mapTo(mutableSetOf()) { variants.getElementName(it) }
+        }
 
     private companion object {
         /** The only pre-ADR-0003 shape still in the corpus. Same key as the discriminator. */

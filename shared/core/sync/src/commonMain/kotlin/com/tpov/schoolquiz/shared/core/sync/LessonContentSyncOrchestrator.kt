@@ -25,8 +25,16 @@ class LessonContentSyncOrchestrator(
     private val questionRepo: QuestionRepository,
     private val syncStateRepo: SyncStateRepository,
     private val syncChangeRemote: LessonContentSyncChangeRemoteDataSource,
+    /**
+     * Куда сообщить, сколько записей журнала урока проход не понял.
+     *
+     * Прежде это число здесь выбрасывалось `.map { }`, и экран показывал ноль, пока журнал урока
+     * был полон записей старой формы: пропуск снова не оставлял следа (AD-11).
+     */
+    private val status: SyncStatusRepository? = null,
+    /** Строгость разбора — общая на все четыре журнала (AD-11). */
+    private val policy: JournalReadPolicy = JournalReadPolicy.TOLERANT,
 ) {
-
     suspend fun syncLessonContent(lessonId: LessonId): Result<Unit> =
         try {
             refreshContainingStructure(lessonId).onFailure { return Result.failure(it) }
@@ -70,16 +78,21 @@ class LessonContentSyncOrchestrator(
             .distinctBy { it.value }
     }
 
-    private suspend fun syncQuestions(lessonId: LessonId): Result<Unit> {
-        val cursorId = lessonContentSyncCursorId(lessonId)
-        val cursor = syncStateRepo.getCursor(cursorId)
-        val changes = syncChangeRemote.fetchChangedSince(lessonId, cursor)
-            .filter { it.nodeId.isNotBlank() && it.type == Question }
-        if (changes.isEmpty()) return Result.success(Unit)
-
-        val questionIds = changes.map { QuestionId(it.nodeId) }.toSet()
-        questionRepo.refreshByIds(questionIds).onFailure { return Result.failure(it) }
-        syncStateRepo.setCursor(cursorId, changes.maxOf { it.changedAtMs })
-        return Result.success(Unit)
-    }
+    private suspend fun syncQuestions(lessonId: LessonId): Result<Unit> =
+        syncStateRepo
+            .syncJournal(
+                cursorId = lessonContentSyncCursorId(lessonId),
+                policy = policy,
+                // В журнале урока лежат только вопросы; запись другого типа или без id читатель не
+                // понял, и она считается, а не пропадает (AD-11).
+                isReadable = { it.type == Question && it.nodeId.isNotBlank() },
+                fetch = { syncChangeRemote.fetchPage(lessonId, it) },
+                apply = { changes ->
+                    questionRepo.refreshByIds(changes.map { QuestionId(it.nodeId) }.toSet())
+                },
+            )
+            // Число не выбрасывается: оно единственный след пропуска (AD-11). Докладывается и при
+            // неудаче применения — непрочитанное от неё прочитанным не становится.
+            .onSuccess { status?.recordUnreadableChanges(SyncJournals.LESSON_CONTENT, it) }
+            .map { }
 }

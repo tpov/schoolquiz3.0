@@ -12,13 +12,17 @@ data class UserStats(
     val nickname: String,
     val avatarUrl: String?,
     val hasPremium: Boolean,
-    val streakDays: Int,        // 0..10
+    // 0..10
+    val streakDays: Int,
     val stars: Long,
     val nolics: Long,
-    val standardHearts: Int,    // 0..5
-    val goldHearts: Int,        // 0..1
+    // 0..5
+    val standardHearts: Int,
+    // 0..1
+    val goldHearts: Int,
     val gold: Long,
-    val currentSkill: Int,      // >= 0, quiz experience points (Role.USER level)
+    // >= 0, quiz experience points (Role.USER level)
+    val currentSkill: Int,
     val qualification: Qualification,
 ) {
     init {
@@ -30,18 +34,19 @@ data class UserStats(
          * Factory for the guest/unauthenticated state.
          * Domain test scenario 14 verifies all field values.
          */
-        fun guest(): UserStats = UserStats(
-            nickname = "Гость",
-            avatarUrl = null,
-            hasPremium = false,
-            streakDays = 0,
-            stars = 0L,
-            nolics = 0L,
-            standardHearts = 5,
-            goldHearts = 0,
-            gold = 0L,
-            currentSkill = 0,
-            qualification = Qualification.zero(),
-        )
+        fun guest(): UserStats =
+            UserStats(
+                nickname = "Гость",
+                avatarUrl = null,
+                hasPremium = false,
+                streakDays = 0,
+                stars = 0L,
+                nolics = 0L,
+                standardHearts = 5,
+                goldHearts = 0,
+                gold = 0L,
+                currentSkill = 0,
+                qualification = Qualification.zero(),
+            )
     }
 }

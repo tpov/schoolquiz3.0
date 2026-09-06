@@ -21,6 +21,8 @@ class SyncThemesUseCase(
      * @return [Result.success] containing the set of processed [ThemeId]s, passed to lesson sync
      *   as parentIds; [Result.failure] on error.
      */
-    suspend operator fun invoke(sectionIds: Set<SectionId>, cursor: Long = 0L): Result<Set<ThemeId>> =
-        themes.refreshByParents(sectionIds, cursor)
+    suspend operator fun invoke(
+        sectionIds: Set<SectionId>,
+        cursor: Long = 0L,
+    ): Result<Set<ThemeId>> = themes.refreshByParents(sectionIds, cursor)
 }

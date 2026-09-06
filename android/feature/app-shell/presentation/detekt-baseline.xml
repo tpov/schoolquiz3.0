@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:AppShellScreen.kt$( rootComponent: DefaultRootComponent, appVersionName: String, appVersionCode: Int, isDebugBuild: Boolean = false, syncFrequency: SyncFrequency = SyncFrequency.DAILY, onSyncFrequencySelected: (SyncFrequency) -&gt; Unit = {}, profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY, onProfileSyncFrequencySelected: (SyncFrequency) -&gt; Unit = {}, onForceResync: () -&gt; Unit = {}, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:AppShellScreen.kt$( rootComponent: DefaultRootComponent, screen: LocalScreenComponent, appVersionName: String, appVersionCode: Int, paddingValues: PaddingValues, canSeeDesignCatalog: Boolean, canManagePublicShelves: Boolean, syncFrequency: SyncFrequency, onSyncFrequencySelected: (SyncFrequency) -&gt; Unit, profileSyncFrequency: SyncFrequency, onProfileSyncFrequencySelected: (SyncFrequency) -&gt; Unit, syncStatus: SyncStatus, onForceResync: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:AppShellScreen.kt$( rootComponent: DefaultRootComponent, state: AppShellState, appVersionName: String, appVersionCode: Int, paddingValues: PaddingValues, uiAccess: AppShellUiAccess, tournamentOverviewState: Map&lt;String, TournamentOverviewLoadState&gt;, syncFrequency: SyncFrequency, onSyncFrequencySelected: (SyncFrequency) -&gt; Unit, profileSyncFrequency: SyncFrequency, onProfileSyncFrequencySelected: (SyncFrequency) -&gt; Unit, syncStatus: SyncStatus, onForceResync: () -&gt; Unit, )</ID>
+    <ID>UnusedPrivateProperty:TournamentEventScreen.kt$val content: @Composable () -&gt; Unit = { Icon(imageVector = icon, contentDescription = null) Spacer(Modifier.width(8.dp)) Text(text) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

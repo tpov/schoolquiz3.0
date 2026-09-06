@@ -17,6 +17,9 @@ class VerificationRepositoryImpl(
 
     override suspend fun pending(limit: Int): List<VerificationRequest> = remote.pending(limit)
 
-    override suspend fun decide(uid: String, decision: VerificationDecision, reason: String?) =
-        remote.decide(uid, decision, reason)
+    override suspend fun decide(
+        uid: String,
+        decision: VerificationDecision,
+        reason: String?,
+    ) = remote.decide(uid, decision, reason)
 }

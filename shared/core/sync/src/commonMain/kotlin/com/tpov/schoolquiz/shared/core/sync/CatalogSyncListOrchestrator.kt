@@ -49,8 +49,12 @@ class CatalogSyncListOrchestrator(
      * пропуск не оставляет следа, и «backfill закончен» не следует ни из чего (AD-11).
      */
     private val status: SyncStatusRepository? = null,
+    /**
+     * Строгость разбора журнала — общая на все четыре (AD-11). До backfill старые формы терпятся
+     * и считаются, после — останавливают проход, и курсор через них не проходит.
+     */
+    private val policy: JournalReadPolicy = JournalReadPolicy.TOLERANT,
 ) : Syncable {
-
     override suspend fun sync(): Result<Unit> = gate.withPass { syncAll() }
 
     private suspend fun syncAll(): Result<Unit> {
@@ -58,14 +62,18 @@ class CatalogSyncListOrchestrator(
             catalogRepo.refreshFromRemote().onFailure { return Result.failure(it) }
 
             val catalogs = catalogRepo.observeAll().first()
+            // Курсор списка — такая же пара `(время, id)`, как у четырёх журналов (AD-31). Прежде
+            // сюда уходило одно время с пустым id, и следующий проход просил «строго больше»: курс,
+            // ставший видимым в ту же миллисекунду, терялся навсегда.
             catalogs
-                .maxOfOrNull { it.lastModifiedAt }
+                .maxOfOrNull { SyncCursor(it.lastModifiedAt, it.id.value) }
                 ?.let { syncStateRepo.setCursor(CATALOG_LIST_CURSOR_ID, it) }
 
-            val catalogIds = catalogs
-                .map { it.id }
-                .plus(CatalogId(ON_DEMAND_COURSES_CATALOG_ID))
-                .distinctBy { it.value }
+            val catalogIds =
+                catalogs
+                    .map { it.id }
+                    .plus(CatalogId(ON_DEMAND_COURSES_CATALOG_ID))
+                    .distinctBy { it.value }
             // Один каталог, который не читается, не отменяет остальные. Прежде выход по первой
             // же неудаче означал, что каталог, стоящий в списке после сломанного, не
             // синхронизируется никогда — а порядок здесь произвольный, по времени изменения.
@@ -82,7 +90,7 @@ class CatalogSyncListOrchestrator(
             }
             // Число описывает проход целиком, включая проход, который где-то упал: непрочитанное
             // от этого не становится прочитанным.
-            status?.recordUnreadableChanges(unreadable)
+            status?.recordUnreadableChanges(SyncJournals.CATALOGS, unreadable)
             firstFailure?.let { Result.failure(it) } ?: Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
@@ -100,55 +108,27 @@ class CatalogSyncListOrchestrator(
         includeQuestions: Boolean,
     ): Result<Int> {
         catalogRepo.refreshByIds(setOf(catalogId)).onFailure { return Result.failure(it) }
-        val cursorId = catalogSyncCursorId(catalogId)
-        val cursor =
-            if (shouldForceFullCourseArchiveSync(catalogId)) {
-                0L
-            } else {
-                syncStateRepo.getCursor(cursorId)
-            }
-        // Журнал читается страницами (AD-31): полная перепубликация большого курса иначе
-        // приходит одним ответом, размер которого ограничен только автором.
-        var at = SyncCursor(cursor)
-        var pages = 0
-        var unreadable = 0
-        while (pages < MAX_PAGES_PER_RUN) {
-            val page = syncChangeRemote.fetchPage(catalogId, at)
-            val changes = page.changes.filter { it.nodeId.isNotBlank() }
-            // Читатель отбросил непонятое ещё до нас; сюда же идут записи с пустым `id` — они
-            // столь же бесполезны и по той же причине: узел, который надо перечитать, не назван.
-            unreadable += page.unreadable + (page.changes.size - changes.size)
-            // Выход по пустой странице, а не по «нет распознанных изменений»: страница, целиком
-            // состоящая из битых записей, иначе останавливала бы каталог навсегда — курсор не
-            // двигался, и следующий проход читал бы её же.
-            if (page.changes.isEmpty()) break
-
-            if (changes.isNotEmpty()) {
-                applyChanges(changes, includeQuestions).onFailure { return Result.failure(it) }
-            }
-            // Курсор двигается только после успешного применения: обрыв на середине страницы
-            // означает, что следующий проход перечитает её же.
-            page.nextCursor?.let {
-                at = it
-                syncStateRepo.setCursor(cursorId, it.changedAtMs)
-            }
-            pages++
-            if (!page.hasMore) break
-        }
-        return Result.success(unreadable)
+        // Журнал читается страницами от сохранённого курсора-пары (AD-31). Форса «с нуля» здесь
+        // нет: он существует только как явная операция ресинка (AD-30).
+        return syncStateRepo.syncJournal(
+            cursorId = catalogSyncCursorId(catalogId),
+            policy = policy,
+            // Запись с пустым `id` столь же бесполезна, как и нераспознанная, и по той же
+            // причине: узел, который надо перечитать, не назван. Раньше она отсеивалась молча.
+            isReadable = { it.nodeId.isNotBlank() },
+            fetch = { syncChangeRemote.fetchPage(catalogId, it) },
+            apply = { applyChanges(it, includeQuestions) },
+        )
     }
-
-    private suspend fun shouldForceFullCourseArchiveSync(catalogId: CatalogId): Boolean =
-        catalogId.value == ON_DEMAND_COURSES_CATALOG_ID &&
-            questRepo.observeByCatalog(catalogId, ARCHIVE_SHELF).first().isEmpty()
 
     private suspend fun applyChanges(
         changes: List<CatalogSyncChange>,
         includeQuestions: Boolean,
     ): Result<Unit> {
-        val grouped = changes
-            .groupBy { it.type }
-            .mapValues { (_, items) -> items.map { it.nodeId }.toSet() }
+        val grouped =
+            changes
+                .groupBy { it.type }
+                .mapValues { (_, items) -> items.map { it.nodeId }.toSet() }
 
         grouped[CatalogSyncNodeType.Catalog]
             ?.map(::CatalogId)
@@ -200,12 +180,3 @@ class CatalogSyncListOrchestrator(
  * is exactly the data that does not exist yet at that moment, so it cannot drive this decision.
  */
 private const val ON_DEMAND_COURSES_CATALOG_ID = "courses"
-private const val ARCHIVE_SHELF = "archive"
-
-/**
- * Сколько страниц журнала берём за один проход.
- *
- * Не бесконечно: журнал пополняется во время чтения, и без потолка один проход мог бы не
- * закончиться никогда. Остаток доедет следующим заходом — курсор уже сдвинут.
- */
-private const val MAX_PAGES_PER_RUN = 50

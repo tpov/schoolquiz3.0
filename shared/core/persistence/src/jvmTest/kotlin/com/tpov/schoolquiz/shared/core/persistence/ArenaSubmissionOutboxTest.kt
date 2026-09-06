@@ -66,7 +66,7 @@ class ArenaSubmissionOutboxTest {
         authoring.insertDraft(draft(status = "DRAFT"))
         authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 2_000L)
         val stuck = outbox.findByMutationId(key("sub-1"))!!
-        outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server")
+        outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server", null)
 
         // Откат по карантину: черновик снова редактируемый, автор может подать его заново.
         authoring.updateDraftStatus(DRAFT_ID, status = "DRAFT", updatedAtMs = 2_500L)
@@ -89,7 +89,7 @@ class ArenaSubmissionOutboxTest {
         authoring.insertDraft(draft(status = "DRAFT"))
         authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 2_000L)
         val stuck = outbox.findByMutationId(key("sub-1"))!!
-        outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server")
+        outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server", null)
         authoring.updateDraftStatus(DRAFT_ID, status = "DRAFT", updatedAtMs = 2_500L)
 
         authoring.queueArenaSubmission(row("sub-2"), DRAFT_ID, updatedAtMs = 3_000L)

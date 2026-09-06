@@ -5,6 +5,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentDetailUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentListItemUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentSyncUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewLanguagesUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQuestionUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
@@ -19,20 +20,28 @@ import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignment
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentKind
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentSyncState
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecision
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitReviewActionCommand
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitReviewActionUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -43,6 +52,7 @@ class DefaultReviewQueueComponent(
     componentContext: ComponentContext,
     private val authRepository: AuthRepository,
     private val observeReviewAssignments: ObserveReviewAssignmentsUseCase,
+    private val observeReviewAssignmentSync: ObserveReviewAssignmentSyncUseCase,
     private val submitReviewAction: SubmitReviewActionUseCase,
     private val questionContentParser: QuestionContentParser,
     mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
@@ -53,6 +63,7 @@ class DefaultReviewQueueComponent(
     private val json = Json { encodeDefaults = true }
     private var assignmentsJob: Job? = null
     private var assignments: List<ReviewAssignment> = emptyList()
+    private var syncStates: Map<String, ReviewAssignmentSyncState> = emptyMap()
 
     override val state: StateFlow<ReviewQueueUiState> = _state.asStateFlow()
 
@@ -76,7 +87,7 @@ class DefaultReviewQueueComponent(
                 selectedFilter = selected,
                 filterMenuExpanded = false,
                 detail = null,
-                assignments = this@DefaultReviewQueueComponent.assignments.toListItems(selected),
+                assignments = this@DefaultReviewQueueComponent.assignments.toListItems(selected, syncStates),
             )
         }
     }
@@ -141,30 +152,29 @@ class DefaultReviewQueueComponent(
         }
     }
 
+    /**
+     * Решение уходит в очередь, а не в callable (AD-3, AD-6): ждать сети нечего, поэтому форма
+     * закрывается тем же кадром, а спиннера «отправка» больше нет. Строка задания не меняется —
+     * его исчезновение из списка принесёт журнал ревью (AD-25).
+     */
     override fun onSubmitClick() {
-        val command =
-            _state.value.detail
-                ?.let { detail ->
-                    assignments
-                        .firstOrNull { it.id == detail.assignmentId }
-                        ?.let { assignment -> detail.toSubmitCommand(assignment) }
-                }
-                ?: return
+        val detail = _state.value.detail ?: return
+        val assignment = assignments.firstOrNull { it.id == detail.assignmentId } ?: return
+        val command = detail.toSubmitCommand(assignment) ?: return
+        _state.update {
+            it.copy(
+                detail = null,
+                errorMessage = null,
+                successMessage = UiMessage.Res(R.string.qa_review_queued),
+            )
+        }
         scope.launch {
-            _state.update { it.copy(isSubmitting = true, errorMessage = null, successMessage = null) }
-            val result = submitReviewAction(command)
-            _state.update {
-                if (result.isSuccess) {
+            submitReviewAction(assignment.ownerUid, command).onFailure { error ->
+                _state.update {
                     it.copy(
-                        isSubmitting = false,
-                        detail = null,
-                        successMessage = UiMessage.Res(R.string.qa_review_submitted),
-                    )
-                } else {
-                    it.copy(
-                        isSubmitting = false,
+                        successMessage = null,
                         errorMessage =
-                            result.exceptionOrNull()?.message?.let(UiMessage::Raw)
+                            error.message?.let(UiMessage::Raw)
                                 ?: UiMessage.Res(R.string.qa_error_submit_review_failed),
                     )
                 }
@@ -193,12 +203,15 @@ class DefaultReviewQueueComponent(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeAssignments(uid: String) {
         assignmentsJob =
             scope.launch {
                 observeReviewAssignments(uid)
+                    .flatMapLatest { loaded -> loaded.withSyncStates(uid) }
                     .catch { error ->
                         assignments = emptyList()
+                        syncStates = emptyMap()
                         _state.update {
                             it.copy(
                                 isLoading = false,
@@ -210,8 +223,9 @@ class DefaultReviewQueueComponent(
                             )
                         }
                     }
-                    .collect { loaded ->
+                    .collect { (loaded, states) ->
                         assignments = loaded
+                        syncStates = states
                         _state.update { current ->
                             val filters = loaded.availableFilters()
                             val selected =
@@ -226,13 +240,28 @@ class DefaultReviewQueueComponent(
                                 isLoading = false,
                                 availableFilters = filters,
                                 selectedFilter = selected,
-                                assignments = loaded.toListItems(selected),
+                                assignments = loaded.toListItems(selected, states),
                                 detail = selectedDetail,
                                 errorMessage = null,
                             )
                         }
                     }
             }
+    }
+
+    /**
+     * Пометка очереди на каждое задание — запросом по `entity_ref`, а не чтением таблицы очереди
+     * (AD-14). Список и пометки едут одним потоком, чтобы карточка не мигала между ними.
+     */
+    private fun List<ReviewAssignment>.withSyncStates(
+        uid: String,
+    ): Flow<Pair<List<ReviewAssignment>, Map<String, ReviewAssignmentSyncState>>> {
+        if (isEmpty()) return flowOf(this to emptyMap())
+        val perAssignment =
+            map { assignment ->
+                observeReviewAssignmentSync(uid, assignment.id).map { state -> assignment.id to state }
+            }
+        return combine(perAssignment) { pairs -> this to pairs.toMap() }
     }
 
     private fun ReviewAssignmentDetailUiState.toSubmitCommand(
@@ -600,9 +629,12 @@ class DefaultReviewQueueComponent(
         return filters
     }
 
-    private fun List<ReviewAssignment>.toListItems(filter: ReviewQueueFilter): List<ReviewAssignmentListItemUiState> =
+    private fun List<ReviewAssignment>.toListItems(
+        filter: ReviewQueueFilter,
+        syncStates: Map<String, ReviewAssignmentSyncState>,
+    ): List<ReviewAssignmentListItemUiState> =
         filter { assignment -> assignment.matches(filter) }
-            .map { it.toListItem() }
+            .map { it.toListItem(syncStates[it.id] ?: ReviewAssignmentSyncState.NONE) }
 
     private fun ReviewAssignment.matches(filter: ReviewQueueFilter): Boolean =
         when (filter) {
@@ -615,7 +647,7 @@ class DefaultReviewQueueComponent(
                 ReviewAssignmentKind.TRANSLATION_REVIEW in taskKinds
         }
 
-    private fun ReviewAssignment.toListItem(): ReviewAssignmentListItemUiState =
+    private fun ReviewAssignment.toListItem(syncState: ReviewAssignmentSyncState): ReviewAssignmentListItemUiState =
         ReviewAssignmentListItemUiState(
             id = id,
             title = title,
@@ -630,7 +662,15 @@ class DefaultReviewQueueComponent(
             testingScore = checks.testingScore?.formatScore(),
             logicScore = checks.logicScore?.formatScore(),
             translationScore = checks.translationScore?.toString(),
+            syncState = syncState.toUi(),
         )
+
+    private fun ReviewAssignmentSyncState.toUi(): ReviewAssignmentSyncUi =
+        when (this) {
+            ReviewAssignmentSyncState.NONE -> ReviewAssignmentSyncUi.NONE
+            ReviewAssignmentSyncState.PENDING -> ReviewAssignmentSyncUi.PENDING
+            ReviewAssignmentSyncState.QUARANTINED -> ReviewAssignmentSyncUi.QUARANTINED
+        }
 
     private fun ReviewAssignmentKind.toUiKindOrNull(): ReviewQueueKindUi? =
         when (this) {

@@ -6,13 +6,14 @@ import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 
 object SectionMapper {
-    fun SectionEntity.toDomain(): Section = Section(
-        id = SectionId(id),
-        questId = QuestId(questId),
-        title = title,
-        order = order,
-        version = version,
-        lastModifiedAt = lastModifiedAt,
-        archived = archived,
-    )
+    fun SectionEntity.toDomain(): Section =
+        Section(
+            id = SectionId(id),
+            questId = QuestId(questId),
+            title = title,
+            order = order,
+            version = version,
+            lastModifiedAt = lastModifiedAt,
+            archived = archived,
+        )
 }

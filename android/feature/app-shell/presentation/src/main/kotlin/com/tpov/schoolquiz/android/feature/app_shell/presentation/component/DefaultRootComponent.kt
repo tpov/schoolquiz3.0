@@ -27,6 +27,8 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Br
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
@@ -125,6 +127,10 @@ class DefaultRootComponent(
     private val fetchTournamentOverview: FetchTournamentOverviewUseCase = noOpFetchTournamentOverviewUseCase,
     private val userStatsRepository: UserStatsRepository,
     private val syncScheduler: SyncScheduler,
+    // Без значения по умолчанию намеренно: забытая проводка обязана не собираться. Заглушка,
+    // стоявшая здесь, отдавала вечное «синхронизации ещё не было» — то самое молчание, ради
+    // устранения которого состояние и выводится наружу (AD-14).
+    syncStatusRepository: SyncStatusRepository,
     myQuestsFactory: (ComponentContext, Navigator, (QuestDisplayItem) -> Unit) -> MyQuestsComponent,
     homeQuestsFactory: (ComponentContext, (CatalogId, String) -> Unit, (LessonId) -> Unit) -> HomeQuestsComponent,
     questCreateFactory: (ComponentContext, Navigator) -> QuestCreateComponent = { _, nav ->
@@ -151,6 +157,12 @@ class DefaultRootComponent(
             onDevModeActivated = { userStatsRepository.setLocalDeveloperLevel(PUBLIC_SHELF_MANAGER_DEVELOPER_LEVEL) },
         )
     override val appShellState: Flow<AppShellState> = _appShellState.asStateFlow()
+
+    /**
+     * Снимок синхронизации отдаётся как есть — репозиторий уже пересобирает его на смену
+     * владельца (инвариант 8), и второй слой кэша тут только задержал бы сброс.
+     */
+    override val syncStatus: Flow<SyncStatus> = syncStatusRepository.observeStatus()
     val tournamentOverviewState = _tournamentOverviewState.asStateFlow()
 
     @Volatile private var initDone = false

@@ -50,6 +50,14 @@ interface QuestCreateComponent {
 
     fun onSubmitNodeToArenaLongClick(target: QuestArenaTargetNode)
 
+    /**
+     * Решение автора по расхождению: принять серверную версию и отправить работу заново (AD-24).
+     *
+     * Не повтор прежней заявки — новая мутация с новым ключом, а прежняя запись снимается: тот
+     * ключ сервер уже видел и отверг (AD-2).
+     */
+    fun onResubmitOverServerVersionClick()
+
     fun onQuestionsClick(difficulty: Difficulty)
 
     fun onQuestionSelected(index: Int)

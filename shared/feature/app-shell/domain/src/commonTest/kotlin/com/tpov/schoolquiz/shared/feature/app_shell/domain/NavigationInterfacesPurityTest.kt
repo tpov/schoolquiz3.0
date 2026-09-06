@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.app_shell.domain
 
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RetapOutcome
@@ -8,10 +9,10 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.RootComponent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlin.test.Test
 import kotlin.test.assertNotNull
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * Compile-time purity verification: Navigator and RootComponent are pure domain interfaces —
@@ -42,6 +43,7 @@ class NavigationInterfacesPurityTest {
             override fun onDeepLink(deepLink: DeepLink) = Unit
             override fun onVersionTap(nowMillis: Long) = Unit
             override fun onSyncNow() = Unit
+            override val syncStatus: Flow<SyncStatus> = emptyFlow()
         }
         assertNotNull(rc)
         assertNotNull(rc.appShellState)

@@ -7,5 +7,8 @@ interface SectionRemoteDataSource {
     suspend fun fetchByIds(ids: Set<String>): List<SectionDto> = emptyList()
 
     /** Fetch sections whose questId is in questIds and lastModifiedAt > cursor. questIds.size ≤ 30. */
-    suspend fun fetchChangedByParents(questIds: Set<String>, cursor: Long): List<SectionDto>
+    suspend fun fetchChangedByParents(
+        questIds: Set<String>,
+        cursor: Long,
+    ): List<SectionDto>
 }

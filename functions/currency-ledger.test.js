@@ -4,6 +4,7 @@ const assert = require("assert");
 const {
   CURRENCY,
   REASON,
+  REASONS,
   SWEPT_CURRENCIES,
   isReportable,
   reconciliationRecord,
@@ -48,6 +49,31 @@ function testAnUnknownCurrencyOrReasonIsRefusedRatherThanRecorded() {
   // настоящую и объявила бы расхождение там, где его нет.
   assert.strictEqual(row({currency: "лайки"}), null);
   assert.strictEqual(row({reason: "потому что"}), null);
+}
+
+function testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves() {
+  // Список закрытый: повод, которого здесь нет, не запишется. Значит, он перечисляется в тесте —
+  // иначе новый повод приезжает молча, и первым о нём узнаёт оператор по строке, которой не понимает.
+  assert.deepStrictEqual(REASONS.slice().sort(), [
+    "attempt_reward",
+    "attempt_toll",
+    "charge_claim",
+    "gift_box",
+    "gold_pack",
+    "lesson_unlock",
+    "market",
+    "purchase_refund",
+    "slot_purchase",
+  ]);
+  // Возврат — свой повод, а не отрицательное начисление: он приходит своим путём, в своё время и
+  // может снять меньше, чем выдал.
+  assert.strictEqual(REASON.PURCHASE_REFUND, "purchase_refund");
+  assert.notStrictEqual(REASON.PURCHASE_REFUND, REASON.GOLD_PACK);
+  const refund = row({currency: CURRENCY.GOLD, delta: -60, reason: REASON.PURCHASE_REFUND, sourceId: "s1"});
+  assert.strictEqual(refund.delta, -60);
+  assert.strictEqual(refund.id, `${UID}_${CURRENCY.GOLD}_${REASON.PURCHASE_REFUND}_s1`);
+  const credit = row({currency: CURRENCY.GOLD, delta: 60, reason: REASON.GOLD_PACK, sourceId: "s1"});
+  assert.notStrictEqual(refund.id, credit.id, "начисление и возврат по одной покупке — две строки");
 }
 
 function testTheSignIsKept() {
@@ -154,6 +180,7 @@ testAMovementCarriesItsReasonAndItsAction();
 testTheIdIsDerivedSoAReplayIsOneMovementNotTwo();
 testNothingIsRecordedWhenThereIsNothingToRecord();
 testAnUnknownCurrencyOrReasonIsRefusedRatherThanRecorded();
+testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves();
 testTheSignIsKept();
 testOneActionMovesSeveralCurrenciesAtOnce();
 testTheSweepComparesTheBalanceAgainstTheSumOfMovements();

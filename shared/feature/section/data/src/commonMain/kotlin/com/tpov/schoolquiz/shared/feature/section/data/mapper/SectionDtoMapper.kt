@@ -4,13 +4,14 @@ import com.tpov.schoolquiz.shared.core.persistence.SectionEntity
 import com.tpov.schoolquiz.shared.feature.section.data.dto.SectionDto
 
 object SectionDtoMapper {
-    fun SectionDto.toEntity(): SectionEntity = SectionEntity(
-        id = id,
-        questId = questId,
-        title = title,
-        order = order,
-        version = version,
-        lastModifiedAt = lastModifiedAt,
-        archived = archived,
-    )
+    fun SectionDto.toEntity(): SectionEntity =
+        SectionEntity(
+            id = id,
+            questId = questId,
+            title = title,
+            order = order,
+            version = version,
+            lastModifiedAt = lastModifiedAt,
+            archived = archived,
+        )
 }

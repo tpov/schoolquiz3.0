@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>TooGenericExceptionCaught:TournamentLeaderboardRepositoryImpl.kt$TournamentLeaderboardRepositoryImpl$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

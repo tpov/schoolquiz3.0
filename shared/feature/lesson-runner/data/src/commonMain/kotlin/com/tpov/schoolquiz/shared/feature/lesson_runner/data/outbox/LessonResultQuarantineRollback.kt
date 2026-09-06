@@ -24,7 +24,6 @@ class LessonResultQuarantineRollback(
     private val attemptDao: LessonAttemptDao,
     private val ratingDao: LessonRatingLocalDao,
 ) {
-
     /** Убирает прохождение вместе с его ответами. */
     val attempts: QuarantineListener =
         QuarantineListener { record ->

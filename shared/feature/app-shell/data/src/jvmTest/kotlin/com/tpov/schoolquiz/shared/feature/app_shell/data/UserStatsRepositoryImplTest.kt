@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.app_shell.data
 
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
+import com.tpov.schoolquiz.shared.core.stats.RawUserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.data.fake.FakeFirebaseUserStatsDataSource
 import com.tpov.schoolquiz.shared.feature.app_shell.data.fake.FakeUserStatsDao
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
@@ -37,6 +38,52 @@ class UserStatsRepositoryImplTest {
         adminLevel = 0,
         developerLevel = 0,
     )
+
+    // -------------------------------------------------------------------------
+    // Локальная трата, о которой сервер ещё не знает
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `given an undelivered local charge then the profile snapshot does not give the nolics back`() =
+        runTest {
+            // Профиль ходит по своему расписанию и очередь не ждёт. Снимок сервера про покупку не
+            // знает: верни его как есть — игрок потратит эти нолики второй раз, а откат карантина
+            // добавит возврат к уже восстановленному балансу.
+            val fakeDao = FakeUserStatsDao()
+            fakeDao.emit(emptyEntity().copy(nolics = 47L))
+            val remote = FakeFirebaseUserStatsDataSource()
+            remote.result = Result.success(RawUserStats(nolics = 100L))
+            val repo =
+                UserStatsRepositoryImpl(
+                    remoteDataSource = remote,
+                    userStatsDao = fakeDao,
+                    currentUidFlow = { flowOf(testUid) },
+                    pendingCharges = { 53L },
+                )
+
+            repo.refreshProfile()
+
+            assertEquals(47L, fakeDao.findByUid(testUid)?.nolics, "списанное остаётся списанным")
+        }
+
+    @Test
+    fun `given everything was delivered then the server balance stands as it is`() = runTest {
+        val fakeDao = FakeUserStatsDao()
+        fakeDao.emit(emptyEntity().copy(nolics = 47L))
+        val remote = FakeFirebaseUserStatsDataSource()
+        remote.result = Result.success(RawUserStats(nolics = 100L))
+        val repo =
+            UserStatsRepositoryImpl(
+                remoteDataSource = remote,
+                userStatsDao = fakeDao,
+                currentUidFlow = { flowOf(testUid) },
+                pendingCharges = { 0L },
+            )
+
+        repo.refreshProfile()
+
+        assertEquals(100L, fakeDao.findByUid(testUid)?.nolics, "доехало всё — вычитать нечего")
+    }
 
     // -------------------------------------------------------------------------
     // D2 — currentStats() reads from DAO and maps domain model

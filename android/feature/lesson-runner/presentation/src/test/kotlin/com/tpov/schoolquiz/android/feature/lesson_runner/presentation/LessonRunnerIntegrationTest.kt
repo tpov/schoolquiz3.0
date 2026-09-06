@@ -8,6 +8,7 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAbortAttemptUseCase
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptSyncMarkRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptFixtures
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeClock
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeCompleteAttemptUseCase
@@ -117,6 +118,7 @@ class LessonRunnerIntegrationTest {
             ),
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
+            attemptSyncMarks = FakeAttemptSyncMarkRepository(),
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
             mainContext = Dispatchers.Unconfined,

@@ -20,7 +20,9 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.logic.LessonAccess
 import com.tpov.schoolquiz.shared.feature.lesson.domain.logic.resolveLessonAccess
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonUnlockOutcome
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonUnlockQueue
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptStats
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
@@ -34,6 +36,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -50,6 +53,13 @@ class DefaultLessonListComponent(
     private val attemptRepository: LessonAttemptRepository,
     private val authRepository: AuthRepository,
     private val economyRepository: EconomyRepository,
+    /**
+     * Постановка разблокировки в общую очередь — порт фичи, которой принадлежит операция.
+     *
+     * Обязательный параметр, а не заглушка со значением по умолчанию: молчаливый no-op здесь
+     * означал бы «купил и ничего не произошло», и отличить его от исправной очереди было бы нечем.
+     */
+    private val queueLessonUnlock: LessonUnlockQueue,
     private val navigation: StackNavigation<QuizzesConfig>,
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
     /**
@@ -77,11 +87,14 @@ class DefaultLessonListComponent(
 
     private val hardCheckedSet: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
 
+    /** Уроки, лежащие сейчас на экране: заголовок нужен, чтобы назвать урок в объяснении. */
+    private val shownLessons: MutableStateFlow<Map<LessonId, String>> = MutableStateFlow(emptyMap())
+
+    /** О каких отказах игроку уже сказали — чтобы не повторять одно и то же на каждой эмиссии. */
+    private val announcedRefusals = mutableSetOf<LessonId>()
+
     private val _messages = Channel<String>(Channel.BUFFERED)
     override val messages: Flow<String> = _messages.receiveAsFlow()
-
-    /** Lessons with a purchase in flight, so a second tap cannot start a second charge. */
-    private val purchasing = MutableStateFlow<Set<String>>(emptySet())
 
     init {
         val statsFlow =
@@ -115,7 +128,32 @@ class DefaultLessonListComponent(
                 }
             }
                 .catch { /* log */ }
-                .collect { _uiState.value = it }
+                .collect {
+                    _uiState.value = it
+                    shownLessons.value =
+                        (it as? LessonListUiState.Loaded)
+                            ?.items
+                            ?.associate { item -> LessonId(item.id) to item.title }
+                            .orEmpty()
+                }
+        }
+        // Покупка, ушедшая в карантин, откачена фичей lesson: нолики вернулись, урок закрылся
+        // (AD-28). Молчания тут быть не должно — игрок увидел бы, как открытый урок сам закрылся.
+        // Источник — карантинная строка очереди, поэтому объяснение переживает и закрытие экрана,
+        // и перезапуск приложения, а не гаснет вместе с сообщением.
+        scope.launch {
+            authRepository.observeUid()
+                .flatMapLatest { uid ->
+                    if (uid == null) {
+                        flowOf(emptySet())
+                    } else {
+                        queueLessonUnlock.observeRefusedUnlocks(uid)
+                    }
+                }
+                .distinctUntilChanged()
+                .combine(shownLessons) { refused, shown -> refused to shown }
+                .catch { /* log */ }
+                .collect { (refused, shown) -> announceRefusals(refused, shown) }
         }
         lifecycle.doOnDestroy {
             componentJob.cancel()
@@ -149,30 +187,79 @@ class DefaultLessonListComponent(
         }
     }
 
+    /**
+     * Разблокировка списывает нолики, открывает урок и кладёт намерение — одной транзакцией.
+     *
+     * Прямой вызов был отказом без сети: игрок в авиарежиме получал ошибку вместо отложенного
+     * действия (AD-3, AD-6). Урок открывается сразу — решение владельца от 2026-09-03: нолики
+     * мягкая валюта, и AD-25 на них не распространяется; списание и открытие ложатся в базу тем же
+     * движением, что и запись очереди (AD-23). Второе нажатие замка на экране не требует: ключ
+     * намерения выводится из тройки «владелец, вид, урок», и повтор возвращает ту же строку (AD-2).
+     */
     override fun onUnlockClick(lesson: LessonItemUi) {
-        // Buying is a server call: nolics live in the profile, so a local deduction would be erased
-        // by the next sync, and the price is the server's to decide.
         if (lesson.access != LessonAccess.LOCKED) return
-        // Two taps used to mean two charges, and the older of the two answers would then overwrite
-        // the newer set of unlocks — paying for a lesson that stayed shut.
-        if (!purchasing.compareAndSetAdding(lesson.id)) return
+        // Цена, которой локально нет, — это урок, чьи вопросы ещё не доехали (история 5.2). Такую
+        // разблокировку не откладывают: названная сервером цена разошлась бы с невиданной. Причина
+        // называется своя, а не «нет связи»: связь тут ни при чём.
+        val price = lesson.unlockPriceNolics
+        if (price == null) {
+            _messages.trySend(UNKNOWN_PRICE_MESSAGE)
+            return
+        }
         scope.launch {
-            val result = economyRepository.unlockLesson(lesson.id, LessonUnlockKind.LESSON)
-            purchasing.update { it - lesson.id }
-            // A refused purchase leaves the row locked, which says nothing about why. Silence here
-            // reads as a dead button.
-            result.exceptionOrNull()?.let { error ->
-                _messages.trySend(error.message?.takeIf { it.isNotBlank() } ?: "Не удалось открыть урок")
+            val uid = authRepository.currentUid()
+            if (uid == null) {
+                _messages.trySend(SIGNED_OUT_MESSAGE)
+                return@launch
             }
+            val lessonId = LessonId(lesson.id)
+            val queued =
+                queueLessonUnlock.queueUnlock(
+                    ownerUid = uid,
+                    lessonId = lessonId,
+                    kindWireName = LessonUnlockKind.LESSON.wireName,
+                    priceNolics = price,
+                )
+            // Повторное нажатие по откаченной покупке — новое намерение: карантинная строка снята
+            // транзакцией, и объяснять прежний отказ больше нечего.
+            announcedRefusals -= lessonId
+            _messages.trySend(queued.messageFor(lesson.title))
         }
     }
 
-    /** Adds [lessonId] and reports whether it was absent — a compare-and-set on the in-flight set. */
-    private fun MutableStateFlow<Set<String>>.compareAndSetAdding(lessonId: String): Boolean {
-        while (true) {
-            val current = value
-            if (lessonId in current) return false
-            if (compareAndSet(current, current + lessonId)) return true
+    /** Что сказать игроку об исходе нажатия. Отказ по балансу называет своё число, а не «нет сети». */
+    private fun Result<LessonUnlockOutcome>.messageFor(title: String): String =
+        fold(
+            onSuccess = { outcome ->
+                when (outcome) {
+                    LessonUnlockOutcome.Opened -> OPENED_MESSAGE
+                    LessonUnlockOutcome.AlreadyOpen -> ALREADY_OPEN_MESSAGE
+                    LessonUnlockOutcome.NoProfile -> NO_PROFILE_MESSAGE
+                    is LessonUnlockOutcome.NotEnoughNolics ->
+                        "Не хватает ноликов: урок «$title» стоит ${outcome.priceNolics}, " +
+                            "у вас ${outcome.balanceNolics}"
+                }
+            },
+            onFailure = { QUEUE_FAILED_MESSAGE },
+        )
+
+    /**
+     * Объясняет откат покупки — по одному разу на отказ.
+     *
+     * Отказы приходят по всем урокам аккаунта; называются только те, что игрок видит перед собой.
+     * Ушедший из набора отказ забывается: значит, строка снята, и следующий отказ по тому же уроку
+     * будет новым.
+     */
+    private fun announceRefusals(
+        refused: Set<LessonId>,
+        shown: Map<LessonId, String>,
+    ) {
+        announcedRefusals.retainAll(refused)
+        refused.forEach { lessonId ->
+            val title = shown[lessonId] ?: return@forEach
+            if (announcedRefusals.add(lessonId)) {
+                _messages.trySend("Покупка урока «$title» не прошла: нолики возвращены, урок снова закрыт")
+            }
         }
     }
 
@@ -235,3 +322,21 @@ class DefaultLessonListComponent(
         return LessonListUiState.Loaded(items)
     }
 }
+
+/** Урок, чьи вопросы ещё не доехали: цены нет, и откладывать нечего. */
+private const val UNKNOWN_PRICE_MESSAGE =
+    "Цена этого урока пока неизвестна: вопросы урока ещё не загружены"
+
+/** Очередь принадлежит аккаунту (AD-8): без него класть запись некуда. */
+private const val SIGNED_OUT_MESSAGE = "Войдите в аккаунт, чтобы открывать уроки"
+
+/** Урок открыт прямо сейчас; на сервер покупка уедет сама, когда появится связь. */
+private const val OPENED_MESSAGE = "Урок открыт"
+
+/** Второе нажатие по уже открытому уроку: ни второго списания, ни второй записи (AD-2). */
+private const val ALREADY_OPEN_MESSAGE = "Этот урок уже открыт"
+
+/** Баланса на устройстве ещё нет — списывать не с чего, и это тоже не «нет сети». */
+private const val NO_PROFILE_MESSAGE = "Профиль ещё не загружен: баланс ноликов пока неизвестен"
+
+private const val QUEUE_FAILED_MESSAGE = "Не удалось поставить покупку в очередь"

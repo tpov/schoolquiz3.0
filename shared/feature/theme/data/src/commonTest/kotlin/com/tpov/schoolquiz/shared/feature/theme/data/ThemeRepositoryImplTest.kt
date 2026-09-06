@@ -6,9 +6,11 @@ import com.tpov.schoolquiz.shared.feature.theme.data.dto.ThemeDto
 import com.tpov.schoolquiz.shared.feature.theme.data.fake.FakeThemeLocalDataSource
 import com.tpov.schoolquiz.shared.feature.theme.data.fake.FakeThemeRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -54,17 +56,19 @@ class ThemeRepositoryImplTest {
         assertEquals(1, fakeLocal.upsertCallsFor["t1"] ?: 0)
     }
 
-    // Matrix 2 row EDGE 2.7: theme archived + newer version → deleted
+    // AC 7.6 / AD-26: `archived` СКРЫВАЕТ узел, а не стирает. Прежде здесь стояло `deleted`, и
+    // архивация уносила у игрока скачанное вместе с прогрессом по каскаду FK.
     @Test
-    fun `when theme archived and newer version then deleted`() = runTest {
+    fun `when theme archived and newer version then hidden but kept`() = runTest {
         fakeLocal.seed(listOf(makeEntity("t1", version = 1L)))
         fakeRemote.result = listOf(makeDto("t1", version = 2L, archived = true))
 
         val result = repository.refreshByParents(sectionIds, 0L)
 
         assertTrue(result.isSuccess)
-        assertTrue(fakeLocal.deletedIds.contains("t1"))
-        assertNull(fakeLocal.findById("t1"))
+        assertTrue(fakeLocal.deletedIds.isEmpty(), "archived скрывает узел, а не удаляет его (AD-26)")
+        assertNotNull(fakeLocal.findById("t1"))
+        assertTrue(repository.observeBySection(SectionId("s1")).first().none { it.id.value == "t1" }, "скрытый узел игроку не показывается")
     }
 
     // Matrix 2 row: version equal → upsert called but entity not overwritten

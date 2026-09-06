@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:BuyerTag.kt$BuyerTag$0xFF</ID>
+    <ID>MagicNumber:BuyerTag.kt$BuyerTag$16</ID>
+    <ID>MagicNumber:BuyerTag.kt$BuyerTag$256</ID>
+    <ID>ReturnCount:PlayBillingRepository.kt$PlayBillingRepository$override suspend fun loadProducts(ids: Set&lt;StoreProductId&gt;): Result&lt;List&lt;StoreProduct&gt;&gt;</ID>
+    <ID>ReturnCount:PlayBillingRepository.kt$PlayBillingRepository$override suspend fun purchase( productId: StoreProductId, buyerId: String, ): BillingOutcome</ID>
+    <ID>ReturnCount:PlayBillingRepository.kt$PlayBillingRepository$private fun ProductDetails.toStoreProduct(): StoreProduct?</ID>
+    <ID>ReturnCount:PlayBillingRepository.kt$PlayBillingRepository$suspend fun refreshUnsettled(): Result&lt;Unit&gt;</ID>
+  </CurrentIssues>
+</SmellBaseline>

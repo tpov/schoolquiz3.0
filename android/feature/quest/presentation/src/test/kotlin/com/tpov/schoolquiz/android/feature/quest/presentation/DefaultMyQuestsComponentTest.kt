@@ -23,6 +23,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraf
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -86,6 +87,7 @@ class DefaultMyQuestsComponentTest {
         authRepo = authRepo,
         observeMyQuests = ObserveMyQuestsUseCase(questRepo),
         observeDraftSummaries = ObserveQuestDraftSummariesUseCase(authoringRepo),
+        openQuestDraft = OpenQuestDraftUseCase(authoringRepo),
         observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
         navigator = navigator,
         onQuestDrillDown = onQuestDrillDown,

@@ -10,7 +10,6 @@ import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
-import com.tpov.schoolquiz.shared.core.outbox.AccountSwitchGuard
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.AccountChooserHost
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.GoogleLinkOutcome
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.PlatformAccountChooserHost
@@ -36,7 +35,7 @@ class FirebaseGoogleSignInRepository(
     private val auth: FirebaseAuth,
     private val credentialManager: CredentialManager,
     private val webClientId: String,
-    private val switchGuard: AccountSwitchGuard,
+    private val accountSwitch: AccountSwitch,
 ) : GoogleSignInRepository {
     override suspend fun linkGoogleAccount(host: AccountChooserHost): Result<GoogleLinkOutcome> {
         val activity = (host as? PlatformAccountChooserHost)?.platformHost as? Activity
@@ -48,6 +47,11 @@ class FirebaseGoogleSignInRepository(
             else -> runCatchingCancellable { attachIdentity(activity) }
         }
     }
+
+    override suspend fun confirmAccountSwitch(): Result<GoogleLinkOutcome> =
+        runCatchingCancellable { accountSwitch.confirm() }
+
+    override fun declineAccountSwitch() = accountSwitch.decline()
 
     private suspend fun attachIdentity(activity: Activity): GoogleLinkOutcome {
         val request =
@@ -66,7 +70,7 @@ class FirebaseGoogleSignInRepository(
         val current = auth.currentUser ?: return signInAs(firebaseCredential)
         return try {
             current.linkWithCredential(firebaseCredential).await()
-            GoogleLinkOutcome.LINKED
+            GoogleLinkOutcome.Linked
         } catch (collision: FirebaseAuthUserCollisionException) {
             // This Google account is already a player. Nothing can merge the two, so the choice is
             // to sign in as them or to refuse; signing in is what somebody tapping their own
@@ -77,19 +81,24 @@ class FirebaseGoogleSignInRepository(
     }
 
     /**
-     * Вход как другой игрок — с попыткой сначала доотправить очередь прежнего (AD-8).
+     * Вход как другой игрок — по правилу AD-8, шаги которого держит [AccountSwitch].
      *
      * Слив идёт до `signInWithCredential`, а не после: после него прежнего `uid` уже не узнать, а
      * запись очереди принадлежит тому, кто её создал, и под новым аккаунтом не отправится никогда.
-     * Не удалось слить — не повод запретить вход, но повод сказать словами.
+     * Осталось неотправленное — вход не делается, а возвращается вопрос; учётные данные до ответа
+     * живут в замыкании, чтобы не показывать выбор аккаунта второй раз.
+     *
+     * Пустой `uid` сюда попадает законно: сессия могла слететь — аккаунт удалён на сервере, токен
+     * отозван, — и тогда `auth.currentUser` пуст, а строки прежнего владельца лежат в очереди.
+     * Кто он, спрашивается у очереди, а не у аутентификации; вопрос игроку задаётся так же.
+     *
+     * Замыкание возвращает `uid` нового владельца: следы снимаются у всех, кроме него, и вход в тот
+     * же аккаунт, чьи строки лежат в очереди, ничего не удаляет.
      */
     private suspend fun signInAs(credential: AuthCredential): GoogleLinkOutcome {
-        val readiness = switchGuard.flushBefore(auth.currentUser?.uid.orEmpty())
-        auth.signInWithCredential(credential).await()
-        return if (readiness.needsWarning) {
-            GoogleLinkOutcome.SWITCHED_WITH_UNSENT
-        } else {
-            GoogleLinkOutcome.SWITCHED
+        val previousUid = auth.currentUser?.uid.orEmpty()
+        return accountSwitch.begin(previousUid) {
+            auth.signInWithCredential(credential).await().user?.uid.orEmpty()
         }
     }
 

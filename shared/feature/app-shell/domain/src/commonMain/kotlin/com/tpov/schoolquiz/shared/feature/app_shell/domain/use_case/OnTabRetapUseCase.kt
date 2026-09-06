@@ -19,6 +19,8 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
  * Synchronous — retap policy is pure computation.
  */
 class OnTabRetapUseCase {
-    operator fun invoke(currentState: AppShellState, tab: Tab): Pair<AppShellState, RetapOutcome> =
-        onActiveTabRetap(currentState, tab)
+    operator fun invoke(
+        currentState: AppShellState,
+        tab: Tab,
+    ): Pair<AppShellState, RetapOutcome> = onActiveTabRetap(currentState, tab)
 }

@@ -1,27 +1,27 @@
 package com.tpov.schoolquiz.apps.android_next
 
+import android.Manifest
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.defaultComponentContext
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
+import com.tpov.schoolquiz.platform.android_services.push.NotificationPermissionPrompt
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.shared.core.sync.ForceResync
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
-import com.tpov.schoolquiz.shared.core.sync.SyncStatus
-import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -34,10 +34,16 @@ private const val DESIGN_STYLE_KEY = "selected_design_style"
 class MainActivity : AppCompatActivity() {
     private lateinit var rootComponent: DefaultRootComponent
 
+    // Ответ не нужен: отказ и согласие запоминаются одинаково — вопрос был задан, и второго не
+    // будет (Story 10.2). Без разрешения push всё равно поднимает синхронизацию, только молча.
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         rootComponent = get { parametersOf(defaultComponentContext()) }
+        askNotificationPermissionOnce()
 
         val syncScheduler = get<SyncScheduler>()
         // Живёт столько же, сколько процесс: см. AppApplication.appScopeModule.
@@ -61,10 +67,6 @@ class MainActivity : AppCompatActivity() {
                     preferences.getString(DESIGN_STYLE_KEY, null).toSchoolQuizDesignStyle(),
                 )
             }
-            // Состояние синхронизации — единственное, из чего игрок узнаёт, что действия ждут
-            // отправки или что одно уже не уедет (AD-14).
-            val syncStatus by get<SyncStatusRepository>().observeStatus()
-                .collectAsStateWithLifecycle(initialValue = SyncStatus())
             var syncFrequency by remember { mutableStateOf(storedFrequency) }
             var profileSyncFrequency by remember { mutableStateOf(storedProfileFrequency) }
 
@@ -84,7 +86,6 @@ class MainActivity : AppCompatActivity() {
                                 syncScheduler.enqueueManualSync()
                             }
                         },
-                        syncStatus = syncStatus,
                         onForceResync = {
                             // Долгая операция: перечитывается всё содержимое. Живёт в области
                             // самой Activity, чтобы уход с экрана её отменял.
@@ -106,6 +107,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun askNotificationPermissionOnce() {
+        val prompt = NotificationPermissionPrompt(this)
+        if (!prompt.shouldAsk()) return
+        // Помечаем до запроса: даже оборванный диалог не должен превращаться в вопрос на каждом
+        // запуске.
+        prompt.markAsked()
+        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -19,11 +19,8 @@ interface QuestRemoteDataSource {
         cursor: Long,
     ): List<QuestDto>
 
-    /** Developer-only callable: sets `quests/{questId}.visibleOn` to exactly [targetShelf]. */
-    suspend fun setPublicShelf(
-        questId: String,
-        targetShelf: String,
-    ) = Unit
+    // Перенос на полку прямым callable больше не ходит: он уезжает общей очередью через единый
+    // приёмник (AD-6), строкой `quest.SET_SHELF` из QuestShelfOutbox.
 
     /** Developer-only callable: empties `quests/{questId}.visibleOn`, taking it off every shelf. */
     suspend fun retirePublic(questId: String) = Unit

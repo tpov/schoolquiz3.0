@@ -53,6 +53,8 @@ data class ProfileActions(
     val onSaveNickname: () -> Unit = {},
     val onSelectNickname: (String) -> Unit = {},
     val onLinkGoogle: () -> Unit = {},
+    val onConfirmAccountSwitch: () -> Unit = {},
+    val onDeclineAccountSwitch: () -> Unit = {},
     val onRefresh: () -> Unit = {},
 )
 
@@ -76,6 +78,8 @@ fun ProfileScreen(
                     // The account sheet is a system dialog and needs the Activity it appears over.
                     (context as? Activity)?.let { component.onLinkGoogle(PlatformAccountChooserHost(it)) }
                 },
+                onConfirmAccountSwitch = component::onConfirmAccountSwitch,
+                onDeclineAccountSwitch = component::onDeclineAccountSwitch,
                 onRefresh = {
                     // One sync at a time: the in-flight flag also drives the icon's spin.
                     if (!state.isLoading) component.onRefresh()
@@ -168,6 +172,15 @@ fun ProfileView(
 
         state.message?.let { ProfileToast(message = it.resolvedText()) }
     }
+    // The question before switching accounts. Modal on purpose: until it is answered the uid does
+    // not change, and dismissing it any other way than the two buttons counts as declining.
+    state.pendingAccountSwitch?.let { warning ->
+        AccountSwitchWarningDialog(
+            warning = warning,
+            onConfirm = actions.onConfirmAccountSwitch,
+            onDecline = actions.onDeclineAccountSwitch,
+        )
+    }
 }
 
 private data class ProfileDashboardMetrics(
@@ -213,8 +226,6 @@ private fun ProfileMessage.resolvedText(): String =
         ProfileMessage.NicknameUpdated -> stringResource(R.string.profile_message_nickname_updated)
         ProfileMessage.GoogleLinked -> stringResource(R.string.profile_message_google_linked)
         ProfileMessage.GoogleSwitchedToExisting -> stringResource(R.string.profile_message_google_switched)
-        ProfileMessage.GoogleSwitchedWithUnsentWork ->
-            stringResource(R.string.profile_message_google_switched_with_unsent)
         is ProfileMessage.Failure -> detail ?: stringResource(R.string.profile_message_sync_failed)
     }
 

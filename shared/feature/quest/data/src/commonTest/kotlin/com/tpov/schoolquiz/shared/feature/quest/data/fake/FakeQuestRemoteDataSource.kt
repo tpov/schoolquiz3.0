@@ -11,10 +11,19 @@ class FakeQuestRemoteDataSource(
     private val shouldThrow: Boolean = false,
     private val ownResults: List<QuestDto> = emptyList(),
     private val publicResults: List<QuestDto> = emptyList(),
+    /** Что отдаёт чтение по id — так журнал приносит квест, изменённый сервером. */
+    private val byIdResults: List<QuestDto> = emptyList(),
 ) : QuestRemoteDataSource {
 
     var fetchOwnChangedCallCount: Int = 0
     var fetchPublicChangedCallCount: Int = 0
+    var fetchByIdsCallCount: Int = 0
+
+    override suspend fun fetchByIds(ids: Set<String>): List<QuestDto> {
+        fetchByIdsCallCount++
+        if (shouldThrow) throw RuntimeException("FakeQuestRemoteDataSource: unexpected fetchByIds call")
+        return byIdResults.filter { it.id in ids }
+    }
 
     override suspend fun fetchOwnChanged(
         authorUid: String,

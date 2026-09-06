@@ -16,6 +16,8 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.TransitionResul
  * dispatches [TransitionResult.events] to the UI.
  */
 class NavigateUseCase {
-    operator fun invoke(currentState: AppShellState, destination: Destination): TransitionResult =
-        navigate(currentState, destination)
+    operator fun invoke(
+        currentState: AppShellState,
+        destination: Destination,
+    ): TransitionResult = navigate(currentState, destination)
 }

@@ -22,21 +22,25 @@ data class NavStack<C>(
      * Push a new config onto the stack.
      * [active] becomes the head of [backStack]; [next] becomes the new [active].
      */
-    fun push(next: C): NavStack<C> = NavStack(
-        active = next,
-        backStack = backStack + active,
-    )
+    fun push(next: C): NavStack<C> =
+        NavStack(
+            active = next,
+            backStack = backStack + active,
+        )
 
     /**
      * Pop the top item.
      * Returns null if already at root (nothing to pop).
      */
     fun pop(): NavStack<C>? =
-        if (backStack.isEmpty()) null
-        else NavStack(
-            active = backStack.last(),
-            backStack = backStack.dropLast(1),
-        )
+        if (backStack.isEmpty()) {
+            null
+        } else {
+            NavStack(
+                active = backStack.last(),
+                backStack = backStack.dropLast(1),
+            )
+        }
 
     /**
      * Replace entire stack with a single root config.

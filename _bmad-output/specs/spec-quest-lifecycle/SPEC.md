@@ -4,6 +4,7 @@ companions:
   - brownfield.md
   - shelf-mechanism.md
   - chat-contract.md
+  - device-run-playbook.md
   - ../../../docs/architecture/0005-quest-lifecycle.md
   - ../../../docs/architecture/0006-roles-and-qualifications.md
 sources: []

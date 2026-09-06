@@ -34,6 +34,14 @@ const RECEIPTS_SUBCOLLECTION = "receipts";
 /** Ответы клиенту. PENDING — не ошибка: дорешается позже тем же путём. */
 const STATUS_CREDITED = "CREDITED";
 const STATUS_PENDING = "PENDING";
+/**
+ * Состояние записи расчёта после возврата (история 1.3).
+ *
+ * Не ответ клиенту, а состояние документа: `settlementGate` пускает повтор только по «начислено»,
+ * и возвращённый токен получает отказ вместо ответа «начислено» — иначе клиент погасил бы покупку,
+ * за которую деньги уже вернули.
+ */
+const STATUS_REFUNDED = "REFUNDED";
 
 /** Что делать с пришедшим чеком. */
 const SETTLEMENT_CREDIT = "credit";
@@ -337,6 +345,38 @@ function goldPackAmount(constants, sku) {
   return Number.isInteger(amount) && amount >= 1 ? amount : null;
 }
 
+/**
+ * Поле недостачи в документе пользователя: сколько золота возврат не смог снять.
+ *
+ * Отдельное поле, а не отрицательный баланс: золото неотрицательно всегда (ADM-19), и весь
+ * отгруженный код исходит из этого. Недостача — долг, а не баланс: она гасится из будущих
+ * начислений прежде, чем они дойдут до баланса, и до тех пор ничего не запрещает.
+ */
+const SHORTFALL_FIELD = "goldShortfall";
+
+/** Недостача, как она лежит в документе. Целая и неотрицательная, как и всё денежное. */
+function readShortfall(user) {
+  const parsed = Number(user && user[SHORTFALL_FIELD]);
+  return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
+}
+
+/**
+ * Сколько останется на балансе после возврата и сколько снять не удалось.
+ *
+ * Возврат отбирает ровно то, что было выдано (`granted` — из записи расчёта, не из уведомления).
+ * Игрок мог уже потратить часть — тогда баланс останавливается на нуле, а остаток становится
+ * недостачей. Уйти в минус нельзя: минусовой баланс пришлось бы разбирать каждому, кто его читает,
+ * а таких мест в коде больше, чем возвратов за всю историю.
+ *
+ * @returns {{gold: number, shortfall: number}} новый баланс и то, что осталось за игроком.
+ */
+function goldAfterClawback(balance, granted) {
+  const have = Math.max(0, Math.trunc(safeNumber(balance, 0)));
+  const owed = Math.max(0, Math.trunc(safeNumber(granted, 0)));
+  const taken = Math.min(have, owed);
+  return {gold: have - taken, shortfall: owed - taken};
+}
+
 function refuse(code, reason, reasonCode) {
   return {decision: SETTLEMENT_REFUSE, code, reason, reasonCode};
 }
@@ -481,6 +521,7 @@ module.exports = {
   PLAY_OUTCOME_UNAVAILABLE,
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
+  PURCHASE_STATE_PURCHASED,
   REASON_CODES,
   REASON_CONSUMED_WITHOUT_SETTLEMENT,
   REASON_CONSUMPTION_STATE_UNKNOWN,
@@ -500,15 +541,19 @@ module.exports = {
   SETTLEMENT_PENDING,
   SETTLEMENT_REFUSE,
   SETTLEMENT_REPLAY,
+  SHORTFALL_FIELD,
   SKU_PATTERN,
   STATUS_CREDITED,
   STATUS_PENDING,
+  STATUS_REFUNDED,
   accountIdFor,
   auditRecord,
   decideSettlement,
+  goldAfterClawback,
   pendingResponse,
   purchaseFromLookup,
   readProductPurchase,
+  readShortfall,
   receiptRecord,
   settlementGate,
   settlementId,

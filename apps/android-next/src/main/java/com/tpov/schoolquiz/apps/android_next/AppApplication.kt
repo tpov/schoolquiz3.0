@@ -15,9 +15,11 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentati
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di.questAuthoringPresentationModule
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
 import com.tpov.schoolquiz.apps.android_next.di.authModule
+import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.attribution.InstallReferrerReader
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
+import com.tpov.schoolquiz.platform.billing.BuyerTag
 import com.tpov.schoolquiz.platform.billing.di.billingModule
 import com.tpov.schoolquiz.platform.firebase.di.analyticsModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseCatalogModule
@@ -29,6 +31,8 @@ import com.tpov.schoolquiz.platform.firebase.di.firebaseQuestionModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseSectionModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseThemeModule
 import com.tpov.schoolquiz.platform.firebase.initializeFirebaseSecurity
+import com.tpov.schoolquiz.platform.firebase.push.DeviceTokenRegistrar
+import com.tpov.schoolquiz.platform.firebase.push.pushModule
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.analytics.UserProperty
 import com.tpov.schoolquiz.shared.core.catalog.data.di.catalogDataModule
@@ -37,10 +41,8 @@ import com.tpov.schoolquiz.shared.core.persistence.di.persistenceModule
 import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
-import com.tpov.schoolquiz.shared.feature.economy.data.di.economyDataModule
-import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
-import com.tpov.schoolquiz.platform.billing.BuyerTag
 import com.tpov.schoolquiz.shared.feature.economy.data.UnsettledPurchaseSettler
+import com.tpov.schoolquiz.shared.feature.economy.data.di.economyDataModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.di.leaderboardDataModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.di.profileDataModule
@@ -173,23 +175,49 @@ class AppApplication : Application(), Configuration.Provider {
                 profileDomainModule,
                 economyDomainModule(
                     currentUidFlow = { sharedAuthUidFlow },
-                    // Метку покупателя несёт магазин, а сравнивает её сервер: обе стороны
-                    // считают sha-256 от uid, и любое расхождение отклоняет каждую покупку.
+                    // The store carries this value and the server compares against it; both sides
+                    // compute sha-256 of the uid, and any drift refuses every real purchase.
                     buyerTag = BuyerTag::of,
                     log = { message, error -> Log.w("Purchases", message, error) },
                 ),
-                // Экономика знает, что баланс надо перечитать с сервера, но не знает, где он
-                // живёт. Composition root — единственное место, которому можно знать обе фичи.
+                // Экономика знает, что баланс надо перечитать с сервера, но не знает где он живёт.
+                // Composition root — единственное место, которому можно знать про обе фичи.
                 economyGlueModule,
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,
                 syncModule,
+                // Время — то же, что у очереди и состояния синхронизации выше: один источник на
+                // весь sync (AD-9), адаптеры своих часов не держат.
+                pushModule(nowMs = { System.currentTimeMillis() }),
             )
         }
         startMeasurement()
         reconcileSyncSchedule()
+        registerDeviceToken()
         startPurchaseSettlement()
+    }
+
+    /**
+     * Держит токен устройства под текущим аккаунтом всё время жизни процесса (Story 10.2).
+     *
+     * Здесь, а не в Activity: токен может смениться и при headless-старте, а поток регистрации
+     * сам пересоздаётся при смене аккаунта.
+     */
+    private fun registerDeviceToken() {
+        GlobalContext.get().get<DeviceTokenRegistrar>().start()
+    }
+
+    /**
+     * Дорешает покупки, оплаченные и не начисленные (Story 1.2).
+     *
+     * Здесь по той же причине, что и регистрация токена: процесс, убитый между оплатой и
+     * начислением, поднимется в следующий раз как угодно — в том числе headless, без единого
+     * экрана, — и покупка обязана дорешаться всё равно. Досеттлер сам пересоздаёт подписку при
+     * смене аккаунта и при возвращении связи, поэтому его достаточно запустить один раз.
+     */
+    private fun startPurchaseSettlement() {
+        GlobalContext.get().get<UnsettledPurchaseSettler>().start()
     }
 
     /**
@@ -209,18 +237,6 @@ class AppApplication : Application(), Configuration.Provider {
      * Здесь же, а не в Activity, потому что процесс поднимается и без неё, и сверять расписание
      * надо на каждом старте.
      */
-    /**
-     * Дорешает покупки, оплаченные и не начисленные (Story 1.2).
-     *
-     * Здесь, а не в Activity: процесс, убитый между оплатой и начислением, поднимется в следующий
-     * раз как угодно — в том числе headless, без единого экрана, — и покупка обязана дорешаться
-     * всё равно. Досеттлер сам пересоздаёт подписку при смене аккаунта и при возвращении связи,
-     * поэтому запустить его достаточно один раз.
-     */
-    private fun startPurchaseSettlement() {
-        GlobalContext.get().get<UnsettledPurchaseSettler>().start()
-    }
-
     private fun reconcileSyncSchedule() {
         val scheduler = GlobalContext.get().get<SyncScheduler>()
         val preferences = SyncPreferences(this)

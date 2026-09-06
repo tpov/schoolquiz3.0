@@ -2,4 +2,17 @@
 <resources>
     <!-- One name for one app: the launcher must not advertise which build somebody is holding. -->
     <string name="app_name">SchoolQuiz</string>
+
+    <!--
+        Push notifications (Story 10.4). One key per event in PushEvents, derived from eventType.
+        No numbers here on purpose: the payload is a reason, not data (AD-20); at most one
+        argument, and only ever the name of the entity concerned.
+    -->
+    <string name="push_channel_name">Events</string>
+    <string name="push_quest_authoring_quest_published_title">Your quest is published</string>
+    <string name="push_quest_authoring_quest_published_text">The review is over and your quest is live. Open the app to see it.</string>
+    <string name="push_qualification_author_rating_changed_title">Your qualification changed</string>
+    <string name="push_qualification_author_rating_changed_text">Your reviewer level has been updated. Open the app for details.</string>
+    <string name="push_profile_verification_approved_title">Verification approved</string>
+    <string name="push_profile_verification_approved_text">Your verification has been approved. Open the app to see what changed.</string>
 </resources>

@@ -1,10 +1,11 @@
 package com.tpov.schoolquiz.platform.firebase.di
 
+import com.tpov.schoolquiz.platform.firebase.network.namingFailures
 import com.tpov.schoolquiz.platform.firebase.theme.FirebaseThemeRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.theme.data.ThemeRemoteDataSource
 import org.koin.dsl.module
 
 val firebaseThemeModule =
     module {
-        single<ThemeRemoteDataSource> { FirebaseThemeRemoteDataSource(get()) }
+        single<ThemeRemoteDataSource> { FirebaseThemeRemoteDataSource(get()).namingFailures() }
     }

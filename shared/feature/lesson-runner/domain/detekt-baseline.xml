@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:LessonRating.kt$LessonRating$3</ID>
+    <ID>MagicNumber:ResultAdvice.kt$10</ID>
+    <ID>MagicNumber:ResultAdvice.kt$100</ID>
+    <ID>MagicNumber:ResultAdvice.kt$11</ID>
+    <ID>MagicNumber:ResultAdvice.kt$14</ID>
+    <ID>MagicNumber:ResultAdvice.kt$4</ID>
+    <ID>MagicNumber:RunnerLogic.kt$0.5</ID>
+    <ID>MagicNumber:RunnerLogic.kt$100</ID>
+    <ID>MagicNumber:RunnerLogic.kt$1000L</ID>
+    <ID>MagicNumber:RunnerLogic.kt$5</ID>
+    <ID>MagicNumber:SpacedRepetition.kt$SpacedRepetition$100</ID>
+    <ID>MagicNumber:SpacedRepetition.kt$SpacedRepetition$20</ID>
+    <ID>MagicNumber:SpacedRepetition.kt$SpacedRepetition$5</ID>
+    <ID>MagicNumber:SpacedRepetition.kt$SpacedRepetition$8</ID>
+    <ID>MagicNumber:SpacedRepetition.kt$SpacedRepetition$80</ID>
+    <ID>MagicNumber:StartLessonAttemptUseCase.kt$8</ID>
+    <ID>MagicNumber:StartLessonAttemptUseCase.kt$StartLessonAttemptUseCase$1000L</ID>
+    <ID>MagicNumber:SubmitLessonRatingUseCase.kt$SubmitLessonRatingUseCase$3</ID>
+    <ID>MagicNumber:TimerDuration.kt$TimerDuration$5</ID>
+    <ID>ReturnCount:StartLessonAttemptUseCase.kt$StartLessonAttemptUseCase$suspend operator fun invoke( lessonId: LessonId, mode: Difficulty, sessionMode: SessionMode = SessionMode.LEARNING, ): RunnerState</ID>
+    <ID>ReturnCount:SubmitLessonRatingUseCase.kt$SubmitLessonRatingUseCase$suspend operator fun invoke( userId: String, lessonId: LessonId, rating: Int, ): Result&lt;Unit&gt;</ID>
+  </CurrentIssues>
+</SmellBaseline>

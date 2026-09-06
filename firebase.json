@@ -1,6 +1,9 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "predeploy": [
+      "firebase emulators:exec --only auth,firestore \"node scripts/rules-emulator-test.js\""
+    ]
   },
   "functions": [
     {
@@ -13,7 +16,8 @@
         "firebase-debug.*.log"
       ],
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "node \"$RESOURCE_DIR/deploy-package.test.js\""
       ],
       "runtime": "nodejs22"
     }

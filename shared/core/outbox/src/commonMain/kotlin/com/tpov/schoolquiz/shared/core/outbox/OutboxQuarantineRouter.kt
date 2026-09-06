@@ -15,7 +15,6 @@ class OutboxQuarantineRouter(
     private val handlers: Map<String, QuarantineListener>,
     private val onUnhandled: QuarantineListener,
 ) : QuarantineListener {
-
     override suspend fun onQuarantined(record: OutboxRecord) {
         val handler = handlers[record.operation]
         if (handler != null) handler.onQuarantined(record) else onUnhandled.onQuarantined(record)

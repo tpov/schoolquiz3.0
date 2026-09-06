@@ -15,7 +15,6 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ActivityKind
  * сессии, и вид известен в момент открытия сессии, а не по полке квеста.
  */
 object ActivityKindRule {
-
     /** Полки, от дорогой к дешёвой. */
     val SHELF_PRECEDENCE: List<String> = listOf("tournamentFinal", "tournament", "arena", "home", "archive")
 

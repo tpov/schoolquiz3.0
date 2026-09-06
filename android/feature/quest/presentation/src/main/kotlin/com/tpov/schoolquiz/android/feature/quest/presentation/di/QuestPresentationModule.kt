@@ -20,6 +20,7 @@ val questPresentationModule =
                 authRepo = get(),
                 observeMyQuests = get(),
                 observeDraftSummaries = get(),
+                openQuestDraft = get(),
                 observeCatalogs = get(),
                 navigator = nav,
                 onQuestDrillDown = onQuestDrillDown,

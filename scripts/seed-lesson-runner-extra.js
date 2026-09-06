@@ -5,22 +5,16 @@
 // Usage: node scripts/seed-lesson-runner-extra.js
 const admin = require('firebase-admin');
 const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json');
-const {catalogSyncChangePath, lessonContentSyncChangePath} = require('./sync-change-id');
+const {writeSyncChanges} = require('../functions/sync-changes');
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const now = admin.firestore.Timestamp.now();
 const baseMs = now.toMillis();
-const INC1 = admin.firestore.FieldValue.increment(1);
 
 const LESSON_ID  = 'lesson-sample';
 const CATALOG_ID = 'courses';
 
 const mkPayload = (obj) => JSON.stringify(obj);
-const syncChange = (type, id, offset) => ({
-  type,
-  id,
-  changedAtMs: baseMs + offset,
-});
 
 // ── 8 Questions (order 1..8, keeping order=0 for question-sample) ─────────────
 
@@ -250,7 +244,6 @@ const questions = [
 // ── Lesson update (merge — keeps existing title/themeId/order) ────────────────
 
 const lessonUpdate = {
-  contentsVersion: 1 + questions.length, // 1 existing + 8 new = 9
   lastModifiedAt: now,
   averageRating: 2.5,
   ratingCount: 4,
@@ -273,40 +266,24 @@ const lessonUpdate = {
     batch.set(db.doc(`questions/${q.id}`), q, { merge: true });
   }
 
+  // Журнал — той же функцией и по тому же объявлению, что и сервер (AD-11): документ на узел, id
+  // без времени, тело из трёх полей; повторный прогон переписывает те же документы. Вопрос уходит в
+  // оба журнала потому, что так объявлено.
   [
-    syncChange('catalog', CATALOG_ID, 1),
-    syncChange('lesson', LESSON_ID, 2),
-  ].forEach((change) => {
-    batch.set(
-      db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
-      change,
-    );
-  });
-
-  questions
-    .map((q, index) => syncChange('question', q.id, 3 + index))
-    .forEach((change) => {
-      // В оба журнала, как пишет сервер.
-      batch.set(
-        db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
-        change,
-      );
-      batch.set(
-        db.doc(lessonContentSyncChangePath(LESSON_ID, change.id)),
-        change,
-      );
-    });
+    {kind: 'catalog', id: CATALOG_ID, catalogId: CATALOG_ID},
+    {kind: 'lesson', id: LESSON_ID, catalogId: CATALOG_ID},
+    ...questions.map((q) => ({kind: 'question', id: q.id, catalogId: CATALOG_ID, lessonId: LESSON_ID})),
+  ].forEach((node, offset) => writeSyncChanges(batch, db, node, baseMs + offset + 1));
 
   // Bump catalog so delta-sync picks up the updated lesson subtree.
   batch.update(db.doc(`catalogs/${CATALOG_ID}`), {
-    contentsVersion: INC1,
     lastModifiedAt: now,
   });
 
   await batch.commit();
 
   console.log('Appended extra questions to lesson-sample:');
-  console.log(`  lesson:   ${LESSON_ID} — "val и var" (contentsVersion → ${lessonUpdate.contentsVersion})`);
+  console.log(`  lesson:   ${LESSON_ID} — "val и var" (${questions.length} new questions)`);
   console.log(`  top3:     Alice 95%, Bob 87%, Charlie 72%`);
   console.log(`  rating:   avg=${lessonUpdate.averageRating} count=${lessonUpdate.ratingCount}`);
   console.log('  sync:     2 catalog sync_changes');

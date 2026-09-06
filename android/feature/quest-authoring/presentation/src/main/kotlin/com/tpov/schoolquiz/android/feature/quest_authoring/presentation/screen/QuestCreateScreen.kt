@@ -138,6 +138,7 @@ fun QuestCreateScreen(
             onStructureCheckClick = component::onStructureCheckClick,
             onContinueDraftClick = component::onContinueDraftClick,
             onSubmitToArenaClick = component::onSubmitToArenaClick,
+            onResubmitOverServerVersionClick = component::onResubmitOverServerVersionClick,
             onSubmitNodeLongClick = component::onSubmitNodeToArenaLongClick,
             onQuestionsClick = component::onQuestionsClick,
             modifier = modifier,
@@ -163,6 +164,7 @@ private fun QuestCreateContent(
     onStructureCheckClick: () -> Unit,
     onContinueDraftClick: () -> Unit,
     onSubmitToArenaClick: () -> Unit,
+    onResubmitOverServerVersionClick: () -> Unit,
     onSubmitNodeLongClick: (QuestArenaTargetNode) -> Unit,
     onQuestionsClick: (Difficulty) -> Unit,
     modifier: Modifier = Modifier,
@@ -354,6 +356,41 @@ private fun QuestCreateContent(
                 enabled = state.canSubmitToArena,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+        // Расхождение показывается словами и одним действием: работа автора цела и лежит в
+        // очереди, а решение у него ровно одно — отправить её заново поверх серверной версии
+        // (AD-24). Без этого блока конфликт виден только как немой статус черновика.
+        //
+        // Два разных расхождения — два разных экрана. Названная сервером версия даёт число и
+        // кнопку. Неназванная не даёт ни того, ни другого: прежний экран подставлял на её место
+        // ноль и предлагал «отправить заново поверх версии 0» — версии, которой не существует, а
+        // сама отправка уходила без сверки вообще. Такое расхождение снимает следующий снимок с
+        // сервера, и до него автору сообщается положение дел, а не ложное решение.
+        state.draftConflict?.let { conflict ->
+            val serverVersion = conflict.serverVersion
+            if (serverVersion == null) {
+                Text(
+                    text = stringResource(R.string.qa_conflict_banner_unknown_version),
+                    color = NoirDanger,
+                    style = NoirType.rowSub,
+                )
+                Text(
+                    text = stringResource(R.string.qa_conflict_unknown_version_hint),
+                    style = NoirType.rowSub,
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.qa_conflict_banner, serverVersion),
+                    color = NoirDanger,
+                    style = NoirType.rowSub,
+                )
+                BrandPrimaryButton(
+                    text = stringResource(R.string.qa_conflict_resubmit, serverVersion),
+                    onClick = onResubmitOverServerVersionClick,
+                    enabled = state.canResubmitOverServerVersion,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
         Spacer(modifier = Modifier.height(12.dp))
     }
@@ -614,6 +651,7 @@ private fun questCreateScreenPreview() {
             onStructureCheckClick = {},
             onContinueDraftClick = {},
             onSubmitToArenaClick = {},
+            onResubmitOverServerVersionClick = {},
             onSubmitNodeLongClick = {},
             onQuestionsClick = {},
         )

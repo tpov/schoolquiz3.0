@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ReturnCount:CallableErrors.kt$private fun serverVersionFrom(details: Any?): Long?</ID>
+    <ID>ThrowsCount:FirebasePurchaseVerifier.kt$internal fun purchaseVerificationFrom( data: Map&lt;*, *&gt;?, productId: StoreProductId, ): PurchaseVerification</ID>
+  </CurrentIssues>
+</SmellBaseline>

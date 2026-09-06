@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ReturnCount:LessonAttemptRepositoryImpl.kt$LessonAttemptRepositoryImpl$private suspend fun buildRepetitionStates( attempt: Attempt, answers: List&lt;AnsweredQuestion&gt;, ): List&lt;QuestionRepetitionEntity&gt;</ID>
+  </CurrentIssues>
+</SmellBaseline>

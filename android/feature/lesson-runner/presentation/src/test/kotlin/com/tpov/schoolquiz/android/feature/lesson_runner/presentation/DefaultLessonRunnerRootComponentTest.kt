@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAbortAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptFixtures
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptSyncMarkRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeClock
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeCompleteAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonAttemptRepository
@@ -28,6 +29,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResul
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
@@ -77,6 +79,7 @@ class DefaultLessonRunnerRootComponentTest {
     private lateinit var fakeLessonRepo: FakeLessonRepository
     private lateinit var fakeAttemptRepo: FakeLessonAttemptRepository
     private lateinit var fakeRatingRepo: FakeLessonRatingRepository
+    private lateinit var fakeSyncMarks: FakeAttemptSyncMarkRepository
 
     @Before
     fun setUp() {
@@ -88,6 +91,7 @@ class DefaultLessonRunnerRootComponentTest {
         fakeLessonRepo = FakeLessonRepository()
         fakeAttemptRepo = FakeLessonAttemptRepository()
         fakeRatingRepo = FakeLessonRatingRepository()
+        fakeSyncMarks = FakeAttemptSyncMarkRepository()
         fakeLessonRepo.addLesson(makeLesson())
     }
 
@@ -109,6 +113,7 @@ class DefaultLessonRunnerRootComponentTest {
         abortAttemptUseCase: suspend (RunnerState.Ready) -> RunnerState = fakeAbort::invoke,
         submitRatingUseCase: suspend (String, LessonId, Int) -> Result<Unit> = fakeSubmitRating::invoke,
         profileRepository: FakeProfileRepository? = null,
+        attemptSyncMarks: FakeAttemptSyncMarkRepository = fakeSyncMarks,
     ): DefaultLessonRunnerRootComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -125,6 +130,7 @@ class DefaultLessonRunnerRootComponentTest {
             ),
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
+            attemptSyncMarks = attemptSyncMarks,
             profileRepository = profileRepository,
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
@@ -1076,5 +1082,109 @@ class DefaultLessonRunnerRootComponentTest {
             deferred.await(),
             "without a next lesson the runner must close",
         )
+    }
+    // ── Пометка очереди на прохождении (история 4.4) ──────────────────────────
+
+    // GIVEN запись прохождения ждёт отправки WHEN построено состояние результата
+    // THEN в нём стоит пометка «не отправлено»
+    @Test
+    fun `результат прохождения, не доехавшего до сервера, помечен как неотправленный`() {
+        fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+        val component = buildComponent()
+
+        component.onAnswer(singleChoiceDraft())
+
+        val result = assertIs<RunnerUiState.Result>(component.uiState.value)
+        assertEquals(AttemptSyncMark.NOT_SENT, result.syncMark)
+    }
+
+    // GIVEN запись прохождения ушла в карантин WHEN построено состояние результата
+    // THEN пометка отличает карантин от ожидания
+    @Test
+    fun `результат прохождения, ушедшего в карантин, помечен карантином`() {
+        fakeSyncMarks.emit(AttemptSyncMark.QUARANTINED)
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+        val component = buildComponent()
+
+        component.onAnswer(singleChoiceDraft())
+
+        val result = assertIs<RunnerUiState.Result>(component.uiState.value)
+        assertEquals(AttemptSyncMark.QUARANTINED, result.syncMark)
+    }
+
+    // GIVEN очередь про это прохождение молчит WHEN построено состояние результата
+    // THEN пометки нет — и это значение, а не отсутствие поля
+    @Test
+    fun `когда очередь ничего не ждёт, пометки на результате нет`() {
+        fakeSyncMarks.emit(AttemptSyncMark.NONE)
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+        val component = buildComponent()
+
+        component.onAnswer(singleChoiceDraft())
+
+        val result = assertIs<RunnerUiState.Result>(component.uiState.value)
+        assertEquals(AttemptSyncMark.NONE, result.syncMark)
+    }
+
+    // GIVEN результат уже на экране WHEN движок уводит запись в карантин
+    // THEN пометка меняется на месте, без пересборки экрана
+    @Test
+    fun `карантин, случившийся при открытом результате, меняет пометку на месте`() {
+        fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+        val component = buildComponent()
+        component.onAnswer(singleChoiceDraft())
+        assertEquals(
+            AttemptSyncMark.NOT_SENT,
+            assertIs<RunnerUiState.Result>(component.uiState.value).syncMark,
+        )
+
+        fakeSyncMarks.emit(AttemptSyncMark.QUARANTINED)
+
+        assertEquals(
+            AttemptSyncMark.QUARANTINED,
+            assertIs<RunnerUiState.Result>(component.uiState.value).syncMark,
+        )
+    }
+
+    // GIVEN прохождение с известным идентификатором WHEN строится результат
+    // THEN спрошено именно про него — ядро сравнивает ссылку целиком (AD-7)
+    @Test
+    fun `пометка спрашивается по тому прохождению, которое показано`() {
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result =
+            RunnerState.Completed(
+                FakeAttemptFixtures.fixtureAttempt(id = "attempt-77"),
+                ratingPrompt = false,
+            )
+        val component = buildComponent()
+
+        component.onAnswer(singleChoiceDraft())
+
+        assertEquals(listOf(AttemptId("attempt-77")), fakeSyncMarks.askedFor)
+    }
+
+    // GIVEN прохождение не сохранилось WHEN показан результат с предупреждением
+    // THEN пометка очереди всё равно приезжает: сохранить не вышло — тем более не отправлено
+    @Test
+    fun `несохранённое прохождение тоже несёт пометку очереди`() {
+        fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result =
+            RunnerState.SaveFailed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(),
+                error = SaveError.IoFailure(RuntimeException("IO error")),
+            )
+        val component = buildComponent()
+
+        component.onAnswer(singleChoiceDraft())
+
+        val result = assertIs<RunnerUiState.Result>(component.uiState.value)
+        assertEquals(AttemptSyncMark.NOT_SENT, result.syncMark)
     }
 }

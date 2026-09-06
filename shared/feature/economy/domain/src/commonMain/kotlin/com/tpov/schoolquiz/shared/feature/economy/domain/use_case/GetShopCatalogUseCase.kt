@@ -1,8 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.economy.domain.use_case
 
+import com.tpov.schoolquiz.shared.feature.economy.domain.logic.canBuySlot
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ChargeRules
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
-import com.tpov.schoolquiz.shared.feature.economy.domain.logic.canBuySlot
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
@@ -10,12 +10,13 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemCategory
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice
 
-/**
+/*
  * What the shelf holds, as pure data.
  *
  * Titles and availability wording are resolved in the UI from [ShopItemId]; the domain carries
  * neither, so no language leaks past this boundary.
  */
+
 /**
  * Витрина магазина.
  *

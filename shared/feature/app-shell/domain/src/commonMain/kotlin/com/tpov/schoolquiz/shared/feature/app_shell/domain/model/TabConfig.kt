@@ -21,12 +21,18 @@ sealed interface TabConfig
 
 sealed interface LocalConfig : TabConfig {
     data object MyQuestsRoot : LocalConfig
+
     data object HomeQuestsRoot : LocalConfig
+
     data object ArchiveRoot : LocalConfig
+
     data object ReviewQueueRoot : LocalConfig
+
     data object SettingsRoot : LocalConfig
+
     /** Always exists as type; rendered as UnderConstructionScreen("Недоступно") in release. */
     data object DesignCatalogRoot : LocalConfig
+
     /** Sentinel shown when no visible sections exist for this tab. */
     data object EmptyRoot : LocalConfig
 
@@ -41,24 +47,38 @@ sealed interface LocalConfig : TabConfig {
 
 sealed interface InternetConfig : TabConfig {
     data object ArenaRoot : InternetConfig
+
     data object CatalogRoot : InternetConfig
+
     data object QualificationsRoot : InternetConfig
+
     data object ProfileRoot : InternetConfig
+
     data object SocialRoot : InternetConfig
+
     data object LeaderboardRoot : InternetConfig
+
     /** Sentinel shown when no visible sections exist for this tab. */
     data object EmptyRoot : InternetConfig
 }
 
 sealed interface EventsConfig : TabConfig {
     data object QualifierTournamentRoot : EventsConfig
+
     data object QualifierTournamentLeaderboardRoot : EventsConfig
+
     data object QualifierTournamentParticipantsRoot : EventsConfig
+
     data object WorldChampionshipRoot : EventsConfig
+
     data object WorldChampionshipLeaderboardRoot : EventsConfig
+
     data object WorldChampionshipParticipantsRoot : EventsConfig
+
     data object ActiveEventsRoot : EventsConfig
+
     data object MinigamesRoot : EventsConfig
+
     /** Sentinel shown when no visible sections exist for this tab. */
     data object EmptyRoot : EventsConfig
 }

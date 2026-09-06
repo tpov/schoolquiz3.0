@@ -5,7 +5,6 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRatin
 import kotlinx.coroutines.flow.Flow
 
 interface LessonRatingRepository {
-
     /**
      * Submits [rating] to Room local table and queues for cascade sync.
      * Returns [Result.failure] on error; local hasSubmitted flag NOT set on failure.
@@ -16,5 +15,8 @@ interface LessonRatingRepository {
      * Observes whether [userId] has already submitted a rating for [lessonId].
      * Backed by Room compound PK (userId, lessonId) table.
      */
-    fun hasSubmitted(userId: String, lessonId: LessonId): Flow<Boolean>
+    fun hasSubmitted(
+        userId: String,
+        lessonId: LessonId,
+    ): Flow<Boolean>
 }

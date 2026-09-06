@@ -13,7 +13,6 @@ package com.tpov.schoolquiz.shared.core.outbox
  * смыслу: [OutboxRecord.payload], `operation` и `entityRef` переезжают дословно (AD-7).
  */
 object OutboxConflictResolution {
-
     /**
      * Запись, которой игрок отправляет работу заново поверх версии, названной сервером.
      *
@@ -29,14 +28,20 @@ object OutboxConflictResolution {
         require(conflicted.state == OutboxState.CONFLICT) {
             "Only a conflicted record can be resolved, got ${conflicted.state}"
         }
+        // Разрешать можно только конфликт, у которого есть номер. Отправить «поверх неизвестной
+        // версии» — значит отправить без версии, а сервер читает отсутствие как «сущности ещё нет»
+        // и отвечает тем же конфликтом; игрок ходил бы по кругу. Фича отказывает раньше (AD-24),
+        // но инвариант держит ядро: обойти его через другую фичу нельзя.
+        val serverVersion =
+            requireNotNull(conflicted.serverVersion) {
+                "A conflict without a server version cannot be resolved by resubmitting"
+            }
         return conflicted.copy(
             // Ноль означает «строки ещё нет»: ключ присвоит база.
             id = 0L,
-            mutationId = OutboxOperations.resolutionKey(conflicted.mutationId, conflicted.serverVersion),
-            // Версия, поверх которой игрок согласился отправить заново. Пустой она бывает только
-            // если сервер назвал конфликт, но не назвал версию: тогда сверять нечего, и приёмник
-            // пропустит мутацию без проверки.
-            expectedVersion = conflicted.serverVersion,
+            mutationId = OutboxOperations.resolutionKey(conflicted.mutationId, serverVersion),
+            // Версия, поверх которой игрок согласился отправить заново.
+            expectedVersion = serverVersion,
             serverVersion = null,
             state = OutboxState.WAITING,
             attemptCount = 0,

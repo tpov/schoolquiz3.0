@@ -15,6 +15,19 @@ class FakeThemeRemoteDataSource : ThemeRemoteDataSource {
     var lastSectionIds: Set<String> = emptySet()
     var lastCursor: Long = -1L
 
+
+    /** Что отдаёт чтение по id: журнал приносит узел именно так. Не вернувшийся id — удалён. */
+    var fetchByIdsResult: List<ThemeDto> = emptyList()
+    var fetchByIdsCallCount: Int = 0
+    var lastFetchByIds: Set<String> = emptySet()
+
+    override suspend fun fetchByIds(ids: Set<String>): List<ThemeDto> {
+        fetchByIdsCallCount++
+        lastFetchByIds = ids
+        if (shouldThrow) throw RuntimeException("FakeThemeRemoteDataSource: network error")
+        return fetchByIdsResult.filter { it.id in ids }
+    }
+
     override suspend fun fetchChangedByParents(sectionIds: Set<String>, cursor: Long): List<ThemeDto> {
         callCount++
         lastSectionIds = sectionIds

@@ -33,6 +33,8 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.formatSyncTimestamp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
@@ -56,6 +58,7 @@ fun DrawerFooter(
     userStats: UserStats,
     onVersionTap: () -> Unit,
     onSyncNow: () -> Unit,
+    syncStatus: SyncStatus = SyncStatus(),
     onDismissQuizzes: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -83,6 +86,27 @@ fun DrawerFooter(
                 monoCaps = true,
             )
         }
+        // Когда синхронизация последний раз прошла целиком (AD-14). Строка стоит рядом со
+        // списком действий, а не внутри него: ручной запуск — инструмент разработчика и виден
+        // не всем, а обещана строка игроку. Пока она жила под действием, в релизной сборке её
+        // не видел никто, и молчание синхронизации оставалось неотличимым от её успеха.
+        //
+        // Числа очереди сюда не выносятся: шторка — это место, откуда синхронизацию запускают,
+        // разбираться со счётчиками игрок идёт в настройки.
+        Text(
+            text =
+                if (syncStatus.hasEverSucceeded) {
+                    stringResource(
+                        R.string.drawer_sync_last_success,
+                        formatSyncTimestamp(syncStatus.lastSuccessAtMs),
+                    )
+                } else {
+                    stringResource(R.string.drawer_sync_never)
+                },
+            style = NoirType.rowSub,
+            color = NoirT3,
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        )
         Text(
             text = "v$versionName",
             style = NoirType.button,

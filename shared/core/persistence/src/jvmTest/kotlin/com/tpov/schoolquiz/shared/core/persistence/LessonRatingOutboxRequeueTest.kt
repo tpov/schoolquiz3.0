@@ -63,6 +63,7 @@ class LessonRatingOutboxRequeueTest {
             nextRetryAtMs = 0L,
             attemptCount = 5,
             lastError = "Refused by server",
+            serverVersion = null,
         )
 
         // Откат по карантину: отметки «оценка поставлена» больше нет, игрок может оценить заново.
@@ -102,7 +103,7 @@ class LessonRatingOutboxRequeueTest {
     fun aKeyHeldByAQuarantinedRowRefusesTheWholeTransaction() = runTest {
         ratings.submitWithOutbox(mark(submittedAt = 1_000L), row("rating-1"))
         val stuck = outbox.findByMutationId(key("rating-1"))!!
-        outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server")
+        outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server", null)
         ratings.delete(USER_ID, LESSON_ID)
 
         val failure = runCatching { ratings.submitWithOutbox(mark(submittedAt = 2_000L), row("rating-1")) }

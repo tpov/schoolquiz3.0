@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:AccountSwitchWarningDialog.kt$3</ID>
+    <ID>MaxLineLength:ProfileUiStateTest.kt$ProfileUiStateTest$ProfileUiState(profile = profile(ProfileStatus.ANONYMOUS, nickname = current), nicknameInput = " $current ")</ID>
+    <ID>MaxLineLength:ProfileUiStateTest.kt$ProfileUiStateTest$val state = ProfileUiState(profile = profile(ProfileStatus.ANONYMOUS, nickname = current), nicknameInput = current)</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.shared.core.outbox
 
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -43,21 +45,45 @@ class OutboxEngine(
     private val batchSize: Int = DEFAULT_BATCH,
 ) {
     /**
+     * Один проход за раз.
+     *
+     * Нужен смене аккаунта (AD-8): пока записи прежнего владельца вырезаются, плановый проход не
+     * должен успеть отправить одну из них. Проход, пришедший вторым, ждёт, а не отменяется.
+     */
+    private val passes = Mutex()
+
+    /**
      * Проходит по записям, до которых дошёл срок, и возвращает итог прохода.
      *
      * Наружу не бросает ничего: единственный способ остановить проход — отмена корутины, и она
      * проходит насквозь, потому что не ловится.
      */
-    suspend fun drain(ownerUid: String): OutboxRunSummary {
+    suspend fun drain(ownerUid: String): OutboxRunSummary = passes.withLock { drainLocked(ownerUid) }
+
+    /**
+     * Выполняет [block], пока ни один проход не идёт, и не пускает новый, пока он не кончится.
+     *
+     * Единственный потребитель — снятие следов прежнего владельца при смене аккаунта: удаление
+     * записей и прогон очереди не должны пересекаться во времени.
+     */
+    suspend fun <T> withoutPasses(block: suspend () -> T): T = passes.withLock { block() }
+
+    private suspend fun drainLocked(ownerUid: String): OutboxRunSummary {
         val now = clock()
         val due = store.dueRecords(ownerUid, now, batchSize)
         var sent = 0
         var retried = 0
         var quarantined = 0
         var conflicted = 0
+        // Ветвь последней записи, которая не уехала. Держится здесь, а не вычитывается потом из
+        // очереди: тут она уже разобрана в тип (AD-15), а в таблице от неё остаётся текст, и
+        // восстанавливать ветвь разбором этого текста запрещено.
+        var lastError: SyncError? = null
 
         for (record in due) {
-            when (step(record, now)) {
+            val outcome = step(record, now)
+            outcome.error?.let { lastError = it }
+            when (outcome.step) {
                 Step.SENT -> sent++
                 Step.QUARANTINED -> quarantined++
                 Step.CONFLICTED -> conflicted++
@@ -71,6 +97,7 @@ class OutboxEngine(
             retried = retried,
             quarantined = quarantined,
             conflicted = conflicted,
+            lastError = lastError,
         )
     }
 
@@ -78,28 +105,30 @@ class OutboxEngine(
     private suspend fun step(
         record: OutboxRecord,
         nowMs: Long,
-    ): Step {
+    ): StepOutcome {
         if (policy.isExpired(record, nowMs)) {
             // Перезревшую отправлять нельзя — срок хранения ключа на сервере истёк, и повтор был бы
             // для него новой операцией (AD-1). Но и лежать она права не имеет: пока возраст резал
             // выборку, такая запись не уезжала, в карантин не попадала и откат не звала — черновик
             // оставался заперт, а счётчик вечно показывал «ожидает». Здесь она доходит до карантина
             // тем же путём, что и любая другая, только без попытки.
-            return quarantine(record, policy.onExpired(record))
+            // Ветви ошибки здесь нет и быть не может: попытки не было, в карантин ведёт возраст.
+            return quarantine(record, policy.onExpired(record), error = null)
         }
 
         val outcome = transport.send(record)
         if (outcome.isSuccess) {
             store.remove(record.id)
-            return Step.SENT
+            return StepOutcome(Step.SENT, error = null)
         }
 
         val error = outcome.exceptionOrNull().syncErrorOrNull() ?: SyncError.Unknown(outcome.exceptionOrNull())
         val decision = policy.onFailure(record, error, clock())
-        if (decision.state == OutboxState.QUARANTINED) return quarantine(record, decision)
+        if (decision.state == OutboxState.QUARANTINED) return quarantine(record, decision, error)
 
         store.apply(record.id, decision)
-        return if (decision.state == OutboxState.CONFLICT) Step.CONFLICTED else Step.RETRY
+        val step = if (decision.state == OutboxState.CONFLICT) Step.CONFLICTED else Step.RETRY
+        return StepOutcome(step, error)
     }
 
     /**
@@ -120,7 +149,8 @@ class OutboxEngine(
     private suspend fun quarantine(
         record: OutboxRecord,
         decision: OutboxDecision,
-    ): Step {
+        error: SyncError?,
+    ): StepOutcome {
         val announced =
             record.copy(
                 state = OutboxState.QUARANTINED,
@@ -135,10 +165,10 @@ class OutboxEngine(
             if (failure is CancellationException) throw failure
             store.apply(record.id, policy.onQuarantineDeferred(record, decision, clock(), failure.describe(decision)))
             // Считается как повтор: карантин не объявлен, но запись жива и будет разобрана снова.
-            return Step.RETRY
+            return StepOutcome(Step.RETRY, error)
         }
         store.apply(record.id, decision)
-        return Step.QUARANTINED
+        return StepOutcome(Step.QUARANTINED, error)
     }
 
     /** Причина, по которой карантин не удалось объявить, — вместе с той, по которой он решён. */
@@ -149,6 +179,17 @@ class OutboxEngine(
 
     /** Исход одной записи за проход. */
     private enum class Step { SENT, QUARANTINED, CONFLICTED, RETRY }
+
+    /**
+     * Исход одной записи вместе с ветвью, по которой он получен.
+     *
+     * Ветвь едет отдельно от исхода, потому что один и тот же исход даёт разные ветви: в карантин
+     * ведёт и отказ сервера, и переживший срок возраст, а у второго ветви нет вовсе.
+     */
+    private data class StepOutcome(
+        val step: Step,
+        val error: SyncError?,
+    )
 
     private companion object {
         /** Сколько записей за один проход. Больше — дольше держим соединение без пользы. */
@@ -163,6 +204,14 @@ data class OutboxRunSummary(
     val retried: Int,
     val quarantined: Int,
     val conflicted: Int,
+    /**
+     * Ветвь последней записи, которая за этот проход не уехала, — или пусто, если не уехавших не
+     * было (либо единственной причиной был возраст, у которого ветви нет).
+     *
+     * Тип, а не текст: показать игроку надо ветвь (AD-15), а разбирать её обратно из
+     * [OutboxRecord.lastError] значило бы выводить решение из строки, собранной для журнала.
+     */
+    val lastError: SyncError? = null,
 ) {
     /**
      * Осталась ли работа: если проход сдвинул хоть одну запись, стоит зайти ещё раз за следующей

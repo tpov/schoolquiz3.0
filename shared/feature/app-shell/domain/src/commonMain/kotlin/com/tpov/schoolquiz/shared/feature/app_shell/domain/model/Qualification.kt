@@ -30,13 +30,14 @@ data class Qualification(
         /**
          * All qualification levels at zero (new user / guest).
          */
-        fun zero(): Qualification = Qualification(
-            tester = 0,
-            moderator = 0,
-            sponsor = 0,
-            translator = 0,
-            admin = 0,
-            developer = 0,
-        )
+        fun zero(): Qualification =
+            Qualification(
+                tester = 0,
+                moderator = 0,
+                sponsor = 0,
+                translator = 0,
+                admin = 0,
+                developer = 0,
+            )
     }
 }

@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
  * Spec: docs/features/home-and-my-quests/0-spec.md — AC#5.
  */
 interface ThemeRepository {
-
     /**
      * Observes themes belonging to [sectionId], sorted by [Theme.order] ASC.
      */
@@ -43,5 +42,8 @@ interface ThemeRepository {
      * @return [Result.success] containing the set of processed [ThemeId]s (passed to lesson sync
      *   as parentIds); [Result.failure] on network/permission errors.
      */
-    suspend fun refreshByParents(sectionIds: Set<SectionId>, cursor: Long): Result<Set<ThemeId>>
+    suspend fun refreshByParents(
+        sectionIds: Set<SectionId>,
+        cursor: Long,
+    ): Result<Set<ThemeId>>
 }

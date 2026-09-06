@@ -45,6 +45,10 @@
     <string name="qa_dest_arena">арену</string>
     <string name="qa_error_arena_missing_questions">Для отправки нужны сохраненные легкие и сложные вопросы в каждом уроке</string>
     <string name="qa_error_arena_enqueue_failed">Не удалось поставить квест в очередь арены</string>
+    <string name="qa_error_arena_draft_missing">Черновик не найден</string>
+    <string name="qa_error_arena_draft_not_submittable">Этот квест уже отправлен или ждет разрешения расхождения</string>
+    <string name="qa_error_arena_bad_shelf">Квест можно отправить только на арену или в архив</string>
+    <string name="qa_error_arena_foreign_lesson">Среди выбранных уроков есть урок из другого квеста</string>
     <string name="qa_error_enter_quest_title">Введите название квеста</string>
     <string name="qa_error_enter_section_title">Введите название раздела</string>
     <string name="qa_error_enter_theme_title">Введите название темы</string>
@@ -101,7 +105,6 @@
     <string name="qa_review_no_translation">Нет перевода</string>
     <string name="qa_review_accepted">Принято</string>
     <string name="qa_review_submit">Отправить</string>
-    <string name="qa_review_submitting">Отправка</string>
     <string name="qa_review_score_testing">Тест: %1$s</string>
     <string name="qa_review_score_logic">Валидация: %1$s</string>
     <string name="qa_review_score_translation">Перевод: %1$s%%</string>
@@ -110,7 +113,9 @@
     <string name="qa_review_languages_review">проверка %1$s</string>
     <string name="qa_review_languages_none">языки не указаны</string>
     <string name="qa_review_question_title">Вопрос %1$d</string>
-    <string name="qa_review_submitted">Проверка отправлена</string>
+    <string name="qa_review_queued">Решение в очереди — отправится, когда появится сеть</string>
+    <string name="qa_review_sync_pending">Решение ждёт отправки</string>
+    <string name="qa_review_sync_quarantined">Решение не принято: задание закрыто или передано другому</string>
     <string name="qa_error_submit_review_failed">Не удалось отправить проверку</string>
     <string name="qa_error_load_assignments_failed">Не удалось загрузить задания</string>
     <string name="qa_error_choose_score">Выберите оценку 1..3</string>
@@ -138,4 +143,11 @@
         <item quantity="many">%1$d вопросов</item>
         <item quantity="other">%1$d вопросов</item>
     </plurals>
+
+    <string name="qa_conflict_banner">Пока заявка ждала, квест на сервере ушёл до версии %1$d</string>
+    <string name="qa_conflict_banner_unknown_version">Сервер отклонил заявку как устаревшую, но версию квеста не назвал</string>
+    <string name="qa_conflict_unknown_version_hint">Работа цела и лежит в очереди. Отправить заново можно будет, когда квест приедет с сервера вместе со своей версией.</string>
+    <string name="qa_conflict_resubmit">Отправить заново поверх версии %1$d</string>
+    <string name="qa_conflict_resubmitted">Отправлено заново поверх версии %1$d</string>
+    <string name="qa_conflict_resolve_failed">Не удалось отправить квест заново</string>
 </resources>

@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonUnlockQueue
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
@@ -55,6 +56,7 @@ class DefaultLessonListComponentPhase06Test {
     private val fakeAttemptRepo = FakeLessonAttemptRepository()
     private val fakeAuthRepo = FakeAuthRepository(initialUid = "user1")
     private val fakeEconomyRepo = FakeEconomyRepository()
+    private val fakeUnlockQueue = FakeLessonUnlockQueue()
     private val fakeNavigation = FakeStackNavigation()
 
     @After
@@ -82,6 +84,7 @@ class DefaultLessonListComponentPhase06Test {
             attemptRepository = fakeAttemptRepo,
             authRepository = fakeAuthRepo,
             economyRepository = fakeEconomyRepo,
+            queueLessonUnlock = fakeUnlockQueue,
             navigation = fakeNavigation,
             coroutineContext = dispatcher,
         )

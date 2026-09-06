@@ -18,11 +18,9 @@ interface ProfileLocalDataSource {
 class RoomProfileLocalDataSource(
     private val dao: UserProfileDao,
 ) : ProfileLocalDataSource {
-    override fun observe(uid: String): Flow<UserProfile?> =
-        dao.observeByUid(uid).map { it?.toDomain() }
+    override fun observe(uid: String): Flow<UserProfile?> = dao.observeByUid(uid).map { it?.toDomain() }
 
-    override suspend fun find(uid: String): UserProfile? =
-        dao.findByUid(uid)?.toDomain()
+    override suspend fun find(uid: String): UserProfile? = dao.findByUid(uid)?.toDomain()
 
     override suspend fun upsert(profile: UserProfile) {
         dao.upsert(profile.toEntity())

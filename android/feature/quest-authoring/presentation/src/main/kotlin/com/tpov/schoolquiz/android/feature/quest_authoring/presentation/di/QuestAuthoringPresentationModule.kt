@@ -19,6 +19,8 @@ val questAuthoringPresentationModule =
                 getActiveQuestDraft = get(),
                 saveDraftQuestion = get(),
                 submitQuestDraftToArena = get(),
+                observeQuestDraftConflict = get(),
+                resolveQuestDraftConflict = get(),
                 questionContentParser = get(),
                 questRepository = get(),
                 sectionRepository = get(),
@@ -33,6 +35,7 @@ val questAuthoringPresentationModule =
                 componentContext = ctx,
                 authRepository = get(),
                 observeReviewAssignments = get(),
+                observeReviewAssignmentSync = get(),
                 submitReviewAction = get(),
                 questionContentParser = get(),
             )

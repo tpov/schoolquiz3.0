@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:DefaultQuestAuthoringIdProvider.kt$DefaultQuestAuthoringIdProvider$36</ID>
+    <ID>MagicNumber:QuestArenaSubmissionRequest.kt$ArenaReviewDto$100</ID>
+    <ID>MagicNumber:QuestArenaSubmissionRequest.kt$ArenaReviewDto$3.0</ID>
+    <ID>NestedBlockDepth:QuestArenaOutcomeSync.kt$QuestArenaOutcomeSync$override suspend fun sync(): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:PrivateQuestMerge.kt$fun privateQuestMerge( localStatus: String?, knownServerRevision: Long?, incomingServerRevision: Long?, dirtyStatuses: Set&lt;String&gt; = LOCAL_DIRTY_STATUSES, ): PrivateQuestMerge</ID>
+    <ID>ReturnCount:QuestAuthoringLocalDataSource.kt$QuestAuthoringLocalDataSourceImpl$override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot)</ID>
+    <ID>TooGenericExceptionCaught:QuestArenaOutcomeSync.kt$QuestArenaOutcomeSync$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:QuestAuthoringRepositoryImpl.kt$QuestAuthoringRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:QuestPrivateSync.kt$QuestPrivateSync$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ReviewAssignmentSync.kt$ReviewAssignmentSync$e: Exception</ID>
+    <ID>TooManyFunctions:QuestAuthoringLocalDataSource.kt$QuestAuthoringLocalDataSource</ID>
+  </CurrentIssues>
+</SmellBaseline>

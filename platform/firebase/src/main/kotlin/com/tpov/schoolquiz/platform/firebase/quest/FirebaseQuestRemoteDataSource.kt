@@ -50,21 +50,8 @@ class FirebaseQuestRemoteDataSource(
             .map { it.toQuestDto() }
     }
 
-    override suspend fun setPublicShelf(
-        questId: String,
-        targetShelf: String,
-    ) {
-        functions
-            .getHttpsCallable(SET_PUBLIC_QUEST_SHELF)
-            .withAppTimeout()
-            .call(
-                mapOf(
-                    "questId" to questId,
-                    "targetShelf" to targetShelf,
-                ),
-            )
-            .await()
-    }
+    // Перенос на полку (`setPublicQuestShelf`) отсюда снят: он уезжает общей очередью через единый
+    // приёмник `submitMutation` операцией `quest.SET_SHELF` (AD-6).
 
     override suspend fun retirePublic(questId: String) {
         functions
@@ -75,7 +62,6 @@ class FirebaseQuestRemoteDataSource(
     }
 
     private companion object {
-        const val SET_PUBLIC_QUEST_SHELF = "setPublicQuestShelf"
         const val RETIRE_PUBLIC_QUEST = "retirePublicQuest"
     }
 }

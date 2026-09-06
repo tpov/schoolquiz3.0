@@ -1,32 +1,33 @@
 'use strict';
 
-const fs = require('fs');
-const admin = require('firebase-admin');
+/**
+ * Сид контрактного набора для списковой синхронизации: каталог, квест, секция, тема, урок и три
+ * вопроса — плюс записи журнала, по которым клиент их находит.
+ *
+ * Журнал пишется общей `writeSyncChanges` из `functions/sync-changes.js`, как и в остальных сидах.
+ * Своей записи здесь быть не должно: раньше сид клал записи одним `batch.set` только в каталожный
+ * журнал, а вопрос читают ДВА журнала — каталожный и журнал своего урока (AD-11, инвариант 2).
+ * Урок, открытый на устройстве, читает `lesson_content/{lessonId}/sync_changes`, и туда сид не
+ * клал ничего: урок открывался пустым, и симптом был неотличим от настоящей поломки синхронизации.
+ * Состав журналов решает объявление `NODE_JOURNALS`, а не этот файл.
+ *
+ * Firestore приезжает через [useFirestore], а не создаётся при загрузке модуля: иначе прогнать сид
+ * на фейке в тесте было бы нельзя — загрузка требовала бы ключа сервисного аккаунта.
+ */
 
-const SERVICE_ACCOUNT_PATH =
-  process.env.FIREBASE_SERVICE_ACCOUNT ||
-  '/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json';
+const {writeSyncChanges} = require('../functions/sync-changes');
 
-if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
-  console.error(`Service account file not found: ${SERVICE_ACCOUNT_PATH}`);
-  process.exit(1);
+/** Firestore и фабрика меток времени — те, что дал [useFirestore]. */
+let db = null;
+let T = null;
+
+/** Подставляет Firestore: боевой в `main`, фейковый в тесте. */
+function useFirestore(firestore, timestamps) {
+  db = firestore;
+  T = timestamps;
 }
-
-const sa = require(SERVICE_ACCOUNT_PATH);
-const {catalogSyncChangeId} = require('./sync-change-id');
-
-admin.initializeApp({ credential: admin.credential.cert(sa) });
-
-const db = admin.firestore();
-const T = admin.firestore.Timestamp;
 
 const CATALOG_ID = process.env.SYNC_TEST_CATALOG_ID || 'codex-sync-test';
-if (CATALOG_ID !== 'codex-sync-test' && process.env.ALLOW_NON_TEST_CATALOG !== '1') {
-  console.error(
-    'Refusing to seed a non-test catalog. Set ALLOW_NON_TEST_CATALOG=1 if this is intentional.',
-  );
-  process.exit(1);
-}
 
 const QUEST_ID = `${CATALOG_ID}-quest`;
 const SECTION_ID = `${CATALOG_ID}-section`;
@@ -86,7 +87,6 @@ function buildDocs(baseMs) {
     name: 'Codex Sync Test',
     picturePath: 'catalog-pictures/school.jpg',
     version,
-    contentsVersion: version,
     lastModifiedAt: stamp,
     archived: false,
     iconCategoryKey: 'school',
@@ -102,7 +102,6 @@ function buildDocs(baseMs) {
     averageRating: 2.6,
     averageRatingCount: 7,
     version,
-    contentsVersion: version,
     lastModifiedAt: stamp,
     archived: false,
   };
@@ -112,7 +111,6 @@ function buildDocs(baseMs) {
     title: 'Flat nodes',
     order: 0,
     version,
-    contentsVersion: version,
     lastModifiedAt: stamp,
     archived: false,
   };
@@ -122,7 +120,6 @@ function buildDocs(baseMs) {
     title: 'Catalog sync list',
     order: 0,
     version,
-    contentsVersion: version,
     lastModifiedAt: stamp,
     archived: false,
   };
@@ -132,7 +129,6 @@ function buildDocs(baseMs) {
     title: 'Client fetches by id',
     order: 0,
     version,
-    contentsVersion: version,
     lastModifiedAt: stamp,
     archived: false,
     averageRating: 2.4,
@@ -230,21 +226,25 @@ function buildDocs(baseMs) {
   };
 }
 
+/**
+ * Узлы сида и время их изменения — в том виде, какого ждёт `writeSyncChanges`.
+ *
+ * Вопрос называет свой урок, квест — что приватной половины у него нет (`ownerUid: null`): и то и
+ * другое требуется объявлением журналов и не выводится здесь.
+ */
 function buildInitialChanges(baseMs) {
   const nodes = [
-    ['catalog', CATALOG_ID],
-    ['quest', QUEST_ID],
-    ['section', SECTION_ID],
-    ['theme', THEME_ID],
-    ['lesson', LESSON_ID],
-    ['question', QUESTION_IDS[0]],
-    ['question', QUESTION_IDS[1]],
-    ['question', QUESTION_IDS[2]],
+    {kind: 'catalog', id: CATALOG_ID, catalogId: CATALOG_ID},
+    {kind: 'quest', id: QUEST_ID, catalogId: CATALOG_ID, ownerUid: null},
+    {kind: 'section', id: SECTION_ID, catalogId: CATALOG_ID},
+    {kind: 'theme', id: THEME_ID, catalogId: CATALOG_ID},
+    {kind: 'lesson', id: LESSON_ID, catalogId: CATALOG_ID},
+    ...QUESTION_IDS.map((id) => ({kind: 'question', id, catalogId: CATALOG_ID, lessonId: LESSON_ID})),
   ];
 
-  return nodes.map(([type, id], index) => ({
-    type,
-    id,
+  return nodes.map((node, index) => ({
+    ...node,
+    type: node.kind,
     changedAtMs: baseMs + index + 1,
   }));
 }
@@ -263,15 +263,7 @@ async function writeSeed(baseMs) {
   docs.questions.forEach((question, index) => {
     batch.set(db.collection('questions').doc(QUESTION_IDS[index]), question);
   });
-  changes.forEach((change) => {
-    batch.set(
-      db.collection('catalogs')
-        .doc(CATALOG_ID)
-        .collection('sync_changes')
-        .doc(catalogSyncChangeId(change.type, change.id)),
-      change,
-    );
-  });
+  changes.forEach((change) => writeSyncChanges(batch, db, change, change.changedAtMs));
   await batch.commit();
 
   return { changes, deletedChanges };
@@ -302,15 +294,16 @@ async function writeIncrementalQuestionChange(previousCursorMs) {
   });
 
   const change = {
+    kind: 'question',
     type: 'question',
     id: QUESTION_IDS[0],
+    catalogId: CATALOG_ID,
+    lessonId: LESSON_ID,
     changedAtMs,
   };
-  await db.collection('catalogs')
-    .doc(CATALOG_ID)
-    .collection('sync_changes')
-    .doc(catalogSyncChangeId(change.type, change.id))
-    .set(change);
+  const batch = db.batch();
+  writeSyncChanges(batch, db, change, changedAtMs);
+  await batch.commit();
 
   return change;
 }
@@ -453,6 +446,43 @@ async function verifyIncrementalChange(previousCursorMs, expectedChange) {
     throw new Error('Incremental question document was not updated');
   }
 }
+
+module.exports = {
+  CATALOG_ID,
+  LESSON_ID,
+  QUESTION_IDS,
+  QUEST_ID,
+  SECTION_ID,
+  THEME_ID,
+  buildInitialChanges,
+  useFirestore,
+  writeIncrementalQuestionChange,
+  writeSeed,
+};
+
+if (require.main !== module) return;
+
+const fs = require('fs');
+const admin = require('firebase-admin');
+
+const SERVICE_ACCOUNT_PATH =
+  process.env.FIREBASE_SERVICE_ACCOUNT ||
+  '/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json';
+
+if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
+  console.error(`Service account file not found: ${SERVICE_ACCOUNT_PATH}`);
+  process.exit(1);
+}
+
+if (CATALOG_ID !== 'codex-sync-test' && process.env.ALLOW_NON_TEST_CATALOG !== '1') {
+  console.error(
+    'Refusing to seed a non-test catalog. Set ALLOW_NON_TEST_CATALOG=1 if this is intentional.',
+  );
+  process.exit(1);
+}
+
+admin.initializeApp({ credential: admin.credential.cert(require(SERVICE_ACCOUNT_PATH)) });
+useFirestore(admin.firestore(), admin.firestore.Timestamp);
 
 (async () => {
   const baseMs = Date.now();

@@ -1,8 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.theme.data
 
+import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.data.mapper.ThemeDtoMapper.toEntity
 import com.tpov.schoolquiz.shared.feature.theme.data.mapper.ThemeMapper.toDomain
-import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
@@ -14,12 +14,10 @@ class ThemeRepositoryImpl(
     private val local: ThemeLocalDataSource,
     private val remote: ThemeRemoteDataSource,
 ) : ThemeRepository {
-
     override fun observeBySection(sectionId: SectionId): Flow<List<Theme>> =
         local.observeBySection(sectionId.value).map { list -> list.map { it.toDomain() } }
 
-    override suspend fun getById(id: ThemeId): Theme? =
-        local.findById(id.value)?.toDomain()
+    override suspend fun getById(id: ThemeId): Theme? = local.findById(id.value)?.toDomain()
 
     override suspend fun refreshByIds(ids: Set<ThemeId>): Result<Unit> {
         if (ids.isEmpty()) return Result.success(Unit)
@@ -31,11 +29,11 @@ class ThemeRepositoryImpl(
                 local.deleteById(missingId)
             }
             for (dto in dtos) {
-                if (dto.archived) {
-                    local.deleteById(dto.id)
-                } else {
-                    local.upsertFromSyncList(dto.toEntity())
-                }
+                // `archived` СКРЫВАЕТ узел, а не удаляет его (AD-26, AC 7.6): строка и связанный с
+                // ней прогресс остаются в базе, а из выборок узел уходит — фильтр стоит в самом
+                // запросе DAO (`WHERE archived = 0`). Прежде здесь было `deleteById`, и архивация
+                // урока уносила у игрока скачанный урок вместе со всеми вопросами по каскаду FK.
+                local.upsertFromSyncList(dto.toEntity())
             }
             Result.success(Unit)
         } catch (e: CancellationException) {
@@ -45,20 +43,19 @@ class ThemeRepositoryImpl(
         }
     }
 
-    override suspend fun refreshByParents(sectionIds: Set<SectionId>, cursor: Long): Result<Set<ThemeId>> {
+    override suspend fun refreshByParents(
+        sectionIds: Set<SectionId>,
+        cursor: Long,
+    ): Result<Set<ThemeId>> {
         if (sectionIds.isEmpty()) return Result.success(emptySet())
         return try {
             val dtos = remote.fetchChangedByParents(sectionIds.map { it.value }.toSet(), cursor)
             val changedIds = mutableSetOf<ThemeId>()
             for (dto in dtos) {
-                val localEntity = local.findById(dto.id)
-                if (dto.archived) {
-                    val localVersion = localEntity?.version ?: 0L
-                    if (dto.version > localVersion) local.deleteById(dto.id)
-                } else {
-                    local.upsertByIdIfNewerVersion(dto.toEntity())
-                    changedIds.add(ThemeId(dto.id))
-                }
+                // Тот же порядок и здесь: архивный узел записывается как скрытый, а не стирается.
+                // В список изменившихся он не попадает — спускаться в детей скрытого узла незачем.
+                local.upsertByIdIfNewerVersion(dto.toEntity())
+                if (!dto.archived) changedIds.add(ThemeId(dto.id))
             }
             Result.success(changedIds)
         } catch (e: CancellationException) {

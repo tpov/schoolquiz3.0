@@ -38,4 +38,6 @@
     <string name="quest_cd_create_quest">Create quest</string>
     <string name="quest_draft_label">Draft</string>
     <string name="quest_questions_count">Questions: %1$d</string>
+    <string name="quest_draft_returned">Returned: %1$s</string>
+    <string name="quest_draft_returned_delivery">could not be sent to the server, try again</string>
 </resources>

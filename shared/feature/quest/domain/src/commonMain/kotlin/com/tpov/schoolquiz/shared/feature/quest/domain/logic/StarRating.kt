@@ -80,15 +80,17 @@ fun computeStarFills(
     val clamped = averageRating.coerceIn(0.0f, stars.toFloat())
     val totalFractions = (clamped * fractionsPerStar).toInt()
 
-    val fills = List(stars) { starIndex ->
-        val starFractions = (totalFractions - starIndex * fractionsPerStar)
-            .coerceIn(0, fractionsPerStar)
-        when {
-            starFractions <= 0 -> StarFill.Empty
-            starFractions >= fractionsPerStar -> StarFill.Full
-            else -> StarFill.Partial(starFractions)
+    val fills =
+        List(stars) { starIndex ->
+            val starFractions =
+                (totalFractions - starIndex * fractionsPerStar)
+                    .coerceIn(0, fractionsPerStar)
+            when {
+                starFractions <= 0 -> StarFill.Empty
+                starFractions >= fractionsPerStar -> StarFill.Full
+                else -> StarFill.Partial(starFractions)
+            }
         }
-    }
 
     return StarRatingModel(fills = fills, hasNoRatings = false)
 }

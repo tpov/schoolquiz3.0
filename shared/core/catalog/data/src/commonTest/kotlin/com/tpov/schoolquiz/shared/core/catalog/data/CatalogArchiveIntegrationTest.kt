@@ -8,14 +8,14 @@ import com.tpov.schoolquiz.shared.core.catalog.data.fake.FakeSyncStateRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Journey 6 integration test — archived catalog removed from observeAll.
- * GIVEN local has a catalog → remote returns archived=true for that catalog
- * → refreshFromRemote deletes it → observeAll emits list without it.
- * AC#22 (indirect), Journey 6.
- * Source: docs/features/home-and-my-quests/plan/phase-02/tests.md §7
+ * Архивный каталог уходит из `observeAll`, но остаётся в базе (AD-26, AC 7.6).
+ *
+ * Прежде он удалялся, а удаление строки каталога каскадит по FK через квесты, секции, темы и уроки
+ * до вопросов: архивация уносила у игрока весь скачанный курс вместе с прогрессом.
  */
 class CatalogArchiveIntegrationTest {
 
@@ -31,9 +31,9 @@ class CatalogArchiveIntegrationTest {
         syncStateRepo = fakeSyncState,
     )
 
-    // Journey 6: archived catalog is deleted locally and disappears from observeAll
+    // Journey 6: archived catalog disappears from observeAll while its row stays
     @Test
-    fun `when catalog archived then removed from observeAll`() = runTest {
+    fun `when catalog archived then hidden from observeAll but kept in the database`() = runTest {
         fakeLocal.seed(
             listOf(
                 CatalogEntity(
@@ -64,7 +64,8 @@ class CatalogArchiveIntegrationTest {
         val catalogs = repository.observeAll().first()
 
         assertTrue(result.isSuccess, "Expected success, got: $result")
-        assertTrue(fakeLocal.deletedIds.contains("c1"), "Expected 'c1' to be deleted via deleteById")
+        assertTrue(fakeLocal.deletedIds.isEmpty(), "archived скрывает каталог, а не удаляет его (AD-26)")
+        assertNotNull(fakeLocal.findById("c1"), "строка обязана остаться — вместе со всем скачанным")
         assertTrue(catalogs.none { it.id.value == "c1" }, "Expected observeAll to not contain archived catalog 'c1'")
     }
 
@@ -93,9 +94,9 @@ class CatalogArchiveIntegrationTest {
         assertTrue(catalogs.none { it.id.value == "c-nonexistent" }, "Expected no ghost catalog in observeAll")
     }
 
-    // Non-archived catalogs not deleted alongside archived ones
+    // Non-archived catalogs not hidden alongside archived ones
     @Test
-    fun `when one catalog archived and another not then only archived is removed`() = runTest {
+    fun `when one catalog archived and another not then only archived is hidden`() = runTest {
         fakeLocal.seed(
             listOf(
                 CatalogEntity(id = "keep", name = "Keep", picturePath = null, pictureUrl = null, version = 1L, lastModifiedAt = 0L, archived = false),
@@ -111,7 +112,8 @@ class CatalogArchiveIntegrationTest {
         repository.refreshFromRemote()
         val catalogs = repository.observeAll().first()
 
-        assertTrue(fakeLocal.deletedIds.contains("remove"), "Expected 'remove' to be deleted")
+        assertTrue(fakeLocal.deletedIds.isEmpty(), "archived скрывает каталог, а не удаляет его")
+        assertNotNull(fakeLocal.findById("remove"), "строка скрытого каталога остаётся в базе")
         assertTrue(catalogs.any { it.id.value == "keep" }, "Expected 'keep' still present in observeAll")
         assertTrue(catalogs.none { it.id.value == "remove" }, "Expected 'remove' absent from observeAll")
     }

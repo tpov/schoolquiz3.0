@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface OutboxDao {
-
     /**
      * Ставит запись в очередь.
      *
@@ -78,13 +77,22 @@ interface OutboxDao {
         limit: Int,
     ): List<OutboxEntity>
 
+    /**
+     * Записывает решение по записи — вместе с версией, названной сервером.
+     *
+     * `server_version` пишется здесь, а не отдельным запросом: разрешение конфликта опирается на
+     * конкретное число, и оно обязано лечь на диск тем же движением, что и состояние `CONFLICT`.
+     * Двумя запросами между ними помещается смерть процесса — и запись пережила бы перезапуск в
+     * конфликте без версии, то есть неразрешимой (AD-24).
+     */
     @Query(
         """
         UPDATE outbox
         SET state = :state,
             next_retry_at_ms = :nextRetryAtMs,
             attempt_count = :attemptCount,
-            last_error = :lastError
+            last_error = :lastError,
+            server_version = :serverVersion
         WHERE id = :id
         """,
     )
@@ -94,7 +102,55 @@ interface OutboxDao {
         nextRetryAtMs: Long,
         attemptCount: Int,
         lastError: String?,
+        serverVersion: Long?,
     )
+
+    /**
+     * Запись, о которой экрану сущности есть что сказать.
+     *
+     * Записей на одну сущность может быть несколько: пока конфликт ждёт решения, рядом успевает
+     * лечь следующее действие. Показывать надо ту, по которой игроку решать, — поэтому конфликтная
+     * идёт вперёд всех, за ней карантинная, и только среди равных выигрывает самая свежая.
+     *
+     * Карантин стоит выше ожидания намеренно: он терминален, и более свежая ждущая запись,
+     * встав перед ним, спрятала бы от игрока единственное состояние, из которого само ничего не
+     * выйдет. Порядок здесь тот же, что у `FakeOutboxStore`, — разъедутся, и тесты фич начнут
+     * утверждать не то, что делает база.
+     *
+     * Выбираются четыре колонки, а не строка целиком: `payload` на каждой эмиссии пометки не
+     * читается и не разбирается (NFR1), и в тексте запроса его нет.
+     */
+    @Query(
+        """
+        SELECT id AS recordId, state AS state,
+               expected_version AS expectedVersion, server_version AS serverVersion
+        FROM outbox
+        WHERE owner_uid = :ownerUid AND entity_ref = :entityRef
+        ORDER BY (state = 'CONFLICT') DESC, (state = 'QUARANTINED') DESC, created_at_ms DESC
+        LIMIT 1
+        """,
+    )
+    fun observeByEntityRef(
+        ownerUid: String,
+        entityRef: String,
+    ): Flow<OutboxEntitySyncRow?>
+
+    /**
+     * То же одним снимком и строкой целиком: разрешение конфликта отправляет запись заново, и ему
+     * нужны и `payload`, и ключ идемпотентности, а не одни числа.
+     */
+    @Query(
+        """
+        SELECT * FROM outbox
+        WHERE owner_uid = :ownerUid AND entity_ref = :entityRef
+        ORDER BY (state = 'CONFLICT') DESC, (state = 'QUARANTINED') DESC, created_at_ms DESC
+        LIMIT 1
+        """,
+    )
+    suspend fun findByEntityRef(
+        ownerUid: String,
+        entityRef: String,
+    ): OutboxEntity?
 
     /** Отправленное удаляется, а не помечается: очередь — не архив (AD-4). */
     @Query("DELETE FROM outbox WHERE id = :id")
@@ -107,6 +163,36 @@ interface OutboxDao {
         "SELECT COUNT(*) FROM outbox WHERE owner_uid = :ownerUid AND state IN ('WAITING', 'WAITING_PRECONDITION')",
     )
     suspend fun countPending(ownerUid: String): Int
+
+    /**
+     * Остаток владельца по всем пяти состояниям — для вопроса перед сменой аккаунта (AD-8).
+     *
+     * Отдельный запрос от [countPending] намеренно: тот отвечает «что поедет» и видит два
+     * состояния, а удаляет смена аккаунта все пять. Неизвестное имя состояния (строка из будущей
+     * версии) считается карантином — так же, как её читает `RoomOutboxStore`: она не уедет, но и
+     * потеряется при переключении, значит про неё надо предупредить.
+     */
+    @Query(
+        """
+        SELECT
+            SUM(state = 'WAITING') AS waiting,
+            SUM(state = 'WAITING_PRECONDITION') AS waitingPrecondition,
+            SUM(state = 'CONFLICT') AS conflicted,
+            SUM(state NOT IN ('WAITING', 'WAITING_PRECONDITION', 'CONFLICT', 'SYNCHRONOUS')) AS quarantined,
+            SUM(state = 'SYNCHRONOUS') AS synchronous
+        FROM outbox WHERE owner_uid = :ownerUid
+        """,
+    )
+    suspend fun countRemainder(ownerUid: String): OutboxRemainderRow
+
+    /**
+     * Все `uid`, чьи строки лежат в таблице.
+     *
+     * Спрашивается там, где действующей сессии нет: `auth.currentUser == null` не означает, что
+     * терять нечего, — кто прежний владелец, знает очередь, а не аутентификация.
+     */
+    @Query("SELECT DISTINCT owner_uid FROM outbox")
+    suspend fun ownersWithRecords(): List<String>
 
     /** Числа по каждому состоянию отдельно — одно «ожидает» на все скрыло бы конфликт (AD-14). */
     @Query(
@@ -125,6 +211,28 @@ interface OutboxDao {
     @Query("DELETE FROM outbox WHERE owner_uid = :ownerUid")
     suspend fun deleteAllOf(ownerUid: String)
 }
+
+/** Строка с остатком владельца. `SUM` по пустой выборке даёт `NULL`, поэтому поля обнуляемые. */
+data class OutboxRemainderRow(
+    val waiting: Int?,
+    val waitingPrecondition: Int?,
+    val conflicted: Int?,
+    val quarantined: Int?,
+    val synchronous: Int?,
+)
+
+/**
+ * Состояние очереди по одной сущности — ровно те четыре значения, которые нужны пометке.
+ *
+ * Проекция, а не `OutboxEntity`: строка целиком тащила бы `payload` на каждую эмиссию, а он
+ * пометке не нужен ни в каком виде (NFR1, AD-7).
+ */
+data class OutboxEntitySyncRow(
+    val recordId: Long,
+    val state: String,
+    val expectedVersion: Long?,
+    val serverVersion: Long?,
+)
 
 /** Строка со сводкой. `SUM` по пустой таблице даёт `NULL`, поэтому поля обнуляемые. */
 data class OutboxCountsRow(

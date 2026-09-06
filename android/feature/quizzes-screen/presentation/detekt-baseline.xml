@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MaxLineLength:DefaultLessonListComponentTest.kt$DefaultLessonListComponentTest$assertEquals(true, BreadcrumbRoot.Dynamic("Lesson A") in pushed.breadcrumbs, "breadcrumbs must include lesson title")</ID>
+  </CurrentIssues>
+</SmellBaseline>

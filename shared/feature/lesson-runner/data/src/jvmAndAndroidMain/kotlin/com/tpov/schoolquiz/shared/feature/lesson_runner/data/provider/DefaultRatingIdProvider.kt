@@ -28,7 +28,10 @@ import java.util.UUID
  * видно, чья это оценка и какого урока, даже когда локальной строки уже нет.
  */
 class DefaultRatingIdProvider : RatingIdProvider {
-    override fun provide(userId: String, lessonId: LessonId): RatingId {
+    override fun provide(
+        userId: String,
+        lessonId: LessonId,
+    ): RatingId {
         val input = "$userId:${lessonId.value}:${UUID.randomUUID()}"
         val bytes = MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8))
         val hex = bytes.joinToString("") { "%02x".format(it) }

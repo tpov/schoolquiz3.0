@@ -12,9 +12,10 @@ interface LogoRemoteDataSource {
 
     suspend fun listings(limit: Int): List<LogoListing>
 
-    suspend fun listForSale(logo: String, price: Long)
-
-    suspend fun cancelListing(logo: String)
+    suspend fun listForSale(
+        logo: String,
+        price: Long,
+    )
 
     suspend fun buyListed(logo: String): Long
 }

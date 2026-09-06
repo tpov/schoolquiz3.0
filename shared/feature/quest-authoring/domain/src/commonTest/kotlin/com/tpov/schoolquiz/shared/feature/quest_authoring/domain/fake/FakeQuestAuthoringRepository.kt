@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.fake
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftConflict
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
@@ -31,6 +32,7 @@ class FakeQuestAuthoringRepository(
                         questionCount = bundle.questions.size,
                         updatedAtMs = bundle.draft.updatedAtMs,
                         isActive = bundle.draft.isActive,
+                        rejectionReason = bundle.draft.rejectionReason,
                     )
                 }
                 .sortedWith(compareByDescending<QuestDraftSummary> { it.updatedAtMs }.thenBy { it.id.value })
@@ -45,6 +47,23 @@ class FakeQuestAuthoringRepository(
         cache.value.values
             .filter { it.draft.ownerUid == ownerUid && it.draft.isActive }
             .maxByOrNull { it.draft.updatedAtMs }
+
+    override suspend fun activateDraft(
+        ownerUid: String,
+        draftId: QuestDraftId,
+    ): Result<Unit> =
+        runCatching {
+            cache.update { current ->
+                requireNotNull(current[draftId]) { "Draft ${draftId.value} not found" }
+                current.mapValues { (id, bundle) ->
+                    if (bundle.draft.ownerUid != ownerUid) {
+                        bundle
+                    } else {
+                        bundle.copy(draft = bundle.draft.copy(isActive = id == draftId))
+                    }
+                }
+            }
+        }
 
     override suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit> =
         runCatching {
@@ -75,13 +94,46 @@ class FakeQuestAuthoringRepository(
                 }
                 val questions = (bundle.questions.filterNot { it.id == question.id } + question)
                     .sortedWith(compareBy<DraftQuestion> { it.lessonId.value }.thenBy { it.order }.thenBy { it.id.value })
+                // Состояние черновика не трогаем: боевой `QuestAuthoringRepositoryImpl.upsertQuestion`
+                // пишет только сам вопрос. Прежде фейк поднимал статус до SAVED, и это делало его
+                // добрее реальности — из-за чего тупик «отклонённый черновик нельзя переотправить»
+                // ни один тест не поймал.
                 val updatedDraft = bundle.draft.copy(
                     updatedAtMs = maxOf(bundle.draft.updatedAtMs, question.updatedAtMs),
                     localRevision = bundle.draft.localRevision + 1,
-                    status = QuestDraftStatus.SAVED,
                 )
                 current + (question.draftId to bundle.copy(draft = updatedDraft, questions = questions))
             }
+        }
+
+    /** Ставит черновику версию, назначенную сервером, — как это делает приезд снимка. */
+    fun setServerRevision(
+        draftId: QuestDraftId,
+        serverRevision: Long?,
+    ) {
+        cache.update { current ->
+            val bundle = requireNotNull(current[draftId]) { "Draft ${draftId.value} not found" }
+            current + (draftId to bundle.copy(draft = bundle.draft.copy(serverRevision = serverRevision)))
+        }
+    }
+
+    /** Расхождение, о котором фейк рассказывает экрану. По умолчанию его нет. */
+    val conflict = MutableStateFlow<QuestDraftConflict?>(null)
+
+    val resolvedConflicts = mutableListOf<QuestDraftId>()
+
+    override fun observeDraftConflict(
+        ownerUid: String,
+        draftId: QuestDraftId,
+    ): Flow<QuestDraftConflict?> = conflict
+
+    override suspend fun resolveDraftConflict(
+        ownerUid: String,
+        draftId: QuestDraftId,
+    ): Result<Unit> =
+        runCatching {
+            resolvedConflicts += draftId
+            conflict.value = null
         }
 
     override suspend fun queueArenaSubmission(submission: QuestArenaSubmission): Result<Unit> =

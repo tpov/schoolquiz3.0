@@ -2,6 +2,9 @@ package com.tpov.schoolquiz.platform.firebase.quest_authoring
 
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
+import com.tpov.schoolquiz.shared.core.sync.JournalReadPolicy
+import com.tpov.schoolquiz.shared.core.sync.SyncChangePage
+import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentChangeDto
@@ -59,17 +62,27 @@ private data class RequiredArenaQuestionFields(
 
 class FirebaseReviewAssignmentRemoteDataSource(
     private val functions: FirebaseFunctions,
+    /** Тот же переключатель терпимости, что у остальных трёх журналов (AD-11). */
+    private val policy: JournalReadPolicy = JournalReadPolicy.TOLERANT,
 ) : ReviewAssignmentRemoteDataSource {
-    override suspend fun fetchAssignmentChangesSince(cursorMs: Long): List<ReviewAssignmentChangeDto> {
+    /**
+     * Страница журнала `admin/review/sync_changes` через callable (AD-31).
+     *
+     * Запрос и разбор ответа — в [reviewAssignmentChangeRequest] и [reviewAssignmentChangePage]:
+     * они чистые, и правило пары проверяется тестом без Firebase.
+     */
+    override suspend fun fetchAssignmentChangePage(
+        cursor: SyncCursor,
+        limit: Int,
+    ): SyncChangePage<ReviewAssignmentChangeDto> {
         val data =
             functions
                 .getHttpsCallable(FETCH_REVIEW_ASSIGNMENT_CHANGES)
                 .withAppTimeout()
-                .call(mapOf(CURSOR_MS to cursorMs))
+                .call(reviewAssignmentChangeRequest(cursor, limit))
                 .await()
                 .data
-        val root = data as? Map<*, *> ?: return emptyList()
-        return root.list(CHANGES).mapNotNull { it.toReviewAssignmentChangeDto() }
+        return reviewAssignmentChangePage(data as? Map<*, *>, cursor, limit, policy)
     }
 
     override suspend fun fetchByIds(ids: Set<String>): List<ReviewAssignmentDto> {
@@ -94,13 +107,6 @@ class FirebaseReviewAssignmentRemoteDataSource(
             .withAppTimeout()
             .call(action.toCallableMap())
             .await()
-    }
-
-    private fun Map<*, *>.toReviewAssignmentChangeDto(): ReviewAssignmentChangeDto? {
-        return ReviewAssignmentChangeDto(
-            id = string(ID) ?: return null,
-            changedAtMs = long(CHANGED_AT_MS),
-        )
     }
 
     private fun Map<*, *>.toReviewAssignmentDto(): ReviewAssignmentDto? {
@@ -262,7 +268,6 @@ class FirebaseReviewAssignmentRemoteDataSource(
         const val FETCH_REVIEW_ASSIGNMENT_CHANGES = "fetchReviewAssignmentChanges"
         const val FETCH_REVIEW_ASSIGNMENTS = "fetchReviewAssignments"
         const val SUBMIT_REVIEW_ACTION = "submitReviewAction"
-        const val CURSOR_MS = "cursorMs"
         const val IDS = "ids"
         const val CHANGES = "changes"
         const val ASSIGNMENTS = "assignments"

@@ -10,6 +10,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
@@ -27,8 +28,23 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
+import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
+import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
+import com.tpov.schoolquiz.apps.android_next.di.syncStatusModule
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
+import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
+import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
+import com.tpov.schoolquiz.shared.core.sync.SyncRun
+import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
+import com.tpov.schoolquiz.shared.core.sync.SyncRunTrace
+import com.tpov.schoolquiz.shared.core.sync.SyncRunTraceStore
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.stats.RawUserStats
@@ -47,10 +63,14 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseC
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.shared.feature.lesson.data.outbox.LessonUnlockQuarantineRollback
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonUnlockOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonUnlockQueue
+import com.tpov.schoolquiz.shared.feature.lesson.data.di.lessonDataModule
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
@@ -108,6 +128,7 @@ import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRep
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di.questAuthoringDomainModule
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftConflict
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
@@ -128,6 +149,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -186,6 +208,22 @@ class KoinModuleWiringTest : KoinTest {
                 override suspend fun findByUid(uid: String): UserStatsEntity? = null
                 override suspend fun upsert(entity: UserStatsEntity) {}
                 override suspend fun updateDeveloperLevel(uid: String, value: Int) {}
+
+                override suspend fun enqueueOutboxRow(entity: OutboxEntity): Long = 1L
+
+                override suspend fun outboxRowState(mutationId: String): String? = null
+
+                override suspend fun deleteOutboxRow(mutationId: String) {}
+
+                override suspend fun undeliveredPayloads(
+                    ownerUid: String,
+                    operation: String,
+                ): List<String> = emptyList()
+
+                override fun observeQuarantinedEntityRefs(
+                    ownerUid: String,
+                    operation: String,
+                ) = flowOf(emptyList<String>())
             }
         }
     }
@@ -278,9 +316,29 @@ class KoinModuleWiringTest : KoinTest {
 
                 override suspend fun getActiveDraft(ownerUid: String): QuestAuthoringBundle? = null
 
+                var activatedDraftId: QuestDraftId? = null
+
+                override suspend fun activateDraft(
+                    ownerUid: String,
+                    draftId: QuestDraftId,
+                ): Result<Unit> {
+                    activatedDraftId = draftId
+                    return Result.success(Unit)
+                }
+
                 override suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit> = Result.success(Unit)
 
                 override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> = Result.success(Unit)
+
+                override fun observeDraftConflict(
+                    ownerUid: String,
+                    draftId: QuestDraftId,
+                ): Flow<QuestDraftConflict?> = flowOf(null)
+
+                override suspend fun resolveDraftConflict(
+                    ownerUid: String,
+                    draftId: QuestDraftId,
+                ): Result<Unit> = Result.success(Unit)
 
                 override suspend fun setDraftStatus(
                     draftId: QuestDraftId,
@@ -325,6 +383,21 @@ class KoinModuleWiringTest : KoinTest {
                     themeIds: Set<ThemeId>,
                     cursor: Long,
                 ): Result<Set<LessonId>> = Result.success(emptySet())
+            }
+        }
+        // Очередь разблокировок — порт фичи lesson. Здесь заглушка, как и у соседних
+        // репозиториев; что её действительно связывает production-модуль фичи, проверяет
+        // `lessonDataModule binds the lesson unlock queue` ниже.
+        single<LessonUnlockQueue> {
+            object : LessonUnlockQueue {
+                override suspend fun queueUnlock(
+                    ownerUid: String,
+                    lessonId: LessonId,
+                    kindWireName: String,
+                    priceNolics: Int,
+                ): Result<LessonUnlockOutcome> = Result.success(LessonUnlockOutcome.Opened)
+
+                override fun observeRefusedUnlocks(ownerUid: String) = flowOf(emptySet<LessonId>())
             }
         }
         single<QuestionRepository> {
@@ -533,6 +606,56 @@ class KoinModuleWiringTest : KoinTest {
     }
 
     // -----------------------------------------------------------------------
+    // Story 4.2: пишущая сторона следа прогона тоже собрана
+    // -----------------------------------------------------------------------
+
+    /**
+     * Тот, кто пишет исход прогона, и тот, кого читает экран, — один и тот же объект.
+     *
+     * Ровно здесь эпик и ломался: контракт состояния был, читатель был, а воркеру композиционный
+     * корень отдавал голый список [Syncable] — писать исход прогона было некому, и «нет сети» при
+     * чтении каталога или профиля не доходило до экрана вообще, оставаясь в `Log.w`.
+     */
+    @Test
+    fun `syncStatusModule binds the writer of the run trace, not only its reader`() = runTest {
+        val written = MutableStateFlow<Map<SyncRunKind, SyncRunTrace>>(emptyMap())
+        val recordingTrace = module {
+            single<SyncRunTraceStore> {
+                object : SyncRunTraceStore {
+                    override fun observeTraces(ownerUid: String): Flow<Map<SyncRunKind, SyncRunTrace>> = written
+
+                    override suspend fun recordSuccess(ownerUid: String, kind: SyncRunKind, atMs: Long) {
+                        written.value = written.value + (kind to SyncRunTrace(lastSuccessAtMs = atMs))
+                    }
+
+                    override suspend fun recordFailure(ownerUid: String, kind: SyncRunKind, error: SyncError) {
+                        val before = written.value[kind] ?: SyncRunTrace()
+                        written.value = written.value + (kind to before.copy(lastError = error))
+                    }
+                }
+            }
+        }
+        startKoin {
+            modules(
+                testDataSourceModule,
+                testDaoModule,
+                appShellDataModule { MutableStateFlow<String?>("uid-A").asStateFlow() },
+                testSyncPortsStubModule,
+                recordingTrace,
+                syncStatusModule,
+            )
+        }
+
+        getKoin().get<SyncRun>().run(SyncRunKind.CONTENT, emptyList())
+
+        val snapshot = getKoin().get<SyncStatusRepository>().observeStatus().first()
+        assertTrue(
+            snapshot.lastSuccessAtMs > 0L,
+            "прогон записал успех, но экран его не видит — пишущая и читающая стороны разошлись",
+        )
+    }
+
+    // -----------------------------------------------------------------------
     // Phase-07 H5: full-stack wiring — all 3 modules
     // GIVEN testDataSourceModule + appShellDataModule + appShellPresentationModule
     //   + questPresentationModule + quizzesPresentationModule + domain + repo stubs
@@ -676,6 +799,16 @@ class KoinModuleWiringTest : KoinTest {
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
                 override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
+            // Умолчания у этого параметра нет: забытая проводка состояния не компилируется.
+            syncStatusRepository = object : SyncStatusRepository {
+                override fun observeStatus(): Flow<SyncStatus> = flowOf(SyncStatus())
+
+                override suspend fun recordSuccess(kind: SyncRunKind, atMs: Long) = Unit
+
+                override suspend fun recordFailure(kind: SyncRunKind, error: SyncError, atMs: Long) = Unit
+
+                override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
+            },
             homeQuestsFactory = { _, _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
@@ -770,6 +903,16 @@ class KoinModuleWiringTest : KoinTest {
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
                 override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
+            // Умолчания у этого параметра нет: забытая проводка состояния не компилируется.
+            syncStatusRepository = object : SyncStatusRepository {
+                override fun observeStatus(): Flow<SyncStatus> = flowOf(SyncStatus())
+
+                override suspend fun recordSuccess(kind: SyncRunKind, atMs: Long) = Unit
+
+                override suspend fun recordFailure(kind: SyncRunKind, error: SyncError, atMs: Long) = Unit
+
+                override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
+            },
             homeQuestsFactory = { _, _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
@@ -838,6 +981,9 @@ class KoinModuleWiringTest : KoinTest {
         single<ThemeDao> { mock(ThemeDao::class.java) }
         single<SectionDao> { mock(SectionDao::class.java) }
         single<QuestDao> { mock(QuestDao::class.java) }
+        // Пометка «не отправлено» на прохождении спрашивает очередь по `entity_ref`. Настоящая
+        // привязка живёт в syncModule, который здесь не поднимается: он тянет базу.
+        single<OutboxStore> { mock(OutboxStore::class.java) }
     }
 
     private val testRunnerRepositoryStubs = module {
@@ -1030,5 +1176,24 @@ class KoinModuleWiringTest : KoinTest {
         startKoin { modules(lessonRunnerPresentationModule) }
         val factory = getKoin().get<LessonRunnerComponentFactory>()
         assertNotNull(factory)
+    }
+
+    /**
+     * Story 5.3: очередь разблокировок связывает модуль владеющей фичи, а не composition root.
+     *
+     * Имя операции `lesson.UNLOCK` принадлежит фиче lesson (NFR4), и постановка в очередь обязана
+     * объявляться там же. Пропади эта привязка — экран уроков перестанет собираться, а до этой
+     * работы её не существовало вовсе: операция была объявлена, обработчик на сервере
+     * зарегистрирован, привязка карантина стояла — и ни одной записи никто не создавал.
+     */
+    @Test
+    fun `lessonDataModule binds the lesson unlock queue`() {
+        // Профиль нужен самой очереди: списание ноликов и открытие урока лежат в его таблице и
+        // едут одной транзакцией с записью очереди (AD-23).
+        startKoin { modules(testSyncPortsStubModule, testDaoModule, lessonDataModule) }
+
+        assertNotNull(getKoin().get<LessonUnlockQueue>())
+        // Реакция на карантин объявлена той же фичей: без неё откатанной покупки не бывает (AD-28).
+        assertNotNull(getKoin().get<LessonUnlockQuarantineRollback>())
     }
 }

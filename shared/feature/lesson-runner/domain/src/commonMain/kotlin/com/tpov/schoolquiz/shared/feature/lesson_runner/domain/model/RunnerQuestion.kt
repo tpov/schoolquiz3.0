@@ -8,7 +8,6 @@ import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
  * Only [Valid] items enter the play pool; [Invalid] are filtered out at init.
  */
 sealed interface RunnerQuestion {
-
     val sourceId: QuestionId
     val order: Int
     val codeAnswerIndex: Int

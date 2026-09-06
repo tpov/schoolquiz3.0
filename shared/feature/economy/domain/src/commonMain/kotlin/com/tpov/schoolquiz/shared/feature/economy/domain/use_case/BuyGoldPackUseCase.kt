@@ -38,7 +38,6 @@ class BuyGoldPackUseCase(
      */
     private val buyerTag: (String) -> String,
 ) {
-
     suspend operator fun invoke(productId: StoreProductId): Result<PurchaseOutcome> {
         // Read once, at the moment of buying. Not held in a field: the account can change, and a
         // stale uid would tag the purchase for somebody who is no longer signed in.

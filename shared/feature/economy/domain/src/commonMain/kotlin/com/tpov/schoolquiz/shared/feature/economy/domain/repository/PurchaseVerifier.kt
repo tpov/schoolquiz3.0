@@ -15,7 +15,6 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
  * crediting is expected, not exceptional — and the server answers identically every time.
  */
 interface PurchaseVerifier {
-
     /**
      * Presents [purchaseToken] for [productId] and returns the server's answer.
      *

@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 09:31
-last_updated: 09-01-2026 20:15
+last_updated: 09-03-2026 16:00
 project: schoolquiz3.0 · sync
 project_key: NOKEY
 tracking_system: file-system
@@ -41,85 +41,767 @@ development_status:
   1-3-исключение-firebase-читается-один-раз-на-границе-и-с-таймаут: done
   1-4-синхронное-действие-не-уходит-в-сеть-когда-сети-нет: done
   1-5-экран-показывает-ветвь-а-не-строку: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
 
-  epic-2: in-progress
+  epic-2: done
   2-1-модуль-shared-core-outbox-и-контракт-отложенного-действия: done
   2-2-движок-прогон-не-ломается-отказ-откладывается-безнадёжное-ух: done
   2-3-правила-firestore-перестают-требовать-contentsversion-и-тест: done
   2-4-contentsversion-и-мёртвый-каскад-уходят-из-моделей-dto-маппе: done
   2-5-граница-пересоздания-что-должно-доехать-и-что-теряется: backlog
   2-6-чистая-схема-версии-1-одна-таблица-очереди-вместо-трёх-и-три: backlog
+  # 2-5 и 2-6 отменены: AD-16 (пересоздание схемы) отменён, база пошла настоящими миграциями; живой остаток — 2-7 и 2-9 — сделан (см. deferred-work.md)
   2-7-с-момента-чистой-схемы-каждая-миграция-настоящая-и-покрыта-т: done
-  2-8-карантин-доходит-до-фичи-и-не-оставляет-молчаливого-расхожде: in-progress
+  2-8-карантин-доходит-до-фичи-и-не-оставляет-молчаливого-расхожде: done
   2-9-три-существующие-очереди-переезжают-на-общую-таблицу-своей-м: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
-  epic-3: done
+  epic-3: in-progress
   3-1-предельный-возраст-записи-и-срок-хранения-ключа-одна-пара-чи: done
   3-2-возраст-записи-третий-повод-карантина: done
   3-3-серверный-модуль-ключей-идемпотентности-с-резервированием-и: done
   3-4-пометка-предусловие-ещё-не-доехало-получает-форму: done
   3-5-единый-callable-приёмник-отложенных-мутаций: done
   3-6-mutationid-рождается-вместе-с-намерением-и-не-меняется: done
-  3-7-ключ-синхронной-мутации-переживает-смерть-процесса: done
+  3-7-ключ-синхронной-мутации-переживает-смерть-процесса: backlog
   3-8-заявка-квеста-на-арену-уходит-с-прямой-записи-в-firestore: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
-  epic-4: in-progress
+  epic-4: done
   4-1-числа-по-каждому-состоянию-очереди-отдельно: done
   4-2-прогон-синхронизации-оставляет-след-время-успеха-и-последнюю: done
   4-3-репозиторий-состояния-отдаёт-снимок-и-переживает-смену-аккау: done
-  4-4-конкретная-сущность-помечается-неотправленной-по-entity_ref: backlog
-  4-5-игрок-видит-состояние-синхронизации-в-шторке-и-настройках: in-progress
-  epic-4-retrospective: optional
+  4-4-конкретная-сущность-помечается-неотправленной-по-entity_ref: done
+  4-5-игрок-видит-состояние-синхронизации-в-шторке-и-настройках: done
+  epic-4-retrospective: done
 
-  epic-5: in-progress
+  epic-5: done
   5-1-отказ-сервера-помечен-как-повторяемый-или-как-окончательный: done
   5-2-цена-разблокировки-урока-считается-на-клиенте-по-той-же-форм: done
   5-3-разблокировка-урока-переезжает-в-очередь: done
-  5-4-перенос-квеста-на-полку-кладёт-в-очередь-намерение-а-не-полк: backlog
-  5-5-действие-ревьюера-переезжает-в-очередь: backlog
-  5-6-снятие-лота-с-продажи-переезжает-в-очередь: backlog
+  5-4-перенос-квеста-на-полку-кладёт-в-очередь-намерение-а-не-полк: done
+  5-5-действие-ревьюера-переезжает-в-очередь: done
+  5-6-снятие-лота-с-продажи-переезжает-в-очередь: done
   5-7-покупки-остаются-синхронными-и-объясняют-себя-без-сети: done
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
 
-  epic-6: in-progress
+  epic-6: done
   6-1-выборка-очереди-ограничена-текущим-владельцем: done
-  6-2-две-названные-операции-снимают-следы-прежнего-владельца: backlog
+  6-2-две-названные-операции-снимают-следы-прежнего-владельца: done
   6-3-слив-очереди-происходит-до-signinwithcredential: done
-  6-4-предупреждение-оно-же-согласие-и-переключение-снимает-следы: in-progress
-  epic-6-retrospective: optional
+  6-4-предупреждение-оно-же-согласие-и-переключение-снимает-следы: done
+  epic-6-retrospective: done
 
-  epic-7: in-progress
-  7-1-журнал-приводится-к-одной-форме-документ-на-узел-id-без-врем: in-progress
-  7-2-изменение-узла-пишется-в-каждый-журнал-откуда-этот-узел-чита: in-progress
-  7-3-курсор-пара-changedatms-docid-во-всех-четырёх-журналах: in-progress
+  epic-7: done
+  7-1-журнал-приводится-к-одной-форме-документ-на-узел-id-без-врем: done
+  7-2-изменение-узла-пишется-в-каждый-журнал-откуда-этот-узел-чита: done
+  7-3-курсор-пара-changedatms-docid-во-всех-четырёх-журналах: done
   7-4-выборка-изменений-ограничена-страницей-и-продолжаема: done
   7-5-полный-ресинк-существует-как-операция-и-лечит-только-сторону: done
-  7-6-семантика-удаления-зафиксирована-тремя-способами-защитный-fa: in-progress
-  epic-7-retrospective: optional
+  7-6-семантика-удаления-зафиксирована-тремя-способами-защитный-fa: done
+  epic-7-retrospective: done
 
-  epic-8: backlog
-  8-1-сервер-назначает-version-одной-функцией-вместо-четырёх-мест: backlog
-  8-2-клиент-перестаёт-слать-localrevision-а-расхождение-черновика: backlog
-  8-3-приёмник-сверяет-expected_version-и-отвергает-устаревшую-мут: backlog
-  8-4-пришедшая-серверная-версия-сохраняется-в-записи-очереди-и-пе: backlog
-  8-5-конфликт-виден-игроку-и-разрешается-новой-мутацией-а-не-повт: backlog
-  8-6-сервер-и-сид-скрипты-перестают-писать-contentsversion: backlog
-  epic-8-retrospective: optional
+  epic-8: done
+  8-1-сервер-назначает-version-одной-функцией-вместо-четырёх-мест: done
+  8-2-клиент-перестаёт-слать-localrevision-а-расхождение-черновика: done
+  8-3-приёмник-сверяет-expected_version-и-отвергает-устаревшую-мут: done
+  8-4-пришедшая-серверная-версия-сохраняется-в-записи-очереди-и-пе: done
+  8-5-конфликт-виден-игроку-и-разрешается-новой-мутацией-а-не-повт: done
+  8-6-сервер-и-сид-скрипты-перестают-писать-contentsversion: done
+  epic-8-retrospective: done
 
   epic-9: done
   9-1-планировщик-умеет-ставить-профильный-воркер-разово: done
   9-2-реконсиляция-на-старте-поднимает-воркер-той-каденции-которая: done
   9-3-профильный-пикер-запускает-синхронизацию-сразу-как-и-контент: done
   9-4-расписание-ставит-только-планировщик: done
-  epic-9-retrospective: optional
+  epic-9-retrospective: done
 
-  epic-10: in-progress
+  epic-10: done
   10-1-правила-firestore-допускают-владельцу-запись-токена-устройст: done
-  10-2-устройство-регистрирует-свой-fcm-токен-под-текущим-аккаунтом: backlog
-  10-3-сервер-отправляет-push-по-критическим-событиям: backlog
-  10-4-push-поднимает-обычную-синхронизацию-а-не-применяет-данные-и: backlog
-  10-5-токен-снимается-при-смене-аккаунта-чужое-уведомление-не-пока: backlog
-  epic-10-retrospective: optional
+  10-2-устройство-регистрирует-свой-fcm-токен-под-текущим-аккаунтом: done
+  10-3-сервер-отправляет-push-по-критическим-событиям: done
+  10-4-push-поднимает-обычную-синхронизацию-а-не-применяет-данные-и: done
+  10-5-токен-снимается-при-смене-аккаунта-чужое-уведомление-не-пока: done
+  epic-10-retrospective: done
+action_items:
+  - id: "epic-5-retro-item-1-rename-unlock_lesson-to-lesson_runner-un"
+    epic: 5
+    action: "Rename UNLOCK_LESSON to lesson_runner.UNLOCK_LESSON on client and server
+      (or reconcile Story 5.3 to the bare name with the identifier-collision reason)"
+    owner: "backend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-09-02.md"
+  - id: "epic-5-retro-item-2-remove-the-four-direct-callables-on-serv"
+    epic: 5
+    action: "Remove the four direct callables on server and client once LiveFirebaseReviewWorkflowInstrumentedTest
+      goes through submitMutation; flip the deferred-actions guard (closes AD-6)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-09-02.md"
+  - id: "epic-5-retro-item-3-close-the-receiver-window-between-handle"
+    epic: 5
+    action: "Close the receiver window between handler effect and completionRecord:
+      completion inside the handler transaction or self-idempotent bodies by key"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-09-02.md"
+  - id: "epic-5-retro-item-4-add-shared-core-outbox-test-fixtures-and"
+    epic: 5
+    action: "Add shared/core/outbox test-fixtures and delete the four FakeOutboxStore
+      copies"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-09-02.md"
+  - id: "epic-5-retro-item-5-extract-epic-5-apply-bodies-and-reviewid"
+    epic: 5
+    action: "Extract epic-5 apply* bodies and reviewIdForMutation from functions/index.js
+      into functions/deferred-actions.js"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-09-02.md"
+  - id: "epic-5-retro-item-6-rule-in-testing-md-every-client-server-s"
+    epic: 5
+    action: "Rule in testing.md: every client/server shared name gets a cross-source
+      guard test; functions/ guard that every *.test.js is wired into npm test"
+    owner: "tpov"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-09-02.md"
+  - id: "epic-5-retro-item-7-parallel-streams-git-worktree-per-stream"
+    epic: 5
+    action: "Parallel streams: git worktree per stream or gate on a quiescent tree;
+      keep per-stream artifact suffixes"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-8-add-the-five-devices-cases-to-scripts-ru"
+    epic: 10
+    action: "Add the five devices cases to scripts/rules-emulator-test.js and run
+      under firebase emulators:exec (Story 10.1 AC)"
+    owner: "test-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-9-add-the-firestore-predeploy-gate-running"
+    epic: 10
+    action: "Add the firestore predeploy gate running the rules harness in firebase.json;
+      fix DeviceTokenSwitchEmulatorTest to read devices via emulator REST owner bearer
+      and drive the switch through signInAs"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-10-reconcile-story-10-2-wording-event-names"
+    epic: 10
+    action: "Reconcile Story 10.2 wording (event namespace = owning feature; string
+      key push_<feature>_<event>) and Story 10.1 wording (devices readable by nobody)"
+    owner: "tpov"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-11-move-pushcontracts-kt-to-shared-core-syn"
+    epic: 10
+    action: "Move PushContracts.kt to shared/core/sync or record the deviation permanently
+      in Story 10.2"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-12-decide-and-implement-the-qualification-p"
+    epic: 10
+    action: "Decide and implement the qualification push threshold: level change only,
+      not every rating delta nor the previous holder on a transfer"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-13-detachdevicetoken-prove-token-ownership"
+    epic: 10
+    action: "detachDeviceToken: prove token ownership (server nonce or caller registration
+      check) and add a per-uid rate limit"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-14-ad-9-shared-core-time-contract-bound-onc"
+    epic: 10
+    action: "AD-9: shared/core/time contract bound once in the composition root; replace
+      the four nowMs lambdas"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-10-retro-item-15-cover-pushmodule-in-koinmodulewiringtest"
+    epic: 10
+    action: "Cover pushModule in KoinModuleWiringTest with an Android-context stub"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-10-retro-2026-09-02.md"
+  - id: "epic-4-retro-item-16-провести-statusprobe-в-outboxsyncable-из"
+    epic: 4
+    action: "Провести statusProbe в OutboxSyncable из композиционного корня: сейчас
+      ветвь ошибки на экране всегда Unknown, и пять строковых констант мертвы"
+    owner: "backend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-09-02.md"
+  - id: "epic-4-retro-item-17-история-4-4-отвергать-постановку-записи"
+    epic: 4
+    action: "История 4.4: отвергать постановку записи с префиксом entity_ref, не совпадающим
+      с пространством имён operation; ответ по ссылке — явное значение вместо null;
+      карантин вперёд ожидания в выборке"
+    owner: "backend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-09-02.md"
+  - id: "epic-4-retro-item-18-решить-и-записать-судьбу-следа-прогона-т"
+    epic: 4
+    action: "Решить и записать судьбу следа прогона: таблица с миграцией и тестом
+      runMigrationsAndValidate либо явное решение, что след живёт сеанс, с правкой
+      критерия 4.2"
+    owner: "backend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-09-02.md"
+  - id: "epic-4-retro-item-19-первый-потребитель-пометки-по-entity_ref"
+    epic: 4
+    action: "Первый потребитель пометки по entity_ref в lesson-runner: поле «не отправлено
+      / карантин» в состоянии экрана и тест компонента"
+    owner: "frontend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-09-02.md"
+  - id: "epic-4-retro-item-20-починить-koinmodulewiringtest-живое-паде"
+    epic: 4
+    action: "Починить KoinModuleWiringTest: живое падение NoBeanDefFoundException
+      SyncStatusRepository на поверхности самого эпика 4"
+    owner: "backend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-09-02.md"
+  - id: "epic-4-retro-item-21-статус-done-у-истории-ставится-только-вм"
+    epic: 4
+    action: "Статус done у истории ставится только вместе с перечнем сверенных критериев;
+      при отсутствии файлов историй перечень идёт в разбор итогов"
+    owner: "tpov"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-09-02.md"
+  - id: "epic-6-retro-item-22-провести-уборку-следов-прежнего-владельц"
+    epic: 6
+    action: "Провести уборку следов прежнего владельца через SyncGate и завести под
+      те же ворота QuestPrivateSync"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-09-02.md"
+  - id: "epic-6-retro-item-23-переписать-правило-ad-8-в-спайне-под-фак"
+    epic: 6
+    action: "Переписать правило AD-8 в спайне под фактический порядок: слив, вопрос,
+      вход, уборка"
+    owner: "backend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-09-02.md"
+  - id: "epic-6-retro-item-24-расширить-страж-ownerscopedtables-ловить"
+    epic: 6
+    action: "Расширить страж OwnerScopedTables: ловить Entity без tableName и печатать
+      список нераспознанных таблиц"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-09-02.md"
+  - id: "epic-6-retro-item-25-решить-судьбу-слива-больше-одной-порции"
+    epic: 6
+    action: "Решить судьбу слива больше одной порции: flushBefore делает один проход
+      при батче 50"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-09-02.md"
+  - id: "epic-7-retro-item-26-дать-перечитать-всё-состояние-занятости"
+    epic: 7
+    action: "Дать «Перечитать всё» состояние занятости: строка занята, пока прогон
+      идёт, второе нажатие не проходит"
+    owner: "frontend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-7-retro-2026-09-02.md"
+  - id: "epic-7-retro-item-27-решить-что-перечитывает-ресинк-передать"
+    epic: 7
+    action: "Решить, что перечитывает ресинк: передать в ForceResync тот же список
+      Syncable, что и плановый проход"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-7-retro-2026-09-02.md"
+  - id: "epic-7-retro-item-28-удалить-мёртвую-каскадную-ветку-чтения-s"
+    epic: 7
+    action: "Удалить мёртвую каскадную ветку чтения: SyncSections/Themes/Lessons/QuestionsUseCase
+      и их проводку"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-7-retro-2026-09-02.md"
+  - id: "epic-7-retro-item-29-зафиксировать-порядок-выката-приватного"
+    epic: 7
+    action: "Зафиксировать порядок выката приватного журнала: релиз клиента раньше
+      деплоя функций"
+    owner: "tpov"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-7-retro-2026-09-02.md"
+  - id: "epic-7-retro-item-30-починить-гейт-применить-ktlint-в-kmplibr"
+    epic: 7
+    action: "Починить гейт: применить ktlint в KmpLibraryConventionPlugin, повесить
+      check на detektMetadata, добавить scripts npm test в ciCheck"
+    owner: "tpov"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-7-retro-2026-09-02.md"
+  - id: "epic-7-retro-item-31-правило-в-testing-md-тесты-по-исходникам"
+    epic: 7
+    action: "Правило в testing.md: тесты по исходникам допустимы только для отрицательных
+      утверждений, поведение проверяется поведением"
+    owner: "tpov"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-7-retro-2026-09-02.md"
+  - id: "epic-1-retro-item-32-написать-тест-androidnetworkmonitor-на-r"
+    epic: 1
+    action: "Написать тест AndroidNetworkMonitor на Robolectric (libs.versions.toml:80)
+      по пяти утверждениям AC 1.2: портал (INTERNET без VALIDATED) → false; getSystemService
+      == null → true отдельным случаем; первое значение до колбэка равно isOnline();
+      onLost одной сети из двух связных → true; unregisterNetwork"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-33-обернуть-nicknameremotedatasource-и-logo"
+    epic: 1
+    action: "Обернуть NicknameRemoteDataSource и LogoRemoteDataSource в .namingFailures()
+      (FirebaseModule.kt:61-64) — сегодня это два из шести портов, у которых ошибка
+      не превращается в ветвь, а два других (ники, логотипы) названы историей 1.4
+      поимённо. (AC 1.4, находки 4, 16)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-34-поднять-предпроверку-связи-для-покупки-н"
+    epic: 1
+    action: "Поднять предпроверку связи для покупки ника и логотипа выше границы SDK:
+      в use case или репозиторий, где её можно проверить фейком (образец — BuyGoldPackUseCase.kt:39-40
+      и его тест). Сегодня кнопка «Купить» держит busy до истечения тридцатисекундного
+      таймаута, что запрещает FR28. (AC 1.4, находки 2,"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-35-ввести-shopmessage-noconnection-как-data"
+    epic: 1
+    action: "Ввести ShopMessage.NoConnection как data object без полей, снять литерал
+      из DefaultShopComponent.kt:435, добавить в ShopView.kt ветвь со своим ресурсом
+      и завести его в values/, values-ru/, values-uk/ — по образцу settings_sync_error_no_network.
+      Сегодня магазин отвечает по-русски на любом языке. (AC "
+    owner: "frontend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-36-тест-defaultshopcomponent-по-ac-1-5-none"
+    epic: 1
+    action: "Тест DefaultShopComponent по AC 1.5: NoNetwork → message == ShopMessage.NoConnection
+      и processingItemId == null в том же прогоне runTest без advanceTimeBy, счётчик
+      обращений к сети ноль; Refused(\"Not enough nolics\") → Failure(\"Not enough
+      nolics\"); два состояния сравниваются значениями. (AC 1.5, нахо"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-37-три-стража-общих-имён-клиента-и-сервера"
+    epic: 1
+    action: "Три стража общих имён клиента и сервера по образцу OutboxOperationsRegistryTest.kt:26-28:
+      precondition-pending (CallableErrors.kt:33 ↔ functions/index.js:576), version-conflict
+      (:43 ↔ mutation-queue.js:265), ключи code/serverVersion (:41-42 ↔ mutation-queue.js:359-363).
+      Правило уже записано в .claud"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-38-дописать-в-shared-core-network-src-commo"
+    epic: 1
+    action: "Дописать в shared/core/network/src/commonTest: страж зависимостей модуля,
+      читающий его build.gradle.kts; утверждение SyncError.Disposition.entries.size
+      == 3; утверждение, что syncErrorOrNull() даёт null для IllegalStateException
+      и не проглатывает CancellationException. (AC 1.1, находка 9)"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-39-решить-судьбу-таймаута-30-секунд-в-calla"
+    epic: 1
+    action: "Решить судьбу таймаута: 30 секунд в CallableErrors.kt:25 против 20, решённых
+      в .memlog.md:98, epics-sync.md:116 и ARCHITECTURE-SPINE.md:352. Затем закрепить
+      порог и единственность объявления тестом. (находки 6, 7)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-40-дописать-к-истории-1-3-уточнение-после-р"
+    epic: 1
+    action: "Дописать к истории 1.3 «Уточнение после разбора» тем же способом, каким
+      это сделано для историй 5.4, 5.6 и 10.2: INTERNAL даёт NoNetwork только при
+      обрыве ввода-вывода; RESOURCE_EXHAUSTED повторяется, а не отвергается (иначе
+      всплеск нагрузки уводит очередь в карантин, а карантин откатывает локальное"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-41-закрыть-обещание-истории-1-2-либо-подпис"
+    epic: 1
+    action: "Закрыть обещание истории 1.2: либо подписать прогон очереди на observeOnline(),
+      либо записать, что триггером служит NetworkType.CONNECTED из WorkManagerSyncScheduler.kt:22,:30,:64,
+      и снять обещание из текста 1.2 и 2.2. Место регистрации исчезло вместе с отменённой
+      историей 2.6. (находка 11)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-42-решить-судьбу-структурного-кода-отказа-б"
+    epic: 1
+    action: "Решить судьбу структурного кода отказа, без которого не убирается DefaultHomeQuestsComponent.kt:224
+      (contains(\"No gift boxes\")) — открытый вопрос самого эпика 1, живой девять
+      эпиков. Либо сервер называет причину кодом рядом с текстом, либо разбор по подстроке
+      признаётся постоянным. (находка 19)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-1-retro-item-43-убрать-из-открытых-вопросов-эпика-1-пунк"
+    epic: 1
+    action: "Убрать из открытых вопросов эпика 1 пункт про «четыре ветви» в epic-breakdown.md:
+      там уже «пяти ветвей» (epic-breakdown.md:54), вопрос закрыт. (находка 20)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-44-восстановить-9-json-под-фактическую-схем"
+    epic: 2
+    action: "Восстановить 9.json под фактическую схему версии 9 (sync_run_trace без
+      kind, PRIMARY KEY(owner_uid) — по Migration8to9.kt:23-31) и перепроверить, что
+      migrate_8_to_9_… и migrate_9_to_10_… в AppDatabaseMigrationsTest.kt проходят.
+      (Н-1)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-45-добавить-в-migrationcoveragetest-kt-тест"
+    epic: 2
+    action: "Добавить в MigrationCoverageTest.kt тест «соседние экспортированные схемы
+      не имеют равного identityHash», назвав в сообщении обе версии. Сегодня он покраснеет
+      на паре 1/2 — вместе с пунктом 3 это и есть решение. (Н-1)"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-46-решить-судьбу-пары-1-json-2-json-восстан"
+    epic: 2
+    action: "Решить судьбу пары 1.json/2.json: восстановить 1.json под доподлинную
+      версию 1 либо записать переход косметическим и вывести его из-под нового теста
+      явным исключением с основанием. (Н-1)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-47-завести-подписку-на-networkmonitor-obser"
+    epic: 2
+    action: "Завести подписку на NetworkMonitor.observeOnline() в composition root:
+      прогон по переходу false → true, минимальный интервал 30 секунд (число решено,
+      .memlog.md:98), поверх уже существующей сериализации OutboxEngine.passes. (Н-3)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-48-тест-соотношения-предельный-возраст-запи"
+    epic: 2
+    action: "Тест соотношения «предельный возраст записи против самой редкой каденции»:
+      OutboxLimits.maxAgeMs обязан быть строго больше максимального SyncFrequency.intervalMs.
+      Сегодня они равны (7 суток против WEEKLY), и запись уходит в карантин по возрасту
+      раньше, чем до неё дойдёт очередная синхронизация. (Н-3"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-49-scripts-deploy-firestore-rules-js-прогон"
+    epic: 2
+    action: "scripts/deploy-firestore-rules.js: прогон scripts/rules-emulator-test.js
+      первым шагом, ненулевой выход без выпуска ruleset. Объявить именованный скрипт
+      в scripts/package.json. (Н-4)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-50-дописать-в-migrationkeycontracttest-свер"
+    epic: 2
+    action: "Дописать в MigrationKeyContractTest сверку трёх приставок entity_ref
+      между Migration5to6.kt:102,137,172 и LessonResultOutboxWriter.kt:243-244 / QuestArenaOutboxWriter.kt:31.
+      (Н-8)"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-51-отвергать-при-сборке-карты-обработчиков"
+    epic: 2
+    action: "Отвергать при сборке карты обработчиков operation без точки и повторный
+      ключ, называя занявшую фичу. Место — OutboxQuarantineRouter либо фабрика карты
+      в SyncModule.kt:126-149. (Н-5)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-52-завести-историю-на-снятие-contentsversio"
+    epic: 2
+    action: "Завести историю на снятие contentsVersion с пяти Room-сущностей: миграция
+      10 → 11 с тестом runMigrationsAndValidate, удаление catalog_v2_has_new_columns
+      (AppDatabaseSchemaValidationTest.kt:37-43). Без истории эта работа не ведётся
+      никем. (Н-2)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-53-прибрать-хвосты-ad-16-комментарий-migrat"
+    epic: 2
+    action: "Прибрать хвосты AD-16: комментарий Migration3to4.kt:9-10, комментарий
+      AppDatabase.kt:32-33, формулировку NFR11 в epics-sync.md:87, фразу про единственное
+      пересоздание в epics-sync.md:1625. (Н-11)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-54-актуализировать-deferred-work-md-снять-б"
+    epic: 2
+    action: "Актуализировать deferred-work.md: снять блок про три живущие своей жизнью
+      очереди и LessonResultSync.kt:45 (:44-48) и запись про нереализованный откат
+      при карантине (:129-131) — обе описывают сделанное. (Н-15)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-55-ввести-в-трекер-статус-cancelled-и-прост"
+    epic: 2
+    action: "Ввести в трекер статус cancelled и проставить его 2.5 и 2.6 вместо backlog;
+      перенести причину из комментария в поле. Отдельно — правило, что все пункты
+      разбора попадают в action_items, а не часть из них. (Н-13, Н-14)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-2-retro-item-56-прогнать-вживую-то-что-покрыто-только-чи"
+    epic: 2
+    action: "Прогнать вживую то, что покрыто только чистыми функциями: устройство
+      с инструментальным прогоном AppDatabaseMigrationsTest (доказательство девяти
+      миграций и всей истории 2.9 сегодня не исполняется нигде), JDK 21 для firebase
+      emulators:exec и один прогон харнесса правил, и один сценарий «действие офл"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-57-реализовать-историю-3-7-или-вернуть-её-в"
+    epic: 3
+    action: "Реализовать историю 3.7 или вернуть её в backlog с записью в deferred-work.md.
+      Сегодня done стоит на истории, у которой нет ни одной строки: никто не пишет
+      state = SYNCHRONOUS, ни один синхронный вызов не несёт mutationId."
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-58-завести-запрос-состояния-ключа-по-mutati"
+    epic: 3
+    action: "Завести запрос состояния ключа по mutationId (три исхода, отказ под чужим
+      uid) и плановую чистку mutation_keys по предикату устаревания; экспортировать
+      isExpired из mutation-queue.js. Без первого история 3.7 нереализуема в принципе,
+      без второго нарушен NFR12."
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-59-закрыть-пятый-обход-ключа-либо-завести-п"
+    epic: 3
+    action: "Закрыть пятый обход ключа: либо завести производителя записи очереди
+      для UNLOCK_LESSON, либо снять операцию с клиента, сервера и SyncModule.kt:131
+      и записать, что разблокировка остаётся синхронной. Сейчас DefaultLessonListComponent.kt:160
+      идёт мимо очереди на unlockLesson (index.js:2038)."
+    owner: "backend-dev"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-60-убрать-литерал-14-24-60-60-1000-из-funct"
+    epic: 3
+    action: "Убрать литерал 14 24 60 60 1000 из functions/mutation-queue.test.js:73:
+      экспортировать QUEUE_RECORD_MAX_AGE_MS из mutation-queue.js:43 и сверять неравенство
+      по двум прочитанным числам. Заодно подставить оба числа в текст исключения mutation-queue.js:46-49."
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-61-сквозной-страж-для-precondition_pending_"
+    epic: 3
+    action: "Сквозной страж для PRECONDITION_PENDING_DETAIL (index.js:576 ↔ CallableErrors.kt:34)
+      и VERSION_CONFLICT_DETAIL (mutation-queue.js:265 ↔ CallableErrors.kt:43) по
+      образцу OutboxOperationsRegistryTest.kt; плюс grep-тест «второй формы „ещё нет“
+      в functions/ нет»."
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-62-развести-reservation_timeout_ms-mutation"
+    epic: 3
+    action: "Развести RESERVATION_TIMEOUT_MS (mutation-queue.js:59) и таймаут callable:
+      задать timeoutSeconds в FUNCTION_OPTIONS явно и сделать резерв строго длиннее,
+      либо перенести оба в config/sync-params.json и связать проверяемым неравенством.
+      Сегодня оба равны 60 секундам, и комментарий «минута заведомо бол"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-63-свести-callable_timeout_seconds-30l-call"
+    epic: 3
+    action: "Свести CALLABLE_TIMEOUT_SECONDS = 30L (CallableErrors.kt:25) с решением
+      «таймаут callable 20 секунд» (.memlog.md:98): либо код к решению, либо решение
+      к коду."
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-64-привести-формулировки-историй-к-фактам-з"
+    epic: 3
+    action: "Привести формулировки историй к фактам, зафиксированным в коде с обоснованием:
+      3.2 (возраст режет отправку, а не выборку), 3.5/3.6 (mutation_id выведенный,
+      а не UUID), 3.8 (SUBMIT_ARENA, чтение коллекции остаётся, дев-вызов снят), 3.3
+      (версионирование живёт в модуле — назвать это решением, а не нару"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-65-один-случай-на-границу-моложе-предельног"
+    epic: 3
+    action: "Один случай на границу «моложе предельного возраста на миллисекунду»
+      в OutboxPolicyTest; сегодня проверена только точная граница (:89)."
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-3-retro-item-66-мелкая-правка-снять-устаревший-kdoc-call"
+    epic: 3
+    action: "Мелкая правка: снять устаревший KDoc CallableErrors.kt:30-33 («сервер
+      научится в E4») — сервер уже говорит эту пометку (index.js:750)."
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-67-снять-localrevision-с-сервера-normalizer"
+    epic: 8
+    action: "снять localRevision с сервера: normalizeRequest (functions/index.js:4588),
+      privateDocuments (:3710), requestToDocument (:2967). Закрывает последний критерий
+      8.2."
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-68-тест-на-последнее-звено-firebasemutation"
+    epic: 8
+    action: "тест на последнее звено: FirebaseMutationTransport.toPayload кладёт expectedVersion,
+      когда колонка не пуста, и не кладёт ключ вовсе, когда пуста. Отдельно — провести
+      LiveFirebaseReviewWorkflowInstrumentedTest.submitToArena (:295-307) через сам
+      транспорт вместо ручного конверта."
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-69-гейт-по-исходнику-index-js-на-ветвь-конф"
+    epic: 8
+    action: "гейт по исходнику index.js на ветвь конфликта: releaseReservation стоит
+      перед throw new HttpsError(\"aborted\", …). Образец — functions/deferred-actions.test.js:266-279."
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-70-страж-на-общие-имена-version-conflict-se"
+    epic: 8
+    action: "страж на общие имена version-conflict, serverVersion, expectedVersion
+      по образцу OutboxOperationsRegistryTest.kt."
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-71-решить-судьбу-ratingversion-довести-до-к"
+    epic: 8
+    action: "решить судьбу ratingVersion: довести до клиента или убрать вместе с гейтом;
+      в любом случае поправить комментарий index.js:3213-3216, который ссылается на
+      несуществующее поведение QuestDao."
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-72-поправить-преамбулу-истории-8-6-в-epics"
+    epic: 8
+    action: "поправить преамбулу истории 8.6 в epics-sync.md: клиентская колонка contentsVersion
+      не снята, и снятие требует своей миграции (запись есть в deferred-work.md:127)."
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-73-закрыть-открытый-вопрос-версионируема-ли"
+    epic: 8
+    action: "закрыть открытый вопрос: версионируема ли quest.SET_SHELF. Сегодня она
+      в очереди, двигает version автора и expected_version не несёт."
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-8-retro-item-74-переписать-testeveryplacethatassignsaque"
+    epic: 8
+    action: "переписать testEveryPlaceThatAssignsAQuestVersionMirrorsItIntoThePrivateDocument
+      поведением (приёмник в миниатюре), оставив в файле только отрицательные гейты."
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-75-покрыть-истории-9-2-и-9-3-шестнадцать-па"
+    epic: 9
+    action: "Покрыть истории 9.2 и 9.3: шестнадцать пар каденций без ON_LAUNCH (оба
+      счётчика ноль, applyFrequency/applyProfileFrequency по разу), три случая с ON_LAUNCH,
+      четыре значения профильного пикера, зеркальный контентный. Сегодня enqueueManualProfileSyncCalls
+      и appliedProfileFrequencies в FakeSyncSchedule"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-76-вынести-решение-о-запуске-из-mainactivit"
+    epic: 9
+    action: "Вынести решение о запуске из MainActivity в чистые функции shared/core/sync,
+      как требуют критерии 9.2 и 9.3, чтобы пункт 1 было куда положить: applyStoredCadences,
+      applyProfileCadenceChoice, applyContentCadenceChoice; после этого SyncFrequency.ON_LAUNCH
+      по apps/android-next/src/main должен давать но"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-77-дописать-в-workmanagersyncschedulertest"
+    epic: 9
+    action: "Дописать в WorkManagerSyncSchedulerTest три недостающих утверждения формы
+      запроса (requiredNetworkType == CONNECTED, isPeriodic == false, ExistingWorkPolicy.REPLACE
+      вместо any<…>() на :47) и завести тест SyncWorkerFactory — у класса ноль тестов.
+      Обе проверки уже пройдены разбором вручную, поведение "
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-78-вывести-на-экран-второй-и-третий-след-pr"
+    epic: 9
+    action: "Вывести на экран второй и третий след: profileLastSuccessAtMs/profileLastError
+      и resyncLastSuccessAtMs/resyncLastError (SyncStatus.kt:42-45) сегодня не читает
+      ни один production-файл, а DrawerFooter.kt:101 показывает только контентный.
+      Профильная каденция, ради которой эпик и делался, игроку не отчи"
+    owner: "frontend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-79-удалить-syncworker-periodic_interval-25"
+    epic: 9
+    action: "Удалить SyncWorker.PERIODIC_INTERVAL (:25, критерий 9.4 требует ноль
+      вхождений по репозиторию) и осиротевшую WORK_NAME_BOOTSTRAP (:24); перенести
+      WORK_NAME_PROFILE_MANUAL из WorkManagerSyncScheduler.kt:69 к ProfileSyncWorker.kt:32,
+      где её объявляет критерий. (находки 8, 10)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-80-свести-syncpreferences-к-графу-mainactiv"
+    epic: 9
+    action: "Свести SyncPreferences к графу: MainActivity.kt:51 и AppApplication.kt:234
+      строят его сами при живой и никем не используемой привязке SyncModule.kt:225.
+      (находка 9)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-81-записать-решение-след-на-каждое-расписан"
+    epic: 9
+    action: "Записать решение «след на каждое расписание» в AD-14 (ARCHITECTURE-SPINE.md:149-153)
+      или отдельной записью в .memlog.md: три файла (SyncWorker.kt:41, ProfileSyncWorker.kt:16,
+      SyncWorkerFactory.kt:11) ссылаются на AD-14 за утверждением, которого в нём
+      нет. (находка 19)"
+    owner: "backend-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-82-починить-pushfakes-kt-31-38-applyprofile"
+    epic: 9
+    action: "Починить PushFakes.kt:31-38: applyProfileFrequency пишет в тот же список,
+      что и applyFrequency, — та самая подмена каденций, ради снятия которой существует
+      эпик. (находка 17)"
+    owner: "test-dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-83-решить-судьбу-перекрытия-списков-profile"
+    epic: 9
+    action: "Решить судьбу перекрытия списков: ProfileBootstrapSync стоит и в ProfileSyncables
+      (SyncModule.kt:287), и дважды в контентном списке (:293, :298). Либо развести
+      — и тогда сразу решить, что делает push с профильными событиями (PushEvents.kt:50,:53),
+      иначе они перестанут доезжать, — либо записать перек"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-84-решить-про-общее-имя-manual_sync-пять-вх"
+    epic: 9
+    action: "Решить про общее имя manual_sync: пять входов с политикой REPLACE, и
+      пришедший push способен отменить ручную синхронизацию, запущенную игроком, молча
+      и без следа. (находка 15)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-85-переписать-критерии-9-2-и-9-4-под-то-что"
+    epic: 9
+    action: "Переписать критерии 9.2 и 9.4 под то, что действительно построено: реконсиляция
+      живёт в AppApplication, а не в MainActivity.onCreate; bootstrap идёт через enqueueManualSync,
+      а не через отдельный enqueueBootstrapSync; взаимоисключающие пункты про WorkManager.getInstance
+      привести к списку из SyncSched"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"
+  - id: "epic-9-retro-item-86-прогнать-вживую-на-устройстве-четыре-сце"
+    epic: 9
+    action: "Прогнать вживую на устройстве четыре сценария, которых не видел ни один
+      тест: профиль ON_LAUNCH на старте, выбор в профильном пикере, MANUAL с последующим
+      headless-подъёмом процесса, первая установка с bootstrap. («Проверка поведением»,
+      находка 25)"
+    owner: "tpov"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-03.md"

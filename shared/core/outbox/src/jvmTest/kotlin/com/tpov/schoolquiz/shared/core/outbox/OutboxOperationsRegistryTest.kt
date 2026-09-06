@@ -13,10 +13,12 @@ import kotlin.test.assertTrue
  * это в бою нечем — отказ выглядит как обычный отказ сервера.
  *
  * Ловушка тут не гипотетическая. В `functions/index.js` идентификатор `UNLOCK_LESSON` уже занят:
- * он импортирован из `lesson-unlocks.js` и означает вид покупки, строку `"lesson"`. Ключ реестра
- * пишется голым именем, то есть литералом `"UNLOCK_LESSON"`, и совпадает с клиентским — но всякая
- * естественная «уборка» вида `[UNLOCK_LESSON]: handler` молча зарегистрировала бы обработчик под
- * `"lesson"`, и каждая отложенная разблокировка стала бы неизвестной операцией.
+ * он импортирован из `lesson-unlocks.js` и означает вид покупки, строку `"lesson"`. Пока ключ
+ * реестра писался голым именем — литералом `UNLOCK_LESSON:`, — всякая естественная «уборка» вида
+ * `[UNLOCK_LESSON]: handler` молча зарегистрировала бы обработчик под `"lesson"`, и каждая
+ * отложенная разблокировка стала бы неизвестной операцией. Имя приведено к правилу NFR4 и теперь
+ * пишется в кавычках (`"lesson.UNLOCK"`), но проверка на вычисленный ключ остаётся: она стережёт
+ * весь реестр, а не одну строку.
  *
  * Поэтому реестр читается текстом. JVM-тест, а не общий: файл с диска общий код не видит.
  */
@@ -49,6 +51,10 @@ class OutboxOperationsRegistryTest {
             OutboxOperations.SUBMIT_ATTEMPT,
             OutboxOperations.SUBMIT_RATING,
             OutboxOperations.SUBMIT_ARENA,
+            OutboxOperations.SUBMIT_REVIEW,
+            OutboxOperations.SET_SHELF,
+            OutboxOperations.CANCEL_NICKNAME_LISTING,
+            OutboxOperations.CANCEL_LOGO_LISTING,
         )
 
     @Test

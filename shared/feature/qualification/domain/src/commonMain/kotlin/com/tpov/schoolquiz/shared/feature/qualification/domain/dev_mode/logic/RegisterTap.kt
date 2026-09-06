@@ -19,20 +19,24 @@ fun registerTap(
     val timedOut = !isFirstTap && elapsed > resetThresholdMillis
 
     return when {
-        timedOut -> TapResult.Reset(
-            newProgress = TapProgress(count = 1, lastTapAtMillis = nowMillis),
-        )
+        timedOut ->
+            TapResult.Reset(
+                newProgress = TapProgress(count = 1, lastTapAtMillis = nowMillis),
+            )
 
-        progress.count < targetCount - 1 -> TapResult.NoChange(
-            newProgress = TapProgress(count = progress.count + 1, lastTapAtMillis = nowMillis),
-        )
+        progress.count < targetCount - 1 ->
+            TapResult.NoChange(
+                newProgress = TapProgress(count = progress.count + 1, lastTapAtMillis = nowMillis),
+            )
 
-        currentDeveloperLevel > required.points -> TapResult.AlreadyDev(
-            newProgress = TapProgress(count = 0, lastTapAtMillis = null),
-        )
+        currentDeveloperLevel > required.points ->
+            TapResult.AlreadyDev(
+                newProgress = TapProgress(count = 0, lastTapAtMillis = null),
+            )
 
-        else -> TapResult.Activated(
-            newProgress = TapProgress(count = 0, lastTapAtMillis = null),
-        )
+        else ->
+            TapResult.Activated(
+                newProgress = TapProgress(count = 0, lastTapAtMillis = null),
+            )
     }
 }

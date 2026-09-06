@@ -60,12 +60,12 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given cold start with guest stats when default state created then internet activeSection is Profile`() {
+    fun `given cold start with guest stats when default state created then internet activeSection is Arena`() {
         // FR #7 / BR #3: defaultSection = visibleSections(INTERNET, guestStats).first()
-        // Guest has skill=0; Arena/Catalog/Social/Leaderboard require skill >= 3000/10000
-        // First visible for guest: Profile (emptyMap)
+        // Guest has skill=0; Catalog/Social/Leaderboard require skill >= 3000/10000.
+        // Порог арены снят, поэтому первой видимой стала она.
         val state = AppShellState.default()
-        assertEquals(DrawerSection.InternetSection.Profile, state.internetState.activeSection)
+        assertEquals(DrawerSection.InternetSection.Arena, state.internetState.activeSection)
     }
 
     @Test
@@ -119,10 +119,10 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given corrupted saved state when fallback called then internet stack active is ProfileRoot`() {
-        // Fallback uses same formula: guest stats → Profile is first visible for INTERNET
+    fun `given corrupted saved state when fallback called then internet stack active is ArenaRoot`() {
+        // Fallback uses same formula: guest stats → арена первая видимая для INTERNET
         val state = fallbackState()
-        assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
+        assertEquals(InternetConfig.ArenaRoot, state.internetState.stack.active)
     }
 
     @Test
@@ -193,11 +193,11 @@ class AppShellStateTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 36 initialTabState INTERNET guest stats activeSection is Profile`() {
-        // FR #7 / BR #3: defaultSection(INTERNET, guest) = visibleSections.first() = Profile
+    fun `scenario 36 initialTabState INTERNET guest stats activeSection is Arena`() {
+        // FR #7 / BR #3: defaultSection(INTERNET, guest) = visibleSections.first() = Arena
         val state = AppShellState.default()
-        assertEquals(DrawerSection.InternetSection.Profile, state.internetState.activeSection)
-        assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
+        assertEquals(DrawerSection.InternetSection.Arena, state.internetState.activeSection)
+        assertEquals(InternetConfig.ArenaRoot, state.internetState.stack.active)
     }
 
     @Test

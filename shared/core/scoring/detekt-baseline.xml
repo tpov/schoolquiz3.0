@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LoopWithTooManyJumpStatements:LessonAllocatedSeconds.kt$LessonAllocatedSeconds$for</ID>
+    <ID>MagicNumber:LessonAllocatedSeconds.kt$LessonAllocatedSeconds$3</ID>
+    <ID>MagicNumber:LessonAllocatedSeconds.kt$LessonAllocatedSeconds$8</ID>
+    <ID>MagicNumber:PercentScore.kt$PercentScore$100</ID>
+    <ID>MagicNumber:Score.kt$Score$9</ID>
+    <ID>MagicNumber:Scoring.kt$10</ID>
+    <ID>MagicNumber:Scoring.kt$100</ID>
+    <ID>MagicNumber:Scoring.kt$20</ID>
+    <ID>MagicNumber:Scoring.kt$50</ID>
+    <ID>MagicNumber:Scoring.kt$8</ID>
+    <ID>MagicNumber:Scoring.kt$9</ID>
+    <ID>MagicNumber:Stars.kt$Stars$30</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$100</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$25</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$3</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$4</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$5</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$50</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$70</ID>
+    <ID>MagicNumber:UnlockPricing.kt$UnlockPricing$90</ID>
+    <ID>ReturnCount:ChargeClaimMask.kt$fun ChargeClaimMask.validateAgainst( codeAnswer: CodeAnswer, difficulty: Difficulty, ): ClaimMaskFault?</ID>
+    <ID>ReturnCount:LessonAllocatedSeconds.kt$LessonAllocatedSeconds$fun of( questions: List&lt;Question&gt;, hard: Boolean, ): Long</ID>
+  </CurrentIssues>
+</SmellBaseline>

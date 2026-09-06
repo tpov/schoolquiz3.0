@@ -4,6 +4,9 @@ import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.AccountChooserHost
 import kotlinx.coroutines.flow.StateFlow
 
+// Одиннадцатый и двенадцатый колбэки — две кнопки одного вопроса (AD-8): свести их к одной с
+// флагом значило бы спрятать, что у согласия и отказа разные последствия.
+@Suppress("TooManyFunctions")
 interface ProfileComponent {
     val state: StateFlow<ProfileUiState>
 
@@ -14,6 +17,17 @@ interface ProfileComponent {
      * appear over; nothing else about it belongs to the caller.
      */
     fun onLinkGoogle(host: AccountChooserHost)
+
+    /**
+     * The player agreed to lose what the previous account had not sent, and to switch.
+     *
+     * Only meaningful while [ProfileUiState.pendingAccountSwitch] is shown; the warning is the
+     * consent (AD-8), so this is the one tap that removes the previous owner's traces.
+     */
+    fun onConfirmAccountSwitch()
+
+    /** The player keeps the previous account. Nothing is removed, the queue keeps going. */
+    fun onDeclineAccountSwitch()
 
     /**
      * The screen came back into view.

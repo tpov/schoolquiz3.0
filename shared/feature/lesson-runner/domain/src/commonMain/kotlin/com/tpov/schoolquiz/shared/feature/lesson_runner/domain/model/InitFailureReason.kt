@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model
 
 sealed interface InitFailureReason {
     data object EmptyPool : InitFailureReason
+
     data object NoValidQuestions : InitFailureReason
 
     /**
@@ -26,5 +27,6 @@ sealed interface InitFailureReason {
     data object RedactedNotSupported : InitFailureReason
 
     data object LessonNotFound : InitFailureReason
+
     data object AuthRequired : InitFailureReason
 }

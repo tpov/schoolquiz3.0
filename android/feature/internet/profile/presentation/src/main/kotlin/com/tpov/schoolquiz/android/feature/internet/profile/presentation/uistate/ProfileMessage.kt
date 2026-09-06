@@ -19,8 +19,5 @@ sealed interface ProfileMessage {
 
     data object GoogleSwitchedToExisting : ProfileMessage
 
-    /** Аккаунт сменился, но неотправленные действия прежнего уехать уже не смогут (AD-8). */
-    data object GoogleSwitchedWithUnsentWork : ProfileMessage
-
     data class Failure(val detail: String?) : ProfileMessage
 }

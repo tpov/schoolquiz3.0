@@ -133,23 +133,27 @@ class VisibilityTest {
     }
 
     // -----------------------------------------------------------------------
-    // Domain Test Scenario 29 — Arena invisible at skill 2999 (boundary inclusive)
+    // Арена видна на любом уровне: порог снят, потому что выпуск идёт только на
+    // арену, и прежний порог 3000 скрывал опубликованный квест от всех новичков
+    // и от самого автора. Границы прежнего порога проверяются с двух сторон, чтобы
+    // его случайное возвращение падало тестом.
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 29 Arena requires USER 3000 at skill 2999 returns false`() {
-        val stats = UserStats.guest().copy(currentSkill = 2_999)
-        assertFalse(isVisible(DrawerSection.InternetSection.Arena, stats))
+    fun `Arena visible at skill 0`() {
+        assertTrue(isVisible(DrawerSection.InternetSection.Arena, UserStats.guest()))
     }
 
-    // -----------------------------------------------------------------------
-    // Domain Test Scenario 30 — Arena visible at skill 3000
-    // -----------------------------------------------------------------------
+    @Test
+    fun `Arena visible below former 3000 threshold`() {
+        val stats = UserStats.guest().copy(currentSkill = 2_999)
+        assertTrue(isVisible(DrawerSection.InternetSection.Arena, stats))
+    }
 
     @Test
-    fun `scenario 30 Arena requires USER 3000 at skill 3000 returns true`() {
-        val stats = UserStats.guest().copy(currentSkill = 3_000)
-        assertTrue(isVisible(DrawerSection.InternetSection.Arena, stats))
+    fun `Arena visible at and above former 3000 threshold`() {
+        assertTrue(isVisible(DrawerSection.InternetSection.Arena, UserStats.guest().copy(currentSkill = 3_000)))
+        assertTrue(isVisible(DrawerSection.InternetSection.Arena, UserStats.guest().copy(currentSkill = 999_999)))
     }
 
     // -----------------------------------------------------------------------
@@ -215,10 +219,14 @@ class VisibilityTest {
     @Test
     fun `scenario 23 visibleSections INTERNET guest returns Profile and Qualifications`() {
         val sections = visibleSections(Tab.INTERNET, UserStats.guest())
-        // Product order: Arena(3000), Catalog(3000), Profile(empty), Qualifications(empty), Social(10000), Leaderboard(3000)
-        // Visible for guest: Profile, Qualifications
+        // Порядок: Arena(без порога), Catalog(3000), Profile(без порога), Qualifications(без
+        // порога), Social(10000), Leaderboard(3000). Гостю видны: Arena, Profile, Qualifications.
+        //
+        // Арена стоит первой, поэтому со снятым порогом вкладка ИНТЕРНЕТ открывается у гостя
+        // на арене, а не на карточке профиля: defaultSection берёт первый видимый раздел.
         assertEquals(
             listOf(
+                DrawerSection.InternetSection.Arena,
                 DrawerSection.InternetSection.Profile,
                 DrawerSection.InternetSection.Qualifications,
             ),
@@ -250,7 +258,7 @@ class VisibilityTest {
     fun `scenario 25 visibleSections INTERNET skill 3000 returns Arena Catalog Profile Qualifications Leaderboard`() {
         val stats = UserStats.guest().copy(currentSkill = 3_000)
         val sections = visibleSections(Tab.INTERNET, stats)
-        // Arena(3000✓), Catalog(3000✓), Profile(empty✓), Qualifications(empty✓), Social(10000✗), Leaderboard(3000✓)
+        // Arena(без порога✓), Catalog(3000✓), Profile✓, Qualifications✓, Social(10000✗), Leaderboard(3000✓)
         assertEquals(
             listOf(
                 DrawerSection.InternetSection.Arena,
@@ -373,10 +381,8 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules row 5 INTERNET Arena requires USER at TEACHINGS first 3000`() {
-        val roles = DrawerSection.InternetSection.Arena.requiredRoles
-        assertEquals(1, roles.size)
-        assertEquals(Title.TEACHINGS.first, roles[Role.USER])
+    fun `visibility rules row 5 INTERNET Arena has empty requiredRoles`() {
+        assertTrue(DrawerSection.InternetSection.Arena.requiredRoles.isEmpty())
     }
 
     @Test
@@ -580,11 +586,12 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `DM-22 isVisible Arena developer 0 currentSkill 2999 single role not met returns false`() {
+    fun `DM-22 isVisible Catalog currentSkill 2999 single role not met returns false`() {
+        // Пример взят на Catalog: у арены порог снят, и ею невидимость уже не показать.
         val stats = UserStats.guest().copy(
             currentSkill = 2_999,
         )
-        assertFalse(isVisible(DrawerSection.InternetSection.Arena, stats))
+        assertFalse(isVisible(DrawerSection.InternetSection.Catalog, stats))
     }
 
     // -----------------------------------------------------------------------

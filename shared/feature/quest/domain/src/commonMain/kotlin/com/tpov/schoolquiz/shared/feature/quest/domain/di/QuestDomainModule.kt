@@ -6,9 +6,10 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestSh
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SyncQuestsUseCase
 import org.koin.dsl.module
 
-val questDomainModule = module {
-    factory { ObserveMyQuestsUseCase(get()) }
-    factory { SetPublicQuestShelfUseCase(get()) }
-    factory { RetirePublicQuestUseCase(get()) }
-    factory { SyncQuestsUseCase(get()) }
-}
+val questDomainModule =
+    module {
+        factory { ObserveMyQuestsUseCase(get()) }
+        factory { SetPublicQuestShelfUseCase(get()) }
+        factory { RetirePublicQuestUseCase(get()) }
+        factory { SyncQuestsUseCase(get()) }
+    }

@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftTreeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
@@ -27,7 +28,7 @@ object QuestArenaSubmissionRequestMapper {
             submissionId = id.value,
             draftId = draftId.value,
             ownerUid = ownerUid,
-            localRevision = localRevision,
+            expectedVersion = expectedVersion,
             requestedAtMs = requestedAtMs,
             draft =
                 ArenaDraftDto(
@@ -97,6 +98,14 @@ object QuestArenaSubmissionRequestMapper {
                 ),
             targetShelf = targetShelf,
             targetLessonIds = lessonIds.mapTo(linkedSetOf()) { it.value },
+            // Не порция, а черновик целиком: только так сервер отличает «узел удалён автором» от
+            // «узел не в этой заявке» и снимает выпавшие урок, тему и раздел.
+            draftTree =
+                ArenaDraftTreeDto(
+                    sections = bundle.sections.mapTo(linkedSetOf()) { it.id.value },
+                    themes = bundle.themes.mapTo(linkedSetOf()) { it.id.value },
+                    lessons = bundle.lessons.mapTo(linkedSetOf()) { it.id.value },
+                ),
         )
     }
 }

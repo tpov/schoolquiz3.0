@@ -1,8 +1,5 @@
 package com.tpov.schoolquiz.shared.core.sync
 
-import com.tpov.schoolquiz.shared.core.network.SyncError
-import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
-
 /**
  * Перечитать всё заново (AD-30).
  *
@@ -14,19 +11,28 @@ import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
  * одной транзакцией с постановкой (AD-23), не трогаются: они верны локально, сервер о них ещё не
  * знает, и переигрывать их не нужно. Локальное состояние, разошедшееся из-за карантинной записи, —
  * не забота ресинка, а последствие карантина (AD-28).
+ *
+ * **Исход решает не он.** Ресинк перечитывает каталог — и только его: очередь не отправляется,
+ * профиль не обновляется. Пока он писал успех сам, удавшееся перечитывание объявляло прошедшим
+ * прогон, половина которого даже не запускалась: свежее время последнего успеха вставало поверх
+ * ветви упавшего планового прогона, и ошибка, которая не починилась, исчезала с экрана. Поэтому
+ * исход уезжает тому же владельцу решения, что и у планового прогона, — [SyncRun], — и ложится
+ * под собственный [SyncRunKind.RESYNC]: у ручного действия свой ответ, и он не выдаёт себя за
+ * ответ расписания.
  */
 class ForceResync(
     private val syncStateRepo: SyncStateRepository,
     private val readSide: Syncable,
     private val gate: SyncGate = SyncGate(),
     /**
-     * Куда сообщить исход.
+     * Кто записывает исход. Умолчания нет намеренно.
      *
-     * Без этого «Перечитать всё» — кнопка, после которой не происходит ничего видимого: успех
-     * неотличим от неудачи, и игрок нажимает её второй раз.
+     * Без записи «Перечитать всё» — кнопка, после которой не происходит ничего видимого: успех
+     * неотличим от неудачи, и игрок нажимает её второй раз. Своей записи здесь при этом нет:
+     * второй писатель безусловного успеха и был тем, из-за чего ресинк снимал чужую ошибку.
+     * Собрать ресинк, исход которого некому записать, теперь нельзя — это не компилируется.
      */
-    private val status: SyncStatusRepository? = null,
-    private val clock: () -> Long = { 0L },
+    private val syncRun: SyncRun,
 ) {
     /**
      * Обнуляет курсоры и запускает чтение с начала журналов.
@@ -39,9 +45,6 @@ class ForceResync(
         // старое значение уже после него — и ресинк молча не сделает ничего.
         gate.withPass {
             syncStateRepo.resetAllCursors()
-            val outcome = readSide.sync()
-            outcome
-                .onSuccess { status?.recordSuccess(clock()) }
-                .onFailure { status?.recordFailure(it.syncErrorOrNull() ?: SyncError.Unknown(it), clock()) }
+            syncRun.run(SyncRunKind.RESYNC, listOf(readSide))
         }
 }

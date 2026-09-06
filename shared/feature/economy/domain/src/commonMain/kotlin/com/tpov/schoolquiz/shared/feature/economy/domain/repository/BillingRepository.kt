@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
  * takes only a product id: the implementation holds the current Activity itself.
  */
 interface BillingRepository {
-
     /**
      * Prices for the given products, from the store, in the user's own currency.
      *

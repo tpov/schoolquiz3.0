@@ -28,19 +28,35 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  *
  * Переезжает только неотправленное. `sent_at_ms IS NOT NULL` — уже доехавшее до сервера; очередь
  * не архив (AD-4), а перенос такой строки под новым ключом был бы вторым применением ровно того,
- * от чего ключ и защищает. Заявки на арену такого столбца не имели — отправленная удалялась, — так
- * что там переезжает всё, что лежит.
+ * от чего ключ и защищает.
  *
  * `owner_uid` очереди — это чей аккаунт, а не чей контент (AD-8). У прохождений и оценок это
  * `user_id`; прежняя нулевая колонка `owner_uid` означала владельца приватного квеста и уезжает в
  * `payload` под своим именем.
+ *
+ * **Заявка на арену не переезжает — и это осознанный отход от истории 2.9.** Тело заявки, которое
+ * читает приёмник, содержит весь черновик: `draft`, `sections`, `themes`, `lessons`, `questions`,
+ * `review`. В прежней таблице `quest_arena_submission_outbox` ничего этого нет — там лежат только
+ * `draftId`, `localRevision`, список уроков и полка: прежний отправитель дочитывал черновик из
+ * базы в момент отправки. Собрать это тело средствами SQL нельзя, а собранное из одних колонок
+ * приёмник отвергает всегда: `quest_authoring.SUBMIT_ARENA` — операция версионируемая, и сверка
+ * версии читает `payload.draft.catalogId` и `payload.draft.id` ещё до обработчика. Перенос дал бы
+ * заведомо отвергаемую мутацию: круг до сервера, «причина отказа» вида `draft.catalogId and
+ * draft.id are required for a versioned submission` в карточке черновика — и та же потеря заявки,
+ * только неделей позже и словами, которые автору ничего не говорят.
+ *
+ * Поэтому строка снимается здесь же, локально и сразу: черновик возвращается в `DRAFT` с причиной
+ * на человеческом языке — тем же способом, каким его вернул бы откат по карантину
+ * (`QuestArenaQuarantineRollback`), только без поездки на сервер. Автор видит свой черновик
+ * редактируемым и подаёт его заново одним нажатием; заявка при этом соберётся заново, целиком и
+ * из настоящего черновика (AD-2).
  */
 val Migration5to6 =
     object : Migration(5, 6) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL(MOVE_ATTEMPTS)
             db.execSQL(MOVE_RATINGS)
-            db.execSQL(MOVE_ARENA_SUBMISSIONS)
+            db.execSQL(RELEASE_ARENA_DRAFTS)
 
             db.execSQL("DROP TABLE IF EXISTS `lesson_result_attempt_outbox`")
             db.execSQL("DROP TABLE IF EXISTS `quest_rating_outbox`")
@@ -56,7 +72,6 @@ val Migration5to6 =
  */
 private const val OPERATION_SUBMIT_ATTEMPT = "lesson_runner.SUBMIT_ATTEMPT"
 private const val OPERATION_SUBMIT_RATING = "lesson_runner.SUBMIT_RATING"
-private const val OPERATION_SUBMIT_ARENA = "quest_authoring.SUBMIT_ARENA"
 
 /**
  * Приставка ключа. Точка в `operation` тут не годится: сервер принимает ключ только из
@@ -64,7 +79,6 @@ private const val OPERATION_SUBMIT_ARENA = "quest_authoring.SUBMIT_ARENA"
  */
 private const val KEY_SUBMIT_ATTEMPT = "lesson_runner-SUBMIT_ATTEMPT-"
 private const val KEY_SUBMIT_RATING = "lesson_runner-SUBMIT_RATING-"
-private const val KEY_SUBMIT_ARENA = "quest_authoring-SUBMIT_ARENA-"
 
 /** Новая запись начинает жизнь ожидающей, без попыток за спиной и без отсрочки. */
 private const val STATE_WAITING = "WAITING"
@@ -147,37 +161,38 @@ private val MOVE_RATINGS =
     """.trimIndent()
 
 /**
- * Заявка на арену несёт с собой уже накопленные попытки: их счётчик — единственное, что осталось
- * от прежней истории строки, и обнулить его значило бы подарить безнадёжной заявке новый круг.
+ * Причина, которую увидит автор вместо заявки, которую нельзя перевезти честно.
+ *
+ * Текст человеческий намеренно: место, куда он ложится, — `rejection_reason` черновика, и оно
+ * показывается автору как есть. Технический текст приёмника в нём означал бы «что-то сломалось»
+ * ровно там, где на самом деле «подайте заново».
  */
-private val MOVE_ARENA_SUBMISSIONS =
+private const val ARENA_RELEASE_REASON =
+    "Заявка на арену не была отправлена до обновления приложения. Черновик снова открыт — " +
+        "подайте его на арену ещё раз."
+
+/**
+ * Черновик, чья заявка так и не уехала, возвращается автору редактируемым.
+ *
+ * Заявка не переносится в общую очередь (см. заголовок файла), поэтому её локальная половина —
+ * статус `REVIEW_QUEUED`, запирающий черновик как «уже подан», — обязана быть снята здесь же.
+ * Оставленный статус запер бы черновик навсегда: заявки, которая его откроет, больше не
+ * существует, а рецензент её никогда не видел.
+ *
+ * `updated_at_ms` не трогается намеренно: у миграции нет часов игрока, а это поле участвует в
+ * правиле расхождения черновика с сервером. Сдвинуть его значило бы объявить правку, которой
+ * автор не делал.
+ *
+ * Условие по статусу — чтобы не переписать причину отказа у черновика, который автор к этому
+ * моменту уже вернул себе сам.
+ */
+private val RELEASE_ARENA_DRAFTS =
     """
-    INSERT INTO `outbox` ($OUTBOX_COLUMNS)
-    SELECT
-        '$KEY_SUBMIT_ARENA' || `id`,
-        `ownerUid`,
-        '$OPERATION_SUBMIT_ARENA',
-        ${jsonObject(
-        "submissionId" to text("id"),
-        "draftId" to text("draftId"),
-        "ownerUid" to text("ownerUid"),
-        "localRevision" to number("localRevision"),
-        "requestedAtMs" to number("requestedAtMs"),
-        // Колонка прежней таблицы звалась `lessonIds`, поле тела зовётся `targetLessonIds`: так его
-        // пишет писатель новой заявки и так его читает сервер. Имя колонки в теле было бы вторым
-        // форматом одного и того же тела — приёмник знает один.
-        "targetLessonIds" to unitSeparatedArray("lessonIds"),
-        "targetShelf" to text("targetShelf"),
-    )},
-        'quest_authoring:draft:' || `draftId`,
-        NULL,
-        '$STATE_WAITING',
-        `attemptCount`,
-        0,
-        `lastError`,
-        `requestedAtMs`
-    FROM `quest_arena_submission_outbox`
-    WHERE ${keyIsFree("'$KEY_SUBMIT_ARENA' || `quest_arena_submission_outbox`.`id`")}
+    UPDATE `quest_drafts`
+    SET `status` = 'DRAFT',
+        `rejectionReason` = '${ARENA_RELEASE_REASON.replace("'", "''")}'
+    WHERE `status` = 'REVIEW_QUEUED'
+      AND `id` IN (SELECT `draftId` FROM `quest_arena_submission_outbox`)
     """.trimIndent()
 
 /**
@@ -249,15 +264,6 @@ private fun number(column: String): String = "CAST(`$column` AS TEXT)"
  * `wasTimeout` как булево, а `0` он принял бы за истину.
  */
 private fun boolean(column: String): String = "CASE WHEN `$column` = 0 THEN 'false' ELSE 'true' END"
-
-/**
- * Список, лежавший строкой через разделитель U+001F, становится JSON-массивом.
- *
- * Пустая строка — это пустой список, а не список из одной пустой строки, поэтому случай разведён
- * явно: наивная замена разделителя дала бы `[""]`.
- */
-private fun unitSeparatedArray(column: String): String =
-    """CASE WHEN `$column` = '' THEN '[]' ELSE '["' || replace(${escaped(column)}, char(31), '","') || '"]' END"""
 
 /**
  * Экранирование внутри JSON-строки.

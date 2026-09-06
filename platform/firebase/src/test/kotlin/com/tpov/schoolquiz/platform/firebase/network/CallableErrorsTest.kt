@@ -127,6 +127,50 @@ class CallableErrorsTest {
         assertEquals(SyncError.Disposition.CONFLICT, error.disposition)
     }
 
+    @Test
+    fun `given aborted with the documented detail then the server version comes through`() {
+        // Ровно то, что кладёт `versionConflictDetail` в functions/mutation-queue.js. Число едет
+        // отдельным полем, потому что разбирать его из текста сообщения запрещено (AD-15), а без
+        // него конфликт неразрешим (AD-24).
+        val error =
+            forCode(
+                code = "ABORTED",
+                message = "Entity moved to version 7",
+                details = mapOf(VERSION_CONFLICT_DETAIL_KEY to VERSION_CONFLICT_DETAIL, "serverVersion" to 7),
+            )
+
+        assertEquals(SyncError.VersionConflict(7L), error)
+    }
+
+    @Test
+    fun `given aborted with a fractional number then it is still read as a version`() {
+        // JSON не различает целые и дробные: SDK отдаёт то Integer, то Double, и приведение к
+        // Long обязано пережить оба.
+        val error =
+            forCode(
+                code = "ABORTED",
+                details = mapOf(VERSION_CONFLICT_DETAIL_KEY to VERSION_CONFLICT_DETAIL, "serverVersion" to 7.0),
+            )
+
+        assertEquals(SyncError.VersionConflict(7L), error)
+    }
+
+    @Test
+    fun `given aborted from somewhere else then the branch survives without a number`() {
+        // Чужой ABORTED — состязание транзакций Firestore, а не наша пометка. Ветвь остаётся
+        // конфликтом, но версии не несёт: выдумывать её нельзя.
+        assertEquals(SyncError.VersionConflict(), forCode("ABORTED", details = mapOf("code" to "something-else")))
+        assertEquals(SyncError.VersionConflict(), forCode("ABORTED", details = "version-conflict"))
+        assertEquals(
+            SyncError.VersionConflict(),
+            forCode("ABORTED", details = mapOf(VERSION_CONFLICT_DETAIL_KEY to VERSION_CONFLICT_DETAIL)),
+        )
+    }
+
+    private companion object {
+        const val VERSION_CONFLICT_DETAIL_KEY = "code"
+    }
+
     // ── Всё остальное ─────────────────────────────────────────────────────────
 
     @Test

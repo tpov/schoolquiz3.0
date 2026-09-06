@@ -13,7 +13,6 @@ enum class ShopItemId(val wireName: String) {
     ;
 
     companion object {
-        fun fromWireName(value: String): ShopItemId? =
-            entries.firstOrNull { it.wireName == value }
+        fun fromWireName(value: String): ShopItemId? = entries.firstOrNull { it.wireName == value }
     }
 }

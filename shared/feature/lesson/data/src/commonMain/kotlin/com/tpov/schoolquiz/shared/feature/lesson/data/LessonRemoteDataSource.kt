@@ -7,5 +7,8 @@ interface LessonRemoteDataSource {
     suspend fun fetchByIds(ids: Set<String>): List<LessonDto> = emptyList()
 
     /** Fetch lessons whose themeId is in themeIds and lastModifiedAt > cursor. themeIds.size ≤ 30. */
-    suspend fun fetchChangedByParents(themeIds: Set<String>, cursor: Long): List<LessonDto>
+    suspend fun fetchChangedByParents(
+        themeIds: Set<String>,
+        cursor: Long,
+    ): List<LessonDto>
 }

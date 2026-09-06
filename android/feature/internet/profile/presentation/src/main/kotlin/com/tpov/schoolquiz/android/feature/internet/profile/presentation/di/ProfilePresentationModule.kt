@@ -18,6 +18,8 @@ val profilePresentationModule =
                         updateProfileNickname = get(),
                         observeDailyActivity = get(),
                         linkGoogleAccount = get(),
+                        confirmAccountSwitch = get(),
+                        declineAccountSwitch = get(),
                         getLeagueStanding = get(),
                     ),
                 nicknames = get(),

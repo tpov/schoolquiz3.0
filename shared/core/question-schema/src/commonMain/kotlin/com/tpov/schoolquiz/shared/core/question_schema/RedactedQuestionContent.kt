@@ -58,7 +58,6 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface RedactedQuestionContent : QuestionDisplay {
-
     /**
      * Null when the payload carried no id of its own — which is every question in the seed corpus,
      * where `buildLesson` puts the id on the wrapper document and never inside `payload`
@@ -96,11 +95,12 @@ sealed interface RedactedQuestionContent : QuestionDisplay {
      * for. A convenience for consumers, not a field: it has no backing state and is not serialized.
      */
     override val difficultyOrNull: Difficulty?
-        get() = when (difficulty) {
-            Difficulty.EASY.name -> Difficulty.EASY
-            Difficulty.HARD.name -> Difficulty.HARD
-            else -> null
-        }
+        get() =
+            when (difficulty) {
+                Difficulty.EASY.name -> Difficulty.EASY
+                Difficulty.HARD.name -> Difficulty.HARD
+                else -> null
+            }
 
     /**
      * A visible label with an opaque id — the one row shape the emitter publishes, whether the row
@@ -123,7 +123,6 @@ sealed interface RedactedQuestionContent : QuestionDisplay {
         override val imageUrl: String?,
         val options: List<Row>,
     ) : RedactedQuestionContent {
-
         /**
          * A length over the option labels.
          *
@@ -148,7 +147,6 @@ sealed interface RedactedQuestionContent : QuestionDisplay {
         override val imageUrl: String?,
         val options: List<Row>,
     ) : RedactedQuestionContent {
-
         /**
          * Every option summed, still saying nothing about how many are correct.
          *
@@ -173,7 +171,6 @@ sealed interface RedactedQuestionContent : QuestionDisplay {
         override val imageUrl: String?,
         val items: List<Row>,
     ) : RedactedQuestionContent {
-
         /**
          * A length over the item labels. The emitter shuffled them; a sum cannot unshuffle.
          *
@@ -205,7 +202,6 @@ sealed interface RedactedQuestionContent : QuestionDisplay {
         val candidates: List<Row>,
         val protectedTextSegments: List<String> = emptyList(),
     ) : RedactedQuestionContent {
-
         /**
          * The word pool only. Not [blanks], which are bare ids, and not [protectedTextSegments].
          *

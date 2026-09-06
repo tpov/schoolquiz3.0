@@ -29,21 +29,22 @@ class SaveDraftQuestionUseCase(
             }
 
             val questionId = command.questionId ?: DraftQuestionId(idProvider.nextId("draft-question"))
-            val question = DraftQuestion(
-                id = questionId,
-                draftId = command.draftId,
-                lessonId = command.lessonId,
-                type = command.type,
-                language = command.language,
-                difficulty = command.difficulty,
-                order = command.order,
-                text = content.text,
-                imagePath = command.imagePath,
-                payload = command.payload,
-                validationState = DraftQuestionValidationState.SAVED,
-                updatedAtMs = timestampProvider.nowMs(),
-                languageLevel = command.languageLevel,
-            )
+            val question =
+                DraftQuestion(
+                    id = questionId,
+                    draftId = command.draftId,
+                    lessonId = command.lessonId,
+                    type = command.type,
+                    language = command.language,
+                    difficulty = command.difficulty,
+                    order = command.order,
+                    text = content.text,
+                    imagePath = command.imagePath,
+                    payload = command.payload,
+                    validationState = DraftQuestionValidationState.SAVED,
+                    updatedAtMs = timestampProvider.nowMs(),
+                    languageLevel = command.languageLevel,
+                )
             repository.upsertQuestion(question).getOrThrow()
             Result.success(questionId)
         } catch (e: CancellationException) {

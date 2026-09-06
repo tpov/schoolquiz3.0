@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ReturnCount:BuyGoldPackUseCase.kt$BuyGoldPackUseCase$suspend operator fun invoke(productId: StoreProductId): Result&lt;PurchaseOutcome&gt;</ID>
+    <ID>ReturnCount:ChargeRegeneration.kt$fun ChargeBalance.regenerated( rules: ChargeRules, nowMs: Long, /** * Сколько слотов у аккаунта куплено. * * Восстанавливается то, чем аккаунт владеет, а не всё, что можно купить: лестница цен продаёт * слоты по одному, и `maxOwned` — предел покупки, а не размер бака у каждого. Ниже потолка * бак ограничен слотами; выше — потолком (понижение не конфискует, но и не доливает). */ ownedSlots: Int = rules.maxOwned, /** Премиум восстанавливается быстрее — если таблица так говорит (`premiumRegenDivisor`). */ hasPremium: Boolean = false, ): ChargeBalance</ID>
+    <ID>ReturnCount:GiftBoxStreak.kt$GiftBoxStreak$fun visited(nowMs: Long): GiftBoxStreak</ID>
+    <ID>TooGenericExceptionCaught:SettlePurchaseUseCase.kt$SettlePurchaseUseCase$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,17 @@
+appId: com.tpov.schoolquiz
+---
+# Форма создания квеста уже открыта, каталог "Квесты" уже выбран (сделано вручную
+# до перехода на Maestro). Дозаполняем название квеста, раздела, темы, урока.
+- tapOn: "Квест"
+- inputText: "Прогон автотест"
+- back
+- tapOn: "Раздел"
+- inputText: "Раздел прогона"
+- back
+- tapOn: "Тема"
+- inputText: "Тема прогона"
+- back
+- tapOn: "Урок"
+- inputText: "Урок прогона"
+- back
+- takeScreenshot: 01-filled

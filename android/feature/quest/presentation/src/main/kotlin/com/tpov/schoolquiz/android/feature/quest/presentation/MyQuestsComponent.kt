@@ -51,4 +51,6 @@ data class DraftQuestDisplayItem(
     val status: QuestDraftStatus,
     val questionCount: Int,
     val isActive: Boolean,
+    /** Причина возврата, если заявка не прошла: показывается автору прямо в списке. */
+    val rejectionReason: String? = null,
 )

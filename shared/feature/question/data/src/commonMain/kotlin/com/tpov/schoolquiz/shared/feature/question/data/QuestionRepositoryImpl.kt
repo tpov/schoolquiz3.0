@@ -1,8 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.question.data
 
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.question.data.mapper.QuestionDtoMapper.toEntity
 import com.tpov.schoolquiz.shared.feature.question.data.mapper.QuestionMapper.toDomain
-import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
@@ -14,12 +14,10 @@ class QuestionRepositoryImpl(
     private val local: QuestionLocalDataSource,
     private val remote: QuestionRemoteDataSource,
 ) : QuestionRepository {
-
     override fun observeByLesson(lessonId: LessonId): Flow<List<Question>> =
         local.observeByLesson(lessonId.value).map { list -> list.map { it.toDomain() } }
 
-    override suspend fun getById(id: QuestionId): Question? =
-        local.findById(id.value)?.toDomain()
+    override suspend fun getById(id: QuestionId): Question? = local.findById(id.value)?.toDomain()
 
     override suspend fun refreshByIds(ids: Set<QuestionId>): Result<Unit> {
         if (ids.isEmpty()) return Result.success(Unit)
@@ -31,11 +29,11 @@ class QuestionRepositoryImpl(
                 local.deleteById(missingId)
             }
             for (dto in dtos) {
-                if (dto.archived) {
-                    local.deleteById(dto.id)
-                } else {
-                    local.upsertFromSyncList(dto.toEntity())
-                }
+                // `archived` СКРЫВАЕТ узел, а не удаляет его (AD-26, AC 7.6): строка и связанный с
+                // ней прогресс остаются в базе, а из выборок узел уходит — фильтр стоит в самом
+                // запросе DAO (`WHERE archived = 0`). Прежде здесь было `deleteById`, и архивация
+                // урока уносила у игрока скачанный урок вместе со всеми вопросами по каскаду FK.
+                local.upsertFromSyncList(dto.toEntity())
             }
             Result.success(Unit)
         } catch (e: CancellationException) {
@@ -45,17 +43,17 @@ class QuestionRepositoryImpl(
         }
     }
 
-    override suspend fun refreshByParents(lessonIds: Set<LessonId>, cursor: Long): Result<Unit> {
+    override suspend fun refreshByParents(
+        lessonIds: Set<LessonId>,
+        cursor: Long,
+    ): Result<Unit> {
         if (lessonIds.isEmpty()) return Result.success(Unit)
         return try {
             val dtos = remote.fetchChangedByParents(lessonIds.map { it.value }.toSet(), cursor)
             for (dto in dtos) {
-                if (dto.archived) {
-                    val localVersion = local.findById(dto.id)?.version ?: 0L
-                    if (dto.version > localVersion) local.deleteById(dto.id)
-                } else {
-                    local.upsertByIdIfNewerVersion(dto.toEntity())
-                }
+                // Тот же порядок и здесь: архивный вопрос записывается как скрытый, а не стирается —
+                // иначе ответы игрока по нему остались бы ссылками в никуда.
+                local.upsertByIdIfNewerVersion(dto.toEntity())
             }
             Result.success(Unit)
         } catch (e: CancellationException) {

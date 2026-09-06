@@ -34,6 +34,9 @@
     <string name="quizzes_shelf_show_world">Show in world championship</string>
     <string name="quizzes_shelf_show_archive">Return to archive</string>
     <string name="quizzes_shelf_retire">Unpublish everywhere</string>
+    <!-- Shelf move waiting in the outbox / refused by the server for good (AD-25, AD-28) -->
+    <string name="quizzes_shelf_sync_pending">Move pending</string>
+    <string name="quizzes_shelf_sync_quarantined">Move refused</string>
     <string name="quizzes_cd_random_quest">Random quest</string>
     <string name="quizzes_share_text">Quest “%1$s” — %2$s</string>
 </resources>

@@ -1,9 +1,9 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case
 
+import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.resultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
-import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 
 /**
  * What to study after an attempt, looked up here rather than on the screen.

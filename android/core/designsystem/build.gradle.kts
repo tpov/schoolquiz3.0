@@ -14,10 +14,12 @@ val noirTokensJson = rootProject.file("noir-design-system/tokens/noir.tokens.jso
 val noirTokensOutputDir = layout.buildDirectory.dir("generated/noirTokens/kotlin")
 
 val generateNoirTokens by tasks.registering {
-    inputs.file(noirTokensJson)
-    outputs.dir(noirTokensOutputDir)
+    val tokensJson = noirTokensJson
+    val tokensOutputDir = noirTokensOutputDir.get().asFile
+    inputs.file(tokensJson)
+    outputs.dir(tokensOutputDir)
     doLast {
-        val root = JsonSlurper().parse(noirTokensJson) as Map<*, *>
+        val root = JsonSlurper().parse(tokensJson) as Map<*, *>
         val sections = listOf("color", "accent", "status")
         val tokens =
             sections.flatMap { section ->
@@ -64,7 +66,7 @@ val generateNoirTokens by tasks.registering {
                 appendLine("}")
             }
 
-        val dir = noirTokensOutputDir.get().asFile.resolve("com/tpov/schoolquiz/android/core/designsystem/noir")
+        val dir = tokensOutputDir.resolve("com/tpov/schoolquiz/android/core/designsystem/noir")
         dir.mkdirs()
         dir.resolve("NoirColorTokens.kt").writeText(file)
     }

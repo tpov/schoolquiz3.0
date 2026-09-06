@@ -13,7 +13,10 @@ interface EconomyLocalDataSource {
 
     suspend fun find(uid: String): EconomyResourceBalance?
 
-    suspend fun upsert(uid: String, balance: EconomyResourceBalance)
+    suspend fun upsert(
+        uid: String,
+        balance: EconomyResourceBalance,
+    )
 }
 
 class RoomEconomyLocalDataSource(
@@ -22,10 +25,12 @@ class RoomEconomyLocalDataSource(
     override fun observe(uid: String): Flow<EconomyResourceBalance?> =
         userStatsDao.observeByUid(uid).map { entity -> entity?.toBalance() }
 
-    override suspend fun find(uid: String): EconomyResourceBalance? =
-        userStatsDao.findByUid(uid)?.toBalance()
+    override suspend fun find(uid: String): EconomyResourceBalance? = userStatsDao.findByUid(uid)?.toBalance()
 
-    override suspend fun upsert(uid: String, balance: EconomyResourceBalance) {
+    override suspend fun upsert(
+        uid: String,
+        balance: EconomyResourceBalance,
+    ) {
         val current = userStatsDao.findByUid(uid)
         userStatsDao.upsert(current?.mergeWithBalance(balance) ?: balance.toNewUserStatsEntity(uid))
     }

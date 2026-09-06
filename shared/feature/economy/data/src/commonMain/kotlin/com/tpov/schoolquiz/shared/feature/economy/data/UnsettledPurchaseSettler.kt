@@ -52,7 +52,6 @@ class UnsettledPurchaseSettler(
     private val retry: RetryPolicy = RetryPolicy(),
     private val log: (String, Throwable?) -> Unit = { _, _ -> },
 ) {
-
     /**
      * Tokens the server has refused, per account.
      *
@@ -94,64 +93,65 @@ class UnsettledPurchaseSettler(
      * until the process restarted. This loop is that clock: it backs off after a failure and,
      * when there is nothing to retry, waits for the queue to actually change before looking again.
      */
-    private suspend fun settleWhileOnline(uid: String) = coroutineScope {
-        val queue = billing.observeUnsettledPurchases()
-        // How many times each token has been attempted while this account has been online. Cleared
-        // with the scope, so a reconnection or an account change starts everyone over.
-        val attempts = mutableMapOf<String, Int>()
-        var backoffMs = 0L
+    private suspend fun settleWhileOnline(uid: String) =
+        coroutineScope {
+            val queue = billing.observeUnsettledPurchases()
+            // How many times each token has been attempted while this account has been online. Cleared
+            // with the scope, so a reconnection or an account change starts everyone over.
+            val attempts = mutableMapOf<String, Int>()
+            var backoffMs = 0L
 
-        while (isActive) {
-            if (backoffMs > 0L) delay(backoffMs)
+            while (isActive) {
+                if (backoffMs > 0L) delay(backoffMs)
 
-            // Ask the store again before reading its answer: an account change or a reconnection is
-            // exactly when a purchase nobody has seen yet becomes visible. A refresh that could not
-            // run leaves a stale — usually empty — queue, so it is worth another go rather than
-            // reading past it.
-            val refreshed = refreshQueue()
-            val snapshot = queue.first()
-            val settleable =
-                if (refreshed) {
-                    snapshot.filterNot {
-                        isRefused(uid, it.purchaseToken) ||
-                            (attempts[it.purchaseToken] ?: 0) >= retry.maxRounds
+                // Ask the store again before reading its answer: an account change or a reconnection is
+                // exactly when a purchase nobody has seen yet becomes visible. A refresh that could not
+                // run leaves a stale — usually empty — queue, so it is worth another go rather than
+                // reading past it.
+                val refreshed = refreshQueue()
+                val snapshot = queue.first()
+                val settleable =
+                    if (refreshed) {
+                        snapshot.filterNot {
+                            isRefused(uid, it.purchaseToken) ||
+                                (attempts[it.purchaseToken] ?: 0) >= retry.maxRounds
+                        }
+                    } else {
+                        emptyList()
                     }
-                } else {
-                    emptyList()
-                }
-            settleable.forEach { attempts[it.purchaseToken] = (attempts[it.purchaseToken] ?: 0) + 1 }
-            val unfinished = !refreshed || settleAll(uid, settleable)
+                settleable.forEach { attempts[it.purchaseToken] = (attempts[it.purchaseToken] ?: 0) + 1 }
+                val unfinished = !refreshed || settleAll(uid, settleable)
 
-            // Something arrived while we were working: go again now rather than sleeping through it.
-            if (queue.first() != snapshot) {
+                // Something arrived while we were working: go again now rather than sleeping through it.
+                if (queue.first() != snapshot) {
+                    backoffMs = 0L
+                    continue
+                }
+
+                if (unfinished && settleable.isNotEmpty()) {
+                    backoffMs = nextBackoff(backoffMs)
+                    continue
+                }
+
                 backoffMs = 0L
-                continue
-            }
-
-            if (unfinished && settleable.isNotEmpty()) {
-                backoffMs = nextBackoff(backoffMs)
-                continue
-            }
-
-            backoffMs = 0L
-            val stillWorthWaking =
-                snapshot.any {
-                    !isRefused(uid, it.purchaseToken) &&
-                        (attempts[it.purchaseToken] ?: 0) < retry.maxRounds
+                val stillWorthWaking =
+                    snapshot.any {
+                        !isRefused(uid, it.purchaseToken) &&
+                            (attempts[it.purchaseToken] ?: 0) < retry.maxRounds
+                    }
+                if (stillWorthWaking || (!refreshed && snapshot.isEmpty())) {
+                    // Bounded: the queue changes only when a new purchase arrives or a settled one is
+                    // consumed, so a purchase the server keeps answering PENDING — or a store that
+                    // could not be asked at all — would otherwise be waited on forever.
+                    withTimeoutOrNull(retry.coolDownMs) { queue.drop(1).first() }
+                } else {
+                    // Nothing left that this account can act on. Only a real event — a new purchase, a
+                    // reconnection, another account — is worth waking for, and each of those restarts
+                    // this scope from the top.
+                    queue.drop(1).first()
                 }
-            if (stillWorthWaking || (!refreshed && snapshot.isEmpty())) {
-                // Bounded: the queue changes only when a new purchase arrives or a settled one is
-                // consumed, so a purchase the server keeps answering PENDING — or a store that
-                // could not be asked at all — would otherwise be waited on forever.
-                withTimeoutOrNull(retry.coolDownMs) { queue.drop(1).first() }
-            } else {
-                // Nothing left that this account can act on. Only a real event — a new purchase, a
-                // reconnection, another account — is worth waking for, and each of those restarts
-                // this scope from the top.
-                queue.drop(1).first()
             }
         }
-    }
 
     /** @return true when the store answered; false when it could not be asked. */
     private suspend fun refreshQueue(): Boolean =

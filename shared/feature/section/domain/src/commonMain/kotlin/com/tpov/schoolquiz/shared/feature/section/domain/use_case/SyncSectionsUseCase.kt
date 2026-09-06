@@ -26,6 +26,8 @@ class SyncSectionsUseCase(
      *   to the theme sync step;
      *   [Result.failure] on error.
      */
-    suspend operator fun invoke(questIds: Set<QuestId>, cursor: Long = 0L): Result<Set<SectionId>> =
-        sections.refreshByParents(questIds, cursor)
+    suspend operator fun invoke(
+        questIds: Set<QuestId>,
+        cursor: Long = 0L,
+    ): Result<Set<SectionId>> = sections.refreshByParents(questIds, cursor)
 }

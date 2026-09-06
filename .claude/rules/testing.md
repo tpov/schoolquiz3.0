@@ -64,6 +64,23 @@ fun `given pending sync when retry succeeds then state is updated`() = runTest {
 - When code composes paths, channels, config, or generated IDs, include at least one test for the fully resolved value.
 - **Mapper round-trip field-level assertions** (menu-refactor retro fix): Mapper round-trip tests (Entity ↔ Domain, Domain ↔ DTO) MUST verify each field explicitly, не только `equals(original)`. Используй field-by-field assertions или property-based testing с field introspection. `equals()` on data class с дефолтными значениями (`val pictureUrl: String? = null`) скрывает field-drop bugs — `original.pictureUrl == null` AND `mapped.pictureUrl == null` returns true даже если mapper случайно dropped non-null value. **Source rationale**: menu-refactor Bug #5 — `pictureUrl` dropped в `CatalogMapper.kt` chain Entity→Domain→UI; round-trip tests passed because `equals()` returned true on default-null values.
 
+## Тесты по исходникам: только отрицательные утверждения
+
+Тест, читающий текст исходного файла вместо поведения, доказывает мало и легко закрепляет неверную реализацию. Разрешён он в двух случаях:
+
+- **Отрицательное утверждение о всём дереве**, которое поведением не проверить: «поля с таким именем нет нигде», «второй копии этой логики не появилось», «прямой вызов снят». Такой тест обязан считать просмотренные файлы и падать, если насчитал подозрительно мало: пустой результат должен значить «не нашли», а не «не искали».
+- **Граница, которую на JVM не поднять**: серверный `index.js` требует firebase-admin и учётных данных, поэтому «обработчик очереди и callable зовут одно тело» проверяется чтением исходника. Прецеденты: `arena-request-document.test.js`, `deferred-actions.test.js`.
+
+Во всех остальных случаях проверяется поведение. Признак нарушения: тест ищет подстроку в файле там, где то же самое утверждение можно получить, вызвав код с фейком. **Source rationale**: разбор эпика 7 — тест «третий способ удаления реализован» искал слово `archived` в файле репозитория; способ был реализован ровно наоборот критерию, и тест оставался зелёным.
+
+## Общие имена клиента и сервера — со сторожем
+
+Любое имя, которое обе стороны обязаны писать одинаково (операция очереди, тип события push, префикс `entity_ref`, поле тела мутации, ключ ответа callable), заводится **вместе со сторожем**, который читает исходник другой стороны и падает на расхождении. Образцы: `OutboxOperationsRegistryTest` (читает реестр `functions/index.js`), `PushEventsRegistryTest` (читает `functions/push-notifications.js`).
+
+Без сторожа каждая сторона проверяет только себя, и расхождение живёт до боя. **Source rationale**: эпик 10 — сервер писал `qualification.AUTHOR_RATING_CHANGED`, клиент ждал `profile.QUALIFICATION_CHANGED`; уведомление о квалификации не показалось бы никогда, а оба набора тестов были зелёными.
+
+Отдельно для серверной части: каждый файл `*.test.js` в `functions/` и `scripts/` обязан быть подключён в строку `test` своего `package.json`. Тест, лежащий в дереве и не запускаемый, — это не покрытие. **Source rationale**: эпик 5 — параллельная сессия переписала `package.json`, и новый тест выпал из прогона незамеченным.
+
 ## Avoid
 
 - No live network or production credentials in unit tests.

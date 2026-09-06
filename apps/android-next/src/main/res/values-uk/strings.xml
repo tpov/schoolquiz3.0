@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Українська локалізація обов'язкова (ст. 27 ч. 7 Закону 2704-VIII). -->
+<resources>
+    <!-- Push-сповіщення (Story 10.4): ключ на подію з PushEvents, без чисел (AD-20). -->
+    <string name="push_channel_name">Події</string>
+    <string name="push_quest_authoring_quest_published_title">Ваш квест опубліковано</string>
+    <string name="push_quest_authoring_quest_published_text">Перевірку завершено, квест доступний усім. Відкрийте застосунок, щоб переглянути.</string>
+    <string name="push_qualification_author_rating_changed_title">Кваліфікація змінилася</string>
+    <string name="push_qualification_author_rating_changed_text">Ваш рівень рецензента оновлено. Подробиці — у застосунку.</string>
+    <string name="push_profile_verification_approved_title">Верифікацію схвалено</string>
+    <string name="push_profile_verification_approved_text">Вашу верифікацію підтверджено. Відкрийте застосунок, щоб побачити зміни.</string>
+</resources>

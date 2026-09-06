@@ -43,6 +43,8 @@
     <string name="runner_result_kicker_easy">Lesson complete · easy</string>
     <string name="runner_result_kicker_hard">Lesson complete · hard</string>
     <string name="runner_result_save_warning">Result not saved — it will be lost on the next sync</string>
+    <string name="runner_result_sync_not_sent">Not sent yet — it will go with the next sync</string>
+    <string name="runner_result_sync_quarantined">Not sent: this attempt will not reach the server. Sync could not take it.</string>
     <string name="runner_result_best">Your best %1$d%%</string>
     <string name="runner_result_again">Try again</string>
     <string name="runner_result_next">Next →</string>

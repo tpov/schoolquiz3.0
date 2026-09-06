@@ -13,5 +13,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RatingId
  */
 interface RatingIdProvider {
     /** Каждый вызов — новое намерение и новый идентификатор. */
-    fun provide(userId: String, lessonId: LessonId): RatingId
+    fun provide(
+        userId: String,
+        lessonId: LessonId,
+    ): RatingId
 }

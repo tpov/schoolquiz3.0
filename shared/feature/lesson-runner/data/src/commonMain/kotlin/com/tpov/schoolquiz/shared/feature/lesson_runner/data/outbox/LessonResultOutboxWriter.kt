@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox
 
-import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
@@ -9,6 +8,7 @@ import com.tpov.schoolquiz.shared.core.persistence.QuestDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRating
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
@@ -66,7 +66,6 @@ class RoomLessonResultOutboxWriter(
     private val questDao: QuestDao,
     private val clock: Clock,
 ) : LessonResultOutboxWriter {
-
     override suspend fun buildAttemptRow(
         attempt: Attempt,
         answers: List<QuestionAnswerEntity>,

@@ -19,11 +19,12 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.TransitionResul
 // ---------------------------------------------------------------------------
 
 /** Root NavStack for the given DrawerSection (no backStack). */
-fun rootStackForSection(section: DrawerSection): NavStack<*> = when (section) {
-    is DrawerSection.LocalSection -> rootLocalStackForSection(section)
-    is DrawerSection.InternetSection -> rootInternetStackForSection(section)
-    is DrawerSection.EventsSection -> rootEventsStackForSection(section)
-}
+fun rootStackForSection(section: DrawerSection): NavStack<*> =
+    when (section) {
+        is DrawerSection.LocalSection -> rootLocalStackForSection(section)
+        is DrawerSection.InternetSection -> rootInternetStackForSection(section)
+        is DrawerSection.EventsSection -> rootEventsStackForSection(section)
+    }
 
 fun rootLocalStackForSection(section: DrawerSection.LocalSection): NavStack<LocalConfig> =
     when (section) {
@@ -70,7 +71,10 @@ fun rootEventsStackForSection(section: DrawerSection.EventsSection): NavStack<Ev
  * - Re-tap via SwitchTab(same tab) delegates to retap FSM
  * - Section visibility pre-guard (Business Rule #20)
  */
-fun navigate(state: AppShellState, destination: Destination): TransitionResult =
+fun navigate(
+    state: AppShellState,
+    destination: Destination,
+): TransitionResult =
     when (destination) {
         Destination.Back -> onBack(state)
         is Destination.SwitchTab -> onSwitchTab(state, destination.tab)
@@ -152,7 +156,10 @@ private fun popCurrentTabStack(state: AppShellState): AppShellState? {
  *
  * Business Rule #8: TabState preserved on every switch (activeSection + childStack).
  */
-fun onSwitchTab(state: AppShellState, targetTab: Tab): TransitionResult {
+fun onSwitchTab(
+    state: AppShellState,
+    targetTab: Tab,
+): TransitionResult {
     return if (targetTab == state.activeTab) {
         // Same tab → retap; outcome embedded via identity of stack
         val (newState, _) = onActiveTabRetap(state, targetTab)
@@ -175,43 +182,51 @@ fun onSwitchTab(state: AppShellState, targetTab: Tab): TransitionResult {
  * Returns Pair<AppShellState, RetapOutcome>.
  * State is the new state (possibly with backStack cleared).
  */
-fun onActiveTabRetap(state: AppShellState, tab: Tab): Pair<AppShellState, RetapOutcome> {
-    val isAtRoot = when (tab) {
-        Tab.LOCAL -> state.localState.stack.isAtRoot
-        Tab.INTERNET -> state.internetState.stack.isAtRoot
-        Tab.EVENTS -> state.eventsState.stack.isAtRoot
-        Tab.SHOP -> state.shopState.stack.isAtRoot
-    }
+fun onActiveTabRetap(
+    state: AppShellState,
+    tab: Tab,
+): Pair<AppShellState, RetapOutcome> {
+    val isAtRoot =
+        when (tab) {
+            Tab.LOCAL -> state.localState.stack.isAtRoot
+            Tab.INTERNET -> state.internetState.stack.isAtRoot
+            Tab.EVENTS -> state.eventsState.stack.isAtRoot
+            Tab.SHOP -> state.shopState.stack.isAtRoot
+        }
 
     return if (!isAtRoot) {
         // POP_TO_ROOT: clear backStack, keep the bottom-most config as active
-        val newState = when (tab) {
-            Tab.LOCAL -> {
-                val s = state.localState.stack
-                state.copy(
-                    localState = state.localState.copy(
-                        stack = s.replaceWithRoot(s.backStack.first()),
-                    ),
-                )
+        val newState =
+            when (tab) {
+                Tab.LOCAL -> {
+                    val s = state.localState.stack
+                    state.copy(
+                        localState =
+                            state.localState.copy(
+                                stack = s.replaceWithRoot(s.backStack.first()),
+                            ),
+                    )
+                }
+                Tab.INTERNET -> {
+                    val s = state.internetState.stack
+                    state.copy(
+                        internetState =
+                            state.internetState.copy(
+                                stack = s.replaceWithRoot(s.backStack.first()),
+                            ),
+                    )
+                }
+                Tab.EVENTS -> {
+                    val s = state.eventsState.stack
+                    state.copy(
+                        eventsState =
+                            state.eventsState.copy(
+                                stack = s.replaceWithRoot(s.backStack.first()),
+                            ),
+                    )
+                }
+                Tab.SHOP -> state // Shop has no real backStack in MVP
             }
-            Tab.INTERNET -> {
-                val s = state.internetState.stack
-                state.copy(
-                    internetState = state.internetState.copy(
-                        stack = s.replaceWithRoot(s.backStack.first()),
-                    ),
-                )
-            }
-            Tab.EVENTS -> {
-                val s = state.eventsState.stack
-                state.copy(
-                    eventsState = state.eventsState.copy(
-                        stack = s.replaceWithRoot(s.backStack.first()),
-                    ),
-                )
-            }
-            Tab.SHOP -> state // Shop has no real backStack in MVP
-        }
         Pair(newState, RetapOutcome.POP_TO_ROOT)
     } else {
         Pair(state, RetapOutcome.NO_OP)
@@ -233,7 +248,10 @@ fun onActiveTabRetap(state: AppShellState, tab: Tab): Pair<AppShellState, RetapO
  * - row 3: section.tab == activeTab, section == activeSection, drawer open → close drawer only (no guard needed)
  * - row 4: section.tab == activeTab, section == activeSection, drawer closed → no-op (no guard needed)
  */
-fun onSelectSection(state: AppShellState, section: DrawerSection): TransitionResult {
+fun onSelectSection(
+    state: AppShellState,
+    section: DrawerSection,
+): TransitionResult {
     val isSameTab = section.tab == state.activeTab
     val isSameSection = state.activeSection == section
 
@@ -259,26 +277,35 @@ fun onSelectSection(state: AppShellState, section: DrawerSection): TransitionRes
 }
 
 /** Sets the section and replaces the stack with the root of that section. */
-private fun setTabSection(state: AppShellState, section: DrawerSection): AppShellState =
+private fun setTabSection(
+    state: AppShellState,
+    section: DrawerSection,
+): AppShellState =
     when (section) {
-        is DrawerSection.LocalSection -> state.copy(
-            localState = TabState(
-                activeSection = section,
-                stack = rootLocalStackForSection(section),
-            ),
-        )
-        is DrawerSection.InternetSection -> state.copy(
-            internetState = TabState(
-                activeSection = section,
-                stack = rootInternetStackForSection(section),
-            ),
-        )
-        is DrawerSection.EventsSection -> state.copy(
-            eventsState = TabState(
-                activeSection = section,
-                stack = rootEventsStackForSection(section),
-            ),
-        )
+        is DrawerSection.LocalSection ->
+            state.copy(
+                localState =
+                    TabState(
+                        activeSection = section,
+                        stack = rootLocalStackForSection(section),
+                    ),
+            )
+        is DrawerSection.InternetSection ->
+            state.copy(
+                internetState =
+                    TabState(
+                        activeSection = section,
+                        stack = rootInternetStackForSection(section),
+                    ),
+            )
+        is DrawerSection.EventsSection ->
+            state.copy(
+                eventsState =
+                    TabState(
+                        activeSection = section,
+                        stack = rootEventsStackForSection(section),
+                    ),
+            )
     }
 
 // ---------------------------------------------------------------------------
@@ -316,10 +343,11 @@ fun onOpenDesignCatalog(state: AppShellState): TransitionResult =
     TransitionResult(
         state.copy(
             activeTab = Tab.LOCAL,
-            localState = TabState(
-                activeSection = null,
-                stack = NavStack(active = LocalConfig.DesignCatalogRoot),
-            ),
+            localState =
+                TabState(
+                    activeSection = null,
+                    stack = NavStack(active = LocalConfig.DesignCatalogRoot),
+                ),
             isDrawerOpen = false,
         ),
     )
@@ -331,14 +359,12 @@ fun onOpenDesignCatalog(state: AppShellState): TransitionResult =
 fun onOpenTournamentLeaderboard(
     state: AppShellState,
     event: DrawerSection.EventsSection,
-): TransitionResult =
-    pushTournamentChild(state, event, leaderboardConfigFor(event))
+): TransitionResult = pushTournamentChild(state, event, leaderboardConfigFor(event))
 
 fun onOpenTournamentParticipants(
     state: AppShellState,
     event: DrawerSection.EventsSection,
-): TransitionResult =
-    pushTournamentChild(state, event, participantsConfigFor(event))
+): TransitionResult = pushTournamentChild(state, event, participantsConfigFor(event))
 
 private fun leaderboardConfigFor(event: DrawerSection.EventsSection): EventsConfig? =
     when (event) {
@@ -377,10 +403,11 @@ private fun pushTournamentChild(
     return TransitionResult(
         state.copy(
             activeTab = Tab.EVENTS,
-            eventsState = TabState(
-                activeSection = event,
-                stack = baseStack.push(child),
-            ),
+            eventsState =
+                TabState(
+                    activeSection = event,
+                    stack = baseStack.push(child),
+                ),
             isDrawerOpen = false,
         ),
     )
@@ -436,8 +463,10 @@ fun onOpenQuestCreate(state: AppShellState): TransitionResult {
  * Returns state unchanged; future feature phases will parse URI and navigate.
  */
 @Suppress("UNUSED_PARAMETER")
-fun onDeepLink(state: AppShellState, deepLink: DeepLink): TransitionResult =
-    TransitionResult(state)
+fun onDeepLink(
+    state: AppShellState,
+    deepLink: DeepLink,
+): TransitionResult = TransitionResult(state)
 
 // ---------------------------------------------------------------------------
 // fallbackState

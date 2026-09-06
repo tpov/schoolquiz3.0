@@ -9,7 +9,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.NavStack
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.TabState
 
-/**
+/*
  * Pure factory functions for constructing initial per-tab states.
  *
  * Extracted from AppShellState.default() so that [AppShellState.default] and

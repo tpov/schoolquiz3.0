@@ -177,3 +177,98 @@
     emulator, not the live project: farm ratings and confirm no gate moves, score a lesson at
     the pass floor and confirm nothing publishes, attempt a self-review, and attempt a direct
     SDK write to quests.
+
+- id: "12"
+  title: Let a rejected quest be sent again
+  description: >-
+    A rejected or undelivered submission returned the draft to a state the submit path refused,
+    so the quest could never be sent again. Found on real devices during story 11; fixed here.
+  spec_checkpoint: false
+  status: done
+  invoke_dev_with: >-
+    Rejection and quarantine both return the draft to DRAFT with a reason
+    (QuestArenaQuarantineRollback.kt:10-14), and DRAFT was absent from the submittable set, while
+    SAVED is assigned only at creation (CreateQuestDraftUseCase.kt:40) — production upsertQuestion
+    does not touch status. DRAFT joins SUBMITTABLE_DRAFT_STATUSES; CONFLICT stays out because a
+    divergence has its own resolution path. Readiness is validated separately, so admitting DRAFT
+    cannot let unfinished work through. The four anonymous requires become six named rejection
+    types so the screen can name the real cause instead of always blaming missing questions.
+  acceptance_evidence: >-
+    QuestArenaSubmissionRejection.kt (new) holds the types and the status set;
+    SubmitQuestDraftToArenaUseCase.kt throws them; DefaultQuestCreateComponent.kt maps each to its
+    own string; four strings added to values, values-ru and values-uk. Five tests in
+    QuestAuthoringUseCaseTest.kt, of which "submit arena accepts a draft returned to DRAFT after
+    rejection" fails without the fix. Module green at 42 of 42.
+    FakeQuestAuthoringRepository.upsertQuestion no longer raises status to SAVED — that divergence
+    from production was why no test caught the dead end.
+
+- id: "13"
+  title: Tell the author why the submission came back
+  description: >-
+    The reason was stored on write and dropped on read, so a rejected author was left guessing.
+  spec_checkpoint: false
+  status: done
+  acceptance_evidence: >-
+    HEAD mapped rejectionReason on the way in only — neither QuestDraftEntity.toDomain nor
+    QuestDraftSummaryEntity.toDomain read it back. Both now do, the summary query selects it, and
+    the My Quests row renders it under the status. Transport codes collapse to one honest sentence
+    because a code is not something an author can act on; a reviewer's own words show verbatim.
+    Strings added to values, values-ru and values-uk. Covered by
+    observeDraftSummaries_carriesRejectionReason, which failed before the mapper fix.
+  invoke_dev_with: >-
+    rejectionReason survives all the way into QuestDraft (QuestDraft.kt:22) and is written by
+    applyRejection (QuestAuthoringLocalDataSource.kt:160) — verified on a device, the column held
+    NOT_FOUND. It appears nowhere under android/. Carry it into QuestDraftSummary and render it on
+    the My Quests row beside the status badge. Delivery failures store a transport code, so the
+    codes need human wording before they are shown: an author must not be told "NOT_FOUND".
+
+- id: "14"
+  title: Do not destroy the author's submission when delivery fails
+  description: >-
+    A missing or renamed server handler counts as a final refusal, which quarantines the mutation
+    and rolls the local change back. A deployment fault erases work.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Reproduced on a device: the arena submission went WAITING with zero attempts, then
+    QUARANTINED after one attempt with NOT_FOUND, and the draft fell from REVIEW_QUEUED to DRAFT
+    with nothing shown to the author. NOT_FOUND is classified as a final refusal
+    (CallableErrors.kt:112-123) alongside PERMISSION_DENIED and INVALID_ARGUMENT, and quarantine is
+    terminal (OutboxRecord.kt:83) with the DAO excluding quarantined rows. A refusal on the merits
+    and a handler that is not deployed are different things and must not share a disposition.
+    Decide the intended behaviour with the owner before coding: retry with backoff, a distinct
+    non-destructive state, or an explicit "could not send" the author can act on.
+
+- id: "15"
+  title: Open the draft the author tapped
+  description: >-
+    Tapping a draft in My Quests opens whichever draft happens to be active, not the one tapped,
+    so with more than one draft the author edits the wrong quest.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    DefaultMyQuestsComponent.onDraftClick discards its draft argument and calls
+    navigator.goTo(Destination.OpenQuestCreate) (line 140-142). The editor then loads the active
+    draft — on the run device that meant tapping the quest with two questions opened an empty
+    duplicate (isActive 0 versus 1 in quest_drafts). Carry the tapped draft id into the create
+    destination and load that draft, or activate it on open. Also worth deciding whether two
+    drafts may share a title at all: the duplicate here was created by simply re-entering the form.
+
+- id: "15"
+  title: Open the draft the author actually tapped
+  description: >-
+    Tapping any draft opened whichever one happened to be active, silently. Found while verifying
+    story 12 on a device; fixed here.
+  spec_checkpoint: false
+  status: done
+  invoke_dev_with: >-
+    onDraftClick took the tapped item and discarded it, navigating to OpenQuestCreate, and that
+    screen loads the active draft. Rather than parameterise the destination — which would touch the
+    shared app-shell and its tests — make the tapped draft active: the editor already opens the
+    active one, "exactly one is active" is an existing rule enforced when a draft is created, and
+    the DAO already had deactivateOtherDrafts.
+  acceptance_evidence: >-
+    DAO gains markDraftActive plus a transactional activateDraft; the local source, repository and
+    a new OpenQuestDraftUseCase carry it up; the component records the choice before navigating,
+    because navigating first would show the previous active draft. Covered by "opening a draft
+    makes it the active one", which asserts both that the tapped draft becomes active and that the
+    previous one is cleared. Nine fakes across the tree implement the two interfaces and all were
+    updated. Full ciCheck green.

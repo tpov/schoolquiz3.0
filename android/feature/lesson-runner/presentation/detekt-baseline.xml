@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>DestructuringDeclarationWithTooManyEntries:LessonRunnerPresentationModule.kt$(ctx: ComponentContext, lessonId: LessonId, mode: Difficulty, sessionMode: SessionMode)</ID>
+    <ID>LongMethod:RunnerStateMapper.kt$fun QuestionContent.toQuestionUiState( draft: UserAnswerDraft? = null, shuffleSeed: Long? = null, ): QuestionUiState</ID>
+  </CurrentIssues>
+</SmellBaseline>

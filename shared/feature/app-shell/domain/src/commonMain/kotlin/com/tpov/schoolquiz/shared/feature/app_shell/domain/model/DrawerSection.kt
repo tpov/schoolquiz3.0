@@ -63,10 +63,15 @@ sealed interface DrawerSection {
     sealed interface InternetSection : DrawerSection {
         override val tab: Tab get() = Tab.INTERNET
 
-        // Row 5 — requires USER >= TEACHINGS.first (3000)
+        // Row 5 — видна всем (порог снят решением владельца 2026-09-03).
+        //
+        // Стоял порог USER >= TEACHINGS.first (3000), и он противоречил замыслу выпуска: квест
+        // выпускается ТОЛЬКО на арену, а арену при таком пороге не видел ни один новый игрок и
+        // даже сам автор. Опубликованная работа попадала на полку, невидимую почти для всех.
+        //
+        // Порог у [Catalog] и [Social] сохранён: они не являются целью выпуска.
         data object Arena : InternetSection {
-            override val requiredRoles: Map<Role, Int>
-                get() = mapOf(Role.USER to Title.TEACHINGS.first)
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
         // Row 6 — requires USER >= TEACHINGS.first (3000)
@@ -117,12 +122,13 @@ sealed interface DrawerSection {
         // Row 11 — requires TESTER AND MODERATOR AND ADMIN AND DEVELOPER all >= QualificationLevel.LEVEL_1.points
         data object ActiveEvents : EventsSection {
             override val requiredRoles: Map<Role, Int>
-                get() = mapOf(
-                    Role.TESTER to QualificationLevel.LEVEL_1.points,
-                    Role.MODERATOR to QualificationLevel.LEVEL_1.points,
-                    Role.ADMIN to QualificationLevel.LEVEL_1.points,
-                    Role.DEVELOPER to QualificationLevel.LEVEL_1.points,
-                )
+                get() =
+                    mapOf(
+                        Role.TESTER to QualificationLevel.LEVEL_1.points,
+                        Role.MODERATOR to QualificationLevel.LEVEL_1.points,
+                        Role.ADMIN to QualificationLevel.LEVEL_1.points,
+                        Role.DEVELOPER to QualificationLevel.LEVEL_1.points,
+                    )
         }
 
         // Row 12 — requires USER >= PLAYER.first (10000)

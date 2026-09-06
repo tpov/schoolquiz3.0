@@ -6,18 +6,19 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 
 object QuestMapper {
-    fun QuestEntity.toDomain(): Quest = Quest(
-        id = QuestId(id),
-        catalogId = CatalogId(catalogId),
-        authorUid = authorUid,
-        title = title,
-        picturePath = picturePath,
-        pictureUrl = pictureUrl,
-        visibleOn = visibleOn,
-        averageRating = averageRating,
-        averageRatingCount = averageRatingCount,
-        version = version,
-        lastModifiedAt = lastModifiedAt,
-        archived = archived,
-    )
+    fun QuestEntity.toDomain(): Quest =
+        Quest(
+            id = QuestId(id),
+            catalogId = CatalogId(catalogId),
+            authorUid = authorUid,
+            title = title,
+            picturePath = picturePath,
+            pictureUrl = pictureUrl,
+            visibleOn = visibleOn,
+            averageRating = averageRating,
+            averageRatingCount = averageRatingCount,
+            version = version,
+            lastModifiedAt = lastModifiedAt,
+            archived = archived,
+        )
 }

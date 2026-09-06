@@ -1,11 +1,11 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
-import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
-import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError
@@ -19,7 +19,6 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerD
  * Error paths: Loading → InitFailed; Ready → Aborted | SaveFailed
  */
 sealed interface RunnerState {
-
     /** Initial state while StartLessonAttemptUseCase is loading questions. */
     data object Loading : RunnerState
 

@@ -10,6 +10,10 @@ class PlaceholderProfileComponent : ProfileComponent {
 
     override fun onLinkGoogle(host: AccountChooserHost) = Unit
 
+    override fun onConfirmAccountSwitch() = Unit
+
+    override fun onDeclineAccountSwitch() = Unit
+
     override fun onScreenShown() = Unit
 
     override fun onStartRename() = Unit

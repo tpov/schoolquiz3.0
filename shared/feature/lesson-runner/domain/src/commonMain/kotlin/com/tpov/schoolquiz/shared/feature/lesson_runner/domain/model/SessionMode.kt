@@ -27,6 +27,5 @@ enum class SessionMode {
      * The matrix comes from ADR-0005: revealed only while learning, and only on easy questions —
      * hard ones are the assessment even during practice.
      */
-    fun revealsCorrectAnswer(difficulty: Difficulty): Boolean =
-        this == LEARNING && difficulty == Difficulty.EASY
+    fun revealsCorrectAnswer(difficulty: Difficulty): Boolean = this == LEARNING && difficulty == Difficulty.EASY
 }

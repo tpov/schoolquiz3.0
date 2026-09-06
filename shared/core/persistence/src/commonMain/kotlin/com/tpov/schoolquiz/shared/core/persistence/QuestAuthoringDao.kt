@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface QuestAuthoringDao {
-
     @Query(
         """
         SELECT
@@ -19,7 +18,8 @@ interface QuestAuthoringDao {
             draft.status AS status,
             COUNT(question.id) AS questionCount,
             draft.updatedAtMs AS updatedAtMs,
-            draft.isActive AS isActive
+            draft.isActive AS isActive,
+            draft.rejectionReason AS rejectionReason
         FROM quest_drafts draft
         LEFT JOIN draft_questions question ON question.draftId = draft.id
         WHERE draft.ownerUid = :ownerUid
@@ -108,7 +108,29 @@ interface QuestAuthoringDao {
     suspend fun deleteSections(draftId: String)
 
     @Query("UPDATE quest_drafts SET isActive = 0 WHERE ownerUid = :ownerUid AND id != :exceptDraftId")
-    suspend fun deactivateOtherDrafts(ownerUid: String, exceptDraftId: String)
+    suspend fun deactivateOtherDrafts(
+        ownerUid: String,
+        exceptDraftId: String,
+    )
+
+    @Query("UPDATE quest_drafts SET isActive = 1 WHERE id = :draftId")
+    suspend fun markDraftActive(draftId: String)
+
+    /**
+     * Делает выбранный черновик тем, который откроет редактор.
+     *
+     * Одной транзакцией, потому что «активен ровно один» — это правило, а не совпадение: между
+     * снятием и установкой не должно существовать состояния, где активны два черновика или ни
+     * одного.
+     */
+    @Transaction
+    suspend fun activateDraft(
+        ownerUid: String,
+        draftId: String,
+    ) {
+        deactivateOtherDrafts(ownerUid, draftId)
+        markDraftActive(draftId)
+    }
 
     @Query(
         """
@@ -119,7 +141,10 @@ interface QuestAuthoringDao {
         WHERE id = :draftId
         """,
     )
-    suspend fun touchDraftAfterQuestionChange(draftId: String, updatedAtMs: Long)
+    suspend fun touchDraftAfterQuestionChange(
+        draftId: String,
+        updatedAtMs: Long,
+    )
 
     @Query(
         """
@@ -169,6 +194,27 @@ interface QuestAuthoringDao {
         draftId: String,
         status: String,
         rejectionReason: String?,
+        updatedAtMs: Long,
+    )
+
+    /**
+     * Records the version the server assigned, touching nothing else.
+     *
+     * Used when the server's snapshot is the echo of this device's own submission: the draft keeps
+     * its content and only learns which version it now is. Without this the next submission goes
+     * out without a version and the server answers with a conflict nobody caused.
+     */
+    @Query(
+        """
+        UPDATE quest_drafts
+        SET serverRevision = :serverRevision,
+            updatedAtMs = :updatedAtMs
+        WHERE id = :draftId
+        """,
+    )
+    suspend fun updateDraftServerRevision(
+        draftId: String,
+        serverRevision: Long,
         updatedAtMs: Long,
     )
 
@@ -231,11 +277,41 @@ interface QuestAuthoringDao {
         updateDraftStatus(draftId = draftId, status = "REVIEW_QUEUED", updatedAtMs = updatedAtMs)
     }
 
+    /** Снимает запись очереди. Очередь — не архив (AD-4): разрешённый конфликт исчезает. */
+    @Query("DELETE FROM outbox WHERE id = :id")
+    suspend fun deleteOutboxRow(id: Long)
+
+    /**
+     * Разрешает конфликт черновика: снимает отвергнутую заявку и ставит новую (AD-24, AD-2).
+     *
+     * Одной транзакцией, и вместе со статусом черновика (AD-23). Порознь возможны обе беды и обе
+     * молчаливые: черновик, показанный конфликтным, но без единой записи в очереди, — и заявка,
+     * уехавшая под новым ключом с черновика, который для автора всё ещё «разошёлся».
+     *
+     * Прежняя запись именно удаляется, а не переписывается: её ключ сервер уже видел и отверг, и
+     * второй раз по нему не применит ничего.
+     */
+    @Transaction
+    suspend fun resolveArenaConflict(
+        conflictedRowId: Long,
+        replacement: OutboxEntity,
+        draftId: String,
+        updatedAtMs: Long,
+    ) {
+        deleteOutboxRow(conflictedRowId)
+        val insertResult = enqueueOutboxRow(replacement)
+        if (insertResult == OUTBOX_ROW_IGNORED) {
+            requireOutboxIntentQueued(insertResult, replacement.mutationId, outboxRowState(replacement.mutationId))
+        }
+        updateDraftStatus(draftId = draftId, status = "REVIEW_QUEUED", updatedAtMs = updatedAtMs)
+    }
+
     @Transaction
     suspend fun upsertQuestion(entity: DraftQuestionEntity) {
-        val lessonDraftId = requireNotNull(findLessonDraftId(entity.lessonId)) {
-            "Draft lesson ${entity.lessonId} not found"
-        }
+        val lessonDraftId =
+            requireNotNull(findLessonDraftId(entity.lessonId)) {
+                "Draft lesson ${entity.lessonId} not found"
+            }
         require(lessonDraftId == entity.draftId) {
             "Question draft ${entity.draftId} does not match lesson draft $lessonDraftId"
         }

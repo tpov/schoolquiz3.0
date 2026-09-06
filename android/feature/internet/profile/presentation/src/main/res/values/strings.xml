@@ -70,6 +70,37 @@
     <string name="profile_message_nickname_updated">Nickname updated</string>
     <string name="profile_message_google_linked">Account linked, progress saved</string>
     <string name="profile_message_google_switched">Signed in to the existing account — guest progress stayed there</string>
-    <string name="profile_message_google_switched_with_unsent">Signed in to the existing account — some of your last actions had not reached the server and cannot be sent now</string>
+
+    <!-- The question before switching to another account: what will be lost (AD-8). -->
+    <string name="profile_switch_warning_title">Switch account?</string>
+    <!-- One line per state, never a single total: "6 actions" hides the conflict waiting on you. -->
+    <plurals name="profile_switch_warning_waiting">
+        <item quantity="one">%d action is still waiting to be sent</item>
+        <item quantity="other">%d actions are still waiting to be sent</item>
+    </plurals>
+    <plurals name="profile_switch_warning_waiting_precondition">
+        <item quantity="one">%d action is waiting for an earlier one to arrive</item>
+        <item quantity="other">%d actions are waiting for an earlier one to arrive</item>
+    </plurals>
+    <plurals name="profile_switch_warning_conflicted">
+        <item quantity="one">%d action disagrees with the server and is waiting for your decision</item>
+        <item quantity="other">%d actions disagree with the server and are waiting for your decision</item>
+    </plurals>
+    <plurals name="profile_switch_warning_quarantined">
+        <item quantity="one">%d action failed for good and will not be sent</item>
+        <item quantity="other">%d actions failed for good and will not be sent</item>
+    </plurals>
+    <plurals name="profile_switch_warning_synchronous">
+        <item quantity="one">%d action was sent, and its outcome is still unknown</item>
+        <item quantity="other">%d actions were sent, and their outcome is still unknown</item>
+    </plurals>
+    <string name="profile_switch_warning_unsent_unknown">Some of your last actions have not reached the server and will be lost — how many could not be counted</string>
+    <string name="profile_switch_warning_data_title">These are kept on this device only and will not come back:</string>
+    <string name="profile_switch_warning_data_answer_history">your answer history</string>
+    <string name="profile_switch_warning_data_repetition_schedule">your repetition schedule</string>
+    <string name="profile_switch_warning_data_quest_drafts">quest drafts you have not published</string>
+    <string name="profile_switch_warning_irreversible">Confirming deletes them for good. Declining keeps you in the current account, and nothing is deleted.</string>
+    <string name="profile_switch_warning_confirm">Switch and lose them</string>
+    <string name="profile_switch_warning_decline">Stay here</string>
     <string name="profile_message_sync_failed">Could not sync the profile</string>
 </resources>

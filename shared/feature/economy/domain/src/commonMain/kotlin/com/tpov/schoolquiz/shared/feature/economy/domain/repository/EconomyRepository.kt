@@ -18,7 +18,10 @@ interface EconomyRepository {
      * Opens a lesson with nolics. The server prices it from the lesson's own allocated time and
      * charges it; buying the same thing twice is a no-op rather than a second charge.
      */
-    suspend fun unlockLesson(lessonId: String, kind: LessonUnlockKind): Result<EconomyResourceBalance>
+    suspend fun unlockLesson(
+        lessonId: String,
+        kind: LessonUnlockKind,
+    ): Result<EconomyResourceBalance>
 
     suspend fun referralProgram(): ReferralProgram
 }

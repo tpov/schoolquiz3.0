@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
  * Spec: home-and-my-quests `0-spec.md` Decision #42 (uid acquisition path).
  */
 interface AuthRepository {
-
     /**
      * One-shot snapshot of the current authenticated user's UID.
      *

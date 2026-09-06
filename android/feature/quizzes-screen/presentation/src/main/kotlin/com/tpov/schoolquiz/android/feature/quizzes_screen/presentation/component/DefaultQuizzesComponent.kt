@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthReposi
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonUnlockQueue
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
@@ -59,6 +60,8 @@ class DefaultQuizzesComponent(
     private val lessonAttemptRepository: LessonAttemptRepository,
     private val authRepository: AuthRepository,
     private val economyRepository: EconomyRepository,
+    /** Очередь разблокировок фичи lesson — передаётся вниз в список уроков (история 5.3). */
+    private val queueLessonUnlock: LessonUnlockQueue,
     private val questionRepository: QuestionRepository,
     private val catalogRepository: CatalogRepository,
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
@@ -319,18 +322,19 @@ class DefaultQuizzesComponent(
             is QuizzesConfig.QuestList ->
                 QuizzesChild.QuestList(
                     DefaultQuestListComponent(
-                        ctx,
-                        config,
-                        questRepository,
-                        sectionRepository,
-                        themeRepository,
-                        lessonRepository,
-                        questionRepository,
-                        setPublicQuestShelf,
-                        retirePublicQuest,
-                        questContentSync,
-                        navigation,
-                        mainContext,
+                        componentContext = ctx,
+                        config = config,
+                        questRepository = questRepository,
+                        sectionRepository = sectionRepository,
+                        themeRepository = themeRepository,
+                        lessonRepository = lessonRepository,
+                        questionRepository = questionRepository,
+                        authRepository = authRepository,
+                        setPublicQuestShelf = setPublicQuestShelf,
+                        retirePublicQuest = retirePublicQuest,
+                        questContentSync = questContentSync,
+                        navigation = navigation,
+                        coroutineContext = mainContext,
                     ),
                 )
             is QuizzesConfig.SectionList ->
@@ -350,6 +354,7 @@ class DefaultQuizzesComponent(
                         lessonAttemptRepository,
                         authRepository,
                         economyRepository,
+                        queueLessonUnlock,
                         navigation,
                         lessonContentSync,
                         observeLessonUnlockPrices,

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>EmptyFunctionBlock:KoinModuleWiringTest.kt$KoinModuleWiringTest.&lt;no name provided&gt;${}</ID>
+    <ID>MatchingDeclarationName:SyncModule.kt$ProfileSyncables</ID>
+    <ID>MaxLineLength:KoinModuleWiringTest.kt$KoinModuleWiringTest$*</ID>
+    <ID>MaxLineLength:KoinModuleWiringTest.kt$KoinModuleWiringTest$modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, testLessonResultOutboxDepsStub, lessonRunnerDataModule)</ID>
+    <ID>MaxLineLength:KoinModuleWiringTest.kt$KoinModuleWiringTest$modules(testPurchaseStubsModule, economyDomainModule(currentUidFlow = { flowOf("uid-test") }, buyerTag = { "tag($it)" }))</ID>
+    <ID>MaxLineLength:KoinModuleWiringTest.kt$KoinModuleWiringTest.&lt;no name provided&gt;$override fun observeByLesson(userId: String, lessonId: LessonId): Flow&lt;List&lt;Attempt&gt;&gt;</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest.data
 
 import com.tpov.schoolquiz.shared.core.catalog.data.StorageUrlResolver
+import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeOutboxStore
 import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeQuestLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeQuestRemoteDataSource
 import kotlinx.coroutines.flow.first
@@ -28,6 +29,7 @@ class MyQuestsOfflineEmptyIntegrationTest {
         local = fakeLocal,
         remote = fakeRemote,
         storageUrlResolver = noOpResolver,
+        outbox = FakeOutboxStore(),
     )
 
     // Journey 3 / AC#31: empty Room + offline → observeMyQuests emits empty list, no crash

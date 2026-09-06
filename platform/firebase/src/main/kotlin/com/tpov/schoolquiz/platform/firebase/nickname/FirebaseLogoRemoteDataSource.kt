@@ -13,6 +13,9 @@ import kotlinx.coroutines.tasks.await
  * Gold, the owned list and the avatar on the account all have to move together, which is why every
  * mutation here is a call and not a write: a client that could edit its own logo list could grant
  * itself the set for nothing.
+ *
+ * Cancelling a lot is not a call from here: it goes through the shared outbox to the one mutation
+ * receiver (`submitMutation`, AD-6), which is the only place the idempotency key is checked.
  */
 class FirebaseLogoRemoteDataSource(
     private val functions: FirebaseFunctions,
@@ -49,10 +52,6 @@ class FirebaseLogoRemoteDataSource(
         call(LIST_FOR_SALE, mapOf(LOGO to logo, PRICE to price))
     }
 
-    override suspend fun cancelListing(logo: String) {
-        call(CANCEL_LISTING, mapOf(LOGO to logo))
-    }
-
     override suspend fun buyListed(logo: String): Long = call(BUY_LISTED, mapOf(LOGO to logo)).number(COMMISSION) ?: 0L
 
     private suspend fun call(
@@ -76,7 +75,6 @@ class FirebaseLogoRemoteDataSource(
         const val WEAR = "wearLogo"
         const val FETCH_LISTINGS = "fetchLogoListings"
         const val LIST_FOR_SALE = "listLogoForSale"
-        const val CANCEL_LISTING = "cancelLogoListing"
         const val BUY_LISTED = "buyListedLogo"
         const val LOGOS = "logos"
         const val LISTINGS = "listings"

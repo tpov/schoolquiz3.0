@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonUnlockQueue
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
@@ -46,6 +47,7 @@ class DefaultLessonListComponentTest {
     private val fakeAttemptRepo = FakeLessonAttemptRepository()
     private val fakeAuthRepo = FakeAuthRepository(initialUid = "user-1")
     private val fakeEconomyRepo = FakeEconomyRepository()
+    private val fakeUnlockQueue = FakeLessonUnlockQueue()
     private val fakeNavigation = FakeStackNavigation()
 
     @After
@@ -75,6 +77,7 @@ class DefaultLessonListComponentTest {
             attemptRepository = fakeAttemptRepo,
             authRepository = fakeAuthRepo,
             economyRepository = fakeEconomyRepo,
+            queueLessonUnlock = fakeUnlockQueue,
             config = QuizzesConfig.LessonList(themeId = themeId, breadcrumbs = breadcrumbs),
             coroutineContext = dispatcher,
         )

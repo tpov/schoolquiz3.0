@@ -9,7 +9,10 @@ package com.tpov.schoolquiz.shared.core.analytics
 object NoOpAnalyticsTracker : AnalyticsTracker {
     override fun track(event: AnalyticsEvent) = Unit
 
-    override fun setUserProperty(property: UserProperty, value: String) = Unit
+    override fun setUserProperty(
+        property: UserProperty,
+        value: String,
+    ) = Unit
 
     override fun setUserId(userId: String?) = Unit
 }
@@ -34,7 +37,10 @@ class RecordingAnalyticsTracker : AnalyticsTracker {
         recorded += event
     }
 
-    override fun setUserProperty(property: UserProperty, value: String) {
+    override fun setUserProperty(
+        property: UserProperty,
+        value: String,
+    ) {
         properties[property] = value
     }
 

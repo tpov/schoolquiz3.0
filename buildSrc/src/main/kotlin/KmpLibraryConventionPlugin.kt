@@ -5,6 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 class KmpLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -12,6 +13,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             pluginManager.apply("com.android.library")
             pluginManager.apply("org.jetbrains.kotlin.multiplatform")
             pluginManager.apply("io.gitlab.arturbosch.detekt")
+            pluginManager.apply("org.jlleitschuh.gradle.ktlint")
 
             extensions.configure<KotlinMultiplatformExtension> {
                 androidTarget()
@@ -44,6 +46,28 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 buildUponDefaultConfig = true
                 allRules = false
                 config.setFrom(rootProject.files("config/detekt/detekt.yml"))
+                baseline = file("detekt-baseline.xml")
+            }
+
+            extensions.configure<KtlintExtension> {
+                version.set("1.1.1")
+                android.set(true)
+                ignoreFailures.set(false)
+                filter {
+                    exclude { it.file.path.contains("/build/") }
+                    exclude { it.file.path.contains("/generated/") }
+                    exclude { it.file.path.contains("Test/") }
+                    exclude { it.file.path.contains("/test/") }
+                }
+            }
+
+            // Задача `detekt` у KMP-модуля ничего не видит: исходники лежат в commonMain и jvmMain,
+            // а она смотрит в src/main/java. Именно её собирали корневой агрегат и ciCheck, поэтому
+            // весь общий код проекта — очередь, синхронизация, база, домены и data-слои фич —
+            // не проверялся ни разу, а гейт был зелёным. Настоящий анализ дают задачи
+            // detektMetadata*/detekt<Target>; вешаем на check их, а не пустышку.
+            tasks.named("check").configure {
+                dependsOn(tasks.matching { it.name.startsWith("detektMetadata") })
             }
         }
     }

@@ -27,29 +27,55 @@ import androidx.room.TypeConverters
         QuestionAnswerEntity::class,
         QuestionRepetitionEntity::class,
         OutboxEntity::class,
+        SyncRunTraceEntity::class,
     ],
     // Bumped whenever the schema changes. Destructive fallback only fires on a version change —
     // leaving the number alone makes Room compare identity hashes and crash instead.
-    version = 6,
+    version = 10,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userStatsDao(): UserStatsDao
+
     abstract fun catalogDao(): CatalogDao
+
     abstract fun questDao(): QuestDao
+
     abstract fun sectionDao(): SectionDao
+
     abstract fun themeDao(): ThemeDao
+
     abstract fun lessonDao(): LessonDao
+
     abstract fun questionDao(): QuestionDao
+
     abstract fun lessonAttemptDao(): LessonAttemptDao
+
     abstract fun lessonRatingLocalDao(): LessonRatingLocalDao
+
     abstract fun syncStateDao(): SyncStateDao
+
     abstract fun questAuthoringDao(): QuestAuthoringDao
+
     abstract fun reviewAssignmentDao(): ReviewAssignmentDao
+
     abstract fun userProfileDao(): UserProfileDao
+
     abstract fun questionAnswerDao(): QuestionAnswerDao
+
     abstract fun questionRepetitionDao(): QuestionRepetitionDao
 
     abstract fun outboxDao(): OutboxDao
+
+    /**
+     * След прогона синхронизации — по строке на владельца и вид прогона (AD-14).
+     *
+     * Вид в ключе с версии 10: расписаний несколько, и общая строка означала, что удачный
+     * профильный прогон снимает ветвь упавшего контентного.
+     */
+    abstract fun syncRunTraceDao(): SyncRunTraceDao
+
+    /** Строки прежнего владельца — вторая операция смены аккаунта (AD-8). Схемы не касается. */
+    abstract fun ownerRowsDao(): OwnerRowsDao
 }

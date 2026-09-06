@@ -19,6 +19,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonUnlockQueue
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
@@ -86,6 +87,7 @@ class DefaultQuizzesComponentTest {
             lessonAttemptRepository = FakeLessonAttemptRepository(),
             authRepository = FakeAuthRepository(),
             economyRepository = FakeEconomyRepository(),
+            queueLessonUnlock = FakeLessonUnlockQueue(),
             questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),

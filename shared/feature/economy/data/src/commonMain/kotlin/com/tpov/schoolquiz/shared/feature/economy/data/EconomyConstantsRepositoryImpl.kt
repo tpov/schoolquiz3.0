@@ -19,7 +19,6 @@ class EconomyConstantsRepositoryImpl(
     private val remote: EconomyConstantsRemoteDataSource,
     private val store: EconomyConstantsStore,
 ) : EconomyConstantsRepository {
-
     private val state = MutableStateFlow(store.read() ?: EconomyConstants.BOOTSTRAP)
 
     override fun observe(): Flow<EconomyConstants> = state.asStateFlow()

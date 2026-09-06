@@ -8,12 +8,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SectionDao {
-
-    @Query("""
+    @Query(
+        """
         SELECT * FROM sections
         WHERE questId = :questId AND archived = 0
         ORDER BY `order` ASC
-    """)
+    """,
+    )
     fun observeByQuest(questId: String): Flow<List<SectionEntity>>
 
     @Query("SELECT * FROM sections WHERE id = :id")

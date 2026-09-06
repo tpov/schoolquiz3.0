@@ -13,7 +13,9 @@ import kotlin.test.assertTrue
  * же попытка на новом устройстве была бы оценена в двух местах по-разному: игрок увидел бы одну
  * цену, а списали бы другую, и объяснить это было бы нечем.
  *
- * Поэтому источник один — `config/economy-constants.json`, — и обе стороны его читают.
+ * Поэтому источник один — `functions/config/economy-constants.json`, — и обе стороны его читают.
+ * Лежит он внутри каталога функций не случайно: деплой упаковывает только его, и объявление,
+ * оставшееся снаружи, уронило бы загрузку всего серверного кода.
  *
  * JVM-тест, а не общий: файл с диска общий код не видит. Разбор минимальный — тащить зависимость
  * на JSON ради десятка полей дороже, чем прочитать их.
@@ -21,7 +23,7 @@ import kotlin.test.assertTrue
 class EconomyConstantsParityTest {
 
     private val text: String by lazy {
-        val file = File("../../../../config/economy-constants.json")
+        val file = File("../../../../functions/config/economy-constants.json")
         assertTrue(file.exists(), "нет общего файла настроек: ${file.absolutePath}")
         file.readText()
     }

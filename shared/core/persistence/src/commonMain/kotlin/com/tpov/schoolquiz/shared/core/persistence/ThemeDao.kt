@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ThemeDao {
-
     @Query("SELECT * FROM themes WHERE sectionId = :sectionId AND archived = 0 ORDER BY `order` ASC")
     fun observeBySection(sectionId: String): Flow<List<ThemeEntity>>
 
