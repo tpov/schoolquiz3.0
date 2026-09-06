@@ -27,6 +27,7 @@ const {
   MAX_TOKEN_LENGTH,
   STATUS_CREDITED,
   STATUS_REFUNDED,
+  PRODUCT_PREMIUM,
 } = require("./purchase-verification");
 
 /** Сообщения топика: один документ на id сообщения. Закрыто правилами, как и расчёты. */
@@ -208,6 +209,12 @@ function decideClawback({settlement, purchase, uid, now}) {
       isTest: settlement.isTest === true,
       purchaseState: purchase ? purchase.purchaseState : null,
       atMs: wholeAtLeastZero(now),
+      ...(settlement.productKind === PRODUCT_PREMIUM ? {
+        productKind: PRODUCT_PREMIUM,
+        premiumGrantId: settlement.premiumGrantId,
+        premiumGrantedMs: settlement.premiumGrantedMs,
+        premiumDays: settlement.premiumDays,
+      } : {}),
     },
   };
 }
@@ -224,7 +231,7 @@ function verdict(decision, reason) {
  * `settlementGate` перестаёт отвечать повтором «начислено» — повторная проверка того же токена
  * получит отказ вместо разрешения погасить покупку, за которую деньги вернули.
  */
-function refundSettlementUpdate({clawback, notificationId, goldBefore, goldAfter, shortfallAdded, now}) {
+function refundSettlementUpdate({clawback, notificationId, goldBefore, goldAfter, shortfallAdded, now, premiumRevokedMs, premiumConsumedMs, premiumUntilMs}) {
   return {
     status: STATUS_REFUNDED,
     refundedAtMs: wholeAtLeastZero(now),
@@ -234,6 +241,7 @@ function refundSettlementUpdate({clawback, notificationId, goldBefore, goldAfter
     goldBeforeRefund: wholeAtLeastZero(goldBefore),
     goldAfterRefund: wholeAtLeastZero(goldAfter),
     refundedPurchaseState: Number.isInteger(clawback && clawback.purchaseState) ? clawback.purchaseState : null,
+    ...(clawback && clawback.productKind === PRODUCT_PREMIUM ? {premiumRevokedMs, premiumConsumedMs, premiumUntilMs} : {}),
   };
 }
 
@@ -244,7 +252,14 @@ function refundSettlementUpdate({clawback, notificationId, goldBefore, goldAfter
  * два движения, потому что их и было два. Недостача названа отдельно: «часть вернуть было уже не
  * с чего» — это не то же самое, что «вернули меньше».
  */
-function refundReceiptRecord({clawback, notificationId, goldBefore, goldAfter, shortfallAdded, now}) {
+function refundReceiptRecord({clawback, notificationId, goldBefore, goldAfter, shortfallAdded, now, premiumRevokedMs, premiumConsumedMs, premiumUntilMs}) {
+  if (clawback && clawback.productKind === PRODUCT_PREMIUM) return {
+    receiptId: refundDocId(clawback.settlementId), uid: clawback.uid, kind: RECEIPT_KIND_PURCHASE_REFUNDED,
+    messageKey: "receipt.premium_refunded",
+    params: {sku: clawback.sku, premiumRevokedMs, premiumConsumedMs, premiumUntilMs},
+    amount: -premiumRevokedMs, currency: "PREMIUM_MS", premiumGrantId: clawback.premiumGrantId,
+    settlementId: clawback.settlementId, notificationId: stringValue(notificationId), createdAtMs: wholeAtLeastZero(now),
+  };
   const takenBack = Math.max(0, wholeAtLeastZero(goldBefore) - wholeAtLeastZero(goldAfter));
   const id = refundDocId(clawback && clawback.settlementId);
   return {
@@ -274,6 +289,7 @@ function refundReceiptRecord({clawback, notificationId, goldBefore, goldAfter, s
  */
 function refundAuditRecord({
   clawback, notificationId, goldBefore, goldAfter, shortfallAdded, shortfallAfter, constantsDoc, constantsVersion, now,
+  premiumRevokedMs, premiumConsumedMs, premiumUntilMs,
 }) {
   const id = refundDocId(clawback && clawback.settlementId);
   return {
@@ -297,6 +313,10 @@ function refundAuditRecord({
     creditedConstantsVersion: wholeAtLeastZero(clawback && clawback.creditedConstantsVersion),
     isTest: clawback ? clawback.isTest === true : false,
     atMs: wholeAtLeastZero(now),
+    ...(clawback && clawback.productKind === PRODUCT_PREMIUM ? {
+      productKind: PRODUCT_PREMIUM, premiumGrantId: clawback.premiumGrantId,
+      premiumGrantedMs: clawback.premiumGrantedMs, premiumRevokedMs, premiumConsumedMs, premiumUntilMs,
+    } : {}),
   };
 }
 

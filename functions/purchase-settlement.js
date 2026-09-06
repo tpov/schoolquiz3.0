@@ -16,9 +16,12 @@
 
 const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constants");
 const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
+const {SOURCE} = require("./premium-grants");
+const {PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
 const {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
+  PRODUCT_PREMIUM,
   REASON_REQUEST_INVALID,
   REASON_SKU_NOT_SOLD,
   RECEIPTS_SUBCOLLECTION,
@@ -54,7 +57,7 @@ const ACCESS_REFUSED_HINT =
   "(Users and permissions) with View financial data + Manage orders";
 /** Пишется ошибкой: игрок заплатил, а таблица SKU не знает — чинится записью в таблицу. */
 const SKU_NOT_SOLD_HINT =
-  "SKU paid for but absent from configs/economy goldPacks — add it; the purchase stays unconsumed " +
+  "SKU paid for but absent from configs/economy product descriptors — configure it; the purchase stays unconsumed " +
   "and re-presents on next launch";
 
 /**
@@ -114,7 +117,9 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
   const userRef = db.collection("users").doc(uid);
   const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
   let verdict;
+  let catchupCheckpoints = 0;
   try {
+    for (let pass = 0; pass < PREMIUM_CATCHUP_PASSES; pass++) {
     verdict = await db.runTransaction(async (transaction) => {
       const [settlementSnapshot, userSnapshot, constantsSnapshot] =
         await transaction.getAll(settlementRef, userRef, constantsRef);
@@ -124,6 +129,31 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
       if (decision.decision !== SETTLEMENT_CREDIT) return decision;
 
       const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+      if (decision.credit.productKind === PRODUCT_PREMIUM) {
+        const operation = {kind: "GRANT", source: SOURCE.PLAY, sourceId: id, days: decision.credit.premiumDays};
+        const snapshot = await readPremiumEconomy({db, transaction, uid, operation});
+        const plan = planPremiumEconomy({snapshot, userData, constants, now, operation});
+        if (plan.caughtUp && plan.outcome !== "GRANTED") {
+          throw new Error("Premium lot exists without its atomic purchase settlement; provenance repair required");
+        }
+        writePremiumEconomy({db, transaction, uid, plan});
+        transaction.set(userRef, {uid, ...plan.userPatch}, {merge: true});
+        if (!plan.caughtUp) return {decision: PREMIUM_CATCHUP};
+        const gold = readGold(userData);
+        const premium = {premiumGrantId: plan.grant.grantId, premiumUntilMs: plan.premiumUntilMs};
+        const response = successResponse({
+          sku, goldGranted: 0, gold, settlementId: id, productKind: PRODUCT_PREMIUM,
+          premiumGrantedMs: decision.credit.premiumGrantedMs, ...premium,
+        });
+        const settled = {
+          id, uid, purchase, credit: decision.credit, goldBefore: gold, goldAfter: gold,
+          constantsDoc: ECONOMY_CONSTANTS_DOC, now: plan.header.asOfMs, ...premium,
+        };
+        transaction.create(settlementRef, settlementRecord({...settled, response}));
+        transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(id), receiptRecord(settled));
+        transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(id), auditRecord(settled));
+        return {decision: SETTLEMENT_CREDIT, response};
+      }
       const goldBefore = readGold(userData);
       // Долг гасится до баланса. Возврат, которому нечего было снять, оставил недостачу (ADM-19), и
       // следующее начисление сначала закрывает её, а до баланса доходит остаток. Иначе игрок,
@@ -171,14 +201,22 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
       if (entry) transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
       return {decision: SETTLEMENT_CREDIT, response};
     });
+    if (verdict.decision !== PREMIUM_CATCHUP) break;
+    catchupCheckpoints++;
+    }
   } catch (error) {
-    // Транзакция не зафиксировалась: исчерпаны попытки на состязании, или `create` наткнулся на
-    // расчёт, которого не было при чтении. Ничего не записано, и повтор — правильный ответ.
-    log.error("verifyPurchase: settlement transaction failed; nothing was written", {
+    // This transaction rolled back. Earlier time-only catch-up checkpoints may have committed;
+    // no purchase credit/receipt is committed until the final atomic transaction succeeds.
+    log.error(catchupCheckpoints ? "verifyPurchase: settlement transaction failed; purchase was not committed" :
+      "verifyPurchase: settlement transaction failed; nothing was written", {
       settlementId: id, sku, uid, message: errorMessage(error),
     });
     return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "settlement could not be committed; retry later"};
   }
+  if (verdict.decision === PREMIUM_CATCHUP) return {
+    kind: SETTLEMENT_OUTCOME_UNAVAILABLE,
+    reason: "Premium time catch-up made durable progress; retry the unconsumed purchase",
+  };
   return outcomeOf(verdict, {id, sku, log});
 }
 

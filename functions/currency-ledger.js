@@ -40,6 +40,7 @@ const CURRENCY = {
   PLASMA_CHARGE_POINTS: "plasmaChargePoints",
   GOLD: "gold",
   BOXES: "boxes",
+  PREMIUM_MS: "premiumMs",
 };
 
 const CURRENCIES = Object.values(CURRENCY);
@@ -75,6 +76,18 @@ const REASON = {
   GIFT_BOX: "gift_box",
   /** Покупка или продажа на рынке ников и логотипов. */
   MARKET: "market",
+  PREMIUM_GRANT: "premium_grant",
+  PREMIUM_REFUND: "premium_refund",
+  PREMIUM_TIME: "premium_time",
+  PREMIUM_LEGACY: "premium_legacy",
+  PREMIUM_REGEN: "premium_regen",
+  ARENA_MILESTONE: "arena_milestone",
+  ARENA_SEASON: "arena_season",
+  ARENA_TICKET_RESERVE: "arena_ticket_reserve",
+  ARENA_TICKET_CANCEL: "arena_ticket_cancel",
+  ARENA_AUTHOR_ROYALTY: "arena_author_royalty",
+  ARENA_ROYALTY_SINK: "arena_royalty_sink",
+  ARENA_ROYALTY_CARRY: "arena_royalty_carry",
 };
 
 const REASONS = Object.values(REASON);

@@ -1,0 +1,34 @@
+"use strict";
+
+const assert = require("assert/strict");
+const {GIFT_BOX_TROPHY_NAMES, TROPHY_VERIFIED} = require("./trophies");
+const {GIFT_BOX_LOGO_NAMES, createGiftBoxEntropy, generateGiftBoxReward} = require("./gift-box-rewards");
+const draws = (...values) => [...values, ...Array(8 - values.length).fill(0)];
+const reward = (...values) => generateGiftBoxReward([], draws(...values));
+
+assert.deepEqual(reward(0.9, 0, 0), {type: "addNolics", amount: 500});
+assert.deepEqual(reward(0.9, 0, 0.999999), {type: "addNolics", amount: 2000});
+assert.deepEqual(reward(0.01, 0.9, 0, 0), {type: "addNolics", amount: 7000});
+assert.deepEqual(reward(0.01, 0.9, 0, 0.999999), {type: "addNolics", amount: 13000});
+assert.deepEqual(reward(0.01, 0.9, 0.5, 0, 0), {type: "addNolics", amount: 7000});
+assert.deepEqual(reward(0.01, 0.9, 0.5, 0.9), {type: "addGold", amount: 1});
+assert.deepEqual(reward(0.05, 0.95, 0.9), {type: "datePremium", amount: 86400});
+assert.deepEqual(reward(0.01, 0.99, 0, 0), {type: "logo", amount: 1, itemName: GIFT_BOX_LOGO_NAMES[0]});
+assert.deepEqual(reward(0.01, 0.99, 0.3, 0, 0.999999), {type: "addGold", amount: 20});
+assert.deepEqual(reward(0.01, 0.99, 0.3, 0.9, 0), {type: "trophy", amount: 1, itemName: GIFT_BOX_TROPHY_NAMES[0]});
+assert.deepEqual(generateGiftBoxReward(GIFT_BOX_TROPHY_NAMES, draws(0.01, 0.99, 0.3, 0.9, 0)), {type: "addGold", amount: 10});
+assert.deepEqual(reward(0.01, 0.99, 0.5, 0), {type: "addGold", amount: 10});
+assert.deepEqual(reward(0.01, 0.99, 0.7), {type: "datePremium", amount: 30 * 86400});
+assert.deepEqual(reward(0.01, 0.99, 0.9, 0), {type: "addNolics", amount: 50000});
+assert.deepEqual(reward(0.01, 0.99, 0.9, 0.999999), {type: "addNolics", amount: 200000});
+assert.ok(!GIFT_BOX_TROPHY_NAMES.includes(TROPHY_VERIFIED));
+const onlyMissing = generateGiftBoxReward(GIFT_BOX_TROPHY_NAMES.slice(1), draws(0.01, 0.99, 0.3, 0.9, 0.99));
+assert.equal(onlyMissing.itemName, GIFT_BOX_TROPHY_NAMES[0]);
+assert.throws(() => generateGiftBoxReward([], []), /eight trusted uniform/);
+assert.throws(() => generateGiftBoxReward([], draws(NaN)), /eight trusted uniform/);
+assert.throws(() => generateGiftBoxReward([], draws(1)), /eight trusted uniform/);
+const entropy = createGiftBoxEntropy();
+assert.equal(entropy.length, 8);
+assert.ok(entropy.every((n) => n >= 0 && n < 1));
+assert.deepEqual(generateGiftBoxReward([], entropy), generateGiftBoxReward([], entropy));
+console.log("gift-box-rewards: all shipped branches/ranges, trophy exclusion and entropy contract passed");

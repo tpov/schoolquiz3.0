@@ -38,7 +38,9 @@ const SOURCE = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
  * `Date.now()` сервера, а не число из запроса. `task.changedAtMs` — время, которое `toAdminLessonTasks`
  * проставила из того же серверного `now`.
  */
-const SERVER_CLOCKS = new Set(["now", "options.now", "task.changedAtMs"]);
+// lessonChangeAtMs is max(server now, locked server lesson-journal cursor + 1), never request time.
+// arena-handler.test drives the callable with forged timestamps and repeated server milliseconds.
+const SERVER_CLOCKS = new Set(["now", "options.now", "task.changedAtMs", "lessonChangeAtMs"]);
 
 /** Имена полей, которые приезжают с устройства и часами быть не могут. */
 const DEVICE_TIME = /requestedAtMs|clientAtMs|deviceAtMs|createdAtMs|updatedAtMs/;

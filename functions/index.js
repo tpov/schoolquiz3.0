@@ -7,7 +7,7 @@ const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onMessagePublished} = require("firebase-functions/v2/pubsub");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {onRequest} = require("firebase-functions/v2/https");
-const {trophyList, pickGiftBoxTrophy, hasTrophy, TROPHY_VERIFIED} = require("./trophies.js");
+const {trophyList, hasTrophy, TROPHY_VERIFIED} = require("./trophies.js");
 const {logoImageUrl, isLogoName, logoImageBytes} = require("./logos.js");
 const {
   describeNickname,
@@ -59,6 +59,13 @@ const {
   settlePurchase,
 } = require("./purchase-settlement");
 const {clawBackPurchase} = require("./purchase-clawback");
+const {applyBoxOperation, BOX_KIND} = require("./box-service");
+const {readBoxState} = require("./gift-boxes");
+const {GIFT_BOX_LOGO_NAMES} = require("./gift-box-rewards");
+const {
+  readPremiumEconomy, planPremiumEconomy, writePremiumEconomy,
+  PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES,
+} = require("./premium-economy");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {
   PUSH_EVENTS,
@@ -67,6 +74,8 @@ const {
   sendPushToUser,
 } = require("./push-notifications");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
+const {createArenaService} = require("./arena-service");
+const {createArenaEntryRuntime} = require("./arena-entry-runtime");
 const {
   CURRENCY,
   LEDGER_PATH,
@@ -110,7 +119,6 @@ const {STATUS: ATTEMPT_STATUS, attemptFingerprint, attemptReceipt, replayFault} 
 const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
 const {
   maxLifePoints,
-  regenerateLifePoints,
   spendLifePoints,
 } = require("./life-points");
 
@@ -219,21 +227,10 @@ const SHOP_ITEM_STANDARD_HEART_SLOT = "STANDARD_HEART_SLOT";
 const SHOP_ITEM_GOLD_HEART = "GOLD_HEART";
 const MAX_STANDARD_HEARTS = 5;
 const MAX_GOLD_HEARTS = 1;
-const GIFT_BOX_STREAK_TARGET_DAYS = 10;
 const MAX_TOURNAMENT_GROUPS_PER_RECALC = 1000;
 const MAX_TOURNAMENT_RESULTS_PER_GROUP = 1000;
 const TOURNAMENT_LEADERBOARD_LIMIT = 100;
 const TOURNAMENT_PARTICIPANT_LIMIT = 500;
-const GIFT_BOX_LOGO_NAMES = [
-  "Golden Crown Logo",
-  "Diamond Star Logo",
-  "Phoenix Wings Logo",
-  "Dragon Scale Logo",
-  "Crystal Orb Logo",
-  "Thunder Bolt Logo",
-  "Mystic Eye Logo",
-  "Royal Shield Logo",
-];
 const NICKNAME_CLAIMS_COLLECTION = "nickname_claims";
 const NICKNAME_LISTINGS_COLLECTION = "nickname_listings";
 const NICKNAME_POLICY_DOC = "configs/nickname_policy";
@@ -242,6 +239,112 @@ const NICKNAME_GENERATION_ATTEMPTS = 20;
 // "archive" is a legitimate destination, not only a publication target: without it a course moved
 // off the archive could never be put back, and the first mistaken move would be permanent.
 const PUBLIC_QUEST_SHELVES = new Set(["home", "arena", "tournament", "tournamentFinal", "archive"]);
+
+const arenaService = createArenaService({
+  db,
+  nowMs: () => Date.now(),
+  loadLessonContext: loadArenaLessonContext,
+  loadCompletion: async (transaction, {uid, lessonId, attemptId}) => {
+    const ref = db.collection(scopedCollection("result_events", PUBLIC_SCOPE))
+      .doc(eventBucketId(attemptId)).collection("events").doc(safeDocId(attemptId));
+    const snapshot = await transaction.get(ref);
+    const event = snapshot.exists ? snapshot.data() || {} : {};
+    if (event.userId !== uid || event.lessonId !== lessonId || !event.settlementReceipt) return null;
+    return {...event.settlementReceipt, activityKind: event.activityKind};
+  },
+  isCurator: async (transaction, uid) => {
+    const snapshot = await transaction.get(db.doc(`profiles/${uid}`));
+    const profile = snapshot.exists ? snapshot.data() || {} : {};
+    return numberValue(profile.adminLevel, 0) >= QUALIFIED_LEVEL ||
+      numberValue(profile.developerLevel, 0) > DEVELOPER_ALL_ACCESS_LEVEL;
+  },
+  writeLessonChange: (transaction, context, fields, now) => {
+    const lessonChangeAtMs = Math.max(now, context.nextChangeAtMs);
+    transaction.set(db.doc(`lessons/${context.lessonId}`),
+      {...fields, lastModifiedAt: admin.firestore.Timestamp.fromMillis(lessonChangeAtMs)}, {merge: true});
+    writeSyncChanges(transaction, db, {kind: "lesson", id: context.lessonId, catalogId: context.catalogId}, lessonChangeAtMs);
+  },
+});
+
+const arenaEntries = createArenaEntryRuntime({db, loadLessonContext: loadArenaLessonContext});
+exports.prepareArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("issue", request));
+exports.cancelArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("cancel", request));
+async function callArenaEntry(method, request) {
+  const uid = requireAuthUid(request);
+  try {
+    return await arenaEntries[method](method === "settle" ? {uid, payload: request.data} : {...request.data, uid});
+  } catch (error) {
+    if (error.name !== "ArenaTicketError") throw error;
+    const code = error.code === "INVALID_ARGUMENT" ? "invalid-argument" :
+      error.code === "TICKET_OWNER_MISMATCH" ? "permission-denied" :
+      ["REQUEST_REUSE", "SETTLEMENT_REUSE", "TICKET_ATTEMPT_MISMATCH"].includes(error.code) ? "already-exists" :
+      ["RETRY_REGEN", "UNSCORABLE_BANK", "INCONSISTENT_SETTLEMENT", "ARENA_INDEX_REBUILD_REQUIRED"].includes(error.code) ? "unavailable" :
+      "failed-precondition";
+    throw new HttpsError(code, error.message, {reason: error.code});
+  }
+}
+
+// These are separate lesson decisions, not the legacy whole-quest shelf/rating operations.
+exports.setLessonPlacement = onCall(CALLABLE_OPTIONS, (request) => callArenaService("transitionLesson", request));
+exports.rateArenaLesson = onCall(CALLABLE_OPTIONS, (request) => callArenaService("submitLessonRating", request));
+exports.finalizeArenaSeason = onCall(CALLABLE_OPTIONS, (request) => callArenaService("finalizeSeason", request));
+
+async function callArenaService(method, request) {
+  const uid = requireAuthUid(request);
+  try {
+    return await arenaService[method]({...request.data, uid});
+  } catch (error) {
+    if (error.code === "INVALID_ARGUMENT") throw new HttpsError("invalid-argument", error.message);
+    if (error.code === "MUTATION_REUSE") throw new HttpsError("already-exists", error.message);
+    if (error.code === "SETTLEMENT_PENDING") throw new HttpsError("unavailable", error.message);
+    throw error;
+  }
+}
+
+async function loadArenaLessonContext(transaction, lessonId) {
+  if (!isSingleDocumentId(lessonId)) return null;
+  const lessonSnapshot = await transaction.get(db.doc(`lessons/${lessonId}`));
+  if (!lessonSnapshot.exists) return null;
+  const lesson = lessonSnapshot.data() || {};
+  if (!isSingleDocumentId(lesson.themeId)) return null;
+  const themeSnapshot = await transaction.get(db.doc(`themes/${lesson.themeId}`));
+  const theme = themeSnapshot.exists ? themeSnapshot.data() || {} : {};
+  if (!isSingleDocumentId(theme.sectionId)) return null;
+  const sectionSnapshot = await transaction.get(db.doc(`sections/${theme.sectionId}`));
+  const section = sectionSnapshot.exists ? sectionSnapshot.data() || {} : {};
+  if (!isSingleDocumentId(section.questId)) return null;
+  const questSnapshot = await transaction.get(db.doc(`quests/${section.questId}`));
+  const quest = questSnapshot.exists ? questSnapshot.data() || {} : {};
+  if (!isSingleDocumentId(quest.catalogId)) return null;
+  const catalogSnapshot = await transaction.get(db.doc(`catalogs/${quest.catalogId}`));
+  if (!catalogSnapshot.exists) return null;
+  const catalog = catalogSnapshot.data() || {};
+  const authorUid = stringValue(quest.authorUid || quest.ownerUid);
+  if (!isSingleDocumentId(authorUid) || !Number.isSafeInteger(lesson.version) || lesson.version < 1) return null;
+  const [reviewSnapshot, recordSnapshots, configSnapshot, changeSnapshot] = await Promise.all([
+    transaction.get(db.doc(adminLessonPath(lessonId))),
+    transaction.get(db.collection(`${adminLessonPath(lessonId)}/reviews`)),
+    transaction.get(db.doc("configs/arena_review")),
+    transaction.get(db.doc(`catalogs/${quest.catalogId}/sync_changes/lesson_${lessonId}`)),
+  ]);
+  const review = reviewSnapshot.exists ? reviewSnapshot.data() || {} : {};
+  const config = configSnapshot.exists ? configSnapshot.data() || {} : {};
+  const task = {lessonId, ownerUid: authorUid, submissionId: review.submissionId,
+    sourceLanguages: new Set(stringArray(review.sourceLanguages)), questions: [], checks: reviewToChecks({})};
+  const records = recordSnapshots.docs.map((doc) => normalizeReviewRecord(doc.data() || {}, doc.id, lessonId));
+  const checks = rebuildAggregate(task, records, config).checks;
+  const reviewApproved = review.status === "PUBLISHED" && !review.rejectedAtMs &&
+    review.ownerUid === authorUid && review.questId === section.questId &&
+    isSingleDocumentId(lesson.reviewSubmissionId) && lesson.reviewSubmissionId === review.submissionId &&
+    Number.isSafeInteger(lesson.reviewApprovedAtMs) && lessonPassed(checks, task, config);
+  const change = changeSnapshot.exists ? changeSnapshot.data() || {} : {};
+  return {lessonId, authorUid, catalogId: quest.catalogId, questId: section.questId,
+    sectionId: theme.sectionId, themeId: lesson.themeId,
+    questType: stringValue(catalog.questType || quest.questType, "REGULAR").toUpperCase(),
+    contentVersion: lesson.version, publishedAtMs: nonNegativeInteger(lesson.publishedAtMs, 0),
+    published: !lesson.archived && !theme.archived && !section.archived && !quest.archived,
+    reviewApproved, nextChangeAtMs: nonNegativeInteger(change.changedAtMs, 0) + 1};
+}
 
 exports.processQuestReviewRequest = onDocumentCreated(
   {...FUNCTION_OPTIONS, document: "quest_review_requests/{submissionId}"},
@@ -338,7 +441,7 @@ exports.rejectReviewSubmission = onCall(CALLABLE_OPTIONS, async (request) => {
   if (!task) throw new HttpsError("not-found", `Review assignment ${assignmentId} not found`);
 
   const config = await readArenaReviewConfig();
-  const existingRecords = await readReviewRecords(task.lessonId);
+  const existingRecords = await readReviewRecords(task.lessonId, task.submissionId);
   // Whoever may score this lesson may refuse it: same gate, both directions. The author-exclusion
   // and the developer exemption inside canSubmit apply here unchanged.
   const mayJudge =
@@ -408,7 +511,7 @@ async function applySubmitReviewAction(uid, payload, options = {}) {
   }
 
   const config = await readArenaReviewConfig();
-  const existingRecords = await readReviewRecords(action.lessonId);
+  const existingRecords = await readReviewRecords(action.lessonId, task.submissionId);
   // Эффект уже лёг — инстанс умер после batch.commit(), но до того, как ключ был закрыт.
   // Отвечаем эквивалентом сохранённого результата и не трогаем ни записи, ни репутацию:
   // проверка раньше canSubmit, иначе «уже отрецензировано» ушло бы отказом в карантин, а
@@ -431,7 +534,8 @@ async function applySubmitReviewAction(uid, payload, options = {}) {
   }
 
   const now = Date.now();
-  const record = actionToRecord(action, profile, task, config, existingRecords, now, pinnedReviewId);
+  const record = {...actionToRecord(action, profile, task, config, existingRecords, now, pinnedReviewId),
+    submissionId: task.submissionId};
   const taskWithTranslatedQuestions =
     record.kind === "TRANSLATION"
       ? {...task, questions: mergeQuestions(task.questions, record.translatedQuestions)}
@@ -1169,6 +1273,8 @@ const MUTATION_HANDLERS = {
   "lesson_runner.SUBMIT_ATTEMPT": (uid, payload) => applyLessonResultEvents(uid, [payload || {}]),
   // Оценка квеста.
   "lesson_runner.SUBMIT_RATING": (uid, payload) => applyQuestRatingEvents(uid, [payload || {}]),
+  // The opening itself owns a permanent receipt; queue leases may expire without rerolling it.
+  "economy.OPEN_GIFT_BOX": (uid, payload) => callBoxOperation({auth: {uid}, data: payload}, BOX_KIND.OPEN),
   // Заявка черновика на арену. Раньше она писалась в Firestore напрямую и проверку ключа
   // обходила в принципе — теперь идёт тем же путём, что и всё остальное (AD-6).
   "quest_authoring.SUBMIT_ARENA": (uid, payload) => applyArenaSubmission(uid, payload),
@@ -1408,6 +1514,22 @@ async function applyLessonResultEvents(uid, attempts) {
   }
   if (attempts.length === 0) return {accepted: 0};
 
+  // A ticket owns its reservation and royalty carry. Each ticket therefore settles in its own
+  // transaction, including its E2 result, rather than sharing a stale payer/author batch readset.
+  if (attempts.some((attempt) => attempt.ticketId != null)) {
+    const combined = {accepted: 0, reward: {skillPoints: 0, nolics: 0}, receipts: []};
+    for (const attempt of attempts) {
+      const result = attempt.ticketId != null ? await callArenaEntry("settle", {auth: {uid}, data: attempt}) :
+        await applyLessonResultEvents(uid, [attempt]);
+      combined.accepted += result.accepted;
+      combined.reward.skillPoints += result.reward.skillPoints;
+      combined.reward.nolics += result.reward.nolics;
+      combined.receipts.push(...result.receipts);
+      combined.lifePoints = result.lifePoints;
+    }
+    return combined;
+  }
+
   const now = Date.now();
   const fingerprints = new Map();
   const events = attempts.map((item) => {
@@ -1473,12 +1595,17 @@ async function applyLessonResultEvents(uid, attempts) {
   const ledgerRows = [];
   let overspendInputs = null;
   const touchedTournamentIds = new Set();
-  await db.runTransaction(async (transaction) => {
+  await runEconomyTransaction(async (transaction) => {
+    // Firestore may rerun this callback after a competing device commits. Claim settlement
+    // rewrites scoring fields, so each run starts from the same immutable intake, not the last
+    // callback's partially settled digits.
+    const settlementEvents = events.map((item) => ({...item, event: structuredClone(item.event)}));
+    touchedTournamentIds.clear();
     // Firestore requires every read before the first write.
     const userRef = db.collection("users").doc(uid);
     const userSnapshot = await transaction.get(userRef);
     const existingSnapshots = [];
-    for (const item of events) {
+    for (const item of settlementEvents) {
       existingSnapshots.push(await transaction.get(item.ref));
     }
 
@@ -1486,6 +1613,8 @@ async function applyLessonResultEvents(uid, attempts) {
     // time here, so nothing has to run while the user is away. Accounts created before this
     // field existed start from a full tank rather than from zero.
     const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    const premiumPlan = await advancePremiumInTransaction(transaction, uid, userData, economy, now);
+    if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
     // The player's best on each lesson, kept beside the balance so paying for improvement needs
     // no aggregate of its own and no second read.
     const lessonBest = {...(userData.lessonBest || {})};
@@ -1494,29 +1623,17 @@ async function applyLessonResultEvents(uid, attempts) {
     const lifeCeiling = maxLifePoints(Math.min(ownedSlots, economy.standard.maxOwned));
     // Премиум восстанавливается быстрее — если так говорит таблица; ручка стоит рядом с периодом,
     // потому что спека запрещает периоду быть голой константой.
-    const hasPremium = numberValue(userData.premiumUntilMs, 0) > now || Boolean(userData.hasPremium);
+    const hasPremium = premiumPlan.userPatch.hasPremium;
     const storedLifePoints = numberValue(userData.lifePoints, lifeCeiling);
     const storedLifeUpdatedAtMs = numberValue(userData.lifePointsUpdatedAtMs, now);
-    let life = regenerateLifePoints(
-      numberValue(userData.lifePoints, lifeCeiling),
-      numberValue(userData.lifePointsUpdatedAtMs, now),
-      now,
-      lifeCeiling,
-      regenMsFor(economy.standard, hasPremium) / POINTS_PER_CHARGE,
-    );
+    let life = {points: premiumPlan.userPatch.lifePoints, updatedAtMs: premiumPlan.userPatch.lifePointsUpdatedAtMs};
 
     // Плазма — такой же бак, как обычный заряд: слоты в `goldHearts`, накопленное в очках.
     const plasmaRules = economy.plasma;
     const plasmaCeiling = Math.min(nonNegativeInteger(userData.goldHearts, 0), plasmaRules.maxOwned) * POINTS_PER_CHARGE;
     const storedPlasmaPoints = numberValue(userData.plasmaPoints, plasmaCeiling);
     const storedPlasmaUpdatedAtMs = numberValue(userData.plasmaPointsUpdatedAtMs, now);
-    let plasma = regenerateLifePoints(
-      numberValue(userData.plasmaPoints, plasmaCeiling),
-      numberValue(userData.plasmaPointsUpdatedAtMs, now),
-      now,
-      plasmaCeiling,
-      regenMsFor(plasmaRules, hasPremium) / POINTS_PER_CHARGE,
-    );
+    let plasma = {points: premiumPlan.userPatch.plasmaPoints, updatedAtMs: premiumPlan.userPatch.plasmaPointsUpdatedAtMs};
     const receiptsByAttempt = new Map();
     // Строки книги собираются внутри транзакции и пишутся ею же: движение и его запись обязаны
     // либо случиться вместе, либо не случиться вовсе.
@@ -1529,7 +1646,7 @@ async function applyLessonResultEvents(uid, attempts) {
     // The activity ratings the profile radar draws. Counted from the same attempts that pay, so a
     // replayed or unpaid submission cannot inflate them either.
     const ratings = {questions: 0, correct: 0, quizzes: 0};
-    events.forEach((item, index) => {
+    settlementEvents.forEach((item, index) => {
       // An attempt is paid for only when it is new, the intake's own payment rule holds for it,
       // and the player still has the life points it costs. The game is offline-first, so a
       // legitimate attempt can arrive with an empty tank — it is stored either way, and the flag
@@ -1704,9 +1821,11 @@ async function applyLessonResultEvents(uid, attempts) {
     for (const entry of ledgerRows) {
       transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
     }
+    writePremiumEconomy({db, transaction, uid, plan: premiumPlan});
     transaction.set(
       userRef,
       {
+        ...premiumPlan.userPatch,
         uid,
         lifePoints: life.points,
         lifePointsUpdatedAtMs: life.updatedAtMs,
@@ -1718,11 +1837,11 @@ async function applyLessonResultEvents(uid, attempts) {
       {merge: true},
     );
     reward = delta;
-    receipts = events.map((item) => receiptsByAttempt.get(item.event.attemptId));
+    receipts = settlementEvents.map((item) => receiptsByAttempt.get(item.event.attemptId));
     remainingLifePoints = life.points;
     overspendInputs = {
       economy,
-      windowStartMs: events.reduce(
+      windowStartMs: settlementEvents.reduce(
         (earliest, item) => Math.min(earliest, nonNegativeEventTime(item.event.completedAtMs) || now),
         now,
       ),
@@ -1767,56 +1886,36 @@ async function applyQuestRatingEvents(uid, ratings) {
   if (ratings.length === 0) return {accepted: 0};
 
   const now = Date.now();
-  const batch = db.batch();
+  const receipts = [];
   for (const item of ratings) {
     const event = normalizeQuestRatingEvent(item, uid);
-    const content = contentKeysForEvent(event);
+    if (typeof item.attemptId === "string" && item.attemptId && event.scope === PUBLIC_SCOPE) {
+      receipts.push(await callArenaService("submitLessonRating", {auth: {uid}, data: {
+        mutationId: event.ratingId, lessonId: event.lessonId, attemptId: item.attemptId, rating: event.rating,
+      }}));
+      continue;
+    }
+    // Preserve already queued legacy/private feedback as history only. It cannot prove a paid,
+    // completed public lesson and must not become a course-wide or season rating during upgrade.
     const bucketId = eventBucketId(event.ratingId);
     const eventRef = db
       .collection(scopedCollection("rating_events", event.scope))
       .doc(bucketId)
       .collection("events")
       .doc(safeDocId(event.ratingId));
-    const submissionRef = db
-      .collection(scopedCollection("quest_rating_submissions", event.scope))
-      .doc(content.questContentKey)
-      .collection("ratings")
-      .doc(hashHex(uid));
-    const dirtyRef = db
-      .collection(scopedCollection("quest_rating_dirty", event.scope))
-      .doc(content.questContentKey);
-    const eventData = clean({
-      ...event,
-      ...content,
-      receivedAtMs: now,
-      schemaVersion: 1,
+    const receipt = {status: "LEGACY_RECORDED", ratingId: event.ratingId, eligible: false};
+    await db.runTransaction(async (transaction) => {
+      const existing = await transaction.get(eventRef);
+      if (existing.exists) {
+        if ((existing.data() || {}).userId !== uid) throw new HttpsError("permission-denied", "Rating belongs to another account");
+        return;
+      }
+      transaction.create(eventRef, clean({...event, ...contentKeysForEvent(event), receivedAtMs: now,
+        schemaVersion: 1, settlementReceipt: receipt}));
     });
-    batch.set(eventRef, eventData, {merge: true});
-    batch.set(
-      submissionRef,
-      clean({
-        ...eventData,
-        uidHash: hashHex(uid),
-        updatedAtMs: now,
-      }),
-      {merge: true},
-    );
-    batch.set(
-      dirtyRef,
-      clean({
-        contentKey: content.questContentKey,
-        scope: event.scope,
-        ownerUid: event.ownerUid,
-        catalogId: event.catalogId,
-        questId: event.questId,
-        sourceShelf: event.sourceShelf,
-        changedAtMs: now,
-      }),
-      {merge: true},
-    );
+    receipts.push(receipt);
   }
-  await batch.commit();
-  return {accepted: ratings.length};
+  return {accepted: ratings.length, receipts};
 }
 
 exports.aggregateQuestRatingsDaily = onSchedule(
@@ -1858,6 +1957,28 @@ async function readEconomyConstantsDocument() {
   const snapshot = await db.doc(ECONOMY_CONSTANTS_DOC).get();
   const writtenAtMs = snapshot.exists && snapshot.updateTime ? snapshot.updateTime.toMillis() : 0;
   return readEconomyConstants(snapshot.exists ? snapshot.data() : null, writtenAtMs);
+}
+
+// Long entitlement histories advance in bounded, durable checkpoints. No operation is
+// acknowledged until its own transaction completed; retries never lose elapsed premium time.
+async function runEconomyTransaction(body) {
+  for (let pass = 0; pass < PREMIUM_CATCHUP_PASSES; pass += 1) {
+    const result = await db.runTransaction(body);
+    if (result !== PREMIUM_CATCHUP) return result;
+  }
+  throw new HttpsError("unavailable", "Premium history is catching up; retry the same operation");
+}
+
+async function advancePremiumInTransaction(transaction, uid, userData, constants, now) {
+  const operation = {kind: "ADVANCE"};
+  const snapshot = await readPremiumEconomy({db, transaction, uid, operation});
+  return planPremiumEconomy({snapshot, userData, constants, now, operation});
+}
+
+function writePremiumCheckpoint(transaction, uid, plan) {
+  writePremiumEconomy({db, transaction, uid, plan});
+  transaction.set(db.doc(`users/${uid}`), plan.userPatch, {merge: true});
+  return PREMIUM_CATCHUP;
 }
 
 exports.getEconomyConstants = onCall(CALLABLE_OPTIONS, async (request) => {
@@ -2629,9 +2750,12 @@ exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
   // той, по которой клиент нарисовал витрину (economy-constants.md).
   const economy = await readEconomyConstantsDocument();
   let response = null;
-  await db.runTransaction(async (transaction) => {
+  await runEconomyTransaction(async (transaction) => {
     const snapshot = await transaction.get(userRef);
-    const current = readEconomyBalance(snapshot.exists ? snapshot.data() || {} : {});
+    const storedUser = snapshot.exists ? snapshot.data() || {} : {};
+    const premiumPlan = await advancePremiumInTransaction(transaction, uid, storedUser, economy, now);
+    if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
+    const current = readEconomyBalance({...storedUser, ...premiumPlan.userPatch});
     const balance = applyShopPurchaseToBalance(current, itemId, economy);
     // Покупка слота — движение сразу двух валют: платы и того, что за неё дали. Идентификатор
     // выводится из момента и предмета: та же покупка, переигранная транзакцией, — одна строка.
@@ -2649,9 +2773,11 @@ exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
     })) {
       transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
     }
+    writePremiumEconomy({db, transaction, uid, plan: premiumPlan});
     transaction.set(
       userRef,
       clean({
+        ...premiumPlan.userPatch,
         uid,
         updatedAtMs: now,
         hasPremium: balance.hasPremium,
@@ -2869,42 +2995,23 @@ async function applyLessonUnlock(uid, payload) {
 }
 
 exports.openGiftBox = onCall(CALLABLE_OPTIONS, async (request) => {
-  const uid = requireAuthUid(request);
-  const now = Date.now();
-  await upsertUserProfile(uid, {
-    nickname: generatedNickname(uid),
-    knownLanguages: normalizeLanguages(request.data && request.data.knownLanguages),
-    now,
-    authStatus: authProfileStatus(request),
-    allowNicknameUpgrade: false,
-  });
-
-  let reward = null;
-  await db.runTransaction(async (transaction) => {
-    const userRef = db.collection("users").doc(uid);
-    const userSnapshot = await transaction.get(userRef);
-    const existingUser = userSnapshot.exists ? userSnapshot.data() || {} : {};
-    const boxState = advanceGiftBoxState(existingUser, now);
-    if (boxState.boxCount <= 0) {
-      throw new HttpsError("failed-precondition", "No gift boxes available");
-    }
-    // Chosen here rather than before the transaction: only inside it do we know which badges the
-    // player already holds, and a duplicate would be a reward worth nothing.
-    reward = generateGiftBoxReward(existingUser.trophies);
-    transaction.set(
-      userRef,
-      clean({
-        uid,
-        updatedAtMs: now,
-        ...boxState,
-        boxCount: boxState.boxCount - 1,
-        ...giftBoxRewardUpdate(existingUser, reward, now),
-      }),
-      {merge: true},
-    );
-  });
-  return reward;
+  return callBoxOperation(request, BOX_KIND.OPEN);
 });
+
+exports.submitGiftBoxOperation = onCall(CALLABLE_OPTIONS, async (request) => callBoxOperation(request));
+
+async function callBoxOperation(request, forcedKind = null) {
+  const uid = requireAuthUid(request);
+  const payload = {...request.data, ...(forcedKind ? {kind: forcedKind} : {})};
+  try {
+    return await applyBoxOperation({db, uid, payload, now: Date.now()});
+  } catch (error) {
+    const codes = {INVALID_ARGUMENT: "invalid-argument", PERMISSION_DENIED: "permission-denied",
+      CONFLICTING_REPLAY: "already-exists", UNAVAILABLE: "unavailable"};
+    if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
+    throw error;
+  }
+}
 
 exports.setPublicQuestShelf = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
@@ -3835,7 +3942,7 @@ async function reconcileChangedReviewLessons(sinceMs, now) {
   const batch = db.batch();
 
   for (const task of tasks) {
-    const records = await readReviewRecords(task.lessonId);
+    const records = await readReviewRecords(task.lessonId, task.submissionId);
     const aggregation = rebuildAggregate(task, records, config);
     const updatedTask = {
       ...task,
@@ -4172,6 +4279,14 @@ async function publishSubmissionIfReady(submissionId, config, now) {
     await requestSnapshot.ref.set({status: "REJECTED", updatedAtMs: now}, {merge: true});
     return false;
   }
+  // A stored aggregate is not proof: older clients could submit their own checks, and review
+  // documents survive a new submission of the same lesson. Rebuild from this submission's
+  // independently accepted records; preserve the old history without laundering it into proof.
+  for (const task of targetTasks) {
+    const records = (await readReviewRecords(task.lessonId)).filter((record) =>
+      record.submissionId === task.submissionId && record.reviewerUid !== task.ownerUid);
+    task.checks = rebuildAggregate({...task, checks: reviewToChecks({})}, records, config).checks;
+  }
   const allReady = targetTasks.every((task) => lessonPassed(task.checks, task, config));
   if (!allReady) {
     await requestSnapshot.ref.set({status: "UNDER_REVIEW", updatedAtMs: now}, {merge: true});
@@ -4246,6 +4361,15 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   });
   for (const task of targetTasks) {
     writeAdminReviewLessonTasksToBatch(batch, [{...task, status: "PUBLISHED", changedAtMs: now}]);
+    const lessonPath = `lessons/${task.lessonId}`;
+    const previous = hierarchySnapshots.find((snapshot) => snapshot.ref.path === lessonPath);
+    const previousData = previous && previous.exists ? previous.data() || {} : {};
+    batch.set(db.doc(lessonPath), {
+      authorUid: task.ownerUid,
+      reviewSubmissionId: task.submissionId,
+      reviewApprovedAtMs: now,
+      publishedAtMs: nonNegativeInteger(previousData.publishedAtMs, now),
+    }, {merge: true});
   }
   batch.set(
     requestSnapshot.ref,
@@ -4754,7 +4878,8 @@ function toAdminLessonTasks(request, createdAtMs) {
       targetShelf: request.targetShelf,
       createdAtMs,
       changedAtMs: createdAtMs,
-      checks: reviewToChecks(request.review, questionLanguages(lessonQuestions)),
+      // Author claims about testing/logic/translation never grant publication authority.
+      checks: reviewToChecks({}),
       questions: lessonQuestions,
       sourceLanguages: new Set(lessonQuestions.map((question) => normalizeLanguage(question.language))),
     };
@@ -4924,7 +5049,8 @@ function isStageOpenForSubmit(task, kind, existingRecords, config) {
 }
 
 function rebuildAggregate(task, records, config) {
-  const accepted = records.filter((record) => record.acceptedByServer);
+  const accepted = records.filter((record) => record.acceptedByServer && record.reviewerUid !== task.ownerUid &&
+    (!task.submissionId || record.submissionId === task.submissionId));
   const testing = scoreAggregate(accepted, "TESTING");
   const logic = scoreAggregate(accepted, "LOGIC");
   const translated = translatedLanguages(task, accepted);
@@ -5245,9 +5371,10 @@ async function adminLessonSnapshotToTask(snapshot) {
   };
 }
 
-async function readReviewRecords(lessonId) {
+async function readReviewRecords(lessonId, submissionId = null) {
   const snapshot = await db.doc(adminLessonPath(lessonId)).collection("reviews").get();
-  return snapshot.docs.map((doc) => normalizeReviewRecord(doc.data() || {}, doc.id, lessonId));
+  return snapshot.docs.map((doc) => normalizeReviewRecord(doc.data() || {}, doc.id, lessonId))
+    .filter((record) => !submissionId || record.submissionId === submissionId);
 }
 
 async function readArenaReviewConfig() {
@@ -5490,165 +5617,6 @@ function writeUserProgressDelta(transaction, uid, delta, now) {
   );
 }
 
-function generateGiftBoxReward(ownedTrophies) {
-  const firstRoll = Math.random();
-  const secondRoll = Math.random();
-
-  if (firstRoll > 0.05) {
-    return {
-      type: "addNolics",
-      amount: randomIntInclusive(500, 2000),
-    };
-  }
-
-  if (secondRoll <= 0.95) {
-    switch (randomIntInclusive(0, 2)) {
-      case 0:
-        return {
-          type: "addNolics",
-          amount: randomIntInclusive(7000, 13000),
-        };
-      case 1: {
-        const goldAmount = randomIntInclusive(0, 1);
-        if (goldAmount === 0) {
-          return {
-            type: "addNolics",
-            amount: randomIntInclusive(7000, 13000),
-          };
-        }
-        return {
-          type: "addGold",
-          amount: goldAmount,
-        };
-      }
-      case 2:
-        return {
-          type: "datePremium",
-          amount: 86400,
-        };
-      default:
-        break;
-    }
-  }
-
-  switch (randomIntInclusive(0, 4)) {
-    case 0:
-      return {
-        type: "logo",
-        amount: 1,
-        itemName: GIFT_BOX_LOGO_NAMES[randomIntInclusive(0, GIFT_BOX_LOGO_NAMES.length - 1)],
-      };
-    case 1: {
-      const trophyName = randomIntInclusive(0, 1) === 0 ? null : pickGiftBoxTrophy(ownedTrophies);
-      // Either the roll went the other way or the collection is already complete. A box that
-      // grants a badge somebody holds grants nothing, so it pays in gold instead.
-      if (!trophyName) {
-        return {
-          type: "addGold",
-          amount: randomIntInclusive(10, 20),
-        };
-      }
-      return {
-        type: "trophy",
-        amount: 1,
-        itemName: trophyName,
-      };
-    }
-    case 2:
-      return {
-        type: "addGold",
-        amount: randomIntInclusive(10, 20),
-      };
-    case 3:
-      return {
-        type: "datePremium",
-        amount: 86400 * 30,
-      };
-    case 4:
-      return {
-        type: "addNolics",
-        amount: randomIntInclusive(50000, 200000),
-      };
-    default:
-      return {
-        type: "addNolics",
-        amount: 1000,
-      };
-  }
-}
-
-function giftBoxRewardUpdate(existingUser, reward, now) {
-  const amount = Math.max(0, numberValue(reward.amount, 0));
-  switch (reward.type) {
-    case "addNolics":
-      return {
-        pointsNolics: admin.firestore.FieldValue.increment(amount),
-        nolics: admin.firestore.FieldValue.increment(amount),
-      };
-    case "addGold":
-      return {
-        gold: admin.firestore.FieldValue.increment(amount),
-      };
-    case "datePremium": {
-      const premiumDeltaMs = amount * 1000;
-      const premiumBaseMs = Math.max(now, numberValue(existingUser.premiumUntilMs, 0));
-      const premiumUntilMs = premiumBaseMs + premiumDeltaMs;
-      return {
-        hasPremium: premiumUntilMs > now,
-        premiumUntilMs,
-      };
-    }
-    case "logo": {
-      const itemName = stringValue(reward.itemName);
-      return itemName ? {ownedLogos: admin.firestore.FieldValue.arrayUnion(itemName)} : {};
-    }
-    case "trophy": {
-      const trophyName = stringValue(reward.itemName);
-      return trophyName ? {trophies: admin.firestore.FieldValue.arrayUnion(trophyName)} : {};
-    }
-    default:
-      return {};
-  }
-}
-
-function advanceGiftBoxState(existingUser, now) {
-  const currentCount = nonNegativeNumber(existingUser.boxCount, existingUser.countBox);
-  const currentStreak = nonNegativeNumber(existingUser.boxStreakDays, existingUser.countDayBox);
-  const nextBoxAtMs = nonNegativeNumber(existingUser.nextBoxAtMs, existingUser.timeLastOpenBox);
-  if (nextBoxAtMs === 0) {
-    return {
-      boxCount: currentCount,
-      boxStreakDays: currentStreak,
-      nextBoxAtMs: now + DAY_MS,
-    };
-  }
-  if (nextBoxAtMs > now) {
-    return {
-      boxCount: currentCount,
-      boxStreakDays: currentStreak,
-      nextBoxAtMs,
-    };
-  }
-
-  const nextStreak = currentStreak + 1;
-  if (nextStreak >= GIFT_BOX_STREAK_TARGET_DAYS) {
-    return {
-      boxCount: currentCount + 1,
-      boxStreakDays: nextStreak,
-      nextBoxAtMs: now + DAY_MS,
-    };
-  }
-  return {
-    boxCount: currentCount,
-    boxStreakDays: nextStreak,
-    nextBoxAtMs: now + DAY_MS,
-  };
-}
-
-function randomIntInclusive(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 function normalizeContentEvent(data, authUid) {
   const scope = normalizeScope(data.scope);
   const ownerUid = nullableString(data.ownerUid);
@@ -5730,6 +5698,7 @@ function normalizeQuestion(data, fallbackId) {
 function normalizeReviewRecord(data, fallbackId, fallbackLessonId) {
   return {
     id: stringValue(data.id, fallbackId),
+    submissionId: nullableString(data.submissionId),
     lessonId: stringValue(data.lessonId, fallbackLessonId),
     kind: stringValue(data.kind),
     reviewerUid: stringValue(data.reviewerUid),
@@ -5797,6 +5766,7 @@ function questionToDocument(question) {
 function reviewRecordToDocument(record) {
   return clean({
     id: record.id,
+    submissionId: record.submissionId,
     lessonId: record.lessonId,
     kind: record.kind,
     reviewerUid: record.reviewerUid,
@@ -5936,12 +5906,15 @@ function authProfileStatus(request) {
 
 async function upsertUserProfile(uid, options) {
   const nicknamePolicy = await readNicknamePolicy();
+  const economy = await readEconomyConstantsDocument();
   const userRef = db.collection("users").doc(uid);
   const profileRef = db.collection("profiles").doc(uid);
-  return db.runTransaction(async (transaction) => {
+  return runEconomyTransaction(async (transaction) => {
     const userSnapshot = await transaction.get(userRef);
     const profileSnapshot = await transaction.get(profileRef);
     const existingUser = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    const premiumPlan = await advancePremiumInTransaction(transaction, uid, existingUser, economy, options.now);
+    if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
     const existingProfile = profileSnapshot.exists ? profileSnapshot.data() || {} : {};
     const qualification = readQualification(existingProfile, existingUser);
     const status = profileStatus(options.authStatus, hasTrophy(existingUser.trophies, TROPHY_VERIFIED));
@@ -5967,9 +5940,14 @@ async function upsertUserProfile(uid, options) {
     const languages = normalizeLanguages(knownLanguages);
     const createdAtMs = numberValue(existingUser.createdAtMs || existingProfile.createdAtMs, options.now);
     const updatedAtMs = options.now;
-    const boxState = advanceGiftBoxState(existingUser, options.now);
-    const premiumUntilMs = nonNegativeNumber(existingUser.premiumUntilMs, 0);
+    // Offline claims must reconcile against the saved anchor before an online VISIT changes it.
+    // Reading/updating a profile is not an extra daily box operation.
+    const boxState = readBoxState(existingUser);
     const publicProfile = {
+      ...premiumPlan.userPatch,
+      reservedNolics: nonNegativeInteger(existingUser.reservedNolics, 0),
+      reservedLifePoints: nonNegativeInteger(existingUser.reservedLifePoints, 0),
+      reservedPlasmaPoints: nonNegativeInteger(existingUser.reservedPlasmaPoints, 0),
       uid,
       nickname,
       avatarUrl: nullableString(existingUser.avatarUrl),
@@ -5984,15 +5962,12 @@ async function upsertUserProfile(uid, options) {
       goldHearts: numberValue(existingUser.goldHearts, 0),
       // Слоты и заряд в них — раздельно, как у обычного заряда: без этих двух полей плазме нечего
       // восстанавливать.
-      plasmaPoints: numberValue(existingUser.plasmaPoints, numberValue(existingUser.goldHearts, 0) * POINTS_PER_CHARGE),
-      plasmaPointsUpdatedAtMs: numberValue(existingUser.plasmaPointsUpdatedAtMs, options.now),
       gold: numberValue(existingUser.gold, 0),
       pointsSkill: numberValue(existingUser.pointsSkill, 0),
       boxCount: boxState.boxCount,
       boxStreakDays: boxState.boxStreakDays,
       nextBoxAtMs: boxState.nextBoxAtMs,
-      premiumUntilMs,
-      hasPremium: premiumUntilMs > options.now || Boolean(existingUser.hasPremium),
+      nextBonusBoxAtMs: nonNegativeInteger(existingUser.nextBonusBoxAtMs, 0),
       trophies: trophyList(existingUser.trophies),
       ownedLogos: stringArray(existingUser.ownedLogos),
       ratingCountQuestions: numberValue(existingUser.ratingCountQuestions, 0),
@@ -6036,6 +6011,7 @@ async function upsertUserProfile(uid, options) {
       adminLevel: qualification.adminLevel,
       developerLevel: qualification.developerLevel,
     };
+    writePremiumEconomy({db, transaction, uid, plan: premiumPlan});
     transaction.set(
       nicknameClaim.ref,
       {
@@ -6194,14 +6170,19 @@ function profileResponse(result, economy) {
     nolics: numberValue(user.pointsNolics, 0),
     standardHearts: numberValue(user.standardHearts, 5),
     goldHearts: numberValue(user.goldHearts, 0),
-    // Life points are reported already regenerated, so the client can show the real balance
-    // without repeating the clock arithmetic. maxLifePoints lets it render the gauge.
+    // upsertUserProfile already committed both clocks and premium lots together. This response
+    // must not run a second, timestamp-only regeneration that loses the work remainder.
     ...lifePointsSnapshot(user, Date.now(), economy),
     ...plasmaSnapshot(user, Date.now(), economy),
     boxCount: numberValue(user.boxCount, 0),
     boxStreakDays: numberValue(user.boxStreakDays, 0),
     nextBoxAtMs: numberValue(user.nextBoxAtMs, 0),
+    nextBonusBoxAtMs: numberValue(user.nextBonusBoxAtMs, 0),
     premiumUntilMs: numberValue(user.premiumUntilMs, 0),
+    hasPremium: numberValue(user.premiumUntilMs, 0) > Date.now(),
+    reservedNolics: nonNegativeInteger(user.reservedNolics, 0),
+    reservedLifePoints: nonNegativeInteger(user.reservedLifePoints, 0),
+    reservedPlasmaPoints: nonNegativeInteger(user.reservedPlasmaPoints, 0),
     trophies: trophyList(user.trophies),
     // What somebody submitted about themselves, readable only by them, plus when they were
     // confirmed. The tick itself is a trophy; this is the date behind it.
@@ -6241,18 +6222,11 @@ function plasmaSnapshot(user, nowMs, economy) {
   const rules = economy && economy.plasma ? economy.plasma : readEconomyConstants(null).plasma;
   const slots = Math.min(nonNegativeInteger(user.goldHearts, 0), rules.maxOwned);
   const ceiling = slots * POINTS_PER_CHARGE;
-  const hasPremium = numberValue(user.premiumUntilMs, 0) > nowMs || Boolean(user.hasPremium);
-  const plasma = regenerateLifePoints(
-    numberValue(user.plasmaPoints, ceiling),
-    numberValue(user.plasmaPointsUpdatedAtMs, nowMs),
-    nowMs,
-    ceiling,
-    regenMsFor(rules, hasPremium) / POINTS_PER_CHARGE,
-  );
   return {
-    plasmaPoints: plasma.points,
+    plasmaPoints: numberValue(user.plasmaPoints, Math.max(0, ceiling - nonNegativeInteger(user.reservedPlasmaPoints, 0))),
     maxPlasmaPoints: ceiling,
-    plasmaPointsUpdatedAtMs: plasma.updatedAtMs,
+    plasmaPointsUpdatedAtMs: numberValue(user.plasmaPointsUpdatedAtMs, nowMs),
+    plasmaRegenRemainderMs: nonNegativeInteger(user.plasmaRegenRemainderMs, 0),
   };
 }
 
@@ -6266,18 +6240,11 @@ function plasmaSnapshot(user, nowMs, economy) {
 function lifePointsSnapshot(user, nowMs, economy) {
   const rules = economy && economy.standard ? economy.standard : readEconomyConstants(null).standard;
   const ceiling = maxLifePoints(Math.min(nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS), rules.maxOwned));
-  const hasPremium = numberValue(user.premiumUntilMs, 0) > nowMs || Boolean(user.hasPremium);
-  const life = regenerateLifePoints(
-    numberValue(user.lifePoints, ceiling),
-    numberValue(user.lifePointsUpdatedAtMs, nowMs),
-    nowMs,
-    ceiling,
-    regenMsFor(rules, hasPremium) / POINTS_PER_CHARGE,
-  );
   return {
-    lifePoints: life.points,
+    lifePoints: numberValue(user.lifePoints, Math.max(0, ceiling - nonNegativeInteger(user.reservedLifePoints, 0))),
     maxLifePoints: ceiling,
-    lifePointsUpdatedAtMs: life.updatedAtMs,
+    lifePointsUpdatedAtMs: numberValue(user.lifePointsUpdatedAtMs, nowMs),
+    lifeRegenRemainderMs: nonNegativeInteger(user.lifeRegenRemainderMs, 0),
   };
 }
 
@@ -6295,7 +6262,7 @@ function lifePointsSnapshot(user, nowMs, economy) {
  */
 function readEconomyBalance(user) {
   return {
-    hasPremium: Boolean(user.hasPremium),
+    hasPremium: numberValue(user.premiumUntilMs, 0) > Date.now(),
     streakDays: nonNegativeInteger(user.streakDays, 0),
     stars: nonNegativeInteger(user.stars, 0),
     nolics: nonNegativeInteger(user.pointsNolics, numberValue(user.nolics, 0)),

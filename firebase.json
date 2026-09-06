@@ -1,6 +1,7 @@
 {
   "firestore": {
     "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json",
     "predeploy": [
       "firebase emulators:exec --only auth,firestore \"node scripts/rules-emulator-test.js\""
     ]

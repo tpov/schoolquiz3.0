@@ -89,6 +89,7 @@ function testTheServerDefaultsAreTheSharedFileVerbatim() {
     plasma: shared.plasma,
     activityPrices: shared.activityPrices,
     goldPacks: shared.goldPacks,
+    premiumProducts: {},
     clockSkewToleranceMs: shared.clockSkewToleranceMs,
     auditEnabled: shared.auditEnabled,
   });

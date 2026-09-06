@@ -164,31 +164,43 @@ function createFirestoreStub(seed, options) {
     return {docs: matches.map(snapshotFor), empty: matches.length === 0, size: matches.length};
   }
 
-  function collectionRef(path) {
+  function collectionRef(path, filters = [], ordering = null, maximum = Infinity) {
     if (isDocumentPath(path)) throw new Error(`not a collection path: ${path}`);
-    return {
+    const described = path + (filters.length ? `?${filters.map(([field, value]) => `${field}==${value}`).join("&")}` : "");
+    const ref = {
       path,
+      querySnapshot: () => {
+        let matches = childrenOf(path).filter((child) => filters.every(([field, value]) =>
+          store.documents.get(child)[field] === value));
+        if (ordering) {
+          const [field, direction] = ordering;
+          matches = matches.filter((child) => store.documents.get(child)[field] !== undefined);
+          matches.sort((a, b) => {
+            const left = store.documents.get(a)[field];
+            const right = store.documents.get(b)[field];
+            const compared = left < right ? -1 : left > right ? 1 : a.localeCompare(b);
+            return direction === "desc" ? -compared : compared;
+          });
+        }
+        return querySnapshot(path, matches.slice(0, maximum));
+      },
       doc: (id) => documentRef(`${path}/${id}`),
       get: async () => {
-        record("read", path);
-        maybeFail("read", path);
-        return querySnapshot(path, childrenOf(path));
+        record("read", described);
+        maybeFail("read", described);
+        return ref.querySnapshot();
       },
       where: (field, operator, value) => {
         if (operator !== "==") throw new Error(`stub supports only "==" queries, got ${operator}`);
-        return {
-          get: async () => {
-            const described = `${path}?${field}==${value}`;
-            record("read", described);
-            maybeFail("read", described);
-            return querySnapshot(
-              path,
-              childrenOf(path).filter((child) => store.documents.get(child)[field] === value),
-            );
-          },
-        };
+        return collectionRef(path, [...filters, [field, value]], ordering, maximum);
       },
+      orderBy: (field, direction = "asc") => {
+        if (ordering || !["asc", "desc"].includes(direction)) throw new Error("Unsupported fake ordering");
+        return collectionRef(path, filters, [field, direction], maximum);
+      },
+      limit: (count) => collectionRef(path, filters, ordering, count),
     };
+    return ref;
   }
 
   const db = {
@@ -209,12 +221,20 @@ function createFirestoreStub(seed, options) {
     },
     runTransaction: async (body) => {
       const pending = [];
+      const created = new Set();
       const transaction = {
         get: async (ref) => {
           if (pending.length > 0) throw new Error("Firestore transaction read after write");
           record("read", ref.path);
           maybeFail("read", ref.path);
-          return snapshotFor(ref.path);
+          return ref.querySnapshot ? ref.querySnapshot() : snapshotFor(ref.path);
+        },
+        getAll: async (...refs) => Promise.all(refs.map((ref) => transaction.get(ref))),
+        create: (ref, data) => {
+          if (created.has(ref.path)) throw new Error("ALREADY_EXISTS");
+          created.add(ref.path);
+          record("write", ref.path);
+          pending.push([ref.path, data, undefined]);
         },
         // Recorded now, applied at commit: Firestore judges read-before-write at the call, and a
         // stub that recorded at commit would let a read after a set look ordered.
@@ -227,6 +247,7 @@ function createFirestoreStub(seed, options) {
       // Validate every simulated commit failure before applying any of its writes: no partial
       // fake commit may make a broken money transaction look correct.
       for (const [path] of pending) maybeFail("commit", path);
+      for (const path of created) if (store.documents.has(path)) throw new Error("ALREADY_EXISTS");
       for (const [path, data, writeOptions] of pending) writeDocument(path, data, writeOptions);
       return result;
     },

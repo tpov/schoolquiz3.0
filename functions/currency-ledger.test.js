@@ -55,6 +55,13 @@ function testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves() {
   // Список закрытый: повод, которого здесь нет, не запишется. Значит, он перечисляется в тесте —
   // иначе новый повод приезжает молча, и первым о нём узнаёт оператор по строке, которой не понимает.
   assert.deepStrictEqual(REASONS.slice().sort(), [
+    "arena_author_royalty",
+    "arena_milestone",
+    "arena_royalty_carry",
+    "arena_royalty_sink",
+    "arena_season",
+    "arena_ticket_cancel",
+    "arena_ticket_reserve",
     "attempt_reward",
     "attempt_toll",
     "charge_claim",
@@ -62,6 +69,11 @@ function testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves() {
     "gold_pack",
     "lesson_unlock",
     "market",
+    "premium_grant",
+    "premium_legacy",
+    "premium_refund",
+    "premium_regen",
+    "premium_time",
     "purchase_refund",
     "slot_purchase",
   ]);

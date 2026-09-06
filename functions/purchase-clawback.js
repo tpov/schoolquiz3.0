@@ -21,9 +21,12 @@
 const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constants");
 const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
 const {ACCESS_REFUSED_HINT} = require("./purchase-settlement");
+const {PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES, premiumGrantId, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
+const {SOURCE, durationMsForDays} = require("./premium-grants");
 const {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
+  PRODUCT_PREMIUM,
   RECEIPTS_SUBCOLLECTION,
   SHORTFALL_FIELD,
   goldAfterClawback,
@@ -170,7 +173,9 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
   const userRef = db.collection("users").doc(uid);
   const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
   let verdict;
+  let catchupCheckpoints = 0;
   try {
+    for (let pass = 0; pass < PREMIUM_CATCHUP_PASSES; pass++) {
     verdict = await db.runTransaction(async (transaction) => {
       const [settlementSnapshot, userSnapshot, constantsSnapshot] =
         await transaction.getAll(settlementRef, userRef, constantsRef);
@@ -180,6 +185,40 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
       if (decision.decision !== CLAWBACK_CLAW_BACK) return decision;
 
       const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+      if (decision.clawback.productKind === PRODUCT_PREMIUM) {
+        const operation = {kind: "REFUND", grantId: decision.clawback.premiumGrantId};
+        const snapshot = await readPremiumEconomy({db, transaction, uid, operation});
+        if (operation.grantId !== premiumGrantId(SOURCE.PLAY, id) || !snapshot.target ||
+            snapshot.target.source !== SOURCE.PLAY || snapshot.target.sourceId !== id ||
+            snapshot.target.durationMs !== decision.clawback.premiumGrantedMs ||
+            snapshot.target.durationMs !== durationMsForDays(decision.clawback.premiumDays)) {
+          throw new Error("Premium purchase settlement and grant provenance disagree; repair required");
+        }
+        const plan = planPremiumEconomy({snapshot, userData, constants, now, operation});
+        if (plan.caughtUp && plan.outcome !== "REFUNDED") {
+          throw new Error("Premium refund tombstone disagrees with purchase settlement; provenance repair required");
+        }
+        writePremiumEconomy({db, transaction, uid, plan});
+        transaction.set(userRef, {uid, ...plan.userPatch}, {merge: true});
+        if (!plan.caughtUp) return {decision: PREMIUM_CATCHUP};
+        const gold = readGold(userData);
+        const taken = {
+          clawback: decision.clawback, notificationId: messageId,
+          goldBefore: gold, goldAfter: gold, shortfallAdded: 0, shortfallAfter: readShortfall(userData),
+          premiumRevokedMs: plan.revokedNowMs, premiumConsumedMs: plan.grant.consumedMs,
+          premiumUntilMs: plan.premiumUntilMs,
+          constantsDoc: ECONOMY_CONSTANTS_DOC, constantsVersion: constants.version, now: plan.header.asOfMs,
+        };
+        transaction.set(settlementRef, refundSettlementUpdate(taken), {merge: true});
+        const refundId = refundDocId(id);
+        transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(refundId), refundReceiptRecord(taken));
+        transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(refundId), refundAuditRecord(taken));
+        transaction.set(notificationRef, notificationRecord({
+          messageId, notification, kind, result: CLAWBACK_OUTCOME_CLAWED_BACK, settlementId: id, sku, uid,
+          publishTimeMs, now, detail: decision.reason,
+        }));
+        return {decision: CLAWBACK_CLAW_BACK, taken};
+      }
       const goldBefore = readGold(userData);
       const shortfallBefore = readShortfall(userData);
       const after = goldAfterClawback(goldBefore, decision.clawback.goldGranted);
@@ -233,13 +272,21 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
       }));
       return {decision: CLAWBACK_CLAW_BACK, taken};
     });
+    if (verdict.decision !== PREMIUM_CATCHUP) break;
+    catchupCheckpoints++;
+    }
   } catch (error) {
-    // Транзакция не зафиксировалась — ничего не записано. Снять всё-таки надо, поэтому сообщение не
-    // подтверждается: Pub/Sub привезёт его снова.
-    log.error("playPurchaseNotifications: clawback transaction failed; nothing was written", {
+    // This transaction rolled back. Earlier time-only catch-up checkpoints may have committed;
+    // no refund notification is acknowledged until the actual refund commits atomically.
+    log.error(catchupCheckpoints ? "playPurchaseNotifications: clawback transaction failed; refund was not committed" :
+      "playPurchaseNotifications: clawback transaction failed; nothing was written", {
       ...context, settlementId: id, sku, uid, message: errorMessage(error),
     });
     throw error;
+  }
+
+  if (verdict.decision === PREMIUM_CATCHUP) {
+    throw new Error("Premium time catch-up made durable progress; redeliver this refund notification");
   }
 
   if (verdict.decision !== CLAWBACK_CLAW_BACK) {
@@ -257,6 +304,11 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
     uid,
     goldTakenBack: verdict.taken.goldBefore - verdict.taken.goldAfter,
     shortfall: verdict.taken.shortfallAfter,
+    ...(verdict.taken.clawback.productKind === PRODUCT_PREMIUM ? {
+      premiumRevokedMs: verdict.taken.premiumRevokedMs,
+      premiumConsumedMs: verdict.taken.premiumConsumedMs,
+      premiumUntilMs: verdict.taken.premiumUntilMs,
+    } : {}),
   };
 }
 

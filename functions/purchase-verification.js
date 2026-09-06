@@ -23,6 +23,8 @@
  */
 
 const crypto = require("crypto");
+const {PREMIUM_DAYS, durationMsForDays} = require("./premium-grants");
+const PRODUCT_PREMIUM = "PREMIUM";
 
 /** Расчёты по токенам: один документ на токен, ключ — sha256 токена. */
 const PURCHASE_SETTLEMENTS_COLLECTION = "purchase_settlements";
@@ -88,6 +90,7 @@ const REASON_TOKEN_OWNED_BY_ANOTHER_ACCOUNT = "TOKEN_OWNED_BY_ANOTHER_ACCOUNT";
 const REASON_SETTLEMENT_NOT_CREDITED = "SETTLEMENT_NOT_CREDITED";
 const REASON_CONSUMPTION_STATE_UNKNOWN = "CONSUMPTION_STATE_UNKNOWN";
 const REASON_QUANTITY_UNREADABLE = "QUANTITY_UNREADABLE";
+const REASON_PREMIUM_QUANTITY_UNSUPPORTED = "PREMIUM_QUANTITY_UNSUPPORTED";
 /** Запрос не той формы — отказ ещё до Play (purchase-settlement.js). */
 const REASON_REQUEST_INVALID = "REQUEST_INVALID";
 const REASON_CODES = Object.freeze([
@@ -101,6 +104,7 @@ const REASON_CODES = Object.freeze([
   REASON_SETTLEMENT_NOT_CREDITED,
   REASON_CONSUMPTION_STATE_UNKNOWN,
   REASON_QUANTITY_UNREADABLE,
+  REASON_PREMIUM_QUANTITY_UNSUPPORTED,
   REASON_REQUEST_INVALID,
 ]);
 
@@ -312,6 +316,21 @@ function decideSettlement({existing, purchase, claimedSku, uid, constants}) {
   }
 
   const goldPerUnit = goldPackAmount(constants, sku);
+  const premium = premiumProduct(constants, sku);
+  if (premium && goldPerUnit !== null) return refuse("invalid-argument", "SKU has conflicting product classes", REASON_SKU_NOT_SOLD);
+  if (premium) {
+    if (purchase.quantity !== 1) return refuse("failed-precondition", "Premium supports one item per purchase", REASON_PREMIUM_QUANTITY_UNSUPPORTED);
+    return {
+      decision: SETTLEMENT_CREDIT,
+      reason: "verified",
+      credit: {
+        sku, productKind: PRODUCT_PREMIUM, premiumDays: premium.days,
+        premiumGrantedMs: durationMsForDays(premium.days), quantity: 1,
+        goldGranted: 0, goldPerUnit: 0, isTest: purchase.isTest,
+        constantsVersion: safeNumber(constants && constants.version, 0),
+      },
+    };
+  }
   if (goldPerUnit === null) return refuse("invalid-argument", `sku ${sku} is not sold`, REASON_SKU_NOT_SOLD);
 
   return {
@@ -326,6 +345,14 @@ function decideSettlement({existing, purchase, claimedSku, uid, constants}) {
       constantsVersion: safeNumber(constants && constants.version, 0),
     },
   };
+}
+
+/** Processing an already paid receipt never consults salesEnabled or a current gold price. */
+function premiumProduct(constants, sku) {
+  const products = constants && constants.premiumProducts;
+  if (!products || !Object.prototype.hasOwnProperty.call(products, sku)) return null;
+  const product = products[sku];
+  return product && PREMIUM_DAYS.includes(product.days) ? product : null;
 }
 
 /**
@@ -382,13 +409,16 @@ function refuse(code, reason, reasonCode) {
 }
 
 /** Ответ на начисление. Сохраняется в записи расчёта и возвращается на повтор без изменений. */
-function successResponse({sku, goldGranted, gold, settlementId: id}) {
+function successResponse({sku, goldGranted, gold, settlementId: id, productKind, premiumGrantedMs, premiumUntilMs, premiumGrantId}) {
   return {
     status: STATUS_CREDITED,
     sku: stringValue(sku),
     goldGranted: safeNumber(goldGranted, 0),
     gold: safeNumber(gold, 0),
     settlementId: stringValue(id),
+    ...(productKind === PRODUCT_PREMIUM ? {
+      productKind, premiumGrantedMs, premiumUntilMs, premiumGrantId,
+    } : {}),
   };
 }
 
@@ -410,6 +440,10 @@ function replayResponse(existing) {
     goldGranted: existing.goldGranted,
     gold: existing.goldAfter,
     settlementId: existing.settlementId,
+    productKind: existing.productKind,
+    premiumGrantedMs: existing.premiumGrantedMs,
+    premiumUntilMs: existing.premiumUntilMs,
+    premiumGrantId: existing.premiumGrantId,
   });
 }
 
@@ -419,7 +453,7 @@ function replayResponse(existing) {
  * Сам токен не хранится — id и есть его хеш, а возврат (история 1.3) получает токен от Play и
  * хеширует его так же. `orderId` — для поддержки и сверки с Play Console.
  */
-function settlementRecord({id, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now, response}) {
+function settlementRecord({id, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now, response, premiumGrantId, premiumUntilMs}) {
   return {
     settlementId: stringValue(id),
     uid: stringValue(uid),
@@ -437,6 +471,7 @@ function settlementRecord({id, uid, purchase, credit, goldBefore, goldAfter, con
     isTest: credit.isTest === true,
     settledAtMs: safeNumber(now, 0),
     response: response === undefined ? null : response,
+    ...premiumRecordFields(credit, premiumGrantId, premiumUntilMs),
   };
 }
 
@@ -444,7 +479,14 @@ function settlementRecord({id, uid, purchase, credit, goldBefore, goldAfter, con
  * Квитанция игроку: ключ и параметры, не текст. Текст собирает устройство на своём языке —
  * украинский интерфейс обязателен по закону, и сервер языка игрока не знает.
  */
-function receiptRecord({id, uid, credit, now}) {
+function receiptRecord({id, uid, credit, now, premiumGrantId, premiumUntilMs}) {
+  if (credit.productKind === PRODUCT_PREMIUM) return {
+    receiptId: stringValue(id), uid: stringValue(uid), kind: RECEIPT_KIND_PURCHASE_CREDITED,
+    messageKey: "receipt.premium_credited",
+    params: {sku: credit.sku, days: credit.premiumDays, premiumGrantedMs: credit.premiumGrantedMs, premiumUntilMs},
+    amount: credit.premiumGrantedMs, currency: "PREMIUM_MS", premiumGrantId,
+    settlementId: stringValue(id), createdAtMs: safeNumber(now, 0),
+  };
   return {
     receiptId: stringValue(id),
     uid: stringValue(uid),
@@ -468,7 +510,7 @@ function receiptRecord({id, uid, credit, now}) {
  * Версия — то, ради чего запись существует: смена цены не ретроактивна, и без записи о том, под
  * какой таблицей принималось решение, доказать это потом нечем.
  */
-function auditRecord({id, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now}) {
+function auditRecord({id, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now, premiumGrantId, premiumUntilMs}) {
   return {
     auditId: stringValue(id),
     action: AUDIT_ACTION_PURCHASE_CREDIT,
@@ -485,7 +527,15 @@ function auditRecord({id, uid, purchase, credit, goldBefore, goldAfter, constant
     constantsVersion: safeNumber(credit.constantsVersion, 0),
     isTest: credit.isTest === true,
     atMs: safeNumber(now, 0),
+    ...premiumRecordFields(credit, premiumGrantId, premiumUntilMs),
   };
+}
+
+function premiumRecordFields(credit, premiumGrantId, premiumUntilMs) {
+  return credit.productKind === PRODUCT_PREMIUM ? {
+    productKind: PRODUCT_PREMIUM, premiumDays: credit.premiumDays,
+    premiumGrantedMs: credit.premiumGrantedMs, premiumGrantId, premiumUntilMs,
+  } : {};
 }
 
 function isAbsent(value) {
@@ -522,12 +572,14 @@ module.exports = {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
   PURCHASE_STATE_PURCHASED,
+  PRODUCT_PREMIUM,
   REASON_CODES,
   REASON_CONSUMED_WITHOUT_SETTLEMENT,
   REASON_CONSUMPTION_STATE_UNKNOWN,
   REASON_PURCHASE_CANCELED,
   REASON_PURCHASE_STATE_UNKNOWN,
   REASON_QUANTITY_UNREADABLE,
+  REASON_PREMIUM_QUANTITY_UNSUPPORTED,
   REASON_REQUEST_INVALID,
   REASON_SETTLEMENT_NOT_CREDITED,
   REASON_SKU_MISMATCH,
@@ -551,6 +603,7 @@ module.exports = {
   decideSettlement,
   goldAfterClawback,
   pendingResponse,
+  premiumProduct,
   purchaseFromLookup,
   readProductPurchase,
   readShortfall,

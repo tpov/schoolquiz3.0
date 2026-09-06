@@ -22,6 +22,7 @@
 const DEFAULTS = require("./config/economy-constants.json");
 // Форма SKU объявлена там, где решается, что по нему начислять: одно определение на оба модуля.
 const {SKU_PATTERN} = require("./purchase-verification");
+const {PREMIUM_DAYS} = require("./premium-grants");
 
 /**
  * Документ таблицы в Firestore.
@@ -143,6 +144,32 @@ function goldPacks(value) {
   return packs;
 }
 
+/** Exact configured Play ids only. No SKU, duration or price is silently invented. */
+function premiumProducts(value) {
+  const products = {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) return products;
+  for (const [sku, entry] of Object.entries(value)) {
+    if (!SKU_PATTERN.test(sku) || !entry || !PREMIUM_DAYS.includes(entry.days)) continue;
+    Object.defineProperty(products, sku, {enumerable: true, configurable: true, writable: true, value: {
+      days: entry.days,
+      salesEnabled: entry.salesEnabled === true,
+      goldPrice: Number.isSafeInteger(entry.goldPrice) && entry.goldPrice > 0 ? entry.goldPrice : null,
+    }});
+  }
+  return products;
+}
+
+/** Only the shop/new-sale path calls this. Receipt and refund processing must never call it. */
+function premiumSaleOffer(constants, sku, payment) {
+  const products = constants && constants.premiumProducts;
+  const offer = products && Object.prototype.hasOwnProperty.call(products, sku) ? products[sku] : null;
+  if (!offer || offer.salesEnabled !== true || !PREMIUM_DAYS.includes(offer.days) ||
+      !["PLAY", "GOLD"].includes(payment)) return null;
+  if (constants.goldPacks && Object.prototype.hasOwnProperty.call(constants.goldPacks, sku)) return null;
+  if (payment === "GOLD" && (!Number.isSafeInteger(offer.goldPrice) || offer.goldPrice <= 0)) return null;
+  return {sku, days: offer.days, payment, ...(payment === "GOLD" ? {goldPrice: offer.goldPrice} : {})};
+}
+
 /**
  * Приводит документ к рабочей таблице.
  *
@@ -170,6 +197,7 @@ function readEconomyConstants(document, fallbackVersion) {
     plasma: chargeRules(source.plasma, DEFAULTS.plasma),
     activityPrices: activityPrices(source.activityPrices),
     goldPacks: goldPacks(source.goldPacks),
+    premiumProducts: premiumProducts(source.premiumProducts),
     clockSkewToleranceMs: nonNegativeInt(source.clockSkewToleranceMs, DEFAULTS.clockSkewToleranceMs),
     auditEnabled: typeof source.auditEnabled === "boolean" ?
       source.auditEnabled : DEFAULTS.auditEnabled,
@@ -234,6 +262,7 @@ module.exports = {
   activityPrice,
   clientEconomyConstants,
   readEconomyConstants,
+  premiumSaleOffer,
   regenMsFor,
   slotPrice,
 };

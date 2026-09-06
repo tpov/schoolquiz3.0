@@ -76,6 +76,35 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Per-purchase entitlement lots include permanent provenance and consumption history.
+    // All balance fields, including charge remainders and reservations, inherit users/write:false.
+    match /premium_accounts/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /lesson_placements/{lessonId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+      match /history/{entryId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
+    match /lesson_ratings/{lessonId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+      match /votes/{voteId} { allow read, write: if false; }
+    }
+    match /arena_mutations/{document=**} { allow read, write: if false; }
+    match /arena_awards/{document=**} { allow read, write: if false; }
+    match /arena_seasons/{document=**} { allow read, write: if false; }
+    match /arena_season_votes/{document=**} { allow read, write: if false; }
+    match /box_operations/{document=**} { allow read, write: if false; }
+    match /arena_entry_tickets/{document=**} { allow read, write: if false; }
+    match /arena_ticket_quotas/{document=**} { allow read, write: if false; }
+    match /arena_ticket_cancellations/{document=**} { allow read, write: if false; }
+    match /arena_royalty_accounts/{document=**} { allow read, write: if false; }
+
     match /purchase_notifications/{messageId} {
       // One document per Play notification message, written by playPurchaseNotifications. It is
       // what makes a re-delivered message take nothing back a second time, and what tells a message

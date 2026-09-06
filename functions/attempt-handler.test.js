@@ -529,6 +529,64 @@ test("the charge is one whole activity price, and the balance is written back", 
   assert.strictEqual(user.lessonBest[`${LESSON}:HARD`], PERCENT);
 });
 
+test("real attempt handler advances premium only until expiry and preserves both charge clocks", async () => {
+  const originalNow = Date.now;
+  const start = 1_800_000_000_000;
+  let now = start;
+  Date.now = () => now;
+  try {
+    store.reset(world({
+      "configs/economy": {...world()["configs/economy"], standard: {regenMs: 100_000}, plasma: {regenMs: 100_000}},
+      [`users/${UID}`]: {uid: UID, standardHearts: 5, goldHearts: 1,
+        lifePoints: 0, plasmaPoints: 0, lifePointsUpdatedAtMs: start, plasmaPointsUpdatedAtMs: start,
+        premiumUntilMs: start + 600, hasPremium: true},
+    }));
+    const request = (id) => ({auth: {uid: UID}, data: {attempts: [serverScoredBody({attemptId: id, completionKind: "ABORTED"})]}});
+    await functions.submitLessonResultEvents.run(request("premium-clock-init"));
+    now = start + 1000;
+    const result = await functions.submitLessonResultEvents.run(request("premium-clock-expired"));
+    const user = store.documents.get(`users/${UID}`);
+    assert.equal(result.lifePoints, 1);
+    assert.equal(user.plasmaPoints, 1);
+    assert.equal(user.lifeRegenRemainderMs, 600);
+    assert.equal(user.plasmaRegenRemainderMs, 600);
+    assert.equal(user.lifePointsUpdatedAtMs, now);
+    assert.equal(user.plasmaPointsUpdatedAtMs, now);
+    assert.equal(user.hasPremium, false);
+    assert.equal(store.documents.get(`premium_accounts/${UID}`).totalRemainingMs, 0);
+    assert.equal(result.receipts[0].lifePointsSpent, 0);
+    now = start + 1400;
+    await functions.submitLessonResultEvents.run(request("premium-clock-next"));
+    assert.equal(store.documents.get(`users/${UID}`).lifePoints, 2);
+    assert.equal(store.documents.get(`users/${UID}`).plasmaPoints, 2);
+  } finally { Date.now = originalNow; }
+});
+
+test("profile refresh clears sticky premium and reports reserved balances without minting capacity", async () => {
+  const originalNow = Date.now;
+  const now = 1_800_000_000_000;
+  Date.now = () => now;
+  try {
+    store.reset(world({[`users/${UID}`]: {uid: UID, nickname: "PlayerName", hasPremium: true,
+      lifePoints: 0, lifePointsUpdatedAtMs: now - 86_400_000, standardHearts: 5,
+      plasmaPoints: 0, plasmaPointsUpdatedAtMs: now - 86_400_000, goldHearts: 1,
+      reservedLifePoints: 300, reservedPlasmaPoints: 40, reservedNolics: 7}}));
+    const result = await functions.ensureUserProfile.run({auth: {uid: UID}, data: {}});
+    assert.equal(result.hasPremium, false);
+    assert.equal(result.premiumUntilMs, 0);
+    assert.equal(result.lifePoints, 200);
+    assert.equal(result.plasmaPoints, 60);
+    assert.equal(result.reservedLifePoints, 300);
+    assert.equal(result.reservedPlasmaPoints, 40);
+    assert.equal(result.reservedNolics, 7);
+    assert.equal(result.lifePointsUpdatedAtMs, now);
+    assert.equal(result.plasmaPointsUpdatedAtMs, now);
+    const again = await functions.ensureUserProfile.run({auth: {uid: UID}, data: {}});
+    assert.equal(again.lifePoints, result.lifePoints);
+    assert.equal(again.plasmaPoints, result.plasmaPoints);
+  } finally { Date.now = originalNow; }
+});
+
 // ────────────────────────────────────────────────────────────────────────────────────────────────
 
 async function run() {
