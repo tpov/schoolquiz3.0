@@ -82,7 +82,8 @@ function entrySnapshot(raw, lessonId, difficulty) {
     return canonical({questionId: question.questionId, questionVersion: question.questionVersion,
       publicQuestion: question.publicQuestion, gradingKey: question.gradingKey});
   });
-  // private gradingKey never appears in issue output. Loader must supply an E2-redacted publicQuestion.
+  // Private gradingKey never appears in issue output. HARD publicQuestion must be E2-redacted;
+  // EASY retains the existing keyed payload for offline learning and S hints.
   return {lessonId, lessonVersion: raw.lessonVersion, difficulty, authorUid: raw.authorUid,
     ratingVersion: raw.ratingVersion, priceNolics: raw.priceNolics, lifeCost: raw.lifeCost, questions,
     contentContext: raw.contentContext == null ? null : canonical(raw.contentContext),
@@ -101,7 +102,7 @@ function publicTicket(ticket) {
  * chooseRandomLesson(tx,{uid,difficulty,requestId,nowMs}) returns a server-chosen lessonId;
  * it must be retry-safe, use server entropy, and have no nontransactional side effects.
  * loadEntrySnapshot(tx,{lessonId,difficulty,nowMs}) supplies the immutable authoritative shape
- * validated above, including an already E2-redacted publicQuestion and a private gradingKey.
+ * validated above, including a HARD-redacted/EASY-keyed publicQuestion and a private gradingKey.
  * readRegeneration(tx,{uid,user,nowMs}) returns {caughtUp,userPatch,...privatePlan}; its cap
  * counts available+reserved life. writeRegeneration(tx,plan) writes ONLY premium state/ledger,
  * never users/{uid}; caller merges userPatch. A !caughtUp checkpoint creates no ticket/hold.

@@ -3,7 +3,7 @@
 const {randomBytes, createHmac, createHash} = require("node:crypto");
 const {createArenaTickets, ArenaTicketError, nolicBalance} = require("./arena-tickets");
 const {assignLessonPrices} = require("./arena-policy");
-const {redact, STATUS: REDACTION, CONTENT_TYPE} = require("./question-redaction");
+const {redact, restoreContent, STATUS: REDACTION, CONTENT_TYPE} = require("./question-redaction");
 const {scoreAttempt} = require("./attempt-scoring");
 const {attemptReceipt, attemptFingerprint, STATUS} = require("./attempt-receipt");
 const {readEconomyConstants, activityPrice, ECONOMY_CONSTANTS_DOC, POINTS_PER_CHARGE} = require("./economy-constants");
@@ -35,8 +35,8 @@ function scoringInput(ticket, answers) {
   return {
     questions: ticket.questions.map((q) => ({...q.publicQuestion, id: q.questionId, lessonId: ticket.lessonId})),
     served: ticket.questions.map((q, codeAnswerIndex) => ({questionId: q.questionId, codeAnswerIndex})),
-    keyDocument: {version: 1, lessonId: ticket.lessonId, publicHalfRedacted: true,
-      keys: ticket.questions.filter((q) => q.gradingKey.kind !== "PARTICIPATION")
+    keyDocument: {version: 1, lessonId: ticket.lessonId, publicHalfRedacted: ticket.difficulty === "HARD",
+      keys: ticket.questions.filter((q) => !["PARTICIPATION", "FULL_CONTENT"].includes(q.gradingKey.kind))
         .map((q) => ({questionId: q.questionId, key: q.gradingKey}))},
     answers,
   };
@@ -73,12 +73,9 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
     // Fixed per callable invocation, so optimistic retries keep the same random ordering.
     const entropy = randomBytes(32);
     const rank = (key) => createHmac("sha256", entropy).update(key).digest("hex");
-    const cachedEntries = new WeakMap();
     async function loadEntry(tx, {lessonId, difficulty}) {
-      let entries = cachedEntries.get(tx);
-      if (!entries) { entries = new Map(); cachedEntries.set(tx, entries); }
-      const cacheKey = `${lessonId}:${difficulty}`;
-      if (entries.has(cacheKey)) return entries.get(cacheKey);
+      // Firestore reuses a Transaction object across retries. Never cache its read set by
+      // object identity: a retry must see withdrawals, review changes and current prices.
       const context = await loadLessonContext(tx, lessonId);
       if (!context || !context.reviewApproved || !context.published || context.questType !== "REGULAR") fail("LESSON_NOT_ELIGIBLE");
       const rows = await arenaRows(tx);
@@ -122,6 +119,13 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
           if (matching.length !== 1 || keyDocument.lessonId !== lessonId || keyDocument.version !== 1) fail("UNSCORABLE_BANK");
           payload = question.payload; key = matching[0].key;
         } else fail("UNSCORABLE_BANK");
+        if (difficulty === "EASY" && key.kind !== "PARTICIPATION") {
+          // EASY keeps the existing offline answer/hint model. HARD alone hides its key.
+          // In both modes money is settled from this immutable server-owned snapshot.
+          const fullContent = split.status === REDACTION.REDACTED ? content : restoreContent(payload, key);
+          if (!fullContent) fail("UNSCORABLE_BANK");
+          payload = JSON.stringify(fullContent); key = {kind: "FULL_CONTENT"};
+        }
         const version = exact(question.version, context.contentVersion);
         if (!version) fail("UNSCORABLE_BANK");
         return {questionId: id, questionVersion: version, gradingKey: key,
@@ -137,7 +141,6 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
         }};
       if (!bundleScorable(result)) fail("UNSCORABLE_BANK");
       if (Buffer.byteLength(JSON.stringify(result)) > MAX_RESULT_BYTES) fail("LESSON_BANK_TOO_LARGE");
-      entries.set(cacheKey, result);
       return result;
     }
     return createArenaTickets({db, nowMs, readRegeneration: regeneration, writeRegeneration,

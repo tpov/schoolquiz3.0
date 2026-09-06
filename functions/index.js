@@ -1,6 +1,9 @@
 "use strict";
 
 const admin = require("firebase-admin");
+// The Emulator Suite may bind the namespaced accessor, losing its static classes. Resolve
+// primitives independently in that environment; injected test namespaces retain their types.
+const firestoreTypes = admin.firestore.Timestamp ? admin.firestore : require("firebase-admin/firestore");
 const crypto = require("crypto");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
@@ -261,7 +264,7 @@ const arenaService = createArenaService({
   writeLessonChange: (transaction, context, fields, now) => {
     const lessonChangeAtMs = Math.max(now, context.nextChangeAtMs);
     transaction.set(db.doc(`lessons/${context.lessonId}`),
-      {...fields, lastModifiedAt: admin.firestore.Timestamp.fromMillis(lessonChangeAtMs)}, {merge: true});
+      {...fields, lastModifiedAt: firestoreTypes.Timestamp.fromMillis(lessonChangeAtMs)}, {merge: true});
     writeSyncChanges(transaction, db, {kind: "lesson", id: context.lessonId, catalogId: context.catalogId}, lessonChangeAtMs);
   },
 });
@@ -399,7 +402,7 @@ exports.fetchReviewAssignmentChanges = onCall(CALLABLE_OPTIONS, async (request) 
   const uid = requireAuthUid(request);
   await requireProfile(uid);
   return readReviewAssignmentChanges(db, request.data || {}, {
-    documentId: admin.firestore.FieldPath.documentId(),
+    documentId: firestoreTypes.FieldPath.documentId(),
   });
 });
 
@@ -1608,6 +1611,11 @@ async function applyLessonResultEvents(uid, attempts) {
     for (const item of settlementEvents) {
       existingSnapshots.push(await transaction.get(item.ref));
     }
+    const placements = [];
+    for (const item of settlementEvents) {
+      placements.push(item.event.scope === PUBLIC_SCOPE ?
+        await transaction.get(db.doc(`lesson_placements/${item.event.lessonId}`)) : null);
+    }
 
     // Life points gate how much activity is paid for. Regeneration is derived from the elapsed
     // time here, so nothing has to run while the user is away. Accounts created before this
@@ -1675,12 +1683,18 @@ async function applyLessonResultEvents(uid, attempts) {
         if (group) touchedTournamentIds.add(group.tournamentId);
         return;
       }
+      const placement = placements[index]?.exists ? placements[index].data() : null;
+      const legacyWithoutTicket = placement?.shelf === "arena" && !item.event.completed && !item.event.aborted;
+      if (placement?.shelf === "arena" && !legacyWithoutTicket) {
+        throw new HttpsError("failed-precondition", "A new Arena attempt requires its prepared ticket",
+          {reason: "ARENA_TICKET_REQUIRED"});
+      }
       const isNew = true;
       let lifeCharged = false;
       // Preserve the independent full-lesson guard from the sync branch, in addition to E2's
       // server scoring decision. A self-consistent one-question payload is not a full lesson.
       const servedCountVerified = servedCountMatchesLesson(item.event, allocatedByLesson);
-      if (isNew && item.payable && servedCountVerified && !item.event.aborted) {
+      if (isNew && item.payable && servedCountVerified && !item.event.aborted && !legacyWithoutTicket) {
         const charged = spendLifePoints(life.points, item.event.lifeCost, lifeCeiling);
         if (charged.affordable) {
           life = {points: charged.points, updatedAtMs: life.updatedAtMs};
@@ -1788,7 +1802,7 @@ async function applyLessonResultEvents(uid, attempts) {
         const tournamentId = writeTournamentAttemptToTransaction(transaction, item.event, item.content, now);
         if (tournamentId) touchedTournamentIds.add(tournamentId);
       }
-      const status = lifeCharged ? ATTEMPT_STATUS.SETTLED :
+      const status = legacyWithoutTicket ? ATTEMPT_STATUS.LEGACY : lifeCharged ? ATTEMPT_STATUS.SETTLED :
         item.event.paymentRule === PAYMENT_RULE.SERVER_SCORED && !item.payable ?
           ATTEMPT_STATUS.UNSCORABLE : ATTEMPT_STATUS.REJECTED;
       const receipt = attemptReceipt({
@@ -2128,7 +2142,7 @@ exports.decideVerification = onCall(CALLABLE_OPTIONS, async (request) => {
     if (decision === DECISION_APPROVED) {
       transaction.set(userRef, {
         uid: targetUid,
-        trophies: admin.firestore.FieldValue.arrayUnion(TROPHY_VERIFIED),
+        trophies: firestoreTypes.FieldValue.arrayUnion(TROPHY_VERIFIED),
         verifiedAtMs: now,
         verifiedByUid: reviewerUid,
         status: "VALIDATED",
@@ -2359,7 +2373,7 @@ exports.buyLogo = onCall(CALLABLE_OPTIONS, async (request) => {
       {
         uid,
         gold: gold - price,
-        ownedLogos: admin.firestore.FieldValue.arrayUnion(name),
+        ownedLogos: firestoreTypes.FieldValue.arrayUnion(name),
         updatedAtMs: Date.now(),
       },
       {merge: true},
@@ -2521,12 +2535,12 @@ exports.buyListedLogo = onCall(CALLABLE_OPTIONS, async (request) => {
     // gold without handing over the avatar, or hand it over unpaid.
     transaction.set(sellerRef, {
       gold: sellerGold + split.sellerGets,
-      ownedLogos: admin.firestore.FieldValue.arrayRemove(name),
+      ownedLogos: firestoreTypes.FieldValue.arrayRemove(name),
       updatedAtMs: now,
     }, {merge: true});
     transaction.set(buyerRef, {
       gold: buyerGold - split.total,
-      ownedLogos: admin.firestore.FieldValue.arrayUnion(name),
+      ownedLogos: firestoreTypes.FieldValue.arrayUnion(name),
       updatedAtMs: now,
     }, {merge: true});
     transaction.delete(listingRef);
@@ -2979,7 +2993,7 @@ async function applyLessonUnlock(uid, payload) {
         // reads nolics, so writing one leaves half the app showing a balance never charged.
         pointsNolics: spent.nolics,
         nolics: spent.nolics,
-        lessonUnlocks: admin.firestore.FieldValue.arrayUnion(key),
+        lessonUnlocks: firestoreTypes.FieldValue.arrayUnion(key),
       }),
       {merge: true},
     );
@@ -3049,7 +3063,7 @@ async function applySetPublicQuestShelf(uid, payload) {
     if (!catalogId) {
       throw new HttpsError("failed-precondition", `Quest ${questId} has no catalogId`);
     }
-    const lastModifiedAt = admin.firestore.Timestamp.fromMillis(now);
+    const lastModifiedAt = firestoreTypes.Timestamp.fromMillis(now);
     const previousVisibleOn = Array.isArray(quest.visibleOn)
       ? quest.visibleOn.filter((shelf) => typeof shelf === "string")
       : [];
@@ -3124,7 +3138,7 @@ exports.retirePublicQuest = onCall(CALLABLE_OPTIONS, async (request) => {
       questRef,
       {
         visibleOn: [],
-        lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+        lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
       },
       quest.version,
       {merge: true},
@@ -3602,7 +3616,7 @@ function writeTournamentAttemptToTransaction(transaction, event, content, now) {
       lastAttemptAtMs: result.completedAtMs,
       lastPercent: result.percent,
       lastGroupId: group.groupId,
-      attemptCount: admin.firestore.FieldValue.increment(1),
+      attemptCount: firestoreTypes.FieldValue.increment(1),
       updatedAtMs: now,
       schemaVersion: 1,
     }),
@@ -4082,7 +4096,7 @@ function writeQuestRatingAggregateToWriter(writer, dirty, averageRating, average
     averageRating,
     averageRatingCount,
     ratingUpdatedAtMs: now,
-    lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+    lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
     // Рейтинг двигает СВОЙ счётчик и не трогает `version` — ни здесь, ни в приватном документе ниже.
     //
     // `version` означает ровно одно: «редакция содержимого сущности», и с ней сверяется
@@ -4095,7 +4109,7 @@ function writeQuestRatingAggregateToWriter(writer, dirty, averageRating, average
     // сравнивает целые числа (`QuestDao.upsertByIdIfNewerVersion`), а не время: время приезжает из
     // разных мест, и «новее» по нему — вопрос часов, а не факта. `ratingUpdatedAtMs` рядом остаётся
     // отметкой «когда пересчитали», а не признаком новизны.
-    ratingVersion: admin.firestore.FieldValue.increment(1),
+    ratingVersion: firestoreTypes.FieldValue.increment(1),
   });
   if (dirty.scope === PRIVATE_SCOPE) {
     // Рейтинг приватного квеста меняет только приватный документ — узел `private_quest`.
@@ -4533,7 +4547,7 @@ function writeHierarchyPruneToBatch(batch, plan, now) {
       db.doc(path),
       {
         archived: data.archived,
-        lastModifiedAt: admin.firestore.Timestamp.fromMillis(data.lastModifiedAtMs),
+        lastModifiedAt: firestoreTypes.Timestamp.fromMillis(data.lastModifiedAtMs),
       },
       data.currentVersion,
       {merge: true},
@@ -4778,7 +4792,7 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
     averageRating: null,
     averageRatingCount: 0,
     version: assignedVersion,
-    lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+    lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
     archived: archivedRoot,
   };
   for (const section of request.sections) {
@@ -4789,7 +4803,7 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       title: section.title,
       order: section.order,
       version: nextVersionAtPath(versions, sectionPath),
-      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
       archived: false,
     };
   }
@@ -4801,7 +4815,7 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       title: theme.title,
       order: theme.order,
       version: nextVersionAtPath(versions, themePath),
-      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
       archived: false,
     };
   }
@@ -4813,7 +4827,7 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       title: lesson.title,
       order: lesson.order,
       version: nextVersionAtPath(versions, lessonPath),
-      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
       archived: false,
     };
   }
@@ -4828,7 +4842,7 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       languageLevel: question.languageLevel,
       order: question.order,
       version: nextVersionAtPath(versions, questionPath),
-      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
       archived: false,
     };
   }
@@ -5593,9 +5607,9 @@ function writeActivityRatingsDelta(transaction, uid, ratings, now) {
     clean({
       uid,
       updatedAtMs: now,
-      ratingCountQuestions: admin.firestore.FieldValue.increment(ratings.questions),
-      ratingCountTrueQuestion: admin.firestore.FieldValue.increment(ratings.correct),
-      ratingQuiz: admin.firestore.FieldValue.increment(ratings.quizzes),
+      ratingCountQuestions: firestoreTypes.FieldValue.increment(ratings.questions),
+      ratingCountTrueQuestion: firestoreTypes.FieldValue.increment(ratings.correct),
+      ratingQuiz: firestoreTypes.FieldValue.increment(ratings.quizzes),
     }),
     {merge: true},
   );
@@ -5608,10 +5622,10 @@ function writeUserProgressDelta(transaction, uid, delta, now) {
     clean({
       uid,
       updatedAtMs: now,
-      pointsSkill: admin.firestore.FieldValue.increment(delta.skillPoints),
-      skillPoints: admin.firestore.FieldValue.increment(delta.skillPoints),
-      pointsNolics: admin.firestore.FieldValue.increment(delta.nolics),
-      nolics: admin.firestore.FieldValue.increment(delta.nolics),
+      pointsSkill: firestoreTypes.FieldValue.increment(delta.skillPoints),
+      skillPoints: firestoreTypes.FieldValue.increment(delta.skillPoints),
+      pointsNolics: firestoreTypes.FieldValue.increment(delta.nolics),
+      nolics: firestoreTypes.FieldValue.increment(delta.nolics),
     }),
     {merge: true},
   );
@@ -6425,7 +6439,7 @@ function clean(value) {
 }
 
 function isFirestoreNativeValue(value) {
-  const firestore = admin.firestore;
+  const firestore = firestoreTypes;
   if (isInstanceOf(value, Date)) return true;
   if (isInstanceOf(value, firestore.Timestamp)) return true;
   if (isInstanceOf(value, firestore.GeoPoint)) return true;

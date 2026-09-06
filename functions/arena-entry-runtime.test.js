@@ -54,7 +54,7 @@ test("real endpoints reserve trusted price/charges and settle from the frozen ba
   assert.equal(store.documents.get("users/player").reservedLifePoints, 50);
   assert.equal(store.documents.get("users/player").lifePoints, 950);
   assert.equal(ticket.questions[0].gradingKey, undefined); assert.equal(ticket.bundleDigest, undefined);
-  assert.equal(JSON.parse(ticket.questions[0].publicQuestion.payload).correctOptionId, undefined);
+  assert.equal(JSON.parse(ticket.questions[0].publicQuestion.payload).correctOptionId, "b");
   store.documents.set("lessons/lesson", {themeId: "theme", version: 9});
   store.documents.set("lesson_placements/lesson", {shelf: "retired"});
   for (const q of ticket.questions) store.documents.delete(`questions/${q.questionId}`);
@@ -91,6 +91,8 @@ test("HARD plasma is additional to the held activity cost; unpaid skip never dro
     store.reset(world());
     store.documents.set("users/player", {...store.documents.get("users/player"), plasmaPoints: plasma});
     const ticket = await issue(`plasma-${plasma}`, {difficulty: "HARD"});
+    assert.equal(ticket.questions[0].gradingKey, undefined);
+    assert.equal(JSON.parse(ticket.questions[0].publicQuestion.payload).correctOptionId, undefined);
     const payload = completion(ticket);
     payload.answers = payload.answers.slice(1); payload.chargeClaims = "P.";
     const receipt = (await submit(payload)).receipts[0];
@@ -133,7 +135,7 @@ test("failed economic commit rolls back result, ticket, payer, author and ledger
 
 test("missing or mismatched frozen key remains retryable with its hold, not a fabricated zero score", async () => {
   store.reset(world());
-  const ticket = await issue("key");
+  const ticket = await issue("key", {difficulty: "HARD"});
   const path = `arena_entry_tickets/${ticket.ticketId}`;
   const frozen = structuredClone(store.documents.get(path));
   const broken = structuredClone(frozen); broken.questions[0].gradingKey.version = 999;
@@ -154,4 +156,81 @@ test("server-selected random is free; missing independent approval refuses befor
   const before = structuredClone([...store.documents]);
   await assert.rejects(issue("no-review"), {code: "failed-precondition"});
   assert.deepEqual(structuredClone([...store.documents]), before);
+});
+
+test("new Arena attempts cannot bypass ticket payments through the old result endpoint; old history is preserved only", async () => {
+  store.reset(world());
+  const payload = {attemptId: "without-ticket", userId: uid, lessonId: "lesson", lessonVersion: 1,
+    catalogId: "catalog", questId: "quest", sectionId: "section", themeId: "theme", scope: "public",
+    difficulty: "EASY", codeAnswer: "99", percentScore: 100, answers: [], completionKind: "COMPLETED",
+    served: [0, 1].map((codeAnswerIndex) => ({codeAnswerIndex, questionId: `EASY-${codeAnswerIndex}`}))};
+  const before = structuredClone([...store.documents]);
+  await assert.rejects(submit(payload), {code: "failed-precondition"});
+  assert.deepEqual(structuredClone([...store.documents]), before);
+  delete payload.completionKind;
+  const result = await submit(payload);
+  assert.equal(result.receipts[0].status, "LEGACY_RECORDED");
+  assert.equal(result.receipts[0].completed, false);
+  assert.equal(result.receipts[0].percentScore, null);
+  assert.equal(result.receipts[0].lifePointsSpent, 0);
+  assert.equal(result.reward.nolics, 0);
+  assert.equal(store.documents.get("users/player").nolics, 1000);
+});
+
+test("selected top level costs 100 and price remains frozen after ratings change", async () => {
+  store.reset(world());
+  store.documents.set("lesson_placements/lower", {lessonId: "lower", shelf: "arena"});
+  store.documents.set("lesson_ratings/lower", {ratingSum: 20, ratingCount: 20, ratingVersion: 1});
+  store.documents.set("lesson_ratings/lesson", {ratingSum: 60, ratingCount: 20, ratingVersion: 7});
+  const ticket = await issue("top-price");
+  assert.equal(ticket.priceNolics, 100); assert.equal(ticket.ratingVersion, 7);
+  assert.equal(store.documents.get("users/player").reservedNolics, 100);
+  store.documents.set("lesson_ratings/lesson", {ratingSum: 20, ratingCount: 20, ratingVersion: 8});
+  const receipt = (await submit(completion(ticket, {answers: []}))).receipts[0];
+  assert.equal(receipt.nolicsSpent, 100);
+  assert.equal(store.documents.get("users/author").nolics, 80);
+  assert.equal(store.documents.get("users/player").nolics, 900);
+});
+
+test("a retried issue rereads withdrawal on the same Transaction object and creates no hold", async () => {
+  store.reset(world());
+  store.retryTransactionOnce = () => {
+    store.documents.set("lesson_placements/lesson", {lessonId: "lesson", shelf: "retired"});
+  };
+  await assert.rejects(issue("withdrawn-on-retry"), {code: "failed-precondition"});
+  assert.equal(store.documents.get("users/player").nolics, 1000);
+  assert.equal(store.documents.get("users/player").lifePoints, 1000);
+  assert.equal(store.writesTo("arena_entry_tickets/").length, 0);
+});
+
+test("a retried issue freezes the newly committed price, not the abandoned transaction's cache", async () => {
+  store.reset(world());
+  store.retryTransactionOnce = () => {
+    store.documents.set("lesson_placements/lower", {lessonId: "lower", shelf: "arena"});
+    store.documents.set("lesson_ratings/lower", {ratingSum: 20, ratingCount: 20, ratingVersion: 1});
+    store.documents.set("lesson_ratings/lesson", {ratingSum: 60, ratingCount: 20, ratingVersion: 7});
+  };
+  const ticket = await issue("repriced-on-retry");
+  assert.equal(ticket.priceNolics, 100);
+  assert.equal(ticket.ratingVersion, 7);
+  assert.equal(store.documents.get("users/player").reservedNolics, 100);
+  assert.equal(store.documents.get("users/player").nolics, 900);
+  assert.equal(store.writesTo("arena_entry_tickets/").length, 1);
+});
+
+test("EASY can restore an already split trusted bank and still receives authoritative scoring", async () => {
+  const {redact} = require("./question-redaction");
+  store.reset(world());
+  const keys = [];
+  for (const n of [0, 1]) {
+    const id = `EASY-${n}`;
+    const question = store.documents.get(`questions/${id}`);
+    const split = redact(question.payload);
+    store.documents.set(`questions/${id}`, {...question, payload: split.publicPayload});
+    keys.push({questionId: id, key: split.key});
+  }
+  store.documents.set("question_keys/lesson", {version: 1, lessonId: "lesson", publicHalfRedacted: true, keys});
+  const ticket = await issue("restored-easy");
+  assert.equal(JSON.parse(ticket.questions[0].publicQuestion.payload).correctOptionId, "b");
+  assert.equal((await submit(completion(ticket))).receipts[0].percentScore, 100);
 });

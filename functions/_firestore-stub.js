@@ -103,6 +103,7 @@ function createFirestoreStub(seed, options) {
     operations: [],
     writes: [],
     fail: (options && options.fail) || null,
+    retryTransactionOnce: (options && options.retryTransactionOnce) || null,
   };
 
   function maybeFail(kind, path) {
@@ -243,7 +244,17 @@ function createFirestoreStub(seed, options) {
           pending.push([ref.path, data, writeOptions]);
         },
       };
-      const result = await body(transaction);
+      let result = await body(transaction);
+      if (store.retryTransactionOnce) {
+        // The real SDK retries the callback with the SAME Transaction instance, but throws
+        // away writes from the conflicted run. Let tests change committed external state.
+        const beforeRetry = store.retryTransactionOnce;
+        store.retryTransactionOnce = null;
+        pending.length = 0;
+        created.clear();
+        await beforeRetry(store);
+        result = await body(transaction);
+      }
       // Validate every simulated commit failure before applying any of its writes: no partial
       // fake commit may make a broken money transaction look correct.
       for (const [path] of pending) maybeFail("commit", path);
@@ -269,6 +280,7 @@ function createFirestoreStub(seed, options) {
     store.operations = [];
     store.writes = [];
     store.fail = (nextOptions && nextOptions.fail) || null;
+    store.retryTransactionOnce = (nextOptions && nextOptions.retryTransactionOnce) || null;
   };
   /** The path of the first write in the run, and every read that happened after it. */
   store.readsAfterFirstWrite = () => {
