@@ -80,6 +80,7 @@ const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const {createArenaService} = require("./arena-service");
 const {createArenaEntryRuntime} = require("./arena-entry-runtime");
 const {createArenaTicketRecovery} = require("./arena-ticket-recovery");
+const {createArenaLessonCatalog} = require("./arena-lesson-catalog");
 const {createCourseTournamentController} = require("./course-tournament-controller");
 const {createTournamentWorker, FUNCTION_TIMEOUT_MS} = require("./tournament-worker");
 const {
@@ -327,6 +328,24 @@ async function callCourseTournament(request, action) {
 }
 
 const arenaEntries = createArenaEntryRuntime({db, loadLessonContext: loadArenaLessonContext});
+const arenaLessonCatalog = createArenaLessonCatalog({db, loadLessonContext: loadArenaLessonContext});
+exports.listArenaLessons = onCall(CALLABLE_OPTIONS, async (request) => {
+  try {
+    const uid = requireAuthUid(request);
+    // Pass the strict payload intact; a body uid can never replace authenticated identity.
+    return await arenaLessonCatalog.list({uid, payload: request.data});
+  } catch (error) {
+    const codes = {
+      UNAUTHENTICATED: "unauthenticated", INVALID_ARGUMENT: "invalid-argument",
+      CATALOG_CHANGED: "failed-precondition", CATALOG_TOO_LARGE: "resource-exhausted",
+      CATALOG_INVALID: "unavailable",
+    };
+    const reason = !request?.auth?.uid ? "UNAUTHENTICATED" :
+      Object.hasOwn(codes, error?.code) ? error.code : "SERVER_FAILURE";
+    // Only fixed reasons cross this boundary, never SDK messages, paths or private data.
+    throw new HttpsError(codes[reason] || "internal", "Arena lessons could not be loaded", {reason});
+  }
+});
 const arenaTicketRecovery = createArenaTicketRecovery({db});
 exports.listArenaEntryTickets = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("list", request));
 exports.fetchArenaEntryTicket = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("get", request));
