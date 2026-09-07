@@ -56,15 +56,21 @@ class FirebaseArenaLessonCatalogRemoteDataSource internal constructor(
         dispatcher = dispatcher,
     )
 
-    override suspend fun list(request: ArenaLessonCatalogRequest): Result<ArenaLessonCatalogPage> =
-        withContext(dispatcher) {
-            val session =
-                sessions.current()
-                    ?: return@withContext failed(ArenaLessonCatalogFailureKind.ACCOUNT_UNAVAILABLE)
-            if (session.ownerUid != request.ownerUid) {
-                return@withContext failed(ArenaLessonCatalogFailureKind.ACCOUNT_CHANGED)
-            }
+    override suspend fun list(request: ArenaLessonCatalogRequest): Result<ArenaLessonCatalogPage> {
+        coroutineContext.ensureActive()
+        val session = sessions.current()
+        if (session == null || session.ownerUid != request.ownerUid) {
+            return failed(
+                if (session == null) {
+                    ArenaLessonCatalogFailureKind.ACCOUNT_UNAVAILABLE
+                } else {
+                    ArenaLessonCatalogFailureKind.ACCOUNT_CHANGED
+                },
+            )
+        }
+        return withContext(dispatcher) {
             try {
+                requireSession(session)
                 val online = networkMonitor.isOnline()
                 coroutineContext.ensureActive()
                 requireSession(session)
@@ -95,6 +101,7 @@ class FirebaseArenaLessonCatalogRemoteDataSource internal constructor(
                 }
             }
         }
+    }
 
     private fun requireSession(expected: OutboxSession) {
         if (sessions.current() != expected) {

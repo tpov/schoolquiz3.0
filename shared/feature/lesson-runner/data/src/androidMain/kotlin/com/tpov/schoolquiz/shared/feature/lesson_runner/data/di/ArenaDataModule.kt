@@ -9,7 +9,9 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaTicketJo
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.OutboxArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.RoomArenaJournalStorage
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.OutboxArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaCatalogRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.Clock
 import org.koin.dsl.module
@@ -27,6 +29,7 @@ val arenaDataModule =
     module {
         includes(arenaCheckpointCodecModule)
         single<ArenaCatalogRepository> { ArenaCatalogRepositoryImpl(remote = get()) }
+        single<ArenaSessionProvider> { OutboxArenaSessionProvider(sessions = get()) }
         single<ArenaJournalStorage> { RoomArenaJournalStorage(dao = get()) }
         single<ArenaOwnerGate> { OutboxArenaOwnerGate(sessions = get(), engine = get()) }
         single { ArenaJournalCodec(sha256 = ::journalSha256) }

@@ -74,7 +74,7 @@ class ArenaTicketJournal(
             if (cmd.state == "ACKNOWLEDGED") return@attempt ArenaCommandDispatch.ALREADY_RECORDED
             if (cmd.state != "PENDING") throw ArenaJournalAttention(cmd.lastFailure ?: "ATTENTION")
             val request = codec.prepare(cmd)
-            val result = exchange(session, cmd) { remote.prepare(request).getOrThrow() }
+            val result = exchange(session, cmd) { remote.prepare(session, request).getOrThrow() }
             gate.withOwner(session) {
                 when (result) {
                     is ArenaPrepareResponse.Ticket -> {
@@ -105,7 +105,12 @@ class ArenaTicketJournal(
             val page =
                 readRemote(
                     session,
-                ) { remote.list(ArenaTicketListRequest(session.ownerUid, afterTicketId, pageSize)).getOrThrow() }
+                ) {
+                    remote.list(
+                        session,
+                        ArenaTicketListRequest(session.ownerUid, afterTicketId, pageSize),
+                    ).getOrThrow()
+                }
             gate.withOwner(session) {
                 page.tickets.forEach { header ->
                     coroutineContext.ensureActive()
@@ -123,7 +128,9 @@ class ArenaTicketJournal(
         attempt {
             gate.withOwner(session) { Unit }
             val result =
-                readRemote(session) { remote.get(ArenaTicketGetRequest(session.ownerUid, ticketId)).getOrThrow() }
+                readRemote(
+                    session,
+                ) { remote.get(session, ArenaTicketGetRequest(session.ownerUid, ticketId)).getOrThrow() }
             gate.withOwner(session) {
                 require(
                     result.snapshot.header.ownerUid == session.ownerUid && result.snapshot.header.ticketId == ticketId,
@@ -236,7 +243,8 @@ class ArenaTicketJournal(
             val (row, cmd) = pair
             if (cmd.state == "ACKNOWLEDGED") return@attempt ArenaCommandDispatch.ALREADY_RECORDED
             if (cmd.state != "PENDING") throw ArenaJournalAttention(cmd.lastFailure ?: "ATTENTION")
-            val result = exchange(session, cmd) { remote.cancel(codec.cancellationRequest(row, cmd)).getOrThrow() }
+            val result =
+                exchange(session, cmd) { remote.cancel(session, codec.cancellationRequest(row, cmd)).getOrThrow() }
             gate.withOwner(session) {
                 if (result is ArenaCancelResponse.RetryRegeneration) {
                     require(result.ticketId == ticketId && result.requestId == cmd.commandId)

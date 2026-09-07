@@ -51,6 +51,15 @@ fun QuizzesScreen(
         }
         when (active) {
             is QuizzesChild.Idle -> Unit
+            is QuizzesChild.ArenaLessons -> {
+                val arenaState by active.component.state.collectAsState()
+                ArenaLessonCatalogScreen(
+                    state = arenaState,
+                    onRefresh = active.component::onRefresh,
+                    onLoadMore = active.component::onLoadMore,
+                    onBack = component::popCurrentChild,
+                )
+            }
             is QuizzesChild.PublicQuestCatalogPicker ->
                 PublicQuestCatalogPickerScreen(
                     component = active.component,

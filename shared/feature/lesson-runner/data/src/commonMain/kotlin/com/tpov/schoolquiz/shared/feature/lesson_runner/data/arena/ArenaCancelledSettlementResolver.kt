@@ -36,7 +36,21 @@ class ArenaCancelledSettlementResolver(
     ): Result<ArenaCancellationResolution> =
         try {
             val session = gate.capture(ownerUid) // Capture before even the dispatcher suspension: A -> B -> A is stale.
-            val request = ArenaTicketGetRequest(ownerUid, ticketId)
+            resolve(session, ticketId)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
+        }
+
+    /** The façade/journal supplies its original epoch; this path never captures a replacement. */
+    @Suppress("TooGenericExceptionCaught")
+    suspend fun resolve(
+        session: OutboxSession,
+        ticketId: String,
+    ): Result<ArenaCancellationResolution> =
+        try {
+            val request = ArenaTicketGetRequest(session.ownerUid, ticketId)
             withContext(dispatcher) {
                 val (ticket, command) =
                     gate.withOwner(session) {
@@ -91,7 +105,7 @@ class ArenaCancelledSettlementResolver(
         request: ArenaTicketGetRequest,
     ): ArenaTicketStatusObservation =
         try {
-            remote.status(request).getOrThrow().also { gate.withOwner(session) { Unit } }
+            remote.status(session, request).getOrThrow().also { gate.withOwner(session) { Unit } }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {

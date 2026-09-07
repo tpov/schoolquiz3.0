@@ -10,6 +10,10 @@ sealed class QuizzesConfig {
     @Serializable
     data object Idle : QuizzesConfig()
 
+    /** Read-only route only: never serialize an owner, response, cursor or entry permission. */
+    @Serializable
+    data object ArenaLessons : QuizzesConfig()
+
     @Serializable
     data class PublicQuestCatalogPicker(
         val targetShelf: String,

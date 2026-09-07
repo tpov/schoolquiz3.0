@@ -36,4 +36,28 @@
     <string name="quizzes_shelf_sync_quarantined">Перенос отклонён сервером</string>
     <string name="quizzes_cd_random_quest">Случайный квест</string>
     <string name="quizzes_share_text">Квест «%1$s» — %2$s</string>
+    <!-- Read-only lesson Arena: no permission, payment or launch controls. -->
+    <string name="arena_catalog_back">Назад</string>
+    <string name="arena_catalog_title">Уроки Арены</string>
+    <string name="arena_catalog_preview">Пока доступен просмотр каталога. Подготовка и запуск уроков ещё не подключены.</string>
+    <string name="arena_catalog_price_notice">Цены могут измениться. Просмотр ничего не списывает и не резервирует вход.</string>
+    <string name="arena_catalog_load">Загрузить уроки</string>
+    <string name="arena_catalog_refresh">Обновить</string>
+    <string name="arena_catalog_more">Ещё 20</string>
+    <string name="arena_catalog_not_loaded">Нажмите «Загрузить уроки», чтобы запросить каталог.</string>
+    <string name="arena_catalog_count">Загружено уроков: %1$d из %2$d</string>
+    <string name="arena_catalog_empty">В этом снимке каталога нет доступных уроков Арены.</string>
+    <string name="arena_catalog_auth">Войдите в аккаунт, чтобы загрузить каталог.</string>
+    <string name="arena_catalog_account_changed">Сессия аккаунта изменилась. Загрузите каталог заново.</string>
+    <string name="arena_catalog_changed">Каталог изменился. Загрузите новый снимок, чтобы продолжить просмотр.</string>
+    <string name="arena_catalog_unavailable">Не удалось загрузить каталог. Проверьте подключение и повторите попытку.</string>
+    <string name="arena_catalog_too_large">Сервер пока не может безопасно вернуть этот каталог. Списаний не было.</string>
+    <string name="arena_catalog_invalid">Ответ сервера не удалось подтвердить. Попробуйте загрузить каталог позже.</string>
+    <string name="arena_catalog_untitled">Название не указано</string>
+    <string name="arena_catalog_author_id">ID автора: %1$s</string>
+    <string name="arena_catalog_unrated">Пока нет оценок игроков</string>
+    <string name="arena_catalog_rating">Рейтинг Арены: %1$d,%2$02d</string>
+    <string name="arena_catalog_votes">Оценок игроков: %1$d</string>
+    <string name="arena_catalog_price">Текущая цена выборочного прохода: %1$d ноликов</string>
+    <string name="arena_catalog_open">Открыть каталог уроков</string>
 </resources>

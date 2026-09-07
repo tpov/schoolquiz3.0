@@ -10,7 +10,10 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogFailure
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogFailureKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogRequest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -231,7 +234,39 @@ class FirebaseArenaLessonCatalogRemoteDataSourceTest {
         )
     }
 
-    private inner class Fake(scope: TestScope) {
+    @Test
+    fun catalogPlainReadCapturesBeforeDispatcherWithoutAddingAnyGateDependency() =
+        runTest {
+            val f = Fake(this)
+            val call = async(start = CoroutineStart.UNDISPATCHED) { f.remote.list(request) }
+            f.session = OutboxSession("other", 2)
+            f.session = OutboxSession("player", 3)
+            failure(call.await(), ArenaLessonCatalogFailureKind.ACCOUNT_CHANGED)
+            assertTrue(f.calls.isEmpty())
+        }
+
+    @Test
+    fun catalogAwaitedConnectivityRetainsEntryEpochOnStandardAndImmediateDispatchers() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                val f = Fake(this, immediate)
+                val entered = CompletableDeferred<Unit>()
+                val release = CompletableDeferred<Unit>()
+                f.beforeOnline = {
+                    entered.complete(Unit)
+                    release.await()
+                }
+                val call = async(start = CoroutineStart.UNDISPATCHED) { f.remote.list(request) }
+                entered.await()
+                f.session = OutboxSession("other", 2)
+                f.session = OutboxSession("player", 3)
+                release.complete(Unit)
+                failure(call.await(), ArenaLessonCatalogFailureKind.ACCOUNT_CHANGED)
+                assertTrue(f.calls.isEmpty())
+            }
+        }
+
+    private inner class Fake(scope: TestScope, immediate: Boolean = false) {
         var session: OutboxSession? = OutboxSession("player", 1)
         var online = true
         var reply: Any? = fixture.getValue("full").toSdk()
@@ -255,7 +290,14 @@ class FirebaseArenaLessonCatalogRemoteDataSourceTest {
                             return online
                         }
                     },
-                dispatcher = StandardTestDispatcher(scope.testScheduler),
+                dispatcher =
+                    if (immediate) {
+                        kotlinx.coroutines.test.UnconfinedTestDispatcher(
+                            scope.testScheduler,
+                        )
+                    } else {
+                        StandardTestDispatcher(scope.testScheduler)
+                    },
             )
     }
 

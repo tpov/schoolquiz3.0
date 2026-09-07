@@ -1,32 +1,44 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation
 
 import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.essenty.backhandler.BackDispatcher
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.arkivanov.essenty.statekeeper.SerializableContainer
 import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaCatalogNotice
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultArenaLessonCatalogComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonUnlockQueue
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaCatalogRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.builtins.ListSerializer
 import org.junit.After
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -59,6 +71,116 @@ import kotlin.test.assertTrue
 class QuizzesStateKeeperRestoreTest {
 
     private val lifecycles = mutableListOf<LifecycleRegistry>()
+    private var arenaReads = 0
+
+    @Test
+    fun `new Arena route restores without cards cursor or automatic read`() {
+        val original = buildComponent(StateKeeperDispatcher(null))
+        original.openCourseArena()
+        val restored = buildComponent(savedStack(listOf(QuizzesConfig.Idle, QuizzesConfig.ArenaLessons)))
+        val child = assertIs<QuizzesChild.ArenaLessons>(restored.childStack.value.active.instance)
+        assertEquals(ArenaCatalogNotice.NOT_LOADED, child.component.state.value.notice)
+        assertEquals(null, child.component.state.value.totalLessons)
+        assertTrue(child.component.state.value.lessons.isEmpty())
+        assertEquals(0, arenaReads)
+    }
+
+    @Test
+    fun `exact old course Arena and its known drill-down tail restore only the preview`() {
+        val root = listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses)
+        val old =
+            listOf(
+                QuizzesConfig.Idle,
+                legacyArena(),
+                QuizzesConfig.SectionList(
+                    "course",
+                    root + BreadcrumbRoot.Dynamic("Course"),
+                    questType = QuestType.COURSE,
+                ),
+                QuizzesConfig.ThemeList(
+                    "section",
+                    root + BreadcrumbRoot.Dynamic("Section"),
+                    questType = QuestType.COURSE,
+                ),
+                QuizzesConfig.LessonList("theme", root + BreadcrumbRoot.Dynamic("Theme"), questType = QuestType.COURSE),
+                QuizzesConfig.LessonRunner(
+                    "lesson",
+                    com.tpov.schoolquiz.shared.core.question_schema.Difficulty.EASY,
+                    root + BreadcrumbRoot.Dynamic("Lesson"),
+                ),
+            )
+        val restored = buildComponent(savedStack(old))
+        assertIs<QuizzesChild.ArenaLessons>(restored.childStack.value.active.instance)
+        assertEquals(2, restored.stackSize())
+        assertIs<QuizzesConfig.Idle>(restored.childStack.value.backStack.single().configuration)
+        assertEquals(0, arenaReads)
+    }
+
+    @Test
+    fun `unrecognized tail under exact legacy Arena falls to safe Idle`() {
+        val unknown =
+            QuizzesConfig.PublicQuestCatalogPicker(
+                targetShelf = "home",
+                breadcrumbs = listOf(BreadcrumbRoot.HomeQuests, BreadcrumbRoot.Catalogs),
+            )
+        val restored = buildComponent(savedStack(listOf(QuizzesConfig.Idle, legacyArena(), unknown)))
+        assertIs<QuizzesChild.Idle>(restored.childStack.value.active.instance)
+        assertEquals(1, restored.stackSize())
+        assertEquals(0, arenaReads)
+    }
+
+    @Test
+    fun `curator selection is not mistaken for the old player Arena entry`() {
+        val curator = legacyArena().copy(selectionTargetShelf = "home")
+        val restored = buildComponent(savedStack(listOf(QuizzesConfig.Idle, curator)))
+        assertEquals(curator, restored.childStack.value.active.configuration)
+        assertIs<QuizzesChild.QuestList>(restored.childStack.value.active.instance)
+        assertEquals(0, arenaReads)
+    }
+
+    @Test
+    fun `other Arena catalog and course archive restoration remain untouched`() {
+        val other = legacyArena().copy(catalogId = "school", questType = QuestType.REGULAR)
+        val archive =
+            legacyArena().copy(
+                shelf = "archive",
+                mode = QuestListMode.Archive,
+                breadcrumbs = listOf(BreadcrumbRoot.Archive, BreadcrumbRoot.Courses),
+            )
+        listOf(other, archive).forEach { config ->
+            val restored = buildComponent(savedStack(listOf(QuizzesConfig.Idle, config)))
+            assertEquals(config, restored.childStack.value.active.configuration)
+            assertIs<QuizzesChild.QuestList>(restored.childStack.value.active.instance)
+        }
+        assertEquals(0, arenaReads)
+    }
+
+    private fun legacyArena() =
+        QuizzesConfig.QuestList(
+            catalogId = "courses",
+            breadcrumbs = listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses),
+            shelf = "arena",
+            mode = QuestListMode.Arena,
+            questType = QuestType.COURSE,
+        )
+
+    /** Produce the old router's real StateKeeper envelope, without constructing a playable child. */
+    private fun savedStack(stack: List<QuizzesConfig>): StateKeeperDispatcher {
+        val stateKeeper = StateKeeperDispatcher(null)
+        val lifecycle = LifecycleRegistry().also { lifecycles += it }
+        lifecycle.resume()
+        val context = DefaultComponentContext(lifecycle, stateKeeper = stateKeeper)
+        context.childStack(
+            source = StackNavigation<QuizzesConfig>(),
+            initialStack = { stack },
+            saveStack = { SerializableContainer(value = it, strategy = ListSerializer(QuizzesConfig.serializer())) },
+            restoreStack = { it.consume(ListSerializer(QuizzesConfig.serializer())) },
+            handleBackButton = false,
+            childFactory = { config, _ -> config },
+        )
+        return StateKeeperDispatcher(stateKeeper.save())
+    }
+
 
     @After
     fun tearDown() {
@@ -98,6 +220,19 @@ class QuizzesStateKeeperRestoreTest {
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+            arenaCatalogFactory =
+                ArenaLessonCatalogComponentFactory { child ->
+                    DefaultArenaLessonCatalogComponent(
+                        child,
+                        ArenaCatalogRepository {
+                            arenaReads++
+                            Result.failure(IllegalStateException("No read expected during restore"))
+                        },
+                        ArenaSessionProvider { ArenaSessionStamp("test-user", 1) },
+                        FakeAuthRepository(),
+                        Dispatchers.Unconfined,
+                    )
+                },
             mainContext = Dispatchers.Unconfined,
         )
     }

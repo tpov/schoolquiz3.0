@@ -1,11 +1,21 @@
 package com.tpov.schoolquiz.platform.firebase.arena
 
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
+import com.google.firebase.functions.HttpsCallableReference
+import com.tpov.schoolquiz.platform.firebase.auth.FakeMutationReceiptStore
+import com.tpov.schoolquiz.platform.firebase.network.fake.EmptyOutbox
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
+import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
+import com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.OutboxArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaCancelResponse
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntryTicket
@@ -16,12 +26,20 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemote
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketCancelRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketGetRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketListRequest
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -282,33 +300,250 @@ class FirebaseArenaTicketRemoteDataSourceTest {
         assertFalse(names.any { "settle" in it })
     }
 
+    @Test
+    fun plainCallsCaptureBeforeTheFirstDispatcherSuspension() =
+        runTest {
+            repeat(4) { operation ->
+                val f = Fake(this)
+                val result = async(start = CoroutineStart.UNDISPATCHED) { plain(f, operation) }
+                f.session = OutboxSession("other", 2)
+                f.session = OutboxSession("player", 3)
+                failure(result.await(), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+                assertTrue(f.calls.isEmpty())
+                assertEquals(0, f.networkReads)
+            }
+        }
+
+    @Test
+    fun allBoundCallsRejectAnOldEpochBeforePrimitiveEntryOnStandardAndImmediateDispatchers() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                repeat(4) { operation ->
+                    val f = Fake(this, immediate)
+                    val original = requireNotNull(f.session)
+                    f.session = OutboxSession("other", 2)
+                    f.session = OutboxSession("player", 3)
+                    failure(bound(f, operation, original), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+                    assertEquals(0, f.networkReads)
+                    assertTrue(f.calls.isEmpty())
+                }
+            }
+        }
+
+    @Test
+    fun allBoundCallsRetainTheOriginalEpochThroughConnectivitySuspension() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                repeat(4) { operation ->
+                    val f = Fake(this, immediate)
+                    val original = requireNotNull(f.session)
+                    f.beforeOnline = {
+                        f.session = OutboxSession("other", 2)
+                        f.session = OutboxSession("player", 3)
+                    }
+                    failure(bound(f, operation, original), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+                    assertTrue(f.calls.isEmpty())
+                }
+            }
+        }
+
+    @Test
+    fun stalledReplyDoesNotHoldTheActualOwnerGateAndCannotBeAcceptedAfterSwitch() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                val f = Fake(this, immediate)
+                val original = requireNotNull(f.session)
+                val entered = CompletableDeferred<Unit>()
+                val release = CompletableDeferred<Unit>()
+                f.beforeReply = {
+                    entered.complete(Unit)
+                    release.await()
+                }
+                val call = async { f.remote.prepare(original, selected) }
+                entered.await()
+                withTimeout(1000) {
+                    f.engine.withoutPasses {
+                        f.session = OutboxSession("other", 2)
+                        f.session = OutboxSession("player", 3)
+                    }
+                }
+                release.complete(Unit)
+                failure(call.await(), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+                assertEquals(1, f.calls.size)
+            }
+        }
+
+    @Test
+    fun controlledSwitchCannotEnterBetweenGuardAndSynchronousTaskStart() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                val f = Fake(this, immediate)
+                val original = requireNotNull(f.session)
+                var switch: Deferred<Unit>? = null
+                var startObservedOriginal = false
+                f.beforeStart = {
+                    switch =
+                        async(start = CoroutineStart.UNDISPATCHED) {
+                            f.engine.withoutPasses { f.session = OutboxSession("player", 3) }
+                        }
+                    startObservedOriginal = f.session == original && switch?.isCompleted == false
+                }
+                f.beforeReply = { requireNotNull(switch).await() }
+                failure(f.remote.prepare(original, selected), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+                assertTrue(startObservedOriginal)
+                assertEquals(1, f.calls.size)
+            }
+        }
+
+    @Test
+    fun cancellationWhileWaitingForTheStartGateCreatesNoSdkTask() =
+        runTest {
+            val f = Fake(this)
+            val held = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val ownerOperation =
+                async {
+                    f.engine.withoutPasses {
+                        held.complete(Unit)
+                        release.await()
+                    }
+                }
+            held.await()
+            val checking = CompletableDeferred<Unit>()
+            f.beforeOnline = { checking.complete(Unit) }
+            val call = async { f.remote.prepare(requireNotNull(f.session), selected) }
+            checking.await()
+            call.cancelAndJoin()
+            release.complete(Unit)
+            ownerOperation.await()
+            assertTrue(call.isCancelled)
+            assertTrue(f.calls.isEmpty())
+        }
+
+    @Test
+    fun freshExplicitBoundRetryUsesOriginalConsentAfterAnUncertainOldEpochReply() =
+        runTest {
+            val f = Fake(this)
+            val original = requireNotNull(f.session)
+            f.beforeReply = {
+                f.session = OutboxSession("player", 3)
+                throw IOException("lost reply")
+            }
+            failure(f.remote.prepare(original, selected), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+            f.beforeReply = {}
+            failure(f.remote.prepare(original, selected), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+            f.remote.prepare(requireNotNull(f.session), selected).getOrThrow()
+            assertEquals(2, f.calls.size)
+            assertEquals(f.calls.first(), f.calls.last())
+            assertEquals(12, f.calls.last().second["maxPriceNolics"])
+            assertEquals("client-selected", f.calls.last().second["requestId"])
+        }
+
+    @Test
+    fun mockedSdkMetadataAtBothTaskStartAndAwaitKeepsExactStructuredCodeAndDetails() =
+        runTest {
+            for (atStart in listOf(true, false)) {
+                val functions = mockk<FirebaseFunctions>()
+                val reference = mockk<HttpsCallableReference>(relaxed = true)
+                every { functions.getHttpsCallable("prepareArenaEntry") } returns reference
+                val details = mapOf("reason" to "RETRY_REGEN")
+                val sdkError = mockk<FirebaseFunctionsException>(relaxed = true)
+                every { sdkError.code } returns FirebaseFunctionsException.Code.UNAVAILABLE
+                every { sdkError.details } returns details
+                if (atStart) {
+                    every { reference.call(any()) } throws sdkError
+                } else {
+                    every { reference.call(any()) } returns Tasks.forException(sdkError)
+                }
+                val actual =
+                    try {
+                        firebaseArenaCallableExchange(functions).start("prepareArenaEntry", emptyMap()).await()
+                        throw AssertionError("SDK failure must escape as structured metadata")
+                    } catch (error: ArenaCallableException) {
+                        error
+                    }
+                assertEquals("UNAVAILABLE", actual.code)
+                assertEquals(details, actual.details)
+                assertTrue(actual.cause === sdkError || actual.cause?.cause === sdkError)
+            }
+        }
+
+    private suspend fun plain(
+        f: Fake,
+        operation: Int,
+    ): Result<*> =
+        when (operation) {
+            0 -> f.remote.prepare(selected)
+            1 -> f.remote.list(ArenaTicketListRequest("player"))
+            2 -> f.remote.get(getRequest())
+            else -> f.remote.cancel(cancelRequest())
+        }
+
+    private suspend fun bound(
+        f: Fake,
+        operation: Int,
+        expected: OutboxSession,
+    ): Result<*> =
+        when (operation) {
+            0 -> f.remote.prepare(expected, selected)
+            1 -> f.remote.list(expected, ArenaTicketListRequest("player"))
+            2 -> f.remote.get(expected, getRequest())
+            else -> f.remote.cancel(expected, cancelRequest())
+        }
+
+    private fun cancelRequest() =
+        ArenaTicketCancelRequest(
+            ArenaTicketWireParser(
+                ::arenaSha256,
+            ).get(fixture.getValue("recoveredSelected").toString(), getRequest()).snapshot.header,
+            "same-cancel",
+        )
+
     private fun TestScope.fake(): Fake = Fake(this)
 
-    private inner class Fake(scope: TestScope) {
+    private inner class Fake(scope: TestScope, immediate: Boolean = false) {
         var session: OutboxSession? = OutboxSession("player", 1)
         var online = true
+        var networkReads = 0
         var reply: Any? = fixture.getValue("issuedSelected").toSdk()
         var beforeOnline: suspend () -> Unit = {}
         var beforeReply: suspend () -> Unit = {}
+        var beforeStart: () -> Unit = {}
+        val sessions = OutboxSessionProvider { session }
+        val engine = arenaSessionTestEngine(sessions)
+        val gate = OutboxArenaOwnerGate(sessions, engine)
         val calls = mutableListOf<Pair<String, Map<String, Any?>>>()
         val remote =
             FirebaseArenaTicketRemoteDataSource(
-                call = { name, payload ->
-                    calls += name to payload.toMap()
-                    beforeReply()
-                    reply
-                },
-                sessions = OutboxSessionProvider { session },
+                exchange =
+                    ArenaCallableExchange { name, payload ->
+                        beforeStart()
+                        calls += name to payload.toMap()
+                        ArenaPendingCall {
+                            beforeReply()
+                            reply
+                        }
+                    },
+                gate = gate,
+                sessions = sessions,
                 networkMonitor =
                     object : NetworkMonitor {
                         override fun observeOnline(): Flow<Boolean> = flowOf(online)
 
                         override suspend fun isOnline(): Boolean {
+                            networkReads++
                             beforeOnline()
                             return online
                         }
                     },
-                dispatcher = StandardTestDispatcher(scope.testScheduler),
+                dispatcher =
+                    if (immediate) {
+                        kotlinx.coroutines.test.UnconfinedTestDispatcher(
+                            scope.testScheduler,
+                        )
+                    } else {
+                        StandardTestDispatcher(scope.testScheduler)
+                    },
             )
     }
 
@@ -345,3 +580,17 @@ class FirebaseArenaTicketRemoteDataSourceTest {
             "shared/feature/lesson-runner/data/src/jvmTest/resources/arena-ticket-client-fixtures.json"
     }
 }
+
+/** Reuse existing platform fakes; the gate/engine are real and no test starts an outbox pass. */
+internal fun arenaSessionTestEngine(
+    sessions: OutboxSessionProvider,
+    transport: MutationTransport = MutationTransport { error("A test must not start a settlement sender") },
+): OutboxEngine =
+    OutboxEngine(
+        store = EmptyOutbox(),
+        transport = transport,
+        clock = { 0L },
+        onQuarantined = NoLocalEffect(),
+        receipts = FakeMutationReceiptStore(),
+        sessions = sessions,
+    )

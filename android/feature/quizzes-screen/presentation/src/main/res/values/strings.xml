@@ -39,4 +39,28 @@
     <string name="quizzes_shelf_sync_quarantined">Move refused</string>
     <string name="quizzes_cd_random_quest">Random quest</string>
     <string name="quizzes_share_text">Quest “%1$s” — %2$s</string>
+    <!-- Read-only lesson Arena: no permission, payment or launch controls. -->
+    <string name="arena_catalog_back">Back</string>
+    <string name="arena_catalog_title">Arena lessons</string>
+    <string name="arena_catalog_preview">Catalog preview only. Entry preparation and play are not connected yet.</string>
+    <string name="arena_catalog_price_notice">Prices may change. Browsing spends nothing and does not reserve an entry.</string>
+    <string name="arena_catalog_load">Load lessons</string>
+    <string name="arena_catalog_refresh">Refresh</string>
+    <string name="arena_catalog_more">Load 20 more</string>
+    <string name="arena_catalog_not_loaded">Press Load lessons to request the catalog.</string>
+    <string name="arena_catalog_count">Loaded %1$d of %2$d lessons</string>
+    <string name="arena_catalog_empty">There are no available Arena lessons in this snapshot.</string>
+    <string name="arena_catalog_auth">Sign in to load the catalog.</string>
+    <string name="arena_catalog_account_changed">The account session changed. Load the catalog again.</string>
+    <string name="arena_catalog_changed">The catalog changed. Load a fresh snapshot before continuing.</string>
+    <string name="arena_catalog_unavailable">Could not load the catalog. Check your connection and try again.</string>
+    <string name="arena_catalog_too_large">The server cannot safely return this catalog yet. Nothing was charged.</string>
+    <string name="arena_catalog_invalid">The server response could not be confirmed. Load the catalog again later.</string>
+    <string name="arena_catalog_untitled">Title not provided</string>
+    <string name="arena_catalog_author_id">Author ID: %1$s</string>
+    <string name="arena_catalog_unrated">No player ratings yet</string>
+    <string name="arena_catalog_rating">Arena rating: %1$d.%2$02d</string>
+    <string name="arena_catalog_votes">Player ratings: %1$d</string>
+    <string name="arena_catalog_price">Current selected-entry price: %1$d nolics</string>
+    <string name="arena_catalog_open">Open lesson catalog</string>
 </resources>

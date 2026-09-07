@@ -4,8 +4,12 @@ import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketRecordEntity
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaCancelResponse
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareResponse
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemoteFailure
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemoteFailureKind
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketPage
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
@@ -163,6 +167,59 @@ class ArenaJournalBoundaryTest {
                 assertIs<ArenaCachedTicket.ResumeOrReconcile>(read(valid.copy(localUse = "LAUNCHED"))).snapshot,
             )
             assertTrue(storage.commands.isEmpty())
+            assertTrue(storage.outbox.isEmpty())
+        }
+
+    @Test
+    fun originalConsentEpochReachesRemoteEntryAndFreshRetryKeepsExactRetainedBody() =
+        runTest {
+            val journal = journal()
+            val original = gate.current
+            journal.recordPrepareConsent(original, request).getOrThrow()
+            val before = storage.commands.toMap()
+            remote.beforeBoundCall = { expected ->
+                gate.switch("other")
+                gate.switch("player")
+                gate.withOwner(expected) { Unit }
+            }
+            val failure = journal.dispatchPrepare(original, request.requestId).exceptionOrNull()
+            assertEquals(ArenaRemoteFailureKind.ACCOUNT_CHANGED, assertIs<ArenaRemoteFailure>(failure).kind)
+            assertEquals(listOf(original), remote.boundSessions)
+            assertTrue(remote.prepares.isEmpty())
+            assertEquals(before, storage.commands)
+            assertTrue(storage.tickets.isEmpty() && storage.outbox.isEmpty())
+            remote.beforeBoundCall = { expected -> gate.withOwner(expected) { Unit } }
+            remote.prepareAction = { Result.success(prepared) }
+            journal.dispatchPrepare(gate.current, request.requestId).getOrThrow()
+            val retained = storage.commands.values.single()
+            assertEquals(before.values.single().bodyJson, retained.bodyJson)
+            assertEquals(before.values.single().bodySha256, retained.bodySha256)
+            assertEquals(listOf<ArenaPrepareRequest>(request), remote.prepares)
+            assertEquals(listOf(original, gate.current), remote.boundSessions)
+        }
+
+    @Test
+    fun listGetAndCancelAlsoUseTheOriginalSessionWithoutAnyPlainRemoteFallback() =
+        runTest {
+            val journal = journal()
+            val original = gate.current
+            remote.beforeBoundCall = { expected -> gate.withOwner(expected) { Unit } }
+            remote.listAction = { Result.success(ArenaTicketPage(listOf(header), null)) }
+            remote.getAction = { Result.success(prepared.ticket) }
+            journal.recoverPage(original).getOrThrow()
+            journal.recoverTicket(original, header.ticketId).getOrThrow()
+            journal.requestCancel(original, header.ticketId, "same-cancel").getOrThrow()
+            remote.cancelAction = {
+                Result.success(
+                    ArenaCancelResponse.RetryRegeneration(header.ticketId, it.requestId),
+                )
+            }
+            assertEquals(
+                ArenaCommandDispatch.RETRY_REGEN,
+                journal.dispatchCancel(original, header.ticketId).getOrThrow(),
+            )
+            assertEquals(List(3) { original }, remote.boundSessions)
+            assertEquals("same-cancel", remote.cancellations.single().requestId)
             assertTrue(storage.outbox.isEmpty())
         }
 

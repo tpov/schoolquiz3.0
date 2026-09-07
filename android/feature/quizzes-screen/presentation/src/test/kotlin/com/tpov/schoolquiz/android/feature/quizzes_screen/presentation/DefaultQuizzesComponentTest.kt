@@ -9,19 +9,22 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeBackDispatcher
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeBackDispatcher
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonUnlockQueue
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
@@ -31,6 +34,7 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -69,6 +73,8 @@ class DefaultQuizzesComponentTest {
     private fun buildComponent(
         backHandler: BackHandler = BackDispatcher(),
         stateKeeper: StateKeeperDispatcher = StateKeeperDispatcher(null),
+        arenaFactory: ArenaLessonCatalogComponentFactory =
+            ArenaLessonCatalogComponentFactory { error("Arena not expected") },
     ): DefaultQuizzesComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -93,8 +99,39 @@ class DefaultQuizzesComponentTest {
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+            arenaCatalogFactory = arenaFactory,
             mainContext = Dispatchers.Unconfined,
         )
+    }
+
+    @Test
+    fun `Arena entry opens only the lesson preview and repeated entry is idempotent`() {
+        var created = 0
+        val preview =
+            object : ArenaLessonCatalogComponent {
+                override val state = MutableStateFlow(ArenaLessonCatalogUiState())
+
+                override fun onRefresh() = error("No automatic read")
+
+                override fun onLoadMore() = error("No automatic read")
+            }
+        val component =
+            buildComponent(
+                arenaFactory =
+                    ArenaLessonCatalogComponentFactory {
+                        created++
+                        preview
+                    },
+            )
+        component.openCourseArena()
+        component.openCourseArena()
+        assertIs<QuizzesConfig.ArenaLessons>(component.childStack.value.active.configuration)
+        val child = assertIs<QuizzesChild.ArenaLessons>(component.childStack.value.active.instance)
+        assertEquals(preview, child.component)
+        assertEquals(1, created)
+        assertEquals(2, component.stackSize())
+        component.popCurrentChild()
+        assertIs<QuizzesChild.Idle>(component.childStack.value.active.instance)
     }
 
     /** Total items in stack: Idle anchor (backStack[0]) + everything above. */

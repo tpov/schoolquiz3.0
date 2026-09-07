@@ -16,12 +16,13 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.height
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.arkivanov.decompose.Child
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
@@ -31,7 +32,6 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
@@ -42,12 +42,13 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.UnderConstr
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.NoirSettingsScreen
-import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
@@ -55,16 +56,19 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Qu
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
+import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
-import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
 import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,9 +79,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import androidx.compose.ui.unit.height
 
 /**
  * Compile-level instrumented tests for phase-05 AppShellScreen composables.
@@ -340,7 +344,53 @@ class AppShellScreenTest {
         lifecycle.destroy()
     }
 
-    private fun createRootComponent(lifecycle: LifecycleRegistry): DefaultRootComponent {
+    @Test
+    fun arenaCanReopenAfterBackWithoutLoadingOrStartingALesson() {
+        val lifecycle = LifecycleRegistry()
+        lifecycle.resume()
+        val probe = ArenaReadProbe()
+        val component = createRootComponent(lifecycle, probe)
+        try {
+            composeTestRule.setContent {
+                SchoolQuizTheme { AppShellScreen(component, appVersionName = "test", appVersionCode = 1) }
+            }
+            composeTestRule.waitForIdle()
+            composeTestRule.runOnIdle {
+                component.navigator.goTo(Destination.SelectSection(DrawerSection.InternetSection.Arena))
+            }
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("arena_back").assertIsDisplayed().performClick()
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("arena_reopen").assertIsDisplayed()
+            composeTestRule.runOnIdle {
+                assertEquals(1, probe.opens)
+                assertEquals(0, probe.reads)
+                assertEquals(0, probe.runnerStarts)
+            }
+            composeTestRule.onNodeWithTag("arena_reopen").performClick()
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("arena_back").assertIsDisplayed()
+            composeTestRule.runOnIdle {
+                assertEquals(2, probe.opens)
+                assertEquals(0, probe.reads)
+                assertEquals(0, probe.runnerStarts)
+            }
+        } finally {
+            lifecycle.stop()
+            lifecycle.destroy()
+        }
+    }
+
+    private class ArenaReadProbe {
+        var opens = 0
+        var reads = 0
+        var runnerStarts = 0
+    }
+
+    private fun createRootComponent(
+        lifecycle: LifecycleRegistry,
+        arena: ArenaReadProbe = ArenaReadProbe(),
+    ): DefaultRootComponent {
         val componentCtx = DefaultComponentContext(lifecycle)
         val repo = object : UserStatsRepository {
             private val _stats = MutableStateFlow(UserStats.guest())
@@ -394,19 +444,44 @@ class AppShellScreenTest {
             },
             quizzesFactory = { _ ->
                 object : QuizzesComponent {
-                    private val idleStack = ChildStack(
+                    private val idleStack = ChildStack<QuizzesConfig, QuizzesChild>(
                         active = Child.Created(QuizzesConfig.Idle, QuizzesChild.Idle),
                         backStack = emptyList(),
                     )
                     override val childStack = MutableValue(idleStack)
-                    override fun openLessonRunner(lessonId: String) = Unit
+                    override fun openLessonRunner(lessonId: String) {
+                        arena.runnerStarts++
+                        error("Read-only Arena cannot start a runner")
+                    }
+
                     override val currentCatalogName: kotlinx.coroutines.flow.StateFlow<String?> =
                         kotlinx.coroutines.flow.MutableStateFlow(null)
                     override val currentCatalogIcons: kotlinx.coroutines.flow.StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         kotlinx.coroutines.flow.MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
                     override fun openCourseArchive() = Unit
-                    override fun openCourseArena() = Unit
+                    override fun openCourseArena() {
+                        arena.opens++
+                        val catalog =
+                            object : ArenaLessonCatalogComponent {
+                                override val state =
+                                    MutableStateFlow(ArenaLessonCatalogUiState(sessionAvailable = true))
+
+                                override fun onRefresh() {
+                                    arena.reads++
+                                }
+
+                                override fun onLoadMore() {
+                                    arena.reads++
+                                }
+                            }
+                        childStack.value =
+                            ChildStack(
+                                active = Child.Created(QuizzesConfig.ArenaLessons, QuizzesChild.ArenaLessons(catalog)),
+                                backStack = listOf(Child.Created(QuizzesConfig.Idle, QuizzesChild.Idle)),
+                            )
+                    }
+
                     override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
                     override fun openPublicQuestShelfCatalog(
                         targetShelf: String,
@@ -415,7 +490,9 @@ class AppShellScreenTest {
                     override fun openSectionList(questId: QuestId, breadcrumbs: List<BreadcrumbRoot>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit
-                    override fun popCurrentChild() = Unit
+                    override fun popCurrentChild() {
+                        childStack.value = idleStack
+                    }
                 }
             },
         )

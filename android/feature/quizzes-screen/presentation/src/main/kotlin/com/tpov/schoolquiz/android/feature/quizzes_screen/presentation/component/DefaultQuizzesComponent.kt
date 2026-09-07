@@ -67,6 +67,7 @@ class DefaultQuizzesComponent(
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
     private val retirePublicQuest: RetirePublicQuestUseCase,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
+    private val arenaCatalogFactory: ArenaLessonCatalogComponentFactory,
     private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
     /** Цена открытия уроков — передаётся вниз в список уроков, где её показывает замок. */
@@ -92,6 +93,7 @@ class DefaultQuizzesComponent(
                 runCatching {
                     container.consume(ListSerializer(QuizzesConfig.serializer()))
                 }.getOrNull()
+                    ?.let(::restoreArenaReadOnlyRoute)
                     // AC 36: process kill = attempt lost. Pop runner back to LessonList on restart.
                     ?.filterNot { it is QuizzesConfig.LessonRunner }
                     ?.takeIf { it.isNotEmpty() }
@@ -155,6 +157,7 @@ class DefaultQuizzesComponent(
     private fun updateCurrentCatalogId(config: QuizzesConfig) {
         when (config) {
             QuizzesConfig.Idle -> currentCatalogId.value = null
+            QuizzesConfig.ArenaLessons -> currentCatalogId.value = null
             is QuizzesConfig.PublicQuestCatalogPicker -> currentCatalogId.value = null
             is QuizzesConfig.QuestList -> currentCatalogId.value = config.catalogId
             // deeper drill-down levels — keep the previously-set catalog id
@@ -169,6 +172,7 @@ class DefaultQuizzesComponent(
     private fun catalogNameFromConfig(config: QuizzesConfig): String? =
         when (config) {
             QuizzesConfig.Idle -> null
+            QuizzesConfig.ArenaLessons -> null
             is QuizzesConfig.PublicQuestCatalogPicker -> null
             is QuizzesConfig.QuestList -> config.breadcrumbs.firstDynamicTitle()
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstDynamicTitle()
@@ -204,16 +208,9 @@ class DefaultQuizzesComponent(
         )
     }
 
+    /** Compatibility entry name; the Arena now lists lessons, never a COURSE quest shelf. */
     override fun openCourseArena() {
-        navigation.pushNew(
-            QuizzesConfig.QuestList(
-                catalogId = COURSES_CATALOG_ID,
-                breadcrumbs = listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses),
-                questType = QuestType.COURSE,
-                shelf = ARENA_SHELF,
-                mode = QuestListMode.Arena,
-            ),
-        )
+        navigation.pushNew(QuizzesConfig.ArenaLessons)
     }
 
     override fun openPublicQuestCatalogPicker(targetShelf: String) {
@@ -263,6 +260,7 @@ class DefaultQuizzesComponent(
         val breadcrumbsSize =
             when (val cfg = active.configuration) {
                 is QuizzesConfig.Idle -> 0
+                QuizzesConfig.ArenaLessons -> 1
                 is QuizzesConfig.PublicQuestCatalogPicker -> cfg.breadcrumbs.size
                 is QuizzesConfig.QuestList -> cfg.breadcrumbs.size
                 is QuizzesConfig.SectionList -> cfg.breadcrumbs.size
@@ -309,6 +307,8 @@ class DefaultQuizzesComponent(
         when (config) {
             is QuizzesConfig.Idle ->
                 QuizzesChild.Idle
+            QuizzesConfig.ArenaLessons ->
+                QuizzesChild.ArenaLessons(arenaCatalogFactory.create(ctx))
             is QuizzesConfig.PublicQuestCatalogPicker ->
                 QuizzesChild.PublicQuestCatalogPicker(
                     DefaultPublicQuestCatalogPickerComponent(
@@ -370,6 +370,7 @@ class DefaultQuizzesComponent(
     private fun isArchiveNavigationPath(config: QuizzesConfig): Boolean =
         when (config) {
             QuizzesConfig.Idle -> false
+            QuizzesConfig.ArenaLessons -> false
             is QuizzesConfig.PublicQuestCatalogPicker -> false
             is QuizzesConfig.QuestList -> config.mode == QuestListMode.Archive
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive
@@ -385,3 +386,46 @@ private const val ARENA_SHELF = "arena"
 private const val TOURNAMENT_SHELF = "tournament"
 private const val TOURNAMENT_FINAL_SHELF = "tournamentFinal"
 private const val QUEST_LIST_STACK_INDEX = 1
+
+/**
+ * Migrate only the exact former player entry and its known drill-down tail. Curator Arena mode,
+ * other catalogs and archive stacks are untouched. An unrecognizable legacy tail fails to Idle,
+ * never to a guessed ordinary lesson or runner.
+ */
+private fun restoreArenaReadOnlyRoute(stack: List<QuizzesConfig>): List<QuizzesConfig> {
+    val index = stack.indexOfFirst { it.isLegacyCourseArenaEntry() }
+    if (index < 0) return stack
+    val tail = stack.drop(index + 1)
+    return if (tail.withIndex().all { (depth, config) -> config.isLegacyCourseArenaDescendant(depth) }) {
+        stack.take(index) + QuizzesConfig.ArenaLessons
+    } else {
+        listOf(QuizzesConfig.Idle)
+    }
+}
+
+private fun QuizzesConfig.isLegacyCourseArenaEntry(): Boolean =
+    this is QuizzesConfig.QuestList &&
+        catalogId == COURSES_CATALOG_ID && questType == QuestType.COURSE && shelf == ARENA_SHELF &&
+        mode == QuestListMode.Arena && selectionTargetShelf == null && forcedLessonMode == null &&
+        breadcrumbs == listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses)
+
+private fun QuizzesConfig.isLegacyCourseArenaDescendant(depth: Int): Boolean {
+    val root = listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses)
+    val breadcrumbs =
+        when (this) {
+            is QuizzesConfig.SectionList ->
+                if (depth == SECTION_DEPTH && questType == QuestType.COURSE) breadcrumbs else null
+            is QuizzesConfig.ThemeList ->
+                if (depth == THEME_DEPTH && questType == QuestType.COURSE) breadcrumbs else null
+            is QuizzesConfig.LessonList ->
+                if (depth == LESSON_DEPTH && questType == QuestType.COURSE) breadcrumbs else null
+            is QuizzesConfig.LessonRunner -> if (depth == RUNNER_DEPTH) breadcrumbs else null
+            else -> null
+        }
+    return breadcrumbs?.take(root.size) == root
+}
+
+private const val SECTION_DEPTH = 0
+private const val THEME_DEPTH = 1
+private const val LESSON_DEPTH = 2
+private const val RUNNER_DEPTH = 3

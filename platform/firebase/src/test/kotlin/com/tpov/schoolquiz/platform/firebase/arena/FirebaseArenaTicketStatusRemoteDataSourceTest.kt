@@ -5,15 +5,21 @@ import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.OutboxArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemoteFailure
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemoteFailureKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketGetRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatusObservation
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -32,6 +38,7 @@ import java.io.File
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FirebaseArenaTicketStatusRemoteDataSourceTest {
     private val repo =
         generateSequence(File(checkNotNull(System.getProperty("user.dir")))) { it.parentFile }
@@ -202,22 +209,86 @@ class FirebaseArenaTicketStatusRemoteDataSourceTest {
         assertTrue(index.contains("exports." + name + " = onCall("))
     }
 
-    private inner class Fake(scope: TestScope) {
+    @Test
+    fun plainStatusCapturesBeforeDispatcherAndCannotRenewAnOldCallerEpoch() =
+        runTest {
+            val f = Fake(this)
+            val call = async(start = CoroutineStart.UNDISPATCHED) { f.status.status(request()) }
+            f.session = OutboxSession("other", 2)
+            f.session = OutboxSession("player", 3)
+            failure(call.await(), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+            assertEquals(0, f.networkReads)
+            assertTrue(f.calls.isEmpty())
+        }
+
+    @Test
+    fun boundStatusRejectsOldEpochBeforeEntryAndAfterConnectivityOnBothDispatchers() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                for (duringNetwork in listOf(false, true)) {
+                    val f = Fake(this, immediate)
+                    val original = requireNotNull(f.session)
+                    if (duringNetwork) {
+                        f.beforeOnline = { f.session = OutboxSession("player", 3) }
+                    } else {
+                        f.session = OutboxSession("player", 3)
+                    }
+                    failure(f.status.status(original, request()), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+                    assertTrue(f.calls.isEmpty())
+                    assertEquals(if (duringNetwork) 1 else 0, f.networkReads)
+                }
+            }
+        }
+
+    @Test
+    fun boundStatusAwaitReleasesTheOwnerGateButItsLateTerminalCannotBecomeFreshProof() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                val f = Fake(this, immediate)
+                val original = requireNotNull(f.session)
+                val entered = CompletableDeferred<Unit>()
+                val release = CompletableDeferred<Unit>()
+                f.reply = projection("recoveredCancelled").toSdk()
+                f.beforeReply = {
+                    entered.complete(Unit)
+                    release.await()
+                }
+                val call = async { f.status.status(original, request("recoveredCancelled")) }
+                entered.await()
+                withTimeout(1000) {
+                    f.engine.withoutPasses { f.session = OutboxSession("player", 3) }
+                }
+                release.complete(Unit)
+                failure(call.await(), ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+                assertEquals(1, f.calls.size)
+            }
+        }
+
+    private inner class Fake(scope: TestScope, immediate: Boolean = false) {
         var session: OutboxSession? = OutboxSession("player", 1)
         var online = true
         var networkReads = 0
         var reply: Any? = projection("recoveredSelected").toSdk()
         var beforeOnline: suspend () -> Unit = {}
         var beforeReply: suspend () -> Unit = {}
+        var beforeStart: () -> Unit = {}
+        val sessions = OutboxSessionProvider { session }
+        val engine = arenaSessionTestEngine(sessions)
+        val gate = OutboxArenaOwnerGate(sessions, engine)
         val calls = mutableListOf<Pair<String, Map<String, Any?>>>()
         val status: ArenaTicketStatusRemoteDataSource =
             FirebaseArenaTicketRemoteDataSource(
-                call = { name, payload ->
-                    calls += name to payload.toMap()
-                    beforeReply()
-                    reply
-                },
-                sessions = OutboxSessionProvider { session },
+                exchange =
+                    ArenaCallableExchange { name, payload ->
+                        beforeStart()
+                        calls += name to payload.toMap()
+                        ArenaPendingCall {
+                            beforeReply()
+                            reply
+                        }
+                    },
+                gate = gate,
+                sessions = sessions,
                 networkMonitor =
                     object : NetworkMonitor {
                         override fun observeOnline() = flowOf(online)
@@ -228,7 +299,14 @@ class FirebaseArenaTicketStatusRemoteDataSourceTest {
                             return online
                         }
                     },
-                dispatcher = StandardTestDispatcher(scope.testScheduler),
+                dispatcher =
+                    if (immediate) {
+                        kotlinx.coroutines.test.UnconfinedTestDispatcher(
+                            scope.testScheduler,
+                        )
+                    } else {
+                        StandardTestDispatcher(scope.testScheduler)
+                    },
             )
     }
 

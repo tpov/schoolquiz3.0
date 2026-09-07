@@ -55,6 +55,7 @@ val firebaseModule =
         single<OutboxSessionProvider> { FirebaseOutboxSessionProvider(FirebaseAuth.getInstance()) }
         single {
             FirebaseArenaTicketRemoteDataSource(
+                gate = get(),
                 functions = get(),
                 sessions = get(),
                 networkMonitor = get(),

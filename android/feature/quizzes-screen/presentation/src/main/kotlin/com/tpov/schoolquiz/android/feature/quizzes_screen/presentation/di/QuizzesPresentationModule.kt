@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultArenaLessonCatalogComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
@@ -10,6 +12,12 @@ import org.koin.dsl.module
 
 val quizzesPresentationModule =
     module {
+        factory {
+            // Required dependency, lazily resolved only when the read-only child is created.
+            ArenaLessonCatalogComponentFactory { ctx ->
+                DefaultArenaLessonCatalogComponent(ctx, repository = get(), sessions = get(), authRepository = get())
+            }
+        }
         factory<QuizzesComponent> { (ctx: ComponentContext) ->
             // Оркестратор регистрируется в syncModule и в приложении есть всегда; отсутствует он
             // только в тестах проводки. Раньше на этот случай подставлялась заглушка,
@@ -33,6 +41,7 @@ val quizzesPresentationModule =
                 setPublicQuestShelf = get(),
                 retirePublicQuest = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
+                arenaCatalogFactory = get<ArenaLessonCatalogComponentFactory>(),
                 questContentSync = contentSync?.let { it::syncQuestContent } ?: { missingSync() },
                 lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { missingSync() },
                 observeLessonUnlockPrices = get<ObserveLessonUnlockPricesUseCase>()::invoke,

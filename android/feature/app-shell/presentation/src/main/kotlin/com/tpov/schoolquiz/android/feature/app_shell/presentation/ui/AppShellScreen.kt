@@ -3,10 +3,13 @@ package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui
 import android.app.Activity
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -15,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -27,7 +31,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
@@ -81,6 +87,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R as QuizzesR
 
 private const val TAB_CROSSFADE_DURATION_MS = 300
 private const val HOME_SHELF = "home"
@@ -571,7 +578,21 @@ private fun CourseArenaContent(
     LaunchedEffect(rootComponent.quizzesComponent) {
         rootComponent.quizzesComponent.openCourseArena()
     }
-    Box(modifier = Modifier.padding(paddingValues).fillMaxSize())
+    // Closing the overlay does not pop the root Internet/Arena destination. Keep a useful
+    // manual reopen surface beneath it; never reopen in response to Idle or make a network call.
+    Column(
+        modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(stringResource(QuizzesR.string.arena_catalog_title), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(QuizzesR.string.arena_catalog_preview))
+        Button(
+            onClick = rootComponent.quizzesComponent::openCourseArena,
+            modifier = Modifier.testTag("arena_reopen"),
+        ) {
+            Text(stringResource(QuizzesR.string.arena_catalog_open))
+        }
+    }
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

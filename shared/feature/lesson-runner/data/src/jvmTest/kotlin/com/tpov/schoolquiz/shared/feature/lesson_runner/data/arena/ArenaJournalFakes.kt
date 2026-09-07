@@ -62,22 +62,68 @@ internal class JournalRemoteFake : ArenaTicketRemoteDataSource {
     var cancelAction: suspend (ArenaTicketCancelRequest) -> Result<ArenaCancelResponse> = { error("Unexpected cancel") }
     var getAction: suspend (ArenaTicketGetRequest) -> Result<ArenaEntryTicket> = { error("Unexpected get") }
     var listAction: suspend (ArenaTicketListRequest) -> Result<ArenaTicketPage> = { error("Unexpected list") }
+    val boundSessions = mutableListOf<OutboxSession>()
+    var beforeBoundCall: suspend (OutboxSession) -> Unit = {}
     val prepares = mutableListOf<ArenaPrepareRequest>()
     val cancellations = mutableListOf<ArenaTicketCancelRequest>()
 
-    override suspend fun prepare(request: ArenaPrepareRequest): Result<ArenaPrepareResponse> {
+    override suspend fun prepare(request: ArenaPrepareRequest): Result<ArenaPrepareResponse> =
+        error(
+            "Plain path is forbidden for journal tests",
+        )
+
+    override suspend fun prepare(
+        expected: OutboxSession,
+        request: ArenaPrepareRequest,
+    ): Result<ArenaPrepareResponse> {
+        require(expected.ownerUid == request.ownerUid)
+        boundSessions += expected
+        beforeBoundCall(expected)
         prepares += request
         return prepareAction(request)
     }
 
-    override suspend fun cancel(request: ArenaTicketCancelRequest): Result<ArenaCancelResponse> {
+    override suspend fun cancel(request: ArenaTicketCancelRequest): Result<ArenaCancelResponse> =
+        error(
+            "Plain path is forbidden for journal tests",
+        )
+
+    override suspend fun cancel(
+        expected: OutboxSession,
+        request: ArenaTicketCancelRequest,
+    ): Result<ArenaCancelResponse> {
+        require(expected.ownerUid == request.ticket.ownerUid)
+        boundSessions += expected
+        beforeBoundCall(expected)
         cancellations += request
         return cancelAction(request)
     }
 
-    override suspend fun get(request: ArenaTicketGetRequest) = getAction(request)
+    override suspend fun get(request: ArenaTicketGetRequest): Result<ArenaEntryTicket> =
+        error("Plain path is forbidden for journal tests")
 
-    override suspend fun list(request: ArenaTicketListRequest) = listAction(request)
+    override suspend fun get(
+        expected: OutboxSession,
+        request: ArenaTicketGetRequest,
+    ): Result<ArenaEntryTicket> {
+        require(expected.ownerUid == request.ownerUid)
+        boundSessions += expected
+        beforeBoundCall(expected)
+        return getAction(request)
+    }
+
+    override suspend fun list(request: ArenaTicketListRequest): Result<ArenaTicketPage> =
+        error("Plain path is forbidden for journal tests")
+
+    override suspend fun list(
+        expected: OutboxSession,
+        request: ArenaTicketListRequest,
+    ): Result<ArenaTicketPage> {
+        require(expected.ownerUid == request.ownerUid)
+        boundSessions += expected
+        beforeBoundCall(expected)
+        return listAction(request)
+    }
 }
 
 /** Coordinator fake only. SQL atomicity/uniqueness/migration are tested independently with real Room. */

@@ -19,6 +19,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.labelRes
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RetapOutcome
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
@@ -173,6 +174,19 @@ class DefaultRootComponentTest {
         assertEquals(100, state.userStats.currentSkill)
     }
 
+    @Test
+    fun `cold start actual Internet stack agrees with the domain Arena default`() = runTest(testDispatcher) {
+        val component = buildComponent()
+        val state = component.appShellState.first()
+        val actual = component.internetTabComponent.childStack.value
+
+        assertEquals(Tab.LOCAL, state.activeTab)
+        assertEquals(DrawerSection.InternetSection.Arena, state.internetState.activeSection)
+        assertEquals(InternetConfig.ArenaRoot, state.internetState.stack.active)
+        assertEquals(state.internetState.stack.active, actual.active.configuration)
+        assertEquals(state.internetState.stack.backStack, actual.backStack.map { it.configuration })
+    }
+
     // -----------------------------------------------------------------------
     // Cold Start FSM — error path
     // Spec: init_use_case_throws_then_fallback_state
@@ -205,6 +219,7 @@ class DefaultRootComponentTest {
 
         val state = component.appShellState.first()
         assertEquals(AppShellState.fallback(UserStats.guest()), state)
+        assertEquals(state.internetState.stack.active, component.internetTabComponent.childStack.value.active.configuration)
     }
 
     // -----------------------------------------------------------------------
@@ -221,7 +236,10 @@ class DefaultRootComponentTest {
 
         component.onDestination(Destination.SwitchTab(Tab.INTERNET))
 
-        assertEquals(Tab.INTERNET, component.appShellState.first().activeTab)
+        val state = component.appShellState.first()
+        assertEquals(Tab.INTERNET, state.activeTab)
+        assertEquals(InternetConfig.ArenaRoot, state.internetState.stack.active)
+        assertEquals(state.internetState.stack.active, component.internetTabComponent.childStack.value.active.configuration)
     }
 
     // -----------------------------------------------------------------------
@@ -391,6 +409,22 @@ class DefaultRootComponentTest {
         val state = component.appShellState.first()
         assertEquals(Tab.INTERNET, state.activeTab)
         assertEquals(DrawerSection.InternetSection.Profile, state.activeSection)
+        assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
+        assertEquals(state.internetState.stack.active, component.internetTabComponent.childStack.value.active.configuration)
+    }
+
+    @Test
+    fun `direct cross-tab Arena selection agrees with the actual Internet stack`() = runTest(testDispatcher) {
+        val component = buildComponent()
+        assertEquals(Tab.LOCAL, component.appShellState.first().activeTab)
+
+        component.onDestination(Destination.SelectSection(DrawerSection.InternetSection.Arena))
+
+        val state = component.appShellState.first()
+        assertEquals(Tab.INTERNET, state.activeTab)
+        assertEquals(DrawerSection.InternetSection.Arena, state.activeSection)
+        assertEquals(InternetConfig.ArenaRoot, state.internetState.stack.active)
+        assertEquals(state.internetState.stack.active, component.internetTabComponent.childStack.value.active.configuration)
     }
 
     // -----------------------------------------------------------------------

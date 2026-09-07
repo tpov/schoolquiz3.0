@@ -32,6 +32,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepo
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
@@ -84,9 +85,6 @@ import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepos
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -99,6 +97,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * JVM integration tests for [DefaultRootComponent] cross-feature wiring.
@@ -363,6 +364,9 @@ class QuizzesRootIntegrationTest {
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 retirePublicQuest = RetirePublicQuestUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+                arenaCatalogFactory = ArenaLessonCatalogComponentFactory {
+                    error("Arena not expected in this fixture")
+                },
                 // Разблокировка урока здесь не нажимается: тест про навигацию между экранами.
                 queueLessonUnlock =
                     object : LessonUnlockQueue {

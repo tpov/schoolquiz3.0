@@ -23,6 +23,16 @@ class QuizzesConfigSerializationTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    @Test
+    fun `Arena lesson route serializes only its type and no response or authority`() {
+        val encoded = json.encodeToString(QuizzesConfig.serializer(), QuizzesConfig.ArenaLessons)
+        assertEquals(
+            setOf("type"),
+            json.parseToJsonElement(encoded).let { it as kotlinx.serialization.json.JsonObject }.keys,
+        )
+        assertEquals(QuizzesConfig.ArenaLessons, roundTrip(QuizzesConfig.ArenaLessons))
+    }
+
     private fun <T : QuizzesConfig> roundTrip(original: T): QuizzesConfig {
         val encoded = json.encodeToString(QuizzesConfig.serializer(), original)
         return json.decodeFromString(QuizzesConfig.serializer(), encoded)

@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena
 
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.persistence.ARENA_RESOLVED_CANCELLED
 import com.tpov.schoolquiz.shared.core.persistence.ArenaCancellationValidator
 import com.tpov.schoolquiz.shared.core.persistence.ArenaCommandEntity
@@ -23,6 +24,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -41,6 +43,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ArenaCancelledSettlementResolverTest {
     @Test
     fun realCancellationResolvesOnlyTheOriginalDeliveryAndPreservesItsBodyAndFailure() =
@@ -340,12 +343,48 @@ class ArenaCancelledSettlementResolverTest {
             }
         }
 
+    @Test
+    fun explicitOriginalStampCannotBeRenewedAtResolverEntryOnEitherDispatcher() =
+        runTest {
+            for (immediate in listOf(false, true)) {
+                val f = CancellationResolutionFixture()
+                val original = f.gate.current
+                val before = f.snapshot()
+                f.gate.switch("other")
+                f.gate.switch("player")
+                val resolver = f.resolver(this, immediate = immediate)
+                assertAccountChanged(resolver.resolve(original, f.header.ticketId).exceptionOrNull())
+                assertTrue(f.requests.isEmpty() && f.boundSessions.isEmpty())
+                assertEquals(before, f.snapshot())
+                resolver.resolve(f.gate.current, f.header.ticketId).getOrThrow()
+                assertEquals(ARENA_RESOLVED_CANCELLED, f.retained.state)
+                assertEquals(f.command.bodyJson, f.retained.bodyJson)
+            }
+        }
+
+    @Test
+    fun statusEntryReceivesOriginalStampEvenIfOwnerReturnsAfterTheRetainedRead() =
+        runTest {
+            val f = CancellationResolutionFixture()
+            val original = f.gate.current
+            val before = f.snapshot()
+            f.beforeBoundStatus = {
+                f.gate.switch("other")
+                f.gate.switch("player")
+            }
+            assertAccountChanged(f.resolver(this).resolve(original, f.header.ticketId).exceptionOrNull())
+            assertEquals(listOf(original), f.boundSessions)
+            assertTrue(f.requests.isEmpty())
+            assertEquals(before, f.snapshot())
+        }
+
     private fun assertAccountChanged(error: Throwable?) {
         assertEquals(ArenaRemoteFailureKind.ACCOUNT_CHANGED, assertIs<ArenaRemoteFailure>(error).kind)
     }
 }
 
 /** Shares the existing canonical journal storage/owner fakes and real server-exported question fixture. */
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class CancellationResolutionFixture(name: String = "issuedSelected") {
     private val fixtures =
         javaClass.classLoader!!.getResourceAsStream("arena-ticket-client-fixtures.json")!!
@@ -419,9 +458,20 @@ internal class CancellationResolutionFixture(name: String = "issuedSelected") {
     var response: ArenaTicketStatusObservation = cancelled
     val requests = mutableListOf<ArenaTicketGetRequest>()
     var action: suspend () -> Result<ArenaTicketStatusObservation> = { Result.success(response) }
+    val boundSessions = mutableListOf<OutboxSession>()
+    var beforeBoundStatus: suspend (OutboxSession) -> Unit = {}
     private val remote =
         object : ArenaTicketStatusRemoteDataSource {
-            override suspend fun status(request: ArenaTicketGetRequest): Result<ArenaTicketStatusObservation> {
+            override suspend fun status(request: ArenaTicketGetRequest): Result<ArenaTicketStatusObservation> =
+                error("Resolver must use the original-session path")
+
+            override suspend fun status(
+                expected: OutboxSession,
+                request: ArenaTicketGetRequest,
+            ): Result<ArenaTicketStatusObservation> {
+                boundSessions += expected
+                beforeBoundStatus(expected)
+                gate.withOwner(expected) { require(expected.ownerUid == request.ownerUid) }
                 requests += request
                 return action()
             }
@@ -451,12 +501,19 @@ internal class CancellationResolutionFixture(name: String = "issuedSelected") {
     fun resolver(
         scope: TestScope,
         actualStorage: ArenaJournalStorage = storage,
+        immediate: Boolean = false,
     ) = ArenaCancelledSettlementResolver(
         actualStorage,
         remote,
         gate,
         proof,
-        StandardTestDispatcher(scope.testScheduler),
+        if (immediate) {
+            kotlinx.coroutines.test.UnconfinedTestDispatcher(
+                scope.testScheduler,
+            )
+        } else {
+            StandardTestDispatcher(scope.testScheduler)
+        },
         { now },
     )
 

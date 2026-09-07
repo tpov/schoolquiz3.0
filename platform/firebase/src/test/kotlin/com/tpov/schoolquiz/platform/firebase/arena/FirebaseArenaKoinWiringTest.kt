@@ -2,11 +2,16 @@ package com.tpov.schoolquiz.platform.firebase.arena
 
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.di.firebaseModule
+import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
+import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaOwnerGate
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.OutboxArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.arenaDataModule
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaLessonCatalogRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
@@ -208,6 +213,71 @@ class FirebaseArenaKoinWiringTest {
         }
     }
 
+    @Test
+    fun actualGateEngineAndProductionTransportResolveWithoutStartingAnyRequests() {
+        val f = Fixture()
+        val app = f.graph()
+        try {
+            val remote = app.koin.get<ArenaTicketRemoteDataSource>()
+            assertTrue(app.koin.get<ArenaOwnerGate>() is OutboxArenaOwnerGate)
+            assertTrue(
+                app.koin.get<MutationTransport>() is FirebaseMutationTransport,
+            )
+            assertSame(app.koin.get<OutboxEngine>(), app.koin.get<OutboxEngine>())
+            assertSame(remote, app.koin.get<ArenaTicketStatusRemoteDataSource>())
+            assertEquals(0, f.sessionReads)
+            assertEquals(0, f.networkReads)
+            verify { f.functions wasNot Called }
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun missingEngineFailsTicketGateResolutionButCatalogStillNeedsNoJournalOrRoom() {
+        val f = Fixture()
+        val app = f.graph(includeEngine = false)
+        try {
+            for (resolve in listOf<() -> Any>(
+                { app.koin.get<ArenaTicketRemoteDataSource>() },
+                { app.koin.get<ArenaTicketStatusRemoteDataSource>() },
+            )) {
+                val failure = runCatching(resolve).exceptionOrNull()
+                assertTrue(generateSequence(failure) { it.cause }.any { it is NoDefinitionFoundException })
+            }
+            assertTrue(app.koin.get<ArenaLessonCatalogRemoteDataSource>() is FirebaseArenaLessonCatalogRemoteDataSource)
+            assertTrue(app.koin.get<ArenaCatalogRepository>() is ArenaCatalogRepositoryImpl)
+            assertEquals(0, f.sessionReads)
+            assertEquals(0, f.networkReads)
+            verify { f.functions wasNot Called }
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun missingGateDefinitionFailsClosedWhilePlainCatalogRemainsIndependent() {
+        val f = Fixture()
+        val app =
+            KoinApplication.init().modules(firebaseModule).modules(
+                module {
+                    single<FirebaseFunctions> { f.functions }
+                    single<OutboxSessionProvider> { f.sessions }
+                    single<NetworkMonitor> { f.network }
+                },
+            )
+        try {
+            val failure = runCatching { app.koin.get<ArenaTicketRemoteDataSource>() }.exceptionOrNull()
+            assertTrue(generateSequence(failure) { it.cause }.any { it is NoDefinitionFoundException })
+            assertTrue(app.koin.get<ArenaLessonCatalogRemoteDataSource>() is FirebaseArenaLessonCatalogRemoteDataSource)
+            assertEquals(0, f.sessionReads)
+            assertEquals(0, f.networkReads)
+            verify { f.functions wasNot Called }
+        } finally {
+            app.close()
+        }
+    }
+
     private class Fixture {
         val functions = mockk<FirebaseFunctions>()
         var session: OutboxSession? = OutboxSession("A", 1)
@@ -230,9 +300,13 @@ class FirebaseArenaKoinWiringTest {
                 }
             }
 
-        fun graph(includeNetwork: Boolean = true): KoinApplication =
+        fun graph(
+            includeNetwork: Boolean = true,
+            includeEngine: Boolean = true,
+        ): KoinApplication =
             KoinApplication.init().modules(firebaseModule, arenaDataModule).modules(
                 module {
+                    if (includeEngine) single<OutboxEngine> { arenaSessionTestEngine(get(), get<MutationTransport>()) }
                     single<FirebaseFunctions> { functions }
                     single<OutboxSessionProvider> { sessions }
                     if (includeNetwork) single<NetworkMonitor> { network }
