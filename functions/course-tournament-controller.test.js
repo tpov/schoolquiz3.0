@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 const {premiumTestDb} = require("./premium-test-db");
-const {createCourseTournamentController, WORKER_PREFIX} = require("./course-tournament-controller");
+const {createCourseTournamentController, WORKER_PREFIX, QUALIFICATION_EXECUTION} = require("./course-tournament-controller");
 const {TOURNAMENT_PATHS: P, matchSessionId} = require("./tournament-service");
 const {SESSION_OPERATIONS, SESSION_INGRESS, VERIFIED_RUNS} = require("./tournament-session");
 const {QUALIFICATION_RANKINGS} = require("./tournament-qualification-freeze");
@@ -16,7 +16,7 @@ const clone = structuredClone;
 function pagedDb(initial) {
   const db = premiumTestDb(initial); const collection = db.collection; const run = db.runTransaction;
   function snapshot(ref) {
-    assert.equal(ref.sort, "__name__"); assert.ok(Number.isInteger(ref.maximum) && ref.maximum >= 2 && ref.maximum <= 101);
+    assert.equal(ref.sort, "__name__"); assert.ok(Number.isInteger(ref.maximum) && ref.maximum >= 1 && ref.maximum <= 101);
     const rows = [...db.store].filter(([key, row]) => key.startsWith(`${ref.path}/`) && key.split("/").length === ref.path.split("/").length + 1 &&
       ref.filters.every(({field, op, value}) => op === "==" && row[field] === value) && (ref.after === null || key.split("/").at(-1) > ref.after))
       .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).slice(0, ref.maximum);
@@ -51,13 +51,14 @@ function fixture(players = ["alice", "bob"], options = {}) {
       type: "SingleChoice", difficulty: i < 60 ? "EASY" : "HARD", text: "A?", options: [{id: "a", text: "A"}, {id: "b", text: "B"}], correctOptionId: "a"})});
   }
   const state = {now: T}; let serial = 0;
-  const controller = createCourseTournamentController({db, nowMs: () => state.now,
+  const restart = () => createCourseTournamentController({db, nowMs: () => state.now,
     isCurator: async () => false, workerBounds: options.workerBounds,
     loadLessonContext: async (tx, lessonId) => {
       const lesson = (await tx.get(db.doc(`lessons/${lessonId}`))).data();
       return {lessonId, authorUid: OWNER, catalogId: "catalog", questId: "course", sectionId: "section", themeId: "theme",
         questType: "COURSE", published: true, reviewApproved: lesson?.reviewSubmissionId === "submission", contentVersion: lesson?.version};
     }});
+  const controller = restart();
   const id = () => `client_operation_${String(++serial).padStart(16, "0")}`;
   const operate = (kind, uid = OWNER, fields = {}) => controller.operate(uid, {kind, operationId: id(), eventId: EVENT, ...fields});
   const prepare = () => controller.prepare(OWNER, {requestId: "preparation_request_00001", source: {kind: "COURSE", id: "course"}});
@@ -87,7 +88,7 @@ function fixture(players = ["alice", "bob"], options = {}) {
     await operate("READY", agreed.pair[1], {matchId: agreed.match.matchId});
     return {...agreed, sessions: agreed.pair.map(uid => matchSessionId(EVENT, agreed.match.matchId, uid))};
   }
-  return {db, state, controller, id, operate, prepare, create, qualify, pending, match, agree, readyBoth};
+  return {db, state, controller, restart, id, operate, prepare, create, qualify, pending, match, agree, readyBoth};
 }
 function balance(f, uid) { return f.db.store.get(`users/${uid}`).boxCount; }
 function assertSafe(value) {
@@ -225,7 +226,7 @@ test("missing qualification keys keep freeze incomplete and escrow reserved unti
   const f = fixture(); await f.create(); await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"});
   const event = f.db.store.get(E); const keyPath = `${P.privateForms}/${EVENT}/forms/${digest(event.qualificationForms[0].formId)}`;
   const key = f.db.store.get(keyPath); f.db.store.delete(keyPath); f.state.now = T + 7 * DAY;
-  const result = await f.controller.reconcileEvent(EVENT); assert.equal(result.status, "PENDING_SERVER_SESSIONS");
+  const result = await f.controller.reconcileEvent(EVENT); assert.equal(result.status, "PENDING_REPAIR");
   assert.equal(f.db.store.get(E).status, "QUALIFICATION"); assert.equal(balance(f, OWNER), 88);
   f.db.store.set(keyPath, key); assert.equal((await f.controller.reconcileEvent(EVENT)).status, "CANCELLED"); assert.equal(balance(f, OWNER), 100);
 });
@@ -272,16 +273,18 @@ test("first server answer arrival is captured before asynchronous binding read a
   const slot = f.db.store.get(`${P.sessions}/${sessionId}/answers/00`);
   assert.equal(slot.scoreDigit, 9); assert.equal(slot.receivedAtMs, T + 100);
 });
-test("controller reports explicit freeze budget exhaustion without ranking, close or refund", async () => {
+test("controller checkpoints a bounded scan and resumes instead of permanently exhausting the first page", async () => {
   const f = fixture(["alice", "bob", "carol"], {workerBounds: {qualificationPageSize: 1, qualificationMaxPages: 1}});
-  const result = await f.qualify(); assert.equal(result.status, "SCAN_BUDGET"); assert.equal(result.done, false);
-  assert.equal(result.needsLargerBudget, true); assert.equal(result.scannedSessions, 1); assert.equal(balance(f, OWNER), 88);
+  const result = await f.qualify(); assert.equal(result.status, "WAITING"); assert.equal(result.done, false);
+  assert.equal(result.qualificationPhase, "SCANNING"); assert.equal(result.admittedCount, 1); assert.equal(balance(f, OWNER), 88);
   assert.equal(f.db.store.has(`${QUALIFICATION_RANKINGS}/${EVENT}`), false); assert.equal(workerReceipts(f).length, 0);
+  for (let i = 0; i < 6 && f.db.store.get(E).status === "QUALIFICATION"; i++) await f.restart().reconcileEvent(EVENT);
+  assert.equal(f.db.store.get(E).status, "BRACKET"); assert.equal(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`).verifiedRunCount, 3);
 });
 test("missing admitted qualification session cannot silently disappear from automatic freeze", async () => {
   const f = fixture(); await f.create(); const start = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"});
   f.db.store.delete(`${P.sessions}/${start.session.sessionId}`); f.state.now = T + 7 * DAY;
-  const result = await f.controller.reconcileEvent(EVENT); assert.equal(result.status, "PENDING_SERVER_SESSIONS");
+  const result = await f.controller.reconcileEvent(EVENT); assert.equal(result.status, "PENDING_REPAIR");
   assert.equal(result.pendingCount, 1); assert.equal(balance(f, OWNER), 88);
 });
 test("both players can finish early; worker uses real verified scores before deadline and only aggregate is public", async () => {
@@ -332,6 +335,151 @@ test("read-only reconnect cannot pause/restart expired question or expose its ne
   const view = await f.controller.readSession("alice", {sessionId});
   assert.equal(view.currentQuestion, null); assert.equal(view.questionDeadlineReached, true);
   assert.deepEqual(f.db.store.get(`${P.sessions}/${sessionId}`), original); assertSafe(view);
+});
+
+async function admitRounds(f, players, rounds) {
+  await f.create();
+  for (const uid of players) for (let roundNumber = 1; roundNumber <= rounds; roundNumber++) {
+    await f.operate("START_QUALIFICATION", uid, {roundNumber, attemptId: `attempt_${uid}_${roundNumber}_0000000001`});
+  }
+  f.state.now = T + 7 * DAY;
+}
+function scanHead(f) { return [...f.db.store].find(([key]) => key.startsWith(`${E}/qualification_scans/`) && key.split("/").length === 4)?.[1]; }
+function assertWorkerSafe(result) {
+  assertSafe(result);
+  for (const key of ["ranking", "forms", "freezeId", "manifestDigest", "verifiedRuns", "uid", "sessionId", "snapshotId"]) assert.equal(Object.hasOwn(result, key), false);
+}
+test("real controller continues 501 admitted sessions across process restarts and publishes exactly one full-cohort ranking", async () => {
+  const players = Array.from({length: 167}, (_, i) => `many${String(i).padStart(3, "0")}`);
+  const f = fixture(players); await admitRounds(f, players, 3); let calls = 0; let priorCount = 0;
+  while (f.db.store.get(E).status === "QUALIFICATION" && calls < 60) {
+    const result = await f.restart().reconcileEvent(EVENT); calls++; assertWorkerSafe(result);
+    const head = scanHead(f); assert.ok(head.admittedCount >= priorCount); priorCount = head.admittedCount;
+    if (f.db.store.get(E).status === "QUALIFICATION") {
+      assert.equal(f.db.store.has(`${QUALIFICATION_RANKINGS}/${EVENT}`), false);
+      assert.equal(f.db.store.get(E).bracket, undefined); assert.equal(workerReceipts(f).length, 0);
+    }
+  }
+  assert.ok(calls > 10 && calls < 60); assert.equal(f.db.store.get(E).status, "BRACKET");
+  const ranking = f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`);
+  assert.equal(ranking.verifiedRunCount, 501); assert.equal(ranking.totalRanked, 167); assert.equal(ranking.ranking.length, 16);
+  assert.equal(scanHead(f).admittedCount, 501); assert.equal(scanHead(f).verifiedCount, 501);
+  assert.equal(workerReceipts(f).length, 1); assert.equal(balance(f, OWNER), 88);
+  const frozen = clone(ranking); await f.restart().reconcileEvent(EVENT);
+  assert.deepEqual(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`), frozen); assert.equal(workerReceipts(f).length, 1);
+});
+test("502 verified admissions are all retained but calculation remains pending without exclusion or bracket", async () => {
+  const players = Array.from({length: 251}, (_, i) => `over${String(i).padStart(3, "0")}`);
+  const f = fixture(players); await admitRounds(f, players, 2); let result;
+  for (let i = 0; i < 60; i++) { result = await f.restart().reconcileEvent(EVENT); assertWorkerSafe(result); if (result.qualificationPhase === "CALCULATION_PENDING") break; }
+  assert.equal(result.reason, "RESOURCE_ENVELOPE"); assert.equal(result.status, "WAITING"); assert.equal(result.done, false);
+  assert.equal(result.admittedCount, 502); assert.equal(result.verifiedCount, 502); assert.equal(result.pendingCount, 0);
+  assert.equal(scanHead(f).status, "SCAN_COMPLETE"); assert.equal(f.db.store.get(E).status, "QUALIFICATION");
+  assert.equal(f.db.store.has(`${QUALIFICATION_RANKINGS}/${EVENT}`), false); assert.equal(f.db.store.get(E).bracket, undefined);
+  assert.equal(workerReceipts(f).length, 0); assert.equal(balance(f, OWNER), 88);
+  const before = clone([...f.db.store]); assert.deepEqual(await f.restart().reconcileEvent(EVENT), result); assert.deepEqual([...f.db.store], before);
+});
+test("scanComplete under an insufficient calculation window is not a published ranking or a completion receipt", async () => {
+  const f = fixture(); await admitRounds(f, ["alice", "bob"], 1);
+  const result = await f.controller.reconcileEvent(EVENT, {deadlineAtMs: f.state.now + QUALIFICATION_EXECUTION.minSolveRemainingMs - 1});
+  assert.equal(result.qualificationPhase, "CALCULATION_PENDING"); assert.equal(result.reason, "INVOCATION_TIME"); assertWorkerSafe(result);
+  assert.equal(scanHead(f).status, "SCAN_COMPLETE"); assert.equal(f.db.store.has(`${QUALIFICATION_RANKINGS}/${EVENT}`), false);
+  assert.equal(workerReceipts(f).length, 0); assert.equal(balance(f, OWNER), 88);
+  await f.restart().reconcileEvent(EVENT, {deadlineAtMs: f.state.now + QUALIFICATION_EXECUTION.minSolveRemainingMs});
+  assert.equal(f.db.store.get(E).status, "BRACKET");
+});
+test("deadline consumed by initial awaited event read starts no scan or calculation", async () => {
+  const f = fixture(); await admitRounds(f, ["alice", "bob"], 1); const before = clone([...f.db.store]);
+  const deadlineAtMs = f.state.now + 100; const doc = f.db.doc;
+  f.db.doc = p => { const ref = doc(p); return {...ref, get: async () => { const result = await ref.get(); if (p === E) f.state.now = deadlineAtMs; return result; }}; };
+  const result = await f.controller.reconcileEvent(EVENT, {deadlineAtMs});
+  assert.equal(result.reason, "INVOCATION_TIME"); assert.deepEqual([...f.db.store], before);
+});
+test("published ranking survives failed close transaction and restart reuses it without duplicate escrow receipt", async () => {
+  const f = fixture(); await admitRounds(f, ["alice", "bob"], 1);
+  const run = f.db.runTransaction; let injected = false;
+  f.db.runTransaction = body => run(tx => body({...tx, set: (ref, value, options) => {
+    if (!injected && ref.path === E && value.status === "BRACKET") { injected = true; f.db.failNextCommit(); }
+    return tx.set(ref, value, options);
+  }}));
+  await assert.rejects(() => f.controller.reconcileEvent(EVENT), /injected atomic commit/);
+  const rank = clone(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`)); assert.equal(rank.complete, true);
+  assert.equal(f.db.store.get(E).status, "QUALIFICATION"); assert.equal(workerReceipts(f).length, 0); assert.equal(balance(f, OWNER), 88);
+  await f.restart().reconcileEvent(EVENT); assert.equal(f.db.store.get(E).status, "BRACKET");
+  assert.deepEqual(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`), rank); assert.equal(workerReceipts(f).length, 1);
+});
+test("worker configuration can lower but never inflate the measured calculation envelope", async () => {
+  assert.throws(() => fixture([], {workerBounds: {qualificationMaxVerifiedRuns: 502}}), {code: "INVALID_ARGUMENT"});
+  assert.throws(() => fixture([], {workerBounds: {qualificationPageSize: 51}}), {code: "INVALID_ARGUMENT"});
+  const f = fixture(["alice", "bob"], {workerBounds: {qualificationMaxVerifiedRuns: 1}});
+  const result = await f.qualify(); assert.equal(result.reason, "RESOURCE_ENVELOPE"); assert.equal(result.verifiedCount, 2);
+});
+test("repair cursor reaches other forms while one is missing and never ranks the incomplete subset", async () => {
+  const players = ["alice", "bob", "carol"];
+  const f = fixture(players, {workerBounds: {qualificationPageSize: 1}}); await f.create();
+  for (let i = 0; i < players.length; i++) await f.operate("START_QUALIFICATION", players[i],
+    {roundNumber: i + 1, attemptId: `attempt_${players[i]}_00000000001`});
+  const form = f.db.store.get(E).qualificationForms[0]; const keyPath = `${P.privateForms}/${EVENT}/forms/${digest(form.formId)}`;
+  const key = f.db.store.get(keyPath); f.db.store.delete(keyPath); f.state.now = T + 7 * DAY;
+  let result;
+  for (let i = 0; i < 10; i++) result = await f.restart().reconcileEvent(EVENT);
+  assert.equal(result.status, "PENDING_REPAIR"); assert.equal(result.admittedCount, 3);
+  assert.equal(result.verifiedCount, 2); assert.equal(result.pendingCount, 1); assert.equal(scanHead(f).discoveryDone, true);
+  assert.equal(f.db.store.has(`${QUALIFICATION_RANKINGS}/${EVENT}`), false); assert.equal(workerReceipts(f).length, 0);
+  f.db.store.set(keyPath, key);
+  for (let i = 0; i < 4 && f.db.store.get(E).status === "QUALIFICATION"; i++) await f.restart().reconcileEvent(EVENT);
+  // The unchanged LS model does not rank singleton groups; retaining all three is distinct
+  // from inventing rankability. This full-cohort result therefore follows normal cancellation.
+  assert.equal(f.db.store.get(E).status, "CANCELLED"); assert.equal(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`).verifiedRunCount, 3);
+  assert.equal(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`).totalRanked, 0);
+});
+test("deadline consumed by close reads preserves published ranking but writes no bracket or permanent close receipt", async () => {
+  const f = fixture(); await admitRounds(f, ["alice", "bob"], 1); const deadlineAtMs = f.state.now + 120_000;
+  const run = f.db.runTransaction;
+  f.db.runTransaction = body => run(tx => body({...tx, get: async ref => {
+    const result = await tx.get(ref);
+    if (ref.path.startsWith(`${P.operations}/`)) f.state.now = deadlineAtMs;
+    return result;
+  }}));
+  const result = await f.controller.reconcileEvent(EVENT, {deadlineAtMs});
+  assert.equal(result.qualificationPhase, "RANKING_PUBLISHED"); assert.equal(result.reason, "INVOCATION_TIME");
+  assert.equal(f.db.store.get(E).status, "QUALIFICATION"); assert.equal(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`).complete, true);
+  assert.equal(workerReceipts(f).length, 0); assert.equal(balance(f, OWNER), 88);
+  f.db.runTransaction = run; await f.restart().reconcileEvent(EVENT); assert.equal(f.db.store.get(E).status, "BRACKET");
+});
+test("bracket deadline consumed by first meeting read starts no next match and performs no monetary or clock writes", async () => {
+  const f = fixture(["alice", "bob", "carol", "dave"]); await f.qualify();
+  f.state.now = Math.max(...f.db.store.get(E).bracket.rounds.map(round => round.matches[0].stageEndsAtMs));
+  const before = clone([...f.db.store]); const deadlineAtMs = f.state.now + 10; const doc = f.db.doc; let meetingsRead = 0;
+  f.db.doc = p => { const ref = doc(p); return {...ref, get: async () => {
+    const result = await ref.get(); if (p.startsWith(`${E}/meetings/`)) { meetingsRead++; f.state.now = deadlineAtMs; } return result;
+  }}; };
+  const result = await f.controller.reconcileEvent(EVENT, {deadlineAtMs});
+  assert.equal(result.status, "WAITING"); assert.equal(result.reason, "INVOCATION_TIME"); assert.equal(result.done, false);
+  assert.equal(meetingsRead, 1); assert.equal(result.transitions, 0); assert.ok(result.nextDueAtMs > f.state.now); assertWorkerSafe(result);
+  assert.deepEqual([...f.db.store], before);
+});
+test("expired bracket session and payout reads stage no writes and preserve an already observed repair gap", async () => {
+  for (const scenario of ["session", "payout", "repair"]) {
+    const f = fixture(); await f.qualify(); const a = await f.readyBoth();
+    f.state.now = f.db.store.get(`${P.sessions}/${a.sessions[0]}`).endsAtMs;
+    if (scenario === "payout") for (let i = 0; i < 2; i++) await f.controller.session(a.pair[i],
+      {kind: "ADVANCE", operationId: f.id(), sessionId: a.sessions[i]});
+    if (scenario === "repair") f.db.store.delete(`${P.privateForms}/${EVENT}/forms/${digest(a.match.sharedForm.formId)}`);
+    const before = clone([...f.db.store]); const deadlineAtMs = f.state.now + 10; const run = f.db.runTransaction;
+    const blockedPath = scenario === "payout" ? null : `${P.sessions}/${a.sessions[scenario === "repair" ? 1 : 0]}`;
+    let triggerCount = 0;
+    f.db.runTransaction = body => run(tx => body({...tx, get: async ref => {
+      const result = await tx.get(ref);
+      if (ref.path === blockedPath || scenario === "payout" && ref.path.startsWith(`${P.operations}/`)) { triggerCount++; f.state.now = deadlineAtMs; }
+      return result;
+    }}));
+    const result = await f.controller.reconcileEvent(EVENT, {deadlineAtMs});
+    assert.equal(result.status, scenario === "repair" ? "PENDING_REPAIR" : "WAITING");
+    assert.equal(result.reason, "INVOCATION_TIME"); assert.equal(result.done, false); assert.equal(triggerCount, 1);
+    assert.equal(result.pendingRepairMatches, scenario === "repair" ? 1 : 0); assert.equal(result.transitions, 0);
+    assert.deepEqual([...f.db.store], before, scenario); assertWorkerSafe(result);
+  }
 });
 
 (async () => { for (const {name, body} of tests) { try { await body(); } catch (e) { console.error(`FAIL ${name}`); throw e; } }

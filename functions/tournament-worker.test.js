@@ -141,6 +141,18 @@ test("function time budget stops launching more events but keeps completed curso
   assert.equal(result.status, "TIME_BUDGET"); assert.equal(result.attempted, 1); assert.equal(result.leaseReleased, true);
   assert.equal(f.db.store.get(S).cursorAfterId, eventId(0));
 });
+test("every controller receives the same trusted sweep deadline, not a fresh budget per event", async () => {
+  const f = fixture(3); const calls = [];
+  const result = await f.worker({reconcileEvent: async (id, execution) => {
+    calls.push({id, execution});
+    f.state.now += 1000;
+    return {eventId: id, done: false, status: "WAITING"};
+  }}).sweep();
+  assert.equal(result.attempted, 3);
+  assert.deepEqual(calls, [0, 1, 2].map(index => ({id: eventId(index),
+    execution: {deadlineAtMs: T + FUNCTION_TIMEOUT_MS}})));
+  assertOnlyStateWrites(f);
+});
 test("authorization read reaching the time limit starts no controller work and releases only its lease", async () => {
   for (const elapsed of [FUNCTION_TIMEOUT_MS, FUNCTION_TIMEOUT_MS + 1]) {
     const f = fixture(); const originalDoc = f.db.doc;

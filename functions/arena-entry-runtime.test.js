@@ -326,3 +326,118 @@ test("EASY can restore an already split trusted bank and still receives authorit
   assert.equal(JSON.parse(ticket.questions[0].publicQuestion.payload).correctOptionId, "b");
   assert.equal((await submit(completion(ticket))).receipts[0].percentScore, 100);
 });
+
+function assertNoWrites(before) {
+  assert.deepEqual(structuredClone([...store.documents]), before);
+  assert.deepEqual(store.writes, []);
+  assert.equal(store.operations.some((operation) => operation.kind === "write"), false);
+}
+function splitBank(difficulty, source = SINGLE, mutate = (payload) => payload) {
+  const {redact} = require("./question-redaction"); const keys = [];
+  for (const n of [0, 1]) {
+    const id = `${difficulty}-${n}`;
+    const split = redact(JSON.stringify({...source, difficulty}), difficulty, {questionId: id, random: () => 0});
+    const question = store.documents.get(`questions/${id}`);
+    store.documents.set(`questions/${id}`, {...question, payload: mutate(split.publicPayload)});
+    keys.push({questionId: id, key: split.key});
+  }
+  store.documents.set("question_keys/lesson", {version: 1, lessonId: "lesson", publicHalfRedacted: true, keys});
+}
+test("real missing-id source stays untouched; actual EASY producer stamps trusted identity before hold", async () => {
+  store.reset(world());
+  const originals = [0, 1].map((n) => structuredClone(store.documents.get(`questions/EASY-${n}`)));
+  for (const original of originals) assert.equal(Object.hasOwn(JSON.parse(original.payload), "id"), false);
+  const ticket = await issue("actual-seeded-shape");
+  for (const row of ticket.questions) {
+    const content = JSON.parse(row.publicQuestion.payload);
+    assert.equal(content.id, row.questionId); assert.equal(content.difficulty, "EASY");
+    assert.equal(content.correctOptionId, "b"); assert.equal(content.info, SINGLE.info);
+  }
+  assert.deepEqual([0, 1].map((n) => store.documents.get(`questions/EASY-${n}`)), originals);
+  assert.equal((await submit(completion(ticket))).receipts[0].percentScore, 100);
+});
+for (const difficulty of ["EASY", "HARD"]) {
+  for (const patch of [{id: "foreign"}, {id: null}, {difficulty: difficulty === "EASY" ? "HARD" : "EASY"}]) {
+    test(`${difficulty} embedded metadata ${JSON.stringify(patch)} rejects before wallet/checkpoint/quota writes`, async () => {
+      store.reset(world());
+      for (const n of [0, 1]) {
+        const path = `questions/${difficulty}-${n}`; const row = store.documents.get(path);
+        store.documents.set(path, {...row, payload: JSON.stringify({...SINGLE, difficulty, ...patch})});
+      }
+      // Even an overdue premium cursor must not be advanced for invalid content.
+      store.documents.get("users/player").lifePointsUpdatedAtMs = 1;
+      const before = structuredClone([...store.documents]);
+      await assert.rejects(issue("conflict", {difficulty}), error => error.details?.reason === "INVALID_QUESTION");
+      assertNoWrites(before);
+    });
+  }
+  test(`${difficulty} Survey missing modern metadata is normalized and participation semantics retained`, async () => {
+    const {SURVEY} = require("./_question-fixtures"); store.reset(world());
+    for (const n of [0, 1]) {
+      const path = `questions/${difficulty}-${n}`; const row = store.documents.get(path);
+      store.documents.set(path, {...row, payload: JSON.stringify(SURVEY)});
+    }
+    const ticket = await issue("survey-metadata", {difficulty});
+    for (const row of ticket.questions) {
+      const content = JSON.parse(row.publicQuestion.payload);
+      assert.equal(content.id, row.questionId); assert.equal(content.difficulty, difficulty);
+      assert.equal(content.type, "Survey"); assert.equal(content.allowMultiple, false);
+    }
+  });
+}
+for (const source of Object.values(require("./_question-fixtures")).filter((value) => value && typeof value === "object" && value.type !== "Survey")) {
+  test(`HARD ${source.type} ALREADY_REDACTED nested grading field rejects before every write`, async () => {
+    store.reset(world());
+    splitBank("HARD", source, (payload) => {
+      const parsed = JSON.parse(payload); const rows = parsed.options || parsed.items || parsed.candidates;
+      rows[0].grading = {answer: "secret"}; return JSON.stringify(parsed);
+    });
+    const before = structuredClone([...store.documents]);
+    await assert.rejects(issue("nested-leak", {difficulty: "HARD"}), error => error.details?.reason === "INVALID_QUESTION");
+    assertNoWrites(before);
+  });
+  test(`HARD ${source.type} valid ALREADY_REDACTED retains exact public bytes and IDs`, async () => {
+    store.reset(world()); splitBank("HARD", source);
+    const ticket = await issue("valid-frozen", {difficulty: "HARD"});
+    for (const row of ticket.questions) assert.equal(row.publicQuestion.payload, store.documents.get(`questions/${row.questionId}`).payload);
+  });
+}
+test("EASY restored redacted payload receives missing metadata from its real document, not key claims", async () => {
+  store.reset(world()); splitBank("EASY");
+  const ticket = await issue("easy-redacted-metadata");
+  for (const row of ticket.questions) {
+    const content = JSON.parse(row.publicQuestion.payload);
+    assert.equal(content.id, row.questionId); assert.equal(content.difficulty, "EASY");
+  }
+  assert.equal((await submit(completion(ticket))).receipts[0].percentScore, 100);
+});
+test("HARD duplicate raw key cannot hide secret bytes before a clean last-value public schema", async () => {
+  store.reset(world()); splitBank("HARD", SINGLE, (payload) => `{"options":[{"answer":"b"}],${payload.slice(1)}`);
+  const before = structuredClone([...store.documents]);
+  await assert.rejects(issue("duplicate-key", {difficulty: "HARD"}), error => error.details?.reason === "INVALID_QUESTION");
+  assertNoWrites(before);
+});
+test("random HARD skips unsafe banks without consuming quota, charge hold or premium checkpoint", async () => {
+  store.reset(world()); splitBank("HARD", SINGLE, (payload) => JSON.stringify({...JSON.parse(payload), info: "private answer"}));
+  store.documents.get("users/player").lifePointsUpdatedAtMs = 1;
+  const before = structuredClone([...store.documents]);
+  await assert.rejects(issue("random-unsafe", {mode: "RANDOM", lessonId: null, difficulty: "HARD"}),
+    error => error.details?.reason === "NO_ELIGIBLE_ARENA_LESSON");
+  assertNoWrites(before);
+});
+test("old unsafe HARD issue replay and recovery fail closed; immutable hold can still be cancelled", async () => {
+  store.reset(world()); const ticket = await issue("old-unsafe", {difficulty: "HARD"});
+  const stored = store.documents.get(`arena_entry_tickets/${ticket.ticketId}`);
+  const row = stored.questions[0]; const parsed = JSON.parse(row.publicQuestion.payload);
+  row.publicQuestion.payload = JSON.stringify({...parsed, correctOptionId: "b"});
+  const before = structuredClone([...store.documents]); const writes = store.writes.length;
+  await assert.rejects(issue("old-unsafe", {difficulty: "HARD"}), error => error.details?.reason === "UNAVAILABLE");
+  await assert.rejects(call("fetchArenaEntryTicket", {ticketId: ticket.ticketId}), {code: "unavailable"});
+  assert.deepEqual(structuredClone([...store.documents]), before); assert.equal(store.writes.length, writes);
+  const cancelled = await call("cancelArenaEntry", {ticketId: ticket.ticketId, requestId: "cancel-old-unsafe"});
+  assert.equal(cancelled.status, "CANCELLED");
+  assert.equal(store.documents.get("users/player").reservedNolics, 0);
+  assert.equal(store.documents.get("users/player").reservedLifePoints, 0);
+  assert.equal(store.documents.get("users/player").nolics, 1000);
+  assert.equal(store.documents.get(`arena_entry_tickets/${ticket.ticketId}`).questions[0].publicQuestion.payload, row.publicQuestion.payload);
+});

@@ -133,7 +133,7 @@ function createTournamentWorker({db, reconcileEvent, nowMs = Date.now,
           const eventId = next.eventIds[index]; let eventError = null;
           attempted++;
           try {
-            const result = await reconcileEvent(eventId);
+            const result = await reconcileEvent(eventId, {deadlineAtMs: stopAtMs});
             if (!result || result.eventId !== eventId || typeof result.done !== "boolean" ||
                 (result.done ? !TERMINAL_STATUSES.has(result.status) : result.status !== "WAITING" && !REPAIR_STATUSES.has(result.status))) {
               eventError = "INVALID_RECONCILE_RESULT";

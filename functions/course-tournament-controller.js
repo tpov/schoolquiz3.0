@@ -6,7 +6,8 @@ const {TOURNAMENT_PATHS: P, normalizeTournamentRequest, applyTournamentOperation
 const {applyTournamentSessionOperation, readTournamentSessionOperation, planTournamentSessionOperation,
   writeTournamentSessionOperation, VERIFIED_RUNS} = require("./tournament-session");
 const {verifiedTournamentRun, loadSettledMatchResults} = require("./tournament-session-results");
-const {freezeQualification, loadQualificationRanking} = require("./tournament-qualification-freeze");
+const {loadQualificationRanking} = require("./tournament-qualification-freeze");
+const {advanceQualificationScan, calculateAndPublishQualificationRanking} = require("./tournament-qualification-scan");
 const {tournamentDigest: digest} = require("./tournament-bank");
 const {progressBracket, evaluateMeeting, READY_WINDOW_MS} = require("./tournament-policy");
 const {PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
@@ -14,7 +15,12 @@ const {PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
 const CLIENT_OPERATIONS = Object.freeze(["CREATE", "START_QUALIFICATION", "PROPOSE", "CONFIRM", "READY"]);
 const WORKER_PREFIX = "ctw_";
 const MAX_MATCHES = 15; // Existing top16 policy, not a new entrant cap.
-const DEFAULT_WORKER_BOUNDS = Object.freeze({qualificationPageSize: 50, qualificationMaxPages: 10, repairRetryMs: 60_000});
+// Measured Node22 / 192MiB / 0.5 CPU: 501 distinct players, one shared form, LS 27.4s,
+// peak RSS 97.1MiB. This limits THIS worker's calculation, never admission or scan membership.
+// Larger events remain pending. Manual operational recovery / alternate calculator is NOT implemented.
+const QUALIFICATION_EXECUTION = Object.freeze({maxVerifiedRuns: 501, workMs: 120_000, scanMs: 30_000, minSolveRemainingMs: 60_000});
+const DEFAULT_WORKER_BOUNDS = Object.freeze({qualificationPageSize: 50, qualificationMaxPages: 1,
+  qualificationMaxVerifiedRuns: QUALIFICATION_EXECUTION.maxVerifiedRuns, repairRetryMs: 60_000});
 const TERMINAL_EVENT = new Set(["FINISHED", "CANCELLED"]);
 const TERMINAL_MATCH = new Set(["PLAYED", "FORFEIT", "DOUBLE_OUT"]);
 const data = (snapshot) => snapshot.exists ? snapshot.data() || {} : null;
@@ -113,7 +119,8 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
   only(overrides, Object.keys(DEFAULT_WORKER_BOUNDS));
   const bounds = {...DEFAULT_WORKER_BOUNDS, ...overrides};
   Object.values(bounds).forEach((n) => exact(n, 1));
-  if (bounds.qualificationPageSize > 100) fail("INVALID_ARGUMENT");
+  if (bounds.qualificationPageSize > 50 || bounds.qualificationMaxPages > 10 ||
+      bounds.qualificationMaxVerifiedRuns > QUALIFICATION_EXECUTION.maxVerifiedRuns) fail("INVALID_ARGUMENT");
   const sourceBanks = createTournamentSourceBank({db, loadLessonContext, isCurator, nowMs, ...(sourceLimits ? {limits: sourceLimits} : {})});
   const dependencies = {loadBank: sourceBanks.loadBank, loadQualificationRanking, loadSettledMatchResults};
   const now = () => exact(nowMs());
@@ -197,9 +204,12 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
     });
   }
 
-  async function advanceSession(expected, at) {
+  async function advanceSession(expected, at, deadlineAtMs) {
+    if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
     return db.runTransaction(async transaction => {
+      if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
       const stored = data(await transaction.get(db.doc(`${P.sessions}/${expected.sessionId}`)));
+      if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
       if (!stored || ["sessionId", "uid", "eventId", "matchId"].some((key) => stored[key] !== expected[key]) || stored.kind !== "MATCH") fail("UNAVAILABLE", "Admitted match session requires repair");
       if (stored.status === "SETTLED") return {changed: false, nextDueAtMs: null};
       if (!stored.pendingAnswerOperationId && at < Math.min(stored.questionEndsAtMs, stored.endsAtMs)) return {changed: false, nextDueAtMs: Math.min(stored.questionEndsAtMs, stored.endsAtMs)};
@@ -207,24 +217,32 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
         stored.pendingAnswerOperationId || null, at >= stored.endsAtMs ? "cutoff" : "progress"])}`;
       const payload = {kind: "ADVANCE", ownerUid: stored.uid, operationId, sessionId: stored.sessionId, formFingerprint: stored.formFingerprint};
       const snapshot = await readTournamentSessionOperation({db, transaction, uid: stored.uid, payload});
+      if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
       const plan = planTournamentSessionOperation({snapshot, now: at});
+      if (now() >= deadlineAtMs) return {changed: false, timedOut: true, gap: !!plan.pendingRepair};
       if (plan.pendingRepair) return {changed: false, gap: true, nextDueAtMs: at + bounds.repairRetryMs};
       // A waiting poll MUST NOT acquire this permanent transition ID or mutate clocks.
       if (plan.response.status === "CURRENT_QUESTION") return {changed: false, nextDueAtMs: Math.min(stored.questionEndsAtMs, stored.endsAtMs)};
+      if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
       writeTournamentSessionOperation({db, transaction, plan});
       return {changed: !plan.replayed, nextDueAtMs: plan.response.session.status === "SETTLED" ? null : plan.response.session.questionEndsAtMs};
     });
   }
-  async function workerOperation(eventId, kind, requestedMatchId, at) {
+  async function workerOperation(eventId, kind, requestedMatchId, at, deadlineAtMs = Number.MAX_SAFE_INTEGER) {
     for (let pass = 0; pass < PREMIUM_CATCHUP_PASSES; pass++) {
+      if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
       const decision = await db.runTransaction(async transaction => {
-        const event = eventRecord(data(await transaction.get(db.doc(path(eventId)))), eventId);
+        if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
+        const saved = await transaction.get(db.doc(path(eventId)));
+        if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
+        const event = eventRecord(data(saved), eventId);
         if (TERMINAL_EVENT.has(event.status)) return {changed: false, terminal: true};
         if (kind === "CLOSE_QUALIFICATION" && event.status !== "QUALIFICATION") return {changed: false};
         if (kind === "ADVANCE_MATCH" && !bracketState(event).progress.pending.some((row) => row.matchId === requestedMatchId)) return {changed: false};
         const operationId = `${WORKER_PREFIX}${kind === "CLOSE_QUALIFICATION" ? "close" : "match"}_${digest([eventId, kind, requestedMatchId || event.qualification.endsAtMs])}`;
         const plan = await readPlanTournamentOperation({db, transaction, uid: event.organizerUid, now: at, dependencies,
           payload: {kind, ownerUid: event.organizerUid, operationId, eventId, ...(requestedMatchId ? {matchId: requestedMatchId} : {})}});
+        if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
         if (!plan.caughtUp) { writeTournamentOperation({db, transaction, plan}); return {checkpoint: true}; }
         const terminal = kind === "CLOSE_QUALIFICATION" ? ["BRACKET", "FINISHED", "CANCELLED"].includes(plan.response.status) : TERMINAL_MATCH.has(plan.response.status);
         if (!terminal) return {changed: false}; // Discard staged WAITING/RESULTS_PENDING receipt AND event clock.
@@ -236,50 +254,88 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
   }
 
   /** SERVER WORKER capability; no uid/data dispatch and no unauthenticated public endpoint. */
-  async function reconcileEvent(eventId) {
-    identifier(eventId); const at = now(); let event = await savedEvent(eventId); let transitions = 0;
+  async function reconcileEvent(eventId, execution = {}) {
+    only(execution, ["deadlineAtMs"]);
+    identifier(eventId); const at = now();
+    const deadlineAtMs = Math.min(exact(at + QUALIFICATION_EXECUTION.workMs), execution.deadlineAtMs === undefined
+      ? Number.MAX_SAFE_INTEGER : exact(execution.deadlineAtMs));
+    let event = await savedEvent(eventId); let transitions = 0;
     const gaps = []; const due = []; const handled = new Set();
+    const budgetWaiting = () => ({eventId, done: false, status: gaps.length ? "PENDING_REPAIR" : "WAITING",
+      reason: "INVOCATION_TIME", transitions, pendingRepairMatches: new Set(gaps).size, nextDueAtMs: exact(now() + bounds.repairRetryMs)});
     if (TERMINAL_EVENT.has(event.status)) return {eventId, done: true, status: event.status, transitions: 0, nextDueAtMs: null};
     if (event.status === "QUALIFICATION") {
       if (at < event.qualification.endsAtMs) return {eventId, done: false, status: "WAITING", transitions: 0, nextDueAtMs: event.qualification.endsAtMs};
-      const frozen = await freezeQualification({db, eventId, now: at, pageSize: bounds.qualificationPageSize, maxPages: bounds.qualificationMaxPages});
-      if (!frozen.complete) return {eventId, done: false, status: frozen.reason, transitions: 0,
-        scannedSessions: frozen.scannedSessions, pendingCount: frozen.pendingCount, needsLargerBudget: !!frozen.needsLargerBudget, nextDueAtMs: at + bounds.repairRetryMs};
-      const closed = await workerOperation(eventId, "CLOSE_QUALIFICATION", null, at);
+      const pending = (qualificationPhase, reason, scanned) => ({eventId, done: false,
+        status: qualificationPhase === "REPAIR" ? "PENDING_REPAIR" : "WAITING", qualificationPhase, reason, transitions: 0,
+        // No manifest/form/ranking/player identities in worker diagnostics.
+        ...(scanned ? pick(scanned, ["admittedCount", "verifiedCount", "pendingCount"]) : {}),
+        nextDueAtMs: exact(now() + bounds.repairRetryMs)});
+      if (now() >= deadlineAtMs) return pending("SCANNING", "INVOCATION_TIME");
+      const scanned = await advanceQualificationScan({db, eventId, now: at, pageSize: bounds.qualificationPageSize,
+        maxPages: bounds.qualificationMaxPages, nowMs: now, deadlineAtMs: Math.min(deadlineAtMs, at + QUALIFICATION_EXECUTION.scanMs)});
+      if (!scanned.complete && !scanned.scanComplete) return pending(scanned.status === "PENDING_REPAIR" ? "REPAIR" : "SCANNING", "SCAN_PENDING", scanned);
+      if (!scanned.complete) {
+        if (scanned.admittedCount > bounds.qualificationMaxVerifiedRuns) return pending("CALCULATION_PENDING", "RESOURCE_ENVELOPE", scanned);
+        if (deadlineAtMs - now() < QUALIFICATION_EXECUTION.minSolveRemainingMs) return pending("CALCULATION_PENDING", "INVOCATION_TIME", scanned);
+        const published = await calculateAndPublishQualificationRanking({db, eventId, now: at, nowMs: now, deadlineAtMs,
+          maxVerifiedRuns: bounds.qualificationMaxVerifiedRuns, minRemainingBeforeSolveMs: QUALIFICATION_EXECUTION.minSolveRemainingMs});
+        if (!published.complete) return pending("CALCULATION_PENDING",
+          published.status === "CALCULATION_RESOURCE_PENDING" ? "RESOURCE_ENVELOPE" : "INVOCATION_TIME", scanned);
+      }
+      // A complete scan is NOT sufficient: only the immutable full-cohort ranking authorizes
+      // CLOSE_QUALIFICATION. Check again after awaited reads/solve; Cloud Run timeout is not a kill.
+      if (now() >= deadlineAtMs) return pending("RANKING_PUBLISHED", "INVOCATION_TIME");
+      const closed = await workerOperation(eventId, "CLOSE_QUALIFICATION", null, at, deadlineAtMs);
       if (closed.changed) transitions++;
+      if (closed.timedOut) return pending("RANKING_PUBLISHED", "INVOCATION_TIME");
       if (closed.gap) return {eventId, done: false, status: "PREMIUM_CHECKPOINT", transitions, nextDueAtMs: at + bounds.repairRetryMs};
+      // Do not chain the independent 15-match worker phase onto a full-cohort calculation.
+      event = await savedEvent(eventId);
+      return {eventId, done: TERMINAL_EVENT.has(event.status), status: TERMINAL_EVENT.has(event.status) ? event.status : "WAITING",
+        transitions, nextDueAtMs: TERMINAL_EVENT.has(event.status) ? null : exact(now() + bounds.repairRetryMs)};
     }
     while (handled.size < MAX_MATCHES) {
+      if (now() >= deadlineAtMs) return budgetWaiting();
       event = await savedEvent(eventId);
       if (TERMINAL_EVENT.has(event.status)) return {eventId, done: true, status: event.status, transitions, nextDueAtMs: null};
+      if (now() >= deadlineAtMs) return budgetWaiting();
       if (event.status !== "BRACKET") fail("UNAVAILABLE", "Qualification has not closed");
       const state = bracketState(event); const pending = state.progress.pending.find((row) => !handled.has(row.matchId));
       if (!pending) break;
       handled.add(pending.matchId);
       const match = state.matches.find((row) => row.matchId === pending.matchId);
+      if (now() >= deadlineAtMs) return budgetWaiting();
       const meeting = data(await db.doc(`${path(eventId)}/meetings/${digest(match.matchId)}`).get());
+      if (now() >= deadlineAtMs) return budgetWaiting();
       const evaluated = evaluate(match, pending, meeting, Math.max(at, event.lastMutationAtMs));
       try {
         if (evaluated.status === "STARTED") {
           for (const player of pending.entrants) {
+            if (now() >= deadlineAtMs) return budgetWaiting();
             const next = await advanceSession({sessionId: matchSessionId(eventId, match.matchId, player.uid),
-              uid: player.uid, eventId, matchId: match.matchId}, at);
-            if (next.nextDueAtMs !== null) due.push(next.nextDueAtMs);
+              uid: player.uid, eventId, matchId: match.matchId}, at, deadlineAtMs);
             if (next.gap) gaps.push(match.matchId);
+            if (next.timedOut || now() >= deadlineAtMs) return budgetWaiting();
+            if (next.nextDueAtMs !== null) due.push(next.nextDueAtMs);
           }
         } else if (evaluated.status === "WAITING_FOR_AGREEMENT") due.push(schedulingDeadline(match));
         else if (evaluated.status === "WAITING_FOR_WINDOW") due.push(evaluated.slotStartsAtMs);
         else if (evaluated.status === "WAITING_FOR_READY") due.push(evaluated.windowEndMs);
-        const advanced = await workerOperation(eventId, "ADVANCE_MATCH", match.matchId, at);
+        if (now() >= deadlineAtMs) return budgetWaiting();
+        const advanced = await workerOperation(eventId, "ADVANCE_MATCH", match.matchId, at, deadlineAtMs);
         if (advanced.changed) transitions++;
         if (advanced.gap) gaps.push(match.matchId);
+        if (advanced.timedOut || now() >= deadlineAtMs) return budgetWaiting();
       } catch (error) {
         if (!["UNAVAILABLE", "SCORING_UNAVAILABLE", "INCONSISTENT_SESSION", "INVALID_RESULTS", "FAILED_PRECONDITION"].includes(error.code)) throw error;
         gaps.push(match.matchId); // Repair needed; never substitute an invented zero/outcome/payout.
       }
     }
+    if (now() >= deadlineAtMs) return budgetWaiting();
     event = await savedEvent(eventId);
     if (TERMINAL_EVENT.has(event.status)) return {eventId, done: true, status: event.status, transitions, nextDueAtMs: null};
+    if (now() >= deadlineAtMs) return budgetWaiting();
     if (gaps.length) due.push(at + bounds.repairRetryMs);
     return {eventId, done: false, status: gaps.length ? "PENDING_REPAIR" : "WAITING", transitions,
       pendingRepairMatches: [...new Set(gaps)].length, nextDueAtMs: due.length ? Math.max(at, Math.min(...due)) : at + bounds.repairRetryMs};
@@ -287,4 +343,4 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
   return {prepare, operate, session, readSession, readEvent, readMeeting, reconcileEvent};
 }
 
-module.exports = {createCourseTournamentController, CLIENT_OPERATIONS, WORKER_PREFIX, MAX_MATCHES, DEFAULT_WORKER_BOUNDS};
+module.exports = {createCourseTournamentController, CLIENT_OPERATIONS, WORKER_PREFIX, MAX_MATCHES, DEFAULT_WORKER_BOUNDS, QUALIFICATION_EXECUTION};

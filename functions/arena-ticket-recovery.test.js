@@ -97,6 +97,28 @@ function world() {
 }
 const rejects = (fn, code) => assert.rejects(fn, (error) => error.code === code);
 
+for (const variant of ["root", "nested", "duplicate", "metadata", "private-key"]) {
+  test(`old HARD ${variant} unsafe content: no public delivery or rewrite, header recovery and full cancellation work`, async () => {
+    const f = world(); const ticket = await f.issue(`unsafe-${variant}`, {difficulty: "HARD"});
+    const stored = f.rows.get(ticketPath(ticket)); const row = stored.questions[0];
+    const content = JSON.parse(row.publicQuestion.payload);
+    if (variant === "root") content.correctOptionId = "b";
+    if (variant === "nested") content.options[0].privateKey = {answer: "b"};
+    if (variant === "metadata") content.id = "foreign-question";
+    if (variant === "private-key") row.gradingKey = null;
+    row.publicQuestion.payload = variant === "duplicate" ? `{"options":[{"grading":"b"}],${row.publicQuestion.payload.slice(1)}` : JSON.stringify(content);
+    const before = clone([...f.rows]);
+    await rejects(() => f.get(ticket), "UNAVAILABLE");
+    assert.deepEqual(clone([...f.rows]), before);
+    assert.equal((await f.list()).tickets[0].ticketId, ticket.ticketId);
+    await f.cancel(ticket);
+    assert.equal(f.rows.get("users/player").reservedLifePoints, 0);
+    assert.equal(f.rows.get("users/player").reservedNolics, 0);
+    assert.equal(f.rows.get("users/player").nolics, 10000);
+    assert.equal(f.rows.get(ticketPath(ticket)).questions[0].publicQuestion.payload, row.publicQuestion.payload);
+  });
+}
+
 test("recovery returns the actual issued public protocol including requestId and EASY hints", async () => {
   const f = world(); const issued = await f.issue("lost-local-request"); const before = clone([...f.rows]);
   const {requestHash: omitted, ...expected} = issued;

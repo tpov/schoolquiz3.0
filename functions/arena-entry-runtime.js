@@ -4,6 +4,7 @@ const {randomBytes, createHmac, createHash} = require("node:crypto");
 const {createArenaTickets, ArenaTicketError, nolicBalance} = require("./arena-tickets");
 const {assignLessonPrices} = require("./arena-policy");
 const {redact, restoreContent, STATUS: REDACTION, CONTENT_TYPE} = require("./question-redaction");
+const {parseQuestionPayload, normalizeModernQuestion, safeRedactedOrSurvey} = require("./arena-public-question");
 const {scoreAttempt} = require("./attempt-scoring");
 const {attemptReceipt, attemptFingerprint, STATUS} = require("./attempt-receipt");
 const {readEconomyConstants, activityPrice, ECONOMY_CONSTANTS_DOC, POINTS_PER_CHARGE} = require("./economy-constants");
@@ -47,6 +48,12 @@ function bundleScorable(ticket) {
   const probes = ticket.questions.map((q, codeAnswerIndex) => ({questionId: q.questionId,
     codeAnswerIndex, answerPayload: null}));
   return scoreAttempt(scoringInput(ticket, probes)).scorable;
+}
+function validateDelivery(ticket, code = "UNAVAILABLE") {
+  if (ticket.difficulty !== "HARD") return;
+  if (!Array.isArray(ticket.questions) || !ticket.questions.length || ticket.questions.some((row) =>
+    !safeRedactedOrSurvey(row.publicQuestion?.payload, {questionId: row.questionId,
+      difficulty: ticket.difficulty, gradingKey: row.gradingKey}))) fail(code);
 }
 
 /** Actual Firestore ticket + E2 settlement boundary. No result is calculated from live content. */
@@ -95,6 +102,7 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
         if (question.archived === true) continue;
         let content;
         try { content = JSON.parse(question.payload); } catch (_) { fail("UNSCORABLE_BANK"); }
+        if (!content || typeof content !== "object" || Array.isArray(content)) fail("INVALID_QUESTION");
         if (String(question.difficulty || content.difficulty || "EASY").toUpperCase() !== difficulty) continue;
         candidates.push({id: doc.id, question, content});
       }
@@ -108,22 +116,29 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
       const selected = [...unique.values()].sort((a, b) => compare(rank(a.id), rank(b.id))).slice(0, POOL_SIZE);
       if (!selected.length) fail("NO_QUESTIONS_FOR_DIFFICULTY");
       const questions = selected.map(({id, question, content}, order) => {
-        const split = redact(question.payload);
+        if (!parseQuestionPayload(question.payload)) fail("INVALID_QUESTION");
+        const normalized = normalizeModernQuestion(content, {questionId: id, difficulty});
+        if (!normalized) fail("INVALID_QUESTION");
+        const sourcePayload = JSON.stringify(normalized);
+        const split = redact(sourcePayload, difficulty, {questionId: id});
         let payload; let key;
         if (split.status === REDACTION.REDACTED) { payload = split.publicPayload; key = split.key; }
         else if (split.status === REDACTION.NOT_APPLICABLE && content.type === CONTENT_TYPE.SURVEY) {
           // Surveys retain participation scoring on Arena only. Tournament bank excludes them.
-          payload = question.payload; key = {kind: "PARTICIPATION"};
+          payload = sourcePayload; key = {kind: "PARTICIPATION"};
         } else if (split.status === REDACTION.ALREADY_REDACTED && keyDocument?.publicHalfRedacted === true) {
           const matching = keyDocument.keys?.filter((entry) => entry.questionId === id) || [];
           if (matching.length !== 1 || keyDocument.lessonId !== lessonId || keyDocument.version !== 1) fail("UNSCORABLE_BANK");
           payload = question.payload; key = matching[0].key;
         } else fail("UNSCORABLE_BANK");
+        if ((split.status === REDACTION.ALREADY_REDACTED || key.kind === "PARTICIPATION") &&
+            !safeRedactedOrSurvey(payload, {questionId: id, difficulty, gradingKey: key})) fail("INVALID_QUESTION");
         if (difficulty === "EASY" && key.kind !== "PARTICIPATION") {
           // EASY keeps the existing offline answer/hint model. HARD alone hides its key.
           // In both modes money is settled from this immutable server-owned snapshot.
-          const fullContent = split.status === REDACTION.REDACTED ? content : restoreContent(payload, key);
-          if (!fullContent) fail("UNSCORABLE_BANK");
+          const restored = split.status === REDACTION.REDACTED ? normalized : restoreContent(payload, key);
+          const fullContent = normalizeModernQuestion(restored, {questionId: id, difficulty});
+          if (!fullContent) fail("INVALID_QUESTION");
           payload = JSON.stringify(fullContent); key = {kind: "FULL_CONTENT"};
         }
         const version = exact(question.version, context.contentVersion);
@@ -140,16 +155,17 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
           catalogId: context.catalogId, questId: context.questId, sectionId: context.sectionId, themeId: context.themeId,
         }};
       if (!bundleScorable(result)) fail("UNSCORABLE_BANK");
+      validateDelivery(result, "INVALID_QUESTION");
       if (Buffer.byteLength(JSON.stringify(result)) > MAX_RESULT_BYTES) fail("LESSON_BANK_TOO_LARGE");
       return result;
     }
     return createArenaTickets({db, nowMs, readRegeneration: regeneration, writeRegeneration,
-      loadEntrySnapshot: loadEntry,
+      loadEntrySnapshot: loadEntry, validateTicketForDelivery: validateDelivery,
       chooseRandomLesson: async (tx, args) => {
         const rows = (await arenaRows(tx)).sort((a, b) => compare(rank(a.lessonId), rank(b.lessonId)));
         for (const row of rows) {
           try { await loadEntry(tx, {...args, lessonId: row.lessonId}); return row.lessonId; }
-          catch (error) { if (!["LESSON_NOT_ELIGIBLE", "NO_QUESTIONS_FOR_DIFFICULTY", "UNSCORABLE_BANK"].includes(error.code)) throw error; }
+          catch (error) { if (!["LESSON_NOT_ELIGIBLE", "NO_QUESTIONS_FOR_DIFFICULTY", "UNSCORABLE_BANK", "INVALID_QUESTION"].includes(error.code)) throw error; }
         }
         fail("NO_ELIGIBLE_ARENA_LESSON");
       },

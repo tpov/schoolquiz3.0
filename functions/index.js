@@ -363,7 +363,7 @@ async function callArenaEntry(method, request) {
     const code = error.code === "INVALID_ARGUMENT" ? "invalid-argument" :
       error.code === "TICKET_OWNER_MISMATCH" ? "permission-denied" :
       ["REQUEST_REUSE", "SETTLEMENT_REUSE", "TICKET_ATTEMPT_MISMATCH"].includes(error.code) ? "already-exists" :
-      ["RETRY_REGEN", "UNSCORABLE_BANK", "INCONSISTENT_SETTLEMENT", "ARENA_INDEX_REBUILD_REQUIRED"].includes(error.code) ? "unavailable" :
+      ["RETRY_REGEN", "UNAVAILABLE", "UNSCORABLE_BANK", "INCONSISTENT_SETTLEMENT", "ARENA_INDEX_REBUILD_REQUIRED"].includes(error.code) ? "unavailable" :
       "failed-precondition";
     throw new HttpsError(code, error.message, {reason: error.code});
   }

@@ -1,6 +1,7 @@
 "use strict";
 
 const {ArenaTicketError, ticketDocumentId, attemptDocumentId, utcDayId} = require("./arena-tickets");
+const {safeRedactedOrSurvey} = require("./arena-public-question");
 
 const COLLECTION = "arena_entry_tickets";
 const MAX_PAGE_SIZE = 20;
@@ -89,6 +90,8 @@ function publicQuestions(rows, ticket) {
     let parsed;
     try { parsed = JSON.parse(question.payload); } catch (_) { fail("UNAVAILABLE"); }
     unavailable(object(parsed));
+    if (ticket.difficulty === "HARD") unavailable(safeRedactedOrSurvey(question.payload,
+      {questionId: row.questionId, difficulty: ticket.difficulty, gradingKey: row.gradingKey}));
     // This declared opaque field is the already-issued public payload, never rebuilt from live
     // questions/private grading keys. EASY intentionally retains its original offline hints.
     return {questionId: row.questionId, questionVersion: row.questionVersion,

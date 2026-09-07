@@ -117,9 +117,9 @@ function publicTicket(ticket) {
  * No query, TTL, automatic expiry, client price, client correctness or client score is used.
  */
 function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Date.now,
-  chooseRandomLesson, loadEntrySnapshot, readRegeneration, writeRegeneration}) {
+  chooseRandomLesson, loadEntrySnapshot, readRegeneration, writeRegeneration, validateTicketForDelivery = () => {}}) {
   if (!db || typeof db.runTransaction !== "function") throw new TypeError("Firestore db required");
-  for (const [name, value] of Object.entries({nowMs, chooseRandomLesson, loadEntrySnapshot, readRegeneration, writeRegeneration})) {
+  for (const [name, value] of Object.entries({nowMs, chooseRandomLesson, loadEntrySnapshot, readRegeneration, writeRegeneration, validateTicketForDelivery})) {
     if (typeof value !== "function") throw new TypeError(`${name} must be a function`);
   }
   const plans = new WeakSet();
@@ -157,6 +157,7 @@ function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Dat
       const previous = data(await tx.get(ticketRef));
       if (previous) {
         if (previous.uid !== uid || previous.requestHash !== requestHash) fail("REQUEST_REUSE");
+        validateTicketForDelivery(previous);
         return {status: "ISSUED", ticket: publicTicket(previous)};
       }
       const now = integer(nowMs(), "server now"); const userRef = db.doc(`users/${uid}`);
@@ -169,6 +170,8 @@ function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Dat
       if (mode === "RANDOM" && issued >= RANDOM_DAILY_LIMIT) fail("RANDOM_DAILY_LIMIT");
       const chosenId = mode === "RANDOM" ? id(await chooseRandomLesson(tx, {uid, difficulty, requestId, nowMs: now}), "server random lessonId") : lessonId;
       const snapshot = entrySnapshot(await loadEntrySnapshot(tx, {lessonId: chosenId, difficulty, nowMs: now}), chosenId, difficulty);
+      // Frozen delivery validation also applies before any regeneration checkpoint or hold.
+      validateTicketForDelivery(snapshot);
       // Every optimistic retry rereads the authoritative price before any checkpoint, hold or
       // receipt write. PRICE_CHANGED requires fresh explicit confirmation; it spends nothing.
       if (hasPriceCeiling && snapshot.priceNolics > maxPriceNolics) fail("PRICE_CHANGED");
