@@ -86,14 +86,9 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    match /lesson_placements/{lessonId} {
-      allow read: if request.auth != null;
-      allow write: if false;
-      match /history/{entryId} {
-        allow read: if request.auth != null;
-        allow write: if false;
-      }
-    }
+    // Placement roots also contain lastRejection; history includes private moderation details.
+    // Public cards/history must use a purpose-specific server projection, never these raw records.
+    match /lesson_placements/{document=**} { allow read, write: if false; }
     match /lesson_ratings/{lessonId} {
       allow read: if request.auth != null;
       allow write: if false;
