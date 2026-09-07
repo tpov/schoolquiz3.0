@@ -610,9 +610,16 @@ class ArenaTicketJournalTest {
     //  - claimForLaunch  -> Result.success(ArenaLaunchClaim.NotFresh) when state() already sees the row as
     //                       unavailable, but Result.failure(IllegalArgumentException) when the row passes
     //                       state() and fails the new-write row guard.
-    //  - updateCheckpoint -> Result.success(false) only for a genuine lost CAS; a row that is not writable
-    //                       at all now yields Result.failure(IllegalArgumentException).
-    // "Lost CAS" and "row not writable" are therefore NOT distinguishable by the Boolean alone.
+    //  - updateCheckpoint -> Result.success(false) whenever the DAO refuses the RE-READ row. That covers
+    //                       a genuinely lost CAS (attempt or revision mismatch) AND a refusal by state:
+    //                       not LAUNCHED, a terminal that appeared, a decision that changed, a bank that
+    //                       went away, a negative clock or revision. false therefore does NOT prove that
+    //                       someone else won the CAS.
+    //                       Result.failure(IllegalArgumentException) covers two further cases: the
+    //                       PRE-READ row failed the new-write guard, or the argument itself was invalid
+    //                       (negative or overflowing expectedRevision), which is checked before any read.
+    // So the Boolean alone distinguishes nothing: a write adapter that treats false as "retry the CAS"
+    // will spin on a row that is simply not writable.
 
     @Test
     fun claimForLaunchReportsNotFreshForAnAlreadyUnavailableRowAndFailsForAnUnwritableOne() =
@@ -633,6 +640,25 @@ class ArenaTicketJournalTest {
             assertTrue(failure.isFailure)
             assertIs<IllegalArgumentException>(failure.exceptionOrNull())
             assertEquals(before, unwritable.financialState())
+        }
+
+    @Test
+    fun updateCheckpointAnswersFalseForAStateRefusalThatIsNotALostCas() =
+        runTest {
+            // The row is UNUSED with no checkpoint and revision 0, so it PASSES the journal's pre-read
+            // new-write guard, and the DAO then refuses it because a CAS requires LAUNCHED with an
+            // existing checkpoint. The caller sees plain false, with no CAS having been lost.
+            val f = RunReadFixture(this)
+            val journal = strictWriteJournal(f)
+            assertEquals("UNUSED", f.row.localUse)
+            assertEquals(null, f.row.checkpointJson)
+            assertEquals(0L, f.row.checkpointRevision)
+            val before = f.financialState()
+            val candidate = f.checkpoints.encode(f.checkpoint(ArenaRunnerPhase.ANSWERING), f.binding)
+            val outcome = journal.updateCheckpoint(f.original, f.header.ticketId, f.header.attemptId, 0, candidate)
+            assertTrue(outcome.isSuccess)
+            assertEquals(false, outcome.getOrNull())
+            assertEquals(before, f.financialState())
         }
 
     @Test
