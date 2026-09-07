@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaCancelResponse
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntryTicket
@@ -23,6 +24,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicket
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketGetRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketListRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketPage
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatusObservation
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.tasks.await
@@ -33,9 +35,9 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
 
 /**
- * Four explicit calls only. The caller will own durable journalling; this adapter never creates
- * IDs, writes a local wallet/cache, automatically retries, or acknowledges a terminal ticket.
- * expectedOwnerUid is checked by the callable BEFORE financial effects; session epochs also
+ * Explicit calls only, including a question-free status port. The caller owns durable journalling.
+ * This adapter never creates IDs, writes a local wallet/cache, automatically retries or acknowledges a terminal ticket.
+ * Mutation expectedOwnerUid is checked by the callable BEFORE financial effects; session epochs also
  * reject stale reads and A -> B -> A responses. Neither check replaces the other.
  */
 class FirebaseArenaTicketRemoteDataSource internal constructor(
@@ -44,7 +46,7 @@ class FirebaseArenaTicketRemoteDataSource internal constructor(
     private val networkMonitor: NetworkMonitor,
     private val dispatcher: CoroutineDispatcher,
     private val parser: ArenaTicketWireParser = ArenaTicketWireParser(::arenaSha256),
-) : ArenaTicketRemoteDataSource {
+) : ArenaTicketRemoteDataSource, ArenaTicketStatusRemoteDataSource {
     constructor(
         functions: FirebaseFunctions,
         sessions: OutboxSessionProvider,
@@ -111,6 +113,14 @@ class FirebaseArenaTicketRemoteDataSource internal constructor(
             GET,
             mapOf("ticketId" to request.ticketId),
             { parser.get(it, request) },
+        )
+
+    override suspend fun status(request: ArenaTicketGetRequest): Result<ArenaTicketStatusObservation> =
+        execute(
+            request.ownerUid,
+            STATUS,
+            mapOf("ticketId" to request.ticketId),
+            { parser.status(it, request) },
         )
 
     override suspend fun cancel(request: ArenaTicketCancelRequest): Result<ArenaCancelResponse> =
@@ -212,6 +222,7 @@ class FirebaseArenaTicketRemoteDataSource internal constructor(
         const val PREPARE = "prepareArenaEntry"
         const val LIST = "listArenaEntryTickets"
         const val GET = "fetchArenaEntryTicket"
+        const val STATUS = "fetchArenaEntryTicketStatus"
         const val CANCEL = "cancelArenaEntry"
     }
 }

@@ -138,6 +138,8 @@ dependencies {
     testImplementation(libs.koin.test.junit4)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotlinx.datetime)
+    testImplementation(libs.androidx.room.runtime)
     testImplementation(libs.mockito.core)
     testImplementation(project(":shared:core:stats"))
     testImplementation(project(":shared:core:question-schema"))

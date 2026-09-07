@@ -71,7 +71,7 @@ class AccountSwitchGuard(
         engine.withoutPasses {
             owners.forEach { owner ->
                 store.forget(owner)
-                traces.forget(owner)
+                traces.forget(owner, OwnerForgetReason.SWITCH)
             }
         }
     }
@@ -85,7 +85,7 @@ class AccountSwitchGuard(
             val newUid = signIn()
             previousUids.filter { it.isNotBlank() && it != newUid }.distinct().forEach { owner ->
                 store.forget(owner)
-                traces.forget(owner)
+                traces.forget(owner, OwnerForgetReason.SWITCH)
             }
             newUid
         }
@@ -140,6 +140,12 @@ class AccountSwitchGuard(
 interface OwnerTraces {
     suspend fun forget(uid: String)
 
+    /** Legacy implementations keep their erase behavior. Only the documented Arena journal opts out. */
+    suspend fun forget(
+        uid: String,
+        reason: OwnerForgetReason,
+    ) = forget(uid)
+
     /**
      * Все, кто оставил на устройстве личные строки.
      *
@@ -169,6 +175,9 @@ interface OwnerTraces {
      */
     val namedLosses: List<OwnerDataKind>
 }
+
+/** No-reason erase APIs still erase. An ordinary sign-out/switch is the narrow retention exception. */
+enum class OwnerForgetReason { SWITCH, SIGN_OUT, ERASE_LOCAL_DATA, DELETE_ACCOUNT }
 
 /**
  * Вид данных, называемый игроку перед сменой аккаунта.

@@ -157,4 +157,35 @@ class BoxOpeningMarkerPersistenceTest {
             assertEquals(2, dao.due("A", now + 10, 100, 50).size)
             assertEquals(listOf("WAITING"), dao.due("B", now, 100, 50).map { it.state })
         }
+
+    @Test fun missingWrongStateAndUnboundMarkersCannotBeAcknowledged() =
+        runTest {
+            assertEquals(false, dao.acknowledgeSynchronousIntent("A", 999, delivery().mutationId))
+            val variants = listOf(marker(delivery()).copy(state = "WAITING"), marker(delivery()).copy(entityRef = null))
+            for ((index, marker) in variants.withIndex()) {
+                val candidate = marker.copy(mutationId = "invalid-marker-$index")
+                val id = dao.insert(candidate)
+                receipt(delivery())
+                assertEquals(false, dao.acknowledgeSynchronousIntent("A", id, delivery().mutationId))
+                assertEquals(candidate.copy(id = id), dao.findById(id))
+                assertNotNull(db.mutationReceiptDao().find("A", delivery().mutationId))
+            }
+        }
+
+    @Test fun receiptMustMatchBothOperationAndEntityBeforeMarkerRemoval() =
+        runTest {
+            val row = delivery()
+            val saved = dao.reserveSynchronousIntent(row, marker(row))
+            val foreignOperation = row.copy(mutationId = "wrong-operation", operation = "economy.NOT_OPEN_GIFT_BOX")
+            val foreignEntity =
+                row.copy(
+                    mutationId = "wrong-entity",
+                    entityRef = "economy.BOX_OPENING:different-opening",
+                )
+            for (receiptRow in listOf(foreignOperation, foreignEntity)) {
+                receipt(receiptRow)
+                assertEquals(false, dao.acknowledgeSynchronousIntent("A", saved.id, receiptRow.mutationId))
+                assertEquals(saved, dao.findById(saved.id))
+            }
+        }
 }

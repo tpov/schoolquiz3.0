@@ -23,6 +23,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicket
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketSnapshot
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatusMetadata
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatusObservation
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -76,6 +78,51 @@ class ArenaTicketWireParser(
         checked {
             ticket(root(wire), request.ownerUid).also {
                 valid(it.snapshot.header.ticketId == request.ticketId)
+            }
+        }
+
+    /** Separate status endpoint: no ISSUED envelope or questions are accepted or manufactured. */
+    fun status(
+        wire: String,
+        request: ArenaTicketGetRequest,
+    ): ArenaTicketStatusObservation =
+        checked {
+            val root = root(wire)
+            valid(root.keys == setOf("ticket"))
+            val raw = root.required("ticket").objectValue()
+            valid(raw.keys == STATUS_TICKET_FIELDS)
+            val header = header(raw, request.ownerUid)
+            valid(header.ticketId == request.ticketId)
+            val contentContext = raw.required("contentContext")
+            if (contentContext != JsonNull) valid(contentContext.objectValue().keys == CONTEXT_FIELDS)
+            val metadata =
+                ArenaTicketStatusMetadata(
+                    header,
+                    raw.documentId("authorUid"),
+                    raw.integer("ratingVersion"),
+                    context(contentContext),
+                )
+            val terminal = raw.required("terminal")
+            when (header.status) {
+                ArenaTicketStatus.RESERVED -> {
+                    valid(terminal == JsonNull)
+                    ArenaTicketStatusObservation.Reserved(metadata)
+                }
+                ArenaTicketStatus.CANCELLED -> {
+                    val receipt = terminal.objectValue()
+                    valid(receipt.keys == CANCELLATION_FIELDS)
+                    ArenaTicketStatusObservation.Cancelled(metadata, cancellation(receipt, header))
+                }
+                ArenaTicketStatus.SETTLED -> {
+                    val receipt = terminal.objectValue()
+                    valid(receipt.keys == SETTLEMENT_FIELDS)
+                    val settled = settlement(receipt, header)
+                    if (header.mode == ArenaEntryMode.RANDOM) {
+                        valid(settled.authorCreditNolics == 0L && settled.sinkNolics == 0L)
+                        valid(settled.royaltyReserveDeltaNolics == 0L)
+                    }
+                    ArenaTicketStatusObservation.Settled(metadata, settled)
+                }
             }
         }
 
@@ -330,13 +377,6 @@ class ArenaTicketWireParser(
         return Json.parseToJsonElement(wire).objectValue()
     }
 
-    private inline fun <T> checked(block: () -> T): T =
-        try {
-            block()
-        } catch (_: IllegalArgumentException) {
-            malformed()
-        }
-
     private fun JsonObject.required(key: String): JsonElement = get(key) ?: malformed()
 
     private fun JsonObject.string(key: String): String {
@@ -377,6 +417,19 @@ class ArenaTicketWireParser(
     }
 
     private companion object {
+        val STATUS_TICKET_FIELDS =
+            setOf(
+                "schemaVersion", "ticketId", "attemptId", "uid", "requestId", "mode", "difficulty",
+                "lessonId", "lessonVersion", "authorUid", "ratingVersion", "priceNolics", "lifeCost",
+                "issuedAtMs", "dayId", "status", "contentContext", "terminal",
+            )
+        val CONTEXT_FIELDS = setOf("catalogId", "questId", "sectionId", "themeId")
+        val CANCELLATION_FIELDS = setOf("receiptId", "cancelledAtMs", "releasedNolics", "releasedLifePoints")
+        val SETTLEMENT_FIELDS =
+            setOf(
+                "receiptId", "attemptId", "settledAtMs", "percentScore", "consumedNolics", "consumedLifePoints",
+                "authorCreditNolics", "sinkNolics", "royaltyReserveDeltaNolics",
+            )
         const val MAX_PRICE_NOLICS = 100L
         const val MAX_PERCENT_SCORE = 100.0
         const val MAX_QUESTIONS = 20
@@ -391,6 +444,13 @@ class ArenaTicketWireParser(
         const val MAX_DATE_MS = 8_640_000_000_000_000L
     }
 }
+
+private inline fun <T> checked(block: () -> T): T =
+    try {
+        block()
+    } catch (_: IllegalArgumentException) {
+        malformed()
+    }
 
 private fun JsonElement.objectValue(): JsonObject = this as? JsonObject ?: malformed()
 

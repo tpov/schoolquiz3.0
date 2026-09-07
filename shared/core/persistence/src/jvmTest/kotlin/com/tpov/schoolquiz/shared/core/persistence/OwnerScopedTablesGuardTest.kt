@@ -1,9 +1,9 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
-import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * Страж закрытого перечня (история 6.2).
@@ -16,7 +16,6 @@ import org.junit.Test
  * сущности — в тот же коммит.
  */
 class OwnerScopedTablesGuardTest {
-
     /** Как в коде называют владельца. Из этих имён и состоит признак «таблица чья-то». */
     private val ownerColumns = setOf("uid", "user_id", "owner_uid", "ownerUid")
 
@@ -83,7 +82,12 @@ class OwnerScopedTablesGuardTest {
         assertEquals(OwnerCleanup.QUEUE, outbox.cleanedBy)
         assertTrue(
             "остальные таблицы перечня снимает вторая операция",
-            OwnerScopedTables.ALL.filter { it.table != "outbox" }.all { it.cleanedBy == OwnerCleanup.TRACES },
+            OwnerScopedTables.ALL.filter { it.table != "outbox" && it.cleanedBy != OwnerCleanup.ARENA_FINANCIAL }
+                .all { it.cleanedBy == OwnerCleanup.TRACES },
+        )
+        assertEquals(
+            setOf("arena_ticket_records", "arena_command_journal"),
+            OwnerScopedTables.ALL.filter { it.cleanedBy == OwnerCleanup.ARENA_FINANCIAL }.map { it.table }.toSet(),
         )
     }
 

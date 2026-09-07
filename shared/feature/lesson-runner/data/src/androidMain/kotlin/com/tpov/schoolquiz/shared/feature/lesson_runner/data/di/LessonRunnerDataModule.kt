@@ -25,6 +25,7 @@ import org.koin.dsl.module
 
 val lessonRunnerDataModule =
     module {
+        includes(arenaDataModule)
         single<AttemptIdProvider> { DefaultAttemptIdProvider() }
         single<RandomSeedProvider> { DefaultRandomSeedProvider() }
         single<RatingIdProvider> { DefaultRatingIdProvider() }

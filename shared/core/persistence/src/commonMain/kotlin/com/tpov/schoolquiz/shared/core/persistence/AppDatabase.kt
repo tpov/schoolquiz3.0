@@ -30,14 +30,17 @@ import androidx.room.TypeConverters
         SyncRunTraceEntity::class,
         MutationReceiptEntity::class,
         LessonAttemptIntentEntity::class,
+        ArenaTicketRecordEntity::class,
+        ArenaCommandEntity::class,
     ],
-    // Bumped whenever the schema changes. Destructive fallback only fires on a version change —
-    // leaving the number alone makes Room compare identity hashes and crash instead.
-    version = 12,
+    // Every version has an explicit non-destructive migration and a generated Room schema.
+    version = 13,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun arenaTicketDao(): ArenaTicketDao
+
     abstract fun mutationReceiptDao(): MutationReceiptDao
 
     abstract fun userStatsDao(): UserStatsDao

@@ -58,31 +58,23 @@ interface LessonAttemptDao {
     ) {
         // Raw answers are already frozen in payload. Never create a successful attempt or a
         // QuestionAnswerEntity with a made-up numeric score just to fit the old schema.
-        if (attemptId.isBlank() || ownerUid.isBlank() || outboxRow.ownerUid != ownerUid ||
-            outboxRow.operation != OutboxOperations.SUBMIT_ATTEMPT ||
-            outboxRow.mutationId != OutboxOperations.mutationKey(OutboxOperations.SUBMIT_ATTEMPT, attemptId) ||
-            outboxRow.entityRef != "lesson_runner:attempt:$attemptId"
-        ) throw AttemptIntentConflict()
+        validateUnscoredAttemptIdentity(attemptId, ownerUid, outboxRow)
         val previous = findAttempt(attemptId)
         val previousAnswers = findAttemptAnswers(attemptId)
         val marker = findAttemptIntent(attemptId)
         val queued = findQueuedAttemptIntent(outboxRow.mutationId)
-        if (previous != null || previousAnswers.isNotEmpty()) throw AttemptIntentConflict()
+        requireUnscoredAttempt(previous, previousAnswers)
 
         val incoming = outboxRow.attemptIntent(attemptId)
         if (marker != null) {
-            if (marker != incoming) throw AttemptIntentConflict()
-            if (queued != null) {
-                if (queued.attemptIntent(attemptId) != incoming) throw AttemptIntentConflict()
-                requireOutboxIntentQueued(OUTBOX_ROW_IGNORED, queued.mutationId, queued.state)
-            }
+            requireSameAttemptIntent(marker, incoming)
+            requireMatchingQueuedAttempt(queued, incoming)
             // Marker survives ACK. Identical retry must not re-enqueue, rewrite or reset backoff.
             return
         }
         // A queued-only legacy body is not evidence of this new raw-only persistence protocol.
-        if (queued != null) throw AttemptIntentConflict()
-        if (outboxRow.state != "WAITING") throw AttemptIntentConflict()
-        if (insertAttemptIntent(incoming) == OUTBOX_ROW_IGNORED) throw AttemptIntentConflict()
+        if (queued != null || outboxRow.state != "WAITING") throw AttemptIntentConflict()
+        insertRequiredAttemptIntent(incoming)
         if (enqueueOutboxRow(outboxRow) == OUTBOX_ROW_IGNORED) throw AttemptIntentConflict()
     }
 
@@ -112,30 +104,16 @@ interface LessonAttemptDao {
         val queued = outboxRow?.let { findQueuedAttemptIntent(it.mutationId) }
         if (outboxRow != null && outboxRow.ownerUid != attempt.userId) throw AttemptIntentConflict()
         if (previous != null || marker != null || queued != null) {
-            if (previous != attempt || findAttemptAnswers(attempt.attemptId) != answers.sortedBy { it.questionId }) {
-                throw AttemptIntentConflict()
-            }
+            requireUnchangedScoredAttempt(previous, attempt, answers)
             if (outboxRow == null) return // Legacy local-only retry never creates a server intent.
             val incoming = outboxRow.attemptIntent(attempt.attemptId)
-            if (marker != null) {
-                if (marker != incoming) throw AttemptIntentConflict()
-            } else if (queued?.attemptIntent(attempt.attemptId) != incoming) {
-                // A legacy row without its original pending request is not completion proof.
-                throw AttemptIntentConflict()
-            }
-            if (queued != null) {
-                if (queued.attemptIntent(attempt.attemptId) != incoming) throw AttemptIntentConflict()
-                requireOutboxIntentQueued(OUTBOX_ROW_IGNORED, queued.mutationId, queued.state)
-            }
-            if (marker == null && insertAttemptIntent(incoming) == OUTBOX_ROW_IGNORED) {
-                throw AttemptIntentConflict()
-            }
+            requireExistingAttemptProof(marker, queued, incoming)
+            requireMatchingQueuedAttempt(queued, incoming)
+            if (marker == null) insertRequiredAttemptIntent(incoming)
             return // Do not rewrite answers, repetition schedule or transport retry metadata.
         }
         outboxRow?.let {
-            if (insertAttemptIntent(it.attemptIntent(attempt.attemptId)) == OUTBOX_ROW_IGNORED) {
-                throw AttemptIntentConflict()
-            }
+            insertRequiredAttemptIntent(it.attemptIntent(attempt.attemptId))
         }
         upsert(attempt)
         if (answers.isNotEmpty()) upsertAnswers(answers)
@@ -191,6 +169,73 @@ interface LessonAttemptDao {
         userId: String,
         sinceMs: Long,
     ): Flow<List<LessonAttemptEarning>>
+}
+
+private fun validateUnscoredAttemptIdentity(
+    attemptId: String,
+    ownerUid: String,
+    row: OutboxEntity,
+) {
+    if (attemptId.isBlank() || ownerUid.isBlank() || row.ownerUid != ownerUid) throw AttemptIntentConflict()
+    if (row.operation != OutboxOperations.SUBMIT_ATTEMPT ||
+        row.mutationId != OutboxOperations.mutationKey(OutboxOperations.SUBMIT_ATTEMPT, attemptId) ||
+        row.entityRef != "lesson_runner:attempt:$attemptId"
+    ) {
+        throw AttemptIntentConflict()
+    }
+}
+
+private fun requireUnscoredAttempt(
+    previous: LessonAttemptEntity?,
+    previousAnswers: List<QuestionAnswerEntity>,
+) {
+    if (previous != null || previousAnswers.isNotEmpty()) throw AttemptIntentConflict()
+}
+
+/** Runs within the caller's Room transaction; a changed attempt still short-circuits the answer read. */
+private suspend fun LessonAttemptDao.requireUnchangedScoredAttempt(
+    previous: LessonAttemptEntity?,
+    attempt: LessonAttemptEntity,
+    answers: List<QuestionAnswerEntity>,
+) {
+    if (previous != attempt || findAttemptAnswers(attempt.attemptId) != answers.sortedBy { it.questionId }) {
+        throw AttemptIntentConflict()
+    }
+}
+
+private fun requireExistingAttemptProof(
+    marker: LessonAttemptIntentEntity?,
+    queued: OutboxEntity?,
+    incoming: LessonAttemptIntentEntity,
+) {
+    if (marker != null) {
+        requireSameAttemptIntent(marker, incoming)
+    } else if (queued?.attemptIntent(incoming.attemptId) != incoming) {
+        // A legacy row without its original pending request is not completion proof.
+        throw AttemptIntentConflict()
+    }
+}
+
+private fun requireSameAttemptIntent(
+    actual: LessonAttemptIntentEntity,
+    incoming: LessonAttemptIntentEntity,
+) {
+    if (actual != incoming) throw AttemptIntentConflict()
+}
+
+private fun requireMatchingQueuedAttempt(
+    queued: OutboxEntity?,
+    incoming: LessonAttemptIntentEntity,
+) {
+    if (queued != null) {
+        requireSameAttemptIntent(queued.attemptIntent(incoming.attemptId), incoming)
+        requireOutboxIntentQueued(OUTBOX_ROW_IGNORED, queued.mutationId, queued.state)
+    }
+}
+
+/** This insert remains part of the enclosing save transaction, before any attempt/answer writes. */
+private suspend fun LessonAttemptDao.insertRequiredAttemptIntent(incoming: LessonAttemptIntentEntity) {
+    if (insertAttemptIntent(incoming) == OUTBOX_ROW_IGNORED) throw AttemptIntentConflict()
 }
 
 /**

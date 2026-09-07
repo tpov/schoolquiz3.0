@@ -276,11 +276,16 @@ interface OutboxDao {
         mutationId: String,
     ): Boolean {
         val marker = findById(markerId) ?: return false
-        if (marker.ownerUid != ownerUid || marker.state != "SYNCHRONOUS") return false
-        val ref = marker.entityRef ?: return false
-        if (matchingReceiptCount(ownerUid, mutationId, marker.operation, ref) != 1) return false
-        delete(markerId)
-        return true
+        val ref = marker.entityRef
+        return when {
+            marker.ownerUid != ownerUid || marker.state != "SYNCHRONOUS" -> false
+            ref == null -> false
+            matchingReceiptCount(ownerUid, mutationId, marker.operation, ref) != 1 -> false
+            else -> {
+                delete(markerId)
+                true
+            }
+        }
     }
 }
 

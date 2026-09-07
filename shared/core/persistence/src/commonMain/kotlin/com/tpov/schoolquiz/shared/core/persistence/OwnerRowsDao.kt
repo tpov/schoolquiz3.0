@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import com.tpov.schoolquiz.shared.core.outbox.OwnerDataKind
+import com.tpov.schoolquiz.shared.core.outbox.OwnerForgetReason
 
 /**
  * Локальные строки прежнего владельца и его личные курсоры — одной транзакцией (AD-8).
@@ -20,6 +21,16 @@ import com.tpov.schoolquiz.shared.core.outbox.OwnerDataKind
  */
 @Dao
 interface OwnerRowsDao {
+    @Query("DELETE FROM arena_command_journal WHERE owner_uid = :uid")
+    suspend fun deleteArenaCommands(uid: String)
+
+    @Query("DELETE FROM arena_ticket_records WHERE owner_uid = :uid")
+    suspend fun deleteArenaTickets(uid: String)
+
+    /** Separate inventory for explicit erasure; retained records are not switch-loss warnings. */
+    @Query("SELECT owner_uid FROM arena_command_journal UNION SELECT owner_uid FROM arena_ticket_records")
+    suspend fun ownersWithArenaFinancialRecords(): List<String>
+
     @Query("DELETE FROM review_assignment_questions WHERE ownerUid = :uid")
     suspend fun deleteReviewAssignmentQuestions(uid: String)
 
@@ -139,6 +150,7 @@ interface OwnerRowsDao {
     suspend fun forgetOwner(
         uid: String,
         privateCursorIds: List<String>,
+        reason: OwnerForgetReason = OwnerForgetReason.ERASE_LOCAL_DATA,
     ) {
         deleteReviewAssignmentQuestions(uid)
         deleteReviewAssignments(uid)
@@ -156,6 +168,10 @@ interface OwnerRowsDao {
         deleteSyncRunTrace(uid)
         deleteMutationReceipts(uid)
         deleteLessonAttemptIntents(uid)
+        if (reason == OwnerForgetReason.ERASE_LOCAL_DATA || reason == OwnerForgetReason.DELETE_ACCOUNT) {
+            deleteArenaCommands(uid)
+            deleteArenaTickets(uid)
+        }
         if (privateCursorIds.isNotEmpty()) deleteCursors(privateCursorIds)
     }
 }
@@ -185,6 +201,9 @@ enum class OwnerCleanup {
 
     /** Личные следы вне очереди: [OwnerRowsDao.forgetOwner]. */
     TRACES,
+
+    /** Arena-only ADR exception: retained on SWITCH/SIGN_OUT, erased on explicit local/account deletion. */
+    ARENA_FINANCIAL,
 }
 
 /**
@@ -223,6 +242,8 @@ object OwnerScopedTables {
             // Очередь: её судьбу решает первая операция, а не эта. Названа, чтобы страж не считал
             // её забытой.
             OwnerScopedTable("outbox", "owner_uid", OwnerCleanup.QUEUE, hasServerTwin = false, namedToPlayer = null),
+            OwnerScopedTable("arena_ticket_records", "owner_uid", OwnerCleanup.ARENA_FINANCIAL, false, null),
+            OwnerScopedTable("arena_command_journal", "owner_uid", OwnerCleanup.ARENA_FINANCIAL, false, null),
             OwnerScopedTable(
                 "mutation_receipts",
                 "owner_uid",

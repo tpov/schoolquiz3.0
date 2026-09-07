@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration10to11
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration11to12
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -35,6 +36,34 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationsTest {
+    @Test
+    fun migrate_12_to_13_preserves_legacy_intent_and_adds_empty_arena_journal() {
+        helper.createDatabase(DB_NAME, version = 12).use { db ->
+            db.execSQL("INSERT INTO sync_state(collectionId, cursor) VALUES ('arena-migration-proof', 701)")
+            db.execSQL(
+                "INSERT INTO lesson_attempt_intents(attempt_id, owner_uid, mutation_id, operation, payload, " +
+                    "entity_ref, expected_version) VALUES ('legacy-a', 'owner-a', 'legacy-m', " +
+                    "'lesson_runner.SUBMIT_ATTEMPT', '{\"legacy\":true}', NULL, NULL)",
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 13, true, Migration12to13).use { db ->
+            db.query("SELECT payload FROM lesson_attempt_intents WHERE attempt_id = 'legacy-a'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("{\"legacy\":true}", c.getString(0))
+            }
+            db.query("SELECT cursor FROM sync_state WHERE collectionId = 'arena-migration-proof'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(701L, c.getLong(0))
+            }
+            listOf("arena_ticket_records", "arena_command_journal").forEach { table ->
+                db.query("SELECT COUNT(*) FROM $table").use { c ->
+                    assertTrue(c.moveToFirst())
+                    assertEquals(0L, c.getLong(0))
+                }
+            }
+        }
+    }
+
     @get:Rule
     val helper =
         MigrationTestHelper(
@@ -650,6 +679,7 @@ class AppDatabaseMigrationsTest {
             Migration9to10,
             Migration10to11,
             Migration11to12,
+            Migration12to13,
         ).close()
     }
 
@@ -657,7 +687,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 12
+        const val CURRENT_VERSION = 13
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES =

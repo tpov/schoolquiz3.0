@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
 import com.tpov.schoolquiz.shared.core.outbox.OwnerDataKind
+import com.tpov.schoolquiz.shared.core.outbox.OwnerForgetReason
 import com.tpov.schoolquiz.shared.core.outbox.OwnerTraces
 
 /**
@@ -25,8 +26,15 @@ class RoomOwnerTraces(
     override val namedLosses: List<OwnerDataKind> = OwnerScopedTables.NAMED_TO_PLAYER
 
     override suspend fun forget(uid: String) {
+        forget(uid, OwnerForgetReason.ERASE_LOCAL_DATA)
+    }
+
+    override suspend fun forget(
+        uid: String,
+        reason: OwnerForgetReason,
+    ) {
         if (uid.isBlank()) return
-        ownerRows.forgetOwner(uid, privateCursorIds(uid))
+        ownerRows.forgetOwner(uid, privateCursorIds(uid), reason)
     }
 
     /**

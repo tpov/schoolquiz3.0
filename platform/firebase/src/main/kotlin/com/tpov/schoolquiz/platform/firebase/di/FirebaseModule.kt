@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
+import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
@@ -36,10 +37,13 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.LogoRemot
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.NicknameRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.VerificationRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
+import kotlinx.coroutines.Dispatchers
 import org.koin.dsl.module
 
 val firebaseModule =
@@ -47,6 +51,16 @@ val firebaseModule =
         single<FirebaseFirestore> { FirebaseFirestore.getInstance() }
         single<FirebaseFunctions> { FirebaseFunctions.getInstance() }
         single<OutboxSessionProvider> { FirebaseOutboxSessionProvider(FirebaseAuth.getInstance()) }
+        single {
+            FirebaseArenaTicketRemoteDataSource(
+                functions = get(),
+                sessions = get(),
+                networkMonitor = get(),
+                dispatcher = Dispatchers.IO,
+            )
+        }
+        single<ArenaTicketRemoteDataSource> { get<FirebaseArenaTicketRemoteDataSource>() }
+        single<ArenaTicketStatusRemoteDataSource> { get<FirebaseArenaTicketRemoteDataSource>() }
         // Единственный адрес очереди (AD-6): новая операция появляется обработчиком на сервере,
         // а не новым путём на клиенте.
         single<MutationTransport> {
