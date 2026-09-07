@@ -226,7 +226,8 @@ test("settlement-to-grant mismatch cannot revoke another Play purchase", async (
   db.store.set(SETTLEMENT, {...db.store.get(SETTLEMENT), premiumGrantId: premiumGrantId(SOURCE.PLAY, "different-receipt")});
   const before = structuredClone([...db.store]);
   await assert.rejects(refund(db, T + 100), /provenance disagree/);
-  assert.deepEqual([...db.store], before);
+  assert.deepEqual([...db.store].filter(([path]) => !path.startsWith("purchase_revocations/")), before);
+  assert.equal(db.store.get(`purchase_revocations/${ID}`).state, "PENDING_VERIFICATION");
 });
 
 async function longHistory() {

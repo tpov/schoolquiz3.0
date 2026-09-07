@@ -136,12 +136,22 @@ function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Dat
     tx.create(db.doc(`${LEDGER_PATH}/${ledgerId}`), {id: ledgerId, uid, currency, delta, reason,
       sourceId: ticketId, atMs, details});
   }
-  async function issue({uid, requestId, mode, lessonId = null, difficulty}) {
+  async function issue(input) {
+    const {uid, requestId, mode, lessonId = null, difficulty, maxPriceNolics} = input;
     id(uid, "authenticated uid"); id(requestId, "requestId");
     if (!["RANDOM", "SELECTED"].includes(mode) || !["EASY", "HARD"].includes(difficulty)) fail("INVALID_ARGUMENT");
     if (mode === "SELECTED") id(lessonId, "selected lessonId");
     else if (lessonId !== null) fail("INVALID_ARGUMENT", "random lesson must be chosen by server");
-    const requestHash = digest({uid, requestId, mode, lessonId, difficulty});
+    const hasPriceCeiling = Object.hasOwn(input, "maxPriceNolics");
+    if (hasPriceCeiling) {
+      if (mode !== "SELECTED") fail("INVALID_ARGUMENT", "maxPriceNolics is only accepted for selected entry");
+      integer(maxPriceNolics, "maxPriceNolics");
+      if (maxPriceNolics > 100) fail("INVALID_ARGUMENT", "maxPriceNolics must be at most 100");
+    }
+    // Omitting the new field must preserve the pre-ceiling request hash byte-for-byte. A retry
+    // with a supplied ceiling binds that exact confirmation, not a default price or live rating.
+    const requestHash = digest({uid, requestId, mode, lessonId, difficulty,
+      ...(hasPriceCeiling ? {maxPriceNolics} : {})});
     const ticketId = ticketDocumentId(uid, requestId); const ticketRef = db.doc(`arena_entry_tickets/${ticketId}`);
     return db.runTransaction(async (tx) => {
       const previous = data(await tx.get(ticketRef));
@@ -159,6 +169,9 @@ function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Dat
       if (mode === "RANDOM" && issued >= RANDOM_DAILY_LIMIT) fail("RANDOM_DAILY_LIMIT");
       const chosenId = mode === "RANDOM" ? id(await chooseRandomLesson(tx, {uid, difficulty, requestId, nowMs: now}), "server random lessonId") : lessonId;
       const snapshot = entrySnapshot(await loadEntrySnapshot(tx, {lessonId: chosenId, difficulty, nowMs: now}), chosenId, difficulty);
+      // Every optimistic retry rereads the authoritative price before any checkpoint, hold or
+      // receipt write. PRICE_CHANGED requires fresh explicit confirmation; it spends nothing.
+      if (hasPriceCeiling && snapshot.priceNolics > maxPriceNolics) fail("PRICE_CHANGED");
       const regeneration = await readRegeneration(tx, {uid, user, nowMs: now});
       validateRegenerationPlan(regeneration);
       const regenerated = {...user, ...regeneration.userPatch};

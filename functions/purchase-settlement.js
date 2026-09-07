@@ -17,6 +17,8 @@
 const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constants");
 const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
 const {SOURCE} = require("./premium-grants");
+const {PURCHASE_REVOCATIONS_COLLECTION, SETTLEMENT_REVOCATION_PENDING,
+  readRevocationFence, revocationSettlementGate} = require("./purchase-revocations");
 const {PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
 const {
   PURCHASE_AUDIT_COLLECTION,
@@ -33,7 +35,6 @@ const {
   purchaseFromLookup,
   readShortfall,
   receiptRecord,
-  settlementGate,
   settlementId,
   settlementRecord,
   successResponse,
@@ -85,12 +86,17 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
   const {purchaseToken, sku} = request;
   const id = settlementId(purchaseToken);
   const settlementRef = db.collection(PURCHASE_SETTLEMENTS_COLLECTION).doc(id);
+  const revocationRef = db.collection(PURCHASE_REVOCATIONS_COLLECTION).doc(id);
 
   // Известный токен отвечается до того, как спрошен Play. Повтору проверка не нужна — сохранённый
   // ответ и есть проверка, — а после погашения Play ответил бы «погашена», что для токена без
   // записи расчёта было бы отказом. Чужой токен отклоняется здесь же, не выдавая, что он есть.
   const known = await settlementRef.get();
-  const gate = settlementGate(known.exists ? known.data() : null, uid);
+  const revocation = await revocationRef.get();
+  let fence;
+  try { fence = readRevocationFence(revocation.exists ? revocation.data() : null, {id, packageName: playApi.packageName}); }
+  catch (_) { return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Purchase verification requires repair; retry later"}; }
+  const gate = revocationSettlementGate({fence, existing: known.exists ? known.data() : null, uid});
   if (gate) return outcomeOf(gate, {id, sku, log});
 
   const lookup = await playApi.getProductPurchase(sku, purchaseToken);
@@ -121,9 +127,13 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
   try {
     for (let pass = 0; pass < PREMIUM_CATCHUP_PASSES; pass++) {
     verdict = await db.runTransaction(async (transaction) => {
-      const [settlementSnapshot, userSnapshot, constantsSnapshot] =
-        await transaction.getAll(settlementRef, userRef, constantsRef);
+      const [settlementSnapshot, userSnapshot, constantsSnapshot, revocationSnapshot] =
+        await transaction.getAll(settlementRef, userRef, constantsRef, revocationRef);
       const existing = settlementSnapshot.exists ? settlementSnapshot.data() : null;
+      const freshFence = readRevocationFence(revocationSnapshot.exists ? revocationSnapshot.data() : null,
+        {id, packageName: playApi.packageName});
+      const fenced = revocationSettlementGate({fence: freshFence, existing, uid});
+      if (fenced) return fenced;
       const constants = readEconomyConstants(constantsSnapshot.exists ? constantsSnapshot.data() : null);
       const decision = decideSettlement({existing, purchase, claimedSku: sku, uid, constants});
       if (decision.decision !== SETTLEMENT_CREDIT) return decision;
@@ -222,6 +232,9 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
 
 /** Переводит чистый вердикт в исход: ответ как есть, или отказ с кодом и причиной. */
 function outcomeOf(verdict, {id, sku, log}) {
+  if (verdict.decision === SETTLEMENT_REVOCATION_PENDING) return {
+    kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Play refund verification is pending; retry later",
+  };
   if (verdict.decision !== SETTLEMENT_REFUSE) {
     return {kind: SETTLEMENT_OUTCOME_RESPONSE, response: verdict.response};
   }

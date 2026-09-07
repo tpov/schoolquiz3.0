@@ -62,6 +62,19 @@ function createPlayDeveloperApi(options = {}) {
   return {
     packageName,
 
+    // Voided RTDNs do not carry SKU and can arrive before our settlement. V2 resolves that
+    // exact token without guessing a product catalogue entry. No balance/price is derived here.
+    async getProductPurchaseByToken(purchaseToken) {
+      const url = productPurchaseByTokenUrl(packageName, purchaseToken);
+      try {
+        const client = await auth.getClient();
+        const response = await client.request({url, method: "GET", timeout: REQUEST_TIMEOUT_MS});
+        return {outcome: PLAY_OUTCOME_FOUND, status: response.status, code: null, reason: null, purchase: response.data};
+      } catch (error) {
+        return classifyFailure(error);
+      }
+    },
+
     /**
      * Состояние покупки одноразового товара.
      *
@@ -91,6 +104,11 @@ function createPlayDeveloperApi(options = {}) {
 function productPurchaseUrl(packageName, sku, purchaseToken) {
   return `${API_ROOT}/applications/${encodeURIComponent(packageName)}` +
     `/purchases/products/${encodeURIComponent(sku)}/tokens/${encodeURIComponent(purchaseToken)}`;
+}
+
+function productPurchaseByTokenUrl(packageName, purchaseToken) {
+  return `${API_ROOT}/applications/${encodeURIComponent(packageName)}` +
+    `/purchases/productsv2/tokens/${encodeURIComponent(purchaseToken)}`;
 }
 
 /**
@@ -134,4 +152,5 @@ module.exports = {
   REQUEST_TIMEOUT_MS,
   createPlayDeveloperApi,
   productPurchaseUrl,
+  productPurchaseByTokenUrl,
 };

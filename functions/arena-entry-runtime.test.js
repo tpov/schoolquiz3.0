@@ -47,6 +47,25 @@ function completion(ticket, patch = {}) {
 }
 function submit(payload, owner = uid) { return call("submitLessonResultEvents", {attempts: [payload]}, owner); }
 
+test("prepare and cancel bind the new client's expected Auth owner before any financial effects", async () => {
+  store.reset(world());
+  const initial = structuredClone([...store.documents]);
+  for (const expectedOwnerUid of [null, "", "invalid/path", 7]) {
+    await assert.rejects(issue("malformed-owner", {expectedOwnerUid}), {code: "invalid-argument"});
+    assert.deepEqual(structuredClone([...store.documents]), initial);
+  }
+  await assert.rejects(issue("switched-owner", {expectedOwnerUid: "author"}), error =>
+    error.code === "permission-denied" && error.details.reason === "ACCOUNT_CHANGED");
+  assert.deepEqual(structuredClone([...store.documents]), initial);
+  const ticket = await issue("bound-owner", {expectedOwnerUid: uid, maxPriceNolics: 1});
+  const reserved = structuredClone([...store.documents]);
+  await assert.rejects(call("cancelArenaEntry", {ticketId: ticket.ticketId, requestId: "bound-cancel",
+    expectedOwnerUid: "author"}), error => error.code === "permission-denied" && error.details.reason === "ACCOUNT_CHANGED");
+  assert.deepEqual(structuredClone([...store.documents]), reserved);
+  assert.equal((await call("cancelArenaEntry", {ticketId: ticket.ticketId, requestId: "bound-cancel",
+    expectedOwnerUid: uid})).status, "CANCELLED");
+});
+
 test("real endpoints reserve trusted price/charges and settle from the frozen bank after editing and retirement", async () => {
   store.reset(world());
   const ticket = await issue("frozen", {priceNolics: 0, lifeCost: 0, uid: "author"});
@@ -225,6 +244,70 @@ test("a retried issue freezes the newly committed price, not the abandoned trans
   assert.equal(store.documents.get("users/player").reservedNolics, 100);
   assert.equal(store.documents.get("users/player").nolics, 900);
   assert.equal(store.writesTo("arena_entry_tickets/").length, 1);
+});
+
+function repriceLessonToMiddleLevel() {
+  store.documents.set("lesson_placements/lower", {lessonId: "lower", shelf: "arena"});
+  store.documents.set("lesson_placements/upper", {lessonId: "upper", shelf: "arena"});
+  store.documents.set("lesson_ratings/lower", {ratingSum: 20, ratingCount: 20, ratingVersion: 1});
+  store.documents.set("lesson_ratings/upper", {ratingSum: 60, ratingCount: 20, ratingVersion: 1});
+  store.documents.set("lesson_ratings/lesson", {ratingSum: 40, ratingCount: 20, ratingVersion: 7});
+}
+
+test("a reused Transaction accepts its new authoritative price within the explicitly confirmed ceiling", async () => {
+  store.reset(world());
+  store.retryTransactionOnce = repriceLessonToMiddleLevel;
+  const ticket = await issue("ceiling-retry-within", {maxPriceNolics: 51});
+  assert.equal(ticket.priceNolics, 51);
+  assert.equal(ticket.ratingVersion, 7);
+  assert.equal(store.documents.get("users/player").reservedNolics, 51);
+  assert.equal(store.documents.get("users/player").nolics, 949);
+  assert.equal(store.documents.get("users/player").reservedLifePoints, 50);
+  assert.equal(store.documents.get("users/player").lifePoints, 950);
+  assert.equal([...store.documents.keys()].filter((path) => path.startsWith("arena_entry_tickets/")).length, 1);
+});
+
+test("a reused Transaction refuses repricing above confirmation without committing its abandoned hold or receipt", async () => {
+  store.reset(world());
+  let externalState;
+  store.retryTransactionOnce = () => {
+    repriceLessonToMiddleLevel();
+    externalState = structuredClone([...store.documents]);
+  };
+  await assert.rejects(issue("ceiling-retry-above", {maxPriceNolics: 50}),
+    (error) => error.code === "failed-precondition" && error.details.reason === "PRICE_CHANGED");
+  assert.deepEqual(structuredClone([...store.documents]), externalState);
+  assert.equal([...store.documents.keys()].some((path) => path.startsWith("arena_entry_tickets/")), false);
+  assert.equal([...store.documents.keys()].some((path) => path.startsWith("audit/currency_ledger/entries/")), false);
+  const ticket = await issue("new-confirmation-after-reprice", {maxPriceNolics: 51});
+  assert.equal(ticket.priceNolics, 51);
+  assert.equal(store.documents.get("users/player").reservedNolics, 51);
+});
+
+test("callable ceiling replay is immutable after rating changes, while no-ceiling legacy replay still works", async () => {
+  store.reset(world());
+  const confirmed = await issue("confirmed-replay", {maxPriceNolics: 1});
+  const legacy = await issue("legacy-replay");
+  repriceLessonToMiddleLevel();
+  const before = structuredClone([...store.documents]);
+  assert.deepEqual(await issue("confirmed-replay", {maxPriceNolics: 1}), confirmed);
+  assert.deepEqual(await issue("legacy-replay"), legacy);
+  for (const [requestId, patch] of [["confirmed-replay", {maxPriceNolics: 51}], ["confirmed-replay", {}],
+    ["legacy-replay", {maxPriceNolics: 1}]]) {
+    await assert.rejects(issue(requestId, patch),
+      (error) => error.code === "already-exists" && error.details.reason === "REQUEST_REUSE");
+  }
+  assert.deepEqual(structuredClone([...store.documents]), before);
+});
+
+test("callable zero ceiling spends nothing and random never accepts a selected-price confirmation", async () => {
+  store.reset(world());
+  const before = structuredClone([...store.documents]);
+  await assert.rejects(issue("zero-confirmation", {maxPriceNolics: 0}),
+    (error) => error.code === "failed-precondition" && error.details.reason === "PRICE_CHANGED");
+  await assert.rejects(issue("random-with-ceiling", {mode: "RANDOM", lessonId: null, maxPriceNolics: 0}),
+    (error) => error.code === "invalid-argument" && error.details.reason === "INVALID_ARGUMENT");
+  assert.deepEqual(structuredClone([...store.documents]), before);
 });
 
 test("EASY can restore an already split trusted bank and still receives authoritative scoring", async () => {

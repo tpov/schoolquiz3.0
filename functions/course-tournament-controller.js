@@ -1,0 +1,290 @@
+"use strict";
+
+const {createTournamentSourceBank} = require("./tournament-source-bank");
+const {TOURNAMENT_PATHS: P, normalizeTournamentRequest, applyTournamentOperation, readPlanTournamentOperation,
+  writeTournamentOperation, readTournamentSession, matchSessionId} = require("./tournament-service");
+const {applyTournamentSessionOperation, readTournamentSessionOperation, planTournamentSessionOperation,
+  writeTournamentSessionOperation, VERIFIED_RUNS} = require("./tournament-session");
+const {verifiedTournamentRun, loadSettledMatchResults} = require("./tournament-session-results");
+const {freezeQualification, loadQualificationRanking} = require("./tournament-qualification-freeze");
+const {tournamentDigest: digest} = require("./tournament-bank");
+const {progressBracket, evaluateMeeting, READY_WINDOW_MS} = require("./tournament-policy");
+const {PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
+
+const CLIENT_OPERATIONS = Object.freeze(["CREATE", "START_QUALIFICATION", "PROPOSE", "CONFIRM", "READY"]);
+const WORKER_PREFIX = "ctw_";
+const MAX_MATCHES = 15; // Existing top16 policy, not a new entrant cap.
+const DEFAULT_WORKER_BOUNDS = Object.freeze({qualificationPageSize: 50, qualificationMaxPages: 10, repairRetryMs: 60_000});
+const TERMINAL_EVENT = new Set(["FINISHED", "CANCELLED"]);
+const TERMINAL_MATCH = new Set(["PLAYED", "FORFEIT", "DOUBLE_OUT"]);
+const data = (snapshot) => snapshot.exists ? snapshot.data() || {} : null;
+const path = (eventId) => `${P.events}/${eventId}`;
+function fail(code, message = code) { const error = new Error(message); error.code = code; throw error; }
+function auth(uid) { if (typeof uid !== "string" || !uid || uid !== uid.trim() || uid.length > 128 || uid.includes("/")) fail("UNAUTHENTICATED"); return uid; }
+function exact(value, min = 0) { if (!Number.isSafeInteger(value) || value < min) fail("INVALID_ARGUMENT"); return value; }
+function identifier(value) { if (typeof value !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(value)) fail("INVALID_ARGUMENT"); return value; }
+function sessionIdentifier(value) { if (typeof value !== "string" || !/^[qm]_[a-f0-9]{64}$/.test(value)) fail("INVALID_ARGUMENT"); return value; }
+function only(object, fields) {
+  if (!object || Object.getPrototypeOf(object) !== Object.prototype || Object.keys(object).some((key) => !fields.includes(key))) fail("INVALID_ARGUMENT");
+}
+function pick(object, fields) { return Object.fromEntries(fields.filter((key) => object?.[key] !== undefined).map((key) => [key, structuredClone(object[key])])); }
+function clientId(value) {
+  identifier(value);
+  if (value.startsWith(WORKER_PREFIX) || value.startsWith("freeze_advance_")) fail("INVALID_ARGUMENT", "Reserved server operation namespace");
+  return value;
+}
+function matchId(value) { if (typeof value !== "string" || !value.trim() || value.length > 512) fail("INVALID_ARGUMENT"); return value; }
+function eventRecord(value, eventId) {
+  if (!value) fail("NOT_FOUND");
+  if (value.schemaVersion !== 1 || value.eventId !== eventId || !["QUALIFICATION", "BRACKET", "FINISHED", "CANCELLED"].includes(value.status)) fail("UNAVAILABLE", "Event state requires repair");
+  auth(value.organizerUid); exact(value.lastMutationAtMs);
+  return value;
+}
+function bracketState(event) {
+  const matches = event.bracket?.rounds?.flatMap((round) => round.matches);
+  if (!Array.isArray(matches) || matches.length > MAX_MATCHES || matches.length < 1 || new Set(matches.map((match) => match.matchId)).size !== matches.length) fail("UNAVAILABLE", "Invalid bounded bracket");
+  return {matches, progress: progressBracket({bracket: event.bracket, outcomes: event.outcomes})};
+}
+function safeSession(value) {
+  return pick(value, ["sessionId", "eventId", "kind", "roundNumber", "matchId", "status", "questionIndex",
+    "startedAtMs", "endsAtMs", "questionStartedAtMs", "questionEndsAtMs"]);
+}
+function safeQuestion(question) {
+  if (question == null) return null;
+  let payload;
+  try { payload = typeof question.publicPayload === "string" ? JSON.parse(question.publicPayload) : question.publicPayload; }
+  catch { fail("UNAVAILABLE", "Current public question requires repair"); }
+  if (!payload || !["SingleChoiceRedacted", "MultipleChoiceRedacted", "OrderingRedacted", "FillBlankRedacted"].includes(payload.type)) fail("UNAVAILABLE", "Current public question requires repair");
+  if (typeof payload.text !== "string" || (payload.imageUrl != null && typeof payload.imageUrl !== "string") ||
+      (payload.id != null && typeof payload.id !== "string") || (payload.difficulty != null && typeof payload.difficulty !== "string")) fail("UNAVAILABLE");
+  for (const key of ["blanks", "protectedTextSegments"]) if (payload[key] !== undefined &&
+      (!Array.isArray(payload[key]) || payload[key].some((item) => typeof item !== "string"))) fail("UNAVAILABLE");
+  const publicPayload = pick(payload, ["type", "id", "difficulty", "text", "imageUrl", "blanks", "protectedTextSegments"]);
+  for (const key of ["options", "items", "candidates"]) if (payload[key] !== undefined) {
+    if (!Array.isArray(payload[key])) fail("UNAVAILABLE");
+    publicPayload[key] = payload[key].map((row) => {
+      if (typeof row?.id !== "string" || typeof row.text !== "string") fail("UNAVAILABLE");
+      return pick(row, ["id", "text"]);
+    });
+  }
+  return {...pick(question, ["questionId", "type", "difficulty", "contentVersion", "maxDurationMs"]), publicPayload};
+}
+function safeMeeting(value) { return pick(value, ["matchId", "status", "slotStartsAtMs", "agreedAtMs", "windowEndMs", "startedAtMs", "endsAtMs", "resultDue", "winnerUid", "loserUid", "technicalForfeit"]); }
+function safeProgress(value) {
+  if (!value) return undefined;
+  return {status: value.status,
+    resolved: (value.resolved || []).map((row) => pick(row, ["matchId", "status", "winnerUid", "loserUid", "technicalForfeit"])),
+    pending: (value.pending || []).map((row) => ({matchId: row.matchId, entrants: row.entrants.map((p) => pick(p, ["uid", "seed"]))})),
+    placements: (value.placements || []).map((row) => pick(row, ["uid", "rank", "slot", "technicalForfeit"]))};
+}
+function safeEvent(value) {
+  const result = {...pick(value, ["eventId", "organizerUid", "status", "cancelReason"]),
+    source: pick(value.source, ["kind", "id"]),
+    qualification: pick(value.qualification, ["startsAtMs", "endsAtMs", "roundCount", "questionsPerRound", "attemptsPerRound"]),
+    prizes: pick(value.prizes, ["first", "second", "third"]),
+    escrow: pick(value.escrow, ["reservedBoxes", "remainingBoxes", "paidBoxes", "returnedBoxes"])};
+  if (value.progress) result.progress = safeProgress(value.progress);
+  return result;
+}
+function safeResponse(value) {
+  const result = pick(value, ["schemaVersion", "operationId", "status", "serverNowMs", "deadlineReached", "questionDeadlineReached"]);
+  if (value.event) result.event = safeEvent(value.event);
+  if (value.session) result.session = safeSession(value.session);
+  if (value.sessions) result.sessions = value.sessions.map(safeSession);
+  if (value.meeting) result.meeting = safeMeeting(value.meeting);
+  if (value.currentQuestion !== undefined || value.question !== undefined) result.currentQuestion = safeQuestion(value.currentQuestion ?? value.question);
+  if (value.lastClosed) result.lastClosed = pick(value.lastClosed, ["questionIndex", "questionId", "kind"]);
+  if (value.result) result.result = pick(value.result, ["percentScore", "elapsedMs", "completedAtMs"]);
+  return result;
+}
+function meetingContext(match, pending) { return {...match, participantUids: pending.entrants.map((row) => row.uid), formMaxDurationMs: match.sharedForm.maxDurationMs}; }
+function evaluate(match, pending, meeting, now) {
+  return evaluateMeeting({match: meetingContext(match, pending), proposals: meeting?.agreement ? meeting.agreement.proposals : meeting?.firstProposals || [],
+    confirmations: meeting?.agreement?.confirmations || [], readySignals: meeting?.readySignals || [], nowMs: now});
+}
+function schedulingDeadline(match) { return exact(match.stageEndsAtMs - READY_WINDOW_MS - match.sharedForm.maxDurationMs); }
+
+/** Construct only inside trusted index/runtime code. Never expose worker methods via a generic
+ * callable dispatch. Auth uid and server clock are separate inputs, not inherited payload fields.
+ */
+function createCourseTournamentController({db, loadLessonContext, isCurator, nowMs = Date.now, sourceLimits,
+  workerBounds: overrides = {}}) {
+  if (typeof nowMs !== "function") throw new TypeError("Trusted server clock required");
+  only(overrides, Object.keys(DEFAULT_WORKER_BOUNDS));
+  const bounds = {...DEFAULT_WORKER_BOUNDS, ...overrides};
+  Object.values(bounds).forEach((n) => exact(n, 1));
+  if (bounds.qualificationPageSize > 100) fail("INVALID_ARGUMENT");
+  const sourceBanks = createTournamentSourceBank({db, loadLessonContext, isCurator, nowMs, ...(sourceLimits ? {limits: sourceLimits} : {})});
+  const dependencies = {loadBank: sourceBanks.loadBank, loadQualificationRanking, loadSettledMatchResults};
+  const now = () => exact(nowMs());
+  const savedEvent = async (eventId) => eventRecord(data(await db.doc(path(identifier(eventId))).get()), eventId);
+
+  async function prepare(uid, payload) { auth(uid); return sourceBanks.prepare({uid, payload}); }
+  async function operate(uid, payload) {
+    auth(uid);
+    if (!CLIENT_OPERATIONS.includes(payload?.kind)) fail("PERMISSION_DENIED", "Server worker operation is not a client capability");
+    if (Object.hasOwn(payload, "ownerUid")) fail("INVALID_ARGUMENT");
+    clientId(payload.operationId);
+    const request = normalizeTournamentRequest(uid, {...payload, ownerUid: uid});
+    return safeResponse(await applyTournamentOperation({db, uid, payload: request, now: now(), dependencies}));
+  }
+  async function session(uid, payload) {
+    auth(uid); const at = now(); // First server arrival, BEFORE asynchronous binding/key reads.
+    if (!["ANSWER", "ADVANCE", "READ"].includes(payload?.kind)) fail("INVALID_ARGUMENT");
+    const allowed = ["kind", "sessionId", ...(payload.kind === "READ" ? [] : ["operationId"]),
+      ...(payload.kind === "ANSWER" ? ["questionIndex", "questionId", "answerPayload"] : [])];
+    only(payload, allowed); sessionIdentifier(payload.sessionId);
+    if (payload.kind === "READ") return readSessionAt(uid, {sessionId: payload.sessionId}, at);
+    clientId(payload.operationId);
+    const stored = data(await db.doc(`${P.sessions}/${payload.sessionId}`).get());
+    if (!stored) fail("NOT_FOUND");
+    if (stored.uid !== uid) fail("PERMISSION_DENIED");
+    if (stored.sessionId !== payload.sessionId) fail("UNAVAILABLE");
+    const response = await applyTournamentSessionOperation({db, uid, now: at,
+      payload: {...payload, ownerUid: uid, formFingerprint: stored.formFingerprint}});
+    return safeResponse(response);
+  }
+  async function readSession(uid, payload) { return readSessionAt(uid, payload, now()); }
+  async function readSessionAt(uid, payload, at) {
+    auth(uid); only(payload, ["sessionId"]); sessionIdentifier(payload.sessionId);
+    return db.runTransaction(async transaction => {
+      const view = await readTournamentSession({db, transaction, uid, sessionId: payload.sessionId, now: at});
+      if (view.session.status === "SETTLED") {
+        const [saved, run] = await transaction.getAll(db.doc(`${P.sessions}/${payload.sessionId}`), db.doc(`${VERIFIED_RUNS}/${payload.sessionId}`));
+        const stored = data(saved);
+        const verified = verifiedTournamentRun(stored, data(run), {sessionId: payload.sessionId, uid,
+          eventId: stored.eventId, formFingerprint: stored.formFingerprint}, at);
+        view.result = verified;
+      }
+      return safeResponse(view);
+    });
+  }
+  async function readEvent(uid, payload) {
+    auth(uid); only(payload, ["eventId"]);
+    const event = await savedEvent(payload.eventId); const view = safeEvent(event);
+    if (event.status === "BRACKET" || event.status === "FINISHED") {
+      const state = bracketState(event); view.progress = safeProgress(state.progress);
+      view.matches = state.matches.map((match) => ({...pick(match, ["matchId", "stage", "stageStartsAtMs", "stageEndsAtMs"]),
+        maxDurationMs: match.sharedForm.maxDurationMs, schedulingDeadlineMs: schedulingDeadline(match)}));
+    }
+    return {event: view, serverNowMs: now()};
+  }
+  async function readMeeting(uid, payload) {
+    auth(uid); only(payload, ["eventId", "matchId", "afterOfferId", "pageSize"]); identifier(payload.eventId); matchId(payload.matchId);
+    const pageSize = payload.pageSize ?? 25; exact(pageSize, 1); if (pageSize > 100) fail("INVALID_ARGUMENT");
+    const after = payload.afterOfferId ?? null;
+    if (after !== null && !/^[a-f0-9]{64}$/.test(after)) fail("INVALID_ARGUMENT");
+    const at = now();
+    return db.runTransaction(async transaction => {
+      const event = eventRecord(data(await transaction.get(db.doc(path(payload.eventId)))), payload.eventId);
+      const state = bracketState(event); const match = state.matches.find((row) => row.matchId === payload.matchId);
+      const pending = state.progress.pending.find((row) => row.matchId === payload.matchId);
+      if (!match || !pending) fail("FAILED_PRECONDITION", "Read the terminal match via event view");
+      if (uid !== event.organizerUid && !pending.entrants.some((row) => row.uid === uid)) fail("PERMISSION_DENIED");
+      const ref = `${path(event.eventId)}/meetings/${digest(match.matchId)}`;
+      const meeting = data(await transaction.get(db.doc(ref)));
+      let query = db.collection(`${ref}/offers`).orderBy("__name__");
+      if (after !== null) query = query.startAfter(after);
+      const docs = (await transaction.get(query.limit(pageSize + 1))).docs;
+      const rows = docs.slice(0, pageSize).map((doc) => {
+        const row = doc.data();
+        if (!pending.entrants.some((p) => p.uid === row.uid) || doc.id !== digest([row.slotStartsAtMs, row.uid])) fail("UNAVAILABLE", "Stored offer binding requires repair");
+        return {offerId: doc.id, ...pick(row, ["uid", "slotStartsAtMs", "acceptedAtMs"])};
+      });
+      return {eventId: event.eventId, meeting: safeMeeting(evaluate(match, pending, meeting, Math.max(at, event.lastMutationAtMs))),
+        schedulingDeadlineMs: schedulingDeadline(match), offers: rows, hasMore: docs.length > pageSize,
+        nextOfferId: docs.length > pageSize ? rows.at(-1).offerId : null, serverNowMs: at};
+    });
+  }
+
+  async function advanceSession(expected, at) {
+    return db.runTransaction(async transaction => {
+      const stored = data(await transaction.get(db.doc(`${P.sessions}/${expected.sessionId}`)));
+      if (!stored || ["sessionId", "uid", "eventId", "matchId"].some((key) => stored[key] !== expected[key]) || stored.kind !== "MATCH") fail("UNAVAILABLE", "Admitted match session requires repair");
+      if (stored.status === "SETTLED") return {changed: false, nextDueAtMs: null};
+      if (!stored.pendingAnswerOperationId && at < Math.min(stored.questionEndsAtMs, stored.endsAtMs)) return {changed: false, nextDueAtMs: Math.min(stored.questionEndsAtMs, stored.endsAtMs)};
+      const operationId = `${WORKER_PREFIX}session_${digest([stored.sessionId, stored.questionIndex, stored.questionEndsAtMs,
+        stored.pendingAnswerOperationId || null, at >= stored.endsAtMs ? "cutoff" : "progress"])}`;
+      const payload = {kind: "ADVANCE", ownerUid: stored.uid, operationId, sessionId: stored.sessionId, formFingerprint: stored.formFingerprint};
+      const snapshot = await readTournamentSessionOperation({db, transaction, uid: stored.uid, payload});
+      const plan = planTournamentSessionOperation({snapshot, now: at});
+      if (plan.pendingRepair) return {changed: false, gap: true, nextDueAtMs: at + bounds.repairRetryMs};
+      // A waiting poll MUST NOT acquire this permanent transition ID or mutate clocks.
+      if (plan.response.status === "CURRENT_QUESTION") return {changed: false, nextDueAtMs: Math.min(stored.questionEndsAtMs, stored.endsAtMs)};
+      writeTournamentSessionOperation({db, transaction, plan});
+      return {changed: !plan.replayed, nextDueAtMs: plan.response.session.status === "SETTLED" ? null : plan.response.session.questionEndsAtMs};
+    });
+  }
+  async function workerOperation(eventId, kind, requestedMatchId, at) {
+    for (let pass = 0; pass < PREMIUM_CATCHUP_PASSES; pass++) {
+      const decision = await db.runTransaction(async transaction => {
+        const event = eventRecord(data(await transaction.get(db.doc(path(eventId)))), eventId);
+        if (TERMINAL_EVENT.has(event.status)) return {changed: false, terminal: true};
+        if (kind === "CLOSE_QUALIFICATION" && event.status !== "QUALIFICATION") return {changed: false};
+        if (kind === "ADVANCE_MATCH" && !bracketState(event).progress.pending.some((row) => row.matchId === requestedMatchId)) return {changed: false};
+        const operationId = `${WORKER_PREFIX}${kind === "CLOSE_QUALIFICATION" ? "close" : "match"}_${digest([eventId, kind, requestedMatchId || event.qualification.endsAtMs])}`;
+        const plan = await readPlanTournamentOperation({db, transaction, uid: event.organizerUid, now: at, dependencies,
+          payload: {kind, ownerUid: event.organizerUid, operationId, eventId, ...(requestedMatchId ? {matchId: requestedMatchId} : {})}});
+        if (!plan.caughtUp) { writeTournamentOperation({db, transaction, plan}); return {checkpoint: true}; }
+        const terminal = kind === "CLOSE_QUALIFICATION" ? ["BRACKET", "FINISHED", "CANCELLED"].includes(plan.response.status) : TERMINAL_MATCH.has(plan.response.status);
+        if (!terminal) return {changed: false}; // Discard staged WAITING/RESULTS_PENDING receipt AND event clock.
+        writeTournamentOperation({db, transaction, plan}); return {changed: !plan.replayed};
+      });
+      if (!decision.checkpoint) return decision;
+    }
+    return {changed: false, gap: true};
+  }
+
+  /** SERVER WORKER capability; no uid/data dispatch and no unauthenticated public endpoint. */
+  async function reconcileEvent(eventId) {
+    identifier(eventId); const at = now(); let event = await savedEvent(eventId); let transitions = 0;
+    const gaps = []; const due = []; const handled = new Set();
+    if (TERMINAL_EVENT.has(event.status)) return {eventId, done: true, status: event.status, transitions: 0, nextDueAtMs: null};
+    if (event.status === "QUALIFICATION") {
+      if (at < event.qualification.endsAtMs) return {eventId, done: false, status: "WAITING", transitions: 0, nextDueAtMs: event.qualification.endsAtMs};
+      const frozen = await freezeQualification({db, eventId, now: at, pageSize: bounds.qualificationPageSize, maxPages: bounds.qualificationMaxPages});
+      if (!frozen.complete) return {eventId, done: false, status: frozen.reason, transitions: 0,
+        scannedSessions: frozen.scannedSessions, pendingCount: frozen.pendingCount, needsLargerBudget: !!frozen.needsLargerBudget, nextDueAtMs: at + bounds.repairRetryMs};
+      const closed = await workerOperation(eventId, "CLOSE_QUALIFICATION", null, at);
+      if (closed.changed) transitions++;
+      if (closed.gap) return {eventId, done: false, status: "PREMIUM_CHECKPOINT", transitions, nextDueAtMs: at + bounds.repairRetryMs};
+    }
+    while (handled.size < MAX_MATCHES) {
+      event = await savedEvent(eventId);
+      if (TERMINAL_EVENT.has(event.status)) return {eventId, done: true, status: event.status, transitions, nextDueAtMs: null};
+      if (event.status !== "BRACKET") fail("UNAVAILABLE", "Qualification has not closed");
+      const state = bracketState(event); const pending = state.progress.pending.find((row) => !handled.has(row.matchId));
+      if (!pending) break;
+      handled.add(pending.matchId);
+      const match = state.matches.find((row) => row.matchId === pending.matchId);
+      const meeting = data(await db.doc(`${path(eventId)}/meetings/${digest(match.matchId)}`).get());
+      const evaluated = evaluate(match, pending, meeting, Math.max(at, event.lastMutationAtMs));
+      try {
+        if (evaluated.status === "STARTED") {
+          for (const player of pending.entrants) {
+            const next = await advanceSession({sessionId: matchSessionId(eventId, match.matchId, player.uid),
+              uid: player.uid, eventId, matchId: match.matchId}, at);
+            if (next.nextDueAtMs !== null) due.push(next.nextDueAtMs);
+            if (next.gap) gaps.push(match.matchId);
+          }
+        } else if (evaluated.status === "WAITING_FOR_AGREEMENT") due.push(schedulingDeadline(match));
+        else if (evaluated.status === "WAITING_FOR_WINDOW") due.push(evaluated.slotStartsAtMs);
+        else if (evaluated.status === "WAITING_FOR_READY") due.push(evaluated.windowEndMs);
+        const advanced = await workerOperation(eventId, "ADVANCE_MATCH", match.matchId, at);
+        if (advanced.changed) transitions++;
+        if (advanced.gap) gaps.push(match.matchId);
+      } catch (error) {
+        if (!["UNAVAILABLE", "SCORING_UNAVAILABLE", "INCONSISTENT_SESSION", "INVALID_RESULTS", "FAILED_PRECONDITION"].includes(error.code)) throw error;
+        gaps.push(match.matchId); // Repair needed; never substitute an invented zero/outcome/payout.
+      }
+    }
+    event = await savedEvent(eventId);
+    if (TERMINAL_EVENT.has(event.status)) return {eventId, done: true, status: event.status, transitions, nextDueAtMs: null};
+    if (gaps.length) due.push(at + bounds.repairRetryMs);
+    return {eventId, done: false, status: gaps.length ? "PENDING_REPAIR" : "WAITING", transitions,
+      pendingRepairMatches: [...new Set(gaps)].length, nextDueAtMs: due.length ? Math.max(at, Math.min(...due)) : at + bounds.repairRetryMs};
+  }
+  return {prepare, operate, session, readSession, readEvent, readMeeting, reconcileEvent};
+}
+
+module.exports = {createCourseTournamentController, CLIENT_OPERATIONS, WORKER_PREFIX, MAX_MATCHES, DEFAULT_WORKER_BOUNDS};

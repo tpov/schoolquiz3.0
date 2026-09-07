@@ -12,10 +12,11 @@
  * больше нет → одна транзакция: запись расчёта ещё раз (гонка), пользователь, таблица констант —
  * решение — баланс, отметка о возврате, квитанция, аудит, строка книги, запись о сообщении.
  *
- * Что подтверждается, а что повторяется. Нечитаемое сообщение, чужой пакет, неизвестный вид, токен
- * без расчёта — подтверждаются: повторять их нечем и незачем, а не подтверждать значит просить
- * Pub/Sub слать одно и то же каждые несколько секунд. Недоступный Play и несостоявшаяся транзакция
- * — бросаются: ничего не записано, и снять всё-таки надо, поэтому пусть привезут снова.
+ * Before any Play call, a private token fence serializes this handler with purchase grant.
+ * PENDING_VERIFICATION blocks credit with a retryable response, not a permanent forfeiture.
+ * API cancellation/not-found confirms the fence; unknown SKU-less tokens use token-only V2.
+ * Unavailable/disagreeing Play and failed economic transactions throw for redelivery: a pending
+ * fence may already exist, but no refund acknowledgement or money effect is fabricated.
  */
 
 const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constants");
@@ -23,10 +24,14 @@ const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger"
 const {ACCESS_REFUSED_HINT} = require("./purchase-settlement");
 const {PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES, premiumGrantId, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
 const {SOURCE, durationMsForDays} = require("./premium-grants");
+const {PURCHASE_REVOCATIONS_COLLECTION, REVOCATION_CONFIRMED, revocationSignal,
+  readRevocationFence, pendingRevocation, confirmedRevocation,
+  cancellationProofFromV1, cancellationProofFromV2} = require("./purchase-revocations");
 const {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
   PRODUCT_PREMIUM,
+  STATUS_REFUNDED,
   RECEIPTS_SUBCOLLECTION,
   SHORTFALL_FIELD,
   goldAfterClawback,
@@ -37,6 +42,7 @@ const {
 const {
   CLAWBACK_CLAW_BACK,
   CLAWBACK_PLAY_DISAGREES,
+  CLAWBACK_NOTHING_TO_TAKE,
   NOTIFICATION_UNKNOWN,
   NOTIFICATION_VOID,
   PURCHASE_NOTIFICATIONS_COLLECTION,
@@ -94,7 +100,7 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
   // Уже виденное сообщение отвечается своим же сохранённым результатом и не пишет ничего. Это
   // экономия, а не защита денег: их охраняет состояние записи расчёта ниже.
   const seen = await notificationRef.get();
-  if (seen.exists) {
+  if (seen.exists && ![CLAWBACK_NOTHING_TO_TAKE, CLAWBACK_PLAY_DISAGREES].includes(seen.data()?.result)) {
     const stored = seen.data() || {};
     return {kind: stringValue(stored.result) || CLAWBACK_OUTCOME_REPLAYED, replayed: true};
   }
@@ -135,20 +141,76 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
     });
   }
 
+  const signal = revocationSignal(notification, playApi.packageName);
+  if (!signal) {
+    log.warn("playPurchaseNotifications: unsupported full-revocation signal; no token fence", context);
+    return record(notificationRef, {messageId, notification, kind, result: CLAWBACK_OUTCOME_RECORDED,
+      publishTimeMs, now, detail: "not a valid supported one-time full cancellation"});
+  }
+
   const id = settlementId(token);
   const settlementRef = db.collection(PURCHASE_SETTLEMENTS_COLLECTION).doc(id);
-  const known = await settlementRef.get();
-  const settlement = known.exists ? known.data() : null;
-  // Ни разу не начисленный токен и уже возвращённый отвечаются до Play: спрашивать его незачем,
-  // снимать нечего.
+  const revocationRef = db.collection(PURCHASE_REVOCATIONS_COLLECTION).doc(id);
+  // The first transaction is the serialization point shared with grant. Reading ABSENT outside
+  // this transaction can never justify acknowledging a refund. Pending fence is not a forfeiture.
+  let ingress;
+  try {
+    ingress = await db.runTransaction(async (transaction) => {
+      const [known, revocation, priorNotice] = await transaction.getAll(settlementRef, revocationRef, notificationRef);
+      if (priorNotice.exists && priorNotice.data()?.settlementId && priorNotice.data().settlementId !== id) {
+        throw new Error("Notification replay token binding disagrees; repair required");
+      }
+      const settlement = known.exists ? known.data() : null;
+      let fence = readRevocationFence(revocation.exists ? revocation.data() : null, {id, packageName});
+      if (fence && ((fence.signal.orderId && signal.orderId && fence.signal.orderId !== signal.orderId) ||
+          (fence.signal.sku && signal.sku && fence.signal.sku !== signal.sku))) {
+        throw new Error("Revocation signal source binding disagrees; repair required");
+      }
+      if (!fence) fence = pendingRevocation({id, packageName, messageId, signal, now});
+      if (settlement?.status === STATUS_REFUNDED) fence = confirmedRevocation(fence,
+        {now, messageId, proof: "EXISTING_REFUNDED_SETTLEMENT"});
+      if (!revocation.exists || fence.state !== revocation.data().state) transaction.set(revocationRef, fence);
+      return {settlement, fence};
+    });
+  } catch (error) {
+    log.error("playPurchaseNotifications: fence transaction failed; nothing was written", {...context, settlementId: id});
+    throw error;
+  }
+  const {settlement} = ingress;
   const gate = settlementClawbackGate(settlement, null);
-  if (gate) {
+  if (gate && settlement?.status === STATUS_REFUNDED) {
     return record(notificationRef, {
       messageId, notification, kind, result: gate.decision, settlementId: id,
       sku: settlement && settlement.sku, uid: settlement && settlement.uid,
       publishTimeMs, now, detail: gate.reason,
     });
   }
+
+  if (!settlement) {
+    // The topic can arrive before the device, and voidedPurchaseNotification has no SKU. Ask
+    // token-only V2. Missing dependency/outage/disagreement keeps a retryable, nonterminal fence.
+    let proof = {confirmed: ingress.fence.state === REVOCATION_CONFIRMED};
+    if (!proof.confirmed) {
+      if (typeof playApi.getProductPurchaseByToken !== "function") throw new Error("Token-only Play lookup unavailable; redeliver");
+      proof = cancellationProofFromV2(await playApi.getProductPurchaseByToken(token), signal);
+    }
+    if (!proof.confirmed) {
+      log.warn("playPurchaseNotifications: ownerless refund verification pending; redeliver", {...context, settlementId: id});
+      throw new Error("Play refund verification pending; redeliver this notification");
+    }
+    await db.runTransaction(async (transaction) => {
+      const [fresh, revocation] = await transaction.getAll(settlementRef, revocationRef);
+      if (fresh.exists) throw new Error("Settlement appeared during refund verification; redeliver");
+      const fence = readRevocationFence(revocation.exists ? revocation.data() : null, {id, packageName});
+      if (!fence) throw new Error("Purchase revocation fence missing; repair required");
+      transaction.set(revocationRef, confirmedRevocation(fence, {now, messageId, proof: proof.proof}));
+      transaction.set(notificationRef, notificationRecord({messageId, notification, kind,
+        result: CLAWBACK_NOTHING_TO_TAKE, settlementId: id, publishTimeMs, now,
+        detail: "Play confirmed cancellation before any grant; permanent token fence retained"}));
+    });
+    return {kind: CLAWBACK_NOTHING_TO_TAKE};
+  }
+  if (gate) throw new Error("Settlement provenance is not refundable; redeliver for repair");
 
   const uid = stringValue(settlement.uid);
   const sku = stringValue(settlement.sku);
@@ -170,6 +232,12 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
     throw new Error("Play Developer API unavailable; redeliver this notification");
   }
 
+  const proof = cancellationProofFromV1(purchase, settlement, signal);
+  if (!proof.confirmed) {
+    log.error(`playPurchaseNotifications: ${PLAY_DISAGREES_HINT}`, {...context, settlementId: id, sku, uid});
+    throw new Error("Play refund verification pending; redeliver this notification");
+  }
+
   const userRef = db.collection("users").doc(uid);
   const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
   let verdict;
@@ -177,9 +245,17 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
   try {
     for (let pass = 0; pass < PREMIUM_CATCHUP_PASSES; pass++) {
     verdict = await db.runTransaction(async (transaction) => {
-      const [settlementSnapshot, userSnapshot, constantsSnapshot] =
-        await transaction.getAll(settlementRef, userRef, constantsRef);
+      const [settlementSnapshot, userSnapshot, constantsSnapshot, revocationSnapshot] =
+        await transaction.getAll(settlementRef, userRef, constantsRef, revocationRef);
       const fresh = settlementSnapshot.exists ? settlementSnapshot.data() : null;
+      const fence = readRevocationFence(revocationSnapshot.exists ? revocationSnapshot.data() : null, {id, packageName});
+      if (!fence) throw new Error("Purchase revocation fence missing; repair required");
+      if (!fresh || fresh.uid !== uid || fresh.sku !== sku) {
+        throw new Error("Purchase owner/product changed during refund verification; repair required");
+      }
+      if (fresh && fresh.status !== STATUS_REFUNDED && !cancellationProofFromV1(purchase, fresh, signal).confirmed) {
+        throw new Error("Purchase provenance changed during refund verification; redeliver");
+      }
       const constants = readEconomyConstants(constantsSnapshot.exists ? constantsSnapshot.data() : null);
       const decision = decideClawback({settlement: fresh, purchase, uid, now});
       if (decision.decision !== CLAWBACK_CLAW_BACK) return decision;
@@ -201,6 +277,7 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
         writePremiumEconomy({db, transaction, uid, plan});
         transaction.set(userRef, {uid, ...plan.userPatch}, {merge: true});
         if (!plan.caughtUp) return {decision: PREMIUM_CATCHUP};
+        transaction.set(revocationRef, confirmedRevocation(fence, {now, messageId, proof: proof.proof}));
         const gold = readGold(userData);
         const taken = {
           clawback: decision.clawback, notificationId: messageId,
@@ -234,6 +311,7 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
         constantsVersion: constants.version,
         now,
       };
+      transaction.set(revocationRef, confirmedRevocation(fence, {now, messageId, proof: proof.proof}));
 
       // Абсолютом, а не приращением: повторно исполненная транзакция обязана дать тот же баланс.
       // Ноль — пол: недостача выражается своим полем, а не минусом (ADM-19).

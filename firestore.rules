@@ -76,6 +76,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Permanent token-level refund fence: neither the buyer nor an app administrator may
+    // read, forge, clear or overwrite it. Only trusted purchase/refund transactions use it.
+    match /purchase_revocations/{document=**} { allow read, write: if false; }
+
     // Per-purchase entitlement lots include permanent provenance and consumption history.
     // All balance fields, including charge remainders and reservations, inherit users/write:false.
     match /premium_accounts/{document=**} {
@@ -118,6 +122,7 @@ service cloud.firestore {
     match /course_tournament_rankings/{document=**} { allow read, write: if false; }
     match /course_tournament_bank_preparations/{document=**} { allow read, write: if false; }
     match /course_tournament_source_banks/{document=**} { allow read, write: if false; }
+    match /course_tournament_worker_state/{document=**} { allow read, write: if false; }
 
     match /purchase_notifications/{messageId} {
       // One document per Play notification message, written by playPurchaseNotifications. It is

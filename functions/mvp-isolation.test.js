@@ -13,6 +13,8 @@ test("MVP fixture is a demo-only separate application, not a real Firebase proje
   assert.equal(config.project_info.project_id, "demo-schoolquiz-mvp");
   assert.equal(config.client[0].client_info.android_client_info.package_name, "com.tpov.schoolquiz.mvp");
   assert.match(config.client[0].api_key[0].current_key, /DemoOnly/);
+  // Firebase IID validates even a demo key before Functions can use its emulator.
+  assert.match(config.client[0].api_key[0].current_key, /^A[\w-]{38}$/);
   const gradle = read(`${app}/build.gradle.kts`);
   assert.match(gradle, /buildConfigField\("boolean", "MVP_EMULATORS", "false"\)/);
   assert.match(gradle, /create\("mvp"\)[\s\S]*applicationIdSuffix = "\.mvp"/);

@@ -7,6 +7,7 @@ const {
   REQUEST_TIMEOUT_MS,
   createPlayDeveloperApi,
   productPurchaseUrl,
+  productPurchaseByTokenUrl,
 } = require("./play-developer-api");
 const {
   PLAY_OUTCOME_FOUND,
@@ -166,6 +167,29 @@ async function testANetworkErrorWithoutAStatusIsUnavailableAndKeepsItsCode() {
   assertNeverCarriesTheToken(denied, "no credentials");
 }
 
+async function testTokenOnlyV2NamesExactPackageAndEncodedTokenWithoutInventingSku() {
+  const data = {orderId: "GPA.fixture", purchaseStateContext: {purchaseState: "CANCELLED"},
+    productLineItem: [{productId: SKU}]};
+  const {auth, client} = api(() => ({status: 200, data}), {packageName: "com.example.app"});
+  assert.deepStrictEqual(await client.getProductPurchaseByToken(TOKEN),
+    {outcome: PLAY_OUTCOME_FOUND, status: 200, code: null, reason: null, purchase: data});
+  assert.deepStrictEqual(auth.calls, [{method: "GET", timeout: REQUEST_TIMEOUT_MS,
+    url: `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.example.app/purchases/productsv2/tokens/${encodeURIComponent(TOKEN)}`}]);
+  assert.strictEqual(auth.calls[0].url, productPurchaseByTokenUrl("com.example.app", TOKEN));
+}
+
+async function testTokenOnlyV2RetainsSafeErrorClassificationWithoutLeakingToken() {
+  for (const [status, reason, expected] of [[404, "notFound", PLAY_OUTCOME_NOT_FOUND],
+    [400, "invalidPurchaseToken", PLAY_OUTCOME_NOT_FOUND], [400, "badRequest", PLAY_OUTCOME_UNAVAILABLE],
+    [401, "forbidden", PLAY_OUTCOME_UNAVAILABLE], [403, "forbidden", PLAY_OUTCOME_UNAVAILABLE],
+    [503, null, PLAY_OUTCOME_UNAVAILABLE], [null, null, PLAY_OUTCOME_UNAVAILABLE]]) {
+    const {client} = api(({url}) => { throw gaxiosError({status, reason, url}); });
+    const result = await client.getProductPurchaseByToken(TOKEN);
+    assert.strictEqual(result.outcome, expected, String(status));
+    assertNeverCarriesTheToken(result, `V2 ${status}`);
+  }
+}
+
 (async () => {
   await testTheRequestNamesThePackageSkuAndTokenExactly();
   await testAFoundPurchaseIsReturnedAsPlaySentIt();
@@ -173,6 +197,8 @@ async function testANetworkErrorWithoutAStatusIsUnavailableAndKeepsItsCode() {
   await testA400AboutAnythingElseIsNotAVerdict();
   await testAccessDeniedAndServerErrorsAreUnavailable();
   await testANetworkErrorWithoutAStatusIsUnavailableAndKeepsItsCode();
+  await testTokenOnlyV2NamesExactPackageAndEncodedTokenWithoutInventingSku();
+  await testTokenOnlyV2RetainsSafeErrorClassificationWithoutLeakingToken();
   console.log("play-developer-api.test.js OK");
 })().catch((error) => {
   console.error(error);

@@ -52,7 +52,8 @@ async function buyPremium(db, now = T, token = TOKEN) {
 }
 async function refundPremium(db, now) {
   const value = {version: "1.0", packageName: PACKAGE, eventTimeMillis: String(now),
-    voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 2, refundType: 1}};
+    voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 2, refundType: 1,
+      orderId: "GPA.1111-2222-3333-44444"}};
   return clawBackPurchase({db, playApi: play(1), now, readGold: (u) => u.gold || 0, log,
     message: {messageId: "box-test-premium-refund", publishTime: new Date(now).toISOString(), data: Buffer.from(JSON.stringify(value)).toString("base64")}});
 }

@@ -1,6 +1,15 @@
 {
   "indexes": [
     {
+      "collectionGroup": "arena_entry_tickets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "uid", "order": "ASCENDING"},
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "__name__", "order": "ASCENDING"}
+      ]
+    },
+    {
       "collectionGroup": "lots",
       "queryScope": "COLLECTION",
       "fields": [

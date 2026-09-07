@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const {createHash} = require("node:crypto");
 const test = require("node:test");
 const {existsSync} = require("node:fs");
 const {join} = require("node:path");
@@ -129,6 +130,89 @@ test("auth, selected admission and immutable question snapshot are enforced befo
   const f = setup();
   await assert.rejects(() => f.issue("x", {uid: ""}), /authenticated uid/);
   await assert.rejects(() => f.issue("x", {mode: "RANDOM"}), /chosen by server/);
+});
+
+test("selected ceiling permits the actual price at or below confirmation and does not charge the ceiling", async () => {
+  for (const maxPriceNolics of [10, 11, 100]) {
+    const f = setup();
+    const {ticket} = await f.issue("confirmed", {maxPriceNolics});
+    assert.equal(ticket.priceNolics, 10);
+    assert.equal(f.db.read("users/player").nolics, 990);
+    assert.equal(f.db.read("users/player").reservedNolics, 10);
+    assert.equal(f.db.read("users/player").reservedLifePoints, 50);
+  }
+});
+
+test("a lower or zero selected ceiling refuses without any hold, receipt or regeneration checkpoint", async () => {
+  for (const maxPriceNolics of [0, 9]) {
+    const f = setup({regeneration: ({user}) => ({caughtUp: false, userPatch: {lifePoints: user.lifePoints}})});
+    const before = f.db.paths("").map((path) => [path, f.db.read(path)]);
+    await assert.rejects(f.issue("unconfirmed-price", {maxPriceNolics}), {code: "PRICE_CHANGED"});
+    assert.deepEqual(f.db.paths("").map((path) => [path, f.db.read(path)]), before);
+    assert.equal(f.db.commits.length, 0);
+    assert.equal(f.stats.regenReads, 0);
+    assert.equal(f.stats.regenWrites, 0);
+  }
+  const f = setup();
+  await assert.rejects(f.issue("old-confirmation", {maxPriceNolics: 9}), {code: "PRICE_CHANGED"});
+  assert.equal((await f.issue("new-explicit-confirmation", {maxPriceNolics: 10})).ticket.priceNolics, 10);
+});
+
+test("only exact safe integer selected ceilings 0 through 100 are accepted; supplied undefined is not absence", async () => {
+  for (const maxPriceNolics of [undefined, null, false, true, "10", 10.5, -1, 101, NaN, Infinity, {}, [], Number.MAX_SAFE_INTEGER + 1]) {
+    const f = setup();
+    await assert.rejects(f.issue("invalid-ceiling", {maxPriceNolics}), {code: "INVALID_ARGUMENT"});
+    assert.equal(f.db.commits.length, 0);
+    assert.equal(f.stats.regenReads, 0);
+  }
+});
+
+test("random entry rejects any supplied ceiling instead of silently ignoring it", async () => {
+  for (const maxPriceNolics of [0, 10, 100, null, undefined]) {
+    const f = setup();
+    await assert.rejects(f.issue("random-ceiling", {mode: "RANDOM", lessonId: null, maxPriceNolics}), {code: "INVALID_ARGUMENT"});
+    assert.equal(f.stats.randomCalls, 0);
+    assert.equal(f.db.commits.length, 0);
+  }
+});
+
+test("a confirmed request replays its original ticket after repricing but cannot change or omit its ceiling", async () => {
+  const f = setup();
+  const first = await f.issue("frozen-ceiling", {maxPriceNolics: 10});
+  const before = f.db.read("users/player");
+  f.db.put("server_lessons/lesson", snapshot({priceNolics: 100, ratingVersion: 6}));
+  assert.deepEqual(await f.issue("frozen-ceiling", {maxPriceNolics: 10}), first);
+  for (const patch of [{}, {maxPriceNolics: 9}, {maxPriceNolics: 11}, {maxPriceNolics: 100}]) {
+    await assert.rejects(f.issue("frozen-ceiling", patch), {code: "REQUEST_REUSE"});
+  }
+  assert.deepEqual(f.db.read("users/player"), before);
+  assert.equal(f.stats.regenReads, 1);
+  assert.equal(f.db.paths("arena_entry_tickets/").length, 1);
+});
+
+test("omitted ceiling retains the exact old request hash and old ticket replay is never upgraded", async () => {
+  const f = setup();
+  const first = await f.issue("legacy");
+  // Pre-extension digest: canonical sorted request keys, no maxPriceNolics key or default.
+  const oldHash = createHash("sha256").update(JSON.stringify({difficulty: "EASY", lessonId: "lesson",
+    mode: "SELECTED", requestId: "legacy", uid: "player"})).digest("hex");
+  assert.equal(f.db.read(`arena_entry_tickets/${first.ticket.ticketId}`).requestHash, oldHash);
+  assert.equal(Object.hasOwn(first.ticket, "maxPriceNolics"), false);
+  f.db.put("server_lessons/lesson", snapshot({priceNolics: 100, ratingVersion: 9}));
+  assert.deepEqual(await f.issue("legacy"), first);
+  await assert.rejects(f.issue("legacy", {maxPriceNolics: 10}), {code: "REQUEST_REUSE"});
+  assert.equal(f.db.read("users/player").reservedNolics, 10);
+});
+
+test("competing confirmations on the same request ID create one immutable ticket and hold", async () => {
+  const f = setup();
+  const outcomes = await Promise.allSettled([f.issue("race-ceiling", {maxPriceNolics: 10}),
+    f.issue("race-ceiling", {maxPriceNolics: 100})]);
+  assert.equal(outcomes.filter((outcome) => outcome.status === "fulfilled").length, 1);
+  assert.equal(outcomes.find((outcome) => outcome.status === "rejected").reason.code, "REQUEST_REUSE");
+  assert.equal(f.db.read("users/player").reservedNolics, 10);
+  assert.equal(f.db.read("users/player").arenaSelectedHeldCount, 1);
+  assert.equal(f.db.paths("arena_entry_tickets/").length, 1);
 });
 
 test("two devices cannot overspend available money or charges; insufficient issue is atomic", async () => {

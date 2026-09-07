@@ -79,6 +79,9 @@ const {
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const {createArenaService} = require("./arena-service");
 const {createArenaEntryRuntime} = require("./arena-entry-runtime");
+const {createArenaTicketRecovery} = require("./arena-ticket-recovery");
+const {createCourseTournamentController} = require("./course-tournament-controller");
+const {createTournamentWorker, FUNCTION_TIMEOUT_MS} = require("./tournament-worker");
 const {
   CURRENCY,
   LEDGER_PATH,
@@ -255,12 +258,7 @@ const arenaService = createArenaService({
     if (event.userId !== uid || event.lessonId !== lessonId || !event.settlementReceipt) return null;
     return {...event.settlementReceipt, activityKind: event.activityKind};
   },
-  isCurator: async (transaction, uid) => {
-    const snapshot = await transaction.get(db.doc(`profiles/${uid}`));
-    const profile = snapshot.exists ? snapshot.data() || {} : {};
-    return numberValue(profile.adminLevel, 0) >= QUALIFIED_LEVEL ||
-      numberValue(profile.developerLevel, 0) > DEVELOPER_ALL_ACCESS_LEVEL;
-  },
+  isCurator: isArenaCurator,
   writeLessonChange: (transaction, context, fields, now) => {
     const lessonChangeAtMs = Math.max(now, context.nextChangeAtMs);
     transaction.set(db.doc(`lessons/${context.lessonId}`),
@@ -269,11 +267,95 @@ const arenaService = createArenaService({
   },
 });
 
+async function isArenaCurator(transaction, uid) {
+  const snapshot = await transaction.get(db.doc(`profiles/${uid}`));
+  const profile = snapshot.exists ? snapshot.data() || {} : {};
+  return numberValue(profile.adminLevel, 0) >= QUALIFIED_LEVEL ||
+    numberValue(profile.developerLevel, 0) > DEVELOPER_ALL_ACCESS_LEVEL;
+}
+
+const courseTournaments = createCourseTournamentController({
+  db, loadLessonContext: loadArenaLessonContext, isCurator: isArenaCurator,
+});
+const tournamentWorker = createTournamentWorker({
+  db, reconcileEvent: courseTournaments.reconcileEvent,
+  log: (record) => logger.warn("Course tournament sweep", record),
+});
+// Server scheduler only; never reuse callable/App Check options or expose client-selected work.
+exports.reconcileCourseTournaments = onSchedule({
+  schedule: "every 1 minutes", timeZone: "UTC", timeoutSeconds: FUNCTION_TIMEOUT_MS / 1000,
+  memory: "512MiB", maxInstances: 1, retryCount: 0,
+}, async () => {
+  const result = await tournamentWorker.sweep();
+  logger.info("Course tournament sweep completed", {
+    status: result.status, attempted: result.attempted, failed: result.failed,
+    completedEvents: result.completedEvents, queryCount: result.queryCount,
+    wrapped: result.wrapped, leaseReleased: result.leaseReleased,
+  });
+});
+// Explicit capabilities only: no callable can select a controller method or invoke its worker.
+exports.prepareCourseTournamentBank = onCall(CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.prepare(uid, payload)));
+exports.submitCourseTournamentOperation = onCall(MONETARY_CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.operate(uid, payload)));
+exports.submitCourseTournamentSession = onCall(CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.session(uid, payload)));
+exports.fetchCourseTournamentEvent = onCall(CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.readEvent(uid, payload)));
+exports.fetchCourseTournamentSession = onCall(CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.readSession(uid, payload)));
+exports.fetchCourseTournamentMeeting = onCall(CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.readMeeting(uid, payload)));
+
+async function callCourseTournament(request, action) {
+  const uid = requireAuthUid(request);
+  try {
+    return await action(uid, request.data);
+  } catch (error) {
+    // Do not expose server documents, grading material or SDK internals through callable errors.
+    const reason = typeof error.code === "string" && /^[A-Z][A-Z_]{0,63}$/.test(error.code) ? error.code : "SERVER_FAILURE";
+    const code = reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+      reason === "UNAUTHENTICATED" ? "unauthenticated" : reason === "PERMISSION_DENIED" ? "permission-denied" :
+      reason === "NOT_FOUND" ? "not-found" :
+      ["ALREADY_EXISTS", "CONFLICTING_REPLAY", "PREPARATION_REUSE"].includes(reason) ? "already-exists" :
+      reason === "SOURCE_TOO_LARGE" ? "resource-exhausted" :
+      ["UNAVAILABLE", "SCORING_UNAVAILABLE"].includes(reason) || reason.startsWith("INCONSISTENT_") ? "unavailable" :
+      reason === "SERVER_FAILURE" ? "internal" : "failed-precondition";
+    if (code === "internal" || code === "unavailable") logger.warn("Course tournament operation needs retry or repair", {reason});
+    throw new HttpsError(code, "Tournament operation could not be completed", {reason});
+  }
+}
+
 const arenaEntries = createArenaEntryRuntime({db, loadLessonContext: loadArenaLessonContext});
+const arenaTicketRecovery = createArenaTicketRecovery({db});
+exports.listArenaEntryTickets = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("list", request));
+exports.fetchArenaEntryTicket = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("get", request));
+async function callArenaTicketRecovery(method, request) {
+  const uid = requireAuthUid(request);
+  try {
+    return await arenaTicketRecovery[method]({uid, payload: request.data});
+  } catch (error) {
+    const reason = error.name === "ArenaTicketError" ? error.code : "UNAVAILABLE";
+    const code = reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+      reason === "NOT_FOUND" ? "not-found" : "unavailable";
+    throw new HttpsError(code, "Arena ticket recovery could not be completed", {reason});
+  }
+}
 exports.prepareArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("issue", request));
 exports.cancelArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("cancel", request));
 async function callArenaEntry(method, request) {
   const uid = requireAuthUid(request);
+  // A direct SDK call may acquire its Auth token after the user has switched accounts. Bind new
+  // paid prepare/cancel calls to the owner confirmed by the UI before entering any transaction.
+  // Legacy clients omit this redundant binding; server Auth remains the only authority.
+  if (method !== "settle" && request.data && Object.hasOwn(request.data, "expectedOwnerUid")) {
+    if (typeof request.data.expectedOwnerUid !== "string" || !isSingleDocumentId(request.data.expectedOwnerUid)) {
+      throw new HttpsError("invalid-argument", "Invalid expected Arena owner", {reason: "INVALID_ARGUMENT"});
+    }
+    if (request.data.expectedOwnerUid !== uid) {
+      throw new HttpsError("permission-denied", "The Arena account changed", {reason: "ACCOUNT_CHANGED"});
+    }
+  }
   try {
     return await arenaEntries[method](method === "settle" ? {uid, payload: request.data} : {...request.data, uid});
   } catch (error) {

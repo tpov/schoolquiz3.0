@@ -45,6 +45,7 @@ const SETTLEMENT_PATH = `purchase_settlements/${ID}`;
 const RECEIPT_PATH = `users/${UID}/receipts/${refundDocId(ID)}`;
 const AUDIT_PATH = `purchase_audit/${refundDocId(ID)}`;
 const NOTIFICATION_PATH = `purchase_notifications/${MESSAGE_ID}`;
+const REVOCATION_PATH = `purchase_revocations/${ID}`;
 const LEDGER_ENTRY_PATH = `${LEDGER_PATH}/${UID}_${CURRENCY.GOLD}_${REASON.PURCHASE_REFUND}_${ID}`;
 const CONSTANTS_DOC = {version: 9, goldPacks: {gold_pack_small: 12}};
 
@@ -126,6 +127,7 @@ function fakeDb({docs = {}, beforeTransaction = null, transactionFails = false} 
     },
     async set(data, options) {
       writes.push({op: "set", path: docPath, data, options});
+      store.set(docPath, options?.merge ? {...store.get(docPath), ...data} : data);
     },
     collection(name) {
       return collectionRef(`${docPath}/${name}`);
@@ -150,6 +152,7 @@ function fakeDb({docs = {}, beforeTransaction = null, transactionFails = false} 
       const pending = [];
       const transaction = {
         async getAll(...refs) {
+          assert.strictEqual(pending.length, 0, "all reads precede writes");
           return refs.map((ref) => snapshot(ref.path));
         },
         set(ref, data, options) {
@@ -159,6 +162,8 @@ function fakeDb({docs = {}, beforeTransaction = null, transactionFails = false} 
       };
       const result = await body(transaction);
       writes.push(...pending);
+      for (const write of pending) store.set(write.path,
+        write.options?.merge ? {...store.get(write.path), ...write.data} : write.data);
       return result;
     },
   };
@@ -172,6 +177,11 @@ function fakePlay(lookup) {
     async getProductPurchase(sku, purchaseToken) {
       calls.push({sku, purchaseToken});
       return lookup;
+    },
+    async getProductPurchaseByToken(purchaseToken) {
+      calls.push({purchaseToken});
+      return {outcome: PLAY_OUTCOME_FOUND, purchase: {orderId: "GPA.3333-4444-5555-66666",
+        productLineItem: [{productId: SKU}], purchaseStateContext: {purchaseState: "CANCELLED"}}};
     },
   };
 }
@@ -216,9 +226,9 @@ async function testAVoidedPurchaseTakesTheGoldBackAndMarksTheSettlementInOneTran
   assert.strictEqual(outcome.goldTakenBack, 60);
   assert.strictEqual(outcome.shortfall, 0);
   assert.deepStrictEqual(play.calls, [{sku: SKU, purchaseToken: TOKEN}], "SKU берётся из записи расчёта");
-  assert.strictEqual(db.transactions, 1);
+  assert.strictEqual(db.transactions, 2, "durable ingress fence, then atomic economic refund");
 
-  assert.strictEqual(db.writes.length, 6, "баланс, расчёт, квитанция, аудит, книга, сообщение");
+  assert.strictEqual(db.writes.length, 8, "pending fence; confirmed fence with balance, receipt and audit");
   const written = byPath(db.writes);
   assert.deepStrictEqual(written[USER_PATH].data, {
     uid: UID, gold: 140, [SHORTFALL_FIELD]: 0, updatedAtMs: NOW,
@@ -280,7 +290,7 @@ async function testASecondRefundOnAnAccountThatAlreadyOwesAddsToTheDebt() {
   const written = byPath(db.writes);
   assert.deepStrictEqual(written[USER_PATH].data, {uid: UID, gold: 0, [SHORTFALL_FIELD]: 75, updatedAtMs: NOW});
   assert.strictEqual(written[LEDGER_ENTRY_PATH], undefined, "баланс не двигался — движения не было");
-  assert.strictEqual(db.writes.length, 5);
+  assert.strictEqual(db.writes.length, 7);
 }
 
 async function testTheSameMessageAgainWritesNothingAndAnswersTheSame() {
@@ -315,10 +325,10 @@ async function testASecondNotificationAboutTheSameTokenTakesNothingBackTwice() {
 
   assert.strictEqual(outcome.kind, CLAWBACK_ALREADY_REFUNDED);
   assert.deepStrictEqual(play.calls, [], "уже возвращённое не перепроверяется");
-  assert.strictEqual(db.writes.length, 1, "только запись о сообщении");
-  assert.strictEqual(db.writes[0].path, "purchase_notifications/another-message");
-  assert.strictEqual(db.writes[0].data.result, CLAWBACK_ALREADY_REFUNDED);
-  assert.strictEqual(db.transactions, 0);
+  assert.strictEqual(db.writes.length, 2, "confirmed fence upgrade plus notification");
+  assert.strictEqual(db.writes[1].path, "purchase_notifications/another-message");
+  assert.strictEqual(db.writes[1].data.result, CLAWBACK_ALREADY_REFUNDED);
+  assert.strictEqual(db.transactions, 1);
 }
 
 async function testARaceThatRefundsBetweenTheReadAndTheTransactionTakesNothingBack() {
@@ -337,8 +347,8 @@ async function testARaceThatRefundsBetweenTheReadAndTheTransactionTakesNothingBa
 
   assert.strictEqual(outcome.kind, CLAWBACK_ALREADY_REFUNDED);
   assert.strictEqual(db.transactions, 1);
-  assert.strictEqual(db.writes.length, 1, "транзакция не записала ничего — только запись о сообщении");
-  assert.strictEqual(db.writes[0].path, NOTIFICATION_PATH);
+  assert.strictEqual(db.writes.length, 2, "confirmed fence upgrade plus notification; no monetary effect");
+  assert.strictEqual(db.writes[1].path, NOTIFICATION_PATH);
 }
 
 async function testATokenThatWasNeverCreditedIsRecordedAndNothingElse() {
@@ -347,11 +357,11 @@ async function testATokenThatWasNeverCreditedIsRecordedAndNothingElse() {
   const {outcome, play} = await clawBack({db});
 
   assert.strictEqual(outcome.kind, CLAWBACK_NOTHING_TO_TAKE);
-  assert.deepStrictEqual(play.calls, [], "спрашивать Play не о чем");
-  assert.strictEqual(db.writes.length, 1);
-  assert.strictEqual(db.writes[0].path, NOTIFICATION_PATH);
-  assert.strictEqual(db.writes[0].data.result, CLAWBACK_NOTHING_TO_TAKE);
-  assert.strictEqual(db.transactions, 0);
+  assert.deepStrictEqual(play.calls, [{purchaseToken: TOKEN}], "token-only V2 resolves SKU-less RTDN");
+  assert.strictEqual(db.writes.length, 3, "pending fence then confirmed fence and notice");
+  assert.strictEqual(db.writes[2].path, NOTIFICATION_PATH);
+  assert.strictEqual(db.writes[2].data.result, CLAWBACK_NOTHING_TO_TAKE);
+  assert.strictEqual(db.transactions, 2);
 }
 
 async function testNothingIsTakenBackWhilePlayStillReportsThePurchaseAsBought() {
@@ -363,12 +373,12 @@ async function testNothingIsTakenBackWhilePlayStillReportsThePurchaseAsBought() 
     },
   });
 
-  const {outcome, log} = await clawBack({db, play: fakePlay(found({purchaseState: 0, consumptionState: 0}))});
-
-  assert.strictEqual(outcome.kind, CLAWBACK_PLAY_DISAGREES);
-  assert.strictEqual(db.writes.length, 1, "деньги не тронуты");
-  assert.strictEqual(db.writes[0].path, NOTIFICATION_PATH);
-  assert.strictEqual(db.writes[0].data.result, CLAWBACK_PLAY_DISAGREES);
+  const log = fakeLog();
+  await assert.rejects(clawBackPurchase({db, playApi: fakePlay(found({purchaseState: 0, consumptionState: 0})),
+    now: NOW, message: message(voidedNotification()), readGold, log}), /redeliver/);
+  assert.strictEqual(db.writes.length, 1, "pending fence only; no monetary effect or terminal memoization");
+  assert.strictEqual(db.writes[0].path, REVOCATION_PATH);
+  assert.strictEqual(db.writes[0].data.state, "PENDING_VERIFICATION");
   // Уведомление против ответа Play — расхождение, которое разбирает человек, а не код.
   assert.strictEqual(log.entries.error.length, 1);
   assert.ok(log.entries.error[0].message.includes(PLAY_DISAGREES_HINT));
@@ -405,8 +415,9 @@ async function testAnUnreachablePlayWritesNothingAndAsksForTheMessageAgain() {
     /redeliver/,
     "без вердикта сообщение не подтверждается",
   );
-  assert.deepStrictEqual(outage.writes, [], "ничего не записано, включая запись о сообщении");
-  assert.strictEqual(outage.transactions, 0);
+  assert.strictEqual(outage.writes.length, 1, "only pending token fence, no acknowledged notification");
+  assert.strictEqual(outage.writes[0].path, REVOCATION_PATH);
+  assert.strictEqual(outage.transactions, 1);
 
   // Отказ в доступе — не покупка виновата, а сервисный аккаунт: ошибка владельцу, не предупреждение.
   for (const status of [401, 403]) {
@@ -419,7 +430,8 @@ async function testAnUnreachablePlayWritesNothingAndAsksForTheMessageAgain() {
     }));
     assert.strictEqual(log.entries.error.length, 1, String(status));
     assert.ok(log.entries.error[0].message.includes(ACCESS_REFUSED_HINT), String(status));
-    assert.deepStrictEqual(denied.writes, [], String(status));
+    assert.strictEqual(denied.writes.length, 1, String(status));
+    assert.strictEqual(denied.writes[0].path, REVOCATION_PATH);
   }
 }
 
