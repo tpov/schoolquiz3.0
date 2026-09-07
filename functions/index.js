@@ -349,6 +349,7 @@ exports.listArenaLessons = onCall(CALLABLE_OPTIONS, async (request) => {
 const arenaTicketRecovery = createArenaTicketRecovery({db});
 exports.listArenaEntryTickets = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("list", request));
 exports.fetchArenaEntryTicket = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("get", request));
+exports.fetchArenaEntryTicketStatus = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("status", request));
 async function callArenaTicketRecovery(method, request) {
   const uid = requireAuthUid(request);
   try {

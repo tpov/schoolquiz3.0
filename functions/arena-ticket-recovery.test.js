@@ -92,8 +92,9 @@ function world() {
   }})};
   const recovery = createArenaTicketRecovery({db: readDb});
   const get = (ticket, uid = "player") => recovery.get({uid, payload: {ticketId: ticket.ticketId}});
+  const status = (ticket, uid = "player") => recovery.status({uid, payload: {ticketId: ticket.ticketId}});
   const list = (payload = {}, uid = "player") => recovery.list({uid, payload});
-  return {rows, clock, issue, cancel, settle, recovery, get, list, stats, hooks};
+  return {rows, clock, issue, cancel, settle, recovery, get, status, list, stats, hooks};
 }
 const rejects = (fn, code) => assert.rejects(fn, (error) => error.code === code);
 
@@ -314,4 +315,180 @@ test("store failures are retryable UNAVAILABLE, not an empty list or a missing t
   await rejects(() => f.get(ticket), "UNAVAILABLE");
   f.hooks.afterSnapshot = () => { throw new Error("sensitive backend detail"); };
   await rejects(() => f.list(), "UNAVAILABLE");
+});
+
+test("status projects actual issued, cancelled and settled headers/receipts, never launch permission or a balance", async () => {
+  const f = world(); const ticket = await f.issue("status-lifecycle");
+  const {questions: omittedQuestions, requestHash: omittedHash, ...expected} = ticket;
+  assert.ok(omittedQuestions.length); assert.equal(typeof omittedHash, "string");
+  const before = clone([...f.rows]);
+  assert.deepEqual(await f.status(ticket), {ticket: expected});
+  assert.deepEqual([...f.rows], before);
+  const cancellation = await f.cancel(ticket);
+  const afterCancellation = clone([...f.rows]);
+  assert.deepEqual(await f.status(ticket), {ticket: {...expected, status: "CANCELLED", terminal: cancellation.terminal}});
+  assert.deepEqual([...f.rows], afterCancellation);
+  const completed = await f.issue("status-settled"); await f.settle(completed);
+  const recovered = await f.get(completed);
+  const {questions: ignored, ...settledHeader} = recovered.ticket;
+  assert.ok(ignored.length);
+  const afterSettlement = clone([...f.rows]);
+  assert.deepEqual(await f.status(completed), {ticket: settledHeader});
+  assert.deepEqual([...f.rows], afterSettlement);
+  assert.equal(settledHeader.terminal.percentScore, 75.5);
+  assert.equal(Object.hasOwn(settledHeader.terminal, "scoreDigest"), false);
+});
+
+for (const variant of ["missing", "empty", "malformed", "unsafe-hard", "missing-key"]) {
+  test(`status keeps a real cancellation readable with a ${variant} frozen bank`, async () => {
+    const f = world(); const ticket = await f.issue(`status-bank-${variant}`, {difficulty: "HARD"});
+    const raw = f.rows.get(ticketPath(ticket));
+    if (variant === "missing") delete raw.questions;
+    if (variant === "empty") raw.questions = [];
+    if (variant === "malformed") raw.questions[0].publicQuestion.payload = "not-json";
+    if (variant === "unsafe-hard") {
+      const payload = JSON.parse(raw.questions[0].publicQuestion.payload); payload.correctOptionId = "secret";
+      raw.questions[0].publicQuestion.payload = JSON.stringify(payload);
+    }
+    if (variant === "missing-key") delete raw.questions[0].gradingKey;
+    // Neither a malformed bank nor current content is needed to read or cancel this hold.
+    assert.equal((await f.status(ticket)).ticket.status, "RESERVED");
+    const cancelled = await f.cancel(ticket);
+    f.rows.set("lesson_placements/lesson", {shelf: "retired"}); f.rows.delete("questions/q1");
+    f.rows.set("lessons/lesson", {version: 999});
+    const before = clone([...f.rows]);
+    await rejects(() => f.get(ticket), "UNAVAILABLE");
+    const result = await f.status(ticket);
+    assert.equal(result.ticket.status, "CANCELLED"); assert.deepEqual(result.ticket.terminal, cancelled.terminal);
+    assert.equal(Object.hasOwn(result.ticket, "questions"), false);
+    assert.deepEqual([...f.rows], before);
+  });
+}
+
+test("status drops unknown/private fields from header and both terminal variants without reading their bank", async () => {
+  const f = world(); const cancelled = await f.issue("status-private-cancel"); await f.cancel(cancelled);
+  const settled = await f.issue("status-private-settle"); await f.settle(settled);
+  for (const ticket of [cancelled, settled]) {
+    const raw = f.rows.get(ticketPath(ticket));
+    raw.futurePrivate = "secret-root"; raw.contentContext.futurePrivate = "secret-context";
+    raw.terminal.futurePrivate = "secret-terminal"; raw.terminal.uid = "foreign";
+    raw.terminal.questions = [{key: "secret-question"}]; raw.questions = null;
+    const before = clone([...f.rows]); const result = await f.status(ticket);
+    const wire = JSON.stringify(result);
+    for (const forbidden of ["secret", "foreign", "questions", "gradingKey", "bundleDigest", "scoreDigest", "requestHash"]) {
+      assert.equal(wire.includes(forbidden), false, forbidden);
+    }
+    for (const forbidden of ["completed", "reward", "codeAnswer", "balance", "wallet", "history"]) {
+      assert.equal(Object.hasOwn(result.ticket, forbidden), false, forbidden);
+      assert.equal(Object.hasOwn(result.ticket.terminal, forbidden), false, forbidden);
+    }
+    assert.deepEqual([...f.rows], before);
+  }
+});
+
+test("status is owner-bound, strict and read-only: caller authority and malformed IDs are refused before reads", async () => {
+  const f = world(); const ticket = await f.issue("status-owned"); const before = clone([...f.rows]);
+  const valid = {uid: "player", payload: {ticketId: ticket.ticketId}};
+  for (const input of [null, [], {...valid, ownerUid: "other"}, {...valid, admin: true},
+    {...valid, payload: null}, {...valid, payload: []}, {...valid, payload: {}},
+    ...["uid", "ownerUid", "expectedOwnerUid", "status", "terminal", "pageSize", "questions"].map((field) =>
+      ({...valid, payload: {...valid.payload, [field]: "forged"}})),
+    ...[null, 0, "", "a".repeat(63), "A".repeat(64), "../" + "a".repeat(64)].map((ticketId) =>
+      ({...valid, payload: {ticketId}}))]) {
+    await rejects(() => f.recovery.status(input), "INVALID_ARGUMENT");
+  }
+  for (const uid of [null, "", "foreign/uid"]) await rejects(() => f.recovery.status({...valid, uid}), "UNAUTHENTICATED");
+  assert.equal(f.stats.documentReads.length, 0);
+  await rejects(() => f.status(ticket, "other"), "NOT_FOUND");
+  await rejects(() => f.status({ticketId: "f".repeat(64)}), "NOT_FOUND");
+  assert.equal(f.stats.documentReads.length, 2); assert.equal(f.stats.queries.length, 0);
+  assert.deepEqual([...f.rows], before);
+});
+
+test("status rejects corrupt required header identity and amounts even if its terminal looks valid", async () => {
+  const f = world(); const ticket = await f.issue("status-header"); await f.cancel(ticket);
+  const original = clone(f.rows.get(ticketPath(ticket)));
+  for (const patch of [{schemaVersion: 2}, {requestId: "another-request"}, {attemptId: "forged"},
+    {ticketId: "a".repeat(64)}, {mode: "FREE"}, {difficulty: "IMPOSSIBLE"}, {lessonId: ""}, {lessonVersion: 0},
+    {priceNolics: null}, {priceNolics: 0}, {priceNolics: 101}, {priceNolics: 10.5}, {lifeCost: undefined},
+    {lifeCost: Number.MAX_SAFE_INTEGER + 1}, {lifeCost: -1}, {issuedAtMs: -1}, {issuedAtMs: Infinity},
+    {dayId: "wrong-day"}, {ratingVersion: -1}, {authorUid: ""}, {contentContext: {catalogId: "only"}}]) {
+    f.rows.set(ticketPath(ticket), {...clone(original), ...patch});
+    const before = clone([...f.rows]); await rejects(() => f.status(ticket), "UNAVAILABLE");
+    assert.deepEqual([...f.rows], before);
+  }
+});
+
+test("status requires a permanent cancellation receipt with exact identity and full hold conservation", async () => {
+  const f = world(); const ticket = await f.issue("status-cancel-proof"); await f.cancel(ticket);
+  const original = clone(f.rows.get(ticketPath(ticket)));
+  for (const terminal of [null, undefined, {}, [], {...original.terminal, receiptId: "arena-cancel:" + "f".repeat(64)},
+    {...original.terminal, receiptId: `arena-settle:${ticket.ticketId}`},
+    {...original.terminal, cancelledAtMs: original.issuedAtMs - 1}, {...original.terminal, cancelledAtMs: NaN},
+    {...original.terminal, releasedNolics: "10"}, {...original.terminal, releasedNolics: 0},
+    {...original.terminal, releasedLifePoints: 0}, {...original.terminal, releasedLifePoints: null}]) {
+    f.rows.set(ticketPath(ticket), {...clone(original), terminal});
+    const before = clone([...f.rows]); await rejects(() => f.status(ticket), "UNAVAILABLE");
+    assert.deepEqual([...f.rows], before);
+  }
+});
+
+test("status requires a real settled receipt with finite score, exact attempt and conserved spending", async () => {
+  const f = world(); const ticket = await f.issue("status-settle-proof"); await f.settle(ticket);
+  const original = clone(f.rows.get(ticketPath(ticket)));
+  for (const terminal of [null, undefined, {}, [], {...original.terminal, receiptId: `arena-cancel:${ticket.ticketId}`},
+    {...original.terminal, attemptId: "foreign-attempt"}, {...original.terminal, settledAtMs: original.issuedAtMs - 1},
+    ...[undefined, null, NaN, Infinity, "75", -1, 101].map((percentScore) => ({...original.terminal, percentScore})),
+    ...[{consumedNolics: 0}, {consumedLifePoints: 0}, {authorCreditNolics: -1}, {sinkNolics: 1.5},
+      {royaltyReserveDeltaNolics: 0.5}, {authorCreditNolics: 9}, {royaltyReserveDeltaNolics: Number.MAX_SAFE_INTEGER + 1}]
+      .map((patch) => ({...original.terminal, ...patch}))]) {
+    f.rows.set(ticketPath(ticket), {...clone(original), terminal});
+    const before = clone([...f.rows]); await rejects(() => f.status(ticket), "UNAVAILABLE");
+    assert.deepEqual([...f.rows], before);
+  }
+});
+
+test("status never fabricates a RESERVED terminal receipt or downgrades an unknown state", async () => {
+  const f = world(); const ticket = await f.issue("status-reserved-proof"); const original = clone(f.rows.get(ticketPath(ticket)));
+  for (const patch of [{terminal: undefined}, {terminal: {}}, {status: "RETRY_REGEN"}, {status: "CANCELLED"}, {status: "SETTLED"}]) {
+    f.rows.set(ticketPath(ticket), {...clone(original), ...patch});
+    await rejects(() => f.status(ticket), "UNAVAILABLE");
+  }
+});
+
+test("status for RANDOM preserves zero payments and spent quota, including actual settle/cancel receipts", async () => {
+  const f = world(); const cancelled = await f.issue("status-random-cancel", {mode: "RANDOM", lessonId: null});
+  await f.cancel(cancelled);
+  const settled = await f.issue("status-random-settle", {mode: "RANDOM", lessonId: null}); await f.settle(settled);
+  const before = clone([...f.rows]);
+  assert.equal((await f.status(cancelled)).ticket.terminal.releasedNolics, 0);
+  const receipt = (await f.status(settled)).ticket.terminal;
+  assert.equal(receipt.consumedNolics, 0); assert.equal(receipt.authorCreditNolics, 0);
+  assert.equal(receipt.sinkNolics, 0); assert.equal(receipt.royaltyReserveDeltaNolics, 0);
+  assert.deepEqual([...f.rows], before);
+  assert.ok([...f.rows.keys()].some((path) => path.startsWith("arena_ticket_quotas/")));
+  // A zero-sum forged transfer from fractional reserves must not masquerade as a free random run.
+  const raw = f.rows.get(ticketPath(settled)); raw.terminal.authorCreditNolics = 1; raw.terminal.royaltyReserveDeltaNolics = -1;
+  await rejects(() => f.status(settled), "UNAVAILABLE");
+});
+
+for (const transition of ["cancel", "settle"]) {
+  test(`status uses one internally consistent snapshot during a racing ${transition}`, async () => {
+    const f = world(); const ticket = await f.issue(`status-race-${transition}`);
+    f.hooks.afterSnapshot = () => f[transition](ticket);
+    const first = await f.status(ticket);
+    assert.equal(first.ticket.status, "RESERVED"); assert.equal(first.ticket.terminal, null);
+    assert.equal(f.stats.documentReads.length, 1); assert.equal(f.stats.dataReads, 1);
+    const second = await f.status(ticket);
+    assert.equal(second.ticket.status, transition === "cancel" ? "CANCELLED" : "SETTLED");
+    assert.ok(second.ticket.terminal.receiptId);
+    assert.equal(f.stats.documentReads.length, 2); assert.equal(f.stats.dataReads, 2);
+  });
+}
+
+test("status backend failure stays retryable UNAVAILABLE and never returns a synthetic terminal state", async () => {
+  const f = world(); const ticket = await f.issue("status-failure"); const before = clone([...f.rows]);
+  f.hooks.afterSnapshot = () => { throw new Error("sensitive backend detail"); };
+  await rejects(() => f.status(ticket), "UNAVAILABLE");
+  assert.deepEqual([...f.rows], before);
 });

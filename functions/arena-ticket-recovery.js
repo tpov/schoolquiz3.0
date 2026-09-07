@@ -161,7 +161,29 @@ function createArenaTicketRecovery({db}) {
       return result;
     });
   }
-  return {list, get};
+  async function status(input) {
+    const {uid, payload} = request(input, ["ticketId"]);
+    if (!hexId(payload.ticketId)) fail("INVALID_ARGUMENT");
+    return read(async () => {
+      // One snapshot binds the owner/header to its permanent terminal receipt. This deliberately
+      // does not inspect questions, grading keys or a live hierarchy: a damaged frozen bank must
+      // not hide an already-committed cancellation. It is NOT permission to launch or an ACK.
+      const snapshot = await db.doc(`${COLLECTION}/${payload.ticketId}`).get();
+      unavailable(snapshot && typeof snapshot.exists === "boolean");
+      if (!snapshot.exists) fail("NOT_FOUND");
+      unavailable(typeof snapshot.data === "function");
+      const raw = snapshot.data(); unavailable(object(raw) && documentId(raw.uid));
+      if (raw.uid !== uid) fail("NOT_FOUND");
+      const ticket = header(raw, payload.ticketId, uid);
+      const receipt = terminal(raw.terminal, ticket);
+      if (ticket.status === "SETTLED" && ticket.mode === "RANDOM") {
+        // Free random tickets never touch the author's fractional royalty account.
+        unavailable(receipt.authorCreditNolics === 0 && receipt.sinkNolics === 0 && receipt.royaltyReserveDeltaNolics === 0);
+      }
+      return {ticket: {...ticket, terminal: receipt}};
+    });
+  }
+  return {list, get, status};
 }
 
 module.exports = {createArenaTicketRecovery, MAX_PAGE_SIZE};
