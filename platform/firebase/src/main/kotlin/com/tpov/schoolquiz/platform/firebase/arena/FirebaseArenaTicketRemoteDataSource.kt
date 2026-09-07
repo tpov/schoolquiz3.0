@@ -1,0 +1,241 @@
+package com.tpov.schoolquiz.platform.firebase.arena
+
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
+import com.tpov.schoolquiz.platform.firebase.network.mutationResponseJson
+import com.tpov.schoolquiz.platform.firebase.network.syncErrorForCode
+import com.tpov.schoolquiz.platform.firebase.network.toSyncError
+import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.network.SyncFailure
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaCancelResponse
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntryTicket
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareRequest
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareResponse
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemoteFailure
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemoteFailureKind
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketCancelRequest
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketGetRequest
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketListRequest
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketPage
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.security.MessageDigest
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.coroutineContext
+
+/**
+ * Four explicit calls only. The caller will own durable journalling; this adapter never creates
+ * IDs, writes a local wallet/cache, automatically retries, or acknowledges a terminal ticket.
+ * expectedOwnerUid is checked by the callable BEFORE financial effects; session epochs also
+ * reject stale reads and A -> B -> A responses. Neither check replaces the other.
+ */
+class FirebaseArenaTicketRemoteDataSource internal constructor(
+    private val call: suspend (String, Map<String, Any?>) -> Any?,
+    private val sessions: OutboxSessionProvider,
+    private val networkMonitor: NetworkMonitor,
+    private val dispatcher: CoroutineDispatcher,
+    private val parser: ArenaTicketWireParser = ArenaTicketWireParser(::arenaSha256),
+) : ArenaTicketRemoteDataSource {
+    constructor(
+        functions: FirebaseFunctions,
+        sessions: OutboxSessionProvider,
+        networkMonitor: NetworkMonitor,
+        dispatcher: CoroutineDispatcher,
+    ) : this(
+        call = { name, payload ->
+            try {
+                functions.getHttpsCallable(name).withAppTimeout().call(payload).await().data
+            } catch (e: FirebaseFunctionsException) {
+                throw ArenaCallableException(e.code.name, e.details, e)
+            }
+        },
+        sessions = sessions,
+        networkMonitor = networkMonitor,
+        dispatcher = dispatcher,
+    )
+
+    override suspend fun prepare(request: ArenaPrepareRequest): Result<ArenaPrepareResponse> {
+        val payload =
+            buildMap<String, Any?> {
+                put("expectedOwnerUid", request.ownerUid)
+                put("requestId", request.requestId)
+                put("difficulty", request.difficulty.name)
+                when (request) {
+                    is ArenaPrepareRequest.Random -> put("mode", "RANDOM")
+                    is ArenaPrepareRequest.Selected -> {
+                        put("mode", "SELECTED")
+                        put("lessonId", request.lessonId)
+                        put("maxPriceNolics", request.maxPriceNolics)
+                    }
+                }
+            }
+        return execute(
+            request.ownerUid,
+            PREPARE,
+            payload,
+            { parser.prepare(it, request) },
+            knownFailure = { signal ->
+                when (signal) {
+                    ArenaCallableSignal.RETRY_REGEN -> ArenaPrepareResponse.RetryRegeneration(request.requestId)
+                    ArenaCallableSignal.PRICE_CHANGED ->
+                        if (request is ArenaPrepareRequest.Selected) ArenaPrepareResponse.PriceChanged else null
+                    else -> null
+                }
+            },
+        )
+    }
+
+    override suspend fun list(request: ArenaTicketListRequest): Result<ArenaTicketPage> =
+        execute(
+            request.ownerUid,
+            LIST,
+            buildMap {
+                put("pageSize", request.pageSize)
+                request.afterTicketId?.let { put("afterTicketId", it) }
+            },
+            { parser.list(it, request) },
+        )
+
+    override suspend fun get(request: ArenaTicketGetRequest): Result<ArenaEntryTicket> =
+        execute(
+            request.ownerUid,
+            GET,
+            mapOf("ticketId" to request.ticketId),
+            { parser.get(it, request) },
+        )
+
+    override suspend fun cancel(request: ArenaTicketCancelRequest): Result<ArenaCancelResponse> =
+        execute(
+            request.ticket.ownerUid,
+            CANCEL,
+            mapOf(
+                "expectedOwnerUid" to request.ticket.ownerUid,
+                "ticketId" to request.ticket.ticketId,
+                "requestId" to request.requestId,
+            ),
+            { parser.cancel(it, request) },
+            knownFailure = { signal ->
+                if (signal == ArenaCallableSignal.RETRY_REGEN) {
+                    ArenaCancelResponse.RetryRegeneration(request.ticket.ticketId, request.requestId)
+                } else {
+                    null
+                }
+            },
+        )
+
+    private suspend fun <T> execute(
+        ownerUid: String,
+        name: String,
+        payload: Map<String, Any?>,
+        decode: (String) -> T,
+        knownFailure: (ArenaCallableSignal) -> T? = { null },
+    ): Result<T> =
+        withContext(dispatcher) {
+            val session =
+                sessions.current()
+                    ?: return@withContext Result.failure(ArenaRemoteFailure(ArenaRemoteFailureKind.ACCOUNT_UNAVAILABLE))
+            if (session.ownerUid != ownerUid) {
+                return@withContext Result.failure(ArenaRemoteFailure(ArenaRemoteFailureKind.ACCOUNT_CHANGED))
+            }
+            try {
+                val online = networkMonitor.isOnline()
+                requireSession(session)
+                if (!online) return@withContext Result.failure(SyncFailure(SyncError.NoNetwork))
+                coroutineContext.ensureActive()
+                val reply = call(name, payload)
+                coroutineContext.ensureActive()
+                requireSession(session)
+                val wire =
+                    try {
+                        mutationResponseJson(reply)
+                    } catch (_: IllegalArgumentException) {
+                        throw ArenaRemoteFailure(ArenaRemoteFailureKind.MALFORMED_RESPONSE)
+                    } catch (_: IllegalStateException) {
+                        throw ArenaRemoteFailure(ArenaRemoteFailureKind.MALFORMED_RESPONSE)
+                    }
+                val decoded = decode(wire)
+                requireSession(session)
+                Result.success(decoded)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                coroutineContext.ensureActive()
+                if (sessions.current() != session) {
+                    return@withContext Result.failure(ArenaRemoteFailure(ArenaRemoteFailureKind.ACCOUNT_CHANGED))
+                }
+                when (e) {
+                    is ArenaRemoteFailure -> Result.failure(e)
+                    is ArenaCallableException -> {
+                        val signal = arenaCallableSignal(e.code, e.details)
+                        if (signal == ArenaCallableSignal.ACCOUNT_CHANGED) {
+                            Result.failure(ArenaRemoteFailure(ArenaRemoteFailureKind.ACCOUNT_CHANGED))
+                        } else {
+                            val value = knownFailure(signal)
+                            if (value != null) {
+                                Result.success(value)
+                            } else {
+                                Result.failure(
+                                    SyncFailure(
+                                        syncErrorForCode(
+                                            e.code,
+                                            message = null,
+                                            details = e.details,
+                                            causedByIo = e.cause?.cause is IOException,
+                                        ),
+                                        e,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                    else -> Result.failure(SyncFailure(e.toSyncError(), e))
+                }
+            }
+        }
+
+    private fun requireSession(expected: OutboxSession) {
+        if (sessions.current() != expected) throw ArenaRemoteFailure(ArenaRemoteFailureKind.ACCOUNT_CHANGED)
+    }
+
+    internal companion object {
+        const val PREPARE = "prepareArenaEntry"
+        const val LIST = "listArenaEntryTickets"
+        const val GET = "fetchArenaEntryTicket"
+        const val CANCEL = "cancelArenaEntry"
+    }
+}
+
+/** SDK metadata, never message-text parsing. Internal seam keeps JVM tests free of Firebase startup. */
+internal class ArenaCallableException(val code: String, val details: Any?, cause: Throwable? = null) : Exception(cause)
+
+internal enum class ArenaCallableSignal { RETRY_REGEN, PRICE_CHANGED, ACCOUNT_CHANGED, OTHER }
+
+internal fun arenaCallableSignal(
+    code: String,
+    details: Any?,
+): ArenaCallableSignal {
+    val reason = (details as? Map<*, *>)?.get("reason") as? String
+    return when {
+        code == "UNAVAILABLE" && reason == "RETRY_REGEN" -> ArenaCallableSignal.RETRY_REGEN
+        code == "FAILED_PRECONDITION" && reason == "PRICE_CHANGED" -> ArenaCallableSignal.PRICE_CHANGED
+        code == "PERMISSION_DENIED" && reason == "ACCOUNT_CHANGED" -> ArenaCallableSignal.ACCOUNT_CHANGED
+        else -> ArenaCallableSignal.OTHER
+    }
+}
+
+@Suppress("MagicNumber") // Unsigned-byte mask and hexadecimal radix.
+internal fun arenaSha256(text: String): String =
+    MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8)).joinToString("") {
+        (it.toInt() and 0xff).toString(16).padStart(2, '0')
+    }

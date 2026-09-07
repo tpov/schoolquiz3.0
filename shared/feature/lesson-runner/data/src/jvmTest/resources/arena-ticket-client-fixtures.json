@@ -1,0 +1,766 @@
+{
+  "schemaVersion": 1,
+  "producer": "actual issuer/recovery with production normalizer; unchanged actual runtime world missing-id source regression",
+  "sourceSha256": {
+    "arena-tickets.js": "9aec302a4335801fd0e5705ee58fd8ff62c0edb8df6835e36e9cbe5d92f24229",
+    "arena-ticket-recovery.js": "3d7c1d6a5aaf176e2de6686eef0a650b556a6788633408e708ba73c4d546487c",
+    "arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
+    "question-redaction.js": "df1606e9a29f931c3cab8c3d34167ad0cf357d1099df49105ca530c39ccdf0e1",
+    "_question-fixtures.js": "9e6bfb9ebdf6e5ebc81ccee7b4b654444e919695ede5d67a578d7e82a11f114b",
+    "arena-ticket-recovery.test.js": "e570edb824443f467fd25548961cb4e5e6025335e96b82a594b1b47be1242e0f",
+    "index.js": "d138ea142ad7bdcd5ef6c4ccd19db442604c4134f16ae5f3b1e61d74c563a208",
+    "arena-entry-runtime.js": "34292d26b8a89691605f3cf31fb742e99c37ef5c189c298aa98a02719b0fceb7",
+    "arena-entry-runtime.test.js": "7523a97c4b7ecb0a45b3560d0b5ea11d588672403b046eeb98196a7f4f256eaa",
+    "arena-public-question.js": "e83398a1ec5b69378d0d05abbb70ed9e41fb29223527d9043a8048f0f0148820"
+  },
+  "hashes": {
+    "[\"arena-ticket\",\"player\",\"client-selected\"]": "53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+    "[\"arena-attempt\",\"53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d\"]": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
+    "[\"arena-ticket\",\"player\",\"client-hard\"]": "a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
+    "[\"arena-attempt\",\"a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382\"]": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
+    "[\"arena-ticket\",\"player\",\"client-random\"]": "8d2334f56c66bbc0bfdb6b83386d61675ec6e99ced0d6a667952f41f64445d42",
+    "[\"arena-attempt\",\"8d2334f56c66bbc0bfdb6b83386d61675ec6e99ced0d6a667952f41f64445d42\"]": "db456f92bb0c7c133066f795506dd3c5779c8cb6cc751d4d29cc83b734fdc023"
+  },
+  "issuedSelected": {
+    "status": "ISSUED",
+    "ticket": {
+      "lessonId": "lesson",
+      "lessonVersion": 3,
+      "difficulty": "EASY",
+      "authorUid": "author",
+      "ratingVersion": 5,
+      "priceNolics": 10,
+      "lifeCost": 50,
+      "contentContext": {
+        "catalogId": "catalog",
+        "questId": "quest",
+        "sectionId": "section",
+        "themeId": "theme"
+      },
+      "schemaVersion": 1,
+      "ticketId": "53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+      "attemptId": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
+      "uid": "player",
+      "requestId": "client-selected",
+      "requestHash": "bfb83a4e791143f62032073a14fb3104b5efe60d8a9ec5c7cfe2eaa064c5ff03",
+      "mode": "SELECTED",
+      "issuedAtMs": 1788696000000,
+      "dayId": "2026-09-06",
+      "status": "RESERVED",
+      "terminal": null,
+      "questions": [
+        {
+          "questionId": "q1",
+          "questionVersion": 2,
+          "publicQuestion": {
+            "difficulty": "EASY",
+            "id": "q1",
+            "language": "en",
+            "lessonId": "lesson",
+            "order": 0,
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "version": 2
+          }
+        }
+      ]
+    }
+  },
+  "issuedHard": {
+    "status": "ISSUED",
+    "ticket": {
+      "lessonId": "lesson",
+      "lessonVersion": 3,
+      "difficulty": "HARD",
+      "authorUid": "author",
+      "ratingVersion": 5,
+      "priceNolics": 10,
+      "lifeCost": 50,
+      "contentContext": {
+        "catalogId": "catalog",
+        "questId": "quest",
+        "sectionId": "section",
+        "themeId": "theme"
+      },
+      "schemaVersion": 1,
+      "ticketId": "a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
+      "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
+      "uid": "player",
+      "requestId": "client-hard",
+      "requestHash": "2ec4e1a16ed059c2228209123b842cceac228dc4545fa0fd1adcc93b97b5b77b",
+      "mode": "SELECTED",
+      "issuedAtMs": 1788696000000,
+      "dayId": "2026-09-06",
+      "status": "RESERVED",
+      "terminal": null,
+      "questions": [
+        {
+          "questionId": "q1",
+          "questionVersion": 2,
+          "publicQuestion": {
+            "difficulty": "HARD",
+            "id": "q1",
+            "language": "en",
+            "lessonId": "lesson",
+            "order": 0,
+            "payload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}]}",
+            "version": 2
+          }
+        }
+      ]
+    }
+  },
+  "issuedRandom": {
+    "status": "ISSUED",
+    "ticket": {
+      "lessonId": "lesson",
+      "lessonVersion": 3,
+      "difficulty": "EASY",
+      "authorUid": "author",
+      "ratingVersion": 5,
+      "priceNolics": 0,
+      "lifeCost": 50,
+      "contentContext": {
+        "catalogId": "catalog",
+        "questId": "quest",
+        "sectionId": "section",
+        "themeId": "theme"
+      },
+      "schemaVersion": 1,
+      "ticketId": "8d2334f56c66bbc0bfdb6b83386d61675ec6e99ced0d6a667952f41f64445d42",
+      "attemptId": "db456f92bb0c7c133066f795506dd3c5779c8cb6cc751d4d29cc83b734fdc023",
+      "uid": "player",
+      "requestId": "client-random",
+      "requestHash": "2c80d59d834b73aa281f93daa6bbab6102f47aa9f415f1da66ee9cdb04f98298",
+      "mode": "RANDOM",
+      "issuedAtMs": 1788696000000,
+      "dayId": "2026-09-06",
+      "status": "RESERVED",
+      "terminal": null,
+      "questions": [
+        {
+          "questionId": "q1",
+          "questionVersion": 2,
+          "publicQuestion": {
+            "difficulty": "EASY",
+            "id": "q1",
+            "language": "en",
+            "lessonId": "lesson",
+            "order": 0,
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "version": 2
+          }
+        }
+      ]
+    }
+  },
+  "recoveredSelected": {
+    "status": "ISSUED",
+    "ticket": {
+      "schemaVersion": 1,
+      "ticketId": "53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+      "attemptId": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
+      "uid": "player",
+      "requestId": "client-selected",
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "lessonId": "lesson",
+      "lessonVersion": 3,
+      "authorUid": "author",
+      "ratingVersion": 5,
+      "priceNolics": 10,
+      "lifeCost": 50,
+      "issuedAtMs": 1788696000000,
+      "dayId": "2026-09-06",
+      "status": "RESERVED",
+      "contentContext": {
+        "catalogId": "catalog",
+        "questId": "quest",
+        "sectionId": "section",
+        "themeId": "theme"
+      },
+      "terminal": null,
+      "questions": [
+        {
+          "questionId": "q1",
+          "questionVersion": 2,
+          "publicQuestion": {
+            "id": "q1",
+            "lessonId": "lesson",
+            "version": 2,
+            "difficulty": "EASY",
+            "order": 0,
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "language": "en"
+          }
+        }
+      ]
+    }
+  },
+  "listFirst": {
+    "tickets": [
+      {
+        "schemaVersion": 1,
+        "ticketId": "53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+        "attemptId": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
+        "uid": "player",
+        "requestId": "client-selected",
+        "mode": "SELECTED",
+        "difficulty": "EASY",
+        "lessonId": "lesson",
+        "lessonVersion": 3,
+        "status": "RESERVED",
+        "priceNolics": 10,
+        "lifeCost": 50,
+        "issuedAtMs": 1788696000000,
+        "dayId": "2026-09-06"
+      },
+      {
+        "schemaVersion": 1,
+        "ticketId": "8d2334f56c66bbc0bfdb6b83386d61675ec6e99ced0d6a667952f41f64445d42",
+        "attemptId": "db456f92bb0c7c133066f795506dd3c5779c8cb6cc751d4d29cc83b734fdc023",
+        "uid": "player",
+        "requestId": "client-random",
+        "mode": "RANDOM",
+        "difficulty": "EASY",
+        "lessonId": "lesson",
+        "lessonVersion": 3,
+        "status": "RESERVED",
+        "priceNolics": 0,
+        "lifeCost": 50,
+        "issuedAtMs": 1788696000000,
+        "dayId": "2026-09-06"
+      }
+    ],
+    "nextTicketId": "8d2334f56c66bbc0bfdb6b83386d61675ec6e99ced0d6a667952f41f64445d42"
+  },
+  "listLast": {
+    "tickets": [
+      {
+        "schemaVersion": 1,
+        "ticketId": "a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
+        "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
+        "uid": "player",
+        "requestId": "client-hard",
+        "mode": "SELECTED",
+        "difficulty": "HARD",
+        "lessonId": "lesson",
+        "lessonVersion": 3,
+        "status": "RESERVED",
+        "priceNolics": 10,
+        "lifeCost": 50,
+        "issuedAtMs": 1788696000000,
+        "dayId": "2026-09-06"
+      }
+    ],
+    "nextTicketId": null
+  },
+  "cancelled": {
+    "status": "CANCELLED",
+    "ticketId": "53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+    "terminal": {
+      "receiptId": "arena-cancel:53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+      "cancelledAtMs": 1788696000000,
+      "releasedNolics": 10,
+      "releasedLifePoints": 50
+    }
+  },
+  "recoveredCancelled": {
+    "status": "ISSUED",
+    "ticket": {
+      "schemaVersion": 1,
+      "ticketId": "53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+      "attemptId": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
+      "uid": "player",
+      "requestId": "client-selected",
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "lessonId": "lesson",
+      "lessonVersion": 3,
+      "authorUid": "author",
+      "ratingVersion": 5,
+      "priceNolics": 10,
+      "lifeCost": 50,
+      "issuedAtMs": 1788696000000,
+      "dayId": "2026-09-06",
+      "status": "CANCELLED",
+      "contentContext": {
+        "catalogId": "catalog",
+        "questId": "quest",
+        "sectionId": "section",
+        "themeId": "theme"
+      },
+      "terminal": {
+        "receiptId": "arena-cancel:53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+        "cancelledAtMs": 1788696000000,
+        "releasedNolics": 10,
+        "releasedLifePoints": 50
+      },
+      "questions": [
+        {
+          "questionId": "q1",
+          "questionVersion": 2,
+          "publicQuestion": {
+            "id": "q1",
+            "lessonId": "lesson",
+            "version": 2,
+            "difficulty": "EASY",
+            "order": 0,
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "language": "en"
+          }
+        }
+      ]
+    }
+  },
+  "issuedCancelledReplay": {
+    "status": "ISSUED",
+    "ticket": {
+      "lessonId": "lesson",
+      "lessonVersion": 3,
+      "difficulty": "EASY",
+      "authorUid": "author",
+      "ratingVersion": 5,
+      "priceNolics": 10,
+      "lifeCost": 50,
+      "contentContext": {
+        "catalogId": "catalog",
+        "questId": "quest",
+        "sectionId": "section",
+        "themeId": "theme"
+      },
+      "schemaVersion": 1,
+      "ticketId": "53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+      "attemptId": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
+      "uid": "player",
+      "requestId": "client-selected",
+      "requestHash": "bfb83a4e791143f62032073a14fb3104b5efe60d8a9ec5c7cfe2eaa064c5ff03",
+      "mode": "SELECTED",
+      "issuedAtMs": 1788696000000,
+      "dayId": "2026-09-06",
+      "status": "CANCELLED",
+      "terminal": {
+        "receiptId": "arena-cancel:53d7e4679cc21e40c00784e94c9e1d53ca7008270f16653cf5d7a3551ca11e8d",
+        "cancelledAtMs": 1788696000000,
+        "releasedNolics": 10,
+        "releasedLifePoints": 50
+      },
+      "questions": [
+        {
+          "questionId": "q1",
+          "questionVersion": 2,
+          "publicQuestion": {
+            "difficulty": "EASY",
+            "id": "q1",
+            "language": "en",
+            "lessonId": "lesson",
+            "order": 0,
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "version": 2
+          }
+        }
+      ]
+    }
+  },
+  "recoveredSettled": {
+    "status": "ISSUED",
+    "ticket": {
+      "schemaVersion": 1,
+      "ticketId": "a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
+      "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
+      "uid": "player",
+      "requestId": "client-hard",
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "lessonId": "lesson",
+      "lessonVersion": 3,
+      "authorUid": "author",
+      "ratingVersion": 5,
+      "priceNolics": 10,
+      "lifeCost": 50,
+      "issuedAtMs": 1788696000000,
+      "dayId": "2026-09-06",
+      "status": "SETTLED",
+      "contentContext": {
+        "catalogId": "catalog",
+        "questId": "quest",
+        "sectionId": "section",
+        "themeId": "theme"
+      },
+      "terminal": {
+        "receiptId": "arena-settle:a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
+        "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
+        "settledAtMs": 1788696000000,
+        "percentScore": 75.5,
+        "consumedNolics": 10,
+        "consumedLifePoints": 50,
+        "authorCreditNolics": 8,
+        "sinkNolics": 2,
+        "royaltyReserveDeltaNolics": 0
+      },
+      "questions": [
+        {
+          "questionId": "q1",
+          "questionVersion": 2,
+          "publicQuestion": {
+            "id": "q1",
+            "lessonId": "lesson",
+            "version": 2,
+            "difficulty": "HARD",
+            "order": 0,
+            "payload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}]}",
+            "language": "en"
+          }
+        }
+      ]
+    }
+  },
+  "cancelSettled": {
+    "status": "SETTLED",
+    "ticketId": "a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
+    "terminal": {
+      "receiptId": "arena-settle:a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
+      "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
+      "settledAtMs": 1788696000000,
+      "scoreDigest": "private-score-digest",
+      "percentScore": 75.5,
+      "consumedNolics": 10,
+      "consumedLifePoints": 50,
+      "authorCreditNolics": 8,
+      "sinkNolics": 2,
+      "royaltyReserveDeltaNolics": 0
+    }
+  },
+  "hardPublicPayloads": [
+    {
+      "name": "SINGLE",
+      "source": {
+        "type": "SingleChoice",
+        "text": "Which keyword declares a read-only binding?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "a",
+            "text": "var"
+          },
+          {
+            "id": "b",
+            "text": "val"
+          },
+          {
+            "id": "c",
+            "text": "lateinit"
+          }
+        ],
+        "correctOptionId": "b",
+        "info": "val is the read-only one",
+        "id": "q1",
+        "difficulty": "HARD"
+      },
+      "payload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}]}"
+    },
+    {
+      "name": "MULTIPLE",
+      "source": {
+        "type": "MultipleChoice",
+        "text": "Which of these run on the JVM?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "a",
+            "text": "Kotlin"
+          },
+          {
+            "id": "b",
+            "text": "Swift"
+          },
+          {
+            "id": "c",
+            "text": "Scala"
+          },
+          {
+            "id": "d",
+            "text": "Rust"
+          }
+        ],
+        "correctOptionIds": [
+          "a",
+          "c"
+        ],
+        "id": "q1",
+        "difficulty": "HARD"
+      },
+      "payload": "{\"type\":\"MultipleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which of these run on the JVM?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"Kotlin\"},{\"id\":\"b\",\"text\":\"Swift\"},{\"id\":\"c\",\"text\":\"Scala\"},{\"id\":\"d\",\"text\":\"Rust\"}]}"
+    },
+    {
+      "name": "ORDERING",
+      "source": {
+        "type": "Ordering",
+        "text": "Put the build steps in order",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "compile"
+          },
+          {
+            "id": "i2",
+            "text": "test"
+          },
+          {
+            "id": "i3",
+            "text": "package"
+          },
+          {
+            "id": "i4",
+            "text": "deploy"
+          }
+        ],
+        "id": "q1",
+        "difficulty": "HARD"
+      },
+      "payload": "{\"type\":\"OrderingRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Put the build steps in order\",\"imageUrl\":null,\"items\":[{\"id\":\"ri-0\",\"text\":\"deploy\"},{\"id\":\"ri-1\",\"text\":\"package\"},{\"id\":\"ri-2\",\"text\":\"compile\"},{\"id\":\"ri-3\",\"text\":\"test\"}]}"
+    },
+    {
+      "name": "FILL_BLANK",
+      "source": {
+        "type": "FillBlank",
+        "text": "___ compiles to bytecode and ___ to machine code.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "Kotlin"
+          },
+          {
+            "id": "c2",
+            "text": "Rust"
+          },
+          {
+            "id": "c3",
+            "text": "Elm"
+          },
+          {
+            "id": "c4",
+            "text": "Swift"
+          },
+          {
+            "id": "c5",
+            "text": "Python"
+          }
+        ],
+        "protectedTextSegments": [
+          "Kotlin"
+        ],
+        "id": "q1",
+        "difficulty": "HARD"
+      },
+      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Elm\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Python\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[]}"
+    },
+    {
+      "name": "SURVEY",
+      "source": {
+        "type": "Survey",
+        "text": "Which editor do you use?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "a",
+            "text": "IntelliJ"
+          },
+          {
+            "id": "b",
+            "text": "VS Code"
+          }
+        ],
+        "allowMultiple": false,
+        "id": "q1",
+        "difficulty": "HARD"
+      },
+      "payload": "{\"type\":\"Survey\",\"text\":\"Which editor do you use?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"IntelliJ\"},{\"id\":\"b\",\"text\":\"VS Code\"}],\"allowMultiple\":false,\"id\":\"q1\",\"difficulty\":\"HARD\"}"
+    }
+  ],
+  "unsafeAlreadyRedactedPayloads": [
+    {
+      "name": "SINGLE",
+      "field": "correctOptionId",
+      "payload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "SINGLE",
+      "field": "futurePrivate",
+      "payload": "{\"type\":\"SingleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"futurePrivate\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "MULTIPLE",
+      "field": "correctOptionId",
+      "payload": "{\"type\":\"MultipleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which of these run on the JVM?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"Kotlin\"},{\"id\":\"b\",\"text\":\"Swift\"},{\"id\":\"c\",\"text\":\"Scala\"},{\"id\":\"d\",\"text\":\"Rust\"}],\"correctOptionId\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "MULTIPLE",
+      "field": "futurePrivate",
+      "payload": "{\"type\":\"MultipleChoiceRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Which of these run on the JVM?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"Kotlin\"},{\"id\":\"b\",\"text\":\"Swift\"},{\"id\":\"c\",\"text\":\"Scala\"},{\"id\":\"d\",\"text\":\"Rust\"}],\"futurePrivate\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "ORDERING",
+      "field": "correctOptionId",
+      "payload": "{\"type\":\"OrderingRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Put the build steps in order\",\"imageUrl\":null,\"items\":[{\"id\":\"ri-0\",\"text\":\"deploy\"},{\"id\":\"ri-1\",\"text\":\"package\"},{\"id\":\"ri-2\",\"text\":\"compile\"},{\"id\":\"ri-3\",\"text\":\"test\"}],\"correctOptionId\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "ORDERING",
+      "field": "futurePrivate",
+      "payload": "{\"type\":\"OrderingRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"Put the build steps in order\",\"imageUrl\":null,\"items\":[{\"id\":\"ri-0\",\"text\":\"deploy\"},{\"id\":\"ri-1\",\"text\":\"package\"},{\"id\":\"ri-2\",\"text\":\"compile\"},{\"id\":\"ri-3\",\"text\":\"test\"}],\"futurePrivate\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "FILL_BLANK",
+      "field": "correctOptionId",
+      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Elm\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Python\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[],\"correctOptionId\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "FILL_BLANK",
+      "field": "futurePrivate",
+      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Elm\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Python\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[],\"futurePrivate\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "already-redacted"
+    },
+    {
+      "name": "SURVEY",
+      "field": "correctOptionId",
+      "payload": "{\"type\":\"Survey\",\"text\":\"Which editor do you use?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"IntelliJ\"},{\"id\":\"b\",\"text\":\"VS Code\"}],\"allowMultiple\":false,\"id\":\"q1\",\"difficulty\":\"HARD\",\"correctOptionId\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "not-applicable"
+    },
+    {
+      "name": "SURVEY",
+      "field": "futurePrivate",
+      "payload": "{\"type\":\"Survey\",\"text\":\"Which editor do you use?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"IntelliJ\"},{\"id\":\"b\",\"text\":\"VS Code\"}],\"allowMultiple\":false,\"id\":\"q1\",\"difficulty\":\"HARD\",\"futurePrivate\":{\"answer\":\"private-answer\"}}",
+      "producerStatus": "not-applicable"
+    }
+  ],
+  "actualRuntimeMissingId": {
+    "sourceQuestions": [
+      [
+        "questions/EASY-0",
+        {
+          "lessonId": "lesson",
+          "version": 1,
+          "difficulty": "EASY",
+          "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\"}"
+        }
+      ],
+      [
+        "questions/EASY-1",
+        {
+          "lessonId": "lesson",
+          "version": 1,
+          "difficulty": "EASY",
+          "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\"}"
+        }
+      ]
+    ],
+    "issued": {
+      "status": "ISSUED",
+      "ticket": {
+        "lessonId": "lesson",
+        "lessonVersion": 1,
+        "difficulty": "EASY",
+        "authorUid": "author",
+        "ratingVersion": 0,
+        "priceNolics": 1,
+        "lifeCost": 50,
+        "contentContext": {
+          "catalogId": "catalog",
+          "questId": "quest",
+          "sectionId": "section",
+          "themeId": "theme"
+        },
+        "schemaVersion": 1,
+        "ticketId": "48498cd9a7563a4b53a12f1c230edbc703c8d5b5eed2828f4c81817309b9e847",
+        "attemptId": "79939ae7ab40e22fd95fea02d3c5bacf629c1514658c01caa6e3cb572e5c51f1",
+        "uid": "player",
+        "requestId": "client-actual-missing-id",
+        "requestHash": "a1687dd7388150f18fdaaa8c6a03f34b58ad6291273848c100985a895246e638",
+        "mode": "SELECTED",
+        "issuedAtMs": 1788696000000,
+        "dayId": "2026-09-06",
+        "status": "RESERVED",
+        "terminal": null,
+        "questions": [
+          {
+            "questionId": "EASY-0",
+            "questionVersion": 1,
+            "publicQuestion": {
+              "difficulty": "EASY",
+              "id": "EASY-0",
+              "language": "",
+              "lessonId": "lesson",
+              "order": 0,
+              "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"EASY-0\"}",
+              "version": 1
+            }
+          },
+          {
+            "questionId": "EASY-1",
+            "questionVersion": 1,
+            "publicQuestion": {
+              "difficulty": "EASY",
+              "id": "EASY-1",
+              "language": "",
+              "lessonId": "lesson",
+              "order": 1,
+              "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"EASY-1\"}",
+              "version": 1
+            }
+          }
+        ]
+      }
+    },
+    "settled": {
+      "accepted": 1,
+      "reward": {
+        "skillPoints": 31,
+        "nolics": 3
+      },
+      "receipts": [
+        {
+          "schemaVersion": 1,
+          "receiptId": "attempt:c2b0fa2998a8d914fd59a6a1c524ea3fcef7ef4c987fb71671fd96023f761002",
+          "attemptId": "79939ae7ab40e22fd95fea02d3c5bacf629c1514658c01caa6e3cb572e5c51f1",
+          "uid": "player",
+          "lessonId": "lesson",
+          "lessonVersion": 1,
+          "status": "SETTLED",
+          "completed": true,
+          "settledAtMs": 1788696000000,
+          "codeAnswer": "99",
+          "percentScore": 100,
+          "lifePointsSpent": 50,
+          "plasmaPointsSpent": 0,
+          "reward": {
+            "skillPoints": 31,
+            "nolics": 3
+          },
+          "ticketId": "48498cd9a7563a4b53a12f1c230edbc703c8d5b5eed2828f4c81817309b9e847",
+          "nolicsSpent": 1
+        }
+      ],
+      "lifePoints": 950
+    },
+    "sourceQuestionsUnchanged": true,
+    "sourceHadEmbeddedIds": false
+  }
+}
