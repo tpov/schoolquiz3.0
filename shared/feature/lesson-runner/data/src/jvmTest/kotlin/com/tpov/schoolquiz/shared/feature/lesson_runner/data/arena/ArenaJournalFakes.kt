@@ -261,12 +261,9 @@ internal class JournalStorageFake : ArenaJournalStorage {
     ): Boolean {
         val key = owner to ticket
         val row = tickets.getValue(key)
-        if (row.serverStatus != "RESERVED" || row.decision != "NONE" ||
-            row.localUse != "UNUSED" || row.snapshotJson == null || row.checkpointJson != null
-        ) {
-            return false
-        }
-        validator.validate(row.binding(), null, checkpoint, null)
+        val unused = row.localUse == "UNUSED" && row.checkpointJson == null && row.checkpointRevision == 0L
+        if (!row.canWriteFakeCheckpoint() || !unused) return false
+        row.validateFakeCheckpoint(checkpoint, null, validator)
         tickets[key] = row.copy(localUse = "LAUNCHED", checkpointJson = checkpoint)
         return true
     }
@@ -279,17 +276,19 @@ internal class JournalStorageFake : ArenaJournalStorage {
         candidate: String,
         validator: ArenaCheckpointValidator,
     ): Boolean {
+        require(expectedRevision >= 0 && expectedRevision < Long.MAX_VALUE)
         val key = owner to ticket
-        val row = tickets[key] ?: return false
-        if (row.attemptId != attemptId || row.checkpointRevision != expectedRevision ||
-            row.serverStatus != "RESERVED" || row.decision != "NONE" || row.localUse != "LAUNCHED"
-        ) {
-            return false
+        val row = tickets[key]
+        val previous = row?.checkpointJson
+        val identityMatches = row != null && row.attemptId == attemptId && row.checkpointRevision == expectedRevision
+        val active = row != null && row.canWriteFakeCheckpoint() && row.localUse == "LAUNCHED"
+        return if (row != null && previous != null && identityMatches && active) {
+            row.validateFakeCheckpoint(candidate, previous, validator)
+            tickets[key] = row.copy(checkpointJson = candidate, checkpointRevision = expectedRevision + 1)
+            true
+        } else {
+            false
         }
-        val previous = row.checkpointJson ?: return false
-        validator.validate(row.binding(), previous, candidate, null)
-        tickets[key] = row.copy(checkpointJson = candidate, checkpointRevision = expectedRevision + 1)
-        return true
     }
 
     override suspend fun chooseCancel(command: ArenaCommandEntity) {
@@ -312,8 +311,13 @@ internal class JournalStorageFake : ArenaJournalStorage {
     ) {
         val key = command.ownerUid to requireNotNull(command.ticketId)
         val ticket = tickets.getValue(key)
-        if (ticket.localUse != "LAUNCHED" || ticket.decision != "NONE") throw ArenaJournalConflict()
-        validator.validate(ticket.binding(), ticket.checkpointJson, requireNotNull(ticket.checkpointJson), row.payload)
+        if (!ticket.canWriteFakeCheckpoint() || ticket.localUse != "LAUNCHED") throw ArenaJournalConflict()
+        ticket.validateFakeCheckpoint(
+            requireNotNull(ticket.checkpointJson),
+            ticket.checkpointJson,
+            validator,
+            row.payload,
+        )
         commands[Triple(command.ownerUid, "SETTLE", command.commandId)] = command
         firstIntents[ticket.attemptId] = row.frozenIntent(ticket.attemptId)
         outbox[row.mutationId] = row
@@ -399,7 +403,33 @@ internal class JournalStorageFake : ArenaJournalStorage {
 }
 
 private fun ArenaTicketRecordEntity.binding() =
-    ArenaCheckpointBinding(ownerUid, ticketId, attemptId, requireNotNull(snapshotSha256))
+    ArenaCheckpointBinding(
+        ownerUid,
+        ticketId,
+        attemptId,
+        requireNotNull(snapshotSha256),
+        requestId,
+        termsJson,
+        requireNotNull(snapshotJson),
+    )
+
+/** Same first-write guards as the Room DAO, not a substitute for the required typed proof validator. */
+private fun ArenaTicketRecordEntity.canWriteFakeCheckpoint(): Boolean {
+    val active = serverStatus == "RESERVED" && decision == "NONE" && terminalJson == null
+    val hasSnapshot = snapshotJson != null && snapshotSha256 != null
+    return active && hasSnapshot && observedAtMs >= 0 && checkpointRevision >= 0
+}
+
+private fun ArenaTicketRecordEntity.validateFakeCheckpoint(
+    candidate: String,
+    previous: String?,
+    validator: ArenaCheckpointValidator,
+    completion: String? = null,
+) {
+    require(candidate.encodeToByteArray().size in 1..1_048_576)
+    require(checkpointRevision >= 0)
+    validator.validate(binding(), previous, candidate, completion)
+}
 
 /** SQLite BINARY compares unsigned UTF-8 bytes, not Kotlin's UTF-16 ordering for supplementary IDs. */
 private fun isAfterArenaLocalId(

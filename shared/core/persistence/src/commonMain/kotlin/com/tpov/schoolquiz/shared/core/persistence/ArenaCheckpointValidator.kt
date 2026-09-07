@@ -1,11 +1,17 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
-/** Immutable binding is reread in the same Room transaction as claim/progress/freeze. */
+/**
+ * Exact immutable bytes reread inside the claim/progress/first-freeze Room transaction.
+ * A stored hash alone cannot prove that the current bank or purchase terms still match the captured row.
+ */
 data class ArenaCheckpointBinding(
     val ownerUid: String,
     val ticketId: String,
     val attemptId: String,
     val snapshotSha256: String,
+    val requestId: String,
+    val termsJson: String,
+    val snapshotJson: String,
 )
 
 /** Pure, required typed-codec validation; no network, mutation or permissive production implementation. */
@@ -28,7 +34,15 @@ internal fun validateArenaCheckpoint(
     require(candidate.encodeToByteArray().size in 1..MAX_CHECKPOINT_BYTES)
     require(row.checkpointRevision >= 0)
     validator.validate(
-        ArenaCheckpointBinding(row.ownerUid, row.ticketId, row.attemptId, requireNotNull(row.snapshotSha256)),
+        ArenaCheckpointBinding(
+            row.ownerUid,
+            row.ticketId,
+            row.attemptId,
+            requireNotNull(row.snapshotSha256),
+            row.requestId,
+            row.termsJson,
+            requireNotNull(row.snapshotJson),
+        ),
         previous,
         candidate,
         completionPayload,

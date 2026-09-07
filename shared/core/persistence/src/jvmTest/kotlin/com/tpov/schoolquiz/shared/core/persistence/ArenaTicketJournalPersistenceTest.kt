@@ -256,7 +256,7 @@ class ArenaTicketJournalPersistenceTest {
             dao.saveCheckpoint("A", "ticket", ticket().attemptId, 0, "1", checkpointValidator)
             val exactBody =
                 ArenaCheckpointValidator { binding, previous, candidate, completion ->
-                    assertEquals(ArenaCheckpointBinding("A", "ticket", ticket().attemptId, "frozen-sha"), binding)
+                    assertEquals(checkpointBinding(ticket()), binding)
                     assertEquals("1", previous)
                     assertEquals(previous, candidate)
                     require(completion == settlement().bodyJson)
@@ -582,4 +582,343 @@ class ArenaTicketJournalPersistenceTest {
             assertEquals(row, dao.ticket("A", "ticket"))
             assertNull(dao.queued(wrongBody.mutationId))
         }
+
+    @Test
+    fun capturedClaimProofRejectsChangedImmutableBytesInsideTheRealTransaction() =
+        runTest { assertImmutableWriteFence("CLAIM") }
+
+    @Test
+    fun capturedProgressProofRejectsChangedImmutableBytesInsideTheRealTransaction() =
+        runTest { assertImmutableWriteFence("CAS") }
+
+    @Test
+    fun capturedFinalProofRejectsChangedImmutableBytesBeforeAnyFinancialInsert() =
+        runTest { assertImmutableWriteFence("FREEZE") }
+
+    @Test
+    fun firstClaimNeverResetsAnExistingRevisionOrContradictoryLocalCheckpoint() =
+        runTest {
+            val variants =
+                listOf(
+                    ticket("revision").copy(checkpointRevision = 7),
+                    ticket("checkpoint").copy(checkpointJson = "0"),
+                    ticket("unknown-use").copy(localUse = "UNKNOWN"),
+                )
+            for (row in variants) {
+                dao.insertTicket(row)
+                assertFalse(dao.claim(row.ownerUid, row.ticketId, "0", checkpointValidator))
+                assertNoNewWrite(row)
+            }
+            db.close()
+            db = open()
+            for (row in variants) assertEquals(row, dao.ticket(row.ownerUid, row.ticketId))
+        }
+
+    @Test
+    fun everyNewWriteRechecksCurrentActiveFlagsBeforeCallingTheCapturedValidator() =
+        runTest {
+            val changes: List<(ArenaTicketRecordEntity) -> ArenaTicketRecordEntity> =
+                listOf(
+                    { it.copy(serverStatus = "CANCELLED") },
+                    { it.copy(serverStatus = "SETTLED") },
+                    { it.copy(serverStatus = "ISSUED") },
+                    { it.copy(decision = "CANCEL") },
+                    { it.copy(decision = "SETTLE") },
+                    { it.copy(terminalJson = "opaque terminal") },
+                    { it.copy(snapshotJson = null) },
+                    { it.copy(snapshotSha256 = null) },
+                    { it.copy(observedAtMs = -1) },
+                    { it.copy(checkpointRevision = -1) },
+                    { it.copy(localUse = "UNKNOWN") },
+                )
+            for (operation in listOf("CLAIM", "CAS", "FREEZE")) {
+                for ((index, change) in changes.withIndex()) {
+                    val captured = newWriteTicket("flags-$operation-$index", operation)
+                    dao.insertTicket(captured)
+                    val current = change(captured)
+                    dao.updateTicket(current) // Separate committed corruption after the outer feature read.
+                    var invoked = false
+                    val proof = ArenaCheckpointValidator { _, _, _, _ -> invoked = true }
+                    val result = runCatching { writeWithProof(captured, operation, proof) }
+                    assertTrue(result.isFailure || result.getOrNull() == false)
+                    assertFalse(invoked)
+                    assertNoNewWrite(current)
+                }
+            }
+        }
+
+    // TZ-01 stage B agreed checks. Each one pins a NAMED outcome: the Boolean writes refuse with false,
+    // the freeze refuses with ArenaJournalConflict, and a rejected proof leaves the row untouched. The
+    // pre-existing stage B tests accept "throws or false" interchangeably, which cannot describe a contract.
+
+    @Test
+    fun identicalCheckpointAtABumpedRevisionStillFreezesTheCorrectBody() =
+        runTest {
+            val seed = ticket("bumped").copy(localUse = "LAUNCHED", checkpointJson = "1", checkpointRevision = 7)
+            dao.insertTicket(seed)
+            val captured = requireNotNull(dao.ticket(seed.ownerUid, seed.ticketId))
+            val expected = checkpointBinding(captured)
+            // An identity CAS: byte-identical checkpoint, revision advances 7 -> 8.
+            assertTrue(dao.saveCheckpoint(seed.ownerUid, seed.ticketId, seed.attemptId, 7, "1", checkpointValidator))
+            val bumped = requireNotNull(dao.ticket(seed.ownerUid, seed.ticketId))
+            assertEquals(8L, bumped.checkpointRevision)
+            assertEquals("1", bumped.checkpointJson)
+            var seen: ArenaCheckpointBinding? = null
+            val proof =
+                ArenaCheckpointValidator { binding, previous, candidate, completion ->
+                    seen = binding
+                    checkpointValidator.validate(binding, previous, candidate, completion)
+                }
+            val command = settlement(bumped)
+            dao.freezeSettlement(command, outbox(command), proof)
+            // The revision is not part of the immutable binding, so the earlier capture still matches.
+            assertEquals(expected, seen)
+            val after = requireNotNull(dao.ticket(seed.ownerUid, seed.ticketId))
+            assertEquals("SETTLE", after.decision)
+            assertEquals(8L, after.checkpointRevision)
+            assertNotNull(dao.ticketCommand(seed.ownerUid, seed.ticketId, "SETTLE"))
+            assertNotNull(dao.intent(seed.attemptId))
+            assertNotNull(dao.queued(outbox(command).mutationId))
+        }
+
+    @Test
+    fun aFinalBodyThatDoesNotMatchTheStoredCheckpointIsRejectedWithoutAnyNewWrite() =
+        runTest {
+            // checkpointValidator accepts a completion payload only for candidate "1".
+            val seed = ticket("mismatch").copy(localUse = "LAUNCHED", checkpointJson = "0", checkpointRevision = 3)
+            dao.insertTicket(seed)
+            val current = requireNotNull(dao.ticket(seed.ownerUid, seed.ticketId))
+            val command = settlement(current)
+            assertTrue(
+                runCatching {
+                    dao.freezeSettlement(command, outbox(command), checkpointValidator)
+                }.exceptionOrNull() is IllegalArgumentException,
+            )
+            assertNoNewWrite(current)
+            assertEquals("NONE", requireNotNull(dao.ticket(seed.ownerUid, seed.ticketId)).decision)
+        }
+
+    @Test
+    fun closedAndCorruptedRowsGiveTheirNamedOutcomeAndNeverReachTheProof() =
+        runTest {
+            for (operation in listOf("CLAIM", "CAS", "FREEZE")) {
+                for ((name, change) in corruptions()) {
+                    val seed = change(newWriteTicket("$name-$operation", operation))
+                    dao.insertTicket(seed)
+                    val current = requireNotNull(dao.ticket(seed.ownerUid, seed.ticketId))
+                    var invoked = false
+                    val proof = ArenaCheckpointValidator { _, _, _, _ -> invoked = true }
+                    val outcome =
+                        runCatching {
+                            when (operation) {
+                                "CLAIM" -> dao.claim(current.ownerUid, current.ticketId, "0", proof)
+                                // A valid expectedRevision on purpose: this case must exercise the ROW
+                                // guard, not saveCheckpoint's separate argument check, which is pinned
+                                // by aNegativeExpectedRevisionIsAnArgumentErrorNotALostCas below.
+                                "CAS" ->
+                                    dao.saveCheckpoint(
+                                        current.ownerUid,
+                                        current.ticketId,
+                                        current.attemptId,
+                                        maxOf(0L, current.checkpointRevision),
+                                        "1",
+                                        proof,
+                                    )
+                                else -> {
+                                    val command = settlement(current)
+                                    dao.freezeSettlement(command, outbox(command), proof)
+                                    true
+                                }
+                            }
+                        }
+                    if (operation == "FREEZE") {
+                        assertTrue("$name/$operation", outcome.exceptionOrNull() is ArenaJournalConflict)
+                    } else {
+                        assertEquals("$name/$operation", false, outcome.getOrNull())
+                    }
+                    assertFalse("$name/$operation", invoked)
+                    assertNoNewWrite(current)
+                }
+            }
+        }
+
+    @Test
+    fun aNegativeExpectedRevisionIsAnArgumentErrorNotALostCas() =
+        runTest {
+            val seed = ticket("negative-argument").copy(localUse = "LAUNCHED", checkpointJson = "0")
+            dao.insertTicket(seed)
+            val current = requireNotNull(dao.ticket("A", "negative-argument"))
+            var invoked = false
+            val proof = ArenaCheckpointValidator { _, _, _, _ -> invoked = true }
+            // saveCheckpoint validates its own argument before it reads the row, so a caller passing a
+            // negative revision gets IllegalArgumentException, not the Boolean "someone else won the CAS".
+            // The write adapter must not read that exception as a lost race.
+            assertTrue(
+                runCatching {
+                    dao.saveCheckpoint(current.ownerUid, current.ticketId, current.attemptId, -1, "1", proof)
+                }.exceptionOrNull() is IllegalArgumentException,
+            )
+            assertFalse(invoked)
+            assertNoNewWrite(current)
+        }
+
+    @Test
+    fun cancelAndSettleAreMutuallyExclusiveInBothOrders() =
+        runTest {
+            val cancelFirst = ticket("cancel-first").copy(localUse = "LAUNCHED", checkpointJson = "1")
+            dao.insertTicket(cancelFirst)
+            dao.chooseCancel(cancellation(cancelFirst))
+            assertEquals("CANCEL", requireNotNull(dao.ticket("A", "cancel-first")).decision)
+            val lateSettle = settlement(requireNotNull(dao.ticket("A", "cancel-first")))
+            assertTrue(
+                runCatching {
+                    dao.freezeSettlement(lateSettle, outbox(lateSettle), checkpointValidator)
+                }.exceptionOrNull() is ArenaJournalConflict,
+            )
+            assertNull(dao.ticketCommand("A", "cancel-first", "SETTLE"))
+            assertEquals("CANCEL", requireNotNull(dao.ticket("A", "cancel-first")).decision)
+
+            val settleFirst = ticket("settle-first").copy(localUse = "LAUNCHED", checkpointJson = "1")
+            dao.insertTicket(settleFirst)
+            val settle = settlement(requireNotNull(dao.ticket("A", "settle-first")))
+            dao.freezeSettlement(settle, outbox(settle), checkpointValidator)
+            assertEquals("SETTLE", requireNotNull(dao.ticket("A", "settle-first")).decision)
+            assertTrue(
+                runCatching {
+                    dao.chooseCancel(cancellation(settleFirst))
+                }.exceptionOrNull() is ArenaJournalConflict,
+            )
+            assertNull(dao.ticketCommand("A", "settle-first", "CANCEL"))
+            assertEquals("SETTLE", requireNotNull(dao.ticket("A", "settle-first")).decision)
+        }
+
+    @Test
+    fun replayThroughTheFreezeEntryPointAfterBankEvictionAddsNoSecondEffect() =
+        runTest {
+            val seed = ticket("replay-freeze").copy(localUse = "LAUNCHED", checkpointJson = "1")
+            dao.insertTicket(seed)
+            val command = settlement(requireNotNull(dao.ticket("A", "replay-freeze")))
+            dao.freezeSettlement(command, outbox(command), checkpointValidator)
+            dao.observe(ticket("replay-freeze").copy(serverStatus = "SETTLED", terminalJson = "receipt"))
+            assertTrue(dao.evictSnapshot("A", "replay-freeze"))
+            assertNull(requireNotNull(dao.ticket("A", "replay-freeze")).snapshotJson)
+            val ticketAfter = requireNotNull(dao.ticket("A", "replay-freeze"))
+            val commandAfter = requireNotNull(dao.ticketCommand("A", "replay-freeze", "SETTLE"))
+            val queuedAfter = requireNotNull(dao.queued(outbox(command).mutationId))
+            var invoked = false
+            val proof = ArenaCheckpointValidator { _, _, _, _ -> invoked = true }
+            // The same entry point again must take the replay branch, not a second new write, and the
+            // evicted bank must not be needed to get there.
+            dao.freezeSettlement(command, outbox(command), proof)
+            assertFalse(invoked)
+            assertEquals(ticketAfter, dao.ticket("A", "replay-freeze"))
+            assertEquals(commandAfter, dao.ticketCommand("A", "replay-freeze", "SETTLE"))
+            assertEquals(queuedAfter, dao.queued(outbox(command).mutationId))
+            assertNotNull(dao.intent(seed.attemptId))
+        }
+
+    /** The same enumerated corruptions the canonical fake is held to, so the two cannot drift silently. */
+    private fun corruptions(): List<Pair<String, (ArenaTicketRecordEntity) -> ArenaTicketRecordEntity>> =
+        listOf(
+            "terminal" to { row: ArenaTicketRecordEntity -> row.copy(terminalJson = "receipt") },
+            "cancelled" to { row: ArenaTicketRecordEntity -> row.copy(decision = "CANCEL") },
+            "serverSettled" to { row: ArenaTicketRecordEntity -> row.copy(serverStatus = "SETTLED") },
+            "unknownLocalUse" to { row: ArenaTicketRecordEntity -> row.copy(localUse = "UNKNOWN") },
+            "negativeClock" to { row: ArenaTicketRecordEntity -> row.copy(observedAtMs = -1) },
+            "negativeRevision" to { row: ArenaTicketRecordEntity -> row.copy(checkpointRevision = -1) },
+        )
+
+    private fun checkpointBinding(row: ArenaTicketRecordEntity) =
+        ArenaCheckpointBinding(
+            row.ownerUid,
+            row.ticketId,
+            row.attemptId,
+            requireNotNull(row.snapshotSha256),
+            row.requestId,
+            row.termsJson,
+            requireNotNull(row.snapshotJson),
+        )
+
+    private fun newWriteTicket(
+        id: String,
+        operation: String,
+    ): ArenaTicketRecordEntity {
+        val fresh = ticket(id)
+        return when (operation) {
+            "CLAIM" -> fresh
+            "CAS" -> fresh.copy(localUse = "LAUNCHED", checkpointJson = "0", checkpointRevision = 7)
+            else -> fresh.copy(localUse = "LAUNCHED", checkpointJson = "1", checkpointRevision = 7)
+        }
+    }
+
+    private suspend fun assertImmutableWriteFence(operation: String) {
+        val changes: List<(ArenaTicketRecordEntity) -> ArenaTicketRecordEntity> =
+            listOf(
+                { it.copy(requestId = "changed-request") },
+                { it.copy(termsJson = "{\"immutablePrice\":11}") },
+                { it.copy(termsJson = it.termsJson.dropLast(1) + ",\"immutablePrice\":10}") },
+                { it.copy(snapshotJson = "{\"questions\":[\"changed\"]}") },
+                { it.copy(snapshotSha256 = "changed-hash") },
+            )
+        for ((index, change) in changes.withIndex()) {
+            val seed = newWriteTicket("bytes-$operation-$index", operation)
+            dao.insertTicket(seed)
+            val captured = requireNotNull(dao.ticket(seed.ownerUid, seed.ticketId))
+            val expected = checkpointBinding(captured)
+            var invoked = false
+            val proof =
+                ArenaCheckpointValidator { binding, previous, candidate, completion ->
+                    invoked = true
+                    require(binding == expected)
+                    checkpointValidator.validate(binding, previous, candidate, completion)
+                }
+            val current = change(captured)
+            dao.updateTicket(current)
+            // First three identity fields/hash can remain identical while the raw bank/terms/request drift.
+            assertTrue(
+                runCatching {
+                    writeWithProof(
+                        captured,
+                        operation,
+                        proof,
+                    )
+                }.exceptionOrNull() is IllegalArgumentException,
+            )
+            assertTrue(invoked)
+            assertNoNewWrite(current)
+        }
+    }
+
+    private suspend fun writeWithProof(
+        captured: ArenaTicketRecordEntity,
+        operation: String,
+        proof: ArenaCheckpointValidator,
+    ): Boolean =
+        when (operation) {
+            "CLAIM" -> dao.claim(captured.ownerUid, captured.ticketId, "0", proof)
+            "CAS" ->
+                dao.saveCheckpoint(
+                    captured.ownerUid,
+                    captured.ticketId,
+                    captured.attemptId,
+                    captured.checkpointRevision,
+                    "1",
+                    proof,
+                )
+            else -> {
+                val command = settlement(captured)
+                dao.freezeSettlement(command, outbox(command), proof)
+                true
+            }
+        }
+
+    private suspend fun assertNoNewWrite(expected: ArenaTicketRecordEntity) {
+        assertEquals(expected, dao.ticket(expected.ownerUid, expected.ticketId))
+        assertNull(dao.ticketCommand(expected.ownerUid, expected.ticketId, "SETTLE"))
+        assertNull(dao.ticketCommand(expected.ownerUid, expected.ticketId, "CANCEL"))
+        assertNull(dao.intent(expected.attemptId))
+        assertNull(dao.queued(outbox(settlement(expected)).mutationId))
+        assertNull(db.lessonAttemptDao().findAttempt(expected.attemptId))
+        assertTrue(db.lessonAttemptDao().findAttemptAnswers(expected.attemptId).isEmpty())
+    }
 }

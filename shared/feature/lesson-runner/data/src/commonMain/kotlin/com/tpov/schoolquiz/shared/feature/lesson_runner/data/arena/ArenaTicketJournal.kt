@@ -328,13 +328,36 @@ class ArenaTicketJournal(
     ) = storage.command(session.ownerUid, kind, id) ?: throw ArenaJournalAttention("NO_ORIGINAL_CONSENT")
 
     private fun checkpointValidator(row: ArenaTicketRecordEntity): ArenaCheckpointValidator {
+        requireCheckpointWriteRow(row)
         val snapshot = codec.decode(row).snapshot
         val hash = requireNotNull(row.snapshotSha256)
-        val expected = ArenaCheckpointBinding(row.ownerUid, row.ticketId, row.attemptId, hash)
+        val expected =
+            ArenaCheckpointBinding(
+                row.ownerUid,
+                row.ticketId,
+                row.attemptId,
+                hash,
+                row.requestId,
+                row.termsJson,
+                requireNotNull(row.snapshotJson),
+            )
         return ArenaCheckpointValidator { binding, previous, candidate, completion ->
             require(binding == expected)
             checkpoints.validate(snapshot, hash, previous, candidate, completion)
         }
+    }
+
+    /** Captured proof for new writes only. Existing frozen replay/cancellation may have no safe bank. */
+    private fun requireCheckpointWriteRow(row: ArenaTicketRecordEntity) {
+        require(row.serverStatus == "RESERVED" && row.decision == "NONE" && row.terminalJson == null)
+        require(row.observedAtMs >= 0 && row.checkpointRevision >= 0)
+        when (row.localUse) {
+            "UNUSED" -> require(row.checkpointJson == null && row.checkpointRevision == 0L)
+            "LAUNCHED" -> require(row.checkpointJson != null)
+            else -> throw IllegalArgumentException("Invalid runner write state")
+        }
+        val header = codec.header(row)
+        require(codec.record(header, row.observedAtMs).termsJson == row.termsJson)
     }
 
     private fun state(row: ArenaTicketRecordEntity): ArenaCachedTicket {

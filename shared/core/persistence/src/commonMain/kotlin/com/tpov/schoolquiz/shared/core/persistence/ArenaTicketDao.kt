@@ -431,9 +431,16 @@ private fun validateObservationCommand(
 }
 
 private fun ArenaTicketRecordEntity.canClaim(): Boolean {
-    val available = serverStatus == "RESERVED" && decision == "NONE" && snapshotJson != null
-    val unused = localUse == "UNUSED" && checkpointJson == null
-    return available && unused
+    val unused = localUse == "UNUSED" && checkpointJson == null && checkpointRevision == 0L
+    return canWriteCheckpoint() && unused
+}
+
+/** New writes only; terminal replay and bank-independent cancellation deliberately do not use this guard. */
+private fun ArenaTicketRecordEntity.canWriteCheckpoint(): Boolean {
+    val active = serverStatus == "RESERVED" && decision == "NONE" && terminalJson == null
+    val hasSnapshot = snapshotJson != null && snapshotSha256 != null
+    val validClockAndRevision = observedAtMs >= 0 && checkpointRevision >= 0
+    return active && hasSnapshot && validClockAndRevision
 }
 
 private fun ArenaTicketRecordEntity.canSaveCheckpoint(
@@ -441,7 +448,7 @@ private fun ArenaTicketRecordEntity.canSaveCheckpoint(
     revision: Long,
 ): Boolean {
     val identityMatches = attemptId == attempt && checkpointRevision == revision
-    val active = serverStatus == "RESERVED" && decision == "NONE" && localUse == "LAUNCHED"
+    val active = canWriteCheckpoint() && localUse == "LAUNCHED"
     return identityMatches && active
 }
 
@@ -461,7 +468,7 @@ private suspend fun ArenaTicketDao.validateNewSettlement(
     ticket: ArenaTicketRecordEntity,
     row: OutboxEntity,
 ) {
-    if (ticket.serverStatus != "RESERVED" || ticket.localUse != "LAUNCHED" || ticket.decision != "NONE") {
+    if (!ticket.canWriteCheckpoint() || ticket.localUse != "LAUNCHED") {
         throw ArenaJournalConflict()
     }
     if (queued(row.mutationId) != null || intent(ticket.attemptId) != null || hasScoredRows(ticket.attemptId)) {

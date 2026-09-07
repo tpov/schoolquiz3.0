@@ -2,15 +2,18 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena
 
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
+import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketRecordEntity
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.arenaCheckpointCompletion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaCancelResponse
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaCancellationReceipt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaInitialCheckpoint
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareResponse
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketGetRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
@@ -24,6 +27,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import org.junit.Test
@@ -429,4 +433,394 @@ class ArenaTicketJournalTest {
         ).digest(value.toByteArray()).joinToString("") {
             "%02x".format(it)
         }
+
+    @Test
+    fun realStrictCodecAcceptsFreshClaimProgressAndOneFrozenFinalBody() =
+        runTest {
+            for (hard in listOf(false, true)) {
+                val f = RunReadFixture(this, hard)
+                val journal = strictWriteJournal(f)
+                assertTrue(strictWrite(f, journal, "CLAIM").getOrThrow())
+                assertEquals(0L, f.row.checkpointRevision)
+                assertTrue(strictWrite(f, journal, "CAS").getOrThrow())
+                assertEquals(1L, f.row.checkpointRevision)
+                val final = f.checkpoint(ArenaRunnerPhase.COMPLETING)
+                val json = f.checkpoints.encode(final, f.binding)
+                journal.updateCheckpoint(f.original, f.header.ticketId, f.header.attemptId, 1, json).getOrThrow()
+                assertTrue(strictWrite(f, journal, "FREEZE").getOrThrow())
+                assertEquals("SETTLE", f.row.decision)
+                val body = f.storage.commands.values.single().bodyJson
+                assertEquals(body, f.storage.outbox.values.single().payload)
+                assertEquals(body, f.storage.firstIntents.values.single().payload)
+                // `codeAnswerIndex` is a documented field of every served row (the strict codec requires the
+            // key set {questionId, codeAnswerIndex}), so a bare "codeAnswer" substring check can never
+            // hold. The intent — no synthetic percent score and no synthetic code answer — is kept, and
+            // expressed against the key rather than a substring of a legitimate one.
+            assertFalse("percentScore" in body)
+            assertFalse("\"codeAnswer\":" in body)
+            }
+        }
+
+    @Test
+    fun realStrictClaimProofRefusesPostReadImmutableDriftBeforeLaunch() =
+        runTest { assertStrictImmutableWriteFence("CLAIM") }
+
+    @Test
+    fun realStrictProgressProofRefusesPostReadImmutableDriftBeforeRevisionChange() =
+        runTest { assertStrictImmutableWriteFence("CAS") }
+
+    @Test
+    fun realStrictFinalProofRefusesPostReadImmutableDriftBeforeAnyIntentInsert() =
+        runTest { assertStrictImmutableWriteFence("FREEZE") }
+
+    @Test
+    fun canonicalTermsUnknownDuplicateAndReorderedBytesCannotEnterAnyNewWriteProof() =
+        runTest {
+            for (operation in listOf("CLAIM", "CAS", "FREEZE")) {
+                for (kind in listOf("unknown", "duplicate", "reordered")) {
+                    val f = RunReadFixture(this)
+                    prepareStrictWrite(f, operation)
+                    val original = f.row.termsJson
+                    val fields = Json.parseToJsonElement(original).jsonObject
+                    val changed =
+                        when (kind) {
+                            "unknown" -> JsonObject(fields + ("futureTerms" to JsonPrimitive("private"))).toString()
+                            "duplicate" -> original.dropLast(1) + ",\"schemaVersion\":1}"
+                            else -> JsonObject(fields.entries.reversed().associate { it.key to it.value }).toString()
+                        }
+                    assertTrue(changed != original)
+                    f.row = f.row.copy(termsJson = changed)
+                    val before = f.financialState()
+                    assertTrue(strictWrite(f, strictWriteJournal(f), operation).isFailure)
+                    assertEquals(before, f.financialState())
+                }
+            }
+        }
+
+    @Test
+    fun newWriteProofRejectsInvalidCapturedFlagsWithoutRepairingThem() =
+        runTest {
+            val changes: List<(ArenaTicketRecordEntity) -> ArenaTicketRecordEntity> =
+                listOf(
+                    { it.copy(terminalJson = "opaque terminal") },
+                    { it.copy(observedAtMs = -1) },
+                    { it.copy(checkpointRevision = -1) },
+                    { it.copy(localUse = "UNKNOWN") },
+                )
+            for (operation in listOf("CLAIM", "CAS", "FREEZE")) {
+                for (change in changes) {
+                    val f = RunReadFixture(this)
+                    prepareStrictWrite(f, operation)
+                    f.row = change(f.row)
+                    val before = f.financialState()
+                    val result = strictWrite(f, strictWriteJournal(f), operation)
+                    assertTrue(result.isFailure || result.getOrNull() == false)
+                    assertEquals(before, f.financialState())
+                }
+            }
+            val f = RunReadFixture(this)
+            f.row = f.row.copy(checkpointRevision = 7)
+            val before = f.financialState()
+            assertTrue(strictWrite(f, strictWriteJournal(f), "CLAIM").isFailure)
+            assertEquals(before, f.financialState())
+        }
+
+    @Test
+    fun actualWriteRereadRefusesTerminalOrDecisionRacesWithoutUsingCapturedActiveState() =
+        runTest {
+            val changes: List<(ArenaTicketRecordEntity) -> ArenaTicketRecordEntity> =
+                listOf(
+                    { it.copy(serverStatus = "CANCELLED") },
+                    { it.copy(decision = "CANCEL") },
+                    { it.copy(terminalJson = "opaque terminal") },
+                    { it.copy(localUse = "UNKNOWN") },
+                    { it.copy(observedAtMs = -1) },
+                )
+            for (operation in listOf("CLAIM", "CAS", "FREEZE")) {
+                for (change in changes) {
+                    val f = RunReadFixture(this)
+                    prepareStrictWrite(f, operation)
+                    val changed = change(f.row)
+                    var before: List<Any>? = null
+                    val journal =
+                        strictWriteJournal(f) {
+                            f.row = changed
+                            before = f.financialState()
+                        }
+                    val result = strictWrite(f, journal, operation)
+                    assertTrue(result.isFailure || result.getOrNull() == false)
+                    assertEquals(before, f.financialState())
+                }
+            }
+        }
+
+    @Test
+    fun strictFrozenReplayAndExplicitCancellationStillDoNotDecodeAnUnsafeBank() =
+        runTest {
+            val f = RunReadFixture(this)
+            prepareStrictWrite(f, "FREEZE")
+            val journal = strictWriteJournal(f)
+            val finalIntent = arenaCheckpointCompletion(f.checkpoint(ArenaRunnerPhase.COMPLETING), f.binding)
+            journal.freezeCompletion(f.original, f.header.ticketId, finalIntent).getOrThrow()
+            f.row = f.row.copy(serverStatus = "SETTLED", snapshotJson = null, checkpointJson = null)
+            val before = f.financialState()
+            journal.freezeCompletion(f.original, f.header.ticketId, finalIntent).getOrThrow()
+            assertEquals(before, f.financialState())
+
+            val cancellable = RunReadFixture(this)
+            cancellable.row = cancellable.row.copy(snapshotJson = "unsafe bank", snapshotSha256 = "bad hash")
+            strictWriteJournal(cancellable).requestCancel(
+                cancellable.original,
+                cancellable.header.ticketId,
+                "explicit-cancel",
+            ).getOrThrow()
+            assertEquals("CANCEL", cancellable.row.decision)
+            assertTrue(cancellable.storage.outbox.isEmpty())
+            assertTrue(cancellable.storage.firstIntents.isEmpty())
+        }
+
+    private suspend fun TestScope.assertStrictImmutableWriteFence(operation: String) {
+        val changes: List<(ArenaTicketRecordEntity) -> ArenaTicketRecordEntity> =
+            listOf(
+                { it.copy(requestId = "changed-request") },
+                { it.copy(termsJson = it.termsJson.dropLast(1) + ",\"schemaVersion\":1}") },
+                { it.copy(snapshotJson = requireNotNull(it.snapshotJson) + " ") },
+                { it.copy(snapshotSha256 = "changed-hash") },
+            )
+        for (change in changes) {
+            val f = RunReadFixture(this)
+            prepareStrictWrite(f, operation)
+            val changed = change(f.row)
+            var before: List<Any>? = null
+            val journal =
+                strictWriteJournal(f) {
+                    f.row = changed
+                    before = f.financialState()
+                }
+            assertTrue(strictWrite(f, journal, operation).exceptionOrNull() is IllegalArgumentException)
+            assertEquals(before, f.financialState())
+            assertTrue(f.remote.boundSessions.isEmpty())
+        }
+    }
+
+    // TZ-01 stage B agreed checks, strict-codec side. The current error channel is deliberately left as
+    // it is; these tests PIN it so the future ArenaRunRepository write adapter has a described contract.
+    //
+    // For the write adapter: a refusal arrives on two different channels.
+    //  - claimForLaunch  -> Result.success(ArenaLaunchClaim.NotFresh) when state() already sees the row as
+    //                       unavailable, but Result.failure(IllegalArgumentException) when the row passes
+    //                       state() and fails the new-write row guard.
+    //  - updateCheckpoint -> Result.success(false) only for a genuine lost CAS; a row that is not writable
+    //                       at all now yields Result.failure(IllegalArgumentException).
+    // "Lost CAS" and "row not writable" are therefore NOT distinguishable by the Boolean alone.
+
+    @Test
+    fun claimForLaunchReportsNotFreshForAnAlreadyUnavailableRowAndFailsForAnUnwritableOne() =
+        runTest {
+            val unavailable = RunReadFixture(this)
+            unavailable.row = unavailable.row.copy(serverStatus = "SETTLED", terminalJson = "receipt")
+            val notFresh = strictWrite(unavailable, strictWriteJournal(unavailable), "CLAIM")
+            assertTrue(notFresh.isSuccess)
+            assertEquals(false, notFresh.getOrNull())
+
+            val unwritable = RunReadFixture(this)
+            // Still RESERVED / NONE / UNUSED with a decodable bank, so state() calls it Available, but a
+            // fresh claim refuses it: an UNUSED row carrying a checkpoint at revision 7 is corrupted, and
+            // the contract says it must not be zeroed back into a new run.
+            unwritable.row = unwritable.row.copy(checkpointJson = "{}", checkpointRevision = 7)
+            val before = unwritable.financialState()
+            val failure = strictWrite(unwritable, strictWriteJournal(unwritable), "CLAIM")
+            assertTrue(failure.isFailure)
+            assertIs<IllegalArgumentException>(failure.exceptionOrNull())
+            assertEquals(before, unwritable.financialState())
+        }
+
+    @Test
+    fun updateCheckpointFailsRatherThanReportingALostCasWhenTheRowIsNotWritable() =
+        runTest {
+            val f = RunReadFixture(this)
+            f.launch()
+            f.row = f.row.copy(decision = "CANCEL")
+            val before = f.financialState()
+            val outcome = strictWrite(f, strictWriteJournal(f), "CAS")
+            assertTrue(outcome.isFailure)
+            assertIs<IllegalArgumentException>(outcome.exceptionOrNull())
+            assertEquals(before, f.financialState())
+        }
+
+    @Test
+    fun strictCodecAcceptsAFreezeAfterAnIdentityCasThatOnlyAdvancedTheRevision() =
+        runTest {
+            val f = RunReadFixture(this)
+            val journal = strictWriteJournal(f)
+            f.launch(ArenaRunnerPhase.COMPLETING)
+            val durable = requireNotNull(f.row.checkpointJson)
+            val revisionBefore = f.row.checkpointRevision
+            // The final checkpoint is immutable, so the only legal CAS on it is the identity one.
+            assertTrue(
+                journal.updateCheckpoint(
+                    f.original,
+                    f.header.ticketId,
+                    f.header.attemptId,
+                    revisionBefore,
+                    durable,
+                ).getOrThrow(),
+            )
+            assertEquals(revisionBefore + 1, f.row.checkpointRevision)
+            assertEquals(durable, f.row.checkpointJson)
+            assertTrue(strictWrite(f, journal, "FREEZE").getOrThrow())
+            assertEquals("SETTLE", f.row.decision)
+            val body = f.storage.commands.values.single().bodyJson
+            assertEquals(body, f.storage.outbox.values.single().payload)
+            assertEquals(body, f.storage.firstIntents.values.single().payload)
+        }
+
+    @Test
+    fun strictCodecRefusesAFinalBodyBuiltForADifferentCheckpointAndWritesNothing() =
+        runTest {
+            val f = RunReadFixture(this)
+            val journal = strictWriteJournal(f)
+            f.launch(ArenaRunnerPhase.COMPLETING)
+            val before = f.financialState()
+            // A completion intent for a checkpoint the row does not hold: the strict codec compares the
+            // body against the checkpoint actually read inside the write, so it cannot be committed.
+            val foreign =
+                arenaCheckpointCompletion(
+                    f.checkpoint(ArenaRunnerPhase.COMPLETING).copy(endedAtMs = f.header.issuedAtMs + 9_999),
+                    f.binding,
+                )
+            val outcome = journal.freezeCompletion(f.original, f.header.ticketId, foreign)
+            assertTrue(outcome.isFailure)
+            assertEquals(before, f.financialState())
+            assertTrue(f.storage.commands.isEmpty())
+            assertTrue(f.storage.outbox.isEmpty())
+            assertTrue(f.storage.firstIntents.isEmpty())
+        }
+
+    @Test
+    fun theCanonicalFakeRefusesTheSameCorruptedRowsAsTheRealDaoWithTheSameOutcome() =
+        runTest {
+            // Behavioural parity, not a source read: the same enumerated corruptions the real Room test
+            // applies to the DAO are applied here to the canonical fake, and must produce false, not a
+            // silent success. If either side drifts, one of the two suites goes red.
+            val corruptions: List<Pair<String, (ArenaTicketRecordEntity) -> ArenaTicketRecordEntity>> =
+                listOf(
+                    "terminal" to { row: ArenaTicketRecordEntity -> row.copy(terminalJson = "receipt") },
+                    "cancelled" to { row: ArenaTicketRecordEntity -> row.copy(decision = "CANCEL") },
+                    "serverSettled" to { row: ArenaTicketRecordEntity -> row.copy(serverStatus = "SETTLED") },
+                    "unknownLocalUse" to { row: ArenaTicketRecordEntity -> row.copy(localUse = "UNKNOWN") },
+                    "negativeClock" to { row: ArenaTicketRecordEntity -> row.copy(observedAtMs = -1) },
+                    "negativeRevision" to { row: ArenaTicketRecordEntity -> row.copy(checkpointRevision = -1) },
+                )
+            for ((name, change) in corruptions) {
+                val claimFixture = RunReadFixture(this)
+                claimFixture.row = change(claimFixture.row)
+                var claimProofSeen = false
+                assertFalse(
+                    claimFixture.storage.claim(
+                        claimFixture.header.ownerUid,
+                        claimFixture.header.ticketId,
+                        // The guard runs before the proof, so any non-empty candidate is enough here.
+                        "{}",
+                    ) { _, _, _, _ -> claimProofSeen = true },
+                    name,
+                )
+                assertFalse(claimProofSeen, name)
+
+                val casFixture = RunReadFixture(this)
+                casFixture.launch()
+                val durable = requireNotNull(casFixture.row.checkpointJson)
+                val revision = casFixture.row.checkpointRevision
+                casFixture.row = change(casFixture.row)
+                var casProofSeen = false
+                assertFalse(
+                    casFixture.storage.saveCheckpoint(
+                        casFixture.header.ownerUid,
+                        casFixture.header.ticketId,
+                        casFixture.header.attemptId,
+                        revision,
+                        durable,
+                    ) { _, _, _, _ -> casProofSeen = true },
+                    name,
+                )
+                assertFalse(casProofSeen, name)
+            }
+        }
+
+    private fun prepareStrictWrite(
+        f: RunReadFixture,
+        operation: String,
+    ) {
+        when (operation) {
+            "CAS" -> f.launch()
+            "FREEZE" -> f.launch(ArenaRunnerPhase.COMPLETING)
+        }
+    }
+
+    private suspend fun strictWrite(
+        f: RunReadFixture,
+        journal: ArenaTicketJournal,
+        operation: String,
+    ): Result<Boolean> =
+        when (operation) {
+            "CLAIM" -> {
+                val initial = f.checkpoint(ArenaRunnerPhase.ANSWERING)
+                journal.claimForLaunch(
+                    f.original,
+                    f.header.ticketId,
+                    ArenaInitialCheckpoint(
+                        initial.sessionMode,
+                        initial.seed,
+                        initial.questionStartedAtMs,
+                        initial.deadlineMs,
+                    ),
+                ).map { it is ArenaLaunchClaim.Claimed }
+            }
+            "CAS" ->
+                journal.updateCheckpoint(
+                    f.original,
+                    f.header.ticketId,
+                    f.header.attemptId,
+                    f.row.checkpointRevision,
+                    requireNotNull(f.row.checkpointJson),
+                )
+            else ->
+                journal.freezeCompletion(
+                    f.original,
+                    f.header.ticketId,
+                    arenaCheckpointCompletion(f.checkpoint(ArenaRunnerPhase.COMPLETING), f.binding),
+                ).map { true }
+        }
+
+    /** Only the pre-transaction read is intercepted; all writes use the shared canonical storage fake. */
+    private fun strictWriteJournal(
+        f: RunReadFixture,
+        afterRead: () -> Unit = {},
+    ): ArenaTicketJournal {
+        val storage =
+            object : ArenaJournalStorage by f.storage {
+                override suspend fun ticket(
+                    owner: String,
+                    ticket: String,
+                ): ArenaTicketRecordEntity? {
+                    val captured = f.storage.ticket(owner, ticket)
+                    afterRead()
+                    return captured
+                }
+            }
+        return ArenaTicketJournal(
+            storage,
+            f.remote,
+            f.gate,
+            object : NetworkMonitor {
+                override fun observeOnline() = flowOf(false)
+
+                override suspend fun isOnline(): Nothing = error("No transport during local checkpoint write")
+            },
+            f.journalCodec,
+            f.checkpoints,
+            { f.header.issuedAtMs + 1_000 },
+            f.dispatcher,
+        )
+    }
 }
