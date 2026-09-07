@@ -36,9 +36,13 @@ data class UnscoredTerminalIntent(
         require(served.map { it.questionId }.distinct().size == served.size)
         require(served.map { it.codeAnswerIndex }.distinct().size == served.size)
         require(answers.map { it.questionId }.distinct().size == answers.size)
-        require(answers.all { answer -> served.any {
-            it.questionId == answer.questionId && it.codeAnswerIndex == answer.codeAnswerIndex
-        } })
+        require(
+            answers.all { answer ->
+                served.any {
+                    it.questionId == answer.questionId && it.codeAnswerIndex == answer.codeAnswerIndex
+                }
+            },
+        )
         require(served.all { it.codeAnswerIndex in claims.raw.indices })
     }
 }

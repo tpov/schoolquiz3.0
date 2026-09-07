@@ -2,8 +2,8 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository
 
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.identity
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.identity
 import kotlinx.coroutines.flow.Flow
 
 interface ServerAttemptSettlementRepository {

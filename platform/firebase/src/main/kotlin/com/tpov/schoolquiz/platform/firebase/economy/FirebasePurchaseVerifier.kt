@@ -47,7 +47,9 @@ class FirebasePurchaseVerifier(
             } catch (e: FirebaseFunctionsException) {
                 // A refusal and a failed call are different things: the first is an answer with a
                 // reason, the second leaves the purchase unsettled and worth retrying.
-                throw purchaseFailureFrom(e.code.name, e.details, e.message, e.cause is IOException)
+                val failure = purchaseFailureFrom(e.code.name, e.details, e.message, e.cause is IOException)
+                failure.addSuppressed(e)
+                throw failure
             } catch (e: IOException) {
                 // Never reached the server, so nothing was decided. Safe to present again.
                 throw SyncFailure(SyncError.NoNetwork, e)

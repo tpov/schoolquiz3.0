@@ -8,12 +8,12 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQue
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RawAnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RawAnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 
 /**
  * State machine for the lesson runner lifecycle.

@@ -56,14 +56,14 @@ class AbortAttemptUseCase(
                 state.chargeClaimsOrEmpty(),
                 AttemptCompletionKind.ABORTED,
             )
-        if (saveResult.isFailure) {
+        return if (saveResult.isFailure) {
             val error =
                 saveResult.exceptionOrNull()
                     ?.let { SaveError.IoFailure(it) }
                     ?: SaveError.UnknownError(Exception("Unknown save error"))
-            return RunnerState.SaveFailed(attempt = attempt, error = error)
+            RunnerState.SaveFailed(attempt = attempt, error = error)
+        } else {
+            RunnerState.Aborted(attempt = attempt)
         }
-
-        return RunnerState.Aborted(attempt = attempt)
     }
 }

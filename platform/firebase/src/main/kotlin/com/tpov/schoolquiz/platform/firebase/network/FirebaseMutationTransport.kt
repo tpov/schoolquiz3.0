@@ -103,9 +103,9 @@ internal fun mutationErrorForCode(
     causedByIo: Boolean = false,
 ): SyncError {
     val mapped = syncErrorForCode(code, message, details, causedByIo)
-    return if (operation in OutboxOperations.permanentReceiptOperations && mapped is SyncError.Refused &&
-        code != "INVALID_ARGUMENT" && code != "OUT_OF_RANGE"
-    ) {
+    val protectedRefusal = operation in OutboxOperations.permanentReceiptOperations && mapped is SyncError.Refused
+    val malformedPayload = code == "INVALID_ARGUMENT" || code == "OUT_OF_RANGE"
+    return if (protectedRefusal && !malformedPayload) {
         SyncError.Unknown()
     } else {
         mapped

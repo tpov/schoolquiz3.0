@@ -4,6 +4,11 @@ import android.content.Context
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -13,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
@@ -32,7 +38,6 @@ import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Ignore
@@ -42,8 +47,11 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class LessonRunnerScreenTest {
-    /** Mirrors ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS in LessonRunnerScreen, which is private. */
+    /** Allows the private 250 ms feedback arm delay and its following recomposition to finish. */
     private val answerFeedbackSkipArmMs = 400L
+
+    /** Behavioral boundary of ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS, not a wall-clock sleep. */
+    private val answerFeedbackArmBoundaryMs = 250L
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -182,6 +190,70 @@ class LessonRunnerScreenTest {
 
     private fun hintNode() = composeTestRule.onNodeWithText(str(R.string.runner_hint_action).uppercase())
 
+    private class FeedbackHarness(
+        val answers: MutableList<UserAnswerDraft>,
+        val nextQuestionText: String,
+    )
+
+    /** Records every callback; the fake itself deliberately provides no duplicate suppression. */
+    private fun showFeedbackQuestion(
+        isHard: Boolean = true,
+        info: String? = null,
+    ): FeedbackHarness {
+        val questionUi =
+            singleChoice(correctId = if (isHard) null else "a").copy(
+                hasLocalAnswerKey = !isHard,
+                info = info,
+            )
+        val initial = question(questionUi).copy(isHard = isHard, revealCorrect = !isHard)
+        val nextQuestionText = "Следующий вопрос после Continue"
+        val next =
+            initial.copy(
+                indexInPool = 1,
+                questionUiState = questionUi.copy(questionText = nextQuestionText, info = null),
+            )
+        val fake = RunFakeComponent(MutableStateFlow<RunnerUiState>(initial), isHardMode = isHard)
+        val answers = mutableListOf<UserAnswerDraft>()
+        val component =
+            object : LessonRunnerRootComponent by fake {
+                override fun onAnswer(answer: UserAnswerDraft) {
+                    answers += answer
+                    fake.onAnswer(answer)
+                    // Emulate the component's state transition, without filtering repeated calls.
+                    fake.setState(next)
+                }
+            }
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                LessonRunnerScreen(component, onNavigateBack = {})
+            }
+        }
+        return FeedbackHarness(answers, nextQuestionText)
+    }
+
+    private fun feedbackContinueNode() =
+        composeTestRule.onNodeWithContentDescription(str(R.string.runner_feedback_continue_action))
+
+    private fun advanceFeedbackFrame() {
+        composeTestRule.mainClock.advanceTimeByFrame()
+        // Android drawing is not driven by MainTestClock; wait for layout/draw without a sleep.
+        composeTestRule.waitForIdle()
+    }
+
+    private fun assertNoFeedbackSubmission(harness: FeedbackHarness) {
+        composeTestRule.runOnIdle { assertEquals(emptyList<UserAnswerDraft>(), harness.answers) }
+    }
+
+    private fun assertOneFeedbackSubmissionAndAdvance(harness: FeedbackHarness) {
+        advanceFeedbackFrame()
+        composeTestRule.runOnIdle {
+            assertEquals(listOf(UserAnswerDraft.SingleChoiceDraft(OptionId("a"))), harness.answers)
+        }
+        composeTestRule.onNodeWithText(harness.nextQuestionText).assertIsDisplayed()
+        composeTestRule.onNodeWithText("2/5").assertIsDisplayed()
+        feedbackContinueNode().assertDoesNotExist()
+    }
+
     private fun resultState(
         percentScore: Int = 80,
         mode: Difficulty = Difficulty.EASY,
@@ -253,40 +325,91 @@ class LessonRunnerScreenTest {
     // Requires a device or emulator; it is not part of ciCheck.
     @Test
     fun ct02b_hardQuestion_tapAfterAnswer_advances() {
-        val fakeComponent =
-            RunFakeComponent(
-                MutableStateFlow(
-                    singleChoiceQuestion(questionText = "CT-02b вопрос", isHard = true).let { state ->
-                        state.copy(
-                            questionUiState =
-                                (state.questionUiState as QuestionUiState.SingleChoice).copy(
-                                    options = listOf(OptionUi("o1", "Первый"), OptionUi("o2", "Второй")),
-                                ),
-                        )
-                    },
-                ),
-                isHardMode = true,
-            )
-
-        composeTestRule.setContent {
-            SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
-            }
-        }
-
+        val harness = showFeedbackQuestion()
+        feedbackContinueNode().assertDoesNotExist()
         composeTestRule.onNodeWithText("Первый").performClick()
+        assertNoFeedbackSubmission(harness)
         // The tap layer arms after a short delay so the answer is not swallowed by the same gesture.
         composeTestRule.mainClock.advanceTimeBy(answerFeedbackSkipArmMs)
-        composeTestRule.onNodeWithContentDescription(str(R.string.runner_feedback_continue_action))
+        val continueNode =
+            feedbackContinueNode()
+                .assertIsDisplayed()
+                .assertIsEnabled()
+                .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        assertEquals(
+            str(R.string.runner_feedback_continue_action),
+            continueNode.fetchSemanticsNode().config[SemanticsActions.OnClick].label,
+        )
+        continueNode.performClick()
+        assertOneFeedbackSubmissionAndAdvance(harness)
+    }
+
+    // Re-enter the same enabled accessibility action before recomposition. A lastAnswer-only fake
+    // would miss two callbacks carrying the same answer; this records the complete callback list.
+    @Test
+    fun ct02c_feedbackContinue_sameFrameRepeatedAction_submitsExactlyOnce() {
+        val harness = showFeedbackQuestion()
+        composeTestRule.onNodeWithText("Первый").performClick()
+        composeTestRule.mainClock.advanceTimeBy(answerFeedbackSkipArmMs)
+        feedbackContinueNode()
             .assertIsDisplayed()
             .assertIsEnabled()
-            .performClick()
+            .performSemanticsAction(SemanticsActions.OnClick) { action ->
+                assertTrue(action())
+                assertTrue(action())
+            }
+        assertOneFeedbackSubmissionAndAdvance(harness)
+    }
 
-        assertNotNull(
-            "a hard question must reach onAnswer on tap; without a verdict digit the tap layer used " +
-                "to be absent and the run stalled here",
-            fakeComponent.lastAnswer,
-        )
+    @Test
+    fun ct02d_feedbackInfo_dismissThenContinue_submitsOnlyOnContinue() {
+        val info = "Объяснение выбранного ответа — CT-02d"
+        val harness = showFeedbackQuestion(isHard = false, info = info)
+        composeTestRule.onNodeWithText("Первый").performClick()
+        composeTestRule.mainClock.advanceTimeBy(answerFeedbackSkipArmMs)
+        feedbackContinueNode().assertIsEnabled()
+        composeTestRule.onNodeWithContentDescription(str(R.string.runner_cd_info))
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule.onNodeWithText(info).assertIsDisplayed()
+        assertNoFeedbackSubmission(harness)
+
+        composeTestRule.onNodeWithText(str(R.string.runner_action_got_it)).performClick()
+        composeTestRule.onNodeWithText(info).assertDoesNotExist()
+        assertNoFeedbackSubmission(harness)
+        feedbackContinueNode().assertIsDisplayed().assertIsEnabled().performClick()
+        assertOneFeedbackSubmissionAndAdvance(harness)
+    }
+
+    @Test
+    fun ct02e_feedbackContinue_remainsDisabledUntil250ms() {
+        val clock = composeTestRule.mainClock
+        val previousAutoAdvance = clock.autoAdvance
+        clock.autoAdvance = false
+        try {
+            val harness = showFeedbackQuestion()
+            advanceFeedbackFrame()
+            composeTestRule.onNodeWithText("Первый").performClick()
+            // This frame composes feedback and starts its LaunchedEffect delay at the current time.
+            advanceFeedbackFrame()
+            val feedbackStartedAt = clock.currentTime
+            feedbackContinueNode().assertIsDisplayed().assertIsNotEnabled()
+            assertNoFeedbackSubmission(harness)
+
+            clock.advanceTimeBy(answerFeedbackArmBoundaryMs - 1L, ignoreFrameDuration = true)
+            composeTestRule.waitForIdle()
+            assertEquals(feedbackStartedAt + answerFeedbackArmBoundaryMs - 1L, clock.currentTime)
+            feedbackContinueNode().assertIsNotEnabled()
+            assertNoFeedbackSubmission(harness)
+
+            clock.advanceTimeBy(1L, ignoreFrameDuration = true)
+            // Enabling is observable on the first frame after the 250 ms coroutine boundary.
+            advanceFeedbackFrame()
+            feedbackContinueNode().assertIsDisplayed().assertIsEnabled().performClick()
+            assertOneFeedbackSubmissionAndAdvance(harness)
+        } finally {
+            clock.autoAdvance = previousAutoAdvance
+        }
     }
 
     // --- CT-03: GIVEN showExitConfirmDialog=true WHEN rendered THEN exit dialog displayed ---

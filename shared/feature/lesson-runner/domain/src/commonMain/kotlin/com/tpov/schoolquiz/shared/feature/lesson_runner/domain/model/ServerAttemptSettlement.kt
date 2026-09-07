@@ -40,11 +40,12 @@ data class ServerAttemptSettlement(
 ) {
     /** Defensive projection: even a malformed adapter cannot make partial proof look final. */
     val hasAccountingProof: Boolean
-        get() = ownerVerified && state == ServerAttemptSettlementState.SETTLED &&
-            !receiptId.isNullOrBlank() && settledAtMs.isSafeAmount() &&
-            codeAnswer != null && percentScore != null && computePercentScore(codeAnswer) == percentScore &&
-            lifePointsSpent.isSafeAmount() && plasmaPointsSpent.isSafeAmount() &&
-            reward?.skillPoints.isSafeAmount() && reward?.nolics.isSafeAmount()
+        get() =
+            ownerVerified && state == ServerAttemptSettlementState.SETTLED &&
+                !receiptId.isNullOrBlank() && settledAtMs.isSafeAmount() &&
+                codeAnswer != null && percentScore != null && computePercentScore(codeAnswer) == percentScore &&
+                lifePointsSpent.isSafeAmount() && plasmaPointsSpent.isSafeAmount() &&
+                reward?.skillPoints.isSafeAmount() && reward?.nolics.isSafeAmount()
 
     /** SETTLED alone can prove accounting, but cannot retroactively prove an old completion. */
     val isConfirmedCompletion: Boolean
@@ -54,4 +55,6 @@ data class ServerAttemptSettlement(
         get() = isConfirmedCompletion
 }
 
-private fun Long?.isSafeAmount(): Boolean = this != null && this in 0..9_007_199_254_740_991L
+private const val MAX_SAFE_SERVER_INTEGER = 9_007_199_254_740_991L
+
+private fun Long?.isSafeAmount(): Boolean = this != null && this in 0..MAX_SAFE_SERVER_INTEGER

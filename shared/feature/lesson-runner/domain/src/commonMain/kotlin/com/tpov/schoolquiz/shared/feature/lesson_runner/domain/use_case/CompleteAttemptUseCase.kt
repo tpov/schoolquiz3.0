@@ -25,8 +25,9 @@ class CompleteAttemptUseCase(
 ) {
     suspend operator fun invoke(state: RunnerState.Ready): RunnerState {
         val nowMs = clock.now().toEpochMilliseconds()
-        val localCode = state.codeAnswer
-            ?: return saveUnscoredTerminal(state, AttemptCompletionKind.COMPLETED, nowMs, attemptRepository)
+        val localCode =
+            state.codeAnswer
+                ?: return saveUnscoredTerminal(state, AttemptCompletionKind.COMPLETED, nowMs, attemptRepository)
         val percentScore = computePercentScore(localCode)
 
         val attempt =
@@ -54,14 +55,14 @@ class CompleteAttemptUseCase(
                 state.chargeClaimsOrEmpty(),
                 AttemptCompletionKind.COMPLETED,
             )
-        if (saveResult.isFailure) {
+        return if (saveResult.isFailure) {
             val error =
                 saveResult.exceptionOrNull()
                     ?.let { SaveError.IoFailure(it) }
                     ?: SaveError.UnknownError(Exception("Unknown save error"))
-            return RunnerState.SaveFailed(attempt = attempt, error = error)
+            RunnerState.SaveFailed(attempt = attempt, error = error)
+        } else {
+            RunnerState.Completed(attempt = attempt, ratingPrompt = true)
         }
-
-        return RunnerState.Completed(attempt = attempt, ratingPrompt = true)
     }
 }

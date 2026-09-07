@@ -34,24 +34,23 @@ class SubmitLessonRatingUseCase(
             return Result.failure(IllegalArgumentException("rating must be in 1..3, got $rating"))
         }
 
-        val lesson =
-            lessonRepository.getById(lessonId)
-                ?: return Result.failure(IllegalStateException("Lesson not found: ${lessonId.value}"))
-
-        val ratingId = ratingIdProvider(userId, lessonId)
-        val nowMs = clock.now().toEpochMilliseconds()
-
-        val lessonRating =
-            LessonRating(
-                id = ratingId,
-                userId = userId,
-                lessonId = lessonId,
-                lessonVersion = lesson.version,
-                rating = rating,
-                ratedAt = nowMs,
-                attemptId = attemptId,
-            )
-
-        return ratingRepository.submit(lessonRating)
+        val lesson = lessonRepository.getById(lessonId)
+        return if (lesson == null) {
+            Result.failure(IllegalStateException("Lesson not found: ${lessonId.value}"))
+        } else {
+            val ratingId = ratingIdProvider(userId, lessonId)
+            val nowMs = clock.now().toEpochMilliseconds()
+            val lessonRating =
+                LessonRating(
+                    id = ratingId,
+                    userId = userId,
+                    lessonId = lessonId,
+                    lessonVersion = lesson.version,
+                    rating = rating,
+                    ratedAt = nowMs,
+                    attemptId = attemptId,
+                )
+            ratingRepository.submit(lessonRating)
+        }
     }
 }

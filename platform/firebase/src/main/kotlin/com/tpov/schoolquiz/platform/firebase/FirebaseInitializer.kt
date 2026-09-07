@@ -24,11 +24,11 @@ fun initializeFirebaseSecurity(
             "The isolated MVP build requires the demo Firebase configuration"
         }
         val host = "127.0.0.1"
-        FirebaseAuth.getInstance(firebaseApp).useEmulator(host, 9099)
-        FirebaseFirestore.getInstance(firebaseApp).useEmulator(host, 8080)
-        FirebaseFunctions.getInstance(firebaseApp).useEmulator(host, 5001)
-        FirebaseDatabase.getInstance(firebaseApp).useEmulator(host, 9000)
-        FirebaseStorage.getInstance(firebaseApp).useEmulator(host, 9199)
+        FirebaseAuth.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.AUTH)
+        FirebaseFirestore.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FIRESTORE)
+        FirebaseFunctions.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FUNCTIONS)
+        FirebaseDatabase.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.DATABASE)
+        FirebaseStorage.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.STORAGE)
         // App Check/Integrity has no local emulator. The demo never contacts its live service.
         return
     }
@@ -44,6 +44,14 @@ fun initializeFirebaseSecurity(
         }
 
     FirebaseAppCheck.getInstance().installAppCheckProviderFactory(providerFactory)
+}
+
+private object MvpEmulatorPorts {
+    const val AUTH = 9099
+    const val FIRESTORE = 8080
+    const val FUNCTIONS = 5001
+    const val DATABASE = 9000
+    const val STORAGE = 9199
 }
 
 private fun debugAppCheckProviderFactoryOrNull(): AppCheckProviderFactory? =

@@ -31,6 +31,7 @@ import kotlinx.datetime.Clock
  * Failures (no throw): InitFailed(AuthRequired | LessonNotFound | EmptyPool |
  *   RedactedNotSupported | NoValidQuestions).
  */
+@Suppress("LongParameterList") // Explicit repositories, identity/clock sources and timer policy remain injectable.
 class StartLessonAttemptUseCase(
     private val questionRepository: QuestionRepository,
     private val lessonRepository: LessonRepository,

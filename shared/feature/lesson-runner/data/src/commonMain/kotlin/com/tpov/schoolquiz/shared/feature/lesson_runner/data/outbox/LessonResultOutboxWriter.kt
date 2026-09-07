@@ -9,12 +9,12 @@ import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
 import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonRating
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
-import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -79,32 +79,50 @@ class RoomLessonResultOutboxWriter(
         require(intent.identity.mode == com.tpov.schoolquiz.shared.core.question_schema.Difficulty.HARD)
         require(!intent.claims.hasClaims) { "Raw legacy HARD cannot claim unbacked charges" }
         val context = resolveContentContext(intent.identity.lessonId.value)
-        val payload = buildJsonObject {
-            put("attemptId", intent.identity.id.value)
-            put("userId", intent.identity.userId)
-            putContext(context)
-            put("lessonVersion", intent.identity.lessonVersion)
-            put("difficulty", intent.identity.mode.name)
-            put("completionKind", intent.completionKind.name)
-            put("completedAtMs", intent.endedAtMs)
-            put("createdAtMs", intent.endedAtMs)
-            put("answers", buildJsonArray {
-                intent.answers.forEach { answer -> add(buildJsonObject {
-                    put("questionId", answer.questionId.value)
-                    put("codeAnswerIndex", answer.codeAnswerIndex)
-                    put("answerPayload", rawAnswerJson.encodeToString(UserAnswer.serializer(), answer.answer))
-                    put("answeredAtMs", answer.answeredAtMs)
-                    put("durationMs", answer.durationMs)
-                    put("wasTimeout", answer.wasTimeout)
-                }) }
-            })
-            put("served", buildJsonArray {
-                intent.served.forEach { question -> add(buildJsonObject {
-                    put("questionId", question.questionId.value)
-                    put("codeAnswerIndex", question.codeAnswerIndex)
-                }) }
-            })
-        }
+        val payload =
+            buildJsonObject {
+                put("attemptId", intent.identity.id.value)
+                put("userId", intent.identity.userId)
+                putContext(context)
+                put("lessonVersion", intent.identity.lessonVersion)
+                put("difficulty", intent.identity.mode.name)
+                put("completionKind", intent.completionKind.name)
+                put("completedAtMs", intent.endedAtMs)
+                put("createdAtMs", intent.endedAtMs)
+                put(
+                    "answers",
+                    buildJsonArray {
+                        intent.answers.forEach { answer ->
+                            add(
+                                buildJsonObject {
+                                    put("questionId", answer.questionId.value)
+                                    put("codeAnswerIndex", answer.codeAnswerIndex)
+                                    put(
+                                        "answerPayload",
+                                        rawAnswerJson.encodeToString(UserAnswer.serializer(), answer.answer),
+                                    )
+                                    put("answeredAtMs", answer.answeredAtMs)
+                                    put("durationMs", answer.durationMs)
+                                    put("wasTimeout", answer.wasTimeout)
+                                },
+                            )
+                        }
+                    },
+                )
+                put(
+                    "served",
+                    buildJsonArray {
+                        intent.served.forEach { question ->
+                            add(
+                                buildJsonObject {
+                                    put("questionId", question.questionId.value)
+                                    put("codeAnswerIndex", question.codeAnswerIndex)
+                                },
+                            )
+                        }
+                    },
+                )
+            }
         return row(
             operation = OutboxOperations.SUBMIT_ATTEMPT,
             sourceId = intent.identity.id.value,

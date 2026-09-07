@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.di
 
-import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.outbox.MutationReceiptStore
+import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultQuarantineRollback

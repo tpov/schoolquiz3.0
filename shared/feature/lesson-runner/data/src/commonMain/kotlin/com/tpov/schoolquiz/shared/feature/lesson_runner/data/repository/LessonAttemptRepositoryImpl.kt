@@ -15,8 +15,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptComp
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServedQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class LessonAttemptRepositoryImpl(
@@ -26,9 +26,10 @@ class LessonAttemptRepositoryImpl(
 ) : LessonAttemptRepository {
     override suspend fun saveUnscored(intent: UnscoredTerminalIntent): Result<Unit> =
         runCatching {
-            val row = checkNotNull(outboxWriter.buildUnscoredAttemptRow(intent)) {
-                "Raw attempt requires a configured outbox writer"
-            }
+            val row =
+                checkNotNull(outboxWriter.buildUnscoredAttemptRow(intent)) {
+                    "Raw attempt requires a configured outbox writer"
+                }
             attemptDao.saveUnscoredAttemptIntent(intent.identity.id.value, intent.identity.userId, row)
         }.onFailure { if (it is CancellationException) throw it }
 

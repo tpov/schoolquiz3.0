@@ -17,14 +17,15 @@ internal suspend fun saveUnscoredTerminal(
     repository: LessonAttemptRepository,
 ): RunnerState {
     check(state.codeAnswer == null && state.answers.isEmpty())
-    val intent = UnscoredTerminalIntent(
-        identity = AttemptIdentity(state.attemptId, state.userId, state.lessonId, state.lessonVersion, state.mode),
-        completionKind = kind,
-        endedAtMs = nowMs,
-        answers = state.rawAnswers.toList(),
-        served = state.playOrder.toServedQuestions(),
-        claims = state.chargeClaimsOrEmpty(),
-    )
+    val intent =
+        UnscoredTerminalIntent(
+            identity = AttemptIdentity(state.attemptId, state.userId, state.lessonId, state.lessonVersion, state.mode),
+            completionKind = kind,
+            endedAtMs = nowMs,
+            answers = state.rawAnswers.toList(),
+            served = state.playOrder.toServedQuestions(),
+            claims = state.chargeClaimsOrEmpty(),
+        )
     val result = repository.saveUnscored(intent)
     result.exceptionOrNull()?.let { error ->
         if (error is CancellationException) throw error

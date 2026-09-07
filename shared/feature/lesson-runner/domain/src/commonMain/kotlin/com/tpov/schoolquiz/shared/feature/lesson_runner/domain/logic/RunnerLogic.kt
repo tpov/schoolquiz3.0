@@ -11,8 +11,8 @@ import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
 import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.core.scoring.evaluateAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RawAnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RawAnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
@@ -36,16 +36,20 @@ fun submitAnswer(
 ): RunnerState.Ready {
     val currentQuestion = state.playOrder[state.indexInPool]
     if (state.codeAnswer == null) {
-        val raw = RawAnsweredQuestion(
-            questionId = currentQuestion.sourceId,
-            codeAnswerIndex = currentQuestion.codeAnswerIndex,
-            answer = answer,
-            answeredAtMs = nowMs,
-            durationMs = if (state.questionStartedAtMs > 0L) {
-                (nowMs - state.questionStartedAtMs).coerceAtLeast(0L)
-            } else 0L,
-            wasTimeout = wasTimeout,
-        )
+        val raw =
+            RawAnsweredQuestion(
+                questionId = currentQuestion.sourceId,
+                codeAnswerIndex = currentQuestion.codeAnswerIndex,
+                answer = answer,
+                answeredAtMs = nowMs,
+                durationMs =
+                    if (state.questionStartedAtMs > 0L) {
+                        (nowMs - state.questionStartedAtMs).coerceAtLeast(0L)
+                    } else {
+                        0L
+                    },
+                wasTimeout = wasTimeout,
+            )
         return advanceRaw(state.copy(rawAnswers = state.rawAnswers + raw), nowMs)
     }
     val score = evaluateAnswer(checkNotNull(currentQuestion.content as? QuestionContent), answer)
@@ -112,10 +116,18 @@ fun autoAnswerOnTimeout(
     if (state.codeAnswer == null) {
         // Preserve only input the player actually entered; silence is omission, not a guessed key.
         val answer = state.currentDraftAnswer.toRawAnswerOrNull()
-        return if (answer == null) advanceRaw(state, nowMs)
-        else submitAnswer(state, answer, nowMs, wasTimeout = true)
+        return if (answer == null) {
+            advanceRaw(state, nowMs)
+        } else {
+            submitAnswer(state, answer, nowMs, wasTimeout = true)
+        }
     }
-    val answer = generateTimeoutAnswer(checkNotNull(currentQuestion.content as? QuestionContent), state.currentDraftAnswer, randomSeed)
+    val answer =
+        generateTimeoutAnswer(
+            checkNotNull(currentQuestion.content as? QuestionContent),
+            state.currentDraftAnswer,
+            randomSeed,
+        )
     return submitAnswer(state, answer, nowMs, wasTimeout = true)
 }
 
@@ -175,8 +187,7 @@ fun <T : RunnerQuestion.Playable> selectSubset(
  *
  * Пустую отдаём, а не `null`: маска той же длины, что `codeAnswer`, и сервер сверяет длины.
  */
-fun RunnerState.Ready.chargeClaimsOrEmpty(): ChargeClaimMask =
-    chargeClaims ?: ChargeClaimMask.none(eligibleSize)
+fun RunnerState.Ready.chargeClaimsOrEmpty(): ChargeClaimMask = chargeClaims ?: ChargeClaimMask.none(eligibleSize)
 
 /**
  * Отмечает заявку на заряд за текущий вопрос.
@@ -208,24 +219,39 @@ fun buildCodeAnswerOnAbort(state: RunnerState.Ready): CodeAnswer {
     return CodeAnswer(String(chars))
 }
 
-private fun advanceRaw(state: RunnerState.Ready, nowMs: Long): RunnerState.Ready {
+private fun advanceRaw(
+    state: RunnerState.Ready,
+    nowMs: Long,
+): RunnerState.Ready {
     val nextIndex = state.indexInPool + 1
-    val deadline = state.playOrder.getOrNull(nextIndex)?.let {
-        nowMs + computeTimer(it.content, state.mode, TimerCoefficients.Default, state.sessionMode).seconds * 1000L
-    } ?: state.deadlineMs
-    return state.copy(indexInPool = nextIndex, deadlineMs = deadline,
-        currentDraftAnswer = null, questionStartedAtMs = nowMs)
+    val deadline =
+        state.playOrder.getOrNull(nextIndex)?.let {
+            nowMs + computeTimer(it.content, state.mode, TimerCoefficients.Default, state.sessionMode).seconds * 1000L
+        } ?: state.deadlineMs
+    return state.copy(
+        indexInPool = nextIndex,
+        deadlineMs = deadline,
+        currentDraftAnswer = null,
+        questionStartedAtMs = nowMs,
+    )
 }
 
 /** Raw timeout never completes a partial answer from hidden correct counts or ordering. */
-private fun UserAnswerDraft?.toRawAnswerOrNull(): UserAnswer? = when (this) {
-    null -> null
-    is UserAnswerDraft.SingleChoiceDraft -> selected?.let { UserAnswer.SingleChoiceAnswer(it) }
-    is UserAnswerDraft.MultipleChoiceDraft -> UserAnswer.MultipleChoiceAnswer(selected)
-    is UserAnswerDraft.OrderingDraft -> UserAnswer.OrderingAnswer(order)
-    is UserAnswerDraft.FillBlankDraft -> UserAnswer.FillBlankAnswer(filled.mapNotNull { (id, value) -> value?.let { id to it } }.toMap())
-    is UserAnswerDraft.SurveyDraft -> UserAnswer.SurveyAnswer(selected)
-}
+private fun UserAnswerDraft?.toRawAnswerOrNull(): UserAnswer? =
+    when (this) {
+        null -> null
+        is UserAnswerDraft.SingleChoiceDraft -> selected?.let { UserAnswer.SingleChoiceAnswer(it) }
+        is UserAnswerDraft.MultipleChoiceDraft -> UserAnswer.MultipleChoiceAnswer(selected)
+        is UserAnswerDraft.OrderingDraft -> UserAnswer.OrderingAnswer(order)
+        is UserAnswerDraft.FillBlankDraft ->
+            UserAnswer.FillBlankAnswer(
+                filled.mapNotNull {
+                        (id, value) ->
+                    value?.let { id to it }
+                }.toMap(),
+            )
+        is UserAnswerDraft.SurveyDraft -> UserAnswer.SurveyAnswer(selected)
+    }
 
 /** Generates a deterministic random answer for [content] using [seed]. */
 private fun generateRandomAnswer(
