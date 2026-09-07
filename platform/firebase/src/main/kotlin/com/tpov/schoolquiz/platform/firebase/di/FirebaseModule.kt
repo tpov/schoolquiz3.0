@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
+import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaLessonCatalogRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
@@ -37,6 +38,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.LogoRemot
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.NicknameRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.VerificationRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaLessonCatalogRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
@@ -61,6 +63,15 @@ val firebaseModule =
         }
         single<ArenaTicketRemoteDataSource> { get<FirebaseArenaTicketRemoteDataSource>() }
         single<ArenaTicketStatusRemoteDataSource> { get<FirebaseArenaTicketRemoteDataSource>() }
+        single {
+            FirebaseArenaLessonCatalogRemoteDataSource(
+                functions = get(),
+                sessions = get(),
+                networkMonitor = get(),
+                dispatcher = Dispatchers.IO,
+            )
+        }
+        single<ArenaLessonCatalogRemoteDataSource> { get<FirebaseArenaLessonCatalogRemoteDataSource>() }
         // Единственный адрес очереди (AD-6): новая операция появляется обработчиком на сервере,
         // а не новым путём на клиенте.
         single<MutationTransport> {

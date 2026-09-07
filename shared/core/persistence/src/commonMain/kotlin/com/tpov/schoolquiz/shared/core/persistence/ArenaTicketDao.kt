@@ -15,6 +15,30 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 @Suppress("TooManyFunctions")
 @Dao
 interface ArenaTicketDao {
+    /** Raw bounded selectors: the data adapter validates page size and supplies at most 51 rows. */
+    @Query(
+        "SELECT * FROM arena_ticket_records WHERE owner_uid = :owner " +
+            "AND (:afterTicketId IS NULL OR ticket_id COLLATE BINARY > :afterTicketId) " +
+            "ORDER BY ticket_id COLLATE BINARY ASC LIMIT :limit",
+    )
+    suspend fun selectLocalTickets(
+        owner: String,
+        afterTicketId: String?,
+        limit: Int,
+    ): List<ArenaTicketRecordEntity>
+
+    @Query(
+        "SELECT * FROM arena_command_journal WHERE owner_uid = :owner AND command_kind = 'PREPARE' " +
+            "AND state IN ('PENDING', 'ATTENTION') " +
+            "AND (:afterCommandId IS NULL OR command_id COLLATE BINARY > :afterCommandId) " +
+            "ORDER BY command_id COLLATE BINARY ASC LIMIT :limit",
+    )
+    suspend fun selectLocalPendingPrepares(
+        owner: String,
+        afterCommandId: String?,
+        limit: Int,
+    ): List<ArenaCommandEntity>
+
     @Query("SELECT COUNT(*) FROM arena_ticket_records WHERE owner_uid = :owner AND snapshot_json IS NOT NULL")
     suspend fun snapshotCount(owner: String): Int
 
@@ -79,6 +103,25 @@ interface ArenaTicketDao {
         id: String,
     ): MutationReceiptEntity?
 
+    @Query("SELECT EXISTS(SELECT 1 FROM mutation_receipts WHERE mutation_id = :id)")
+    suspend fun hasAnyReceipt(id: String): Boolean
+
+    /** Arena settlement always has expected_version NULL; all other immutable fields and state are bound. */
+    @Query(
+        "DELETE FROM outbox WHERE id = :id AND owner_uid = :owner AND mutation_id = :mutation " +
+            "AND operation = :operation AND payload = :payload AND entity_ref IS :entityRef " +
+            "AND expected_version IS NULL AND state = :state",
+    )
+    suspend fun deleteCancelledPending(
+        id: Long,
+        owner: String,
+        mutation: String,
+        operation: String,
+        payload: String,
+        entityRef: String?,
+        state: String,
+    ): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertIntent(row: LessonAttemptIntentEntity)
 
@@ -127,6 +170,8 @@ interface ArenaTicketDao {
         kind: String,
         id: String,
     ) {
+        val previous = command(row.ownerUid, kind, id)
+        if (previous?.state == ARENA_RESOLVED_CANCELLED) throw ArenaJournalConflict("Cancellation is not a generic ACK")
         observe(row)
         val cmd = command(row.ownerUid, kind, id) ?: throw ArenaJournalConflict()
         validateObservationCommand(cmd, row, kind, id)
@@ -142,7 +187,7 @@ interface ArenaTicketDao {
         attention: Boolean,
     ) {
         val old = command(owner, kind, id) ?: throw ArenaJournalConflict()
-        if (old.state == ArenaJournalValues.ACKNOWLEDGED) return
+        if (old.state == ArenaJournalValues.ACKNOWLEDGED || old.state == ARENA_RESOLVED_CANCELLED) return
         updateCommand(old.copy(state = if (attention) "ATTENTION" else old.state, lastFailure = failure))
     }
 
@@ -265,6 +310,36 @@ interface ArenaTicketDao {
         }
     }
 
+    /**
+     * Storage-only terminal resolution; caller must hold the same live owner-generation/delivery gate.
+     * Genuine server cancellation, retained SETTLE tombstone and first intent are written before exact queue deletion.
+     * All writes share one commit; none becomes visible independently.
+     * No generic receipt, second sender, local balance/score update or local cancellation is synthesized.
+     */
+    @Transaction
+    suspend fun resolveCancelledSettlement(
+        command: ArenaCommandEntity,
+        firstIntent: LessonAttemptIntentEntity,
+        observation: ArenaTicketRecordEntity,
+        validator: ArenaCancellationValidator,
+    ) {
+        val old = ticket(command.ownerUid, requireNotNull(command.ticketId)) ?: throw ArenaJournalConflict()
+        val retained = ticketCommand(old.ownerUid, old.ticketId, "SETTLE") ?: throw ArenaJournalConflict()
+        val marker = intent(old.attemptId)
+        val pending = queued(firstIntent.mutationId)
+        val hasAcknowledgment = hasAnyReceipt(firstIntent.mutationId)
+        validateArenaCancellationIdentity(old, retained, command, firstIntent, observation)
+        validateRetainedIntent(marker, firstIntent)
+        validateRetainedIntent(pending?.attemptIntent(old.attemptId), firstIntent)
+        requireUnacknowledgedCancellation(firstIntent, pending, hasAcknowledgment)
+        validator.validate(old, retained, firstIntent, observation)
+        if (validateArenaCancellationReplay(old, retained, pending)) return
+        if (marker == null) insertIntent(firstIntent)
+        updateTicket(mergeObservation(old, observation, null))
+        updateCommand(retained.copy(state = ARENA_RESOLVED_CANCELLED))
+        if (pending != null) deleteValidatedCancelledPending(pending)
+    }
+
     @Transaction
     suspend fun evictSnapshot(
         owner: String,
@@ -286,6 +361,29 @@ interface ArenaTicketDao {
 }
 
 private const val MAX_SNAPSHOTS = 20
+
+private suspend fun ArenaTicketDao.requireUnacknowledgedCancellation(
+    first: LessonAttemptIntentEntity,
+    pending: OutboxEntity?,
+    hasAcknowledgment: Boolean,
+) {
+    if (hasAcknowledgment || hasScoredRows(first.attemptId)) throw ArenaJournalConflict("Attempt has another outcome")
+    if (pending != null && pending.state !in setOf("WAITING", "WAITING_PRECONDITION")) throw ArenaJournalConflict()
+}
+
+private suspend fun ArenaTicketDao.deleteValidatedCancelledPending(pending: OutboxEntity) {
+    val count =
+        deleteCancelledPending(
+            pending.id,
+            pending.ownerUid,
+            pending.mutationId,
+            pending.operation,
+            pending.payload,
+            pending.entityRef,
+            pending.state,
+        )
+    if (count != 1) throw ArenaJournalConflict("Pending delivery changed before cancellation commit")
+}
 
 private fun mergeObservation(
     old: ArenaTicketRecordEntity,

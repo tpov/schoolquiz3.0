@@ -1,9 +1,11 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena
 
+import com.tpov.schoolquiz.shared.core.persistence.ArenaCancellationValidator
 import com.tpov.schoolquiz.shared.core.persistence.ArenaCheckpointValidator
 import com.tpov.schoolquiz.shared.core.persistence.ArenaCommandEntity
 import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketDao
 import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketRecordEntity
+import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptIntentEntity
 import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 
 /**
@@ -12,6 +14,19 @@ import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
  */
 @Suppress("TooManyFunctions")
 interface ArenaJournalStorage {
+    /** Data-layer raw pages only; caller supplies the same owner-generation gate and maps rows for UI. */
+    suspend fun ticketPage(
+        owner: String,
+        pageSize: Int,
+        cursor: ArenaLocalTicketCursor? = null,
+    ): ArenaLocalTicketPage
+
+    suspend fun pendingPreparePage(
+        owner: String,
+        pageSize: Int,
+        cursor: ArenaLocalPrepareCursor? = null,
+    ): ArenaLocalPreparePage
+
     suspend fun ticket(
         owner: String,
         ticket: String,
@@ -82,6 +97,14 @@ interface ArenaJournalStorage {
         row: OutboxEntity,
     )
 
+    /** Requires the caller's captured owner-generation gate, with delivery passes excluded. */
+    suspend fun resolveCancelledSettlement(
+        command: ArenaCommandEntity,
+        firstIntent: LessonAttemptIntentEntity,
+        observation: ArenaTicketRecordEntity,
+        validator: ArenaCancellationValidator,
+    )
+
     suspend fun evictSnapshot(
         owner: String,
         ticket: String,
@@ -89,6 +112,26 @@ interface ArenaJournalStorage {
 }
 
 class RoomArenaJournalStorage(private val dao: ArenaTicketDao) : ArenaJournalStorage {
+    override suspend fun ticketPage(
+        owner: String,
+        pageSize: Int,
+        cursor: ArenaLocalTicketCursor?,
+    ): ArenaLocalTicketPage {
+        val read = localTicketPageRead(owner, pageSize, cursor)
+        val rows = dao.selectLocalTickets(read.ownerUid, read.afterId, read.fetchLimit)
+        return localTicketPage(read, rows)
+    }
+
+    override suspend fun pendingPreparePage(
+        owner: String,
+        pageSize: Int,
+        cursor: ArenaLocalPrepareCursor?,
+    ): ArenaLocalPreparePage {
+        val read = localPreparePageRead(owner, pageSize, cursor)
+        val rows = dao.selectLocalPendingPrepares(read.ownerUid, read.afterId, read.fetchLimit)
+        return localPreparePage(read, rows)
+    }
+
     override suspend fun ticket(
         owner: String,
         ticket: String,
@@ -174,6 +217,13 @@ class RoomArenaJournalStorage(private val dao: ArenaTicketDao) : ArenaJournalSto
         command: ArenaCommandEntity,
         row: OutboxEntity,
     ) = dao.confirmSettlementReplay(command, row)
+
+    override suspend fun resolveCancelledSettlement(
+        command: ArenaCommandEntity,
+        firstIntent: LessonAttemptIntentEntity,
+        observation: ArenaTicketRecordEntity,
+        validator: ArenaCancellationValidator,
+    ) = dao.resolveCancelledSettlement(command, firstIntent, observation, validator)
 
     override suspend fun evictSnapshot(
         owner: String,

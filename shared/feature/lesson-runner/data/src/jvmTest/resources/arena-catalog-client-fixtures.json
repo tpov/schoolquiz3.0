@@ -1,0 +1,515 @@
+{
+  "schemaVersion": 1,
+  "producer": "actual catalog factory + full root loader + Firestore fake; no writes",
+  "sourceSha256": {
+    "index.js": "7cad5bd6cb8b1d648112b063c67c418b8ff2464ada89a733fbfcf562882416ec",
+    "arena-lesson-catalog.js": "3ef0ef385a2ef44c7735408cd448f4fb6b73b53530e932a6289a4744ca8cc1d3",
+    "arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
+    "_firestore-stub.js": "fcfecc9207bc75d69499db4e52622415c59ebc6a4b43ab043991407788f85468"
+  },
+  "full": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 7,
+    "lessons": [
+      {
+        "lessonId": "high",
+        "contentVersion": 1,
+        "title": "Title high",
+        "authorUid": "author",
+        "rating": {
+          "sum": 3,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 43,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 100,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "z-near",
+        "contentVersion": 1,
+        "title": "Title z-near",
+        "authorUid": "author",
+        "rating": {
+          "sum": 8000000000000002,
+          "count": 4000000000000000,
+          "weightedScore": {
+            "numerator": 8000000000000042,
+            "denominator": 4000000000000020
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 75,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "a-near",
+        "contentVersion": 1,
+        "title": "Title a-near",
+        "authorUid": "author",
+        "rating": {
+          "sum": 8000000000000001,
+          "count": 4000000000000000,
+          "weightedScore": {
+            "numerator": 8000000000000041,
+            "denominator": 4000000000000020
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 51,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "a-unrated",
+        "contentVersion": 1,
+        "title": "Title a-unrated",
+        "authorUid": "author",
+        "rating": {
+          "sum": 0,
+          "count": 0,
+          "weightedScore": {
+            "numerator": 40,
+            "denominator": 20
+          },
+          "ratingVersion": 0
+        },
+        "priceNolics": 1,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "b-mid",
+        "contentVersion": 1,
+        "title": "Title b-mid",
+        "authorUid": "author",
+        "rating": {
+          "sum": 2,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 42,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 26,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "c-mid",
+        "contentVersion": 1,
+        "title": "Title c-mid",
+        "authorUid": "author",
+        "rating": {
+          "sum": 4,
+          "count": 2,
+          "weightedScore": {
+            "numerator": 44,
+            "denominator": 22
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 26,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "low",
+        "contentVersion": 1,
+        "title": "Title low",
+        "authorUid": "author",
+        "rating": {
+          "sum": 1,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 41,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 1,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      }
+    ],
+    "nextCursor": null
+  },
+  "first": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 7,
+    "lessons": [
+      {
+        "lessonId": "high",
+        "contentVersion": 1,
+        "title": "Title high",
+        "authorUid": "author",
+        "rating": {
+          "sum": 3,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 43,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 100,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "z-near",
+        "contentVersion": 1,
+        "title": "Title z-near",
+        "authorUid": "author",
+        "rating": {
+          "sum": 8000000000000002,
+          "count": 4000000000000000,
+          "weightedScore": {
+            "numerator": 8000000000000042,
+            "denominator": 4000000000000020
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 75,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "a-near",
+        "contentVersion": 1,
+        "title": "Title a-near",
+        "authorUid": "author",
+        "rating": {
+          "sum": 8000000000000001,
+          "count": 4000000000000000,
+          "weightedScore": {
+            "numerator": 8000000000000041,
+            "denominator": 4000000000000020
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 51,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      }
+    ],
+    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYS1uZWFyIiwic25hcHNob3QiOiI3M2U5ZDMzODBjZTI3MjQzM2YwODJmMDIzMDcwNmM2MDIxYmMxOGRlNTUzZTExNzI0YTI4MzU2NThiMGRmNzcwIiwidiI6MX0"
+  },
+  "second": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 7,
+    "lessons": [
+      {
+        "lessonId": "a-unrated",
+        "contentVersion": 1,
+        "title": "Title a-unrated",
+        "authorUid": "author",
+        "rating": {
+          "sum": 0,
+          "count": 0,
+          "weightedScore": {
+            "numerator": 40,
+            "denominator": 20
+          },
+          "ratingVersion": 0
+        },
+        "priceNolics": 1,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "b-mid",
+        "contentVersion": 1,
+        "title": "Title b-mid",
+        "authorUid": "author",
+        "rating": {
+          "sum": 2,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 42,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 26,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "c-mid",
+        "contentVersion": 1,
+        "title": "Title c-mid",
+        "authorUid": "author",
+        "rating": {
+          "sum": 4,
+          "count": 2,
+          "weightedScore": {
+            "numerator": 44,
+            "denominator": 22
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 26,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      }
+    ],
+    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYy1taWQiLCJzbmFwc2hvdCI6IjczZTlkMzM4MGNlMjcyNDMzZjA4MmYwMjMwNzA2YzYwMjFiYzE4ZGU1NTNlMTE3MjRhMjgzNTY1OGIwZGY3NzAiLCJ2IjoxfQ"
+  },
+  "last": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 7,
+    "lessons": [
+      {
+        "lessonId": "low",
+        "contentVersion": 1,
+        "title": "Title low",
+        "authorUid": "author",
+        "rating": {
+          "sum": 1,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 41,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 1,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      }
+    ],
+    "nextCursor": null
+  },
+  "empty": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "5f68ddb4a3cbc279bcb984e6d4c228a3d17b2544bff12b390846f7a4d7ec37db",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 0,
+    "lessons": [],
+    "nextCursor": null
+  },
+  "nullable": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "0f69b299cb5b4c9e5fff2e7756e09a1b309ced44c5183be31daae8498bdbaeb9",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 1,
+    "lessons": [
+      {
+        "lessonId": "nullable",
+        "contentVersion": 1,
+        "title": null,
+        "authorUid": "author",
+        "rating": {
+          "sum": 0,
+          "count": 0,
+          "weightedScore": {
+            "numerator": 40,
+            "denominator": 20
+          },
+          "ratingVersion": 0
+        },
+        "priceNolics": 1,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": null,
+          "placementVersion": null,
+          "updatedAtMs": null
+        }
+      }
+    ],
+    "nextCursor": null
+  },
+  "tieFirst": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "8dfd95f3945be4c547f6c23c78911e7302161cd043ba16191be0467218cdfc2c",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 4,
+    "lessons": [
+      {
+        "lessonId": "a-rated",
+        "contentVersion": 1,
+        "title": "Title a-rated",
+        "authorUid": "author",
+        "rating": {
+          "sum": 2,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 42,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 100,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "b-unrated",
+        "contentVersion": 1,
+        "title": "Title b-unrated",
+        "authorUid": "author",
+        "rating": {
+          "sum": 0,
+          "count": 0,
+          "weightedScore": {
+            "numerator": 40,
+            "denominator": 20
+          },
+          "ratingVersion": 0
+        },
+        "priceNolics": 1,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      }
+    ],
+    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYi11bnJhdGVkIiwic25hcHNob3QiOiI4ZGZkOTVmMzk0NWJlNGM1NDdmNmMyM2M3ODkxMWU3MzAyMTYxY2QwNDNiYTE2MTkxYmUwNDY3MjE4Y2RmYzJjIiwidiI6MX0"
+  },
+  "tieLast": {
+    "status": "OK",
+    "catalogVersion": "arena-lesson-catalog-v1",
+    "snapshotFingerprint": "8dfd95f3945be4c547f6c23c78911e7302161cd043ba16191be0467218cdfc2c",
+    "serverNowMs": 1788739200000,
+    "entryAvailability": "PREPARE_REQUIRED",
+    "totalEligibleLessons": 4,
+    "lessons": [
+      {
+        "lessonId": "c-rated",
+        "contentVersion": 1,
+        "title": "Title c-rated",
+        "authorUid": "author",
+        "rating": {
+          "sum": 4,
+          "count": 2,
+          "weightedScore": {
+            "numerator": 44,
+            "denominator": 22
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 100,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      },
+      {
+        "lessonId": "low",
+        "contentVersion": 1,
+        "title": "Title low",
+        "authorUid": "author",
+        "rating": {
+          "sum": 1,
+          "count": 1,
+          "weightedScore": {
+            "numerator": 41,
+            "denominator": 21
+          },
+          "ratingVersion": 1
+        },
+        "priceNolics": 1,
+        "placement": {
+          "shelf": "arena",
+          "previousShelf": "review",
+          "placementVersion": 1,
+          "updatedAtMs": 1788739199999
+        }
+      }
+    ],
+    "nextCursor": null
+  }
+}
