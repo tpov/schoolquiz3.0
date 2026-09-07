@@ -4,8 +4,8 @@
   "description": "",
   "main": "backfill-catalogs.js",
   "scripts": {
-    "test": "node sync-change-id.test.js && node content-catalog-index.test.js && node redact-existing-questions.test.js && node backfill-sync-change-form.test.js && node seed-sync-list-test-data.test.js",
-    "lint": "node --check backfill-sync-change-form.js && node --check backfill-sync-change-form.test.js && node --check seed-sync-list-test-data.js && node --check seed-sync-list-test-data.test.js && node --check sync-change-id.js && node --check seed-hierarchy.js && node --check seed-lesson-runner-samples.js && node --check seed-lesson-runner-extra.js && node --check seed-criptico-course.js && node --check bump-all-content.js && node --check seed-bulk/shared.js && node --check seed-bulk/seed-bulk-quests.js && node --check seed-bulk/retire-quest.js && node --check seed-bulk/verify-seeded-quest.js"
+    "test": "node sync-change-id.test.js && node content-catalog-index.test.js && node redact-existing-questions.test.js && node backfill-sync-change-form.test.js && node seed-sync-list-test-data.test.js && node mvp-arena-catalog-ui-oracle.test.js",
+    "lint": "node --check backfill-sync-change-form.js && node --check backfill-sync-change-form.test.js && node --check seed-sync-list-test-data.js && node --check seed-sync-list-test-data.test.js && node --check sync-change-id.js && node --check seed-hierarchy.js && node --check seed-lesson-runner-samples.js && node --check seed-lesson-runner-extra.js && node --check seed-criptico-course.js && node --check bump-all-content.js && node --check seed-bulk/shared.js && node --check seed-bulk/seed-bulk-quests.js && node --check seed-bulk/retire-quest.js && node --check seed-bulk/verify-seeded-quest.js && node --check mvp-arena-catalog-ui-oracle.js && node --check mvp-arena-catalog-ui-oracle.test.js"
   },
   "keywords": [],
   "author": "",

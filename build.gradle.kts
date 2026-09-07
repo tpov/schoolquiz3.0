@@ -52,6 +52,19 @@ tasks.register<Exec>("functionsTest") {
     onlyIf { file("functions/node_modules").isDirectory }
 }
 
+// The maintenance scripts carry the read-only financial oracle that proves a UI walk moved no money,
+// and their suites live in the same separate toolchain the Gradle gate did not reach. Unlike
+// functionsTest the guard here is not a node_modules directory: these suites require nothing that is
+// installed — they were run green with scripts/node_modules absent — so guarding on it would make the
+// task skip forever, and a permanently skipped gate reads as a pass without ever looking.
+tasks.register<Exec>("scriptsTest") {
+    description = "Run the maintenance-script unit tests"
+    group = "verification"
+    workingDir = file("scripts")
+    commandLine("npm", "test")
+    onlyIf { file("scripts/package.json").isFile }
+}
+
 tasks.register("ciCheck") {
     description = "Run the canonical local quality gate for active modules"
     group = "verification"
@@ -60,6 +73,7 @@ tasks.register("ciCheck") {
     dependsOn(activeSubprojectTasks("allTests"))
     dependsOn(tasks.named("compileAndroidTests"))
     dependsOn(tasks.named("functionsTest"))
+    dependsOn(tasks.named("scriptsTest"))
     dependsOn(tasks.named("detekt"))
     dependsOn(tasks.named("ktlintCheck"))
     // Настоящий анализ общего кода. Задача `detekt` у KMP-модуля не видит ничего: исходники лежат
