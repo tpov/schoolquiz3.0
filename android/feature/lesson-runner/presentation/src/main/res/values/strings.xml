@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- English translations for the lesson-runner strings. -->
 <resources>
+    <string name="runner_feedback_continue_action">Continue lesson</string>
     <!-- Actions -->
     <string name="runner_action_continue">Continue</string>
     <string name="runner_action_exit">Exit</string>
@@ -82,6 +83,7 @@
     <string name="runner_discussion_title">Discussion</string>
     <string name="runner_discussion_open">Open →</string>
     <string name="runner_settlement_pending">Waiting for server confirmation. Score and rewards are not confirmed yet.</string>
+    <string name="runner_result_sync_now">Sync result now</string>
     <string name="runner_settlement_confirmed">Completion confirmed by the server</string>
     <string name="runner_settlement_accounting_only">Score and charges confirmed; completion is not confirmed.</string>
     <string name="runner_settlement_unscorable">The server saved this attempt without a score. It is not a zero.</string>

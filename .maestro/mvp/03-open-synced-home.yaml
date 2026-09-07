@@ -1,0 +1,46 @@
+appId: com.tpov.schoolquiz.mvp
+name: Isolated MVP synchronized Home
+---
+- launchApp:
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- assertVisible: "MVP validated checks"
+- tapOn:
+    text: "MVP validated checks"
+    index: 0
+- assertVisible: "MVP smoke course"
+- tapOn: "MVP smoke course"
+- assertVisible: "MVP section"
+- tapOn: "MVP section"
+- assertVisible: "MVP theme"
+- tapOn: "MVP theme"
+- assertVisible: "MVP quick lesson"
+- tapOn: "MVP quick lesson"
+- runFlow:
+    when:
+      visible: "GOT IT"
+    commands:
+      - tapOn: "GOT IT"
+- assertNotVisible: "Questions are invalid"
+- assertVisible: "val"
+- tapOn: "val"
+- assertVisible: "CORRECT"
+- takeScreenshot: "answer-feedback"
+- extendedWaitUntil:
+    visible: "Continue lesson"
+    timeout: 30000
+- tapOn: "Continue lesson"
+- assertVisible: "val"
+- tapOn: "val"
+- assertVisible: "CORRECT"
+- extendedWaitUntil:
+    visible: "Continue lesson"
+    timeout: 30000
+- tapOn: "Continue lesson"
+- assertVisible: "Sync result now"
+- tapOn: "Sync result now"
+- extendedWaitUntil:
+    visible: "Completion confirmed by the server"
+    timeout: 120000
+- assertNotVisible: "Waiting for server confirmation.*"
+- takeScreenshot: "home-after-sync"

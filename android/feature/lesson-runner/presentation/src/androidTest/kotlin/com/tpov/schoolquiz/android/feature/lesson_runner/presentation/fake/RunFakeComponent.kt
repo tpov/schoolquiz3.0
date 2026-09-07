@@ -16,7 +16,6 @@ class RunFakeComponent(
     private val _events: Channel<RunnerEvent> = Channel(Channel.BUFFERED),
     override val isHardMode: Boolean = false,
 ) : LessonRunnerRootComponent {
-
     override val uiState: StateFlow<RunnerUiState> = _uiState
 
     private val _comments = MutableStateFlow<List<LessonComment>>(emptyList())
@@ -49,6 +48,7 @@ class RunFakeComponent(
         private set
     var nextLessonCount: Int = 0
         private set
+
     /** Times the handler asked to spend, whether or not the spend succeeded. */
     var hintCount: Int = 0
         private set
@@ -94,6 +94,8 @@ class RunFakeComponent(
     override fun onSubmitRating(rating: Int) {
         lastRating = rating
     }
+
+    override fun onSyncResult() = Unit
 
     override fun onFinish() {
         finishCount++

@@ -10,45 +10,46 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.Runn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAbortAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptFixtures
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptSyncMarkRepository
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeServerAttemptSettlementRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeClock
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeCompleteAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonRatingRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeProfileRepository
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeServerAttemptSettlementRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeStartLessonAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSubmitLessonRatingUseCase
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.core.question_schema.RedactedQuestionContent
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
+import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
-import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
-import com.tpov.schoolquiz.shared.core.scoring.PercentScore
-import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
@@ -77,7 +78,6 @@ import kotlin.test.assertTrue
 @Suppress("LargeClass")
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultLessonRunnerRootComponentTest {
-
     private lateinit var lifecycle: LifecycleRegistry
 
     private lateinit var fakeStart: FakeStartLessonAttemptUseCase
@@ -90,6 +90,7 @@ class DefaultLessonRunnerRootComponentTest {
     private lateinit var fakeRatingRepo: FakeLessonRatingRepository
     private lateinit var fakeSyncMarks: FakeAttemptSyncMarkRepository
     private lateinit var fakeSettlements: FakeServerAttemptSettlementRepository
+    private lateinit var fakeSyncScheduler: FakeSyncScheduler
 
     @Before
     fun setUp() {
@@ -103,6 +104,7 @@ class DefaultLessonRunnerRootComponentTest {
         fakeRatingRepo = FakeLessonRatingRepository()
         fakeSyncMarks = FakeAttemptSyncMarkRepository()
         fakeSettlements = FakeServerAttemptSettlementRepository()
+        fakeSyncScheduler = FakeSyncScheduler()
         fakeLessonRepo.addLesson(makeLesson())
     }
 
@@ -133,16 +135,18 @@ class DefaultLessonRunnerRootComponentTest {
             componentContext = ctx,
             lessonId = lessonId,
             mode = mode,
-            useCases = com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases(
-                startAttempt = startAttemptUseCase,
-                completeAttempt = completeAttemptUseCase,
-                abortAttempt = abortAttemptUseCase,
-                submitRating = submitRatingUseCase,
-            ),
+            useCases =
+                com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases(
+                    startAttempt = startAttemptUseCase,
+                    completeAttempt = completeAttemptUseCase,
+                    abortAttempt = abortAttemptUseCase,
+                    submitRating = submitRatingUseCase,
+                ),
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
             attemptSyncMarks = attemptSyncMarks,
             attemptSettlements = fakeSettlements,
+            syncScheduler = fakeSyncScheduler,
             profileRepository = profileRepository,
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
@@ -150,12 +154,57 @@ class DefaultLessonRunnerRootComponentTest {
         )
     }
 
+    @Test
+    fun `manual result sync schedules existing intent without recreating attempt or changing result`() {
+        fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+        fakeSettlements.settlement.value =
+            ServerAttemptSettlement(
+                ServerAttemptSettlementState.PENDING,
+                ownerVerified = true,
+            )
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = true)
+        val component = buildComponent()
+        component.onSyncResult()
+        assertEquals(0, fakeSyncScheduler.manualRequests)
+        component.onAnswer(singleChoiceDraft())
+        val result = assertIs<RunnerUiState.Result>(component.uiState.value)
+        assertTrue(result.canRequestSync)
+        component.onSyncResult()
+        component.onSyncResult()
+        assertEquals(2, fakeSyncScheduler.manualRequests)
+        assertEquals(result, component.uiState.value, "Scheduling must not synthesize a receipt or new attempt")
+        fakeSettlements.settlement.value = confirmedSettlement()
+        component.onSyncResult()
+        assertEquals(2, fakeSyncScheduler.manualRequests)
+        assertEquals(result.attemptId, assertIs<RunnerUiState.Result>(component.uiState.value).attemptId)
+    }
+
+    @Test
+    fun `quarantined or account lost result cannot request resubmission`() {
+        fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+        fakeSettlements.settlement.value = ServerAttemptSettlement(ServerAttemptSettlementState.PENDING)
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = true)
+        val component = buildComponent()
+        component.onAnswer(singleChoiceDraft())
+        component.onSyncResult()
+        assertEquals(0, fakeSyncScheduler.manualRequests)
+        fakeSettlements.settlement.value =
+            ServerAttemptSettlement(
+                ServerAttemptSettlementState.PENDING,
+                ownerVerified = true,
+            )
+        fakeSyncMarks.emit(AttemptSyncMark.QUARANTINED)
+        component.onSyncResult()
+        assertEquals(0, fakeSyncScheduler.manualRequests)
+    }
+
     // ── Domain / fixture helpers ──────────────────────────────────────────────
 
     private fun optId(s: String) = OptionId(s)
 
-    private fun singleChoiceDraft(optionId: String = "A") =
-        UserAnswerDraft.SingleChoiceDraft(optId(optionId))
+    private fun singleChoiceDraft(optionId: String = "A") = UserAnswerDraft.SingleChoiceDraft(optId(optionId))
 
     private fun makeRunnerQuestion(
         id: String = "q1",
@@ -169,16 +218,18 @@ class DefaultLessonRunnerRootComponentTest {
             sourceId = QuestionId(id),
             order = 0,
             codeAnswerIndex = codeAnswerIndex,
-            content = QuestionContent.SingleChoice(
-                id = id,
-                difficulty = mode,
-                text = "xxxx",
-                imageUrl = null,
-                options = listOf("A", "B", "C", "D").map {
-                    QuestionContent.Option(optId(it), optText)
-                },
-                correctOptionId = optId("A"),
-            ),
+            content =
+                QuestionContent.SingleChoice(
+                    id = id,
+                    difficulty = mode,
+                    text = "xxxx",
+                    imageUrl = null,
+                    options =
+                        listOf("A", "B", "C", "D").map {
+                            QuestionContent.Option(optId(it), optText)
+                        },
+                    correctOptionId = optId("A"),
+                ),
         )
     }
 
@@ -188,9 +239,10 @@ class DefaultLessonRunnerRootComponentTest {
         lessonVersion: Long = 5L,
         mode: Difficulty = Difficulty.EASY,
         questions: Int = 1,
-        playOrder: List<RunnerQuestion.Valid> = (0 until questions).map {
-            makeRunnerQuestion("q${it + 1}", codeAnswerIndex = it)
-        },
+        playOrder: List<RunnerQuestion.Valid> =
+            (0 until questions).map {
+                makeRunnerQuestion("q${it + 1}", codeAnswerIndex = it)
+            },
         eligibleSize: Int = playOrder.size,
         indexInPool: Int = 0,
         deadlineMs: Long = 9_000_000L,
@@ -232,21 +284,36 @@ class DefaultLessonRunnerRootComponentTest {
 
     // ── PT-01: EASY → Question(isHard=false) ─────────────────────────────────
 
-    private fun rawReady() = makeReadyState(mode = Difficulty.HARD).copy(
-        codeAnswer = null,
-        playOrder = listOf(RunnerQuestion.Redacted(
-            QuestionId("raw-q"), 0, 0,
-            RedactedQuestionContent.SingleChoice(
-                difficulty = "HARD", text = "Public question", imageUrl = null,
-                options = listOf(RedactedQuestionContent.Row("a", "One"), RedactedQuestionContent.Row("b", "Two")),
-            ),
-        )),
-    )
+    private fun rawReady() =
+        makeReadyState(mode = Difficulty.HARD).copy(
+            codeAnswer = null,
+            playOrder =
+                listOf(
+                    RunnerQuestion.Redacted(
+                        QuestionId("raw-q"),
+                        0,
+                        0,
+                        RedactedQuestionContent.SingleChoice(
+                            difficulty = "HARD",
+                            text = "Public question",
+                            imageUrl = null,
+                            options =
+                                listOf(
+                                    RedactedQuestionContent.Row("a", "One"),
+                                    RedactedQuestionContent.Row("b", "Two"),
+                                ),
+                        ),
+                    ),
+                ),
+        )
 
     @Test fun rawCompletionWaitsForReceiptWithoutAnyPlaceholderScoreOrHistory() {
         fakeStart.result = rawReady()
-        val component = buildComponent(mode = Difficulty.HARD,
-            completeAttemptUseCase = CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke)
+        val component =
+            buildComponent(
+                mode = Difficulty.HARD,
+                completeAttemptUseCase = CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke,
+            )
         val question = assertIs<RunnerUiState.Question>(component.uiState.value)
         assertTrue(question.serverScored)
         assertFalse(question.revealCorrect || question.questionUiState.hasLocalAnswerKey)
@@ -273,9 +340,12 @@ class DefaultLessonRunnerRootComponentTest {
 
     @Test fun rawTimeoutOmitsUnenteredAnswerAndDoesNotSpendHardHint() {
         fakeStart.result = rawReady()
-        val component = buildComponent(mode = Difficulty.HARD,
-            completeAttemptUseCase = CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke,
-            profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 300)))
+        val component =
+            buildComponent(
+                mode = Difficulty.HARD,
+                completeAttemptUseCase = CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke,
+                profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 300)),
+            )
         assertFalse(component.hintRequested())
         assertEquals(3, assertIs<RunnerUiState.Question>(component.uiState.value).lives)
         component.onTimeout()
@@ -286,11 +356,16 @@ class DefaultLessonRunnerRootComponentTest {
 
     @Test fun rawAbortDoesNotObserveCompletionOrOfferRating() {
         fakeStart.result = rawReady()
-        val component = buildComponent(mode = Difficulty.HARD,
-            abortAttemptUseCase = AbortAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke)
+        val component =
+            buildComponent(
+                mode = Difficulty.HARD,
+                abortAttemptUseCase = AbortAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke,
+            )
         component.onExit()
-        assertEquals(com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind.ABORTED,
-            fakeAttemptRepo.rawIntents.single().completionKind)
+        assertEquals(
+            com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind.ABORTED,
+            fakeAttemptRepo.rawIntents.single().completionKind,
+        )
         component.onSubmitRating(3)
         assertTrue(fakeSettlements.observedAttempts.isEmpty() && fakeAttemptRepo.savedAttempts.isEmpty())
         assertEquals(0, fakeSubmitRating.callCount)
@@ -299,8 +374,11 @@ class DefaultLessonRunnerRootComponentTest {
     @Test fun rawSaveFailureRemainsUnknownEvenIfReceiptLaterArrives() {
         fakeStart.result = rawReady()
         fakeAttemptRepo.saveResult = Result.failure(IllegalStateException("disk"))
-        val component = buildComponent(mode = Difficulty.HARD,
-            completeAttemptUseCase = CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke)
+        val component =
+            buildComponent(
+                mode = Difficulty.HARD,
+                completeAttemptUseCase = CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke,
+            )
         component.onAnswer(singleChoiceDraft("b"))
         val failed = assertIs<RunnerUiState.Result>(component.uiState.value)
         assertTrue(failed.saveWarning)
@@ -313,21 +391,26 @@ class DefaultLessonRunnerRootComponentTest {
         fakeStart.result = rawReady()
         val gate = CompletableDeferred<Unit>()
         var completeCalls = 0
-        val component = buildComponent(mode = Difficulty.HARD,
-            completeAttemptUseCase = { state ->
-                completeCalls++
-                gate.await()
-                CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)(state)
-            },
-            abortAttemptUseCase = AbortAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke)
+        val component =
+            buildComponent(
+                mode = Difficulty.HARD,
+                completeAttemptUseCase = { state ->
+                    completeCalls++
+                    gate.await()
+                    CompleteAttemptUseCase(fakeAttemptRepo, fakeClock)(state)
+                },
+                abortAttemptUseCase = AbortAttemptUseCase(fakeAttemptRepo, fakeClock)::invoke,
+            )
         component.onAnswer(singleChoiceDraft("a"))
         component.onExit()
         component.onTimeout()
         gate.complete(Unit)
         assertEquals(1, completeCalls)
         assertEquals(1, fakeAttemptRepo.rawIntents.size)
-        assertEquals(com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind.COMPLETED,
-            fakeAttemptRepo.rawIntents.single().completionKind)
+        assertEquals(
+            com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptCompletionKind.COMPLETED,
+            fakeAttemptRepo.rawIntents.single().completionKind,
+        )
     }
 
     // PT-01: GIVEN component EASY mode; FakeStart returns Ready
@@ -389,18 +472,19 @@ class DefaultLessonRunnerRootComponentTest {
 
     // PT-05: GIVEN state = Completed; WHEN onFinish() THEN emit RunnerEvent.NavigateBack
     @Test
-    fun `completedState_onFinish_emits_navigateBack`() = runTest {
-        fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
-        val component = buildComponent()
-        component.onAnswer(singleChoiceDraft())
-        assertIs<RunnerUiState.Result>(component.uiState.value)
+    fun `completedState_onFinish_emits_navigateBack`() =
+        runTest {
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+            val component = buildComponent()
+            component.onAnswer(singleChoiceDraft())
+            assertIs<RunnerUiState.Result>(component.uiState.value)
 
-        val deferred = async { component.events.first() }
-        component.onFinish()
+            val deferred = async { component.events.first() }
+            component.onFinish()
 
-        assertIs<RunnerEvent.NavigateBack>(deferred.await(), "onFinish must emit NavigateBack")
-    }
+            assertIs<RunnerEvent.NavigateBack>(deferred.await(), "onFinish must emit NavigateBack")
+        }
 
     // ── PT-10: onTimeout → state updated ─────────────────────────────────────
 
@@ -441,11 +525,12 @@ class DefaultLessonRunnerRootComponentTest {
     //        WHEN Completed THEN computeStars gives rawTenths=10; hardUnlocked=false
     @Test
     fun `EASY_50percent_computeStars_gives_Stars10_hardUnlocked_false`() {
-        val attempt = FakeAttemptFixtures.fixtureAttempt(
-            mode = Difficulty.EASY,
-            percentScore = 50,
-            codeAnswer = "15111",
-        )
+        val attempt =
+            FakeAttemptFixtures.fixtureAttempt(
+                mode = Difficulty.EASY,
+                percentScore = 50,
+                codeAnswer = "15111",
+            )
         fakeStart.result = makeReadyState(questions = 1)
         fakeComplete.result = RunnerState.Completed(attempt, ratingPrompt = false)
         val component = buildComponent()
@@ -517,10 +602,11 @@ class DefaultLessonRunnerRootComponentTest {
     //        WHEN Result state THEN hardUnlocked=true
     @Test
     fun `EASY_perfect_attempt_hardUnlocked_true`() {
-        val perfectAttempt = FakeAttemptFixtures.fixtureAttempt(
-            mode = Difficulty.EASY,
-            codeAnswer = "9",
-        )
+        val perfectAttempt =
+            FakeAttemptFixtures.fixtureAttempt(
+                mode = Difficulty.EASY,
+                codeAnswer = "9",
+            )
         fakeAttemptRepo.saveResult = Result.success(Unit)
         // Pre-populate with a perfect prior attempt
         kotlinx.coroutines.runBlocking { fakeAttemptRepo.save(perfectAttempt) }
@@ -541,11 +627,12 @@ class DefaultLessonRunnerRootComponentTest {
     //        WHEN Result state THEN hardUnlocked=false even if rawTenths=20
     @Test
     fun `EASY_imperfect_hardUnlocked_false`() {
-        val imperfectAttempt = FakeAttemptFixtures.fixtureAttempt(
-            mode = Difficulty.EASY,
-            codeAnswer = "8",
-            percentScore = 88,
-        )
+        val imperfectAttempt =
+            FakeAttemptFixtures.fixtureAttempt(
+                mode = Difficulty.EASY,
+                codeAnswer = "8",
+                percentScore = 88,
+            )
         kotlinx.coroutines.runBlocking { fakeAttemptRepo.save(imperfectAttempt) }
 
         val newAttempt = FakeAttemptFixtures.fixtureAttempt(id = "new-id")
@@ -666,11 +753,12 @@ class DefaultLessonRunnerRootComponentTest {
     //        WHEN onContinue() THEN isPaused=false; indexInPool==3
     @Test
     fun `onContinue_isPaused_false_sameIndex`() {
-        fakeStart.result = makeReadyState(
-            questions = 5,
-            indexInPool = 3,
-            isPaused = true,
-        )
+        fakeStart.result =
+            makeReadyState(
+                questions = 5,
+                indexInPool = 3,
+                isPaused = true,
+            )
         val component = buildComponent()
         assertEquals(3, (component.uiState.value as RunnerUiState.Question).indexInPool)
         assertTrue((component.uiState.value as RunnerUiState.Question).isPaused)
@@ -687,16 +775,17 @@ class DefaultLessonRunnerRootComponentTest {
     // PT-25: GIVEN state = Ready; FakeAbortAttemptUseCase
     //        WHEN onExit() THEN fakeAbortUseCase.callCount == 1 + NavigateBack emitted
     @Test
-    fun `onExit_abortUseCase_called_popSignal`() = runTest {
-        fakeStart.result = makeReadyState()
-        val component = buildComponent()
+    fun `onExit_abortUseCase_called_popSignal`() =
+        runTest {
+            fakeStart.result = makeReadyState()
+            val component = buildComponent()
 
-        val deferred = async { component.events.first() }
-        component.onExit()
+            val deferred = async { component.events.first() }
+            component.onExit()
 
-        assertEquals(1, fakeAbort.callCount, "AbortAttemptUseCase must be called once on onExit()")
-        assertIs<RunnerEvent.NavigateBack>(deferred.await(), "onExit must emit NavigateBack event")
-    }
+            assertEquals(1, fakeAbort.callCount, "AbortAttemptUseCase must be called once on onExit()")
+            assertIs<RunnerEvent.NavigateBack>(deferred.await(), "onExit must emit NavigateBack event")
+        }
 
     // ── PT-26: complete → savedAttempts.size == 1 ─────────────────────────────
 
@@ -706,10 +795,11 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun `complete_savedAttempts_size_one`() {
         fakeStart.result = makeReadyState(questions = 1)
-        val realComplete = CompleteAttemptUseCase(
-            attemptRepository = fakeAttemptRepo,
-            clock = fakeClock,
-        )
+        val realComplete =
+            CompleteAttemptUseCase(
+                attemptRepository = fakeAttemptRepo,
+                clock = fakeClock,
+            )
         val component = buildComponent(completeAttemptUseCase = realComplete::invoke)
 
         component.onAnswer(singleChoiceDraft())
@@ -730,15 +820,17 @@ class DefaultLessonRunnerRootComponentTest {
     fun `abort_after3_codeAnswer_positions_correct`() {
         val questions = (0 until 20).map { makeRunnerQuestion("q${it + 1}", codeAnswerIndex = it) }
         val pool = questions.take(3) // only 3 in play order (subset)
-        fakeStart.result = makeReadyState(
-            playOrder = pool,
-            eligibleSize = 20,
-            questions = 20,
-        ).copy(eligibleSize = 20, codeAnswer = CodeAnswer("0".repeat(20)))
-        val realAbort = AbortAttemptUseCase(
-            attemptRepository = fakeAttemptRepo,
-            clock = fakeClock,
-        )
+        fakeStart.result =
+            makeReadyState(
+                playOrder = pool,
+                eligibleSize = 20,
+                questions = 20,
+            ).copy(eligibleSize = 20, codeAnswer = CodeAnswer("0".repeat(20)))
+        val realAbort =
+            AbortAttemptUseCase(
+                attemptRepository = fakeAttemptRepo,
+                clock = fakeClock,
+            )
         val component = buildComponent(abortAttemptUseCase = realAbort::invoke)
         // Answer all 3 questions in pool
         repeat(3) { component.onAnswer(singleChoiceDraft()) }
@@ -753,25 +845,27 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun `abort_after3_of5_codeAnswer_positions_correct`() {
         val pool = (0 until 5).map { makeRunnerQuestion("q${it + 1}", codeAnswerIndex = it) }
-        fakeStart.result = RunnerState.Ready(
-            attemptId = AttemptId("attempt-ready"),
-            userId = "user1",
-            lessonId = LessonId("lesson1"),
-            lessonVersion = 5L,
-            mode = Difficulty.EASY,
-            playOrder = pool,
-            eligibleSize = 5,
-            indexInPool = 0,
-            codeAnswer = CodeAnswer("00000"),
-            deadlineMs = 9_000_000L,
-            seed = 12345L,
-            currentDraftAnswer = null,
-            isPaused = false,
-        )
-        val realAbort = AbortAttemptUseCase(
-            attemptRepository = fakeAttemptRepo,
-            clock = fakeClock,
-        )
+        fakeStart.result =
+            RunnerState.Ready(
+                attemptId = AttemptId("attempt-ready"),
+                userId = "user1",
+                lessonId = LessonId("lesson1"),
+                lessonVersion = 5L,
+                mode = Difficulty.EASY,
+                playOrder = pool,
+                eligibleSize = 5,
+                indexInPool = 0,
+                codeAnswer = CodeAnswer("00000"),
+                deadlineMs = 9_000_000L,
+                seed = 12345L,
+                currentDraftAnswer = null,
+                isPaused = false,
+            )
+        val realAbort =
+            AbortAttemptUseCase(
+                attemptRepository = fakeAttemptRepo,
+                clock = fakeClock,
+            )
         val component = buildComponent(abortAttemptUseCase = realAbort::invoke)
 
         // Answer 3 questions (not the last one)
@@ -797,10 +891,11 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun `lessonVersion_snapshot_at_start`() {
         fakeStart.result = makeReadyState(lessonVersion = 5L, questions = 1)
-        val realComplete = CompleteAttemptUseCase(
-            attemptRepository = fakeAttemptRepo,
-            clock = fakeClock,
-        )
+        val realComplete =
+            CompleteAttemptUseCase(
+                attemptRepository = fakeAttemptRepo,
+                clock = fakeClock,
+            )
         val component = buildComponent(completeAttemptUseCase = realComplete::invoke)
         component.onAnswer(singleChoiceDraft())
 
@@ -816,10 +911,11 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun localRatingIntentWaitsForServerProof() {
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(),
-            ratingPrompt = true,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(),
+                ratingPrompt = true,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
 
@@ -832,10 +928,11 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun explicitlySuppressedRatingIntentStaysHidden() {
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(),
-            ratingPrompt = false,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(),
+                ratingPrompt = false,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
 
@@ -847,18 +944,21 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun confirmedNonPerfectCompletionCanRateLesson() {
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(codeAnswer = "5", percentScore = 50),
-            ratingPrompt = true,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(codeAnswer = "5", percentScore = 50),
+                ratingPrompt = true,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
 
         val result = component.uiState.value as RunnerUiState.Result
         assertFalse(result.canSubmitRating)
-        fakeSettlements.settlement.value = confirmedSettlement().copy(
-            codeAnswer = CodeAnswer("5"), percentScore = PercentScore(50),
-        )
+        fakeSettlements.settlement.value =
+            confirmedSettlement().copy(
+                codeAnswer = CodeAnswer("5"),
+                percentScore = PercentScore(50),
+            )
         assertTrue(assertIs<RunnerUiState.Result>(component.uiState.value).canSubmitRating)
     }
 
@@ -867,13 +967,14 @@ class DefaultLessonRunnerRootComponentTest {
         val saved = CompletableDeferred<Unit>()
         var completeCalls = 0
         fakeStart.result = makeReadyState(questions = 1)
-        val component = buildComponent(
-            completeAttemptUseCase = { ready ->
-                completeCalls++
-                saved.await()
-                fakeComplete(ready)
-            },
-        )
+        val component =
+            buildComponent(
+                completeAttemptUseCase = { ready ->
+                    completeCalls++
+                    saved.await()
+                    fakeComplete(ready)
+                },
+            )
 
         component.onAnswer(singleChoiceDraft())
         component.onExit()
@@ -892,13 +993,14 @@ class DefaultLessonRunnerRootComponentTest {
         val saved = CompletableDeferred<Unit>()
         var abortCalls = 0
         fakeStart.result = makeReadyState(questions = 1)
-        val component = buildComponent(
-            abortAttemptUseCase = { ready ->
-                abortCalls++
-                saved.await()
-                fakeAbort(ready)
-            },
-        )
+        val component =
+            buildComponent(
+                abortAttemptUseCase = { ready ->
+                    abortCalls++
+                    saved.await()
+                    fakeAbort(ready)
+                },
+            )
 
         component.onExit()
         component.onAnswer(singleChoiceDraft())
@@ -914,12 +1016,13 @@ class DefaultLessonRunnerRootComponentTest {
     fun cancelledTerminalSaveReleasesGateInsteadOfBlockingTheRetainedRunner() {
         val pending = CompletableDeferred<Unit>()
         fakeStart.result = makeReadyState(questions = 1)
-        val component = buildComponent(
-            completeAttemptUseCase = {
-                pending.await()
-                error("cancellation must propagate")
-            },
-        )
+        val component =
+            buildComponent(
+                completeAttemptUseCase = {
+                    pending.await()
+                    error("cancellation must propagate")
+                },
+            )
         component.onAnswer(singleChoiceDraft())
         pending.completeExceptionally(CancellationException("save cancelled"))
 
@@ -984,12 +1087,13 @@ class DefaultLessonRunnerRootComponentTest {
         assertEquals(0, fakeSubmitRating.callCount)
     }
 
-    private fun confirmedSettlement() = ServerAttemptSettlement(
-        state = ServerAttemptSettlementState.SETTLED, receiptId = "server-receipt", codeAnswer = CodeAnswer("9"),
-        percentScore = PercentScore(100), completed = true, settledAtMs = 1000L,
-        lifePointsSpent = 50L, plasmaPointsSpent = 100L, reward = ServerAttemptReward(7L, 2L),
-        ownerVerified = true,
-    )
+    private fun confirmedSettlement() =
+        ServerAttemptSettlement(
+            state = ServerAttemptSettlementState.SETTLED, receiptId = "server-receipt", codeAnswer = CodeAnswer("9"),
+            percentScore = PercentScore(100), completed = true, settledAtMs = 1000L,
+            lifePointsSpent = 50L, plasmaPointsSpent = 100L, reward = ServerAttemptReward(7L, 2L),
+            ownerVerified = true,
+        )
 
     @Test
     fun runAgainCancelsThePreviousReceiptObserver() {
@@ -1022,10 +1126,11 @@ class DefaultLessonRunnerRootComponentTest {
     fun `onSubmitRating_ratingUseCase_called_once`() {
         fakeSettlements.settlement.value = confirmedSettlement()
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(),
-            ratingPrompt = true,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(),
+                ratingPrompt = true,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
         assertIs<RunnerUiState.Result>(component.uiState.value)
@@ -1049,10 +1154,11 @@ class DefaultLessonRunnerRootComponentTest {
         fakeLessonRepo = FakeLessonRepository()
         fakeLessonRepo.addLesson(makeLesson(top3 = top3))
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(),
-            ratingPrompt = false,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(),
+                ratingPrompt = false,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
 
@@ -1067,18 +1173,20 @@ class DefaultLessonRunnerRootComponentTest {
     //        WHEN Result state THEN bestStarsRawTenths=15
     @Test
     fun `bestStars_15_bestStarsRawTenths_15`() {
-        val priorAttempt = FakeAttemptFixtures.fixtureAttempt(
-            id = "prior-id",
-            mode = Difficulty.EASY,
-            percentScore = 75,
-        )
+        val priorAttempt =
+            FakeAttemptFixtures.fixtureAttempt(
+                id = "prior-id",
+                mode = Difficulty.EASY,
+                percentScore = 75,
+            )
         kotlinx.coroutines.runBlocking { fakeAttemptRepo.save(priorAttempt) }
 
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(id = "new-id", percentScore = 50),
-            ratingPrompt = false,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(id = "new-id", percentScore = 50),
+                ratingPrompt = false,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
 
@@ -1094,10 +1202,11 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun `hardUnlocked_false_no_perfect_attempt`() {
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(codeAnswer = "5", percentScore = 50),
-            ratingPrompt = false,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(codeAnswer = "5", percentScore = 50),
+                ratingPrompt = false,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
 
@@ -1111,19 +1220,21 @@ class DefaultLessonRunnerRootComponentTest {
     //        WHEN Result state THEN hardUnlocked=true
     @Test
     fun `hardUnlocked_true_after_EASY_perfect_attempt`() {
-        val perfectAttempt = FakeAttemptFixtures.fixtureAttempt(
-            id = "perfect-prior",
-            mode = Difficulty.EASY,
-            codeAnswer = "9",
-            percentScore = 100,
-        )
+        val perfectAttempt =
+            FakeAttemptFixtures.fixtureAttempt(
+                id = "perfect-prior",
+                mode = Difficulty.EASY,
+                codeAnswer = "9",
+                percentScore = 100,
+            )
         kotlinx.coroutines.runBlocking { fakeAttemptRepo.save(perfectAttempt) }
 
         fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(id = "current"),
-            ratingPrompt = false,
-        )
+        fakeComplete.result =
+            RunnerState.Completed(
+                attempt = FakeAttemptFixtures.fixtureAttempt(id = "current"),
+                ratingPrompt = false,
+            )
         val component = buildComponent()
         component.onAnswer(singleChoiceDraft())
 
@@ -1194,45 +1305,49 @@ class DefaultLessonRunnerRootComponentTest {
     // PT-40: GIVEN FakeComplete returns SaveFailed
     //        WHEN complete THEN uiState.Result.saveWarning=true + SaveAttemptFailed event
     @Test
-    fun `completeSaveFailed_saveWarning_true_and_event_emitted`() = runTest {
-        fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.SaveFailed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(),
-            error = SaveError.IoFailure(RuntimeException("IO error")),
-        )
-        val component = buildComponent()
+    fun `completeSaveFailed_saveWarning_true_and_event_emitted`() =
+        runTest {
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeComplete.result =
+                RunnerState.SaveFailed(
+                    attempt = FakeAttemptFixtures.fixtureAttempt(),
+                    error = SaveError.IoFailure(RuntimeException("IO error")),
+                )
+            val component = buildComponent()
 
-        val deferred = async { component.events.first() }
-        component.onAnswer(singleChoiceDraft())
+            val deferred = async { component.events.first() }
+            component.onAnswer(singleChoiceDraft())
 
-        val result = component.uiState.value as RunnerUiState.Result
-        assertTrue(result.saveWarning, "saveWarning must be true when CompleteUseCase returns SaveFailed")
-        assertIs<RunnerEvent.SaveAttemptFailed>(deferred.await(), "SaveAttemptFailed event must be emitted")
-    }
+            val result = component.uiState.value as RunnerUiState.Result
+            assertTrue(result.saveWarning, "saveWarning must be true when CompleteUseCase returns SaveFailed")
+            assertIs<RunnerEvent.SaveAttemptFailed>(deferred.await(), "SaveAttemptFailed event must be emitted")
+        }
 
     // ── PT-41: rating submit failure → SaveRatingFailed event ─────────────────
 
     // PT-41: GIVEN FakeSubmitRating.result=failure
     //        WHEN onSubmitRating(3) THEN SaveRatingFailed event emitted
     @Test
-    fun `ratingSubmitFailure_saveRatingFailed_event`() = runTest {
-        fakeSettlements.settlement.value = confirmedSettlement()
-        fakeSubmitRating.result = Result.failure(RuntimeException("network error"))
-        fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(
-            attempt = FakeAttemptFixtures.fixtureAttempt(),
-            ratingPrompt = true,
-        )
-        val component = buildComponent()
-        component.onAnswer(singleChoiceDraft())
-        assertIs<RunnerUiState.Result>(component.uiState.value)
+    fun `ratingSubmitFailure_saveRatingFailed_event`() =
+        runTest {
+            fakeSettlements.settlement.value = confirmedSettlement()
+            fakeSubmitRating.result = Result.failure(RuntimeException("network error"))
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeComplete.result =
+                RunnerState.Completed(
+                    attempt = FakeAttemptFixtures.fixtureAttempt(),
+                    ratingPrompt = true,
+                )
+            val component = buildComponent()
+            component.onAnswer(singleChoiceDraft())
+            assertIs<RunnerUiState.Result>(component.uiState.value)
 
-        val deferred = async { component.events.first() }
-        component.onSubmitRating(3)
+            val deferred = async { component.events.first() }
+            component.onSubmitRating(3)
 
-        val event = deferred.await()
-        assertIs<RunnerEvent.SaveRatingFailed>(event, "SaveRatingFailed event must be emitted on rating failure")
-    }
+            val event = deferred.await()
+            assertIs<RunnerEvent.SaveRatingFailed>(event, "SaveRatingFailed event must be emitted on rating failure")
+        }
 
     // ── Lives pill + hint budget (design §4.4, decision F2) ──────────────────
 
@@ -1241,9 +1356,10 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun `profileHearts_mappedIntoQuestionLives`() {
         fakeStart.result = makeReadyState(questions = 1)
-        val component = buildComponent(
-            profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 300)),
-        )
+        val component =
+            buildComponent(
+                profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 300)),
+            )
 
         val uiState = assertIs<RunnerUiState.Question>(component.uiState.value)
         assertEquals(3, uiState.lives, "300 life points must surface as 3 hearts")
@@ -1263,9 +1379,10 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun `hintRequested_spendsOneLife`() {
         fakeStart.result = makeReadyState(questions = 2)
-        val component = buildComponent(
-            profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 200)),
-        )
+        val component =
+            buildComponent(
+                profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 200)),
+            )
         assertEquals(2, (component.uiState.value as RunnerUiState.Question).lives)
 
         assertTrue(component.hintRequested(), "hint must succeed while lives remain")
@@ -1281,9 +1398,10 @@ class DefaultLessonRunnerRootComponentTest {
     @Test
     fun `hintRequested_refused_whenNoLives`() {
         fakeStart.result = makeReadyState(questions = 2)
-        val component = buildComponent(
-            profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 100)),
-        )
+        val component =
+            buildComponent(
+                profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 100)),
+            )
         assertTrue(component.hintRequested())
 
         assertFalse(component.hintRequested(), "hint must be refused with an empty budget")
@@ -1312,39 +1430,41 @@ class DefaultLessonRunnerRootComponentTest {
 
     // GIVEN a next lesson in the theme WHEN onNextLesson() THEN OpenNextLesson(next id)
     @Test
-    fun `onNextLesson_emitsOpenNextLesson_whenNextExists`() = runTest {
-        fakeLessonRepo.addLesson(makeLesson(id = "lesson2", order = 1))
-        fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
-        val component = buildComponent()
-        component.onAnswer(singleChoiceDraft())
-        assertIs<RunnerUiState.Result>(component.uiState.value)
+    fun `onNextLesson_emitsOpenNextLesson_whenNextExists`() =
+        runTest {
+            fakeLessonRepo.addLesson(makeLesson(id = "lesson2", order = 1))
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+            val component = buildComponent()
+            component.onAnswer(singleChoiceDraft())
+            assertIs<RunnerUiState.Result>(component.uiState.value)
 
-        val deferred = async { component.events.first() }
-        component.onNextLesson()
+            val deferred = async { component.events.first() }
+            component.onNextLesson()
 
-        val event = deferred.await()
-        val opened = assertIs<RunnerEvent.OpenNextLesson>(event, "next lesson must be offered to the host")
-        assertEquals("lesson2", opened.lessonId)
-    }
+            val event = deferred.await()
+            val opened = assertIs<RunnerEvent.OpenNextLesson>(event, "next lesson must be offered to the host")
+            assertEquals("lesson2", opened.lessonId)
+        }
 
     // GIVEN no next lesson WHEN onNextLesson() THEN fall back to NavigateBack
     @Test
-    fun `onNextLesson_fallsBackToNavigateBack_whenNoNext`() = runTest {
-        fakeStart.result = makeReadyState(questions = 1)
-        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
-        val component = buildComponent()
-        component.onAnswer(singleChoiceDraft())
-        assertIs<RunnerUiState.Result>(component.uiState.value)
+    fun `onNextLesson_fallsBackToNavigateBack_whenNoNext`() =
+        runTest {
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+            val component = buildComponent()
+            component.onAnswer(singleChoiceDraft())
+            assertIs<RunnerUiState.Result>(component.uiState.value)
 
-        val deferred = async { component.events.first() }
-        component.onNextLesson()
+            val deferred = async { component.events.first() }
+            component.onNextLesson()
 
-        assertIs<RunnerEvent.NavigateBack>(
-            deferred.await(),
-            "without a next lesson the runner must close",
-        )
-    }
+            assertIs<RunnerEvent.NavigateBack>(
+                deferred.await(),
+                "without a next lesson the runner must close",
+            )
+        }
     // ── Пометка очереди на прохождении (история 4.4) ──────────────────────────
 
     // GIVEN запись прохождения ждёт отправки WHEN построено состояние результата

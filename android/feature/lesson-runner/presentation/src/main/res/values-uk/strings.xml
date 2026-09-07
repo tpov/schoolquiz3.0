@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Ukrainian translations for the lesson-runner strings. -->
 <resources>
+    <string name="runner_feedback_continue_action">Продовжити урок</string>
+    <string name="runner_result_sync_now">Надіслати результат</string>
     <!-- Actions -->
     <string name="runner_action_continue">Продовжити</string>
     <string name="runner_action_exit">Вийти</string>

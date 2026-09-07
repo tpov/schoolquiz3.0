@@ -21,7 +21,10 @@ class WorkManagerSyncScheduler(
             OneTimeWorkRequestBuilder<SyncWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                 .build()
-        workManager.enqueueUniqueWork(SyncWorker.WORK_NAME_MANUAL, ExistingWorkPolicy.REPLACE, request)
+        // A second request may concern an intent saved after the current drain took its snapshot.
+        // Preserve that request without cancelling an in-flight server call or its local receipt ACK.
+        // KEEP could lose the wake-up; APPEND would inherit a previously failed/cancelled chain.
+        workManager.enqueueUniqueWork(SyncWorker.WORK_NAME_MANUAL, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
     override fun enqueueManualProfileSync() {

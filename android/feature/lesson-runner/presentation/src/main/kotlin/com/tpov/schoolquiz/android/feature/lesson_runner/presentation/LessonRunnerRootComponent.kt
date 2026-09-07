@@ -37,6 +37,9 @@ interface LessonRunnerRootComponent {
 
     fun onSubmitRating(rating: Int)
 
+    /** Explicit manual synchronization, without leaving the pending result or changing its ID. */
+    fun onSyncResult()
+
     fun onFinish()
 
     /** Restart the same lesson as a fresh attempt (design decision F3). */

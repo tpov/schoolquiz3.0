@@ -24,7 +24,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class WorkManagerSyncSchedulerTest {
-
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @After
@@ -71,6 +70,39 @@ class WorkManagerSyncSchedulerTest {
     }
 
     // ── Request shape: what exactly gets handed to WorkManager ────────────────────────────────
+
+    @Test
+    fun `manual content repeats preserve the active request and queue a later drain`() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        val workManager = WorkManager.getInstance(context)
+        val scheduler = WorkManagerSyncScheduler(workManager)
+
+        scheduler.enqueueManualSync()
+        val first = workManager.getWorkInfosForUniqueWork(SyncWorker.WORK_NAME_MANUAL).get().single()
+        assertEquals(WorkInfo.State.ENQUEUED, first.state)
+
+        scheduler.enqueueManualSync()
+        val queued = workManager.getWorkInfosForUniqueWork(SyncWorker.WORK_NAME_MANUAL).get()
+        assertEquals(2, queued.size)
+        assertEquals(WorkInfo.State.ENQUEUED, queued.single { it.id == first.id }.state)
+        assertEquals(WorkInfo.State.BLOCKED, queued.single { it.id != first.id }.state)
+    }
+
+    @Test
+    fun `manual content request starts again after cancellation instead of inheriting it`() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        val workManager = WorkManager.getInstance(context)
+        val scheduler = WorkManagerSyncScheduler(workManager)
+        scheduler.enqueueManualSync()
+        val first = workManager.getWorkInfosForUniqueWork(SyncWorker.WORK_NAME_MANUAL).get().single()
+        workManager.cancelUniqueWork(SyncWorker.WORK_NAME_MANUAL).result.get()
+        assertEquals(WorkInfo.State.CANCELLED, workManager.getWorkInfoById(first.id).get().state)
+
+        scheduler.enqueueManualSync()
+        val queued = workManager.getWorkInfosForUniqueWork(SyncWorker.WORK_NAME_MANUAL).get()
+        assertEquals(1, queued.count { it.state == WorkInfo.State.ENQUEUED })
+        assertEquals(0, queued.count { it.state == WorkInfo.State.BLOCKED })
+    }
 
     @Test
     fun `daily content frequency enqueues unique periodic work with a one day period`() {

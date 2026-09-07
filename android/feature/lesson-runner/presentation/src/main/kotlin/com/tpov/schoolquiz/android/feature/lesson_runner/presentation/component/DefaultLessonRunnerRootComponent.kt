@@ -18,6 +18,7 @@ import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.scoring.computeStars
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
@@ -30,12 +31,12 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTime
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.submitAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.identity
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.identity
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.AttemptSyncMarkRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonCommentRepository
@@ -73,6 +74,7 @@ class DefaultLessonRunnerRootComponent(
      */
     private val attemptSyncMarks: AttemptSyncMarkRepository,
     private val attemptSettlements: ServerAttemptSettlementRepository,
+    private val syncScheduler: SyncScheduler,
     /**
      * Read once per completed round for the lives figure on the result card. Null (the default)
      * when the host has no profile to read — the figure stays hidden instead of guessing.
@@ -145,6 +147,11 @@ class DefaultLessonRunnerRootComponent(
         stateHolder.domainState = updatedDomain
         stateHolder.uiState.value =
             updatedDomain.toQuestionUiState(stateHolder.livesRemainingHearts)
+    }
+
+    override fun onSyncResult() {
+        val result = stateHolder.uiState.value as? RunnerUiState.Result ?: return
+        if (result.canRequestSync) syncScheduler.enqueueManualSync()
     }
 
     override fun onAnswer(answer: UserAnswerDraft) {
@@ -230,7 +237,13 @@ class DefaultLessonRunnerRootComponent(
             }
         stateHolder.uiState.value = current.copy(ratingSubmissionState = RatingSubmissionState.InProgress)
         scope.launch {
-            val result = useCases.submitRating(completedAttempt.userId, completedAttempt.lessonId, completedAttempt.id, rating)
+            val result =
+                useCases.submitRating(
+                    completedAttempt.userId,
+                    completedAttempt.lessonId,
+                    completedAttempt.id,
+                    rating,
+                )
             val latest = stateHolder.uiState.value as? RunnerUiState.Result ?: return@launch
             if (latest.attemptId != completedAttempt.id) return@launch
             if (result.isSuccess) {
@@ -286,7 +299,11 @@ class DefaultLessonRunnerRootComponent(
         val remaining = current.lives ?: return false
         if (remaining <= 0) return false
         val ready = stateHolder.domainState as? RunnerState.Ready ?: return false
-        if (ready.mode != Difficulty.EASY || ready.codeAnswer == null || !current.questionUiState.hasLocalAnswerKey) return false
+        if (ready.mode != Difficulty.EASY || ready.codeAnswer == null ||
+            !current.questionUiState.hasLocalAnswerKey
+        ) {
+            return false
+        }
         stateHolder.domainState = claimCharge(ready, ChargeClaimMask.Claim.STANDARD_HINT)
         val updated = remaining - 1
         stateHolder.livesRemainingHearts = updated
@@ -391,71 +408,83 @@ class DefaultLessonRunnerRootComponent(
         }
     }
 
-    private suspend fun triggerComplete(readyState: RunnerState.Ready) = withTerminalSave(readyState) {
-        val result = useCases.completeAttempt(readyState)
-        stateHolder.domainState = result
-        when (result) {
-            is RunnerState.Completed -> {
-                analytics.track(
-                    AnalyticsEvent.LessonFinished(
-                        lessonId = lessonId.value,
-                        difficulty = mode.name,
-                        percent = result.attempt.percentScore.raw,
-                        stars = computeStars(result.attempt.percentScore, result.attempt.mode).rawTenths,
-                    ),
-                )
-                stateHolder.uiState.value =
-                    buildResultUiState(result.attempt, result.ratingPrompt, saveWarning = false)
-                observeSyncMark(result.attempt.identity())
-                observeServerSettlement(result.attempt.identity())
-            }
-            is RunnerState.SaveFailed -> {
-                emitEvent(RunnerEvent.SaveAttemptFailed(result.error.toEventSaveError()))
-                stateHolder.uiState.value =
-                    buildResultUiState(
-                        result.attempt,
-                        showRatingPrompt = false,
-                        saveWarning = true,
+    private suspend fun triggerComplete(readyState: RunnerState.Ready) =
+        withTerminalSave(readyState) {
+            val result = useCases.completeAttempt(readyState)
+            stateHolder.domainState = result
+            when (result) {
+                is RunnerState.Completed -> {
+                    analytics.track(
+                        AnalyticsEvent.LessonFinished(
+                            lessonId = lessonId.value,
+                            difficulty = mode.name,
+                            percent = result.attempt.percentScore.raw,
+                            stars = computeStars(result.attempt.percentScore, result.attempt.mode).rawTenths,
+                        ),
                     )
-                observeSyncMark(result.attempt.identity())
-                observeServerSettlement(result.attempt.identity())
+                    stateHolder.uiState.value =
+                        buildResultUiState(result.attempt, result.ratingPrompt, saveWarning = false)
+                    observeSyncMark(result.attempt.identity())
+                    observeServerSettlement(result.attempt.identity())
+                }
+                is RunnerState.SaveFailed -> {
+                    emitEvent(RunnerEvent.SaveAttemptFailed(result.error.toEventSaveError()))
+                    stateHolder.uiState.value =
+                        buildResultUiState(
+                            result.attempt,
+                            showRatingPrompt = false,
+                            saveWarning = true,
+                        )
+                    observeSyncMark(result.attempt.identity())
+                    observeServerSettlement(result.attempt.identity())
+                }
+                is RunnerState.PendingCompletion -> {
+                    // No LessonFinished score telemetry until an authoritative result exists.
+                    stateHolder.uiState.value =
+                        buildUnscoredResultUiState(
+                            result.intent,
+                            showRatingPrompt = true,
+                            saveWarning = false,
+                        )
+                    observeSyncMark(result.intent.identity)
+                    observeServerSettlement(result.intent.identity)
+                }
+                is RunnerState.PendingSaveFailed -> {
+                    showUnscoredSaveFailure(result)
+                }
+                else -> {}
             }
-            is RunnerState.PendingCompletion -> {
-                // No LessonFinished score telemetry until an authoritative result exists.
-                stateHolder.uiState.value = buildUnscoredResultUiState(result.intent, showRatingPrompt = true, saveWarning = false)
-                observeSyncMark(result.intent.identity)
-                observeServerSettlement(result.intent.identity)
-            }
-            is RunnerState.PendingSaveFailed -> {
-                showUnscoredSaveFailure(result)
-            }
-            else -> {}
         }
-    }
 
-    private suspend fun triggerAbort(readyState: RunnerState.Ready) = withTerminalSave(readyState) {
-        val result = useCases.abortAttempt(readyState)
-        stateHolder.domainState = result
-        when (result) {
-            is RunnerState.SaveFailed -> {
-                emitEvent(RunnerEvent.SaveAttemptFailed(result.error.toEventSaveError()))
-                stateHolder.uiState.value =
-                    buildResultUiState(
-                        result.attempt,
-                        showRatingPrompt = false,
-                        saveWarning = true,
-                    )
-                observeSyncMark(result.attempt.identity())
-                observeServerSettlement(result.attempt.identity())
+    private suspend fun triggerAbort(readyState: RunnerState.Ready) =
+        withTerminalSave(readyState) {
+            val result = useCases.abortAttempt(readyState)
+            stateHolder.domainState = result
+            when (result) {
+                is RunnerState.SaveFailed -> {
+                    emitEvent(RunnerEvent.SaveAttemptFailed(result.error.toEventSaveError()))
+                    stateHolder.uiState.value =
+                        buildResultUiState(
+                            result.attempt,
+                            showRatingPrompt = false,
+                            saveWarning = true,
+                        )
+                    observeSyncMark(result.attempt.identity())
+                    observeServerSettlement(result.attempt.identity())
+                }
+                is RunnerState.PendingSaveFailed -> showUnscoredSaveFailure(result)
+                else -> emitEvent(RunnerEvent.NavigateBack)
             }
-            is RunnerState.PendingSaveFailed -> showUnscoredSaveFailure(result)
-            else -> emitEvent(RunnerEvent.NavigateBack)
         }
-    }
 
     private suspend fun showUnscoredSaveFailure(result: RunnerState.PendingSaveFailed) {
         emitEvent(RunnerEvent.SaveAttemptFailed(result.error.toEventSaveError()))
-        stateHolder.uiState.value = buildUnscoredResultUiState(result.intent, showRatingPrompt = false, saveWarning = true)
+        stateHolder.uiState.value =
+            buildUnscoredResultUiState(
+                result.intent,
+                showRatingPrompt = false,
+                saveWarning = true,
+            )
         observeSyncMark(result.intent.identity)
         observeServerSettlement(result.intent.identity)
     }
@@ -481,7 +510,13 @@ class DefaultLessonRunnerRootComponent(
             lessonRatingCount = lesson?.ratingCount ?: 0,
             top3 = lesson?.top3.orEmpty(),
             userAttemptCount = history.size,
-            userAveragePercentScore = history.takeIf { it.isNotEmpty() }?.let { it.sumOf { row -> row.percentScore.raw } / it.size },
+            userAveragePercentScore =
+                history.takeIf { it.isNotEmpty() }?.let {
+                    it.sumOf {
+                            row ->
+                        row.percentScore.raw
+                    } / it.size
+                },
             userBestPercentScore = history.maxOfOrNull { it.percentScore.raw },
             livesRemainingHearts = profile?.let { it.lifePoints / UserProfile.LIFE_POINTS_PER_HEART },
             livesMaxHearts = profile?.let { it.maxLifePoints / UserProfile.LIFE_POINTS_PER_HEART },
@@ -553,13 +588,14 @@ class DefaultLessonRunnerRootComponent(
 
     private fun observeServerSettlement(attempt: AttemptIdentity) {
         stateHolder.settlementJob?.cancel()
-        stateHolder.settlementJob = scope.launch {
-            attemptSettlements.observe(attempt).collect { settlement ->
-                val current = stateHolder.uiState.value as? RunnerUiState.Result ?: return@collect
-                if (current.attemptId != attempt.id) return@collect
-                stateHolder.uiState.value = current.copy(serverSettlement = settlement)
+        stateHolder.settlementJob =
+            scope.launch {
+                attemptSettlements.observe(attempt).collect { settlement ->
+                    val current = stateHolder.uiState.value as? RunnerUiState.Result ?: return@collect
+                    if (current.attemptId != attempt.id) return@collect
+                    stateHolder.uiState.value = current.copy(serverSettlement = settlement)
+                }
             }
-        }
     }
 
     private fun emitEvent(event: RunnerEvent) {

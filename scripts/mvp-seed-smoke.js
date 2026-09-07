@@ -14,20 +14,21 @@ assert.equal(process.env.GCLOUD_PROJECT, PROJECT);
 assert.equal(process.env.FIRESTORE_EMULATOR_HOST, "schoolquiz-mvp-firebase:8080");
 const app = initializeApp({projectId: PROJECT});
 const db = getFirestore(app);
-const fixtureId = "mvp-smoke-v1";
+// Keep the original v1 documents as evidence. V2 includes the required modern payload identity.
+const fixtureId = "mvp-smoke-v2";
 const ids = Object.fromEntries(["catalog", "quest", "section", "theme", "lesson"].map(kind => [kind, `${fixtureId}-${kind}`]));
 
 async function seed() {
   const now = Date.now();
   const common = {version: 1, lastModifiedAt: Timestamp.fromMillis(now), archived: false, testFixture: fixtureId};
   const rows = [
-    ["catalog", {id: ids.catalog, name: "MVP checks", questType: "REGULAR", iconNames: []}],
+    ["catalog", {id: ids.catalog, name: "MVP validated checks", questType: "REGULAR", iconNames: []}],
     ["quest", {id: ids.quest, catalogId: ids.catalog, authorUid: `${fixtureId}-author`, title: "MVP smoke course", visibleOn: ["home"]}],
     ["section", {id: ids.section, questId: ids.quest, title: "MVP section", order: 0}],
     ["theme", {id: ids.theme, sectionId: ids.section, title: "MVP theme", order: 0}],
     ["lesson", {id: ids.lesson, themeId: ids.theme, title: "MVP quick lesson", order: 0}],
     ...[0, 1].map(order => ["question", {id: `${fixtureId}-q-${order}`, lessonId: ids.lesson,
-      text: SINGLE.text, payload: JSON.stringify({...SINGLE, difficulty: "EASY"}), difficulty: "EASY",
+      text: SINGLE.text, payload: JSON.stringify({...SINGLE, id: `${fixtureId}-q-${order}`, difficulty: "EASY"}), difficulty: "EASY",
       language: "en", languageLevel: 0, order}]),
   ];
   const created = await db.runTransaction(async transaction => {

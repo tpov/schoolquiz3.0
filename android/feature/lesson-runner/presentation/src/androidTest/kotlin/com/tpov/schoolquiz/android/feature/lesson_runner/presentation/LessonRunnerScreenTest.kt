@@ -9,13 +9,13 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.RunFakeComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
@@ -32,7 +32,6 @@ import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -43,9 +42,8 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class LessonRunnerScreenTest {
-
     /** Mirrors ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS in LessonRunnerScreen, which is private. */
-    private val ANSWER_FEEDBACK_SKIP_ARM_MS = 400L
+    private val answerFeedbackSkipArmMs = 400L
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -65,13 +63,14 @@ class LessonRunnerScreenTest {
         indexInPool: Int = 0,
         totalInPool: Int = 5,
     ) = RunnerUiState.Question(
-        questionUiState = QuestionUiState.SingleChoice(
-            questionText = questionText,
-            hasImage = false,
-            imageUrl = null,
-            options = emptyList(),
-            selectedOptionId = null,
-        ),
+        questionUiState =
+            QuestionUiState.SingleChoice(
+                questionText = questionText,
+                hasImage = false,
+                imageUrl = null,
+                options = emptyList(),
+                selectedOptionId = null,
+            ),
         indexInPool = indexInPool,
         totalInPool = totalInPool,
         deadlineMs = deadlineMs,
@@ -97,31 +96,34 @@ class LessonRunnerScreenTest {
         lives = lives,
     )
 
-    private fun singleChoice(correctId: String?) = QuestionUiState.SingleChoice(
-        questionText = "Один ответ",
-        hasImage = false,
-        imageUrl = null,
-        options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
-        selectedOptionId = null,
-        correctOptionId = correctId,
-    )
+    private fun singleChoice(correctId: String?) =
+        QuestionUiState.SingleChoice(
+            questionText = "Один ответ",
+            hasImage = false,
+            imageUrl = null,
+            options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
+            selectedOptionId = null,
+            correctOptionId = correctId,
+        )
 
-    private fun multipleChoice(correctIds: Set<String>) = QuestionUiState.MultipleChoice(
-        questionText = "Несколько ответов",
-        hasImage = false,
-        imageUrl = null,
-        options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
-        selectedIds = emptySet(),
-        correctIds = correctIds,
-    )
+    private fun multipleChoice(correctIds: Set<String>) =
+        QuestionUiState.MultipleChoice(
+            questionText = "Несколько ответов",
+            hasImage = false,
+            imageUrl = null,
+            options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
+            selectedIds = emptySet(),
+            correctIds = correctIds,
+        )
 
-    private fun ordering(correctOrder: List<String>) = QuestionUiState.Ordering(
-        questionText = "Порядок",
-        hasImage = false,
-        imageUrl = null,
-        items = listOf(OptionUi("b", "Второй"), OptionUi("a", "Первый")),
-        correctOrderIds = correctOrder,
-    )
+    private fun ordering(correctOrder: List<String>) =
+        QuestionUiState.Ordering(
+            questionText = "Порядок",
+            hasImage = false,
+            imageUrl = null,
+            items = listOf(OptionUi("b", "Второй"), OptionUi("a", "Первый")),
+            correctOrderIds = correctOrder,
+        )
 
     /** [blankCount] `___` in the template; [correct] is the key the domain grades against. */
     private fun fillBlank(
@@ -145,36 +147,38 @@ class LessonRunnerScreenTest {
     }
 
     /** Every type that has an answer to play, with the draft each hint must submit. */
-    private val hintableTypes: List<Triple<String, QuestionUiState, UserAnswerDraft>> = listOf(
-        Triple(
-            "single choice",
-            singleChoice(correctId = "b"),
-            UserAnswerDraft.SingleChoiceDraft(OptionId("b")),
-        ),
-        Triple(
-            "multiple choice",
-            multipleChoice(correctIds = setOf("a", "b")),
-            UserAnswerDraft.MultipleChoiceDraft(setOf(OptionId("a"), OptionId("b"))),
-        ),
-        Triple(
-            "ordering",
-            ordering(correctOrder = listOf("a", "b")),
-            UserAnswerDraft.OrderingDraft(listOf(OptionId("a"), OptionId("b"))),
-        ),
-        Triple(
-            "fill blank",
-            fillBlank(blankCount = 1, correct = mapOf(0 to "x")),
-            UserAnswerDraft.FillBlankDraft(mapOf(BlankId("b0") to CandidateId("x"))),
-        ),
-    )
+    private val hintableTypes: List<Triple<String, QuestionUiState, UserAnswerDraft>> =
+        listOf(
+            Triple(
+                "single choice",
+                singleChoice(correctId = "b"),
+                UserAnswerDraft.SingleChoiceDraft(OptionId("b")),
+            ),
+            Triple(
+                "multiple choice",
+                multipleChoice(correctIds = setOf("a", "b")),
+                UserAnswerDraft.MultipleChoiceDraft(setOf(OptionId("a"), OptionId("b"))),
+            ),
+            Triple(
+                "ordering",
+                ordering(correctOrder = listOf("a", "b")),
+                UserAnswerDraft.OrderingDraft(listOf(OptionId("a"), OptionId("b"))),
+            ),
+            Triple(
+                "fill blank",
+                fillBlank(blankCount = 1, correct = mapOf(0 to "x")),
+                UserAnswerDraft.FillBlankDraft(mapOf(BlankId("b0") to CandidateId("x"))),
+            ),
+        )
 
     /** Every type with nothing to play. Fill blank's case is the one reachable in shipped data. */
-    private val unhintableTypes: List<Pair<String, QuestionUiState>> = listOf(
-        "single choice with no correct id" to singleChoice(correctId = null),
-        "multiple choice with an empty correct set" to multipleChoice(correctIds = emptySet()),
-        "ordering with an empty correct order" to ordering(correctOrder = emptyList()),
-        "fill blank the template cannot fill" to fillBlank(blankCount = 1, correct = mapOf(0 to "x", 1 to "y")),
-    )
+    private val unhintableTypes: List<Pair<String, QuestionUiState>> =
+        listOf(
+            "single choice with no correct id" to singleChoice(correctId = null),
+            "multiple choice with an empty correct set" to multipleChoice(correctIds = emptySet()),
+            "ordering with an empty correct order" to ordering(correctOrder = emptyList()),
+            "fill blank the template cannot fill" to fillBlank(blankCount = 1, correct = mapOf(0 to "x", 1 to "y")),
+        )
 
     private fun hintNode() = composeTestRule.onNodeWithText(str(R.string.runner_hint_action).uppercase())
 
@@ -208,9 +212,10 @@ class LessonRunnerScreenTest {
     // Spec AC-1, AC-2
     @Test
     fun ct01_questionScreen_easy_mode_renders() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(questionText = "CT-01 вопрос", indexInPool = 0, totalInPool = 5)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(questionText = "CT-01 вопрос", indexInPool = 0, totalInPool = 5)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -227,9 +232,10 @@ class LessonRunnerScreenTest {
     // Spec AC-2
     @Test
     fun ct02_questionScreen_hard_mode_errorBackground() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(questionText = "CT-02 вопрос", isHard = true)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(questionText = "CT-02 вопрос", isHard = true)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -247,18 +253,20 @@ class LessonRunnerScreenTest {
     // Requires a device or emulator; it is not part of ciCheck.
     @Test
     fun ct02b_hardQuestion_tapAfterAnswer_advances() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(
-                singleChoiceQuestion(questionText = "CT-02b вопрос", isHard = true).let { state ->
-                    state.copy(
-                        questionUiState = (state.questionUiState as QuestionUiState.SingleChoice).copy(
-                            options = listOf(OptionUi("o1", "Первый"), OptionUi("o2", "Второй")),
-                        ),
-                    )
-                },
-            ),
-            isHardMode = true,
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(
+                    singleChoiceQuestion(questionText = "CT-02b вопрос", isHard = true).let { state ->
+                        state.copy(
+                            questionUiState =
+                                (state.questionUiState as QuestionUiState.SingleChoice).copy(
+                                    options = listOf(OptionUi("o1", "Первый"), OptionUi("o2", "Второй")),
+                                ),
+                        )
+                    },
+                ),
+                isHardMode = true,
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -268,8 +276,11 @@ class LessonRunnerScreenTest {
 
         composeTestRule.onNodeWithText("Первый").performClick()
         // The tap layer arms after a short delay so the answer is not swallowed by the same gesture.
-        composeTestRule.mainClock.advanceTimeBy(ANSWER_FEEDBACK_SKIP_ARM_MS)
-        composeTestRule.onRoot().performClick()
+        composeTestRule.mainClock.advanceTimeBy(answerFeedbackSkipArmMs)
+        composeTestRule.onNodeWithContentDescription(str(R.string.runner_feedback_continue_action))
+            .assertIsDisplayed()
+            .assertIsEnabled()
+            .performClick()
 
         assertNotNull(
             "a hard question must reach onAnswer on tap; without a verdict digit the tap layer used " +
@@ -282,9 +293,10 @@ class LessonRunnerScreenTest {
     // Spec AC-7
     @Test
     fun ct03_exitConfirmDialog_showExitConfirmDialog_true() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(showExitConfirmDialog = true)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(showExitConfirmDialog = true)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -333,9 +345,10 @@ class LessonRunnerScreenTest {
     @Test
     fun ct10_timer_expired_onTimeout_invoked() {
         val expiredDeadline = System.currentTimeMillis() - 100L
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(deadlineMs = expiredDeadline, isPaused = false)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(deadlineMs = expiredDeadline, isPaused = false)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -351,10 +364,11 @@ class LessonRunnerScreenTest {
     // Spec AC-11
     @Test
     fun ct11_hard_mode_flagSecure_set() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(isHard = true)),
-            isHardMode = true,
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(isHard = true)),
+                isHardMode = true,
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -398,9 +412,10 @@ class LessonRunnerScreenTest {
     // Spec AC-11
     @Test
     fun ct13_easy_mode_no_flagSecure() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(isHard = false)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(isHard = false)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -416,14 +431,15 @@ class LessonRunnerScreenTest {
     // Spec AC-9 (paused timer does not tick)
     @Test
     fun ct14_paused_timer_not_ticking() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(
-                singleChoiceQuestion(
-                    isPaused = true,
-                    deadlineMs = System.currentTimeMillis() + 30_000L,
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(
+                    singleChoiceQuestion(
+                        isPaused = true,
+                        deadlineMs = System.currentTimeMillis() + 30_000L,
+                    ),
                 ),
-            ),
-        )
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -443,9 +459,10 @@ class LessonRunnerScreenTest {
     // Spec AC-9
     @Test
     fun ct15_paused_blockingDialog_displayed() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(isPaused = true)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(isPaused = true)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -460,9 +477,10 @@ class LessonRunnerScreenTest {
     // Spec AC-9
     @Test
     fun ct16_continue_button_calls_onContinue() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(isPaused = true)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(isPaused = true)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -479,9 +497,10 @@ class LessonRunnerScreenTest {
     // Spec AC-9
     @Test
     fun ct17_exit_button_calls_onExit() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(isPaused = true, showExitConfirmDialog = false)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(isPaused = true, showExitConfirmDialog = false)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -584,9 +603,10 @@ class LessonRunnerScreenTest {
     // Spec AC-3
     @Test
     fun ct25_initFailed_emptyPool_text_displayed() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.EmptyPool)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.EmptyPool)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -601,9 +621,10 @@ class LessonRunnerScreenTest {
     // Spec AC-3
     @Test
     fun ct26_initFailed_noValidQuestions() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.NoValidQuestions)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.NoValidQuestions)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -618,9 +639,10 @@ class LessonRunnerScreenTest {
     // E2.7
     @Test
     fun ct31_initFailed_redactedNotSupported() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.RedactedNotSupported)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.RedactedNotSupported)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -671,10 +693,11 @@ class LessonRunnerScreenTest {
     // Spec AC-11
     @Test
     fun ct29_hardMode_activityRecreate_flagSecure_remains() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(singleChoiceQuestion(isHard = true)),
-            isHardMode = true,
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(singleChoiceQuestion(isHard = true)),
+                isHardMode = true,
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -722,9 +745,10 @@ class LessonRunnerScreenTest {
     // --- CT-31: GIVEN any answerable type WHEN the hint fires THEN one charge buys the answer ---
     @Test
     fun ct31_hint_everyAnswerableType_spendsOneCharge_andSubmitsThatAnswer() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(question(hintableTypes.first().second, index = 0)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(question(hintableTypes.first().second, index = 0)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -745,7 +769,7 @@ class LessonRunnerScreenTest {
 
             assertEquals("$name: one press, one charge", i + 1, fakeComponent.chargesSpent)
 
-            composeTestRule.mainClock.advanceTimeBy(ANSWER_FEEDBACK_SKIP_ARM_MS)
+            composeTestRule.mainClock.advanceTimeBy(answerFeedbackSkipArmMs)
             composeTestRule.onRoot().performClick()
             composeTestRule.waitForIdle()
 
@@ -762,9 +786,10 @@ class LessonRunnerScreenTest {
     // charge and was marked wrong for a hint they never got.
     @Test
     fun ct32_hint_onUnanswerableTypes_spendsNothing_andSubmitsNothing() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(question(unhintableTypes.first().second, index = 0)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(question(unhintableTypes.first().second, index = 0)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -785,7 +810,7 @@ class LessonRunnerScreenTest {
 
             // Had the hint fired it would have submitted its partial answer; tapping through the
             // verdict layer is how that reaches onAnswer, and where the wrong mark would appear.
-            composeTestRule.mainClock.advanceTimeBy(ANSWER_FEEDBACK_SKIP_ARM_MS)
+            composeTestRule.mainClock.advanceTimeBy(answerFeedbackSkipArmMs)
             composeTestRule.onRoot().performClick()
             composeTestRule.waitForIdle()
 
@@ -796,9 +821,10 @@ class LessonRunnerScreenTest {
     // --- CT-33: GIVEN an answerable question with no charges THEN the hint is dead ---
     @Test
     fun ct33_hint_withNoCharges_isDead() {
-        val fakeComponent = RunFakeComponent(
-            MutableStateFlow(question(hintableTypes.first().second, lives = 0)),
-        )
+        val fakeComponent =
+            RunFakeComponent(
+                MutableStateFlow(question(hintableTypes.first().second, lives = 0)),
+            )
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -817,14 +843,15 @@ class LessonRunnerScreenTest {
     // --- CT-34: GIVEN a survey THEN there is no hint button at all ---
     @Test
     fun ct34_survey_hasNoHintButton() {
-        val survey = QuestionUiState.Survey(
-            questionText = "Опрос",
-            hasImage = false,
-            imageUrl = null,
-            options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
-            selectedIds = emptySet(),
-            allowMultiple = false,
-        )
+        val survey =
+            QuestionUiState.Survey(
+                questionText = "Опрос",
+                hasImage = false,
+                imageUrl = null,
+                options = listOf(OptionUi("a", "Первый"), OptionUi("b", "Второй")),
+                selectedIds = emptySet(),
+                allowMultiple = false,
+            )
         val fakeComponent = RunFakeComponent(MutableStateFlow(question(survey)))
 
         composeTestRule.setContent {

@@ -1,7 +1,5 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation
 
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
-
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.instancekeeper.InstanceKeeperDispatcher
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
@@ -9,29 +7,29 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeServerAttemptSettlementRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAbortAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptSyncMarkRepository
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeAttemptFixtures
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeClock
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeCompleteAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonRatingRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeServerAttemptSettlementRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeStartLessonAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSubmitLessonRatingUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
-import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +39,6 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNotEquals
 
 /**
  * Integration tests for DefaultLessonRunnerRootComponent — state holder rotation and lifecycle.
@@ -55,7 +52,6 @@ import kotlin.test.assertNotEquals
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LessonRunnerIntegrationTest {
-
     private val lifecycles = mutableListOf<LifecycleRegistry>()
 
     private lateinit var fakeStart: FakeStartLessonAttemptUseCase
@@ -105,38 +101,42 @@ class LessonRunnerIntegrationTest {
         val lifecycle = LifecycleRegistry()
         lifecycles.add(lifecycle)
         lifecycle.resume()
-        val ctx = DefaultComponentContext(
-            lifecycle = lifecycle,
-            instanceKeeper = instanceKeeper,
-        )
+        val ctx =
+            DefaultComponentContext(
+                lifecycle = lifecycle,
+                instanceKeeper = instanceKeeper,
+            )
         return DefaultLessonRunnerRootComponent(
             componentContext = ctx,
             lessonId = lessonId,
             mode = mode,
-            useCases = com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases(
-                startAttempt = startAttemptUseCase,
-                completeAttempt = completeAttemptUseCase,
-                abortAttempt = abortAttemptUseCase,
-                submitRating = submitRatingUseCase,
-            ),
+            useCases =
+                com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases(
+                    startAttempt = startAttemptUseCase,
+                    completeAttempt = completeAttemptUseCase,
+                    abortAttempt = abortAttemptUseCase,
+                    submitRating = submitRatingUseCase,
+                ),
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
             attemptSyncMarks = FakeAttemptSyncMarkRepository(),
             attemptSettlements = FakeServerAttemptSettlementRepository(),
+            syncScheduler = com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSyncScheduler(),
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
             mainContext = Dispatchers.Unconfined,
         )
     }
 
-    private fun defaultLesson() = Lesson(
-        id = LessonId("lesson1"),
-        themeId = ThemeId("theme1"),
-        title = "Test Lesson",
-        order = 0,
-        version = 5L,
-        lastModifiedAt = 1000L,
-    )
+    private fun defaultLesson() =
+        Lesson(
+            id = LessonId("lesson1"),
+            themeId = ThemeId("theme1"),
+            title = "Test Lesson",
+            order = 0,
+            version = 5L,
+            lastModifiedAt = 1000L,
+        )
 
     private fun optId(s: String) = OptionId(s)
 
@@ -149,14 +149,15 @@ class LessonRunnerIntegrationTest {
         sourceId = QuestionId(id),
         order = codeAnswerIndex,
         codeAnswerIndex = codeAnswerIndex,
-        content = QuestionContent.SingleChoice(
-            id = id,
-            difficulty = Difficulty.EASY,
-            text = "Q",
-            imageUrl = null,
-            options = listOf("A", "B").map { QuestionContent.Option(optId(it), it) },
-            correctOptionId = optId("A"),
-        ),
+        content =
+            QuestionContent.SingleChoice(
+                id = id,
+                difficulty = Difficulty.EASY,
+                text = "Q",
+                imageUrl = null,
+                options = listOf("A", "B").map { QuestionContent.Option(optId(it), it) },
+                correctOptionId = optId("A"),
+            ),
     )
 
     private fun makeReadyState(

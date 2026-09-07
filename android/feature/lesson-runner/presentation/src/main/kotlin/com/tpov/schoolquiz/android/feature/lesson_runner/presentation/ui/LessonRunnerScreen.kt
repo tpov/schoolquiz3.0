@@ -32,6 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -200,6 +203,7 @@ private fun RunnerStateContent(
                 onRunAgain = { component.onRunAgain() },
                 onNextLesson = { component.onNextLesson() },
                 onPostComment = { component.onPostComment(it) },
+                onSyncResult = component::onSyncResult,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -265,12 +269,16 @@ private fun QuestionStateContent(
             onTimeout = {
                 if (feedback == null) {
                     val timeoutFeedback =
-                        if (state.serverScored) null else buildTimeoutFeedback(
-                            qState = state.questionUiState,
-                            currentDraft = state.currentDraft,
-                            seed = state.indexInPool.toLong() xor state.deadlineMs,
-                            revealCorrect = state.revealCorrect,
-                        )
+                        if (state.serverScored) {
+                            null
+                        } else {
+                            buildTimeoutFeedback(
+                                qState = state.questionUiState,
+                                currentDraft = state.currentDraft,
+                                seed = state.indexInPool.toLong() xor state.deadlineMs,
+                                revealCorrect = state.revealCorrect,
+                            )
+                        }
                     if (timeoutFeedback != null) {
                         feedback = timeoutFeedback
                     } else {
@@ -654,12 +662,16 @@ private fun BoxScope.FeedbackOverlay(
     onSkip: () -> Unit,
 ) {
     if (!hasAnswered) return
+    val continueLabel = stringResource(R.string.runner_feedback_continue_action)
     Box(
         modifier =
             Modifier
                 .matchParentSize()
+                .semantics { contentDescription = continueLabel }
                 .clickable(
                     enabled = canSkip,
+                    role = Role.Button,
+                    onClickLabel = continueLabel,
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },
                     onClick = onSkip,
@@ -960,6 +972,8 @@ private class PreviewLessonRunnerComponent(initialState: RunnerUiState) : Lesson
     override fun onCrossCancelled() = Unit
 
     override fun onSubmitRating(rating: Int) = Unit
+
+    override fun onSyncResult() = Unit
 
     override fun onFinish() = Unit
 

@@ -284,7 +284,8 @@ internal fun AnswerOptionSurface(
             Modifier
                 .fillMaxWidth()
                 .graphicsLayer {
-                    rotationX = flip.rotation
+                    // The back face keeps its label upright after the half-turn.
+                    rotationX = if (flip.showBack) flip.rotation - FEEDBACK_FLIP_FULL_ROTATION else flip.rotation
                     cameraDistance = FLIP_CAMERA_DISTANCE
                 }
                 .background(fill)

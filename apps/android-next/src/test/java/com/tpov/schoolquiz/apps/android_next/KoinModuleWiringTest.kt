@@ -1323,6 +1323,7 @@ class KoinModuleWiringTest : KoinTest {
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,
+                testSyncSchedulerModule,
                 testAnalyticsStub,
                 questionSchemaModule,
             )

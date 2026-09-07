@@ -4,8 +4,8 @@ import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
@@ -86,9 +86,19 @@ sealed interface RunnerUiState {
         val displayedReward
             get() = serverSettlement.takeIf { it.hasAccountingProof }?.reward
 
+        val canRequestSync: Boolean
+            get() =
+                attemptId != null && !saveWarning && syncMark == AttemptSyncMark.NOT_SENT &&
+                    serverSettlement.ownerVerified && serverSettlement.state in
+                    setOf(
+                        ServerAttemptSettlementState.PENDING,
+                        ServerAttemptSettlementState.UNSCORABLE,
+                    )
+
         val canSubmitRating: Boolean
-            get() = showRatingPrompt && !saveWarning && syncMark != AttemptSyncMark.QUARANTINED &&
-                serverSettlement.canQueueRating
+            get() =
+                showRatingPrompt && !saveWarning && syncMark != AttemptSyncMark.QUARANTINED &&
+                    serverSettlement.canQueueRating
     }
 
     sealed interface RatingSubmissionState {

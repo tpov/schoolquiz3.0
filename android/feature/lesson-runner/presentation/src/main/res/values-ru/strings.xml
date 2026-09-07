@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Russian translations. The unqualified values/ holds English as the global fallback. -->
 <resources>
+    <string name="runner_feedback_continue_action">Продолжить урок</string>
+    <string name="runner_result_sync_now">Отправить результат</string>
     <!-- Actions -->
     <string name="runner_action_continue">Продолжить</string>
     <string name="runner_action_exit">Выйти</string>

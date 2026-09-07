@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.settlem
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
@@ -16,31 +17,62 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ResultSettlementPresentationTest {
-    private fun result(settlement: ServerAttemptSettlement) = RunnerUiState.Result(
-        percentScore = PercentScore(88), mode = Difficulty.HARD, completedAt = 10L,
-        hardUnlocked = true, bestStarsRawTenths = 28, currentAttemptStarsRawTenths = 28,
-        lessonAverageRating = null, lessonRatingCount = 0, top3 = emptyList(), userAttemptCount = 1,
-        userAveragePercentScore = 88, showRatingPrompt = true, saveWarning = false, serverSettlement = settlement,
-    )
+    private fun result(settlement: ServerAttemptSettlement) =
+        RunnerUiState.Result(
+            percentScore = PercentScore(88), mode = Difficulty.HARD, completedAt = 10L,
+            hardUnlocked = true, bestStarsRawTenths = 28, currentAttemptStarsRawTenths = 28,
+            lessonAverageRating = null, lessonRatingCount = 0, top3 = emptyList(), userAttemptCount = 1,
+            userAveragePercentScore = 88, showRatingPrompt = true, saveWarning = false, serverSettlement = settlement,
+        )
 
-    private fun confirmed() = ServerAttemptSettlement(
-        state = ServerAttemptSettlementState.SETTLED, receiptId = "receipt", codeAnswer = CodeAnswer("1"),
-        percentScore = PercentScore(0), completed = true, settledAtMs = 20L,
-        lifePointsSpent = 50L, plasmaPointsSpent = 100L, reward = ServerAttemptReward(0L, 0L),
-        ownerVerified = true,
-    )
+    private fun confirmed() =
+        ServerAttemptSettlement(
+            state = ServerAttemptSettlementState.SETTLED, receiptId = "receipt", codeAnswer = CodeAnswer("1"),
+            percentScore = PercentScore(0), completed = true, settledAtMs = 20L,
+            lifePointsSpent = 50L, plasmaPointsSpent = 100L, reward = ServerAttemptReward(0L, 0L),
+            ownerVerified = true,
+        )
+
+    @Test
+    fun onlySavedOwnedUnsentNonterminalIntentOffersManualSync() {
+        val pending =
+            result(ServerAttemptSettlement(ServerAttemptSettlementState.PENDING, ownerVerified = true))
+                .copy(attemptId = AttemptId("attempt"), syncMark = AttemptSyncMark.NOT_SENT)
+        assertTrue(pending.canRequestSync)
+        assertFalse(pending.copy(attemptId = null).canRequestSync)
+        assertFalse(pending.copy(saveWarning = true).canRequestSync)
+        assertFalse(pending.copy(syncMark = AttemptSyncMark.QUARANTINED).canRequestSync)
+        assertFalse(pending.copy(syncMark = AttemptSyncMark.NONE).canRequestSync)
+        assertFalse(pending.copy(serverSettlement = confirmed()).canRequestSync)
+        assertFalse(
+            pending.copy(serverSettlement = pending.serverSettlement.copy(ownerVerified = false)).canRequestSync,
+        )
+        for (state in ServerAttemptSettlementState.entries) {
+            val expected =
+                state == ServerAttemptSettlementState.PENDING || state == ServerAttemptSettlementState.UNSCORABLE
+            assertEquals(
+                expected,
+                pending.copy(serverSettlement = pending.serverSettlement.copy(state = state)).canRequestSync,
+            )
+        }
+    }
 
     @Test
     fun waitingUnscorableLegacyRefusalAndAccountLossShowNoScoreOrReward() {
         val unknownStates = ServerAttemptSettlementState.entries.filter { it != ServerAttemptSettlementState.SETTLED }
-        val wording = unknownStates.map { state ->
-            val value = result(ServerAttemptSettlement(state))
-            assertNull(value.displayedPercentScore)
-            assertNull(value.displayedReward)
-            assertFalse(value.serverSettlement.isConfirmedCompletion)
-            settlementStatusText(value.serverSettlement)
-        }
-        assertEquals(unknownStates.size, wording.toSet().size, "Unknown states must not share a misleading generic label")
+        val wording =
+            unknownStates.map { state ->
+                val value = result(ServerAttemptSettlement(state))
+                assertNull(value.displayedPercentScore)
+                assertNull(value.displayedReward)
+                assertFalse(value.serverSettlement.isConfirmedCompletion)
+                settlementStatusText(value.serverSettlement)
+            }
+        assertEquals(
+            unknownStates.size,
+            wording.toSet().size,
+            "Unknown states must not share a misleading generic label",
+        )
     }
 
     @Test
@@ -64,7 +96,8 @@ class ResultSettlementPresentationTest {
     @Test
     fun malformedAdapterCannotCreateGreenOrDisplayNegativeUnsafeAmounts() {
         listOf(
-            confirmed().copy(receiptId = null), confirmed().copy(percentScore = null),
+            confirmed().copy(receiptId = null),
+            confirmed().copy(percentScore = null),
             confirmed().copy(reward = ServerAttemptReward(-1L, 0L)),
             confirmed().copy(lifePointsSpent = 9_007_199_254_740_992L),
         ).forEach {
@@ -82,8 +115,12 @@ class ResultSettlementPresentationTest {
         assertTrue(value.canSubmitRating)
         assertFalse(value.copy(syncMark = AttemptSyncMark.QUARANTINED).canSubmitRating)
         assertFalse(value.copy(saveWarning = true).canSubmitRating)
-        assertFalse(result(ServerAttemptSettlement(ServerAttemptSettlementState.PENDING, ownerVerified = true)).canSubmitRating)
-        assertFalse(result(ServerAttemptSettlement(ServerAttemptSettlementState.PENDING)).canSubmitRating,
-            "Before the current owner is observed, no rating may be queued")
+        assertFalse(
+            result(ServerAttemptSettlement(ServerAttemptSettlementState.PENDING, ownerVerified = true)).canSubmitRating,
+        )
+        assertFalse(
+            result(ServerAttemptSettlement(ServerAttemptSettlementState.PENDING)).canSubmitRating,
+            "Before the current owner is observed, no rating may be queued",
+        )
     }
 }

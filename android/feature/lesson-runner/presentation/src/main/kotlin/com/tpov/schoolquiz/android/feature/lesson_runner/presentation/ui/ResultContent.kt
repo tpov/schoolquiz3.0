@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,20 +69,18 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
-import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
-
 
 // Accuracy chart geometry, lifted from the design's SVG (viewBox 340×120 rendered at 104×44):
 // the plot spans x 10..330, score digits 1..9 sit on nine levels 11.5 units apart with '9' on
 // y=14, and hairline gridlines cross at y=14/60/106.
-
 
 // Chart paint, straight from the design: success wash under the line (0.10), danger wash above
 // it (0.08), the stroke at three-quarter accent with a heavier head dot.
@@ -102,6 +101,7 @@ fun ResultContent(
     onRunAgain: () -> Unit,
     onNextLesson: () -> Unit,
     onPostComment: (String) -> Unit,
+    onSyncResult: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isHard = state.mode == Difficulty.HARD
@@ -149,6 +149,12 @@ fun ResultContent(
                     stringResource(R.string.runner_result_sync_quarantined),
                     style = NoirType.rowSub.copy(color = NoirDanger),
                 )
+        }
+
+        if (state.canRequestSync) {
+            TextButton(onClick = onSyncResult) {
+                Text(stringResource(R.string.runner_result_sync_now), style = NoirType.button)
+            }
         }
 
         if (state.canSubmitRating) {
@@ -303,9 +309,7 @@ private fun discussionCountWording(count: Int): String {
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
-private fun ResultScoreCard(
-    state: RunnerUiState.Result,
-) {
+private fun ResultScoreCard(state: RunnerUiState.Result) {
     val settlement = state.serverSettlement
     val tone = if (settlement.isConfirmedCompletion) NoirSuccess else NoirT3
     Column(
@@ -355,9 +359,7 @@ private fun ResultScoreCard(
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
-private fun ResultRewardStrip(
-    state: RunnerUiState.Result,
-) {
+private fun ResultRewardStrip(state: RunnerUiState.Result) {
     val reward = state.displayedReward ?: return
     val settlement = state.serverSettlement
     val lifePointsSpent = settlement.lifePointsSpent ?: return
@@ -371,10 +373,18 @@ private fun ResultRewardStrip(
             },
     ) {
         Row(Modifier.fillMaxWidth()) {
-            RewardCell(NoirIcons.Star, "+${reward.skillPoints}", LocalNoirAccent.current,
-                stringResource(R.string.runner_settlement_skill_points))
-            RewardCell(NoirIcons.Nolic, "+${reward.nolics}", LocalNoirAccent.current,
-                stringResource(R.string.runner_settlement_nolics))
+            RewardCell(
+                NoirIcons.Star,
+                "+${reward.skillPoints}",
+                LocalNoirAccent.current,
+                stringResource(R.string.runner_settlement_skill_points),
+            )
+            RewardCell(
+                NoirIcons.Nolic,
+                "+${reward.nolics}",
+                LocalNoirAccent.current,
+                stringResource(R.string.runner_settlement_nolics),
+            )
         }
         Text(
             stringResource(R.string.runner_settlement_charges, lifePointsSpent, plasmaPointsSpent),
@@ -409,7 +419,6 @@ private fun RowScope.RewardCell(
 
 /** How far the corner wash reaches across the card, as a share of its longest side. */
 private const val SCORE_WASH_REACH = 1.32f
-
 
 /**
  * The lesson's discussion: the comments people left, and a one-line field to add one.
@@ -535,11 +544,12 @@ private fun CommentRow(comment: LessonComment) {
 internal fun settlementStatusText(settlement: ServerAttemptSettlement): Int =
     when (settlement.state) {
         ServerAttemptSettlementState.PENDING -> R.string.runner_settlement_pending
-        ServerAttemptSettlementState.SETTLED -> when {
-            settlement.isConfirmedCompletion -> R.string.runner_settlement_confirmed
-            settlement.hasAccountingProof -> R.string.runner_settlement_accounting_only
-            else -> R.string.runner_settlement_invalid
-        }
+        ServerAttemptSettlementState.SETTLED ->
+            when {
+                settlement.isConfirmedCompletion -> R.string.runner_settlement_confirmed
+                settlement.hasAccountingProof -> R.string.runner_settlement_accounting_only
+                else -> R.string.runner_settlement_invalid
+            }
         ServerAttemptSettlementState.UNSCORABLE -> R.string.runner_settlement_unscorable
         ServerAttemptSettlementState.REJECTED -> R.string.runner_settlement_rejected
         ServerAttemptSettlementState.LEGACY_RECORDED -> R.string.runner_settlement_legacy
@@ -556,18 +566,19 @@ private fun ResultContentPreview() {
             state =
                 RunnerUiState.Result(
                     percentScore = PercentScore(85),
-                    serverSettlement = ServerAttemptSettlement(
-                        state = ServerAttemptSettlementState.SETTLED,
-                        receiptId = "preview-receipt",
-                        codeAnswer = CodeAnswer("9"),
-                        percentScore = PercentScore(100),
-                        completed = true,
-                        settledAtMs = 0L,
-                        lifePointsSpent = 50L,
-                        plasmaPointsSpent = 0L,
-                        reward = ServerAttemptReward(skillPoints = 100L, nolics = 10L),
-                        ownerVerified = true,
-                    ),
+                    serverSettlement =
+                        ServerAttemptSettlement(
+                            state = ServerAttemptSettlementState.SETTLED,
+                            receiptId = "preview-receipt",
+                            codeAnswer = CodeAnswer("9"),
+                            percentScore = PercentScore(100),
+                            completed = true,
+                            settledAtMs = 0L,
+                            lifePointsSpent = 50L,
+                            plasmaPointsSpent = 0L,
+                            reward = ServerAttemptReward(skillPoints = 100L, nolics = 10L),
+                            ownerVerified = true,
+                        ),
                     mode = Difficulty.EASY,
                     completedAt = 0L,
                     hardUnlocked = false,
@@ -596,6 +607,7 @@ private fun ResultContentPreview() {
             onRunAgain = {},
             onNextLesson = {},
             onPostComment = {},
+            onSyncResult = {},
         )
     }
 }
@@ -629,6 +641,7 @@ private fun ResultContentSaveWarningPreview() {
             onRunAgain = {},
             onNextLesson = {},
             onPostComment = {},
+            onSyncResult = {},
         )
     }
 }
