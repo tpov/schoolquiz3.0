@@ -51,6 +51,21 @@ class ArenaTicketJournal(
             gate.withOwner(session) { state(requiredTicket(session, ticketId)) }
         }
 
+    /**
+     * One immutable local row under the original owner epoch. This observation never claims a run.
+     * Do not compose public read/checkpoint calls here: their independent reads can cross a decision.
+     */
+    suspend fun readRunView(
+        session: OutboxSession,
+        ticketId: String,
+    ): Result<ArenaRunReadView> =
+        attempt {
+            ArenaTicketGetRequest(session.ownerUid, ticketId)
+            gate.withOwner(session) {
+                arenaRunReadView(storage.ticket(session.ownerUid, ticketId), session, ticketId, codec, checkpoints)
+            }
+        }
+
     /** Online explicit consent is committed before dispatch. Existing identity cannot change ceiling. */
     suspend fun recordPrepareConsent(
         session: OutboxSession,

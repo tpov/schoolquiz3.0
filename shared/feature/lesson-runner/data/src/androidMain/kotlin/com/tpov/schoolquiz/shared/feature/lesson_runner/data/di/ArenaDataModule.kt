@@ -1,5 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.di
 
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaCancelledSettlementProof
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaCancelledSettlementResolver
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaEntryLocalMapper
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaJournalCheckpointCodec
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaJournalCodec
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaJournalStorage
@@ -8,9 +11,12 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaRunnerCh
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaTicketJournal
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.OutboxArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.RoomArenaJournalStorage
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaEntryRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.OutboxArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaCatalogRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.Clock
@@ -24,10 +30,17 @@ val arenaCheckpointCodecModule =
         single<ArenaJournalCheckpointCodec> { get<ArenaRunnerCheckpointCodec>() }
     }
 
+/** Required strict public parser/proof. Kept separate to test their absence, not to provide a fallback. */
+val arenaEntryProofModule =
+    module {
+        single { ArenaTicketWireParser(sha256 = ::journalSha256) }
+        single { ArenaCancelledSettlementProof(codec = get(), sha256 = ::journalSha256) }
+    }
+
 /** Lazy wiring only: resolution never starts a purchase, recovery pass, launch or settlement. */
 val arenaDataModule =
     module {
-        includes(arenaCheckpointCodecModule)
+        includes(arenaCheckpointCodecModule, arenaEntryProofModule)
         single<ArenaCatalogRepository> { ArenaCatalogRepositoryImpl(remote = get()) }
         single<ArenaSessionProvider> { OutboxArenaSessionProvider(sessions = get()) }
         single<ArenaJournalStorage> { RoomArenaJournalStorage(dao = get()) }
@@ -43,6 +56,29 @@ val arenaDataModule =
                 codec = get(),
                 checkpoints = get<ArenaJournalCheckpointCodec>(),
                 nowMs = { clock.now().toEpochMilliseconds() },
+                dispatcher = Dispatchers.IO,
+            )
+        }
+        single {
+            val clock = get<Clock>()
+            ArenaCancelledSettlementResolver(
+                storage = get(),
+                remote = get(),
+                gate = get(),
+                proof = get(),
+                dispatcher = Dispatchers.IO,
+                nowMs = { clock.now().toEpochMilliseconds() },
+            )
+        }
+        single { ArenaEntryLocalMapper(codec = get(), parser = get()) }
+        single<ArenaEntryRepository> {
+            ArenaEntryRepositoryImpl(
+                storage = get(),
+                journal = get(),
+                resolver = get(),
+                mapper = get(),
+                gate = get(),
+                sessions = get(),
                 dispatcher = Dispatchers.IO,
             )
         }

@@ -10,6 +10,10 @@ import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
+import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketDao
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaCancelledSettlementProof
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaCancelledSettlementResolver
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaEntryLocalMapper
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.OutboxArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.arenaDataModule
@@ -17,6 +21,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaLessonC
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaEntryRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogFailure
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogFailureKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogRequest
@@ -24,11 +29,15 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemote
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRemoteFailureKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketGetRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaCatalogRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import io.mockk.Called
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -278,8 +287,73 @@ class FirebaseArenaKoinWiringTest {
         }
     }
 
+    @Test
+    fun fullEntryGraphUsesActualTicketStatusGateEngineAndTransportWithoutStartupActions() {
+        val f = Fixture()
+        val app = f.graph(includeEntryPorts = true)
+        try {
+            val koin = app.koin
+            val entry = koin.get<ArenaEntryRepository>()
+            assertTrue(entry is ArenaEntryRepositoryImpl)
+            assertSame(entry, koin.get<ArenaEntryRepository>())
+            assertSame(koin.get<ArenaEntryLocalMapper>(), koin.get<ArenaEntryLocalMapper>())
+            assertSame(koin.get<ArenaCancelledSettlementProof>(), koin.get<ArenaCancelledSettlementProof>())
+            assertSame(koin.get<ArenaCancelledSettlementResolver>(), koin.get<ArenaCancelledSettlementResolver>())
+            assertSame(koin.get<ArenaSessionProvider>(), koin.get<ArenaSessionProvider>())
+            val ticket = koin.get<ArenaTicketRemoteDataSource>()
+            assertTrue(ticket is FirebaseArenaTicketRemoteDataSource)
+            assertSame(ticket, koin.get<ArenaTicketStatusRemoteDataSource>())
+            assertSame(ticket, koin.get<FirebaseArenaTicketRemoteDataSource>())
+            assertTrue(koin.get<ArenaOwnerGate>() is OutboxArenaOwnerGate)
+            assertTrue(koin.get<MutationTransport>() is FirebaseMutationTransport)
+            assertSame(koin.get<OutboxEngine>(), koin.get<OutboxEngine>())
+            assertSame(f.sessions, koin.get<OutboxSessionProvider>())
+            assertEquals(0, f.clockReads)
+            assertEquals(0, f.sessionReads)
+            assertEquals(0, f.networkReads)
+            verify { f.functions wasNot Called }
+            verify { f.dao wasNot Called }
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun missingExistingEngineBlocksEntryThroughItsRequiredGateWhileCatalogRemainsIndependent() {
+        val f = Fixture()
+        val app = f.graph(includeEngine = false, includeEntryPorts = true)
+        try {
+            for (resolve in listOf<() -> Any>(
+                { app.koin.get<ArenaOwnerGate>() },
+                { app.koin.get<ArenaEntryRepository>() },
+                { app.koin.get<ArenaCancelledSettlementResolver>() },
+            )) {
+                val failure = runCatching(resolve).exceptionOrNull()
+                assertTrue(generateSequence(failure) { it.cause }.any { it is NoDefinitionFoundException })
+            }
+            assertTrue(app.koin.get<ArenaCatalogRepository>() is ArenaCatalogRepositoryImpl)
+            assertTrue(app.koin.get<ArenaLessonCatalogRemoteDataSource>() is FirebaseArenaLessonCatalogRemoteDataSource)
+            assertEquals(0, f.clockReads)
+            assertEquals(0, f.sessionReads)
+            assertEquals(0, f.networkReads)
+            verify { f.functions wasNot Called }
+            verify { f.dao wasNot Called }
+        } finally {
+            app.close()
+        }
+    }
+
     private class Fixture {
         val functions = mockk<FirebaseFunctions>()
+        val dao = mockk<ArenaTicketDao>()
+        var clockReads = 0
+        val clock =
+            object : Clock {
+                override fun now(): Instant {
+                    clockReads++
+                    return Instant.fromEpochMilliseconds(1000)
+                }
+            }
         var session: OutboxSession? = OutboxSession("A", 1)
         var sessionReads = 0
         var networkReads = 0
@@ -303,11 +377,16 @@ class FirebaseArenaKoinWiringTest {
         fun graph(
             includeNetwork: Boolean = true,
             includeEngine: Boolean = true,
+            includeEntryPorts: Boolean = false,
         ): KoinApplication =
             KoinApplication.init().modules(firebaseModule, arenaDataModule).modules(
                 module {
                     if (includeEngine) single<OutboxEngine> { arenaSessionTestEngine(get(), get<MutationTransport>()) }
                     single<FirebaseFunctions> { functions }
+                    if (includeEntryPorts) {
+                        single<ArenaTicketDao> { dao }
+                        single<Clock> { clock }
+                    }
                     single<OutboxSessionProvider> { sessions }
                     if (includeNetwork) single<NetworkMonitor> { network }
                 },

@@ -64,6 +64,7 @@ dependencies {
     testImplementation(libs.junit4)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotlinx.datetime)
     // Сквозные проверки идут от брошенного исключения SDK до снимка состояния синхронизации, то
     // есть через настоящие шаги прогона. Шагам нужны типы, которых у самого модуля Firebase на
     // компиляции нет: доменные порты содержимого (их держит оркестратор каталога), строки базы
