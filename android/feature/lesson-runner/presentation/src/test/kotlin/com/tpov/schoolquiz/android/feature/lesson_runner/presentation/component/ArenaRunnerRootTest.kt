@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunne
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
@@ -94,10 +95,7 @@ class ArenaRunnerRootTest {
                     component.onArenaAction(component.question().token, ArenaRunAction.Continue)
                     runCurrent()
                 }
-                assertEquals(
-                    ArenaRunnerStatus.PENDING_COMPLETION,
-                    assertIs<ArenaRunnerView.Attention>(component.arenaView.value).status,
-                )
+                assertIs<ArenaRunnerView.Result>(component.arenaView.value)
                 for (action in listOf(component::onRunAgain, component::onNextLesson)) {
                     val event = async { component.events.first() }
                     action()
@@ -106,6 +104,35 @@ class ArenaRunnerRootTest {
                 }
                 assertEquals(1, f.run.freshCalls)
                 assertEquals(1, f.run.freezeCalls)
+            } finally {
+                f.close()
+            }
+        }
+
+    @Test
+    fun backFromFrozenResultNavigatesWithoutCancellingItsSettledTicket() =
+        runTest {
+            val f = RootFixture(this)
+            try {
+                val component = f.component()
+                component.onArenaForeground()
+                runCurrent()
+                repeat(2) {
+                    component.onArenaAction(component.question().token, ArenaRunAction.Answer(f.run.answer))
+                    runCurrent()
+                    component.onArenaAction(component.question().token, ArenaRunAction.Continue)
+                    runCurrent()
+                }
+                assertIs<ArenaRunnerView.Result>(component.arenaView.value)
+
+                val event = async { component.events.first() }
+                component.onBack()
+                runCurrent()
+
+                assertEquals(RunnerEvent.NavigateBack, event.await())
+                assertTrue(f.entries.cancels.isEmpty())
+                assertEquals(0, f.entries.dispatches)
+                assertIs<ArenaRunRead.DecisionPending>(f.run.observed)
             } finally {
                 f.close()
             }
@@ -133,6 +160,7 @@ private fun ArenaRunnerRootComponent.question() = assertIs<ArenaRunnerView.Quest
 private class RootFixture(scope: TestScope) {
     val run = RunCoordinatorFixture(scope)
     val sync = FakeSyncScheduler()
+    val entries = HostEntryFake(run)
     val lifecycles = mutableListOf<LifecycleRegistry>()
     val request =
         ArenaRunnerRequest(
@@ -145,11 +173,12 @@ private class RootFixture(scope: TestScope) {
     private val services =
         ArenaRunServices(
             run.repository,
-            HostEntryFake(run),
+            entries,
             ArenaSessionProvider { run.session },
             ArenaSessionObserver { flowOf(run.session) },
             ArenaWalletRepository { error("No automatic wallet read") },
             sync,
+            HostSettlementFake(),
         )
 
     fun component(route: ArenaRunnerRequest = request): ArenaRunnerRootComponent {

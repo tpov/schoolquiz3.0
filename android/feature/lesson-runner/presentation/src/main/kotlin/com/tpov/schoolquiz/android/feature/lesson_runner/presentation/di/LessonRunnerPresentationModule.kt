@@ -25,7 +25,7 @@ import org.koin.dsl.module
 val lessonRunnerPresentationModule =
     module {
         single<ArenaRunnerComponentFactory> {
-            val services = ArenaRunServices(get(), get(), get(), get(), get(), get())
+            val services = ArenaRunServices(get(), get(), get(), get(), get(), get(), get())
             val clock = get<kotlinx.datetime.Clock>()
             ArenaRunnerComponentFactory { context, request ->
                 DefaultArenaRunnerRootComponent(context, request, services, clock)

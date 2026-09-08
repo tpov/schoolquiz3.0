@@ -4,19 +4,32 @@ import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.buildHintDraft
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketHeader
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.coroutines.CoroutineContext
@@ -44,6 +57,8 @@ internal class ArenaRunHost(
     private var showExit = false
     private var cancelDispatching = false
     private var destroyed = false
+    private var receiptKey: ArenaReceiptKey? = null
+    private var receiptFrame: ArenaRunnerView.Result? = null
 
     init {
         val controller = coordinator
@@ -54,11 +69,13 @@ internal class ArenaRunHost(
                 services.sessionEvents.observeSessions().collect {
                     if (!controller.checkSession()) {
                         budget.clear()
+                        clearReceipt()
                         publish()
                     }
                 }
             }
             scope.launch { controller.state.collect { reconcile() } }
+            observeReceipts(controller)
             val intent = request.fresh?.let { ArenaRunStart.Fresh(it.mode) } ?: ArenaRunStart.ResumeOnly
             controller.start(intent)
         }
@@ -153,9 +170,15 @@ internal class ArenaRunHost(
 
     fun sync() {
         val controller = coordinator ?: return
-        val pending = controller.state.value.observed as? ArenaRunRead.DecisionPending
-        if (!destroyed && controller.checkSession() && !controller.state.value.busy) {
-            if (pending?.decision == ArenaRunDecision.CANCEL) dispatchCancel() else services.sync.enqueueManualSync()
+        val state = controller.state.value
+        val pending = state.observed as? ArenaRunRead.DecisionPending
+        if (!destroyed && controller.checkSession() && !state.busy) {
+            when {
+                pending?.decision == ArenaRunDecision.CANCEL -> dispatchCancel()
+                state.canRetryReceiptSync(
+                    receiptFrame?.settlement ?: pendingSettlement(),
+                ) -> services.sync.enqueueManualSync()
+            }
         }
     }
 
@@ -176,6 +199,7 @@ internal class ArenaRunHost(
     private fun reconcile() {
         val controller = coordinator ?: return
         val current = controller.state.value
+        reconcileReceipt(current)
         if (current.notice != null) visibility.writeFailed()
         if (!current.busy && current.notice == null && controller.checkSession()) {
             val token = controller.token()
@@ -202,9 +226,11 @@ internal class ArenaRunHost(
         if (controller != null && original != null) {
             controller.checkSession()
             val state = controller.state.value
+            reconcileReceipt(state)
             val current = state.observed as? ArenaRunRead.Continuable
+            val result = receiptFrameFor(state, original)
             mutableView.value =
-                arenaRunView(
+                result ?: arenaRunView(
                     state,
                     original,
                     visibility.foreground,
@@ -216,13 +242,167 @@ internal class ArenaRunHost(
         }
     }
 
+    private fun reconcileReceipt(state: ArenaRunCoordinatorState) {
+        val original = stamp
+        val candidate = original?.let { state.takeReceiptCandidate(it, ticketId) }
+        when {
+            destroyed -> clearReceipt()
+            original == null -> clearReceipt()
+            candidate == null -> clearReceipt()
+            services.sessions.current() != original -> clearReceipt()
+            else -> writePendingReceipt(state, original, candidate)
+        }
+    }
+
+    private fun writePendingReceipt(
+        state: ArenaRunCoordinatorState,
+        original: ArenaSessionStamp,
+        candidate: ArenaReceiptCandidate,
+    ) {
+        val key = ArenaReceiptKey(original, ticketId, candidate.attempt)
+        if (receiptKey != key) {
+            receiptKey = key
+            receiptFrame =
+                ArenaRunnerView.Result(
+                    original,
+                    candidate.header,
+                    candidate.attempt,
+                    pendingSettlement(),
+                    state.canRetryReceiptSync(pendingSettlement()),
+                )
+        }
+    }
+
+    private fun observeReceipts(controller: ArenaRunCoordinator) {
+        val original = requireNotNull(stamp)
+        scope.launch {
+            controller.state
+                .map { state ->
+                    state.takeReceiptCandidate(original, ticketId)?.let { candidate ->
+                        ArenaReceiptKey(original, ticketId, candidate.attempt)
+                    }
+                }
+                .distinctUntilChanged()
+                .flatMapLatest { key ->
+                    key?.let { frozen ->
+                        services.settlements.observe(frozen.attempt).map { ArenaReceiptEmission(frozen, it) }
+                    } ?: flowOf(null)
+                }
+                .collect { emission ->
+                    if (emission == null) {
+                        clearReceipt()
+                    } else if (!destroyed && services.sessions.current() == original) {
+                        val current = controller.state.value.takeReceiptCandidate(original, ticketId)
+                        if (current?.attempt == emission.key.attempt) {
+                            receiptKey = emission.key
+                            receiptFrame =
+                                ArenaRunnerView.Result(
+                                    original,
+                                    current.header,
+                                    emission.key.attempt,
+                                    emission.settlement,
+                                    controller.state.value.canRetryReceiptSync(emission.settlement),
+                                )
+                        }
+                    }
+                    publish()
+                }
+        }
+    }
+
+    private fun clearReceipt() {
+        receiptKey = null
+        receiptFrame = null
+    }
+
+    private fun receiptFrameFor(
+        state: ArenaRunCoordinatorState,
+        original: ArenaSessionStamp,
+    ): ArenaRunnerView.Result? =
+        state.takeReceiptCandidate(original, ticketId)?.let { candidate ->
+            val key = ArenaReceiptKey(original, ticketId, candidate.attempt)
+            receiptFrame
+                ?.takeIf { receiptKey == key && services.sessions.current() == original }
+                ?.let { receipt ->
+                    receipt.copy(
+                        header = candidate.header,
+                        canSync = state.canRetryReceiptSync(receipt.settlement),
+                    )
+                }
+        }
+
     override fun onDestroy() {
         destroyed = true
+        clearReceipt()
         scope.cancel()
         budget.clear()
         mutableView.value = ArenaRunnerView.Attention(ArenaRunnerStatus.ACCOUNT_CHANGED)
     }
 }
+
+/** The observer key contains the captured epoch so same-UID ABA sessions cannot reuse a receipt. */
+private data class ArenaReceiptKey(
+    val stamp: ArenaSessionStamp,
+    val ticketId: String,
+    val attempt: AttemptIdentity,
+)
+
+private data class ArenaReceiptCandidate(
+    val header: ArenaTicketHeader,
+    val attempt: AttemptIdentity,
+)
+
+private data class ArenaReceiptEmission(
+    val key: ArenaReceiptKey,
+    val settlement: ServerAttemptSettlement,
+)
+
+private fun ArenaRunCoordinatorState.takeReceiptCandidate(
+    stamp: ArenaSessionStamp,
+    ticketId: String,
+): ArenaReceiptCandidate? =
+    if (notice == null) {
+        receiptHeader()
+            ?.takeIf { it.ownerUid == stamp.ownerUid && it.ticketId == ticketId }
+            ?.let { header ->
+                runCatching {
+                    AttemptIdentity(
+                        id = AttemptId(header.attemptId),
+                        userId = stamp.ownerUid,
+                        lessonId = LessonId(header.lessonId),
+                        lessonVersion = header.lessonVersion,
+                        mode = header.difficulty,
+                    )
+                }.getOrNull()?.let { ArenaReceiptCandidate(header, it) }
+            }
+    } else {
+        null
+    }
+
+private fun ArenaRunCoordinatorState.receiptHeader(): ArenaTicketHeader? =
+    when (val current = observed) {
+        is ArenaRunRead.DecisionPending -> current.header.takeIf { current.decision == ArenaRunDecision.SETTLE }
+        is ArenaRunRead.Terminal -> current.header.takeIf { it.status == ArenaTicketStatus.SETTLED }
+        else -> null
+    }
+
+private fun pendingSettlement() = ServerAttemptSettlement(ServerAttemptSettlementState.PENDING)
+
+/**
+ * A manual sync can replay only a durable, still-pending SETTLE command. PENDING is the normal
+ * wait; UNSCORABLE and INVALID_RECEIPT may be repaired by a later authoritative receipt. REJECTED,
+ * LEGACY_RECORDED and ACCOUNT_UNAVAILABLE are not retried from this retained ticket screen.
+ */
+private fun ArenaRunCoordinatorState.canRetryReceiptSync(settlement: ServerAttemptSettlement): Boolean =
+    observed is ArenaRunRead.DecisionPending &&
+        (observed as ArenaRunRead.DecisionPending).decision == ArenaRunDecision.SETTLE &&
+        !settlement.isConfirmedCompletion &&
+        settlement.state in
+        setOf(
+            ServerAttemptSettlementState.PENDING,
+            ServerAttemptSettlementState.UNSCORABLE,
+            ServerAttemptSettlementState.INVALID_RECEIPT,
+        )
 
 internal data class ArenaRunServices(
     val runs: ArenaRunRepository,
@@ -231,4 +411,5 @@ internal data class ArenaRunServices(
     val sessionEvents: ArenaSessionObserver,
     val wallet: ArenaWalletRepository,
     val sync: SyncScheduler,
+    val settlements: ServerAttemptSettlementRepository,
 )

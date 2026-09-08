@@ -14,4 +14,11 @@
     <string name="arena_run_pending_cancel">Скасування збережено на пристрої. Сервер ще не підтвердив звільнення резервів.</string>
     <string name="arena_run_cancelled">Дозвіл скасовано. Цей екран не підтверджує суму повернення.</string>
     <string name="arena_run_receipt_needed">Дозвіл розраховано, але ще потрібна перевірена квитанція результату.</string>
+    <string name="arena_run_result_title">Квитанція результату Арени</string>
+    <string name="arena_run_result_percent">Підтверджений результат: %1$d%%</string>
+    <string name="arena_run_result_code">Підтверджений код результату: %1$s</string>
+    <string name="arena_run_result_reward_skill">Нараховано очок навички: %1$d</string>
+    <string name="arena_run_result_reward_nolics">Нараховано ноліків: %1$d</string>
+    <string name="arena_run_result_life_cost">Використано очок життя: %1$d</string>
+    <string name="arena_run_result_plasma_cost">Використано очок плазми: %1$d</string>
 </resources>

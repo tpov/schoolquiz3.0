@@ -37,6 +37,7 @@ internal fun ArenaRunnerContent(component: ArenaRunnerRootComponent) {
     ArenaRunnerLifecycle(component)
     when (val current = frame) {
         is ArenaRunnerView.Question -> ArenaQuestion(current, component)
+        is ArenaRunnerView.Result -> ArenaResult(current, component)
         is ArenaRunnerView.Attention -> ArenaAttention(current, component)
     }
 }
@@ -169,6 +170,42 @@ private fun ArenaDialogs(
             onContinue = { component.onArenaAction(frame.token, ArenaRunAction.Continue) },
             onExit = component::onCrossButtonTap,
         )
+    }
+}
+
+/** A frozen receipt projection: no current lesson, local score, rating writer, or inferred reward. */
+@Composable
+private fun ArenaResult(
+    frame: ArenaRunnerView.Result,
+    component: ArenaRunnerRootComponent,
+) {
+    val settlement = frame.settlement
+    Column(
+        Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringResource(R.string.arena_run_result_title))
+        Text(stringResource(settlementStatusText(settlement)))
+        if (settlement.isConfirmedCompletion) {
+            val percent = requireNotNull(settlement.percentScore)
+            val code = requireNotNull(settlement.codeAnswer)
+            val reward = requireNotNull(settlement.reward)
+            Text(stringResource(R.string.arena_run_result_percent, percent.raw))
+            Text(stringResource(R.string.arena_run_result_code, code.raw))
+            Text(stringResource(R.string.arena_run_result_reward_skill, reward.skillPoints))
+            Text(stringResource(R.string.arena_run_result_reward_nolics, reward.nolics))
+            Text(stringResource(R.string.arena_run_result_life_cost, requireNotNull(settlement.lifePointsSpent)))
+            Text(stringResource(R.string.arena_run_result_plasma_cost, requireNotNull(settlement.plasmaPointsSpent)))
+        }
+        if (frame.canSync) {
+            TextButton(onClick = component::onSyncResult) {
+                Text(stringResource(R.string.arena_run_sync))
+            }
+        }
+        TextButton(onClick = component::onBack) {
+            Text(stringResource(R.string.arena_run_back_to_tickets))
+        }
     }
 }
 

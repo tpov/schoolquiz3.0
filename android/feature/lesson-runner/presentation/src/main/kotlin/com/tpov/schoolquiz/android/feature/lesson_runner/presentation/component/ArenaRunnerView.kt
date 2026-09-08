@@ -3,6 +3,10 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.AnswerFeedback
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketHeader
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import kotlinx.coroutines.flow.StateFlow
 
 /** Internal extension consumed by the shared screen; navigation still uses LessonRunnerRootComponent. */
@@ -30,6 +34,19 @@ internal sealed interface ArenaRunnerView {
         val feedback: AnswerFeedback?,
         val busy: Boolean,
         val foreground: Boolean,
+    ) : ArenaRunnerView
+
+    /**
+     * Frozen-ticket result only. This deliberately does not adapt an ordinary [RunnerUiState.Result],
+     * because the normal result fields need a live lesson hierarchy which an Arena ticket must not read.
+     */
+    data class Result(
+        val stamp: ArenaSessionStamp,
+        val header: ArenaTicketHeader,
+        val attempt: AttemptIdentity,
+        val settlement: ServerAttemptSettlement,
+        /** True only while the frozen SETTLE command remains retryable and its receipt is unconfirmed. */
+        val canSync: Boolean,
     ) : ArenaRunnerView
 
     data class Attention(

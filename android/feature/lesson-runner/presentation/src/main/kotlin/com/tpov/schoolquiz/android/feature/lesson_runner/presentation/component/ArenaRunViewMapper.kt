@@ -43,11 +43,22 @@ private fun observedArenaRunView(
     when (val current = state.observed) {
         null -> ArenaRunnerView.Attention(ArenaRunnerStatus.LOADING, busy = state.busy)
         is ArenaRunRead.Continuable -> savedQuestion(current, stamp, foreground, lives, showExit, state.busy)
-        is ArenaRunRead.Prepared -> ArenaRunnerView.Attention(ArenaRunnerStatus.PREPARED_REQUIRES_EXPLICIT_START)
-        ArenaRunRead.LocalAbsent -> ArenaRunnerView.Attention(ArenaRunnerStatus.LOCAL_ABSENT, canReload = !state.busy)
+        is ArenaRunRead.Prepared ->
+            ArenaRunnerView.Attention(
+                ArenaRunnerStatus.PREPARED_REQUIRES_EXPLICIT_START,
+                busy = state.busy,
+                canReload = !state.busy,
+            )
+        ArenaRunRead.LocalAbsent ->
+            ArenaRunnerView.Attention(
+                ArenaRunnerStatus.LOCAL_ABSENT,
+                busy = state.busy,
+                canReload = !state.busy,
+            )
         is ArenaRunRead.NeedsRecovery ->
             ArenaRunnerView.Attention(
                 ArenaRunnerStatus.NEEDS_RECOVERY,
+                busy = state.busy,
                 canReload = !state.busy,
             )
         is ArenaRunRead.Completing -> ArenaRunnerView.Attention(ArenaRunnerStatus.COMPLETING, busy = state.busy)

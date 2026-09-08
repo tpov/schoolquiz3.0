@@ -14,4 +14,11 @@
     <string name="arena_run_pending_cancel">Отмена сохранена на устройстве. Сервер ещё не подтвердил освобождение резервов.</string>
     <string name="arena_run_cancelled">Разрешение отменено. Этот экран не подтверждает сумму возврата.</string>
     <string name="arena_run_receipt_needed">Разрешение рассчитано, но ещё нужна проверенная квитанция результата.</string>
+    <string name="arena_run_result_title">Квитанция результата Арены</string>
+    <string name="arena_run_result_percent">Подтверждённый результат: %1$d%%</string>
+    <string name="arena_run_result_code">Подтверждённый код результата: %1$s</string>
+    <string name="arena_run_result_reward_skill">Начислено очков навыка: %1$d</string>
+    <string name="arena_run_result_reward_nolics">Начислено ноликов: %1$d</string>
+    <string name="arena_run_result_life_cost">Использовано очков жизни: %1$d</string>
+    <string name="arena_run_result_plasma_cost">Использовано очков плазмы: %1$d</string>
 </resources>

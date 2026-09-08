@@ -49,8 +49,7 @@ internal class ArenaRunnerInstance(
                 val cancellationSaved = attention?.status == ArenaRunnerStatus.PENDING_CANCEL && !attention.busy
                 if (leaveAfterCancellation && cancellationSaved) {
                     leaveAfterCancellation = false
-                    // Best effort only. Leaving can cancel IO; the durable decision remains retryable in Entry.
-                    host.sync()
+                    // Entry owns later RETRY_CANCEL dispatch; this screen only saved the durable intent.
                     channel.trySend(RunnerEvent.NavigateBack)
                 }
             }
@@ -101,10 +100,17 @@ internal class ArenaRunnerInstance(
         val frame = host.view.value
         if (frame is ArenaRunnerView.Question) {
             onCrossButtonTap()
-        } else if (frame is ArenaRunnerView.Attention && !frame.busy && frame.status !in SAVING_STATUSES) {
+        } else if (canNavigateBack(frame)) {
             channel.trySend(RunnerEvent.NavigateBack)
         }
     }
+
+    private fun canNavigateBack(frame: ArenaRunnerView): Boolean =
+        when (frame) {
+            is ArenaRunnerView.Result -> true
+            is ArenaRunnerView.Attention -> !frame.busy && frame.status !in SAVING_STATUSES
+            else -> false
+        }
 
     override fun onFinish() = onBack()
 
@@ -112,10 +118,8 @@ internal class ArenaRunnerInstance(
 
     override fun onNextLesson() = onBack()
 
-    // No ordinary rating writer/live hierarchy fallback. The Arena receipt/rating adapter is a separate C slice.
-    override fun onSubmitRating(rating: Int) {
-        channel.trySend(RunnerEvent.SaveRatingFailed)
-    }
+    // The frozen-rating port is intentionally not wired until its owner/receipt transaction is available.
+    override fun onSubmitRating(rating: Int) = Unit
 
     override fun onPostComment(text: String) = Unit
 

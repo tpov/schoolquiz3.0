@@ -9,6 +9,9 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepar
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRecoveryCursor
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaWalletObservation
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
@@ -17,7 +20,11 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaS
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.datetime.Clock
@@ -32,6 +39,7 @@ internal class ArenaRunHostFixture(scope: TestScope) {
     var syncCalls = 0
     var beforeWallet: suspend () -> Unit = {}
     val entries = HostEntryFake(run)
+    val settlements = HostSettlementFake()
     private val services =
         ArenaRunServices(
             run.repository,
@@ -54,6 +62,7 @@ internal class ArenaRunHostFixture(scope: TestScope) {
 
                 override fun applyProfileFrequency(frequency: SyncFrequency) = error("Unexpected profile schedule")
             },
+            settlements,
         )
     private val dispatcher = StandardTestDispatcher(scope.testScheduler)
 
@@ -79,6 +88,35 @@ internal class ArenaRunHostFixture(scope: TestScope) {
         run.session = run.stamp.copy(generation = 3)
         sessionEvents.value = run.session
     }
+}
+
+/** Tracks subscription lifetime so receipt tests prove that stale flows cannot paint a retained host. */
+internal class HostSettlementFake : ServerAttemptSettlementRepository {
+    private val values = mutableMapOf<AttemptIdentity, MutableStateFlow<ServerAttemptSettlement>>()
+    val observedAttempts = mutableListOf<AttemptIdentity>()
+    var cancellations = 0
+
+    override fun observe(attempt: AttemptIdentity): Flow<ServerAttemptSettlement> =
+        flow {
+            observedAttempts += attempt
+            try {
+                valueFor(attempt).collect { emit(it) }
+            } finally {
+                cancellations++
+            }
+        }
+
+    fun emit(
+        attempt: AttemptIdentity,
+        settlement: ServerAttemptSettlement,
+    ) {
+        valueFor(attempt).value = settlement
+    }
+
+    private fun valueFor(attempt: AttemptIdentity) =
+        values.getOrPut(attempt) {
+            MutableStateFlow(ServerAttemptSettlement(ServerAttemptSettlementState.PENDING))
+        }
 }
 
 internal fun ArenaRunHost.question() = assertIs<ArenaRunnerView.Question>(view.value)

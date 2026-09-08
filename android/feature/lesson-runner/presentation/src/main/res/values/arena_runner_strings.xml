@@ -14,4 +14,11 @@
     <string name="arena_run_pending_cancel">Cancellation saved on this device. The server has not confirmed the release of reserved resources.</string>
     <string name="arena_run_cancelled">The ticket is cancelled. This screen does not certify a refund amount.</string>
     <string name="arena_run_receipt_needed">The ticket is settled, but a verified result receipt is still required.</string>
+    <string name="arena_run_result_title">Arena result receipt</string>
+    <string name="arena_run_result_percent">Verified score: %1$d%%</string>
+    <string name="arena_run_result_code">Verified result code: %1$s</string>
+    <string name="arena_run_result_reward_skill">Skill points awarded: %1$d</string>
+    <string name="arena_run_result_reward_nolics">Nolics awarded: %1$d</string>
+    <string name="arena_run_result_life_cost">Life points used: %1$d</string>
+    <string name="arena_run_result_plasma_cost">Plasma points used: %1$d</string>
 </resources>

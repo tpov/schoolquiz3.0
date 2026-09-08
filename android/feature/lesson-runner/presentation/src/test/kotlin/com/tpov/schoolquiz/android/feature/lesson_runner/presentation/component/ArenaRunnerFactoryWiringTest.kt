@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaR
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -68,6 +69,7 @@ class ArenaRunnerFactoryWiringTest {
         single<ArenaSessionObserver> { ArenaSessionObserver { error("No session observation during resolution") } }
         single<ArenaWalletRepository> { ArenaWalletRepository { error("No wallet read during resolution") } }
         single<SyncScheduler> { FakeSyncScheduler() }
+        single<ServerAttemptSettlementRepository> { HostSettlementFake() }
     }
 
     private val clockModule =

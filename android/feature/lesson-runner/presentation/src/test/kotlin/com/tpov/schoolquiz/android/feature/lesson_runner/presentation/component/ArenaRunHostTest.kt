@@ -2,18 +2,224 @@
 
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ArenaRunHostTest {
+    @Test
+    fun settleReceiptUsesExactFrozenIdentityAndOnlyConfirmedCompletionIsGreen() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+
+                val pending = assertIs<ArenaRunnerView.Result>(host.view.value)
+                assertEquals(f.run.header.attemptId, pending.attempt.id.value)
+                assertEquals(f.run.stamp.ownerUid, pending.attempt.userId)
+                assertEquals(f.run.header.lessonId, pending.attempt.lessonId.value)
+                assertEquals(f.run.header.lessonVersion, pending.attempt.lessonVersion)
+                assertEquals(f.run.header.difficulty, pending.attempt.mode)
+                assertEquals(listOf(pending.attempt), f.settlements.observedAttempts)
+                assertFalse(pending.settlement.isConfirmedCompletion)
+
+                f.settlements.emit(pending.attempt, confirmedSettlement())
+                runCurrent()
+                val confirmed = assertIs<ArenaRunnerView.Result>(host.view.value)
+                assertTrue(confirmed.settlement.isConfirmedCompletion)
+                assertEquals(100, confirmed.settlement.percentScore?.raw)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun malformedLegacyAndPendingReceiptsNeverBecomeConfirmedArenaResults() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                val attempt = assertIs<ArenaRunnerView.Result>(host.view.value).attempt
+                val invalid =
+                    listOf(
+                        ServerAttemptSettlement(ServerAttemptSettlementState.PENDING),
+                        ServerAttemptSettlement(ServerAttemptSettlementState.UNSCORABLE),
+                        ServerAttemptSettlement(ServerAttemptSettlementState.REJECTED),
+                        ServerAttemptSettlement(ServerAttemptSettlementState.LEGACY_RECORDED),
+                        ServerAttemptSettlement(ServerAttemptSettlementState.INVALID_RECEIPT),
+                        ServerAttemptSettlement(ServerAttemptSettlementState.ACCOUNT_UNAVAILABLE),
+                        ServerAttemptSettlement(
+                            state = ServerAttemptSettlementState.SETTLED,
+                            ownerVerified = true,
+                            completed = true,
+                        ),
+                    )
+                invalid.forEach { settlement ->
+                    f.settlements.emit(attempt, settlement)
+                    runCurrent()
+                    val frame = assertIs<ArenaRunnerView.Result>(host.view.value)
+                    assertFalse(frame.settlement.isConfirmedCompletion)
+                    assertNull(frame.settlement.percentScore)
+                    assertNull(frame.settlement.reward)
+                }
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun pendingReceiptCanRequestManualSyncButConfirmedReceiptCannot() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                val pending = assertIs<ArenaRunnerView.Result>(host.view.value)
+                assertTrue(pending.canSync)
+
+                host.sync()
+                assertEquals(1, f.syncCalls)
+
+                f.settlements.emit(pending.attempt, confirmedSettlement())
+                runCurrent()
+                val confirmed = assertIs<ArenaRunnerView.Result>(host.view.value)
+                assertFalse(confirmed.canSync)
+                host.sync()
+                assertEquals(1, f.syncCalls)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun receiptSubscriptionCancelsForCancellationAndLateABATicketFlow() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                val attempt = assertIs<ArenaRunnerView.Result>(host.view.value).attempt
+
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.CANCEL)
+                host.reload()
+                runCurrent()
+                assertEquals(
+                    ArenaRunnerStatus.PENDING_CANCEL,
+                    assertIs<ArenaRunnerView.Attention>(host.view.value).status,
+                )
+                assertEquals(1, f.settlements.cancellations)
+
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                f.run.session = ArenaSessionStamp("other-owner", 2)
+                f.sessionEvents.value = f.run.session
+                runCurrent()
+                f.run.session = f.run.stamp.copy(generation = 3)
+                f.sessionEvents.value = f.run.session
+                runCurrent()
+                f.settlements.emit(attempt, confirmedSettlement())
+                runCurrent()
+                assertEquals(
+                    ArenaRunnerStatus.ACCOUNT_CHANGED,
+                    assertIs<ArenaRunnerView.Attention>(host.view.value).status,
+                )
+                assertTrue(f.settlements.cancellations >= 2)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun terminalSettledResubscribesAtMostOnceAndDestroyCancelsReceiptFlow() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                val attempt = assertIs<ArenaRunnerView.Result>(host.view.value).attempt
+                f.run.observed = ArenaRunRead.Terminal(f.run.header.copy(status = ArenaTicketStatus.SETTLED))
+                host.reload()
+                host.reload()
+                runCurrent()
+                assertEquals(listOf(attempt), f.settlements.observedAttempts)
+                host.onDestroy()
+                runCurrent()
+                assertEquals(1, f.settlements.cancellations)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun restoredFrozenTicketReceivesTheSameDurableReceipt() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            val first = f.host()
+            try {
+                first.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                first.reload()
+                runCurrent()
+                val attempt = assertIs<ArenaRunnerView.Result>(first.view.value).attempt
+                f.settlements.emit(attempt, confirmedSettlement())
+                runCurrent()
+                first.onDestroy()
+
+                val restored = f.host(fresh = false, initiatingSession = f.run.stamp)
+                try {
+                    restored.foreground()
+                    runCurrent()
+                    val result = assertIs<ArenaRunnerView.Result>(restored.view.value)
+                    assertEquals(attempt, result.attempt)
+                    assertTrue(result.settlement.isConfirmedCompletion)
+                } finally {
+                    restored.onDestroy()
+                }
+            } finally {
+                first.onDestroy()
+            }
+        }
+
     @Test
     fun liveResumeCannotBorrowSameUidNewEpochBetweenTapAndConstruction() =
         runTest {
@@ -70,10 +276,8 @@ class ArenaRunHostTest {
                 }
                 assertEquals(1, f.run.freezeCalls)
                 assertIs<ArenaRunRead.DecisionPending>(f.run.observed)
-                assertEquals(
-                    ArenaRunnerStatus.PENDING_COMPLETION,
-                    assertIs<ArenaRunnerView.Attention>(host.view.value).status,
-                )
+                val pending = assertIs<ArenaRunnerView.Result>(host.view.value)
+                assertFalse(pending.settlement.isConfirmedCompletion)
                 host.foreground()
                 host.reload()
                 runCurrent()
@@ -289,3 +493,17 @@ class ArenaRunHostTest {
             }
         }
 }
+
+private fun confirmedSettlement() =
+    ServerAttemptSettlement(
+        state = ServerAttemptSettlementState.SETTLED,
+        receiptId = "receipt",
+        codeAnswer = CodeAnswer("9"),
+        percentScore = PercentScore(100),
+        completed = true,
+        settledAtMs = 1L,
+        lifePointsSpent = 10L,
+        plasmaPointsSpent = 0L,
+        reward = ServerAttemptReward(20L, 5L),
+        ownerVerified = true,
+    )
