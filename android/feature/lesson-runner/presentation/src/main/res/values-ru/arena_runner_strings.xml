@@ -1,0 +1,17 @@
+<resources>
+    <string name="arena_run_refresh_hint_budget">Обновить баланс зарядов для подсказок</string>
+    <string name="arena_run_reload">Прочитать сохранённое состояние</string>
+    <string name="arena_run_sync">Синхронизировать</string>
+    <string name="arena_run_back_to_tickets">К разрешениям Арены</string>
+    <string name="arena_run_loading">Читаем сохранённую попытку…</string>
+    <string name="arena_run_account_changed">Сессия аккаунта изменилась. Откройте попытку заново из Арены.</string>
+    <string name="arena_run_prepared">Разрешение ещё не использовано. Нажмите «Начать» в Арене явно.</string>
+    <string name="arena_run_local_absent">На устройстве нет сохранённой попытки. Восстановите её статус в Арене, не создавая замену.</string>
+    <string name="arena_run_needs_recovery">Сохранённая попытка требует восстановления. Её результат не подтверждён.</string>
+    <string name="arena_run_local_failure">Исход сохранения неизвестен. Перед продолжением прочитайте сохранённое состояние.</string>
+    <string name="arena_run_completing">Сохраняем итоговую отправку…</string>
+    <string name="arena_run_pending_completion">Отправка сохранена на устройстве. Ожидаем результат и квитанцию расчёта сервера.</string>
+    <string name="arena_run_pending_cancel">Отмена сохранена на устройстве. Сервер ещё не подтвердил освобождение резервов.</string>
+    <string name="arena_run_cancelled">Разрешение отменено. Этот экран не подтверждает сумму возврата.</string>
+    <string name="arena_run_receipt_needed">Разрешение рассчитано, но ещё нужна проверенная квитанция результата.</string>
+</resources>

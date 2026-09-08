@@ -1,0 +1,17 @@
+<resources>
+    <string name="arena_run_refresh_hint_budget">Оновити баланс зарядів для підказок</string>
+    <string name="arena_run_reload">Прочитати збережений стан</string>
+    <string name="arena_run_sync">Синхронізувати</string>
+    <string name="arena_run_back_to_tickets">До дозволів Арени</string>
+    <string name="arena_run_loading">Читаємо збережену спробу…</string>
+    <string name="arena_run_account_changed">Сесія облікового запису змінилася. Відкрийте спробу з Арени знову.</string>
+    <string name="arena_run_prepared">Дозвіл ще не використано. Натисніть «Почати» в Арені явно.</string>
+    <string name="arena_run_local_absent">На пристрої немає збереженої спроби. Відновіть її статус в Арені, не створюючи заміну.</string>
+    <string name="arena_run_needs_recovery">Збережена спроба потребує відновлення. Її результат не підтверджено.</string>
+    <string name="arena_run_local_failure">Результат збереження невідомий. Перед продовженням прочитайте збережений стан.</string>
+    <string name="arena_run_completing">Зберігаємо підсумкове надсилання…</string>
+    <string name="arena_run_pending_completion">Надсилання збережено на пристрої. Очікуємо результат і квитанцію розрахунку сервера.</string>
+    <string name="arena_run_pending_cancel">Скасування збережено на пристрої. Сервер ще не підтвердив звільнення резервів.</string>
+    <string name="arena_run_cancelled">Дозвіл скасовано. Цей екран не підтверджує суму повернення.</string>
+    <string name="arena_run_receipt_needed">Дозвіл розраховано, але ще потрібна перевірена квитанція результату.</string>
+</resources>

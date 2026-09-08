@@ -17,10 +17,14 @@ data class ArenaRunnerRequest(
     val ownerUid: String,
     val ticketId: String,
     val fresh: ArenaFreshStart? = null,
+    /** Live Resume callbacks retain their frame epoch too. Null only for a restored route pointer. */
+    val initiatingSession: ArenaSessionStamp? = null,
 ) {
     init {
         require(ownerUid.isNotBlank() && ticketId.isNotBlank())
         require(fresh == null || fresh.session.ownerUid == ownerUid)
+        require(initiatingSession == null || initiatingSession.ownerUid == ownerUid)
+        require(fresh == null || initiatingSession == null || fresh.session == initiatingSession)
     }
 }
 

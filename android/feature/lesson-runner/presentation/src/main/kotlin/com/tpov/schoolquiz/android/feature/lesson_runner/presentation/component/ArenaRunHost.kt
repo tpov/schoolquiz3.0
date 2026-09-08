@@ -30,7 +30,8 @@ internal class ArenaRunHost(
 ) : InstanceKeeper.Instance {
     private val scope = CoroutineScope(mainContext + SupervisorJob())
     private val stamp =
-        request.fresh?.session ?: services.sessions.current()?.takeIf { it.ownerUid == request.ownerUid }
+        request.fresh?.session ?: request.initiatingSession
+            ?: services.sessions.current()?.takeIf { it.ownerUid == request.ownerUid }
     private val ticketId = request.ticketId
     private val coordinator =
         stamp?.let {

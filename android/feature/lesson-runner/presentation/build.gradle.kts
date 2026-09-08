@@ -24,6 +24,7 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.bundles.decompose)
     implementation(libs.bundles.koin.android)
 

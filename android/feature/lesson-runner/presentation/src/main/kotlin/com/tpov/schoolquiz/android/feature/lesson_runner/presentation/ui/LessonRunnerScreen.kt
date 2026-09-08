@@ -53,6 +53,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.rememberNoirState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
@@ -96,7 +97,8 @@ fun LessonRunnerScreen(
     val saveResultError = stringResource(R.string.runner_error_save_result)
     val saveRatingError = stringResource(R.string.runner_error_save_rating)
 
-    rememberFlagSecure(enabled = component.isHardMode)
+    // Arena observes its durable frame directly below; do not wait for the compatibility uiState mapping.
+    if (component !is ArenaRunnerRootComponent) rememberFlagSecure(enabled = component.isHardMode)
 
     val view = LocalView.current
     val window = (view.context as? Activity)?.window
@@ -174,6 +176,10 @@ private fun RunnerStateContent(
     state: RunnerUiState,
     component: LessonRunnerRootComponent,
 ) {
+    if (component is ArenaRunnerRootComponent) {
+        ArenaRunnerContent(component)
+        return
+    }
     when (state) {
         RunnerUiState.Loading ->
             Box(modifier = Modifier.fillMaxSize()) {

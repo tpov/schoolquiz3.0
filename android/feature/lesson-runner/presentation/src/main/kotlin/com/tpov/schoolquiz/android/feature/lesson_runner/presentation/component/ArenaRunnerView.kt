@@ -19,6 +19,8 @@ internal interface ArenaRunnerRootComponent : LessonRunnerRootComponent {
     fun onArenaForeground()
 
     fun onArenaBackground(changingConfigurations: Boolean)
+
+    fun onArenaRefreshWallet()
 }
 
 internal sealed interface ArenaRunnerView {

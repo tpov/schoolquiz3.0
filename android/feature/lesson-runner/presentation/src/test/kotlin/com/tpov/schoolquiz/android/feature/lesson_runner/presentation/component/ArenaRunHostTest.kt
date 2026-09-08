@@ -15,6 +15,25 @@ import kotlin.test.assertTrue
 
 class ArenaRunHostTest {
     @Test
+    fun liveResumeCannotBorrowSameUidNewEpochBetweenTapAndConstruction() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            f.switchEpoch()
+            val host = f.host(fresh = false, initiatingSession = f.run.stamp)
+            try {
+                host.foreground()
+                runCurrent()
+                assertEquals(
+                    ArenaRunnerStatus.ACCOUNT_CHANGED,
+                    assertIs<ArenaRunnerView.Attention>(host.view.value).status,
+                )
+                assertEquals(0, f.run.readCalls + f.run.freshCalls)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
     fun freshClaimStartingAfterBackgroundCannotCreateNegativeAnswerDuration() =
         runTest {
             val f = ArenaRunHostFixture(this)

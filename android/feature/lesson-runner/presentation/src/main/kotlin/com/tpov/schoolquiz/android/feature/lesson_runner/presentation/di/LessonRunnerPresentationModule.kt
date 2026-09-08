@@ -1,8 +1,11 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunServices
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultArenaRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
@@ -21,12 +24,19 @@ import org.koin.dsl.module
 
 val lessonRunnerPresentationModule =
     module {
-        factory { (ctx: ComponentContext, lessonId: LessonId, mode: Difficulty, sessionMode: SessionMode) ->
+        single<ArenaRunnerComponentFactory> {
+            val services = ArenaRunServices(get(), get(), get(), get(), get(), get())
+            val clock = get<kotlinx.datetime.Clock>()
+            ArenaRunnerComponentFactory { context, request ->
+                DefaultArenaRunnerRootComponent(context, request, services, clock)
+            }
+        }
+        factory { parameters ->
             DefaultLessonRunnerRootComponent(
-                componentContext = ctx,
-                lessonId = lessonId,
-                mode = mode,
-                sessionMode = sessionMode,
+                componentContext = parameters.get<ComponentContext>(),
+                lessonId = parameters.get<LessonId>(),
+                mode = parameters.get<Difficulty>(),
+                sessionMode = parameters.get<SessionMode>(),
                 useCases =
                     LessonRunnerUseCases(
                         startAttempt = get<StartLessonAttemptUseCase>()::invoke,

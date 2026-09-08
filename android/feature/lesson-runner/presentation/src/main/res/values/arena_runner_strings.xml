@@ -1,0 +1,17 @@
+<resources>
+    <string name="arena_run_refresh_hint_budget">Refresh hint charge balance</string>
+    <string name="arena_run_reload">Read saved state</string>
+    <string name="arena_run_sync">Synchronize</string>
+    <string name="arena_run_back_to_tickets">Back to Arena tickets</string>
+    <string name="arena_run_loading">Reading the saved attempt…</string>
+    <string name="arena_run_account_changed">The account session changed. Reopen this attempt from Arena.</string>
+    <string name="arena_run_prepared">This ticket has not been started. Choose Start explicitly in Arena.</string>
+    <string name="arena_run_local_absent">This device has no saved attempt. Recover its status in Arena; do not create a replacement attempt.</string>
+    <string name="arena_run_needs_recovery">The saved attempt needs recovery. Its result has not been confirmed.</string>
+    <string name="arena_run_local_failure">The save outcome is unknown. Read the saved state before continuing.</string>
+    <string name="arena_run_completing">Saving the final submission…</string>
+    <string name="arena_run_pending_completion">Submission saved on this device. Waiting for the server result and accounting receipt.</string>
+    <string name="arena_run_pending_cancel">Cancellation saved on this device. The server has not confirmed the release of reserved resources.</string>
+    <string name="arena_run_cancelled">The ticket is cancelled. This screen does not certify a refund amount.</string>
+    <string name="arena_run_receipt_needed">The ticket is settled, but a verified result receipt is still required.</string>
+</resources>

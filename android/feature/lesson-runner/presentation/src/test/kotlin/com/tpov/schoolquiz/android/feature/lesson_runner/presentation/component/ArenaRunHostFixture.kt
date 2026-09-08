@@ -57,12 +57,16 @@ internal class ArenaRunHostFixture(scope: TestScope) {
         )
     private val dispatcher = StandardTestDispatcher(scope.testScheduler)
 
-    fun host(fresh: Boolean = true): ArenaRunHost =
+    fun host(
+        fresh: Boolean = true,
+        initiatingSession: ArenaSessionStamp? = null,
+    ): ArenaRunHost =
         ArenaRunHost(
             ArenaRunnerRequest(
                 run.stamp.ownerUid,
                 run.header.ticketId,
                 if (fresh) ArenaFreshStart(run.stamp, SessionMode.LEARNING) else null,
+                initiatingSession,
             ),
             services,
             object : Clock {
