@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.component
 
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.arkivanov.decompose.Child
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
@@ -364,6 +365,7 @@ class QuizzesRootIntegrationTest {
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 retirePublicQuest = RetirePublicQuestUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+                arenaRunnerFactory = ArenaRunnerComponentFactory { _, _ -> error("Arena run not expected") },
                 arenaCatalogFactory = ArenaLessonCatalogComponentFactory {
                     error("Arena not expected in this fixture")
                 },

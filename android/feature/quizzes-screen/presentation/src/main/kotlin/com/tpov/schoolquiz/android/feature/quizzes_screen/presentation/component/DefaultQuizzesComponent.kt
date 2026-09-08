@@ -15,6 +15,8 @@ import com.arkivanov.essenty.backhandler.BackCallback
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.statekeeper.SerializableContainer
 import com.tpov.schoolquiz.android.core.designsystem.components.resolveIcons
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
@@ -28,6 +30,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepos
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonUnlockQueue
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
@@ -68,12 +71,13 @@ class DefaultQuizzesComponent(
     private val retirePublicQuest: RetirePublicQuestUseCase,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
     private val arenaCatalogFactory: ArenaLessonCatalogComponentFactory,
+    private val arenaRunnerFactory: ArenaRunnerComponentFactory,
     private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
     /** Цена открытия уроков — передаётся вниз в список уроков, где её показывает замок. */
     private val observeLessonUnlockPrices: (List<LessonId>) -> Flow<Map<LessonId, Int>> = { flowOf(emptyMap()) },
     private val mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
-) : ComponentContext by componentContext, QuizzesComponent {
+) : ComponentContext by componentContext, QuizzesComponent, ArenaRunNavigation {
     private val navigation = StackNavigation<QuizzesConfig>()
 
     // saveStack/restoreStack overload: runCatching wraps SerializationException on corrupted
@@ -158,6 +162,7 @@ class DefaultQuizzesComponent(
         when (config) {
             QuizzesConfig.Idle -> currentCatalogId.value = null
             QuizzesConfig.ArenaLessons -> currentCatalogId.value = null
+            is QuizzesConfig.ArenaRunner -> currentCatalogId.value = null
             is QuizzesConfig.PublicQuestCatalogPicker -> currentCatalogId.value = null
             is QuizzesConfig.QuestList -> currentCatalogId.value = config.catalogId
             // deeper drill-down levels — keep the previously-set catalog id
@@ -173,6 +178,7 @@ class DefaultQuizzesComponent(
         when (config) {
             QuizzesConfig.Idle -> null
             QuizzesConfig.ArenaLessons -> null
+            is QuizzesConfig.ArenaRunner -> null
             is QuizzesConfig.PublicQuestCatalogPicker -> null
             is QuizzesConfig.QuestList -> config.breadcrumbs.firstDynamicTitle()
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstDynamicTitle()
@@ -256,11 +262,16 @@ class DefaultQuizzesComponent(
 
     override fun popToLevel(uiLevel: Int) {
         if (uiLevel < 0) return
+        if (childStack.value.active.configuration is QuizzesConfig.ArenaRunner) {
+            (childStack.value.active.instance as? QuizzesChild.LessonRunner)?.component?.onCrossButtonTap()
+            return
+        }
         val active = childStack.value.active
         val breadcrumbsSize =
             when (val cfg = active.configuration) {
                 is QuizzesConfig.Idle -> 0
                 QuizzesConfig.ArenaLessons -> 1
+                is QuizzesConfig.ArenaRunner -> 1
                 is QuizzesConfig.PublicQuestCatalogPicker -> cfg.breadcrumbs.size
                 is QuizzesConfig.QuestList -> cfg.breadcrumbs.size
                 is QuizzesConfig.SectionList -> cfg.breadcrumbs.size
@@ -286,7 +297,32 @@ class DefaultQuizzesComponent(
     }
 
     override fun popCurrentChild() {
+        val route = childStack.value.active.configuration as? QuizzesConfig.ArenaRunner
         navigation.pop()
+        val original = route?.initiatingSession ?: route?.fresh?.session
+        val entry = (childStack.value.active.instance as? QuizzesChild.ArenaLessons)?.component?.entry
+        if (original != null && entry?.state?.value?.session == original) {
+            entry.onEvent(ArenaEntryEvent.Load(original, ArenaEntryPage.TICKETS))
+        }
+    }
+
+    override fun openArenaRunner(
+        session: ArenaSessionStamp,
+        ticketId: String,
+        fresh: Boolean,
+    ) {
+        val entry = (childStack.value.active.instance as? QuizzesChild.ArenaLessons)?.component?.entry?.state?.value
+        val request = entry?.let { arenaRunRequest(it, session, ticketId, fresh) }
+        if (request != null) {
+            navigation.pushNew(
+                QuizzesConfig.ArenaRunner(
+                    request.ownerUid,
+                    request.ticketId,
+                    request.fresh,
+                    request.initiatingSession,
+                ),
+            )
+        }
     }
 
     override fun openLessonRunner(lessonId: String) {
@@ -297,7 +333,11 @@ class DefaultQuizzesComponent(
     }
 
     override fun dismissQuizzes() {
-        navigation.popToFirst()
+        if (childStack.value.active.configuration is QuizzesConfig.ArenaRunner) {
+            (childStack.value.active.instance as? QuizzesChild.LessonRunner)?.component?.onCrossButtonTap()
+        } else {
+            navigation.popToFirst()
+        }
     }
 
     private fun createChild(
@@ -365,12 +405,25 @@ class DefaultQuizzesComponent(
                 QuizzesChild.LessonRunner(
                     lessonRunnerFactory.create(ctx, LessonId(config.lessonId), config.mode, config.sessionMode),
                 )
+            is QuizzesConfig.ArenaRunner ->
+                QuizzesChild.LessonRunner(
+                    arenaRunnerFactory.create(
+                        ctx,
+                        ArenaRunnerRequest(
+                            config.ownerUid,
+                            config.ticketId,
+                            config.fresh,
+                            config.initiatingSession,
+                        ),
+                    ),
+                )
         }
 
     private fun isArchiveNavigationPath(config: QuizzesConfig): Boolean =
         when (config) {
             QuizzesConfig.Idle -> false
             QuizzesConfig.ArenaLessons -> false
+            is QuizzesConfig.ArenaRunner -> false
             is QuizzesConfig.PublicQuestCatalogPicker -> false
             is QuizzesConfig.QuestList -> config.mode == QuestListMode.Archive
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive
@@ -393,15 +446,24 @@ private const val QUEST_LIST_STACK_INDEX = 1
  * never to a guessed ordinary lesson or runner.
  */
 private fun restoreArenaReadOnlyRoute(stack: List<QuizzesConfig>): List<QuizzesConfig> {
-    val index = stack.indexOfFirst { it.isLegacyCourseArenaEntry() }
-    if (index < 0) return stack
-    val tail = stack.drop(index + 1)
+    // StateKeeper may retain an in-memory object rather than decoding JSON, so @Transient alone
+    // cannot be the security boundary. Every restored Arena runner is ResumeOnly by construction.
+    val restored = stack.map(QuizzesConfig::withoutArenaRunnerAuthority)
+    val index = restored.indexOfFirst { it.isLegacyCourseArenaEntry() }
+    if (index < 0) return restored
+    val tail = restored.drop(index + 1)
     return if (tail.withIndex().all { (depth, config) -> config.isLegacyCourseArenaDescendant(depth) }) {
-        stack.take(index) + QuizzesConfig.ArenaLessons
+        restored.take(index) + QuizzesConfig.ArenaLessons
     } else {
         listOf(QuizzesConfig.Idle)
     }
 }
+
+private fun QuizzesConfig.withoutArenaRunnerAuthority(): QuizzesConfig =
+    when (this) {
+        is QuizzesConfig.ArenaRunner -> QuizzesConfig.ArenaRunner(ownerUid, ticketId)
+        else -> this
+    }
 
 private fun QuizzesConfig.isLegacyCourseArenaEntry(): Boolean =
     this is QuizzesConfig.QuestList &&

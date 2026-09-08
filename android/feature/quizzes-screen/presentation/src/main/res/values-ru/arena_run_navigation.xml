@@ -1,0 +1,4 @@
+<resources>
+    <string name="arena_entry_start_run">Начать подготовленную попытку</string>
+    <string name="arena_entry_open_run">Открыть сохранённую попытку или результат</string>
+</resources>

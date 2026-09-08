@@ -1,0 +1,4 @@
+<resources>
+    <string name="arena_entry_start_run">Start this prepared attempt</string>
+    <string name="arena_entry_open_run">Open saved attempt or result</string>
+</resources>

@@ -10,6 +10,7 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.arkivanov.essenty.statekeeper.SerializableContainer
 import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaCatalogNotice
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
@@ -69,7 +70,6 @@ import kotlin.test.assertTrue
  * all Decompose navigation and Value.subscribe calls are synchronous on the calling thread.
  */
 class QuizzesStateKeeperRestoreTest {
-
     private val lifecycles = mutableListOf<LifecycleRegistry>()
     private var arenaReads = 0
 
@@ -181,7 +181,6 @@ class QuizzesStateKeeperRestoreTest {
         return StateKeeperDispatcher(stateKeeper.save())
     }
 
-
     @After
     fun tearDown() {
         lifecycles.forEach { lc ->
@@ -196,14 +195,19 @@ class QuizzesStateKeeperRestoreTest {
     private fun buildComponent(
         stateKeeper: StateKeeperDispatcher,
         backDispatcher: BackDispatcher = BackDispatcher(),
+        arenaRunnerFactory: ArenaRunnerComponentFactory =
+            ArenaRunnerComponentFactory { _, _ ->
+                error("Arena run not expected")
+            },
     ): DefaultQuizzesComponent {
         val lifecycle = LifecycleRegistry().also { lifecycles += it }
         lifecycle.resume()
-        val ctx = DefaultComponentContext(
-            lifecycle = lifecycle,
-            stateKeeper = stateKeeper,
-            backHandler = backDispatcher,
-        )
+        val ctx =
+            DefaultComponentContext(
+                lifecycle = lifecycle,
+                stateKeeper = stateKeeper,
+                backHandler = backDispatcher,
+            )
         val questRepository = FakeQuestRepository()
         return DefaultQuizzesComponent(
             componentContext = ctx,
@@ -220,6 +224,7 @@ class QuizzesStateKeeperRestoreTest {
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+            arenaRunnerFactory = arenaRunnerFactory,
             arenaCatalogFactory =
                 ArenaLessonCatalogComponentFactory { child ->
                     DefaultArenaLessonCatalogComponent(
@@ -238,8 +243,7 @@ class QuizzesStateKeeperRestoreTest {
     }
 
     /** Total items in Decompose ChildStack (backStack + active). */
-    private fun DefaultQuizzesComponent.stackSize(): Int =
-        childStack.value.backStack.size + 1
+    private fun DefaultQuizzesComponent.stackSize(): Int = childStack.value.backStack.size + 1
 
     // ── PD-01 — Stack size preserved ─────────────────────────────────────────
 

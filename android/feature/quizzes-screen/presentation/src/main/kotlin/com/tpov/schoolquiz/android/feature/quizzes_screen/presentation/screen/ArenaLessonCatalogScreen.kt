@@ -41,8 +41,9 @@ fun ArenaLessonCatalogScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     entryState: ArenaEntryUiState? = null,
-    onEntryEvent: (ArenaEntryEvent) -> Unit = {},
+    entryCallbacks: ArenaEntryCallbacks = ArenaEntryCallbacks({}),
 ) {
+    val onEntryEvent = entryCallbacks.onEvent
     LazyColumn(
         modifier = modifier.fillMaxSize().testTag("arena_catalog"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -94,7 +95,7 @@ fun ArenaLessonCatalogScreen(
             }
         }
         // The parser has already established exact rational order and uniqueness. Do not re-sort.
-        if (entryState != null) arenaEntryItems(entryState, onEntryEvent)
+        if (entryState != null) arenaEntryItems(entryState, entryCallbacks)
         items(state.lessons, key = { "catalog_lesson_" + it.lessonId }) { lesson ->
             Column(Modifier.padding(horizontal = 16.dp)) {
                 ArenaLessonReadOnlyCard(lesson)

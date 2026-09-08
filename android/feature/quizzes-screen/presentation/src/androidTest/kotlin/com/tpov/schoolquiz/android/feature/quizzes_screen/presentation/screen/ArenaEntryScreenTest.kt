@@ -48,7 +48,7 @@ class ArenaEntryScreenTest {
                     {},
                     {},
                     entryState = ArenaEntryUiState(session = stamp),
-                    onEntryEvent = { events += it },
+                    entryCallbacks = ArenaEntryCallbacks(onEvent = { events += it }),
                 )
             }
         }
@@ -102,7 +102,7 @@ class ArenaEntryScreenTest {
                     {},
                     {},
                     entryState = frozen,
-                    onEntryEvent = { events += it },
+                    entryCallbacks = ArenaEntryCallbacks(onEvent = { events += it }),
                 )
             }
         }

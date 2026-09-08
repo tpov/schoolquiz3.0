@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaRunNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 
@@ -55,13 +56,20 @@ fun QuizzesScreen(
                 val arenaState by active.component.state.collectAsState()
                 val entry = active.component.entry
                 val entryState = entry?.state?.collectAsState()?.value
+                val entryCallbacks =
+                    ArenaEntryCallbacks(
+                        onEvent = { entry?.onEvent(it) },
+                        onOpenRun =
+                            (component as? ArenaRunNavigation)
+                                ?.let { it::openArenaRunner },
+                    )
                 ArenaLessonCatalogScreen(
                     state = arenaState,
                     onRefresh = active.component::onRefresh,
                     onLoadMore = active.component::onLoadMore,
                     onBack = component::popCurrentChild,
                     entryState = entryState,
-                    onEntryEvent = { entry?.onEvent(it) },
+                    entryCallbacks = entryCallbacks,
                 )
             }
             is QuizzesChild.PublicQuestCatalogPicker ->

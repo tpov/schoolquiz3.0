@@ -8,6 +8,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
@@ -57,7 +58,6 @@ import kotlin.test.assertTrue
  * all Decompose navigation and Value.subscribe calls are synchronous on the calling thread.
  */
 class DefaultQuizzesComponentTest {
-
     private lateinit var lifecycle: LifecycleRegistry
 
     @After
@@ -75,14 +75,19 @@ class DefaultQuizzesComponentTest {
         stateKeeper: StateKeeperDispatcher = StateKeeperDispatcher(null),
         arenaFactory: ArenaLessonCatalogComponentFactory =
             ArenaLessonCatalogComponentFactory { error("Arena not expected") },
+        arenaRunnerFactory: ArenaRunnerComponentFactory =
+            ArenaRunnerComponentFactory { _, _ ->
+                error("Arena run not expected")
+            },
     ): DefaultQuizzesComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
-        val ctx = DefaultComponentContext(
-            lifecycle = lifecycle,
-            stateKeeper = stateKeeper,
-            backHandler = backHandler,
-        )
+        val ctx =
+            DefaultComponentContext(
+                lifecycle = lifecycle,
+                stateKeeper = stateKeeper,
+                backHandler = backHandler,
+            )
         val questRepository = FakeQuestRepository()
         return DefaultQuizzesComponent(
             componentContext = ctx,
@@ -100,6 +105,7 @@ class DefaultQuizzesComponentTest {
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
             arenaCatalogFactory = arenaFactory,
+            arenaRunnerFactory = arenaRunnerFactory,
             mainContext = Dispatchers.Unconfined,
         )
     }
@@ -135,8 +141,7 @@ class DefaultQuizzesComponentTest {
     }
 
     /** Total items in stack: Idle anchor (backStack[0]) + everything above. */
-    private fun DefaultQuizzesComponent.stackSize(): Int =
-        childStack.value.backStack.size + 1
+    private fun DefaultQuizzesComponent.stackSize(): Int = childStack.value.backStack.size + 1
 
     // ── QZ-U-01 — Back Callback lifecycle ────────────────────────────────────────
 
@@ -188,7 +193,7 @@ class DefaultQuizzesComponentTest {
         component.openQuestList(CatalogId("cat-1"), "Math")
         assertTrue(backDispatcher.isEnabled, "backCallback must be enabled after push")
 
-        backDispatcher.back()  // fires registered callback → navigation.pop()
+        backDispatcher.back() // fires registered callback → navigation.pop()
 
         assertFalse(
             backDispatcher.isEnabled,
@@ -261,7 +266,7 @@ class DefaultQuizzesComponentTest {
         val component = buildComponent()
         assertEquals(1, component.stackSize(), "initial stack must contain only Idle")
 
-        component.dismissQuizzes()  // should not throw
+        component.dismissQuizzes() // should not throw
 
         assertEquals(1, component.stackSize(), "stack size must remain 1 after noop dismiss")
         assertIs<QuizzesChild.Idle>(component.childStack.value.active.instance)
@@ -317,7 +322,7 @@ class DefaultQuizzesComponentTest {
         component.openQuestList(CatalogId("cat-1"), "Math")
 
         lifecycle.stop()
-        lifecycle.destroy()  // triggers doOnDestroy { componentJob.cancel() }
+        lifecycle.destroy() // triggers doOnDestroy { componentJob.cancel() }
 
         // Post-destroy: Value is still readable (Decompose freezes it), no exception
         assertNotNull(component.childStack.value, "childStack.value must not throw after destroy")
@@ -433,9 +438,10 @@ class DefaultQuizzesComponentTest {
 
         component.openPublicQuestCatalogPicker(targetShelf = "tournament")
 
-        val config = assertIs<QuizzesConfig.PublicQuestCatalogPicker>(
-            component.childStack.value.active.configuration,
-        )
+        val config =
+            assertIs<QuizzesConfig.PublicQuestCatalogPicker>(
+                component.childStack.value.active.configuration,
+            )
         assertEquals("tournament", config.targetShelf)
         assertEquals("tournament", config.selectionTargetShelf)
     }
@@ -449,9 +455,10 @@ class DefaultQuizzesComponentTest {
             forcedHardMode = true,
         )
 
-        val config = assertIs<QuizzesConfig.PublicQuestCatalogPicker>(
-            component.childStack.value.active.configuration,
-        )
+        val config =
+            assertIs<QuizzesConfig.PublicQuestCatalogPicker>(
+                component.childStack.value.active.configuration,
+            )
         assertEquals("tournamentFinal", config.targetShelf)
         assertNull(config.selectionTargetShelf)
         assertEquals(Difficulty.HARD, config.forcedLessonMode)

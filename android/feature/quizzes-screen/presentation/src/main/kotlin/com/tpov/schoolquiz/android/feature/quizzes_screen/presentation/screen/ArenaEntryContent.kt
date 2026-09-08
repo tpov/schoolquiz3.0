@@ -26,24 +26,25 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.availableEntryActions
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.canOfferCancellation
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.canReadArenaRun
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.canRetryPreparation
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.canStartArenaRun
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLocalEntry
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPendingPreparation
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
-import java.text.DateFormat
-import java.util.Date
 
 internal fun LazyListScope.arenaEntryItems(
     state: ArenaEntryUiState,
-    onEvent: (ArenaEntryEvent) -> Unit,
+    callbacks: ArenaEntryCallbacks,
 ) {
+    val onEvent = callbacks.onEvent
     item(key = "entry_header") { ArenaEntryHeader(state, onEvent) }
     val stamp = state.session ?: return
     items(state.preparations, key = { "entry_prepare_" + it.requestId }) { row ->
         ArenaPreparationCard(row, stamp, state.busy, onEvent)
     }
     items(state.tickets, key = { "entry_ticket_" + it.ticketId }) { row ->
-        ArenaTicketCard(row, stamp, state.busy, onEvent)
+        ArenaTicketCard(row, stamp, state.busy, callbacks)
     }
     item(key = "entry_pages") {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -88,7 +89,7 @@ private fun ArenaEntryHeader(
                 Text(
                     stringResource(
                         R.string.arena_entry_observed,
-                        DateFormat.getDateTimeInstance().format(Date(wallet.observedAtMs)),
+                        java.text.DateFormat.getDateTimeInstance().format(java.util.Date(wallet.observedAtMs)),
                     ),
                 )
             }
@@ -150,8 +151,9 @@ private fun ArenaTicketCard(
     row: ArenaLocalEntry,
     stamp: ArenaSessionStamp,
     busy: Boolean,
-    onEvent: (ArenaEntryEvent) -> Unit,
+    callbacks: ArenaEntryCallbacks,
 ) {
+    val onEvent = callbacks.onEvent
     Card(Modifier.fillMaxWidth().padding(16.dp).testTag("arena_ticket_" + row.ticketId)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.arena_entry_ticket_id, row.ticketId))
@@ -160,6 +162,17 @@ private fun ArenaTicketCard(
                 Text(stringResource(R.string.arena_entry_request_id, it.requestId))
             }
             Text(stringResource(row.state.localStateResource()))
+            val open = callbacks.onOpenRun
+            if (open != null && row.canStartArenaRun()) {
+                EntryButton(R.string.arena_entry_start_run, "arena_start_" + row.ticketId, !busy) {
+                    open(stamp, row.ticketId, true)
+                }
+            }
+            if (open != null && row.canReadArenaRun()) {
+                EntryButton(R.string.arena_entry_open_run, "arena_open_" + row.ticketId, !busy) {
+                    open(stamp, row.ticketId, false)
+                }
+            }
             if (row.canOfferCancellation()) {
                 EntryButton(R.string.arena_entry_cancel, "arena_cancel_" + row.ticketId, !busy) {
                     onEvent(ArenaEntryEvent.ShowCancel(stamp, row.ticketId))

@@ -1,9 +1,12 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config
 
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaFreshStart
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 sealed class QuizzesConfig {
@@ -13,6 +16,19 @@ sealed class QuizzesConfig {
     /** Read-only route only: never serialize an owner, response, cursor or entry permission. */
     @Serializable
     data object ArenaLessons : QuizzesConfig()
+
+    /** Persist a pointer only. Restore never retains fresh-launch permission or an old process epoch. */
+    @Serializable
+    data class ArenaRunner(
+        val ownerUid: String,
+        val ticketId: String,
+        @Transient val fresh: ArenaFreshStart? = null,
+        @Transient val initiatingSession: ArenaSessionStamp? = null,
+    ) : QuizzesConfig() {
+        init {
+            require(ownerUid.isNotBlank() && ticketId.isNotBlank())
+        }
+    }
 
     @Serializable
     data class PublicQuestCatalogPicker(

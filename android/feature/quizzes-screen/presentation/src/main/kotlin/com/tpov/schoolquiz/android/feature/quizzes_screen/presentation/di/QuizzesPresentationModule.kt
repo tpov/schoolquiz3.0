@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryDependencies
@@ -57,6 +58,11 @@ val quizzesPresentationModule =
                 retirePublicQuest = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
                 arenaCatalogFactory = get<ArenaLessonCatalogComponentFactory>(),
+                // Keep catalogue construction independent of runner resolution; no fallback on explicit launch.
+                arenaRunnerFactory =
+                    ArenaRunnerComponentFactory { child, request ->
+                        get<ArenaRunnerComponentFactory>().create(child, request)
+                    },
                 questContentSync = contentSync?.let { it::syncQuestContent } ?: { missingSync() },
                 lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { missingSync() },
                 observeLessonUnlockPrices = get<ObserveLessonUnlockPricesUseCase>()::invoke,
