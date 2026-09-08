@@ -21,7 +21,14 @@ data class ArenaLocalEntry(
     val ticketId: String,
     val header: ArenaTicketHeader?,
     val state: ArenaLocalEntryState,
+    val localDecision: ArenaLocalDecision,
 )
+
+/** Durable row marker, independent of server terminal status. Not a receipt or proof of a queued body.
+ * SETTLE also survives an already resolved cancellation tombstone: reconciliation is idempotent.
+ * Match pending PREPARE only to header.requestId; neither ordering nor this marker creates that link.
+ */
+enum class ArenaLocalDecision { NONE, CANCEL, SETTLE, UNKNOWN }
 
 /** Summaries only: no snapshot, checkpoint, launcher lease, receipt ACK or wallet authority. */
 enum class ArenaLocalEntryState {

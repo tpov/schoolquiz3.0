@@ -6,6 +6,7 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaLessonCatalogRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaTicketRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaWalletRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
@@ -41,6 +42,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.Verificat
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaLessonCatalogRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaWalletRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
@@ -53,6 +55,16 @@ val firebaseModule =
         single<FirebaseFirestore> { FirebaseFirestore.getInstance() }
         single<FirebaseFunctions> { FirebaseFunctions.getInstance() }
         single<OutboxSessionProvider> { FirebaseOutboxSessionProvider(FirebaseAuth.getInstance()) }
+        single<ArenaWalletRemoteDataSource> {
+            FirebaseArenaWalletRemoteDataSource(
+                firestore = get(),
+                sessions = get(),
+                network = get(),
+                gate = get(),
+                dispatcher = Dispatchers.IO,
+                clock = get(),
+            )
+        }
         single {
             FirebaseArenaTicketRemoteDataSource(
                 gate = get(),

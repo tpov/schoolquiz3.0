@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketRecordEntity
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaCancelResponse
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntryMode
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLocalDecision
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLocalEntry
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLocalEntryState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPendingPreparation
@@ -28,14 +29,21 @@ class ArenaEntryLocalMapper(
         row: ArenaTicketRecordEntity,
     ): ArenaLocalEntry {
         require(row.ownerUid == owner) // Never expose even an ID from a foreign storage result.
+        val decision =
+            when (row.decision) {
+                "NONE" -> ArenaLocalDecision.NONE
+                "CANCEL" -> ArenaLocalDecision.CANCEL
+                "SETTLE" -> ArenaLocalDecision.SETTLE
+                else -> ArenaLocalDecision.UNKNOWN
+            }
         val header =
             readable {
                 codec.header(row).also {
                     require(codec.record(it, row.observedAtMs).termsJson == row.termsJson)
                 }
-            } ?: return ArenaLocalEntry(row.ticketId, null, ArenaLocalEntryState.NEEDS_RECOVERY)
+            } ?: return ArenaLocalEntry(row.ticketId, null, ArenaLocalEntryState.NEEDS_RECOVERY, decision)
         val state = readable { ticketState(row, header) } ?: ArenaLocalEntryState.NEEDS_RECOVERY
-        return ArenaLocalEntry(row.ticketId, header, state)
+        return ArenaLocalEntry(row.ticketId, header, state, decision)
     }
 
     fun preparation(

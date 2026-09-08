@@ -14,6 +14,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
     implementation(project(":shared:core:stats"))
     implementation(project(":shared:core:sync"))
