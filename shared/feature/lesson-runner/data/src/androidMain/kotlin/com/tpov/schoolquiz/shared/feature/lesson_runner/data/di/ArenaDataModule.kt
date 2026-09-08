@@ -14,10 +14,12 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.RoomArenaJour
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaEntryRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaRunRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaWalletRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.OutboxArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaCatalogRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +47,15 @@ val arenaDataModule =
         includes(arenaCheckpointCodecModule, arenaEntryProofModule)
         single<ArenaCatalogRepository> { ArenaCatalogRepositoryImpl(remote = get()) }
         single<ArenaSessionProvider> { OutboxArenaSessionProvider(sessions = get()) }
+        single<ArenaRunRepository> {
+            ArenaRunRepositoryImpl(
+                journal = get(),
+                checkpoints = get<ArenaRunnerCheckpointCodec>(),
+                sessions = get(),
+                dispatcher = Dispatchers.IO,
+                clock = get<Clock>(),
+            )
+        }
         single<ArenaWalletRepository> {
             ArenaWalletRepositoryImpl(remote = get(), sessions = get(), dispatcher = Dispatchers.IO)
         }

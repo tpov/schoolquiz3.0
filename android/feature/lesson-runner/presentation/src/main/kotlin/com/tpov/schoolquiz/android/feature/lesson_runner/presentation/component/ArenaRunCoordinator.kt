@@ -1,9 +1,13 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ArenaRunTransitions
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.advanceArenaFeedbackToPause
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.revealPreparedArenaQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.timeoutArenaQuestionToPause
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunCasOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
@@ -77,7 +81,9 @@ internal class ArenaRunCoordinator(
     ) {
         if (token != this.token()) return
         val current = state.value.observed as? ArenaRunRead.Continuable ?: return
-        perform({ clock.now().toEpochMilliseconds() }) { now ->
+        perform(
+            { if (action is ArenaRunAction.BackgroundAt) action.nowMs else clock.now().toEpochMilliseconds() },
+        ) { now ->
             val candidate =
                 when (action) {
                     is ArenaRunAction.Draft -> ArenaRunTransitions.draft(current, action.answer)
@@ -86,9 +92,38 @@ internal class ArenaRunCoordinator(
                     ArenaRunAction.Continue -> ArenaRunTransitions.continueRun(current, now)
                     ArenaRunAction.Timeout -> ArenaRunTransitions.timeout(current, now)
                     ArenaRunAction.Background -> ArenaRunTransitions.background(current, now)
+                    is ArenaRunAction.BackgroundAt -> ArenaRunTransitions.background(current, now)
+                    ArenaRunAction.AdvanceToPause -> advanceArenaFeedbackToPause(current, now)
+                    ArenaRunAction.TimeoutToPause -> timeoutArenaQuestionToPause(current, now)
+                    ArenaRunAction.RevealPrepared -> revealPreparedArenaQuestion(current)
                 }
             val result = runs.checkpointCAS(stamp, ticketId, current.revision, candidate).getOrThrow()
             publish(result.current, if (result is ArenaRunCasOutcome.Conflict) ArenaRunNotice.CONFLICT else null)
+        }
+    }
+
+    /** Durable local final intent only. The resulting read remains pending until a genuine server receipt. */
+    fun freeze() {
+        val current = state.value.observed as? ArenaRunRead.Completing ?: return
+        perform({ Unit }) {
+            runs.finalize(stamp, current).getOrThrow()
+            publish(runs.resumeOnly(stamp, ticketId).getOrThrow())
+        }
+    }
+
+    /** User-confirmed local cancellation. Network dispatch is deliberately outside this serialized writer. */
+    fun cancel(
+        entries: ArenaEntryRepository,
+        requestId: String,
+    ) {
+        val current = state.value.observed
+        val cancellable =
+            current is ArenaRunRead.Prepared || current is ArenaRunRead.Continuable ||
+                current is ArenaRunRead.NeedsRecovery && current.header != null
+        if (!cancellable) return
+        perform({ Unit }) {
+            entries.recordCancelIntent(stamp, ticketId, requestId).getOrThrow()
+            publish(runs.resumeOnly(stamp, ticketId).getOrThrow())
         }
     }
 
@@ -218,4 +253,12 @@ internal sealed interface ArenaRunAction {
     data object Timeout : ArenaRunAction
 
     data object Background : ArenaRunAction
+
+    data class BackgroundAt(val nowMs: Long) : ArenaRunAction
+
+    data object AdvanceToPause : ArenaRunAction
+
+    data object TimeoutToPause : ArenaRunAction
+
+    data object RevealPrepared : ArenaRunAction
 }

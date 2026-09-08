@@ -22,6 +22,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoeffi
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunCasOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunClaimOutcome
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunFinalizeOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
@@ -239,7 +241,7 @@ class ArenaRunCoordinatorTest {
         }
 }
 
-private class RunCoordinatorFixture(private val scope: TestScope) {
+internal class RunCoordinatorFixture(private val scope: TestScope) {
     val stamp = ArenaSessionStamp("owner", 1)
     var session: ArenaSessionStamp? = stamp
     var now = 1500L
@@ -248,6 +250,8 @@ private class RunCoordinatorFixture(private val scope: TestScope) {
     val candidates = mutableListOf<ArenaRunnerCheckpoint>()
     var beforeCas: suspend () -> Unit = {}
     var afterCas: suspend () -> Unit = {}
+    var freezeCalls = 0
+    var afterFreeze: suspend () -> Unit = {}
     val answer = UserAnswerDraft.SingleChoiceDraft(OptionId("A"))
     val header =
         ArenaTicketHeader(
@@ -290,7 +294,7 @@ private class RunCoordinatorFixture(private val scope: TestScope) {
             ),
         )
     var observed: ArenaRunRead = ArenaRunRead.Prepared(header)
-    private val repository =
+    val repository =
         object : ArenaRunRepository {
             override suspend fun read(
                 stamp: ArenaSessionStamp,
@@ -346,7 +350,14 @@ private class RunCoordinatorFixture(private val scope: TestScope) {
             override suspend fun finalize(
                 stamp: ArenaSessionStamp,
                 completing: ArenaRunRead.Completing,
-            ): Nothing = error("Freeze is not part of reducer slice")
+            ): Result<ArenaRunFinalizeOutcome> {
+                assertEquals(this@RunCoordinatorFixture.stamp, stamp)
+                assertEquals(observed, completing)
+                freezeCalls++
+                observed = ArenaRunRead.DecisionPending(header, ArenaRunDecision.SETTLE)
+                afterFreeze()
+                return Result.success(ArenaRunFinalizeOutcome.FrozenLocally(header.ticketId, header.attemptId))
+            }
         }
     val coordinator =
         ArenaRunCoordinator(

@@ -35,6 +35,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketR
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaEntryRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaRunRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTimer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntryFailure
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntryFailureKind
@@ -52,6 +53,9 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicket
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunFailure
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunFailureKind
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import kotlinx.coroutines.CompletableDeferred
@@ -97,6 +101,8 @@ class ArenaKoinWiringTest {
             assertSame(koin.get<ArenaTicketJournal>(), koin.get<ArenaTicketJournal>())
             assertIs<ArenaEntryRepositoryImpl>(koin.get<ArenaEntryRepository>())
             assertSame(koin.get<ArenaEntryRepository>(), koin.get<ArenaEntryRepository>())
+            assertIs<ArenaRunRepositoryImpl>(koin.get<ArenaRunRepository>())
+            assertSame(koin.get<ArenaRunRepository>(), koin.get<ArenaRunRepository>())
             assertSame(koin.get<ArenaEntryLocalMapper>(), koin.get<ArenaEntryLocalMapper>())
             assertSame(koin.get<ArenaTicketWireParser>(), koin.get<ArenaTicketWireParser>())
             assertSame(koin.get<ArenaCancelledSettlementProof>(), koin.get<ArenaCancelledSettlementProof>())
@@ -144,6 +150,8 @@ class ArenaKoinWiringTest {
             assertFailsWith<NoDefinitionFoundException> { app.koin.get<ArenaJournalCheckpointCodec>() }
             val entryFailure = assertFailsWith<Exception> { app.koin.get<ArenaEntryRepository>() }
             assertTrue(generateSequence<Throwable>(entryFailure) { it.cause }.any { it is NoDefinitionFoundException })
+            val runFailure = assertFailsWith<Exception> { app.koin.get<ArenaRunRepository>() }
+            assertTrue(generateSequence<Throwable>(runFailure) { it.cause }.any { it is NoDefinitionFoundException })
             f.assertNoFinancialActions()
         } finally {
             app.close()
@@ -353,6 +361,29 @@ class ArenaKoinWiringTest {
             app.close()
         }
     }
+
+    @Test
+    fun resolvedRunRejectsOldEpochBeforeClockOrDaoEvenWhenSameUidReturns() =
+        runTest {
+            val f = Fixture()
+            val app = f.graph()
+            try {
+                val runs = app.koin.get<ArenaRunRepository>()
+                val original = ArenaSessionStamp("A", 1)
+                f.sessions.session = OutboxSession("A", 3)
+                val claim =
+                    assertIs<ArenaRunFailure>(
+                        runs.freshClaim(original, "ticket", SessionMode.LEARNING).exceptionOrNull(),
+                    )
+                val read = assertIs<ArenaRunFailure>(runs.resumeOnly(original, "ticket").exceptionOrNull())
+                assertEquals(ArenaRunFailureKind.ACCOUNT_CHANGED, claim.kind)
+                assertEquals(ArenaRunFailureKind.ACCOUNT_CHANGED, read.kind)
+                assertEquals(0, f.clockReads)
+                f.assertNoFinancialActions()
+            } finally {
+                app.close()
+            }
+        }
 
     private class Sessions : OutboxSessionProvider {
         var session: OutboxSession? = OutboxSession("A", 1)
