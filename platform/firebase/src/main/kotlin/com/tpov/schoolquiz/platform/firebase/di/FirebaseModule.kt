@@ -44,6 +44,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketR
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaWalletRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
@@ -54,7 +55,9 @@ val firebaseModule =
     module {
         single<FirebaseFirestore> { FirebaseFirestore.getInstance() }
         single<FirebaseFunctions> { FirebaseFunctions.getInstance() }
-        single<OutboxSessionProvider> { FirebaseOutboxSessionProvider(FirebaseAuth.getInstance()) }
+        single { FirebaseOutboxSessionProvider(FirebaseAuth.getInstance()) }
+        single<OutboxSessionProvider> { get<FirebaseOutboxSessionProvider>() }
+        single<ArenaSessionObserver> { get<FirebaseOutboxSessionProvider>() }
         single<ArenaWalletRemoteDataSource> {
             FirebaseArenaWalletRemoteDataSource(
                 firestore = get(),

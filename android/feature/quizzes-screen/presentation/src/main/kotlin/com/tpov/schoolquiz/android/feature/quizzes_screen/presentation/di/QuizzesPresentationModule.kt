@@ -2,7 +2,10 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryDependencies
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultArenaEntryComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultArenaLessonCatalogComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
@@ -13,9 +16,21 @@ import org.koin.dsl.module
 val quizzesPresentationModule =
     module {
         factory {
-            // Required dependency, lazily resolved only when the read-only child is created.
+            ArenaEntryComponentFactory { ctx ->
+                DefaultArenaEntryComponent(ctx, ArenaEntryDependencies(get(), get(), get(), get()))
+            }
+        }
+        factory {
+            // Required dependencies, lazily resolved only when the catalogue child is created.
             ArenaLessonCatalogComponentFactory { ctx ->
-                DefaultArenaLessonCatalogComponent(ctx, repository = get(), sessions = get(), authRepository = get())
+                DefaultArenaLessonCatalogComponent(
+                    ctx,
+                    repository = get(),
+                    sessions = get(),
+                    authRepository = get(),
+                    entryFactory = get(),
+                    sessionEvents = get(),
+                )
             }
         }
         factory<QuizzesComponent> { (ctx: ComponentContext) ->

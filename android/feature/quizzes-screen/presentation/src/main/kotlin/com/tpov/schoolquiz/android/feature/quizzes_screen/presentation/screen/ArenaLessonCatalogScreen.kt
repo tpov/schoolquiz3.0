@@ -23,13 +23,15 @@ import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaCatalogNotice
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryEvent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogUiState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogCard
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogPlacement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogRating
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogScore
 
-/** Stateless read projection. There are no purchases, lesson clicks, network effects or start actions. */
+/** Stateless catalogue and explicit entry intents. No direct network calls or lesson-start authority. */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun ArenaLessonCatalogScreen(
@@ -38,6 +40,8 @@ fun ArenaLessonCatalogScreen(
     onLoadMore: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    entryState: ArenaEntryUiState? = null,
+    onEntryEvent: (ArenaEntryEvent) -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize().testTag("arena_catalog"),
@@ -52,8 +56,15 @@ fun ArenaLessonCatalogScreen(
                     Text(stringResource(R.string.arena_catalog_back))
                 }
                 Text(stringResource(R.string.arena_catalog_title), style = MaterialTheme.typography.headlineSmall)
-                Text(stringResource(R.string.arena_catalog_preview), style = MaterialTheme.typography.bodyMedium)
-                Text(stringResource(R.string.arena_catalog_price_notice), style = MaterialTheme.typography.bodySmall)
+                if (entryState == null) {
+                    Text(stringResource(R.string.arena_catalog_preview), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        stringResource(R.string.arena_catalog_price_notice),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                } else {
+                    Text(stringResource(R.string.arena_entry_intro), style = MaterialTheme.typography.bodyMedium)
+                }
                 val loadLabel =
                     if (state.totalLessons == null) R.string.arena_catalog_load else R.string.arena_catalog_refresh
                 Button(
@@ -83,8 +94,19 @@ fun ArenaLessonCatalogScreen(
             }
         }
         // The parser has already established exact rational order and uniqueness. Do not re-sort.
-        items(state.lessons, key = { it.lessonId }) { lesson ->
-            ArenaLessonReadOnlyCard(lesson, Modifier.padding(horizontal = 16.dp))
+        if (entryState != null) arenaEntryItems(entryState, onEntryEvent)
+        items(state.lessons, key = { "catalog_lesson_" + it.lessonId }) { lesson ->
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                ArenaLessonReadOnlyCard(lesson)
+                val stamp = state.session
+                if (entryState != null && stamp != null) {
+                    OutlinedButton(
+                        onClick = { onEntryEvent(ArenaEntryEvent.ShowPrepare(stamp, lesson)) },
+                        enabled = entryState.session == stamp && !entryState.busy,
+                        modifier = Modifier.fillMaxWidth().testTag("arena_select_" + lesson.lessonId),
+                    ) { Text(stringResource(R.string.arena_entry_select)) }
+                }
+            }
         }
         if (state.canLoadMore) {
             item {
@@ -98,6 +120,7 @@ fun ArenaLessonCatalogScreen(
             }
         }
     }
+    if (entryState != null) ArenaEntryDialogs(entryState, onEntryEvent)
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

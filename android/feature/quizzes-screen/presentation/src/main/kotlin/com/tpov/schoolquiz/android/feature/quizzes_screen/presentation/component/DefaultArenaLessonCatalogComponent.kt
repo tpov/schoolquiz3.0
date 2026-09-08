@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.childContext
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnResume
@@ -10,6 +11,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLesson
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogPage
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaCatalogRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,6 +25,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
@@ -34,10 +37,14 @@ class DefaultArenaLessonCatalogComponent(
     sessions: ArenaSessionProvider,
     authRepository: AuthRepository,
     mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+    entryFactory: ArenaEntryComponentFactory? = null,
+    sessionEvents: ArenaSessionObserver? = null,
 ) : ComponentContext by componentContext, ArenaLessonCatalogComponent {
+    // Read-only construction remains available for previews/tests; production DI requires the entry factory.
+    override val entry = entryFactory?.create(childContext("arena_entry_child"))
     private val holder =
         instanceKeeper.getOrCreate("arena_lesson_catalog") {
-            ArenaCatalogStateHolder(repository, sessions, authRepository, mainContext)
+            ArenaCatalogStateHolder(repository, sessions, authRepository, mainContext, sessionEvents)
         }
 
     override val state = holder.state
@@ -54,14 +61,15 @@ class DefaultArenaLessonCatalogComponent(
 
 /**
  * Only an in-memory read snapshot survives rotation. Process restore serializes the route, not
- * cards, cursors or this stamp. The source has no epoch Flow: recheck on uid events, resume,
- * before each action and around each awaited response; do not claim idle A -> B -> A detection.
+ * cards, cursors or this stamp. Production observes epoch changes, including A -> B -> A.
+ * The legacy read-only test/preview construction may supply only UID events.
  */
 private class ArenaCatalogStateHolder(
     private val repository: ArenaCatalogRepository,
     private val sessions: ArenaSessionProvider,
     authRepository: AuthRepository,
     dispatcher: CoroutineDispatcher,
+    sessionEvents: ArenaSessionObserver?,
 ) : InstanceKeeper.Instance {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private var session = sessions.current()
@@ -73,7 +81,7 @@ private class ArenaCatalogStateHolder(
 
     init {
         scope.launch {
-            authRepository.observeUid()
+            (sessionEvents?.observeSessions()?.map { Unit } ?: authRepository.observeUid().map { Unit })
                 .catch { error ->
                     if (error is CancellationException) throw error
                     reset(null, ArenaCatalogNotice.ACCOUNT_UNAVAILABLE)
@@ -168,6 +176,7 @@ private class ArenaCatalogStateHolder(
                     canLoadMore = page.nextCursor != null,
                     sessionAvailable = true,
                     notice = null,
+                    session = operation.session,
                 )
         }
     }
@@ -218,6 +227,7 @@ private class ArenaCatalogStateHolder(
     private fun initialState(stamp: ArenaSessionStamp?) =
         ArenaLessonCatalogUiState(
             sessionAvailable = stamp != null,
+            session = stamp,
             notice = if (stamp == null) ArenaCatalogNotice.ACCOUNT_UNAVAILABLE else ArenaCatalogNotice.NOT_LOADED,
         )
 }
