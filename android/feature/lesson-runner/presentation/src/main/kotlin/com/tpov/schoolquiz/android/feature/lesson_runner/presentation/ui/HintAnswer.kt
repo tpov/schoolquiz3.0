@@ -150,4 +150,19 @@ internal fun UserAnswerDraft.FillBlankDraft.filledByBlankIndex(
 internal class HintControl(
     val enabled: Boolean,
     val spend: () -> Boolean,
-)
+    /** Arena submits answer + charge claim atomically; no local reveal before its saved feedback arrives. */
+    private val deferredSubmit: ((UserAnswerDraft) -> Unit)? = null,
+) {
+    fun accept(
+        answer: UserAnswerDraft,
+        revealAfterSpend: () -> Unit,
+    ) {
+        if (!enabled) return
+        val submit = deferredSubmit
+        if (submit != null) {
+            submit(answer)
+        } else if (spend()) {
+            revealAfterSpend()
+        }
+    }
+}

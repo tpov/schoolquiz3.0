@@ -57,10 +57,6 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.Runn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.TemplatePart
-import com.tpov.schoolquiz.shared.core.question_schema.BlankId
-import com.tpov.schoolquiz.shared.core.question_schema.CandidateId
-import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlinx.coroutines.delay
@@ -68,7 +64,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlin.random.Random
 
 // Design decision §4.4: the verdict waits for a tap instead of advancing on a hidden timer;
 // the short arm delay swallows the double-tap that selected the answer in the first place.
@@ -294,17 +289,22 @@ private fun QuestionStateContent(
                 currentDraft = state.currentDraft,
                 feedback = feedback,
                 revealCorrect = state.revealCorrect && state.questionUiState.hasLocalAnswerKey,
-                component = component,
-                hint =
-                    rememberHintControl(
-                        qState = state.questionUiState,
-                        isHard = state.isHard,
-                        charges = state.lives,
-                        feedbackShown = feedback != null,
-                        questionKey = state.indexInPool,
-                        component = component,
+                interaction =
+                    QuestionInteraction(
+                        readDraft = { (component.uiState.value as? RunnerUiState.Question)?.currentDraft },
+                        changeDraft = component::onDraftChanged,
+                        selectAnswer = component::onDraftChanged,
+                        hint =
+                            rememberHintControl(
+                                qState = state.questionUiState,
+                                isHard = state.isHard,
+                                charges = state.lives,
+                                feedbackShown = feedback != null,
+                                questionKey = state.indexInPool,
+                                component = component,
+                            ),
+                        feedback = { feedback = it },
                     ),
-                onFeedback = { feedback = it },
             )
             FeedbackOverlay(
                 hasAnswered = feedback != null,
@@ -323,10 +323,22 @@ private fun QuestionStateContent(
             }
         }
     }
+    QuestionStateDialogs(state, component, showInfoDialog) { showInfoDialog = false }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun QuestionStateDialogs(
+    state: RunnerUiState.Question,
+    component: LessonRunnerRootComponent,
+    showInfoDialog: Boolean,
+    dismissInfo: () -> Unit,
+) {
+    val infoText = state.questionUiState.info
     if (showInfoDialog && infoText != null) {
         QuestionInfoDialog(
             info = infoText,
-            onDismiss = { showInfoDialog = false },
+            onDismiss = dismissInfo,
         )
     }
     if (state.isPaused) {
@@ -372,278 +384,6 @@ private fun rememberHintControl(
     )
 }
 
-@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod", "ktlint:standard:function-naming")
-@Composable
-private fun QuestionTypeContent(
-    qState: QuestionUiState,
-    currentDraft: UserAnswerDraft?,
-    feedback: AnswerFeedback?,
-    revealCorrect: Boolean,
-    component: LessonRunnerRootComponent,
-    hint: HintControl,
-    onFeedback: (AnswerFeedback) -> Unit,
-) {
-    // Whether a hint exists was decided once, by isHintAvailable, before this ran — difficulty
-    // included, so no branch below repeats the easy-only rule. Each handler builds its own typed
-    // draft and spends only once that draft is in hand, so a question with nothing playable to
-    // reveal can never take a charge — and the typed builders mean a handler wired to the wrong
-    // draft type does not compile.
-    val hintEnabled = hint.enabled
-    when (qState) {
-        is QuestionUiState.Survey ->
-            SurveyContent(
-                state = qState,
-                onOptionToggled = { optionId ->
-                    val current =
-                        (component.uiState.value as? RunnerUiState.Question)
-                            ?.currentDraft as? UserAnswerDraft.SurveyDraft
-                    val selected = current?.selected.orEmpty()
-                    val id = OptionId(optionId)
-                    val next =
-                        when {
-                            !qState.allowMultiple -> setOf(id)
-                            id in selected -> selected - id
-                            else -> selected + id
-                        }
-                    component.onDraftChanged(UserAnswerDraft.SurveyDraft(next))
-                },
-                onSubmit = {
-                    val draft =
-                        (component.uiState.value as? RunnerUiState.Question)
-                            ?.currentDraft as? UserAnswerDraft.SurveyDraft
-                            ?: UserAnswerDraft.SurveyDraft(emptySet())
-                    onFeedback(
-                        AnswerFeedback.Survey(
-                            answer = draft,
-                            selectedIds = draft.selected.map { it.raw }.toSet(),
-                        ),
-                    )
-                },
-                feedback = feedback as? AnswerFeedback.Survey,
-            )
-        is QuestionUiState.SingleChoice -> {
-            val selectAndReveal: (String) -> Unit = { optionId ->
-                val draft = UserAnswerDraft.SingleChoiceDraft(OptionId(optionId))
-                component.onDraftChanged(draft)
-                onFeedback(
-                    AnswerFeedback.SingleChoice(
-                        answer = draft,
-                        selectedId = optionId,
-                        correctId = qState.correctOptionId,
-                        revealCorrect = revealCorrect,
-                    ),
-                )
-            }
-            SingleChoiceContent(
-                state = qState,
-                onOptionSelected = selectAndReveal,
-                feedback = feedback as? AnswerFeedback.SingleChoice,
-                hintEnabled = hintEnabled,
-                onHint = {
-                    val correctId = qState.hintDraft()?.selected?.raw
-                    if (correctId != null && hint.spend()) selectAndReveal(correctId)
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        is QuestionUiState.MultipleChoice -> {
-            val currentSelected =
-                (currentDraft as? UserAnswerDraft.MultipleChoiceDraft)
-                    ?.selected?.map { it.raw }?.toSet() ?: qState.selectedIds
-            val submitWith: (Set<String>) -> Unit = { ids ->
-                val draft = UserAnswerDraft.MultipleChoiceDraft(ids.map { OptionId(it) }.toSet())
-                onFeedback(
-                    AnswerFeedback.MultipleChoice(
-                        answer = draft,
-                        selectedIds = ids,
-                        correctIds = qState.correctIds,
-                        revealCorrect = revealCorrect,
-                    ),
-                )
-            }
-            MultipleChoiceContent(
-                state = qState.copy(selectedIds = currentSelected),
-                onOptionToggled = { optionId ->
-                    val newSelected =
-                        if (optionId in currentSelected) currentSelected - optionId else currentSelected + optionId
-                    component.onDraftChanged(
-                        UserAnswerDraft.MultipleChoiceDraft(newSelected.map { OptionId(it) }.toSet()),
-                    )
-                },
-                onSubmit = { submitWith(currentSelected) },
-                feedback = feedback as? AnswerFeedback.MultipleChoice,
-                hintEnabled = hintEnabled,
-                onHint = {
-                    val draft = qState.hintDraft()
-                    if (draft != null && hint.spend()) {
-                        // The component owns the draft; without this the paid-for answer would
-                        // live only in the transient feedback, as it did before.
-                        component.onDraftChanged(draft)
-                        submitWith(draft.selected.map { it.raw }.toSet())
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        is QuestionUiState.Ordering -> {
-            val orderingFeedback = feedback as? AnswerFeedback.Ordering
-            val draftOrder = (currentDraft as? UserAnswerDraft.OrderingDraft)?.order
-            val itemById = qState.items.associateBy { it.id }
-            val currentItems =
-                if (orderingFeedback != null) {
-                    orderingFeedback.orderIds.mapNotNull { itemById[it] }.takeIf { it.size == qState.items.size }
-                        ?: qState.items
-                } else if (draftOrder != null && draftOrder.size == qState.items.size) {
-                    draftOrder.mapNotNull { itemById[it.raw] }.takeIf { it.size == qState.items.size }
-                        ?: qState.items
-                } else {
-                    qState.items
-                }
-            OrderingContent(
-                state = qState.copy(items = currentItems),
-                onMoveUp = { index ->
-                    if (index > 0) {
-                        val newItems =
-                            currentItems.toMutableList().also {
-                                val tmp = it[index]
-                                it[index] = it[index - 1]
-                                it[index - 1] = tmp
-                            }
-                        component.onDraftChanged(UserAnswerDraft.OrderingDraft(newItems.map { OptionId(it.id) }))
-                    }
-                },
-                onMoveDown = { index ->
-                    if (index < currentItems.lastIndex) {
-                        val newItems =
-                            currentItems.toMutableList().also {
-                                val tmp = it[index]
-                                it[index] = it[index + 1]
-                                it[index + 1] = tmp
-                            }
-                        component.onDraftChanged(UserAnswerDraft.OrderingDraft(newItems.map { OptionId(it.id) }))
-                    }
-                },
-                onReorder = { from, to ->
-                    val newItems = currentItems.toMutableList()
-                    val item = newItems.removeAt(from)
-                    newItems.add(to, item)
-                    component.onDraftChanged(UserAnswerDraft.OrderingDraft(newItems.map { OptionId(it.id) }))
-                },
-                onSubmit = {
-                    val draft = UserAnswerDraft.OrderingDraft(currentItems.map { OptionId(it.id) })
-                    onFeedback(
-                        AnswerFeedback.Ordering(
-                            answer = draft,
-                            orderIds = currentItems.map { it.id },
-                            correctOrderIds = qState.correctOrderIds,
-                            revealCorrect = revealCorrect,
-                        ),
-                    )
-                },
-                feedback = orderingFeedback,
-                hintEnabled = hintEnabled,
-                onHint = {
-                    // correctOrderIds is the content order, i.e. the right arrangement itself.
-                    val draft = qState.hintDraft()
-                    if (draft != null && hint.spend()) {
-                        component.onDraftChanged(draft)
-                        onFeedback(
-                            AnswerFeedback.Ordering(
-                                answer = draft,
-                                orderIds = draft.order.map { it.raw },
-                                correctOrderIds = qState.correctOrderIds,
-                                revealCorrect = revealCorrect,
-                            ),
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        is QuestionUiState.FillBlank -> {
-            val filledRaw =
-                (currentDraft as? UserAnswerDraft.FillBlankDraft)
-                    ?.filled
-                    ?.mapNotNull { (blankId, candidateId) -> candidateId?.let { blankId.raw to it.raw } }
-                    ?.toMap() ?: emptyMap()
-            val blankParts = qState.templateParts.filterIsInstance<TemplatePart.Blank>()
-            val blanksByIndex = blankParts.associateBy { it.index }
-            val candidateById = qState.candidates.associateBy { it.id }
-            val displayFilledValues =
-                filledRaw.entries.mapNotNull { (blankId, candidateId) ->
-                    val blank = blankParts.firstOrNull { it.blankId == blankId } ?: return@mapNotNull null
-                    val text = candidateById[candidateId]?.text ?: return@mapNotNull null
-                    blank.index to text
-                }.toMap()
-            FillBlankContent(
-                state = qState.copy(filledValues = displayFilledValues),
-                candidates = qState.candidates,
-                usedCandidateIds = filledRaw.values.toSet(),
-                onCandidateSelected = { blankIndex, candidateId ->
-                    blanksByIndex[blankIndex]?.let { blank ->
-                        val newFilled = filledRaw + (blank.blankId to candidateId)
-                        component.onDraftChanged(
-                            UserAnswerDraft.FillBlankDraft(
-                                newFilled.mapKeys { BlankId(it.key) }.mapValues { CandidateId(it.value) },
-                            ),
-                        )
-                    }
-                },
-                onBlankCleared = { blankIndex ->
-                    blanksByIndex[blankIndex]?.let { blank ->
-                        val newFilled = filledRaw - blank.blankId
-                        component.onDraftChanged(
-                            UserAnswerDraft.FillBlankDraft(
-                                newFilled.mapKeys { BlankId(it.key) }.mapValues { CandidateId(it.value) },
-                            ),
-                        )
-                    }
-                },
-                onSubmit = {
-                    val draft =
-                        UserAnswerDraft.FillBlankDraft(
-                            filledRaw.mapKeys { BlankId(it.key) }.mapValues { CandidateId(it.value) },
-                        )
-                    onFeedback(
-                        AnswerFeedback.FillBlank(
-                            answer = draft,
-                            filledCandidateIdsByBlankIndex =
-                                filledRaw.mapNotNull { (blankId, candidateId) ->
-                                    val blank =
-                                        blankParts.firstOrNull { it.blankId == blankId }
-                                            ?: return@mapNotNull null
-                                    blank.index to candidateId
-                                }.toMap(),
-                            correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
-                            revealCorrect = revealCorrect,
-                        ),
-                    )
-                },
-                feedback = feedback as? AnswerFeedback.FillBlank,
-                hintEnabled = hintEnabled,
-                onHint = {
-                    val draft = qState.hintDraft()
-                    if (draft != null && hint.spend()) {
-                        component.onDraftChanged(draft)
-                        onFeedback(
-                            AnswerFeedback.FillBlank(
-                                answer = draft,
-                                // Read off what is actually submitted, not off the answer key.
-                                // Handing revealDigit() the key twice made every fill-blank hint
-                                // report a perfect 9 whatever the draft contained.
-                                filledCandidateIdsByBlankIndex = draft.filledByBlankIndex(blankParts),
-                                correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
-                                revealCorrect = revealCorrect,
-                            ),
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-    }
-}
-
 /**
  * Tap-anywhere layer plus the reveal line — the mockup's verdict slot, which replaces the old
  * invisible three-second overlay. The verdict waits for a tap instead of advancing on a timer.
@@ -655,7 +395,7 @@ private fun QuestionTypeContent(
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
-private fun BoxScope.FeedbackOverlay(
+internal fun BoxScope.FeedbackOverlay(
     hasAnswered: Boolean,
     feedbackDigit: Int?,
     canSkip: Boolean,
@@ -723,154 +463,6 @@ private fun verdictLabel(digit: Int): String =
         WORST_DIGIT -> stringResource(R.string.runner_verdict_wrong)
         else -> stringResource(R.string.runner_verdict_partial, digit)
     }
-
-private fun buildTimeoutFeedback(
-    qState: QuestionUiState,
-    currentDraft: UserAnswerDraft?,
-    seed: Long,
-    revealCorrect: Boolean,
-): AnswerFeedback? {
-    if (!qState.hasLocalAnswerKey && qState !is QuestionUiState.Survey) return null
-    val random = Random(seed)
-    return when (qState) {
-        is QuestionUiState.Survey ->
-            AnswerFeedback.Survey(
-                answer =
-                    currentDraft as? UserAnswerDraft.SurveyDraft
-                        ?: UserAnswerDraft.SurveyDraft(emptySet()),
-                selectedIds =
-                    (currentDraft as? UserAnswerDraft.SurveyDraft)
-                        ?.selected?.map { it.raw }?.toSet().orEmpty(),
-            )
-        is QuestionUiState.SingleChoice -> buildSingleChoiceTimeoutFeedback(qState, currentDraft, random, revealCorrect)
-        is QuestionUiState.MultipleChoice ->
-            buildMultipleChoiceTimeoutFeedback(
-                qState,
-                currentDraft,
-                random,
-                revealCorrect,
-            )
-        is QuestionUiState.Ordering -> buildOrderingTimeoutFeedback(qState, currentDraft, random, revealCorrect)
-        is QuestionUiState.FillBlank -> buildFillBlankTimeoutFeedback(qState, currentDraft, random, revealCorrect)
-    }
-}
-
-private fun buildSingleChoiceTimeoutFeedback(
-    qState: QuestionUiState.SingleChoice,
-    currentDraft: UserAnswerDraft?,
-    random: Random,
-    revealCorrect: Boolean,
-): AnswerFeedback.SingleChoice? {
-    val selectedId =
-        (currentDraft as? UserAnswerDraft.SingleChoiceDraft)?.selected?.raw
-            ?: qState.options.shuffled(random).firstOrNull()?.id
-            ?: return null
-    val draft = UserAnswerDraft.SingleChoiceDraft(OptionId(selectedId))
-    return AnswerFeedback.SingleChoice(
-        answer = draft,
-        selectedId = selectedId,
-        correctId = qState.correctOptionId,
-        revealCorrect = revealCorrect,
-    )
-}
-
-private fun buildMultipleChoiceTimeoutFeedback(
-    qState: QuestionUiState.MultipleChoice,
-    currentDraft: UserAnswerDraft?,
-    random: Random,
-    revealCorrect: Boolean,
-): AnswerFeedback.MultipleChoice? {
-    val validIds = qState.options.map { it.id }.toSet()
-    if (validIds.isEmpty()) return null
-    val selectedFromDraft =
-        (currentDraft as? UserAnswerDraft.MultipleChoiceDraft)
-            ?.selected
-            ?.map { it.raw }
-            ?.filter { it in validIds }
-            ?.toSet()
-            ?: emptySet()
-    val targetSize = qState.correctIds.size.coerceAtLeast(1).coerceAtMost(validIds.size)
-    val randomRemainder =
-        qState.options
-            .map { it.id }
-            .filter { it !in selectedFromDraft }
-            .shuffled(random)
-            .take((targetSize - selectedFromDraft.size).coerceAtLeast(0))
-    val selectedIds = selectedFromDraft + randomRemainder
-    val draft = UserAnswerDraft.MultipleChoiceDraft(selectedIds.map { OptionId(it) }.toSet())
-    return AnswerFeedback.MultipleChoice(
-        answer = draft,
-        selectedIds = selectedIds,
-        correctIds = qState.correctIds,
-        revealCorrect = revealCorrect,
-    )
-}
-
-private fun buildOrderingTimeoutFeedback(
-    qState: QuestionUiState.Ordering,
-    currentDraft: UserAnswerDraft?,
-    random: Random,
-    revealCorrect: Boolean,
-): AnswerFeedback.Ordering? {
-    val validIds = qState.items.map { it.id }
-    if (validIds.isEmpty()) return null
-    val draftOrder =
-        (currentDraft as? UserAnswerDraft.OrderingDraft)
-            ?.order
-            ?.map { it.raw }
-            ?.filter { it in validIds }
-    val orderIds =
-        if (draftOrder.isNullOrEmpty()) {
-            validIds.shuffled(random)
-        } else {
-            draftOrder + validIds.filter { it !in draftOrder }
-        }
-    val draft = UserAnswerDraft.OrderingDraft(orderIds.map { OptionId(it) })
-    return AnswerFeedback.Ordering(
-        answer = draft,
-        orderIds = orderIds,
-        correctOrderIds = qState.correctOrderIds,
-        revealCorrect = revealCorrect,
-    )
-}
-
-private fun buildFillBlankTimeoutFeedback(
-    qState: QuestionUiState.FillBlank,
-    currentDraft: UserAnswerDraft?,
-    random: Random,
-    revealCorrect: Boolean,
-): AnswerFeedback.FillBlank? {
-    val blankParts = qState.templateParts.filterIsInstance<TemplatePart.Blank>()
-    val candidateIds = qState.candidates.map { it.id }
-    if (blankParts.isEmpty() || candidateIds.isEmpty()) return null
-    val validBlankIds = blankParts.map { it.blankId }.toSet()
-    val validCandidateIds = candidateIds.toSet()
-    val filledByBlankId =
-        blankParts.associate { blank ->
-            val draftCandidate =
-                (currentDraft as? UserAnswerDraft.FillBlankDraft)
-                    ?.filled
-                    ?.get(BlankId(blank.blankId))
-                    ?.raw
-                    ?.takeIf { it in validCandidateIds }
-            blank.blankId to (draftCandidate ?: candidateIds.shuffled(random).first())
-        }.filterKeys { it in validBlankIds }
-    val draft =
-        UserAnswerDraft.FillBlankDraft(
-            filledByBlankId
-                .mapKeys { BlankId(it.key) }
-                .mapValues { CandidateId(it.value) },
-        )
-    return AnswerFeedback.FillBlank(
-        answer = draft,
-        filledCandidateIdsByBlankIndex =
-            blankParts.associate { blank ->
-                blank.index to filledByBlankId.getValue(blank.blankId)
-            },
-        correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
-        revealCorrect = revealCorrect,
-    )
-}
 
 private val previewQuestionOptions =
     listOf(
