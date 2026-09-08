@@ -17,6 +17,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicket
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketHeader
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketListRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketPage
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketSnapshot
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UnscoredTerminalIntent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
@@ -175,14 +176,34 @@ class ArenaTicketJournal(
         session: OutboxSession,
         ticketId: String,
         initial: ArenaInitialCheckpoint,
+    ): Result<ArenaLaunchClaim> = claimForLaunchCore(session, ticketId) { initial }
+
+    /** Synchronous factory runs only for a validated fresh row under the existing original-owner gate. */
+    internal suspend fun claimForLaunch(
+        session: OutboxSession,
+        ticketId: String,
+        initialFactory: (ArenaTicketSnapshot) -> ArenaInitialCheckpoint,
+    ): Result<ArenaLaunchClaim> = claimForLaunchCore(session, ticketId, initialFactory)
+
+    private suspend fun claimForLaunchCore(
+        session: OutboxSession,
+        ticketId: String,
+        initialFactory: (ArenaTicketSnapshot) -> ArenaInitialCheckpoint,
     ): Result<ArenaLaunchClaim> =
         attempt {
             gate.withOwner(session) {
                 val row = requiredTicket(session, ticketId)
                 val cached = state(row)
                 if (cached !is ArenaCachedTicket.Available) return@withOwner ArenaLaunchClaim.NotFresh(cached)
-                val candidate = checkpoints.initial(cached.snapshot, requireNotNull(row.snapshotSha256), initial)
-                if (storage.claim(session.ownerUid, ticketId, candidate, checkpointValidator(row))) {
+                // Validate the complete immutable row before allowing factory work, not just before the TX.
+                val validator = checkpointValidator(row, codec, checkpoints)
+                val candidate =
+                    checkpoints.initial(
+                        cached.snapshot,
+                        requireNotNull(row.snapshotSha256),
+                        initialFactory(cached.snapshot),
+                    )
+                if (storage.claim(session.ownerUid, ticketId, candidate, validator)) {
                     ArenaLaunchClaim.Claimed(cached.snapshot)
                 } else {
                     ArenaLaunchClaim.NotFresh(state(requiredTicket(session, ticketId)))
@@ -222,7 +243,7 @@ class ArenaTicketJournal(
                     attemptId,
                     expectedRevision,
                     candidateJson,
-                    checkpointValidator(row),
+                    checkpointValidator(row, codec, checkpoints),
                 )
             }
         }
@@ -286,7 +307,7 @@ class ArenaTicketJournal(
                     storage.confirmSettlementReplay(replay, codec.outbox(replay))
                 } else {
                     val cmd = codec.completion(row, intent)
-                    storage.freezeSettlement(cmd, codec.outbox(cmd), checkpointValidator(row))
+                    storage.freezeSettlement(cmd, codec.outbox(cmd), checkpointValidator(row, codec, checkpoints))
                 }
             }
         }
@@ -326,39 +347,6 @@ class ArenaTicketJournal(
         kind: String,
         id: String,
     ) = storage.command(session.ownerUid, kind, id) ?: throw ArenaJournalAttention("NO_ORIGINAL_CONSENT")
-
-    private fun checkpointValidator(row: ArenaTicketRecordEntity): ArenaCheckpointValidator {
-        requireCheckpointWriteRow(row)
-        val snapshot = codec.decode(row).snapshot
-        val hash = requireNotNull(row.snapshotSha256)
-        val expected =
-            ArenaCheckpointBinding(
-                row.ownerUid,
-                row.ticketId,
-                row.attemptId,
-                hash,
-                row.requestId,
-                row.termsJson,
-                requireNotNull(row.snapshotJson),
-            )
-        return ArenaCheckpointValidator { binding, previous, candidate, completion ->
-            require(binding == expected)
-            checkpoints.validate(snapshot, hash, previous, candidate, completion)
-        }
-    }
-
-    /** Captured proof for new writes only. Existing frozen replay/cancellation may have no safe bank. */
-    private fun requireCheckpointWriteRow(row: ArenaTicketRecordEntity) {
-        require(row.serverStatus == "RESERVED" && row.decision == "NONE" && row.terminalJson == null)
-        require(row.observedAtMs >= 0 && row.checkpointRevision >= 0)
-        when (row.localUse) {
-            "UNUSED" -> require(row.checkpointJson == null && row.checkpointRevision == 0L)
-            "LAUNCHED" -> require(row.checkpointJson != null)
-            else -> throw IllegalArgumentException("Invalid runner write state")
-        }
-        val header = codec.header(row)
-        require(codec.record(header, row.observedAtMs).termsJson == row.termsJson)
-    }
 
     private fun state(row: ArenaTicketRecordEntity): ArenaCachedTicket {
         val header = codec.header(row)
@@ -435,4 +423,44 @@ class ArenaTicketJournal(
                 Result.failure(error)
             }
         }
+}
+
+private fun checkpointValidator(
+    row: ArenaTicketRecordEntity,
+    codec: ArenaJournalCodec,
+    checkpoints: ArenaJournalCheckpointCodec,
+): ArenaCheckpointValidator {
+    requireCheckpointWriteRow(row, codec)
+    val snapshot = codec.decode(row).snapshot
+    val hash = requireNotNull(row.snapshotSha256)
+    val expected =
+        ArenaCheckpointBinding(
+            row.ownerUid,
+            row.ticketId,
+            row.attemptId,
+            hash,
+            row.requestId,
+            row.termsJson,
+            requireNotNull(row.snapshotJson),
+        )
+    return ArenaCheckpointValidator { binding, previous, candidate, completion ->
+        require(binding == expected)
+        checkpoints.validate(snapshot, hash, previous, candidate, completion)
+    }
+}
+
+/** Pure captured proof for new writes only. Frozen replay/cancellation may still have no safe bank. */
+private fun requireCheckpointWriteRow(
+    row: ArenaTicketRecordEntity,
+    codec: ArenaJournalCodec,
+) {
+    require(row.serverStatus == "RESERVED" && row.decision == "NONE" && row.terminalJson == null)
+    require(row.observedAtMs >= 0 && row.checkpointRevision >= 0)
+    when (row.localUse) {
+        "UNUSED" -> require(row.checkpointJson == null && row.checkpointRevision == 0L)
+        "LAUNCHED" -> require(row.checkpointJson != null)
+        else -> throw IllegalArgumentException("Invalid runner write state")
+    }
+    val header = codec.header(row)
+    require(codec.record(header, row.observedAtMs).termsJson == row.termsJson)
 }
