@@ -73,6 +73,10 @@ interface OwnerRowsDao {
     @Query("DELETE FROM lesson_rating_submitted_local WHERE user_id = :uid")
     suspend fun deleteLessonRatingsSubmitted(uid: String)
 
+    /** Retained arena rating bodies are local queue state, not retained arena financial evidence. */
+    @Query("DELETE FROM arena_frozen_rating_intents WHERE owner_uid = :uid")
+    suspend fun deleteArenaFrozenRatingIntents(uid: String)
+
     /**
      * Снимает след прогона прежнего владельца.
      *
@@ -121,6 +125,7 @@ interface OwnerRowsDao {
         UNION SELECT user_id FROM question_answers
         UNION SELECT user_id FROM question_repetition
         UNION SELECT user_id FROM lesson_rating_submitted_local
+        UNION SELECT owner_uid FROM arena_frozen_rating_intents
         UNION SELECT owner_uid FROM sync_run_trace
         UNION SELECT owner_uid FROM mutation_receipts
         UNION SELECT owner_uid FROM lesson_attempt_intents
@@ -165,6 +170,7 @@ interface OwnerRowsDao {
         deleteQuestionAnswers(uid)
         deleteQuestionRepetition(uid)
         deleteLessonRatingsSubmitted(uid)
+        deleteArenaFrozenRatingIntents(uid)
         deleteSyncRunTrace(uid)
         deleteMutationReceipts(uid)
         deleteLessonAttemptIntents(uid)
@@ -308,6 +314,13 @@ object OwnerScopedTables {
                 "user_id",
                 OwnerCleanup.TRACES,
                 hasServerTwin = true,
+                namedToPlayer = null,
+            ),
+            OwnerScopedTable(
+                "arena_frozen_rating_intents",
+                "owner_uid",
+                OwnerCleanup.TRACES,
+                hasServerTwin = false,
                 namedToPlayer = null,
             ),
             // След прогона: время последнего успеха и ветвь последней ошибки этого владельца

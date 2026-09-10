@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRemainder
 import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.outbox.OwnerDataKind
+import com.tpov.schoolquiz.shared.core.outbox.OwnerForgetReason
 import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
 import kotlinx.coroutines.Dispatchers
@@ -307,6 +308,32 @@ class OwnerTracesPersistenceTest {
             assertEquals("но забыть его всё равно есть кому", listOf(previous), traces.ownersWithTraces())
         }
 
+    @Test
+    fun frozenArenaRatingIntentIsRemovedOnSwitchAndExplicitErasureWithoutTouchingTheOtherOwner() =
+        runTest {
+            seedFrozenRatingTrace(previous)
+            seedFrozenRatingTrace(next)
+
+            assertEquals(setOf(previous, next), traces.ownersWithTraces().toSet())
+            assertTrue(
+                "очередное намерение не добавляет новый названный вид потери",
+                traces.lossesOf(previous).isEmpty(),
+            )
+
+            traces.forget(previous, OwnerForgetReason.SWITCH)
+
+            assertEquals(0, countIn("arena_frozen_rating_intents", "owner_uid", previous))
+            assertEquals(0, countIn("lesson_rating_submitted_local", "user_id", previous))
+            assertEquals(1, countIn("arena_frozen_rating_intents", "owner_uid", next))
+
+            seedFrozenRatingTrace(previous)
+            traces.forget(previous, OwnerForgetReason.ERASE_LOCAL_DATA)
+
+            assertEquals(0, countIn("arena_frozen_rating_intents", "owner_uid", previous))
+            assertEquals(1, countIn("arena_frozen_rating_intents", "owner_uid", next))
+            assertEquals(listOf(next), traces.ownersWithTraces())
+        }
+
     private suspend fun cursorOf(collectionId: String): SyncCursor? = syncState.find(collectionId)?.toCursor()
 
     /**
@@ -336,6 +363,7 @@ class OwnerTracesPersistenceTest {
         db.questionAnswerDao().upsertAll(listOf(questionAnswer(owner)))
         db.questionRepetitionDao().upsertAll(listOf(questionRepetition(owner)))
         db.lessonRatingLocalDao().upsert(LessonRatingSubmittedLocalEntity(owner, "lesson-1", 1L))
+        seedFrozenRatingIntent(owner, "lesson-1")
         // След прогона — такая же личная строка владельца, как остальные (история 4.2).
         db.syncRunTraceDao().recordSuccess(owner, SyncRunKind.CONTENT.column(), atMs = 1_000L)
         db.mutationReceiptDao().persist(
@@ -360,6 +388,31 @@ class OwnerTracesPersistenceTest {
             ),
         )
         if (withQueueRow) store.enqueue(record("m-seed-$owner", owner))
+    }
+
+    private suspend fun seedFrozenRatingTrace(owner: String) {
+        db.lessonRatingLocalDao().upsert(LessonRatingSubmittedLocalEntity(owner, "arena-lesson", 1L))
+        seedFrozenRatingIntent(owner, "arena-lesson")
+    }
+
+    private suspend fun seedFrozenRatingIntent(
+        owner: String,
+        lessonId: String,
+    ) {
+        db.arenaFrozenRatingDao().insertIntent(
+            ArenaFrozenRatingIntentEntity(
+                ownerUid = owner,
+                ticketId = "ticket-$owner",
+                attemptId = "attempt-$owner",
+                lessonId = lessonId,
+                ratingId = "rating-$owner",
+                mutationId = "lesson_runner.SUBMIT_RATING:rating-$owner",
+                operation = "lesson_runner.SUBMIT_RATING",
+                payload = "{\"rating\":2}",
+                entityRef = "lesson_runner:rating:rating-$owner",
+                createdAtMs = 1L,
+            ),
+        )
     }
 
     /** Считает строки без DAO: перечень таблиц один, и проверять его надо им же. */

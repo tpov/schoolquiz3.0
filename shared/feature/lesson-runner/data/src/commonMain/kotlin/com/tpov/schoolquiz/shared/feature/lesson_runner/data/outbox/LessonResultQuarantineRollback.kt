@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox
 
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import com.tpov.schoolquiz.shared.core.outbox.QuarantineListener
+import com.tpov.schoolquiz.shared.core.persistence.ArenaFrozenRatingDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
 import kotlinx.serialization.json.Json
@@ -23,6 +24,7 @@ import kotlinx.serialization.json.jsonPrimitive
 class LessonResultQuarantineRollback(
     private val attemptDao: LessonAttemptDao,
     private val ratingDao: LessonRatingLocalDao,
+    private val arenaRatings: ArenaFrozenRatingDao? = null,
 ) {
     /** Убирает прохождение вместе с его ответами. */
     val attempts: QuarantineListener =
@@ -34,6 +36,14 @@ class LessonResultQuarantineRollback(
     /** Убирает отметку «оценка поставлена», чтобы игрок мог оценить квест заново. */
     val ratings: QuarantineListener =
         QuarantineListener { record ->
+            val ticketId = record.field("ticketId")
+            val ratingId = record.field("ratingId")
+            // Arena rows are correlated by the retained random-id intent.  A stale terminal row
+            // must never fall through to the old owner+lesson delete and erase a newer retry.
+            if (record.field("sourceShelf") == "arena" && ticketId != null && ratingId != null) {
+                arenaRatings?.rollbackExact(record.ownerUid, ticketId, record.mutationId, ratingId, record.payload)
+                return@QuarantineListener
+            }
             val userId = record.field("userId") ?: record.ownerUid
             val lessonId = record.field("lessonId") ?: return@QuarantineListener
             ratingDao.delete(userId = userId, lessonId = lessonId)

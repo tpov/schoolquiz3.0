@@ -3,9 +3,9 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 
 /**
- * Immutable user rating for a lesson. One per (userId, lessonId) lifetime.
- * Remote ID = deterministic sha256("$userId:$lessonId").
- * lessonVersion stored for analytics; not part of uniqueness key.
+ * Immutable user rating attempt for a lesson. The local marker permits one active vote per
+ * (userId, lessonId); a rejected/quarantined vote may be retried with a fresh random ID.
+ * lessonVersion is stored for analytics; it is not part of the marker key.
  */
 data class LessonRating(
     val id: RatingId,

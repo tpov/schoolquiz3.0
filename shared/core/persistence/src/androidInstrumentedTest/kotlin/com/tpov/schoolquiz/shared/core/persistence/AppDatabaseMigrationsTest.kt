@@ -6,6 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration10to11
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration11to12
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -36,6 +37,32 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationsTest {
+    @Test
+    fun migrate_13_to_14_preserves_pending_arena_journal_and_adds_empty_rating_intents() {
+        helper.createDatabase(DB_NAME, version = 13).use { db ->
+            db.execSQL(
+                "INSERT INTO arena_command_journal(owner_uid, command_kind, command_id, ticket_id, attempt_id, " +
+                    "body_json, body_sha256, state, last_failure, created_at_ms) VALUES " +
+                    "('owner-13', 'SETTLE', 'attempt-13', 'ticket-13', 'attempt-13', '{}', 'sha', 'PENDING', NULL, 13)",
+            )
+            db.execSQL("INSERT INTO sync_state(collectionId, cursor) VALUES ('migration-13-proof', 713)")
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 14, true, Migration13to14).use { db ->
+            db.query("SELECT state FROM arena_command_journal WHERE owner_uid = 'owner-13'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("PENDING", c.getString(0))
+            }
+            db.query("SELECT COUNT(*) FROM arena_frozen_rating_intents").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0L, c.getLong(0))
+            }
+            db.query("SELECT cursor FROM sync_state WHERE collectionId = 'migration-13-proof'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(713L, c.getLong(0))
+            }
+        }
+    }
+
     @Test
     fun migrate_12_to_13_preserves_legacy_intent_and_adds_empty_arena_journal() {
         helper.createDatabase(DB_NAME, version = 12).use { db ->
@@ -680,6 +707,7 @@ class AppDatabaseMigrationsTest {
             Migration10to11,
             Migration11to12,
             Migration12to13,
+            Migration13to14,
         ).close()
     }
 
@@ -687,7 +715,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 13
+        const val CURRENT_VERSION = 14
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES =

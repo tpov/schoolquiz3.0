@@ -14,11 +14,14 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.RoomArenaJour
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaEntryRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaFrozenRatingDependencies
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaFrozenRatingRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaRunRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaWalletRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.OutboxArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaCatalogRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaFrozenRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
@@ -54,6 +57,20 @@ val arenaDataModule =
                 sessions = get(),
                 dispatcher = Dispatchers.IO,
                 clock = get<Clock>(),
+            )
+        }
+        single<ArenaFrozenRatingRepository> {
+            ArenaFrozenRatingRepositoryImpl(
+                ArenaFrozenRatingDependencies(
+                    dao = get(),
+                    receipts = get(),
+                    settlements = get(),
+                    sessions = get(),
+                    gate = get(),
+                    ids = get(),
+                    clock = get(),
+                    codec = get(),
+                ),
             )
         }
         single<ArenaWalletRepository> {

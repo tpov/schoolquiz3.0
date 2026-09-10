@@ -34,6 +34,13 @@ class ArenaJournalCodec(private val sha256: (String) -> String) {
     private val parser = ArenaTicketWireParser(sha256)
     private val answerJson = Json { encodeDefaults = true }
 
+    /** A retained command is usable as frozen provenance only when its stored bytes still hash. */
+    fun isIntact(command: ArenaCommandEntity): Boolean =
+        runCatching {
+            verify(command)
+            true
+        }.getOrDefault(false)
+
     fun consent(
         request: ArenaPrepareRequest,
         now: Long,

@@ -1,9 +1,10 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
-import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
+import kotlin.test.assertFailsWith
 
 /**
  * The gate that keeps the schema history honest.
@@ -20,12 +21,14 @@ import org.junit.Test
  * presence of source, not the behaviour of a class.
  */
 class MigrationCoverageTest {
-
     private val schemasDir = File("schemas/com.tpov.schoolquiz.shared.core.persistence.AppDatabase")
-    private val migrationsDir = File("src/androidMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/migrations")
-    private val migrationTest = File(
-        "src/androidInstrumentedTest/kotlin/com/tpov/schoolquiz/shared/core/persistence/AppDatabaseMigrationsTest.kt",
-    )
+    private val migrationsDir =
+        File("src/androidMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/migrations")
+    private val migrationTest =
+        File(
+            "src/androidInstrumentedTest/kotlin/com/tpov/schoolquiz/shared/core/persistence/" +
+                "AppDatabaseMigrationsTest.kt",
+        )
 
     private fun exportedVersions(): List<Int> =
         schemasDir.listFiles()
@@ -39,10 +42,11 @@ class MigrationCoverageTest {
         val versions = exportedVersions()
         assertTrue("no exported schemas found in ${schemasDir.path}", versions.isNotEmpty())
 
-        val declared = migrationsDir.listFiles().orEmpty().joinToString("\n") { it.readText() }
-        val missing = versions.filter { it >= 2 }.filterNot { v ->
-            declared.contains("Migration(${v - 1}, $v)")
-        }
+        val declared = migrationFiles().map(::migrationStep).toSet()
+        val missing =
+            versions.filter { it >= 2 }.filterNot { v ->
+                MigrationStep(v - 1, v) in declared
+            }
 
         assertTrue(
             "Exported schema exists with no migration behind it: " +
@@ -58,9 +62,10 @@ class MigrationCoverageTest {
         assertTrue("missing ${migrationTest.path}", migrationTest.exists())
         val body = migrationTest.readText()
 
-        val unproven = exportedVersions().filter { it >= 2 }.filterNot { v ->
-            body.contains(Regex("""runMigrationsAndValidate\(\s*\w+\s*,\s*$v\s*,"""))
-        }
+        val unproven =
+            exportedVersions().filter { it >= 2 }.filterNot { v ->
+                body.contains(Regex("""runMigrationsAndValidate\(\s*\w+\s*,\s*$v\s*,"""))
+            }
 
         assertTrue(
             "Migration with no runMigrationsAndValidate behind it: " +
@@ -88,9 +93,10 @@ class MigrationCoverageTest {
         if (!schemasDir.exists()) return
         val hashes = exportedVersions().associateWith(::identityHashOf)
 
-        val collisions = exportedVersions().filter { it >= 2 }.filter { v ->
-            hashes[v] != null && hashes[v] == hashes[v - 1]
-        }
+        val collisions =
+            exportedVersions().filter { it >= 2 }.filter { v ->
+                hashes[v] != null && hashes[v] == hashes[v - 1]
+            }
 
         assertTrue(
             "Neighbouring exported schemas describe the same shape: " +
@@ -120,16 +126,15 @@ class MigrationCoverageTest {
         if (!schemasDir.exists()) return
         val mismatches = mutableListOf<String>()
 
-        migrationsDir.listFiles().orEmpty().sortedBy { it.name }.forEach { file ->
+        migrationFiles().forEach { file ->
             val text = file.readText()
-            val target = Regex("""Migration\(\d+,\s*(\d+)\)""")
-                .find(text)?.groupValues?.get(1)?.toIntOrNull() ?: return@forEach
-            val exported = exportedCreateSql(target)
+            val step = migrationStep(file.name, text)
+            val exported = exportedCreateSql(step.to)
 
             createTableStatements(text).forEach { (table, statement) ->
                 val schema = exported[table]?.replace("\${TABLE_NAME}", table) ?: return@forEach
                 if (statement.withoutWhitespace() != schema.withoutWhitespace()) {
-                    mismatches += "${file.name} creates `$table` in a shape $target.json does not " +
+                    mismatches += "${file.name} creates `$table` in a shape ${step.to}.json does not " +
                         "describe:\n  migration: $statement\n  schema:    $schema"
                 }
             }
@@ -147,14 +152,16 @@ class MigrationCoverageTest {
         if (!schemasDir.exists()) return
         val newest = exportedVersions().max()
 
-        val declared = File(
-            "src/commonMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/AppDatabase.kt",
-        ).readText()
+        val declared =
+            File(
+                "src/commonMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/AppDatabase.kt",
+            ).readText()
         val declaredVersion = Regex("""version\s*=\s*(\d+)""").find(declared)?.groupValues?.get(1)?.toInt()
         assertEquals("@Database version does not match the newest exported schema", newest, declaredVersion)
 
-        val pinned = Regex("""CURRENT_VERSION\s*=\s*(\d+)""").find(migrationTest.readText())
-            ?.groupValues?.get(1)?.toInt()
+        val pinned =
+            Regex("""CURRENT_VERSION\s*=\s*(\d+)""").find(migrationTest.readText())
+                ?.groupValues?.get(1)?.toInt()
         assertEquals("CURRENT_VERSION in the migration test drifted from the schema", newest, pinned)
     }
 
@@ -163,18 +170,103 @@ class MigrationCoverageTest {
         val src = File("src")
         if (!src.exists()) return
 
-        val offenders = src.walkTopDown()
-            .filter { it.extension == "kt" }
-            .filter { it.name != "MigrationCoverageTest.kt" && it.name != "TypeConvertersPhase02Test.kt" }
-            .filter { it.readText().contains("fallbackToDestructiveMigration") }
-            .map { it.path }
-            .toList()
+        val offenders =
+            src.walkTopDown()
+                .filter { it.extension == "kt" }
+                .filter { it.name != "MigrationCoverageTest.kt" && it.name != "TypeConvertersPhase02Test.kt" }
+                .filter { it.readText().contains("fallbackToDestructiveMigration") }
+                .map { it.path }
+                .toList()
 
         assertTrue(
             "fallbackToDestructiveMigration silently wipes the player's data. Found in: $offenders",
             offenders.isEmpty(),
         )
     }
+
+    @Test
+    fun `migration step resolver accepts adjacent literals and local constants`() {
+        assertEquals(
+            MigrationStep(13, 14),
+            migrationStep("Migration13to14.kt", "object : Migration(13, 14) {}"),
+        )
+        assertEquals(
+            MigrationStep(13, 14),
+            migrationStep(
+                "Migration13to14.kt",
+                "private const val FROM = 13\nprivate const val TO = 14\nobject : Migration(FROM, TO) {}",
+            ),
+        )
+    }
+
+    @Test
+    fun `migration step resolver fails closed for invalid declarations`() {
+        assertFailsWith<IllegalStateException> {
+            migrationStep("Migration13to14.kt", "object : Migration(FROM, TO) {}")
+        }
+        assertFailsWith<IllegalStateException> {
+            migrationStep(
+                "Migration13to14.kt",
+                "private const val FROM = 13\nprivate const val TO = 14\nobject : Migration(TO, FROM) {}",
+            )
+        }
+        assertFailsWith<IllegalStateException> {
+            migrationStep("Migration13to14.kt", "object : Migration(13, 15) {}")
+        }
+        assertFailsWith<IllegalStateException> {
+            migrationStep("Migration13to15.kt", "object : Migration(13, 15) {}")
+        }
+        assertFailsWith<IllegalStateException> {
+            migrationStep(
+                "Migration13to14.kt",
+                "private const val FROM = 13\nprivate const val FROM = 14\nobject : Migration(FROM, 14) {}",
+            )
+        }
+        assertFailsWith<IllegalStateException> {
+            migrationStep(
+                "Migration13to14.kt",
+                "private const val FROM = 13 + 1\nprivate const val TO = 14\nobject : Migration(FROM, TO) {}",
+            )
+        }
+    }
+
+    private fun migrationFiles(): List<File> =
+        migrationsDir.listFiles().orEmpty().filter { it.extension == "kt" }.sortedBy { it.name }
+
+    private fun migrationStep(file: File): MigrationStep = migrationStep(file.name, file.readText())
+
+    /** Source-level resolver deliberately accepts only adjacent named migration files and local constants. */
+    private fun migrationStep(
+        fileName: String,
+        source: String,
+    ): MigrationStep {
+        val expected =
+            checkNotNull(MIGRATION_FILE.matchEntire(fileName)) { "Unexpected migration file name: $fileName" }
+                .groupValues.let { MigrationStep(it[1].toInt(), it[2].toInt()) }
+        val constants =
+            LOCAL_NUMERIC_CONST.findAll(source).map { it.groupValues.drop(1) }.groupBy { it.first() }
+        val arguments =
+            checkNotNull(MIGRATION_CALL.findAll(source).singleOrNull()) {
+                "Expected one Migration(from, to) declaration in $fileName"
+            }.groupValues.drop(1)
+        val resolved =
+            MigrationStep(
+                resolveMigrationArgument(arguments.first(), constants, fileName),
+                resolveMigrationArgument(arguments.last(), constants, fileName),
+            )
+        check(resolved.to == resolved.from + 1 && resolved == expected) {
+            "Migration declaration $resolved does not match adjacent $expected in $fileName"
+        }
+        return resolved
+    }
+
+    private fun resolveMigrationArgument(
+        token: String,
+        constants: Map<String, List<List<String>>>,
+        fileName: String,
+    ): Int =
+        token.toIntOrNull() ?: constants[token]?.singleOrNull()?.get(1)?.toIntOrNull()
+            ?: error("Unresolved or ambiguous migration version `$token` in $fileName")
 
     private fun identityHashOf(version: Int): String? =
         Regex(""""identityHash"\s*:\s*"(\w+)"""")
@@ -218,4 +310,16 @@ class MigrationCoverageTest {
     }
 
     private fun String.withoutWhitespace(): String = filterNot { it.isWhitespace() }
+
+    private data class MigrationStep(val from: Int, val to: Int)
+
+    private companion object {
+        val MIGRATION_FILE = Regex("""Migration(\d+)to(\d+)\.kt""")
+        val MIGRATION_CALL =
+            Regex("""Migration\(\s*(\d+|[A-Z][A-Z0-9_]*)\s*,\s*(\d+|[A-Z][A-Z0-9_]*)\s*\)""")
+        val LOCAL_NUMERIC_CONST =
+            Regex(
+                """(?m)^(?:private\s+)?const\s+val\s+([A-Z][A-Z0-9_]*)(?:\s*:\s*Int)?\s*=\s*(\d+)\s*$""",
+            )
+    }
 }

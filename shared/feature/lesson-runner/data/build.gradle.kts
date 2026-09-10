@@ -40,5 +40,9 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.junit4)
         }
+        jvmTest.dependencies {
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
+        }
     }
 }

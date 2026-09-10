@@ -31,6 +31,16 @@ interface LessonRatingLocalDao {
     @Query("SELECT state FROM outbox WHERE mutation_id = :mutationId")
     suspend fun outboxRowState(mutationId: String): String?
 
+    /** An arena intent retains the marker's exact random rating body; ordinary routes cannot replace it. */
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM arena_frozen_rating_intents " +
+            "WHERE owner_uid = :userId AND lesson_id = :lessonId)",
+    )
+    suspend fun hasArenaFrozenRatingIntent(
+        userId: String,
+        lessonId: String,
+    ): Boolean
+
     /**
      * Пишет оценку и её строку очереди одной транзакцией (AD-23).
      *
@@ -47,6 +57,9 @@ interface LessonRatingLocalDao {
         rating: LessonRatingSubmittedLocalEntity,
         outboxRow: OutboxEntity?,
     ): Long {
+        check(!hasArenaFrozenRatingIntent(rating.userId, rating.lessonId)) {
+            "Arena frozen rating already owns this lesson marker"
+        }
         val rowId = upsert(rating)
         outboxRow?.let {
             val insertResult = enqueueOutboxRow(it)
@@ -58,7 +71,11 @@ interface LessonRatingLocalDao {
     }
 
     /** Откат по карантину: оценки, которой сервер не принял, локально быть не должно (AD-28). */
-    @Query("DELETE FROM lesson_rating_submitted_local WHERE user_id = :userId AND lesson_id = :lessonId")
+    @Query(
+        "DELETE FROM lesson_rating_submitted_local WHERE user_id = :userId AND lesson_id = :lessonId " +
+            "AND NOT EXISTS(SELECT 1 FROM arena_frozen_rating_intents " +
+            "WHERE owner_uid = :userId AND lesson_id = :lessonId)",
+    )
     suspend fun delete(
         userId: String,
         lessonId: String,

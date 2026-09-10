@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.core.persistence.di
 
 import androidx.room.Room
 import com.tpov.schoolquiz.shared.core.persistence.AppDatabase
+import com.tpov.schoolquiz.shared.core.persistence.ArenaFrozenRatingDao
 import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketDao
 import com.tpov.schoolquiz.shared.core.persistence.CatalogDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
@@ -27,6 +28,7 @@ import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration10to11
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration11to12
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -62,10 +64,12 @@ val persistenceModule =
                     Migration10to11,
                     Migration11to12,
                     Migration12to13,
+                    Migration13to14,
                 )
                 .build()
         }
         single<ArenaTicketDao> { get<AppDatabase>().arenaTicketDao() }
+        single<ArenaFrozenRatingDao> { get<AppDatabase>().arenaFrozenRatingDao() }
         single<UserStatsDao> { get<AppDatabase>().userStatsDao() }
         single<CatalogDao> { get<AppDatabase>().catalogDao() }
         single<QuestDao> { get<AppDatabase>().questDao() }

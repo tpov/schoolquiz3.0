@@ -42,7 +42,7 @@ val lessonRunnerDataModule =
         // Откат локальной половины при карантине — решение владеющей фичи (AD-28). Ядру он отдаётся
         // в composition root, где собирается маршрутизатор карантина.
         single<LessonResultQuarantineRollback> {
-            LessonResultQuarantineRollback(attemptDao = get(), ratingDao = get())
+            LessonResultQuarantineRollback(attemptDao = get(), ratingDao = get(), arenaRatings = get())
         }
         // Пометка «не отправлено» на прохождении: спрашивается у ядра по `entity_ref`, поток
         // пересобирается на смене аккаунта от того же источника `uid`, что и остальные user-scoped

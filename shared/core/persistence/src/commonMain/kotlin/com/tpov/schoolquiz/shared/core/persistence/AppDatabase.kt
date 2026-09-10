@@ -32,14 +32,17 @@ import androidx.room.TypeConverters
         LessonAttemptIntentEntity::class,
         ArenaTicketRecordEntity::class,
         ArenaCommandEntity::class,
+        ArenaFrozenRatingIntentEntity::class,
     ],
     // Every version has an explicit non-destructive migration and a generated Room schema.
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun arenaTicketDao(): ArenaTicketDao
+
+    abstract fun arenaFrozenRatingDao(): ArenaFrozenRatingDao
 
     abstract fun mutationReceiptDao(): MutationReceiptDao
 
