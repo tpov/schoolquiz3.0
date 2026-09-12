@@ -108,13 +108,7 @@ name: E2B start answer and preserved-data relaunch
     timeout: 60000
 - assertVisible: ${E2B_SELECTOR_SAVED_ANSWER}
 - takeScreenshot: "02-e2b-answer-restored-after-relaunch"
-- tapOn: ${E2B_SELECTOR_CONTINUE_LESSON}
-- extendedWaitUntil:
-    visible: ${E2B_SELECTOR_SECOND_QUESTION}
-    timeout: 60000
-- tapOn: ${E2B_SELECTOR_SECOND_ANSWER}
-- extendedWaitUntil:
-    visible: ${E2B_SELECTOR_CONTINUE_LESSON}
-    timeout: 60000
-- takeScreenshot: "02-e2b-second-answer-saved"
-- tapOn: ${E2B_SELECTOR_CONTINUE_LESSON}
+# Freeze the verified post-relaunch state before the runner makes its private
+# Room copy. The following flow performs a second retained-data launch and
+# completes this exact ticket only after the read-only progress proof passes.
+- stopApp

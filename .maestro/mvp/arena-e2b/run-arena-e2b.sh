@@ -15,8 +15,10 @@ run_context=''
 selectors_file=''
 receipt_context=''
 rating_id_context=''
+attempt_progress_context=''
 context_reader=''
 receipt_oracle=''
+attempt_progress_reader=''
 output_root=''
 serial=''
 install_candidate=false
@@ -25,6 +27,7 @@ maestro_bin="${MAESTRO_BIN:-maestro}"
 apksigner_bin="${APKSIGNER_BIN:-apksigner}"
 java_home="${JAVA_HOME:-}"
 node_bin="${NODE_BIN:-node}"
+sqlite3_bin="${SQLITE3_BIN:-sqlite3}"
 output_dir=''
 overall_status='INTERRUPTED'
 phase_status='NOT_RUN'
@@ -82,6 +85,8 @@ Usage:
     --run-context <immutable.env> --selectors <confirmed-selectors.env> \
     --output-root <results-dir> [--serial <adb-serial>] \
     [--receipt-context <reader.json>] [--context-reader <reader.js>] \
+    [--attempt-progress-context <room-reader.json>] \
+    [--attempt-progress-reader <reader.js>] [--sqlite3 <path>] \
     [--rating-id-context <room-reader.json>] \
     [--receipt-oracle <oracle.js>] [--adb <path>] [--maestro <path>] \
     [--apksigner <path>] [--java-home <dir>] [--node <path>] [--install-candidate]
@@ -89,7 +94,12 @@ Usage:
 Only verify may emit overall PASS.  Device phases require --serial.  Settle and deliver require
 --receipt-context and --context-reader; rate requires --receipt-context; deliver-rating requires
 --receipt-context and --rating-id-context; verify requires
---receipt-context, --rating-id-context, --context-reader, and --receipt-oracle.
+--receipt-context, --attempt-progress-context, --rating-id-context, --context-reader, and --receipt-oracle.
+
+The fresh settle phase also requires --attempt-progress-reader.  It copies a stopped retained
+Room database only to a private temporary directory, validates the post-relaunch checkpoint, and
+deletes that raw copy before the phase continues.  Pass --sqlite3 explicitly when node:sqlite is
+not available in the controlled runtime.
 
 --install-candidate performs one retained-data update through adb install -r. Omitting it
 only verifies the already installed package, so later phases cannot restart the app by reinstalling it.
@@ -436,6 +446,77 @@ if (value.documentWrites !== 0 || value.networkCalls !== 0 || value.deviceCalls 
 NODE
 }
 
+validate_attempt_progress_context() {
+    local context_file=$1
+    local expected_ticket_id=$2
+    local expected_attempt_id=$3
+    [[ -f "$context_file" ]] || die "attempt progress context does not exist: $context_file"
+    "$node_bin" - "$context_file" "$run_id" "$expected_ticket_id" "$expected_attempt_id" <<'NODE'
+const fs = require('fs');
+const [file, runId, ticketId, attemptId] = process.argv.slice(2);
+let value;
+try {
+  value = JSON.parse(fs.readFileSync(file, 'utf8'));
+} catch (error) {
+  process.stderr.write(`invalid attempt progress context: ${error.message}\n`);
+  process.exit(2);
+}
+const exactKeys = (object, keys, name) => {
+  if (!object || typeof object !== 'object' || Array.isArray(object)) throw new Error(`${name} is not an object`);
+  const actual = Object.keys(object).sort();
+  const expected = [...keys].sort();
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw new Error(`${name} has an unexpected schema`);
+  }
+};
+const isSha = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+try {
+  exactKeys(value, ['status', 'readerVersion', 'documentWrites', 'networkCalls', 'deviceCalls', 'storage',
+    'queryAdapter', 'runId', 'ticketId', 'attemptId', 'ticketState', 'progress', 'snapshot'], 'attempt progress context');
+  if (value.status !== 'CONTEXT' || value.readerVersion !== 'arena-e2e-attempt-progress-reader-v1' ||
+      value.documentWrites !== 0 || value.networkCalls !== 0 || value.deviceCalls !== 0 || value.storage !== 'Room' ||
+      typeof value.queryAdapter !== 'string' || value.runId !== runId || value.ticketId !== ticketId ||
+      value.attemptId !== attemptId || !isSha(value.ticketId) || !isSha(value.attemptId)) {
+    throw new Error('attempt progress context does not bind the immutable run');
+  }
+  exactKeys(value.ticketState, ['serverStatus', 'localUse', 'decision', 'checkpointRevision', 'snapshotSha256'], 'ticket state');
+  if (value.ticketState.serverStatus !== 'RESERVED' || value.ticketState.localUse !== 'LAUNCHED' ||
+      value.ticketState.decision !== 'NONE' || !Number.isSafeInteger(value.ticketState.checkpointRevision) ||
+      value.ticketState.checkpointRevision < 1 || !isSha(value.ticketState.snapshotSha256)) {
+    throw new Error('attempt progress ticket state is not a retained unfinished Arena run');
+  }
+  exactKeys(value.progress, ['checkpointSchemaVersion', 'checkpointSha256', 'phase', 'indexInPool',
+    'acceptedAnswerCount', 'currentDraftPresent', 'pendingFeedbackPresent', 'pendingFeedbackIndex', 'isCompleted'],
+  'attempt progress');
+  if (value.progress.checkpointSchemaVersion !== 1 || !isSha(value.progress.checkpointSha256) ||
+      value.progress.phase !== 'FEEDBACK' || value.progress.indexInPool !== 0 ||
+      value.progress.acceptedAnswerCount !== 0 || value.progress.currentDraftPresent !== true ||
+      value.progress.pendingFeedbackPresent !== true || value.progress.pendingFeedbackIndex !== 0 ||
+      value.progress.isCompleted !== false) {
+    throw new Error('attempt progress does not prove the first saved answer after relaunch');
+  }
+  exactKeys(value.snapshot, ['database', 'wal', 'shm'], 'snapshot');
+  exactKeys(value.snapshot.database, ['file', 'bytes', 'sha256'], 'snapshot database');
+  if (value.snapshot.database.file !== 'schoolquiz.db' || !Number.isSafeInteger(value.snapshot.database.bytes) ||
+      value.snapshot.database.bytes < 1 || !isSha(value.snapshot.database.sha256)) {
+    throw new Error('attempt progress snapshot database is invalid');
+  }
+  for (const name of ['wal', 'shm']) {
+    const sidecar = value.snapshot[name];
+    if (sidecar !== null) {
+      exactKeys(sidecar, ['file', 'bytes', 'sha256'], `snapshot ${name}`);
+      if (typeof sidecar.file !== 'string' || !Number.isSafeInteger(sidecar.bytes) || sidecar.bytes < 0 || !isSha(sidecar.sha256)) {
+        throw new Error(`attempt progress snapshot ${name} is invalid`);
+      }
+    }
+  }
+} catch (error) {
+  process.stderr.write(`invalid attempt progress context: ${error.message}\n`);
+  process.exit(2);
+}
+NODE
+}
+
 prepare_ticket_selectors() {
     local ticket_id
     ticket_id=$(json_value "$receipt_context" ticketId) || die 'could not read ticketId from receipt context'
@@ -528,9 +609,10 @@ write_manifest() {
         printf 'runContextSha256=%s\n' "$context_sha"
         printf 'selectorMapSha256=%s\n' "$selector_sha"
         printf 'runnerScriptSha256=%s\n' "$runner_sha"
-        printf 'appId=%s\n' "$APP_ID"
-        [[ -n "$receipt_context" ]] && printf 'receiptContextSha256=%s\n' "$(sha256_file "$receipt_context")"
-    } > "$output_dir/run-manifest.env"
+    printf 'appId=%s\n' "$APP_ID"
+    [[ -n "$receipt_context" ]] && printf 'receiptContextSha256=%s\n' "$(sha256_file "$receipt_context")"
+    [[ -n "$attempt_progress_context" ]] && printf 'attemptProgressContextSha256=%s\n' "$(sha256_file "$attempt_progress_context")"
+} > "$output_dir/run-manifest.env"
     chmod 600 "$output_dir/run-manifest.env"
 }
 
@@ -607,6 +689,58 @@ capture_reader_context_after_rating() {
         --rating "$E2B_RATING"
 }
 
+capture_attempt_progress_context() {
+    local destination=$1
+    local temporary="${destination}.tmp.$$"
+    local snapshot_dir="$output_dir/room-attempt-progress.raw"
+    local database="$snapshot_dir/schoolquiz.db"
+    local suffix
+    [[ -f "$attempt_progress_reader" ]] || die "attempt progress reader does not exist: $attempt_progress_reader"
+    if [[ "$sqlite3_bin" == */* ]]; then
+        [[ -x "$sqlite3_bin" ]] || die "sqlite3 binary is not executable: $sqlite3_bin"
+    else
+        command -v "$sqlite3_bin" >/dev/null 2>&1 || die "sqlite3 binary is unavailable: $sqlite3_bin"
+    fi
+    [[ ! -e "$destination" && ! -e "$temporary" && ! -e "$snapshot_dir" ]] ||
+        die 'attempt progress evidence path already exists'
+    mkdir -m 700 "$snapshot_dir"
+
+    # The preceding Maestro flow has displayed the restored answer and stopped the app.  Copying
+    # the frozen database and its adjacent sidecars is the only device read in this proof.  Raw
+    # copies are removed after the reader emits its redacted context, including on a read failure.
+    if ! "$adb_bin" -s "$serial" exec-out run-as "$APP_ID" cat databases/schoolquiz.db > "$database"; then
+        rm -f -- "$database"
+        rmdir -- "$snapshot_dir" 2>/dev/null || true
+        die 'could not copy the retained Room database for post-relaunch evidence'
+    fi
+    for suffix in -wal -shm; do
+        if "$adb_bin" -s "$serial" shell run-as "$APP_ID" sh -c "test -f databases/schoolquiz.db${suffix}" >/dev/null; then
+            if ! "$adb_bin" -s "$serial" exec-out run-as "$APP_ID" cat "databases/schoolquiz.db${suffix}" > "${database}${suffix}"; then
+                rm -f -- "$database" "${database}-wal" "${database}-shm"
+                rmdir -- "$snapshot_dir" 2>/dev/null || true
+                die 'could not copy a retained Room sidecar for post-relaunch evidence'
+            fi
+        fi
+    done
+    if ! "$node_bin" "$attempt_progress_reader" \
+        --db "$database" \
+        --sqlite3 "$sqlite3_bin" \
+        --run-id "$run_id" \
+        --owner-uid "$E2B_OWNER_UID" \
+        --ticket-id "$(json_value "$receipt_context" ticketId)" \
+        --attempt-id "$(json_value "$receipt_context" attemptId)" > "$temporary"; then
+        rm -f -- "$temporary" "$database" "${database}-wal" "${database}-shm"
+        rmdir -- "$snapshot_dir" 2>/dev/null || true
+        return 1
+    fi
+    chmod 600 "$temporary"
+    if ! rm -f -- "$database" "${database}-wal" "${database}-shm" || ! rmdir -- "$snapshot_dir"; then
+        rm -f -- "$temporary"
+        die 'could not remove the raw Room snapshot after progress validation'
+    fi
+    mv -- "$temporary" "$destination"
+}
+
 run_full_oracle() {
     local rating_id
     rating_id=$(json_value "$rating_id_context" ratingId) || die 'could not read ratingId from Room context'
@@ -629,9 +763,11 @@ while (($#)); do
         --run-context) [[ $# -ge 2 ]] || die '--run-context requires a value'; run_context=$2; shift 2 ;;
         --selectors) [[ $# -ge 2 ]] || die '--selectors requires a value'; selectors_file=$2; shift 2 ;;
         --receipt-context) [[ $# -ge 2 ]] || die '--receipt-context requires a value'; receipt_context=$2; shift 2 ;;
+        --attempt-progress-context) [[ $# -ge 2 ]] || die '--attempt-progress-context requires a value'; attempt_progress_context=$2; shift 2 ;;
         --rating-id-context) [[ $# -ge 2 ]] || die '--rating-id-context requires a value'; rating_id_context=$2; shift 2 ;;
         --context-reader) [[ $# -ge 2 ]] || die '--context-reader requires a value'; context_reader=$2; shift 2 ;;
         --receipt-oracle) [[ $# -ge 2 ]] || die '--receipt-oracle requires a value'; receipt_oracle=$2; shift 2 ;;
+        --attempt-progress-reader) [[ $# -ge 2 ]] || die '--attempt-progress-reader requires a value'; attempt_progress_reader=$2; shift 2 ;;
         --output-root) [[ $# -ge 2 ]] || die '--output-root requires a value'; output_root=$2; shift 2 ;;
         --serial) [[ $# -ge 2 ]] || die '--serial requires a value'; serial=$2; shift 2 ;;
         --adb) [[ $# -ge 2 ]] || die '--adb requires a value'; adb_bin=$2; shift 2 ;;
@@ -639,6 +775,7 @@ while (($#)); do
         --apksigner) [[ $# -ge 2 ]] || die '--apksigner requires a value'; apksigner_bin=$2; shift 2 ;;
         --java-home) [[ $# -ge 2 ]] || die '--java-home requires a value'; java_home=$2; shift 2 ;;
         --node) [[ $# -ge 2 ]] || die '--node requires a value'; node_bin=$2; shift 2 ;;
+        --sqlite3) [[ $# -ge 2 ]] || die '--sqlite3 requires a value'; sqlite3_bin=$2; shift 2 ;;
         --install-candidate) install_candidate=true; shift ;;
         --help|-h) usage; exit 0 ;;
         *) die "unknown argument: $1" ;;
@@ -671,6 +808,10 @@ case "$phase" in
         require_value --receipt-context "$receipt_context"
         require_value --context-reader "$context_reader"
         [[ -f "$context_reader" ]] || die "context reader does not exist: $context_reader"
+        if [[ "$phase" == settle ]]; then
+            require_value --attempt-progress-reader "$attempt_progress_reader"
+            [[ -f "$attempt_progress_reader" ]] || die "attempt progress reader does not exist: $attempt_progress_reader"
+        fi
         validate_receipt_context "$receipt_context" false
         validate_unsettled_server_context "$receipt_context"
         prepare_ticket_selectors
@@ -701,6 +842,7 @@ case "$phase" in
         ;;
     verify)
         require_value --receipt-context "$receipt_context"
+        require_value --attempt-progress-context "$attempt_progress_context"
         require_value --rating-id-context "$rating_id_context"
         require_value --context-reader "$context_reader"
         require_value --receipt-oracle "$receipt_oracle"
@@ -709,6 +851,9 @@ case "$phase" in
         validate_receipt_context "$receipt_context" false
         validate_confirmed_settlement "$receipt_context"
         validate_rating_id_context "$rating_id_context" \
+            "$(json_value "$receipt_context" ticketId)" \
+            "$(json_value "$receipt_context" attemptId)"
+        validate_attempt_progress_context "$attempt_progress_context" \
             "$(json_value "$receipt_context" ticketId)" \
             "$(json_value "$receipt_context" attemptId)"
         ;;
@@ -747,6 +892,13 @@ case "$phase" in
         ;;
     settle)
         run_maestro "$(dirname "$0")/flows/02-start-answer-relaunch.yaml"
+        capture_attempt_progress_context "$output_dir/post-relaunch-room-progress.json"
+        validate_attempt_progress_context "$output_dir/post-relaunch-room-progress.json" \
+            "$(json_value "$receipt_context" ticketId)" \
+            "$(json_value "$receipt_context" attemptId)"
+        printf 'postRelaunchAttemptProgressContextSha256=%s\n' \
+            "$(sha256_file "$output_dir/post-relaunch-room-progress.json")" >> "$output_dir/run-manifest.env"
+        run_maestro "$(dirname "$0")/flows/02-resume-saved-answer-and-finish.yaml"
         run_maestro "$(dirname "$0")/flows/03-finish.yaml"
         capture_reader_context "$output_dir/pending-settlement-context.json"
         validate_receipt_context "$output_dir/pending-settlement-context.json" false

@@ -15,7 +15,7 @@ identities could accidentally validate an older receipt.
 | --- | --- | --- |
 | `preflight` | Preserved-data launch and retained-account UI check | Selector snapshot and immutable run context |
 | `prepare` | SELECTED/HARD preparation | Read-only receipt context containing the new ticket and attempt |
-| `settle` | Start, answer, force-stop/relaunch, finish | Pending UI proof plus a `RESERVED`/no-event server context for the exact saved SETTLE |
+| `settle` | Start, answer, force-stop/relaunch, read retained Room progress, finish | Pending UI proof, a redacted Room checkpoint for the same first answer, and a `RESERVED`/no-event server context for the exact saved SETTLE |
 | `resume-settle` | Continue an interrupted saved-answer run | Same pending proof, without preparing or starting a replacement ticket |
 | `deliver` | Re-open an existing local SETTLE request and synchronize it | Fresh read-only receipt context showing the matching settlement |
 | `rate` | Queue rating `2` from the confirmed result screen | Read-only Room context containing the new `ratingId` and the exact ticket/attempt |
@@ -53,6 +53,17 @@ executed Maestro flow by SHA-256.
    the `RATE_LESSON` receipt.  In the retained Maestro image, pass
    `--sqlite3 /tools/sdk/platform-tools/sqlite3` explicitly: `/usr/bin/sqlite3`
    is not installed there.  The reader stays read-only in either runtime.
+5. The fresh `settle` invocation must receive
+   `--attempt-progress-reader scripts/arena-e2e-attempt-progress-reader.js` and,
+   in the retained Maestro runtime, `--sqlite3 /tools/sdk/platform-tools/sqlite3`.
+   After the first force-stop/relaunch flow visibly restores the saved answer,
+   the runner keeps the app stopped, copies `schoolquiz.db` with adjacent
+   WAL/SHM files to a private temporary directory, runs the reader, then
+   deletes the raw copy. Its `post-relaunch-room-progress.json` contains only
+   the bound ticket/attempt, checkpoint hashes, and redacted progress flags;
+   it contains no owner ID, question ID, selected answer, raw checkpoint, or
+   Room mutation payload. The runner then makes one more retained-data launch
+   and completes the exact saved ticket.
 
 The current UI evidence identifies the target lesson as `Catalog fixture title
 changed` and the preparation controls as `Prepare selected lesson`, `Confirm
@@ -93,10 +104,11 @@ demo Firestore endpoint and empty credential variables. Their JSON is written
 through a private temporary file and renamed only after a successful read, so
 a failed reader cannot leave a partial receipt artifact behind.
 
-The `settle` and `verify` phases receive paths to the read-only context reader;
-`verify` also receives the settlement context, a Room rating-ID context, and
-the two-receipt oracle.  The oracle gets `--rating-id` and `--rating`, never
-the local outbox mutation key.
+The `settle` phase receives the server context reader plus the local attempt
+progress reader. `verify` receives the settlement context, the redacted
+post-relaunch Room context, a Room rating-ID context, and the two-receipt
+oracle. The oracle gets `--rating-id` and `--rating`, never the local outbox
+mutation key.
 
 Example shape, with all paths and values supplied by the executor:
 
@@ -112,12 +124,15 @@ bash work/arena-e2b/run-arena-e2b.sh \
   --output-root <outside-repository-results-directory>
 ```
 
-For `settle`, add `--receipt-context <reader-output-after-prepare.json>` and
-`--context-reader <arena-e2e-context-reader.js>`. Its output must remain
-`RESERVED` with no event or receipt. Run `deliver` against that same pending
-context; it sends the already saved operation and produces the confirmed context
-for `rate`. For
-`verify`, retain that settlement context, add `--rating-id-context <room-reader-output.json>`, and add
+For `settle`, add `--receipt-context <reader-output-after-prepare.json>`,
+`--context-reader <arena-e2e-context-reader.js>`,
+`--attempt-progress-reader <arena-e2e-attempt-progress-reader.js>`, and an
+explicit read-only SQLite binary. Its output must remain `RESERVED` with no
+event or receipt. Run `deliver` against that same pending context; it sends the
+already saved operation and produces the confirmed context for `rate`. For
+`verify`, retain that settlement context, add
+`--attempt-progress-context <settle-output/post-relaunch-room-progress.json>`,
+`--rating-id-context <room-reader-output.json>`, and
 `--receipt-oracle <arena-e2e-receipt-oracle.js>`.
 
 `rate` stops only when the UI confirms that rating `2` is queued locally. Take
