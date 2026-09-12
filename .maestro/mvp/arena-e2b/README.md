@@ -24,6 +24,8 @@ identities could accidentally validate an older receipt.
 `run-arena-e2b.sh` emits `result.json` in a new private output directory on
 every phase.  Only `verify` may emit an overall `PASS`; completed earlier
 phases remain `NOT_RUN` overall and name their next required evidence.
+Its manifest binds the APK, run context, selector map, runner and every
+executed Maestro flow by SHA-256.
 
 ## Inputs
 

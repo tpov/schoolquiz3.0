@@ -32,10 +32,14 @@ name: E2B start answer and preserved-data relaunch
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_TICKET_START}
+      below:
+        text: ${E2B_SELECTOR_TICKET_LABEL}
     direction: DOWN
     timeout: 60000
 - tapOn:
     text: ${E2B_SELECTOR_TICKET_START}
+    below:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
     enabled: true
     retryTapIfNoChange: true
 - extendedWaitUntil:
@@ -81,10 +85,14 @@ name: E2B start answer and preserved-data relaunch
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_TICKET_OPEN}
+      below:
+        text: ${E2B_SELECTOR_TICKET_LABEL}
     direction: DOWN
     timeout: 60000
 - tapOn:
     text: ${E2B_SELECTOR_TICKET_OPEN}
+    below:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
     enabled: true
     retryTapIfNoChange: true
 - extendedWaitUntil:

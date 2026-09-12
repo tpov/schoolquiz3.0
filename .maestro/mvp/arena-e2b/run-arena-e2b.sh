@@ -502,10 +502,11 @@ parse_reverse_mapping() {
 }
 
 write_manifest() {
-    local apk_sha context_sha selector_sha
+    local apk_sha context_sha selector_sha runner_sha
     apk_sha=$(sha256_file "$candidate_apk")
     context_sha=$(sha256_file "$run_context")
     selector_sha=$(sha256_file "$selectors_file")
+    runner_sha=$(sha256_file "$0")
     {
         printf 'runId=%s\n' "$run_id"
         printf 'phase=%s\n' "$phase"
@@ -513,6 +514,7 @@ write_manifest() {
         printf 'candidateApkSha256=%s\n' "$apk_sha"
         printf 'runContextSha256=%s\n' "$context_sha"
         printf 'selectorMapSha256=%s\n' "$selector_sha"
+        printf 'runnerScriptSha256=%s\n' "$runner_sha"
         printf 'appId=%s\n' "$APP_ID"
         [[ -n "$receipt_context" ]] && printf 'receiptContextSha256=%s\n' "$(sha256_file "$receipt_context")"
     } > "$output_dir/run-manifest.env"
@@ -521,10 +523,12 @@ write_manifest() {
 
 run_maestro() {
     local flow=$1
-    local flow_name=${flow##*/}
+    local flow_name=${flow##*/} flow_sha
     flow_name=${flow_name%.yaml}
     local flow_output="$output_dir/maestro-${phase}-${flow_name}"
     mkdir -p "$flow_output"
+    flow_sha=$(sha256_file "$flow")
+    printf 'maestroFlow.%s.%s.sha256=%s\n' "$phase" "$flow_name" "$flow_sha" >> "$output_dir/run-manifest.env"
     local -a args=(test -e "E2B_RUN_ID=$run_id" -e "E2B_APP_ID=$APP_ID")
     local key value
     for key in "${SELECTOR_KEYS[@]}"; do

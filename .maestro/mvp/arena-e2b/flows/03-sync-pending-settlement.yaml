@@ -32,10 +32,14 @@ name: E2B deliver the retained settlement request
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_TICKET_OPEN}
+      below:
+        text: ${E2B_SELECTOR_TICKET_LABEL}
     direction: DOWN
     timeout: 60000
 - tapOn:
     text: ${E2B_SELECTOR_TICKET_OPEN}
+    below:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
     enabled: true
     retryTapIfNoChange: true
 - extendedWaitUntil:
