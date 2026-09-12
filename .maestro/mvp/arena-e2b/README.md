@@ -16,6 +16,7 @@ identities could accidentally validate an older receipt.
 | `preflight` | Preserved-data launch and retained-account UI check | Selector snapshot and immutable run context |
 | `prepare` | SELECTED/HARD preparation | Read-only receipt context containing the new ticket and attempt |
 | `settle` | Start, answer, force-stop/relaunch, finish | Fresh read-only receipt context showing the matching settlement |
+| `deliver` | Re-open an existing local SETTLE request and synchronize it | Fresh read-only receipt context showing the matching settlement |
 | `rate` | Submit rating `2` from the confirmed result screen | Read-only Room context containing the new `ratingId` and the exact ticket/attempt |
 | `verify` | Run the two-receipt oracle | `PASS` only when `SETTLE` and `RATE_LESSON` bind the same run |
 

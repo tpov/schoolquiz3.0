@@ -1,0 +1,53 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B deliver the retained settlement request
+---
+# This flow is used only after the original ticket has a local SETTLE request.
+# It opens that exact existing ticket; it never starts or prepares a replacement.
+- launchApp:
+    clearState: false
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    direction: DOWN
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    enabled: true
+    retryTapIfNoChange: true
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    direction: DOWN
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_OPEN}
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_TICKET_OPEN}
+    enabled: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SYNCHRONIZE}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SYNCHRONIZE}
+    enabled: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_SETTLE_CONFIRMED}
+    timeout: 60000
+- takeScreenshot: "03-e2b-retained-settlement-delivered"

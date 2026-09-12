@@ -2,6 +2,15 @@ appId: com.tpov.schoolquiz.mvp
 name: E2B finish and wait for settlement receipt
 ---
 - extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SYNCHRONIZE}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SYNCHRONIZE}
+    enabled: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
     visible: ${E2B_SELECTOR_SETTLE_CONFIRMED}
     timeout: 60000
 - takeScreenshot: "03-e2b-settle-ui-confirmed"

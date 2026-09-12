@@ -61,6 +61,7 @@ readonly SELECTOR_KEYS=(
     E2B_SELECTOR_SECOND_QUESTION
     E2B_SELECTOR_SECOND_ANSWER
     E2B_SELECTOR_CONTINUE_LESSON
+    E2B_SELECTOR_SYNCHRONIZE
     E2B_SELECTOR_SETTLE_CONFIRMED
     E2B_SELECTOR_RATING_PROMPT
     E2B_SELECTOR_RATE_TWO
@@ -70,7 +71,7 @@ readonly SELECTOR_KEYS=(
 usage() {
     cat <<'USAGE'
 Usage:
-  run-arena-e2b.sh --phase preflight|prepare|settle|rate|verify \
+  run-arena-e2b.sh --phase preflight|prepare|settle|deliver|rate|verify \
     --run-id <id> --candidate-head <40-hex> --apk <candidate.apk> \
     --run-context <immutable.env> --selectors <confirmed-selectors.env> \
     --output-root <results-dir> [--serial <adb-serial>] \
@@ -79,7 +80,7 @@ Usage:
     [--receipt-oracle <oracle.js>] [--adb <path>] [--maestro <path>] \
     [--apksigner <path>] [--java-home <dir>] [--node <path>] [--install-candidate]
 
-Only verify may emit overall PASS.  Device phases require --serial.  Settle requires
+Only verify may emit overall PASS.  Device phases require --serial.  Settle and deliver require
 --receipt-context and --context-reader; rate requires --receipt-context; verify requires
 --receipt-context, --rating-id-context, --context-reader, and --receipt-oracle.
 
@@ -236,7 +237,13 @@ required_selector_keys() {
                 E2B_SELECTOR_QUESTION E2B_SELECTOR_FIRST_ANSWER E2B_SELECTOR_SAVED_ANSWER \
                 E2B_SELECTOR_RESUME_DIALOG E2B_SELECTOR_RESUME_OR_SAVED E2B_SELECTOR_RESUME_CONTINUE \
                 E2B_SELECTOR_SECOND_QUESTION E2B_SELECTOR_SECOND_ANSWER E2B_SELECTOR_CONTINUE_LESSON \
-                E2B_SELECTOR_SETTLE_CONFIRMED
+                E2B_SELECTOR_SYNCHRONIZE E2B_SELECTOR_SETTLE_CONFIRMED
+            ;;
+        deliver)
+            printf '%s\n' \
+                E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_SHOW_LOCAL_TICKETS \
+                E2B_SELECTOR_TICKET_LABEL_TEMPLATE E2B_SELECTOR_TICKET_OPEN \
+                E2B_SELECTOR_SYNCHRONIZE E2B_SELECTOR_SETTLE_CONFIRMED
             ;;
         rate)
             printf '%s\n' \
@@ -257,7 +264,7 @@ validate_selectors() {
         [[ -n "$key" ]] || continue
         require_file_key selectors "$key"
     done < <(required_selector_keys)
-    if [[ "$phase" == settle || "$phase" == rate ]]; then
+    if [[ "$phase" == settle || "$phase" == deliver || "$phase" == rate ]]; then
         local template=$E2B_SELECTOR_TICKET_LABEL_TEMPLATE
         [[ "$template" == *'{{ticketId}}'* ]] || die 'ticket label selector must contain {{ticketId}}'
         [[ "${template#*'{{ticketId}}'}" != *'{{ticketId}}'* ]] || die 'ticket label selector must contain {{ticketId}} exactly once'
@@ -595,7 +602,7 @@ validate_selectors
 # Validate all immutable and read-only inputs before the runner updates the retained APK or changes
 # its three allowed reverse mappings.
 case "$phase" in
-    settle)
+    settle|deliver)
         require_value --receipt-context "$receipt_context"
         require_value --context-reader "$context_reader"
         [[ -f "$context_reader" ]] || die "context reader does not exist: $context_reader"
@@ -631,7 +638,7 @@ chmod 700 "$output_dir"
 write_manifest
 
 case "$phase" in
-    preflight|prepare|settle|rate)
+    preflight|prepare|settle|deliver|rate)
         require_value --serial "$serial"
         assert_device_and_candidate
         ensure_reverse_mappings
@@ -657,6 +664,16 @@ case "$phase" in
     settle)
         run_maestro "$(dirname "$0")/flows/02-start-answer-relaunch.yaml"
         run_maestro "$(dirname "$0")/flows/03-finish.yaml"
+        capture_reader_context "$output_dir/receipt-context-after-settle.json"
+        validate_receipt_context "$output_dir/receipt-context-after-settle.json" false
+        validate_confirmed_settlement "$output_dir/receipt-context-after-settle.json"
+        printf 'settlementReceiptContextSha256=%s\n' "$(sha256_file "$output_dir/receipt-context-after-settle.json")" >> "$output_dir/run-manifest.env"
+        overall_status='NOT_RUN'
+        phase_status='PASS'
+        next_required='inspect the settlement context, then submit rating 2 from the confirmed result screen'
+        ;;
+    deliver)
+        run_maestro "$(dirname "$0")/flows/03-sync-pending-settlement.yaml"
         capture_reader_context "$output_dir/receipt-context-after-settle.json"
         validate_receipt_context "$output_dir/receipt-context-after-settle.json" false
         validate_confirmed_settlement "$output_dir/receipt-context-after-settle.json"
