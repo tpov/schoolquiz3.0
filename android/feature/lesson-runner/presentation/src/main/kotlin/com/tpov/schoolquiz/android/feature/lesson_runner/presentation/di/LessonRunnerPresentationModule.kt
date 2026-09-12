@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunResultServices
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunServices
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultArenaRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
@@ -25,7 +26,15 @@ import org.koin.dsl.module
 val lessonRunnerPresentationModule =
     module {
         single<ArenaRunnerComponentFactory> {
-            val services = ArenaRunServices(get(), get(), get(), get(), get(), get(), get())
+            val services =
+                ArenaRunServices(
+                    runs = get(),
+                    entries = get(),
+                    sessions = get(),
+                    sessionEvents = get(),
+                    wallet = get(),
+                    result = ArenaRunResultServices(settlements = get(), ratings = get(), sync = get()),
+                )
             val clock = get<kotlinx.datetime.Clock>()
             ArenaRunnerComponentFactory { context, request ->
                 DefaultArenaRunnerRootComponent(context, request, services, clock)

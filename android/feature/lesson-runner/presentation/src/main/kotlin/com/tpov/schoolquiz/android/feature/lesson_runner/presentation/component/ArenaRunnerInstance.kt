@@ -107,7 +107,7 @@ internal class ArenaRunnerInstance(
 
     private fun canNavigateBack(frame: ArenaRunnerView): Boolean =
         when (frame) {
-            is ArenaRunnerView.Result -> true
+            is ArenaRunnerView.Result -> !frame.rating.submitting
             is ArenaRunnerView.Attention -> !frame.busy && frame.status !in SAVING_STATUSES
             else -> false
         }
@@ -118,8 +118,15 @@ internal class ArenaRunnerInstance(
 
     override fun onNextLesson() = onBack()
 
-    // The frozen-rating port is intentionally not wired until its owner/receipt transaction is available.
+    // The inherited callback has no frozen receipt frame, so Arena deliberately fails it closed.
     override fun onSubmitRating(rating: Int) = Unit
+
+    fun submitRating(
+        frame: ArenaRunnerView.Result,
+        rating: Int,
+    ) = host.submitRating(frame, rating)
+
+    fun requestRatingSync(frame: ArenaRunnerView.Result) = host.requestRatingSync(frame)
 
     override fun onPostComment(text: String) = Unit
 

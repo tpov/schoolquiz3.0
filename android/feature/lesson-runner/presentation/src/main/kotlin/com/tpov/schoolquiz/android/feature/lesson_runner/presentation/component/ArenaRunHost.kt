@@ -13,6 +13,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIden
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaFrozenRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
@@ -52,6 +53,8 @@ internal class ArenaRunHost(
         }
     private val visibility = ArenaRunVisibility()
     private val budget = ArenaRunHintBudget(stamp, services.wallet, services.sessions, scope, clock, ::publish)
+    private val rating =
+        ArenaRunRating(services.result.ratings, services.sessions, services.result.sync, mainContext)
     private val mutableView = MutableStateFlow<ArenaRunnerView>(ArenaRunnerView.Attention(ArenaRunnerStatus.LOADING))
     val view = mutableView.asStateFlow()
     private var showExit = false
@@ -67,6 +70,7 @@ internal class ArenaRunHost(
         } else {
             scope.launch {
                 services.sessionEvents.observeSessions().collect {
+                    rating.onSessionChanged()
                     if (!controller.checkSession()) {
                         budget.clear()
                         clearReceipt()
@@ -75,6 +79,7 @@ internal class ArenaRunHost(
                 }
             }
             scope.launch { controller.state.collect { reconcile() } }
+            scope.launch { rating.state.collect { publish() } }
             observeReceipts(controller)
             val intent = request.fresh?.let { ArenaRunStart.Fresh(it.mode) } ?: ArenaRunStart.ResumeOnly
             controller.start(intent)
@@ -177,7 +182,7 @@ internal class ArenaRunHost(
                 pending?.decision == ArenaRunDecision.CANCEL -> dispatchCancel()
                 state.canRetryReceiptSync(
                     receiptFrame?.settlement ?: pendingSettlement(),
-                ) -> services.sync.enqueueManualSync()
+                ) -> services.result.sync.enqueueManualSync()
             }
         }
     }
@@ -229,8 +234,9 @@ internal class ArenaRunHost(
             reconcileReceipt(state)
             val current = state.observed as? ArenaRunRead.Continuable
             val result = receiptFrameFor(state, original)
+            rating.bind(result?.toVerifiedResult())
             mutableView.value =
-                result ?: arenaRunView(
+                result?.copy(rating = rating.state.value) ?: arenaRunView(
                     state,
                     original,
                     visibility.foreground,
@@ -285,7 +291,7 @@ internal class ArenaRunHost(
                 .distinctUntilChanged()
                 .flatMapLatest { key ->
                     key?.let { frozen ->
-                        services.settlements.observe(frozen.attempt).map { ArenaReceiptEmission(frozen, it) }
+                        services.result.settlements.observe(frozen.attempt).map { ArenaReceiptEmission(frozen, it) }
                     } ?: flowOf(null)
                 }
                 .collect { emission ->
@@ -313,7 +319,39 @@ internal class ArenaRunHost(
     private fun clearReceipt() {
         receiptKey = null
         receiptFrame = null
+        rating.bind(null)
     }
+
+    /** UI callbacks must still name the exact rendered receipt after a retained-host state change. */
+    fun submitRating(
+        frame: ArenaRunnerView.Result,
+        ratingValue: Int,
+    ) {
+        verifiedCurrentResult(frame)?.let {
+            rating.bind(it)
+            rating.submit(ratingValue)
+        }
+    }
+
+    fun requestRatingSync(frame: ArenaRunnerView.Result) {
+        verifiedCurrentResult(frame)?.let {
+            rating.bind(it)
+            rating.requestSync()
+        }
+    }
+
+    private fun verifiedCurrentResult(frame: ArenaRunnerView.Result): ArenaVerifiedResult? =
+        currentReceiptFrame()
+            ?.let { current ->
+                frame
+                    .takeIf { it == current.copy(rating = frame.rating) }
+                    ?.toVerifiedResult()
+            }
+
+    private fun currentReceiptFrame(): ArenaRunnerView.Result? =
+        coordinator?.state?.value?.let { state ->
+            stamp?.let { original -> receiptFrameFor(state, original) }
+        }
 
     private fun receiptFrameFor(
         state: ArenaRunCoordinatorState,
@@ -333,7 +371,9 @@ internal class ArenaRunHost(
 
     override fun onDestroy() {
         destroyed = true
-        clearReceipt()
+        rating.onDestroy()
+        receiptKey = null
+        receiptFrame = null
         scope.cancel()
         budget.clear()
         mutableView.value = ArenaRunnerView.Attention(ArenaRunnerStatus.ACCOUNT_CHANGED)
@@ -410,6 +450,22 @@ internal data class ArenaRunServices(
     val sessions: ArenaSessionProvider,
     val sessionEvents: ArenaSessionObserver,
     val wallet: ArenaWalletRepository,
-    val sync: SyncScheduler,
-    val settlements: ServerAttemptSettlementRepository,
+    val result: ArenaRunResultServices,
 )
+
+/** Result ports stay together so the main retained-host constructor remains small and legible. */
+internal data class ArenaRunResultServices(
+    val settlements: ServerAttemptSettlementRepository,
+    val ratings: ArenaFrozenRatingRepository,
+    val sync: SyncScheduler,
+)
+
+private fun ArenaRunnerView.Result.toVerifiedResult(): ArenaVerifiedResult? =
+    takeIf { settlement.isConfirmedCompletion }?.let {
+        ArenaVerifiedResult(
+            stamp,
+            header.ticketId,
+            attempt,
+            settlement,
+        )
+    }

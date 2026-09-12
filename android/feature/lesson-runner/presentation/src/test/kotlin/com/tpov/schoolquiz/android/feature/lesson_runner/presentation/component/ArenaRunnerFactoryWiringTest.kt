@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonR
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaFrozenRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
@@ -70,6 +71,7 @@ class ArenaRunnerFactoryWiringTest {
         single<ArenaWalletRepository> { ArenaWalletRepository { error("No wallet read during resolution") } }
         single<SyncScheduler> { FakeSyncScheduler() }
         single<ServerAttemptSettlementRepository> { HostSettlementFake() }
+        single<ArenaFrozenRatingRepository> { HostArenaFrozenRatingFake() }
     }
 
     private val clockModule =

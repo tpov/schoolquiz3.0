@@ -2,18 +2,23 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaFreshStart
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntriesCursor
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPreparationsCursor
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPrepareRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRecoveryCursor
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaWalletObservation
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaFrozenRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
@@ -40,6 +45,7 @@ internal class ArenaRunHostFixture(scope: TestScope) {
     var beforeWallet: suspend () -> Unit = {}
     val entries = HostEntryFake(run)
     val settlements = HostSettlementFake()
+    val ratings = HostArenaFrozenRatingFake()
     private val services =
         ArenaRunServices(
             run.repository,
@@ -51,18 +57,21 @@ internal class ArenaRunHostFixture(scope: TestScope) {
                 beforeWallet()
                 Result.success(ArenaWalletObservation(stamp, run.now, 1, 0, 500, 50, 1000))
             },
-            object : SyncScheduler {
-                override fun enqueueManualSync() {
-                    syncCalls++
-                }
+            ArenaRunResultServices(
+                settlements,
+                ratings,
+                object : SyncScheduler {
+                    override fun enqueueManualSync() {
+                        syncCalls++
+                    }
 
-                override fun enqueueManualProfileSync() = error("Unexpected profile sync")
+                    override fun enqueueManualProfileSync() = error("Unexpected profile sync")
 
-                override fun applyFrequency(frequency: SyncFrequency) = error("Unexpected schedule")
+                    override fun applyFrequency(frequency: SyncFrequency) = error("Unexpected schedule")
 
-                override fun applyProfileFrequency(frequency: SyncFrequency) = error("Unexpected profile schedule")
-            },
-            settlements,
+                    override fun applyProfileFrequency(frequency: SyncFrequency) = error("Unexpected profile schedule")
+                },
+            ),
         )
     private val dispatcher = StandardTestDispatcher(scope.testScheduler)
 
@@ -88,6 +97,47 @@ internal class ArenaRunHostFixture(scope: TestScope) {
         run.session = run.stamp.copy(generation = 3)
         sessionEvents.value = run.session
     }
+}
+
+internal class HostArenaFrozenRatingFake : ArenaFrozenRatingRepository {
+    private val values = mutableMapOf<Pair<ArenaSessionStamp, String>, MutableStateFlow<ArenaFrozenRatingState>>()
+    val observed = mutableListOf<Pair<ArenaSessionStamp, String>>()
+    val submitted = mutableListOf<Triple<ArenaSessionStamp, String, Int>>()
+
+    /** Lets a test hold a submission open so an in-flight rating can be observed from outside. */
+    var beforeSubmit: suspend () -> Unit = {}
+
+    override fun observe(
+        stamp: ArenaSessionStamp,
+        ticketId: String,
+    ): Flow<ArenaFrozenRatingState> =
+        flow {
+            observed += stamp to ticketId
+            valueFor(stamp, ticketId).collect(::emit)
+        }
+
+    override suspend fun submit(
+        stamp: ArenaSessionStamp,
+        ticketId: String,
+        rating: Int,
+    ): Result<ArenaFrozenRatingState> {
+        submitted += Triple(stamp, ticketId, rating)
+        beforeSubmit()
+        return Result.success(ArenaFrozenRatingState.Queued(rating))
+    }
+
+    fun emit(
+        stamp: ArenaSessionStamp,
+        ticketId: String,
+        state: ArenaFrozenRatingState,
+    ) {
+        valueFor(stamp, ticketId).value = state
+    }
+
+    private fun valueFor(
+        stamp: ArenaSessionStamp,
+        ticketId: String,
+    ) = values.getOrPut(stamp to ticketId) { MutableStateFlow(ArenaFrozenRatingState.Unavailable) }
 }
 
 /** Tracks subscription lifetime so receipt tests prove that stale flows cannot paint a retained host. */
@@ -207,3 +257,18 @@ internal class HostEntryFake(private val run: RunCoordinatorFixture) : ArenaEntr
         ticketId: String,
     ): Nothing = error("Unexpected settlement restore")
 }
+
+/** The one confirmed-completion receipt shape shared by the retained host and root tests. */
+internal fun confirmedSettlement() =
+    ServerAttemptSettlement(
+        state = ServerAttemptSettlementState.SETTLED,
+        receiptId = "receipt",
+        codeAnswer = CodeAnswer("9"),
+        percentScore = PercentScore(100),
+        completed = true,
+        settledAtMs = 1L,
+        lifePointsSpent = 10L,
+        plasmaPointsSpent = 0L,
+        reward = ServerAttemptReward(20L, 5L),
+        ownerVerified = true,
+    )

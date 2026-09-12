@@ -21,4 +21,14 @@
     <string name="arena_run_result_reward_nolics">Начислено ноликов: %1$d</string>
     <string name="arena_run_result_life_cost">Использовано очков жизни: %1$d</string>
     <string name="arena_run_result_plasma_cost">Использовано очков плазмы: %1$d</string>
+    <string name="arena_run_rating_choose">Оцените этот урок</string>
+    <string name="arena_run_rating_option_1">Оценка 1</string>
+    <string name="arena_run_rating_option_2">Оценка 2</string>
+    <string name="arena_run_rating_option_3">Оценка 3</string>
+    <string name="arena_run_rating_queued">Ваша оценка (%1$d) ожидает отправки.</string>
+    <string name="arena_run_rating_accepted">Ваша оценка (%1$d) принята.</string>
+    <string name="arena_run_rating_existing_unverified">Оценка существует, но подтверждение сервера проверить нельзя.</string>
+    <string name="arena_run_rating_unavailable">Оценка для этой квитанции недоступна.</string>
+    <string name="arena_run_rating_submit_failed">Оценка не сохранена. Повторите попытку.</string>
+    <string name="arena_run_rating_sync">Отправить оценку</string>
 </resources>

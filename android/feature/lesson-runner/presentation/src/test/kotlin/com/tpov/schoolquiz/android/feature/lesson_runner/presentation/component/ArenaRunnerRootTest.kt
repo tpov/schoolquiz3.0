@@ -11,11 +11,13 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaFresh
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSyncScheduler
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -139,6 +141,58 @@ class ArenaRunnerRootTest {
         }
 
     @Test
+    fun backIsRefusedOnEveryComponentPathWhileAFrozenRatingSubmissionIsInFlight() =
+        runTest {
+            val f = RootFixture(this)
+            try {
+                val component = f.component()
+                component.onArenaForeground()
+                runCurrent()
+                repeat(2) {
+                    component.onArenaAction(component.question().token, ArenaRunAction.Answer(f.run.answer))
+                    runCurrent()
+                    component.onArenaAction(component.question().token, ArenaRunAction.Continue)
+                    runCurrent()
+                }
+                val pending = assertIs<ArenaRunnerView.Result>(component.arenaView.value)
+                f.settlements.emit(pending.attempt, confirmedSettlement())
+                runCurrent()
+                f.ratings.emit(pending.stamp, pending.header.ticketId, ArenaFrozenRatingState.Pending)
+                runCurrent()
+                val confirmed = assertIs<ArenaRunnerView.Result>(component.arenaView.value)
+                assertTrue(confirmed.rating.canSubmit)
+
+                val release = CompletableDeferred<Unit>()
+                f.ratings.beforeSubmit = { release.await() }
+                component.onArenaSubmitRating(confirmed, 2)
+                runCurrent()
+                assertTrue(assertIs<ArenaRunnerView.Result>(component.arenaView.value).rating.submitting)
+
+                val event = async { component.events.first() }
+                component.onBack()
+                runCurrent()
+                assertTrue(event.isActive)
+
+                // The OS back button reaches the runner as onCrossButtonTap; a Result frame routes it to onBack.
+                component.onCrossButtonTap()
+                runCurrent()
+                assertTrue(event.isActive)
+
+                release.complete(Unit)
+                runCurrent()
+                assertFalse(assertIs<ArenaRunnerView.Result>(component.arenaView.value).rating.submitting)
+
+                component.onBack()
+                runCurrent()
+                assertEquals(RunnerEvent.NavigateBack, event.await())
+                assertTrue(f.entries.cancels.isEmpty())
+                assertEquals(0, f.entries.dispatches)
+            } finally {
+                f.close()
+            }
+        }
+
+    @Test
     fun retainedInstanceCannotBeReusedForDifferentTicket() =
         runTest {
             val f = RootFixture(this)
@@ -161,6 +215,8 @@ private class RootFixture(scope: TestScope) {
     val run = RunCoordinatorFixture(scope)
     val sync = FakeSyncScheduler()
     val entries = HostEntryFake(run)
+    val settlements = HostSettlementFake()
+    val ratings = HostArenaFrozenRatingFake()
     val lifecycles = mutableListOf<LifecycleRegistry>()
     val request =
         ArenaRunnerRequest(
@@ -177,8 +233,7 @@ private class RootFixture(scope: TestScope) {
             ArenaSessionProvider { run.session },
             ArenaSessionObserver { flowOf(run.session) },
             ArenaWalletRepository { error("No automatic wallet read") },
-            sync,
-            HostSettlementFake(),
+            ArenaRunResultServices(settlements, ratings, sync),
         )
 
     fun component(route: ArenaRunnerRequest = request): ArenaRunnerRootComponent {

@@ -21,4 +21,14 @@
     <string name="arena_run_result_reward_nolics">Nolics awarded: %1$d</string>
     <string name="arena_run_result_life_cost">Life points used: %1$d</string>
     <string name="arena_run_result_plasma_cost">Plasma points used: %1$d</string>
+    <string name="arena_run_rating_choose">Rate this lesson</string>
+    <string name="arena_run_rating_option_1">Rate 1</string>
+    <string name="arena_run_rating_option_2">Rate 2</string>
+    <string name="arena_run_rating_option_3">Rate 3</string>
+    <string name="arena_run_rating_queued">Your rating (%1$d) is queued to send.</string>
+    <string name="arena_run_rating_accepted">Your rating (%1$d) was accepted.</string>
+    <string name="arena_run_rating_existing_unverified">A rating exists, but server acceptance cannot be verified.</string>
+    <string name="arena_run_rating_unavailable">Rating is unavailable for this receipt.</string>
+    <string name="arena_run_rating_submit_failed">Rating was not saved. Try again.</string>
+    <string name="arena_run_rating_sync">Send queued rating</string>
 </resources>

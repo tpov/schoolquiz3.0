@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunAction
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunRatingState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunToken
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunnerStatus
@@ -32,6 +33,7 @@ import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntryMode
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketHeader
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
@@ -183,6 +185,37 @@ class ArenaRunnerContentTest {
     }
 
     @Test
+    fun confirmed_pending_receipt_submits_the_rendered_rating() {
+        val frame = resultFrame(confirmedSettlement(), ArenaRunRatingState(ArenaFrozenRatingState.Pending))
+        val fake = render(frame)
+
+        composeTestRule.onNodeWithText(string(R.string.arena_run_rating_option_2)).performClick()
+
+        assertEquals(listOf(frame to 2), fake.ratingSubmissions)
+    }
+
+    @Test
+    fun queued_rating_exposes_only_explicit_rating_sync() {
+        val frame = resultFrame(confirmedSettlement(), ArenaRunRatingState(ArenaFrozenRatingState.Queued(3)))
+        val fake = render(frame)
+
+        composeTestRule.onNodeWithText(string(R.string.arena_run_rating_queued, 3)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.arena_run_rating_sync)).performClick()
+
+        assertEquals(listOf(frame), fake.ratingSyncs)
+    }
+
+    @Test
+    fun rating_submission_disables_rating_and_back_controls() {
+        render(
+            resultFrame(confirmedSettlement(), ArenaRunRatingState(ArenaFrozenRatingState.Pending, submitting = true)),
+        )
+
+        composeTestRule.onNodeWithText(string(R.string.arena_run_rating_option_1)).assertIsNotEnabled()
+        composeTestRule.onNodeWithText(string(R.string.arena_run_back_to_tickets)).assertIsNotEnabled()
+    }
+
+    @Test
     fun hard_arena_question_to_attention_clears_flag_secure() {
         val fake = render(questionFrame(ArenaRunnerPhase.ANSWERING, isHard = true))
         composeTestRule.waitForIdle()
@@ -282,37 +315,40 @@ class ArenaRunnerContentTest {
             revealCorrect = true,
         )
 
-    private fun resultFrame(settlement: ServerAttemptSettlement) =
-        ArenaRunnerView.Result(
-            stamp = ArenaSessionStamp("arena-test-user", 7L),
-            header =
-                ArenaTicketHeader(
-                    schemaVersion = 1,
-                    ticketId = "ticket-1",
-                    attemptId = "attempt-1",
-                    ownerUid = "arena-test-user",
-                    requestId = "request-1",
-                    mode = ArenaEntryMode.SELECTED,
-                    difficulty = Difficulty.HARD,
-                    lessonId = "lesson-1",
-                    lessonVersion = 1L,
-                    status = ArenaTicketStatus.SETTLED,
-                    priceNolics = 100,
-                    lifeCost = 50L,
-                    issuedAtMs = 0L,
-                    dayId = "2026-09-08",
-                ),
-            attempt =
-                AttemptIdentity(
-                    AttemptId("attempt-1"),
-                    "arena-test-user",
-                    LessonId("lesson-1"),
-                    1L,
-                    Difficulty.HARD,
-                ),
-            settlement = settlement,
-            canSync = false,
-        )
+    private fun resultFrame(
+        settlement: ServerAttemptSettlement,
+        rating: ArenaRunRatingState = ArenaRunRatingState(),
+    ) = ArenaRunnerView.Result(
+        stamp = ArenaSessionStamp("arena-test-user", 7L),
+        header =
+            ArenaTicketHeader(
+                schemaVersion = 1,
+                ticketId = "ticket-1",
+                attemptId = "attempt-1",
+                ownerUid = "arena-test-user",
+                requestId = "request-1",
+                mode = ArenaEntryMode.SELECTED,
+                difficulty = Difficulty.HARD,
+                lessonId = "lesson-1",
+                lessonVersion = 1L,
+                status = ArenaTicketStatus.SETTLED,
+                priceNolics = 100,
+                lifeCost = 50L,
+                issuedAtMs = 0L,
+                dayId = "2026-09-08",
+            ),
+        attempt =
+            AttemptIdentity(
+                AttemptId("attempt-1"),
+                "arena-test-user",
+                LessonId("lesson-1"),
+                1L,
+                Difficulty.HARD,
+            ),
+        settlement = settlement,
+        canSync = false,
+        rating = rating,
+    )
 
     private fun confirmedSettlement() =
         ServerAttemptSettlement(
@@ -343,6 +379,8 @@ class ArenaRunnerContentTest {
         ) {
         private val view = MutableStateFlow<ArenaRunnerView>(frame)
         val actions = mutableListOf<Pair<ArenaRunToken, ArenaRunAction>>()
+        val ratingSubmissions = mutableListOf<Pair<ArenaRunnerView.Result, Int>>()
+        val ratingSyncs = mutableListOf<ArenaRunnerView.Result>()
 
         override val arenaView = view
 
@@ -364,5 +402,16 @@ class ArenaRunnerContentTest {
         override fun onArenaBackground(changingConfigurations: Boolean) = Unit
 
         override fun onArenaRefreshWallet() = Unit
+
+        override fun onArenaSubmitRating(
+            frame: ArenaRunnerView.Result,
+            rating: Int,
+        ) {
+            ratingSubmissions += frame to rating
+        }
+
+        override fun onArenaRequestRatingSync(frame: ArenaRunnerView.Result) {
+            ratingSyncs += frame
+        }
     }
 }

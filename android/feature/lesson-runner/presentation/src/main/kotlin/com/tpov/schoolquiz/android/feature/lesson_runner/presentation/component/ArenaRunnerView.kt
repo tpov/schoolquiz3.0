@@ -25,6 +25,13 @@ internal interface ArenaRunnerRootComponent : LessonRunnerRootComponent {
     fun onArenaBackground(changingConfigurations: Boolean)
 
     fun onArenaRefreshWallet()
+
+    fun onArenaSubmitRating(
+        frame: ArenaRunnerView.Result,
+        rating: Int,
+    )
+
+    fun onArenaRequestRatingSync(frame: ArenaRunnerView.Result)
 }
 
 internal sealed interface ArenaRunnerView {
@@ -47,6 +54,7 @@ internal sealed interface ArenaRunnerView {
         val settlement: ServerAttemptSettlement,
         /** True only while the frozen SETTLE command remains retryable and its receipt is unconfirmed. */
         val canSync: Boolean,
+        val rating: ArenaRunRatingState = ArenaRunRatingState(),
     ) : ArenaRunnerView
 
     data class Attention(

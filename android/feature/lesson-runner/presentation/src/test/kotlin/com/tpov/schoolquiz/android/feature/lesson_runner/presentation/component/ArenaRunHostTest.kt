@@ -2,11 +2,9 @@
 
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 
-import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
-import com.tpov.schoolquiz.shared.core.scoring.PercentScore
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
@@ -115,6 +113,44 @@ class ArenaRunHostTest {
                 val confirmed = assertIs<ArenaRunnerView.Result>(host.view.value)
                 assertFalse(confirmed.canSync)
                 host.sync()
+                assertEquals(1, f.syncCalls)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun ratingCallbacksRequireTheCurrentConfirmedFrozenReceipt() =
+        runTest {
+            val f = ArenaRunHostFixture(this)
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                val pending = assertIs<ArenaRunnerView.Result>(host.view.value)
+                f.settlements.emit(pending.attempt, confirmedSettlement())
+                runCurrent()
+                f.ratings.emit(pending.stamp, pending.header.ticketId, ArenaFrozenRatingState.Pending)
+                runCurrent()
+                val confirmed = assertIs<ArenaRunnerView.Result>(host.view.value)
+
+                host.submitRating(confirmed, 2)
+                runCurrent()
+                assertEquals(listOf(Triple(confirmed.stamp, confirmed.header.ticketId, 2)), f.ratings.submitted)
+                val queued = assertIs<ArenaRunnerView.Result>(host.view.value)
+                host.requestRatingSync(queued)
+                assertEquals(1, f.syncCalls)
+
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.CANCEL)
+                host.reload()
+                runCurrent()
+                host.requestRatingSync(confirmed)
+                host.submitRating(confirmed, 3)
+                runCurrent()
+                assertEquals(1, f.ratings.submitted.size)
                 assertEquals(1, f.syncCalls)
             } finally {
                 host.onDestroy()
@@ -493,17 +529,3 @@ class ArenaRunHostTest {
             }
         }
 }
-
-private fun confirmedSettlement() =
-    ServerAttemptSettlement(
-        state = ServerAttemptSettlementState.SETTLED,
-        receiptId = "receipt",
-        codeAnswer = CodeAnswer("9"),
-        percentScore = PercentScore(100),
-        completed = true,
-        settledAtMs = 1L,
-        lifePointsSpent = 10L,
-        plasmaPointsSpent = 0L,
-        reward = ServerAttemptReward(20L, 5L),
-        ownerVerified = true,
-    )

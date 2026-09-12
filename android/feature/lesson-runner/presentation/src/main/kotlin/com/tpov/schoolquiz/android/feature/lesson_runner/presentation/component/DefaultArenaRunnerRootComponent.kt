@@ -38,4 +38,11 @@ internal class DefaultArenaRunnerRootComponent private constructor(
     override fun onArenaBackground(changingConfigurations: Boolean) = instance.host.background(changingConfigurations)
 
     override fun onArenaRefreshWallet() = instance.host.refreshWallet()
+
+    override fun onArenaSubmitRating(
+        frame: ArenaRunnerView.Result,
+        rating: Int,
+    ) = instance.submitRating(frame, rating)
+
+    override fun onArenaRequestRatingSync(frame: ArenaRunnerView.Result) = instance.requestRatingSync(frame)
 }

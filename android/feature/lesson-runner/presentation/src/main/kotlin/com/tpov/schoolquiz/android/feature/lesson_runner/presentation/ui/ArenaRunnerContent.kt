@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunnerStatus
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunnerView
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import kotlinx.coroutines.delay
 
@@ -197,17 +198,64 @@ private fun ArenaResult(
             Text(stringResource(R.string.arena_run_result_reward_nolics, reward.nolics))
             Text(stringResource(R.string.arena_run_result_life_cost, requireNotNull(settlement.lifePointsSpent)))
             Text(stringResource(R.string.arena_run_result_plasma_cost, requireNotNull(settlement.plasmaPointsSpent)))
+            ArenaRating(frame, component)
         }
         if (frame.canSync) {
             TextButton(onClick = component::onSyncResult) {
                 Text(stringResource(R.string.arena_run_sync))
             }
         }
-        TextButton(onClick = component::onBack) {
+        TextButton(onClick = component::onBack, enabled = !frame.rating.submitting) {
             Text(stringResource(R.string.arena_run_back_to_tickets))
         }
     }
 }
+
+@Composable
+private fun ArenaRating(
+    frame: ArenaRunnerView.Result,
+    component: ArenaRunnerRootComponent,
+) {
+    val rating = frame.rating
+    when (val local = rating.local) {
+        ArenaFrozenRatingState.Pending -> {
+            Text(stringResource(R.string.arena_run_rating_choose))
+            for (value in ARENA_RATING_VALUES) {
+                TextButton(
+                    onClick = { component.onArenaSubmitRating(frame, value) },
+                    enabled = rating.canSubmit,
+                ) {
+                    Text(stringResource(ratingOptionResource(value)))
+                }
+            }
+        }
+        is ArenaFrozenRatingState.Queued -> {
+            Text(stringResource(R.string.arena_run_rating_queued, local.rating))
+            TextButton(
+                onClick = { component.onArenaRequestRatingSync(frame) },
+                enabled = rating.canSync,
+            ) {
+                Text(stringResource(R.string.arena_run_rating_sync))
+            }
+        }
+        is ArenaFrozenRatingState.Accepted ->
+            Text(stringResource(R.string.arena_run_rating_accepted, local.rating))
+        ArenaFrozenRatingState.ExistingUnverified ->
+            Text(stringResource(R.string.arena_run_rating_existing_unverified))
+        ArenaFrozenRatingState.Unavailable ->
+            Text(stringResource(R.string.arena_run_rating_unavailable))
+    }
+    if (rating.submitting) CircularProgressIndicator()
+    if (rating.submitFailed) Text(stringResource(R.string.arena_run_rating_submit_failed))
+}
+
+private fun ratingOptionResource(value: Int): Int =
+    when (value) {
+        RATING_ONE -> R.string.arena_run_rating_option_1
+        RATING_TWO -> R.string.arena_run_rating_option_2
+        RATING_THREE -> R.string.arena_run_rating_option_3
+        else -> error("Arena rating must be between 1 and 3")
+    }
 
 @Composable
 private fun ArenaAttention(
@@ -249,6 +297,10 @@ private fun ArenaRunnerStatus.messageResource(): Int =
     }
 
 private const val FEEDBACK_ARM_MS = 250L
+private const val RATING_ONE = 1
+private const val RATING_TWO = 2
+private const val RATING_THREE = 3
+private val ARENA_RATING_VALUES = RATING_ONE..RATING_THREE
 private val SYNC_STATUSES =
     setOf(
         ArenaRunnerStatus.PENDING_COMPLETION,
