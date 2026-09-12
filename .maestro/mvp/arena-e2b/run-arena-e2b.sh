@@ -781,7 +781,7 @@ case "$phase" in
         run_maestro "$(dirname "$0")/flows/04-rate-two.yaml"
         overall_status='NOT_RUN'
         phase_status='PASS'
-        next_required='capture a read-only Room rating-ID context, then deliver the saved rating intent'
+        next_required='capture a read-only Room rating-ID context, then force-stop/relaunch and deliver the saved rating intent'
         ;;
     deliver-rating)
         run_maestro "$(dirname "$0")/flows/04-send-queued-rating.yaml"

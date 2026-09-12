@@ -1,8 +1,11 @@
 appId: com.tpov.schoolquiz.mvp
 name: E2B deliver the retained queued rating
 ---
-# The rating ID is captured from Room before this flow. This opens the exact
-# settled ticket and sends that pre-existing queued rating; it never taps Rate 2.
+# The rating ID is captured from Room before this flow. `stopApp` is the
+# required retained-data process stop; launchApp must then rediscover the exact
+# settled ticket and its already queued rating before the manual sync action.
+# This flow never taps Rate 2 or creates a replacement rating intent.
+- stopApp
 - launchApp:
     clearState: false
 - tapOn: ${E2B_SELECTOR_INTERNET}
@@ -44,6 +47,7 @@ name: E2B deliver the retained queued rating
     retryTapIfNoChange: true
 - assertVisible: ${E2B_SELECTOR_SETTLE_CONFIRMED}
 - assertVisible: ${E2B_SELECTOR_RATING_QUEUED}
+- takeScreenshot: "04-e2b-queued-rating-restored-after-relaunch"
 - tapOn:
     text: ${E2B_SELECTOR_SEND_QUEUED_RATING}
     enabled: true
