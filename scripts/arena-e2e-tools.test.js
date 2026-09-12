@@ -198,6 +198,12 @@ async function testOracleRejectsOldOrDifferentRatingReceipt() {
   await rejectsCode(() => readOracleEvidence(fakeDb({ratingData: stale}), context), "RATING_RECEIPT_MISMATCH");
 }
 
+async function testOracleRejectsMismatchedSettlementTimestamp() {
+  const wrong = event();
+  wrong.settlementReceipt.settledAtMs = 21;
+  await rejectsCode(() => readOracleEvidence(fakeDb({eventData: wrong}), context), "SETTLEMENT_ECONOMY_MISMATCH");
+}
+
 async function testOracleRejectsDuplicateOrUnexpectedLedgerEffects() {
   const duplicate = [...ticketLedger(), {...ticketLedger()[0], id: "ticket-nolics-duplicate"}];
   await rejectsCode(() => readOracleEvidence(fakeDb({ticketRows: duplicate}), context), "LEDGER_AMBIGUITY");
@@ -218,6 +224,7 @@ async function testOracleRejectsMismatchedEventIdentity() {
   await testContextReaderReadsOnlyExactTicketAndEvent();
   await testOracleRequiresAllExactProofsAndUsesOnlyReads();
   await testOracleRejectsOldOrDifferentRatingReceipt();
+  await testOracleRejectsMismatchedSettlementTimestamp();
   await testOracleRejectsDuplicateOrUnexpectedLedgerEffects();
   await testOracleRejectsMismatchedEventIdentity();
   console.log("arena-e2e-tools.test.js OK");

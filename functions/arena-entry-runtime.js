@@ -201,7 +201,9 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
       if (ticket.status === "CANCELLED") fail("TICKET_CANCELLED");
       if (ticket.status === "SETTLED") fail("INCONSISTENT_SETTLEMENT");
       if (payload.completionKind === "ABORTED") fail("EXPLICIT_CANCELLATION_REQUIRED");
-      const now = exact(nowMs());
+      // The ticket terminal and the immutable event receipt describe this same transaction.
+      // `readTicketSettlement` has already sampled and validated its canonical instant.
+      const now = readset.now;
       if (!bundleScorable(ticket)) fail("UNSCORABLE_BANK");
       const scored = scoreAttempt(scoringInput(ticket, payload.answers));
       // Do not finalize a permanent result or release the hold on a server scoring gap.

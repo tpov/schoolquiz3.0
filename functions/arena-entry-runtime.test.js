@@ -92,6 +92,24 @@ test("real endpoints reserve trusted price/charges and settle from the frozen ba
   await assert.rejects(submit({...payload, answers: []}), {code: "already-exists"});
 });
 
+test("ticket terminal and result receipt share one canonical settlement timestamp", async () => {
+  store.reset(world());
+  const ticket = await issue("canonical-settlement-time");
+  const payload = completion(ticket);
+  const originalNow = Date.now;
+  let clock = 1_800_000_000_000;
+  Date.now = () => clock++;
+  try {
+    const result = await submit(payload);
+    const terminal = store.documents.get(`arena_entry_tickets/${ticket.ticketId}`).terminal;
+    const receipt = store.documents.get(eventPath(ticket.attemptId)).settlementReceipt;
+    assert.equal(terminal.settledAtMs, receipt.settledAtMs);
+    assert.equal(receipt.settledAtMs, result.receipts[0].settledAtMs);
+  } finally {
+    Date.now = originalNow;
+  }
+});
+
 test("five one-nolic accepted runs conserve author four, sink one, with separate independent holds", async () => {
   store.reset(world());
   const tickets = [];
