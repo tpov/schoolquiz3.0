@@ -59,6 +59,7 @@ const ENDPOINTS = Object.freeze([
   "getLessonLifecycle",
   "listLessonLifecycleHistory",
   "listMyArenaRoyalty",
+  "listMyQuestReviewSubmissions",
 ]);
 // SHA-256 of JSON.stringify(sorted pre-TZ06B index.js export names).  Keeping the previous
 // surface frozen catches an accidental deletion or an unrelated new callable, unlike comparing
@@ -135,6 +136,12 @@ function royalty(uid, atMs, delta, patch = {}) {
     sourceId: "PRIVATE_TICKET", details: {payerUid: "PRIVATE_PAYER", attemptId: "PRIVATE_ATTEMPT"},
     futurePrivate: "PRIVATE_LEDGER", ...patch};
 }
+function reviewSubmission(ownerUid, draftId, status, processedAtMs, patch = {}) {
+  return {ownerUid, draftId, status, processedAtMs, processed: true,
+    questions: [{id: "PRIVATE_QUESTION", payload: "PRIVATE_ANSWER"}],
+    draft: {title: "PRIVATE_DRAFT"}, review: {futurePrivate: "PRIVATE_REVIEW"},
+    lastError: "PRIVATE_ERROR", ...patch};
+}
 
 function world() {
   return {
@@ -163,6 +170,13 @@ function world() {
     "audit/currency_ledger/entries/royalty-c": royalty("author", NOW - 20, 3),
     "audit/currency_ledger/entries/not-royalty": royalty("author", NOW - 1, 99, {reason: "attempt_reward"}),
     "audit/currency_ledger/entries/foreign-royalty": royalty("other", NOW - 1, 77),
+    "quest_review_requests/submission-published": reviewSubmission("author", "draft-published", "PUBLISHED", NOW - 20),
+    "quest_review_requests/submission-rejected": reviewSubmission("author", "draft-rejected", "REJECTED", NOW - 10,
+      {rejectionReason: "Correct the unsupported question format"}),
+    "quest_review_requests/submission-foreign": reviewSubmission("other", "draft-foreign", "PUBLISHED", NOW - 5),
+    "quest_review_requests/legacy-old": reviewSubmission("author", "draft-legacy", "REJECTED", NOW - 30,
+      {rejectionReason: "Old author-visible reason"}),
+    "quest_review_requests/legacy-current": reviewSubmission("author", "draft-legacy", "UNDER_REVIEW", NOW - 1),
   };
 }
 
@@ -183,6 +197,13 @@ function assertNoPrivate(value) {
   for (const token of ["PRIVATE_", "lastRejection", "actorUid", "authorUid", "mutationId", "reason\"",
     "sourceId", "details", "authorCarryFifths", "sinkCarryFifths", "reservedNolics",
     "totalPaymentsNolics", "totalSinkNolics", "reviewerUid", "submissionId"]) {
+    assert.equal(wire.includes(token), false, token);
+  }
+}
+function assertNoRawReviewRequest(value) {
+  const wire = JSON.stringify(value);
+  for (const token of ["PRIVATE_", "\"ownerUid\"", "questions", "\"draft\"", "\"review\"",
+    "processedAtMs", "lastError", "payload"]) {
     assert.equal(wire.includes(token), false, token);
   }
 }
@@ -220,6 +241,7 @@ test("payload authority spoofing and malformed cursor/body fail at the callable 
     ["listLessonLifecycleHistory", {lessonId: "lesson-owned-a", ownerUid: "other"}],
     ["listMyArenaRoyalty", {uid: "other"}],
     ["listMyArenaRoyalty", {cursor: "a".repeat(4097)}],
+    ["listMyQuestReviewSubmissions", {submissionIds: [], legacyDraftIds: [], uid: "other"}],
   ];
   for (const [endpoint, data] of invalid) {
     await assert.rejects(call(endpoint, "author", data),
@@ -279,6 +301,28 @@ test("actual callable enforces author/curator scope, hides foreign lesson existe
   assert.deepEqual(ownEmptyRoyalty, {viewVersion: "arena-lifecycle-views-v1",
     summary: {totalCreditedNolics: 0, updatedAtMs: null}, entries: [], nextCursor: null});
   assertNoPrivate(ownEmptyRoyalty);
+
+  const outcomes = await call("listMyQuestReviewSubmissions", "author", {
+    submissionIds: ["submission-rejected", "submission-published"], legacyDraftIds: [],
+  });
+  assert.deepEqual(outcomes, {viewVersion: "quest-review-submissions-v1", entries: [
+    {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED", rejectionReason: null},
+    {submissionId: "submission-rejected", draftId: "draft-rejected", status: "REJECTED",
+      rejectionReason: "Correct the unsupported question format"},
+  ]});
+  assertNoRawReviewRequest(outcomes);
+  const legacyOutcome = await call("listMyQuestReviewSubmissions", "author", {
+    submissionIds: [], legacyDraftIds: ["draft-legacy"],
+  });
+  assert.deepEqual(legacyOutcome.entries, [
+    {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null},
+  ]);
+  assertNoRawReviewRequest(legacyOutcome);
+  const foreignOutcome = await call("listMyQuestReviewSubmissions", "author", {
+    submissionIds: ["submission-foreign"], legacyDraftIds: [],
+  });
+  assert.deepEqual(foreignOutcome.entries, []);
+  assertNoRawReviewRequest(foreignOutcome);
   unchanged(state);
 });
 

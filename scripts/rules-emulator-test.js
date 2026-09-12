@@ -349,7 +349,8 @@ async function testReviewHierarchy() {
  * идемпотентности вообще (AD-6). Единственный путь — обработчик quest_authoring.SUBMIT_ARENA,
  * который пишет отсюда с правами Admin SDK, и правила ему не писаны.
  *
- * Чтение осталось: именно так вердикт доходит до автора.
+ * Полное тело заявки закрыто всем: автор получает только allowlist-проекцию через callable,
+ * рецензент — отдельное ограниченное задание. Rules не могут выразить такую проекцию поля.
  */
 async function testReviewRequests() {
   await deny("review_requests: автор не создаёт заявку напрямую", () =>
@@ -359,16 +360,16 @@ async function testReviewRequests() {
   await deny("review_requests: заявка сразу обработанной", () =>
     db("author").doc("quest_review_requests/req-done").set({ownerUid: "author", processed: true}));
 
-  await allow("review_requests: автор читает свою", () =>
-    db("author").doc("quest_review_requests/req-1").get());
-  await allow("review_requests: ревьюер читает чужую", () =>
-    db("tester").doc("quest_review_requests/req-1").get());
-  await deny("review_requests: чужой не читает", () =>
-    db("outsider").doc("quest_review_requests/req-1").get());
-  await deny("review_requests: автор не правит свою", () =>
-    db("author").doc("quest_review_requests/req-1").update({processed: true}));
-  await deny("review_requests: автор не удаляет свою", () =>
-    db("author").doc("quest_review_requests/req-1").delete());
+  for (const [actor, label] of [["author", "автор"], ["tester", "ревьюер"], ["outsider", "чужой"], ["guest", "гость"]]) {
+    await deny(`review_requests: ${label} не читает raw документ`, () =>
+      db(actor).doc("quest_review_requests/req-1").get());
+    await deny(`review_requests: ${label} не листает raw коллекцию`, () =>
+      db(actor).collection("quest_review_requests").get());
+    await deny(`review_requests: ${label} не правит raw документ`, () =>
+      db(actor).doc("quest_review_requests/req-1").update({processed: true}));
+    await deny(`review_requests: ${label} не удаляет raw документ`, () =>
+      db(actor).doc("quest_review_requests/req-1").delete());
+  }
 }
 
 /**

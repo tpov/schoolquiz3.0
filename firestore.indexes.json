@@ -42,6 +42,16 @@
         {"fieldPath": "active", "order": "ASCENDING"},
         {"fieldPath": "sequence", "order": "ASCENDING"}
       ]
+    },
+    {
+      "collectionGroup": "quest_review_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "ownerUid", "order": "ASCENDING"},
+        {"fieldPath": "draftId", "order": "ASCENDING"},
+        {"fieldPath": "processedAtMs", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
     }
   ],
   "fieldOverrides": [

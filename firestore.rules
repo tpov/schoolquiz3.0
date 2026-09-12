@@ -171,20 +171,11 @@ service cloud.firestore {
     }
 
     match /quest_review_requests/{requestId} {
-      // Заявку пишет только сервер — обработчик quest_authoring.SUBMIT_ARENA из общей очереди.
-      //
-      // Здесь стоял create для клиента, и это был путь мимо ключа идемпотентности. Правило кода не
-      // выполняет: отличить вторую доставку той же заявки от первой оно не может в принципе, а
-      // триггер на созданный документ обрабатывал такую заявку вообще без mutationId — то есть
-      // повторная подача проходила бы как новая работа. AD-6 запрещает сам путь, а не только его
-      // использование, поэтому он закрыт, хотя пользующегося им кода в приложении уже нет.
-      //
-      // Автор по-прежнему читает свою заявку: именно так до него доходит вердикт — статус
-      // PUBLISHED или REJECTED вместе с причиной отказа. Ревьюер читает чужие по своей
-      // квалификации.
-      allow read: if request.auth != null
-        && (resource.data.ownerUid == request.auth.uid || isReviewer());
-      allow write: if false;
+      // Raw requests carry draft bodies, questions and reviewer-only operational data. Neither an
+      // author nor a reviewer needs a general Firestore read of that document: authors receive a
+      // narrow Auth-bound projection through listMyQuestReviewSubmissions, while review work uses
+      // its own server-shaped assignment calls. Writes remain server-only as well.
+      allow read, write: if false;
     }
 
     match /catalogs/{catalogId} {

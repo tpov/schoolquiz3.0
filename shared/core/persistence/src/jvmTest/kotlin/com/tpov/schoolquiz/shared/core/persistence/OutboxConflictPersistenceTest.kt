@@ -116,6 +116,7 @@ class OutboxConflictPersistenceTest {
             conflictedRowId = stored.id,
             replacement = replacement.toOutboxEntity(),
             draftId = DRAFT_ID,
+            submissionId = "sub-1",
             updatedAtMs = 5_000L,
         )
 
@@ -148,8 +149,8 @@ class OutboxConflictPersistenceTest {
         val stored = store.findByEntityRef(OWNER_UID, DRAFT_REF)!!
         val replacement = OutboxConflictResolution.replacementFor(stored, nowMs = 5_000L)
 
-        authoring.resolveArenaConflict(stored.id, replacement.toOutboxEntity(), DRAFT_ID, 5_000L)
-        authoring.resolveArenaConflict(stored.id, replacement.toOutboxEntity(), DRAFT_ID, 6_000L)
+        authoring.resolveArenaConflict(stored.id, replacement.toOutboxEntity(), DRAFT_ID, "sub-1", 5_000L)
+        authoring.resolveArenaConflict(stored.id, replacement.toOutboxEntity(), DRAFT_ID, "sub-1", 6_000L)
 
         assertEquals(1, store.countPending(OWNER_UID))
     }

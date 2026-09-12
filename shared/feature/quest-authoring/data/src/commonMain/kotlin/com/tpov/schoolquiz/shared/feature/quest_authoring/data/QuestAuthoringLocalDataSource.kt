@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.core.persistence.QuestAuthoringDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toEntityBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -37,23 +38,35 @@ interface QuestAuthoringLocalDataSource {
     suspend fun queueArenaSubmission(
         outboxRow: OutboxEntity,
         draftId: String,
+        submissionId: String,
         requestedAtMs: Long,
     )
 
-    /** Owner uids that have at least one draft awaiting a review verdict. */
-    suspend fun findOwnerUidsAwaitingReview(): Set<String>
+    /** This account's bounded, still-awaiting draft/submission pairs. */
+    suspend fun findAwaitingReviewTargets(ownerUid: String): List<ArenaReviewSubmissionTarget>
 
     /** Заявку опубликовали: черновик выходит из ожидания рецензии и получает свой терминальный статус. */
     suspend fun applyPublication(
+        ownerUid: String,
         draftId: String,
+        submissionId: String,
         updatedAtMs: Long,
-    )
+    ): Boolean
 
     suspend fun applyRejection(
+        ownerUid: String,
         draftId: String,
+        submissionId: String,
         reason: String?,
         updatedAtMs: Long,
-    )
+    ): Boolean
+
+    /** Safely upgrades an old awaiting row after a server-confirmed response names its submission. */
+    suspend fun claimLegacyReviewSubmission(
+        ownerUid: String,
+        draftId: String,
+        submissionId: String,
+    ): Boolean
 
     suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot)
 
@@ -74,6 +87,12 @@ interface QuestAuthoringLocalDataSource {
         updatedAtMs: Long,
     )
 }
+
+/** Local correlation data; a null ID denotes a row created before schema version 15. */
+data class ArenaReviewSubmissionTarget(
+    val draftId: String,
+    val activeSubmissionId: String?,
+)
 
 class QuestAuthoringLocalDataSourceImpl(
     private val dao: QuestAuthoringDao,
@@ -138,42 +157,63 @@ class QuestAuthoringLocalDataSourceImpl(
     override suspend fun queueArenaSubmission(
         outboxRow: OutboxEntity,
         draftId: String,
+        submissionId: String,
         requestedAtMs: Long,
     ) {
         dao.queueArenaSubmission(
             outboxRow = outboxRow,
             draftId = draftId,
+            submissionId = submissionId,
             updatedAtMs = requestedAtMs,
         )
     }
 
-    override suspend fun findOwnerUidsAwaitingReview(): Set<String> =
-        dao.findDraftsAwaitingReview(AWAITING_REVIEW_LIMIT).map { it.ownerUid }.toSet()
+    override suspend fun findAwaitingReviewTargets(ownerUid: String): List<ArenaReviewSubmissionTarget> =
+        dao.findDraftsAwaitingReview(ownerUid = ownerUid, limit = AWAITING_REVIEW_LIMIT).map {
+            ArenaReviewSubmissionTarget(draftId = it.id, activeSubmissionId = it.activeSubmissionId)
+        }
 
     override suspend fun applyPublication(
+        ownerUid: String,
         draftId: String,
+        submissionId: String,
         updatedAtMs: Long,
-    ) {
-        dao.updateDraftStatusWithReason(
+    ): Boolean =
+        dao.settleReviewSubmission(
             draftId = draftId,
+            ownerUid = ownerUid,
+            submissionId = submissionId,
             status = "PUBLISHED",
             rejectionReason = null,
             updatedAtMs = updatedAtMs,
-        )
-    }
+        ) == 1
 
     override suspend fun applyRejection(
+        ownerUid: String,
         draftId: String,
+        submissionId: String,
         reason: String?,
         updatedAtMs: Long,
-    ) {
-        dao.updateDraftStatusWithReason(
+    ): Boolean =
+        dao.settleReviewSubmission(
             draftId = draftId,
+            ownerUid = ownerUid,
+            submissionId = submissionId,
             status = "DRAFT",
             rejectionReason = reason,
             updatedAtMs = updatedAtMs,
-        )
-    }
+        ) == 1
+
+    override suspend fun claimLegacyReviewSubmission(
+        ownerUid: String,
+        draftId: String,
+        submissionId: String,
+    ): Boolean =
+        dao.claimLegacyReviewSubmission(
+            draftId = draftId,
+            ownerUid = ownerUid,
+            submissionId = submissionId,
+        ) == 1
 
     /**
      * Кладёт приехавший приватный квест поверх локального черновика — или объявляет расхождение.
@@ -191,6 +231,16 @@ class QuestAuthoringLocalDataSourceImpl(
     override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) {
         val incoming = snapshot.toEntityBundle()
         val existing = dao.findDraftById(incoming.draft.id)
+        // Old installations have awaiting rows without an active submission ID. A private
+        // snapshot is server-authored evidence of the submission that owns that row; claim it
+        // before merge handling, but never overwrite an ID recorded by a newer resubmission.
+        if (snapshot.request.submissionId.isNotBlank()) {
+            dao.claimLegacyReviewSubmission(
+                draftId = incoming.draft.id,
+                ownerUid = snapshot.request.ownerUid,
+                submissionId = snapshot.request.submissionId,
+            )
+        }
         val merge =
             privateQuestMerge(
                 localStatus = existing?.status,
@@ -245,10 +295,15 @@ class QuestAuthoringLocalDataSourceImpl(
         draftId: String,
         updatedAtMs: Long,
     ) {
+        val submissionId =
+            requireNotNull(QuestArenaOutboxWriter.submissionIdFromPayload(replacement.payload)) {
+                "Replacement Arena submission does not carry a submission id"
+            }
         dao.resolveArenaConflict(
             conflictedRowId = conflictedRowId,
             replacement = replacement,
             draftId = draftId,
+            submissionId = submissionId,
             updatedAtMs = updatedAtMs,
         )
     }

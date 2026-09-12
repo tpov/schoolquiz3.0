@@ -35,6 +35,7 @@ import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringEntityBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ArenaReviewSubmissionTarget
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.section.data.SectionLocalDataSource
@@ -267,21 +268,32 @@ class UnusedQuestAuthoringLocal : QuestAuthoringLocalDataSource {
     override suspend fun queueArenaSubmission(
         outboxRow: OutboxEntity,
         draftId: String,
+        submissionId: String,
         requestedAtMs: Long,
     ) = Unit
 
-    override suspend fun findOwnerUidsAwaitingReview(): Set<String> = emptySet()
+    override suspend fun findAwaitingReviewTargets(ownerUid: String): List<ArenaReviewSubmissionTarget> = emptyList()
 
     override suspend fun applyPublication(
+        ownerUid: String,
         draftId: String,
+        submissionId: String,
         updatedAtMs: Long,
-    ) = Unit
+    ): Boolean = false
 
     override suspend fun applyRejection(
+        ownerUid: String,
         draftId: String,
+        submissionId: String,
         reason: String?,
         updatedAtMs: Long,
-    ) = Unit
+    ): Boolean = false
+
+    override suspend fun claimLegacyReviewSubmission(
+        ownerUid: String,
+        draftId: String,
+        submissionId: String,
+    ): Boolean = false
 
     override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) = Unit
 

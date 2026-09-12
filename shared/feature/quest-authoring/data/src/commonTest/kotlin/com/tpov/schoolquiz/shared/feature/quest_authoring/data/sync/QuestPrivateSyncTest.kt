@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import com.tpov.schoolquiz.shared.core.sync.journalPage
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringEntityBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ArenaReviewSubmissionTarget
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
@@ -259,22 +260,31 @@ class QuestPrivateSyncTest {
     private class FakeLocal : QuestAuthoringLocalDataSource {
         val rejections = mutableListOf<Pair<String, String?>>()
 
-        override suspend fun findOwnerUidsAwaitingReview(): Set<String> = awaitingReviewOwners
-
-        var awaitingReviewOwners: Set<String> = emptySet()
+        override suspend fun findAwaitingReviewTargets(ownerUid: String): List<ArenaReviewSubmissionTarget> = emptyList()
 
         override suspend fun applyPublication(
+            ownerUid: String,
             draftId: String,
+            submissionId: String,
             updatedAtMs: Long,
-        ) = Unit
+        ): Boolean = false
 
         override suspend fun applyRejection(
+            ownerUid: String,
             draftId: String,
+            submissionId: String,
             reason: String?,
             updatedAtMs: Long,
-        ) {
+        ): Boolean {
             rejections += draftId to reason
+            return false
         }
+
+        override suspend fun claimLegacyReviewSubmission(
+            ownerUid: String,
+            draftId: String,
+            submissionId: String,
+        ): Boolean = false
 
         val synced = mutableListOf<PrivateQuestSnapshot>()
 
@@ -304,6 +314,7 @@ class QuestPrivateSyncTest {
         override suspend fun queueArenaSubmission(
             outboxRow: OutboxEntity,
             draftId: String,
+            submissionId: String,
             requestedAtMs: Long,
         ) = Unit
 

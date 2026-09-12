@@ -17,6 +17,7 @@ import com.tpov.schoolquiz.shared.feature.quest.data.QuestRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest.data.dto.QuestDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcome
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcomeRequest
 import com.tpov.schoolquiz.shared.feature.question.data.QuestionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.question.data.dto.QuestionDto
 import com.tpov.schoolquiz.shared.feature.section.data.SectionRemoteDataSource
@@ -131,8 +132,8 @@ internal fun EconomyConstantsRemoteDataSource.namingFailures(): EconomyConstants
 private class NamedFailureArenaOutcomeReads(
     private val delegate: QuestArenaSubmissionRemoteDataSource,
 ) : QuestArenaSubmissionRemoteDataSource {
-    override suspend fun fetchOutcomes(ownerUid: String): List<QuestSubmissionOutcome> =
-        withNamedFailure { delegate.fetchOutcomes(ownerUid) }
+    override suspend fun fetchOutcomes(request: QuestSubmissionOutcomeRequest): List<QuestSubmissionOutcome> =
+        withNamedFailure { delegate.fetchOutcomes(request) }
 }
 
 private class NamedFailureEconomyConstantsReads(

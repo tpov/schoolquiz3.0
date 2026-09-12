@@ -11,6 +11,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.persistence.AppDatabase
 import com.tpov.schoolquiz.shared.core.persistence.RoomSyncStateRepository
@@ -25,6 +26,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaRevie
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaSectionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaThemeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcomeRequest
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewSegmentResultDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.SubmitReviewActionDto
@@ -47,6 +49,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
     private val firestore = FirebaseFirestore.getInstance()
     private val functions = FirebaseFunctions.getInstance(REGION)
     private val reviewRemote = FirebaseReviewAssignmentRemoteDataSource(functions)
+    private val authorOutcomeRemote = FirebaseQuestArenaSubmissionRemoteDataSource(functions)
 
     @Test
     fun pixelRunsFullReviewWorkflowAgainstProductionFirebase() =
@@ -245,7 +248,11 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
 
     private suspend fun waitForProcessed(ids: LiveIds) {
         withTimeout(PROCESSING_TIMEOUT_MS) {
-            while (serverDoc(reviewRequestPath(ids)).getBoolean("processed") != true) {
+            while (
+                authorOutcomeRemote
+                    .fetchOutcomes(QuestSubmissionOutcomeRequest(setOf(ids.submissionId), emptySet()))
+                    .none { it.status == "UNDER_REVIEW" || it.status == "PUBLISHED" || it.status == "REJECTED" }
+            ) {
                 delay(POLL_INTERVAL_MS)
             }
         }
@@ -456,8 +463,6 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
                 }
         }
     }
-
-    private fun reviewRequestPath(ids: LiveIds): String = "quest_review_requests/${ids.submissionId}"
 
     private fun privateQuestPath(ids: LiveIds): String =
         "private/${ids.ownerUid}/catalogs/${ids.catalogId}/quests/${ids.questId}"

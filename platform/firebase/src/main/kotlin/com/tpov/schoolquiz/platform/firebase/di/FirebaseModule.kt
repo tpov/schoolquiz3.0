@@ -134,7 +134,7 @@ val firebaseModule =
             FirebaseLessonContentSyncChangeRemoteDataSource(firestore = get(), policy = get()).namingFailures()
         }
         single<QuestArenaSubmissionRemoteDataSource> {
-            FirebaseQuestArenaSubmissionRemoteDataSource(firestore = get()).namingFailures()
+            FirebaseQuestArenaSubmissionRemoteDataSource(functions = get()).namingFailures()
         }
         single<QuestPrivateRemoteDataSource> {
             FirebaseQuestPrivateRemoteDataSource(

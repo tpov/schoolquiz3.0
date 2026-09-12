@@ -1,5 +1,23 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote
 
+/** One bounded, authenticated request for review outcomes the device is still waiting for. */
+data class QuestSubmissionOutcomeRequest(
+    val submissionIds: Set<String>,
+    val legacyDraftIds: Set<String>,
+) {
+    init {
+        require(submissionIds.intersect(legacyDraftIds).isEmpty()) {
+            "A review submission id and a legacy draft id must not share an identifier"
+        }
+        require(submissionIds.size + legacyDraftIds.size <= MAX_QUEST_REVIEW_OUTCOME_TARGETS) {
+            "At most $MAX_QUEST_REVIEW_OUTCOME_TARGETS review outcomes may be read at once"
+        }
+        require((submissionIds + legacyDraftIds).all { it.isNotBlank() }) {
+            "Review outcome identifiers must not be blank"
+        }
+    }
+}
+
 /** What the server decided about a submission the author sent. */
 data class QuestSubmissionOutcome(
     val submissionId: String,
@@ -18,6 +36,8 @@ data class QuestSubmissionOutcome(
     }
 }
 
+const val MAX_QUEST_REVIEW_OUTCOME_TARGETS: Int = 20
+
 /**
  * Чтение вердиктов. Отправки здесь больше нет.
  *
@@ -27,14 +47,12 @@ data class QuestSubmissionOutcome(
  */
 interface QuestArenaSubmissionRemoteDataSource {
     /**
-     * Reads back what the server decided about this author's submissions.
+     * Reads back only a named, bounded set of still-pending outcomes.
      *
-     * Queried by owner rather than tracked locally on purpose: the outbox row is deleted the
-     * moment the submission is sent, so the device keeps no handle on it. The author's own
-     * requests are readable by the security rules, and each document names its draft — which is
-     * all that is needed to put the verdict back on the right draft.
-     *
-     * Without this the author learns nothing at all: not a rejection, and not a publication.
+     * The server derives the owner exclusively from Firebase Auth. Current clients name their
+     * submission IDs exactly. [QuestSubmissionOutcomeRequest.legacyDraftIds] exists solely for
+     * upgrading rows created before the local active-submission marker was introduced; it is
+     * intentionally bounded and never becomes a history scan.
      */
-    suspend fun fetchOutcomes(ownerUid: String): List<QuestSubmissionOutcome> = emptyList()
+    suspend fun fetchOutcomes(request: QuestSubmissionOutcomeRequest): List<QuestSubmissionOutcome> = emptyList()
 }

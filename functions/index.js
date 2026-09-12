@@ -82,7 +82,9 @@ const {createArenaService} = require("./arena-service");
 const {createArenaEntryRuntime} = require("./arena-entry-runtime");
 const {createArenaTicketRecovery} = require("./arena-ticket-recovery");
 const {createArenaLessonCatalog} = require("./arena-lesson-catalog");
-const {createArenaLifecycleViews, ArenaLifecycleViewError} = require("./arena-lifecycle-views");
+const {
+  createArenaLifecycleViews, ArenaLifecycleViewError, MAX_AUTHOR_REJECTION_REASON_BYTES,
+} = require("./arena-lifecycle-views");
 const {createCourseTournamentController} = require("./course-tournament-controller");
 const {createTournamentWorker, FUNCTION_TIMEOUT_MS} = require("./tournament-worker");
 const {
@@ -365,6 +367,8 @@ exports.listLessonLifecycleHistory = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request
   callArenaLifecycleView("listHistory", request));
 exports.listMyArenaRoyalty = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
   callArenaLifecycleView("listMyRoyalty", request));
+exports.listMyQuestReviewSubmissions = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("listMyQuestReviewSubmissions", request));
 async function callArenaLifecycleView(method, request) {
   try {
     const uid = requireAuthUid(request);
@@ -619,6 +623,9 @@ exports.rejectReviewSubmission = onCall(CALLABLE_OPTIONS, async (request) => {
   // A rejection without a reason is indistinguishable from silence, and the author cannot act
   // on silence.
   if (!reason) throw new HttpsError("invalid-argument", "reason is required");
+  if (Buffer.byteLength(reason, "utf8") > MAX_AUTHOR_REJECTION_REASON_BYTES) {
+    throw new HttpsError("invalid-argument", "reason is too long");
+  }
 
   const task = await readAdminReviewLessonTask(assignmentId);
   if (!task) throw new HttpsError("not-found", `Review assignment ${assignmentId} not found`);

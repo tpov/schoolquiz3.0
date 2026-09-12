@@ -2,7 +2,9 @@
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const {ArenaLifecycleViewError, VIEW_VERSION, createArenaLifecycleViews} = require("./arena-lifecycle-views");
+const {
+  ArenaLifecycleViewError, VIEW_VERSION, REVIEW_SUBMISSION_VIEW_VERSION, createArenaLifecycleViews,
+} = require("./arena-lifecycle-views");
 
 function compare(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
 function parent(path) { return path.slice(0, path.lastIndexOf("/")); }
@@ -119,6 +121,12 @@ function ledger(uid, atMs, delta, patch = {}) {
     sourceId: "PRIVATE_TICKET", details: {payerUid: "PRIVATE_PAYER", attemptId: "PRIVATE_ATTEMPT"},
     futurePrivate: "PRIVATE_LEDGER", ...patch};
 }
+function reviewSubmission(ownerUid, draftId, status, processedAtMs, patch = {}) {
+  return {ownerUid, draftId, status, processedAtMs, processed: true,
+    questions: [{id: "PRIVATE_QUESTION", payload: "PRIVATE_ANSWER"}],
+    draft: {title: "PRIVATE_DRAFT"}, review: {futurePrivate: "PRIVATE_REVIEW"},
+    lastError: "PRIVATE_ERROR", ...patch};
+}
 function world() {
   const contexts = {
     "lesson-a": context("lesson-a", "author", 2),
@@ -145,6 +153,13 @@ function world() {
     "audit/currency_ledger/entries/royalty-c": ledger("author", 200, 3),
     "audit/currency_ledger/entries/not-royalty": ledger("author", 400, 99, {reason: "attempt_reward"}),
     "audit/currency_ledger/entries/foreign-royalty": ledger("other", 500, 77),
+    "quest_review_requests/submission-published": reviewSubmission("author", "draft-published", "PUBLISHED", 100),
+    "quest_review_requests/submission-rejected": reviewSubmission("author", "draft-rejected", "REJECTED", 110,
+      {rejectionReason: "Correct the unsupported question format"}),
+    "quest_review_requests/submission-foreign": reviewSubmission("other", "draft-foreign", "PUBLISHED", 120),
+    "quest_review_requests/legacy-old": reviewSubmission("author", "draft-legacy", "REJECTED", 130,
+      {rejectionReason: "Old author-visible reason"}),
+    "quest_review_requests/legacy-current": reviewSubmission("author", "draft-legacy", "UNDER_REVIEW", 140),
   };
   return {seed, contexts};
 }
@@ -161,7 +176,8 @@ function rejects(action, code) {
 function noPrivate(value) {
   const text = JSON.stringify(value);
   for (const token of ["PRIVATE_", "\"actorUid\"", "\"authorUid\"", "\"mutationId\"", "\"reason\":", "\"sourceId\"", "\"details\"",
-    "authorCarryFifths", "sinkCarryFifths", "reservedNolics", "totalPaymentsNolics", "totalSinkNolics"]) {
+    "authorCarryFifths", "sinkCarryFifths", "reservedNolics", "totalPaymentsNolics", "totalSinkNolics",
+    "questions", "processedAtMs", "lastError", "payload"]) {
     assert.equal(text.includes(token), false, token);
   }
 }
@@ -273,6 +289,52 @@ test("royalty reader returns only actual author credits, uses a descending bound
   assert.deepEqual(second.entries, [{creditedNolics: 1, creditedAtMs: 100}]);
   assert.equal(second.nextCursor, null);
   await rejects(f.views.listMyRoyalty({uid: "other", payload: {cursor: first.nextCursor}}), "INVALID_ARGUMENT");
+  assert.deepEqual(f.writes, []);
+});
+
+test("author outcome view binds exact submissions or bounded legacy drafts to Auth and never returns request bodies", async () => {
+  const f = fixture();
+  const exact = await f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-rejected", "submission-published"], legacyDraftIds: [],
+  }});
+  assert.deepEqual(exact, {viewVersion: REVIEW_SUBMISSION_VIEW_VERSION, entries: [
+    {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED", rejectionReason: null},
+    {submissionId: "submission-rejected", draftId: "draft-rejected", status: "REJECTED",
+      rejectionReason: "Correct the unsupported question format"},
+  ]});
+  noPrivate(exact);
+
+  const legacy = await f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: [], legacyDraftIds: ["draft-legacy"],
+  }});
+  assert.deepEqual(legacy, {viewVersion: REVIEW_SUBMISSION_VIEW_VERSION, entries: [
+    {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null},
+  ]});
+  noPrivate(legacy);
+
+  const hidden = await f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-foreign"], legacyDraftIds: [],
+  }});
+  assert.deepEqual(hidden.entries, []);
+  noPrivate(hidden); assert.deepEqual(f.writes, []);
+});
+
+test("author outcome view rejects malformed identity lists before reads and fails closed on a corrupt visible reason", async () => {
+  const f = fixture();
+  for (const payload of [
+    {submissionIds: ["submission-published", "submission-published"], legacyDraftIds: []},
+    {submissionIds: ["submission-published"], legacyDraftIds: ["draft-legacy".repeat(200)]},
+    {submissionIds: Array.from({length: 20}, (_, index) => `submission-${index}`), legacyDraftIds: ["draft-legacy"]},
+    {submissionIds: [], legacyDraftIds: [], uid: "other"},
+  ]) await rejects(f.views.listMyQuestReviewSubmissions({uid: "author", payload}), "INVALID_ARGUMENT");
+  assert.deepEqual(f.reads, []);
+
+  f.documents.set("quest_review_requests/submission-rejected", reviewSubmission(
+    "author", "draft-rejected", "REJECTED", 110, {rejectionReason: "x".repeat(1001)},
+  ));
+  await rejects(f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-rejected"], legacyDraftIds: [],
+  }}), "UNAVAILABLE");
   assert.deepEqual(f.writes, []);
 });
 

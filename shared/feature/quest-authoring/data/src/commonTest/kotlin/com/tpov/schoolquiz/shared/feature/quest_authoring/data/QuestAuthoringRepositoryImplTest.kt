@@ -179,6 +179,7 @@ class QuestAuthoringRepositoryImplTest {
         assertTrue(row.payload.contains("\"question-1\""))
         assertTrue(row.payload.contains("\"lesson-1\""))
         assertEquals("draft-1", local.queuedDraftId)
+        assertEquals("submission-1", local.queuedSubmissionId)
     }
 
     /**
@@ -332,22 +333,31 @@ class QuestAuthoringRepositoryImplTest {
     private class FakeQuestAuthoringLocalDataSource : QuestAuthoringLocalDataSource {
         val rejections = mutableListOf<Pair<String, String?>>()
 
-        override suspend fun findOwnerUidsAwaitingReview(): Set<String> = awaitingReviewOwners
-
-        var awaitingReviewOwners: Set<String> = emptySet()
+        override suspend fun findAwaitingReviewTargets(ownerUid: String): List<ArenaReviewSubmissionTarget> = emptyList()
 
         override suspend fun applyPublication(
+            ownerUid: String,
             draftId: String,
+            submissionId: String,
             updatedAtMs: Long,
-        ) = Unit
+        ): Boolean = false
 
         override suspend fun applyRejection(
+            ownerUid: String,
             draftId: String,
+            submissionId: String,
             reason: String?,
             updatedAtMs: Long,
-        ) {
+        ): Boolean {
             rejections += draftId to reason
+            return false
         }
+
+        override suspend fun claimLegacyReviewSubmission(
+            ownerUid: String,
+            draftId: String,
+            submissionId: String,
+        ): Boolean = false
 
         val summaries = MutableStateFlow<List<QuestDraftSummaryEntity>>(emptyList())
         val draftFlow = MutableStateFlow<QuestAuthoringEntityBundle?>(null)
@@ -357,6 +367,7 @@ class QuestAuthoringRepositoryImplTest {
         var upsertedQuestion: DraftQuestionEntity? = null
         var queuedSubmission: OutboxEntity? = null
         var queuedDraftId: String? = null
+        var queuedSubmissionId: String? = null
         var statusUpdate: StatusUpdate? = null
         var saveFailure: Exception? = null
 
@@ -393,10 +404,12 @@ class QuestAuthoringRepositoryImplTest {
         override suspend fun queueArenaSubmission(
             outboxRow: OutboxEntity,
             draftId: String,
+            submissionId: String,
             requestedAtMs: Long,
         ) {
             queuedSubmission = outboxRow
             queuedDraftId = draftId
+            queuedSubmissionId = submissionId
         }
 
         override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) = Unit

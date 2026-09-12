@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringEntityBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ArenaReviewSubmissionTarget
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
 import kotlinx.coroutines.flow.Flow
@@ -73,19 +74,24 @@ class QuestArenaQuarantineRollbackTest {
         var updatedAtMs: Long = 0L
 
         override suspend fun applyPublication(
+            ownerUid: String,
             draftId: String,
+            submissionId: String,
             updatedAtMs: Long,
-        ) = Unit
+        ): Boolean = false
 
         override suspend fun applyRejection(
+            ownerUid: String,
             draftId: String,
+            submissionId: String,
             reason: String?,
             updatedAtMs: Long,
-        ) {
-            if (draftId != DRAFT_ID) return
+        ): Boolean {
+            if (draftId != DRAFT_ID) return false
             status = "DRAFT"
             rejectionReason = reason
             this.updatedAtMs = updatedAtMs
+            return true
         }
 
         override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummaryEntity>> =
@@ -113,10 +119,17 @@ class QuestArenaQuarantineRollbackTest {
         override suspend fun queueArenaSubmission(
             outboxRow: OutboxEntity,
             draftId: String,
+            submissionId: String,
             requestedAtMs: Long,
         ) = Unit
 
-        override suspend fun findOwnerUidsAwaitingReview(): Set<String> = emptySet()
+        override suspend fun findAwaitingReviewTargets(ownerUid: String): List<ArenaReviewSubmissionTarget> = emptyList()
+
+        override suspend fun claimLegacyReviewSubmission(
+            ownerUid: String,
+            draftId: String,
+            submissionId: String,
+        ): Boolean = false
 
         override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) = Unit
 

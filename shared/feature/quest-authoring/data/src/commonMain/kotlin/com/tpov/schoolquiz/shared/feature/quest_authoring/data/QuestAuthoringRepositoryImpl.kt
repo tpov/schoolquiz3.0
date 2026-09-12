@@ -76,6 +76,7 @@ class QuestAuthoringRepositoryImpl(
             local.queueArenaSubmission(
                 outboxRow = QuestArenaOutboxWriter.row(submission.toRequest(bundle)),
                 draftId = submission.draftId.value,
+                submissionId = submission.id.value,
                 requestedAtMs = submission.requestedAtMs,
             )
         }

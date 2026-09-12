@@ -29,6 +29,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration10to11
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration11to12
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -65,6 +66,7 @@ val persistenceModule =
                     Migration11to12,
                     Migration12to13,
                     Migration13to14,
+                    Migration14to15,
                 )
                 .build()
         }

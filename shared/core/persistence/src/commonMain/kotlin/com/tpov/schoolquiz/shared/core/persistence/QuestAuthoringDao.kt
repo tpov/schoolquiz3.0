@@ -171,11 +171,15 @@ interface QuestAuthoringDao {
     @Query(
         """
         SELECT * FROM quest_drafts
-        WHERE status IN ('REVIEW_QUEUED', 'REVIEW_SENT')
+        WHERE ownerUid = :ownerUid
+          AND status IN ('REVIEW_QUEUED', 'REVIEW_SENT')
         ORDER BY updatedAtMs DESC LIMIT :limit
         """,
     )
-    suspend fun findDraftsAwaitingReview(limit: Int): List<QuestDraftEntity>
+    suspend fun findDraftsAwaitingReview(
+        ownerUid: String,
+        limit: Int,
+    ): List<QuestDraftEntity>
 
     /**
      * Sends a draft back to its author with the reviewer's reason attached. Status returns to
@@ -196,6 +200,75 @@ interface QuestAuthoringDao {
         rejectionReason: String?,
         updatedAtMs: Long,
     )
+
+    /**
+     * Binds an awaiting draft to its one server submission while clearing a previous rejection.
+     *
+     * The outbox insertion and this state transition share one transaction below. A later
+     * terminal result is allowed to settle the draft only when it carries this exact identifier.
+     */
+    @Query(
+        """
+        UPDATE quest_drafts
+        SET status = 'REVIEW_QUEUED',
+            rejectionReason = NULL,
+            activeSubmissionId = :submissionId,
+            updatedAtMs = :updatedAtMs
+        WHERE id = :draftId AND ownerUid = :ownerUid
+        """,
+    )
+    suspend fun markDraftReviewQueued(
+        draftId: String,
+        ownerUid: String,
+        submissionId: String,
+        updatedAtMs: Long,
+    ): Int
+
+    /**
+     * Claims an old awaiting row from a server-confirmed snapshot without ever replacing a newer
+     * locally persisted submission ID.
+     */
+    @Query(
+        """
+        UPDATE quest_drafts
+        SET activeSubmissionId = :submissionId
+        WHERE id = :draftId
+          AND ownerUid = :ownerUid
+          AND status IN ('REVIEW_QUEUED', 'REVIEW_SENT')
+          AND activeSubmissionId IS NULL
+        """,
+    )
+    suspend fun claimLegacyReviewSubmission(
+        draftId: String,
+        ownerUid: String,
+        submissionId: String,
+    ): Int
+
+    /**
+     * Settles only the currently active submission. A null marker is retained only for the
+     * one-time legacy recovery path; a newer submission marker blocks an old verdict.
+     */
+    @Query(
+        """
+        UPDATE quest_drafts
+        SET status = :status,
+            rejectionReason = :rejectionReason,
+            activeSubmissionId = NULL,
+            updatedAtMs = :updatedAtMs
+        WHERE id = :draftId
+          AND ownerUid = :ownerUid
+          AND status IN ('REVIEW_QUEUED', 'REVIEW_SENT')
+          AND (activeSubmissionId = :submissionId OR activeSubmissionId IS NULL)
+        """,
+    )
+    suspend fun settleReviewSubmission(
+        draftId: String,
+        ownerUid: String,
+        submissionId: String,
+        status: String,
+        rejectionReason: String?,
+        updatedAtMs: Long,
+    ): Int
 
     /**
      * Records the version the server assigned, touching nothing else.
@@ -268,13 +341,21 @@ interface QuestAuthoringDao {
     suspend fun queueArenaSubmission(
         outboxRow: OutboxEntity,
         draftId: String,
+        submissionId: String,
         updatedAtMs: Long,
     ) {
         val insertResult = enqueueOutboxRow(outboxRow)
         if (insertResult == OUTBOX_ROW_IGNORED) {
             requireOutboxIntentQueued(insertResult, outboxRow.mutationId, outboxRowState(outboxRow.mutationId))
         }
-        updateDraftStatus(draftId = draftId, status = "REVIEW_QUEUED", updatedAtMs = updatedAtMs)
+        check(
+            markDraftReviewQueued(
+                draftId = draftId,
+                ownerUid = outboxRow.ownerUid,
+                submissionId = submissionId,
+                updatedAtMs = updatedAtMs,
+            ) == 1,
+        ) { "Queued Arena submission does not name its owner draft" }
     }
 
     /** Снимает запись очереди. Очередь — не архив (AD-4): разрешённый конфликт исчезает. */
@@ -296,6 +377,7 @@ interface QuestAuthoringDao {
         conflictedRowId: Long,
         replacement: OutboxEntity,
         draftId: String,
+        submissionId: String,
         updatedAtMs: Long,
     ) {
         deleteOutboxRow(conflictedRowId)
@@ -303,7 +385,14 @@ interface QuestAuthoringDao {
         if (insertResult == OUTBOX_ROW_IGNORED) {
             requireOutboxIntentQueued(insertResult, replacement.mutationId, outboxRowState(replacement.mutationId))
         }
-        updateDraftStatus(draftId = draftId, status = "REVIEW_QUEUED", updatedAtMs = updatedAtMs)
+        check(
+            markDraftReviewQueued(
+                draftId = draftId,
+                ownerUid = replacement.ownerUid,
+                submissionId = submissionId,
+                updatedAtMs = updatedAtMs,
+            ) == 1,
+        ) { "Replacement Arena submission does not name its owner draft" }
     }
 
     @Transaction

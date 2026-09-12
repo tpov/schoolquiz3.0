@@ -46,12 +46,15 @@ class ArenaSubmissionOutboxTest {
 
     @Test
     fun submittingADraftQueuesItAndLocksIt() = runTest {
-        authoring.insertDraft(draft(status = "DRAFT"))
+        authoring.insertDraft(draft(status = "DRAFT", rejectionReason = "old review reason"))
 
-        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 2_000L)
+        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, submissionId = "sub-1", updatedAtMs = 2_000L)
 
         assertNotNull("заявка не встала в очередь", outbox.findByMutationId(key("sub-1")))
-        assertEquals("REVIEW_QUEUED", authoring.findDraftById(DRAFT_ID)!!.status)
+        val submitted = authoring.findDraftById(DRAFT_ID)!!
+        assertEquals("REVIEW_QUEUED", submitted.status)
+        assertEquals("sub-1", submitted.activeSubmissionId)
+        assertEquals(null, submitted.rejectionReason)
     }
 
     /**
@@ -64,7 +67,7 @@ class ArenaSubmissionOutboxTest {
     @Test
     fun aKeyHeldByAQuarantinedRowLeavesTheDraftEditable() = runTest {
         authoring.insertDraft(draft(status = "DRAFT"))
-        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 2_000L)
+        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, submissionId = "sub-1", updatedAtMs = 2_000L)
         val stuck = outbox.findByMutationId(key("sub-1"))!!
         outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server", null)
 
@@ -72,7 +75,9 @@ class ArenaSubmissionOutboxTest {
         authoring.updateDraftStatus(DRAFT_ID, status = "DRAFT", updatedAtMs = 2_500L)
 
         // Подача под тем же ключом — то есть тем же намерением, которое уже не уедет.
-        val failure = runCatching { authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 3_000L) }
+        val failure = runCatching {
+            authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, submissionId = "sub-1", updatedAtMs = 3_000L)
+        }
 
         assertTrue("занятый терминальной записью ключ обязан быть слышен", failure.isFailure)
         assertEquals(
@@ -87,12 +92,12 @@ class ArenaSubmissionOutboxTest {
     @Test
     fun aFreshIntentAfterQuarantineGoesThrough() = runTest {
         authoring.insertDraft(draft(status = "DRAFT"))
-        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 2_000L)
+        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, submissionId = "sub-1", updatedAtMs = 2_000L)
         val stuck = outbox.findByMutationId(key("sub-1"))!!
         outbox.applyDecision(stuck.id, OutboxState.QUARANTINED.name, 0L, 5, "Refused by server", null)
         authoring.updateDraftStatus(DRAFT_ID, status = "DRAFT", updatedAtMs = 2_500L)
 
-        authoring.queueArenaSubmission(row("sub-2"), DRAFT_ID, updatedAtMs = 3_000L)
+        authoring.queueArenaSubmission(row("sub-2"), DRAFT_ID, submissionId = "sub-2", updatedAtMs = 3_000L)
 
         assertEquals(OutboxState.WAITING.name, outbox.findByMutationId(key("sub-2"))!!.state)
         assertEquals("REVIEW_QUEUED", authoring.findDraftById(DRAFT_ID)!!.status)
@@ -103,13 +108,40 @@ class ArenaSubmissionOutboxTest {
         authoring.insertDraft(draft(status = "DRAFT"))
 
         // Переигранная транзакция, а не второе намерение: тот же ключ.
-        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 2_000L)
-        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, updatedAtMs = 2_000L)
+        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, submissionId = "sub-1", updatedAtMs = 2_000L)
+        authoring.queueArenaSubmission(row("sub-1"), DRAFT_ID, submissionId = "sub-1", updatedAtMs = 2_000L)
 
         assertEquals(1, outbox.countPending(OWNER_UID))
     }
 
-    private fun draft(status: String) =
+    @Test
+    fun anOldTerminalVerdictCannotSettleANewerSubmission() = runTest {
+        authoring.insertDraft(draft(status = "DRAFT"))
+        authoring.queueArenaSubmission(row("sub-old"), DRAFT_ID, submissionId = "sub-old", updatedAtMs = 2_000L)
+        authoring.updateDraftStatus(DRAFT_ID, status = "DRAFT", updatedAtMs = 3_000L)
+        authoring.queueArenaSubmission(row("sub-new"), DRAFT_ID, submissionId = "sub-new", updatedAtMs = 4_000L)
+
+        val oldApplied =
+            authoring.settleReviewSubmission(
+                draftId = DRAFT_ID,
+                ownerUid = OWNER_UID,
+                submissionId = "sub-old",
+                status = "DRAFT",
+                rejectionReason = "old",
+                updatedAtMs = 5_000L,
+            )
+        val current = authoring.findDraftById(DRAFT_ID)!!
+
+        assertEquals(0, oldApplied)
+        assertEquals("REVIEW_QUEUED", current.status)
+        assertEquals("sub-new", current.activeSubmissionId)
+        assertEquals(null, current.rejectionReason)
+    }
+
+    private fun draft(
+        status: String,
+        rejectionReason: String? = null,
+    ) =
         QuestDraftEntity(
             id = DRAFT_ID,
             ownerUid = OWNER_UID,
@@ -125,6 +157,7 @@ class ArenaSubmissionOutboxTest {
             createdAtMs = 1_000L,
             updatedAtMs = 1_000L,
             isActive = true,
+            rejectionReason = rejectionReason,
         )
 
     private fun key(submissionId: String) = OutboxOperations.mutationKey(OutboxOperations.SUBMIT_ARENA, submissionId)

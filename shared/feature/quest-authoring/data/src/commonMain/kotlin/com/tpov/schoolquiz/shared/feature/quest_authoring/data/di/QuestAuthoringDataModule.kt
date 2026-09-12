@@ -11,7 +11,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArena
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ReviewActionQuarantine
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringTimestampProvider
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestArenaOutcomeSync
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
@@ -28,7 +27,6 @@ val questAuthoringDataModule =
         single<ReviewAssignmentRepository> {
             ReviewAssignmentRepositoryImpl(local = get<ReviewAssignmentLocalDataSource>(), outbox = get<OutboxStore>())
         }
-        single { QuestArenaOutcomeSync(get(), get(), get()) }
         // Откат локальной половины при карантине — решение владеющей фичи (AD-28).
         single { QuestArenaQuarantineRollback(get(), get()) }
         // У решения ревьюера локальной половины нет (AD-25): карантин — пометка по entity_ref, не откат.

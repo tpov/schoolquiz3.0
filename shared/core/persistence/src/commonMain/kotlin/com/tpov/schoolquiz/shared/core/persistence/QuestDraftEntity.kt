@@ -11,6 +11,7 @@ import androidx.room.PrimaryKey
         Index(value = ["catalogId"]),
         Index(value = ["updatedAtMs"]),
         Index(value = ["isActive"]),
+        Index(value = ["ownerUid", "status", "activeSubmissionId"]),
     ],
 )
 data class QuestDraftEntity(
@@ -33,4 +34,12 @@ data class QuestDraftEntity(
      * rejected; cleared when the author resubmits.
      */
     val rejectionReason: String? = null,
+    /**
+     * The one server submission that is allowed to settle this awaiting draft.
+     *
+     * It is deliberately local bookkeeping rather than a user-visible draft field: dropping it
+     * after the outbox row is delivered would let an old terminal outcome settle a later submit
+     * with the same draft ID.
+     */
+    val activeSubmissionId: String? = null,
 )

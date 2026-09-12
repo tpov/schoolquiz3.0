@@ -24,8 +24,11 @@ class QuestArenaQuarantineRollback(
                 ?.removePrefix(QuestArenaOutboxWriter.DRAFT_REF_PREFIX)
                 ?.takeIf { it.isNotBlank() }
                 ?: return
+        val submissionId = QuestArenaOutboxWriter.submissionIdFromPayload(record.payload) ?: return
         local.applyRejection(
+            ownerUid = record.ownerUid,
             draftId = draftId,
+            submissionId = submissionId,
             reason = record.lastError,
             updatedAtMs = timestampProvider.nowMs(),
         )

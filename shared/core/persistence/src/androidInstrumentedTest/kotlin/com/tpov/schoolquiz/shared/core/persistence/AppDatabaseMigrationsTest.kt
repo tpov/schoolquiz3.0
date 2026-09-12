@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration10to11
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration11to12
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -37,6 +38,30 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationsTest {
+    @Test
+    fun migrate_14_to_15_preserves_awaiting_draft_and_adds_an_empty_active_submission_marker() {
+        helper.createDatabase(DB_NAME, version = 14).use { db ->
+            db.execSQL(
+                "INSERT INTO quest_drafts(id, ownerUid, catalogId, title, description, defaultLanguage, " +
+                    "defaultDifficulty, status, localRevision, serverRevision, publicQuestId, createdAtMs, " +
+                    "updatedAtMs, isActive, rejectionReason) VALUES " +
+                    "('draft-14', 'owner-14', 'catalog-14', 'Draft 14', NULL, 'uk', 'EASY', " +
+                    "'REVIEW_QUEUED', 14, NULL, NULL, 14, 15, 1, 'previous reason')",
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 15, true, Migration14to15).use { db ->
+            db.query(
+                "SELECT ownerUid, status, rejectionReason, activeSubmissionId FROM quest_drafts WHERE id = 'draft-14'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("owner-14", c.getString(0))
+                assertEquals("REVIEW_QUEUED", c.getString(1))
+                assertEquals("previous reason", c.getString(2))
+                assertTrue(c.isNull(3))
+            }
+        }
+    }
+
     @Test
     fun migrate_13_to_14_preserves_pending_arena_journal_and_adds_empty_rating_intents() {
         helper.createDatabase(DB_NAME, version = 13).use { db ->
@@ -708,6 +733,7 @@ class AppDatabaseMigrationsTest {
             Migration11to12,
             Migration12to13,
             Migration13to14,
+            Migration14to15,
         ).close()
     }
 
@@ -715,7 +741,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 14
+        const val CURRENT_VERSION = 15
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES =

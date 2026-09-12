@@ -69,6 +69,7 @@ class OutboxNamespaceGuardPersistenceTest {
                         entityRef = "lesson_runner:attempt:a1",
                     ),
                     draftId = DRAFT_ID,
+                    submissionId = "sub-1",
                     updatedAtMs = 2_000L,
                 )
             }
@@ -166,6 +167,7 @@ class OutboxNamespaceGuardPersistenceTest {
                 entityRef = "quest_authoring:draft:$DRAFT_ID",
             ),
             draftId = DRAFT_ID,
+            submissionId = "sub-1",
             updatedAtMs = 2_000L,
         )
         db.lessonAttemptDao().saveAttemptWithAnswers(

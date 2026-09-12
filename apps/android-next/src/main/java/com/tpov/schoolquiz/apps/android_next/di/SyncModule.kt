@@ -309,7 +309,12 @@ val syncModule =
             )
         }
         single<QuestArenaOutcomeSync> {
-            QuestArenaOutcomeSync(local = get(), remote = get(), timestampProvider = get())
+            QuestArenaOutcomeSync(
+                local = get(),
+                remote = get(),
+                timestampProvider = get(),
+                currentUidProvider = { get<AuthRepository>().currentUid() },
+            )
         }
         single<ProfileSyncables> {
             ProfileSyncables(listOf(get<ProfileBootstrapSync>(), get<UserStatsRepository>() as Syncable))

@@ -4,6 +4,7 @@ const {createCipheriv, createDecipheriv, randomBytes} = require("node:crypto");
 const {LEDGER_PATH, CURRENCY, REASON} = require("./currency-ledger");
 
 const VIEW_VERSION = "arena-lifecycle-views-v1";
+const REVIEW_SUBMISSION_VIEW_VERSION = "quest-review-submissions-v1";
 const LIMITS = Object.freeze({defaultPageSize: 20, maxPageSize: 20, cursorBytes: 4096, responseBytes: 100_000});
 const SHELVES = new Set(["review", "arena", "tournament", "home", "retired", "rejected"]);
 const HISTORY_STATUSES = new Set(["APPLIED", "REJECTED"]);
@@ -23,6 +24,10 @@ const FIRST_TRANSITION_REJECTION_CODES = new Set([
 const CURSOR_VERSION = 1;
 const CURSOR_NONCE_BYTES = 12;
 const CURSOR_TAG_BYTES = 16;
+const REVIEW_SUBMISSION_STATUSES = new Set(["PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED"]);
+// A reviewer writes this explanation specifically for the author. It is not a free pass to ship
+// an unbounded request document through a callable response.
+const MAX_AUTHOR_REJECTION_REASON_BYTES = 1000;
 
 class ArenaLifecycleViewError extends Error {
   constructor(code) {
@@ -63,6 +68,15 @@ function pageSize(payload) {
   const value = payload.pageSize === undefined ? LIMITS.defaultPageSize : payload.pageSize;
   if (!unsigned(value, 1) || value > LIMITS.maxPageSize) fail("INVALID_ARGUMENT");
   return value;
+}
+function inputIdentifierList(value) {
+  if (!Array.isArray(value) || value.length > LIMITS.maxPageSize) fail("INVALID_ARGUMENT");
+  const values = value.map(item => {
+    if (!identifier(item)) fail("INVALID_ARGUMENT");
+    return item;
+  });
+  if (new Set(values).size !== values.length) fail("INVALID_ARGUMENT");
+  return values.sort();
 }
 function safeShelf(value) { return typeof value === "string" && SHELVES.has(value) ? value : null; }
 function safeReasonCode(value) { return typeof value === "string" && REJECTION_CODES.has(value) ? value : null; }
@@ -200,6 +214,20 @@ function royaltyEntry(snapshot, uid) {
   unavailable(plain(raw) && raw.uid === uid && raw.reason === REASON.ARENA_AUTHOR_ROYALTY &&
     raw.currency === CURRENCY.NOLICS && unsigned(raw.delta, 1) && unsigned(raw.atMs));
   return {id, entry: {creditedNolics: raw.delta, creditedAtMs: raw.atMs}};
+}
+function authorVisibleRejectionReason(raw) {
+  if (raw === null || raw === undefined) return null;
+  unavailable(typeof raw === "string" && raw.trim().length > 0 &&
+    Buffer.byteLength(raw, "utf8") <= MAX_AUTHOR_REJECTION_REASON_BYTES);
+  return raw.trim();
+}
+function reviewSubmissionEntry(snapshot, uid, expectedDraftId = null) {
+  const submissionId = documentId(snapshot); const raw = snapshot.data();
+  unavailable(plain(raw) && raw.ownerUid === uid && identifier(raw.draftId) &&
+    REVIEW_SUBMISSION_STATUSES.has(raw.status));
+  if (expectedDraftId !== null) unavailable(raw.draftId === expectedDraftId && unsigned(raw.processedAtMs));
+  return {submissionId, draftId: raw.draftId, status: raw.status,
+    rejectionReason: raw.status === "REJECTED" ? authorVisibleRejectionReason(raw.rejectionReason) : null};
 }
 
 /**
@@ -346,7 +374,43 @@ function createArenaLifecycleViews({db, loadLessonContext, isCurator, readCursor
     }));
   }
 
-  return Object.freeze({listOwned, listCurator, get, listHistory, listMyRoyalty});
+  /**
+   * The author only needs the state of submissions still named by their local draft. Reading the
+   * whole request collection would both leak the complete request body and make old terminal rows
+   * capable of settling a later resubmission. Current submission IDs are exact document reads;
+   * legacy drafts without a persisted ID get one bounded, server-ordered recovery lookup.
+   */
+  async function listMyQuestReviewSubmissions(input) {
+    const {uid, payload} = readRequest(input, ["submissionIds", "legacyDraftIds"]);
+    const submissionIds = inputIdentifierList(payload.submissionIds);
+    const legacyDraftIds = inputIdentifierList(payload.legacyDraftIds);
+    if (submissionIds.length + legacyDraftIds.length > LIMITS.maxPageSize) fail("INVALID_ARGUMENT");
+    return protectedRead(() => db.runTransaction(async tx => {
+      const entries = [];
+      for (const submissionId of submissionIds) {
+        const snapshot = await tx.get(db.doc("quest_review_requests/" + submissionId));
+        if (!snapshot.exists) continue;
+        const raw = snapshot.data();
+        // A guessed foreign document is deliberately indistinguishable from an absent one.
+        if (!plain(raw) || raw.ownerUid !== uid) continue;
+        entries.push(reviewSubmissionEntry(snapshot, uid));
+      }
+      for (const draftId of legacyDraftIds) {
+        const query = db.collection("quest_review_requests")
+          .where("ownerUid", "==", uid).where("draftId", "==", draftId)
+          .orderBy("processedAtMs", "desc").orderBy("__name__", "desc").limit(1);
+        const docs = documentRows(await tx.get(query), 1);
+        if (docs.length === 1) entries.push(reviewSubmissionEntry(docs[0], uid, draftId));
+      }
+      const deduplicated = [...new Map(entries.map(entry => [entry.submissionId, entry])).values()];
+      return checkResponse({viewVersion: REVIEW_SUBMISSION_VIEW_VERSION, entries: deduplicated});
+    }));
+  }
+
+  return Object.freeze({listOwned, listCurator, get, listHistory, listMyRoyalty, listMyQuestReviewSubmissions});
 }
 
-module.exports = {ArenaLifecycleViewError, LIMITS, VIEW_VERSION, createArenaLifecycleViews};
+module.exports = {
+  ArenaLifecycleViewError, LIMITS, VIEW_VERSION, REVIEW_SUBMISSION_VIEW_VERSION,
+  MAX_AUTHOR_REJECTION_REASON_BYTES, createArenaLifecycleViews,
+};

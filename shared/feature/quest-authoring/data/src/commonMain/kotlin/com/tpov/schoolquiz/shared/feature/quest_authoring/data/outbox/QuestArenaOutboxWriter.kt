@@ -12,6 +12,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 /**
@@ -30,6 +33,23 @@ object QuestArenaOutboxWriter {
     const val DRAFT_REF_PREFIX: String = "quest_authoring:draft:"
 
     fun draftRef(draftId: String): String = DRAFT_REF_PREFIX + draftId
+
+    /**
+     * Reads only the correlation key owned by this feature from an already-stored outbox body.
+     *
+     * Conflict replacement intentionally preserves the original body: the server rejected it
+     * before creating a review submission, so minting a different submission ID would make a
+     * later terminal outcome impossible to correlate. Parsing is deliberately fail-closed.
+     */
+    fun submissionIdFromPayload(payload: String): String? =
+        runCatching {
+            kotlinx.serialization.json.Json
+                .parseToJsonElement(payload)
+                .jsonObject["submissionId"]
+                ?.jsonPrimitive
+                ?.contentOrNull
+                ?.takeIf { it.isNotBlank() }
+        }.getOrNull()
 
     fun row(
         request: QuestArenaSubmissionRequest,
