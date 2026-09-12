@@ -1,6 +1,14 @@
 appId: com.tpov.schoolquiz.mvp
 name: E2B selected HARD preparation
 ---
+# The preceding preflight deliberately finishes at the selected lesson card.
+# Re-establish the page anchor before requiring the title; otherwise a valid
+# retained catalog fails merely because its header is off-screen.
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_ARENA_TITLE}
+    direction: UP
+    timeout: 20000
 - assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
 - scrollUntilVisible:
     element:

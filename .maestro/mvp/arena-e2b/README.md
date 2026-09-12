@@ -147,8 +147,10 @@ opens that ticket and completes its saved lesson. It never prepares or starts a
 replacement.
 
 The Arena screen orders its items as catalog header, reservation header, local
-tickets, then lesson cards.  The flows therefore scroll up from a selected
-lesson to the reservation header, and down from that header to the exact
+tickets, then lesson cards.  A preparation phase first re-establishes the
+catalog-header anchor because preflight intentionally finishes at the selected
+lesson card. The flows therefore scroll up from a selected lesson to the
+reservation header, and down from that header to the exact
 reader-verified ticket.  This preserves the distinction between the prepared
 ticket's `Start` action and its later `Open` action after a process relaunch.
 On a cold Arena entry the title may render while the lower reservation controls
