@@ -86,6 +86,11 @@ tcp:8080 -> tcp:8080
 tcp:5001 -> tcp:5001
 ```
 
+Every receipt reader and the final oracle are invoked with the fixed private
+demo Firestore endpoint and empty credential variables. Their JSON is written
+through a private temporary file and renamed only after a successful read, so
+a failed reader cannot leave a partial receipt artifact behind.
+
 The `settle` and `verify` phases receive paths to the read-only context reader;
 `verify` also receives the settlement context, a Room rating-ID context, and
 the two-receipt oracle.  The oracle gets `--rating-id` and `--rating`, never

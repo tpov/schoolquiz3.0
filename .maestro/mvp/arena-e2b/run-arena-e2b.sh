@@ -29,6 +29,8 @@ output_dir=''
 overall_status='INTERRUPTED'
 phase_status='NOT_RUN'
 next_required='runner did not reach a terminal phase'
+readonly EVIDENCE_PROJECT='demo-schoolquiz-mvp'
+readonly EVIDENCE_FIRESTORE_HOST='schoolquiz-mvp-firebase:8080'
 
 run_seen_keys=$'\n'
 selector_seen_keys=$'\n'
@@ -564,16 +566,31 @@ run_maestro() {
     fi
 }
 
+capture_evidence_json() {
+    local destination=$1
+    shift
+    local temporary="${destination}.tmp.$$"
+    [[ ! -e "$destination" ]] || die "evidence destination already exists: $destination"
+    [[ ! -e "$temporary" ]] || die "evidence temporary path already exists: $temporary"
+    if ! env -u GOOGLE_APPLICATION_CREDENTIALS -u FIREBASE_CONFIG \
+        GCLOUD_PROJECT="$EVIDENCE_PROJECT" \
+        FIRESTORE_EMULATOR_HOST="$EVIDENCE_FIRESTORE_HOST" \
+        "$@" > "$temporary"; then
+        rm -f -- "$temporary"
+        return 1
+    fi
+    chmod 600 "$temporary"
+    mv -- "$temporary" "$destination"
+}
+
 capture_reader_context() {
     local destination=$1
     [[ -f "$context_reader" ]] || die "context reader does not exist: $context_reader"
-    "$node_bin" "$context_reader" \
+    capture_evidence_json "$destination" "$node_bin" "$context_reader" \
         --run-id "$run_id" \
         --owner-uid "$E2B_OWNER_UID" \
         --ticket-id "$(json_value "$receipt_context" ticketId)" \
-        --attempt-id "$(json_value "$receipt_context" attemptId)" \
-        > "$destination"
-    chmod 600 "$destination"
+        --attempt-id "$(json_value "$receipt_context" attemptId)"
 }
 
 capture_reader_context_after_rating() {
@@ -581,30 +598,26 @@ capture_reader_context_after_rating() {
     local rating_id
     rating_id=$(json_value "$rating_id_context" ratingId) || die 'could not read ratingId from Room context'
     [[ -f "$context_reader" ]] || die "context reader does not exist: $context_reader"
-    "$node_bin" "$context_reader" \
+    capture_evidence_json "$destination" "$node_bin" "$context_reader" \
         --run-id "$run_id" \
         --owner-uid "$E2B_OWNER_UID" \
         --ticket-id "$(json_value "$receipt_context" ticketId)" \
         --attempt-id "$(json_value "$receipt_context" attemptId)" \
         --rating-id "$rating_id" \
-        --rating "$E2B_RATING" \
-        > "$destination"
-    chmod 600 "$destination"
+        --rating "$E2B_RATING"
 }
 
 run_full_oracle() {
     local rating_id
     rating_id=$(json_value "$rating_id_context" ratingId) || die 'could not read ratingId from Room context'
     [[ -f "$receipt_oracle" ]] || die "receipt oracle does not exist: $receipt_oracle"
-    "$node_bin" "$receipt_oracle" \
+    capture_evidence_json "$output_dir/two-receipt-oracle.json" "$node_bin" "$receipt_oracle" \
         --run-id "$run_id" \
         --owner-uid "$E2B_OWNER_UID" \
         --ticket-id "$(json_value "$receipt_context" ticketId)" \
         --attempt-id "$(json_value "$receipt_context" attemptId)" \
         --rating-id "$rating_id" \
-        --rating "$E2B_RATING" \
-        > "$output_dir/two-receipt-oracle.json"
-    chmod 600 "$output_dir/two-receipt-oracle.json"
+        --rating "$E2B_RATING"
 }
 
 while (($#)); do
