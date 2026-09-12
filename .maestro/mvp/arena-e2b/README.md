@@ -15,7 +15,7 @@ identities could accidentally validate an older receipt.
 | --- | --- | --- |
 | `preflight` | Preserved-data launch and retained-account UI check | Selector snapshot and immutable run context |
 | `prepare` | SELECTED/HARD preparation | Read-only receipt context containing the new ticket and attempt |
-| `settle` | Start, answer, force-stop/relaunch, finish | Fresh read-only receipt context showing the matching settlement |
+| `settle` | Start, answer, force-stop/relaunch, finish | Pending UI proof plus a `RESERVED`/no-event server context for the exact saved SETTLE |
 | `deliver` | Re-open an existing local SETTLE request and synchronize it | Fresh read-only receipt context showing the matching settlement |
 | `rate` | Submit rating `2` from the confirmed result screen | Read-only Room context containing the new `ratingId` and the exact ticket/attempt |
 | `deliver-rating` | Re-open the existing queued rating and send it | Final server receipt and oracle verification |
@@ -39,7 +39,9 @@ phases remain `NOT_RUN` overall and name their next required evidence.
    it refuses anything except one new ticket whose immutable fields match the
    run context.  Pass that exact ticket and attempt to the read-only
    `arena-e2e-context-reader.js`.
-4. After settlement, capture another context-reader JSON.  After submitting
+4. After `settle`, retain its pending server context and screenshot. `deliver`
+   must consume that same context and produces the confirmed settlement context.
+   After submitting
    the rating, stop the app only after the rating UI confirms its local save,
    take a read-only Room snapshot (database plus adjacent WAL/SHM), and run
    `arena-e2e-rating-id-reader.js`.  It refuses a missing, ambiguous, or
@@ -99,9 +101,11 @@ bash work/arena-e2b/run-arena-e2b.sh \
 ```
 
 For `settle`, add `--receipt-context <reader-output-after-prepare.json>` and
-`--context-reader <arena-e2e-context-reader.js>`.  For `rate`, add the fresh
-receipt context from the settlement phase.  For `verify`, retain that settlement
-context, add `--rating-id-context <room-reader-output.json>`, and add
+`--context-reader <arena-e2e-context-reader.js>`. Its output must remain
+`RESERVED` with no event or receipt. Run `deliver` against that same pending
+context; it sends the already saved operation and produces the confirmed context
+for `rate`. For
+`verify`, retain that settlement context, add `--rating-id-context <room-reader-output.json>`, and add
 `--receipt-oracle <arena-e2e-receipt-oracle.js>`.
 
 The Arena screen orders its items as catalog header, reservation header, local

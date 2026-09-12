@@ -2,7 +2,7 @@
 #
 # E2B runner draft.  It is safe by construction for a retained MVP installation:
 # no clear/uninstall fallback, no reverse --remove-all, and no hidden output location.
-set -euo pipefail
+set -Eeuo pipefail
 
 readonly APP_ID='com.tpov.schoolquiz.mvp'
 readonly ALLOWED_REVERSE_PORTS=(9099 8080 5001)
@@ -62,6 +62,7 @@ readonly SELECTOR_KEYS=(
     E2B_SELECTOR_SECOND_ANSWER
     E2B_SELECTOR_CONTINUE_LESSON
     E2B_SELECTOR_SYNCHRONIZE
+    E2B_SELECTOR_SETTLE_PENDING
     E2B_SELECTOR_SETTLE_CONFIRMED
     E2B_SELECTOR_RATING_PROMPT
     E2B_SELECTOR_RATE_TWO
@@ -107,6 +108,18 @@ on_interrupt() {
     exit 130
 }
 
+on_error() {
+    local exit_code=$?
+    # A failed reader, validator, or oracle is evidence of a failed phase, not an interruption.
+    # Keep a more specific failure state set by run_maestro() or die().
+    if [[ "$overall_status" != 'FAIL' ]]; then
+        overall_status='FAIL'
+        phase_status='FAIL'
+        next_required='inspect the failed read-only evidence or runner stderr before retrying'
+    fi
+    exit "$exit_code"
+}
+
 write_result() {
     local exit_code=$?
     trap - EXIT
@@ -126,6 +139,7 @@ NODE
 
 trap write_result EXIT
 trap on_interrupt INT TERM
+trap on_error ERR
 
 require_value() {
     local option_name=$1
@@ -240,7 +254,7 @@ required_selector_keys() {
                 E2B_SELECTOR_QUESTION E2B_SELECTOR_FIRST_ANSWER E2B_SELECTOR_SAVED_ANSWER \
                 E2B_SELECTOR_RESUME_DIALOG E2B_SELECTOR_RESUME_OR_SAVED E2B_SELECTOR_RESUME_CONTINUE \
                 E2B_SELECTOR_SECOND_QUESTION E2B_SELECTOR_SECOND_ANSWER E2B_SELECTOR_CONTINUE_LESSON \
-                E2B_SELECTOR_SYNCHRONIZE E2B_SELECTOR_SETTLE_CONFIRMED
+                E2B_SELECTOR_SYNCHRONIZE E2B_SELECTOR_SETTLE_PENDING
             ;;
         deliver)
             printf '%s\n' \
@@ -345,6 +359,19 @@ const [file] = process.argv.slice(2);
 const value = JSON.parse(fs.readFileSync(file, 'utf8'));
 if (value.settlementReceipt === null || typeof value.settlementReceipt !== 'object' || Array.isArray(value.settlementReceipt)) {
   process.stderr.write('receipt context does not contain a confirmed settlement receipt\n');
+  process.exit(2);
+}
+NODE
+}
+
+validate_unsettled_server_context() {
+    local context_file=$1
+    "$node_bin" - "$context_file" <<'NODE'
+const fs = require('fs');
+const [file] = process.argv.slice(2);
+const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+if (value.ticketStatus !== 'RESERVED' || value.settlementReceipt !== null || value.event !== null) {
+  process.stderr.write('receipt context is not the exact unconfirmed server state required for this phase\n');
   process.exit(2);
 }
 NODE
@@ -612,11 +639,20 @@ validate_selectors
 # Validate all immutable and read-only inputs before the runner updates the retained APK or changes
 # its three allowed reverse mappings.
 case "$phase" in
-    settle|deliver)
+    settle)
         require_value --receipt-context "$receipt_context"
         require_value --context-reader "$context_reader"
         [[ -f "$context_reader" ]] || die "context reader does not exist: $context_reader"
         validate_receipt_context "$receipt_context" false
+        validate_unsettled_server_context "$receipt_context"
+        prepare_ticket_selectors
+        ;;
+    deliver)
+        require_value --receipt-context "$receipt_context"
+        require_value --context-reader "$context_reader"
+        [[ -f "$context_reader" ]] || die "context reader does not exist: $context_reader"
+        validate_receipt_context "$receipt_context" false
+        validate_unsettled_server_context "$receipt_context"
         prepare_ticket_selectors
         ;;
     rate)
@@ -684,20 +720,20 @@ case "$phase" in
     settle)
         run_maestro "$(dirname "$0")/flows/02-start-answer-relaunch.yaml"
         run_maestro "$(dirname "$0")/flows/03-finish.yaml"
-        capture_reader_context "$output_dir/receipt-context-after-settle.json"
-        validate_receipt_context "$output_dir/receipt-context-after-settle.json" false
-        validate_confirmed_settlement "$output_dir/receipt-context-after-settle.json"
-        printf 'settlementReceiptContextSha256=%s\n' "$(sha256_file "$output_dir/receipt-context-after-settle.json")" >> "$output_dir/run-manifest.env"
+        capture_reader_context "$output_dir/pending-settlement-context.json"
+        validate_receipt_context "$output_dir/pending-settlement-context.json" false
+        validate_unsettled_server_context "$output_dir/pending-settlement-context.json"
+        printf 'pendingSettlementContextSha256=%s\n' "$(sha256_file "$output_dir/pending-settlement-context.json")" >> "$output_dir/run-manifest.env"
         overall_status='NOT_RUN'
         phase_status='PASS'
-        next_required='inspect the settlement context, then submit rating 2 from the confirmed result screen'
+        next_required='use the retained exact ticket to synchronize its saved settlement request'
         ;;
     deliver)
         run_maestro "$(dirname "$0")/flows/03-sync-pending-settlement.yaml"
-        capture_reader_context "$output_dir/receipt-context-after-settle.json"
-        validate_receipt_context "$output_dir/receipt-context-after-settle.json" false
-        validate_confirmed_settlement "$output_dir/receipt-context-after-settle.json"
-        printf 'settlementReceiptContextSha256=%s\n' "$(sha256_file "$output_dir/receipt-context-after-settle.json")" >> "$output_dir/run-manifest.env"
+        capture_reader_context "$output_dir/confirmed-settlement-context.json"
+        validate_receipt_context "$output_dir/confirmed-settlement-context.json" false
+        validate_confirmed_settlement "$output_dir/confirmed-settlement-context.json"
+        printf 'confirmedSettlementContextSha256=%s\n' "$(sha256_file "$output_dir/confirmed-settlement-context.json")" >> "$output_dir/run-manifest.env"
         overall_status='NOT_RUN'
         phase_status='PASS'
         next_required='inspect the settlement context, then submit rating 2 from the confirmed result screen'
