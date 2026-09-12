@@ -27,10 +27,15 @@ name: E2B start answer and preserved-data relaunch
     direction: DOWN
     timeout: 60000
 - assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+# The exact label has just been found. Its action row is rendered below the
+# visible card fragment, so reveal that immediate action before tapping it.
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_START}
+    direction: DOWN
+    timeout: 60000
 - tapOn:
     text: ${E2B_SELECTOR_TICKET_START}
-    below:
-      text: ${E2B_SELECTOR_TICKET_LABEL}
     enabled: true
     retryTapIfNoChange: true
 - extendedWaitUntil:
@@ -71,10 +76,15 @@ name: E2B start answer and preserved-data relaunch
     direction: DOWN
     timeout: 60000
 - assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+# As above, search downward from the exact ticket card for its immediate open
+# action; historical cards are never used as a replacement ticket.
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_OPEN}
+    direction: DOWN
+    timeout: 60000
 - tapOn:
     text: ${E2B_SELECTOR_TICKET_OPEN}
-    below:
-      text: ${E2B_SELECTOR_TICKET_LABEL}
     enabled: true
     retryTapIfNoChange: true
 - extendedWaitUntil:

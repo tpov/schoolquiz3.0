@@ -27,10 +27,13 @@ name: E2B submit rating two
     direction: DOWN
     timeout: 60000
 - assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_OPEN}
+    direction: DOWN
+    timeout: 60000
 - tapOn:
     text: ${E2B_SELECTOR_TICKET_OPEN}
-    below:
-      text: ${E2B_SELECTOR_TICKET_LABEL}
     enabled: true
     retryTapIfNoChange: true
 - assertVisible: ${E2B_SELECTOR_SETTLE_CONFIRMED}

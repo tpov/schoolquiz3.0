@@ -114,10 +114,10 @@ Opening a retained run may show either the explicit recovery dialog or its
 already-restored saved-answer state, so the flow waits for either observable
 state before deciding whether to press `Continue`.
 Where the UI exposes generic action text, Maestro scopes an enabled action
-below the reader-verified `Ticket: <id>` label and asserts the next retained
-state immediately.  The UI currently does not expose test tags as Android
-resource IDs, so this is a visible-layout guard rather than a substitute for
-the independent server receipt binding.
+by first locating the reader-verified `Ticket: <id>` label and then revealing
+the action directly below that card.  The UI currently does not expose test
+tags as Android resource IDs, so this is a visible-layout guard rather than a
+substitute for the independent server receipt binding.
 
 The source tree is not evidence by itself: the private run artifacts record
 the exact candidate, retained device, server contexts, and results.  Use
