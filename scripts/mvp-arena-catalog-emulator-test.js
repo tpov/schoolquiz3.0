@@ -29,7 +29,8 @@ const scriptSha256 = sha(readFileSync(__filename));
 assert.equal(scriptSha256, process.env.AC_EXPECTED_SCRIPT_SHA256);
 const EXPECTED_SOURCE = Object.freeze({
   "functions/index.js": "7cad5bd6cb8b1d648112b063c67c418b8ff2464ada89a733fbfcf562882416ec",
-  "functions/arena-lesson-catalog.js": "3ef0ef385a2ef44c7735408cd448f4fb6b73b53530e932a6289a4744ca8cc1d3",
+  "functions/arena-lesson-catalog.js": "ab1bd8754fd822c321ad50844af64b419b41a3e36cb25a6523da4f35b339f8a5",
+  "functions/arena-eligible-universe.js": "51c9ea3bc30a066ccf151ab870ee3309f026567d545642f77489e1179c3f57f9",
   "functions/arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
   "functions/question-key-store.js": "052d0eaeebc7145f3c86545a091e22b20ac40d826e6fedc760afbb7a3d3126d4",
   "functions/question-redaction.js": "df1606e9a29f931c3cab8c3d34167ad0cf357d1099df49105ca530c39ccdf0e1",

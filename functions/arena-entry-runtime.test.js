@@ -24,7 +24,7 @@ function world() {
     "quests/quest": {catalogId: "catalog", authorUid: "author", visibleOn: ["archive"]},
     "sections/section": {questId: "quest"}, "themes/theme": {sectionId: "section"},
     "lessons/lesson": {themeId: "theme", version: 1, reviewSubmissionId: "submission", reviewApprovedAtMs: now - 1000},
-    "lesson_placements/lesson": {lessonId: "lesson", shelf: "arena", authorUid: "author"},
+    "lesson_placements/lesson": {lessonId: "lesson", shelf: "arena", authorUid: "author", contentVersion: 1},
     "admin/review/lessons/lesson": {ownerUid: "author", questId: "quest", submissionId: "submission",
       status: "PUBLISHED", sourceLanguages: ["en"]},
     "admin/review/lessons/lesson/reviews/tester": {kind: "TESTING", reviewerUid: "tester",
@@ -35,6 +35,25 @@ function world() {
       {lessonId: "lesson", version: 1, difficulty, payload: JSON.stringify({...SINGLE, difficulty})}]))),
   };
 }
+function eligiblePriceLesson(id, ratingSum, ratingCount, ratingVersion = 1) {
+  return {
+    [`catalogs/catalog-${id}`]: {questType: "REGULAR"},
+    [`quests/quest-${id}`]: {catalogId: `catalog-${id}`, authorUid: `author-${id}`, visibleOn: ["archive"]},
+    [`sections/section-${id}`]: {questId: `quest-${id}`},
+    [`themes/theme-${id}`]: {sectionId: `section-${id}`},
+    [`lessons/${id}`]: {themeId: `theme-${id}`, version: 1, reviewSubmissionId: `submission-${id}`,
+      reviewApprovedAtMs: 1},
+    [`lesson_placements/${id}`]: {lessonId: id, shelf: "arena", authorUid: `author-${id}`, contentVersion: 1},
+    [`lesson_ratings/${id}`]: {ratingSum, ratingCount, ratingVersion},
+    [`admin/review/lessons/${id}`]: {ownerUid: `author-${id}`, questId: `quest-${id}`,
+      submissionId: `submission-${id}`, status: "PUBLISHED", sourceLanguages: ["en"]},
+    ...Object.fromEntries(["TESTING", "LOGIC"].map((kind) => [`admin/review/lessons/${id}/reviews/${kind}`, {
+      kind, reviewerUid: `${kind}-${id}`, acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100,
+      submissionId: `submission-${id}`,
+    }])),
+  };
+}
+function putAll(rows) { for (const [path, value] of Object.entries(rows)) store.documents.set(path, value); }
 function call(name, data, owner = uid) { return functions[name].run({auth: {uid: owner}, data}); }
 async function issue(requestId, patch = {}) {
   return (await call("prepareArenaEntry", {requestId, mode: "SELECTED", lessonId: "lesson", difficulty: "EASY", ...patch})).ticket;
@@ -195,6 +214,35 @@ test("server-selected random is free; missing independent approval refuses befor
   assert.deepEqual(structuredClone([...store.documents]), before);
 });
 
+test("stale placement author/version rejects selected and random preparation before any hold", async () => {
+  for (const fields of [{authorUid: "other"}, {contentVersion: 2}]) {
+    store.reset(world());
+    store.documents.set("lesson_placements/lesson", {...store.documents.get("lesson_placements/lesson"), ...fields});
+    const before = structuredClone([...store.documents]);
+    await assert.rejects(issue(`stale-selected-${fields.contentVersion || "author"}`), {code: "failed-precondition"});
+    await assert.rejects(issue(`stale-random-${fields.contentVersion || "author"}`, {mode: "RANDOM", lessonId: null}),
+      {code: "failed-precondition"});
+    assert.deepEqual(structuredClone([...store.documents]), before);
+  }
+});
+
+test("corrupt eligible aggregate is unavailable and never reaches a wallet write", async () => {
+  store.reset(world());
+  store.documents.set("lesson_ratings/lesson", {ratingSum: 4, ratingCount: 1, ratingVersion: 1});
+  const before = structuredClone([...store.documents]);
+  await assert.rejects(issue("corrupt-aggregate"),
+    (error) => error.code === "unavailable" && error.details.reason === "UNAVAILABLE");
+  assert.deepEqual(structuredClone([...store.documents]), before);
+});
+
+test("preparation reuses the callback-local economy snapshot for its regeneration plan", async () => {
+  for (const [mode, patch] of [["SELECTED", {}], ["RANDOM", {mode: "RANDOM", lessonId: null}]]) {
+    store.reset(world());
+    await issue(`one-economy-read-${mode}`, patch);
+    assert.equal(store.operations.filter((operation) => operation.path === "configs/economy").length, 1);
+  }
+});
+
 test("a reviewed Arena lesson may belong to a course kept in the on-demand archive", async () => {
   store.reset(world());
   store.documents.set("quests/quest", {...store.documents.get("quests/quest"), archived: true});
@@ -225,8 +273,7 @@ test("new Arena attempts cannot bypass ticket payments through the old result en
 
 test("selected top level costs 100 and price remains frozen after ratings change", async () => {
   store.reset(world());
-  store.documents.set("lesson_placements/lower", {lessonId: "lower", shelf: "arena"});
-  store.documents.set("lesson_ratings/lower", {ratingSum: 20, ratingCount: 20, ratingVersion: 1});
+  putAll(eligiblePriceLesson("lower", 20, 20));
   store.documents.set("lesson_ratings/lesson", {ratingSum: 60, ratingCount: 20, ratingVersion: 7});
   const ticket = await issue("top-price");
   assert.equal(ticket.priceNolics, 100); assert.equal(ticket.ratingVersion, 7);
@@ -236,6 +283,22 @@ test("selected top level costs 100 and price remains frozen after ratings change
   assert.equal(receipt.nolicsSpent, 100);
   assert.equal(store.documents.get("users/author").nolics, 80);
   assert.equal(store.documents.get("users/player").nolics, 900);
+});
+
+test("a full eligible index preserves the 12000 cap and rejects selected or random prepare before writes", async () => {
+  const extras = {};
+  for (let n = 0; n < 999; n++) Object.assign(extras, eligiblePriceLesson(`capacity-${n}`, 0, 0));
+  for (const mode of ["SELECTED", "RANDOM"]) {
+    store.reset({...world(), ...extras});
+    const before = structuredClone([...store.documents]);
+    const payload = mode === "SELECTED" ? {
+      requestId: `capacity-${mode}`, mode, lessonId: "lesson", difficulty: "EASY",
+    } :
+      {requestId: `capacity-${mode}`, mode, lessonId: null, difficulty: "EASY"};
+    await assert.rejects(call("prepareArenaEntry", payload), error =>
+      error.code === "unavailable" && error.details.reason === "ARENA_INDEX_REBUILD_REQUIRED");
+    assert.deepEqual(structuredClone([...store.documents]), before);
+  }
 });
 
 test("a retried issue rereads withdrawal on the same Transaction object and creates no hold", async () => {
@@ -252,8 +315,7 @@ test("a retried issue rereads withdrawal on the same Transaction object and crea
 test("a retried issue freezes the newly committed price, not the abandoned transaction's cache", async () => {
   store.reset(world());
   store.retryTransactionOnce = () => {
-    store.documents.set("lesson_placements/lower", {lessonId: "lower", shelf: "arena"});
-    store.documents.set("lesson_ratings/lower", {ratingSum: 20, ratingCount: 20, ratingVersion: 1});
+    putAll(eligiblePriceLesson("lower", 20, 20));
     store.documents.set("lesson_ratings/lesson", {ratingSum: 60, ratingCount: 20, ratingVersion: 7});
   };
   const ticket = await issue("repriced-on-retry");
@@ -262,13 +324,12 @@ test("a retried issue freezes the newly committed price, not the abandoned trans
   assert.equal(store.documents.get("users/player").reservedNolics, 100);
   assert.equal(store.documents.get("users/player").nolics, 900);
   assert.equal(store.writesTo("arena_entry_tickets/").length, 1);
+  assert.equal(store.operations.filter((operation) => operation.path === "configs/economy").length, 2,
+    "each optimistic callback has its own reader; neither callback repeats the economy read");
 });
 
 function repriceLessonToMiddleLevel() {
-  store.documents.set("lesson_placements/lower", {lessonId: "lower", shelf: "arena"});
-  store.documents.set("lesson_placements/upper", {lessonId: "upper", shelf: "arena"});
-  store.documents.set("lesson_ratings/lower", {ratingSum: 20, ratingCount: 20, ratingVersion: 1});
-  store.documents.set("lesson_ratings/upper", {ratingSum: 60, ratingCount: 20, ratingVersion: 1});
+  putAll({...eligiblePriceLesson("lower", 20, 20), ...eligiblePriceLesson("upper", 60, 20)});
   store.documents.set("lesson_ratings/lesson", {ratingSum: 40, ratingCount: 20, ratingVersion: 7});
 }
 

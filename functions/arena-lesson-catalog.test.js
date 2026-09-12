@@ -146,12 +146,12 @@ test("pagination covers every eligible lesson once, defaults to 20 and allows 50
 test("cursor detects unseen pricing, display, version, membership and eligibility changes without writes", async () => {
   const seed = {...lessonWorld("a"), ...lessonWorld("b"),
     "lesson_placements/stale": {shelf: "arena"}, ...rating("stale", 3, 1)};
-  const changes = [() => patch("lesson_ratings/stale", {ratingSum: 2}),
+  const changes = [() => patch("lesson_ratings/a", {ratingSum: 2, ratingCount: 1, ratingVersion: 1}),
     () => patch("lessons/b", {title: "Changed title"}),
     () => patch("lesson_placements/b", {placementVersion: 2}),
     () => patch("lessons/b", {version: 2}),
     () => patch("admin/review/lessons/b", {status: "REJECTED"}),
-    () => store.documents.delete("lesson_placements/stale"),
+    () => patch("lesson_placements/b", {authorUid: "other-author"}),
     () => { for (const [key, value] of Object.entries(lessonWorld("c"))) store.documents.set(key, value); }];
   for (const change of changes) {
     store.reset(seed); const first = await read({pageSize: 1}); change(); const before = snapshot();
@@ -168,14 +168,15 @@ test("private payload and audit text do not enter the public fingerprint", async
   assert.equal(second.snapshotFingerprint, first.snapshotFingerprint); safe(second);
 });
 
-test("stale raw placements keep price parity with actual prepare but never become visible cards", async () => {
-  store.reset({...bankWorld(), ...rating("lesson", 2, 1),
-    "lesson_placements/low": {shelf: "arena"}, ...rating("low", 1, 1),
-    "lesson_placements/high": {shelf: "arena"}, ...rating("high", 3, 1)});
+test("stale placement author/version are absent from catalog and cannot influence its confirmed quote", async () => {
+  store.reset({...bankWorld(), ...rating("lesson", 2, 1), ...lessonWorld("low"), ...rating("low", 1, 1),
+    ...lessonWorld("high"), ...rating("high", 3, 1)});
+  patch("lesson_placements/low", {contentVersion: 2});
+  patch("lesson_placements/high", {authorUid: "other-author"});
   const before = snapshot(); const response = await read();
-  assert.deepEqual(response.lessons.map(row => [row.lessonId, row.priceNolics]), [["lesson", 51]]); noWrites(before);
+  assert.deepEqual(response.lessons.map(row => [row.lessonId, row.priceNolics]), [["lesson", 1]]); noWrites(before);
   const ticket = (await functions.prepareArenaEntry.run({auth: {uid: "player"}, data: {
-    requestId: "catalog-parity", mode: "SELECTED", lessonId: "lesson", difficulty: "HARD", maxPriceNolics: 51}})).ticket;
+    requestId: "catalog-parity", mode: "SELECTED", lessonId: "lesson", difficulty: "HARD", maxPriceNolics: 1}})).ticket;
   assert.equal(ticket.priceNolics, response.lessons[0].priceNolics);
 });
 
@@ -220,8 +221,8 @@ test("actual root's unbounded review query is bounded with +1 and never receives
 test("exactly 12000 document reads are permitted without an off-by-one rejection", async () => {
   store.reset(lessonWorld()); const before = snapshot();
   const service = createReader(async tx => {
-    // Placement query and aggregate doc consume two reads before the trusted loader begins.
-    for (let n = 0; n < LIMITS.readDocuments - 2; n++) await tx.get(store.db.doc("budget/same"));
+    // The placement query consumes one read before this loader returns no eligible context.
+    for (let n = 0; n < LIMITS.readDocuments - 1; n++) await tx.get(store.db.doc(`budget/${n}`));
     return null;
   });
   const result = await read({}, service); assert.equal(result.totalEligibleLessons, 0);
@@ -232,7 +233,7 @@ test("total read budget is explicit even for repeated injected reads", async () 
   store.reset(lessonWorld()); const before = snapshot();
   const service = createReader(async tx => {
     assert.equal(tx.set, undefined); assert.equal(tx.create, undefined);
-    for (let n = 0; n <= LIMITS.readDocuments; n++) await tx.get(store.db.doc("budget/same"));
+    for (let n = 0; n <= LIMITS.readDocuments; n++) await tx.get(store.db.doc(`budget/${n}`));
     return null;
   });
   await assert.rejects(read({}, service), {code: "CATALOG_TOO_LARGE"});
@@ -246,7 +247,7 @@ test("same-Transaction optimistic retry rebuilds metadata/pricing and resets the
   let calls = 0; const txs = [];
   const service = createReader(async (tx, id) => {
     calls++; txs.push(tx);
-    for (let n = 0; n < 6000; n++) await tx.get(store.db.doc("budget/same"));
+    for (let n = 0; n < 6000; n++) await tx.get(store.db.doc(`budget/${calls}-${n}`));
     return rootLoader(tx, id);
   });
   const result = await read({}, service);

@@ -62,12 +62,25 @@ function setup({user = {}, source = {}, author = {}, regeneration = null} = {}) 
   const db = fakeDb({"users/player": {nolics: 1000, pointsNolics: 1000, lifePoints: 5000, ...user},
     "users/author": {nolics: 0, pointsNolics: 0, ...author}, "server_lessons/lesson": snapshot(source),
     "server_random/current": {lessonId: "lesson"}});
-  const clock = {now: START}; const stats = {randomCalls: 0, regenReads: 0, regenWrites: 0};
+  const clock = {now: START};
+  const stats = {randomCalls: 0, regenReads: 0, regenWrites: 0, entryContexts: [],
+    randomContexts: [], loaderContexts: [], regenContexts: []};
   const service = createArenaTickets({db, policy, nowMs: () => clock.now,
-    chooseRandomLesson: async (tx) => { stats.randomCalls++; return (await tx.get(db.doc("server_random/current"))).data().lessonId; },
-    loadEntrySnapshot: async (tx, {lessonId}) => (await tx.get(db.doc(`server_lessons/${lessonId}`))).data(),
-    readRegeneration: async (tx, {uid, user: oldUser, nowMs}) => {
+    createEntryReadContext: () => {
+      const context = Object.freeze({call: stats.entryContexts.length + 1});
+      stats.entryContexts.push(context); return context;
+    },
+    chooseRandomLesson: async (tx, {entryReadContext}) => {
+      stats.randomCalls++; stats.randomContexts.push(entryReadContext);
+      return (await tx.get(db.doc("server_random/current"))).data().lessonId;
+    },
+    loadEntrySnapshot: async (tx, {lessonId, entryReadContext}) => {
+      stats.loaderContexts.push(entryReadContext);
+      return (await tx.get(db.doc(`server_lessons/${lessonId}`))).data();
+    },
+    readRegeneration: async (tx, {uid, user: oldUser, nowMs, entryReadContext}) => {
       stats.regenReads++;
+      stats.regenContexts.push(entryReadContext);
       const stored = (await tx.get(db.doc(`server_regen/${uid}`))).data();
       if (regeneration) return regeneration({user: oldUser, nowMs, stored});
       return {caughtUp: true, userPatch: {lifePoints: oldUser.lifePoints, lifePointsUpdatedAtMs: nowMs}, uid};
@@ -119,6 +132,29 @@ test("issue reserves available balances and returns immutable redacted version, 
   assert.deepEqual((await f.issue("one")).ticket, ticket);
   assert.equal(f.stats.regenReads, 1);
   await assert.rejects(() => f.issue("one", {difficulty: "HARD"}), (e) => e.code === "REQUEST_REUSE");
+});
+
+test("one callback-local entry context is shared by selected/random loading and preparation regeneration", async () => {
+  const selected = setup();
+  await selected.issue("selected-context");
+  assert.equal(selected.stats.entryContexts.length, 1);
+  assert.strictEqual(selected.stats.loaderContexts[0], selected.stats.entryContexts[0]);
+  assert.strictEqual(selected.stats.regenContexts[0], selected.stats.entryContexts[0]);
+
+  const random = setup();
+  await random.service.issue({uid: "player", requestId: "random-context", mode: "RANDOM",
+    lessonId: null, difficulty: "EASY"});
+  assert.equal(random.stats.entryContexts.length, 1);
+  assert.strictEqual(random.stats.randomContexts[0], random.stats.entryContexts[0]);
+  assert.strictEqual(random.stats.loaderContexts[0], random.stats.entryContexts[0]);
+  assert.strictEqual(random.stats.regenContexts[0], random.stats.entryContexts[0]);
+
+  const cancelled = setup();
+  const {ticket} = await cancelled.issue("cancel-context");
+  const contextsBeforeCancel = cancelled.stats.entryContexts.length;
+  await cancelled.cancel(ticket);
+  assert.equal(cancelled.stats.entryContexts.length, contextsBeforeCancel);
+  assert.equal(cancelled.stats.regenContexts.at(-1), undefined);
 });
 
 test("auth, selected admission and immutable question snapshot are enforced before any hold", async () => {

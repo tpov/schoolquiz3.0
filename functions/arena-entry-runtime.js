@@ -2,7 +2,7 @@
 
 const {randomBytes, createHmac, createHash} = require("node:crypto");
 const {createArenaTickets, ArenaTicketError, nolicBalance} = require("./arena-tickets");
-const {assignLessonPrices} = require("./arena-policy");
+const {createArenaEligibleUniverse} = require("./arena-eligible-universe");
 const {redact, restoreContent, STATUS: REDACTION, CONTENT_TYPE} = require("./question-redaction");
 const {parseQuestionPayload, normalizeModernQuestion, safeRedactedOrSurvey} = require("./arena-public-question");
 const {scoreAttempt} = require("./attempt-scoring");
@@ -16,6 +16,7 @@ const {CURRENCY, REASON, LEDGER_PATH, ledgerEntries} = require("./currency-ledge
 
 const MAX_ARENA_LESSONS = 1000;
 const MAX_LESSON_ROWS = 1000;
+const ENTRY_READ_RESERVE = MAX_LESSON_ROWS * 2 + 2;
 const MAX_RESULT_BYTES = 500_000;
 const CHECKPOINT = Symbol("premium checkpoint");
 function fail(code, message = code) { throw new ArenaTicketError(code, message); }
@@ -58,12 +59,26 @@ function validateDelivery(ticket, code = "UNAVAILABLE") {
 
 /** Actual Firestore ticket + E2 settlement boundary. No result is calculated from live content. */
 function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now()}) {
-  async function constants(tx) {
-    const snapshot = await tx.get(db.doc(ECONOMY_CONSTANTS_DOC));
+  const eligibleUniverse = createArenaEligibleUniverse({db, loadLessonContext});
+  async function metered(reader, action) {
+    try {
+      return await action(reader);
+    } catch (error) {
+      if (error.code === "UNIVERSE_TOO_LARGE") fail("ARENA_INDEX_REBUILD_REQUIRED");
+      if (error.code === "UNIVERSE_INVALID") fail("UNAVAILABLE");
+      throw error;
+    }
+  }
+  async function constants(tx, reader = null) {
+    const snapshot = reader ? await metered(reader,
+      (trustedReader) => trustedReader.get(db.doc(ECONOMY_CONSTANTS_DOC))) :
+      await tx.get(db.doc(ECONOMY_CONSTANTS_DOC));
     return readEconomyConstants(data(snapshot), 0);
   }
-  async function regeneration(tx, {uid, user, nowMs: now}) {
-    const rules = await constants(tx);
+  async function regeneration(tx, {uid, user, nowMs: now, entryReadContext = null}) {
+    // Preparation has already read its entry constants through this callback-local reader.
+    // Reuse that same snapshot/meter instead of an unmetered duplicate transaction get.
+    const rules = await constants(tx, entryReadContext);
     const operation = {kind: "ADVANCE"};
     const snapshot = await readPremiumEconomy({db, transaction: tx, uid, operation});
     return {...planPremiumEconomy({snapshot, userData: user, constants: rules, now, operation}), uid};
@@ -71,31 +86,38 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
   function writeRegeneration(tx, plan) {
     writePremiumEconomy({db, transaction: tx, uid: plan.uid, plan});
   }
-  async function arenaRows(tx) {
-    const snapshot = await tx.get(db.collection("lesson_placements").where("shelf", "==", "arena").limit(MAX_ARENA_LESSONS + 1));
-    if (snapshot.docs.length > MAX_ARENA_LESSONS) fail("ARENA_INDEX_REBUILD_REQUIRED");
-    return snapshot.docs.map((doc) => ({...doc.data(), lessonId: doc.id})).sort((a, b) => compare(a.lessonId, b.lessonId));
+  async function readUniverse(tx, entryReadContext = null) {
+    const reader = entryReadContext || eligibleUniverse.forTransaction(tx);
+    try {
+      return {reader, universe: await reader.read()};
+    } catch (error) {
+      if (error.code === "UNIVERSE_TOO_LARGE") fail("ARENA_INDEX_REBUILD_REQUIRED");
+      fail("UNAVAILABLE");
+    }
   }
   function tickets() {
     // Fixed per callable invocation, so optimistic retries keep the same random ordering.
     const entropy = randomBytes(32);
     const rank = (key) => createHmac("sha256", entropy).update(key).digest("hex");
-    async function loadEntry(tx, {lessonId, difficulty}) {
+    async function loadEntry(tx, {lessonId, difficulty, universeState = null, entryReadContext = null}) {
       // Firestore reuses a Transaction object across retries. Never cache its read set by
       // object identity: a retry must see withdrawals, review changes and current prices.
-      const context = await loadLessonContext(tx, lessonId);
-      if (!context || !context.reviewApproved || !context.published || context.questType !== "REGULAR") fail("LESSON_NOT_ELIGIBLE");
-      const rows = await arenaRows(tx);
-      if (!rows.some((row) => row.lessonId === lessonId)) fail("LESSON_NOT_ELIGIBLE");
-      const aggregates = await Promise.all(rows.map(async (row) => {
-        const rating = data(await tx.get(db.doc(`lesson_ratings/${row.lessonId}`))) || {};
-        return {lessonId: row.lessonId, ratingSum: exact(rating.ratingSum), ratingCount: exact(rating.ratingCount),
-          ratingVersion: exact(rating.ratingVersion)};
-      }));
-      const price = assignLessonPrices(aggregates).find((row) => row.lessonId === lessonId);
-      const snapshot = await tx.get(db.collection("questions").where("lessonId", "==", lessonId).limit(MAX_LESSON_ROWS + 1));
+      const {reader, universe} = universeState || await readUniverse(tx, entryReadContext);
+      const entry = universe.find(lessonId);
+      if (!entry) fail("LESSON_NOT_ELIGIBLE");
+      // Leave room for bounded selected-context/bank reads and the shared economy constants.
+      // Premium accounting retains its separately bounded subsystem outside this content meter.
+      await metered(reader, (trustedReader) => trustedReader.requireRemaining(ENTRY_READ_RESERVE));
+      const context = await metered(reader, (trustedReader) => loadLessonContext(trustedReader, lessonId));
+      if (!context || context.questType !== "REGULAR" || !context.published || !context.reviewApproved ||
+          context.lessonId !== lessonId || context.authorUid !== entry.authorUid ||
+          context.contentVersion !== entry.contentVersion) fail("LESSON_NOT_ELIGIBLE");
+      const snapshot = await metered(reader, (trustedReader) => trustedReader.get(
+        db.collection("questions").where("lessonId", "==", lessonId).limit(MAX_LESSON_ROWS + 1),
+      ));
       if (snapshot.docs.length > MAX_LESSON_ROWS) fail("LESSON_BANK_TOO_LARGE");
-      const keyDocument = data(await tx.get(db.doc(`question_keys/${lessonId}`)));
+      const keyDocument = data(await metered(reader,
+        (trustedReader) => trustedReader.get(db.doc(`question_keys/${lessonId}`))));
       const candidates = [];
       for (const doc of snapshot.docs) {
         const question = doc.data() || {};
@@ -147,10 +169,11 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
           publicQuestion: {id, lessonId, version, difficulty, order, payload,
             language: typeof question.language === "string" ? question.language : ""}};
       });
-      const rules = await constants(tx);
-      const result = {lessonId, lessonVersion: context.contentVersion, difficulty, authorUid: context.authorUid,
-        questType: "REGULAR", published: true, reviewApproved: true, shelf: "arena", priceNolics: price.priceNolics,
-        ratingVersion: aggregates.find((row) => row.lessonId === lessonId).ratingVersion,
+      const rules = await constants(tx, reader);
+      const result = {lessonId, lessonVersion: context.contentVersion, difficulty,
+        authorUid: context.authorUid, questType: "REGULAR", published: true,
+        reviewApproved: true, shelf: "arena", priceNolics: entry.priceNolics,
+        ratingVersion: entry.rating.version,
         lifeCost: activityPrice(rules, "ARENA"), questions, contentContext: {
           catalogId: context.catalogId, questId: context.questId, sectionId: context.sectionId, themeId: context.themeId,
         }};
@@ -161,10 +184,13 @@ function createArenaEntryRuntime({db, loadLessonContext, nowMs = () => Date.now(
     }
     return createArenaTickets({db, nowMs, readRegeneration: regeneration, writeRegeneration,
       loadEntrySnapshot: loadEntry, validateTicketForDelivery: validateDelivery,
+      createEntryReadContext: (tx) => eligibleUniverse.forTransaction(tx),
       chooseRandomLesson: async (tx, args) => {
-        const rows = (await arenaRows(tx)).sort((a, b) => compare(rank(a.lessonId), rank(b.lessonId)));
+        const universeState = await readUniverse(tx, args.entryReadContext);
+        const {universe} = universeState;
+        const rows = [...universe.rows].sort((a, b) => compare(rank(a.lessonId), rank(b.lessonId)));
         for (const row of rows) {
-          try { await loadEntry(tx, {...args, lessonId: row.lessonId}); return row.lessonId; }
+          try { await loadEntry(tx, {...args, lessonId: row.lessonId, universeState}); return row.lessonId; }
           catch (error) { if (!["LESSON_NOT_ELIGIBLE", "NO_QUESTIONS_FOR_DIFFICULTY", "UNSCORABLE_BANK", "INVALID_QUESTION"].includes(error.code)) throw error; }
         }
         fail("NO_ELIGIBLE_ARENA_LESSON");

@@ -99,11 +99,13 @@ function publicTicket(ticket) {
 
 /**
  * Server-only adapter. uid is supplied from verified Auth, never request.data.uid.
- * chooseRandomLesson(tx,{uid,difficulty,requestId,nowMs}) returns a server-chosen lessonId;
+ * createEntryReadContext(tx) creates one opaque, callback-local read context. The same context is
+ * passed to random selection, snapshot loading and preparation regeneration; it is never stored.
+ * chooseRandomLesson(tx,{uid,difficulty,requestId,nowMs,entryReadContext}) returns a server-chosen lessonId;
  * it must be retry-safe, use server entropy, and have no nontransactional side effects.
- * loadEntrySnapshot(tx,{lessonId,difficulty,nowMs}) supplies the immutable authoritative shape
+ * loadEntrySnapshot(tx,{lessonId,difficulty,nowMs,entryReadContext}) supplies the immutable authoritative shape
  * validated above, including a HARD-redacted/EASY-keyed publicQuestion and a private gradingKey.
- * readRegeneration(tx,{uid,user,nowMs}) returns {caughtUp,userPatch,...privatePlan}; its cap
+ * readRegeneration(tx,{uid,user,nowMs,entryReadContext}) returns {caughtUp,userPatch,...privatePlan}; its cap
  * counts available+reserved life. writeRegeneration(tx,plan) writes ONLY premium state/ledger,
  * never users/{uid}; caller merges userPatch. A !caughtUp checkpoint creates no ticket/hold.
  *
@@ -117,9 +119,12 @@ function publicTicket(ticket) {
  * No query, TTL, automatic expiry, client price, client correctness or client score is used.
  */
 function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Date.now,
-  chooseRandomLesson, loadEntrySnapshot, readRegeneration, writeRegeneration, validateTicketForDelivery = () => {}}) {
+  chooseRandomLesson, loadEntrySnapshot, readRegeneration, writeRegeneration, validateTicketForDelivery = () => {},
+  createEntryReadContext = () => null}) {
   if (!db || typeof db.runTransaction !== "function") throw new TypeError("Firestore db required");
-  for (const [name, value] of Object.entries({nowMs, chooseRandomLesson, loadEntrySnapshot, readRegeneration, writeRegeneration, validateTicketForDelivery})) {
+  const dependencies = {nowMs, chooseRandomLesson, loadEntrySnapshot, readRegeneration,
+    writeRegeneration, validateTicketForDelivery, createEntryReadContext};
+  for (const [name, value] of Object.entries(dependencies)) {
     if (typeof value !== "function") throw new TypeError(`${name} must be a function`);
   }
   const plans = new WeakSet();
@@ -168,14 +173,21 @@ function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Dat
       const quota = data(await tx.get(quotaRef));
       const issued = integer(quota ? quota.randomIssued : 0, "randomIssued");
       if (mode === "RANDOM" && issued >= RANDOM_DAILY_LIMIT) fail("RANDOM_DAILY_LIMIT");
-      const chosenId = mode === "RANDOM" ? id(await chooseRandomLesson(tx, {uid, difficulty, requestId, nowMs: now}), "server random lessonId") : lessonId;
-      const snapshot = entrySnapshot(await loadEntrySnapshot(tx, {lessonId: chosenId, difficulty, nowMs: now}), chosenId, difficulty);
+      // Each optimistic callback receives a fresh opaque context even when an SDK Transaction
+      // object is reused. It only carries trusted read accounting and cannot be persisted.
+      const entryReadContext = createEntryReadContext(tx);
+      const chosenId = mode === "RANDOM" ? id(await chooseRandomLesson(tx, {
+        uid, difficulty, requestId, nowMs: now, entryReadContext,
+      }), "server random lessonId") : lessonId;
+      const snapshot = entrySnapshot(await loadEntrySnapshot(tx, {
+        lessonId: chosenId, difficulty, nowMs: now, entryReadContext,
+      }), chosenId, difficulty);
       // Frozen delivery validation also applies before any regeneration checkpoint or hold.
       validateTicketForDelivery(snapshot);
       // Every optimistic retry rereads the authoritative price before any checkpoint, hold or
       // receipt write. PRICE_CHANGED requires fresh explicit confirmation; it spends nothing.
       if (hasPriceCeiling && snapshot.priceNolics > maxPriceNolics) fail("PRICE_CHANGED");
-      const regeneration = await readRegeneration(tx, {uid, user, nowMs: now});
+      const regeneration = await readRegeneration(tx, {uid, user, nowMs: now, entryReadContext});
       validateRegenerationPlan(regeneration);
       const regenerated = {...user, ...regeneration.userPatch};
       const availableLife = integer(regenerated.lifePoints, "available lifePoints");
