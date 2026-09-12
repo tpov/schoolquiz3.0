@@ -1,0 +1,12 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B submit rating two
+---
+- launchApp:
+    clearState: false
+- assertVisible: ${E2B_SELECTOR_SETTLE_CONFIRMED}
+- assertVisible: ${E2B_SELECTOR_RATING_PROMPT}
+- tapOn: ${E2B_SELECTOR_RATE_TWO}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_RATING_ACCEPTED}
+    timeout: 60000
+- takeScreenshot: "04-e2b-rating-two-accepted"

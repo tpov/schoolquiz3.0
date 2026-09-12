@@ -1,0 +1,20 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B retained-account identity preflight
+---
+# Values are supplied only after a hierarchy capture for the exact candidate and device.
+- launchApp:
+    clearState: false
+- assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TARGET_LESSON}
+    direction: DOWN
+    timeout: 20000
+- assertVisible: ${E2B_SELECTOR_TARGET_LESSON}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_FROZEN_PRICE}
+    direction: DOWN
+    timeout: 20000
+- assertVisible: ${E2B_SELECTOR_FROZEN_PRICE}
+- takeScreenshot: "00-e2b-identity-preflight"

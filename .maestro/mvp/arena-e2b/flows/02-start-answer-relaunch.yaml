@@ -1,0 +1,45 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B start answer and preserved-data relaunch
+---
+- launchApp:
+    clearState: false
+- assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    direction: UP
+    timeout: 30000
+- assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+- tapOn: ${E2B_SELECTOR_TICKET_START}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_QUESTION}
+    timeout: 60000
+- tapOn: ${E2B_SELECTOR_FIRST_ANSWER}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_SAVED_ANSWER}
+    timeout: 60000
+- takeScreenshot: "02-e2b-answer-saved-before-relaunch"
+# stopApp is the intentional process stop. launchApp retains the application data.
+- stopApp
+- launchApp:
+    clearState: false
+- runFlow:
+    when:
+      visible: ${E2B_SELECTOR_RESUME_DIALOG}
+    commands:
+      - tapOn: ${E2B_SELECTOR_RESUME_CONTINUE}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_SAVED_ANSWER}
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_SAVED_ANSWER}
+- takeScreenshot: "02-e2b-answer-restored-after-relaunch"
+- tapOn: ${E2B_SELECTOR_CONTINUE_LESSON}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_SECOND_QUESTION}
+    timeout: 60000
+- tapOn: ${E2B_SELECTOR_SECOND_ANSWER}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_CONTINUE_LESSON}
+    timeout: 60000
+- takeScreenshot: "02-e2b-second-answer-saved"
+- tapOn: ${E2B_SELECTOR_CONTINUE_LESSON}

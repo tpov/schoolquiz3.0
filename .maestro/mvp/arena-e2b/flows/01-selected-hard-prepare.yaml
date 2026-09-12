@@ -1,0 +1,34 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B selected HARD preparation
+---
+- assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TARGET_LESSON}
+    direction: DOWN
+    timeout: 20000
+- assertVisible: ${E2B_SELECTOR_TARGET_LESSON}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_FROZEN_PRICE}
+    direction: DOWN
+    timeout: 20000
+- assertVisible: ${E2B_SELECTOR_FROZEN_PRICE}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_SELECTED_PREPARE}
+    direction: DOWN
+    timeout: 20000
+- tapOn: ${E2B_SELECTOR_SELECTED_PREPARE}
+- assertVisible: ${E2B_SELECTOR_PREPARE_DIALOG}
+- tapOn: ${E2B_SELECTOR_DIFFICULTY_HARD}
+- assertVisible: ${E2B_SELECTOR_HARD_SELECTED}
+- takeScreenshot: "01-e2b-selected-hard-consent"
+- tapOn: ${E2B_SELECTOR_PREPARE_CONFIRM}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_PREPARED_TICKET}
+    direction: UP
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_PREPARED_TICKET}
+- takeScreenshot: "01-e2b-ticket-prepared"
