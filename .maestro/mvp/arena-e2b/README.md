@@ -50,7 +50,9 @@ executed Maestro flow by SHA-256.
    `arena-e2e-rating-id-reader.js`.  It refuses a missing, ambiguous, or
    differently bound rating intent.  The final verification uses this Room
    context to obtain the ID and has the server reader independently confirm
-   the `RATE_LESSON` receipt.
+   the `RATE_LESSON` receipt.  In the retained Maestro image, pass
+   `--sqlite3 /tools/sdk/platform-tools/sqlite3` explicitly: `/usr/bin/sqlite3`
+   is not installed there.  The reader stays read-only in either runtime.
 
 The current UI evidence identifies the target lesson as `Catalog fixture title
 changed` and the preparation controls as `Prepare selected lesson`, `Confirm
