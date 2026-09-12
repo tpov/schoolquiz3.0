@@ -44,6 +44,6 @@ name: E2B submit rating two
 - assertVisible: ${E2B_SELECTOR_RATING_PROMPT}
 - tapOn: ${E2B_SELECTOR_RATE_TWO}
 - extendedWaitUntil:
-    visible: ${E2B_SELECTOR_RATING_ACCEPTED}
+    visible: ${E2B_SELECTOR_RATING_QUEUED}
     timeout: 60000
-- takeScreenshot: "04-e2b-rating-two-accepted"
+- takeScreenshot: "04-e2b-rating-two-queued"

@@ -275,7 +275,7 @@ required_selector_keys() {
                 E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_SHOW_LOCAL_TICKETS \
                 E2B_SELECTOR_TICKET_LABEL_TEMPLATE E2B_SELECTOR_TICKET_OPEN \
                 E2B_SELECTOR_SETTLE_CONFIRMED E2B_SELECTOR_RATING_PROMPT E2B_SELECTOR_RATE_TWO \
-                E2B_SELECTOR_RATING_ACCEPTED
+                E2B_SELECTOR_RATING_QUEUED
             ;;
         deliver-rating)
             printf '%s\n' \
@@ -765,7 +765,7 @@ case "$phase" in
         run_maestro "$(dirname "$0")/flows/04-rate-two.yaml"
         overall_status='NOT_RUN'
         phase_status='PASS'
-        next_required='capture a refreshed read-only receipt context containing the new ratingId, then run verify'
+        next_required='capture a read-only Room rating-ID context, then deliver the saved rating intent'
         ;;
     deliver-rating)
         run_maestro "$(dirname "$0")/flows/04-send-queued-rating.yaml"

@@ -18,7 +18,7 @@ identities could accidentally validate an older receipt.
 | `settle` | Start, answer, force-stop/relaunch, finish | Pending UI proof plus a `RESERVED`/no-event server context for the exact saved SETTLE |
 | `resume-settle` | Continue an interrupted saved-answer run | Same pending proof, without preparing or starting a replacement ticket |
 | `deliver` | Re-open an existing local SETTLE request and synchronize it | Fresh read-only receipt context showing the matching settlement |
-| `rate` | Submit rating `2` from the confirmed result screen | Read-only Room context containing the new `ratingId` and the exact ticket/attempt |
+| `rate` | Queue rating `2` from the confirmed result screen | Read-only Room context containing the new `ratingId` and the exact ticket/attempt |
 | `deliver-rating` | Re-open the existing queued rating and send it | Final server receipt and oracle verification |
 | `verify` | Run the two-receipt oracle | `PASS` only when `SETTLE` and `RATE_LESSON` bind the same run |
 
@@ -110,6 +110,10 @@ context; it sends the already saved operation and produces the confirmed context
 for `rate`. For
 `verify`, retain that settlement context, add `--rating-id-context <room-reader-output.json>`, and add
 `--receipt-oracle <arena-e2e-receipt-oracle.js>`.
+
+`rate` stops only when the UI confirms that rating `2` is queued locally. Take
+the Room ID snapshot at that point, then use `deliver-rating` to send that exact
+stored intent and wait for the accepted receipt.
 
 If the tooling, rather than the product, interrupts after the first saved
 answer, preserve the exact `RESERVED` context and use `resume-settle`; it only
