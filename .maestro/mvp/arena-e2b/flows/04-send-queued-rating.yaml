@@ -1,0 +1,50 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B deliver the retained queued rating
+---
+# The rating ID is captured from Room before this flow. This opens the exact
+# settled ticket and sends that pre-existing queued rating; it never taps Rate 2.
+- launchApp:
+    clearState: false
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    direction: DOWN
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    enabled: true
+    retryTapIfNoChange: true
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    direction: DOWN
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_OPEN}
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_TICKET_OPEN}
+    enabled: true
+    retryTapIfNoChange: true
+- assertVisible: ${E2B_SELECTOR_SETTLE_CONFIRMED}
+- assertVisible: ${E2B_SELECTOR_RATING_QUEUED}
+- tapOn:
+    text: ${E2B_SELECTOR_SEND_QUEUED_RATING}
+    enabled: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_RATING_ACCEPTED}
+    timeout: 60000
+- takeScreenshot: "04-e2b-queued-rating-delivered"

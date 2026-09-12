@@ -65,13 +65,15 @@ readonly SELECTOR_KEYS=(
     E2B_SELECTOR_SETTLE_CONFIRMED
     E2B_SELECTOR_RATING_PROMPT
     E2B_SELECTOR_RATE_TWO
+    E2B_SELECTOR_RATING_QUEUED
+    E2B_SELECTOR_SEND_QUEUED_RATING
     E2B_SELECTOR_RATING_ACCEPTED
 )
 
 usage() {
     cat <<'USAGE'
 Usage:
-  run-arena-e2b.sh --phase preflight|prepare|settle|deliver|rate|verify \
+  run-arena-e2b.sh --phase preflight|prepare|settle|deliver|rate|deliver-rating|verify \
     --run-id <id> --candidate-head <40-hex> --apk <candidate.apk> \
     --run-context <immutable.env> --selectors <confirmed-selectors.env> \
     --output-root <results-dir> [--serial <adb-serial>] \
@@ -81,7 +83,8 @@ Usage:
     [--apksigner <path>] [--java-home <dir>] [--node <path>] [--install-candidate]
 
 Only verify may emit overall PASS.  Device phases require --serial.  Settle and deliver require
---receipt-context and --context-reader; rate requires --receipt-context; verify requires
+--receipt-context and --context-reader; rate requires --receipt-context; deliver-rating requires
+--receipt-context and --rating-id-context; verify requires
 --receipt-context, --rating-id-context, --context-reader, and --receipt-oracle.
 
 --install-candidate performs one retained-data update through adb install -r. Omitting it
@@ -252,6 +255,13 @@ required_selector_keys() {
                 E2B_SELECTOR_SETTLE_CONFIRMED E2B_SELECTOR_RATING_PROMPT E2B_SELECTOR_RATE_TWO \
                 E2B_SELECTOR_RATING_ACCEPTED
             ;;
+        deliver-rating)
+            printf '%s\n' \
+                E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_SHOW_LOCAL_TICKETS \
+                E2B_SELECTOR_TICKET_LABEL_TEMPLATE E2B_SELECTOR_TICKET_OPEN \
+                E2B_SELECTOR_SETTLE_CONFIRMED E2B_SELECTOR_RATING_QUEUED \
+                E2B_SELECTOR_SEND_QUEUED_RATING E2B_SELECTOR_RATING_ACCEPTED
+            ;;
         verify)
             ;;
         *) die "unknown phase: $phase" ;;
@@ -264,7 +274,7 @@ validate_selectors() {
         [[ -n "$key" ]] || continue
         require_file_key selectors "$key"
     done < <(required_selector_keys)
-    if [[ "$phase" == settle || "$phase" == deliver || "$phase" == rate ]]; then
+    if [[ "$phase" == settle || "$phase" == deliver || "$phase" == rate || "$phase" == deliver-rating ]]; then
         local template=$E2B_SELECTOR_TICKET_LABEL_TEMPLATE
         [[ "$template" == *'{{ticketId}}'* ]] || die 'ticket label selector must contain {{ticketId}}'
         [[ "${template#*'{{ticketId}}'}" != *'{{ticketId}}'* ]] || die 'ticket label selector must contain {{ticketId}} exactly once'
@@ -615,6 +625,16 @@ case "$phase" in
         validate_confirmed_settlement "$receipt_context"
         prepare_ticket_selectors
         ;;
+    deliver-rating)
+        require_value --receipt-context "$receipt_context"
+        require_value --rating-id-context "$rating_id_context"
+        validate_receipt_context "$receipt_context" false
+        validate_confirmed_settlement "$receipt_context"
+        validate_rating_id_context "$rating_id_context" \
+            "$(json_value "$receipt_context" ticketId)" \
+            "$(json_value "$receipt_context" attemptId)"
+        prepare_ticket_selectors
+        ;;
     verify)
         require_value --receipt-context "$receipt_context"
         require_value --rating-id-context "$rating_id_context"
@@ -638,7 +658,7 @@ chmod 700 "$output_dir"
 write_manifest
 
 case "$phase" in
-    preflight|prepare|settle|deliver|rate)
+    preflight|prepare|settle|deliver|rate|deliver-rating)
         require_value --serial "$serial"
         assert_device_and_candidate
         ensure_reverse_mappings
@@ -687,6 +707,12 @@ case "$phase" in
         overall_status='NOT_RUN'
         phase_status='PASS'
         next_required='capture a refreshed read-only receipt context containing the new ratingId, then run verify'
+        ;;
+    deliver-rating)
+        run_maestro "$(dirname "$0")/flows/04-send-queued-rating.yaml"
+        overall_status='NOT_RUN'
+        phase_status='PASS'
+        next_required='run verify with the retained Room rating-ID context and the two-receipt oracle'
         ;;
     verify)
         capture_reader_context_after_rating "$output_dir/receipt-context-after-rating.json"

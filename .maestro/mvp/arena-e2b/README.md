@@ -18,6 +18,7 @@ identities could accidentally validate an older receipt.
 | `settle` | Start, answer, force-stop/relaunch, finish | Fresh read-only receipt context showing the matching settlement |
 | `deliver` | Re-open an existing local SETTLE request and synchronize it | Fresh read-only receipt context showing the matching settlement |
 | `rate` | Submit rating `2` from the confirmed result screen | Read-only Room context containing the new `ratingId` and the exact ticket/attempt |
+| `deliver-rating` | Re-open the existing queued rating and send it | Final server receipt and oracle verification |
 | `verify` | Run the two-receipt oracle | `PASS` only when `SETTLE` and `RATE_LESSON` bind the same run |
 
 `run-arena-e2b.sh` emits `result.json` in a new private output directory on
