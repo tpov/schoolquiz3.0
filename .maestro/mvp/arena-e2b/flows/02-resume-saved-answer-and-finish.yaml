@@ -1,0 +1,67 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B resume the exact saved answer and finish
+---
+# Recovery only: the supplied server context must still be RESERVED with no event.
+# This flow never starts or prepares a ticket.
+- launchApp:
+    clearState: false
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    direction: DOWN
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    enabled: true
+    retryTapIfNoChange: true
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    direction: DOWN
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_OPEN}
+      below:
+        text: ${E2B_SELECTOR_TICKET_LABEL}
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_TICKET_OPEN}
+    below:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    enabled: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_RESUME_OR_SAVED}
+    timeout: 60000
+- runFlow:
+    when:
+      visible: ${E2B_SELECTOR_RESUME_DIALOG}
+    commands:
+      - tapOn: ${E2B_SELECTOR_RESUME_CONTINUE}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_SAVED_ANSWER}
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_SAVED_ANSWER}
+- takeScreenshot: "02-e2b-answer-restored-for-recovery"
+- tapOn: ${E2B_SELECTOR_CONTINUE_LESSON}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_SECOND_QUESTION}
+    timeout: 60000
+- tapOn: ${E2B_SELECTOR_SECOND_ANSWER}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_CONTINUE_LESSON}
+    timeout: 60000
+- takeScreenshot: "02-e2b-second-answer-saved-after-recovery"
+- tapOn: ${E2B_SELECTOR_CONTINUE_LESSON}

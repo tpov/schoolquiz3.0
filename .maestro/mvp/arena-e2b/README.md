@@ -16,6 +16,7 @@ identities could accidentally validate an older receipt.
 | `preflight` | Preserved-data launch and retained-account UI check | Selector snapshot and immutable run context |
 | `prepare` | SELECTED/HARD preparation | Read-only receipt context containing the new ticket and attempt |
 | `settle` | Start, answer, force-stop/relaunch, finish | Pending UI proof plus a `RESERVED`/no-event server context for the exact saved SETTLE |
+| `resume-settle` | Continue an interrupted saved-answer run | Same pending proof, without preparing or starting a replacement ticket |
 | `deliver` | Re-open an existing local SETTLE request and synchronize it | Fresh read-only receipt context showing the matching settlement |
 | `rate` | Submit rating `2` from the confirmed result screen | Read-only Room context containing the new `ratingId` and the exact ticket/attempt |
 | `deliver-rating` | Re-open the existing queued rating and send it | Final server receipt and oracle verification |
@@ -109,6 +110,11 @@ context; it sends the already saved operation and produces the confirmed context
 for `rate`. For
 `verify`, retain that settlement context, add `--rating-id-context <room-reader-output.json>`, and add
 `--receipt-oracle <arena-e2e-receipt-oracle.js>`.
+
+If the tooling, rather than the product, interrupts after the first saved
+answer, preserve the exact `RESERVED` context and use `resume-settle`; it only
+opens that ticket and completes its saved lesson. It never prepares or starts a
+replacement.
 
 The Arena screen orders its items as catalog header, reservation header, local
 tickets, then lesson cards.  The flows therefore scroll up from a selected

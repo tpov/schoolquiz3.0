@@ -74,7 +74,7 @@ readonly SELECTOR_KEYS=(
 usage() {
     cat <<'USAGE'
 Usage:
-  run-arena-e2b.sh --phase preflight|prepare|settle|deliver|rate|deliver-rating|verify \
+  run-arena-e2b.sh --phase preflight|prepare|settle|resume-settle|deliver|rate|deliver-rating|verify \
     --run-id <id> --candidate-head <40-hex> --apk <candidate.apk> \
     --run-context <immutable.env> --selectors <confirmed-selectors.env> \
     --output-root <results-dir> [--serial <adb-serial>] \
@@ -255,6 +255,14 @@ required_selector_keys() {
                 E2B_SELECTOR_RESUME_DIALOG E2B_SELECTOR_RESUME_OR_SAVED E2B_SELECTOR_RESUME_CONTINUE \
                 E2B_SELECTOR_SECOND_QUESTION E2B_SELECTOR_SECOND_ANSWER E2B_SELECTOR_CONTINUE_LESSON \
                 E2B_SELECTOR_SYNCHRONIZE E2B_SELECTOR_SETTLE_PENDING
+            ;;
+        resume-settle)
+            printf '%s\n' \
+                E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_SHOW_LOCAL_TICKETS \
+                E2B_SELECTOR_TICKET_LABEL_TEMPLATE E2B_SELECTOR_TICKET_OPEN \
+                E2B_SELECTOR_SAVED_ANSWER E2B_SELECTOR_RESUME_DIALOG E2B_SELECTOR_RESUME_OR_SAVED \
+                E2B_SELECTOR_RESUME_CONTINUE E2B_SELECTOR_SECOND_QUESTION E2B_SELECTOR_SECOND_ANSWER \
+                E2B_SELECTOR_CONTINUE_LESSON E2B_SELECTOR_SYNCHRONIZE E2B_SELECTOR_SETTLE_PENDING
             ;;
         deliver)
             printf '%s\n' \
@@ -643,7 +651,7 @@ validate_selectors
 # Validate all immutable and read-only inputs before the runner updates the retained APK or changes
 # its three allowed reverse mappings.
 case "$phase" in
-    settle)
+    settle|resume-settle)
         require_value --receipt-context "$receipt_context"
         require_value --context-reader "$context_reader"
         [[ -f "$context_reader" ]] || die "context reader does not exist: $context_reader"
@@ -698,7 +706,7 @@ chmod 700 "$output_dir"
 write_manifest
 
 case "$phase" in
-    preflight|prepare|settle|deliver|rate|deliver-rating)
+    preflight|prepare|settle|resume-settle|deliver|rate|deliver-rating)
         require_value --serial "$serial"
         assert_device_and_candidate
         ensure_reverse_mappings
@@ -723,6 +731,17 @@ case "$phase" in
         ;;
     settle)
         run_maestro "$(dirname "$0")/flows/02-start-answer-relaunch.yaml"
+        run_maestro "$(dirname "$0")/flows/03-finish.yaml"
+        capture_reader_context "$output_dir/pending-settlement-context.json"
+        validate_receipt_context "$output_dir/pending-settlement-context.json" false
+        validate_unsettled_server_context "$output_dir/pending-settlement-context.json"
+        printf 'pendingSettlementContextSha256=%s\n' "$(sha256_file "$output_dir/pending-settlement-context.json")" >> "$output_dir/run-manifest.env"
+        overall_status='NOT_RUN'
+        phase_status='PASS'
+        next_required='use the retained exact ticket to synchronize its saved settlement request'
+        ;;
+    resume-settle)
+        run_maestro "$(dirname "$0")/flows/02-resume-saved-answer-and-finish.yaml"
         run_maestro "$(dirname "$0")/flows/03-finish.yaml"
         capture_reader_context "$output_dir/pending-settlement-context.json"
         validate_receipt_context "$output_dir/pending-settlement-context.json" false
