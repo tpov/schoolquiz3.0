@@ -54,8 +54,10 @@ executed Maestro flow by SHA-256.
 
 The current UI evidence identifies the target lesson as `Catalog fixture title
 changed` and the preparation controls as `Prepare selected lesson`, `Confirm
-preparation`, `Hard`, and `Confirm`.  Place those facts in the selector map
-only after the hierarchy capture confirms the exact candidate and locale.  The
+preparation`, `Hard`, and `Confirm`. Fixture titles may repeat, so the selector
+map also requires the visible fixture-author line; the preparation flow scopes
+its generic control to that author with Maestro's `below` relation. Place those
+facts in the selector map only after the hierarchy capture confirms the exact candidate and locale. The
 source also defines tags such as `arena_entry`, `arena_entry_dialog`,
 `arena_difficulty_HARD`, `arena_entry_confirm`, and
 `arena_start_<ticketId>`.  Tags are hints, not pre-filled Maestro selectors:

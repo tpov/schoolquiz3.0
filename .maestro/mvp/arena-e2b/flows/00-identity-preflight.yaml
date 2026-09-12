@@ -36,7 +36,15 @@ name: E2B retained-account identity preflight
 - assertVisible: ${E2B_SELECTOR_TARGET_LESSON}
 - scrollUntilVisible:
     element:
+      text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
+    direction: DOWN
+    timeout: 20000
+- assertVisible: ${E2B_SELECTOR_FIXTURE_AUTHOR}
+- scrollUntilVisible:
+    element:
       text: ${E2B_SELECTOR_FROZEN_PRICE}
+      below:
+        text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
     timeout: 20000
 - assertVisible: ${E2B_SELECTOR_FROZEN_PRICE}

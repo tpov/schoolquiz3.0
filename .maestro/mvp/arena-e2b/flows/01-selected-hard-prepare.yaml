@@ -4,22 +4,31 @@ name: E2B selected HARD preparation
 - assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
 - scrollUntilVisible:
     element:
-      text: ${E2B_SELECTOR_TARGET_LESSON}
+      text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
     timeout: 20000
-- assertVisible: ${E2B_SELECTOR_TARGET_LESSON}
+- assertVisible: ${E2B_SELECTOR_FIXTURE_AUTHOR}
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_FROZEN_PRICE}
+      below:
+        text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
     timeout: 20000
 - assertVisible: ${E2B_SELECTOR_FROZEN_PRICE}
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_SELECTED_PREPARE}
+      below:
+        text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
     timeout: 20000
-- tapOn: ${E2B_SELECTOR_SELECTED_PREPARE}
+- tapOn:
+    text: ${E2B_SELECTOR_SELECTED_PREPARE}
+    below:
+      text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
+    enabled: true
+    retryTapIfNoChange: true
 - assertVisible: ${E2B_SELECTOR_PREPARE_DIALOG}
 - tapOn: ${E2B_SELECTOR_DIFFICULTY_HARD}
 - assertVisible: ${E2B_SELECTOR_HARD_SELECTED}
