@@ -497,7 +497,12 @@ run_maestro() {
         args+=(-e "E2B_ATTEMPT_ID=$(json_value "$receipt_context" attemptId)")
     fi
     args+=(--test-output-dir "$flow_output" -e "E2B_RATING=$E2B_RATING" "$flow")
-    "$maestro_bin" --device "$serial" --no-ansi "${args[@]}" 2>&1 | tee "$output_dir/maestro-${phase}-${flow_name}.log"
+    if ! "$maestro_bin" --device "$serial" --no-ansi "${args[@]}" 2>&1 | tee "$output_dir/maestro-${phase}-${flow_name}.log"; then
+        overall_status='FAIL'
+        phase_status='FAIL'
+        next_required='inspect the saved Maestro hierarchy and retained ticket state before retrying'
+        return 1
+    fi
 }
 
 capture_reader_context() {

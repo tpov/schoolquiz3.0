@@ -107,6 +107,9 @@ tickets, then lesson cards.  The flows therefore scroll up from a selected
 lesson to the reservation header, and down from that header to the exact
 reader-verified ticket.  This preserves the distinction between the prepared
 ticket's `Start` action and its later `Open` action after a process relaunch.
+On a cold Arena entry the title may render while the lower reservation controls
+are merely off-screen, so flows scroll to `Show local tickets` before waiting
+for its enabled state.
 Opening a retained run may show either the explicit recovery dialog or its
 already-restored saved-answer state, so the flow waits for either observable
 state before deciding whether to press `Continue`.

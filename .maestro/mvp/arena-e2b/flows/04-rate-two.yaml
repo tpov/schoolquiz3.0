@@ -7,6 +7,11 @@ name: E2B submit rating two
 - extendedWaitUntil:
     visible: ${E2B_SELECTOR_ARENA_TITLE}
     timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    direction: DOWN
+    timeout: 60000
 - extendedWaitUntil:
     visible:
       text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
