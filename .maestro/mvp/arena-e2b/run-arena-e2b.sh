@@ -23,6 +23,7 @@ install_candidate=false
 adb_bin="${ADB_BIN:-adb}"
 maestro_bin="${MAESTRO_BIN:-maestro}"
 apksigner_bin="${APKSIGNER_BIN:-apksigner}"
+java_home="${JAVA_HOME:-}"
 node_bin="${NODE_BIN:-node}"
 output_dir=''
 overall_status='INTERRUPTED'
@@ -32,7 +33,13 @@ next_required='runner did not reach a terminal phase'
 run_seen_keys=$'\n'
 selector_seen_keys=$'\n'
 readonly SELECTOR_KEYS=(
+    E2B_SELECTOR_INTERNET
     E2B_SELECTOR_ARENA_TITLE
+    E2B_SELECTOR_REFRESH_BALANCE
+    E2B_SELECTOR_NOLICS_BALANCE
+    E2B_SELECTOR_LIFE_BALANCE
+    E2B_SELECTOR_LOAD_LESSONS
+    E2B_SELECTOR_CATALOG_LOADED
     E2B_SELECTOR_TARGET_LESSON
     E2B_SELECTOR_FROZEN_PRICE
     E2B_SELECTOR_SELECTED_PREPARE
@@ -41,12 +48,15 @@ readonly SELECTOR_KEYS=(
     E2B_SELECTOR_HARD_SELECTED
     E2B_SELECTOR_PREPARE_CONFIRM
     E2B_SELECTOR_PREPARED_TICKET
+    E2B_SELECTOR_SHOW_LOCAL_TICKETS
     E2B_SELECTOR_TICKET_LABEL_TEMPLATE
     E2B_SELECTOR_TICKET_START
+    E2B_SELECTOR_TICKET_OPEN
     E2B_SELECTOR_QUESTION
     E2B_SELECTOR_FIRST_ANSWER
     E2B_SELECTOR_SAVED_ANSWER
     E2B_SELECTOR_RESUME_DIALOG
+    E2B_SELECTOR_RESUME_OR_SAVED
     E2B_SELECTOR_RESUME_CONTINUE
     E2B_SELECTOR_SECOND_QUESTION
     E2B_SELECTOR_SECOND_ANSWER
@@ -67,7 +77,7 @@ Usage:
     [--receipt-context <reader.json>] [--context-reader <reader.js>] \
     [--rating-id-context <room-reader.json>] \
     [--receipt-oracle <oracle.js>] [--adb <path>] [--maestro <path>] \
-    [--apksigner <path>] [--node <path>] [--install-candidate]
+    [--apksigner <path>] [--java-home <dir>] [--node <path>] [--install-candidate]
 
 Only verify may emit overall PASS.  Device phases require --serial.  Settle requires
 --receipt-context and --context-reader; rate requires --receipt-context; verify requires
@@ -120,7 +130,8 @@ require_value() {
 }
 
 is_safe_value() {
-    [[ $1 != *$'\n'* && $1 != *$'\r'* && $1 != *$'\0'* ]]
+    # Bash strings cannot contain NUL; test only the control bytes that can be represented here.
+    [[ $1 != *$'\n'* && $1 != *$'\r'* ]]
 }
 
 parse_key_value_file() {
@@ -203,26 +214,36 @@ validate_run_context() {
 required_selector_keys() {
     case "$phase" in
         preflight)
-            printf '%s\n' E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_TARGET_LESSON E2B_SELECTOR_FROZEN_PRICE
+            printf '%s\n' \
+                E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_REFRESH_BALANCE \
+                E2B_SELECTOR_NOLICS_BALANCE E2B_SELECTOR_LIFE_BALANCE E2B_SELECTOR_LOAD_LESSONS \
+                E2B_SELECTOR_CATALOG_LOADED E2B_SELECTOR_TARGET_LESSON E2B_SELECTOR_FROZEN_PRICE
             ;;
         prepare)
             printf '%s\n' \
-                E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_TARGET_LESSON E2B_SELECTOR_FROZEN_PRICE \
+                E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_REFRESH_BALANCE \
+                E2B_SELECTOR_NOLICS_BALANCE E2B_SELECTOR_LIFE_BALANCE E2B_SELECTOR_LOAD_LESSONS \
+                E2B_SELECTOR_CATALOG_LOADED E2B_SELECTOR_TARGET_LESSON E2B_SELECTOR_FROZEN_PRICE \
                 E2B_SELECTOR_SELECTED_PREPARE E2B_SELECTOR_PREPARE_DIALOG \
                 E2B_SELECTOR_DIFFICULTY_HARD E2B_SELECTOR_HARD_SELECTED \
-                E2B_SELECTOR_PREPARE_CONFIRM E2B_SELECTOR_PREPARED_TICKET
+                E2B_SELECTOR_PREPARE_CONFIRM E2B_SELECTOR_SHOW_LOCAL_TICKETS \
+                E2B_SELECTOR_PREPARED_TICKET
             ;;
         settle)
             printf '%s\n' \
-                E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_TICKET_LABEL_TEMPLATE E2B_SELECTOR_TICKET_START \
+                E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_SHOW_LOCAL_TICKETS \
+                E2B_SELECTOR_TICKET_LABEL_TEMPLATE E2B_SELECTOR_TICKET_START E2B_SELECTOR_TICKET_OPEN \
                 E2B_SELECTOR_QUESTION E2B_SELECTOR_FIRST_ANSWER E2B_SELECTOR_SAVED_ANSWER \
-                E2B_SELECTOR_RESUME_DIALOG E2B_SELECTOR_RESUME_CONTINUE \
+                E2B_SELECTOR_RESUME_DIALOG E2B_SELECTOR_RESUME_OR_SAVED E2B_SELECTOR_RESUME_CONTINUE \
                 E2B_SELECTOR_SECOND_QUESTION E2B_SELECTOR_SECOND_ANSWER E2B_SELECTOR_CONTINUE_LESSON \
                 E2B_SELECTOR_SETTLE_CONFIRMED
             ;;
         rate)
-            printf '%s\n' E2B_SELECTOR_SETTLE_CONFIRMED E2B_SELECTOR_RATING_PROMPT \
-                E2B_SELECTOR_RATE_TWO E2B_SELECTOR_RATING_ACCEPTED
+            printf '%s\n' \
+                E2B_SELECTOR_INTERNET E2B_SELECTOR_ARENA_TITLE E2B_SELECTOR_SHOW_LOCAL_TICKETS \
+                E2B_SELECTOR_TICKET_LABEL_TEMPLATE E2B_SELECTOR_TICKET_OPEN \
+                E2B_SELECTOR_SETTLE_CONFIRMED E2B_SELECTOR_RATING_PROMPT E2B_SELECTOR_RATE_TWO \
+                E2B_SELECTOR_RATING_ACCEPTED
             ;;
         verify)
             ;;
@@ -236,7 +257,7 @@ validate_selectors() {
         [[ -n "$key" ]] || continue
         require_file_key selectors "$key"
     done < <(required_selector_keys)
-    if [[ "$phase" == settle ]]; then
+    if [[ "$phase" == settle || "$phase" == rate ]]; then
         local template=$E2B_SELECTOR_TICKET_LABEL_TEMPLATE
         [[ "$template" == *'{{ticketId}}'* ]] || die 'ticket label selector must contain {{ticketId}}'
         [[ "${template#*'{{ticketId}}'}" != *'{{ticketId}}'* ]] || die 'ticket label selector must contain {{ticketId}} exactly once'
@@ -372,7 +393,13 @@ assert_device_and_candidate() {
     local actual_apk_sha cert_output actual_cert
     actual_apk_sha=$(sha256_file "$candidate_apk")
     [[ "$actual_apk_sha" == "$E2B_APK_SHA256" ]] || die 'candidate APK SHA-256 differs from immutable context'
-    cert_output=$("$apksigner_bin" verify --print-certs "$candidate_apk") || die 'candidate APK signature is invalid'
+    if [[ -n "$java_home" ]]; then
+        [[ -x "$java_home/bin/java" ]] || die "Java executable is absent under --java-home: $java_home"
+        cert_output=$(JAVA_HOME="$java_home" PATH="$java_home/bin:$PATH" "$apksigner_bin" verify --print-certs "$candidate_apk") ||
+            die 'candidate APK signature is invalid'
+    else
+        cert_output=$("$apksigner_bin" verify --print-certs "$candidate_apk") || die 'candidate APK signature is invalid'
+    fi
     actual_cert=$(printf '%s\n' "$cert_output" | awk -F': ' '/Signer #1 certificate SHA-256 digest:/ {print tolower($2); exit}')
     [[ "$actual_cert" == "$E2B_APK_CERT_SHA256" ]] || die 'candidate APK certificate differs from immutable context'
 
@@ -386,14 +413,13 @@ assert_device_and_candidate() {
 }
 
 ensure_reverse_mappings() {
-    local mapping local_port remote_port extra
+    local mapping local_port
     local mappings
     mappings=$("$adb_bin" -s "$serial" reverse --list)
     while IFS= read -r mapping; do
         [[ -z "$mapping" ]] && continue
-        read -r local_port remote_port extra <<< "$mapping"
-        [[ -z "$extra" ]] || die 'ADB reverse list contains an unexpected mapping shape'
-        case "$local_port:$remote_port" in
+        parse_reverse_mapping "$mapping"
+        case "$REVERSE_LOCAL:$REVERSE_REMOTE" in
             tcp:9099:tcp:9099|tcp:8080:tcp:8080|tcp:5001:tcp:5001) ;;
             *) die 'ADB target already has a reverse mapping outside the E2B allowlist' ;;
         esac
@@ -403,8 +429,32 @@ ensure_reverse_mappings() {
     done
     mappings=$("$adb_bin" -s "$serial" reverse --list)
     for local_port in "${ALLOWED_REVERSE_PORTS[@]}"; do
-        grep -Fqx "tcp:$local_port tcp:$local_port" <<< "$mappings" || die "required reverse port $local_port is absent"
+        local found=false
+        while IFS= read -r mapping; do
+            [[ -z "$mapping" ]] && continue
+            parse_reverse_mapping "$mapping"
+            if [[ "$REVERSE_LOCAL" == "tcp:$local_port" && "$REVERSE_REMOTE" == "tcp:$local_port" ]]; then
+                found=true
+            fi
+        done <<< "$mappings"
+        [[ "$found" == true ]] || die "required reverse port $local_port is absent"
     done
+}
+
+parse_reverse_mapping() {
+    local mapping=$1 first second third fourth
+    read -r first second third fourth <<< "$mapping"
+    if [[ "$first" == tcp:* ]]; then
+        REVERSE_LOCAL=$first
+        REVERSE_REMOTE=$second
+        [[ -z "$third" && -z "$fourth" ]] || die 'ADB reverse list contains an unexpected mapping shape'
+    else
+        # Platform-tools 36 prefixes `reverse --list` rows with an internal device name.
+        [[ -n "$first" && "$second" == tcp:* && "$third" == tcp:* && -z "$fourth" ]] ||
+            die 'ADB reverse list contains an unexpected mapping shape'
+        REVERSE_LOCAL=$second
+        REVERSE_REMOTE=$third
+    fi
 }
 
 write_manifest() {
@@ -510,6 +560,7 @@ while (($#)); do
         --adb) [[ $# -ge 2 ]] || die '--adb requires a value'; adb_bin=$2; shift 2 ;;
         --maestro) [[ $# -ge 2 ]] || die '--maestro requires a value'; maestro_bin=$2; shift 2 ;;
         --apksigner) [[ $# -ge 2 ]] || die '--apksigner requires a value'; apksigner_bin=$2; shift 2 ;;
+        --java-home) [[ $# -ge 2 ]] || die '--java-home requires a value'; java_home=$2; shift 2 ;;
         --node) [[ $# -ge 2 ]] || die '--node requires a value'; node_bin=$2; shift 2 ;;
         --install-candidate) install_candidate=true; shift ;;
         --help|-h) usage; exit 0 ;;
@@ -550,6 +601,7 @@ case "$phase" in
         require_value --receipt-context "$receipt_context"
         validate_receipt_context "$receipt_context" false
         validate_confirmed_settlement "$receipt_context"
+        prepare_ticket_selectors
         ;;
     verify)
         require_value --receipt-context "$receipt_context"

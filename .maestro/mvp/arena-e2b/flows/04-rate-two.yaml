@@ -3,6 +3,31 @@ name: E2B submit rating two
 ---
 - launchApp:
     clearState: false
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    enabled: true
+    retryTapIfNoChange: true
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    direction: DOWN
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+- tapOn:
+    text: ${E2B_SELECTOR_TICKET_OPEN}
+    below:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    enabled: true
+    retryTapIfNoChange: true
 - assertVisible: ${E2B_SELECTOR_SETTLE_CONFIRMED}
 - assertVisible: ${E2B_SELECTOR_RATING_PROMPT}
 - tapOn: ${E2B_SELECTOR_RATE_TWO}

@@ -61,6 +61,8 @@ The runner requires explicit `--run-id`, `--candidate-head`, `--apk`,
 `--run-context`, `--selectors`, and `--output-root` inputs.  Device phases
 also require `--serial`.  It checks the APK SHA-256 and signing certificate
 against the immutable context and requires an existing installation.
+When the Android build tools do not already find Java on `PATH`, pass the
+mounted JDK explicitly with `--java-home <dir>`.
 `--install-candidate` is allowed only for `preflight` or `prepare` and performs
 one `adb install -r` update; later phases verify the APK file and retained
 package without reinstalling or restarting it.  It never clears app data,
@@ -100,5 +102,20 @@ receipt context from the settlement phase.  For `verify`, retain that settlement
 context, add `--rating-id-context <room-reader-output.json>`, and add
 `--receipt-oracle <arena-e2e-receipt-oracle.js>`.
 
-The draft has not run Maestro, ADB, Firebase, or a build.  Use
+The Arena screen orders its items as catalog header, reservation header, local
+tickets, then lesson cards.  The flows therefore scroll up from a selected
+lesson to the reservation header, and down from that header to the exact
+reader-verified ticket.  This preserves the distinction between the prepared
+ticket's `Start` action and its later `Open` action after a process relaunch.
+Opening a retained run may show either the explicit recovery dialog or its
+already-restored saved-answer state, so the flow waits for either observable
+state before deciding whether to press `Continue`.
+Where the UI exposes generic action text, Maestro scopes an enabled action
+below the reader-verified `Ticket: <id>` label and asserts the next retained
+state immediately.  The UI currently does not expose test tags as Android
+resource IDs, so this is a visible-layout guard rather than a substitute for
+the independent server receipt binding.
+
+The source tree is not evidence by itself: the private run artifacts record
+the exact candidate, retained device, server contexts, and results.  Use
 `bash -n work/arena-e2b/run-arena-e2b.sh` for a local syntax check only.

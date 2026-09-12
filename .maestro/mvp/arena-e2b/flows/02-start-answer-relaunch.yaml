@@ -3,14 +3,31 @@ name: E2B start answer and preserved-data relaunch
 ---
 - launchApp:
     clearState: false
-- assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    enabled: true
+    retryTapIfNoChange: true
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_TICKET_LABEL}
-    direction: UP
-    timeout: 30000
+    direction: DOWN
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
-- tapOn: ${E2B_SELECTOR_TICKET_START}
+- tapOn:
+    text: ${E2B_SELECTOR_TICKET_START}
+    below:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    enabled: true
+    retryTapIfNoChange: true
 - extendedWaitUntil:
     visible: ${E2B_SELECTOR_QUESTION}
     timeout: 60000
@@ -23,6 +40,36 @@ name: E2B start answer and preserved-data relaunch
 - stopApp
 - launchApp:
     clearState: false
+# A cold launcher entry opens Home, not the retained Arena runner. Re-enter the
+# same exact ticket through the local-ticket view; never prepare another one.
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+      enabled: true
+    timeout: 60000
+- tapOn:
+    text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    enabled: true
+    retryTapIfNoChange: true
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    direction: DOWN
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_TICKET_LABEL}
+- tapOn:
+    text: ${E2B_SELECTOR_TICKET_OPEN}
+    below:
+      text: ${E2B_SELECTOR_TICKET_LABEL}
+    enabled: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_RESUME_OR_SAVED}
+    timeout: 60000
 - runFlow:
     when:
       visible: ${E2B_SELECTOR_RESUME_DIALOG}

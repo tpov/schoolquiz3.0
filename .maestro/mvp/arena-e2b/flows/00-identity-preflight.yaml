@@ -4,7 +4,30 @@ name: E2B retained-account identity preflight
 # Values are supplied only after a hierarchy capture for the exact candidate and device.
 - launchApp:
     clearState: false
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_REFRESH_BALANCE}
+    direction: DOWN
+    timeout: 20000
+- tapOn: ${E2B_SELECTOR_REFRESH_BALANCE}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_NOLICS_BALANCE}
+    timeout: 60000
+- assertVisible: ${E2B_SELECTOR_LIFE_BALANCE}
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_LOAD_LESSONS}
+    direction: UP
+    timeout: 20000
+- tapOn: ${E2B_SELECTOR_LOAD_LESSONS}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_CATALOG_LOADED}
+    timeout: 60000
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_TARGET_LESSON}
