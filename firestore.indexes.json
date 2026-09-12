@@ -10,6 +10,32 @@
       ]
     },
     {
+      "collectionGroup": "lesson_placements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "authorUid", "order": "ASCENDING"},
+        {"fieldPath": "__name__", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "history",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "decidedAtMs", "order": "ASCENDING"},
+        {"fieldPath": "__name__", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "uid", "order": "ASCENDING"},
+        {"fieldPath": "reason", "order": "ASCENDING"},
+        {"fieldPath": "atMs", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },
+    {
       "collectionGroup": "lots",
       "queryScope": "COLLECTION",
       "fields": [

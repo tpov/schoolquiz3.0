@@ -10,6 +10,7 @@ const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onMessagePublished} = require("firebase-functions/v2/pubsub");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {onRequest} = require("firebase-functions/v2/https");
+const {defineSecret} = require("firebase-functions/params");
 const {trophyList, hasTrophy, TROPHY_VERIFIED} = require("./trophies.js");
 const {logoImageUrl, isLogoName, logoImageBytes} = require("./logos.js");
 const {
@@ -81,6 +82,7 @@ const {createArenaService} = require("./arena-service");
 const {createArenaEntryRuntime} = require("./arena-entry-runtime");
 const {createArenaTicketRecovery} = require("./arena-ticket-recovery");
 const {createArenaLessonCatalog} = require("./arena-lesson-catalog");
+const {createArenaLifecycleViews, ArenaLifecycleViewError} = require("./arena-lifecycle-views");
 const {createCourseTournamentController} = require("./course-tournament-controller");
 const {createTournamentWorker, FUNCTION_TIMEOUT_MS} = require("./tournament-worker");
 const {
@@ -196,6 +198,9 @@ const MONETARY_FUNCTION_OPTIONS = {...FUNCTION_OPTIONS, maxInstances: 2};
  */
 const CALLABLE_OPTIONS = {...FUNCTION_OPTIONS, invoker: "public"};
 const MONETARY_CALLABLE_OPTIONS = {...MONETARY_FUNCTION_OPTIONS, invoker: "public"};
+// Pagination anchors reference closed receipts. The token key is bound only to lifecycle readers.
+const ARENA_LIFECYCLE_CURSOR_SECRET = defineSecret("ARENA_LIFECYCLE_CURSOR_SECRET");
+const LIFECYCLE_CALLABLE_OPTIONS = {...CALLABLE_OPTIONS, secrets: [ARENA_LIFECYCLE_CURSOR_SECRET]};
 /**
  * The Pub/Sub topic Play publishes real-time developer notifications to.
  *
@@ -329,6 +334,10 @@ async function callCourseTournament(request, action) {
 
 const arenaEntries = createArenaEntryRuntime({db, loadLessonContext: loadArenaLessonContext});
 const arenaLessonCatalog = createArenaLessonCatalog({db, loadLessonContext: loadArenaLessonContext});
+const arenaLifecycleViews = createArenaLifecycleViews({
+  db, loadLessonContext: loadArenaLifecycleContext, isCurator: isArenaCurator,
+  readCursorKey: () => ARENA_LIFECYCLE_CURSOR_SECRET.value(),
+});
 exports.listArenaLessons = onCall(CALLABLE_OPTIONS, async (request) => {
   try {
     const uid = requireAuthUid(request);
@@ -346,6 +355,31 @@ exports.listArenaLessons = onCall(CALLABLE_OPTIONS, async (request) => {
     throw new HttpsError(codes[reason] || "internal", "Arena lessons could not be loaded", {reason});
   }
 });
+exports.listOwnedLessonLifecycle = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("listOwned", request));
+exports.listCuratorLessonLifecycle = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("listCurator", request));
+exports.getLessonLifecycle = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("get", request));
+exports.listLessonLifecycleHistory = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("listHistory", request));
+exports.listMyArenaRoyalty = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("listMyRoyalty", request));
+async function callArenaLifecycleView(method, request) {
+  try {
+    const uid = requireAuthUid(request);
+    return await arenaLifecycleViews[method]({uid, payload: request.data});
+  } catch (error) {
+    const reason = !request || !request.auth || !request.auth.uid ? "UNAUTHENTICATED" :
+      error instanceof ArenaLifecycleViewError ? error.code : "UNAVAILABLE";
+    const code = reason === "UNAUTHENTICATED" ? "unauthenticated" :
+      reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+        reason === "PERMISSION_DENIED" ? "permission-denied" :
+          reason === "NOT_FOUND" ? "not-found" :
+            reason === "SOURCE_TOO_LARGE" ? "resource-exhausted" : "unavailable";
+    throw new HttpsError(code, "Lesson lifecycle could not be loaded", {reason});
+  }
+}
 const arenaTicketRecovery = createArenaTicketRecovery({db});
 exports.listArenaEntryTickets = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("list", request));
 exports.fetchArenaEntryTicket = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("get", request));
@@ -452,6 +486,47 @@ async function loadArenaLessonContext(transaction, lessonId) {
     published: !lesson.archived && !theme.archived && !section.archived &&
       (!quest.archived || stringArray(quest.visibleOn).includes("archive")),
     reviewApproved, nextChangeAtMs: nonNegativeInteger(change.changedAtMs, 0) + 1};
+}
+
+/**
+ * Bounded context for the pageable lifecycle readers. State transitions and the public Arena
+ * catalog intentionally recompute independent-review checks from every review record. A reader
+ * must not do that: one old lesson with a large review journal would turn a page of twenty rows
+ * into an unbounded transaction. This uses the server-written review outcome and six named
+ * documents only; it never reads the review subcollection.
+ */
+async function loadArenaLifecycleContext(transaction, lessonId) {
+  if (!isSingleDocumentId(lessonId)) return null;
+  const lessonSnapshot = await transaction.get(db.doc(`lessons/${lessonId}`));
+  if (!lessonSnapshot.exists) return null;
+  const lesson = lessonSnapshot.data() || {};
+  if (!isSingleDocumentId(lesson.themeId)) return null;
+  const themeSnapshot = await transaction.get(db.doc(`themes/${lesson.themeId}`));
+  const theme = themeSnapshot.exists ? themeSnapshot.data() || {} : {};
+  if (!isSingleDocumentId(theme.sectionId)) return null;
+  const sectionSnapshot = await transaction.get(db.doc(`sections/${theme.sectionId}`));
+  const section = sectionSnapshot.exists ? sectionSnapshot.data() || {} : {};
+  if (!isSingleDocumentId(section.questId)) return null;
+  const questSnapshot = await transaction.get(db.doc(`quests/${section.questId}`));
+  const quest = questSnapshot.exists ? questSnapshot.data() || {} : {};
+  if (!isSingleDocumentId(quest.catalogId)) return null;
+  const catalogSnapshot = await transaction.get(db.doc(`catalogs/${quest.catalogId}`));
+  if (!catalogSnapshot.exists) return null;
+  const catalog = catalogSnapshot.data() || {};
+  const authorUid = stringValue(quest.authorUid || quest.ownerUid);
+  if (!isSingleDocumentId(authorUid) || !Number.isSafeInteger(lesson.version) || lesson.version < 1) return null;
+  const reviewSnapshot = await transaction.get(db.doc(adminLessonPath(lessonId)));
+  const review = reviewSnapshot.exists ? reviewSnapshot.data() || {} : {};
+  const reviewApproved = review.status === "PUBLISHED" && !review.rejectedAtMs &&
+    review.ownerUid === authorUid && review.questId === section.questId &&
+    isSingleDocumentId(lesson.reviewSubmissionId) && lesson.reviewSubmissionId === review.submissionId &&
+    Number.isSafeInteger(lesson.reviewApprovedAtMs);
+  return {lessonId, authorUid,
+    questType: stringValue(catalog.questType || quest.questType, "REGULAR").toUpperCase(),
+    contentVersion: lesson.version,
+    published: !lesson.archived && !theme.archived && !section.archived &&
+      (!quest.archived || stringArray(quest.visibleOn).includes("archive")),
+    reviewApproved};
 }
 
 exports.processQuestReviewRequest = onDocumentCreated(

@@ -165,22 +165,37 @@ function createFirestoreStub(seed, options) {
     return {docs: matches.map(snapshotFor), empty: matches.length === 0, size: matches.length};
   }
 
-  function collectionRef(path, filters = [], ordering = null, maximum = Infinity) {
+  function collectionRef(path, filters = [], ordering = [], after = null, maximum = Infinity) {
     if (isDocumentPath(path)) throw new Error(`not a collection path: ${path}`);
     const described = path + (filters.length ? `?${filters.map(([field, value]) => `${field}==${value}`).join("&")}` : "");
+    const valueOf = (child, field) => field === "__name__" ?
+      child.slice(child.lastIndexOf("/") + 1) : store.documents.get(child)[field];
+    const compared = (left, right) => left < right ? -1 : left > right ? 1 : 0;
     const ref = {
       path,
       querySnapshot: () => {
         let matches = childrenOf(path).filter((child) => filters.every(([field, value]) =>
-          store.documents.get(child)[field] === value));
-        if (ordering) {
-          const [field, direction] = ordering;
-          matches = matches.filter((child) => store.documents.get(child)[field] !== undefined);
+          valueOf(child, field) === value));
+        if (ordering.length > 0) {
+          matches = matches.filter((child) => ordering.every(([field]) => valueOf(child, field) !== undefined));
           matches.sort((a, b) => {
-            const left = store.documents.get(a)[field];
-            const right = store.documents.get(b)[field];
-            const compared = left < right ? -1 : left > right ? 1 : a.localeCompare(b);
-            return direction === "desc" ? -compared : compared;
+            for (const [field, direction] of ordering) {
+              const result = compared(valueOf(a, field), valueOf(b, field));
+              if (result !== 0) return direction === "desc" ? -result : result;
+            }
+            return 0;
+          });
+        }
+        if (after !== null) {
+          if (ordering.length === 0 || after.length !== ordering.length) throw new Error("Unsupported fake cursor");
+          matches = matches.filter((child) => {
+            for (let index = 0; index < ordering.length; index += 1) {
+              const [field, direction] = ordering[index];
+              const result = compared(valueOf(child, field), after[index]);
+              if (result === 0) continue;
+              return direction === "desc" ? result < 0 : result > 0;
+            }
+            return false;
           });
         }
         return querySnapshot(path, matches.slice(0, maximum));
@@ -193,13 +208,14 @@ function createFirestoreStub(seed, options) {
       },
       where: (field, operator, value) => {
         if (operator !== "==") throw new Error(`stub supports only "==" queries, got ${operator}`);
-        return collectionRef(path, [...filters, [field, value]], ordering, maximum);
+        return collectionRef(path, [...filters, [field, value]], ordering, after, maximum);
       },
       orderBy: (field, direction = "asc") => {
-        if (ordering || !["asc", "desc"].includes(direction)) throw new Error("Unsupported fake ordering");
-        return collectionRef(path, filters, [field, direction], maximum);
+        if (!["asc", "desc"].includes(direction) || ordering.some(([old]) => old === field)) throw new Error("Unsupported fake ordering");
+        return collectionRef(path, filters, [...ordering, [field, direction]], after, maximum);
       },
-      limit: (count) => collectionRef(path, filters, ordering, count),
+      startAfter: (...values) => collectionRef(path, filters, ordering, values, maximum),
+      limit: (count) => collectionRef(path, filters, ordering, after, count),
     };
     return ref;
   }

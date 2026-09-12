@@ -38,14 +38,21 @@ async function main() {
   const [owner, outsider, appAdmin] = await Promise.all([account(), account(), account()]);
   const placement = db.doc(`lesson_placements/${runId}`);
   const history = placement.collection("history").doc(`${runId}_decision`);
+  const royalty = db.doc(`arena_royalty_accounts/${owner.uid}`);
+  const ledger = db.doc(`audit/currency_ledger/entries/${runId}_royalty`);
   const batch = db.batch();
   batch.create(placement, {lessonId: runId, authorUid: owner.uid, shelf: "review", syntheticRun: runId,
     lastRejection: {code: "SYNTHETIC_REFUSAL", reason: "Private synthetic moderation detail", actorUid: appAdmin.uid}});
   batch.create(history, {actorUid: appAdmin.uid, mutationId: `${runId}_mutation`, status: "REJECTED",
     reason: "Private synthetic moderation detail", fromShelf: "review", targetShelf: "arena", syntheticRun: runId});
+  batch.create(royalty, {authorCarryFifths: 4, sinkCarryFifths: 1, reservedNolics: 1,
+    totalAuthorCreditNolics: 13, totalSinkNolics: 3, totalPaymentsNolics: 17, syntheticRun: runId});
+  batch.create(ledger, {id: `${runId}_royalty`, uid: owner.uid, currency: "nolics", delta: 3,
+    reason: "arena_author_royalty", sourceId: `${runId}_ticket`,
+    details: {payerUid: outsider.uid, attemptId: `${runId}_attempt`}, syntheticRun: runId});
   batch.create(db.doc(`profiles/${appAdmin.uid}`), {uid: appAdmin.uid, adminLevel: 100, syntheticRun: runId});
   await batch.commit();
-  const refs = [placement, history];
+  const refs = [placement, history, royalty, ledger];
   const before = await db.getAll(...refs);
   for (const [role, actor] of [["author", owner], ["otherPlayer", outsider], ["appAdmin", appAdmin], ["anonymous", null]]) {
     for (const ref of refs) {
@@ -67,7 +74,7 @@ async function main() {
     assert.ok(after[index].updateTime.isEqual(doc.updateTime), "Denied probes must leave exact source records unchanged");
   });
   console.log(JSON.stringify({status: "PASS", projectId: PROJECT, runId, checks,
-    createdAuthAccounts: 3, createOnlyFixtureDocuments: 3, fixtureDeleted: false,
+    createdAuthAccounts: 3, createOnlyFixtureDocuments: 5, fixtureDeleted: false,
     sourceDataAndUpdateTimeUnchanged: true,
     mountedRulesSha256: sha(readFileSync("/repo/firestore.rules"))}, null, 2));
 }
