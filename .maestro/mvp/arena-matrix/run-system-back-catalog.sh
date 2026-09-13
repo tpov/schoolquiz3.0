@@ -215,7 +215,9 @@ capture_surface() {
 }
 
 assess_surface() {
-    local name=$1 expected=$2 hierarchy="$output_dir/$name-hierarchy.json"
+    local name=$1
+    local expected=$2
+    local hierarchy="$output_dir/$name-hierarchy.json"
     "$node_bin" - "$hierarchy" "$output_dir/$name-safety.json" "$expected" \
         "${MATRIX_SELECTOR_HOME}" "${MATRIX_SELECTOR_ARENA_NAV}" \
         "${MATRIX_SELECTOR_ARENA_TITLE}" "${MATRIX_SELECTOR_OPEN_CATALOG}" \
