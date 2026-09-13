@@ -32,8 +32,11 @@ output_dir=''
 overall_status='INTERRUPTED'
 phase_status='NOT_RUN'
 next_required='runner did not reach a terminal phase'
+device_lock_path=''
+device_lock_held=false
 readonly EVIDENCE_PROJECT='demo-schoolquiz-mvp'
 readonly EVIDENCE_FIRESTORE_HOST='schoolquiz-mvp-firebase:8080'
+readonly E2B_DEVICE_LOCK_ROOT="${E2B_DEVICE_LOCK_ROOT:-/tools/arena-e2b-device-locks}"
 
 run_seen_keys=$'\n'
 selector_seen_keys=$'\n'
@@ -114,6 +117,14 @@ die() {
     exit 2
 }
 
+device_phase_already_running() {
+    overall_status='FAIL'
+    phase_status='FAIL'
+    next_required='wait for the active E2B device phase to finish, then retry this phase'
+    printf 'E2B runner: %s\n' "$*" >&2
+    exit 2
+}
+
 on_interrupt() {
     overall_status='INTERRUPTED'
     phase_status='INTERRUPTED'
@@ -136,6 +147,7 @@ on_error() {
 write_result() {
     local exit_code=$?
     trap - EXIT
+    release_device_lock
     if [[ -n "$output_dir" && -d "$output_dir" ]]; then
         "$node_bin" - "$output_dir/result.json" "$overall_status" "$phase_status" "$phase" "$run_id" "$next_required" <<'NODE' || true
 const fs = require('fs');
@@ -550,6 +562,35 @@ assert_device_and_candidate() {
     fi
 }
 
+acquire_device_lock() {
+    [[ "$serial" != *$'\n'* && "$serial" != *$'\r'* && -n "$serial" ]] || die 'invalid ADB serial'
+    [[ "$E2B_DEVICE_LOCK_ROOT" = /* && "$E2B_DEVICE_LOCK_ROOT" != *$'\n'* && "$E2B_DEVICE_LOCK_ROOT" != *$'\r'* ]] ||
+        die 'E2B device lock root is invalid'
+    mkdir -p -- "$E2B_DEVICE_LOCK_ROOT" || die 'could not create the E2B device lock root'
+    chmod 700 "$E2B_DEVICE_LOCK_ROOT" || die 'could not secure the E2B device lock root'
+
+    local serial_sha
+    serial_sha=$(printf '%s' "$serial" | sha256sum | awk '{print $1}') || die 'could not derive the E2B device lock name'
+    [[ "$serial_sha" =~ ^[a-f0-9]{64}$ ]] || die 'invalid E2B device lock name'
+    device_lock_path="$E2B_DEVICE_LOCK_ROOT/$serial_sha.lock"
+    exec 9>>"$device_lock_path" || die 'could not open the E2B device lock'
+    chmod 600 "$device_lock_path" || die 'could not secure the E2B device lock'
+    if ! flock -n 9; then
+        exec 9>&-
+        device_lock_path=''
+        device_phase_already_running 'another E2B device phase already owns the selected serial'
+    fi
+    device_lock_held=true
+}
+
+release_device_lock() {
+    if [[ "$device_lock_held" == true ]]; then
+        flock -u 9 || true
+        exec 9>&- || true
+        device_lock_held=false
+    fi
+}
+
 ensure_reverse_mappings() {
     local mapping local_port
     local mappings
@@ -872,6 +913,7 @@ write_manifest
 case "$phase" in
     preflight|prepare|settle|resume-settle|deliver|rate|deliver-rating)
         require_value --serial "$serial"
+        acquire_device_lock
         assert_device_and_candidate
         ensure_reverse_mappings
         ;;
