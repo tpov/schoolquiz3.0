@@ -714,7 +714,10 @@ capture_attempt_progress_context() {
         die 'could not copy the retained Room database for post-relaunch evidence'
     fi
     for suffix in -wal -shm; do
-        if "$adb_bin" -s "$serial" shell run-as "$APP_ID" sh -c "test -f databases/schoolquiz.db${suffix}" >/dev/null; then
+        # Invoke run-as directly.  On the retained Redroid image, `run-as … sh -c`
+        # exposes a different shell root and falsely reports that the adjacent
+        # SQLite sidecars are absent; a main database without its WAL can be stale.
+        if "$adb_bin" -s "$serial" shell run-as "$APP_ID" ls "databases/schoolquiz.db${suffix}" >/dev/null 2>&1; then
             if ! "$adb_bin" -s "$serial" exec-out run-as "$APP_ID" cat "databases/schoolquiz.db${suffix}" > "${database}${suffix}"; then
                 rm -f -- "$database" "${database}-wal" "${database}-shm"
                 rmdir -- "$snapshot_dir" 2>/dev/null || true
