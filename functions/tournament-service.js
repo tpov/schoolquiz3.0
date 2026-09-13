@@ -2,7 +2,7 @@
 
 const {randomBytes} = require("node:crypto");
 const policy = require("./tournament-policy");
-const {ALGORITHM_VERSION} = require("./tournament-ranking");
+const {validateRankingVersion} = require("./tournament-qualification-version");
 const {canonicalTournamentJson: canonical, tournamentDigest: digest,
   normalizeTournamentBank, tournamentFormBundle} = require("./tournament-bank");
 const {readPremiumEconomy, planPremiumEconomy, writePremiumEconomy, PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
@@ -111,8 +111,10 @@ function loader(deps, name) {
 function rankingGate(snapshot, event) {
   if (!snapshot || snapshot.complete !== true) fail("UNAVAILABLE", "Verified qualification freeze is not complete; retry without cancelling");
   const expected = digest(event.qualificationForms.map(({formId, fingerprint}) => ({formId, fingerprint})));
-  if (snapshot.schemaVersion !== 1 || snapshot.eventId !== event.eventId || snapshot.endsAtMs !== event.qualification.endsAtMs ||
-      snapshot.algorithmVersion !== ALGORITHM_VERSION || snapshot.formsFingerprint !== expected ||
+  let provenance;
+  try { provenance = validateRankingVersion(snapshot, event); }
+  catch { fail("INVALID_RANKING", "Unbound calculation version"); }
+  if (snapshot.eventId !== event.eventId || snapshot.endsAtMs !== event.qualification.endsAtMs || snapshot.formsFingerprint !== expected ||
       !Array.isArray(snapshot.ranking) || snapshot.ranking.length > 16 || !Number.isSafeInteger(snapshot.totalRanked) ||
       snapshot.totalRanked < 0 || snapshot.ranking.length !== Math.min(16, snapshot.totalRanked) ||
       !/^[a-f0-9]{64}$/.test(snapshot.verifiedRunsFingerprint || "")) fail("INVALID_RANKING", "Unbound, truncated or wrong-algorithm ranking freeze");
@@ -121,7 +123,7 @@ function rankingGate(snapshot, event) {
   const entrants = policy.selectQualifiers(snapshot.ranking);
   entrants.forEach((row, i) => { uidValue(row.uid); if (row.authoritativePlace !== i + 1) fail("INVALID_RANKING", "Top ordinals must be complete and contiguous"); });
   return {snapshotId: snapshot.snapshotId, algorithmVersion: snapshot.algorithmVersion,
-    verifiedRunsFingerprint: snapshot.verifiedRunsFingerprint, verifiedRunCount: snapshot.verifiedRunCount, totalRanked: snapshot.totalRanked};
+    verifiedRunsFingerprint: snapshot.verifiedRunsFingerprint, verifiedRunCount: snapshot.verifiedRunCount, totalRanked: snapshot.totalRanked, ...provenance};
 }
 
 /** Read and plan, with writes staged in memory only. Injected loaders must perform transaction

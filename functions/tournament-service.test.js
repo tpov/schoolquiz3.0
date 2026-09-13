@@ -10,6 +10,8 @@ const {applyTournamentOperation: apply, readPlanTournamentOperation, writeTourna
   readTournamentSession, TOURNAMENT_PATHS: P, qualificationSessionId, matchSessionId} = require("./tournament-service");
 const {LEDGER_PATH, CURRENCY} = require("./currency-ledger");
 const {PREMIUM_LOT_BATCH} = require("./premium-economy");
+const {selectQualificationCalculation} = require("./tournament-qualification-freeze");
+const {VERSIONS} = require("./tournament-qualification-compact");
 
 const T = 1_800_000_000_000;
 const DAY = 86_400_000;
@@ -447,6 +449,37 @@ test("oversized public bundle fails before any financial write", async () => {
   for (const q of f.state.bank.questions) q.publicPayload = {...JSON.parse(q.publicPayload), text: "X".repeat(50_000)};
   const before = structuredClone([...f.db.store]);
   await assert.rejects(f.create(), {code: "RESOURCE_EXHAUSTED"}); assert.deepEqual([...f.db.store], before);
+});
+
+async function versionedFixture() {
+  const f = fixture(); await f.create();
+  const selected = await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 7 * DAY});
+  const c = selected.contract;
+  const legacy = await f.dependencies.loadQualificationRanking({eventId: EVENT, forms: event(f).qualificationForms, endsAtMs: c.endsAtMs});
+  f.state.rankingOverride = {...legacy, schemaVersion: 2, snapshotId: c.freezeId, freezeFenceId: c.freezeId,
+    calculationVersions: {...VERSIONS}, calculationContractDigest: c.contractDigest,
+    inputFingerprintVersion: "player-stream-chain-v1", verifiedRunsFingerprint: digest("complete-versioned-player-stream")};
+  return f;
+}
+test("close consumes selected versioned ranking and retains exact provenance with the bracket", async () => {
+  const f = await versionedFixture(); const expected = structuredClone(f.state.rankingOverride);
+  const closed = await f.close(); assert.equal(closed.status, "BRACKET");
+  const provenance = event(f).qualificationRanking;
+  assert.equal(provenance.calculationContractDigest, expected.calculationContractDigest);
+  assert.deepEqual(provenance.calculationVersions, VERSIONS);
+  assert.equal(provenance.inputFingerprintVersion, "player-stream-chain-v1");
+  assert.equal(provenance.verifiedRunsFingerprint, expected.verifiedRunsFingerprint);
+  assert.equal(provenance.snapshotId, expected.snapshotId);
+  assert.deepEqual(event(f).bracket.entrants.map(row => row.uid), ["alice", "bob"]);
+  assert.deepEqual(f.state.rankingOverride, expected);
+});
+test("old or incompatible ranking cannot close selected-version event or mutate its escrow", async () => {
+  for (const mutate of [r => { r.schemaVersion = 1; }, r => { r.calculationVersions.roundingVersion = "old-floating"; },
+    r => { r.calculationContractDigest = digest("other-contract"); }, r => { delete r.inputFingerprintVersion; },
+    r => { r.freezeFenceId = "legacy-fence"; }]) {
+    const f = await versionedFixture(); mutate(f.state.rankingOverride); const before = structuredClone([...f.db.store]);
+    await assert.rejects(f.close(), {code: "INVALID_RANKING"}); assert.deepEqual([...f.db.store], before);
+  }
 });
 
 (async () => {

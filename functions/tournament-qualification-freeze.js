@@ -4,8 +4,9 @@ const {TOURNAMENT_PATHS, qualificationSessionId} = require("./tournament-service
 const {VERIFIED_RUNS, advanceTournamentSession} = require("./tournament-session");
 const {verifiedTournamentRun} = require("./tournament-session-results");
 const {buildQualificationRankingSnapshot} = require("./tournament-qualification");
-const {ALGORITHM_VERSION} = require("./tournament-ranking");
 const {tournamentDigest: digest} = require("./tournament-bank");
+const {calculationContract, validateCalculationContract, assertCurrentCalculationRuntime,
+  assertLegacyQualificationPublication, validateRankingVersion} = require("./tournament-qualification-version");
 
 const QUALIFICATION_RANKINGS = "course_tournament_rankings";
 function fail(code, message) { const error = new Error(message); error.code = code; throw error; }
@@ -15,8 +16,9 @@ function exact(value, label, min = 0) {
 }
 function formsFingerprint(forms) { return digest(forms.map(({formId, fingerprint}) => ({formId, fingerprint}))); }
 function frozenGate(event, ranking) {
-  if (!ranking || ranking.schemaVersion !== 1 || ranking.complete !== true || ranking.eventId !== event.eventId ||
-      ranking.endsAtMs !== event.qualification?.endsAtMs || ranking.algorithmVersion !== ALGORITHM_VERSION ||
+  validateRankingVersion(ranking, event);
+  if (!ranking || ranking.complete !== true || ranking.eventId !== event.eventId ||
+      ranking.endsAtMs !== event.qualification?.endsAtMs ||
       ranking.formsFingerprint !== formsFingerprint(event.qualificationForms) || !event.qualificationFreezeFence ||
       ranking.freezeFenceId !== event.qualificationFreezeFence.freezeId || ranking.snapshotId !== ranking.freezeFenceId ||
       !/^[a-f0-9]{64}$/.test(ranking.verifiedRunsFingerprint || "") || !Number.isSafeInteger(ranking.totalRanked) ||
@@ -44,6 +46,8 @@ async function fenceQualification({db, eventId, now}) {
     const endsAtMs = exact(event.qualification?.endsAtMs, "qualification cutoff");
     if (now < endsAtMs) fail("FAILED_PRECONDITION", "Qualification is still open");
     const fingerprint = formsFingerprint(event.qualificationForms);
+    const calculation = validateCalculationContract(event);
+    if (calculation) return {event, fence: event.qualificationFreezeFence};
     const freezeId = `freeze_${digest([eventId, endsAtMs, fingerprint])}`;
     const existing = event.qualificationFreezeFence;
     if (existing && (existing.schemaVersion !== 1 || existing.freezeId !== freezeId || existing.endsAtMs !== endsAtMs || existing.formsFingerprint !== fingerprint)) {
@@ -54,6 +58,39 @@ async function fenceQualification({db, eventId, now}) {
     const next = {...event, lastMutationAtMs: at, qualificationFreezeFence: fence};
     transaction.set(ref, next);
     return {event: next, fence};
+  });
+}
+
+/** Explicit server-only version selection for an unpublished event. The rotated freeze ID
+ * fences even an in-flight legacy binary that knows nothing about qualificationCalculation:
+ * both old publication transactions already compare their captured freeze ID to this event.
+ * Existing scan subcollections stay untouched; the new scan uses the new fence path.
+ */
+async function selectQualificationCalculation({db, eventId, now}) {
+  exact(now, "server time");
+  if (typeof eventId !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(eventId)) fail("INVALID_ARGUMENT", "Immutable event id required");
+  return db.runTransaction(async transaction => {
+    const ref = db.doc(`${TOURNAMENT_PATHS.events}/${eventId}`);
+    const [saved, ranking] = await transaction.getAll(ref, db.doc(`${QUALIFICATION_RANKINGS}/${eventId}`));
+    if (!saved.exists) fail("NOT_FOUND", "Tournament event not found");
+    const event = saved.data();
+    if (ranking.exists) return {event, contract: validateCalculationContract(event), existingRanking: frozenGate(event, ranking.data())};
+    if (event.schemaVersion !== 1 || event.eventId !== eventId || event.status !== "QUALIFICATION" ||
+        now < exact(event.qualification?.endsAtMs, "qualification cutoff")) fail("FAILED_PRECONDITION", "Only closed unpublished qualification may select calculation");
+    const existing = validateCalculationContract(event);
+    if (existing) { assertCurrentCalculationRuntime(existing); return {event, contract: existing}; }
+    const contract = calculationContract(event); const oldFence = event.qualificationFreezeFence;
+    if (oldFence && (oldFence.schemaVersion !== 1 || oldFence.endsAtMs !== contract.endsAtMs ||
+        oldFence.formsFingerprint !== contract.formsFingerprint ||
+        oldFence.freezeId !== `freeze_${digest([eventId, contract.endsAtMs, contract.formsFingerprint])}`)) {
+      fail("UNAVAILABLE", "Prior legacy fence requires repair before version selection");
+    }
+    const at = Math.max(now, exact(event.lastMutationAtMs, "event clock"));
+    const fence = {schemaVersion: 1, freezeId: contract.freezeId, endsAtMs: contract.endsAtMs,
+      formsFingerprint: contract.formsFingerprint, fencedAtMs: at};
+    const next = {...event, lastMutationAtMs: at, qualificationFreezeFence: fence, qualificationCalculation: contract};
+    transaction.set(ref, next);
+    return {event: next, contract};
   });
 }
 
@@ -91,6 +128,7 @@ async function freezeQualification({db, eventId, now, pageSize, maxPages}) {
   if (pageSize > 100) fail("INVALID_ARGUMENT", "Page size must be <=100");
   const {event, fence, existingRanking} = await fenceQualification({db, eventId, now});
   if (existingRanking) return {complete: true, replayed: true, ranking: existingRanking};
+  assertLegacyQualificationPublication(event, fence.freezeId);
   const runs = []; const pending = []; const seenSessions = new Set();
   let after = null; let terminal = false; let pageCount = 0;
   for (; pageCount < maxPages; pageCount++) {
@@ -135,6 +173,7 @@ async function freezeQualification({db, eventId, now, pageSize, maxPages}) {
   return db.runTransaction(async transaction => {
     const ref = db.doc(`${QUALIFICATION_RANKINGS}/${eventId}`);
     const [current, prior] = await transaction.getAll(db.doc(`${TOURNAMENT_PATHS.events}/${eventId}`), ref);
+    assertLegacyQualificationPublication(current.exists ? current.data() : null, fence.freezeId);
     if (!current.exists || current.data().qualificationFreezeFence?.freezeId !== fence.freezeId ||
         current.data().lastMutationAtMs < fence.endsAtMs || formsFingerprint(current.data().qualificationForms) !== fence.formsFingerprint) {
       fail("UNAVAILABLE", "Admission fence changed before ranking publication");
@@ -158,4 +197,5 @@ async function loadQualificationRanking({db, transaction, eventId, forms, endsAt
   return ranking;
 }
 
-module.exports = {QUALIFICATION_RANKINGS, fenceQualification, readQualificationEntryPage, freezeQualification, loadQualificationRanking};
+module.exports = {QUALIFICATION_RANKINGS, fenceQualification, selectQualificationCalculation,
+  readQualificationEntryPage, freezeQualification, loadQualificationRanking};

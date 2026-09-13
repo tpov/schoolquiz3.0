@@ -8,6 +8,7 @@ const {verifiedTournamentRun} = require("./tournament-session-results");
 const {buildQualificationRankingSnapshot} = require("./tournament-qualification");
 const {ALGORITHM_VERSION} = require("./tournament-ranking");
 const {tournamentDigest: digest} = require("./tournament-bank");
+const {assertLegacyQualificationPublication, validateCalculationContract} = require("./tournament-qualification-version");
 
 const SCAN_VERSION = 1;
 const data = snap => snap.exists ? snap.data() : null;
@@ -28,9 +29,11 @@ function identity(event) {
   const fence = event.qualificationFreezeFence;
   if (!fence || event.lastMutationAtMs < event.qualification.endsAtMs || fence.endsAtMs !== event.qualification.endsAtMs ||
       fence.formsFingerprint !== digest(event.qualificationForms.map(({formId, fingerprint}) => ({formId, fingerprint})))) fail("Immutable admission fence required");
+  const contract = event.qualificationCalculation ? validateCalculationContract(event) : null;
   return {schemaVersion: SCAN_VERSION, eventId: event.eventId, freezeId: fence.freezeId, endsAtMs: fence.endsAtMs,
     formsFingerprint: fence.formsFingerprint, sourceFingerprint: digest({source: event.source, poolFingerprint: event.poolFingerprint,
-      privateBankFingerprint: event.privateBankFingerprint ?? null, timingVersion: event.timingVersion ?? null}), algorithmVersion: ALGORITHM_VERSION};
+      privateBankFingerprint: event.privateBankFingerprint ?? null, timingVersion: event.timingVersion ?? null}), algorithmVersion: ALGORITHM_VERSION,
+    ...(contract ? {calculationContractDigest: contract.contractDigest} : {})};
 }
 function initial(anchor) {
   return {...anchor, identityHash: digest(anchor), status: "SCANNING", revision: 0, afterEntryId: null,
@@ -319,6 +322,7 @@ async function calculateAndPublish(options, checkBudget) {
   if (manifest.published) return {complete: true, replayed: true, ranking: manifest.published};
   if (!manifest.ready) return {complete: false, status: manifest.status};
   const {event, head, context} = manifest;
+  assertLegacyQualificationPublication(event, head.freezeId);
   // Full-cohort LS is synchronous and unchanged. This is a cooperative execution envelope,
   // NOT cancellation or an admission cap; an exceeded budget never publishes partial ranks.
   checkBudget(manifest.verifiedRuns.length, true);
@@ -332,6 +336,7 @@ async function calculateAndPublish(options, checkBudget) {
     const ref = db.doc(`${QUALIFICATION_RANKINGS}/${eventId}`);
     const [eventSnap, currentSnap, priorSnap] = await tx.getAll(db.doc(eventPath(eventId)), db.doc(context.path), ref);
     const current = checked(data(currentSnap), context.anchor);
+    assertLegacyQualificationPublication(data(eventSnap), head.freezeId);
     if (digest(identity(data(eventSnap))) !== digest(context.anchor) || !terminalScan(current) || current.manifestDigest !== head.manifestDigest) fail("Manifest changed before ranking publication");
     const prior = data(priorSnap);
     if (prior) {
@@ -347,4 +352,82 @@ async function calculateAndPublish(options, checkBudget) {
   });
 }
 
-module.exports = {SCAN_VERSION, scanPath, advanceQualificationScan, readCompleteQualificationManifest, calculateAndPublishQualificationRanking};
+/** Bounded read boundary for the durable calculator. The caller persists these cursor/chain
+ * values together with its own revision and lease in the SAME transaction. No full cohort array
+ * is materialized, and every admission/session/run is re-verified before it becomes a projection.
+ */
+function qualificationCalculationManifest(event, rawHead) {
+  const anchor = identity(event);
+  const head = checked(rawHead, anchor);
+  if (!terminalScan(head)) fail("Complete immutable scan required for calculation");
+  return {anchor, head, path: scanPath(event.eventId, anchor.freezeId),
+    initialChainHash: initial(anchor).chainHash};
+}
+async function readQualificationCalculationChunk({db, transaction: tx, event, rawHead, index,
+  afterEntryId, chainHash, now}) {
+  const {anchor, head, path} = qualificationCalculationManifest(event, rawHead);
+  exact(index); exact(now);
+  if (index >= head.chunkCount) fail("Calculation cursor is outside the manifest");
+  const chunk = data(await tx.get(db.doc(`${path}/chunks/${chunkKey(index)}`)));
+  if (!chunk || chunk.identityHash !== head.identityHash || chunk.index !== index ||
+      chunk.afterEntryId !== afterEntryId || chunk.previousChainHash !== chainHash ||
+      !Array.isArray(chunk.entries) || chunk.entries.length > 50 || typeof chunk.terminal !== "boolean" ||
+      chunk.terminal !== (index === head.chunkCount - 1)) fail("Incomplete calculation chunk chain");
+  const {chunkHash, previousChainHash, ...body} = chunk;
+  if (chunkHash !== digest(body)) fail("Calculation chunk digest mismatch");
+  const rowSnaps = chunk.entries.length ? await tx.getAll(...chunk.entries.map(entry =>
+    db.doc(`${path}/rows/${rowKey(docId(entry.entryId))}`))) : [];
+  let previous = afterEntryId;
+  const accepted = [];
+  for (let i = 0; i < chunk.entries.length; i++) {
+    const entry = chunk.entries[i]; const row = data(rowSnaps[i]); const id = docId(entry.entryId);
+    if (previous !== null && compare(id, previous) <= 0 || !row || row.status !== "VERIFIED" ||
+        row.identityHash !== head.identityHash || row.entryId !== id || row.entryDigest !== entry.entryDigest ||
+        !row.binding || row.runDigest !== digest(row.run)) fail("Missing, repeated or unverified calculation row");
+    const [session, run, savedEntry] = await tx.getAll(db.doc(`${P.sessions}/${row.binding.sessionId}`),
+      db.doc(`${VERIFIED_RUNS}/${row.binding.sessionId}`), db.doc(`${eventPath(event.eventId)}/entries/${id}`));
+    const binding = boundAdmission(event, id, data(savedEntry));
+    if (!binding || digest(data(savedEntry)) !== row.entryDigest || digest(binding) !== digest(row.binding)) fail("Frozen admission was modified");
+    const verified = verifiedEntry(event, binding, data(session), data(run), now);
+    if (!verified || digest(verified) !== row.runDigest) fail("Immutable verified receipt was modified");
+    accepted.push({entryId: id, entryDigest: row.entryDigest, runDigest: row.runDigest, run: verified});
+    previous = id;
+  }
+  if (previous !== chunk.lastEntryId) fail("Calculation chunk endpoint disagrees");
+  return {anchor, accepted, afterEntryId: previous, terminal: chunk.terminal,
+    chainHash: digest([chainHash, chunkHash])};
+}
+
+/** Re-check the immutable source of each complete player on REDUCE and PROJECT, not merely
+ * a self-consistent checksum of an intermediate private document. At most three admissions.
+ */
+async function verifyQualificationCalculationPlayer({db, transaction: tx, event, rawHead, admissions, player}) {
+  const {head, path} = qualificationCalculationManifest(event, rawHead);
+  if (!Array.isArray(admissions) || admissions.length < 1 || admissions.length > 3 ||
+      !player || !Array.isArray(player.results) || player.results.length !== admissions.length) fail("Invalid complete player source");
+  const results = []; const sessions = new Set(); const forms = new Set();
+  for (const admitted of admissions) {
+    const entryId = docId(admitted.entryId);
+    const [rowSnap, entrySnap] = await tx.getAll(db.doc(`${path}/rows/${rowKey(entryId)}`),
+      db.doc(`${eventPath(event.eventId)}/entries/${entryId}`));
+    const row = data(rowSnap); const entry = data(entrySnap); const binding = boundAdmission(event, entryId, entry);
+    if (!row || row.status !== "VERIFIED" || row.identityHash !== head.identityHash || row.entryId !== entryId ||
+        row.entryDigest !== admitted.entryDigest || row.runDigest !== admitted.runDigest || row.runDigest !== digest(row.run) ||
+        !binding || binding.uid !== player.userId || binding.sessionId !== admitted.sessionId ||
+        digest(entry) !== row.entryDigest || digest(binding) !== digest(row.binding) ||
+        sessions.has(binding.sessionId) || forms.has(binding.formId)) fail("Changed or repeated player admission source");
+    const [sessionSnap, runSnap] = await tx.getAll(db.doc(`${P.sessions}/${binding.sessionId}`),
+      db.doc(`${VERIFIED_RUNS}/${binding.sessionId}`));
+    const verified = verifiedEntry(event, binding, data(sessionSnap), data(runSnap), head.endsAtMs);
+    if (!verified || digest(verified) !== admitted.runDigest) fail("Changed verified player source");
+    sessions.add(binding.sessionId); forms.add(binding.formId);
+    results.push({formId: verified.formId, percent: verified.percentScore,
+      elapsedMs: verified.elapsedMs, completedAtMs: verified.completedAtMs});
+  }
+  results.sort((a, b) => a.formId < b.formId ? -1 : a.formId > b.formId ? 1 : 0);
+  if (digest({userId: player.userId, results}) !== digest(player)) fail("Player projection differs from verified input");
+}
+
+module.exports = {SCAN_VERSION, scanPath, advanceQualificationScan, readCompleteQualificationManifest,
+  calculateAndPublishQualificationRanking, qualificationCalculationManifest, readQualificationCalculationChunk,
+  verifyQualificationCalculationPlayer};

@@ -6,7 +6,9 @@ const {redact} = require("./question-redaction");
 const {tournamentDigest: digest} = require("./tournament-bank");
 const {applyTournamentOperation, qualificationSessionId, TOURNAMENT_PATHS: P} = require("./tournament-service");
 const {VERIFIED_RUNS} = require("./tournament-session");
-const {QUALIFICATION_RANKINGS: RANKINGS, fenceQualification, freezeQualification, loadQualificationRanking, readQualificationEntryPage} = require("./tournament-qualification-freeze");
+const {QUALIFICATION_RANKINGS: RANKINGS, fenceQualification, selectQualificationCalculation,
+  freezeQualification, loadQualificationRanking, readQualificationEntryPage} = require("./tournament-qualification-freeze");
+const {VERSIONS} = require("./tournament-qualification-compact");
 
 const T = 1_800_000_000_000;
 const EVENT = "event_0000000000000001";
@@ -156,6 +158,60 @@ test("page-boundary admission race retries against fence and cannot slip behind 
   };
   const result = await f.freeze(); assert.equal(attempted, true); assert.equal(result.complete, true);
   assert.equal(result.ranking.verifiedRunCount, 3); assert.equal([...f.db.store.keys()].filter(path => path.includes("/entries/")).length, 3);
+});
+
+test("explicit version selection rotates only unpublished fence and preserves historical scan and escrow", async () => {
+  const f = fixture(); const legacy = await fenceQualification({db: f.db, eventId: EVENT, now: T + 20_000});
+  const historicalPath = `${E}/qualification_scans/${legacy.fence.freezeId}`;
+  f.db.store.set(historicalPath, {historical: "preserved"});
+  const before = structuredClone([...f.db.store]);
+  const first = await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 20_000});
+  assert.notEqual(first.contract.freezeId, legacy.fence.freezeId); assert.deepEqual(first.contract.versions, VERSIONS);
+  for (const [path, value] of before) if (path !== E) assert.deepEqual(f.db.store.get(path), value, path);
+  assert.deepEqual(first.event.escrow, legacy.event.escrow); assert.equal(f.db.store.has(`${RANKINGS}/${EVENT}`), false);
+  const snapshot = structuredClone([...f.db.store]);
+  const again = await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 99_000});
+  assert.deepEqual(again, first); assert.deepEqual([...f.db.store], snapshot);
+  const fenced = await fenceQualification({db: f.db, eventId: EVENT, now: T + 30_000});
+  assert.equal(fenced.fence.freezeId, first.contract.freezeId); assert.deepEqual([...f.db.store], snapshot);
+  const queries = f.queries.length;
+  await assert.rejects(f.freeze(), {code: "UNAVAILABLE"}); assert.equal(f.queries.length, queries);
+});
+test("legacy publication wins before selection and is returned byte-for-byte without rebinding", async () => {
+  const f = fixture(); const published = await f.freeze(); const before = structuredClone([...f.db.store]);
+  const selected = await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 99_000});
+  assert.equal(selected.contract, null); assert.deepEqual(selected.existingRanking, published.ranking);
+  assert.deepEqual([...f.db.store], before); assert.equal(f.db.store.get(E).qualificationCalculation, undefined);
+});
+test("selection during an old freeze scan prevents its delayed legacy publication", async () => {
+  const f = fixture(["alice", "bob", "carol"]); let chosen;
+  f.control.onPage = async page => { if (page === 2) chosen = await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 20_000}); };
+  await assert.rejects(f.freeze(), {code: "UNAVAILABLE"});
+  assert.ok(chosen); assert.equal(f.db.store.has(`${RANKINGS}/${EVENT}`), false);
+  assert.equal(f.db.store.get(E).qualificationFreezeFence.freezeId, chosen.contract.freezeId);
+  assert.deepEqual(f.db.store.get(E).escrow, {reservedBoxes: 0, remainingBoxes: 0, paidBoxes: 0, returnedBoxes: 0});
+});
+test("version selection commit failure rolls back the fence and contract together", async () => {
+  const f = fixture(); await fenceQualification({db: f.db, eventId: EVENT, now: T + 20_000});
+  const before = structuredClone([...f.db.store]); f.db.failNextCommit();
+  await assert.rejects(selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 20_000}));
+  assert.deepEqual([...f.db.store], before);
+  await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 20_000});
+  assert.ok(f.db.store.get(E).qualificationCalculation);
+});
+test("versioned published result replays unchanged and corrupted version provenance is rejected", async () => {
+  const f = fixture(); const selected = await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 20_000});
+  const c = selected.contract; const stored = {schemaVersion: 2, complete: true, eventId: EVENT, endsAtMs: c.endsAtMs,
+    snapshotId: c.freezeId, freezeFenceId: c.freezeId, formsFingerprint: c.formsFingerprint,
+    algorithmVersion: VERSIONS.algorithmFamily, calculationVersions: {...VERSIONS}, calculationContractDigest: c.contractDigest,
+    inputFingerprintVersion: "player-stream-chain-v1", verifiedRunsFingerprint: digest("complete-verified-player-stream"),
+    verifiedRunCount: 2, totalRanked: 2, ranking: [{uid: "alice", place: 1}, {uid: "bob", place: 2}]};
+  f.db.store.set(`${RANKINGS}/${EVENT}`, stored); const before = structuredClone([...f.db.store]);
+  assert.deepEqual((await f.freeze()).ranking, stored);
+  assert.deepEqual((await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 90_000})).existingRanking, stored);
+  assert.deepEqual([...f.db.store], before);
+  f.db.store.get(`${RANKINGS}/${EVENT}`).calculationVersions.roundingVersion = "wrong";
+  await assert.rejects(f.freeze(), {code: "UNAVAILABLE"});
 });
 
 (async () => { for (const {name, fn} of tests) { await fn(); console.log(`ok - ${name}`); } console.log(`tournament-qualification-freeze: ${tests.length} behavioral tests passed`); })()

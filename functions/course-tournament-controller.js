@@ -6,8 +6,9 @@ const {TOURNAMENT_PATHS: P, normalizeTournamentRequest, applyTournamentOperation
 const {applyTournamentSessionOperation, readTournamentSessionOperation, planTournamentSessionOperation,
   writeTournamentSessionOperation, VERIFIED_RUNS} = require("./tournament-session");
 const {verifiedTournamentRun, loadSettledMatchResults} = require("./tournament-session-results");
-const {loadQualificationRanking} = require("./tournament-qualification-freeze");
-const {advanceQualificationScan, calculateAndPublishQualificationRanking} = require("./tournament-qualification-scan");
+const {loadQualificationRanking, selectQualificationCalculation} = require("./tournament-qualification-freeze");
+const {advanceQualificationScan} = require("./tournament-qualification-scan");
+const {advanceQualificationCalculation} = require("./tournament-qualification-calculation");
 const {tournamentDigest: digest} = require("./tournament-bank");
 const {progressBracket, evaluateMeeting, READY_WINDOW_MS} = require("./tournament-policy");
 const {PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
@@ -15,12 +16,11 @@ const {PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
 const CLIENT_OPERATIONS = Object.freeze(["CREATE", "START_QUALIFICATION", "PROPOSE", "CONFIRM", "READY"]);
 const WORKER_PREFIX = "ctw_";
 const MAX_MATCHES = 15; // Existing top16 policy, not a new entrant cap.
-// Measured Node22 / 192MiB / 0.5 CPU: 501 distinct players, one shared form, LS 27.4s,
-// peak RSS 97.1MiB. This limits THIS worker's calculation, never admission or scan membership.
-// Larger events remain pending. Manual operational recovery / alternate calculator is NOT implemented.
-const QUALIFICATION_EXECUTION = Object.freeze({maxVerifiedRuns: 501, workMs: 120_000, scanMs: 30_000, minSolveRemainingMs: 60_000});
+// Budgets bound invocations, not cohort membership. Every unfinished calculation resumes its
+// own persisted phase; there is no fallback to dense LS or a size-based permanent wait.
+const QUALIFICATION_EXECUTION = Object.freeze({workMs: 120_000, scanMs: 30_000});
 const DEFAULT_WORKER_BOUNDS = Object.freeze({qualificationPageSize: 50, qualificationMaxPages: 1,
-  qualificationMaxVerifiedRuns: QUALIFICATION_EXECUTION.maxVerifiedRuns, repairRetryMs: 60_000});
+  qualificationCalculationMaxPages: 5, repairRetryMs: 60_000});
 const TERMINAL_EVENT = new Set(["FINISHED", "CANCELLED"]);
 const TERMINAL_MATCH = new Set(["PLAYED", "FORFEIT", "DOUBLE_OUT"]);
 const data = (snapshot) => snapshot.exists ? snapshot.data() || {} : null;
@@ -120,7 +120,7 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
   const bounds = {...DEFAULT_WORKER_BOUNDS, ...overrides};
   Object.values(bounds).forEach((n) => exact(n, 1));
   if (bounds.qualificationPageSize > 50 || bounds.qualificationMaxPages > 10 ||
-      bounds.qualificationMaxVerifiedRuns > QUALIFICATION_EXECUTION.maxVerifiedRuns) fail("INVALID_ARGUMENT");
+      bounds.qualificationCalculationMaxPages > 10) fail("INVALID_ARGUMENT");
   const sourceBanks = createTournamentSourceBank({db, loadLessonContext, isCurator, nowMs, ...(sourceLimits ? {limits: sourceLimits} : {})});
   const dependencies = {loadBank: sourceBanks.loadBank, loadQualificationRanking, loadSettledMatchResults};
   const now = () => exact(nowMs());
@@ -272,16 +272,19 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
         ...(scanned ? pick(scanned, ["admittedCount", "verifiedCount", "pendingCount"]) : {}),
         nextDueAtMs: exact(now() + bounds.repairRetryMs)});
       if (now() >= deadlineAtMs) return pending("SCANNING", "INVOCATION_TIME");
-      const scanned = await advanceQualificationScan({db, eventId, now: at, pageSize: bounds.qualificationPageSize,
+      // Selection rotates the publication fence atomically, so an already-running legacy
+      // publisher cannot write over this version. An already-published ranking always wins.
+      const selected = await selectQualificationCalculation({db, eventId, now: at});
+      if (now() >= deadlineAtMs) return pending("SCANNING", "INVOCATION_TIME");
+      const scanned = selected.existingRanking ? {complete: true} : await advanceQualificationScan({db, eventId, now: at, pageSize: bounds.qualificationPageSize,
         maxPages: bounds.qualificationMaxPages, nowMs: now, deadlineAtMs: Math.min(deadlineAtMs, at + QUALIFICATION_EXECUTION.scanMs)});
       if (!scanned.complete && !scanned.scanComplete) return pending(scanned.status === "PENDING_REPAIR" ? "REPAIR" : "SCANNING", "SCAN_PENDING", scanned);
       if (!scanned.complete) {
-        if (scanned.admittedCount > bounds.qualificationMaxVerifiedRuns) return pending("CALCULATION_PENDING", "RESOURCE_ENVELOPE", scanned);
-        if (deadlineAtMs - now() < QUALIFICATION_EXECUTION.minSolveRemainingMs) return pending("CALCULATION_PENDING", "INVOCATION_TIME", scanned);
-        const published = await calculateAndPublishQualificationRanking({db, eventId, now: at, nowMs: now, deadlineAtMs,
-          maxVerifiedRuns: bounds.qualificationMaxVerifiedRuns, minRemainingBeforeSolveMs: QUALIFICATION_EXECUTION.minSolveRemainingMs});
+        const published = await advanceQualificationCalculation({db, eventId, now: at, nowMs: now, deadlineAtMs,
+          pageSize: bounds.qualificationPageSize, maxPages: bounds.qualificationCalculationMaxPages});
         if (!published.complete) return pending("CALCULATION_PENDING",
-          published.status === "CALCULATION_RESOURCE_PENDING" ? "RESOURCE_ENVELOPE" : "INVOCATION_TIME", scanned);
+          published.status === "CALCULATION_PROGRESS" ? "CHECKPOINT_SAVED" :
+            published.status === "CALCULATION_TIME_PENDING" ? "INVOCATION_TIME" : "WORKER_BUSY", scanned);
       }
       // A complete scan is NOT sufficient: only the immutable full-cohort ranking authorizes
       // CLOSE_QUALIFICATION. Check again after awaited reads/solve; Cloud Run timeout is not a kill.

@@ -368,24 +368,31 @@ test("real controller continues 501 admitted sessions across process restarts an
   const frozen = clone(ranking); await f.restart().reconcileEvent(EVENT);
   assert.deepEqual(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`), frozen); assert.equal(workerReceipts(f).length, 1);
 });
-test("502 verified admissions are all retained but calculation remains pending without exclusion or bracket", async () => {
+test("502 verified admissions complete through persisted calculation without exclusion or a size wait", async () => {
   const players = Array.from({length: 251}, (_, i) => `over${String(i).padStart(3, "0")}`);
   const f = fixture(players); await admitRounds(f, players, 2); let result;
-  for (let i = 0; i < 60; i++) { result = await f.restart().reconcileEvent(EVENT); assertWorkerSafe(result); if (result.qualificationPhase === "CALCULATION_PENDING") break; }
-  assert.equal(result.reason, "RESOURCE_ENVELOPE"); assert.equal(result.status, "WAITING"); assert.equal(result.done, false);
-  assert.equal(result.admittedCount, 502); assert.equal(result.verifiedCount, 502); assert.equal(result.pendingCount, 0);
-  assert.equal(scanHead(f).status, "SCAN_COMPLETE"); assert.equal(f.db.store.get(E).status, "QUALIFICATION");
-  assert.equal(f.db.store.has(`${QUALIFICATION_RANKINGS}/${EVENT}`), false); assert.equal(f.db.store.get(E).bracket, undefined);
-  assert.equal(workerReceipts(f).length, 0); assert.equal(balance(f, OWNER), 88);
-  const before = clone([...f.db.store]); assert.deepEqual(await f.restart().reconcileEvent(EVENT), result); assert.deepEqual([...f.db.store], before);
+  let saved = false;
+  for (let i = 0; i < 60 && f.db.store.get(E).status === "QUALIFICATION"; i++) {
+    result = await f.restart().reconcileEvent(EVENT); assertWorkerSafe(result);
+    saved ||= result.reason === "CHECKPOINT_SAVED";
+    assert.notEqual(result.reason, "RESOURCE_ENVELOPE");
+  }
+  assert.equal(saved, true); assert.equal(scanHead(f).admittedCount, 502); assert.equal(scanHead(f).verifiedCount, 502);
+  assert.equal(scanHead(f).status, "PUBLISHED"); assert.equal(f.db.store.get(E).status, "BRACKET");
+  const rank = f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`);
+  assert.equal(rank.schemaVersion, 2); assert.equal(rank.verifiedRunCount, 502); assert.equal(rank.totalRanked, 251);
+  assert.equal(rank.ranking.length, 16); assert.equal(workerReceipts(f).length, 1); assert.equal(balance(f, OWNER), 88);
+  const before = clone(rank); await f.restart().reconcileEvent(EVENT);
+  assert.deepEqual(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`), before);
 });
-test("scanComplete under an insufficient calculation window is not a published ranking or a completion receipt", async () => {
-  const f = fixture(); await admitRounds(f, ["alice", "bob"], 1);
-  const result = await f.controller.reconcileEvent(EVENT, {deadlineAtMs: f.state.now + QUALIFICATION_EXECUTION.minSolveRemainingMs - 1});
-  assert.equal(result.qualificationPhase, "CALCULATION_PENDING"); assert.equal(result.reason, "INVOCATION_TIME"); assertWorkerSafe(result);
+test("scanComplete plus one calculation page is not a published ranking or completion receipt", async () => {
+  const f = fixture(["alice", "bob"], {workerBounds: {qualificationCalculationMaxPages: 1}});
+  await admitRounds(f, ["alice", "bob"], 1);
+  const result = await f.controller.reconcileEvent(EVENT);
+  assert.equal(result.qualificationPhase, "CALCULATION_PENDING"); assert.equal(result.reason, "CHECKPOINT_SAVED"); assertWorkerSafe(result);
   assert.equal(scanHead(f).status, "SCAN_COMPLETE"); assert.equal(f.db.store.has(`${QUALIFICATION_RANKINGS}/${EVENT}`), false);
   assert.equal(workerReceipts(f).length, 0); assert.equal(balance(f, OWNER), 88);
-  await f.restart().reconcileEvent(EVENT, {deadlineAtMs: f.state.now + QUALIFICATION_EXECUTION.minSolveRemainingMs});
+  for (let i = 0; i < 6 && f.db.store.get(E).status === "QUALIFICATION"; i++) await f.restart().reconcileEvent(EVENT);
   assert.equal(f.db.store.get(E).status, "BRACKET");
 });
 test("deadline consumed by initial awaited event read starts no scan or calculation", async () => {
@@ -408,11 +415,12 @@ test("published ranking survives failed close transaction and restart reuses it 
   await f.restart().reconcileEvent(EVENT); assert.equal(f.db.store.get(E).status, "BRACKET");
   assert.deepEqual(f.db.store.get(`${QUALIFICATION_RANKINGS}/${EVENT}`), rank); assert.equal(workerReceipts(f).length, 1);
 });
-test("worker configuration can lower but never inflate the measured calculation envelope", async () => {
-  assert.throws(() => fixture([], {workerBounds: {qualificationMaxVerifiedRuns: 502}}), {code: "INVALID_ARGUMENT"});
+test("worker bounds limit pages rather than product cohort size", async () => {
+  assert.throws(() => fixture([], {workerBounds: {qualificationMaxVerifiedRuns: 501}}), {code: "INVALID_ARGUMENT"});
   assert.throws(() => fixture([], {workerBounds: {qualificationPageSize: 51}}), {code: "INVALID_ARGUMENT"});
-  const f = fixture(["alice", "bob"], {workerBounds: {qualificationMaxVerifiedRuns: 1}});
-  const result = await f.qualify(); assert.equal(result.reason, "RESOURCE_ENVELOPE"); assert.equal(result.verifiedCount, 2);
+  assert.throws(() => fixture([], {workerBounds: {qualificationCalculationMaxPages: 11}}), {code: "INVALID_ARGUMENT"});
+  const f = fixture(["alice", "bob"], {workerBounds: {qualificationCalculationMaxPages: 1}});
+  const result = await f.qualify(); assert.equal(result.reason, "CHECKPOINT_SAVED"); assert.equal(result.verifiedCount, 2);
 });
 test("repair cursor reaches other forms while one is missing and never ranks the incomplete subset", async () => {
   const players = ["alice", "bob", "carol"];
