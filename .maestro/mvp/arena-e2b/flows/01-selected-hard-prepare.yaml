@@ -8,13 +8,13 @@ name: E2B selected HARD preparation
     element:
       text: ${E2B_SELECTOR_ARENA_TITLE}
     direction: UP
-    timeout: 20000
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_ARENA_TITLE}
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
-    timeout: 20000
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_FIXTURE_AUTHOR}
 - scrollUntilVisible:
     element:
@@ -22,7 +22,7 @@ name: E2B selected HARD preparation
       below:
         text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
-    timeout: 20000
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_FROZEN_PRICE}
 - scrollUntilVisible:
     element:
@@ -30,7 +30,7 @@ name: E2B selected HARD preparation
       below:
         text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
-    timeout: 20000
+    timeout: 60000
 - tapOn:
     text: ${E2B_SELECTOR_SELECTED_PREPARE}
     below:

@@ -32,13 +32,15 @@ name: E2B retained-account identity preflight
     element:
       text: ${E2B_SELECTOR_TARGET_LESSON}
     direction: DOWN
-    timeout: 20000
+    # A legitimate page can contain the complete 14-row catalog before this candidate.
+    # Keep this bounded, but do not confuse catalog depth with a missing lesson.
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_TARGET_LESSON}
 - scrollUntilVisible:
     element:
       text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
-    timeout: 20000
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_FIXTURE_AUTHOR}
 - scrollUntilVisible:
     element:
@@ -46,6 +48,6 @@ name: E2B retained-account identity preflight
       below:
         text: ${E2B_SELECTOR_FIXTURE_AUTHOR}
     direction: DOWN
-    timeout: 20000
+    timeout: 60000
 - assertVisible: ${E2B_SELECTOR_FROZEN_PRICE}
 - takeScreenshot: "00-e2b-identity-preflight"
