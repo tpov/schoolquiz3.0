@@ -1,6 +1,8 @@
 appId: com.tpov.schoolquiz.mvp
 name: E2B finish and persist the retained settlement request
 ---
+# The result receipt exposes its own pending status. It need not repeat the local outbox wording;
+# the runner's following server reader proves that the exact SETTLE is still unconfirmed.
 - extendedWaitUntil:
     visible:
       text: ${E2B_SELECTOR_SYNCHRONIZE}

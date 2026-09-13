@@ -41,6 +41,9 @@ executed Maestro flow by SHA-256.
    not the selected option text: HARD content may intentionally expose neither
    the option nor a verdict. The read-only Room progress reader, rather than
    that UI control, proves that the exact first answer was retained.
+   `E2B_SELECTOR_SETTLE_PENDING` similarly comes from the result receipt's
+   pending status, not from a generic local-outbox notification; the following
+   server reader proves that its exact SETTLE has not yet been delivered.
 3. Before `prepare`, use `arena-e2e-ticket-discovery.js baseline` to record the
    complete owned-ticket set.  After preparation, use its `discover` command;
    it refuses anything except one new ticket whose immutable fields match the
