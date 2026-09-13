@@ -18,6 +18,15 @@ const PRIVATE = [
   "course_tournament_bank_preparations", "course_tournament_source_banks", "course_tournament_worker_state",
 ];
 const runId = `ct_rules_${randomUUID().replaceAll("-", "")}`;
+const probes = [
+  ...PRIVATE.map(collection => ({label: collection, path: `${collection}/${runId}`})),
+  {label: "qualification-calculation-checkpoint",
+    path: `course_tournament_events/${runId}/qualification_calculations/${runId}`},
+  {label: "qualification-calculation-player",
+    path: `course_tournament_events/${runId}/qualification_calculations/${runId}/players/${runId}`},
+  {label: "qualification-calculation-session-deduplication",
+    path: `course_tournament_events/${runId}/qualification_calculations/${runId}/sessions/${runId}`},
+];
 async function main() {
   const hub = await fetch(`http://${HOST}:4400/emulators`, {signal: AbortSignal.timeout(15_000)});
   assert.equal(hub.status, 200);
@@ -31,13 +40,13 @@ async function main() {
   const actor = await signup.json();
   assert.equal(typeof actor.idToken, "string"); assert.equal(typeof actor.localId, "string");
   const checks = [];
-  for (const collection of PRIVATE) {
-    const response = await fetch(`http://${HOST}:8080/v1/projects/${PROJECT}/databases/(default)/documents/${collection}/${runId}`, {
+  for (const {label, path} of probes) {
+    const response = await fetch(`http://${HOST}:8080/v1/projects/${PROJECT}/databases/(default)/documents/${path}`, {
       headers: {authorization: `Bearer ${actor.idToken}`}, signal: AbortSignal.timeout(15_000),
     });
     await response.arrayBuffer();
-    assert.equal(response.status, 403, `${collection}: private document probe must be denied`);
-    checks.push({collection, status: response.status});
+    assert.equal(response.status, 403, `${label}: private document probe must be denied`);
+    checks.push({pathKind: label, status: response.status});
   }
   console.log(JSON.stringify({status: "PASS", projectId: PROJECT, runId, syntheticUid: actor.localId,
     firestoreWrites: 0, probeDocumentsExist: false, checks,
