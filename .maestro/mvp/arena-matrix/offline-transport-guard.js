@@ -5,12 +5,12 @@
 // insufficient: this guard temporarily removes only the three known emulator mappings and always
 // restores the verified preflight topology before it returns.
 
-const {createHash} = require("node:crypto");
+const {createHash, randomBytes} = require("node:crypto");
 const {spawn, spawnSync} = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const VERSION = "arena-offline-transport-guard-v1";
+const VERSION = "arena-offline-transport-guard-v2";
 const REVERSE_PORTS = Object.freeze([9099, 8080, 5001]);
 const MAX_OUTPUT_BYTES = 64 * 1024;
 const CONTROL_CHANNEL_ACK = "adb-independent";
@@ -20,6 +20,13 @@ const DEFAULT_LOCK_ROOT = "/tools/arena-e2b-device-locks";
 const LOCK_READY_TIMEOUT_MS = 5_000;
 const CHILD_TERM_GRACE_MS = 2_000;
 const MAX_CHILD_LOG_BYTES = 64 * 1024;
+const MAX_SEQUENCE_PLAN_BYTES = 64 * 1024;
+// Every ADB mutation is bounded.  `spawnSync` is intentionally used so a successful mutation is
+// observed before the next one starts, but an unresponsive bridge must never strand the process
+// past this deadline and skip its restoration/quarantine decision.
+const DEFAULT_ADB_TIMEOUT_MS = 10_000;
+const MIN_ADB_TIMEOUT_MS = 100;
+const MAX_ADB_TIMEOUT_MS = 60_000;
 
 class OfflineTransportGuardError extends Error {
   constructor(code, message = code) {
@@ -34,6 +41,20 @@ function fail(code, message) {
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function requireOwnScriptHash(expected) {
+  if (!expected) return;
+  const script = process.argv[1];
+  try {
+    const stat = fs.lstatSync(script);
+    if (!stat.isFile() || stat.isSymbolicLink() || sha256(fs.readFileSync(script)) !== expected) {
+      fail("SELF_HASH_MISMATCH", "guard source does not match the sealed input lock");
+    }
+  } catch (error) {
+    if (error instanceof OfflineTransportGuardError) throw error;
+    fail("SELF_HASH_MISMATCH", "guard source cannot be verified");
+  }
 }
 
 function safeText(value, name, {max = 4096} = {}) {
@@ -64,6 +85,22 @@ function parseTimeout(value) {
   return timeout;
 }
 
+function parsePlanTimeout(value, name) {
+  if (!Number.isSafeInteger(value) || value < 1 || value > MAX_CHILD_TIMEOUT_MS) {
+    fail("SEQUENCE_PLAN_INVALID", name + " must be a supported positive integer");
+  }
+  return value;
+}
+
+function parseAdbTimeout(value) {
+  if (!/^[1-9][0-9]*$/.test(value)) fail("INVALID_ARGUMENT", "adb timeout must be a positive integer");
+  const timeout = Number(value);
+  if (!Number.isSafeInteger(timeout) || timeout < MIN_ADB_TIMEOUT_MS || timeout > MAX_ADB_TIMEOUT_MS) {
+    fail("INVALID_ARGUMENT", "adb timeout is outside the supported range");
+  }
+  return timeout;
+}
+
 function safeAbsolutePath(value, name) {
   safeText(value, name);
   if (!path.isAbsolute(value)) fail("INVALID_ARGUMENT", name + " must be absolute");
@@ -75,20 +112,18 @@ function usage() {
     "node .maestro/mvp/arena-matrix/offline-transport-guard.js",
     "--serial <adb-serial> --adb <adb-binary> --app-id <application-id>",
     "--control-channel adb-independent --output <new-private-result.json>",
-    "[--timeout-ms <1..3600000>] [--lock-root <private-lock-directory>] [--flock <binary>]",
-    "-- <command> [argument ...]",
+    "[--timeout-ms <1..3600000>] [--adb-timeout-ms <100..60000>] [--self-sha256 <sha256>] [--lock-root <private-lock-directory>] [--flock <binary>] -- <command> [argument ...]",
+    "or: --sequence-plan <new-private-sequence.json> (without -- or --timeout-ms)",
   ].join(" ");
 }
 
 function parseArguments(argv) {
   if (argv.length === 1 && argv[0] === "--help") return {help: true};
   const separator = argv.indexOf("--");
-  if (separator < 0 || separator === argv.length - 1 || argv.lastIndexOf("--") !== separator) {
-    fail("USAGE", "A nonempty child command after -- is required");
-  }
-  const options = argv.slice(0, separator);
+  if (separator >= 0 && argv.lastIndexOf("--") !== separator) fail("USAGE", "Only one command separator is allowed");
+  const options = separator >= 0 ? argv.slice(0, separator) : argv;
   if (options.length % 2 !== 0) fail("USAGE", "Expected named option/value pairs before --");
-  const allowed = new Set(["--serial", "--adb", "--app-id", "--control-channel", "--output", "--timeout-ms", "--lock-root", "--flock"]);
+  const allowed = new Set(["--serial", "--adb", "--app-id", "--control-channel", "--output", "--timeout-ms", "--adb-timeout-ms", "--self-sha256", "--lock-root", "--flock", "--sequence-plan"]);
   const values = {};
   for (let index = 0; index < options.length; index += 2) {
     const flag = options[index];
@@ -115,7 +150,20 @@ function parseArguments(argv) {
   const timeoutMs = Object.hasOwn(values, "--timeout-ms")
     ? parseTimeout(values["--timeout-ms"])
     : DEFAULT_CHILD_TIMEOUT_MS;
-  const command = argv.slice(separator + 1);
+  const adbTimeoutMs = Object.hasOwn(values, "--adb-timeout-ms")
+    ? parseAdbTimeout(values["--adb-timeout-ms"])
+    : DEFAULT_ADB_TIMEOUT_MS;
+  const selfSha256 = Object.hasOwn(values, "--self-sha256") ? values["--self-sha256"] : null;
+  if (selfSha256 !== null && !/^[a-f0-9]{64}$/.test(selfSha256)) fail("INVALID_ARGUMENT", "self SHA-256 must be lowercase hexadecimal");
+  const hasPlan = Object.hasOwn(values, "--sequence-plan");
+  if (hasPlan && (separator >= 0 || Object.hasOwn(values, "--timeout-ms"))) {
+    fail("USAGE", "sequence-plan owns both commands and timeouts");
+  }
+  if (!hasPlan && (separator < 0 || separator === argv.length - 1)) {
+    fail("USAGE", "A nonempty child command after -- is required");
+  }
+  const sequencePlan = hasPlan ? readSequencePlan(values["--sequence-plan"]) : null;
+  const command = hasPlan ? sequencePlan.whileCut.argv : argv.slice(separator + 1);
   for (const value of command) safeText(value, "child command argument", {max: 16_384});
   return {
     serial,
@@ -123,10 +171,16 @@ function parseArguments(argv) {
     appId,
     output,
     childLog: output + ".child.log",
+    preCutLog: hasPlan ? output + ".pre-cut.log" : null,
     lockRoot,
     flock,
-    timeoutMs,
+    timeoutMs: hasPlan ? sequencePlan.whileCut.timeoutMs : timeoutMs,
+    adbTimeoutMs,
+    selfSha256,
     command,
+    preCutCommand: hasPlan ? sequencePlan.preCut.argv : null,
+    preCutTimeoutMs: hasPlan ? sequencePlan.preCut.timeoutMs : null,
+    sequencePlanSha256: hasPlan ? sequencePlan.sha256 : null,
   };
 }
 
@@ -186,6 +240,79 @@ function requirePrivateOutputPath(outputPath) {
   return canonicalOutput;
 }
 
+function requirePrivateRegularFile(filePath, name) {
+  const resolved = safeAbsolutePath(filePath, name);
+  const parent = path.dirname(resolved);
+  let parentStat;
+  let descriptor;
+  try {
+    parentStat = fs.lstatSync(parent);
+  } catch {
+    fail("SEQUENCE_PLAN_UNAVAILABLE", name + " parent cannot be inspected");
+  }
+  if (!parentStat.isDirectory() || parentStat.isSymbolicLink() || (parentStat.mode & 0o077) !== 0) {
+    fail("SEQUENCE_PLAN_UNSAFE", name + " parent must be a private non-symlink directory");
+  }
+  const canonicalParent = canonicalExistingDirectory(parent);
+  if ((fs.lstatSync(canonicalParent).mode & 0o077) !== 0) {
+    fail("SEQUENCE_PLAN_UNSAFE", name + " canonical parent must be private");
+  }
+  try {
+    descriptor = fs.openSync(resolved, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+    const stat = fs.fstatSync(descriptor);
+    if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077) !== 0 || stat.size < 1 || stat.size > MAX_SEQUENCE_PLAN_BYTES) {
+      fail("SEQUENCE_PLAN_UNSAFE", name + " must be a bounded private regular file");
+    }
+    const canonical = fs.realpathSync(resolved);
+    if (canonical !== path.join(canonicalParent, path.basename(resolved))) {
+      fail("SEQUENCE_PLAN_UNSAFE", name + " must not resolve through a link");
+    }
+    return fs.readFileSync(descriptor, "utf8");
+  } catch (error) {
+    if (error instanceof OfflineTransportGuardError) throw error;
+    fail("SEQUENCE_PLAN_UNAVAILABLE", name + " cannot be read safely");
+  } finally {
+    if (descriptor !== undefined) {
+      try { fs.closeSync(descriptor); } catch (_) { /* best effort */ }
+    }
+  }
+}
+
+function exactKeys(value, keys, name) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) fail("SEQUENCE_PLAN_INVALID", name + " must be an object");
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    fail("SEQUENCE_PLAN_INVALID", name + " has an unexpected schema");
+  }
+}
+
+function parsePlanChild(value, name) {
+  exactKeys(value, ["argv", "timeoutMs"], name);
+  if (!Array.isArray(value.argv) || value.argv.length === 0 || value.argv.length > 64) {
+    fail("SEQUENCE_PLAN_INVALID", name + ".argv must be a bounded nonempty array");
+  }
+  for (const argument of value.argv) safeText(argument, name + ".argv item", {max: 16_384});
+  return {argv: value.argv, timeoutMs: parsePlanTimeout(value.timeoutMs, name + ".timeoutMs")};
+}
+
+function readSequencePlan(filePath) {
+  const contents = requirePrivateRegularFile(filePath, "sequence plan");
+  let value;
+  try {
+    value = JSON.parse(contents);
+  } catch {
+    fail("SEQUENCE_PLAN_INVALID", "sequence plan is not JSON");
+  }
+  exactKeys(value, ["artifactVersion", "preCut", "whileCut"], "sequence plan");
+  if (value.artifactVersion !== 1) fail("SEQUENCE_PLAN_INVALID", "sequence plan artifact version is unsupported");
+  return {
+    preCut: parsePlanChild(value.preCut, "sequence plan preCut"),
+    whileCut: parsePlanChild(value.whileCut, "sequence plan whileCut"),
+    sha256: sha256(contents),
+  };
+}
+
 function writePrivateJson(outputPath, value) {
   const temporary = outputPath + ".tmp." + process.pid;
   let descriptor;
@@ -209,10 +336,30 @@ function writePrivateJson(outputPath, value) {
   }
 }
 
-function runAdb(adb, serial, args) {
+function issueSequenceCapability(output, config, phase) {
+  if (!config.sequencePlanSha256) return null;
+  const file = requirePrivateOutputPath(output + "." + phase + ".capability.json");
+  const nonce = randomBytes(32).toString("hex");
+  const value = {
+    artifactVersion: 1,
+    guardVersion: VERSION,
+    guardPid: process.pid,
+    phase,
+    nonce,
+    serialSha256: sha256(config.serial),
+    appId: config.appId,
+    sequencePlanSha256: config.sequencePlanSha256,
+  };
+  writePrivateJson(file, value);
+  return {file, nonce, sha256: sha256(JSON.stringify(value))};
+}
+
+function runAdb(adb, serial, args, timeoutMs = DEFAULT_ADB_TIMEOUT_MS) {
   const result = spawnSync(adb, ["-s", serial, ...args], {
     encoding: "utf8",
     maxBuffer: MAX_OUTPUT_BYTES,
+    timeout: timeoutMs,
+    killSignal: "SIGKILL",
   });
   if (result.error || result.signal || result.status !== 0) {
     fail("ADB_COMMAND_FAILED", "an adb transport command failed");
@@ -220,8 +367,8 @@ function runAdb(adb, serial, args) {
   return String(result.stdout || "").replace(/\r/g, "").trim();
 }
 
-function requireDeviceReady(adb, serial) {
-  if (runAdb(adb, serial, ["get-state"]) !== "device") {
+function requireDeviceReady(adb, serial, timeoutMs) {
+  if (runAdb(adb, serial, ["get-state"], timeoutMs) !== "device") {
     fail("DEVICE_NOT_READY", "adb target is not ready");
   }
 }
@@ -247,8 +394,8 @@ function parseReverseMapping(line) {
   return local + ":" + remote;
 }
 
-function readMappings(adb, serial) {
-  const output = runAdb(adb, serial, ["reverse", "--list"]);
+function readMappings(adb, serial, timeoutMs) {
+  const output = runAdb(adb, serial, ["reverse", "--list"], timeoutMs);
   if (output === "") return [];
   const mappings = output.split("\n").filter(Boolean).map(parseReverseMapping);
   if (new Set(mappings).size !== mappings.length) fail("REVERSE_MAPPING_INVALID", "adb reverse list contains duplicates");
@@ -262,61 +409,71 @@ function requireExactMappings(mappings) {
   }
 }
 
-function readToggle(adb, serial, key) {
-  const value = runAdb(adb, serial, ["shell", "settings", "get", "global", key]);
+function readToggle(adb, serial, key, timeoutMs) {
+  const value = runAdb(adb, serial, ["shell", "settings", "get", "global", key], timeoutMs);
   if (value !== "0" && value !== "1") fail("TOGGLE_STATE_UNKNOWN", "device transport toggle is not a binary state");
   return value;
 }
 
-function preflight(adb, serial) {
-  requireDeviceReady(adb, serial);
-  const wifi = readToggle(adb, serial, "wifi_on");
-  const data = readToggle(adb, serial, "mobile_data");
-  const mappings = readMappings(adb, serial);
+function preflight(adb, serial, timeoutMs) {
+  requireDeviceReady(adb, serial, timeoutMs);
+  const wifi = readToggle(adb, serial, "wifi_on", timeoutMs);
+  const data = readToggle(adb, serial, "mobile_data", timeoutMs);
+  const mappings = readMappings(adb, serial, timeoutMs);
   if (wifi !== "1" || data !== "1") fail("DEVICE_NOT_ONLINE", "device must begin with Wi-Fi and data enabled");
   requireExactMappings(mappings);
   return {wifiEnabled: true, dataEnabled: true, reverseMappingCount: mappings.length};
 }
 
-function stopApplication(adb, serial, appId) {
-  runAdb(adb, serial, ["shell", "am", "force-stop", appId]);
-  requireDeviceReady(adb, serial);
+function stopApplication(adb, serial, appId, timeoutMs) {
+  runAdb(adb, serial, ["shell", "am", "force-stop", appId], timeoutMs);
+  requireDeviceReady(adb, serial, timeoutMs);
 }
 
-function cutTransport(adb, serial) {
+function cutTransport(adb, serial, timeoutMs, requireLock = null) {
+  const checkLock = () => {
+    if (typeof requireLock === "function") requireLock();
+  };
+  checkLock();
   for (const port of REVERSE_PORTS) {
-    runAdb(adb, serial, ["reverse", "--remove", "tcp:" + port]);
-    requireDeviceReady(adb, serial);
+    runAdb(adb, serial, ["reverse", "--remove", "tcp:" + port], timeoutMs);
+    checkLock();
+    requireDeviceReady(adb, serial, timeoutMs);
+    checkLock();
   }
-  runAdb(adb, serial, ["shell", "svc", "wifi", "disable"]);
-  requireDeviceReady(adb, serial);
-  runAdb(adb, serial, ["shell", "svc", "data", "disable"]);
-  requireDeviceReady(adb, serial);
-  return requireCutTransport(adb, serial);
+  runAdb(adb, serial, ["shell", "svc", "wifi", "disable"], timeoutMs);
+  checkLock();
+  requireDeviceReady(adb, serial, timeoutMs);
+  checkLock();
+  runAdb(adb, serial, ["shell", "svc", "data", "disable"], timeoutMs);
+  checkLock();
+  requireDeviceReady(adb, serial, timeoutMs);
+  checkLock();
+  return requireCutTransport(adb, serial, timeoutMs);
 }
 
-function requireCutTransport(adb, serial) {
-  requireDeviceReady(adb, serial);
-  const wifi = readToggle(adb, serial, "wifi_on");
-  const data = readToggle(adb, serial, "mobile_data");
-  const mappings = readMappings(adb, serial);
+function requireCutTransport(adb, serial, timeoutMs) {
+  requireDeviceReady(adb, serial, timeoutMs);
+  const wifi = readToggle(adb, serial, "wifi_on", timeoutMs);
+  const data = readToggle(adb, serial, "mobile_data", timeoutMs);
+  const mappings = readMappings(adb, serial, timeoutMs);
   if (wifi !== "0" || data !== "0" || mappings.length !== 0) {
     fail("TRANSPORT_CUT_NOT_CONFIRMED", "the device still has a backend transport path");
   }
   return {wifiDisabled: true, dataDisabled: true, reverseMappingCount: 0};
 }
 
-function restoreTransport(adb, serial, appId) {
+function restoreTransport(adb, serial, appId, timeoutMs) {
   const failures = [];
   try {
     // A cold process cannot reconnect while the original backend route is being restored.
-    stopApplication(adb, serial, appId);
+    stopApplication(adb, serial, appId, timeoutMs);
   } catch (_) {
     failures.push("force-stop");
   }
   let currentMappings = null;
   try {
-    currentMappings = new Set(readMappings(adb, serial));
+    currentMappings = new Set(readMappings(adb, serial, timeoutMs));
   } catch (_) {
     failures.push("reverse-list");
   }
@@ -325,8 +482,8 @@ function restoreTransport(adb, serial, appId) {
       const mapping = "tcp:" + port + ":tcp:" + port;
       if (currentMappings.has(mapping)) continue;
       try {
-        runAdb(adb, serial, ["reverse", "tcp:" + port, "tcp:" + port]);
-        requireDeviceReady(adb, serial);
+        runAdb(adb, serial, ["reverse", "tcp:" + port, "tcp:" + port], timeoutMs);
+        requireDeviceReady(adb, serial, timeoutMs);
       } catch (_) {
         failures.push("reverse");
       }
@@ -334,16 +491,16 @@ function restoreTransport(adb, serial, appId) {
   }
   for (const args of [["shell", "svc", "wifi", "enable"], ["shell", "svc", "data", "enable"]]) {
     try {
-      runAdb(adb, serial, args);
-      requireDeviceReady(adb, serial);
+      runAdb(adb, serial, args, timeoutMs);
+      requireDeviceReady(adb, serial, timeoutMs);
     } catch (_) {
       failures.push("toggle");
     }
   }
   if (failures.length !== 0) fail("TRANSPORT_RESTORE_FAILED", "could not restore every transport control");
-  const wifi = readToggle(adb, serial, "wifi_on");
-  const data = readToggle(adb, serial, "mobile_data");
-  const mappings = readMappings(adb, serial);
+  const wifi = readToggle(adb, serial, "wifi_on", timeoutMs);
+  const data = readToggle(adb, serial, "mobile_data", timeoutMs);
+  const mappings = readMappings(adb, serial, timeoutMs);
   if (wifi !== "1" || data !== "1") fail("TRANSPORT_RESTORE_FAILED", "network toggles did not return to enabled");
   requireExactMappings(mappings);
   return {appStoppedBeforeRestore: true, wifiEnabled: true, dataEnabled: true, reverseMappingCount: mappings.length};
@@ -373,6 +530,93 @@ function openPrivateChildLog(logPath) {
   }
 }
 
+function processGroupHasLiveMember(child) {
+  // `kill(-pgid, 0)` reports a group containing only zombies as present.  A zombie cannot issue
+  // a device command or retain a network route, so treat it as drained while its reaper catches
+  // up. Prefer Linux /proc because the minimal controlled image deliberately has no `ps`; use a
+  // bounded `ps` snapshot on other POSIX systems and retain the conservative kill probe only if
+  // neither source is available.
+  try {
+    const group = String(child.pid);
+    for (const entry of fs.readdirSync("/proc", {withFileTypes: true})) {
+      if (!entry.isDirectory() || !/^[1-9][0-9]*$/.test(entry.name)) continue;
+      let stat;
+      try {
+        stat = fs.readFileSync(path.join("/proc", entry.name, "stat"), "utf8");
+      } catch (_) {
+        continue;
+      }
+      const close = stat.lastIndexOf(")");
+      if (close < 0) continue;
+      const fields = stat.slice(close + 2).trim().split(/\s+/);
+      // /proc/<pid>/stat after `comm)` starts at state, then ppid, then pgrp.
+      if (fields.length >= 3 && fields[2] === group && fields[0] !== "Z" && fields[0] !== "X") return true;
+    }
+    return false;
+  } catch (_) {
+    // /proc is absent on Darwin and some hardened hosts.
+  }
+  try {
+    const snapshot = spawnSync("ps", ["-eo", "pid=,pgid=,stat="], {
+      encoding: "utf8",
+      maxBuffer: MAX_OUTPUT_BYTES,
+      timeout: 1_000,
+      killSignal: "SIGKILL",
+    });
+    if (!snapshot.error && !snapshot.signal && snapshot.status === 0) {
+      const group = String(child.pid);
+      const rows = String(snapshot.stdout || "").split("\n");
+      return rows.some((row) => {
+        const fields = row.trim().split(/\s+/);
+        return fields.length >= 3 && fields[1] === group && !fields[2].startsWith("Z");
+      });
+    }
+  } catch (_) {
+    // Fall through to the portable, fail-closed signal probe.
+  }
+  return null;
+}
+
+function processGroupExists(child) {
+  if (!child || !Number.isInteger(child.pid) || child.pid <= 0) return false;
+  const live = processGroupHasLiveMember(child);
+  if (live !== null) return live;
+  try {
+    process.kill(-child.pid, 0);
+    return true;
+  } catch (error) {
+    if (error && error.code === "ESRCH") return false;
+    // EPERM still proves that the process group exists; fail closed during cleanup instead of
+    // assuming a child has disappeared merely because it cannot be signalled.
+    return true;
+  }
+}
+
+function waitForProcessGroupExit(child, timeoutMs) {
+  return new Promise((resolve) => {
+    const deadline = Date.now() + timeoutMs;
+    const poll = () => {
+      if (!processGroupExists(child)) return resolve(true);
+      if (Date.now() >= deadline) return resolve(false);
+      setTimeout(poll, 25);
+    };
+    poll();
+  });
+}
+
+async function cleanChildProcessGroup(child) {
+  if (!child || !Number.isInteger(child.pid) || child.pid <= 0 || !processGroupExists(child)) {
+    return {processGroupClean: true, processGroupTerminated: false, processGroupKilled: false};
+  }
+  const termSent = signalProcessGroup(child, "SIGTERM");
+  if (await waitForProcessGroupExit(child, CHILD_TERM_GRACE_MS)) {
+    return {processGroupClean: true, processGroupTerminated: termSent, processGroupKilled: false};
+  }
+  const killSent = signalProcessGroup(child, "SIGKILL");
+  const processGroupClean = await waitForProcessGroupExit(child, CHILD_TERM_GRACE_MS);
+  return {processGroupClean, processGroupTerminated: termSent, processGroupKilled: killSent};
+}
+
 function runChild(command, timeoutMs, childLogPath, onChild) {
   return new Promise((resolve) => {
     let logFd;
@@ -389,6 +633,7 @@ function runChild(command, timeoutMs, childLogPath, onChild) {
         logWriteFailed: false,
         logUnavailable: error instanceof OfflineTransportGuardError,
         terminationSignalFailed: false,
+        processGroupClean: false,
       });
       return;
     }
@@ -406,10 +651,14 @@ function runChild(command, timeoutMs, childLogPath, onChild) {
       try { fs.fsyncSync(logFd); } catch (_) { logWriteFailed = true; }
       try { fs.closeSync(logFd); } catch (_) { logWriteFailed = true; }
     };
-    const finish = (value) => {
+    const finish = async (value) => {
       if (settled) return;
       settled = true;
       if (timeout) clearTimeout(timeout);
+      // Do not clear a pending hard-kill merely because the leader exited: a descendant can keep
+      // the detached process group alive with stdio ignored.  The group is always drained before
+      // the next sequence leaf or transport restoration.
+      const processGroup = await cleanChildProcessGroup(child);
       if (forceKillTimer) clearTimeout(forceKillTimer);
       closeLog();
       onChild(null);
@@ -421,6 +670,7 @@ function runChild(command, timeoutMs, childLogPath, onChild) {
         logWriteFailed,
         logUnavailable: false,
         terminationSignalFailed,
+        ...processGroup,
       });
     };
     const terminate = () => {
@@ -452,19 +702,30 @@ function runChild(command, timeoutMs, childLogPath, onChild) {
         stdio: ["ignore", "pipe", "pipe"],
       });
     } catch (_) {
-      finish({started: false, exitCode: null, signal: null});
+      void finish({started: false, exitCode: null, signal: null});
       return;
     }
     child.stdout.on("data", capture);
     child.stderr.on("data", capture);
-    child.once("error", () => finish({started: false, exitCode: null, signal: null}));
-    child.once("close", (exitCode, signal) => finish({started: true, exitCode, signal}));
+    child.once("error", () => { void finish({started: false, exitCode: null, signal: null}); });
+    child.once("close", (exitCode, signal) => { void finish({started: true, exitCode, signal}); });
     onChild({child, terminate});
     timeout = setTimeout(() => {
       timedOut = true;
       terminate();
     }, timeoutMs);
   });
+}
+
+function childFailureCode(child, prefix = "") {
+  if (child.logUnavailable) return prefix + "CHILD_LOG_UNAVAILABLE";
+  if (child.logWriteFailed) return prefix + "CHILD_LOG_WRITE_FAILED";
+  if (child.terminationSignalFailed) return prefix + "CHILD_TERMINATION_FAILED";
+  if (child.processGroupClean !== true) return prefix + "CHILD_PROCESS_GROUP_REMAINS";
+  if (child.timedOut) return prefix + "CHILD_TIMEOUT";
+  if (child.signal) return null;
+  if (child.started && child.exitCode === 0) return null;
+  return prefix + (child.started ? "CHILD_FAILED" : "CHILD_START_FAILED");
 }
 
 function prepareLockRoot(lockRoot) {
@@ -569,7 +830,10 @@ async function acquireDeviceLock(lockRoot, serial, flock) {
 }
 
 function requireHeldLock(lock) {
-  if (!lock || !lock.held || lock.released) fail("DEVICE_LOCK_LOST", "the exclusive device lock is no longer held");
+  if (!lock || !lock.held || lock.released || lock.holder.exitCode !== null || lock.holder.signalCode !== null) {
+    if (lock) lock.held = false;
+    fail("DEVICE_LOCK_LOST", "the exclusive device lock is no longer held");
+  }
 }
 
 async function releaseDeviceLock(lock) {
@@ -585,8 +849,10 @@ async function releaseDeviceLock(lock) {
 }
 
 async function execute(config) {
+  requireOwnScriptHash(config.selfSha256);
   const output = requirePrivateOutputPath(config.output);
   const childLog = requirePrivateOutputPath(output + ".child.log");
+  const preCutLog = config.preCutCommand ? requirePrivateOutputPath(config.preCutLog) : null;
   if (process.platform !== "linux" && process.platform !== "darwin") {
     fail("PROCESS_GROUP_UNSUPPORTED", "the offline guard requires POSIX process groups");
   }
@@ -598,8 +864,12 @@ async function execute(config) {
   };
   const onSigint = () => onSignal("SIGINT");
   const onSigterm = () => onSignal("SIGTERM");
+  const onSighup = () => onSignal("SIGHUP");
+  const onSigquit = () => onSignal("SIGQUIT");
   process.on("SIGINT", onSigint);
   process.on("SIGTERM", onSigterm);
+  process.on("SIGHUP", onSighup);
+  process.on("SIGQUIT", onSigquit);
 
   const result = {
     artifactVersion: 1,
@@ -609,9 +879,28 @@ async function execute(config) {
     controlChannel: "ADB_INDEPENDENT_ACKNOWLEDGED",
     backendWrites: 0,
     backendNetworkCalls: 0,
+    sequencePlanSha256: config.sequencePlanSha256,
+    sequenceCapabilities: {preCutIssued: false, offlineIssued: false},
     deviceLock: {acquired: false, heldThroughChild: false, released: false},
     preflight: {passed: false},
-    application: {stoppedBeforeCut: false, stoppedBeforeRestore: false},
+    preCut: {
+      requested: Boolean(config.preCutCommand),
+      completed: false,
+      started: false,
+      exitCode: null,
+      signal: null,
+      timedOut: false,
+      logBytes: 0,
+      logTruncated: false,
+      logWriteFailed: false,
+    },
+    preCutBaseline: {rechecked: false},
+    application: {
+      stoppedBeforePreCut: false,
+      stoppedAfterPreCutFailure: false,
+      stoppedBeforeCut: false,
+      stoppedBeforeRestore: false,
+    },
     cut: {attempted: false, confirmed: false},
     child: {
       started: false,
@@ -637,55 +926,113 @@ async function execute(config) {
     };
     result.deviceLock.acquired = true;
     requireHeldLock(lock);
-    const start = preflight(config.adb, config.serial);
+    const start = preflight(config.adb, config.serial, config.adbTimeoutMs);
     result.preflight = {passed: true, ...start};
-    stopApplication(config.adb, config.serial, config.appId);
-    result.application.stoppedBeforeCut = true;
-    // Recheck after stopping the process so a concurrent route change cannot become an offline pass.
-    preflight(config.adb, config.serial);
-    requireHeldLock(lock);
-    transportTouched = true;
-    result.cut = {attempted: true, ...cutTransport(config.adb, config.serial), confirmed: true};
-    if (interruptedSignal) {
-      result.status = "INTERRUPTED";
-    } else {
-      const child = await runChild(config.command, config.timeoutMs, childLog, (active) => {
+    let mayCut = !interruptedSignal;
+    if (config.preCutCommand && mayCut) {
+      // The leaf's first operation is a stopped-app snapshot.  Stopping before it launches also
+      // prevents a retained sender from delivering an older command during an online pre-cut.
+      requireHeldLock(lock);
+      stopApplication(config.adb, config.serial, config.appId, config.adbTimeoutMs);
+      result.application.stoppedBeforePreCut = true;
+      const capability = issueSequenceCapability(output, config, "pre-cut");
+      if (!capability) fail("SEQUENCE_CAPABILITY_UNAVAILABLE", "the sequence pre-cut capability was not issued");
+      result.sequenceCapabilities.preCutIssued = true;
+      const preCutCommand = [...config.preCutCommand, "--guard-capability", capability.file, "--guard-nonce", capability.nonce];
+      const preCut = await runChild(preCutCommand, config.preCutTimeoutMs, preCutLog, (active) => {
         activeTerminator = active ? active.terminate : null;
       });
-      result.child = child;
+      result.preCut = {requested: true, completed: false, ...preCut};
       activeTerminator = null;
       if (lockLost) {
         result.status = "FAIL";
         result.errorCode = "DEVICE_LOCK_LOST";
-      } else {
-        requireHeldLock(lock);
-        requireCutTransport(config.adb, config.serial);
-        result.deviceLock.heldThroughChild = true;
-        result.offlineIntegrity.verifiedAfterChild = true;
-      }
-      if (result.status === "FAIL") {
-        // A lost lock is already conclusive; retain it rather than reclassifying the child outcome.
+        mayCut = false;
       } else if (interruptedSignal) {
         result.status = "INTERRUPTED";
-      } else if (child.logUnavailable) {
-        result.status = "FAIL";
-        result.errorCode = "CHILD_LOG_UNAVAILABLE";
-      } else if (child.logWriteFailed) {
-        result.status = "FAIL";
-        result.errorCode = "CHILD_LOG_WRITE_FAILED";
-      } else if (child.terminationSignalFailed) {
-        result.status = "FAIL";
-        result.errorCode = "CHILD_TERMINATION_FAILED";
-      } else if (child.timedOut) {
-        result.status = "FAIL";
-        result.errorCode = "CHILD_TIMEOUT";
-      } else if (child.signal) {
-        result.status = "INTERRUPTED";
-      } else if (child.started && child.exitCode === 0) {
-        result.status = "PASS";
+        mayCut = false;
       } else {
-        result.status = "FAIL";
-        result.errorCode = child.started ? "CHILD_FAILED" : "CHILD_START_FAILED";
+        const preCutError = childFailureCode(preCut, "PRE_CUT_");
+        if (preCutError) {
+          result.status = "FAIL";
+          result.errorCode = preCutError;
+          mayCut = false;
+        } else if (preCut.signal) {
+          result.status = "INTERRUPTED";
+          mayCut = false;
+        } else {
+          requireHeldLock(lock);
+          const baseline = preflight(config.adb, config.serial, config.adbTimeoutMs);
+          result.preCut = {...result.preCut, completed: true};
+          result.preCutBaseline = {rechecked: true, ...baseline};
+        }
+      }
+    }
+    if (!mayCut) {
+      // A failed online leaf can have launched the app.  Quiesce it while the same exclusive
+      // lock remains held; do not make any device mutation after the lock is lost.
+      if (config.preCutCommand && !lockLost) {
+        try {
+          requireHeldLock(lock);
+          stopApplication(config.adb, config.serial, config.appId, config.adbTimeoutMs);
+          result.application.stoppedAfterPreCutFailure = true;
+        } catch (error) {
+          result.status = "FAIL";
+          result.errorCode = error instanceof OfflineTransportGuardError ? error.code : "APPLICATION_STOP_FAILED";
+        }
+      }
+      if (interruptedSignal && result.status !== "FAIL") result.status = "INTERRUPTED";
+    } else {
+      stopApplication(config.adb, config.serial, config.appId, config.adbTimeoutMs);
+      result.application.stoppedBeforeCut = true;
+      // Recheck after stopping the process so a concurrent route change cannot become an offline pass.
+      preflight(config.adb, config.serial, config.adbTimeoutMs);
+      requireHeldLock(lock);
+      transportTouched = true;
+      result.cut = {attempted: true, ...cutTransport(config.adb, config.serial, config.adbTimeoutMs, () => requireHeldLock(lock)), confirmed: true};
+      // `cutTransport` contains bounded synchronous ADB calls.  Probe the lock holder directly
+      // immediately after it returns and once more at the last point before spawning the leaf.
+      requireHeldLock(lock);
+      if (interruptedSignal) {
+        result.status = "INTERRUPTED";
+      } else {
+        requireHeldLock(lock);
+        let offlineCommand = config.command;
+        if (config.sequencePlanSha256) {
+          const capability = issueSequenceCapability(output, config, "offline");
+          if (!capability) fail("SEQUENCE_CAPABILITY_UNAVAILABLE", "the sequence offline capability was not issued");
+          result.sequenceCapabilities.offlineIssued = true;
+          offlineCommand = [...config.command, "--guard-capability", capability.file, "--guard-nonce", capability.nonce];
+        }
+        const child = await runChild(offlineCommand, config.timeoutMs, childLog, (active) => {
+          activeTerminator = active ? active.terminate : null;
+        });
+        result.child = child;
+        activeTerminator = null;
+        if (lockLost) {
+          result.status = "FAIL";
+          result.errorCode = "DEVICE_LOCK_LOST";
+        } else {
+          requireHeldLock(lock);
+          requireCutTransport(config.adb, config.serial, config.adbTimeoutMs);
+          result.deviceLock.heldThroughChild = true;
+          result.offlineIntegrity.verifiedAfterChild = true;
+        }
+        if (result.status === "FAIL") {
+          // A lost lock is already conclusive; retain it rather than reclassifying the child outcome.
+        } else if (interruptedSignal) {
+          result.status = "INTERRUPTED";
+        } else {
+          const childError = childFailureCode(child);
+          if (childError) {
+            result.status = "FAIL";
+            result.errorCode = childError;
+          } else if (child.signal) {
+            result.status = "INTERRUPTED";
+          } else {
+            result.status = "PASS";
+          }
+        }
       }
     }
   } catch (error) {
@@ -693,15 +1040,21 @@ async function execute(config) {
     result.status = code === "DEVICE_LOCK_HELD" ? "NOT_RUN" : (interruptedSignal ? "INTERRUPTED" : "FAIL");
     result.errorCode = code;
   } finally {
-    if (transportTouched) {
+    if (transportTouched && !lockLost) {
       result.restore.attempted = true;
       try {
-        result.restore = {attempted: true, ...restoreTransport(config.adb, config.serial, config.appId), confirmed: true};
+        requireHeldLock(lock);
+        result.restore = {attempted: true, ...restoreTransport(config.adb, config.serial, config.appId, config.adbTimeoutMs), confirmed: true};
         result.application.stoppedBeforeRestore = true;
       } catch (error) {
         result.status = "FAIL";
         result.errorCode = error instanceof OfflineTransportGuardError ? error.code : "TRANSPORT_RESTORE_FAILED";
       }
+    } else if (transportTouched && lockLost) {
+      // Never restore a partial/full cut after losing exclusivity: another guarded operation may
+      // already own the device.  Leave it quarantined for a human-held recovery lock instead of
+      // racing an unverified network restoration.
+      result.restore = {attempted: false, confirmed: false, skippedDueToLockLoss: true};
     }
     if (lockLost) {
       result.status = "FAIL";
@@ -723,6 +1076,8 @@ async function execute(config) {
     } finally {
       process.removeListener("SIGINT", onSigint);
       process.removeListener("SIGTERM", onSigterm);
+      process.removeListener("SIGHUP", onSighup);
+      process.removeListener("SIGQUIT", onSigquit);
     }
   }
   if (resultWriteFailed) {

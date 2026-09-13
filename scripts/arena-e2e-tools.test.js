@@ -6,6 +6,7 @@ const {
   LEDGER_PATH,
   parseCli,
   readContext,
+  readSettlementOracleEvidence,
   readOracleEvidence,
   expectedRatingPayloadHash,
   mutationDocumentId,
@@ -111,7 +112,14 @@ function attemptLedger() {
   ];
 }
 
-function fakeDb({ticketData = ticket(), eventData = event(), ratingData = ratingReceipt(), ticketRows = ticketLedger(), attemptRows = attemptLedger()} = {}) {
+function fakeDb(options = {}) {
+  // `undefined` is meaningful here: it models an absent result-event document.  Destructuring
+  // defaults would silently turn that deliberate absence back into the normal settled event.
+  const ticketData = Object.hasOwn(options, "ticketData") ? options.ticketData : ticket();
+  const eventData = Object.hasOwn(options, "eventData") ? options.eventData : event();
+  const ratingData = Object.hasOwn(options, "ratingData") ? options.ratingData : ratingReceipt();
+  const ticketRows = Object.hasOwn(options, "ticketRows") ? options.ticketRows : ticketLedger();
+  const attemptRows = Object.hasOwn(options, "attemptRows") ? options.attemptRows : attemptLedger();
   const calls = [];
   const docs = new Map([
     [`arena_entry_tickets/${ticketId}`, ticketData],
@@ -164,6 +172,7 @@ function testCliRequiresExplicitBoundIdsAndRatingPair() {
   const mismatchedTicket = [...args];
   mismatchedTicket[5] = "b".repeat(64);
   throwsCode(() => parseCli(mismatchedTicket, {requireRating: true}), "INVALID_ARGUMENT");
+  throwsCode(() => parseCli(args, {allowRating: false}), "USAGE");
 }
 
 async function testContextReaderReadsOnlyExactTicketAndEvent() {
@@ -173,10 +182,26 @@ async function testContextReaderReadsOnlyExactTicketAndEvent() {
   assert.equal(result.documentWrites, 0);
   assert.equal(result.runId, context.runId);
   assert.equal(result.frozenPriceNolics, 5);
+  assert.equal(result.resultEventDocumentExists, true);
   assert.equal(result.event.status, "SETTLED");
   assert.deepEqual(db.calls.map((call) => call.kind), ["get", "get"]);
   assert.equal(db.calls[0].path, `arena_entry_tickets/${ticketId}`);
   assert.match(db.calls[1].path, /^result_events_public\/[a-f0-9]{2}\/events\//);
+}
+
+async function testContextReaderDistinguishesNoEventFromEventWithoutReceipt() {
+  const reserved = ticket();
+  reserved.status = "RESERVED";
+  reserved.terminal = null;
+  const noDocument = await readContext(fakeDb({ticketData: reserved, eventData: undefined}), context);
+  assert.equal(noDocument.resultEventDocumentExists, false);
+  assert.equal(noDocument.event, null);
+
+  const withoutReceipt = event();
+  withoutReceipt.settlementReceipt = null;
+  const existingDocument = await readContext(fakeDb({ticketData: reserved, eventData: withoutReceipt}), context);
+  assert.equal(existingDocument.resultEventDocumentExists, true);
+  assert.equal(existingDocument.event, null);
 }
 
 async function testOracleRequiresAllExactProofsAndUsesOnlyReads() {
@@ -190,6 +215,38 @@ async function testOracleRequiresAllExactProofsAndUsesOnlyReads() {
   assert.equal(result.ledger.attemptRows.length, 4);
   assert.deepEqual(db.calls.map((call) => call.kind).sort(), ["get", "get", "get", "query", "query"]);
   assert.deepEqual(db.calls.filter((call) => call.kind === "query").map((call) => call.sourceId).sort(), [attemptId, ticketId].sort());
+}
+
+async function testSettlementOnlyOracleBindsTheExactReceiptAndLedgerWithoutRating() {
+  const db = fakeDb();
+  const settlementContext = {runId: context.runId, ownerUid, ticketId, attemptId};
+  const result = await readSettlementOracleEvidence(db, settlementContext);
+  assert.equal(result.status, "PASS");
+  assert.equal(result.oracleVersion, "arena-e2e-settlement-oracle-v1");
+  assert.equal(result.documentWrites, 0);
+  assert.equal(Object.hasOwn(result, "ratingReceipt"), false);
+  assert.deepEqual(db.calls.map((call) => call.kind).sort(), ["get", "get", "query", "query"]);
+  assert.deepEqual(db.calls.filter((call) => call.kind === "query").map((call) => call.sourceId).sort(), [attemptId, ticketId].sort());
+  await rejectsCode(() => readSettlementOracleEvidence(fakeDb(), context), "INVALID_ARGUMENT");
+}
+
+async function testSettlementOnlyOracleRejectsMismatchedTicketAndEventEconomy() {
+  const wrong = event();
+  wrong.settlementReceipt.nolicsSpent = 4;
+  await rejectsCode(() => readSettlementOracleEvidence(fakeDb({eventData: wrong}), {
+    runId: context.runId, ownerUid, ticketId, attemptId,
+  }), "SETTLEMENT_ECONOMY_MISMATCH");
+}
+
+async function testSettlementOnlyOracleRejectsDuplicateAndMissingLedgerEffects() {
+  const duplicate = [...ticketLedger(), {...ticketLedger()[0], id: "ticket-nolics-duplicate"}];
+  await rejectsCode(() => readSettlementOracleEvidence(fakeDb({ticketRows: duplicate}), {
+    runId: context.runId, ownerUid, ticketId, attemptId,
+  }), "LEDGER_AMBIGUITY");
+  const missing = attemptLedger().slice(0, -1);
+  await rejectsCode(() => readSettlementOracleEvidence(fakeDb({attemptRows: missing}), {
+    runId: context.runId, ownerUid, ticketId, attemptId,
+  }), "LEDGER_AMBIGUITY");
 }
 
 async function testOracleRejectsOldOrDifferentRatingReceipt() {
@@ -222,7 +279,11 @@ async function testOracleRejectsMismatchedEventIdentity() {
 (async () => {
   testCliRequiresExplicitBoundIdsAndRatingPair();
   await testContextReaderReadsOnlyExactTicketAndEvent();
+  await testContextReaderDistinguishesNoEventFromEventWithoutReceipt();
   await testOracleRequiresAllExactProofsAndUsesOnlyReads();
+  await testSettlementOnlyOracleBindsTheExactReceiptAndLedgerWithoutRating();
+  await testSettlementOnlyOracleRejectsMismatchedTicketAndEventEconomy();
+  await testSettlementOnlyOracleRejectsDuplicateAndMissingLedgerEffects();
   await testOracleRejectsOldOrDifferentRatingReceipt();
   await testOracleRejectsMismatchedSettlementTimestamp();
   await testOracleRejectsDuplicateOrUnexpectedLedgerEffects();

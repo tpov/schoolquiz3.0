@@ -66,7 +66,7 @@ function expectedRatingPayloadHash({lessonId, attemptId, rating}) {
   return sha256(JSON.stringify(["RATE_LESSON", {lessonId, attemptId, rating}]));
 }
 
-function parseCli(argv, {requireRating = false} = {}) {
+function parseCli(argv, {requireRating = false, allowRating = true} = {}) {
   const values = {};
   const allowed = new Set(["--run-id", "--owner-uid", "--ticket-id", "--attempt-id", "--rating-id", "--rating"]);
   if (argv.length === 1 && argv[0] === "--help") return {help: true};
@@ -93,6 +93,7 @@ function parseCli(argv, {requireRating = false} = {}) {
   const hasRatingId = Object.hasOwn(values, "ratingId");
   const hasRating = Object.hasOwn(values, "rating");
   if (hasRatingId !== hasRating) fail("USAGE", "--rating-id and --rating must be supplied together");
+  if (!allowRating && hasRatingId) fail("USAGE", "rating arguments are not accepted by this oracle");
   if (requireRating && !hasRatingId) fail("USAGE", "Missing --rating-id and --rating");
   if (hasRatingId) {
     text(values.ratingId, "ratingId", {max: 256});
@@ -234,7 +235,7 @@ async function readContext(db, context) {
   const eventResult = assertEvent(eventSnapshot.exists ? eventSnapshot.data() : null, ticket, context);
   return {
     status: "CONTEXT",
-    oracleVersion: "arena-e2e-context-reader-v1",
+    oracleVersion: "arena-e2e-context-reader-v2",
     projectId: PROJECT,
     firestoreHost: FIRESTORE_EMULATOR_HOST,
     documentWrites: 0,
@@ -245,6 +246,10 @@ async function readContext(db, context) {
     ...(context.ratingId ? {ratingId: context.ratingId, rating: context.rating} : {}),
     ticketPath,
     resultEventPath: resultPath,
+    // `event` deliberately summarizes only a settlement receipt for backwards-compatible
+    // consumers.  An identity-bound result-event document can exist before it carries that
+    // receipt, so expose document presence separately rather than collapsing it into null.
+    resultEventDocumentExists: eventSnapshot.exists,
     ...ticketSummary(ticket),
     event: eventSummary(eventResult?.receipt, resultPath),
   };
@@ -335,11 +340,73 @@ function assertRatingReceipt(mutation, ticket, terminal, receipt, context) {
       mutation.result.acceptedAtMs !== mutation.decidedAtMs) {
     fail("RATING_RECEIPT_MISMATCH", "RATE_LESSON result is not the exact immutable receipt");
   }
+  assertSettlementReceipt(ticket, terminal, receipt);
+  return {expectedPayloadHash, mutation};
+}
+
+function assertSettlementReceipt(ticket, terminal, receipt) {
   if (receipt.nolicsSpent !== terminal.consumedNolics || receipt.percentScore !== terminal.percentScore ||
       receipt.settledAtMs !== terminal.settledAtMs) {
     fail("SETTLEMENT_ECONOMY_MISMATCH", "Ticket and event settlement receipts disagree");
   }
-  return {expectedPayloadHash, mutation};
+  if (receipt.ticketId !== ticket.ticketId || receipt.attemptId !== ticket.attemptId || receipt.uid !== ticket.uid ||
+      receipt.lessonId !== ticket.lessonId || receipt.lessonVersion !== ticket.lessonVersion) {
+    fail("SETTLEMENT_IDENTITY_MISMATCH", "Ticket and event settlement receipts do not bind the same attempt");
+  }
+  return receipt;
+}
+
+function settlementResult({context, ticket, receipt, resultPath, ticketLedger, attemptLedger}) {
+  const result = {
+    status: "PASS",
+    oracleVersion: "arena-e2e-settlement-oracle-v1",
+    projectId: PROJECT,
+    firestoreHost: FIRESTORE_EMULATOR_HOST,
+    documentWrites: 0,
+    runId: context.runId,
+    ownerUid: context.ownerUid,
+    ticketId: context.ticketId,
+    attemptId: context.attemptId,
+    lessonId: ticket.lessonId,
+    lessonVersion: ticket.lessonVersion,
+    frozenPriceNolics: ticket.priceNolics,
+    ticketPath: `arena_entry_tickets/${context.ticketId}`,
+    resultEventPath: resultPath,
+    settlementReceipt: ticketSummary(ticket).settlementReceipt,
+    event: eventSummary(receipt, resultPath),
+    ledger: {
+      ticketRows: ticketLedger.map((row) => ({id: row.id, uid: row.uid, currency: row.currency, delta: row.delta,
+        reason: row.reason, sourceId: row.sourceId, atMs: row.atMs})),
+      attemptRows: attemptLedger.map((row) => ({id: row.id, uid: row.uid, currency: row.currency, delta: row.delta,
+        reason: row.reason, sourceId: row.sourceId, atMs: row.atMs})),
+    },
+  };
+  result.evidenceSha256 = sha256(JSON.stringify(result));
+  return result;
+}
+
+async function readSettlementOracleEvidence(db, context) {
+  if (Object.hasOwn(context, "ratingId") || Object.hasOwn(context, "rating")) {
+    fail("INVALID_ARGUMENT", "Settlement-only evidence must not receive a rating context");
+  }
+  const ticketPath = `arena_entry_tickets/${context.ticketId}`;
+  const resultPath = eventPath(context.attemptId);
+  const ledger = db.collection(LEDGER_PATH);
+  const [ticketSnapshot, eventSnapshot, ticketLedgerSnapshot, attemptLedgerSnapshot] = await Promise.all([
+    db.doc(ticketPath).get(),
+    db.doc(resultPath).get(),
+    ledger.where("sourceId", "==", context.ticketId).limit(MAX_LEDGER_ROWS_PER_SOURCE + 1).get(),
+    ledger.where("sourceId", "==", context.attemptId).limit(MAX_LEDGER_ROWS_PER_SOURCE + 1).get(),
+  ]);
+  const ticket = assertTicket(ticketSnapshot.exists ? ticketSnapshot.data() : null, context);
+  const terminal = settledTerminal(ticket);
+  const eventResult = assertEvent(eventSnapshot.exists ? eventSnapshot.data() : null, ticket, context, {requireSettled: true});
+  const receipt = assertSettlementReceipt(ticket, terminal, eventResult.receipt);
+  const ticketLedger = assertExactLedger(ticketLedgerSnapshot.docs.map((document) => document.data()),
+    expectedTicketLedger(ticket, terminal), context.ticketId);
+  const attemptLedger = assertExactLedger(attemptLedgerSnapshot.docs.map((document) => document.data()),
+    expectedAttemptLedger(receipt, terminal), context.attemptId);
+  return settlementResult({context, ticket, receipt, resultPath, ticketLedger, attemptLedger});
 }
 
 async function readOracleEvidence(db, context) {
@@ -364,25 +431,13 @@ async function readOracleEvidence(db, context) {
   const attemptLedger = assertExactLedger(attemptLedgerSnapshot.docs.map((document) => document.data()),
     expectedAttemptLedger(receipt, terminal), context.attemptId);
   const result = {
-    status: "PASS",
+    ...settlementResult({context, ticket, receipt, resultPath, ticketLedger, attemptLedger}),
     oracleVersion: "arena-e2e-receipt-oracle-v1",
-    projectId: PROJECT,
-    firestoreHost: FIRESTORE_EMULATOR_HOST,
-    documentWrites: 0,
-    runId: context.runId,
-    ownerUid: context.ownerUid,
-    ticketId: context.ticketId,
-    attemptId: context.attemptId,
-    lessonId: ticket.lessonId,
-    lessonVersion: ticket.lessonVersion,
-    frozenPriceNolics: ticket.priceNolics,
     ratingId: context.ratingId,
     rating: context.rating,
     ticketPath,
     resultEventPath: resultPath,
     ratingReceiptPath: ratingPath,
-    settlementReceipt: ticketSummary(ticket).settlementReceipt,
-    event: eventSummary(receipt, resultPath),
     ratingReceipt: {
       mutationId: rating.mutation.mutationId,
       operation: rating.mutation.operation,
@@ -390,12 +445,6 @@ async function readOracleEvidence(db, context) {
       ratingId: rating.mutation.result.ratingId,
       acceptedAtMs: rating.mutation.result.acceptedAtMs,
       payloadHash: rating.expectedPayloadHash,
-    },
-    ledger: {
-      ticketRows: ticketLedger.map((row) => ({id: row.id, uid: row.uid, currency: row.currency, delta: row.delta,
-        reason: row.reason, sourceId: row.sourceId, atMs: row.atMs})),
-      attemptRows: attemptLedger.map((row) => ({id: row.id, uid: row.uid, currency: row.currency, delta: row.delta,
-        reason: row.reason, sourceId: row.sourceId, atMs: row.atMs})),
     },
   };
   result.evidenceSha256 = sha256(JSON.stringify(result));
@@ -412,9 +461,11 @@ module.exports = {
   checkEnvironment,
   expectedRatingPayloadHash,
   readContext,
+  readSettlementOracleEvidence,
   readOracleEvidence,
   assertTicket,
   settledTerminal,
+  assertSettlementReceipt,
   assertEvent,
   assertExactLedger,
   expectedTicketLedger,
