@@ -236,6 +236,8 @@ process.exit(0);
 
 function makeFixture({
   mappings = NORMAL_PORTS,
+  wifi = 1,
+  data = 1,
   prefixedRows = true,
   failOnceCommand = null,
   hangOnceCommand = null,
@@ -259,8 +261,8 @@ function makeFixture({
   const exitingParentWithDescendant = path.join(root, "exiting-parent-with-descendant.js");
   fs.writeFileSync(statePath, JSON.stringify({
     connected: true,
-    wifi: 1,
-    data: 1,
+    wifi,
+    data,
     mappings,
     prefixedRows,
     failOnceCommand,
@@ -294,6 +296,8 @@ function makeFixture({
     descendant,
     waitingChild,
     exitingParentWithDescendant,
+    initialWifi: wifi,
+    initialData: data,
     dispose() { fs.rmSync(root, {recursive: true, force: true}); },
   };
 }
@@ -370,8 +374,8 @@ function adbCommands(log, predicate) {
 
 function assertRestored(fixture) {
   const state = readState(fixture);
-  assert.equal(state.wifi, 1);
-  assert.equal(state.data, 1);
+  assert.equal(state.wifi, fixture.initialWifi);
+  assert.equal(state.data, fixture.initialData);
   assert.deepEqual(state.mappings.slice().sort((left, right) => left - right), NORMAL_PORTS.slice().sort((left, right) => left - right));
 }
 
@@ -576,6 +580,28 @@ function testTwoColumnReverseRowsPass() {
     const {output, outcome} = invokeGuard(fixture, [process.execPath, fixture.child]);
     assert.equal(outcome.status, 0, outcome.stderr);
     assert.equal(JSON.parse(fs.readFileSync(output, "utf8")).status, "PASS");
+    assertRestored(fixture);
+  } finally {
+    fixture.dispose();
+  }
+}
+
+function testRadioOffBaselineStillCutsAndRestoresExactTopology() {
+  const fixture = makeFixture({wifi: 0, data: 1});
+  try {
+    const {output, outcome} = invokeGuard(fixture, [process.execPath, fixture.child]);
+    assert.equal(outcome.status, 0, outcome.stderr);
+    const result = JSON.parse(fs.readFileSync(output, "utf8"));
+    assert.equal(result.status, "PASS");
+    assert.equal(result.preflight.wifiEnabled, false);
+    assert.equal(result.preflight.dataEnabled, true);
+    assert.equal(result.cut.confirmed, true);
+    assert.equal(result.restore.confirmed, true);
+    assert.equal(result.restore.wifiEnabled, false);
+    assert.equal(result.restore.dataEnabled, true);
+    const log = readState(fixture).log.filter((entry) => entry.type === "adb").map((entry) => entry.command.join(" "));
+    assert.equal(log.includes("shell svc wifi disable"), false);
+    assert.equal(log.includes("shell svc wifi enable"), false);
     assertRestored(fixture);
   } finally {
     fixture.dispose();
@@ -935,6 +961,7 @@ async function main() {
     ["sequence-symlink", testSequenceSymlinkedPlanFailsBeforeDeviceCalls],
     ["child-failure", testChildFailureStillRestores],
     ["two-column", testTwoColumnReverseRowsPass],
+    ["radio-baseline", testRadioOffBaselineStillCutsAndRestoresExactTopology],
     ["private-log", testChildOutputStaysInPrivateBoundedLog],
     ["timeout", testTimeoutKillsProcessGroupAndRestores],
     ["hung-adb", testHungAdbIsBoundedAndRestores],

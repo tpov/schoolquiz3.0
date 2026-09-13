@@ -420,9 +420,16 @@ function preflight(adb, serial, timeoutMs) {
   const wifi = readToggle(adb, serial, "wifi_on", timeoutMs);
   const data = readToggle(adb, serial, "mobile_data", timeoutMs);
   const mappings = readMappings(adb, serial, timeoutMs);
-  if (wifi !== "1" || data !== "1") fail("DEVICE_NOT_ONLINE", "device must begin with Wi-Fi and data enabled");
   requireExactMappings(mappings);
-  return {wifiEnabled: true, dataEnabled: true, reverseMappingCount: mappings.length};
+  // The demo endpoint is reached through these exact adb-reverse routes, so a device may have a
+  // deliberately disabled radio while still being online to Firebase.  Preserve that verified
+  // binary baseline rather than enabling a radio the test did not own before cutting all routes.
+  return {wifiEnabled: wifi === "1", dataEnabled: data === "1", reverseMappingCount: mappings.length};
+}
+
+function sameTransportBaseline(expected, actual) {
+  return Boolean(expected && actual) && expected.wifiEnabled === actual.wifiEnabled &&
+    expected.dataEnabled === actual.dataEnabled && expected.reverseMappingCount === actual.reverseMappingCount;
 }
 
 function stopApplication(adb, serial, appId, timeoutMs) {
@@ -430,7 +437,7 @@ function stopApplication(adb, serial, appId, timeoutMs) {
   requireDeviceReady(adb, serial, timeoutMs);
 }
 
-function cutTransport(adb, serial, timeoutMs, requireLock = null) {
+function cutTransport(adb, serial, baseline, timeoutMs, requireLock = null) {
   const checkLock = () => {
     if (typeof requireLock === "function") requireLock();
   };
@@ -441,14 +448,18 @@ function cutTransport(adb, serial, timeoutMs, requireLock = null) {
     requireDeviceReady(adb, serial, timeoutMs);
     checkLock();
   }
-  runAdb(adb, serial, ["shell", "svc", "wifi", "disable"], timeoutMs);
-  checkLock();
-  requireDeviceReady(adb, serial, timeoutMs);
-  checkLock();
-  runAdb(adb, serial, ["shell", "svc", "data", "disable"], timeoutMs);
-  checkLock();
-  requireDeviceReady(adb, serial, timeoutMs);
-  checkLock();
+  if (baseline.wifiEnabled) {
+    runAdb(adb, serial, ["shell", "svc", "wifi", "disable"], timeoutMs);
+    checkLock();
+    requireDeviceReady(adb, serial, timeoutMs);
+    checkLock();
+  }
+  if (baseline.dataEnabled) {
+    runAdb(adb, serial, ["shell", "svc", "data", "disable"], timeoutMs);
+    checkLock();
+    requireDeviceReady(adb, serial, timeoutMs);
+    checkLock();
+  }
   return requireCutTransport(adb, serial, timeoutMs);
 }
 
@@ -463,7 +474,7 @@ function requireCutTransport(adb, serial, timeoutMs) {
   return {wifiDisabled: true, dataDisabled: true, reverseMappingCount: 0};
 }
 
-function restoreTransport(adb, serial, appId, timeoutMs) {
+function restoreTransport(adb, serial, appId, baseline, timeoutMs) {
   const failures = [];
   try {
     // A cold process cannot reconnect while the original backend route is being restored.
@@ -489,10 +500,14 @@ function restoreTransport(adb, serial, appId, timeoutMs) {
       }
     }
   }
-  for (const args of [["shell", "svc", "wifi", "enable"], ["shell", "svc", "data", "enable"]]) {
+  for (const [toggle, expectedEnabled] of [["wifi", baseline.wifiEnabled], ["data", baseline.dataEnabled]]) {
     try {
-      runAdb(adb, serial, args, timeoutMs);
-      requireDeviceReady(adb, serial, timeoutMs);
+      const key = toggle === "wifi" ? "wifi_on" : "mobile_data";
+      const expected = expectedEnabled ? "1" : "0";
+      if (readToggle(adb, serial, key, timeoutMs) !== expected) {
+        runAdb(adb, serial, ["shell", "svc", toggle, expectedEnabled ? "enable" : "disable"], timeoutMs);
+        requireDeviceReady(adb, serial, timeoutMs);
+      }
     } catch (_) {
       failures.push("toggle");
     }
@@ -501,9 +516,16 @@ function restoreTransport(adb, serial, appId, timeoutMs) {
   const wifi = readToggle(adb, serial, "wifi_on", timeoutMs);
   const data = readToggle(adb, serial, "mobile_data", timeoutMs);
   const mappings = readMappings(adb, serial, timeoutMs);
-  if (wifi !== "1" || data !== "1") fail("TRANSPORT_RESTORE_FAILED", "network toggles did not return to enabled");
+  if (wifi !== (baseline.wifiEnabled ? "1" : "0") || data !== (baseline.dataEnabled ? "1" : "0")) {
+    fail("TRANSPORT_RESTORE_FAILED", "network toggles did not return to their verified baseline");
+  }
   requireExactMappings(mappings);
-  return {appStoppedBeforeRestore: true, wifiEnabled: true, dataEnabled: true, reverseMappingCount: mappings.length};
+  return {
+    appStoppedBeforeRestore: true,
+    wifiEnabled: baseline.wifiEnabled,
+    dataEnabled: baseline.dataEnabled,
+    reverseMappingCount: mappings.length,
+  };
 }
 
 function signalProcessGroup(child, signal) {
@@ -916,6 +938,7 @@ async function execute(config) {
   };
   let transportTouched = false;
   let lock = null;
+  let baseline = null;
   let lockLost = false;
   let resultWriteFailed = false;
   try {
@@ -926,8 +949,8 @@ async function execute(config) {
     };
     result.deviceLock.acquired = true;
     requireHeldLock(lock);
-    const start = preflight(config.adb, config.serial, config.adbTimeoutMs);
-    result.preflight = {passed: true, ...start};
+    baseline = preflight(config.adb, config.serial, config.adbTimeoutMs);
+    result.preflight = {passed: true, ...baseline};
     let mayCut = !interruptedSignal;
     if (config.preCutCommand && mayCut) {
       // The leaf's first operation is a stopped-app snapshot.  Stopping before it launches also
@@ -962,9 +985,12 @@ async function execute(config) {
           mayCut = false;
         } else {
           requireHeldLock(lock);
-          const baseline = preflight(config.adb, config.serial, config.adbTimeoutMs);
+          const preCutBaseline = preflight(config.adb, config.serial, config.adbTimeoutMs);
+          if (!sameTransportBaseline(baseline, preCutBaseline)) {
+            fail("PREFLIGHT_BASELINE_DRIFT", "the verified transport baseline changed before the cut");
+          }
           result.preCut = {...result.preCut, completed: true};
-          result.preCutBaseline = {rechecked: true, ...baseline};
+          result.preCutBaseline = {rechecked: true, ...preCutBaseline};
         }
       }
     }
@@ -986,10 +1012,13 @@ async function execute(config) {
       stopApplication(config.adb, config.serial, config.appId, config.adbTimeoutMs);
       result.application.stoppedBeforeCut = true;
       // Recheck after stopping the process so a concurrent route change cannot become an offline pass.
-      preflight(config.adb, config.serial, config.adbTimeoutMs);
+      const beforeCutBaseline = preflight(config.adb, config.serial, config.adbTimeoutMs);
+      if (!sameTransportBaseline(baseline, beforeCutBaseline)) {
+        fail("PREFLIGHT_BASELINE_DRIFT", "the verified transport baseline changed before the cut");
+      }
       requireHeldLock(lock);
       transportTouched = true;
-      result.cut = {attempted: true, ...cutTransport(config.adb, config.serial, config.adbTimeoutMs, () => requireHeldLock(lock)), confirmed: true};
+      result.cut = {attempted: true, ...cutTransport(config.adb, config.serial, baseline, config.adbTimeoutMs, () => requireHeldLock(lock)), confirmed: true};
       // `cutTransport` contains bounded synchronous ADB calls.  Probe the lock holder directly
       // immediately after it returns and once more at the last point before spawning the leaf.
       requireHeldLock(lock);
@@ -1044,7 +1073,7 @@ async function execute(config) {
       result.restore.attempted = true;
       try {
         requireHeldLock(lock);
-        result.restore = {attempted: true, ...restoreTransport(config.adb, config.serial, config.appId, config.adbTimeoutMs), confirmed: true};
+        result.restore = {attempted: true, ...restoreTransport(config.adb, config.serial, config.appId, baseline, config.adbTimeoutMs), confirmed: true};
         result.application.stoppedBeforeRestore = true;
       } catch (error) {
         result.status = "FAIL";

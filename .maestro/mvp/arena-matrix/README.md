@@ -95,11 +95,13 @@ a wired or container control plane. It must never be used for Wi-Fi ADB. The gua
 control channel after every reverse/toggle change, but the acknowledgement is still required
 because no portable ADB query can prove the physical route.
 
-Before it changes the device, it requires one ready target with Wi-Fi and data enabled and exactly
-these three normal mappings, with no extras: `9099`, `8080`, and `5001`. It accepts both current
-two-column and platform-tools-36 prefixed `adb reverse --list` rows. Any extra mapping (including
-the Firebase Database or Storage ports) is `FAIL` before an app stop, reverse removal, or network
-toggle, rather than leaving a possible backend bypass.
+Before it changes the device, it requires one ready target with binary Wi-Fi/data states and exactly
+these three normal mappings, with no extras: `9099`, `8080`, and `5001`. It records that complete
+baseline and restores it exactly: a radio that was already disabled is not silently enabled by a
+test. The mappings themselves prove that this demo app has a backend route even when a radio is
+already off. It accepts both current two-column and platform-tools-36 prefixed `adb reverse --list`
+rows. Any extra mapping (including the Firebase Database or Storage ports) is `FAIL` before an app
+stop, reverse removal, or network toggle, rather than leaving a possible backend bypass.
 
 It also acquires the same per-serial `flock` used by E2B at
 `/tools/arena-e2b-device-locks` (or an explicitly supplied private `--lock-root`) before the
@@ -122,9 +124,9 @@ Its fixed sequence is:
 
 ```text
 preflight -> force-stop app -> recheck exact baseline -> remove only 9099/8080/5001
-  -> disable Wi-Fi/data -> verify no mappings and live ADB control -> child
+  -> disable every radio that was enabled -> verify zero Wi-Fi/data/mappings and live ADB control -> child
   -> reverify no mappings and held lock
-  -> force-stop app -> restore only the three baseline mappings -> enable Wi-Fi/data
+  -> force-stop app -> restore only the three baseline mappings and the exact radio baseline
   -> verify exact baseline
 ```
 
@@ -174,8 +176,8 @@ removals, both mapping output shapes, shared-lock contention, revalidation after
 mapping, private child-output containment, restoration after child failure, partial cut failure,
 timeout with a TERM-ignoring child and descendant, repeated handled signals, and refusal before
 mutation for unexpected mappings, a missing control-channel acknowledgement, or a symlinked
-output parent, plus the two-leaf online/offline order, pre-cut failure and timeout without a cut,
-pre-cut baseline drift, and refusal of a symlinked sequence plan:
+output parent, plus a radio-disabled baseline, the two-leaf online/offline order, pre-cut failure
+and timeout without a cut, pre-cut baseline drift, and refusal of a symlinked sequence plan:
 
 ```text
 node /repo/.maestro/mvp/arena-matrix/offline-transport-guard.test.js
