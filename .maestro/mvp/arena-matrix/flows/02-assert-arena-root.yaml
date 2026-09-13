@@ -1,0 +1,23 @@
+appId: com.tpov.schoolquiz.mvp
+name: Arena matrix assert system Back returned Arena root
+---
+- assertVisible: ${MATRIX_SELECTOR_ARENA_TITLE}
+- assertVisible: ${MATRIX_SELECTOR_ARENA_ROOT_PREVIEW}
+- assertVisible: ${MATRIX_SELECTOR_OPEN_CATALOG}
+- assertNotVisible: ${MATRIX_SELECTOR_CATALOG_PROMPT}
+- assertNotVisible: ${MATRIX_SELECTOR_LOAD_LESSONS}
+- assertNotVisible: ${MATRIX_SELECTOR_LOADED_CATALOG}
+- assertNotVisible: ${MATRIX_SELECTOR_ARENA_RESERVATIONS}
+- assertNotVisible: ${MATRIX_SELECTOR_PREPARE}
+- assertNotVisible: ${MATRIX_SELECTOR_CONFIRM_PREPARATION}
+- assertNotVisible: ${MATRIX_SELECTOR_CONFIRM_CANCELLATION}
+- assertNotVisible: ${MATRIX_SELECTOR_TICKET_LABEL}
+- assertNotVisible: ${MATRIX_SELECTOR_TICKET_STATE}
+- assertNotVisible: ${MATRIX_SELECTOR_START}
+- assertNotVisible: ${MATRIX_SELECTOR_OPEN_SAVED}
+- assertNotVisible: ${MATRIX_SELECTOR_SYNCHRONIZE}
+- assertNotVisible: ${MATRIX_SELECTOR_RATING_PROMPT}
+- assertNotVisible: ${MATRIX_SELECTOR_RUNNER_ACTIVE}
+- assertNotVisible: ${MATRIX_SELECTOR_RECEIPT}
+- assertNotVisible: ${MATRIX_SELECTOR_RATING}
+- takeScreenshot: "02-arena-root-after-system-back"

@@ -1,0 +1,22 @@
+appId: com.tpov.schoolquiz.mvp
+name: Arena matrix assert system Back returned Home
+---
+- assertVisible: ${MATRIX_SELECTOR_HOME}
+- assertNotVisible: ${MATRIX_SELECTOR_ARENA_TITLE}
+- assertNotVisible: ${MATRIX_SELECTOR_CATALOG_PROMPT}
+- assertNotVisible: ${MATRIX_SELECTOR_LOAD_LESSONS}
+- assertNotVisible: ${MATRIX_SELECTOR_ARENA_RESERVATIONS}
+- assertNotVisible: ${MATRIX_SELECTOR_LOADED_CATALOG}
+- assertNotVisible: ${MATRIX_SELECTOR_PREPARE}
+- assertNotVisible: ${MATRIX_SELECTOR_CONFIRM_PREPARATION}
+- assertNotVisible: ${MATRIX_SELECTOR_CONFIRM_CANCELLATION}
+- assertNotVisible: ${MATRIX_SELECTOR_TICKET_LABEL}
+- assertNotVisible: ${MATRIX_SELECTOR_TICKET_STATE}
+- assertNotVisible: ${MATRIX_SELECTOR_START}
+- assertNotVisible: ${MATRIX_SELECTOR_OPEN_SAVED}
+- assertNotVisible: ${MATRIX_SELECTOR_SYNCHRONIZE}
+- assertNotVisible: ${MATRIX_SELECTOR_RATING_PROMPT}
+- assertNotVisible: ${MATRIX_SELECTOR_RUNNER_ACTIVE}
+- assertNotVisible: ${MATRIX_SELECTOR_RECEIPT}
+- assertNotVisible: ${MATRIX_SELECTOR_RATING}
+- takeScreenshot: "03-home-after-second-system-back"
