@@ -79,6 +79,7 @@ const {
 } = require("./push-notifications");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const {createArenaService} = require("./arena-service");
+const {createArenaSeasonWorker, FUNCTION_TIMEOUT_MS: ARENA_SEASON_FUNCTION_TIMEOUT_MS} = require("./arena-season-worker");
 const {createArenaEntryRuntime} = require("./arena-entry-runtime");
 const {createArenaTicketRecovery} = require("./arena-ticket-recovery");
 const {createArenaLessonCatalog} = require("./arena-lesson-catalog");
@@ -275,6 +276,25 @@ const arenaService = createArenaService({
   },
 });
 
+const arenaSeasonWorker = createArenaSeasonWorker({
+  db, advanceFinalization: (execution) => arenaService.advanceSeasonFinalizationForQuarter(execution),
+  log: (record) => logger.warn("Arena season sweep", record),
+});
+
+// A scheduler owns progress; the callable below can only reserve a season and read its small
+// redacted status projection. It cannot choose a job ID, page, lease, cursor, or server clock.
+exports.reconcileArenaSeasonFinalizations = onSchedule({...FUNCTION_OPTIONS,
+  schedule: "every 1 minutes", timeZone: "UTC", timeoutSeconds: ARENA_SEASON_FUNCTION_TIMEOUT_MS / 1000,
+  memory: "512MiB", maxInstances: 1, retryCount: 0,
+}, async () => {
+  const result = await arenaSeasonWorker.sweep();
+  logger.info("Arena season sweep completed", {
+    status: result.status, attempted: result.attempted, advanceCalls: result.advanceCalls, failed: result.failed,
+    terminal: result.terminal, queryCount: result.queryCount, wrapped: result.wrapped,
+    leaseReleased: result.leaseReleased,
+  });
+});
+
 async function isArenaCurator(transaction, uid) {
   const snapshot = await transaction.get(db.doc(`profiles/${uid}`));
   const profile = snapshot.exists ? snapshot.data() || {} : {};
@@ -431,16 +451,23 @@ async function callArenaEntry(method, request) {
 exports.setLessonPlacement = onCall(CALLABLE_OPTIONS, (request) => callArenaService("transitionLesson", request));
 exports.rateArenaLesson = onCall(CALLABLE_OPTIONS, (request) => callArenaService("submitLessonRating", request));
 exports.finalizeArenaSeason = onCall(CALLABLE_OPTIONS, (request) => callArenaService("finalizeSeason", request));
+exports.getArenaSeasonFinalizationStatus = onCall(CALLABLE_OPTIONS, (request) =>
+  callArenaService("getSeasonFinalizationStatus", request));
 
 async function callArenaService(method, request) {
   const uid = requireAuthUid(request);
   try {
     return await arenaService[method]({...request.data, uid});
   } catch (error) {
-    if (error.code === "INVALID_ARGUMENT") throw new HttpsError("invalid-argument", error.message);
-    if (error.code === "MUTATION_REUSE") throw new HttpsError("already-exists", error.message);
-    if (error.code === "SETTLEMENT_PENDING") throw new HttpsError("unavailable", error.message);
-    throw error;
+    const reason = typeof error?.code === "string" && /^[A-Z][A-Z_]{0,63}$/.test(error.code) ? error.code : "SERVER_FAILURE";
+    const code = reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+      reason === "CURATOR_REQUIRED" ? "permission-denied" :
+      reason === "MUTATION_REUSE" ? "already-exists" :
+      reason === "SETTLEMENT_PENDING" || reason === "UNAVAILABLE" ? "unavailable" :
+      reason === "SEASON_NOT_FOUND" ? "not-found" :
+      reason === "SERVER_FAILURE" ? "internal" : "failed-precondition";
+    if (code === "internal" || code === "unavailable") logger.warn("Arena operation needs retry or repair", {reason});
+    throw new HttpsError(code, "Arena operation could not be completed", {reason});
   }
 }
 

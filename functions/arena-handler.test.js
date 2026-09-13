@@ -118,7 +118,12 @@ test("box award and public placement rollback together after a failed commit", a
   store.reset(world()); await move("arena", "a");
   const before = structuredClone([...store.documents]);
   store.fail = (kind, path) => kind === "commit" && path === "users/author" ? "commit lost" : null;
-  await assert.rejects(move("tournament", "t"), /commit lost/);
+  await assert.rejects(move("tournament", "t"), error => {
+    assert.equal(error.code, "internal");
+    assert.equal(error.message, "Arena operation could not be completed");
+    assert.doesNotMatch(error.message, /commit lost/);
+    return true;
+  });
   assert.deepEqual(structuredClone([...store.documents]), before);
   store.fail = null;
   await move("tournament", "t");

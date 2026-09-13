@@ -95,9 +95,14 @@ service cloud.firestore {
       match /votes/{voteId} { allow read, write: if false; }
     }
     match /arena_mutations/{document=**} { allow read, write: if false; }
+    // Pending long-running mutation reservations and the scheduler cursor are as private as the
+    // immutable receipts they protect. A direct client write could otherwise pre-claim a season
+    // finalization; a direct read would expose another curator's operational state.
+    match /arena_mutation_reservations/{document=**} { allow read, write: if false; }
     match /arena_awards/{document=**} { allow read, write: if false; }
     match /arena_seasons/{document=**} { allow read, write: if false; }
     match /arena_season_votes/{document=**} { allow read, write: if false; }
+    match /arena_season_worker_state/{document=**} { allow read, write: if false; }
     match /box_operations/{document=**} { allow read, write: if false; }
     match /arena_entry_tickets/{document=**} { allow read, write: if false; }
     match /arena_ticket_quotas/{document=**} { allow read, write: if false; }

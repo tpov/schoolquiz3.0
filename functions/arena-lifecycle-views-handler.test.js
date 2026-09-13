@@ -61,10 +61,11 @@ const ENDPOINTS = Object.freeze([
   "listMyArenaRoyalty",
   "listMyQuestReviewSubmissions",
 ]);
-// SHA-256 of JSON.stringify(sorted pre-TZ06B index.js export names).  Keeping the previous
-// surface frozen catches an accidental deletion or an unrelated new callable, unlike comparing
-// this module to itself when SOURCE defaults to __dirname.
-const PRE_TZ06B_EXPORT_SET_SHA256 = "549bbaf4ad600e72d261ce79b78a38f06c8ff569135ff118de7a8307b1e2e0f0";
+// SHA-256 of JSON.stringify(sorted accepted non-lifecycle index.js export names).  The snapshot
+// includes the explicitly reviewed Arena season finalization callables and its scheduler. Keeping
+// it frozen catches an accidental deletion or unrelated new callable, unlike comparing this
+// module to itself when SOURCE defaults to __dirname.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "c6582f3aca2e920a58d871da0ff611a60054351638b4801aa186aa251785b029";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
@@ -208,10 +209,10 @@ function assertNoRawReviewRequest(value) {
   }
 }
 
-test("TZ06B adds exactly the frozen lifecycle callable surface and preserves existing callables", () => {
+test("TZ06B lifecycle readers preserve the accepted callable surface", () => {
   const actual = Object.keys(functions).sort();
   assert.deepEqual(actual.filter(name => ENDPOINTS.includes(name)), [...ENDPOINTS].sort());
-  assert.equal(exportSetHash(actual.filter(name => !ENDPOINTS.includes(name))), PRE_TZ06B_EXPORT_SET_SHA256);
+  assert.equal(exportSetHash(actual.filter(name => !ENDPOINTS.includes(name))), ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256);
   for (const endpoint of ENDPOINTS) assert.equal(typeof functions[endpoint], "function", endpoint);
   for (const endpoint of ["listArenaLessons", "prepareArenaEntry", "setLessonPlacement", "rateArenaLesson",
     "fetchArenaEntryTicketStatus", "submitCourseTournamentOperation"]) {
