@@ -16,14 +16,15 @@ const MAX_FILE_BYTES = 64 * 1024 * 1024;
 const MAX_AUTH_PREFS_BYTES = 1024 * 1024;
 
 class PreparationPreflightError extends Error {
-  constructor(code, message = code) {
+  constructor(code, message = code, details = null) {
     super(message);
     this.code = code;
+    this.details = details;
   }
 }
 
-function fail(code, message) {
-  throw new PreparationPreflightError(code, message);
+function fail(code, message, details) {
+  throw new PreparationPreflightError(code, message, details);
 }
 
 function sha256(value) {
@@ -143,7 +144,14 @@ function authPreferenceValue(xml) {
 function jwtPayload(token) {
   if (typeof token !== "string" || token.length < 16 || token.length > 32_768) fail("AUTH_PREFS_INVALID", "cached access token is invalid");
   const parts = token.split(".");
-  if (parts.length !== 3 || parts.some((part) => !/^[A-Za-z0-9_-]+$/.test(part))) fail("AUTH_PREFS_INVALID", "cached access token is not a JWT");
+  // Firebase Auth Emulator stores an unsigned JWT as `header.payload.`.  This reader never uses
+  // it to authenticate a request; it only cross-checks the persisted Firebase user against its
+  // own cached claims.  Keep both nonempty segments base64url and accept an empty third segment
+  // only for that emulator representation.
+  if (parts.length !== 3 || !/^[A-Za-z0-9_-]+$/.test(parts[0]) || !/^[A-Za-z0-9_-]+$/.test(parts[1]) ||
+      (parts[2] !== "" && !/^[A-Za-z0-9_-]+$/.test(parts[2]))) {
+    fail("AUTH_PREFS_INVALID", "cached access token is not a supported JWT representation");
+  }
   let payload;
   try {
     payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
@@ -261,7 +269,7 @@ function assertQuiescent(rows) {
     orphanedRatingIntents: requireCount(rows.orphanedRatings, "orphaned rating intent"),
   };
   if (Object.values(quiescence).some((value) => value !== 0)) {
-    fail("PREPARATION_NOT_QUIESCENT", "the stopped app has unresolved financial state; recovery is required before prepare");
+    fail("PREPARATION_NOT_QUIESCENT", "the stopped app has unresolved financial state; recovery is required before prepare", {quiescence});
   }
   return quiescence;
 }
@@ -297,7 +305,28 @@ function main(argv = process.argv.slice(2)) {
     process.stdout.write(usage() + "\n");
     return;
   }
-  process.stdout.write(JSON.stringify(readPreparationPreflight(context)) + "\n");
+  try {
+    process.stdout.write(JSON.stringify(readPreparationPreflight(context)) + "\n");
+  } catch (error) {
+    if (error instanceof PreparationPreflightError) error.context = context;
+    throw error;
+  }
+}
+
+function blockedResult(error) {
+  const context = error?.context;
+  const quiescence = error?.details?.quiescence;
+  if (!(error instanceof PreparationPreflightError) || error.code !== "PREPARATION_NOT_QUIESCENT" ||
+      !context || !quiescence || typeof quiescence !== "object" || Array.isArray(quiescence)) return null;
+  return {
+    status: "BLOCKED",
+    readerVersion: VERSION,
+    runId: context.runId,
+    ownerUidSha256: sha256(context.ownerUid),
+    accountRefSha256: sha256(context.accountRef),
+    quiescence,
+    documentWrites: 0,
+  };
 }
 
 if (require.main === module) {
@@ -305,6 +334,8 @@ if (require.main === module) {
     main();
   } catch (error) {
     const code = error instanceof PreparationPreflightError ? error.code : "UNEXPECTED";
+    const blocked = blockedResult(error);
+    if (blocked) process.stdout.write(JSON.stringify(blocked) + "\n");
     process.stderr.write("arena preparation preflight: " + code + "\n");
     process.exitCode = 2;
   }
@@ -319,4 +350,5 @@ module.exports = {
   assertPersistedCurrentUser,
   assertQuiescent,
   readPreparationPreflight,
+  blockedResult,
 };

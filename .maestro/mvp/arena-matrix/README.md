@@ -215,7 +215,14 @@ identity, proves that the persisted Firebase user and refreshable token bind the
 and rejects any outbox row, unresolved Arena command, reserved ticket, or orphaned submit/rating
 intent. It writes only hashes and counts; raw Room and Auth copies are removed before the leaf
 continues. This prevents a silent anonymous account from turning a financial run into a different
-test.
+test. Firebase Auth Emulator's persisted unsigned `header.payload.` token form is accepted only
+for this local consistency check; the reader still requires its `sub` and `user_id` claims to
+match the persisted Firebase user and the requested owner.
+
+If the stopped app instead has a prior pending financial operation, the reader exits nonzero and
+emits a redacted `BLOCKED` record with only the five quiescence counts and owner/account hashes.
+The leaves reject it exactly as they reject any other failed preflight; the record is for selecting
+the existing recovery path, never permission to create another ticket.
 
 The launcher seals the APK, context, selector map, readers, guard, leaf and all five flows into an
 immutable input-lock file. The leaves rehash each input immediately before use and also require

@@ -9,6 +9,7 @@ const {
   PreparationPreflightError,
   ROOM_SCHEMA_IDENTITY_HASH,
   ROOM_SCHEMA_VERSION,
+  blockedResult,
   readPreparationPreflight,
 } = require("./arena-e2e-preparation-preflight-reader");
 
@@ -18,16 +19,16 @@ function ownerHash() {
   return createHash("sha256").update(OWNER).digest("hex");
 }
 
-function token(owner) {
+function token(owner, {unsigned = false} = {}) {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
-  return [encode({alg: "none"}), encode({sub: owner, user_id: owner}), "signature"].join(".");
+  return [encode({alg: "none"}), encode({sub: owner, user_id: owner}), unsigned ? "" : "signature"].join(".");
 }
 
-function authXml(owner) {
+function authXml(owner, options = {}) {
   const cached = {
     type: "com.google.firebase.auth.internal.DefaultFirebaseUser",
     userInfos: [JSON.stringify({userId: owner})],
-    cachedTokenState: JSON.stringify({access_token: token(owner), refresh_token: "refresh-token-for-test"}),
+    cachedTokenState: JSON.stringify({access_token: token(owner, options), refresh_token: "refresh-token-for-test"}),
   };
   return "<?xml version=\"1.0\"?><map><string name=\"com.google.firebase.auth.FIREBASE_USER\">" +
     JSON.stringify(cached).replace(/"/g, "&quot;") + "</string></map>";
@@ -91,6 +92,16 @@ function testRejectsDifferentPersistedOwnerBeforeRoomResult() {
   }
 }
 
+function testAcceptsFirebaseEmulatorUnsignedJwt() {
+  const value = fixture({authOwner: OWNER});
+  try {
+    fs.writeFileSync(value.context.authPrefs, authXml(OWNER, {unsigned: true}));
+    assert.equal(readPreparationPreflight(value.context, value.adapter).status, "PASS");
+  } finally {
+    value.dispose();
+  }
+}
+
 function testRejectsCachedIdentityWithoutRefreshCredential() {
   const value = fixture();
   try {
@@ -118,8 +129,33 @@ function testRejectsAnyUnresolvedFinancialState() {
   }
 }
 
+function testRedactsBlockedQuiescenceForARecoveryOperator() {
+  const value = fixture({queryRows: rows({reservedTickets: {count: 2}, commands: {count: 3}})});
+  try {
+    let error;
+    try { readPreparationPreflight(value.context, value.adapter); } catch (caught) { error = caught; }
+    assert.ok(error instanceof PreparationPreflightError);
+    error.context = value.context;
+    const blocked = blockedResult(error);
+    assert.equal(blocked.status, "BLOCKED");
+    assert.deepEqual(blocked.quiescence, {
+      outboxRows: 0,
+      unresolvedArenaCommands: 3,
+      reservedArenaTickets: 2,
+      orphanedSubmitIntents: 0,
+      orphanedRatingIntents: 0,
+    });
+    assert.equal(JSON.stringify(blocked).includes(OWNER), false);
+    assert.equal(blockedResult(new Error("not a preflight error")), null);
+  } finally {
+    value.dispose();
+  }
+}
+
 testAcceptsExactPersistedOwnerAndQuiescentRoom();
 testRejectsDifferentPersistedOwnerBeforeRoomResult();
+testAcceptsFirebaseEmulatorUnsignedJwt();
 testRejectsCachedIdentityWithoutRefreshCredential();
 testRejectsAnyUnresolvedFinancialState();
+testRedactsBlockedQuiescenceForARecoveryOperator();
 console.log("arena preparation preflight reader tests: PASS");
