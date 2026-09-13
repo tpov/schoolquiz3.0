@@ -27,7 +27,7 @@ assert.equal(process.env.AC_PRIVATE_NETWORK_VERIFIED, "schoolquiz-mvp-private");
 assert.equal(sha(readFileSync(__filename)), process.env.AC_EXPECTED_SCRIPT_SHA256);
 
 const EXPECTED_SOURCE = Object.freeze({
-  "functions/index.js": "7cad5bd6cb8b1d648112b063c67c418b8ff2464ada89a733fbfcf562882416ec",
+  "functions/index.js": "8ec51d2758be233929c33883af81e42e889977549d304f95d036243961f68910",
   "functions/arena-entry-runtime.js": "2b755cb990a68d8e66fdd183736aa9b1b261fa7e4c99371e686bd42740fe1053",
   "functions/arena-tickets.js": "0d76d7f551a40c278b24014ab42834d94e9d03ba3ca7a005bd712396f200331f",
   "functions/arena-lesson-catalog.js": "ab1bd8754fd822c321ad50844af64b419b41a3e36cb25a6523da4f35b339f8a5",
