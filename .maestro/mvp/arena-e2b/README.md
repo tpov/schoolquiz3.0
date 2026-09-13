@@ -49,9 +49,87 @@ post-oracle evidence hashes are identical and report zero writes; the target
 changes only from local `RESERVED`/`SETTLE:PENDING` to
 `SETTLED`/`SETTLE:ACKNOWLEDGED`; the exact local receipt count is unchanged;
 other tickets, commands, receipts, outbox rows, intents, and stats are
-unchanged; and the app is stopped afterwards. Any server mismatch, unknown
-terminal timestamp, or unexpected local change leaves the record quarantined
-and stops the workflow.
+unchanged; and the app is stopped afterwards. Any unexplained server mismatch,
+unknown terminal timestamp, or unexpected local change leaves the record
+quarantined and stops the workflow.
+
+### Pinned pre-fix clock incident (not acceptance)
+
+`scripts/arena-e2e-legacy-settlement.js` is a separate, operator-only path for
+an individually audited incident predating `8dc782ea`. That defect sampled
+the clock twice in the same settlement transaction. It does not authorize
+changing either stored timestamp or resubmitting a settlement.
+
+The operator supplies a private incident file with schemaVersion `1`, kind
+`PRE_CANONICAL_SETTLEMENT_CLOCK`, incidentId, full fixCommit, ownerSha256,
+ticketSha256, attemptSha256, exact terminalSettledAtMs/eventSettledAtMs, and
+serverEvidenceSha256. The last field is the reviewed `serverDigest` of the
+original ticket, event, completed mutation key and exact bounded ledger rows.
+The executable additionally pins the reviewed e499 server evidence SHA-256 in
+source; a supplied incident file cannot authorize a different snapshot.
+There is no timestamp tolerance and no wildcard incident. The diagnostic
+also requires a stopped Room v14 snapshot: one matching saved request, one
+local receipt identical to the event response, the original request hashes,
+and no outbox delivery under that mutation ID. All other strict identity,
+score, frozen price, conservation and ledger checks remain mandatory.
+
+Invoke only against the private demo emulator. Both the reader's validated environment
+and the actual Node process environment must name that endpoint; Firebase Admin does
+not inherit an arbitrary environment object passed to a JavaScript function. Unset
+`GOOGLE_APPLICATION_CREDENTIALS` and `FIREBASE_CONFIG` (do not assign empty strings):
+
+```
+GCLOUD_PROJECT=demo-schoolquiz-mvp FIRESTORE_EMULATOR_HOST=schoolquiz-mvp-firebase:8080 node scripts/arena-e2e-legacy-settlement.js --context private-context.json --incident reviewed-incident.json --db stopped-copy.db
+```
+
+`LEGACY_RECOVERY_ELIGIBLE` permits only the same exact-ticket read/recovery
+flow above, with before/after snapshots and unchanged serverEvidenceSha256.
+The post-snapshot must show `RECONCILED`; separately compare all unrelated
+rows, which this one-ticket reader intentionally does not inspect. This is
+not `PASS`: freshAcceptance stays `FAIL`, and the strict settlement and
+two-receipt oracles must continue to reject the historical timestamp pair.
+The first new acceptance run must use its own fresh ticket and exact current
+receipts. A missing/changed pin, pending sender, other discrepancy, or absent
+mutation key remains blocked for separate investigation.
+
+`run-arena-legacy-recovery.js` is the one-shot wrapper for the reviewed
+`arena-clock-e499-20260912` incident on retained device B (`172.17.0.5:5555`).
+Before using it, verify the installed C1+C3 APK checksum against the candidate
+registry; never install, clear application state or manufacture a replacement
+context for recovery. Supply private `--context`, `--incident`, `--selectors`,
+and `--output-root` paths, plus explicit `--adb` and `--maestro` executable paths.
+The actual process must have the emulator environment above. `--help` lists the
+exact command shape; `--inspect <run-directory>` is read-only and does not retry.
+
+Selectors are literal observed UI labels. The selector file contains
+`E2B_SELECTOR_INTERNET`, `E2B_SELECTOR_ARENA_TITLE`,
+`E2B_SELECTOR_SHOW_LOCAL_TICKETS`, `E2B_SELECTOR_TICKET_LABEL_TEMPLATE` (exactly one
+`{{ticketId}}` placeholder), `E2B_SELECTOR_RECOVER_TICKET`, and
+`E2B_SELECTOR_TERMINAL_TICKET`. The public CLI cannot override the shared device
+lock, database snapshot path, target owner/ticket/attempt or reviewed evidence pin.
+
+The wrapper holds the existing per-device lock through all stops, snapshots,
+UI work and failure diagnostics. It retains stopped DB/WAL/SHM/Auth copies under
+private 0700/0600 directories, uses a bounded UI flow, and never submits a mutation.
+Successful recovery requires equal server evidence, equal current payer/author/
+premium-header/royalty-account hashes, unchanged Auth bytes and a full Room row
+comparison. Only the target ticket's terminal observation, target SETTLE command
+acknowledgement and the already-reviewed profile timestamps may change. Monetary
+fields, unrelated rows, receipts and intent bodies must remain unchanged.
+
+The outcome is `RECOVERY_RECONCILED`, **not** a new E2B PASS. An interrupted UI
+run receives one diagnostic stopped snapshot and `REQUIRES_REVIEW`; there is no
+automatic UI retry or rollback. A blocked precheck never proceeds to the flow.
+
+The pinned incident was executed once on 2026-09-13 and is now locally
+`RECONCILED`; **do not run the recovery flow again**. The original wrapper result
+remains `REQUIRES_REVIEW / SERVER_ECONOMY_CHANGED`, not automated success. A
+separate read-only review reconstructed the exact pre-run five-document hash:
+only the player's three profile clocks and premium header clock advanced. Full
+Room comparison passed; retained Auth differences were same-owner token/cache
+refresh only. See `docs/agents/2026-09-13-arena-legacy-recovery.md` for evidence,
+the explicit review limitations, and all preceding blocked invocations. This
+does not relax the wrapper's comparisons or the fresh acceptance oracle.
 
 ## Inputs
 
