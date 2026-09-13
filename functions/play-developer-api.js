@@ -112,6 +112,60 @@ function productPurchaseByTokenUrl(packageName, purchaseToken) {
 }
 
 /**
+ * Normalizes the one line-item form of ProductPurchaseV2 needed for a quantity refund.
+ *
+ * A voided RTDN tells us that something changed, but deliberately does not name the quantity.
+ * ProductPurchaseV2 is the authoritative source for both the original and still-refundable
+ * quantities.  This reader is intentionally narrower than the API object: bundles / multiple
+ * line items and an absent or malformed offer are not a safe basis for changing money, so callers
+ * receive null and keep the notification retryable instead of guessing.
+ *
+ * `refundableQuantity` is allowed to be zero: the API documents it as the number not refunded,
+ * so zero is meaningful for a fully refunded multi-quantity purchase.  The partial-refund path
+ * decides whether zero agrees with the RTDN type; this reader only preserves the fact exactly.
+ */
+function readProductPurchaseV2(apiJson) {
+  if (!isObject(apiJson) || !Array.isArray(apiJson.productLineItem) || apiJson.productLineItem.length !== 1) {
+    return null;
+  }
+  const line = apiJson.productLineItem[0];
+  if (!isObject(line) || !isObject(line.productOfferDetails)) return null;
+  const offer = line.productOfferDetails;
+  const quantity = positiveSafeIntOrNull(offer.quantity);
+  const refundableQuantity = nonNegativeSafeIntOrNull(offer.refundableQuantity);
+  if (!text(line.productId) || quantity === null || refundableQuantity === null) return null;
+  return {
+    productId: line.productId,
+    orderId: text(apiJson.orderId) ? apiJson.orderId : "",
+    purchaseState: text(apiJson.purchaseStateContext && apiJson.purchaseStateContext.purchaseState) ?
+      apiJson.purchaseStateContext.purchaseState : "",
+    obfuscatedExternalAccountId: text(apiJson.obfuscatedExternalAccountId) ?
+      apiJson.obfuscatedExternalAccountId : "",
+    quantity,
+    refundableQuantity,
+  };
+}
+
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function text(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
+function nonNegativeSafeIntOrNull(value) {
+  if (typeof value === "boolean" || value === "" || value === null || value === undefined) return null;
+  const parsed = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value;
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function positiveSafeIntOrNull(value) {
+  const parsed = nonNegativeSafeIntOrNull(value);
+  return parsed !== null && parsed >= 1 ? parsed : null;
+}
+
+/**
  * Исход по ошибке запроса. 404 и 400 с причиной о токене — не знает; всё остальное — не ответ о
  * токене, а повод повторить. 401/403 — тоже повтор, но обвязка пишет их ошибкой: это не токен
  * виноват, а доступ сервисного аккаунта.
@@ -153,4 +207,5 @@ module.exports = {
   createPlayDeveloperApi,
   productPurchaseUrl,
   productPurchaseByTokenUrl,
+  readProductPurchaseV2,
 };

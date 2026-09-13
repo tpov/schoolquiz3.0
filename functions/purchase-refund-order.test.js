@@ -154,7 +154,6 @@ for (const hasSettlement of [false, true]) {
 const invalidSignals = [
   ["another package", {packageName: "com.other.app"}],
   ["subscription", {voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 1, refundType: 1, orderId: "GPA.fixture-order"}}],
-  ["partial refund", {voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 2, refundType: 2, orderId: "GPA.fixture-order"}}],
   ["unknown refund type", {voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 2, refundType: 3, orderId: "GPA.fixture-order"}}],
   ["missing product type", {voidedPurchaseNotification: {purchaseToken: TOKEN, refundType: 1, orderId: "GPA.fixture-order"}}],
   ["missing order", {voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 2, refundType: 1}}],

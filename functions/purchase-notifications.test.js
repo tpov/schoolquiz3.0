@@ -6,6 +6,7 @@ const path = require("path");
 const {
   AUDIT_ACTION_PURCHASE_REFUND,
   CLAWBACK_ALREADY_REFUNDED,
+  CLAWBACK_ALREADY_RECONCILED,
   CLAWBACK_CLAW_BACK,
   CLAWBACK_NOTHING_TO_TAKE,
   CLAWBACK_PLAY_DISAGREES,
@@ -17,6 +18,7 @@ const {
   RECEIPT_KIND_PURCHASE_REFUNDED,
   RECEIPT_MESSAGE_GOLD_PACK_REFUNDED,
   decideClawback,
+  decidePartialClawback,
   decodeNotification,
   notificationKind,
   notificationRecord,
@@ -210,7 +212,15 @@ function testAVoidConfirmedByPlayTakesBackWhatTheSettlementSaysWasGranted() {
     sku: SKU,
     orderId: "GPA.3333-4444-5555-66666",
     goldGranted: 60,
+    goldToClawBack: 60,
     quantity: 1,
+    purchaseQuantity: 1,
+    grantedQuantity: 1,
+    priorRefundedQuantity: 0,
+    refundedQuantity: 1,
+    refundQuantity: 1,
+    refundableQuantity: 0,
+    refundDocQuantity: undefined,
     goldPerUnit: 60,
     creditedConstantsVersion: 7,
     isTest: false,
@@ -250,6 +260,10 @@ function testTheRecordsOfARefundNameWhatTheAuditNeeds() {
   assert.strictEqual(update.goldTakenBack, 60);
   assert.strictEqual(update.shortfallAdded, 0);
   assert.strictEqual(update.refundNotificationId, MESSAGE_ID);
+  assert.strictEqual(update.lastRefundNotificationId, MESSAGE_ID);
+  assert.strictEqual(update.refundedQuantity, 1);
+  assert.strictEqual(update.lastObservedRefundableQuantity, 0);
+  assert.strictEqual(update.refundRevision, 0);
   assert.strictEqual(update.refundedAtMs, NOW);
   assert.strictEqual(update.goldGranted, undefined, "суммы начисления запись не переписывает");
   assert.strictEqual(update.uid, undefined);
@@ -262,7 +276,7 @@ function testTheRecordsOfARefundNameWhatTheAuditNeeds() {
   assert.strictEqual(receipt.kind, RECEIPT_KIND_PURCHASE_REFUNDED);
   assert.strictEqual(receipt.messageKey, RECEIPT_MESSAGE_GOLD_PACK_REFUNDED);
   assert.strictEqual(receipt.amount, -60, "движение отрицательное — его и было");
-  assert.deepStrictEqual(receipt.params, {sku: SKU, gold: 60, shortfall: 0});
+  assert.deepStrictEqual(receipt.params, {sku: SKU, gold: 60, shortfall: 0, refundQuantity: 1, refundedQuantity: 1});
   assert.strictEqual(receipt.uid, UID);
   assert.strictEqual(JSON.stringify(receipt).includes(TOKEN), false, "сырого токена в квитанции нет");
 
@@ -274,6 +288,9 @@ function testTheRecordsOfARefundNameWhatTheAuditNeeds() {
   assert.strictEqual(audit.constantsVersion, 9);
   assert.strictEqual(audit.creditedConstantsVersion, 7);
   assert.strictEqual(audit.goldGranted, 60);
+  assert.strictEqual(audit.purchaseQuantity, 1);
+  assert.strictEqual(audit.refundQuantity, 1);
+  assert.strictEqual(audit.refundedQuantity, 1);
   assert.strictEqual(audit.goldTakenBack, 60);
   assert.strictEqual(audit.goldBefore, 200);
   assert.strictEqual(audit.goldAfter, 140);
@@ -286,6 +303,39 @@ function testTheRecordsOfARefundNameWhatTheAuditNeeds() {
   assert.strictEqual(spent.shortfallAdded, 40);
   assert.strictEqual(spent.shortfallAfter, 40);
   assert.strictEqual(refundReceiptRecord({...taken, goldBefore: 20, goldAfter: 0, shortfallAdded: 40}).params.shortfall, 40);
+}
+
+function testPartialDecisionUsesOnlyTheV2CumulativeQuantity() {
+  const current = settlement({
+    schemaVersion: 2,
+    quantity: 5,
+    purchaseQuantity: 5,
+    grantedQuantity: 5,
+    refundedQuantity: 2,
+    lastObservedRefundableQuantity: 3,
+    refundRevision: 1,
+    goldPerUnit: 60,
+    goldGranted: 300,
+  });
+  const partial = decidePartialClawback({
+    settlement: current,
+    uid: UID,
+    now: NOW,
+    refundProof: {purchaseQuantity: 5, refundedQuantity: 3},
+  });
+  assert.strictEqual(partial.decision, CLAWBACK_CLAW_BACK);
+  assert.strictEqual(partial.clawback.goldToClawBack, 60);
+  assert.strictEqual(partial.clawback.refundDocQuantity, 3);
+  assert.strictEqual(
+    decidePartialClawback({settlement: current, uid: UID, now: NOW,
+      refundProof: {purchaseQuantity: 5, refundedQuantity: 2}}).decision,
+    CLAWBACK_ALREADY_RECONCILED,
+  );
+  assert.strictEqual(
+    decidePartialClawback({settlement: current, uid: UID, now: NOW,
+      refundProof: {purchaseQuantity: 5, refundedQuantity: 1}}).decision,
+    CLAWBACK_PLAY_DISAGREES,
+  );
 }
 
 function testTheRecordOfAMessageSaysWhatArrivedAndHowItEnded() {
@@ -353,6 +403,7 @@ testASettlementAlreadyRefundedIsNotRefundedTwice();
 testNothingIsTakenBackWhilePlayStillCallsThePurchaseBought();
 testAVoidConfirmedByPlayTakesBackWhatTheSettlementSaysWasGranted();
 testTheRecordsOfARefundNameWhatTheAuditNeeds();
+testPartialDecisionUsesOnlyTheV2CumulativeQuantity();
 testTheRecordOfAMessageSaysWhatArrivedAndHowItEnded();
 testTheTriggerIsWiredTheWayTheSpecSays();
 testTheCollectionIsTheOneTheRulesClose();

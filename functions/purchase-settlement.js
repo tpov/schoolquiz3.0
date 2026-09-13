@@ -18,12 +18,15 @@ const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constan
 const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
 const {SOURCE} = require("./premium-grants");
 const {PURCHASE_REVOCATIONS_COLLECTION, SETTLEMENT_REVOCATION_PENDING,
-  readRevocationFence, revocationSettlementGate} = require("./purchase-revocations");
+  readRevocationFence, revocationSettlementGate, partialRefundGrantAdjustment,
+  multiQuantityGrantProofFromV2} = require("./purchase-revocations");
 const {PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
 const {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
   PRODUCT_PREMIUM,
+  PURCHASE_STATE_PURCHASED,
+  REASON_PURCHASE_CANCELED,
   REASON_REQUEST_INVALID,
   REASON_SKU_NOT_SOLD,
   RECEIPTS_SUBCOLLECTION,
@@ -120,8 +123,57 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
     return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Play could not be reached; retry later"};
   }
 
-  const userRef = db.collection("users").doc(uid);
   const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
+  // A new multi-quantity gold grant must additionally agree with ProductPurchaseV2.  We first
+  // exclude pending/cancelled/unsold/premium paths with the same pure decision used in the
+  // transaction, so Premium q>1 remains an explicit unsupported refusal rather than a V2 outage.
+  let multiQuantityProof = null;
+  if (purchase && purchase.purchaseState === PURCHASE_STATE_PURCHASED && purchase.quantity > 1) {
+    let preflight;
+    try {
+      const constantsSnapshot = await constantsRef.get();
+      preflight = decideSettlement({
+        existing: null, purchase, claimedSku: sku, uid,
+        constants: readEconomyConstants(constantsSnapshot.exists ? constantsSnapshot.data() : null),
+      });
+    } catch (error) {
+      log.warn("verifyPurchase: quantity preflight could not read server constants", {
+        settlementId: id, sku, uid, message: errorMessage(error),
+      });
+      return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Purchase quantity verification unavailable; retry later"};
+    }
+    if (preflight.decision === SETTLEMENT_CREDIT && preflight.credit.productKind !== PRODUCT_PREMIUM) {
+      let v2Lookup;
+      try {
+        if (typeof playApi.getProductPurchaseByToken !== "function") {
+          return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Purchase quantity verification unavailable; retry later"};
+        }
+        v2Lookup = await playApi.getProductPurchaseByToken(purchaseToken);
+      } catch (error) {
+        log.warn("verifyPurchase: ProductPurchaseV2 quantity lookup failed", {
+          settlementId: id, sku, uid, message: errorMessage(error),
+        });
+        return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Purchase quantity verification unavailable; retry later"};
+      }
+      multiQuantityProof = multiQuantityGrantProofFromV2(v2Lookup, purchase);
+      if (!multiQuantityProof.confirmed) {
+        log.warn("verifyPurchase: ProductPurchaseV2 quantity proof is unavailable or disagrees", {
+          settlementId: id, sku, uid, outcome: field(v2Lookup, "outcome"), status: field(v2Lookup, "status"),
+        });
+        return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Purchase quantity verification unavailable; retry later"};
+      }
+      if (multiQuantityProof.refundableQuantity === 0) {
+        return outcomeOf({
+          decision: SETTLEMENT_REFUSE,
+          code: "failed-precondition",
+          reason: "Play reports no remaining refundable quantity for this purchase",
+          reasonCode: REASON_PURCHASE_CANCELED,
+        }, {id, sku, log});
+      }
+    }
+  }
+
+  const userRef = db.collection("users").doc(uid);
   let verdict;
   let catchupCheckpoints = 0;
   try {
@@ -135,7 +187,27 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
       const fenced = revocationSettlementGate({fence: freshFence, existing, uid});
       if (fenced) return fenced;
       const constants = readEconomyConstants(constantsSnapshot.exists ? constantsSnapshot.data() : null);
-      const decision = decideSettlement({existing, purchase, claimedSku: sku, uid, constants});
+      // Pure V1 rules (state, readable positive quantity, SKU and Premium q=1) must decide
+      // before a grant-only adjustment.  Otherwise a cancelled/zero-quantity purchase would
+      // become a retryable provenance error instead of its established terminal refusal.
+      let decision = decideSettlement({existing, purchase, claimedSku: sku, uid, constants});
+      if (decision.decision !== SETTLEMENT_CREDIT) return decision;
+      const multiGold = decision.credit.productKind !== PRODUCT_PREMIUM && purchase && purchase.quantity > 1;
+      if (multiGold && (!multiQuantityProof || multiQuantityProof.confirmed !== true)) {
+        // Config can change between the non-transactional V2 preflight and this authoritative
+        // transaction.  A newly enabled multi-quantity SKU never receives the V1 amount without
+        // its matching V2 proof; retry performs the required lookup under the new configuration.
+        throw new Error("Multi-quantity grant requires matching ProductPurchaseV2 proof; retry later");
+      }
+      const adjustment = partialRefundGrantAdjustment({
+        fence: freshFence, purchase, uid, grantProof: multiGold ? multiQuantityProof : null,
+      });
+      if (!adjustment.valid) {
+        throw new Error("Partial refund provenance disagrees with purchase; repair required");
+      }
+      decision = decideSettlement({
+        existing, purchase, claimedSku: sku, uid, constants, creditedQuantity: adjustment.quantity,
+      });
       if (decision.decision !== SETTLEMENT_CREDIT) return decision;
 
       const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
@@ -157,7 +229,7 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
         });
         const settled = {
           id, uid, purchase, credit: decision.credit, goldBefore: gold, goldAfter: gold,
-          constantsDoc: ECONOMY_CONSTANTS_DOC, now: plan.header.asOfMs, ...premium,
+          constantsDoc: ECONOMY_CONSTANTS_DOC, now: plan.header.asOfMs, partialRefund: adjustment.partial, ...premium,
         };
         transaction.create(settlementRef, settlementRecord({...settled, response}));
         transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(id), receiptRecord(settled));
@@ -177,7 +249,7 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
       });
       const settled = {
         id, uid, purchase, credit: decision.credit, goldBefore, goldAfter,
-        constantsDoc: ECONOMY_CONSTANTS_DOC, now,
+        constantsDoc: ECONOMY_CONSTANTS_DOC, now, partialRefund: adjustment.partial,
       };
       transaction.set(
         userRef,

@@ -24,9 +24,9 @@ const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger"
 const {ACCESS_REFUSED_HINT} = require("./purchase-settlement");
 const {PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES, premiumGrantId, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
 const {SOURCE, durationMsForDays} = require("./premium-grants");
-const {PURCHASE_REVOCATIONS_COLLECTION, REVOCATION_CONFIRMED, revocationSignal,
-  readRevocationFence, pendingRevocation, confirmedRevocation,
-  cancellationProofFromV1, cancellationProofFromV2} = require("./purchase-revocations");
+const {PURCHASE_REVOCATIONS_COLLECTION, REVOCATION_CONFIRMED, REVOCATION_PARTIAL, revocationSignal,
+  readRevocationFence, pendingRevocation, confirmedRevocation, partiallyConfirmedRevocation,
+  cancellationProofFromV1, cancellationProofFromV2, partialRefundProofFromV2} = require("./purchase-revocations");
 const {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
@@ -41,12 +41,14 @@ const {
 } = require("./purchase-verification");
 const {
   CLAWBACK_CLAW_BACK,
+  CLAWBACK_ALREADY_RECONCILED,
   CLAWBACK_PLAY_DISAGREES,
   CLAWBACK_NOTHING_TO_TAKE,
   NOTIFICATION_UNKNOWN,
   NOTIFICATION_VOID,
   PURCHASE_NOTIFICATIONS_COLLECTION,
   decideClawback,
+  decidePartialClawback,
   decodeNotification,
   notificationKind,
   notificationRecord,
@@ -166,10 +168,17 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
           (fence.signal.sku && signal.sku && fence.signal.sku !== signal.sku))) {
         throw new Error("Revocation signal source binding disagrees; repair required");
       }
-      if (!fence) fence = pendingRevocation({id, packageName, messageId, signal, now});
+      // Every new supported signal (including a later partial one) enters the same durable
+      // pending state before we consult Play. A previous partial observation is carried forward;
+      // it is evidence, not a terminal token cancellation.
+      if (!fence || fence.state !== REVOCATION_CONFIRMED) {
+        fence = pendingRevocation({id, packageName, messageId, signal, now, previous: fence});
+      }
       if (settlement?.status === STATUS_REFUNDED) fence = confirmedRevocation(fence,
         {now, messageId, proof: "EXISTING_REFUNDED_SETTLEMENT"});
-      if (!revocation.exists || fence.state !== revocation.data().state) transaction.set(revocationRef, fence);
+      if (!revocation.exists || JSON.stringify(fence) !== JSON.stringify(revocation.data())) {
+        transaction.set(revocationRef, fence);
+      }
       return {settlement, fence};
     });
   } catch (error) {
@@ -183,6 +192,13 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
       messageId, notification, kind, result: gate.decision, settlementId: id,
       sku: settlement && settlement.sku, uid: settlement && settlement.uid,
       publishTimeMs, now, detail: gate.reason,
+    });
+  }
+
+  if (signal.kind === "ONE_TIME_PARTIAL_VOID") {
+    return reconcilePartialRefund({
+      db, playApi, now, messageId, notification, kind, publishTimeMs, readGold, log,
+      id, token, signal, packageName, settlement, settlementRef, revocationRef, notificationRef, context,
     });
   }
 
@@ -282,12 +298,13 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
         const taken = {
           clawback: decision.clawback, notificationId: messageId,
           goldBefore: gold, goldAfter: gold, shortfallAdded: 0, shortfallAfter: readShortfall(userData),
+          refundRevision: nextRefundRevision(fresh),
           premiumRevokedMs: plan.revokedNowMs, premiumConsumedMs: plan.grant.consumedMs,
           premiumUntilMs: plan.premiumUntilMs,
           constantsDoc: ECONOMY_CONSTANTS_DOC, constantsVersion: constants.version, now: plan.header.asOfMs,
         };
         transaction.set(settlementRef, refundSettlementUpdate(taken), {merge: true});
-        const refundId = refundDocId(id);
+        const refundId = refundDocId(id, decision.clawback.refundDocQuantity);
         transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(refundId), refundReceiptRecord(taken));
         transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(refundId), refundAuditRecord(taken));
         transaction.set(notificationRef, notificationRecord({
@@ -298,7 +315,7 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
       }
       const goldBefore = readGold(userData);
       const shortfallBefore = readShortfall(userData);
-      const after = goldAfterClawback(goldBefore, decision.clawback.goldGranted);
+      const after = goldAfterClawback(goldBefore, decision.clawback.goldToClawBack);
       const shortfallAfter = shortfallBefore + after.shortfall;
       const taken = {
         clawback: decision.clawback,
@@ -307,6 +324,7 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
         goldAfter: after.gold,
         shortfallAdded: after.shortfall,
         shortfallAfter,
+        refundRevision: nextRefundRevision(fresh),
         constantsDoc: ECONOMY_CONSTANTS_DOC,
         constantsVersion: constants.version,
         now,
@@ -322,7 +340,8 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
       );
       // Слиянием, а не заменой: запись о начислении — доказательство выданного, и она остаётся.
       transaction.set(settlementRef, refundSettlementUpdate(taken), {merge: true});
-      const refundId = refundDocId(id);
+      const refundId = refundDocId(id, decision.clawback.refundDocQuantity);
+      const ledgerSourceId = decision.clawback.refundDocQuantity === undefined ? id : refundId;
       transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(refundId), refundReceiptRecord(taken));
       transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(refundId), refundAuditRecord(taken));
       // Движение записывается настоящее — сколько с баланса действительно ушло, — а выданное и
@@ -333,11 +352,13 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
         currency: CURRENCY.GOLD,
         delta: after.gold - goldBefore,
         reason: REASON.PURCHASE_REFUND,
-        sourceId: id,
+        sourceId: ledgerSourceId,
         atMs: now,
         details: {
           sku: decision.clawback.sku,
           goldGranted: decision.clawback.goldGranted,
+          refundQuantity: decision.clawback.refundQuantity,
+          refundedQuantity: decision.clawback.refundedQuantity,
           shortfallAdded: after.shortfall,
           shortfallAfter,
           notificationId: messageId,
@@ -388,6 +409,155 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
       premiumUntilMs: verdict.taken.premiumUntilMs,
     } : {}),
   };
+}
+
+/**
+ * Reconciles a quantity-based partial RTDN. The RTDN does not say how many units were refunded;
+ * V2 does. The handler keeps the token fenced until it has a complete, matching V2 observation.
+ * This is intentionally separate from full cancellation: a partially refunded token can still
+ * represent unrefunded units and must not become a permanent no-credit fence.
+ */
+async function reconcilePartialRefund({
+  db, playApi, now, messageId, notification, kind, publishTimeMs, readGold, log,
+  id, token, signal, packageName, settlement, settlementRef, revocationRef, notificationRef, context,
+}) {
+  if (typeof playApi.getProductPurchaseByToken !== "function") {
+    throw new Error("Token-only Play lookup unavailable; redeliver");
+  }
+  const lookup = await playApi.getProductPurchaseByToken(token);
+  const proof = partialRefundProofFromV2(lookup, settlement, signal);
+  if (!proof.confirmed) {
+    log.warn("playPurchaseNotifications: partial refund verification pending; redeliver", {...context, settlementId: id});
+    throw new Error("Play partial refund verification pending; redeliver this notification");
+  }
+  const observation = {...proof.observation, observedAtMs: now, notificationId: messageId};
+
+  if (!settlement) {
+    await db.runTransaction(async (transaction) => {
+      const [fresh, revocation] = await transaction.getAll(settlementRef, revocationRef);
+      if (fresh.exists) throw new Error("Settlement appeared during partial refund verification; redeliver");
+      const fence = readRevocationFence(revocation.exists ? revocation.data() : null, {id, packageName});
+      if (!fence) throw new Error("Purchase revocation fence missing; repair required");
+      const freshProof = partialRefundProofFromV2(lookup, null, signal);
+      if (!freshProof.confirmed) throw new Error("Partial refund verification changed; redeliver");
+      transaction.set(revocationRef, partiallyConfirmedRevocation(fence, {now, messageId, observation}));
+      transaction.set(notificationRef, notificationRecord({
+        messageId, notification, kind, result: CLAWBACK_OUTCOME_RECORDED, settlementId: id,
+        sku: observation.sku, publishTimeMs, now,
+        detail: "Play V2 partial refund observed before credit; only remaining quantity may be granted",
+      }));
+    });
+    return {kind: CLAWBACK_OUTCOME_RECORDED};
+  }
+
+  const uid = stringValue(settlement.uid);
+  const sku = stringValue(settlement.sku);
+  const userRef = db.collection("users").doc(uid);
+  const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
+  let verdict;
+  try {
+    verdict = await db.runTransaction(async (transaction) => {
+      const [settlementSnapshot, userSnapshot, constantsSnapshot, revocationSnapshot] =
+        await transaction.getAll(settlementRef, userRef, constantsRef, revocationRef);
+      const fresh = settlementSnapshot.exists ? settlementSnapshot.data() : null;
+      const fence = readRevocationFence(revocationSnapshot.exists ? revocationSnapshot.data() : null, {id, packageName});
+      if (!fence || !fresh || fresh.uid !== uid || fresh.sku !== sku) {
+        throw new Error("Purchase owner/product changed during partial refund verification; repair required");
+      }
+      const freshProof = partialRefundProofFromV2(lookup, fresh, signal);
+      if (!freshProof.confirmed) throw new Error("Partial refund provenance changed; redeliver");
+      const freshObservation = {...freshProof.observation, observedAtMs: now, notificationId: messageId};
+      const decision = decidePartialClawback({settlement: fresh, refundProof: freshObservation, uid, now});
+      if (decision.decision === CLAWBACK_ALREADY_RECONCILED) {
+        transaction.set(revocationRef, partiallyConfirmedRevocation(fence, {now, messageId, observation: freshObservation}));
+        transaction.set(notificationRef, notificationRecord({
+          messageId, notification, kind, result: CLAWBACK_OUTCOME_RECORDED, settlementId: id, sku, uid,
+          publishTimeMs, now, detail: decision.reason,
+        }));
+        return decision;
+      }
+      if (decision.decision !== CLAWBACK_CLAW_BACK) {
+        throw new Error("Partial refund quantity provenance requires repair; redeliver");
+      }
+      if (decision.clawback.productKind === PRODUCT_PREMIUM) {
+        throw new Error("Premium multi-quantity refunds are unsupported; redeliver");
+      }
+
+      const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+      const constants = readEconomyConstants(constantsSnapshot.exists ? constantsSnapshot.data() : null);
+      const goldBefore = readGold(userData);
+      const shortfallBefore = readShortfall(userData);
+      const after = goldAfterClawback(goldBefore, decision.clawback.goldToClawBack);
+      const shortfallAfter = shortfallBefore + after.shortfall;
+      const refundRevision = nextRefundRevision(fresh);
+      const taken = {
+        clawback: decision.clawback,
+        notificationId: messageId,
+        goldBefore,
+        goldAfter: after.gold,
+        shortfallAdded: after.shortfall,
+        shortfallAfter,
+        refundRevision,
+        constantsDoc: ECONOMY_CONSTANTS_DOC,
+        constantsVersion: constants.version,
+        now,
+      };
+      const refundId = refundDocId(id, decision.clawback.refundDocQuantity);
+      transaction.set(revocationRef, partiallyConfirmedRevocation(fence, {now, messageId, observation: freshObservation}));
+      transaction.set(userRef, {uid, gold: after.gold, [SHORTFALL_FIELD]: shortfallAfter, updatedAtMs: now}, {merge: true});
+      transaction.set(settlementRef, refundSettlementUpdate(taken), {merge: true});
+      transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(refundId), refundReceiptRecord(taken));
+      transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(refundId), refundAuditRecord(taken));
+      const entry = ledgerEntry({
+        uid,
+        currency: CURRENCY.GOLD,
+        delta: after.gold - goldBefore,
+        reason: REASON.PURCHASE_REFUND,
+        sourceId: refundId,
+        atMs: now,
+        details: {
+          sku: decision.clawback.sku,
+          goldGranted: decision.clawback.goldGranted,
+          refundQuantity: decision.clawback.refundQuantity,
+          refundedQuantity: decision.clawback.refundedQuantity,
+          shortfallAdded: after.shortfall,
+          shortfallAfter,
+          notificationId: messageId,
+        },
+      });
+      if (entry) transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+      transaction.set(notificationRef, notificationRecord({
+        messageId, notification, kind, result: CLAWBACK_OUTCOME_CLAWED_BACK, settlementId: id, sku, uid,
+        publishTimeMs, now, detail: decision.reason,
+      }));
+      return {decision: CLAWBACK_CLAW_BACK, taken};
+    });
+  } catch (error) {
+    log.error("playPurchaseNotifications: partial clawback transaction failed; nothing was written", {
+      ...context, settlementId: id, sku, uid, message: errorMessage(error),
+    });
+    throw error;
+  }
+
+  if (verdict.decision === CLAWBACK_ALREADY_RECONCILED) {
+    return {kind: CLAWBACK_OUTCOME_RECORDED, settlementId: id, uid};
+  }
+  return {
+    kind: CLAWBACK_OUTCOME_CLAWED_BACK,
+    settlementId: id,
+    uid,
+    goldTakenBack: verdict.taken.goldBefore - verdict.taken.goldAfter,
+    shortfall: verdict.taken.shortfallAfter,
+  };
+}
+
+function nextRefundRevision(settlement) {
+  if (settlement && settlement.refundRevision === undefined) return 1;
+  const prior = Number(settlement && settlement.refundRevision);
+  if (!Number.isSafeInteger(prior) || prior < 0 || prior >= Number.MAX_SAFE_INTEGER) {
+    throw new Error("Refund revision requires repair");
+  }
+  return prior + 1;
 }
 
 /** Записывает сообщение и возвращает его же результат: одна запись, один ответ. */

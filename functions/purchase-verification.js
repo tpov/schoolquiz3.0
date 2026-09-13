@@ -28,6 +28,8 @@ const PRODUCT_PREMIUM = "PREMIUM";
 
 /** Расчёты по токенам: один документ на токен, ключ — sha256 токена. */
 const PURCHASE_SETTLEMENTS_COLLECTION = "purchase_settlements";
+/** Additive quantity-refund state written by new settlements; old documents remain readable. */
+const PURCHASE_SETTLEMENT_SCHEMA_VERSION = 2;
 /** Аудит движений денег: кто, токен, SKU, сумма, документ констант с версией. */
 const PURCHASE_AUDIT_COLLECTION = "purchase_audit";
 /** Квитанции под пользователем: `users/{uid}/receipts/{settlementId}`. */
@@ -272,7 +274,7 @@ function settlementGate(existing, uid) {
  * @param {string} uid кому начислять.
  * @param {object} constants таблица, приведённая `readEconomyConstants`.
  */
-function decideSettlement({existing, purchase, claimedSku, uid, constants}) {
+function decideSettlement({existing, purchase, claimedSku, uid, constants, creditedQuantity}) {
   const gate = settlementGate(existing, uid);
   if (gate) return gate;
 
@@ -333,14 +335,23 @@ function decideSettlement({existing, purchase, claimedSku, uid, constants}) {
   }
   if (goldPerUnit === null) return refuse("invalid-argument", `sku ${sku} is not sold`, REASON_SKU_NOT_SOLD);
 
+  // A V2-confirmed partial refund that arrived before credit can reduce the amount that reaches
+  // the balance. This is trusted server-side state, never a client field. It must still describe
+  // a positive subset of the V1 purchase; otherwise the transaction retries for repair.
+  const quantity = creditedQuantity === undefined ? purchase.quantity : creditedQuantity;
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > purchase.quantity ||
+      !Number.isSafeInteger(goldPerUnit * quantity)) {
+    return refuse("failed-precondition", "purchase quantity is unreadable", REASON_QUANTITY_UNREADABLE);
+  }
+
   return {
     decision: SETTLEMENT_CREDIT,
     reason: "verified",
     credit: {
       sku,
       goldPerUnit,
-      quantity: purchase.quantity,
-      goldGranted: goldPerUnit * purchase.quantity,
+      quantity,
+      goldGranted: goldPerUnit * quantity,
       isTest: purchase.isTest,
       constantsVersion: safeNumber(constants && constants.version, 0),
     },
@@ -453,15 +464,32 @@ function replayResponse(existing) {
  * Сам токен не хранится — id и есть его хеш, а возврат (история 1.3) получает токен от Play и
  * хеширует его так же. `orderId` — для поддержки и сверки с Play Console.
  */
-function settlementRecord({id, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now, response, premiumGrantId, premiumUntilMs}) {
+function settlementRecord({
+  id, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now, response,
+  premiumGrantId, premiumUntilMs, partialRefund,
+}) {
+  const purchaseQuantity = positiveSafeIntOrFallback(purchase && purchase.quantity, credit.quantity);
+  const initialRefund = initialPartialRefund(partialRefund, purchaseQuantity);
+  const grantedQuantity = positiveSafeIntOrFallback(credit.quantity, purchaseQuantity);
+  const quantityAware = purchaseQuantity > 1 || initialRefund.refundedQuantity > 0;
   return {
+    ...(quantityAware ? {
+      schemaVersion: PURCHASE_SETTLEMENT_SCHEMA_VERSION,
+      purchaseQuantity,
+      grantedQuantity,
+      refundedQuantity: initialRefund.refundedQuantity,
+      lastObservedRefundableQuantity: initialRefund.refundableQuantity,
+      refundRevision: 0,
+    } : {}),
     settlementId: stringValue(id),
     uid: stringValue(uid),
     status: STATUS_CREDITED,
     sku: stringValue(credit.sku),
     orderId: stringValue(purchase && purchase.orderId),
     purchaseTimeMs: safeNumber(purchase && purchase.purchaseTimeMs, 0),
-    quantity: safeNumber(credit.quantity, 1),
+    // `quantity` keeps its historical meaning: units actually credited. New additive fields
+    // retain the original purchase size and any V2-confirmed pre-credit refund separately.
+    quantity: grantedQuantity,
     goldPerUnit: safeNumber(credit.goldPerUnit, 0),
     goldGranted: safeNumber(credit.goldGranted, 0),
     goldBefore: safeNumber(goldBefore, 0),
@@ -550,7 +578,23 @@ function intOrNull(value) {
 
 function positiveIntOrNull(value) {
   const parsed = intOrNull(value);
-  return parsed !== null && parsed >= 1 ? parsed : null;
+  return parsed !== null && Number.isSafeInteger(parsed) && parsed >= 1 ? parsed : null;
+}
+
+function positiveSafeIntOrFallback(value, fallback) {
+  const parsed = Number(value);
+  if (Number.isSafeInteger(parsed) && parsed >= 1) return parsed;
+  const fallbackParsed = Number(fallback);
+  return Number.isSafeInteger(fallbackParsed) && fallbackParsed >= 1 ? fallbackParsed : 1;
+}
+
+function initialPartialRefund(partial, purchaseQuantity) {
+  if (!partial || !Number.isSafeInteger(partial.refundedQuantity) || !Number.isSafeInteger(partial.refundableQuantity) ||
+      partial.refundedQuantity < 1 || partial.refundableQuantity < 1 ||
+      partial.refundedQuantity + partial.refundableQuantity !== purchaseQuantity) {
+    return {refundedQuantity: 0, refundableQuantity: purchaseQuantity};
+  }
+  return {refundedQuantity: partial.refundedQuantity, refundableQuantity: partial.refundableQuantity};
 }
 
 function safeNumber(value, fallback) {
@@ -570,6 +614,7 @@ module.exports = {
   PLAY_OUTCOME_NOT_FOUND,
   PLAY_OUTCOME_UNAVAILABLE,
   PURCHASE_AUDIT_COLLECTION,
+  PURCHASE_SETTLEMENT_SCHEMA_VERSION,
   PURCHASE_SETTLEMENTS_COLLECTION,
   PURCHASE_STATE_PURCHASED,
   PURCHASE_STATE_CANCELED,

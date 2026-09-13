@@ -8,6 +8,7 @@ const {
   createPlayDeveloperApi,
   productPurchaseUrl,
   productPurchaseByTokenUrl,
+  readProductPurchaseV2,
 } = require("./play-developer-api");
 const {
   PLAY_OUTCOME_FOUND,
@@ -190,6 +191,37 @@ async function testTokenOnlyV2RetainsSafeErrorClassificationWithoutLeakingToken(
   }
 }
 
+function testV2QuantityReaderRequiresExactlyOneCompleteSafeLineItem() {
+  const value = readProductPurchaseV2({
+    orderId: "GPA.fixture",
+    obfuscatedExternalAccountId: "account-hash",
+    purchaseStateContext: {purchaseState: "PURCHASED"},
+    productLineItem: [{productId: SKU, productOfferDetails: {quantity: 5, refundableQuantity: 3}}],
+  });
+  assert.deepStrictEqual(value, {
+    productId: SKU,
+    orderId: "GPA.fixture",
+    purchaseState: "PURCHASED",
+    obfuscatedExternalAccountId: "account-hash",
+    quantity: 5,
+    refundableQuantity: 3,
+  });
+  assert.equal(readProductPurchaseV2({productLineItem: [{productId: SKU,
+    productOfferDetails: {quantity: 5, refundableQuantity: 0}}]}).refundableQuantity, 0,
+  "zero remaining quantity is a valid V2 fact for a full refund, not malformed data");
+  assert.equal(readProductPurchaseV2({productLineItem: []}), null, "no line item is not a quantity proof");
+  assert.equal(readProductPurchaseV2({productLineItem: [{productId: SKU}, {productId: SKU}]}), null,
+    "bundles cannot be assigned to one configured product");
+  for (const details of [{quantity: 0, refundableQuantity: 0}, {quantity: 5, refundableQuantity: -1},
+    {quantity: 5.5, refundableQuantity: 3}, {quantity: "many", refundableQuantity: 3},
+    {quantity: Number.MAX_SAFE_INTEGER + 1, refundableQuantity: 3}]) {
+    assert.equal(readProductPurchaseV2({productLineItem: [{productId: SKU, productOfferDetails: details}]}), null);
+  }
+  assert.equal(readProductPurchaseV2({productLineItem: [{productId: SKU,
+    productOfferDetails: {quantity: "5", refundableQuantity: "3"}}]}).quantity, 5,
+  "JSON-number strings are normalized only when exactly safe integers");
+}
+
 (async () => {
   await testTheRequestNamesThePackageSkuAndTokenExactly();
   await testAFoundPurchaseIsReturnedAsPlaySentIt();
@@ -199,6 +231,7 @@ async function testTokenOnlyV2RetainsSafeErrorClassificationWithoutLeakingToken(
   await testANetworkErrorWithoutAStatusIsUnavailableAndKeepsItsCode();
   await testTokenOnlyV2NamesExactPackageAndEncodedTokenWithoutInventingSku();
   await testTokenOnlyV2RetainsSafeErrorClassificationWithoutLeakingToken();
+  testV2QuantityReaderRequiresExactlyOneCompleteSafeLineItem();
   console.log("play-developer-api.test.js OK");
 })().catch((error) => {
   console.error(error);

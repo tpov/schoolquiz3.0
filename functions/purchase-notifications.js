@@ -61,6 +61,8 @@ const ONE_TIME_PRODUCT_CANCELED = 2;
  */
 const CLAWBACK_CLAW_BACK = "CLAW_BACK";
 const CLAWBACK_ALREADY_REFUNDED = "ALREADY_REFUNDED";
+/** A different RTDN reached an already-applied partial V2 quantity; no money moves again. */
+const CLAWBACK_ALREADY_RECONCILED = "ALREADY_RECONCILED";
 const CLAWBACK_NOTHING_TO_TAKE = "NOTHING_TO_TAKE";
 const CLAWBACK_PLAY_DISAGREES = "PLAY_DISAGREES";
 
@@ -192,22 +194,93 @@ function decideClawback({settlement, purchase, uid, now}) {
     return verdict(CLAWBACK_PLAY_DISAGREES, "Play did not say the purchase is no longer bought");
   }
 
+  return decideRefundQuantity({
+    settlement,
+    uid,
+    now,
+    targetRefundedQuantity: settlementQuantityState(settlement)?.purchaseQuantity,
+    purchaseState: purchase ? purchase.purchaseState : null,
+    reason: purchase ? "Play no longer reports the purchase as bought" : "Play does not know this token",
+    full: true,
+  });
+}
+
+/**
+ * A V2-confirmed partial quantity is a monetary proof even while V2 still says PURCHASED. This
+ * intentionally does not reuse the full-void purchase-state test above: the official V2 field
+ * `refundableQuantity`, not a guessed state transition, describes a partial refund.
+ */
+function decidePartialClawback({settlement, refundProof, uid, now}) {
+  const gate = settlementClawbackGate(settlement, uid);
+  if (gate) return gate;
+  const quantities = settlementQuantityState(settlement);
+  if (!refundProof || !quantities || refundProof.purchaseQuantity !== quantities.purchaseQuantity ||
+      !Number.isSafeInteger(refundProof.refundedQuantity) || refundProof.refundedQuantity < 1 ||
+      refundProof.refundedQuantity >= quantities.purchaseQuantity) {
+    return verdict(CLAWBACK_PLAY_DISAGREES, "Play partial-refund quantities do not match the settlement");
+  }
+  if (settlement.productKind === PRODUCT_PREMIUM) {
+    return verdict(CLAWBACK_PLAY_DISAGREES, "Premium multi-quantity refunds are unsupported");
+  }
+  return decideRefundQuantity({
+    settlement,
+    uid,
+    now,
+    targetRefundedQuantity: refundProof.refundedQuantity,
+    purchaseState: null,
+    reason: "Play V2 reports a lower refundable quantity",
+    full: false,
+  });
+}
+
+function decideRefundQuantity({settlement, uid, now, targetRefundedQuantity, purchaseState, reason, full}) {
+  const quantities = settlementQuantityState(settlement);
+  if (!quantities || !Number.isSafeInteger(targetRefundedQuantity) || targetRefundedQuantity < quantities.refundedQuantity ||
+      targetRefundedQuantity > quantities.purchaseQuantity ||
+      (!full && targetRefundedQuantity >= quantities.purchaseQuantity)) {
+    return verdict(CLAWBACK_PLAY_DISAGREES, "refund quantity provenance requires repair");
+  }
+  if (targetRefundedQuantity === quantities.refundedQuantity) {
+    return verdict(CLAWBACK_ALREADY_RECONCILED, "Play refund quantity is already reconciled");
+  }
+  const refundQuantity = targetRefundedQuantity - quantities.refundedQuantity;
+  const goldToClawBack = quantities.goldPerUnit * refundQuantity;
+  if (!Number.isSafeInteger(goldToClawBack)) {
+    return verdict(CLAWBACK_PLAY_DISAGREES, "refund amount cannot be represented safely");
+  }
+  // A legacy settlement retains the historic `_refund` key only for its one and only full
+  // reversal.  A partial is inherently a sequence: its first operation upgrades the settlement
+  // to v2 and gets a cumulative quantity key, so the next partial/full reversal cannot overwrite
+  // a receipt, audit record, or ledger source.  The extra checks make a partially migrated or
+  // manually repaired v1 record conservative as well.
+  const hasAdditiveQuantityProvenance = settlement.schemaVersion >= 2 ||
+    settlement.purchaseQuantity !== undefined || settlement.grantedQuantity !== undefined ||
+    settlement.refundedQuantity !== undefined || settlement.lastObservedRefundableQuantity !== undefined ||
+    settlement.refundRevision !== undefined;
   return {
     decision: CLAWBACK_CLAW_BACK,
-    reason: purchase ? "Play no longer reports the purchase as bought" : "Play does not know this token",
+    reason,
     clawback: {
       uid: stringValue(settlement.uid),
       settlementId: stringValue(settlement.settlementId),
       sku: stringValue(settlement.sku),
       orderId: stringValue(settlement.orderId),
-      // Сумма — из записи расчёта: столько было выдано, столько и отбирается. В уведомлении суммы
-      // нет, и её появление там ничего бы не изменило — верить чужому числу о своих деньгах нельзя.
-      goldGranted: wholeAtLeastZero(settlement.goldGranted),
-      quantity: wholeAtLeastZero(settlement.quantity),
-      goldPerUnit: wholeAtLeastZero(settlement.goldPerUnit),
+      // `goldGranted` remains the immutable amount originally credited; the operation debit is
+      // `goldToClawBack`, derived from the newly refunded quantity only.
+      goldGranted: quantities.goldGranted,
+      goldToClawBack,
+      quantity: quantities.grantedQuantity,
+      purchaseQuantity: quantities.purchaseQuantity,
+      grantedQuantity: quantities.grantedQuantity,
+      priorRefundedQuantity: quantities.refundedQuantity,
+      refundedQuantity: targetRefundedQuantity,
+      refundQuantity,
+      refundableQuantity: quantities.purchaseQuantity - targetRefundedQuantity,
+      refundDocQuantity: hasAdditiveQuantityProvenance || !full ? targetRefundedQuantity : undefined,
+      goldPerUnit: quantities.goldPerUnit,
       creditedConstantsVersion: wholeAtLeastZero(settlement.constantsVersion),
       isTest: settlement.isTest === true,
-      purchaseState: purchase ? purchase.purchaseState : null,
+      purchaseState,
       atMs: wholeAtLeastZero(now),
       ...(settlement.productKind === PRODUCT_PREMIUM ? {
         productKind: PRODUCT_PREMIUM,
@@ -217,6 +290,27 @@ function decideClawback({settlement, purchase, uid, now}) {
       } : {}),
     },
   };
+}
+
+/** Reads old one-shot settlements and new additive quantity state without silently fixing either. */
+function settlementQuantityState(settlement) {
+  if (!settlement || typeof settlement !== "object") return null;
+  const legacyQuantity = safePositiveInteger(settlement.quantity);
+  const purchaseQuantity = settlement.purchaseQuantity === undefined ? legacyQuantity : safePositiveInteger(settlement.purchaseQuantity);
+  const grantedQuantity = settlement.grantedQuantity === undefined ? legacyQuantity : safePositiveInteger(settlement.grantedQuantity);
+  const refundedQuantity = settlement.refundedQuantity === undefined ? 0 : safeNonNegativeInteger(settlement.refundedQuantity);
+  const goldPerUnit = safeNonNegativeInteger(settlement.goldPerUnit);
+  const goldGranted = safeNonNegativeInteger(settlement.goldGranted);
+  if (purchaseQuantity === null || grantedQuantity === null || refundedQuantity === null || goldPerUnit === null ||
+      goldGranted === null || grantedQuantity > purchaseQuantity || refundedQuantity > purchaseQuantity ||
+      purchaseQuantity - refundedQuantity > grantedQuantity ||
+      !Number.isSafeInteger(goldPerUnit * grantedQuantity) || goldGranted !== goldPerUnit * grantedQuantity) {
+    return null;
+  }
+  const lastRefundable = settlement.lastObservedRefundableQuantity === undefined ?
+    purchaseQuantity - refundedQuantity : safeNonNegativeInteger(settlement.lastObservedRefundableQuantity);
+  if (lastRefundable === null || lastRefundable !== purchaseQuantity - refundedQuantity) return null;
+  return {purchaseQuantity, grantedQuantity, refundedQuantity, goldPerUnit, goldGranted};
 }
 
 function verdict(decision, reason) {
@@ -231,16 +325,34 @@ function verdict(decision, reason) {
  * `settlementGate` перестаёт отвечать повтором «начислено» — повторная проверка того же токена
  * получит отказ вместо разрешения погасить покупку, за которую деньги вернули.
  */
-function refundSettlementUpdate({clawback, notificationId, goldBefore, goldAfter, shortfallAdded, now, premiumRevokedMs, premiumConsumedMs, premiumUntilMs}) {
+function refundSettlementUpdate({
+  clawback, notificationId, goldBefore, goldAfter, shortfallAdded, now, refundRevision,
+  premiumRevokedMs, premiumConsumedMs, premiumUntilMs,
+}) {
+  const fullyRefunded = clawback && clawback.refundedQuantity === clawback.purchaseQuantity;
+  // `refundDocQuantity` is supplied exactly for v2 quantity history (including the first
+  // partial converted from an old one-shot settlement).  Persist the additive provenance in the
+  // same atomic transaction as its first cumulative receipt, audit and ledger entry.
+  const additiveQuantityState = clawback && clawback.refundDocQuantity !== undefined ? {
+    schemaVersion: 2,
+    purchaseQuantity: clawback.purchaseQuantity,
+    grantedQuantity: clawback.grantedQuantity,
+    goldGranted: clawback.goldGranted,
+  } : {};
   return {
-    status: STATUS_REFUNDED,
+    status: fullyRefunded ? STATUS_REFUNDED : STATUS_CREDITED,
     refundedAtMs: wholeAtLeastZero(now),
     refundNotificationId: stringValue(notificationId),
+    lastRefundNotificationId: stringValue(notificationId),
+    refundedQuantity: safeNonNegativeInteger(clawback && clawback.refundedQuantity) ?? 0,
+    lastObservedRefundableQuantity: safeNonNegativeInteger(clawback && clawback.refundableQuantity) ?? 0,
+    refundRevision: safeNonNegativeInteger(refundRevision) ?? 0,
     goldTakenBack: Math.max(0, wholeAtLeastZero(goldBefore) - wholeAtLeastZero(goldAfter)),
     shortfallAdded: wholeAtLeastZero(shortfallAdded),
     goldBeforeRefund: wholeAtLeastZero(goldBefore),
     goldAfterRefund: wholeAtLeastZero(goldAfter),
     refundedPurchaseState: Number.isInteger(clawback && clawback.purchaseState) ? clawback.purchaseState : null,
+    ...additiveQuantityState,
     ...(clawback && clawback.productKind === PRODUCT_PREMIUM ? {premiumRevokedMs, premiumConsumedMs, premiumUntilMs} : {}),
   };
 }
@@ -253,15 +365,15 @@ function refundSettlementUpdate({clawback, notificationId, goldBefore, goldAfter
  * с чего» — это не то же самое, что «вернули меньше».
  */
 function refundReceiptRecord({clawback, notificationId, goldBefore, goldAfter, shortfallAdded, now, premiumRevokedMs, premiumConsumedMs, premiumUntilMs}) {
+  const id = refundDocId(clawback && clawback.settlementId, clawback && clawback.refundDocQuantity);
   if (clawback && clawback.productKind === PRODUCT_PREMIUM) return {
-    receiptId: refundDocId(clawback.settlementId), uid: clawback.uid, kind: RECEIPT_KIND_PURCHASE_REFUNDED,
+    receiptId: id, uid: clawback.uid, kind: RECEIPT_KIND_PURCHASE_REFUNDED,
     messageKey: "receipt.premium_refunded",
     params: {sku: clawback.sku, premiumRevokedMs, premiumConsumedMs, premiumUntilMs},
     amount: -premiumRevokedMs, currency: "PREMIUM_MS", premiumGrantId: clawback.premiumGrantId,
     settlementId: clawback.settlementId, notificationId: stringValue(notificationId), createdAtMs: wholeAtLeastZero(now),
   };
   const takenBack = Math.max(0, wholeAtLeastZero(goldBefore) - wholeAtLeastZero(goldAfter));
-  const id = refundDocId(clawback && clawback.settlementId);
   return {
     receiptId: id,
     uid: stringValue(clawback && clawback.uid),
@@ -271,6 +383,8 @@ function refundReceiptRecord({clawback, notificationId, goldBefore, goldAfter, s
       sku: stringValue(clawback && clawback.sku),
       gold: takenBack,
       shortfall: wholeAtLeastZero(shortfallAdded),
+      refundQuantity: safeNonNegativeInteger(clawback && clawback.refundQuantity) ?? 0,
+      refundedQuantity: safeNonNegativeInteger(clawback && clawback.refundedQuantity) ?? 0,
     },
     amount: -takenBack,
     currency: "GOLD",
@@ -291,7 +405,7 @@ function refundAuditRecord({
   clawback, notificationId, goldBefore, goldAfter, shortfallAdded, shortfallAfter, constantsDoc, constantsVersion, now,
   premiumRevokedMs, premiumConsumedMs, premiumUntilMs,
 }) {
-  const id = refundDocId(clawback && clawback.settlementId);
+  const id = refundDocId(clawback && clawback.settlementId, clawback && clawback.refundDocQuantity);
   return {
     auditId: id,
     action: AUDIT_ACTION_PURCHASE_REFUND,
@@ -301,6 +415,11 @@ function refundAuditRecord({
     sku: stringValue(clawback && clawback.sku),
     orderId: stringValue(clawback && clawback.orderId),
     quantity: wholeAtLeastZero(clawback && clawback.quantity),
+    purchaseQuantity: safeNonNegativeInteger(clawback && clawback.purchaseQuantity) ?? 0,
+    grantedQuantity: safeNonNegativeInteger(clawback && clawback.grantedQuantity) ?? 0,
+    priorRefundedQuantity: safeNonNegativeInteger(clawback && clawback.priorRefundedQuantity) ?? 0,
+    refundQuantity: safeNonNegativeInteger(clawback && clawback.refundQuantity) ?? 0,
+    refundedQuantity: safeNonNegativeInteger(clawback && clawback.refundedQuantity) ?? 0,
     goldPerUnit: wholeAtLeastZero(clawback && clawback.goldPerUnit),
     goldGranted: wholeAtLeastZero(clawback && clawback.goldGranted),
     goldTakenBack: Math.max(0, wholeAtLeastZero(goldBefore) - wholeAtLeastZero(goldAfter)),
@@ -354,8 +473,15 @@ function notificationRecord({
 }
 
 /** Id квитанции и аудита возврата — рядом с записями начисления, не поверх них. */
-function refundDocId(settlementDocId) {
-  return `${stringValue(settlementDocId)}${REFUND_DOC_SUFFIX}`;
+function refundDocId(settlementDocId, cumulativeRefundedQuantity) {
+  const id = stringValue(settlementDocId);
+  // Legacy records used one terminal refund document. New quantity-aware settlements make the
+  // cumulative refunded quantity part of the id, so repeated partial RTDNs cannot overwrite a
+  // prior receipt, audit row or ledger source.
+  if (Number.isSafeInteger(cumulativeRefundedQuantity) && cumulativeRefundedQuantity >= 1) {
+    return `${id}${REFUND_DOC_SUFFIX}_q${cumulativeRefundedQuantity}`;
+  }
+  return `${id}${REFUND_DOC_SUFFIX}`;
 }
 
 function isObject(value) {
@@ -373,6 +499,16 @@ function wholeAtLeastZero(value) {
   return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
 }
 
+function safeNonNegativeInteger(value) {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function safePositiveInteger(value) {
+  const parsed = safeNonNegativeInteger(value);
+  return parsed !== null && parsed >= 1 ? parsed : null;
+}
+
 function stringValue(value) {
   if (value === null || value === undefined) return "";
   return String(value);
@@ -380,6 +516,7 @@ function stringValue(value) {
 
 module.exports = {
   AUDIT_ACTION_PURCHASE_REFUND,
+  CLAWBACK_ALREADY_RECONCILED,
   CLAWBACK_ALREADY_REFUNDED,
   CLAWBACK_CLAW_BACK,
   CLAWBACK_NOTHING_TO_TAKE,
@@ -395,6 +532,7 @@ module.exports = {
   RECEIPT_MESSAGE_GOLD_PACK_REFUNDED,
   REFUND_DOC_SUFFIX,
   decideClawback,
+  decidePartialClawback,
   decodeNotification,
   notificationKind,
   notificationRecord,
@@ -404,5 +542,6 @@ module.exports = {
   refundReceiptRecord,
   refundSettlementUpdate,
   settlementClawbackGate,
+  settlementQuantityState,
   tokenOf,
 };
