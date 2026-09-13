@@ -80,3 +80,87 @@ Run it in the controlled Maestro container with Node v22's read-only `node:sqlit
 is currently no sqlite3-CLI fallback. A successful local result proves only the retained local
 state; an offline row still needs the independently recorded network cut and a later receipt
 oracle, while a response-loss row needs the proxy audit and server receipt proof.
+
+## Offline transport guard
+
+`offline-transport-guard.js` is the narrow transport boundary for a future real-offline Arena
+row. It exists because this demo application points Firebase at `127.0.0.1` and normally reaches
+the emulator through `adb reverse`; turning Wi-Fi/data off by itself would not prove an outage.
+It is a guard around one already-bounded child command, not an acceptance runner and not a
+substitute for the pending-SETTLE reader or receipt oracle.
+
+The guard requires an explicit `--control-channel adb-independent` acknowledgement. That flag is
+only valid when ADB control will survive disabling the device's Wi-Fi and mobile data, for example
+a wired or container control plane. It must never be used for Wi-Fi ADB. The guard checks that
+control channel after every reverse/toggle change, but the acknowledgement is still required
+because no portable ADB query can prove the physical route.
+
+Before it changes the device, it requires one ready target with Wi-Fi and data enabled and exactly
+these three normal mappings, with no extras: `9099`, `8080`, and `5001`. It accepts both current
+two-column and platform-tools-36 prefixed `adb reverse --list` rows. Any extra mapping (including
+the Firebase Database or Storage ports) is `FAIL` before an app stop, reverse removal, or network
+toggle, rather than leaving a possible backend bypass.
+
+It also acquires the same per-serial `flock` used by E2B at
+`/tools/arena-e2b-device-locks` (or an explicitly supplied private `--lock-root`) before the
+first device read and holds it through restore. A competing cooperating runner returns `NOT_RUN`
+before any device call. Loss of the lock, or a failed exact-offline check after the child, is a
+`FAIL`. The post-child check cannot protect against a hostile process that deliberately bypasses
+the shared lock and adds then removes a mapping between observations; therefore real use is only
+valid in the controlled device environment where all device phases use this lock.
+The helper normally notices that its guard parent is gone and releases the lock, but a hard host
+failure can still leave a stale lock. In that recovery case, first prove there is no live owner and
+restore the device transport manually; do not remove a lock merely to start another financial run.
+
+Its fixed sequence is:
+
+```text
+preflight -> force-stop app -> recheck exact baseline -> remove only 9099/8080/5001
+  -> disable Wi-Fi/data -> verify no mappings and live ADB control -> child
+  -> reverify no mappings and held lock
+  -> force-stop app -> restore only the three baseline mappings -> enable Wi-Fi/data
+  -> verify exact baseline
+```
+
+It never calls `adb reverse --remove-all`. A concurrent or unexpected mapping is left untouched
+and makes the result `FAIL` for manual recovery rather than being deleted. The child is placed in
+its own POSIX process group; a timeout or any handled `SIGINT`/`SIGTERM` first terminates that
+group and then escalates to `SIGKILL` after a bounded grace interval. Repeated handled signals do
+not bypass cleanup. Sudden host loss, an unhandled `SIGKILL` to the guard, or a deliberately
+detached grandchild cannot be made recoverable by a process-local guard.
+
+The guard never inherits the child's stdout/stderr. It saves at most 64 KiB of that output in a
+new adjacent `0600` private log and records only byte count/truncation status in the result JSON.
+The JSON itself contains only a serial hash, state/counts, child exit outcome, and generic error
+code — not the serial, child command, app data, output, or backend payloads. Both result paths
+are checked as new paths under a private, canonical non-symlink directory before the lock or a
+device command is acquired.
+
+Run it only with a new result path inside a non-symlink `0700` directory:
+
+```text
+node /repo/.maestro/mvp/arena-matrix/offline-transport-guard.js \
+  --serial <adb-serial> --adb <adb-binary> --app-id <application-id> \
+  --control-channel adb-independent --output <new-private-dir>/transport-result.json \
+  --timeout-ms <bounded-ms> -- <already-bounded-child-command> [arguments...]
+```
+
+The controlled environment supplies `flock`; `--lock-root` is only for an equivalent private
+shared lock root. `--flock` exists solely to inject the fake helper in the standalone test and is
+not an alternative locking protocol for real device runs.
+
+The standalone fake-ADB test proves the normal cut/restore order, three-and-only-three mapping
+removals, both mapping output shapes, shared-lock contention, revalidation after a concurrent
+mapping, private child-output containment, restoration after child failure, partial cut failure,
+timeout with a TERM-ignoring child and descendant, repeated handled signals, and refusal before
+mutation for unexpected mappings, a missing control-channel acknowledgement, or a symlinked
+output parent:
+
+```text
+node /repo/.maestro/mvp/arena-matrix/offline-transport-guard.test.js
+```
+
+No Device B, Firebase data, ticket, attempt, or financial flow is changed by that test. A future
+offline runner must additionally bind an isolated fixture/context, save stopped Room copies for
+the progress and pending-SETTLE readers, prove the server remains uncommitted while the guard is
+closed, and only then perform a separately controlled delivery and receipt-oracle phase.
