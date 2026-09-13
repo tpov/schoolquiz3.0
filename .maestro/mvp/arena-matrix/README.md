@@ -61,3 +61,22 @@ node /repo/.maestro/mvp/arena-matrix/submit-mutation-drop-proxy.test.js
 The test uses an artificial loopback HTTP server. It exercises exact matching, one upstream call
 under a concurrent retry, successful-response loss, pass-through traffic, non-success handling,
 private artifacts, and invalid configuration. It does not change Firebase or an Android device.
+
+## Pending SETTLE Room reader
+
+`scripts/arena-e2e-pending-settlement-reader.js` is a read-only local proof helper for a future
+offline or response-loss run. It must receive one explicit run, owner, ticket, and derived attempt,
+plus a private **copy** of `schoolquiz.db` and any adjacent WAL/SHM sidecars made while the app is
+stopped. It never opens adb or Firebase and emits only hashes, states, counts, and file digests;
+it never emits the owner, ticket, attempt, payload, answers, or errors stored by Room.
+
+The helper accepts only the installed C1+C3 Room v14 schema and its exact Room identity hash. It
+requires one intact frozen snapshot, one exact pending `SETTLE` command, the matching pending
+outbox row and first intent, no receipt for that mutation under any owner, and no locally scored
+attempt rows. It rejects an already delivered, ambiguous, malformed, mismatched, or newer schema
+state rather than treating it as pending.
+
+Run it in the controlled Maestro container with Node v22's read-only `node:sqlite` runtime. There
+is currently no sqlite3-CLI fallback. A successful local result proves only the retained local
+state; an offline row still needs the independently recorded network cut and a later receipt
+oracle, while a response-loss row needs the proxy audit and server receipt proof.
