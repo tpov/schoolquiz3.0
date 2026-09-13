@@ -36,7 +36,11 @@ executed Maestro flow by SHA-256.
 2. Capture the exact accessibility hierarchy on the installed candidate, then
    copy `selectors.env.example` outside this directory and fill every selector
    used by the chosen phase.  Values are blank by design; locale text and
-   accessibility exposure must come from that capture.
+   accessibility exposure must come from that capture. In particular,
+   `E2B_SELECTOR_SAVED_ANSWER` must identify the post-answer feedback control,
+   not the selected option text: HARD content may intentionally expose neither
+   the option nor a verdict. The read-only Room progress reader, rather than
+   that UI control, proves that the exact first answer was retained.
 3. Before `prepare`, use `arena-e2e-ticket-discovery.js baseline` to record the
    complete owned-ticket set.  After preparation, use its `discover` command;
    it refuses anything except one new ticket whose immutable fields match the
@@ -56,7 +60,8 @@ executed Maestro flow by SHA-256.
 5. The fresh `settle` invocation must receive
    `--attempt-progress-reader scripts/arena-e2e-attempt-progress-reader.js` and,
    in the retained Maestro runtime, `--sqlite3 /tools/sdk/platform-tools/sqlite3`.
-   After the first force-stop/relaunch flow visibly restores the saved answer,
+   After the first force-stop/relaunch flow visibly restores the saved-answer
+   feedback state,
    the runner keeps the app stopped, copies `schoolquiz.db` with adjacent
    WAL/SHM files to a private temporary directory, runs the reader, then
    deletes the raw copy. Its `post-relaunch-room-progress.json` contains only

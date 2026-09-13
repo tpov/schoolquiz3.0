@@ -54,6 +54,8 @@ name: E2B resume the exact saved answer and finish
     visible: ${E2B_SELECTOR_SAVED_ANSWER}
     timeout: 60000
 - assertVisible: ${E2B_SELECTOR_SAVED_ANSWER}
+# The feedback-control assertion is only a UI restoration check. The earlier Room reader proves
+# that this exact retained feedback state contains the first answer.
 - takeScreenshot: "02-e2b-answer-restored-for-recovery"
 - tapOn: ${E2B_SELECTOR_CONTINUE_LESSON}
 - extendedWaitUntil:

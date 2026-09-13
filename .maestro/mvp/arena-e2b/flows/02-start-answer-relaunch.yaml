@@ -46,6 +46,8 @@ name: E2B start answer and preserved-data relaunch
     visible: ${E2B_SELECTOR_QUESTION}
     timeout: 60000
 - tapOn: ${E2B_SELECTOR_FIRST_ANSWER}
+# On HARD content the feedback overlay can intentionally hide the selected option and verdict.
+# This selector identifies the feedback control; the following Room read binds it to the answer.
 - extendedWaitUntil:
     visible: ${E2B_SELECTOR_SAVED_ANSWER}
     timeout: 60000
