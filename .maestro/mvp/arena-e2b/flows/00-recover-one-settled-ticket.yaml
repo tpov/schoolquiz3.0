@@ -1,0 +1,48 @@
+appId: com.tpov.schoolquiz.mvp
+name: E2B recover one already-settled retained ticket
+---
+# This flow has no PREPARE, RUN, SETTLE, RESTORE_SETTLEMENT, rating, or wallet-refresh action.
+# The caller must first bind E2B_SELECTOR_TARGET_TICKET_LABEL to a fresh read-only receipt/ledger
+# oracle result.  It only asks the app to re-read that one exact local ticket from the server.
+# The caller must make the loaded local-ticket list available first. This flow intentionally does
+# not refresh a catalog or wallet, so a recovery cannot hide another application action.
+# Values bound to E2B_SELECTOR_* are literal accessibility text, not regular expressions.
+- launchApp:
+    clearState: false
+- tapOn: ${E2B_SELECTOR_INTERNET}
+- extendedWaitUntil:
+    visible: ${E2B_SELECTOR_ARENA_TITLE}
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: ${E2B_SELECTOR_SHOW_LOCAL_TICKETS}
+    enabled: true
+    retryTapIfNoChange: true
+- scrollUntilVisible:
+    element:
+      text: ${E2B_SELECTOR_TARGET_TICKET_LABEL}
+    direction: DOWN
+    timeout: 60000
+    centerElement: true
+- assertVisible: ${E2B_SELECTOR_TARGET_TICKET_LABEL}
+# Ticket IDs wrap on a narrow device.  Move just enough to keep this card's own action below its
+# label in the viewport; `below` then prevents selecting a same-named action from another card.
+- scroll
+- assertVisible: ${E2B_SELECTOR_TARGET_TICKET_LABEL}
+- tapOn:
+    text: ${E2B_SELECTOR_RECOVER_TICKET}
+    below:
+      text: ${E2B_SELECTOR_TARGET_TICKET_LABEL}
+    enabled: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      text: ${E2B_SELECTOR_TERMINAL_TICKET}
+      below:
+        text: ${E2B_SELECTOR_TARGET_TICKET_LABEL}
+    timeout: 60000
+- takeScreenshot: "00-e2b-one-settled-ticket-recovered"

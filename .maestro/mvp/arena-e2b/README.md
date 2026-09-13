@@ -28,6 +28,31 @@ phases remain `NOT_RUN` overall and name their next required evidence.
 Its manifest binds the APK, run context, selector map, runner and every
 executed Maestro flow by SHA-256.
 
+## Recovery of a retained settled ticket
+
+`flows/00-recover-one-settled-ticket.yaml` is a deliberately narrow repair
+flow, not an E2B phase and not a substitute for `settle` or `deliver`. It may
+be used only when a fresh, read-only settlement oracle has already proved the
+same owner, ticket, and attempt `SETTLED` with its exact event and ledger.
+The caller records a stopped-app Room snapshot before and after the flow and
+binds the visible `Ticket: <id>` label to that oracle context.
+
+The flow opens the already available local-ticket list and presses only
+`Refresh this ticket from server` under the matched card. It does not prepare,
+start, finish, restore a settlement, refresh a wallet, rate a lesson, or
+refresh a catalog. It is therefore safe to fail closed if the local-ticket
+list is not already available. Its selector values are literal visible text,
+not regular expressions.
+
+Acceptance for this repair requires all of the following: the pre- and
+post-oracle evidence hashes are identical and report zero writes; the target
+changes only from local `RESERVED`/`SETTLE:PENDING` to
+`SETTLED`/`SETTLE:ACKNOWLEDGED`; the exact local receipt count is unchanged;
+other tickets, commands, receipts, outbox rows, intents, and stats are
+unchanged; and the app is stopped afterwards. Any server mismatch, unknown
+terminal timestamp, or unexpected local change leaves the record quarantined
+and stops the workflow.
+
 ## Inputs
 
 1. Copy `run-context.env.example` outside this directory and fill it with the
