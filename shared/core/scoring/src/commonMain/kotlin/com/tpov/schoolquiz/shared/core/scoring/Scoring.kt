@@ -15,7 +15,10 @@ import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
  * Evaluates [answer] against [content] and returns a [Score] in 1..9.
  * Score formula: digit = round(correct_share × 8) + 1 (integer math, round-half-up).
  */
-fun evaluateAnswer(content: QuestionContent, answer: UserAnswer): Score {
+fun evaluateAnswer(
+    content: QuestionContent,
+    answer: UserAnswer,
+): Score {
     return when {
         content is QuestionContent.SingleChoice && answer is UserAnswer.SingleChoiceAnswer -> {
             val validIds = content.options.map { it.id }.toSet()
@@ -32,8 +35,9 @@ fun evaluateAnswer(content: QuestionContent, answer: UserAnswer): Score {
         }
         content is QuestionContent.Ordering && answer is UserAnswer.OrderingAnswer -> {
             val correctOrder = content.items.map { it.id }
-            val isValidPerm = answer.order.size == correctOrder.size &&
-                answer.order.toSet() == correctOrder.toSet()
+            val isValidPerm =
+                answer.order.size == correctOrder.size &&
+                    answer.order.toSet() == correctOrder.toSet()
             if (!isValidPerm) {
                 Score(1)
             } else {
@@ -43,10 +47,11 @@ fun evaluateAnswer(content: QuestionContent, answer: UserAnswer): Score {
         }
         content is QuestionContent.FillBlank && answer is UserAnswer.FillBlankAnswer -> {
             val validCandidates = content.candidates.map { it.id }.toSet()
-            val filledCorrect = content.blanks.count { blank ->
-                val c = answer.filled[blank.id]
-                c != null && c in validCandidates && c == blank.correctCandidateId
-            }
+            val filledCorrect =
+                content.blanks.count { blank ->
+                    val c = answer.filled[blank.id]
+                    c != null && c in validCandidates && c == blank.correctCandidateId
+                }
             scoreDigit(filledCorrect, content.blanks.size)
         }
         content is QuestionContent.Survey && answer is UserAnswer.SurveyAnswer -> {
@@ -66,11 +71,15 @@ fun evaluateAnswer(content: QuestionContent, answer: UserAnswer): Score {
  * HARD: rawTenths = 20 + (percentScore × 10 + 50) / 100 → [20..30].
  * Integer math, round-half-up via +50 constant.
  */
-fun computeStars(percentScore: PercentScore, mode: Difficulty): Stars {
-    val rawTenths = when (mode) {
-        Difficulty.EASY -> (percentScore.raw * 20 + 50) / 100
-        Difficulty.HARD -> 20 + (percentScore.raw * 10 + 50) / 100
-    }
+fun computeStars(
+    percentScore: PercentScore,
+    mode: Difficulty,
+): Stars {
+    val rawTenths =
+        when (mode) {
+            Difficulty.EASY -> (percentScore.raw * 20 + 50) / 100
+            Difficulty.HARD -> 20 + (percentScore.raw * 10 + 50) / 100
+        }
     return Stars(rawTenths)
 }
 
@@ -89,7 +98,10 @@ fun computePercentScore(codeAnswer: CodeAnswer): PercentScore {
  * Score digit via integer round-half-up: (num * 8 + den/2) / den + 1.
  * Returns Score(1) if denominator is zero.
  */
-private fun scoreDigit(numerator: Int, denominator: Int): Score {
+private fun scoreDigit(
+    numerator: Int,
+    denominator: Int,
+): Score {
     if (denominator == 0) return Score(1)
     val digit = (numerator * 8 + denominator / 2) / denominator + 1
     return Score(digit.coerceIn(1, 9))

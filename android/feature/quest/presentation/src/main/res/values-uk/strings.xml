@@ -35,4 +35,6 @@
     <string name="quest_cd_create_quest">Створити квест</string>
     <string name="quest_draft_label">Чернетка</string>
     <string name="quest_questions_count">Питань: %1$d</string>
+    <string name="quest_draft_returned">Повернуто: %1$s</string>
+    <string name="quest_draft_returned_delivery">не вдалося надіслати на сервер, спробуйте ще раз</string>
 </resources>

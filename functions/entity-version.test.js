@@ -235,12 +235,28 @@ function testTheRatingAggregateNeverTouchesVersion() {
 function testEveryPlaceThatAssignsAQuestVersionMirrorsItIntoThePrivateDocument() {
   const mirror = functionBody(INDEX_SOURCE, "writeQuestVersionMirror");
   assert.ok(/privateQuestPath\(/.test(mirror), "зеркало пишет не в приватный документ квеста");
-  assert.ok(/privateSyncChangePath\(/.test(mirror), "версия без отметки в ленте изменений до автора не доедет");
+  // Отметку в ленте изменений зеркало больше не пишет само: с AD-11 квест принадлежит и
+  // каталожному, и приватному журналу по объявлению (`sync-changes.js`), и запись в оба — один
+  // вызов `writeSyncChanges` для узла `quest` рядом с зеркалом. Второй писатель того же документа
+  // здесь означал бы две формы в одном журнале.
+  assert.ok(!/sync_changes|SyncChangePath\(/.test(mirror), "журнал пишет объявление, а не зеркало");
 
-  const callers = [...INDEX_SOURCE.matchAll(/writeQuestVersionMirror\(/g)].length;
+  const calls = [...INDEX_SOURCE.matchAll(/(?<!function )writeQuestVersionMirror\(/g)];
   assert.ok(
-    callers >= 4,
-    `зеркало обязано звучать в публикации, перекладке и снятии с полок, а не только в объявлении: ${callers}`,
+    calls.length >= 3,
+    `зеркало обязано звучать в публикации, перекладке и снятии с полок, а не только в объявлении: ${calls.length}`,
+  );
+  // Рядом с каждым зеркалом — запись узла `quest` в его журналы: без неё версия до автора не доедет.
+  for (const call of calls) {
+    const nearby = INDEX_SOURCE.slice(Math.max(0, call.index - 900), call.index + 900);
+    const journaled =
+      /writeSyncChanges\([^;]*kind:\s*"quest"/s.test(nearby) || /writePublicHierarchyToBatch\(/.test(nearby);
+    assert.ok(journaled, `зеркало без отметки в ленте изменений около смещения ${call.index}`);
+  }
+  const publishedNodes = functionBody(INDEX_SOURCE, "publicHierarchyNodes");
+  assert.ok(
+    /kind:\s*"quest"[^}]*ownerUid/.test(publishedNodes),
+    "публикация пишет узел quest с автором — иначе приватный журнал автора пуст",
   );
 }
 

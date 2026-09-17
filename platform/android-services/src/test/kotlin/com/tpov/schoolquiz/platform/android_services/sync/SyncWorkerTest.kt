@@ -3,8 +3,15 @@ package com.tpov.schoolquiz.platform.android_services.sync
 import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.sync.SyncRun
+import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
 import io.mockk.mockk
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -24,10 +31,22 @@ private class FakeSyncable(private val result: Result<Unit> = Result.success(Uni
     }
 }
 
+/** След прогона здесь не проверяется — он свой у [SyncWorkerTraceTest]; тут только порядок шагов. */
+private object SilentStatus : SyncStatusRepository {
+    override fun observeStatus(): Flow<SyncStatus> = flowOf(SyncStatus())
+
+    override suspend fun recordSuccess(kind: SyncRunKind, atMs: Long) = Unit
+
+    override suspend fun recordFailure(kind: SyncRunKind, error: SyncError, atMs: Long) = Unit
+
+    override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
+}
+
 class SyncWorkerTest {
 
     private val context = mockk<Context>(relaxed = true)
     private val workerParams = mockk<WorkerParameters>(relaxed = true)
+    private val run = SyncRun(SilentStatus) { 0L }
 
     // Spec scenario 1:
     // GIVEN List<Syncable> with 2 successful fakes
@@ -37,7 +56,7 @@ class SyncWorkerTest {
     fun `when all syncables succeed then doWork returns success and each called once`() = runTest {
         val fake1 = FakeSyncable(Result.success(Unit))
         val fake2 = FakeSyncable(Result.success(Unit))
-        val worker = SyncWorker(context, workerParams, listOf(fake1, fake2))
+        val worker = SyncWorker(context, workerParams, listOf(fake1, fake2), run)
 
         val result = worker.doWork()
 
@@ -57,7 +76,7 @@ class SyncWorkerTest {
     fun `when first syncable fails then doWork returns retry and the rest still run`() = runTest {
         val fake1 = FakeSyncable(Result.failure(java.io.IOException("network error")))
         val fake2 = FakeSyncable(Result.success(Unit))
-        val worker = SyncWorker(context, workerParams, listOf(fake1, fake2))
+        val worker = SyncWorker(context, workerParams, listOf(fake1, fake2), run)
 
         val result = worker.doWork()
 
@@ -72,7 +91,7 @@ class SyncWorkerTest {
         val fake1 = FakeSyncable(Result.success(Unit))
         val fake2 = FakeSyncable(Result.failure(java.io.IOException("network error")))
         val fake3 = FakeSyncable(Result.success(Unit))
-        val worker = SyncWorker(context, workerParams, listOf(fake1, fake2, fake3))
+        val worker = SyncWorker(context, workerParams, listOf(fake1, fake2, fake3), run)
 
         val result = worker.doWork()
 
@@ -86,7 +105,7 @@ class SyncWorkerTest {
     // THEN Result.success() (no syncables = nothing to fail)
     @Test
     fun `when syncables list is empty then doWork returns success`() = runTest {
-        val worker = SyncWorker(context, workerParams, emptyList())
+        val worker = SyncWorker(context, workerParams, emptyList(), run)
 
         val result = worker.doWork()
 

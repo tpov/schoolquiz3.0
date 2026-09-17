@@ -411,9 +411,10 @@ async function testReviewStages() {
 
 async function testPublication() {
   await scenario("квест публикуется и становится виден всем", async () => {
-    const published = await call("processPendingArenaRequests", "developer", {limit: 10});
-    assert.ok(published, "обработка не вернула результат");
-
+    // Толчка обработке здесь больше нет. Дев-вызов `processPendingArenaRequests` снят: он прогонял
+    // тело заявки мимо ключа идемпотентности и мимо сверки версии, то есть был вторым, непроверяемым
+    // входом в ту же публикацию. Проверять здесь всё равно нечего было — заявка обработана триггером
+    // ещё в testSubmission, а публикацию делает сведение оценок рецензентов выше по сценарию.
     const request = await db.collection("quest_review_requests").doc("sub-1").get();
     assert.strictEqual((request.data() || {}).status, "PUBLISHED", "заявка не переведена в PUBLISHED");
 

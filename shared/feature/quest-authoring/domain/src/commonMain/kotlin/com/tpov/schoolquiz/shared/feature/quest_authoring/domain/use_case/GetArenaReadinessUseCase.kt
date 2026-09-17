@@ -11,9 +11,10 @@ class GetArenaReadinessUseCase(
 ) {
     suspend operator fun invoke(draftId: QuestDraftId): Result<ArenaReadiness> {
         return try {
-            val bundle = requireNotNull(repository.getDraft(draftId)) {
-                "Draft ${draftId.value} not found"
-            }
+            val bundle =
+                requireNotNull(repository.getDraft(draftId)) {
+                    "Draft ${draftId.value} not found"
+                }
             Result.success(validateArenaReadiness(bundle))
         } catch (e: CancellationException) {
             throw e

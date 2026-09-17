@@ -8,6 +8,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncStatusRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
@@ -86,6 +87,7 @@ class DevModeActivationIntegrationTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
         syncScheduler = FakeSyncScheduler(),
+        syncStatusRepository = FakeSyncStatusRepository(),
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },

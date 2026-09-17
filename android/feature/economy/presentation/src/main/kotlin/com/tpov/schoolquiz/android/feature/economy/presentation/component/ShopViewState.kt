@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBa
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ListingCancelSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameAvailability
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
@@ -77,7 +78,28 @@ data class NicknameShopState(
      * field rather than two because only ever one thing is armed, and two could disagree.
      */
     val armed: String? = null,
+    /**
+     * What the queue says about taking each of your lots down, by name.
+     *
+     * A removal does not wait for the server: it is queued, and the row only learns about it from
+     * here — "still queued" or "refused, the lot was already sold". Absent means the queue has
+     * nothing on that lot. Names and logos are separate maps because a logo may share a name
+     * with a nickname.
+     */
+    val nicknameCancelSyncs: Map<String, ListingCancelSync> = emptyMap(),
+    val logoCancelSyncs: Map<String, ListingCancelSync> = emptyMap(),
 ) {
+    /** The names on sale whose removal the queue should be asked about. */
+    val ownNicknameLots: Set<String>
+        get() = owned.filter { it.isForSale }.map { it.nickname }.toSet()
+
+    /** The logos you hold that are also in the window — your lots. */
+    val ownLogoLots: Set<String>
+        get() {
+            val listed = logoListingsByName.keys
+            return logos.filter { it.owned && it.name in listed }.map { it.name }.toSet()
+        }
+
     /**
      * The names you hold, worn one first.
      *

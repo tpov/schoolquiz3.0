@@ -19,6 +19,8 @@ class SyncLessonsUseCase(
      * @return [Result.success] containing the set of processed [LessonId]s for cascade trigger;
      *   [Result.failure] on error.
      */
-    suspend operator fun invoke(themeIds: Set<ThemeId>, cursor: Long = 0L): Result<Set<LessonId>> =
-        lessons.refreshByParents(themeIds, cursor)
+    suspend operator fun invoke(
+        themeIds: Set<ThemeId>,
+        cursor: Long = 0L,
+    ): Result<Set<LessonId>> = lessons.refreshByParents(themeIds, cursor)
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Push-уведомления (Story 10.4): ключ на событие из PushEvents, без чисел (AD-20). -->
+    <string name="push_channel_name">События</string>
+    <string name="push_quest_authoring_quest_published_title">Ваш квест опубликован</string>
+    <string name="push_quest_authoring_quest_published_text">Проверка завершена, квест доступен всем. Откройте приложение, чтобы посмотреть.</string>
+    <string name="push_qualification_author_rating_changed_title">Квалификация изменилась</string>
+    <string name="push_qualification_author_rating_changed_text">Ваш уровень ревьюера обновлён. Подробности — в приложении.</string>
+    <string name="push_profile_verification_approved_title">Верификация одобрена</string>
+    <string name="push_profile_verification_approved_text">Ваша верификация подтверждена. Откройте приложение, чтобы увидеть изменения.</string>
+</resources>

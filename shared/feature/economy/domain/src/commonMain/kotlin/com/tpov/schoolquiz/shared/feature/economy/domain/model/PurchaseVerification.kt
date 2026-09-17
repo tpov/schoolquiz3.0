@@ -59,8 +59,7 @@ enum class PurchaseRefusalCode {
 
     companion object {
         /** Reads the wire value the server put in `details.reasonCode`. */
-        fun fromWire(value: String?): PurchaseRefusalCode =
-            entries.firstOrNull { it.name == value } ?: UNKNOWN
+        fun fromWire(value: String?): PurchaseRefusalCode = entries.firstOrNull { it.name == value } ?: UNKNOWN
     }
 }
 

@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.platform.firebase.network
 
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.functions.HttpsCallableReference
 import com.tpov.schoolquiz.shared.core.network.SyncError
@@ -33,15 +34,33 @@ const val CALLABLE_TIMEOUT_SECONDS: Long = 30L
 const val PRECONDITION_PENDING_DETAIL: String = "precondition-pending"
 
 /**
+ * Пометка, которой сервер называет расхождение версий, и поле, в котором он кладёт свою версию.
+ *
+ * Детали здесь — объект, а не строка, в отличие от [PRECONDITION_PENDING_DETAIL]: сама пометка
+ * говорит только «конфликт», а разрешать его нечем без числа. Обе половины обязаны совпадать с
+ * `VERSION_CONFLICT_DETAIL` и `versionConflictDetail` в `functions/mutation-queue.js`.
+ */
+const val VERSION_CONFLICT_DETAIL: String = "version-conflict"
+private const val DETAIL_CODE = "code"
+private const val DETAIL_SERVER_VERSION = "serverVersion"
+
+/**
  * Читает исключение как одну из пяти ветвей [SyncError].
  *
  * Отмену корутины не трогаем: это не ошибка обращения, и подменять её ошибкой значит проглотить
  * остановку.
+ *
+ * Firestore приходит сюда наравне с вызовами функций: коды у него те же — имена статусов gRPC, —
+ * поэтому таблица решений одна на обе стороны, а не своя у отправки и своя у чтения. Деталей
+ * Firestore не носит: конфликт версий и «предусловие ещё не выполнено» их требуют и потому
+ * приезжают только от приёмника мутаций.
  */
 fun Throwable.toSyncError(): SyncError =
     when (this) {
         is CancellationException -> throw this
         is FirebaseFunctionsException -> syncErrorForCode(code.name, message, details, cause is IOException)
+        is FirebaseFirestoreException ->
+            syncErrorForCode(code.name, message, details = null, causedByIo = cause is IOException)
         // Сюда попадает всё, что не доехало до сервера: нет маршрута, оборванное соединение,
         // неизвестный хост. Ответа не было, значит повторять безопасно.
         is IOException -> SyncError.NoNetwork
@@ -52,8 +71,9 @@ fun Throwable.toSyncError(): SyncError =
  * Таблица решений в чистом виде: имя кода → ветвь.
  *
  * Принимает имя, а не сам `Code`, ровно для того, чтобы её можно было проверить без Firebase.
- * Имена — значения `FirebaseFunctionsException.Code`; [causedByIo] говорит, лежит ли в причине
- * исключения обрыв ввода-вывода — без этого `INTERNAL` неразличим.
+ * Имена — значения `FirebaseFunctionsException.Code` и `FirebaseFirestoreException.Code`: и то и
+ * другое — статусы gRPC, поэтому таблица у отправки и у чтения общая. [causedByIo] говорит, лежит
+ * ли в причине исключения обрыв ввода-вывода — без этого `INTERNAL` неразличим.
  */
 internal fun syncErrorForCode(
     code: String,
@@ -70,8 +90,10 @@ internal fun syncErrorForCode(
         // одно от другого можно только по причине — по коду они неразличимы.
         "INTERNAL" -> if (causedByIo) SyncError.NoNetwork else SyncError.Unknown()
 
-        // Канонический код состязания: сущность изменилась под нами.
-        "ABORTED" -> SyncError.VersionConflict()
+        // Канонический код состязания: сущность изменилась под нами. Версию, до которой сущность
+        // успела уехать, сервер кладёт в детали отдельным полем — из текста сообщения её брать
+        // нельзя (AD-15), а без числа разрешать конфликт нечем (AD-24).
+        "ABORTED" -> SyncError.VersionConflict(serverVersion = serverVersionFrom(details))
 
         // Отличить «ещё нет» от «нет» может только сервер, и он говорит это в деталях: сам по
         // себе FAILED_PRECONDITION в этом проекте означает отказ («не хватает ноликов»).
@@ -102,6 +124,23 @@ internal fun syncErrorForCode(
 
         else -> SyncError.Unknown()
     }
+
+/**
+ * Достаёт серверную версию из деталей отказа.
+ *
+ * Числа приезжают из JSON тем типом, каким их разобрал SDK, — `Double` для дробных, `Integer` для
+ * целых, — поэтому читаются как [Number], а не как `Long`. Чужой ABORTED без наших деталей даёт
+ * пустоту: ветвь остаётся конфликтом, но номера не несёт, и разрешение спросит сервер заново.
+ */
+private fun serverVersionFrom(details: Any?): Long? {
+    val map = details as? Map<*, *> ?: return null
+    if (map[DETAIL_CODE] != VERSION_CONFLICT_DETAIL) return null
+    return when (val raw = map[DETAIL_SERVER_VERSION]) {
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull()
+        else -> null
+    }
+}
 
 private fun refused(
     code: String,

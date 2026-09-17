@@ -32,18 +32,18 @@ data class AppShellState(
 ) {
     /** Convenience: the DrawerSection for the currently active tab. */
     val activeSection: DrawerSection?
-        get() = when (activeTab) {
-            Tab.LOCAL -> localState.activeSection
-            Tab.INTERNET -> internetState.activeSection
-            Tab.EVENTS -> eventsState.activeSection
-            Tab.SHOP -> null
-        }
+        get() =
+            when (activeTab) {
+                Tab.LOCAL -> localState.activeSection
+                Tab.INTERNET -> internetState.activeSection
+                Tab.EVENTS -> eventsState.activeSection
+                Tab.SHOP -> null
+            }
 
     /** Convenience: true if active tab is SHOP (which never has a drawer). */
     val isShopActive: Boolean get() = activeTab == Tab.SHOP
 
     companion object {
-
         /**
          * Default state: cold-start with given user stats.
          *
@@ -56,15 +56,16 @@ data class AppShellState(
          * Each tab state is computed by [initialLocalTabState], [initialInternetTabState],
          * [initialEventsTabState], [initialShopTabState].
          */
-        fun default(stats: UserStats = UserStats.guest()): AppShellState = AppShellState(
-            activeTab = Tab.LOCAL,
-            localState = initialLocalTabState(stats),
-            internetState = initialInternetTabState(stats),
-            eventsState = initialEventsTabState(stats),
-            shopState = initialShopTabState(),
-            isDrawerOpen = false,
-            userStats = stats,
-        )
+        fun default(stats: UserStats = UserStats.guest()): AppShellState =
+            AppShellState(
+                activeTab = Tab.LOCAL,
+                localState = initialLocalTabState(stats),
+                internetState = initialInternetTabState(stats),
+                eventsState = initialEventsTabState(stats),
+                shopState = initialShopTabState(),
+                isDrawerOpen = false,
+                userStats = stats,
+            )
 
         /**
          * Fallback state for corrupted/unrecognised SavedState.

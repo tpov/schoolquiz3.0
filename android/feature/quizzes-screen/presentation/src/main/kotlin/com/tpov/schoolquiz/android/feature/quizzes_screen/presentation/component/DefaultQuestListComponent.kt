@@ -14,8 +14,11 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Qu
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper.toQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestShelfSyncMark
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.toShelfSyncMark
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -32,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -50,6 +54,7 @@ class DefaultQuestListComponent(
     private val themeRepository: ThemeRepository,
     private val lessonRepository: LessonRepository,
     private val questionRepository: QuestionRepository,
+    private val authRepository: AuthRepository,
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
     private val retirePublicQuest: RetirePublicQuestUseCase,
     private val questContentSync: suspend (QuestId) -> Result<Unit>,
@@ -90,12 +95,14 @@ class DefaultQuestListComponent(
                         downloadingQuestIds,
                         completedQuestIds,
                         questAvailabilityFlow(quests),
-                    ) { downloadingIds, completedIds, downloaded ->
+                        shelfSyncFlow(quests),
+                    ) { downloadingIds, completedIds, downloaded, shelfSync ->
                         mapToUi(
                             quests = quests,
                             downloadingIds = downloadingIds,
                             completedIds = completedIds,
                             downloaded = downloaded,
+                            shelfSync = shelfSync,
                         )
                     }
                 }
@@ -167,15 +174,24 @@ class DefaultQuestListComponent(
         }
     }
 
+    /**
+     * Перенос на полку — намерение в очередь, а не вызов сервера (история 5.4).
+     *
+     * Локальная строка не трогается и перечитывать её здесь нечего: полка серверно-защищена
+     * (AD-25), новая приедет журналом изменений, когда сервер применит перенос. До этого карточка
+     * показывает пометку «ждёт отправки» по ответу очереди, а не квест на новой полке.
+     */
     private fun setQuestShelf(
         quest: QuestDisplayItem,
         targetShelf: String,
         dismissOnSuccess: Boolean,
     ) {
         scope.launch {
-            setPublicQuestShelf.execute(quest.id, targetShelf)
+            // Без аккаунта намерению некому принадлежать (AD-8): полки и так видны только
+            // разработчику, так что кнопка сюда без входа не приводит.
+            val ownerUid = authRepository.currentUid() ?: return@launch
+            setPublicQuestShelf.execute(ownerUid, quest.id, targetShelf)
                 .onSuccess {
-                    questRepository.refreshByIds(setOf(quest.id))
                     if (dismissOnSuccess) {
                         navigation.popToFirst()
                     }
@@ -183,7 +199,7 @@ class DefaultQuestListComponent(
                 .onFailure { error ->
                     Log.w(
                         TAG,
-                        "Failed to set quest ${quest.id.value} public shelf to $targetShelf",
+                        "Failed to queue quest ${quest.id.value} public shelf move to $targetShelf",
                         error,
                     )
                 }
@@ -195,6 +211,7 @@ class DefaultQuestListComponent(
         downloadingIds: Set<String>,
         completedIds: Set<String>,
         downloaded: Map<QuestId, Boolean>,
+        shelfSync: Map<QuestId, QuestShelfSyncMark>,
     ): QuestListUiState {
         val items =
             quests
@@ -220,7 +237,10 @@ class DefaultQuestListComponent(
         return if (items.isEmpty()) {
             QuestListUiState.Empty
         } else {
-            QuestListUiState.Loaded(items)
+            QuestListUiState.Loaded(
+                quests = items,
+                shelfSync = shelfSync.filterKeys { id -> items.any { it.id == id } },
+            )
         }
     }
 
@@ -250,6 +270,29 @@ class DefaultQuestListComponent(
             flowOf(emptyList())
         } else {
             questRepository.observeByCatalog(catalogId, sourceShelf)
+        }
+
+    /**
+     * Пометки о неподтверждённых переносах — по ответу очереди на ссылку квеста (история 4.4).
+     *
+     * Подписка переподписывается на смену аккаунта: записи очереди принадлежат uid, и чужие
+     * пометки после выхода остаться на экране не должны. Без аккаунта пометок нет.
+     */
+    private fun shelfSyncFlow(quests: List<Quest>): Flow<Map<QuestId, QuestShelfSyncMark>> =
+        authRepository.observeUid().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyMap())
+            } else {
+                combine(
+                    quests.map { quest ->
+                        questRepository.observeShelfChangeState(uid, quest.id).map { state ->
+                            quest.id to state.toShelfSyncMark()
+                        }
+                    },
+                ) { entries ->
+                    entries.mapNotNull { (id, mark) -> mark?.let { id to it } }.toMap()
+                }
+            }
         }
 
     private fun questAvailabilityFlow(quests: List<Quest>) =

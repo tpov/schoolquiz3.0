@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
  * Domain rule: no DI annotations — DI wiring is phase-01 concern.
  */
 interface UserStatsRepository {
-
     /**
      * Continuously observes user stats.
      * Emits a new value whenever stats change (login, skill gain, role change, etc.).

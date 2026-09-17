@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 const crypto = require("crypto");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
+const {onMessagePublished} = require("firebase-functions/v2/pubsub");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {onRequest} = require("firebase-functions/v2/https");
 const {trophyList, pickGiftBoxTrophy, hasTrophy, TROPHY_VERIFIED} = require("./trophies.js");
@@ -58,7 +59,14 @@ const {
   SETTLEMENT_OUTCOME_UNAVAILABLE,
   settlePurchase,
 } = require("./purchase-settlement");
+const {clawBackPurchase} = require("./purchase-clawback");
 const {createPlayDeveloperApi} = require("./play-developer-api");
+const {
+  PUSH_EVENTS,
+  PushError,
+  detachDeviceToken,
+  sendPushToUser,
+} = require("./push-notifications");
 const {activityKindForQuest, sourceShelfForQuest} = require("./activity-kind");
 const {PAYMENT_RULE, isPayable, readSubmittedAttempt} = require("./attempt-intake");
 const {
@@ -82,6 +90,13 @@ const {
   settleClaims,
   validateClaimMask,
 } = require("./charge-claims");
+const {ADMIN_REVIEW_SYNC_CHANGES, writeSyncChanges} = require("./sync-changes");
+const {readReviewAssignmentChanges, resolveReviewAssignments} = require("./review-journal");
+const {
+  planHierarchyPrune,
+  planPrivateHierarchyPrune,
+  writePrivateHierarchyPruneToBatch,
+} = require("./hierarchy-prune");
 const logger = require("firebase-functions/logger");
 const {questionKeyDocuments} = require("./question-key-store");
 const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
@@ -104,13 +119,25 @@ const REGION = "us-central1";
  * 28 functions asks for far more CPU than a project is granted. The result is not a slow app but a
  * dead one: deploys fail, and the functions that do deploy answer 429 "no available instance".
  *
- * One instance still serves 80 concurrent requests, which is far beyond anything this app will
- * see at this stage, and it is the smallest ask that can fit a project's starting quota. Raise it
- * once the region's CPU quota has actually been granted.
+ * Одного инстанса на функцию оказалось мало: квота считает не инстансы, а процессор, и по
+ * целому ядру на функцию проект упёрся в потолок. Замеряно в консоли: предел в `us-central1` —
+ * 20 000 милли-vCPU, занято 95,5 %, а функций 49. Отсюда отказы выкатки «Quota exceeded for total
+ * allowable CPU per project per region»: восемь вызываемых функций так и остались недостижимыми,
+ * включая приёмник очереди и настройки экономики.
+ *
+ * `cpu: "gcf_gen1"` возвращает тот объём процессора, что выделялся функциям первого поколения, —
+ * для 256 МБ это примерно шестая часть ядра. Аппетит падает впятеро, и все 49 функций помещаются
+ * в ту же квоту без обращения в поддержку.
+ *
+ * Цена: при доле ядра инстанс обслуживает **один** запрос за раз (одновременность больше единицы
+ * при `cpu < 1` запрещена). При нынешней нагрузке — 221 вызов за неделю по данным консоли — это
+ * незаметно. Когда нагрузка вырастет, правильный ход — просить увеличение квоты и возвращать
+ * целое ядро, а не молча упираться в очередь.
  */
 const FUNCTION_OPTIONS = {
   region: REGION,
   maxInstances: 1,
+  cpu: "gcf_gen1",
   labels: {"schoolquiz-runtime": "node22"},
 };
 /**
@@ -123,6 +150,39 @@ const FUNCTION_OPTIONS = {
  * for that call alone, and small enough to fit the region's CPU quota alongside everything else.
  */
 const MONETARY_FUNCTION_OPTIONS = {...FUNCTION_OPTIONS, maxInstances: 2};
+/**
+ * Настройки для всего, что зовёт клиент.
+ *
+ * `invoker: "public"` здесь не про доверие вызывающему, а про достижимость. Право на вызов
+ * Cloud Run выдаётся при СОЗДАНИИ службы; у функций, созданных недавно, оно по умолчанию не
+ * выдаётся, а последующие выкатки идут как обновление и его не добавляют. Такая функция числится
+ * в списке, но отвечает 403 HTML-страницей раньше, чем запрос доходит до кода, — а клиентский SDK
+ * переводит это в `UNAUTHENTICATED`, и выглядит оно как беда со входом, хотя вход ни при чём.
+ *
+ * Так на боевом молча оказались недостижимы восемь вызываемых функций: приёмник очереди
+ * `submitMutation`, из-за которого ни одна отложенная операция клиента никогда не доходила до
+ * сервера, и `getEconomyConstants`, который валил синхронизацию целиком, среди них.
+ *
+ * Проверку личности это не ослабляет: каждая функция по-прежнему начинается с `requireAuthUid`,
+ * а денежные — ещё и с `requireProfile`. Открыт только сам вход, ровно как у остальных
+ * девятнадцати функций проекта, которые всё это время работали.
+ *
+ * Расписаниям и триггерам (`onSchedule`, `onDocumentCreated`) эти настройки НЕ передаются: их
+ * вызывает не клиент, а Google под своей служебной личностью, и открывать их наружу было бы
+ * настоящей дырой. Они остаются на [FUNCTION_OPTIONS].
+ */
+const CALLABLE_OPTIONS = {...FUNCTION_OPTIONS, invoker: "public"};
+const MONETARY_CALLABLE_OPTIONS = {...MONETARY_FUNCTION_OPTIONS, invoker: "public"};
+/**
+ * The Pub/Sub topic Play publishes real-time developer notifications to.
+ *
+ * A plain module constant, not a secret and not an environment variable: the name is half of a
+ * deploy-time binding — the topic has to exist in this project under exactly this name, and Play
+ * Console has to be pointed at it — so writing it anywhere but here would only hide which name the
+ * function is waiting on. The topic and its subscription are created by the owner in the console;
+ * nothing about it is confidential.
+ */
+const PLAY_RTDN_TOPIC = "play-rtdn";
 const QUALIFIED_LEVEL = 100;
 const DEVELOPER_ALL_ACCESS_LEVEL = 100;
 const TRANSLATION_REVIEW_LEVEL_GAP = 100;
@@ -214,31 +274,25 @@ exports.processQuestReviewRequest = onDocumentCreated(
  * рабочий код значит держать этот вход открытым постоянно ради ситуации, которой в проде нет.
  */
 
-exports.fetchReviewAssignmentChanges = onCall(FUNCTION_OPTIONS, async (request) => {
+/**
+ * Страница журнала ревью.
+ *
+ * Единственный из четырёх журналов, который клиент читает не из Firestore напрямую: коллекция
+ * `admin/review/sync_changes` закрыта правилами. Поэтому ограничение и продолжаемость выборки
+ * (AD-31) здесь обязан выполнить сервер, а не запрос клиента: курсор — пара `(changedAtMs, docId)`,
+ * страница ограничена `limit`, и ответ говорит, есть ли ещё. Скалярный `cursorMs` остаётся
+ * запасным входом для клиента прежней версии. Разбор и запрос живут в `review-journal.js` — там же
+ * их тест на фейке Firestore.
+ */
+exports.fetchReviewAssignmentChanges = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
-  const cursorMs = numberValue(request.data && request.data.cursorMs, 0);
-  const snapshot = await db
-    .collection("admin/review/sync_changes")
-    .where("changedAtMs", ">", cursorMs)
-    .get();
-  const changes = snapshot.docs
-    .map((doc) => {
-      const data = doc.data() || {};
-      const assignmentId = stringValue(data.assignmentId || data.id || doc.id);
-      const lessonId = stringValue(data.lessonId);
-      if (!assignmentId || !lessonId) return null;
-      return {
-        id: assignmentId,
-        changedAtMs: numberValue(data.changedAtMs, 0),
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.changedAtMs - b.changedAtMs);
-  return {changes};
+  return readReviewAssignmentChanges(db, request.data || {}, {
+    documentId: admin.firestore.FieldPath.documentId(),
+  });
 });
 
-exports.fetchReviewAssignments = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchReviewAssignments = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   const ids = stringArray(request.data && request.data.ids);
@@ -262,7 +316,7 @@ exports.fetchReviewAssignments = onCall(FUNCTION_OPTIONS, async (request) => {
  * travels back to the author's draft, and nothing of it reaches a public shelf. Resubmission is
  * how it comes back — the author edits and sends again, minting a new submission.
  */
-exports.rejectReviewSubmission = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.rejectReviewSubmission = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   const assignmentId = stringValue(request.data && request.data.assignmentId);
@@ -312,9 +366,27 @@ exports.rejectReviewSubmission = onCall(FUNCTION_OPTIONS, async (request) => {
   return {assignmentId, submissionId: task.submissionId, rejectedAtMs: now, reason};
 });
 
-exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.submitReviewAction = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
-  const action = normalizeSubmitAction(request.data || {});
+  return applySubmitReviewAction(uid, request.data || {});
+});
+
+/**
+ * Решение ревьюера — тело, общее для прямого вызова и для очереди.
+ *
+ * Тело — сериализованный `SubmitReviewActionCommand`, в той же форме, что и прямой вызов.
+ * Задание, к моменту доставки переназначенное или закрытое, отвечает окончательным отказом
+ * (`not-found` / `permission-denied`), и запись очереди уходит в карантин — локальной половины у
+ * этого действия нет, откатывать нечего (AD-25, AD-28).
+ *
+ * Начисление репутации ниже идёт вне транзакции. От двойного начисления при повторной доставке
+ * защищает ключ идемпотентности приёмника (AD-1): повтор по выполненному ключу получает
+ * сохранённый ответ и сюда не попадает. Здесь этот ключ не сверяется и не может — у тела нет
+ * доступа к конверту, и второй проверки рядом с единственной быть не должно.
+ */
+async function applySubmitReviewAction(uid, payload, options = {}) {
+  const action = normalizeSubmitAction(payload || {});
+  const pinnedReviewId = stringValue(options.reviewId) || null;
   const profile = await requireProfile(uid);
   const task = await readAdminReviewLessonTask(action.assignmentId);
   if (!task) {
@@ -329,6 +401,20 @@ exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
 
   const config = await readArenaReviewConfig();
   const existingRecords = await readReviewRecords(action.lessonId);
+  // Эффект уже лёг — инстанс умер после batch.commit(), но до того, как ключ был закрыт.
+  // Отвечаем эквивалентом сохранённого результата и не трогаем ни записи, ни репутацию:
+  // проверка раньше canSubmit, иначе «уже отрецензировано» ушло бы отказом в карантин, а
+  // карантин откатил бы ревью, которое на самом деле состоялось.
+  if (pinnedReviewId && existingRecords.some((record) => record.id === pinnedReviewId)) {
+    const settled = rebuildAggregate(task, existingRecords, config);
+    return {
+      recordId: pinnedReviewId,
+      aggregate: checksToCallableMap(settled.checks),
+      reviewerDeltas: [],
+      published: await publishSubmissionIfReady(task.submissionId, config, Date.now()),
+      replayed: true,
+    };
+  }
   if (!canSubmit(profile, task, action.kind, config, existingRecords)) {
     throw new HttpsError(
       "permission-denied",
@@ -337,7 +423,7 @@ exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
   }
 
   const now = Date.now();
-  const record = actionToRecord(action, profile, task, config, existingRecords, now);
+  const record = actionToRecord(action, profile, task, config, existingRecords, now, pinnedReviewId);
   const taskWithTranslatedQuestions =
     record.kind === "TRANSLATION"
       ? {...task, questions: mergeQuestions(task.questions, record.translatedQuestions)}
@@ -375,7 +461,7 @@ exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
     reviewerDeltas,
     published,
   };
-});
+}
 
 /** Сколько аккаунтов сверяем за один прогон. Остальные дождутся следующего: сверка не срочная. */
 const MAX_RECONCILED_ACCOUNTS_PER_RUN = 200;
@@ -619,16 +705,15 @@ function isSingleDocumentId(value) {
 }
 
 const {
+  DECISION_DENIED,
   DECISION_EXECUTE,
   DECISION_REPLAY,
   DECISION_WAIT,
   STATE_RESERVED,
-  belongsTo,
   completionRecord,
-  decideMutation,
+  gateVerdict,
   parseMutationPayload,
   readExpectedVersion,
-  reservationRecord,
   resolveOperation,
   validateMutation,
   versionConflictDetail,
@@ -671,8 +756,22 @@ const PRECONDITION_PENDING_DETAIL = "precondition-pending";
  * Разблокировка урока подходит: цену считает сервер из времени самого урока, повтор безопасен по
  * набору купленного, и без сети игрок всё равно не увидит цену раньше отправки.
  */
+/**
+ * Идентификатор записи ревью для мутации из очереди.
+ *
+ * Ключ уже проверен приёмником (`[A-Za-z0-9_-]`, до 128 символов), поэтому годится в id
+ * документа как есть. Префикс отличает его от записей, созданных прямым callable по часам.
+ */
+function reviewIdForMutation(mutationId) {
+  return `m_${stringValue(mutationId)}`;
+}
+
 const MUTATION_HANDLERS = {
-  UNLOCK_LESSON: (uid, payload) => applyLessonUnlock(uid, payload),
+  // Разблокировка урока. Имя в пространстве владеющей фичи (NFR4): раньше ключ был голым
+  // `UNLOCK_LESSON`, и это единственное имя реестра, у которого фичи не было. Клиентская половина
+  // — `OutboxOperations.UNLOCK_LESSON`, и совпадение этих двух строк сторожит
+  // `OutboxOperationsRegistryTest`.
+  "lesson.UNLOCK": (uid, payload) => applyLessonUnlock(uid, payload),
   // Прохождение урока. Приёмник у него теперь один: очередь несёт по одному прохождению за
   // запись, а пакетный callable остаётся для синхронной отправки — тело у обоих общее.
   "lesson_runner.SUBMIT_ATTEMPT": (uid, payload) => applyLessonResultEvents(uid, [payload || {}]),
@@ -681,6 +780,17 @@ const MUTATION_HANDLERS = {
   // Заявка черновика на арену. Раньше она писалась в Firestore напрямую и проверку ключа
   // обходила в принципе — теперь идёт тем же путём, что и всё остальное (AD-6).
   "quest_authoring.SUBMIT_ARENA": (uid, payload) => applyArenaSubmission(uid, payload),
+  // Решение ревьюера по заданию. Начисление репутации в теле идёт вне транзакции, и защищает его
+  // от повтора только ключ: вторая доставка получает сохранённый ответ и до обработчика не доходит.
+  "quest_authoring.SUBMIT_REVIEW": (uid, payload, _now, mutationId) =>
+    applySubmitReviewAction(uid, payload, {reviewId: reviewIdForMutation(mutationId)}),
+  // Перенос публичного квеста на полку. Полка серверно-защищена (AD-25): клиент кладёт в очередь
+  // намерение, а новое значение приезжает к нему журналом изменений.
+  "quest.SET_SHELF": (uid, payload) => applySetPublicQuestShelf(uid, payload),
+  // Снятие своего лота с продажи. Детерминировано по содержимому и потому откладывается (AD-3),
+  // в отличие от покупки. Лот, купленный за время ожидания, — окончательный отказ.
+  "profile.CANCEL_NICKNAME_LISTING": (uid, payload) => applyCancelNicknameListing(uid, payload),
+  "profile.CANCEL_LOGO_LISTING": (uid, payload) => applyCancelLogoListing(uid, payload),
 };
 
 /**
@@ -763,7 +873,7 @@ async function applyArenaSubmission(uid, payload) {
  * транзакцию с записью ключа нельзя, а повтор по зарезервированному, но не завершённому ключу
  * никогда не считается выполненным — он ждёт, а не выполняет второй раз.
  */
-exports.submitMutation = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
 
@@ -788,25 +898,15 @@ exports.submitMutation = onCall(FUNCTION_OPTIONS, async (request) => {
   const gate = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(keyRef);
     const existing = snapshot.exists ? snapshot.data() : null;
-
-    if (!belongsTo(existing, uid)) {
-      // Чужой ключ — не повтор, а попытка прочитать чужой результат.
-      return {decision: "denied"};
+    // Решение — чистое (`gateVerdict`); транзакции остаётся только записать резервирование.
+    const verdict = gateVerdict(existing, uid, mutationId, operation, now);
+    if (verdict.decision === DECISION_EXECUTE) {
+      transaction.set(keyRef, verdict.reservation);
     }
-
-    const verdict = decideMutation(existing, now);
-    if (verdict.decision === DECISION_REPLAY) {
-      return {decision: DECISION_REPLAY, result: verdict.result};
-    }
-    if (verdict.decision === DECISION_WAIT) {
-      return {decision: DECISION_WAIT, reason: verdict.reason};
-    }
-
-    transaction.set(keyRef, reservationRecord(mutationId, uid, operation, now));
-    return {decision: DECISION_EXECUTE, reservation: reservationRecord(mutationId, uid, operation, now)};
+    return verdict;
   });
 
-  if (gate.decision === "denied") {
+  if (gate.decision === DECISION_DENIED) {
     throw new HttpsError("permission-denied", "mutationId belongs to another account");
   }
   if (gate.decision === DECISION_REPLAY) {
@@ -850,7 +950,18 @@ exports.submitMutation = onCall(FUNCTION_OPTIONS, async (request) => {
     }
   }
 
-  const result = await resolved.handler(uid, body.payload, now);
+  // Ключ едет в обработчик: телу, чей эффект не умещается в транзакцию с ключом, нужен свой
+  // детерминированный идентификатор, чтобы повтор по протухшему резерву не применил его дважды (AD-1).
+  let result;
+  try {
+    result = await resolved.handler(uid, body.payload, now, mutationId);
+  } catch (error) {
+    // Отказ тела — не результат: ключ освобождается, как при конфликте версии. Останься он
+    // зарезервированным, честный повтор транзиентной ошибки ждал бы минуту таймаута, а
+    // окончательный отказ держал бы в `mutation_keys` резерв, которому уже нечего защищать.
+    await releaseReservation(keyRef, gate.reservation);
+    throw error;
+  }
   await keyRef.set(completionRecord(gate.reservation, result, Date.now()));
   return {replayed: false, result: result === undefined ? null : result};
 });
@@ -873,7 +984,7 @@ async function releaseReservation(keyRef, reservation) {
   });
 }
 
-exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.submitLessonResultEvents = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
   return applyLessonResultEvents(uid, listMaps(request.data && request.data.attempts));
@@ -1177,7 +1288,6 @@ async function applyLessonResultEvents(uid, attempts) {
         rules: economy.plasma,
         ownedSlots: nonNegativeInteger(userData.goldHearts, 0),
       },
-
     };
   });
   // Перерасход. Излишек и так не оплачен — запись для оператора, а не второе наказание, и
@@ -1189,7 +1299,7 @@ async function applyLessonResultEvents(uid, attempts) {
   return {accepted: attempts.length, reward, lifePoints: remainingLifePoints};
 }
 
-exports.submitQuestRatingEvents = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.submitQuestRatingEvents = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
   return applyQuestRatingEvents(uid, listMaps(request.data && request.data.ratings));
@@ -1262,7 +1372,7 @@ exports.aggregateQuestRatingsDaily = onSchedule(
   },
 );
 
-exports.aggregateQuestRatingsNow = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.aggregateQuestRatingsNow = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
@@ -1296,7 +1406,7 @@ async function readEconomyConstantsDocument() {
   return readEconomyConstants(snapshot.exists ? snapshot.data() : null, writtenAtMs);
 }
 
-exports.getEconomyConstants = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.getEconomyConstants = onCall(CALLABLE_OPTIONS, async (request) => {
   requireAuthUid(request);
   const constants = await readEconomyConstantsDocument();
   const known = Math.floor(Number(request.data && request.data.knownVersion));
@@ -1307,7 +1417,7 @@ exports.getEconomyConstants = onCall(FUNCTION_OPTIONS, async (request) => {
   return {unchanged: false, ...clientEconomyConstants(constants)};
 });
 
-exports.ensureUserProfile = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.ensureUserProfile = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const result = await upsertUserProfile(uid, {
     nickname: generatedNickname(uid),
@@ -1319,7 +1429,7 @@ exports.ensureUserProfile = onCall(FUNCTION_OPTIONS, async (request) => {
   return profileResponse(result, await readEconomyConstantsDocument());
 });
 
-exports.updateUserNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.updateUserNickname = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const nickname = sanitizeNickname(stringValue(request.data && request.data.nickname), null);
   if (!nickname) {
@@ -1343,7 +1453,7 @@ exports.updateUserNickname = onCall(FUNCTION_OPTIONS, async (request) => {
  * says about themselves, reaches them on telegram, and decides. These three calls carry that
  * conversation — filing, listing, deciding — and nothing about it is derivable from play.
  */
-exports.submitVerificationRequest = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.submitVerificationRequest = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   // An anonymous account is a container for statistics, not a person anybody could verify. The
   // ladder runs anonymous -> registered -> validated, and this is the step that needs a real login.
@@ -1382,7 +1492,7 @@ exports.submitVerificationRequest = onCall(FUNCTION_OPTIONS, async (request) => 
   return {status: "PENDING", submittedAtMs: now};
 });
 
-exports.fetchVerificationRequests = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchVerificationRequests = onCall(CALLABLE_OPTIONS, async (request) => {
   await requireVerifier(requireAuthUid(request));
   const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 20), 100));
   const snapshot = await db
@@ -1405,7 +1515,7 @@ exports.fetchVerificationRequests = onCall(FUNCTION_OPTIONS, async (request) => 
   };
 });
 
-exports.decideVerification = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.decideVerification = onCall(CALLABLE_OPTIONS, async (request) => {
   const reviewerUid = requireAuthUid(request);
   await requireVerifier(reviewerUid);
   const targetUid = stringValue(request.data && request.data.uid);
@@ -1452,7 +1562,44 @@ exports.decideVerification = onCall(FUNCTION_OPTIONS, async (request) => {
       transaction.set(profileRef, {uid: targetUid, status: "VALIDATED"}, {merge: true});
     }
   });
+  // После коммита, не внутри: транзакция может переиграться, а уведомление — нет. Сбой доставки
+  // операцию не роняет — решение уже записано (AD-20).
+  if (decision === DECISION_APPROVED) {
+    await notifyUser(PUSH_EVENTS.VERIFICATION_APPROVED, targetUid, targetUid);
+  }
   return {uid: targetUid, decision, decidedAtMs: now};
+});
+
+/**
+ * Push по критическому событию — повод, а не данные (AD-20).
+ *
+ * Зовётся после коммита операции. Никогда не бросает: уведомление — побочный канал, и его
+ * сбой не должен превращаться в HttpsError у операции, которая уже состоялась.
+ */
+async function notifyUser(event, entityId, targetUid) {
+  try {
+    await sendPushToUser({db, messaging: admin.messaging()}, event, entityId, targetUid, logger);
+  } catch (error) {
+    logger.warn("push: unexpected failure", {eventType: event && event.eventType, message: error.message});
+  }
+}
+
+/**
+ * Снимает токен устройства с чужого аккаунта — единственная точка, откуда это делает клиент,
+ * получивший сообщение с чужим `targetUid` после смены аккаунта (Story 10.5).
+ */
+exports.detachDeviceToken = onCall(CALLABLE_OPTIONS, async (request) => {
+  const callerUid = requireAuthUid(request);
+  try {
+    return await detachDeviceToken(db, {
+      callerUid,
+      token: request.data && request.data.token,
+      targetUid: request.data && request.data.targetUid,
+    });
+  } catch (error) {
+    if (error instanceof PushError) throw new HttpsError(error.code, error.message);
+    throw error;
+  }
 });
 
 /**
@@ -1465,7 +1612,7 @@ exports.decideVerification = onCall(FUNCTION_OPTIONS, async (request) => {
  * The answer is a hint, never a reservation. Somebody else can claim the name between this call and
  * the save, so the save still decides.
  */
-exports.checkNicknameAvailability = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.checkNicknameAvailability = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const policy = await readNicknamePolicy();
   const described = describeNickname(stringValue(request.data && request.data.nickname), policy);
@@ -1512,7 +1659,7 @@ exports.checkNicknameAvailability = onCall(FUNCTION_OPTIONS, async (request) => 
  * change hands through the shop.
  */
 
-exports.fetchOwnedNicknames = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchOwnedNicknames = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const [claims, userSnapshot, listings] = await Promise.all([
     db.collection(NICKNAME_CLAIMS_COLLECTION).where("uid", "==", uid).get(),
@@ -1538,7 +1685,7 @@ exports.fetchOwnedNicknames = onCall(FUNCTION_OPTIONS, async (request) => {
   };
 });
 
-exports.claimNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.claimNickname = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const policy = await readNicknamePolicy();
   const described = describeNickname(stringValue(request.data && request.data.nickname), policy);
@@ -1601,7 +1748,7 @@ const LOGO_PRICES = {
   "Royal Shield Logo": 400,
 };
 
-exports.fetchLogoCatalog = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchLogoCatalog = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const snapshot = await db.collection("users").doc(uid).get();
   const owned = new Set(stringArray((snapshot.data() || {}).ownedLogos));
@@ -1615,7 +1762,7 @@ exports.fetchLogoCatalog = onCall(FUNCTION_OPTIONS, async (request) => {
   };
 });
 
-exports.buyLogo = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.buyLogo = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const name = stringValue(request.data && request.data.logo);
   const price = LOGO_PRICES[name];
@@ -1646,7 +1793,7 @@ exports.buyLogo = onCall(FUNCTION_OPTIONS, async (request) => {
   return {logo: name, charged: price};
 });
 
-exports.wearLogo = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.wearLogo = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const name = stringValue(request.data && request.data.logo);
   if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
@@ -1663,7 +1810,9 @@ exports.wearLogo = onCall(FUNCTION_OPTIONS, async (request) => {
 
 /** The avatar image itself. Small, immutable, cached for a day; 404 for anything else. */
 exports.logoImage = onRequest(
-  {region: "us-central1", maxInstances: 1},
+  // Картинки логотипов отдаются в браузер и на устройство без токена — вход тут открыт по смыслу,
+  // но объявить его всё равно нужно: иначе служба недостижима (см. [CALLABLE_OPTIONS]).
+  {region: "us-central1", maxInstances: 1, invoker: "public"},
   async (request, response) => {
     const name = String(request.query.logo || "");
     const bytes = isLogoName(name) ? logoImageBytes(name) : null;
@@ -1678,7 +1827,7 @@ exports.logoImage = onRequest(
   },
 );
 
-exports.fetchLogoListings = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchLogoListings = onCall(CALLABLE_OPTIONS, async (request) => {
   requireAuthUid(request);
   const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 50), 100));
   const snapshot = await db.collection(LOGO_LISTINGS_COLLECTION).limit(limit).get();
@@ -1696,7 +1845,7 @@ exports.fetchLogoListings = onCall(FUNCTION_OPTIONS, async (request) => {
   };
 });
 
-exports.listLogoForSale = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.listLogoForSale = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const name = stringValue(request.data && request.data.logo);
   if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
@@ -1733,9 +1882,21 @@ exports.listLogoForSale = onCall(FUNCTION_OPTIONS, async (request) => {
   return {logo: name, price};
 });
 
-exports.cancelLogoListing = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.cancelLogoListing = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
-  const name = stringValue(request.data && request.data.logo);
+  return applyCancelLogoListing(uid, request.data || {});
+});
+
+/**
+ * Снятие логотипа с продажи — тело, общее для прямого вызова и для очереди.
+ *
+ * Ключ лота — `logo`, как и у прямого вызова. Лот, которого уже нет, — `not-found`: за время
+ * ожидания его купили, и повтор этого не изменит, поэтому отказ окончательный и запись очереди
+ * уходит в карантин. Повтор после успешного снятия сюда не доходит: приёмник отдаёт сохранённый
+ * `{cancelled: true}` по ключу, и второго `not-found` клиент не видит.
+ */
+async function applyCancelLogoListing(uid, payload) {
+  const name = stringValue(payload && payload.logo);
   if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
   const listingRef = db.collection(LOGO_LISTINGS_COLLECTION).doc(name);
   await db.runTransaction(async (transaction) => {
@@ -1747,9 +1908,9 @@ exports.cancelLogoListing = onCall(FUNCTION_OPTIONS, async (request) => {
     transaction.delete(listingRef);
   });
   return {cancelled: true};
-});
+}
 
-exports.buyListedLogo = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.buyListedLogo = onCall(CALLABLE_OPTIONS, async (request) => {
   const buyerUid = requireAuthUid(request);
   const name = stringValue(request.data && request.data.logo);
   if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
@@ -1811,7 +1972,7 @@ exports.buyListedLogo = onCall(FUNCTION_OPTIONS, async (request) => {
  * round trip each, and the count is approximate only in the sense that somebody may pass you
  * between the two — which is true of any ranking that is not frozen.
  */
-exports.fetchLeagueStanding = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchLeagueStanding = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const snapshot = await db.collection("users").doc(uid).get();
   const mine = numberValue((snapshot.data() || {}).skillPoints, 0);
@@ -1828,7 +1989,7 @@ exports.fetchLeagueStanding = onCall(FUNCTION_OPTIONS, async (request) => {
   return {place, total, topPercent, skillPoints: mine};
 });
 
-exports.setActiveNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.setActiveNickname = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
   if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
@@ -1853,7 +2014,7 @@ exports.setActiveNickname = onCall(FUNCTION_OPTIONS, async (request) => {
   return {nickname};
 });
 
-exports.fetchNicknameListings = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchNicknameListings = onCall(CALLABLE_OPTIONS, async (request) => {
   requireAuthUid(request);
   const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 50), 100));
   const snapshot = await db.collection(NICKNAME_LISTINGS_COLLECTION).limit(limit).get();
@@ -1886,7 +2047,7 @@ function requireVerifiedForNicknameMarket(user, action) {
   }
 }
 
-exports.listNicknameForSale = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.listNicknameForSale = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
   if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
@@ -1924,9 +2085,20 @@ exports.listNicknameForSale = onCall(FUNCTION_OPTIONS, async (request) => {
   return {nickname: stringValue((await claimRef.get()).data().nickname), price};
 });
 
-exports.cancelNicknameListing = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.cancelNicknameListing = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
-  const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
+  return applyCancelNicknameListing(uid, request.data || {});
+});
+
+/**
+ * Снятие ника с продажи — тело, общее для прямого вызова и для очереди.
+ *
+ * Ключ лота — `nickname`, как и у прямого вызова. Семантика отказов и повтора та же, что у
+ * {@link applyCancelLogoListing}: купленный лот — окончательный `not-found`, повтор после
+ * успешного снятия получает сохранённый ответ от приёмника.
+ */
+async function applyCancelNicknameListing(uid, payload) {
+  const canonical = canonicalNickname(stringValue(payload && payload.nickname));
   if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
   const listingRef = db.collection(NICKNAME_LISTINGS_COLLECTION).doc(nicknameClaimId(canonical));
   await db.runTransaction(async (transaction) => {
@@ -1938,9 +2110,9 @@ exports.cancelNicknameListing = onCall(FUNCTION_OPTIONS, async (request) => {
     transaction.delete(listingRef);
   });
   return {cancelled: true};
-});
+}
 
-exports.buyListedNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.buyListedNickname = onCall(CALLABLE_OPTIONS, async (request) => {
   const buyerUid = requireAuthUid(request);
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
   if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
@@ -1990,7 +2162,7 @@ exports.buyListedNickname = onCall(FUNCTION_OPTIONS, async (request) => {
   return receipt;
 });
 
-exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const itemId = stringValue(request.data && request.data.itemId);
   if (![SHOP_ITEM_STANDARD_HEART_SLOT, SHOP_ITEM_GOLD_HEART].includes(itemId)) {
@@ -2060,7 +2232,7 @@ exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
  * machine-readable `reasonCode` in its details; the client branches on the code, people and
  * analytics on the reason.
  */
-exports.verifyPurchase = onCall(MONETARY_FUNCTION_OPTIONS, async (request) => {
+exports.verifyPurchase = onCall(MONETARY_CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const outcome = await settlePurchase({
     db,
@@ -2079,6 +2251,37 @@ exports.verifyPurchase = onCall(MONETARY_FUNCTION_OPTIONS, async (request) => {
   }
   return outcome.response;
 });
+
+/**
+ * Takes back the gold a refunded purchase paid for — exactly once, and never below zero.
+ *
+ * Google refunds a purchase without asking the app, and refunds by itself anything the player left
+ * unclaimed for three days. Until this handler existed, every one of those left the gold on the
+ * account, which made a refund the cheapest way to be paid in gold for nothing.
+ *
+ * A notification is a reason to ask, not a fact: the money moves only when the Play Developer API
+ * confirms the purchase is no longer in the purchased state, or no longer knows the token at all.
+ * The amount is what the settlement record says was granted, never what the message claims.
+ *
+ * Wiring only. The reading of the message and the decision are pure (purchase-notifications.js),
+ * and the one transaction that writes balance, settlement, receipt, audit and ledger row together
+ * runs without firebase-admin (purchase-clawback.js). `retry: true` because a message this handler
+ * throws on is one it wrote nothing for: an unreachable Play or an uncommitted transaction must
+ * come back, while anything unreadable is recorded and acknowledged so it cannot pile up.
+ */
+exports.playPurchaseNotifications = onMessagePublished(
+  {...MONETARY_FUNCTION_OPTIONS, topic: PLAY_RTDN_TOPIC, retry: true},
+  async (event) => {
+    await clawBackPurchase({
+      db,
+      playApi: playDeveloperApi(),
+      now: Date.now(),
+      message: event.data && event.data.message,
+      readGold: (data) => readEconomyBalance(data).gold,
+      log: logger,
+    });
+  },
+);
 
 /**
  * The Play client is built on first use, not at load: every function in this file shares the
@@ -2129,7 +2332,7 @@ function parseQuestionPayload(data) {
   }
 }
 
-exports.unlockLesson = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.unlockLesson = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   return applyLessonUnlock(uid, request.data);
 });
@@ -2207,7 +2410,7 @@ async function applyLessonUnlock(uid, payload) {
   return response;
 }
 
-exports.openGiftBox = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.openGiftBox = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const now = Date.now();
   await upsertUserProfile(uid, {
@@ -2245,16 +2448,29 @@ exports.openGiftBox = onCall(FUNCTION_OPTIONS, async (request) => {
   return reward;
 });
 
-exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.setPublicQuestShelf = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
+  return applySetPublicQuestShelf(uid, request.data || {});
+});
+
+/**
+ * Перенос публичного квеста на полку — тело, общее для прямого вызова и для очереди.
+ *
+ * Тело: `questId`, `targetShelf`, необязательный `reason`. Уровень разработчика проверяется
+ * первым, и отказ по нему окончательный (`permission-denied`): аккаунт без уровня не получит его
+ * от повтора, и запись очереди уходит в карантин. Локальной полки это не касается — `visibleOn`
+ * серверно-защищён (AD-25) и приезжает на клиент журналом изменений после применения.
+ */
+async function applySetPublicQuestShelf(uid, payload) {
+  const data = payload || {};
   const profile = await requireProfile(uid);
   if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
     throw new HttpsError("permission-denied", "Developer level is required");
   }
 
-  const questId = stringValue(request.data && request.data.questId);
+  const questId = stringValue(data.questId);
   if (!questId) throw new HttpsError("invalid-argument", "questId is required");
-  const targetShelf = publicQuestShelfValue(request.data && request.data.targetShelf);
+  const targetShelf = publicQuestShelfValue(data.targetShelf);
   const now = Date.now();
   const questRef = db.collection("quests").doc(questId);
 
@@ -2285,18 +2501,9 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
       quest.version,
       {merge: true},
     );
-    transaction.set(
-      db.doc(publicCatalogSyncChangePath(catalogId, "quest", questId)),
-      syncChangeDocument("quest", questId, now),
-      {merge: true},
-    );
-    writeQuestVersionMirror(transaction, {
-      ownerUid: nullableString(quest.authorUid || quest.ownerUid),
-      catalogId,
-      questId,
-      assignedVersion,
-      now,
-    });
+    const ownerUid = nullableString(quest.authorUid || quest.ownerUid);
+    writeQuestVersionMirror(transaction, {ownerUid, catalogId, questId, assignedVersion, now});
+    writeSyncChanges(transaction, db, {kind: "quest", id: questId, catalogId, ownerUid}, now);
     writeShelfMoveAudit(transaction, {
       questId,
       catalogId,
@@ -2304,7 +2511,7 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
       action: "move",
       previousVisibleOn,
       visibleOn: [targetShelf],
-      reason: nullableString(request.data && request.data.reason),
+      reason: nullableString(data.reason),
       now,
     });
     return {
@@ -2315,14 +2522,14 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
       changedAtMs: now,
     };
   });
-});
+}
 
 /**
  * Takes a published quest off every shelf. The client half of removal already works — an empty
  * visibleOn makes the sync delete the local row — so the server half is all that was missing:
  * until this callable, the only takedown was a laptop script hardcoded to the courses catalog.
  */
-exports.retirePublicQuest = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.retirePublicQuest = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
@@ -2357,18 +2564,11 @@ exports.retirePublicQuest = onCall(FUNCTION_OPTIONS, async (request) => {
       quest.version,
       {merge: true},
     );
-    transaction.set(
-      db.doc(publicCatalogSyncChangePath(catalogId, "quest", questId)),
-      syncChangeDocument("quest", questId, now),
-      {merge: true},
-    );
-    writeQuestVersionMirror(transaction, {
-      ownerUid: nullableString(quest.authorUid || quest.ownerUid),
-      catalogId,
-      questId,
-      assignedVersion,
-      now,
-    });
+    // Снятие с полок — тоже изменение узла, и в журнал оно попадает наравне с любым другим:
+    // пустой `visibleOn` и есть удаление для клиента (AD-26), и без записи он о нём не узнает.
+    const ownerUid = nullableString(quest.authorUid || quest.ownerUid);
+    writeQuestVersionMirror(transaction, {ownerUid, catalogId, questId, assignedVersion, now});
+    writeSyncChanges(transaction, db, {kind: "quest", id: questId, catalogId, ownerUid}, now);
     writeShelfMoveAudit(transaction, {
       questId,
       catalogId,
@@ -2409,7 +2609,7 @@ function banDurationMsFor(profile) {
 }
 
 /** Anyone signed in can report anything. The verdict is where judgement happens, not the filing. */
-exports.submitReport = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.submitReport = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
   const targetType = stringValue(request.data && request.data.targetType).toUpperCase();
@@ -2459,7 +2659,7 @@ exports.submitReport = onCall(FUNCTION_OPTIONS, async (request) => {
  * and ban the author. The reporter is paid for being right and charged for being wrong, which is
  * what stops reporting from being free.
  */
-exports.decideReport = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.decideReport = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   const isModerator = profile.moderatorLevel >= QUALIFIED_LEVEL;
@@ -2546,7 +2746,7 @@ exports.decideReport = onCall(FUNCTION_OPTIONS, async (request) => {
  * costs them — the same +3 / -3 the review consensus uses, and the same reputation number.
  * Judgement about judgement is how a moderation corps stays honest without a second hierarchy.
  */
-exports.reviewReportDecision = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.reviewReportDecision = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   const isDeveloper = profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL;
@@ -2607,7 +2807,7 @@ async function reportTargetOwnerUid(report) {
  * preserved in the audit record: the evidence must survive the removal, or every dispute becomes
  * one person's word against another's.
  */
-exports.removeLessonComment = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.removeLessonComment = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   const isModerator = profile.moderatorLevel >= QUALIFIED_LEVEL;
@@ -2668,7 +2868,7 @@ function writeShelfMoveAudit(transaction, options) {
   );
 }
 
-exports.recalculateTournamentLeaderboard = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.recalculateTournamentLeaderboard = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
   if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
@@ -2679,7 +2879,7 @@ exports.recalculateTournamentLeaderboard = onCall(FUNCTION_OPTIONS, async (reque
   return recalculateTournamentLeaderboard(tournamentId, Date.now());
 });
 
-exports.fetchTournamentOverview = onCall(FUNCTION_OPTIONS, async (request) => {
+exports.fetchTournamentOverview = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
   const tournamentId = tournamentIdValue(request.data && request.data.tournamentId);
@@ -3011,7 +3211,7 @@ async function processArenaRequest(request) {
   const now = Date.now();
   const adminTasks = toAdminLessonTasks(request, now);
   const batch = db.batch();
-  writePrivateHierarchyToBatch(batch, request);
+  writePrivateHierarchyToBatch(batch, request, now);
   writeAdminReviewLessonTasksToBatch(batch, adminTasks);
   batch.set(
     db.collection("quest_review_requests").doc(request.submissionId),
@@ -3065,6 +3265,7 @@ function requestToDocument(request) {
     requestedAtMs: request.requestedAtMs,
     targetShelf: request.targetShelf,
     targetLessonIds: request.targetLessonIds,
+    draftTree: request.draftTree,
     draft: request.draft,
     sections: request.sections,
     themes: request.themes,
@@ -3074,10 +3275,36 @@ function requestToDocument(request) {
   };
 }
 
-function writePrivateHierarchyToBatch(batch, request) {
-  for (const [path, data] of Object.entries(privateDocuments(request))) {
+/**
+ * Приватное дерево автора и его журнал одним батчем — по серверным часам.
+ *
+ * `now` приходит аргументом и обязан приходить: время журнала — это курсор читателя, а не свойство
+ * заявки. Раньше запись датировалась `request.requestedAtMs` — числом, которое ставит устройство
+ * автора (`SubmitQuestDraftToArenaUseCase` → тело очереди → `numberValue(data.requestedAtMs, 0)`).
+ * У автора с убежавшими вперёд часами курсор `private_quests:{uid}` уезжал в будущее, и всё, что
+ * сервер записывал потом — назначенная при публикации версия (`writeQuestVersionMirror`),
+ * перекладка по полкам, рейтинг, — оказывалось ниже курсора и не читалось никогда: `serverRevision`
+ * в черновик не приходил, следующая публикация уходила со стухшим `expected_version` и получала
+ * вечный конфликт. Курсор монотонен и назад не возвращается, документ журнала на квест один и
+ * пишется без merge, поэтому клиентское время не добавлялось к серверному, а замещало его, и
+ * лечилось это только «Перечитать всё».
+ *
+ * Отсюда правило, общее для всех четырёх журналов (AD-11, AD-31): `changedAtMs` ставит тот, чьи
+ * часы задают порядок чтения, — сервер. Время устройства остаётся в полях про содержание
+ * (`updatedAtMs`, `createdAtMs`, `requestedAtMs` в теле заявки), где оно и означает «когда автор
+ * это сделал». Стережёт `sync-change-clock.test.js`.
+ */
+function writePrivateHierarchyToBatch(batch, request, now) {
+  for (const [path, data] of Object.entries(privateDocuments(request, now))) {
     batch.set(db.doc(path), clean(data), {merge: true});
   }
+  // Заявка трогает только приватную копию квеста: публичного узла у черновика ещё нет.
+  writeSyncChanges(
+    batch,
+    db,
+    {kind: "private_quest", id: request.draft.id, catalogId: request.draft.catalogId, ownerUid: request.ownerUid},
+    now,
+  );
 }
 
 /**
@@ -3094,8 +3321,9 @@ function writePrivateHierarchyToBatch(batch, request) {
  * число, и «моя редакция выросла из версии N» — утверждение про квест, а не про то, из какого
  * документа его прочитали.
  *
- * Отметка `changedAtMs` обязательна рядом: приватная синхронизация ходит по ней, и версия, не
- * попавшая в ленту изменений, доехала бы до автора только со следующей его правкой.
+ * Отметка `changedAtMs` обязательна рядом: приватная синхронизация ходит по ней. Запись в
+ * приватный журнал здесь не делается — её делает тот же вызов `writeSyncChanges` для узла `quest`,
+ * который пишет и каталожный журнал: квест принадлежит обоим (AD-11), и запись в них одна.
  *
  * @param {*} writer батч или транзакция.
  */
@@ -3106,35 +3334,39 @@ function writeQuestVersionMirror(writer, options) {
   // Квест без автора зеркалить некуда. Такие документы остались от сидов, которые пишут публичное
   // дерево напрямую и приватной половины не имеют; терять из-за них перекладку по полкам нельзя.
   if (!ownerUid || !catalogId || !questId) return;
-  const now = options.now;
   writer.set(
     db.doc(privateQuestPath(ownerUid, catalogId, questId)),
     {
       version: options.assignedVersion,
-      changedAtMs: now,
+      changedAtMs: options.now,
     },
-    {merge: true},
-  );
-  writer.set(
-    db.doc(privateSyncChangePath(ownerUid, catalogId, questId)),
-    {id: questId, type: "quest", catalogId, questId, changedAtMs: now},
     {merge: true},
   );
 }
 
+/**
+ * Задания на ревью — документы и их журнал одним батчем.
+ *
+ * Задание переписывается целиком при создании, оценке, отклонении и публикации, и каждый раз в
+ * `admin/review/sync_changes/{assignmentId}` ложится запись с новым `changedAtMs` — иначе рецензент,
+ * читающий журнал, о смене статуса не узнает.
+ */
 function writeAdminReviewLessonTasksToBatch(batch, tasks) {
   for (const [path, data] of Object.entries(adminDocuments(tasks))) {
     batch.set(db.doc(path), clean(data), {merge: true});
   }
+  for (const task of tasks) {
+    writeSyncChanges(batch, db, {kind: "review_assignment", id: task.id}, task.changedAtMs);
+  }
 }
 
 async function reconcileChangedReviewLessons(sinceMs, now) {
-  const changes = await db.collection("admin/review/sync_changes")
+  const changes = await db.collection(ADMIN_REVIEW_SYNC_CHANGES)
     .where("changedAtMs", ">", sinceMs)
     .get();
   const assignmentIds = new Set(
     changes.docs
-      .map((doc) => stringValue((doc.data() || {}).assignmentId, doc.id))
+      .map((doc) => stringValue((doc.data() || {}).id, doc.id))
       .filter(Boolean),
   );
   if (assignmentIds.size === 0) return {checked: 0, published: 0};
@@ -3219,7 +3451,10 @@ async function aggregateDirtyQuestRatingDoc(scope, dirtyDoc, now) {
   const qualificationScore = questRatingQualificationScore(ratingsSnapshot.docs, targetUid);
   const aggregateRef = db.collection(scopedCollection("quest_rating_aggregates", dirty.scope)).doc(dirty.contentKey);
   const result = {processed: 1, skipped: 0, qualificationDelta: 0};
+  // Последний прогон транзакции — тот, что закоммитился; его адресаты и получают push.
+  let changedUids = [];
   await db.runTransaction(async (transaction) => {
+    changedUids = [];
     const dirtySnapshot = await transaction.get(dirtyDoc.ref);
     if (!dirtySnapshot.exists) {
       result.processed = 0;
@@ -3247,6 +3482,7 @@ async function aggregateDirtyQuestRatingDoc(scope, dirtyDoc, now) {
       },
     );
     result.qualificationDelta = qualificationApplication.delta;
+    changedUids = qualificationApplication.changedUids;
 
     transaction.set(
       aggregateRef,
@@ -3266,13 +3502,17 @@ async function aggregateDirtyQuestRatingDoc(scope, dirtyDoc, now) {
       }),
       {merge: true},
     );
-    writeQuestRatingAggregateToWriter(transaction, dirty, averageRating, count, now);
+    writeQuestRatingAggregateToWriter(transaction, dirty, averageRating, count, now, targetUid);
     transaction.delete(dirtyDoc.ref);
   });
+  // После коммита: уровень квалификации изменился — автору уходит повод, не число (AD-20).
+  for (const uid of changedUids) {
+    await notifyUser(PUSH_EVENTS.AUTHOR_RATING_CHANGED, uid, uid);
+  }
   return result;
 }
 
-function writeQuestRatingAggregateToWriter(writer, dirty, averageRating, averageRatingCount, now) {
+function writeQuestRatingAggregateToWriter(writer, dirty, averageRating, averageRatingCount, now, ownerUid) {
   const ratingPatch = clean({
     averageRating,
     averageRatingCount,
@@ -3293,29 +3533,28 @@ function writeQuestRatingAggregateToWriter(writer, dirty, averageRating, average
     ratingVersion: admin.firestore.FieldValue.increment(1),
   });
   if (dirty.scope === PRIVATE_SCOPE) {
+    // Рейтинг приватного квеста меняет только приватный документ — узел `private_quest`.
     writer.set(
       db.doc(privateQuestPath(dirty.ownerUid, dirty.catalogId, dirty.questId)),
       {...ratingPatch, changedAtMs: now},
       {merge: true},
     );
-    writer.set(
-      db.doc(privateSyncChangePath(dirty.ownerUid, dirty.catalogId, dirty.questId)),
-      {
-        id: dirty.questId,
-        type: "quest",
-        catalogId: dirty.catalogId,
-        questId: dirty.questId,
-        changedAtMs: now,
-      },
-      {merge: true},
+    writeSyncChanges(
+      writer,
+      db,
+      {kind: "private_quest", id: dirty.questId, catalogId: dirty.catalogId, ownerUid: dirty.ownerUid},
+      now,
     );
     return;
   }
   writer.set(db.collection("quests").doc(dirty.questId), ratingPatch, {merge: true});
-  writer.set(
-    db.doc(publicCatalogSyncChangePath(dirty.catalogId, "quest", dirty.questId)),
-    syncChangeDocument("quest", dirty.questId, now),
-    {merge: true},
+  // Рейтинг публичного квеста — изменение публичного узла, и автор узнаёт о нём из своего журнала
+  // так же, как о перекладке по полкам: `ownerUid` здесь — автор, которому начисляется квалификация.
+  writeSyncChanges(
+    writer,
+    db,
+    {kind: "quest", id: dirty.questId, catalogId: dirty.catalogId, ownerUid: nullableString(ownerUid)},
+    now,
   );
 }
 
@@ -3365,18 +3604,30 @@ async function readQualificationTargets(transaction, uids) {
 function writeRatingQualificationDelta(transaction, targetSnapshots, options) {
   let appliedDelta = 0;
   let appliedScore = 0;
+  // Кому уйдёт push после коммита. Сама отправка здесь жить не может: транзакция переигрывается,
+  // а уведомление повторяться не должно.
+  //
+  // Уведомляется только нынешний автор и только когда его рейтинг ВЫРОС. Прежний владелец при
+  // переносе рейтинга получал «ваша квалификация изменилась» о том, что у него отобрали, — а
+  // автор получал то же самое, когда оценка опустила его число. Уровня квалификации по этому
+  // числу в проекте нет (ADR-0006: рейтинг автора — репутация, а не ранг), поэтому единственное
+  // событие, о котором игроку есть смысл сказать, — «стало лучше». Чем оно должно стать, когда
+  // появится оффер квалификации, записано в deferred-work.md.
+  const changedUids = [];
   if (
     options.previousTargetUid &&
     options.previousTargetUid !== options.targetUid &&
     options.previousAppliedScore !== 0
   ) {
-    appliedDelta += writeAuthorRatingScoreDelta(
+    const previousDelta = writeAuthorRatingScoreDelta(
       transaction,
       targetSnapshots,
       options.previousTargetUid,
       -options.previousAppliedScore,
       options.now,
     );
+    appliedDelta += previousDelta;
+    // Прежнему владельцу не пишем: у него отняли, это не повод для уведомления.
   }
   if (options.targetUid) {
     const previousTargetAppliedScore =
@@ -3390,8 +3641,9 @@ function writeRatingQualificationDelta(transaction, targetSnapshots, options) {
     );
     appliedDelta += targetDelta;
     appliedScore = previousTargetAppliedScore + targetDelta;
+    if (targetDelta > 0) changedUids.push(options.targetUid);
   }
-  return {delta: appliedDelta, appliedScore};
+  return {delta: appliedDelta, appliedScore, changedUids};
 }
 
 function writeAuthorRatingScoreDelta(transaction, targetSnapshots, uid, delta, now) {
@@ -3475,6 +3727,27 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   // тот же снимок отвечает и на вопрос про полки ниже, второе чтение того же документа не нужно.
   const hierarchySnapshots = await readPublicHierarchySnapshots(publishable);
   const currentVersions = versionsByPath(hierarchySnapshots);
+  // Что автор из дерева убрал. Публикация пишет только узлы заявки и только с `merge`, поэтому без
+  // этого шага удалённый урок или вопрос остаётся на сервере с `archived: false`, возвращается из
+  // `refreshByIds` и живёт на устройстве игрока вечно (AD-26).
+  // Судить о составе вопросов сервер вправе только у тех уроков, чьи вопросы этот батч и пишет:
+  // урок из заявки, не попавший в эту публикацию, ею не описан, и его вопросы трогать нельзя.
+  const prunable = {
+    ...publishable,
+    lessons: publishable.lessons.filter((lesson) => requestedLessonIds.has(lesson.id)),
+  };
+  const pruned = planHierarchyPrune({
+    request: prunable,
+    existing: await readPublishedSubtree(prunable),
+    now,
+  });
+  // Та же половина работы на приватной копии автора. Публичное снятие ей ничего не говорит: автор
+  // читает своё дерево из `private/{uid}/…`, и урок, снятый только в каталоге, оставался у него
+  // навсегда — приватный документ жил вечным объединением всех прошлых публикаций.
+  const privatePruned = planPrivateHierarchyPrune({
+    request: prunable,
+    existing: await readPrivateSubtree(prunable),
+  });
   // A republish overwrites visibleOn with the submission's target shelf, which demotes a quest a
   // curator had placed elsewhere. That reset stays — unreviewed edits must not remain on a curated
   // shelf — but it stops being silent: the audit names the author as the actor.
@@ -3503,6 +3776,9 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   // бы в тот день, когда один из них поправят.
   const assignedVersion = nextVersionAtPath(currentVersions, `quests/${request.draft.id}`);
   writePublicHierarchyToBatch(batch, publishable, now, currentVersions, assignedVersion);
+  writeHierarchyPruneToBatch(batch, pruned, now);
+  writePrivateHierarchyPruneToBatch(batch, db, privatePruned, now);
+  logPrivatePruneOutcome(privatePruned);
   writeQuestVersionMirror(batch, {
     ownerUid: request.ownerUid,
     catalogId: request.draft.catalogId,
@@ -3524,6 +3800,8 @@ async function publishSubmissionIfReady(submissionId, config, now) {
     {merge: true},
   );
   await batch.commit();
+  // Публикация зафиксирована — автору уходит повод синхронизироваться, не данные (AD-20).
+  await notifyUser(PUSH_EVENTS.QUEST_PUBLISHED, request.draft.id, request.ownerUid);
   return true;
 }
 
@@ -3548,6 +3826,151 @@ async function readPublicHierarchySnapshots(request) {
 /** Сколько ссылок отдаём в одно `getAll`. */
 const MAX_DOCUMENTS_PER_GET = 100;
 
+/** Сколько значений отдаём в одно `in`-условие: предел Firestore. */
+const MAX_VALUES_PER_IN = 30;
+
+/**
+ * Уже опубликованное поддерево квеста — то, с чем сравнивается заявка.
+ *
+ * Читается ровно столько, сколько заявка вправе судить. Вопросы — у уроков, которые в заявке есть:
+ * их состав она описывает целиком. Секции, темы и уроки — только когда заявка назвала полный состав
+ * черновика (`draftTree`); без него они не снимаются, и читать их незачем.
+ */
+async function readPublishedSubtree(request) {
+  const lessonIds = (request.lessons || []).map((lesson) => lesson.id).filter(Boolean);
+  const questions = await readDocsWhere("questions", "lessonId", lessonIds);
+  if (!request.draftTree) return {sections: [], themes: [], lessons: [], questions};
+
+  const sections = await readDocsWhere("sections", "questId", [request.draft.id]);
+  const sectionIds = mergedIds(sections, request.draftTree.sections);
+  const themes = await readDocsWhere("themes", "sectionId", sectionIds);
+  const themeIds = mergedIds(themes, request.draftTree.themes);
+  const lessons = await readDocsWhere("lessons", "themeId", themeIds);
+  return {sections, themes, lessons, questions};
+}
+
+/** Идентификаторы прочитанных строк плюс объявленные заявкой — чтобы не потерять новых детей. */
+function mergedIds(rows, declaredIds) {
+  return [...new Set(rows.map((row) => row.id).concat(declaredIds || []).filter(Boolean))];
+}
+
+/**
+ * Приватная копия дерева у автора — то, с чем сравнивается заявка на его половине.
+ *
+ * Читается перечислением, а не по вычисленным путям: документ урока лежит там, куда его положила
+ * заявка, которая его создала, и заявка сегодняшняя могла перенести урок в другую тему. Перечисление
+ * находит его там, где он есть; арифметика по путям сегодняшней заявки — только там, где он был бы.
+ *
+ * Вопросы читаются лишь у уроков этой публикации: только их состав заявка описывает целиком, и
+ * только их она вправе судить. У остальных уроков вопросы не читаются вовсе — их и не трогают.
+ *
+ * @returns {{sections: Array, themes: Array, lessons: Array, questions: Array}} строки
+ *   `{id, path, lessonId?}` — ровно то, что ждёт `planPrivateHierarchyPrune`.
+ */
+async function readPrivateSubtree(request) {
+  const ownerUid = stringValue(request.ownerUid);
+  const catalogId = request.draft ? stringValue(request.draft.catalogId) : "";
+  const questId = request.draft ? stringValue(request.draft.id) : "";
+  const subtree = {sections: [], themes: [], lessons: [], questions: []};
+  if (!ownerUid || !catalogId || !questId) return subtree;
+
+  const submittedLessons = new Set((request.lessons || []).map((lesson) => lesson.id).filter(Boolean));
+  const questRef = db.doc(privateQuestPath(ownerUid, catalogId, questId));
+  const sections = await questRef.collection("sections").get();
+  for (const section of sections.docs) {
+    subtree.sections.push({id: section.id, path: section.ref.path});
+    const themes = await section.ref.collection("themes").get();
+    for (const theme of themes.docs) {
+      subtree.themes.push({id: theme.id, path: theme.ref.path});
+      const lessons = await theme.ref.collection("lessons").get();
+      for (const lesson of lessons.docs) {
+        subtree.lessons.push({id: lesson.id, path: lesson.ref.path});
+        if (!submittedLessons.has(lesson.id)) continue;
+        const questions = await lesson.ref.collection("questions").get();
+        for (const question of questions.docs) {
+          subtree.questions.push({id: question.id, path: question.ref.path, lessonId: lesson.id});
+        }
+      }
+    }
+  }
+  return subtree;
+}
+
+/**
+ * Что приватное снятие оставило нетронутым — отдельной строкой от публичной.
+ *
+ * Заявка старого клиента не несёт `draftTree`, и урок, тема и раздел по ней не снимаются ни в одном
+ * из двух деревьев. У автора это заметно иначе, чем у игрока: удалённый урок остаётся у него на
+ * устройстве, а не в чужом каталоге, — поэтому строка своя, а не общая с публичной.
+ */
+function logPrivatePruneOutcome(plan) {
+  if (plan.skipped) {
+    logger.info("publish: the author's own copy was left untouched", {questId: plan.questId || null, reason: plan.skipped});
+    return;
+  }
+  const undecidable = Object.entries(plan.undecidable || {});
+  if (undecidable.length === 0) return;
+  logger.info("publish: private nodes outside this submission were left as they are", {
+    questId: plan.questId || null,
+    counts: Object.fromEntries(undecidable.map(([collection, ids]) => [collection, ids.length])),
+  });
+}
+
+/** Строки коллекции, у которых поле равно одному из значений: `{id, currentVersion, archived, lessonId}`. */
+async function readDocsWhere(collection, field, values) {
+  const rows = [];
+  for (let index = 0; index < values.length; index += MAX_VALUES_PER_IN) {
+    const chunk = values.slice(index, index + MAX_VALUES_PER_IN);
+    if (chunk.length === 0) continue;
+    const snapshot = await db.collection(collection).where(field, "in", chunk).get();
+    for (const doc of snapshot.docs) {
+      const data = doc.data() || {};
+      rows.push({
+        id: doc.id,
+        currentVersion: currentEntityVersion(data),
+        archived: data.archived === true,
+        lessonId: stringValue(data.lessonId) || null,
+      });
+    }
+  }
+  return rows;
+}
+
+/**
+ * Снятие выпавших узлов — тем же батчем, что и сама публикация.
+ *
+ * Документ и его записи в журналах уходят одним коммитом: снятый узел без записи в журнале клиент
+ * не увидит никогда, а запись без снятия отправила бы его перечитывать неизменившийся документ.
+ */
+function writeHierarchyPruneToBatch(batch, plan, now) {
+  for (const [path, data] of Object.entries(plan.documents)) {
+    // Версию назначает `entity-version.js` и только он (AD-12): снятие узла — изменение его
+    // содержимого, и клиент обязан увидеть его как новую версию, а не как то же число.
+    setVersioned(
+      batch,
+      db.doc(path),
+      {
+        archived: data.archived,
+        lastModifiedAt: admin.firestore.Timestamp.fromMillis(data.lastModifiedAtMs),
+      },
+      data.currentVersion,
+      {merge: true},
+    );
+  }
+  for (const node of plan.nodes) writeSyncChanges(batch, db, node, now);
+  const undecidable = Object.entries(plan.undecidable || {});
+  if (undecidable.length > 0) {
+    // Опубликованный урок, тема или раздел, которых в этой заявке нет. Удалены они или просто не в
+    // этой порции — по заявке не видно, и сервер их не трогает. Строка нужна, чтобы «квест копит
+    // мусор» было видно раньше, чем это заметит игрок; она уходит, как только заявка начнёт
+    // называть полный состав черновика.
+    logger.info("publish: nodes outside this submission were left as they are", {
+      questId: plan.questId || null,
+      counts: Object.fromEntries(undecidable.map(([collection, ids]) => [collection, ids.length])),
+    });
+  }
+}
+
 function requestWithPublishedQuestions(request, targetTasks) {
   const questionsByLesson = new Map(
     targetTasks.map((task) => [task.lessonId, task.questions]),
@@ -3571,7 +3994,15 @@ function requestWithPublishedQuestions(request, targetTasks) {
   return {...request, questions};
 }
 
-function privateDocuments(request) {
+/**
+ * Документы приватного дерева автора.
+ *
+ * `now` — серверное время того же батча, что пишет журнал: приватная синхронизация ходит по
+ * `changedAtMs`, и документ, датированный часами устройства, разошёлся бы со своей же записью в
+ * журнале. Поля про содержание (`createdAtMs`, `updatedAtMs`) остаются авторскими — они говорят,
+ * когда автор правил черновик, а не когда сервер это записал.
+ */
+function privateDocuments(request, now) {
   const documents = {};
   const ownerUid = request.ownerUid;
   const catalogId = request.draft.catalogId;
@@ -3584,7 +4015,7 @@ function privateDocuments(request) {
     id: catalogId,
     ownerUid,
     updatedAtMs: request.draft.updatedAtMs,
-    changedAtMs: request.requestedAtMs,
+    changedAtMs: now,
   };
   documents[privateQuestPath(ownerUid, catalogId, questId)] = {
     id: questId,
@@ -3602,15 +4033,8 @@ function privateDocuments(request) {
     createdAtMs: request.draft.createdAtMs,
     localRevision: request.localRevision,
     updatedAtMs: request.draft.updatedAtMs,
-    changedAtMs: request.requestedAtMs,
+    changedAtMs: now,
     review: checksToCallableMap(request.review),
-  };
-  documents[privateSyncChangePath(ownerUid, catalogId, questId)] = {
-    id: questId,
-    type: "quest",
-    catalogId,
-    questId,
-    changedAtMs: request.requestedAtMs,
   };
 
   for (const section of request.sections) {
@@ -3659,6 +4083,10 @@ function adminDocuments(tasks) {
   for (const task of tasks) {
     documents[adminLessonPath(task.lessonId)] = {
       id: task.lessonId,
+      // Id задания — то, по чему клиент зовёт fetchReviewAssignments после журнала. Раньше урок
+      // задания хранился в теле записи журнала; тело теперь три поля (AD-11), и задание ищется
+      // по этому полю (`readAdminReviewLessonTasksByIds`).
+      assignmentId: task.id,
       submissionId: task.submissionId,
       ownerUid: task.ownerUid,
       catalogId: task.catalogId,
@@ -3694,12 +4122,6 @@ function adminDocuments(tasks) {
     for (const question of task.questions) {
       documents[adminQuestionPath(task.lessonId, task.questId, question.id)] = questionToDocument(question);
     }
-    documents[adminSyncChangePath(task.id)] = {
-      id: task.id,
-      assignmentId: task.id,
-      lessonId: task.lessonId,
-      changedAtMs: task.changedAtMs,
-    };
   }
   return documents;
 }
@@ -3708,6 +4130,28 @@ function writePublicHierarchyToBatch(batch, request, now, currentVersions, assig
   for (const [path, data] of Object.entries(publicDocuments(request, now, currentVersions, assignedVersion))) {
     batch.set(db.doc(path), clean(data), {merge: true});
   }
+  for (const node of publicHierarchyNodes(request)) {
+    writeSyncChanges(batch, db, node, now);
+  }
+}
+
+/**
+ * Узлы публикуемого дерева для журнала — тот же состав, что и у документов в `publicDocuments`.
+ *
+ * Квест идёт с автором: публикация зеркалит версию в его приватный документ
+ * (`writeQuestVersionMirror`), и автор читает об этом из своего журнала. Вопрос принадлежит двум
+ * журналам — каталожному и журналу своего урока; какие именно, решает объявление, не это место.
+ */
+function publicHierarchyNodes(request) {
+  const catalogId = request.draft.catalogId;
+  const nodes = [{kind: "quest", id: request.draft.id, catalogId, ownerUid: nullableString(request.ownerUid)}];
+  for (const section of request.sections) nodes.push({kind: "section", id: section.id, catalogId});
+  for (const theme of request.themes) nodes.push({kind: "theme", id: theme.id, catalogId});
+  for (const lesson of request.lessons) nodes.push({kind: "lesson", id: lesson.id, catalogId});
+  for (const question of request.questions) {
+    nodes.push({kind: "question", id: question.id, catalogId, lessonId: question.lessonId});
+  }
+  return nodes;
 }
 
 /**
@@ -3755,7 +4199,6 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
     lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
     archived: archivedRoot,
   };
-  documents[publicCatalogSyncChangePath(catalogId, "quest", questId)] = syncChangeDocument("quest", questId, now);
   for (const section of request.sections) {
     const sectionPath = `sections/${section.id}`;
     documents[sectionPath] = {
@@ -3767,8 +4210,6 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
-    documents[publicCatalogSyncChangePath(catalogId, "section", section.id)] =
-      syncChangeDocument("section", section.id, now);
   }
   for (const theme of request.themes) {
     const themePath = `themes/${theme.id}`;
@@ -3781,7 +4222,6 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
-    documents[publicCatalogSyncChangePath(catalogId, "theme", theme.id)] = syncChangeDocument("theme", theme.id, now);
   }
   for (const lesson of request.lessons) {
     const lessonPath = `lessons/${lesson.id}`;
@@ -3794,8 +4234,6 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
-    documents[publicCatalogSyncChangePath(catalogId, "lesson", lesson.id)] =
-      syncChangeDocument("lesson", lesson.id, now);
   }
   for (const question of request.questions) {
     const questionPath = `questions/${question.id}`;
@@ -3811,10 +4249,6 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
       lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
       archived: false,
     };
-    documents[publicCatalogSyncChangePath(catalogId, "question", question.id)] =
-      syncChangeDocument("question", question.id, now);
-    documents[lessonContentSyncChangePath(question.lessonId, question.id)] =
-      syncChangeDocument("question", question.id, now);
   }
   // The other half of every question, gathered into one server-only document per lesson. The
   // payload above is written exactly as before — this only starts producing the key beside it, so
@@ -3846,10 +4280,6 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
 
 /** How many refused questions one publish reports by name before the count has to speak for them. */
 const LOGGED_REFUSAL_SAMPLE = 50;
-
-function syncChangeDocument(type, id, changedAtMs) {
-  return {type, id, changedAtMs};
-}
 
 function toAdminLessonTasks(request, createdAtMs) {
   return request.lessons.map((lesson) => {
@@ -4135,10 +4565,12 @@ function requiredLanguages(task, config) {
   return configured.size > 0 ? configured : new Set(Array.from(task.sourceLanguages).map(normalizeLanguage).filter(Boolean));
 }
 
-function actionToRecord(action, profile, task, config, existingRecords, now) {
+function actionToRecord(action, profile, task, config, existingRecords, now, pinnedReviewId = null) {
   const reviewerLevel = levelFor(profile, action.kind);
   const language = action.language ? normalizeLanguage(action.language) : null;
-  const reviewId = `${action.assignmentId}_${action.kind.toLowerCase()}_${now}_${profile.uid}`
+  // Из очереди id задан ключом мутации и не зависит от часов: повтор строит ту же запись.
+  const reviewId = pinnedReviewId ||
+    `${action.assignmentId}_${action.kind.toLowerCase()}_${now}_${profile.uid}`
     .replace(/[^A-Za-z0-9_.-]/g, "_");
 
   if (action.kind === "TESTING" || action.kind === "LOGIC") {
@@ -4259,17 +4691,51 @@ function deltaKey(delta) {
   return `${delta.reviewerUid}\u0000${delta.points}`;
 }
 
+/**
+ * Задания по их id.
+ *
+ * Задание — документ урока под `admin/review/lessons`, а id задания — «заявка × урок». Урок ищется
+ * по полю `assignmentId` документа: журнал ревью больше не носит `lessonId` в теле (AD-11: три
+ * поля, `id` — ключ для этой самой выборки).
+ *
+ * Одним запросом по этому полю обойтись нельзя. Задания, записанные прежней версией сервера, поля
+ * не имеют вовсе, и такое задание перестало бы находиться навсегда: рецензент получал бы из журнала
+ * его id и пустой ответ, а `ReviewAssignmentSync` понимает пустой ответ как «задание удалено» и
+ * стирает его с устройства. Поэтому поиск — цепочка из трёх шагов (`review-journal.js`), а найденное
+ * окольным путём задание тут же доклеивает себе поле: следующее чтение идёт коротким путём, и
+ * доклейка не превращается в постоянный второй запрос.
+ */
 async function readAdminReviewLessonTasksByIds(ids) {
   if (!ids || ids.size === 0) return [];
+  const wanted = [...ids].map((id) => stringValue(id)).filter(Boolean);
+  const {resolved, heals} = await resolveReviewAssignments(db, wanted);
   const tasks = [];
-  for (const assignmentId of ids) {
-    const change = await db.doc(adminSyncChangePath(assignmentId)).get();
-    const lessonId = change.exists ? stringValue((change.data() || {}).lessonId) : null;
-    if (!lessonId) continue;
-    const lesson = await db.doc(adminLessonPath(lessonId)).get();
+  for (const hit of resolved) {
+    const lesson = hit.lesson || (await db.doc(adminLessonPath(hit.lessonId)).get());
     if (lesson.exists) tasks.push(await adminLessonSnapshotToTask(lesson));
   }
+  await stampAssignmentIds(heals);
   return tasks;
+}
+
+/**
+ * Доклеивает `assignmentId` заданиям, найденным окольным путём.
+ *
+ * Отдельным батчем, а не внутри чтения: чтение обязано вернуть задания даже если запись не удалась
+ * — рецензент важнее ускорения следующего чтения. Поэтому отказ здесь только логируется.
+ */
+async function stampAssignmentIds(heals) {
+  if (!heals || heals.length === 0) return;
+  try {
+    const batch = db.batch();
+    for (const heal of heals) batch.set(db.doc(heal.path), heal.data, {merge: true});
+    await batch.commit();
+  } catch (error) {
+    logger.warn("review-assignment: could not stamp assignmentId", {
+      count: heals.length,
+      error: errorMessage(error),
+    });
+  }
 }
 
 async function readAdminReviewLessonTask(assignmentId) {
@@ -4427,6 +4893,17 @@ async function addReviewerReputation(uid, points) {
   });
 }
 
+/** Полный состав черновика: три списка идентификаторов, или null, если заявка его не называет. */
+function normalizeDraftTree(value) {
+  if (!value || typeof value !== "object") return null;
+  const sections = stringArray(value.sections);
+  const themes = stringArray(value.themes);
+  const lessons = stringArray(value.lessons);
+  // Урок — единственный обязательный список: без него снимать нечего и не от чего отталкиваться.
+  if (lessons.length === 0) return null;
+  return {sections, themes, lessons};
+}
+
 function normalizeRequest(data, fallbackSubmissionId) {
   return {
     submissionId: stringValue(data.submissionId, fallbackSubmissionId),
@@ -4436,6 +4913,11 @@ function normalizeRequest(data, fallbackSubmissionId) {
     requestedAtMs: numberValue(data.requestedAtMs, 0),
     targetShelf: targetShelfValue(data.targetShelf),
     targetLessonIds: stringArray(data.targetLessonIds),
+    // Полный состав черновика, если заявка его называет. Заявка несёт порцию — выбранные уроки, их
+    // темы и разделы, — и по ней одной нельзя отличить «урок удалён» от «урок не в этой порции».
+    // Пока поля нет, урок, тема и раздел на публикации не снимаются (`hierarchy-prune.js`); клиент,
+    // который начнёт его слать, включает снятие, ничего больше не меняя (AD-13).
+    draftTree: normalizeDraftTree(data.draftTree),
     status: stringValue(data.status),
     draft: {
       id: stringValue(data.draft && data.draft.id),
@@ -4473,13 +4955,7 @@ function normalizeRequest(data, fallbackSubmissionId) {
   };
 }
 
-/**
- * Per-question answers that came with an attempt.
- *
- * Kept permissive on purpose: a malformed row is dropped rather than failing the whole attempt,
- * because these answers feed statistics, not rewards — losing one is far better than rejecting a
- * legitimately played lesson.
- */
+
 function normalizeLessonAnswers(value) {
   return listMaps(value)
     .map((item) => ({
@@ -4493,7 +4969,6 @@ function normalizeLessonAnswers(value) {
     }))
     .filter((item) => item.questionId !== "");
 }
-
 
 function normalizeQuestRatingEvent(data, authUid) {
   const userId = stringValue(data.userId, authUid);
@@ -5474,18 +5949,6 @@ function privateQuestPath(ownerUid, catalogId, questId) {
   return `${privateCatalogPath(ownerUid, catalogId)}/quests/${questId}`;
 }
 
-function privateSyncChangePath(ownerUid, catalogId, questId) {
-  return `private/${ownerUid}/sync_changes/${catalogId}_${questId}`;
-}
-
-function publicCatalogSyncChangePath(catalogId, type, id) {
-  return `catalogs/${catalogId}/sync_changes/${type}_${id}`;
-}
-
-function lessonContentSyncChangePath(lessonId, questionId) {
-  return `lesson_content/${lessonId}/sync_changes/${questionId}`;
-}
-
 function privateSectionPath(ownerUid, catalogId, questId, sectionId) {
   return `${privateQuestPath(ownerUid, catalogId, questId)}/sections/${sectionId}`;
 }
@@ -5502,8 +5965,10 @@ function privateQuestionPath(ownerUid, catalogId, questId, sectionId, themeId, l
   return `${privateLessonPath(ownerUid, catalogId, questId, sectionId, themeId, lessonId)}/questions/${questionId}`;
 }
 
+const ADMIN_REVIEW_LESSONS = "admin/review/lessons";
+
 function adminLessonPath(lessonId) {
-  return `admin/review/lessons/${lessonId}`;
+  return `${ADMIN_REVIEW_LESSONS}/${lessonId}`;
 }
 
 function adminQuestPath(lessonId, questId) {
@@ -5516,10 +5981,6 @@ function adminQuestionPath(lessonId, questId, questionId) {
 
 function adminReviewRecordPath(lessonId, reviewId) {
   return `${adminLessonPath(lessonId)}/reviews/${reviewId}`;
-}
-
-function adminSyncChangePath(changeId) {
-  return `admin/review/sync_changes/${changeId}`;
 }
 
 function clean(value) {

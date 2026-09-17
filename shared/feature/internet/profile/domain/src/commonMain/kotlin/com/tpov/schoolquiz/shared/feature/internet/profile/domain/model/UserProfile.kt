@@ -101,8 +101,6 @@ data class UserProfile(
         /** One heart holds this many life points. Mirrors LIFE_POINTS_PER_HEART in functions/life-points.js. */
         const val LIFE_POINTS_PER_HEART = 100
 
-        /** Cost of one lesson attempt, from the legacy price list. */
-
         /** Mirrors TROPHY_VERIFIED in functions/trophies.js. */
         const val TROPHY_VERIFIED = "verified"
 

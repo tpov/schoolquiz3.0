@@ -16,6 +16,9 @@ import kotlinx.coroutines.tasks.await
  * Nothing here touches Firestore directly. The registry that decides who owns which name is closed
  * to clients by the security rules, and a sale has to move title, gold and the listing together —
  * three writes a client could only do one at a time, leaving a half-finished trade behind.
+ *
+ * Cancelling a lot is not a call from here: it goes through the shared outbox to the one mutation
+ * receiver (`submitMutation`, AD-6), which is the only place the idempotency key is checked.
  */
 class FirebaseNicknameRemoteDataSource(
     private val functions: FirebaseFunctions,
@@ -65,10 +68,6 @@ class FirebaseNicknameRemoteDataSource(
         call(LIST_FOR_SALE, mapOf(NICKNAME to nickname, PRICE to price))
     }
 
-    override suspend fun cancelListing(nickname: String) {
-        call(CANCEL_LISTING, mapOf(NICKNAME to nickname))
-    }
-
     override suspend fun buy(nickname: String): Long = call(BUY, mapOf(NICKNAME to nickname)).number(COMMISSION) ?: 0L
 
     private suspend fun call(
@@ -93,7 +92,6 @@ class FirebaseNicknameRemoteDataSource(
         const val CLAIM = "claimNickname"
         const val FETCH_LISTINGS = "fetchNicknameListings"
         const val LIST_FOR_SALE = "listNicknameForSale"
-        const val CANCEL_LISTING = "cancelNicknameListing"
         const val BUY = "buyListedNickname"
 
         const val NICKNAME = "nickname"

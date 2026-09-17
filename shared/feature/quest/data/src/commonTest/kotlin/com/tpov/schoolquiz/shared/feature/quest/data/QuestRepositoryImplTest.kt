@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.catalog.data.StorageUrlResolver
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.persistence.QuestEntity
 import com.tpov.schoolquiz.shared.feature.quest.data.dto.QuestDto
+import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeOutboxStore
 import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeQuestLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeQuestRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -61,6 +62,7 @@ class QuestRepositoryImplTest {
         local = local,
         remote = remote,
         storageUrlResolver = noOpResolver,
+        outbox = FakeOutboxStore(),
     )
 
     // AC#9: currentUserUid not null → both queries A and B called

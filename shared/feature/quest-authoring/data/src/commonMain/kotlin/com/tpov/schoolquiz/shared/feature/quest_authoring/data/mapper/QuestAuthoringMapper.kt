@@ -5,7 +5,6 @@ import com.tpov.schoolquiz.shared.core.persistence.DraftLessonEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftQuestionEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftSectionEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftThemeEntity
-import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
 import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentEntity
@@ -27,8 +26,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSect
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSectionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftTheme
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftThemeId
-import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
-import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmissionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraft
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
@@ -89,6 +86,7 @@ object QuestAuthoringMapper {
             createdAtMs = createdAtMs,
             updatedAtMs = updatedAtMs,
             isActive = isActive,
+            rejectionReason = rejectionReason,
         )
 
     fun DraftSection.toEntity(): DraftSectionEntity =
@@ -186,32 +184,7 @@ object QuestAuthoringMapper {
             questionCount = questionCount,
             updatedAtMs = updatedAtMs,
             isActive = isActive,
-        )
-
-    fun QuestArenaSubmission.toEntity(): QuestArenaSubmissionEntity =
-        QuestArenaSubmissionEntity(
-            id = id.value,
-            draftId = draftId.value,
-            ownerUid = ownerUid,
-            localRevision = localRevision,
-            requestedAtMs = requestedAtMs,
-            lessonIds = lessonIds.map { it.value }.sorted(),
-            targetShelf = targetShelf,
-            attemptCount = attemptCount,
-            lastError = lastError,
-        )
-
-    fun QuestArenaSubmissionEntity.toDomain(): QuestArenaSubmission =
-        QuestArenaSubmission(
-            id = QuestArenaSubmissionId(id),
-            draftId = QuestDraftId(draftId),
-            ownerUid = ownerUid,
-            localRevision = localRevision,
-            requestedAtMs = requestedAtMs,
-            lessonIds = lessonIds.map(::DraftLessonId).toSet(),
-            targetShelf = targetShelf,
-            attemptCount = attemptCount,
-            lastError = lastError,
+            rejectionReason = rejectionReason,
         )
 
     fun PrivateQuestSnapshot.toEntityBundle(): QuestAuthoringEntityBundle =
@@ -226,7 +199,10 @@ object QuestAuthoringMapper {
                     defaultLanguage = request.draft.defaultLanguage,
                     defaultDifficulty = request.draft.defaultDifficulty,
                     status = QuestDraftStatus.SYNCED.name,
-                    localRevision = serverRevision,
+                    // «Сервер версии этому квесту ещё не назначал» выражается пустотой и только
+                    // ею (AD-12): ноль на этом месте пришлось бы каждый раз отличать от настоящей
+                    // версии, а счётчик правок начинается с единицы — нулевой редакции не бывает.
+                    localRevision = serverRevision ?: 1L,
                     serverRevision = serverRevision,
                     publicQuestId = request.draft.publicQuestId,
                     createdAtMs = request.draft.createdAtMs,
@@ -336,6 +312,5 @@ object QuestAuthoringMapper {
             updatedAtMs = updatedAtMs,
         )
 
-    private fun PrivateQuestSnapshot.snapshotUpdatedAt(): Long =
-        maxOf(changedAtMs, request.draft.updatedAtMs)
+    private fun PrivateQuestSnapshot.snapshotUpdatedAt(): Long = maxOf(changedAtMs, request.draft.updatedAtMs)
 }

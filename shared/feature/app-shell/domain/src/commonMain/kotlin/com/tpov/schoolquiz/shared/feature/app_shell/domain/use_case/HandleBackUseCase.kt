@@ -17,6 +17,5 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.TransitionResul
  * Synchronous — back policy is pure computation.
  */
 class HandleBackUseCase {
-    operator fun invoke(currentState: AppShellState): TransitionResult =
-        onBack(currentState)
+    operator fun invoke(currentState: AppShellState): TransitionResult = onBack(currentState)
 }

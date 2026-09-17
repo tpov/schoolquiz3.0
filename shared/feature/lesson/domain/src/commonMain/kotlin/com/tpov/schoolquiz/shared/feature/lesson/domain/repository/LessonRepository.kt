@@ -14,15 +14,11 @@ import kotlinx.coroutines.flow.Flow
  * Spec: docs/features/home-and-my-quests/0-spec.md — AC#5.
  */
 interface LessonRepository {
-
     /**
      * Observes lessons belonging to [themeId], sorted by [Lesson.order] ASC.
      */
     fun observeByTheme(themeId: ThemeId): Flow<List<Lesson>>
 
-    /**
-     * Returns a single lesson from the local cache, or null if absent.
-     */
     /**
      * Titles of the lessons taught before [id] in its own theme, in teaching order.
      *
@@ -52,5 +48,8 @@ interface LessonRepository {
      * @return [Result.success] containing the set of processed [LessonId]s (passed to question sync
      *   as parentIds); [Result.failure] on network/permission errors.
      */
-    suspend fun refreshByParents(themeIds: Set<ThemeId>, cursor: Long): Result<Set<LessonId>>
+    suspend fun refreshByParents(
+        themeIds: Set<ThemeId>,
+        cursor: Long,
+    ): Result<Set<LessonId>>
 }

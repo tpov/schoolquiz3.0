@@ -3,8 +3,12 @@ package com.tpov.schoolquiz.platform.firebase.quest_authoring
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.tpov.schoolquiz.platform.firebase.sync.fetchSyncChangePage
 import com.tpov.schoolquiz.platform.firebase.util.longField
 import com.tpov.schoolquiz.platform.firebase.util.millisField
+import com.tpov.schoolquiz.shared.core.sync.JournalReadPolicy
+import com.tpov.schoolquiz.shared.core.sync.SyncChangePage
+import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
@@ -20,18 +24,19 @@ import kotlinx.coroutines.tasks.await
 class FirebaseQuestPrivateRemoteDataSource(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
+    /** Тот же переключатель терпимости, что у остальных трёх журналов (AD-11). */
+    private val policy: JournalReadPolicy = JournalReadPolicy.TOLERANT,
 ) : QuestPrivateRemoteDataSource {
-    override suspend fun fetchChangedSince(cursorMs: Long): List<PrivateQuestSyncChange> {
-        val uid = auth.currentUser?.uid ?: return emptyList()
+    /** Страница журнала `private/{uid}/sync_changes` (AD-31). См. [fetchSyncChangePage]. */
+    override suspend fun fetchPage(
+        cursor: SyncCursor,
+        limit: Int,
+    ): SyncChangePage<PrivateQuestSyncChange> {
+        val uid = auth.currentUser?.uid ?: return SyncChangePage.empty()
         return firestore.collection(PRIVATE_COLLECTION)
             .document(uid)
             .collection(SYNC_CHANGES_COLLECTION)
-            .whereGreaterThan(CHANGED_AT_MS, cursorMs)
-            .orderBy(CHANGED_AT_MS)
-            .get()
-            .await()
-            .documents
-            .mapNotNull { it.toPrivateQuestSyncChange() }
+            .fetchSyncChangePage(cursor, limit) { it.toPrivateQuestSyncChange() }
     }
 
     override suspend fun fetchSnapshots(changes: List<PrivateQuestSyncChange>): List<PrivateQuestSnapshot> {
@@ -71,7 +76,12 @@ class FirebaseQuestPrivateRemoteDataSource(
             lessonDtos = lessonDtos,
             questionDtos = questionDtos,
         )
-        val revision = long(LOCAL_REVISION)
+        // Серверная версия — та и только та, которую назначил сервер (AD-12). Прежний запасной
+        // путь брал вместо неё localRevision — число, присланное самим клиентом, — и сверка
+        // выходила клиента с клиентом же. Нет поля — нет версии: пусто честнее подделки, потому
+        // что пусто приёмник видит и пропускает проверку, а подделку сравнивает и объявляет
+        // расхождение там, где его нет.
+        val revision: Long? = serverAssignedVersion()
         val changedAtMs = long(CHANGED_AT_MS, fallback = changedAtMsFallback.takeIf { it > 0L } ?: long(UPDATED_AT_MS))
         return PrivateQuestSnapshot(
             serverRevision = revision,
@@ -81,7 +91,7 @@ class FirebaseQuestPrivateRemoteDataSource(
                     submissionId = string(SUBMISSION_ID, fallback = id),
                     draftId = string(DRAFT_ID, fallback = id),
                     ownerUid = uid,
-                    localRevision = revision,
+                    expectedVersion = revision,
                     requestedAtMs = changedAtMs,
                     draft = toDraftDto(catalogId),
                     sections = sectionDtos,
@@ -129,20 +139,16 @@ class FirebaseQuestPrivateRemoteDataSource(
         }
     }
 
-    private fun DocumentSnapshot.toPrivateQuestSyncChange(): PrivateQuestSyncChange? {
-        val catalogId = getString(CATALOG_ID)?.takeIf { it.isNotBlank() }
-        val questId = getString(QUEST_ID)?.takeIf { it.isNotBlank() }
-        val changedAtMs = longOrNull(CHANGED_AT_MS)
-        return if (catalogId != null && questId != null && changedAtMs != null) {
-            PrivateQuestSyncChange(
-                catalogId = catalogId,
-                questId = questId,
-                changedAtMs = changedAtMs,
-            )
-        } else {
-            null
-        }
-    }
+    /** Обе формы записи журнала — разбор в [privateQuestSyncChangeOrNull], здесь только поля. */
+    private fun DocumentSnapshot.toPrivateQuestSyncChange(): PrivateQuestSyncChange? =
+        privateQuestSyncChangeOrNull(
+            documentId = id,
+            bodyId = getString(SYNC_CHANGE_ID),
+            bodyCatalogId = getString(CATALOG_ID),
+            bodyQuestId = getString(QUEST_ID),
+            changedAtMs = longOrNull(CHANGED_AT_MS),
+            policy = policy,
+        )
 
     private fun DocumentSnapshot.toDraftDto(catalogId: String): ArenaDraftDto =
         ArenaDraftDto(
@@ -284,7 +290,9 @@ class FirebaseQuestPrivateRemoteDataSource(
         const val CREATED_AT_MS = "createdAtMs"
         const val UPDATED_AT_MS = "updatedAtMs"
         const val CHANGED_AT_MS = "changedAtMs"
-        const val LOCAL_REVISION = "localRevision"
+
+        /** Поле `id` тела записи журнала: в приватном журнале это квест. */
+        const val SYNC_CHANGE_ID = "id"
         const val TARGET_SHELF = "targetShelf"
         const val TARGET_LESSON_IDS = "targetLessonIds"
         const val SECTION_ID = "sectionId"

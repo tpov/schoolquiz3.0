@@ -47,7 +47,6 @@ class SettlePurchaseUseCase(
      */
     private val log: (String, Throwable?) -> Unit = { _, _ -> },
 ) {
-
     /** Settlements running right now, by token. The value is what a second caller waits on. */
     private val inFlight = mutableMapOf<String, CompletableDeferred<Result<PurchaseOutcome>>>()
     private val guard = Mutex()

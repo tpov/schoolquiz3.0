@@ -2,24 +2,22 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
-import com.tpov.schoolquiz.shared.core.scoring.PercentScore
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
-import com.tpov.schoolquiz.shared.core.scoring.Score
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.core.scoring.Stars
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
+import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
+import com.tpov.schoolquiz.shared.core.scoring.computeStars
+import com.tpov.schoolquiz.shared.core.scoring.evaluateAnswer
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerDuration
-import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
-import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import kotlin.random.Random
-import com.tpov.schoolquiz.shared.core.scoring.evaluateAnswer
-import com.tpov.schoolquiz.shared.core.scoring.computeStars
 
 // ── Public pure functions ──────────────────────────────────────────────────
 
@@ -42,35 +40,39 @@ fun submitAnswer(
     val newCodeAnswer = CodeAnswer(String(codeAnswerChars))
 
     val nextIndex = state.indexInPool + 1
-    val newDeadlineMs = if (nextIndex < state.playOrder.size) {
-        val nextQuestion = state.playOrder[nextIndex]
-        val duration = computeTimer(
-            content = nextQuestion.content,
-            mode = state.mode,
-            coefficients = TimerCoefficients.Default,
-            sessionMode = state.sessionMode,
-        )
-        nowMs + duration.seconds * 1000L
-    } else {
-        state.deadlineMs
-    }
+    val newDeadlineMs =
+        if (nextIndex < state.playOrder.size) {
+            val nextQuestion = state.playOrder[nextIndex]
+            val duration =
+                computeTimer(
+                    content = nextQuestion.content,
+                    mode = state.mode,
+                    coefficients = TimerCoefficients.Default,
+                    sessionMode = state.sessionMode,
+                )
+            nowMs + duration.seconds * 1000L
+        } else {
+            state.deadlineMs
+        }
 
     // The digit alone cannot answer "which option did they pick" or "how long did it take", so the
     // whole answer is recorded here and persisted with the attempt. A zero/absent start timestamp
     // means the duration is unknown, which is truer than reporting a bogus one.
-    val answered = AnsweredQuestion(
-        questionId = currentQuestion.sourceId,
-        codeAnswerIndex = currentQuestion.codeAnswerIndex,
-        score = score,
-        answer = answer,
-        answeredAtMs = nowMs,
-        durationMs = if (state.questionStartedAtMs > 0L) {
-            (nowMs - state.questionStartedAtMs).coerceAtLeast(0L)
-        } else {
-            0L
-        },
-        wasTimeout = wasTimeout,
-    )
+    val answered =
+        AnsweredQuestion(
+            questionId = currentQuestion.sourceId,
+            codeAnswerIndex = currentQuestion.codeAnswerIndex,
+            score = score,
+            answer = answer,
+            answeredAtMs = nowMs,
+            durationMs =
+                if (state.questionStartedAtMs > 0L) {
+                    (nowMs - state.questionStartedAtMs).coerceAtLeast(0L)
+                } else {
+                    0L
+                },
+            wasTimeout = wasTimeout,
+        )
 
     return state.copy(
         indexInPool = nextIndex,
@@ -86,7 +88,11 @@ fun submitAnswer(
  * Generates a deterministic random [UserAnswer] from [randomSeed] and delegates to [submitAnswer].
  * Called on timer expiry or onStop.
  */
-fun autoAnswerOnTimeout(state: RunnerState.Ready, randomSeed: Long, nowMs: Long): RunnerState.Ready {
+fun autoAnswerOnTimeout(
+    state: RunnerState.Ready,
+    randomSeed: Long,
+    nowMs: Long,
+): RunnerState.Ready {
     val currentQuestion = state.playOrder[state.indexInPool]
     val answer = generateTimeoutAnswer(currentQuestion.content, state.currentDraftAnswer, randomSeed)
     return submitAnswer(state, answer, nowMs, wasTimeout = true)
@@ -119,10 +125,11 @@ fun computeTimer(
     sessionMode: SessionMode = SessionMode.LEARNING,
 ): TimerDuration {
     val charsCount = computeCharsCount(content)
-    val base = when (mode) {
-        Difficulty.EASY -> coefficients.kEasy
-        Difficulty.HARD -> coefficients.kHard
-    }
+    val base =
+        when (mode) {
+            Difficulty.EASY -> coefficients.kEasy
+            Difficulty.HARD -> coefficients.kHard
+        }
     val k = if (sessionMode == SessionMode.EXAM) base * coefficients.examFactor else base
     val seconds = maxOf(5, (charsCount * k + 0.5).toInt())
     return TimerDuration(seconds)
@@ -142,11 +149,6 @@ fun selectSubset(
     return eligible.shuffled(Random(seed)).take(count)
 }
 
-/**
- * Builds final [CodeAnswer] for an aborted attempt.
- * Unanswered subset positions (indexInPool and beyond) → '1'.
- * Out-of-subset positions remain '0'. Already answered positions stay as-is.
- */
 /**
  * Заявки, сделанные в этом прогоне, — пустая маска, если ни одной.
  *
@@ -184,23 +186,25 @@ fun buildCodeAnswerOnAbort(state: RunnerState.Ready): CodeAnswer {
     return CodeAnswer(String(chars))
 }
 
-
-
 /** Total character count for timer formula: text + option/item/candidate texts + optional +100. */
 private fun computeCharsCount(content: QuestionContent): Int {
     val imageBonus = if (content.imageUrl != null) 100 else 0
-    val optionChars = when (content) {
-        is QuestionContent.SingleChoice -> content.options.sumOf { it.text.length }
-        is QuestionContent.MultipleChoice -> content.options.sumOf { it.text.length }
-        is QuestionContent.Ordering -> content.items.sumOf { it.text.length }
-        is QuestionContent.FillBlank -> content.candidates.sumOf { it.text.length }
-        is QuestionContent.Survey -> content.options.sumOf { it.text.length }
-    }
+    val optionChars =
+        when (content) {
+            is QuestionContent.SingleChoice -> content.options.sumOf { it.text.length }
+            is QuestionContent.MultipleChoice -> content.options.sumOf { it.text.length }
+            is QuestionContent.Ordering -> content.items.sumOf { it.text.length }
+            is QuestionContent.FillBlank -> content.candidates.sumOf { it.text.length }
+            is QuestionContent.Survey -> content.options.sumOf { it.text.length }
+        }
     return content.text.length + optionChars + imageBonus
 }
 
 /** Generates a deterministic random answer for [content] using [seed]. */
-private fun generateRandomAnswer(content: QuestionContent, seed: Long): UserAnswer {
+private fun generateRandomAnswer(
+    content: QuestionContent,
+    seed: Long,
+): UserAnswer {
     val random = Random(seed)
     return when (content) {
         is QuestionContent.SingleChoice -> {
@@ -219,9 +223,10 @@ private fun generateRandomAnswer(content: QuestionContent, seed: Long): UserAnsw
             UserAnswer.SurveyAnswer(setOf(content.options.random(random).id))
         }
         is QuestionContent.FillBlank -> {
-            val filled = content.blanks.associate { blank ->
-                blank.id to content.candidates.random(random).id
-            }
+            val filled =
+                content.blanks.associate { blank ->
+                    blank.id to content.candidates.random(random).id
+                }
             UserAnswer.FillBlankAnswer(filled)
         }
     }

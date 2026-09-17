@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
@@ -16,11 +17,14 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestShelfSyncMark
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestShelfSyncState
+import com.tpov.schoolquiz.shared.feature.quest.domain.provider.QuestShelfChangeIdProvider
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
@@ -48,6 +52,8 @@ import kotlin.test.assertTrue
  *
  * Coverage: QL-U-01..07, QL-U-10, QL-U-stub-01
  */
+private const val DEV_UID = "uid-dev"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultQuestListComponentTest {
 
@@ -60,7 +66,9 @@ class DefaultQuestListComponentTest {
     private val fakeLessonRepo = FakeLessonRepository()
     private val fakeQuestionRepo = FakeQuestionRepository()
     private val fakeNavigation = FakeStackNavigation()
+    private val fakeAuth = FakeAuthRepository(initialUid = DEV_UID)
     private var syncedQuestIds = emptyList<QuestId>()
+    private var nextShelfChangeId = 0
 
     @After
     fun tearDown() {
@@ -93,7 +101,12 @@ class DefaultQuestListComponentTest {
             themeRepository = fakeThemeRepo,
             lessonRepository = fakeLessonRepo,
             questionRepository = fakeQuestionRepo,
-            setPublicQuestShelf = SetPublicQuestShelfUseCase(fakeRepo),
+            authRepository = fakeAuth,
+            setPublicQuestShelf =
+                SetPublicQuestShelfUseCase(
+                    fakeRepo,
+                    QuestShelfChangeIdProvider { "intent-${++nextShelfChangeId}" },
+                ),
             retirePublicQuest = RetirePublicQuestUseCase(fakeRepo),
             questContentSync = { questId ->
                 syncedQuestIds = syncedQuestIds + questId
@@ -267,15 +280,98 @@ class DefaultQuestListComponentTest {
     }
 
     @Test
-    fun `onQuestClick in selection mode sets target shelf instead of opening sections`() = runTest(testScheduler) {
+    fun `onQuestClick in selection mode queues the shelf move instead of opening sections`() = runTest(testScheduler) {
         val component = buildComponent(shelf = "arena", mode = QuestListMode.Arena, selectionTargetShelf = "home")
         val questItem = questDisplayItemFixture(id = "q-1", title = "Quest A")
 
         component.onQuestClick(questItem)
         advanceUntilIdle()
 
-        assertEquals(listOf(QuestId("q-1") to "home"), fakeRepo.shelfSetRequests)
+        val queued = fakeRepo.queuedShelfChanges.single()
+        assertEquals(QuestId("q-1"), queued.questId)
+        assertEquals("home", queued.targetShelf)
+        assertEquals(DEV_UID, queued.ownerUid)
         assertTrue(fakeNavigation.pushedConfigs.isEmpty(), "selection mode must not push SectionList")
+    }
+
+    // ── Story 5.4: перенос на полку — намерение в очереди, не полка в строке ────
+
+    /**
+     * Авиарежим: в очереди запись, строка квеста не тронута, перечитывания нет (AD-25).
+     * Карточка показывает «ждёт отправки» по ответу очереди.
+     */
+    @Test
+    fun `set shelf queues the intent and leaves visibleOn untouched`() = runTest(testScheduler) {
+        val component = buildComponent(shelf = "arena", mode = QuestListMode.Arena)
+        fakeRepo.emit(listOf(questFixture(id = "q-1", visibleOn = setOf("arena"))))
+        advanceUntilIdle()
+        val item = (component.uiState.value as QuestListUiState.Loaded).quests.single()
+
+        component.onSetShelfClick(item, "home")
+        advanceUntilIdle()
+
+        val queued = fakeRepo.queuedShelfChanges.single()
+        assertEquals("intent-1", queued.id)
+        assertEquals(DEV_UID, queued.ownerUid)
+        assertEquals(QuestId("q-1"), queued.questId)
+        assertEquals("home", queued.targetShelf)
+        assertEquals(setOf("arena"), fakeRepo.getById(QuestId("q-1"))?.visibleOn, "полка локально не меняется")
+        assertTrue(fakeRepo.refreshedIds.isEmpty(), "новая полка приезжает журналом, а не перечитыванием по успеху")
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+        assertEquals(setOf("q-1"), state.quests.map { it.id.value }.toSet(), "квест всё ещё на прежней полке")
+        assertEquals(QuestShelfSyncMark.Pending, state.shelfSync[QuestId("q-1")])
+    }
+
+    /** Карантин: пометка приходит по ссылке на сущность, откатывать нечего (AD-28, AD-25). */
+    @Test
+    fun `quarantined shelf move is marked on the card by entity ref`() = runTest(testScheduler) {
+        val component = buildComponent(shelf = "arena", mode = QuestListMode.Arena)
+        fakeRepo.emit(listOf(questFixture(id = "q-1", visibleOn = setOf("arena"))))
+        advanceUntilIdle()
+        val item = (component.uiState.value as QuestListUiState.Loaded).quests.single()
+        component.onSetShelfClick(item, "home")
+        advanceUntilIdle()
+
+        fakeRepo.setShelfChangeState(DEV_UID, QuestId("q-1"), QuestShelfSyncState.QUARANTINED)
+        advanceUntilIdle()
+
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+        assertEquals(QuestShelfSyncMark.Quarantined, state.shelfSync[QuestId("q-1")])
+        assertEquals(setOf("arena"), fakeRepo.getById(QuestId("q-1"))?.visibleOn, "локальной половины нет")
+    }
+
+    /** Доставка: запись удалена, новая полка приезжает журналом и меняет строку — не компонент. */
+    @Test
+    fun `after delivery the new shelf arrives through the journal and the mark disappears`() = runTest(testScheduler) {
+        val component = buildComponent(shelf = "arena", mode = QuestListMode.Arena)
+        val quest = questFixture(id = "q-1", visibleOn = setOf("arena"))
+        fakeRepo.emit(listOf(quest))
+        advanceUntilIdle()
+        val item = (component.uiState.value as QuestListUiState.Loaded).quests.single()
+        component.onSetShelfClick(item, "home")
+        advanceUntilIdle()
+        assertIs<QuestListUiState.Loaded>(component.uiState.value)
+
+        // Отправлено — запись удалена (AD-4); синхронизация чтения принесла новую полку.
+        fakeRepo.setShelfChangeState(DEV_UID, QuestId("q-1"), QuestShelfSyncState.NONE)
+        fakeRepo.emit(listOf(quest.copy(visibleOn = setOf("home"), version = 2L, lastModifiedAt = 5L)))
+        advanceUntilIdle()
+
+        assertIs<QuestListUiState.Empty>(component.uiState.value, "квест ушёл с арены только после журнала")
+    }
+
+    /** Без аккаунта намерение некому принадлежать: в очередь ничего не кладётся. */
+    @Test
+    fun `set shelf without a signed-in account queues nothing`() = runTest(testScheduler) {
+        fakeAuth.signOut()
+        val component = buildComponent(shelf = "arena", mode = QuestListMode.Arena)
+
+        component.onSetShelfClick(questDisplayItemFixture(id = "q-1"), "home")
+        advanceUntilIdle()
+
+        assertTrue(fakeRepo.queuedShelfChanges.isEmpty())
     }
 
     // ── QL-U-06 ──────────────────────────────────────────────────────────────

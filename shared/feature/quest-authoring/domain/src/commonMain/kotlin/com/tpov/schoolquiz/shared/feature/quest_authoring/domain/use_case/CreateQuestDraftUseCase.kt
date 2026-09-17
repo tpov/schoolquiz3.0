@@ -28,52 +28,57 @@ class CreateQuestDraftUseCase(
             val sectionId = DraftSectionId(idProvider.nextId("draft-section"))
             val themeId = DraftThemeId(idProvider.nextId("draft-theme"))
             val lessonId = DraftLessonId(idProvider.nextId("draft-lesson"))
-            val draft = QuestDraft(
-                id = draftId,
-                ownerUid = command.ownerUid,
-                catalogId = command.catalogId,
-                title = command.title.trim(),
-                description = command.description?.trim()?.takeIf { it.isNotEmpty() },
-                defaultLanguage = command.defaultLanguage,
-                defaultDifficulty = command.defaultDifficulty,
-                status = QuestDraftStatus.SAVED,
-                localRevision = 1L,
-                serverRevision = null,
-                publicQuestId = command.sourceQuestId,
-                createdAtMs = now,
-                updatedAtMs = now,
-                isActive = true,
-            )
-            val bundle = QuestAuthoringBundle(
-                draft = draft,
-                sections = listOf(
-                    DraftSection(
-                        id = sectionId,
-                        draftId = draftId,
-                        title = command.sectionTitle,
-                        order = 0,
-                    ),
-                ),
-                themes = listOf(
-                    DraftTheme(
-                        id = themeId,
-                        draftId = draftId,
-                        sectionId = sectionId,
-                        title = command.themeTitle,
-                        order = 0,
-                    ),
-                ),
-                lessons = listOf(
-                    DraftLesson(
-                        id = lessonId,
-                        draftId = draftId,
-                        themeId = themeId,
-                        title = command.lessonTitle,
-                        order = 0,
-                    ),
-                ),
-                questions = emptyList(),
-            )
+            val draft =
+                QuestDraft(
+                    id = draftId,
+                    ownerUid = command.ownerUid,
+                    catalogId = command.catalogId,
+                    title = command.title.trim(),
+                    description = command.description?.trim()?.takeIf { it.isNotEmpty() },
+                    defaultLanguage = command.defaultLanguage,
+                    defaultDifficulty = command.defaultDifficulty,
+                    status = QuestDraftStatus.SAVED,
+                    localRevision = 1L,
+                    serverRevision = null,
+                    publicQuestId = command.sourceQuestId,
+                    createdAtMs = now,
+                    updatedAtMs = now,
+                    isActive = true,
+                )
+            val bundle =
+                QuestAuthoringBundle(
+                    draft = draft,
+                    sections =
+                        listOf(
+                            DraftSection(
+                                id = sectionId,
+                                draftId = draftId,
+                                title = command.sectionTitle,
+                                order = 0,
+                            ),
+                        ),
+                    themes =
+                        listOf(
+                            DraftTheme(
+                                id = themeId,
+                                draftId = draftId,
+                                sectionId = sectionId,
+                                title = command.themeTitle,
+                                order = 0,
+                            ),
+                        ),
+                    lessons =
+                        listOf(
+                            DraftLesson(
+                                id = lessonId,
+                                draftId = draftId,
+                                themeId = themeId,
+                                title = command.lessonTitle,
+                                order = 0,
+                            ),
+                        ),
+                    questions = emptyList(),
+                )
             repository.saveDraft(bundle).getOrThrow()
             Result.success(draftId)
         } catch (e: CancellationException) {

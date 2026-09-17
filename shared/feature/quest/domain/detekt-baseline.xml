@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:Quest.kt$Quest$3.0f</ID>
+    <ID>MagicNumber:StarRating.kt$StarFill.Partial$9</ID>
+  </CurrentIssues>
+</SmellBaseline>

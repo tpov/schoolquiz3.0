@@ -5,12 +5,12 @@ import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionDisplay
 import com.tpov.schoolquiz.shared.core.question_schema.RedactedQuestionContent
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTimer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.selectSubset
-import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
@@ -44,16 +44,19 @@ class StartLessonAttemptUseCase(
         mode: Difficulty,
         sessionMode: SessionMode = SessionMode.LEARNING,
     ): RunnerState {
-        val userId = authRepository.currentUid()
-            ?: return RunnerState.InitFailed(InitFailureReason.AuthRequired)
+        val userId =
+            authRepository.currentUid()
+                ?: return RunnerState.InitFailed(InitFailureReason.AuthRequired)
 
-        val lesson = lessonRepository.getById(lessonId)
-            ?: return RunnerState.InitFailed(InitFailureReason.LessonNotFound)
+        val lesson =
+            lessonRepository.getById(lessonId)
+                ?: return RunnerState.InitFailed(InitFailureReason.LessonNotFound)
 
         val questions = questionRepository.observeByLesson(lessonId).first()
-        val activeQuestions = questions
-            .filter { !it.archived }
-            .dedupeTranslatedVariants()
+        val activeQuestions =
+            questions
+                .filter { !it.archived }
+                .dedupeTranslatedVariants()
 
         val parsed = activeQuestions.map { q -> parser.readForRunner(q, mode) }
 
@@ -63,9 +66,10 @@ class StartLessonAttemptUseCase(
         // A redacted question that definitely belongs to the other pool explains nothing about why
         // this one is empty, and counting it would make an easy-only lesson opened as hard blame
         // redaction for what is simply an absence of hard questions.
-        val redactedForMode = parsed
-            .filterIsInstance<ParsedQuestion.Redacted>()
-            .count { it.difficulty == mode || it.difficulty == null }
+        val redactedForMode =
+            parsed
+                .filterIsInstance<ParsedQuestion.Redacted>()
+                .count { it.difficulty == mode || it.difficulty == null }
 
         // Priority 1: active questions exist, none is playable, and none of the unplayable ones was
         // redacted into this pool — so the payloads really are broken. The `redactedForMode == 0`
@@ -162,7 +166,6 @@ private fun String.canonicalQuestionId(): String {
  * outcomes is what lets the caller tell them apart.
  */
 private sealed interface ParsedQuestion {
-
     /** An ordinary question, with its answer key, ready for the pool. */
     data class Playable(val question: RunnerQuestion.Valid) : ParsedQuestion
 
@@ -185,27 +188,33 @@ private sealed interface ParsedQuestion {
  * this code has never been told about; letting it fall silently into "the payloads are broken"
  * would hide it behind the very message this slice exists to stop overloading, so it fails loudly.
  */
-private fun QuestionContentParser.readForRunner(question: Question, mode: Difficulty): ParsedQuestion {
-    val display = parseForDisplay(
-        payload = question.payload,
-        fallbackId = question.id.value,
-        fallbackText = question.text,
-        fallbackDifficulty = mode,
-    ).getOrNull()
+private fun QuestionContentParser.readForRunner(
+    question: Question,
+    mode: Difficulty,
+): ParsedQuestion {
+    val display =
+        parseForDisplay(
+            payload = question.payload,
+            fallbackId = question.id.value,
+            fallbackText = question.text,
+            fallbackDifficulty = mode,
+        ).getOrNull()
 
     return when (display) {
         null -> ParsedQuestion.Unreadable
-        is QuestionContent -> ParsedQuestion.Playable(
-            RunnerQuestion.Valid(
-                sourceId = question.id,
-                order = question.order,
-                codeAnswerIndex = -1,
-                content = display,
-            ),
-        )
+        is QuestionContent ->
+            ParsedQuestion.Playable(
+                RunnerQuestion.Valid(
+                    sourceId = question.id,
+                    order = question.order,
+                    codeAnswerIndex = -1,
+                    content = display,
+                ),
+            )
         is RedactedQuestionContent -> ParsedQuestion.Redacted(display.difficultyOrNull)
-        else -> error(
-            "QuestionContentParser returned an unrecognised QuestionDisplay: ${display::class.simpleName}",
-        )
+        else ->
+            error(
+                "QuestionContentParser returned an unrecognised QuestionDisplay: ${display::class.simpleName}",
+            )
     }
 }

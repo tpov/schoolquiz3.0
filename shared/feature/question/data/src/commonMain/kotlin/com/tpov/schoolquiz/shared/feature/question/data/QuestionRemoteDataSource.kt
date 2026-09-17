@@ -7,5 +7,8 @@ interface QuestionRemoteDataSource {
     suspend fun fetchByIds(ids: Set<String>): List<QuestionDto> = emptyList()
 
     /** Fetch questions whose lessonId is in lessonIds and lastModifiedAt > cursor. lessonIds.size ≤ 30. */
-    suspend fun fetchChangedByParents(lessonIds: Set<String>, cursor: Long): List<QuestionDto>
+    suspend fun fetchChangedByParents(
+        lessonIds: Set<String>,
+        cursor: Long,
+    ): List<QuestionDto>
 }

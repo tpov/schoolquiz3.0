@@ -3,8 +3,10 @@
 // Bulk seed runner.
 // Reads scripts/seed-bulk/data/<catalogId>.js for each target catalog,
 // writes the entire quest -> section -> theme -> lesson -> question hierarchy
-// into Firestore via the Admin SDK, then bumps catalog contentsVersion and
-// emits matching sync_change documents.
+// into Firestore via the Admin SDK, then bumps the catalog and emits matching
+// sync_change documents — one per node, id without time, through the same
+// declaration the server writes by (functions/sync-changes.js, AD-11), so a
+// rerun overwrites the journal instead of growing it.
 //
 // Usage: node scripts/seed-bulk/seed-bulk-quests.js
 // Optional: NODE_OPTIONS=--max-old-space-size=4096 node ...
@@ -16,7 +18,7 @@ const {
   VISIBLE_ON,
   LANGUAGE,
   mkPayload,
-  syncChange,
+  writeSyncChangesWith,
   BatchWriter,
   admin,
 } = require('./shared');
@@ -25,10 +27,25 @@ ensureInit();
 
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
+const {VERSION_STEP} = require('../../functions/entity-version.js');
+
 const now = admin.firestore.Timestamp.now();
 const baseMs = now.toMillis();
-const VERSION = baseMs;
-const INC1 = FieldValue.increment(1);
+
+// Версию здесь назначает сид, и это не нарушение AD-12.
+//
+// AD-12 запрещает одно: чтобы значение version приезжало ОТ КЛИЕНТА. Правило существует потому,
+// что два устройства одного автора назначили бы одно число двум разным редакциям и расхождение
+// стало бы нечем обнаружить. Сид клиентом не является — он пишет документы напрямую Admin SDK,
+// callable в этом пути нет вообще, и писателя, кроме него, у сидовых квестов не бывает. Сервер
+// назначить эту версию не может физически: он в этот путь не входит.
+//
+// Шаг берётся из того же модуля, что и на сервере: два разных шага в двух местах и есть та
+// рассинхронизация, ради устранения которой модуль написан. Инкремент, а не число: сид пишет
+// сотни документов без чтения, а `FieldValue.increment` даёт `+1` от текущего значения без него —
+// новый документ получает первую версию, пересев поверх старого продолжает его ряд, и повторный
+// прогон никогда не откатывает версию назад.
+const VERSION = FieldValue.increment(VERSION_STEP);
 
 const DEFAULT_TARGET_CATALOGS = ['school', 'courses', 'surveys', 'games', 'quests'];
 const COURSES_CATALOG_ID = 'courses';
@@ -96,18 +113,12 @@ async function seedCatalog(catalogId) {
       averageRating: null,
       averageRatingCount: 0,
       version: VERSION,
-      contentsVersion: VERSION,
       lastModifiedAt: now,
       archived: questArchived,
     };
     await writer.set(db.doc(`quests/${quest.id}`), questDoc, { merge: true });
-    const questChange = syncChange('quest', quest.id, ts.next().value);
-    await writer.set(
-      db.doc(
-        `catalogs/${catalogId}/sync_changes/${questChange.changedAtMs}-${questChange.type}-${questChange.id}`,
-      ),
-      questChange,
-    );
+    // Приватной половины у сидового квеста нет — и это говорится, а не умалчивается.
+    await writeSyncChangesWith(writer, db, { kind: 'quest', id: quest.id, catalogId, ownerUid: null }, ts.next().value);
     questCount += 1;
 
     for (let s = 0; s < quest.sections.length; s++) {
@@ -118,18 +129,11 @@ async function seedCatalog(catalogId) {
         title: section.title,
         order: s,
         version: VERSION,
-        contentsVersion: VERSION,
         lastModifiedAt: now,
         archived: false,
       };
       await writer.set(db.doc(`sections/${section.id}`), sectionDoc, { merge: true });
-      const sectionChange = syncChange('section', section.id, ts.next().value);
-      await writer.set(
-        db.doc(
-          `catalogs/${catalogId}/sync_changes/${sectionChange.changedAtMs}-${sectionChange.type}-${sectionChange.id}`,
-        ),
-        sectionChange,
-      );
+      await writeSyncChangesWith(writer, db, { kind: 'section', id: section.id, catalogId }, ts.next().value);
       sectionCount += 1;
 
       for (let t = 0; t < section.themes.length; t++) {
@@ -140,18 +144,11 @@ async function seedCatalog(catalogId) {
           title: theme.title,
           order: t,
           version: VERSION,
-          contentsVersion: VERSION,
           lastModifiedAt: now,
           archived: false,
         };
         await writer.set(db.doc(`themes/${theme.id}`), themeDoc, { merge: true });
-        const themeChange = syncChange('theme', theme.id, ts.next().value);
-        await writer.set(
-          db.doc(
-            `catalogs/${catalogId}/sync_changes/${themeChange.changedAtMs}-${themeChange.type}-${themeChange.id}`,
-          ),
-          themeChange,
-        );
+        await writeSyncChangesWith(writer, db, { kind: 'theme', id: theme.id, catalogId }, ts.next().value);
         themeCount += 1;
 
         for (let l = 0; l < theme.lessons.length; l++) {
@@ -162,7 +159,6 @@ async function seedCatalog(catalogId) {
             title: lesson.title,
             order: l,
             version: VERSION,
-            contentsVersion: VERSION,
             lastModifiedAt: now,
             archived: false,
             averageRating: null,
@@ -170,13 +166,7 @@ async function seedCatalog(catalogId) {
             top3: [],
           };
           await writer.set(db.doc(`lessons/${lesson.id}`), lessonDoc, { merge: true });
-          const lessonChange = syncChange('lesson', lesson.id, ts.next().value);
-          await writer.set(
-            db.doc(
-              `catalogs/${catalogId}/sync_changes/${lessonChange.changedAtMs}-${lessonChange.type}-${lessonChange.id}`,
-            ),
-            lessonChange,
-          );
+          await writeSyncChangesWith(writer, db, { kind: 'lesson', id: lesson.id, catalogId }, ts.next().value);
           lessonCount += 1;
 
           for (let q = 0; q < lesson.questions.length; q++) {
@@ -197,12 +187,13 @@ async function seedCatalog(catalogId) {
               archived: false,
             };
             await writer.set(db.doc(`questions/${question.id}`), questionDoc, { merge: true });
-            const questionChange = syncChange('question', question.id, ts.next().value);
-            await writer.set(
-              db.doc(
-                `lesson_content/${lesson.id}/sync_changes/${questionChange.changedAtMs}-${questionChange.type}-${questionChange.id}`,
-              ),
-              questionChange,
+            // Вопрос читается двумя журналами — каталожным и журналом своего урока; в какие писать,
+            // решает объявление, а не этот сид. Раньше он писал только журнал урока.
+            await writeSyncChangesWith(
+              writer,
+              db,
+              { kind: 'question', id: question.id, catalogId, lessonId: lesson.id },
+              ts.next().value,
             );
             questionCount += 1;
           }
@@ -212,17 +203,13 @@ async function seedCatalog(catalogId) {
   }
 
   // Catalog cascade signal.
-  const catalogChange = syncChange('catalog', catalogId, ts.next().value);
-  await writer.set(
-    db.doc(
-      `catalogs/${catalogId}/sync_changes/${catalogChange.changedAtMs}-${catalogChange.type}-${catalogChange.id}`,
-    ),
-    catalogChange,
-  );
+  await writeSyncChangesWith(writer, db, { kind: 'catalog', id: catalogId, catalogId }, ts.next().value);
+  // Каталог двигает свою собственную version — тот же счётчик, что у любого другого узла.
+  // `contentsVersion` был вторым счётчиком того же самого и не читается клиентом с эпика 8.
   await writer.set(
     db.doc(`catalogs/${catalogId}`),
     {
-      contentsVersion: INC1,
+      version: VERSION,
       lastModifiedAt: now,
     },
     { merge: true },
@@ -262,7 +249,7 @@ function archivedForQuest(catalogId, quest) {
     totalQuestions += s.questionCount;
   }
   console.log(`  TOTAL    ops=${totalOps}  questions=${totalQuestions}`);
-  console.log(`  baseMs=${baseMs}  version=${VERSION}`);
+  console.log(`  baseMs=${baseMs}  version step=+${VERSION_STEP} (назначается инкрементом)`);
 })()
   .catch((e) => {
     console.error(e);

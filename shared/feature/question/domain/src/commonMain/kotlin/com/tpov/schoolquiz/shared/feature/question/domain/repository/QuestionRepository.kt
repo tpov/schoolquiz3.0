@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.Flow
  * Spec: docs/features/home-and-my-quests/0-spec.md — AC#5.
  */
 interface QuestionRepository {
-
     /**
      * Observes questions belonging to [lessonId], sorted by [Question.order] ASC.
      */
@@ -45,5 +44,8 @@ interface QuestionRepository {
      * @param lessonIds set of lesson ids whose questions to pull.
      * @param cursor    local questionsCursor (max lastModifiedAt seen so far).
      */
-    suspend fun refreshByParents(lessonIds: Set<LessonId>, cursor: Long): Result<Unit>
+    suspend fun refreshByParents(
+        lessonIds: Set<LessonId>,
+        cursor: Long,
+    ): Result<Unit>
 }

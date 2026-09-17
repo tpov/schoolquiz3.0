@@ -9,6 +9,7 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncStatusRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
@@ -110,6 +111,7 @@ class DefaultRootComponentTest {
         fetchTournamentOverview = fetchTournamentOverview,
         userStatsRepository = fakeRepo,
         syncScheduler = syncScheduler,
+        syncStatusRepository = FakeSyncStatusRepository(),
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
@@ -195,6 +197,7 @@ class DefaultRootComponentTest {
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = errorRepo,
             syncScheduler = FakeSyncScheduler(),
+            syncStatusRepository = FakeSyncStatusRepository(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
             homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },
@@ -345,9 +348,13 @@ class DefaultRootComponentTest {
     // SectionVisibility guard (AC 23g)
     // Spec: go_to_select_section_hidden_section_no_op
     // GIVEN DefaultRootComponent with guest stats (currentSkill == 0)
-    //       Arena requires USER >= Title.TEACHINGS.first (3000)
-    // WHEN onDestination(SelectSection(InternetSection.Arena))
+    //       Catalog requires USER >= Title.TEACHINGS.first (3000)
+    // WHEN onDestination(SelectSection(InternetSection.Catalog))
     // THEN state unchanged — domain visibility guard blocks hidden section
+    //
+    // Пример взят на Catalog: у арены порог снят (выпуск идёт только на неё, и прежний порог
+    // прятал опубликованный квест от новичков и от самого автора), поэтому показать ею работу
+    // сторожа больше нельзя.
     // -----------------------------------------------------------------------
 
     @Test
@@ -356,9 +363,9 @@ class DefaultRootComponentTest {
         val component = buildComponent(fakeRepo)
         val stateBefore = component.appShellState.first()
 
-        // Arena.requiredRoles = mapOf(Role.USER to Title.TEACHINGS.first = 3000)
+        // Catalog.requiredRoles = mapOf(Role.USER to Title.TEACHINGS.first = 3000)
         // guest has currentSkill = 0 → guard blocks
-        component.onDestination(Destination.SelectSection(DrawerSection.InternetSection.Arena))
+        component.onDestination(Destination.SelectSection(DrawerSection.InternetSection.Catalog))
 
         val stateAfter = component.appShellState.first()
         assertEquals(stateBefore.activeTab, stateAfter.activeTab)
@@ -433,6 +440,7 @@ class DefaultRootComponentTest {
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = fakeRepo,
             syncScheduler = FakeSyncScheduler(),
+            syncStatusRepository = FakeSyncStatusRepository(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
             homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },

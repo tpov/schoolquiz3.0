@@ -16,7 +16,6 @@ async function backfillCatalogs() {
     // client expects Firestore Timestamp, not Number
     if (!(d.lastModifiedAt instanceof Timestamp)) update.lastModifiedAt = now;
     if (d.version === undefined) update.version = 1;
-    if (d.contentsVersion === undefined) update.contentsVersion = 0;
     if (d.archived === undefined) update.archived = false;
     if (Object.keys(update).length > 0) {
       batch.update(doc.ref, update);

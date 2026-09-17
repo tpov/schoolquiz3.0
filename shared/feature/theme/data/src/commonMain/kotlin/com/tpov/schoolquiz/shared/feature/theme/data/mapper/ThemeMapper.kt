@@ -6,13 +6,14 @@ import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 
 object ThemeMapper {
-    fun ThemeEntity.toDomain(): Theme = Theme(
-        id = ThemeId(id),
-        sectionId = SectionId(sectionId),
-        title = title,
-        order = order,
-        version = version,
-        lastModifiedAt = lastModifiedAt,
-        archived = archived,
-    )
+    fun ThemeEntity.toDomain(): Theme =
+        Theme(
+            id = ThemeId(id),
+            sectionId = SectionId(sectionId),
+            title = title,
+            order = order,
+            version = version,
+            lastModifiedAt = lastModifiedAt,
+            archived = archived,
+        )
 }

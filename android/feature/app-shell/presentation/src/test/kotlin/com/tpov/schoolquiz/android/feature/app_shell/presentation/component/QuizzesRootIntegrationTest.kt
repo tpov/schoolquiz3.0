@@ -15,20 +15,22 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncStatusRepository
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonAttemptRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestAuthoringRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
-import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSectionRepository
-import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonRepository
-import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonAttemptRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
@@ -40,33 +42,31 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.Q
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
+import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
-import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonUnlockOutcome
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonUnlockQueue
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
-import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
-import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
-import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
@@ -74,12 +74,19 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsU
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
+import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
+import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -92,9 +99,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 /**
  * JVM integration tests for [DefaultRootComponent] cross-feature wiring.
@@ -235,6 +239,7 @@ class QuizzesRootIntegrationTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
         syncScheduler = FakeSyncScheduler(),
+        syncStatusRepository = FakeSyncStatusRepository(),
         homeQuestsFactory = { ctx, onCatalogDrillDown, _ ->
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
@@ -258,6 +263,7 @@ class QuizzesRootIntegrationTest {
                 authRepo = FakeAuthRepository(initialUid = "user1"),
                 observeMyQuests = ObserveMyQuestsUseCase(questRepo),
                 observeDraftSummaries = ObserveQuestDraftSummariesUseCase(FakeQuestAuthoringRepository()),
+                openQuestDraft = OpenQuestDraftUseCase(FakeQuestAuthoringRepository()),
                 observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
                 navigator = navigator,
                 onQuestDrillDown = onQuestDrillDown,
@@ -281,6 +287,7 @@ class QuizzesRootIntegrationTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = FakeUserStatsRepository(),
         syncScheduler = FakeSyncScheduler(),
+        syncStatusRepository = FakeSyncStatusRepository(),
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         quizzesFactory = { ctx ->
@@ -356,6 +363,19 @@ class QuizzesRootIntegrationTest {
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 retirePublicQuest = RetirePublicQuestUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+                // Разблокировка урока здесь не нажимается: тест про навигацию между экранами.
+                queueLessonUnlock =
+                    object : LessonUnlockQueue {
+                        override suspend fun queueUnlock(
+                            ownerUid: String,
+                            lessonId: LessonId,
+                            kindWireName: String,
+                            priceNolics: Int,
+                        ): Result<LessonUnlockOutcome> = error("Not expected")
+
+                        override fun observeRefusedUnlocks(ownerUid: String): Flow<Set<LessonId>> =
+                            flowOf(emptySet())
+                    },
                 mainContext = testDispatcher,
             )
         },

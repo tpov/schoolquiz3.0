@@ -74,11 +74,12 @@ class AppShellTransitionsTest {
     }
 
     @Test
-    fun `scenario 2 given LOCAL backStack empty when switchTab INTERNET then internet activeSection is Profile`() {
-        // FR #7 / BR #3: defaultSection(INTERNET, guestStats) = Profile (first visible)
+    fun `scenario 2 given LOCAL backStack empty when switchTab INTERNET then internet activeSection is Arena`() {
+        // FR #7 / BR #3: defaultSection(INTERNET, guestStats) = первый видимый раздел.
+        // Со снятым порогом арены им стала арена, а не карточка профиля.
         val state = defaultState()
         val result = navigate(state, Destination.SwitchTab(Tab.INTERNET))
-        assertEquals(DrawerSection.InternetSection.Profile, result.newState.internetState.activeSection)
+        assertEquals(DrawerSection.InternetSection.Arena, result.newState.internetState.activeSection)
     }
 
     @Test
@@ -666,9 +667,10 @@ class AppShellTransitionsTest {
 
     @Test
     fun `section switch row 1 section invisible for current stats - no-op guard`() {
-        // Arena requires USER >= 3000, guest has 0 → invisible → no-op
+        // Catalog requires USER >= 3000, guest has 0 → invisible → no-op.
+        // Арена сюда больше не годится: её порог снят.
         val state = defaultState() // LOCAL, guest stats
-        val result = navigate(state, Destination.SelectSection(DrawerSection.InternetSection.Arena))
+        val result = navigate(state, Destination.SelectSection(DrawerSection.InternetSection.Catalog))
         assertEquals(state, result.newState)
     }
 
@@ -748,8 +750,8 @@ class AppShellTransitionsTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 34 given Internet Profile drawer open stats currentSkill 0 when selectSection Arena then state unchanged`() {
-        // Arena requires USER >= 3000, guest has currentSkill=0 → invisible → domain no-op
+    fun `scenario 34 given Internet Profile drawer open stats currentSkill 0 when selectSection Catalog then state unchanged`() {
+        // Catalog requires USER >= 3000, guest has currentSkill=0 → invisible → domain no-op
         val state = AppShellState.default().copy(
             activeTab = Tab.INTERNET,
             isDrawerOpen = true,
@@ -759,16 +761,16 @@ class AppShellTransitionsTest {
             ),
             // userStats = guest (currentSkill = 0) from default()
         )
-        val result = navigate(state, Destination.SelectSection(DrawerSection.InternetSection.Arena))
+        val result = navigate(state, Destination.SelectSection(DrawerSection.InternetSection.Catalog))
         assertEquals(state, result.newState)
         assertTrue(result.events.isEmpty())
     }
 
     @Test
-    fun `scenario 34 given LOCAL stats currentSkill 0 when cross-tab selectSection Arena then state unchanged`() {
-        // Arena is invisible for guest; cross-tab attempt is also blocked
+    fun `scenario 34 given LOCAL stats currentSkill 0 when cross-tab selectSection Catalog then state unchanged`() {
+        // Catalog is invisible for guest; cross-tab attempt is also blocked
         val state = defaultState() // LOCAL, guest stats
-        val result = navigate(state, Destination.SelectSection(DrawerSection.InternetSection.Arena))
+        val result = navigate(state, Destination.SelectSection(DrawerSection.InternetSection.Catalog))
         assertEquals(state, result.newState)
     }
 

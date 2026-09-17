@@ -49,6 +49,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentDetailUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentListItemUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentSyncUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewLanguagesUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQuestionUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
@@ -92,7 +93,6 @@ fun ReviewQueueView(
         } else {
             ReviewDetail(
                 detail = state.detail,
-                isSubmitting = state.isSubmitting,
                 onBackToListClick = onBackToListClick,
                 onScoreSelected = onScoreSelected,
                 onLanguageSelected = onLanguageSelected,
@@ -237,7 +237,31 @@ private fun ReviewAssignmentCard(
                 )
             }
             ReviewScores(item)
+            ReviewSyncMark(item.syncState)
         }
+    }
+}
+
+/** Пометка очереди на карточке: «ещё уедет» и «не уедет никогда» — разные слова (AD-14, AD-28). */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ReviewSyncMark(syncState: ReviewAssignmentSyncUi) {
+    when (syncState) {
+        ReviewAssignmentSyncUi.NONE -> Unit
+        ReviewAssignmentSyncUi.PENDING ->
+            Text(
+                text = stringResource(R.string.qa_review_sync_pending),
+                style = NoirType.kicker,
+                color = NoirT3,
+                modifier = Modifier.testTag("review-sync-pending"),
+            )
+        ReviewAssignmentSyncUi.QUARANTINED ->
+            Text(
+                text = stringResource(R.string.qa_review_sync_quarantined),
+                style = NoirType.kicker,
+                color = NoirDanger,
+                modifier = Modifier.testTag("review-sync-quarantined"),
+            )
     }
 }
 
@@ -263,7 +287,6 @@ private fun ReviewScores(item: ReviewAssignmentListItemUiState) {
 @Composable
 private fun ReviewDetail(
     detail: ReviewAssignmentDetailUiState,
-    isSubmitting: Boolean,
     onBackToListClick: () -> Unit,
     onScoreSelected: (Int) -> Unit,
     onLanguageSelected: (String) -> Unit,
@@ -316,20 +339,13 @@ private fun ReviewDetail(
                 )
             }
         }
+        // Решение уходит в очередь, а не в сеть: ждать нечего, и кнопка не гаснет на спиннер.
         Button(
             onClick = onSubmitClick,
-            enabled = !isSubmitting,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-            Text(
-                text =
-                    if (isSubmitting) {
-                        stringResource(R.string.qa_review_submitting)
-                    } else {
-                        stringResource(R.string.qa_review_submit)
-                    },
-            )
+            Text(text = stringResource(R.string.qa_review_submit))
         }
     }
 }

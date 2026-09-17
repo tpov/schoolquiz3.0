@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongMethod:DefaultQuestCreateComponent.kt$DefaultQuestCreateComponent$private fun buildQuestionContent(editor: QuestQuestionEditorUiState): Result&lt;QuestionContent&gt;</ID>
+    <ID>ReturnCount:DefaultReviewQueueComponent.kt$DefaultReviewQueueComponent$override fun onSubmitClick()</ID>
+    <ID>SpreadOperator:UiMessageText.kt$(id, *args.toTypedArray())</ID>
+  </CurrentIssues>
+</SmellBaseline>

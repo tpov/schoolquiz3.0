@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.platform.firebase.di
 
 import com.google.firebase.storage.FirebaseStorage
 import com.tpov.schoolquiz.platform.firebase.catalog.FirebaseCatalogRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.network.namingFailures
 import com.tpov.schoolquiz.shared.core.catalog.data.CatalogRemoteDataSource
 import com.tpov.schoolquiz.shared.core.catalog.data.StorageUrlResolver
 import kotlinx.coroutines.tasks.await
@@ -11,7 +12,7 @@ import org.koin.dsl.module
 val firebaseCatalogModule =
     module {
         single<CatalogRemoteDataSource> {
-            FirebaseCatalogRemoteDataSource(get())
+            FirebaseCatalogRemoteDataSource(get()).namingFailures()
         }
         single<StorageUrlResolver>(named("storageUrlResolver")) {
             StorageUrlResolver { path ->

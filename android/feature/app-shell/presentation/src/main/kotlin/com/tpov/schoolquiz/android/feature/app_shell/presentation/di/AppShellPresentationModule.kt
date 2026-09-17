@@ -38,6 +38,7 @@ val appShellPresentationModule =
                 fetchTournamentOverview = get(),
                 userStatsRepository = get(),
                 syncScheduler = get(),
+                syncStatusRepository = get(),
                 myQuestsFactory = { compCtx, nav, onQuestDrillDown ->
                     koin.get(MyQuestsComponent::class, parameters = { parametersOf(compCtx, nav, onQuestDrillDown) })
                 },

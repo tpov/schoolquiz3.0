@@ -8,14 +8,15 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogReposito
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
-val catalogDataModule = module {
-    single<CatalogLocalDataSource> { CatalogLocalDataSourceImpl(get()) }
-    single<CatalogRepository> {
-        CatalogRepositoryImpl(
-            local = get(),
-            remote = get(),
-            storageUrlResolver = get<StorageUrlResolver>(named("storageUrlResolver")),
-            syncStateRepo = get(),
-        )
+val catalogDataModule =
+    module {
+        single<CatalogLocalDataSource> { CatalogLocalDataSourceImpl(get()) }
+        single<CatalogRepository> {
+            CatalogRepositoryImpl(
+                local = get(),
+                remote = get(),
+                storageUrlResolver = get<StorageUrlResolver>(named("storageUrlResolver")),
+                syncStateRepo = get(),
+            )
+        }
     }
-}

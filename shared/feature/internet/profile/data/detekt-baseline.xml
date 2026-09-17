@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ComplexCondition:ListingCancelOutbox.kt$ListingCancelOutbox$it.isLetterOrDigit() &amp;&amp; it.code &lt; 128 || it == '_' || it == '-'</ID>
+    <ID>MagicNumber:ListingCancelOutbox.kt$ListingCancelOutbox$0x20</ID>
+    <ID>MagicNumber:ListingCancelOutbox.kt$ListingCancelOutbox$128</ID>
+    <ID>MagicNumber:ListingCancelOutbox.kt$ListingCancelOutbox$16</ID>
+    <ID>MagicNumber:ListingCancelOutbox.kt$ListingCancelOutbox$4</ID>
+    <ID>MagicNumber:ProfileRepositoryImpl.kt$6</ID>
+    <ID>MaxLineLength:VerificationRemoteDataSource.kt$VerificationRemoteDataSource$/** The platform side of [com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.VerificationRepository]. */</ID>
+    <ID>TooGenericExceptionCaught:ProfileRepositoryImpl.kt$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -17,7 +17,6 @@ data class LessonAttemptStats(
 )
 
 interface LessonAttemptRepository {
-
     /**
      * Persists [attempt] to Room.
      * Returns [Result.failure] on IO error; caller transitions to SaveFailed state.
@@ -38,7 +37,10 @@ interface LessonAttemptRepository {
      * Fake-only convenience, like the one-argument form: production callers must use the
      * three-argument [save]. Defaults to [save] so fakes that only care about attempts keep working.
      */
-    suspend fun save(attempt: Attempt, answers: List<AnsweredQuestion>): Result<Unit> = save(attempt)
+    suspend fun save(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+    ): Result<Unit> = save(attempt)
 
     /**
      * Persists [attempt], its [answers] and the questions it [served], in one transaction.
@@ -74,7 +76,10 @@ interface LessonAttemptRepository {
     /**
      * Observes all attempts for [userId] + [lessonId], sorted by completedAt DESC.
      */
-    fun observeByLesson(userId: String, lessonId: LessonId): Flow<List<Attempt>>
+    fun observeByLesson(
+        userId: String,
+        lessonId: LessonId,
+    ): Flow<List<Attempt>>
 
     /**
      * Observes all attempts for [userId] across all lessons.

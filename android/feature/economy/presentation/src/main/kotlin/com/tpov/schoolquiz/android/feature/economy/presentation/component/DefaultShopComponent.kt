@@ -9,15 +9,23 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralPro
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ListingCancelSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.LogoRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -58,7 +66,35 @@ class DefaultShopComponent(
                 }
             }
         }
+        // Снятие лота уезжает очередью, и строка узнаёт о нём только отсюда: «в очереди» или
+        // «отказано — уже продан». Спрашивается ровно про свои лоты, а не про всю витрину.
+        scope.launch {
+            cancelSyncs(_state.map { it.nicknames.ownNicknameLots }, nicknames::observeCancelSync).collect { marks ->
+                _state.update { it.copy(nicknames = it.nicknames.copy(nicknameCancelSyncs = marks)) }
+            }
+        }
+        scope.launch {
+            cancelSyncs(_state.map { it.nicknames.ownLogoLots }, logos::observeCancelSync).collect { marks ->
+                _state.update { it.copy(nicknames = it.nicknames.copy(logoCancelSyncs = marks)) }
+            }
+        }
     }
+
+    /** По каждому ключу — что говорит очередь; ключи без ответа в карту не попадают. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun cancelSyncs(
+        keys: Flow<Set<String>>,
+        source: (String) -> Flow<ListingCancelSync?>,
+    ): Flow<Map<String, ListingCancelSync>> =
+        keys.distinctUntilChanged().flatMapLatest { set ->
+            if (set.isEmpty()) {
+                flowOf(emptyMap())
+            } else {
+                combine(set.map { key -> source(key).map { key to it } }) { pairs ->
+                    pairs.mapNotNull { (key, sync) -> sync?.let { key to it } }.toMap()
+                }
+            }
+        }
 
     override fun obtainEvent(event: ShopViewEvent) {
         when (event) {
@@ -91,11 +127,7 @@ class DefaultShopComponent(
                     logos.listForSale(event.logo, event.price)
                     ShopMessage.LogoListed(event.price)
                 }
-            is ShopViewEvent.CancelLogoListing ->
-                runLogoAction(event.logo) {
-                    logos.cancelListing(event.logo)
-                    ShopMessage.ListingCancelled
-                }
+            is ShopViewEvent.CancelLogoListing -> queueCancel { logos.cancelListing(event.logo) }
             is ShopViewEvent.BuyLogoListing ->
                 runLogoAction(event.logo) {
                     val commission = logos.buyListed(event.logo)
@@ -126,11 +158,7 @@ class DefaultShopComponent(
                     nicknames.listForSale(event.nickname, event.price)
                     ShopMessage.NicknameListed(event.price)
                 }
-            is ShopViewEvent.CancelNicknameListing ->
-                runNicknameAction(event.nickname) {
-                    nicknames.cancelListing(event.nickname)
-                    ShopMessage.ListingCancelled
-                }
+            is ShopViewEvent.CancelNicknameListing -> queueCancel { nicknames.cancelListing(event.nickname) }
             is ShopViewEvent.BuyNickname ->
                 runNicknameAction(event.nickname) {
                     val commission = nicknames.buy(event.nickname)
@@ -341,6 +369,28 @@ class DefaultShopComponent(
                 )
             }
             refreshLogos()
+        }
+    }
+
+    /**
+     * Кладёт снятие лота в очередь.
+     *
+     * Не [runNicknameAction] и не [runLogoAction] намеренно: сервер здесь не зовётся, поэтому строка
+     * не помечается занятой, и витрина не перечитывается — лот исчезнет из неё, когда его удалит
+     * сервер и витрина обновится сама (AD-25). Что с записью дальше, строка читает из очереди.
+     */
+    private fun queueCancel(enqueue: suspend () -> Unit) {
+        scope.launch {
+            val outcome = runCatching { enqueue() }
+            _state.update {
+                it.copy(
+                    message =
+                        outcome.fold(
+                            onSuccess = { ShopMessage.ListingCancelQueued },
+                            onFailure = { error -> ShopMessage.Failure(error.errorDetail()) },
+                        ),
+                )
+            }
         }
     }
 

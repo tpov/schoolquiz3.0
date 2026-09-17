@@ -3,8 +3,10 @@ package com.tpov.schoolquiz.apps.android_next.di
 import android.content.Context
 import androidx.credentials.CredentialManager
 import com.google.firebase.auth.FirebaseAuth
+import com.tpov.schoolquiz.platform.firebase.auth.AccountSwitch
 import com.tpov.schoolquiz.platform.firebase.auth.FirebaseGoogleSignInRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.GoogleSignInRepository
+import kotlinx.coroutines.CoroutineScope
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -24,7 +26,20 @@ val authModule =
                 auth = FirebaseAuth.getInstance(),
                 credentialManager = get(),
                 webClientId = androidContext().googleWebClientId(),
+                accountSwitch = get(),
+            )
+        }
+        // Шаги смены аккаунта (AD-8) держат между вопросом и ответом сам вход, поэтому один на
+        // приложение — как и репозиторий, который их зовёт.
+        //
+        // Само переключение идёт в scope процесса, а не экрана: между входом и снятием следов
+        // прежнего владельца лежит сеть, и уход с экрана профиля не должен оставлять аккаунт
+        // сменённым, а строки прежнего владельца — на месте (AD-8).
+        single {
+            AccountSwitch(
                 switchGuard = get(),
+                deviceTokenRelease = get(),
+                scope = get<CoroutineScope>(),
             )
         }
     }

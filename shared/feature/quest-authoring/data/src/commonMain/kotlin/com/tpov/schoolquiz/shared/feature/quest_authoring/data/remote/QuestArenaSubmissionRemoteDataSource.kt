@@ -9,15 +9,23 @@ data class QuestSubmissionOutcome(
 ) {
     val isRejected: Boolean get() = status == STATUS_REJECTED
 
+    /** Опубликовано. Такой же терминальный исход, как отказ, и автору о нём тоже надо сказать. */
+    val isPublished: Boolean get() = status == STATUS_PUBLISHED
+
     companion object {
         const val STATUS_REJECTED = "REJECTED"
         const val STATUS_PUBLISHED = "PUBLISHED"
     }
 }
 
+/**
+ * Чтение вердиктов. Отправки здесь больше нет.
+ *
+ * Заявка уходит единственным приёмником (AD-6): прямая запись в `quest_review_requests` обходила
+ * проверку ключа идемпотентности в принципе — проверить ключ можно только там, где выполняется
+ * код, а правило Firestore кода не выполняет.
+ */
 interface QuestArenaSubmissionRemoteDataSource {
-    suspend fun submit(request: QuestArenaSubmissionRequest)
-
     /**
      * Reads back what the server decided about this author's submissions.
      *

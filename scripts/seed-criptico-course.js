@@ -4,15 +4,28 @@
 // Usage: node scripts/seed-criptico-course.js
 const admin = require('firebase-admin');
 const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json');
-const {catalogSyncChangePath, lessonContentSyncChangePath} = require('./sync-change-id');
+const {writeSyncChanges} = require('../functions/sync-changes');
+const {VERSION_STEP} = require('../functions/entity-version.js');
 
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 
 const db = admin.firestore();
 const now = admin.firestore.Timestamp.now();
 const baseMs = now.toMillis();
-const INC1 = admin.firestore.FieldValue.increment(1);
-const VERSION = baseMs;
+
+// Версию здесь назначает скрипт, и это не нарушение AD-12.
+//
+// AD-12 запрещает одно: чтобы значение version приезжало ОТ КЛИЕНТА — иначе два устройства одного
+// автора назначат одно число двум разным редакциям. Скрипт клиентом не является: он пишет
+// документы напрямую Admin SDK, callable в этом пути нет вообще, и сервер назначить эту версию не
+// может физически.
+//
+// Но регламент версии он обязан соблюдать тот же, потому что пишет слиянием поверх существующих
+// документов, и клиентский приёмник снимков применяет их только когда версия выросла. Шаг берётся
+// из общего модуля, а значение — из атомарного инкремента: новый документ получает первую версию,
+// повторный прогон продолжает ряд, и версия никогда не откатывается назад. Ни отметка времени, ни
+// зашитое число этого не дают — первая не версия, второе не растёт.
+const VERSION = admin.firestore.FieldValue.increment(VERSION_STEP);
 const AUTHOR = 'seed-author-uid';
 
 const CATALOG_ID = 'courses';
@@ -22,11 +35,6 @@ const THEME_ID = 'theme-criptico-blockchain';
 const LESSON_ID = 'lesson-criptico-intro';
 
 const mkPayload = (obj) => JSON.stringify(obj);
-const syncChange = (type, id, offset) => ({
-  type,
-  id,
-  changedAtMs: baseMs + offset,
-});
 
 const quest = {
   id: QUEST_ID,
@@ -38,7 +46,6 @@ const quest = {
   averageRating: null,
   averageRatingCount: 0,
   version: VERSION,
-  contentsVersion: VERSION,
   lastModifiedAt: now,
   archived: true,
 };
@@ -49,7 +56,6 @@ const section = {
   title: 'Криптовалюта без мифов',
   order: 0,
   version: VERSION,
-  contentsVersion: VERSION,
   lastModifiedAt: now,
   archived: false,
 };
@@ -60,7 +66,6 @@ const theme = {
   title: 'Блокчейн, кошельки и безопасность',
   order: 0,
   version: VERSION,
-  contentsVersion: VERSION,
   lastModifiedAt: now,
   archived: false,
 };
@@ -71,7 +76,6 @@ const lesson = {
   title: 'Основы крипты',
   order: 0,
   version: VERSION,
-  contentsVersion: VERSION,
   lastModifiedAt: now,
   archived: false,
   averageRating: 4.6,
@@ -308,38 +312,23 @@ const questions = [
     batch.set(db.doc(`questions/${question.id}`), question, { merge: true });
   }
 
+  // Журнал — той же функцией и по тому же объявлению, что и сервер (AD-11): документ на узел, id
+  // без времени, тело из трёх полей; повторный прогон переписывает те же документы. Вопрос уходит в
+  // оба журнала — каталожный и своего урока — потому, что так объявлено: запись только в один
+  // означает, что половина читателей об изменении не узнает. Приватной половины у сидового квеста
+  // нет: `ownerUid: null`.
   [
-    syncChange('catalog', CATALOG_ID, 1),
-    syncChange('quest', QUEST_ID, 2),
-    syncChange('section', SECTION_ID, 3),
-    syncChange('theme', THEME_ID, 4),
-    syncChange('lesson', LESSON_ID, 5),
-  ].forEach((change) => {
-    batch.set(
-      db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
-      change,
-    );
-  });
-
-  questions
-    .map((question, index) => syncChange('question', question.id, 6 + index))
-    .forEach((change) => {
-      // В оба журнала, как пишет сервер: вопрос читается и по каталогу, и по содержимому
-      // урока, и запись только в один означает, что половина читателей об изменении не узнает.
-      batch.set(
-        db.doc(catalogSyncChangePath(CATALOG_ID, change.type, change.id)),
-        change,
-      );
-      batch.set(
-        db.doc(lessonContentSyncChangePath(LESSON_ID, change.id)),
-        change,
-      );
-    });
+    {kind: 'catalog', id: CATALOG_ID, catalogId: CATALOG_ID},
+    {kind: 'quest', id: QUEST_ID, catalogId: CATALOG_ID, ownerUid: null},
+    {kind: 'section', id: SECTION_ID, catalogId: CATALOG_ID},
+    {kind: 'theme', id: THEME_ID, catalogId: CATALOG_ID},
+    {kind: 'lesson', id: LESSON_ID, catalogId: CATALOG_ID},
+    ...questions.map((question) => ({kind: 'question', id: question.id, catalogId: CATALOG_ID, lessonId: LESSON_ID})),
+  ].forEach((node, offset) => writeSyncChanges(batch, db, node, baseMs + offset + 1));
 
   batch.set(
     db.doc(`catalogs/${CATALOG_ID}`),
     {
-      contentsVersion: INC1,
       lastModifiedAt: now,
     },
     { merge: true },

@@ -17,6 +17,10 @@ import java.io.File
  *
  * Здесь же сверяются имена операций: `operation` — часть контракта с сервером, и незнакомое имя
  * приёмник отвергает окончательно.
+ *
+ * Заявки на арену здесь нет намеренно: миграция её не переносит вовсе — тело версионируемой
+ * заявки из прежних колонок не собирается, и приёмник отверг бы такую запись всегда. Что миграция
+ * делает с ней вместо переноса, проверяет `MigrationArenaContractTest`.
  */
 class MigrationKeyContractTest {
 
@@ -28,7 +32,6 @@ class MigrationKeyContractTest {
             mapOf(
                 "KEY_SUBMIT_ATTEMPT" to OutboxOperations.mutationKey(OutboxOperations.SUBMIT_ATTEMPT, "X").dropLast(1),
                 "KEY_SUBMIT_RATING" to OutboxOperations.mutationKey(OutboxOperations.SUBMIT_RATING, "X").dropLast(1),
-                "KEY_SUBMIT_ARENA" to OutboxOperations.mutationKey(OutboxOperations.SUBMIT_ARENA, "X").dropLast(1),
             )
 
         expected.forEach { (constant, prefix) ->
@@ -46,7 +49,6 @@ class MigrationKeyContractTest {
 
         assertEquals(OutboxOperations.SUBMIT_ATTEMPT, source.constantValue("OPERATION_SUBMIT_ATTEMPT"))
         assertEquals(OutboxOperations.SUBMIT_RATING, source.constantValue("OPERATION_SUBMIT_RATING"))
-        assertEquals(OutboxOperations.SUBMIT_ARENA, source.constantValue("OPERATION_SUBMIT_ARENA"))
     }
 
     @Test

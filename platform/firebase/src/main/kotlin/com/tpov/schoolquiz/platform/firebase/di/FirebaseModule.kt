@@ -6,10 +6,11 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
+import com.tpov.schoolquiz.platform.firebase.network.namingFailures
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseLogoRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
@@ -52,15 +53,15 @@ val firebaseModule =
             FirebaseUserStatsDataSource(
                 firestore = get(),
                 auth = FirebaseAuth.getInstance(),
-            )
+            ).namingFailures()
         }
         single<ProfileRemoteDataSource> {
-            FirebaseProfileRemoteDataSource(functions = get())
+            FirebaseProfileRemoteDataSource(functions = get()).namingFailures()
         }
         single<NicknameRemoteDataSource> {
-            FirebaseNicknameRemoteDataSource(functions = get())
+            FirebaseNicknameRemoteDataSource(functions = get()).namingFailures()
         }
-        single<LogoRemoteDataSource> { FirebaseLogoRemoteDataSource(functions = get()) }
+        single<LogoRemoteDataSource> { FirebaseLogoRemoteDataSource(functions = get()).namingFailures() }
         single<VerificationRemoteDataSource> {
             FirebaseVerificationRemoteDataSource(
                 functions = get(),
@@ -68,38 +69,38 @@ val firebaseModule =
                 auth = FirebaseAuth.getInstance(),
             )
         }
-        single<EconomyConstantsRemoteDataSource> { FirebaseEconomyConstantsRemoteDataSource(get()) }
+        single<EconomyConstantsRemoteDataSource> { FirebaseEconomyConstantsRemoteDataSource(get()).namingFailures() }
         single<EconomyRemoteDataSource> {
             FirebaseEconomyRemoteDataSource(functions = get(), networkMonitor = get())
         }
-        // Проверка чека — денежный вызов, поэтому знает про связь: офлайн отказывает названной
-        // причиной, а не держит спиннер до истечения таймаута (ADM-5).
-        single<PurchaseVerifier> {
-            FirebasePurchaseVerifier(functions = get(), networkMonitor = get())
-        }
         single<GiftBoxRemoteDataSource> {
             FirebaseGiftBoxRemoteDataSource(functions = get())
+        }
+        // Денежный вызов: прямой и синхронный, не через приёмник отложенных мутаций (ADM-5).
+        single<PurchaseVerifier> {
+            FirebasePurchaseVerifier(functions = get(), networkMonitor = get())
         }
         single<LessonResultRemoteDataSource> {
             FirebaseLessonResultRemoteDataSource(functions = get())
         }
         single<CatalogSyncChangeRemoteDataSource> {
-            FirebaseCatalogSyncChangeRemoteDataSource(firestore = get())
+            FirebaseCatalogSyncChangeRemoteDataSource(firestore = get(), policy = get()).namingFailures()
         }
         single<LessonContentSyncChangeRemoteDataSource> {
-            FirebaseLessonContentSyncChangeRemoteDataSource(firestore = get())
+            FirebaseLessonContentSyncChangeRemoteDataSource(firestore = get(), policy = get()).namingFailures()
         }
         single<QuestArenaSubmissionRemoteDataSource> {
-            FirebaseQuestArenaSubmissionRemoteDataSource(firestore = get())
+            FirebaseQuestArenaSubmissionRemoteDataSource(firestore = get()).namingFailures()
         }
         single<QuestPrivateRemoteDataSource> {
             FirebaseQuestPrivateRemoteDataSource(
                 firestore = get(),
                 auth = FirebaseAuth.getInstance(),
-            )
+                policy = get(),
+            ).namingFailures()
         }
         single<ReviewAssignmentRemoteDataSource> {
-            FirebaseReviewAssignmentRemoteDataSource(functions = get())
+            FirebaseReviewAssignmentRemoteDataSource(functions = get(), policy = get()).namingFailures()
         }
         single<TournamentLeaderboardRemoteDataSource> {
             FirebaseTournamentLeaderboardRemoteDataSource(functions = get())

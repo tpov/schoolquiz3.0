@@ -1,6 +1,6 @@
 const admin = require('firebase-admin');
 const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json');
-const {catalogSyncChangePath, lessonContentSyncChangePath} = require('./sync-change-id');
+const {writeSyncChanges} = require('../functions/sync-changes');
 const {buildCatalogIndex, syncTypeOf} = require('./content-catalog-index');
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
@@ -43,22 +43,21 @@ async function bumpCollection(name, catalogIdOf, missing) {
         missing.push(`${name}/${d.id}`);
         return;
       }
-      batch.set(
-        db.doc(catalogSyncChangePath(catalogId, type, d.id)),
-        { type, id: d.id, changedAtMs: nowMs },
-        { merge: true },
-      );
+      // Журнал — той же функцией и по тому же объявлению, что и сервер: в какие журналы попадает
+      // узел, решает объявление, а не этот скрипт. Вопрос читается двумя журналами — каталожным и
+      // журналом своего урока; квест с автором — ещё и приватным журналом автора.
+      const node = { kind: type, id: d.id, catalogId };
       if (name === 'questions') {
-        // Вопрос читается двумя журналами: каталожным и журналом своего урока.
         const lessonId = String(data.lessonId || '');
-        if (lessonId) {
-          batch.set(
-            db.doc(lessonContentSyncChangePath(lessonId, d.id)),
-            { type, id: d.id, changedAtMs: nowMs },
-            { merge: true },
-          );
+        if (!lessonId) {
+          // Вопрос без урока: журнал урока ему не адресовать. Громко, как и узел без каталога.
+          missing.push(`${name}/${d.id}`);
+          return;
         }
+        node.lessonId = lessonId;
       }
+      if (name === 'quests') node.ownerUid = data.authorUid ? String(data.authorUid) : null;
+      writeSyncChanges(batch, db, node, nowMs);
     });
     await batch.commit();
     total += chunk.length;

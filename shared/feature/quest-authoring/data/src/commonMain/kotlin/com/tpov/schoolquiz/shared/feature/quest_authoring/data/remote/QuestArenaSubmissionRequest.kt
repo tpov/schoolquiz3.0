@@ -4,7 +4,13 @@ data class QuestArenaSubmissionRequest(
     val submissionId: String,
     val draftId: String,
     val ownerUid: String,
-    val localRevision: Long,
+    /**
+     * Версия квеста на сервере, на которую автор опирался, подавая заявку (AD-24).
+     *
+     * Не счётчик правок автора: тот считает, сколько раз он трогал черновик, и к тому, разошлась
+     * ли работа с чужой, отношения не имеет. Пусто — квест ещё не публиковался, сверять не с чем.
+     */
+    val expectedVersion: Long?,
     val requestedAtMs: Long,
     val draft: ArenaDraftDto,
     val sections: List<ArenaSectionDto>,
@@ -14,6 +20,30 @@ data class QuestArenaSubmissionRequest(
     val review: ArenaReviewDto,
     val targetShelf: String = "arena",
     val targetLessonIds: Set<String> = emptySet(),
+    /**
+     * Полный состав черновика — все разделы, темы и уроки, а не только попавшие в порцию.
+     *
+     * Заявка несёт порцию: выбранные уроки, их темы и их разделы. По ней одной «урок удалён» и
+     * «урок не в этой порции» на проводе неразличимы, и сервер без этого поля снимает только
+     * вопрос целевого урока. Поле объявляет, что у автора вообще осталось, и включает снятие
+     * урока, темы и раздела.
+     *
+     * По контракту поле необязательное (AD-13): сервер, не увидев его, работает по-старому, а
+     * старый клиент, его не шлющий, продолжает публиковать. Этот клиент шлёт его всегда.
+     */
+    val draftTree: ArenaDraftTreeDto = ArenaDraftTreeDto(),
+)
+
+/**
+ * Три списка идентификаторов черновика целиком.
+ *
+ * Пустой черновик — три пустых списка, а не пропущенное поле: сервер сам решает, что по заявке без
+ * единого урока снимать нечего (`normalizeDraftTree`), и молчание клиента ему для этого не нужно.
+ */
+data class ArenaDraftTreeDto(
+    val sections: Set<String> = emptySet(),
+    val themes: Set<String> = emptySet(),
+    val lessons: Set<String> = emptySet(),
 )
 
 data class ArenaReviewDto(

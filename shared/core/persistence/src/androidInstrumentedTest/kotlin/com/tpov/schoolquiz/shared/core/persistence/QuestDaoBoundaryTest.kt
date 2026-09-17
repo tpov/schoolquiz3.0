@@ -53,6 +53,8 @@ class QuestDaoBoundaryTest {
         title: String = "Test Quest",
         visibleOn: Set<String> = setOf("home"),
         version: Long = 1L,
+        lastModifiedAt: Long = 0L,
+        averageRating: Float? = null,
         archived: Boolean = false,
     ) = QuestEntity(
         id = id,
@@ -62,10 +64,10 @@ class QuestDaoBoundaryTest {
         picturePath = null,
         pictureUrl = null,
         visibleOn = visibleOn,
-        averageRating = null,
+        averageRating = averageRating,
         averageRatingCount = 0,
         version = version,
-        lastModifiedAt = 0L,
+        lastModifiedAt = lastModifiedAt,
         archived = archived,
     )
 
@@ -105,13 +107,36 @@ class QuestDaoBoundaryTest {
     }
 
     @Test
-    fun upsertByIdIfNewerVersionSkipsOnEqualVersion() = runTest {
-        upsert(questEntity(id = "q1", version = 5L, title = "original"))
-        upsert(questEntity(id = "q1", version = 5L, title = "updated"))
+    fun upsertByIdIfNewerVersionSkipsAnIdenticalSnapshot() = runTest {
+        upsert(questEntity(id = "q1", version = 5L, lastModifiedAt = 100L, title = "original"))
+        upsert(questEntity(id = "q1", version = 5L, lastModifiedAt = 100L, title = "original"))
 
         val result = dao.findById("q1")
 
         assert(result?.title == "original") { "Expected title='original', got '${result?.title}'" }
+    }
+
+    @Test
+    fun upsertByIdIfNewerVersionAppliesARatingThatDidNotMoveTheVersion() = runTest {
+        // A rating changes the document but not `version` — that is the conflict token and moves
+        // only on content changes. The server records the rating in `lastModifiedAt`, and a quest
+        // already on the device has to pick it up from there.
+        upsert(questEntity(id = "q1", version = 5L, lastModifiedAt = 100L, averageRating = null))
+        upsert(questEntity(id = "q1", version = 5L, lastModifiedAt = 200L, averageRating = 4.5f))
+
+        val result = dao.findById("q1")
+
+        assert(result?.averageRating == 4.5f) { "Expected the rating to land, got '${result?.averageRating}'" }
+    }
+
+    @Test
+    fun upsertByIdIfNewerVersionSkipsAStaleSnapshotWithTheSameVersion() = runTest {
+        upsert(questEntity(id = "q1", version = 5L, lastModifiedAt = 200L, title = "current"))
+        upsert(questEntity(id = "q1", version = 5L, lastModifiedAt = 100L, title = "stale"))
+
+        val result = dao.findById("q1")
+
+        assert(result?.title == "current") { "Expected title='current', got '${result?.title}'" }
     }
 
     @Test

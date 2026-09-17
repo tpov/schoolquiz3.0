@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.first
 class AuthRepositoryImpl(
     private val currentUidFlow: () -> Flow<String?>,
 ) : AuthRepository {
-
     override suspend fun currentUid(): String? = currentUidFlow().first()
 
     override fun observeUid(): Flow<String?> = currentUidFlow()

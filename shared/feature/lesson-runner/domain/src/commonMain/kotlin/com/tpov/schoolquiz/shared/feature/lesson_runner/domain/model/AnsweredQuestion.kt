@@ -1,9 +1,9 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model
 
-import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
-import com.tpov.schoolquiz.shared.core.scoring.Score
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.Score
 import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
+import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 
 /**
  * One answer, recorded per question.

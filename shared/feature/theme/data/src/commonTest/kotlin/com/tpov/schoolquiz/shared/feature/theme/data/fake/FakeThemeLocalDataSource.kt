@@ -20,12 +20,29 @@ class FakeThemeLocalDataSource : ThemeLocalDataSource {
     val deletedIds = mutableListOf<String>()
 
     override fun observeBySection(sectionId: String): Flow<List<ThemeEntity>> =
-        _flow.map { list -> list.filter { it.sectionId == sectionId } }
+        // Как в ThemeDao: `WHERE sectionId = :sectionId AND archived = 0`.
+        _flow.map { list -> list.filter { it.sectionId == sectionId && !it.archived } }
 
     override suspend fun upsertByIdIfNewerVersion(entity: ThemeEntity) {
         upsertCallsFor[entity.id] = (upsertCallsFor[entity.id] ?: 0) + 1
         val current = store[entity.id]
         if (current == null || current.version < entity.version) {
+            store[entity.id] = entity
+            _flow.value = store.values.toList()
+        }
+    }
+
+
+    /** Как в ThemeDao.upsertFromSyncList: версия, время, а при их равенстве — отличие содержимого. */
+    override suspend fun upsertFromSyncList(entity: ThemeEntity) {
+        upsertCallsFor[entity.id] = (upsertCallsFor[entity.id] ?: 0) + 1
+        val current = store[entity.id]
+        val replace =
+            current == null ||
+                current.version < entity.version ||
+                current.lastModifiedAt < entity.lastModifiedAt ||
+                (current.lastModifiedAt == entity.lastModifiedAt && current != entity)
+        if (replace) {
             store[entity.id] = entity
             _flow.value = store.values.toList()
         }

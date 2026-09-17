@@ -8,4 +8,5 @@ data class QuestDraftSummaryEntity(
     val questionCount: Int,
     val updatedAtMs: Long,
     val isActive: Boolean,
+    val rejectionReason: String? = null,
 )

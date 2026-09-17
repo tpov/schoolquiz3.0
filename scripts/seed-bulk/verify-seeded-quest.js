@@ -17,6 +17,7 @@ const {
   ensureInit,
   admin,
 } = require('./shared');
+const {publicCatalogSyncChangePath, lessonContentSyncChangePath} = require('../../functions/sync-changes');
 
 const catalogId = process.env.VERIFY_CATALOG || 'courses';
 const questId = process.env.VERIFY_QUEST_ID || 'qb-courses-english-tech-c2';
@@ -154,16 +155,20 @@ function indexById(items) {
   return Object.fromEntries(items.map((item) => [item.id, item]));
 }
 
-function assertVersioned(data, version, path, hasContentsVersion, expectedArchived = false) {
+// Версия и время записи — две разные величины, и проверяются они порознь.
+//
+// Раньше проверка была одна: сид клал в `version` миллисекунды прогона, и одно число отвечало сразу
+// за «какая это редакция» и «когда её записали». Версия теперь считается шагами по единице, время
+// живёт в `lastModifiedAt`, и сверять их на равенство больше нельзя — как и раньше было нельзя, но
+// совпадение это скрывало.
+function assertVersioned(data, version, seedMs, path, expectedArchived = false) {
   assert(data.version === version, `${path}: version expected ${version}, got ${data.version}`);
-  if (hasContentsVersion) {
-    assert(data.contentsVersion === version, `${path}: contentsVersion expected ${version}, got ${data.contentsVersion}`);
-  }
-  assert(millis(data.lastModifiedAt) === version, `${path}: lastModifiedAt expected ${version}, got ${millis(data.lastModifiedAt)}`);
+  assert(data.contentsVersion === undefined, `${path}: contentsVersion must be gone, got ${data.contentsVersion}`);
+  assert(millis(data.lastModifiedAt) === seedMs, `${path}: lastModifiedAt expected ${seedMs}, got ${millis(data.lastModifiedAt)}`);
   assert(data.archived === expectedArchived, `${path}: archived expected ${expectedArchived}, got ${data.archived}`);
 }
 
-function verifyQuestDoc(doc, expected, version) {
+function verifyQuestDoc(doc, expected, version, seedMs) {
   const path = docPath('quests', doc.id);
   const data = doc.data();
   exactKeys(
@@ -178,7 +183,6 @@ function verifyQuestDoc(doc, expected, version) {
       'averageRating',
       'averageRatingCount',
       'version',
-      'contentsVersion',
       'lastModifiedAt',
       'archived',
     ],
@@ -192,7 +196,7 @@ function verifyQuestDoc(doc, expected, version) {
   assert(sameJson(data.visibleOn, visibleOnForQuest(expected)), `${path}: visibleOn mismatch`);
   assert(data.averageRating === null, `${path}: averageRating must be null`);
   assert(data.averageRatingCount === 0, `${path}: averageRatingCount must be 0`);
-  assertVersioned(data, version, path, true, archivedForQuest(expected));
+  assertVersioned(data, version, seedMs, path, archivedForQuest(expected));
 }
 
 function visibleOnForQuest(quest) {
@@ -205,29 +209,29 @@ function archivedForQuest(quest) {
   return catalogId === COURSES_CATALOG_ID;
 }
 
-function verifySectionDoc(doc, expected, version) {
+function verifySectionDoc(doc, expected, version, seedMs) {
   const path = docPath('sections', doc.id);
   const data = doc.data();
-  exactKeys(data, ['id', 'questId', 'title', 'order', 'version', 'contentsVersion', 'lastModifiedAt', 'archived'], path);
+  exactKeys(data, ['id', 'questId', 'title', 'order', 'version', 'lastModifiedAt', 'archived'], path);
   assert(data.id === expected.id, `${path}: id mismatch`);
   assert(data.questId === expected.questId, `${path}: questId mismatch`);
   assert(data.title === expected.title, `${path}: title mismatch`);
   assert(data.order === expected.order, `${path}: order mismatch`);
-  assertVersioned(data, version, path, true);
+  assertVersioned(data, version, seedMs, path);
 }
 
-function verifyThemeDoc(doc, expected, version) {
+function verifyThemeDoc(doc, expected, version, seedMs) {
   const path = docPath('themes', doc.id);
   const data = doc.data();
-  exactKeys(data, ['id', 'sectionId', 'title', 'order', 'version', 'contentsVersion', 'lastModifiedAt', 'archived'], path);
+  exactKeys(data, ['id', 'sectionId', 'title', 'order', 'version', 'lastModifiedAt', 'archived'], path);
   assert(data.id === expected.id, `${path}: id mismatch`);
   assert(data.sectionId === expected.sectionId, `${path}: sectionId mismatch`);
   assert(data.title === expected.title, `${path}: title mismatch`);
   assert(data.order === expected.order, `${path}: order mismatch`);
-  assertVersioned(data, version, path, true);
+  assertVersioned(data, version, seedMs, path);
 }
 
-function verifyLessonDoc(doc, expected, version) {
+function verifyLessonDoc(doc, expected, version, seedMs) {
   const path = docPath('lessons', doc.id);
   const data = doc.data();
   exactKeys(
@@ -238,7 +242,6 @@ function verifyLessonDoc(doc, expected, version) {
       'title',
       'order',
       'version',
-      'contentsVersion',
       'lastModifiedAt',
       'archived',
       'averageRating',
@@ -254,10 +257,10 @@ function verifyLessonDoc(doc, expected, version) {
   assert(data.averageRating === null, `${path}: averageRating must be null`);
   assert(data.ratingCount === 0, `${path}: ratingCount must be 0`);
   assert(Array.isArray(data.top3) && data.top3.length === 0, `${path}: top3 must be empty array`);
-  assertVersioned(data, version, path, true);
+  assertVersioned(data, version, seedMs, path);
 }
 
-function verifyQuestionDoc(doc, expected, version) {
+function verifyQuestionDoc(doc, expected, version, seedMs) {
   const path = docPath('questions', doc.id);
   const data = doc.data();
   exactKeys(data, ['id', 'lessonId', 'text', 'payload', 'language', 'order', 'version', 'lastModifiedAt', 'archived'], path);
@@ -266,7 +269,7 @@ function verifyQuestionDoc(doc, expected, version) {
   assert(data.text === (expected.text || expected.payloadObj.text), `${path}: text mismatch`);
   assert(data.language === LANGUAGE, `${path}: language mismatch`);
   assert(data.order === expected.order, `${path}: order mismatch`);
-  assertVersioned(data, version, path, false);
+  assertVersioned(data, version, seedMs, path);
   let payload;
   try {
     payload = JSON.parse(data.payload);
@@ -276,8 +279,8 @@ function verifyQuestionDoc(doc, expected, version) {
   assert(sameJson(payload, expected.payloadObj), `${path}: payload mismatch`);
 }
 
-function makeExpectedSyncChanges(flat, version) {
-  let changedAtMs = version;
+function makeExpectedSyncChanges(flat, seedMs) {
+  let changedAtMs = seedMs;
   const catalogChanges = [];
   const questionChangesByLesson = new Map();
 
@@ -289,7 +292,9 @@ function makeExpectedSyncChanges(flat, version) {
       theme.lessons.forEach((lesson) => {
         catalogChanges.push({ type: 'lesson', id: lesson.id, changedAtMs: changedAtMs++ });
         lesson.questions.forEach((question) => {
+          // Вопрос читается двумя журналами, и сид пишет в оба одной записью с одним временем.
           const change = { type: 'question', id: question.id, changedAtMs: changedAtMs++ };
+          catalogChanges.push(change);
           if (!questionChangesByLesson.has(lesson.id)) questionChangesByLesson.set(lesson.id, []);
           questionChangesByLesson.get(lesson.id).push(change);
         });
@@ -309,10 +314,10 @@ function verifyChangeDoc(doc, expected) {
   assert(data.changedAtMs === expected.changedAtMs, `${doc.ref.path}: changedAtMs mismatch`);
 }
 
-async function verifySync(flat, version) {
-  const { catalogChanges, questionChangesByLesson } = makeExpectedSyncChanges(flat, version);
+async function verifySync(flat, seedMs) {
+  const { catalogChanges, questionChangesByLesson } = makeExpectedSyncChanges(flat, seedMs);
   const catalogRefs = catalogChanges.map((change) => (
-    db.doc(`catalogs/${catalogId}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`)
+    db.doc(publicCatalogSyncChangePath(catalogId, change.type, change.id))
   ));
   const catalogDocs = [];
   for (const group of chunk(catalogRefs, chunkSize)) catalogDocs.push(...await db.getAll(...group));
@@ -326,7 +331,7 @@ async function verifySync(flat, version) {
     changes.forEach((change) => {
       questionSync.push({
         expected: change,
-        ref: db.doc(`lesson_content/${lessonId}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+        ref: db.doc(lessonContentSyncChangePath(lessonId, change.id)),
       });
     });
   }
@@ -346,6 +351,10 @@ async function main() {
   assert(questDoc.exists, `quests/${quest.id}: missing`);
   const version = questDoc.get('version');
   assert(Number.isSafeInteger(version) && version > 0, `quests/${quest.id}: invalid version ${version}`);
+  // Идентификаторы документов ленты изменений собраны из миллисекунд прогона, и они же лежат в
+  // `lastModifiedAt`. Версия к ним отношения не имеет — берём время оттуда, где оно и живёт.
+  const seedMs = millis(questDoc.get('lastModifiedAt'));
+  assert(Number.isSafeInteger(seedMs) && seedMs > 0, `quests/${quest.id}: invalid lastModifiedAt ${seedMs}`);
 
   await assertCountByPrefix('sections', 'sb-courses-english-tech-', flat.sections.length);
   await assertCountByPrefix('themes', 'tb-courses-english-tech-', flat.themes.length);
@@ -353,14 +362,14 @@ async function main() {
   await assertCountByPrefix('questions', 'qsb-courses-english-tech-', flat.questions.length);
   await assertCountByPrefix('lesson_materials', 'lb-courses-english-tech-', 0);
 
-  verifyQuestDoc(questDoc, quest, version);
-  await assertCollectionDocs('sections', indexById(flat.sections), (doc, expected) => verifySectionDoc(doc, expected, version));
-  await assertCollectionDocs('themes', indexById(flat.themes), (doc, expected) => verifyThemeDoc(doc, expected, version));
-  await assertCollectionDocs('lessons', indexById(flat.lessons), (doc, expected) => verifyLessonDoc(doc, expected, version));
-  await assertCollectionDocs('questions', indexById(flat.questions), (doc, expected) => verifyQuestionDoc(doc, expected, version));
+  verifyQuestDoc(questDoc, quest, version, seedMs);
+  await assertCollectionDocs('sections', indexById(flat.sections), (doc, expected) => verifySectionDoc(doc, expected, version, seedMs));
+  await assertCollectionDocs('themes', indexById(flat.themes), (doc, expected) => verifyThemeDoc(doc, expected, version, seedMs));
+  await assertCollectionDocs('lessons', indexById(flat.lessons), (doc, expected) => verifyLessonDoc(doc, expected, version, seedMs));
+  await assertCollectionDocs('questions', indexById(flat.questions), (doc, expected) => verifyQuestionDoc(doc, expected, version, seedMs));
 
   if (verifySyncChanges) {
-    await verifySync(flat, version);
+    await verifySync(flat, seedMs);
   }
 
   console.log(JSON.stringify({
@@ -368,6 +377,7 @@ async function main() {
     catalogId,
     questId,
     version,
+    seedMs,
     sections: flat.sections.length,
     themes: flat.themes.length,
     lessons: flat.lessons.length,

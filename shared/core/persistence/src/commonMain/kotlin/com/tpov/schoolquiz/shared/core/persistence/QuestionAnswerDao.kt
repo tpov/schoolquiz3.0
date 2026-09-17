@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface QuestionAnswerDao {
-
     @Upsert
     suspend fun upsertAll(entities: List<QuestionAnswerEntity>)
 
@@ -21,7 +20,10 @@ interface QuestionAnswerDao {
         ORDER BY answered_at_ms DESC
         """,
     )
-    suspend fun findByQuestion(userId: String, questionId: String): List<QuestionAnswerEntity>
+    suspend fun findByQuestion(
+        userId: String,
+        questionId: String,
+    ): List<QuestionAnswerEntity>
 
     @Query("SELECT * FROM question_answers WHERE lesson_id = :lessonId")
     fun observeByLesson(lessonId: String): Flow<List<QuestionAnswerEntity>>

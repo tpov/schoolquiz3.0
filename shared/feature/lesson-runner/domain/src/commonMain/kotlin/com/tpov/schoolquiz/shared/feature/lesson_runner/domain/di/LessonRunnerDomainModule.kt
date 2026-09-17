@@ -14,38 +14,39 @@ import org.koin.dsl.module
  * LessonRunnerDomainKoinAdapter (data/androidMain) bridges providers → use case function types.
  * This module is NOT registered in production — use lessonRunnerDomainKoinAdapter instead (ADR-LR-09 C1).
  */
-val lessonRunnerDomainModule = module {
-    factory {
-        StartLessonAttemptUseCase(
-            questionRepository = get(),
-            lessonRepository = get(),
-            parser = get(),
-            authRepository = get(),
-            clock = get(),
-            randomSeedProvider = get(),
-        )
+val lessonRunnerDomainModule =
+    module {
+        factory {
+            StartLessonAttemptUseCase(
+                questionRepository = get(),
+                lessonRepository = get(),
+                parser = get(),
+                authRepository = get(),
+                clock = get(),
+                randomSeedProvider = get(),
+            )
+        }
+        factory {
+            CompleteAttemptUseCase(
+                attemptRepository = get(),
+                ratingRepository = get(),
+                clock = get(),
+                attemptIdProvider = get(),
+            )
+        }
+        factory {
+            AbortAttemptUseCase(
+                attemptRepository = get(),
+                clock = get(),
+                attemptIdProvider = get(),
+            )
+        }
+        factory {
+            SubmitLessonRatingUseCase(
+                ratingRepository = get(),
+                lessonRepository = get(),
+                clock = get(),
+                ratingIdProvider = get(),
+            )
+        }
     }
-    factory {
-        CompleteAttemptUseCase(
-            attemptRepository = get(),
-            ratingRepository = get(),
-            clock = get(),
-            attemptIdProvider = get(),
-        )
-    }
-    factory {
-        AbortAttemptUseCase(
-            attemptRepository = get(),
-            clock = get(),
-            attemptIdProvider = get(),
-        )
-    }
-    factory {
-        SubmitLessonRatingUseCase(
-            ratingRepository = get(),
-            lessonRepository = get(),
-            clock = get(),
-            ratingIdProvider = get(),
-        )
-    }
-}

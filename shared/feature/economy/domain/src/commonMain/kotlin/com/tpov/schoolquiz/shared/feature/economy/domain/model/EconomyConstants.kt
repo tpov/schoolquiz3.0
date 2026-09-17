@@ -118,7 +118,9 @@ data class ChargeRules(
     init {
         require(maxOwned >= 0) { "ChargeRules.maxOwned must be non-negative, got $maxOwned" }
         require(regenMs >= 0L) { "ChargeRules.regenMs must be non-negative, got $regenMs" }
-        require(premiumRegenDivisor >= 1) { "ChargeRules.premiumRegenDivisor must be at least 1, got $premiumRegenDivisor" }
+        require(
+            premiumRegenDivisor >= 1,
+        ) { "ChargeRules.premiumRegenDivisor must be at least 1, got $premiumRegenDivisor" }
         require(priceLadder.isNotEmpty()) { "лестница цен не может быть пустой: слот нельзя купить даром" }
         require(priceLadder.all { it >= 0L }) { "цена слота не может быть отрицательной" }
     }

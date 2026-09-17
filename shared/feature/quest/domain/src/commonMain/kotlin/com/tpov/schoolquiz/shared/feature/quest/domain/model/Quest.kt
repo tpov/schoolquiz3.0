@@ -89,9 +89,14 @@ data class Quest(
 ) {
     companion object {
         /** Valid shelf names per spec FR#4. */
-        val VALID_SHELVES: Set<String> = setOf(
-            "home", "arena", "tournament", "tournamentFinal", "archive",
-        )
+        val VALID_SHELVES: Set<String> =
+            setOf(
+                "home",
+                "arena",
+                "tournament",
+                "tournamentFinal",
+                "archive",
+            )
     }
 
     init {

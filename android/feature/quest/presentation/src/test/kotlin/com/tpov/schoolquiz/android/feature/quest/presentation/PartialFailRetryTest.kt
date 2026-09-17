@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -78,6 +79,7 @@ class PartialFailRetryTest {
         authRepo = authRepo,
         observeMyQuests = ObserveMyQuestsUseCase(questRepo),
         observeDraftSummaries = ObserveQuestDraftSummariesUseCase(FakeQuestAuthoringRepository()),
+        openQuestDraft = OpenQuestDraftUseCase(FakeQuestAuthoringRepository()),
         observeCatalogs = ObserveCatalogsUseCase(FakeCatalogRepository()),
         navigator = FakeNavigator(),
         mainContext = testDispatcher,

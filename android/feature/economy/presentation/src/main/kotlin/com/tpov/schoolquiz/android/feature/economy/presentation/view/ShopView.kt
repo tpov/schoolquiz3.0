@@ -768,7 +768,7 @@ private fun ShopMessage.resolvedText(): String =
             }
         is ShopMessage.NicknameWorn -> stringResource(R.string.nft_msg_worn, nickname)
         is ShopMessage.NicknameListed -> stringResource(R.string.nft_msg_listed, price)
-        ShopMessage.ListingCancelled -> stringResource(R.string.nft_msg_listing_cancelled)
+        ShopMessage.ListingCancelQueued -> stringResource(R.string.nft_msg_listing_cancel_queued)
         is ShopMessage.NicknameBought -> stringResource(R.string.nft_msg_bought, commission)
         is ShopMessage.LogoPurchased -> stringResource(R.string.nft_msg_logo_bought, charged)
         is ShopMessage.LogoWorn -> stringResource(R.string.nft_msg_logo_worn, logo)

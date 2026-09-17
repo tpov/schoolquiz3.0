@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:NoirSettingsScreen.kt$( profile: UserProfile, appVersionName: String, appVersionCode: Int, onSyncNow: () -&gt; Unit, modifier: Modifier = Modifier, syncFrequency: SyncFrequency = SyncFrequency.DAILY, onSyncFrequencySelected: (SyncFrequency) -&gt; Unit = {}, profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY, onProfileSyncFrequencySelected: (SyncFrequency) -&gt; Unit = {}, syncStatus: SyncStatus = SyncStatus(), onForceResync: () -&gt; Unit = {}, )</ID>
+  </CurrentIssues>
+</SmellBaseline>

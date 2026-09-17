@@ -39,7 +39,14 @@ class FakeQuestLocalDataSource : QuestLocalDataSource {
     override suspend fun upsertByIdIfNewerVersion(entity: QuestEntity) {
         upsertCallsFor[entity.id] = (upsertCallsFor[entity.id] ?: 0) + 1
         val current = store[entity.id]
-        if (current == null || current.version < entity.version) {
+        // Mirrors QuestDao: `version` is the conflict token and moves only on content changes,
+        // so a rating — which moves `lastModifiedAt` only — must still get through.
+        val isOlder =
+            current == null ||
+                current.version < entity.version ||
+                current.lastModifiedAt < entity.lastModifiedAt ||
+                (current.lastModifiedAt == entity.lastModifiedAt && current != entity)
+        if (isOlder) {
             store[entity.id] = entity
             _flow.value = store.values.toList()
         }

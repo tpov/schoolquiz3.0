@@ -33,6 +33,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComme
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.AttemptSyncMarkRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonCommentRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
@@ -62,6 +63,11 @@ class DefaultLessonRunnerRootComponent(
     private val useCases: LessonRunnerUseCases,
     private val lessonRepository: LessonRepository,
     private val attemptRepository: LessonAttemptRepository,
+    /**
+     * Ответ очереди про это прохождение (AD-14). Без значения по умолчанию намеренно: забытая
+     * проводка обязана падать в графе, а не тихо показывать «всё отправлено».
+     */
+    private val attemptSyncMarks: AttemptSyncMarkRepository,
     /**
      * Read once per completed round for the lives figure on the result card. Null (the default)
      * when the host has no profile to read — the figure stays hidden instead of guessing.
@@ -377,6 +383,7 @@ class DefaultLessonRunnerRootComponent(
                 )
                 stateHolder.uiState.value =
                     buildResultUiState(result.attempt, result.ratingPrompt, saveWarning = false)
+                observeSyncMark(result.attempt)
             }
             is RunnerState.SaveFailed -> {
                 emitEvent(RunnerEvent.SaveAttemptFailed(result.error.toEventSaveError()))
@@ -386,6 +393,7 @@ class DefaultLessonRunnerRootComponent(
                         showRatingPrompt = false,
                         saveWarning = true,
                     )
+                observeSyncMark(result.attempt)
             }
             else -> {}
         }
@@ -403,6 +411,7 @@ class DefaultLessonRunnerRootComponent(
                         showRatingPrompt = false,
                         saveWarning = true,
                     )
+                observeSyncMark(result.attempt)
             }
             else -> emitEvent(RunnerEvent.NavigateBack)
         }
@@ -445,6 +454,26 @@ class DefaultLessonRunnerRootComponent(
             showRatingPrompt = showRatingPrompt,
             saveWarning = saveWarning,
         )
+    }
+
+    /**
+     * Подписка на пометку очереди для показанного прохождения.
+     *
+     * Спрашивается у ядра по ссылке на сущность; сама очередь этой фичей не читается (AD-7).
+     * Подписка живёт, пока на экране результат: карантин может случиться уже после того, как
+     * игрок увидел карточку, и тогда пометка меняется на месте.
+     */
+    private fun observeSyncMark(attempt: Attempt) {
+        stateHolder.syncMarkJob?.cancel()
+        stateHolder.syncMarkJob =
+            scope.launch {
+                attemptSyncMarks.observeAttemptMark(attempt.id).collect { mark ->
+                    val current = stateHolder.uiState.value as? RunnerUiState.Result ?: return@collect
+                    if (current.syncMark != mark) {
+                        stateHolder.uiState.value = current.copy(syncMark = mark)
+                    }
+                }
+            }
     }
 
     private fun emitEvent(event: RunnerEvent) {

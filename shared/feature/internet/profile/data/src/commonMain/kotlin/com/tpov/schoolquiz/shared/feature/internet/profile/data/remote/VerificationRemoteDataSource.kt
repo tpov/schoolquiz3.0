@@ -13,5 +13,9 @@ interface VerificationRemoteDataSource {
 
     suspend fun pending(limit: Int): List<VerificationRequest>
 
-    suspend fun decide(uid: String, decision: VerificationDecision, reason: String?)
+    suspend fun decide(
+        uid: String,
+        decision: VerificationDecision,
+        reason: String?,
+    )
 }

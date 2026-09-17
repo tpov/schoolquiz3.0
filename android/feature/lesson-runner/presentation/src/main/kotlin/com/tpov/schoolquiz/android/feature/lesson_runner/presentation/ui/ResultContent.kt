@@ -73,6 +73,7 @@ import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 
 private const val PERFECT_SCORE = 100
@@ -143,6 +144,23 @@ fun ResultContent(
                 stringResource(R.string.runner_result_save_warning),
                 style = NoirType.rowSub.copy(color = NoirDanger),
             )
+        }
+
+        // Пометка очереди на самом прохождении (AD-14). Молчание до сих пор значило и «уехало», и
+        // «не уедет никогда» — на карточке результата это два разных исхода и две разные строки.
+        // `when` исчерпывающий и без `else`: новое значение набора не соберётся молча.
+        when (state.syncMark) {
+            AttemptSyncMark.NONE -> Unit
+            AttemptSyncMark.NOT_SENT ->
+                Text(
+                    stringResource(R.string.runner_result_sync_not_sent),
+                    style = NoirType.rowSub.copy(color = NoirT3),
+                )
+            AttemptSyncMark.QUARANTINED ->
+                Text(
+                    stringResource(R.string.runner_result_sync_quarantined),
+                    style = NoirType.rowSub.copy(color = NoirDanger),
+                )
         }
 
         if (state.showRatingPrompt) {

@@ -9,32 +9,48 @@ class InMemorySyncStateRepositoryTest {
     private val repository = InMemorySyncStateRepository()
 
     @Test
-    fun `getCursor returns 0 by default`() = runTest {
-        val cursor = repository.getCursor("quizzes")
-        assertEquals(0L, cursor)
+    fun `getCursor returns the beginning by default`() = runTest {
+        assertEquals(SyncCursor.BEGINNING, repository.getCursor("quizzes"))
     }
 
     @Test
-    fun `setCursor and getCursor returns value`() = runTest {
-        repository.setCursor("quizzes", 1714500000000L)
-        val cursor = repository.getCursor("quizzes")
-        assertEquals(1714500000000L, cursor)
+    fun `setCursor and getCursor keep the whole pair`() = runTest {
+        repository.setCursor("quizzes", SyncCursor(1714500000000L, "doc-b"))
+
+        assertEquals(SyncCursor(1714500000000L, "doc-b"), repository.getCursor("quizzes"))
     }
 
     @Test
     fun `setCursor for different collections are independent`() = runTest {
-        repository.setCursor("quizzes", 1000L)
-        repository.setCursor("questions", 2000L)
+        repository.setCursor("quizzes", SyncCursor(1000L, "a"))
+        repository.setCursor("questions", SyncCursor(2000L, "b"))
 
-        assertEquals(1000L, repository.getCursor("quizzes"))
-        assertEquals(2000L, repository.getCursor("questions"))
-        assertEquals(0L, repository.getCursor("categories"))
+        assertEquals(SyncCursor(1000L, "a"), repository.getCursor("quizzes"))
+        assertEquals(SyncCursor(2000L, "b"), repository.getCursor("questions"))
+        assertEquals(SyncCursor.BEGINNING, repository.getCursor("categories"))
     }
 
     @Test
-    fun `setCursor overwrites previous value`() = runTest {
-        repository.setCursor("quizzes", 1000L)
-        repository.setCursor("quizzes", 5000L)
-        assertEquals(5000L, repository.getCursor("quizzes"))
+    fun `setCursor moves forward by the pair, never back`() = runTest {
+        repository.setCursor("quizzes", SyncCursor(1000L, "b"))
+
+        // Та же миллисекунда, меньший id — это раньше, а не позже.
+        repository.setCursor("quizzes", SyncCursor(1000L, "a"))
+        assertEquals(SyncCursor(1000L, "b"), repository.getCursor("quizzes"))
+
+        repository.setCursor("quizzes", SyncCursor(999L, "z"))
+        assertEquals(SyncCursor(1000L, "b"), repository.getCursor("quizzes"))
+
+        repository.setCursor("quizzes", SyncCursor(1000L, "c"))
+        assertEquals(SyncCursor(1000L, "c"), repository.getCursor("quizzes"))
+    }
+
+    @Test
+    fun `resetAllCursors puts every collection back to the beginning`() = runTest {
+        repository.setCursor("quizzes", SyncCursor(1000L, "a"))
+
+        repository.resetAllCursors()
+
+        assertEquals(SyncCursor.BEGINNING, repository.getCursor("quizzes"))
     }
 }

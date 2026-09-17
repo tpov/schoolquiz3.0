@@ -8,11 +8,14 @@
  * что и куда было бы написано, — и проверяется само тело транзакции, а не его пересказ.
  *
  * Порядок: форма запроса → запись расчёта (повтор отвечается до Play) → Play → одна транзакция:
- * запись расчёта ещё раз (гонка), пользователь, таблица констант — решение — четыре записи.
- * Золото пишется абсолютом: `increment` не отличает повтор от первой доставки.
+ * запись расчёта ещё раз (гонка), пользователь, таблица констант — решение — баланс, расчёт,
+ * квитанция, аудит и строка книги движений. Золото пишется абсолютом: `increment` не отличает
+ * повтор от первой доставки. Строки книги нет только тогда, когда баланс не двинулся — всё
+ * начисленное ушло на недостачу, оставленную возвратом (purchase-clawback.js).
  */
 
 const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constants");
+const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
 const {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
@@ -21,9 +24,11 @@ const {
   RECEIPTS_SUBCOLLECTION,
   SETTLEMENT_CREDIT,
   SETTLEMENT_REFUSE,
+  SHORTFALL_FIELD,
   auditRecord,
   decideSettlement,
   purchaseFromLookup,
+  readShortfall,
   receiptRecord,
   settlementGate,
   settlementId,
@@ -118,8 +123,15 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
       const decision = decideSettlement({existing, purchase, claimedSku: sku, uid, constants});
       if (decision.decision !== SETTLEMENT_CREDIT) return decision;
 
-      const goldBefore = readGold(userSnapshot.exists ? userSnapshot.data() || {} : {});
-      const goldAfter = goldBefore + decision.credit.goldGranted;
+      const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+      const goldBefore = readGold(userData);
+      // Долг гасится до баланса. Возврат, которому нечего было снять, оставил недостачу (ADM-19), и
+      // следующее начисление сначала закрывает её, а до баланса доходит остаток. Иначе игрок,
+      // потративший возвращённое, покупал бы себе прощение долга вместе с новым паком.
+      const shortfallBefore = readShortfall(userData);
+      const shortfallCleared = Math.min(shortfallBefore, decision.credit.goldGranted);
+      const shortfallAfter = shortfallBefore - shortfallCleared;
+      const goldAfter = goldBefore + decision.credit.goldGranted - shortfallCleared;
       const response = successResponse({
         sku, goldGranted: decision.credit.goldGranted, gold: goldAfter, settlementId: id,
       });
@@ -127,13 +139,36 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
         id, uid, purchase, credit: decision.credit, goldBefore, goldAfter,
         constantsDoc: ECONOMY_CONSTANTS_DOC, now,
       };
-      transaction.set(userRef, {uid, gold: goldAfter, updatedAtMs: now}, {merge: true});
+      transaction.set(
+        userRef,
+        {uid, gold: goldAfter, [SHORTFALL_FIELD]: shortfallAfter, updatedAtMs: now},
+        {merge: true},
+      );
       // `create`, а не `set`: если между чтением и фиксацией этот токен рассчитал параллельный
       // вызов, транзакция падает — и на повторе читает запись и отвечает повтором — вместо того,
       // чтобы начислить второй раз.
       transaction.create(settlementRef, settlementRecord({...settled, response}));
       transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(id), receiptRecord(settled));
       transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(id), auditRecord(settled));
+      // Деньги были единственным местом, куда книга движений не заглядывала. Записывается настоящее
+      // движение баланса — выданное минус то, что ушло на долг, — а полная сумма и погашенная
+      // недостача названы в подробностях: сумма строк обязана сходиться с балансом.
+      const entry = ledgerEntry({
+        uid,
+        currency: CURRENCY.GOLD,
+        delta: goldAfter - goldBefore,
+        reason: REASON.GOLD_PACK,
+        sourceId: id,
+        atMs: now,
+        details: {
+          sku,
+          goldGranted: decision.credit.goldGranted,
+          quantity: decision.credit.quantity,
+          shortfallCleared,
+          shortfallAfter,
+        },
+      });
+      if (entry) transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
       return {decision: SETTLEMENT_CREDIT, response};
     });
   } catch (error) {

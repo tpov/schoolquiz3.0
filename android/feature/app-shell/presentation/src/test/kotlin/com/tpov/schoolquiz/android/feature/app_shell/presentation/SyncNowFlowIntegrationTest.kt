@@ -7,10 +7,15 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncStatusRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
@@ -18,6 +23,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppSh
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -69,6 +75,7 @@ class SyncNowFlowIntegrationTest {
     private fun buildComponent(
         fakeRepo: FakeUserStatsRepository = FakeUserStatsRepository(),
         fakeSyncScheduler: FakeSyncScheduler,
+        fakeSyncStatusRepository: FakeSyncStatusRepository = FakeSyncStatusRepository(),
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
@@ -77,6 +84,7 @@ class SyncNowFlowIntegrationTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
         syncScheduler = fakeSyncScheduler,
+        syncStatusRepository = fakeSyncStatusRepository,
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
@@ -117,6 +125,49 @@ class SyncNowFlowIntegrationTest {
 
         job.cancel()
         assertTrue(collectedEvents.any { it == RootEvent.SyncStarted })
+    }
+
+    // -----------------------------------------------------------------------
+    // Состояние синхронизации отдаёт сам компонент: экранам его показывают параметром, а не
+    // добывают из Koin (di-patterns.md, use-cases.md).
+    // -----------------------------------------------------------------------
+    @Test
+    fun `the component hands out the snapshot the repository keeps`() = runTest(testDispatcher) {
+        val statusRepository =
+            FakeSyncStatusRepository(
+                SyncStatus(
+                    lastSuccessAtMs = 1_756_800_000_000L,
+                    counts = OutboxCounts(waiting = 3, quarantined = 2),
+                    lastError = SyncError.NoNetwork,
+                ),
+            )
+        val component =
+            buildComponent(
+                fakeSyncScheduler = FakeSyncScheduler(),
+                fakeSyncStatusRepository = statusRepository,
+            )
+
+        val snapshot = component.syncStatus.first()
+
+        assertEquals(1_756_800_000_000L, snapshot.lastSuccessAtMs)
+        assertEquals(3, snapshot.counts.waiting)
+        assertEquals(2, snapshot.counts.quarantined)
+        assertEquals(SyncError.NoNetwork, snapshot.lastError)
+    }
+
+    @Test
+    fun `a later snapshot reaches the same flow, without rebuilding the component`() = runTest(testDispatcher) {
+        val statusRepository = FakeSyncStatusRepository()
+        val component =
+            buildComponent(
+                fakeSyncScheduler = FakeSyncScheduler(),
+                fakeSyncStatusRepository = statusRepository,
+            )
+        assertEquals(0L, component.syncStatus.first().lastSuccessAtMs)
+
+        statusRepository.recordSuccess(SyncRunKind.CONTENT, atMs = 1_756_800_000_000L)
+
+        assertEquals(1_756_800_000_000L, component.syncStatus.first().lastSuccessAtMs)
     }
 
     // -----------------------------------------------------------------------

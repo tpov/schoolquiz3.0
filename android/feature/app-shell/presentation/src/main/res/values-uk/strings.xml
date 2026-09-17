@@ -76,4 +76,6 @@
     <string name="tournament_error_update_participants">Не вдалося оновити учасників</string>
     <string name="tournament_loading">Оновлюємо дані</string>
     <string name="tournament_attempts_count">Спроб: %1$d</string>
+    <string name="drawer_sync_last_success">Остання синхронізація: %1$s</string>
+    <string name="drawer_sync_never">Ще жодного разу не синхронізувалися</string>
 </resources>

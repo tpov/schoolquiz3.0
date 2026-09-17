@@ -10,74 +10,34 @@ import kotlin.test.assertTrue
  *
  * 1. Идентификатор, не вернувшийся из `refreshByIds`, — сущности больше нет, стираем локально.
  * 2. Пустой `visibleOn` — квест снят со всех полок, убираем с устройства.
- * 3. `archived` — узел скрыт. Для квеста он остаётся маркером: у квестов есть полка «Архив», и
- *    открыть его оттуда по требованию надо уметь. У остальных узлов такой полки нет, и «скрыть»
- *    совпадает с «убрать локально».
+ * 3. `archived` — узел скрыт. Строка и связанный с ней прогресс остаются в базе, из выборок узел
+ *    уходит фильтром самого запроса (AC 7.6). У квеста `archived` вдобавок маркер полки «Архив».
  *
- * Поля `deleted` нет и не будет: retention tombstone здесь неприменим — журнал изменений уже
- * говорит, что узел тронули, а состояние узла читается из него самого.
+ * **Первые три проверяются поведением, а не текстом файлов** — по одному тесту на каждый из шести
+ * контентных репозиториев:
+ * `CatalogDeletionSemanticsTest`, `QuestDeletionSemanticsTest`, `SectionDeletionSemanticsTest`,
+ * `ThemeDeletionSemanticsTest`, `LessonDeletionSemanticsTest`, `QuestionRepositoryImplTest`.
+ * Прежде здесь стоял поиск подстрок, и он проходил бы, даже если ветку удаления убрать совсем:
+ * слово `archived` встречалось в тех же файлах в фильтрах показа, к удалению отношения не имеющих.
  *
- * Договор проверяется по исходникам, потому что нарушают его не поведением, а тем, что добавляют
- * четвёртый способ, не зная о трёх: сегодня контракт живёт только в шести файлах реализации.
+ * Здесь остаётся ровно то, что поведением не проверяется: четвёртый способ изобретают, добавляя
+ * поле, — и увидеть это можно только просмотром всего дерева. Поле `deleted` не вводится: retention
+ * tombstone здесь неприменим — журнал изменений уже говорит, что узел тронули, а состояние узла
+ * читается из него самого.
  */
 class DeletionSemanticsTest {
 
     private val repositoryRoot = File("../../..")
 
-    private val contentRepositories =
-        listOf(
-            "shared/core/catalog/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/core/catalog/data/CatalogRepositoryImpl.kt",
-            "shared/feature/quest/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/quest/data/QuestRepositoryImpl.kt",
-            "shared/feature/section/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/section/data/SectionRepositoryImpl.kt",
-            "shared/feature/theme/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/theme/data/ThemeRepositoryImpl.kt",
-            "shared/feature/lesson/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson/data/LessonRepositoryImpl.kt",
-            "shared/feature/question/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/question/data/QuestionRepositoryImpl.kt",
-        )
-
-    private fun source(path: String): String {
-        val file = File(repositoryRoot, path)
-        assertTrue(file.exists(), "нет файла реализации: ${file.absolutePath}")
-        return file.readText()
-    }
-
-    @Test
-    fun `given every content repository then a node that stopped coming back is removed`() {
-        // Первый способ. Без него узел, удалённый на сервере, живёт на устройстве вечно: журнал
-        // сообщает, что его тронули, `refreshByIds` возвращает на один меньше — и всё.
-        val missing =
-            contentRepositories.filterNot { path ->
-                val text = source(path)
-                text.contains("requested - returned") && text.contains("deleteById")
-            }
-
-        assertEquals(emptyList(), missing, "не стирают невернувшийся идентификатор:\n" + missing.joinToString("\n"))
-    }
-
-    @Test
-    fun `given the quest repository then an empty shelf list takes the quest off the device`() {
-        // Второй способ, и он только у квеста: полки есть лишь у него.
-        assertTrue(
-            source(contentRepositories[1]).contains("visibleOn.isEmpty()"),
-            "квест, снятый со всех полок, обязан уходить с устройства",
-        )
-    }
-
-    @Test
-    fun `given every node below the quest then archived removes it locally`() {
-        // Третий способ. У квеста он намеренно другой — архивный квест остаётся маркером для
-        // полки «Архив», и это закреплено собственным тестом в его модуле.
-        val below = contentRepositories.filter { it.contains("/section/") || it.contains("/theme/") ||
-            it.contains("/lesson/") || it.contains("/question/") || it.contains("/catalog/") }
-        val missing = below.filterNot { source(it).contains("archived") }
-
-        assertEquals(emptyList(), missing, "не реагируют на archived:\n" + missing.joinToString("\n"))
-    }
-
     @Test
     fun `given the whole tree then no fourth mechanism named 'deleted' has appeared`() {
         // Четвёртый способ изобретают, не зная о трёх. Поле с таким именем — самый вероятный вид.
-        val roots = listOf("shared", "platform", "functions", "firestore.rules")
+        // Клиент, сервер и скрипты — целиком: AC 7.6 говорит про весь код чтения и все модели, а
+        // сид-скрипты и бэкфиллы пишут те же документы, что сервер. Прежде `android`, `apps` и
+        // `scripts` в обход не входили, и поле, заведённое в UI-модели или в сиде, здесь не ловилось.
+        val roots = listOf("shared", "platform", "functions", "firestore.rules", "android", "apps", "scripts")
         var swept = 0
+        val sweptByRoot = mutableMapOf<String, Int>()
         val offenders =
             roots.flatMap { root ->
                 val start = File(repositoryRoot, root)
@@ -87,16 +47,28 @@ class DeletionSemanticsTest {
                 files
                     .filterNot { it.path.contains("/build/") || it.path.contains("/node_modules/") }
                     .filter { it.extension in setOf("kt", "js", "rules") }
-                    .filterNot { it.name == "DeletionSemanticsTest.kt" }
-                    .onEach { swept++ }
+                    // Только то, что приложение и сервер действительно пишут и читают. Фейк в
+                    // тесте волен называть свою бухгалтерию как угодно — `db.deleted` в фейке
+                    // Firestore не механизм удаления узла, а список того, что фейк стёр у себя.
+                    // Четвёртый способ появляется в рабочем коде, и там он и ловится.
+                    .filterNot { it.isTestSource() }
+                    .onEach {
+                        swept++
+                        sweptByRoot[root] = (sweptByRoot[root] ?: 0) + 1
+                    }
                     .filter { file -> DELETED_FIELD.containsMatchIn(file.readText()) }
                     .map { it.path.removePrefix(repositoryRoot.path).trimStart('/') }
                     .toList()
             }
 
         // Пустой результат обязан значить «не нашли», а не «не искали»: путь до корня считается
-        // от рабочей папки модуля, и ошибись он — тест молча проходил бы всегда.
-        assertTrue(swept > 500, "просмотрено всего $swept файлов — путь до корня, похоже, не тот")
+        // от рабочей папки модуля, и ошибись он — тест молча проходил бы всегда. Порог пересчитан
+        // под расширенный состав корней: сегодня просматривается около 1350 файлов.
+        assertTrue(swept > 1_200, "просмотрено всего $swept файлов — путь до корня, похоже, не тот")
+        // Именно те три корня, которых в обходе не было: молчаливый ноль по любому из них снова
+        // сделал бы защиту пустой ровно там, где её отсутствие не заметят.
+        val unswept = listOf("android", "apps", "scripts").filter { (sweptByRoot[it] ?: 0) == 0 }
+        assertEquals(emptyList(), unswept, "не просмотрены совсем: " + unswept.joinToString())
         assertEquals(
             emptyList(),
             offenders,
@@ -105,7 +77,15 @@ class DeletionSemanticsTest {
         )
     }
 
+    private fun File.isTestSource(): Boolean =
+        name.endsWith("Test.kt") ||
+            name.endsWith(".test.js") ||
+            TEST_SOURCE_DIRS.any { path.contains(it) }
+
     private companion object {
+        val TEST_SOURCE_DIRS =
+            listOf("/src/test/", "/src/commonTest/", "/src/jvmTest/", "/src/androidTest/", "/src/androidInstrumentedTest/")
+
         /** Объявление или чтение поля с таким именем; слова вроде `deletedCount` не в счёт. */
         val DELETED_FIELD =
             Regex("""(val|var)\s+deleted\s*[:=]|["'`]deleted["'`]\s*:|\.deleted\b|\bdata\.deleted\b""")

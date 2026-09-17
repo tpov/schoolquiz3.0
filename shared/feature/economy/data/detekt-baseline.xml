@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LoopWithTooManyJumpStatements:UnsettledPurchaseSettler.kt$UnsettledPurchaseSettler$while</ID>
+    <ID>MagicNumber:UnsettledPurchaseSettler.kt$RetryPolicy$15</ID>
+    <ID>MagicNumber:UnsettledPurchaseSettler.kt$RetryPolicy$60_000L</ID>
+    <ID>ReturnCount:EconomyRepositoryImpl.kt$EconomyRepositoryImpl$override suspend fun purchase(itemId: ShopItemId): Result&lt;ShopPurchaseResult&gt;</ID>
+    <ID>TooGenericExceptionCaught:EconomyRepositoryImpl.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GiftBoxRepositoryImpl.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:UnsettledPurchaseSettler.kt$UnsettledPurchaseSettler$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

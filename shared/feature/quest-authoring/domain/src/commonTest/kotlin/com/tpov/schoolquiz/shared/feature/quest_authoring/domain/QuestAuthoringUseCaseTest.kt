@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.command.CreateQ
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.command.SaveDraftQuestionCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.fake.FakeQuestAuthoringRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmissionRejection
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
@@ -14,6 +15,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Create
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetArenaReadinessUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import kotlinx.coroutines.flow.first
@@ -21,7 +23,9 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class QuestAuthoringUseCaseTest {
@@ -169,6 +173,48 @@ class QuestAuthoringUseCaseTest {
         assertEquals(1, repo.queuedArenaSubmissions.size)
     }
 
+    /**
+     * Эпик 8: заявка несёт серверную версию, а не счётчик правок автора (AD-12).
+     *
+     * Черновик, правленный после последней публикации, подаётся с той версией, которую назначил
+     * сервер, а не с числом своих правок: иначе устаревшей объявляется любая активная работа.
+     */
+    @Test
+    fun `submit arena carries the server version, not the local edit counter`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+        val lessonId = repo.getDraft(draftId)!!.lessons.single().id
+        val save = SaveDraftQuestionUseCase(repo, parser, ids, clock)
+        saveQuestion(save, draftId, lessonId, "q-easy", Difficulty.EASY, order = 0)
+        saveQuestion(save, draftId, lessonId, "q-hard", Difficulty.HARD, order = 1)
+        repo.setServerRevision(draftId, 2L)
+        val localRevision = repo.getDraft(draftId)!!.draft.localRevision
+
+        SubmitQuestDraftToArenaUseCase(repo, ids, clock)(draftId).getOrThrow()
+
+        val submission = repo.queuedArenaSubmissions.single()
+        assertEquals(2L, submission.expectedVersion)
+        assertTrue(localRevision > 2L, "счётчик правок ушёл вперёд — и в заявку он не попал")
+    }
+
+    @Test
+    fun `submit arena of a never published draft carries no expected version`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+        val lessonId = repo.getDraft(draftId)!!.lessons.single().id
+        val save = SaveDraftQuestionUseCase(repo, parser, ids, clock)
+        saveQuestion(save, draftId, lessonId, "q-easy", Difficulty.EASY, order = 0)
+        saveQuestion(save, draftId, lessonId, "q-hard", Difficulty.HARD, order = 1)
+
+        SubmitQuestDraftToArenaUseCase(repo, ids, clock)(draftId).getOrThrow()
+
+        assertNull(repo.queuedArenaSubmissions.single().expectedVersion)
+    }
+
     @Test
     fun `observe summaries returns saved quest for my quests surface`() = runTest {
         val repo = FakeQuestAuthoringRepository()
@@ -182,6 +228,140 @@ class QuestAuthoringUseCaseTest {
         assertEquals(draftId, summaries.single().id)
         assertEquals("Private Math Quest", summaries.single().title)
         assertTrue(summaries.single().isActive)
+    }
+
+
+    /**
+     * Отказ рецензента и карантин заявки возвращают черновик в `DRAFT` — чтобы автор поправил и
+     * отправил заново. Пока `DRAFT` не входил в число отправляемых состояний, вторая половина
+     * этого замысла не работала: черновик разблокировали для правки, а отправку не принимали, и
+     * поднять состояние обратно было нечем — `SAVED` ставится только при создании. Любой
+     * отклонённый квест становился неотправляемым навсегда.
+     */
+    @Test
+    fun `submit arena accepts a draft returned to DRAFT after rejection`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+        val lessonId = repo.getDraft(draftId)!!.lessons.single().id
+        val save = SaveDraftQuestionUseCase(repo, parser, ids, clock)
+        saveQuestion(save, draftId, lessonId, "q-easy", Difficulty.EASY, order = 0)
+        saveQuestion(save, draftId, lessonId, "q-hard", Difficulty.HARD, order = 1)
+        val submit = SubmitQuestDraftToArenaUseCase(repo, ids, clock)
+        submit(draftId).getOrThrow()
+        assertEquals(QuestDraftStatus.REVIEW_QUEUED, repo.getDraft(draftId)!!.draft.status)
+
+        // Так возвращает черновик автору отказ рецензента и карантин заявки.
+        repo.setDraftStatus(draftId, QuestDraftStatus.DRAFT, clock.nowMs())
+
+        val again = submit(draftId)
+
+        assertTrue(again.isSuccess, "отклонённый черновик обязан отправляться заново")
+        assertEquals(2, repo.queuedArenaSubmissions.size)
+    }
+
+    @Test
+    fun `submit arena refuses a draft that is already queued and names the reason`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+        val lessonId = repo.getDraft(draftId)!!.lessons.single().id
+        val save = SaveDraftQuestionUseCase(repo, parser, ids, clock)
+        saveQuestion(save, draftId, lessonId, "q-easy", Difficulty.EASY, order = 0)
+        saveQuestion(save, draftId, lessonId, "q-hard", Difficulty.HARD, order = 1)
+        val submit = SubmitQuestDraftToArenaUseCase(repo, ids, clock)
+        submit(draftId).getOrThrow()
+
+        val second = submit(draftId)
+
+        val rejection = assertIs<QuestArenaSubmissionRejection.DraftNotSubmittable>(second.exceptionOrNull())
+        assertEquals(QuestDraftStatus.REVIEW_QUEUED, rejection.status)
+    }
+
+    /**
+     * Причина отказа обязана быть различима: экран показывает подпись по типу, и «в уроке нет
+     * нужных вопросов» не должно подменять собой все прочие отказы.
+     */
+    @Test
+    fun `submit arena names a lesson without both difficulties`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+        val lessonId = repo.getDraft(draftId)!!.lessons.single().id
+        val save = SaveDraftQuestionUseCase(repo, parser, ids, clock)
+        saveQuestion(save, draftId, lessonId, "q-easy", Difficulty.EASY, order = 0)
+
+        val result = SubmitQuestDraftToArenaUseCase(repo, ids, clock)(draftId)
+
+        val rejection = assertIs<QuestArenaSubmissionRejection.LessonNotReady>(result.exceptionOrNull())
+        assertEquals(lessonId, rejection.lessonId)
+    }
+
+    @Test
+    fun `submit arena names an unsupported target shelf`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+        val lessonId = repo.getDraft(draftId)!!.lessons.single().id
+        val save = SaveDraftQuestionUseCase(repo, parser, ids, clock)
+        saveQuestion(save, draftId, lessonId, "q-easy", Difficulty.EASY, order = 0)
+        saveQuestion(save, draftId, lessonId, "q-hard", Difficulty.HARD, order = 1)
+
+        val result =
+            SubmitQuestDraftToArenaUseCase(repo, ids, clock)(
+                draftId = draftId,
+                lessonIds = setOf(lessonId),
+                targetShelf = "home",
+            )
+
+        val rejection = assertIs<QuestArenaSubmissionRejection.UnsupportedTargetShelf>(result.exceptionOrNull())
+        assertEquals("home", rejection.targetShelf)
+    }
+
+    @Test
+    fun `submit arena names an empty lesson selection`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+
+        val result =
+            SubmitQuestDraftToArenaUseCase(repo, ids, clock)(
+                draftId = draftId,
+                lessonIds = emptySet(),
+                targetShelf = "arena",
+            )
+
+        assertIs<QuestArenaSubmissionRejection.NoLessonsChosen>(result.exceptionOrNull())
+    }
+
+
+    /**
+     * Выбор черновика в списке обязан открывать именно его.
+     *
+     * Редактор показывает активный черновик, а обработчик нажатия прежде выбор терял: с двумя
+     * черновиками автор попадал не туда, куда нажал, и подмену ничем не мог заметить.
+     */
+    @Test
+    fun `opening a draft makes it the active one`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val create = CreateQuestDraftUseCase(repo, ids, clock)
+        val first = create(createCommand()).getOrThrow()
+        clock.value = 2_000L
+        val second = create(createCommand()).getOrThrow()
+        assertEquals(second, repo.getActiveDraft("uid-1")!!.draft.id, "активным стал последний созданный")
+
+        val result = OpenQuestDraftUseCase(repo)(ownerUid = "uid-1", draftId = first)
+
+        assertTrue(result.isSuccess)
+        assertEquals(first, repo.getActiveDraft("uid-1")!!.draft.id)
+        assertFalse(repo.getDraft(second)!!.draft.isActive, "прежний активный обязан сняться")
     }
 
     private fun createCommand(): CreateQuestDraftCommand =

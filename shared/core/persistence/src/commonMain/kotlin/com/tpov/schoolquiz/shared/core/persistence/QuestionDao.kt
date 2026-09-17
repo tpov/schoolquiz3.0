@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface QuestionDao {
-
     @Query("SELECT * FROM questions WHERE lessonId = :lessonId AND archived = 0 ORDER BY `order` ASC")
     fun observeByLesson(lessonId: String): Flow<List<QuestionEntity>>
 

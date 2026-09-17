@@ -7,5 +7,6 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.Goo
 class LinkGoogleAccountUseCase(
     private val repository: GoogleSignInRepository,
 ) {
-    suspend operator fun invoke(host: AccountChooserHost): Result<GoogleLinkOutcome> = repository.linkGoogleAccount(host)
+    suspend operator fun invoke(host: AccountChooserHost): Result<GoogleLinkOutcome> =
+        repository.linkGoogleAccount(host)
 }

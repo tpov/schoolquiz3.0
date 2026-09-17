@@ -22,7 +22,6 @@ class EconomyRepositoryImpl(
     private val remote: EconomyRemoteDataSource,
     private val currentUidFlow: () -> Flow<String?>,
 ) : EconomyRepository {
-
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeBalance(): Flow<EconomyResourceBalance> =
         currentUidFlow().flatMapLatest { uid ->

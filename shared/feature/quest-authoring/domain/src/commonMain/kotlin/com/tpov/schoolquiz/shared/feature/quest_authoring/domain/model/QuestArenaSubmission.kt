@@ -7,7 +7,8 @@ data class QuestArenaSubmission(
     val id: QuestArenaSubmissionId,
     val draftId: QuestDraftId,
     val ownerUid: String,
-    val localRevision: Long,
+    /** Серверная версия квеста, поверх которой подаётся заявка (AD-24). Пусто — первая публикация. */
+    val expectedVersion: Long?,
     val requestedAtMs: Long,
     val lessonIds: Set<DraftLessonId>,
     val targetShelf: String,
@@ -16,7 +17,9 @@ data class QuestArenaSubmission(
 ) {
     init {
         require(ownerUid.isNotBlank()) { "QuestArenaSubmission.ownerUid must not be blank" }
-        require(localRevision >= 1) { "QuestArenaSubmission.localRevision must be >= 1, got $localRevision" }
+        require(expectedVersion == null || expectedVersion >= 1) {
+            "QuestArenaSubmission.expectedVersion must be null or >= 1, got $expectedVersion"
+        }
         require(requestedAtMs >= 0) { "QuestArenaSubmission.requestedAtMs must be >= 0, got $requestedAtMs" }
         require(lessonIds.isNotEmpty()) { "QuestArenaSubmission.lessonIds must not be empty" }
         require(targetShelf == QUEST_ARENA_TARGET_SHELF || targetShelf == QUEST_ARCHIVE_TARGET_SHELF) {

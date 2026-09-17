@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.catalog.data.CatalogLocalDataSource
 import com.tpov.schoolquiz.shared.core.persistence.CatalogEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeCatalogLocalDataSource : CatalogLocalDataSource {
     private val _entities = MutableStateFlow<List<CatalogEntity>>(emptyList())
@@ -12,7 +13,9 @@ class FakeCatalogLocalDataSource : CatalogLocalDataSource {
     val upsertCallsFor = mutableMapOf<String, Int>()
     val deletedIds = mutableListOf<String>()
 
-    override fun observeAll(): Flow<List<CatalogEntity>> = _entities
+    // Как в CatalogDao: `WHERE archived = 0` — архивный каталог не показывается, но строка
+    // и всё скачанное под ней на месте.
+    override fun observeAll(): Flow<List<CatalogEntity>> = _entities.map { list -> list.filter { !it.archived } }
 
     override suspend fun findById(id: String): CatalogEntity? = _entities.value.find { it.id == id }
 

@@ -9,17 +9,20 @@ import kotlinx.coroutines.sync.withLock
  * In-memory stub for SyncStateRepository.
  */
 class InMemorySyncStateRepository : SyncStateRepository {
-
-    private val cursors = MutableStateFlow<Map<String, Long>>(emptyMap())
+    private val cursors = MutableStateFlow<Map<String, SyncCursor>>(emptyMap())
     private val mutex = Mutex()
 
-    override suspend fun getCursor(collectionId: String): Long =
-        cursors.value[collectionId] ?: 0L
+    override suspend fun getCursor(collectionId: String): SyncCursor =
+        cursors.value[collectionId] ?: SyncCursor.BEGINNING
 
-    override suspend fun setCursor(collectionId: String, value: Long) {
+    override suspend fun setCursor(
+        collectionId: String,
+        cursor: SyncCursor,
+    ) {
         mutex.withLock {
-            // maxOf guard: prevents regression if two WorkManager jobs run concurrently
-            cursors.update { it + (collectionId to maxOf(it[collectionId] ?: 0L, value)) }
+            // Монотонность по паре, а не по числу: два наложившихся прохода иначе откатили бы
+            // курсор друг друга.
+            cursors.update { it + (collectionId to maxOf(it[collectionId] ?: SyncCursor.BEGINNING, cursor)) }
         }
     }
 

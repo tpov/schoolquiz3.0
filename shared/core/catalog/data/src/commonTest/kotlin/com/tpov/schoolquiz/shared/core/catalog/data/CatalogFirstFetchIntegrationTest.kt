@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.core.catalog.data.fake.FakeCatalogRemoteDataSo
 import com.tpov.schoolquiz.shared.core.catalog.data.fake.FakeCatalogUrlResolver
 import com.tpov.schoolquiz.shared.core.catalog.data.fake.FakeSyncStateRepository
 import kotlinx.coroutines.flow.first
+import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -123,7 +124,7 @@ class CatalogFirstFetchIntegrationTest {
                 ),
             ),
         )
-        fakeSyncState.setCursor("catalogs", 1000L)
+        fakeSyncState.setCursor("catalogs", SyncCursor(1_000L, "a"))
         fakeRemote.result = Result.success(
             listOf(
                 CatalogDto(id = "b", name = "B", picturePath = null, version = 2L, lastModifiedAt = 2000L, archived = false),
@@ -132,6 +133,6 @@ class CatalogFirstFetchIntegrationTest {
 
         repository.refreshFromRemote()
 
-        assertEquals(1000L, fakeRemote.lastCursor, "Expected second sync to pass cursor=1000L, not 0")
+        assertEquals(SyncCursor(1_000L, "a"), fakeRemote.lastCursor, "второй проход обязан продолжить с сохранённой пары, а не с нуля")
     }
 }

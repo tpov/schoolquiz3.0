@@ -42,10 +42,11 @@ class SyncQuestsUseCase(
         availableShelves: Set<String>,
         catalogIdsToSync: Set<CatalogId> = emptySet(),
         cursor: Long = 0L,
-    ): Result<Set<QuestId>> = quests.refreshFromRemote(
-        currentUserUid = currentUserUid,
-        availableShelves = availableShelves,
-        catalogIdsToSync = catalogIdsToSync,
-        cursor = cursor,
-    )
+    ): Result<Set<QuestId>> =
+        quests.refreshFromRemote(
+            currentUserUid = currentUserUid,
+            availableShelves = availableShelves,
+            catalogIdsToSync = catalogIdsToSync,
+            cursor = cursor,
+        )
 }

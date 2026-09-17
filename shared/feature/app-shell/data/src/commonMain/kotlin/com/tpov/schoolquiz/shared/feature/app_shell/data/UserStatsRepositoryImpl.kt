@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.core.sync.Syncable
 import com.tpov.schoolquiz.shared.feature.app_shell.data.mapper.toDomain
 import com.tpov.schoolquiz.shared.feature.app_shell.data.mapper.toEntity
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.PendingLocalCharges
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,13 +20,20 @@ class UserStatsRepositoryImpl(
     private val remoteDataSource: UserStatsDataSource,
     private val userStatsDao: UserStatsDao,
     private val currentUidFlow: () -> Flow<String?>,
+    /**
+     * Локальные траты, о которых сервер ещё не знает. По умолчанию их нет — так собирается
+     * репозиторий в тестах, которым до очереди дела нет.
+     */
+    private val pendingCharges: PendingLocalCharges = PendingLocalCharges { 0L },
 ) : UserStatsRepository, Syncable {
-
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeStats(): Flow<UserStats> =
         currentUidFlow().flatMapLatest { uid ->
-            if (uid == null) flowOf(UserStats.guest())
-            else userStatsDao.observeByUid(uid).map { it?.toDomain() ?: UserStats.guest() }
+            if (uid == null) {
+                flowOf(UserStats.guest())
+            } else {
+                userStatsDao.observeByUid(uid).map { it?.toDomain() ?: UserStats.guest() }
+            }
         }
 
     override suspend fun currentStats(): UserStats {
@@ -50,7 +58,17 @@ class UserStatsRepositoryImpl(
             // the device. Unlocks are monotone, so keeping both sides is always correct.
             val held = userStatsDao.findByUid(uid)?.lessonUnlocks.orEmpty()
             val fresh = raw.toEntity(uid)
-            userStatsDao.upsert(fresh.copy(lessonUnlocks = held + fresh.lessonUnlocks))
+            // И то же самое с балансом, только вычитанием: снимок сервера не знает про покупку,
+            // которая списана локально и ещё не доехала. Оставить его как есть значит вернуть
+            // игроку уже потраченное — он потратит эти нолики второй раз, а откат карантина
+            // добавит возврат к восстановленному балансу. Запись уехала — слагаемое исчезло само.
+            val undelivered = runCatching { pendingCharges.undeliveredNolics(uid) }.getOrDefault(0L)
+            userStatsDao.upsert(
+                fresh.copy(
+                    lessonUnlocks = held + fresh.lessonUnlocks,
+                    nolics = (fresh.nolics - undelivered).coerceAtLeast(0L),
+                ),
+            )
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e

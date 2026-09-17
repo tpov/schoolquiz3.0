@@ -11,9 +11,14 @@
 //
 // So to "overwrite/remove" the old course we just UPDATE it the same way the
 // seeder writes changes — set the quest's visibleOn to [], bump version, emit a
-// `quest` sync_change under catalogs/<catalog>/sync_changes, and bump catalog
-// contentsVersion. Clients then drop the quest on next sync. v2 is seeded
-// separately (different id) and appears as usual.
+// `quest` sync_change under catalogs/<catalog>/sync_changes, and bump the
+// catalog. Clients then drop the quest on next sync. v2 is seeded separately
+// (different id) and appears as usual.
+//
+// For a quest that has an author — anything published through the arena — use the
+// `retirePublicQuest` callable instead: it also mirrors the assigned version into
+// the author's private document, which this script cannot see. This one is for
+// seeded courses, which have no private half.
 //
 // Default scope = quest-level only (1 quest doc). The old children become
 // unreachable once the quest is gone (harmless orphans). Pass --cascade to also
@@ -27,13 +32,21 @@
 //   node scripts/seed-bulk/retire-quest.js qb-courses-english-tech-c2 --commit --cascade  # + archive all children
 // ---------------------------------------------------------------------------
 
-const { ensureInit, syncChange, BatchWriter, admin } = require('./shared');
+const { ensureInit, writeSyncChangesWith, BatchWriter, admin } = require('./shared');
 
 ensureInit();
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
+const {VERSION_STEP} = require('../../functions/entity-version.js');
+
 const now = admin.firestore.Timestamp.now();
-const VERSION = now.toMillis();
+const nowMs = now.toMillis();
+// Версию здесь назначает скрипт, и это не нарушение AD-12: запрет адресован клиенту, а скрипт
+// пишет документы напрямую Admin SDK — callable в этом пути нет, и сервер назначить эту версию не
+// может физически. Регламент при этом тот же, что на сервере: шаг из общего модуля, значение из
+// атомарного инкремента. Отметка времени, стоявшая здесь раньше, версией не была — она лишь
+// случайно росла, и после первой же серверной перекладки по полкам ряд пошёл бы от неё.
+const VERSION = FieldValue.increment(VERSION_STEP);
 const CATALOG_ID = 'courses';
 
 const questId = process.argv[2];
@@ -45,9 +58,13 @@ if (!questId || questId.startsWith('--')) {
   process.exit(1);
 }
 
-let changeSeq = VERSION;
+let changeSeq = nowMs;
 const nextMs = () => changeSeq++;
-const catalogChangePath = (c) => `catalogs/${CATALOG_ID}/sync_changes/${c.changedAtMs}-${c.type}-${c.id}`;
+let writer = null;
+// Журнал — той же функцией и по тому же объявлению, что и сервер (AD-11): документ на узел, id без
+// времени. Архивация и снятие с полок — изменения узла наравне с любыми другими, и запись о них
+// обязательна (AD-26): без неё клиент ничего не удалит.
+const journal = (node) => writeSyncChangesWith(writer, db, node, nextMs());
 
 (async () => {
   console.log(`Target quest: ${questId}  catalog: ${CATALOG_ID}`);
@@ -61,7 +78,7 @@ const catalogChangePath = (c) => `catalogs/${CATALOG_ID}/sync_changes/${c.change
   }
   console.log('current visibleOn:', JSON.stringify(questSnap.get('visibleOn')));
 
-  const writer = new BatchWriter(db);
+  writer = new BatchWriter(db);
   let nSec = 0;
   let nTheme = 0;
   let nLesson = 0;
@@ -82,26 +99,22 @@ const catalogChangePath = (c) => `catalogs/${CATALOG_ID}/sync_changes/${c.change
             nQ += 1;
             if (commit) {
               await writer.set(q.ref, { archived: true, version: VERSION, lastModifiedAt: now }, { merge: true });
-              const c = syncChange('question', q.id, nextMs());
-              await writer.set(db.doc(`lesson_content/${ls.id}/sync_changes/${c.changedAtMs}-${c.type}-${c.id}`), c);
+              await journal({ kind: 'question', id: q.id, catalogId: CATALOG_ID, lessonId: ls.id });
             }
           }
           if (commit) {
             await writer.set(ls.ref, { archived: true, version: VERSION, lastModifiedAt: now }, { merge: true });
-            const c = syncChange('lesson', ls.id, nextMs());
-            await writer.set(db.doc(catalogChangePath(c)), c);
+            await journal({ kind: 'lesson', id: ls.id, catalogId: CATALOG_ID });
           }
         }
         if (commit) {
           await writer.set(th.ref, { archived: true, version: VERSION, lastModifiedAt: now }, { merge: true });
-          const c = syncChange('theme', th.id, nextMs());
-          await writer.set(db.doc(catalogChangePath(c)), c);
+          await journal({ kind: 'theme', id: th.id, catalogId: CATALOG_ID });
         }
       }
       if (commit) {
         await writer.set(sec.ref, { archived: true, version: VERSION, lastModifiedAt: now }, { merge: true });
-        const c = syncChange('section', sec.id, nextMs());
-        await writer.set(db.doc(catalogChangePath(c)), c);
+        await journal({ kind: 'section', id: sec.id, catalogId: CATALOG_ID });
       }
     }
     console.log(`children found: sections=${nSec} themes=${nTheme} lessons=${nLesson} questions=${nQ}`);
@@ -114,18 +127,18 @@ const catalogChangePath = (c) => `catalogs/${CATALOG_ID}/sync_changes/${c.change
       { visibleOn: [], version: VERSION, lastModifiedAt: now },
       { merge: true },
     );
-    const qc = syncChange('quest', questId, nextMs());
-    await writer.set(db.doc(catalogChangePath(qc)), qc);
+    // Сидовый квест: приватной половины нет (для квеста с автором есть callable retirePublicQuest).
+    await journal({ kind: 'quest', id: questId, catalogId: CATALOG_ID, ownerUid: null });
     await writer.set(
       db.doc(`catalogs/${CATALOG_ID}`),
-      { contentsVersion: FieldValue.increment(1), lastModifiedAt: now },
+      { version: VERSION, lastModifiedAt: now },
       { merge: true },
     );
     const ops = await writer.commit();
     console.log(`COMMITTED: ${questId} retired (visibleOn=[]). cascade children archived=${cascade ? nQ + nLesson + nTheme + nSec : 0}. ops=${ops}`);
   } else {
     console.log(
-      `DRY-RUN: would set quests/${questId}.visibleOn=[], emit quest sync_change, bump catalog contentsVersion` +
+      `DRY-RUN: would set quests/${questId}.visibleOn=[], emit quest sync_change, bump catalog version` +
         (cascade ? `; plus archive ~${nQ + nLesson + nTheme + nSec} child docs (sections=${nSec} themes=${nTheme} lessons=${nLesson} questions=${nQ}).` : '.'),
     );
     console.log('Re-run with --commit to apply.');

@@ -2,9 +2,9 @@ package com.tpov.schoolquiz.shared.feature.internet.profile.data
 
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileBootstrapRequest
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
-import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import kotlinx.coroutines.CancellationException
@@ -23,7 +23,6 @@ class ProfileRepositoryImpl(
     private val nowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
     private val defaultLanguages: () -> List<String> = { listOf("ru") },
 ) : ProfileRepository {
-
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeCurrentProfile(): Flow<UserProfile> =
         currentUidFlow().flatMapLatest { uid ->

@@ -124,12 +124,16 @@ fun AppShellScreen(
     onSyncFrequencySelected: (SyncFrequency) -> Unit = {},
     profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit = {},
-    syncStatus: SyncStatus = SyncStatus(),
     onForceResync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by rootComponent.appShellState.collectAsStateWithLifecycle(
         initialValue = AppShellState.fallback(UserStats.guest()),
+    )
+    // Снимок синхронизации приезжает из компонента и дальше идёт параметром — ни шторка, ни
+    // настройки к репозиторию не ходят и Koin не резолвят (di-patterns.md, use-cases.md).
+    val syncStatus by rootComponent.syncStatus.collectAsStateWithLifecycle(
+        initialValue = SyncStatus(),
     )
     val tournamentOverviewState by rootComponent.tournamentOverviewState.collectAsStateWithLifecycle(
         initialValue = emptyMap(),
@@ -231,6 +235,7 @@ fun AppShellScreen(
                     giftBoxCount = homeQuestsState.giftBoxCount,
                     onVersionTap = { rootComponent.onVersionTap(System.currentTimeMillis()) },
                     onSyncNow = { rootComponent.onSyncNow() },
+                    syncStatus = syncStatus,
                     onDismissQuizzes = { rootComponent.quizzesComponent.dismissQuizzes() },
                 )
             },

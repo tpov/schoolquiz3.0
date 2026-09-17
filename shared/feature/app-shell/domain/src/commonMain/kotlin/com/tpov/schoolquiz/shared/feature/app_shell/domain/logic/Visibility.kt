@@ -12,7 +12,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.TabConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 
-/**
+/*
  * Pure visibility functions for progressive section unlock (FR #20).
  *
  * Business Rule #16: AND semantics — section is visible iff ALL requiredRoles entries satisfied.
@@ -32,15 +32,19 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
  * - Role.ADMIN      → stats.qualification.admin
  * - Role.DEVELOPER  → stats.qualification.developer
  */
-fun actualLevel(role: Role, stats: UserStats): Int = when (role) {
-    Role.USER -> stats.currentSkill
-    Role.TESTER -> stats.qualification.tester
-    Role.MODERATOR -> stats.qualification.moderator
-    Role.SPONSOR -> stats.qualification.sponsor
-    Role.TRANSLATOR -> stats.qualification.translator
-    Role.ADMIN -> stats.qualification.admin
-    Role.DEVELOPER -> stats.qualification.developer
-}
+fun actualLevel(
+    role: Role,
+    stats: UserStats,
+): Int =
+    when (role) {
+        Role.USER -> stats.currentSkill
+        Role.TESTER -> stats.qualification.tester
+        Role.MODERATOR -> stats.qualification.moderator
+        Role.SPONSOR -> stats.qualification.sponsor
+        Role.TRANSLATOR -> stats.qualification.translator
+        Role.ADMIN -> stats.qualification.admin
+        Role.DEVELOPER -> stats.qualification.developer
+    }
 
 /**
  * Returns true if [section] is visible for the given [stats].
@@ -51,7 +55,10 @@ fun actualLevel(role: Role, stats: UserStats): Int = when (role) {
  * Superqualification OR-bypass (ADR-HLA-02, Problem 2 fix):
  * If developer >= QualificationLevel.LEVEL_1.points → always visible regardless of requiredRoles.
  */
-fun isVisible(section: DrawerSection, stats: UserStats): Boolean {
+fun isVisible(
+    section: DrawerSection,
+    stats: UserStats,
+): Boolean {
     if (stats.qualification.developer >= QualificationLevel.LEVEL_1.points) return true
     return section.requiredRoles.all { (role, minLevel) ->
         actualLevel(role, stats) >= minLevel
@@ -71,33 +78,40 @@ fun isVisible(section: DrawerSection, stats: UserStats): Boolean {
  * Note: [DrawerFooterAction.DesignCatalog] is NOT a DrawerSection and is NOT included here.
  * Use [visibleFooterActions] for footer action visibility.
  */
-fun visibleSections(tab: Tab, stats: UserStats): List<DrawerSection> = when (tab) {
-    Tab.LOCAL -> listOf(
-        DrawerSection.LocalSection.HomeQuests,
-        DrawerSection.LocalSection.Archive,
-        DrawerSection.LocalSection.ReviewQueue,
-        DrawerSection.LocalSection.MyQuests,
-        DrawerSection.LocalSection.Settings,
-    ).filter { isVisible(it, stats) }
+fun visibleSections(
+    tab: Tab,
+    stats: UserStats,
+): List<DrawerSection> =
+    when (tab) {
+        Tab.LOCAL ->
+            listOf(
+                DrawerSection.LocalSection.HomeQuests,
+                DrawerSection.LocalSection.Archive,
+                DrawerSection.LocalSection.ReviewQueue,
+                DrawerSection.LocalSection.MyQuests,
+                DrawerSection.LocalSection.Settings,
+            ).filter { isVisible(it, stats) }
 
-    Tab.INTERNET -> listOf(
-        DrawerSection.InternetSection.Arena,
-        DrawerSection.InternetSection.Catalog,
-        DrawerSection.InternetSection.Profile,
-        DrawerSection.InternetSection.Qualifications,
-        DrawerSection.InternetSection.Social,
-        DrawerSection.InternetSection.Leaderboard,
-    ).filter { isVisible(it, stats) }
+        Tab.INTERNET ->
+            listOf(
+                DrawerSection.InternetSection.Arena,
+                DrawerSection.InternetSection.Catalog,
+                DrawerSection.InternetSection.Profile,
+                DrawerSection.InternetSection.Qualifications,
+                DrawerSection.InternetSection.Social,
+                DrawerSection.InternetSection.Leaderboard,
+            ).filter { isVisible(it, stats) }
 
-    Tab.EVENTS -> listOf(
-        DrawerSection.EventsSection.QualifierTournament,
-        DrawerSection.EventsSection.WorldChampionship,
-        DrawerSection.EventsSection.ActiveEvents,
-        DrawerSection.EventsSection.Minigames,
-    ).filter { isVisible(it, stats) }
+        Tab.EVENTS ->
+            listOf(
+                DrawerSection.EventsSection.QualifierTournament,
+                DrawerSection.EventsSection.WorldChampionship,
+                DrawerSection.EventsSection.ActiveEvents,
+                DrawerSection.EventsSection.Minigames,
+            ).filter { isVisible(it, stats) }
 
-    Tab.SHOP -> emptyList()
-}
+        Tab.SHOP -> emptyList()
+    }
 
 /**
  * Returns the default [DrawerSection] for [tab] given [stats].
@@ -106,31 +120,34 @@ fun visibleSections(tab: Tab, stats: UserStats): List<DrawerSection> = when (tab
  * Returns null if no sections are visible for the tab (e.g. guest on EVENTS tab).
  * In this case the caller must use [emptyRootFor] as the navigation target.
  */
-fun defaultSection(tab: Tab, stats: UserStats): DrawerSection? =
-    visibleSections(tab, stats).firstOrNull()
+fun defaultSection(
+    tab: Tab,
+    stats: UserStats,
+): DrawerSection? = visibleSections(tab, stats).firstOrNull()
 
 /**
  * Returns the root [TabConfig] for the given [DrawerSection].
  *
  * Used by [initialTabState] to map the default visible section to its root navigation config.
  */
-fun rootOf(section: DrawerSection): TabConfig = when (section) {
-    DrawerSection.LocalSection.MyQuests -> LocalConfig.MyQuestsRoot
-    DrawerSection.LocalSection.HomeQuests -> LocalConfig.HomeQuestsRoot
-    DrawerSection.LocalSection.Archive -> LocalConfig.ArchiveRoot
-    DrawerSection.LocalSection.ReviewQueue -> LocalConfig.ReviewQueueRoot
-    DrawerSection.LocalSection.Settings -> LocalConfig.SettingsRoot
-    DrawerSection.InternetSection.Arena -> InternetConfig.ArenaRoot
-    DrawerSection.InternetSection.Catalog -> InternetConfig.CatalogRoot
-    DrawerSection.InternetSection.Qualifications -> InternetConfig.QualificationsRoot
-    DrawerSection.InternetSection.Profile -> InternetConfig.ProfileRoot
-    DrawerSection.InternetSection.Social -> InternetConfig.SocialRoot
-    DrawerSection.InternetSection.Leaderboard -> InternetConfig.LeaderboardRoot
-    DrawerSection.EventsSection.QualifierTournament -> EventsConfig.QualifierTournamentRoot
-    DrawerSection.EventsSection.WorldChampionship -> EventsConfig.WorldChampionshipRoot
-    DrawerSection.EventsSection.ActiveEvents -> EventsConfig.ActiveEventsRoot
-    DrawerSection.EventsSection.Minigames -> EventsConfig.MinigamesRoot
-}
+fun rootOf(section: DrawerSection): TabConfig =
+    when (section) {
+        DrawerSection.LocalSection.MyQuests -> LocalConfig.MyQuestsRoot
+        DrawerSection.LocalSection.HomeQuests -> LocalConfig.HomeQuestsRoot
+        DrawerSection.LocalSection.Archive -> LocalConfig.ArchiveRoot
+        DrawerSection.LocalSection.ReviewQueue -> LocalConfig.ReviewQueueRoot
+        DrawerSection.LocalSection.Settings -> LocalConfig.SettingsRoot
+        DrawerSection.InternetSection.Arena -> InternetConfig.ArenaRoot
+        DrawerSection.InternetSection.Catalog -> InternetConfig.CatalogRoot
+        DrawerSection.InternetSection.Qualifications -> InternetConfig.QualificationsRoot
+        DrawerSection.InternetSection.Profile -> InternetConfig.ProfileRoot
+        DrawerSection.InternetSection.Social -> InternetConfig.SocialRoot
+        DrawerSection.InternetSection.Leaderboard -> InternetConfig.LeaderboardRoot
+        DrawerSection.EventsSection.QualifierTournament -> EventsConfig.QualifierTournamentRoot
+        DrawerSection.EventsSection.WorldChampionship -> EventsConfig.WorldChampionshipRoot
+        DrawerSection.EventsSection.ActiveEvents -> EventsConfig.ActiveEventsRoot
+        DrawerSection.EventsSection.Minigames -> EventsConfig.MinigamesRoot
+    }
 
 /**
  * Returns the empty-state sentinel [TabConfig] for the given [tab].
@@ -140,12 +157,13 @@ fun rootOf(section: DrawerSection): TabConfig = when (section) {
  *
  * SHOP has no empty state — ShopRoot is always valid.
  */
-fun emptyRootFor(tab: Tab): TabConfig = when (tab) {
-    Tab.LOCAL -> LocalConfig.EmptyRoot
-    Tab.INTERNET -> InternetConfig.EmptyRoot
-    Tab.EVENTS -> EventsConfig.EmptyRoot
-    Tab.SHOP -> ShopConfig.ShopRoot
-}
+fun emptyRootFor(tab: Tab): TabConfig =
+    when (tab) {
+        Tab.LOCAL -> LocalConfig.EmptyRoot
+        Tab.INTERNET -> InternetConfig.EmptyRoot
+        Tab.EVENTS -> EventsConfig.EmptyRoot
+        Tab.SHOP -> ShopConfig.ShopRoot
+    }
 
 /**
  * Returns the list of [DrawerFooterAction]s visible for the current build type and user stats.
@@ -156,7 +174,10 @@ fun emptyRootFor(tab: Tab): TabConfig = when (tab) {
  * - isDebugBuild=false, developer=0 → [About]
  * Order: DesignCatalog → SyncNow → About (stable per spec).
  */
-fun visibleFooterActions(isDebugBuild: Boolean, stats: UserStats): List<DrawerFooterAction> {
+fun visibleFooterActions(
+    isDebugBuild: Boolean,
+    stats: UserStats,
+): List<DrawerFooterAction> {
     val devToolsVisible = isDebugBuild || stats.qualification.developer >= QualificationLevel.LEVEL_1.points
     return if (devToolsVisible) {
         listOf(DrawerFooterAction.DesignCatalog, DrawerFooterAction.SyncNow, DrawerFooterAction.About)

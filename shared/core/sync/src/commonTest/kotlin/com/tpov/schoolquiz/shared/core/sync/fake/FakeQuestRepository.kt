@@ -90,15 +90,43 @@ class FakeQuestRepository : QuestRepository {
         return Result.success(nextRefreshChangedOverride ?: emptySet())
     }
 
+    /**
+     * Повторяет договор `QuestRepositoryImpl.refreshByIds` (AD-26), как только сервер засеян через
+     * [seedServerQuests]: id, которого на сервере нет, стирается локально; пустой `visibleOn`
+     * убирает квест с устройства; `archived` остаётся строкой — у квеста есть полка «Архив».
+     * Без засеянного сервера фейк только записывает вызов.
+     */
     override suspend fun refreshByIds(ids: Set<QuestId>): Result<Unit> {
         refreshByIdsCallCount++
         lastRefreshByIds = ids
+        refreshByIdsRequests += ids
+        nextRefreshByIdsFailure?.let {
+            nextRefreshByIdsFailure = null
+            return Result.failure(it)
+        }
+        if (!serverSeeded) return Result.success(Unit)
+        val server = serverQuests.associateBy { it.id }
+        cache.value = cache.value.toMutableMap().also { map ->
+            for (id in ids) {
+                val quest = server[id]
+                if (quest == null || quest.visibleOn.isEmpty()) map.remove(id) else map[id] = quest
+            }
+        }
         return Result.success(Unit)
     }
 
+    val refreshByIdsRequests = mutableListOf<Set<QuestId>>()
+    private var nextRefreshByIdsFailure: Throwable? = null
+    private var serverSeeded = false
+
+    fun setNextRefreshByIdsFailure(error: Throwable) { nextRefreshByIdsFailure = error }
+
     fun setNextRefreshFailure(error: Throwable) { nextRefreshFailure = error }
     fun setNextRefreshChanged(ids: Set<QuestId>) { nextRefreshChangedOverride = ids }
-    fun seedServerQuests(quests: List<Quest>) { serverQuests = quests }
+    fun seedServerQuests(quests: List<Quest>) {
+        serverQuests = quests
+        serverSeeded = true
+    }
     fun seed(quests: List<Quest>) { cache.value = quests.associateBy { it.id } }
     fun snapshot(): List<Quest> = cache.value.values.sortedBy { it.id.value }
 
@@ -114,6 +142,9 @@ class FakeQuestRepository : QuestRepository {
         nextRefreshChangedOverride = null
         throwCancellation = false
         serverQuests = emptyList()
+        serverSeeded = false
+        refreshByIdsRequests.clear()
+        nextRefreshByIdsFailure = null
         cache.value = emptyMap()
     }
 }

@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic
 
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RepetitionState
 import com.tpov.schoolquiz.shared.core.scoring.Score
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RepetitionState
 
 /**
  * Spaced repetition, SM-2.
@@ -17,7 +17,6 @@ import com.tpov.schoolquiz.shared.core.scoring.Score
  * Pure functions — no clock, no storage — so the schedule is testable on its own.
  */
 object SpacedRepetition {
-
     /** Ease factors are stored scaled by 1000 to stay integers. */
     const val EASE_SCALE = 1000
 
@@ -46,7 +45,11 @@ object SpacedRepetition {
      *
      * @param previous null for a question answered for the first time.
      */
-    fun next(previous: RepetitionState?, score: Score, answeredAtMs: Long): RepetitionState {
+    fun next(
+        previous: RepetitionState?,
+        score: Score,
+        answeredAtMs: Long,
+    ): RepetitionState {
         val quality = qualityOf(score)
         val priorEase = previous?.easeFactorMilli ?: INITIAL_EASE_MILLI
         val priorRepetitions = previous?.repetitions ?: 0
@@ -65,14 +68,15 @@ object SpacedRepetition {
             )
         } else {
             val repetitions = priorRepetitions + 1
-            val intervalDays = when (repetitions) {
-                1 -> FIRST_INTERVAL_DAYS
-                2 -> SECOND_INTERVAL_DAYS
-                else -> {
-                    val previousInterval = previous?.intervalDays ?: SECOND_INTERVAL_DAYS
-                    ((previousInterval.toLong() * ease) / EASE_SCALE).toInt().coerceAtLeast(1)
+            val intervalDays =
+                when (repetitions) {
+                    1 -> FIRST_INTERVAL_DAYS
+                    2 -> SECOND_INTERVAL_DAYS
+                    else -> {
+                        val previousInterval = previous?.intervalDays ?: SECOND_INTERVAL_DAYS
+                        ((previousInterval.toLong() * ease) / EASE_SCALE).toInt().coerceAtLeast(1)
+                    }
                 }
-            }
             RepetitionState(
                 intervalDays = intervalDays,
                 easeFactorMilli = ease,
@@ -87,7 +91,10 @@ object SpacedRepetition {
      * SM-2 ease update: EF' = EF + (0.1 - (5-q) * (0.08 + (5-q) * 0.02)), in milli-units.
      * A perfect answer nudges the ease up, a poor one drops it sharply.
      */
-    private fun adjustEase(easeMilli: Int, quality: Int): Int {
+    private fun adjustEase(
+        easeMilli: Int,
+        quality: Int,
+    ): Int {
         val missed = 5 - quality
         val delta = 100 - missed * (80 + missed * 20)
         return (easeMilli + delta).coerceAtLeast(MIN_EASE_MILLI)

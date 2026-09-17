@@ -150,6 +150,36 @@ private fun DraftQuestCard(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp),
             )
+            // Почему работа вернулась к автору. Причина хранилась с самого начала и доезжала до
+            // модели, но не показывалась: автор видел «Черновик» и не мог отличить свою
+            // недоделку от отклонённой заявки.
+            item.rejectionReason?.takeIf { it.isNotBlank() }?.let { reason ->
+                Text(
+                    text = stringResource(R.string.quest_draft_returned, humanReadableReason(reason)),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
         }
     }
 }
+
+/**
+ * Причина возврата словами, понятными автору.
+ *
+ * В поле лежит либо текст рецензента, либо код сбоя доставки (`NOT_FOUND`, `UNAUTHENTICATED` и
+ * прочие из [CallableErrors]). Код автору не говорит ничего и выглядит как поломка приложения,
+ * поэтому все транспортные коды сводятся к одной честной фразе, а человеческий текст рецензента
+ * показывается как есть.
+ */
+@Composable
+private fun humanReadableReason(reason: String): String =
+    if (reason.trim().matches(TRANSPORT_CODE)) {
+        stringResource(R.string.quest_draft_returned_delivery)
+    } else {
+        reason
+    }
+
+/** Коды транспорта: только заглавные буквы и подчёркивания, без пробелов. */
+private val TRANSPORT_CODE = Regex("[A-Z][A-Z_]{2,}")

@@ -7,5 +7,8 @@ interface ThemeRemoteDataSource {
     suspend fun fetchByIds(ids: Set<String>): List<ThemeDto> = emptyList()
 
     /** Fetch themes whose sectionId is in sectionIds and lastModifiedAt > cursor. sectionIds.size ≤ 30. */
-    suspend fun fetchChangedByParents(sectionIds: Set<String>, cursor: Long): List<ThemeDto>
+    suspend fun fetchChangedByParents(
+        sectionIds: Set<String>,
+        cursor: Long,
+    ): List<ThemeDto>
 }

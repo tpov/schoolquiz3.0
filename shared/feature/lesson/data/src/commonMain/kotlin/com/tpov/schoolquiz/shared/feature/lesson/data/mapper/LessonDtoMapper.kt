@@ -4,16 +4,17 @@ import com.tpov.schoolquiz.shared.core.persistence.LessonEntity
 import com.tpov.schoolquiz.shared.feature.lesson.data.dto.LessonDto
 
 object LessonDtoMapper {
-    fun LessonDto.toEntity(): LessonEntity = LessonEntity(
-        id = id,
-        themeId = themeId,
-        title = title,
-        order = order,
-        version = version,
-        lastModifiedAt = lastModifiedAt,
-        archived = archived,
-        averageRating = averageRating,
-        ratingCount = ratingCount ?: 0,
-        top3 = top3 ?: emptyList(),
-    )
+    fun LessonDto.toEntity(): LessonEntity =
+        LessonEntity(
+            id = id,
+            themeId = themeId,
+            title = title,
+            order = order,
+            version = version,
+            lastModifiedAt = lastModifiedAt,
+            archived = archived,
+            averageRating = averageRating,
+            ratingCount = ratingCount ?: 0,
+            top3 = top3 ?: emptyList(),
+        )
 }

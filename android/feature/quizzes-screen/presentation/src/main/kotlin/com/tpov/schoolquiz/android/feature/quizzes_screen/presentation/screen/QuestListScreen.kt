@@ -59,6 +59,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestShelfSyncMark
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 
@@ -166,6 +167,7 @@ private fun QuestListLoadedContent(
                 QuestListItem(
                     quest = quest,
                     orderLabel = "${index + 1}.",
+                    shelfSyncMark = state.shelfSync[quest.id],
                     isMenuExpanded = expandedQuestId == quest.id,
                     useArenaRatingStyle = useArenaRatingStyle,
                     canManagePublicShelves = canManagePublicShelves,
@@ -212,15 +214,25 @@ private fun QuestListLoadedContent(
 private fun QuestListItem(
     quest: QuestDisplayItem,
     orderLabel: String,
+    shelfSyncMark: QuestShelfSyncMark?,
     isMenuExpanded: Boolean,
     useArenaRatingStyle: Boolean,
     canManagePublicShelves: Boolean,
     actions: QuestListItemActions,
 ) {
-    Box {
+    // Пометка о неподтверждённом переносе — по ответу очереди (история 4.4), а не по полке:
+    // полка локально не меняется, пока сервер не пришлёт её журналом (AD-25).
+    val shelfSyncLabel =
+        when (shelfSyncMark) {
+            null -> null
+            QuestShelfSyncMark.Pending -> stringResource(R.string.quizzes_shelf_sync_pending)
+            QuestShelfSyncMark.Quarantined -> stringResource(R.string.quizzes_shelf_sync_quarantined)
+        }
+    Box(modifier = Modifier.testTag("quest_item_${quest.id.value}")) {
         HierarchyItemCard(
             title = quest.title,
             orderLabel = orderLabel,
+            subtitleCount = shelfSyncLabel,
             rating = quest.averageRating,
             ratingTint = if (useArenaRatingStyle) NoirViolet else null,
             onClick = actions.onClick,

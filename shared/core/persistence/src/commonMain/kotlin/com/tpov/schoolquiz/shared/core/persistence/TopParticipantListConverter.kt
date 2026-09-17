@@ -8,14 +8,14 @@ import kotlinx.serialization.json.Json
 
 @ProvidedTypeConverter
 class TopParticipantListConverter {
-
     @TypeConverter
     fun toDb(list: List<TopParticipant>): String = Json.encodeToString(list)
 
     @TypeConverter
-    fun fromDb(json: String): List<TopParticipant> = try {
-        Json.decodeFromString(json)
-    } catch (e: Exception) {
-        emptyList()
-    }
+    fun fromDb(json: String): List<TopParticipant> =
+        try {
+            Json.decodeFromString(json)
+        } catch (e: Exception) {
+            emptyList()
+        }
 }

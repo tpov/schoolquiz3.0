@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 /** Очередь в памяти. Ведёт себя как настоящая ровно в том, что проверяют тесты движка. */
-class FakeOutboxStore(
+open class FakeOutboxStore(
     private val policy: OutboxPolicy = OutboxPolicy(),
-) : OutboxStore {
+) : OutboxStore, OutboxRemainderSource {
 
     private val records = MutableStateFlow<List<OutboxRecord>>(emptyList())
     private var nextId = 1L
@@ -22,6 +22,9 @@ class FakeOutboxStore(
     }
 
     override suspend fun enqueue(record: OutboxRecord): OutboxRecord {
+        // Та же проверка, что и у настоящей очереди: фейк, принимающий запись с чужой ссылкой,
+        // научил бы фичу форме, которую база отвергнет (NFR4).
+        OutboxNamespace.requireSameNamespace(record.operation, record.entityRef)
         val stored = record.copy(id = nextId++)
         records.value = records.value + stored
         return stored
@@ -76,14 +79,21 @@ class FakeOutboxStore(
     override fun observeEntity(
         ownerUid: String,
         entityRef: String,
-    ): Flow<OutboxEntitySync?> = records.map { list -> list.pickForEntity(ownerUid, entityRef)?.toEntitySync() }
+    ): Flow<OutboxEntitySync> =
+        records.map { list -> list.pickForEntity(ownerUid, entityRef)?.toEntitySync() ?: OutboxEntitySync.None }
 
     override suspend fun findByEntityRef(
         ownerUid: String,
         entityRef: String,
     ): OutboxRecord? = records.value.pickForEntity(ownerUid, entityRef)
 
-    /** Конфликтная вперёд всех, иначе самая свежая — то же правило, что в запросе Room. */
+    /**
+     * Конфликтная вперёд всех, за ней карантинная, и только потом самая свежая — то же правило,
+     * что в запросе Room.
+     *
+     * Карантин выше ожидания потому, что он терминален: более свежая ждущая запись, встав перед
+     * ним, спрятала бы от игрока то единственное, что само не рассосётся.
+     */
     private fun List<OutboxRecord>.pickForEntity(
         ownerUid: String,
         entityRef: String,
@@ -91,11 +101,12 @@ class FakeOutboxStore(
         filter { it.ownerUid == ownerUid && it.entityRef == entityRef }
             .sortedWith(
                 compareByDescending<OutboxRecord> { it.state == OutboxState.CONFLICT }
+                    .thenByDescending { it.state == OutboxState.QUARANTINED }
                     .thenByDescending { it.createdAtMs },
             ).firstOrNull()
 
     private fun OutboxRecord.toEntitySync() =
-        OutboxEntitySync(
+        OutboxEntitySync.Queued(
             recordId = id,
             state = state,
             expectedVersion = expectedVersion,
@@ -107,4 +118,23 @@ class FakeOutboxStore(
 
     override suspend fun countPending(ownerUid: String): Int =
         records.value.count { it.ownerUid == ownerUid && it.state.isPending }
+
+    /** Остаток по всем пяти состояниям — тот же перечень, что удаляет [forget]. */
+    override suspend fun remainderOf(ownerUid: String): OutboxRemainder {
+        val mine = records.value.filter { it.ownerUid == ownerUid }
+        return OutboxRemainder(
+            waiting = mine.count { it.state == OutboxState.WAITING },
+            waitingPrecondition = mine.count { it.state == OutboxState.WAITING_PRECONDITION },
+            conflicted = mine.count { it.state == OutboxState.CONFLICT },
+            quarantined = mine.count { it.state == OutboxState.QUARANTINED },
+            synchronous = mine.count { it.state == OutboxState.SYNCHRONOUS },
+        )
+    }
+
+    override suspend fun ownersWithRecords(): List<String> = records.value.map { it.ownerUid }.distinct()
+
+    open override suspend fun forget(ownerUid: String) {
+        records.value = records.value.filterNot { it.ownerUid == ownerUid }
+    }
+
 }

@@ -71,13 +71,15 @@ class OutboxConflictResolutionTest {
     }
 
     @Test
-    fun `given a conflict the server did not number then the key still differs from the old one`() {
+    fun `given a conflict the server did not number then resolving is refused`() {
+        // Без номера переотправка ушла бы без версии, а сервер читает отсутствие как «сущности
+        // нет» и отвечает тем же конфликтом — игрок ходил бы по кругу. Ядро отказывает само, не
+        // полагаясь на то, что каждая фича проверит это до вызова.
         val numberless = conflicted.copy(serverVersion = null)
 
-        val replacement = OutboxConflictResolution.replacementFor(numberless, nowMs = 5_000L)
-
-        assertEquals("quest_authoring-SUBMIT_ARENA-submission-1-rnone", replacement.mutationId)
-        assertNull(replacement.expectedVersion, "сверять нечем — приёмник пропустит без проверки")
+        assertFailsWith<IllegalArgumentException> {
+            OutboxConflictResolution.replacementFor(numberless, nowMs = 5_000L)
+        }
     }
 
     @Test

@@ -8,12 +8,16 @@ class ActivateDevModeUseCase(
     private val readCurrentDeveloperLevel: () -> Int,
     private val onDevModeActivated: suspend () -> Unit,
 ) {
-    suspend operator fun invoke(progress: TapProgress, nowMillis: Long): TapResult {
-        val result = registerTap(
-            progress = progress,
-            nowMillis = nowMillis,
-            currentDeveloperLevel = readCurrentDeveloperLevel(),
-        )
+    suspend operator fun invoke(
+        progress: TapProgress,
+        nowMillis: Long,
+    ): TapResult {
+        val result =
+            registerTap(
+                progress = progress,
+                nowMillis = nowMillis,
+                currentDeveloperLevel = readCurrentDeveloperLevel(),
+            )
         if (result is TapResult.Activated) {
             onDevModeActivated()
         }

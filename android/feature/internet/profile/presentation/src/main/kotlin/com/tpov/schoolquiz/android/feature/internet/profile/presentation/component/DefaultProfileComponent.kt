@@ -1,13 +1,19 @@
 package com.tpov.schoolquiz.android.feature.internet.profile.presentation.component
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.AccountSwitchWarning
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileMessage
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.toWarning
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.AccountChooserHost
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.GoogleLinkOutcome
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ConfirmAccountSwitchUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.DeclineAccountSwitchUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.EnsureCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.GetLeagueStandingUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.LinkGoogleAccountUseCase
@@ -35,6 +41,8 @@ data class ProfileUseCases(
     val updateProfileNickname: UpdateProfileNicknameUseCase,
     val observeDailyActivity: ObserveDailyActivityUseCase,
     val linkGoogleAccount: LinkGoogleAccountUseCase,
+    val confirmAccountSwitch: ConfirmAccountSwitchUseCase,
+    val declineAccountSwitch: DeclineAccountSwitchUseCase,
     val getLeagueStanding: GetLeagueStandingUseCase,
 )
 
@@ -46,7 +54,33 @@ class DefaultProfileComponent(
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + Dispatchers.Main.immediate)
 
-    private val _state = MutableStateFlow(ProfileUiState(isLoading = true))
+    /**
+     * Заданный вопрос, переживающий пересоздание экрана.
+     *
+     * Живёт ровно столько же, сколько удерживаемые учётные данные в `AccountSwitch`: тот — один на
+     * процесс, этот — retained-объект. Поворот экрана убирал диалог вместе с состоянием компонента,
+     * переключение оставалось брошенным на полпути, а в памяти висело незакрытое ожидание с чужими
+     * учётными данными. Смерть процесса убирает оба разом, и восстанавливать нечего.
+     */
+    private class HeldQuestion : InstanceKeeper.Instance {
+        var warning: AccountSwitchWarning? = null
+
+        override fun onDestroy() {
+            warning = null
+        }
+    }
+
+    private val heldQuestion = instanceKeeper.getOrCreate(::HeldQuestion)
+
+    private val _state =
+        MutableStateFlow(
+            ProfileUiState(
+                isLoading = true,
+                // Вопрос был задан до поворота — он и остаётся на экране, а кнопка входа занята.
+                pendingAccountSwitch = heldQuestion.warning,
+                isLinkingGoogle = heldQuestion.warning != null,
+            ),
+        )
     override val state: StateFlow<ProfileUiState> = _state
 
     init {
@@ -195,29 +229,61 @@ class DefaultProfileComponent(
         scope.launch {
             _state.update { it.copy(isLinkingGoogle = true, message = null) }
             val result = useCases.linkGoogleAccount(host)
-            _state.update { current ->
-                current.copy(
-                    isLinkingGoogle = false,
-                    message =
-                        result.fold(
-                            onSuccess = { outcome ->
-                                when (outcome) {
-                                    GoogleLinkOutcome.LINKED -> ProfileMessage.GoogleLinked
-                                    // Said plainly. The alternative is somebody discovering on
-                                    // their own that everything they had is no longer here.
-                                    GoogleLinkOutcome.SWITCHED -> ProfileMessage.GoogleSwitchedToExisting
-                                    GoogleLinkOutcome.SWITCHED_WITH_UNSENT ->
-                                        ProfileMessage.GoogleSwitchedWithUnsentWork
-                                }
-                            },
-                            onFailure = { error -> error.toFailureMessage() },
-                        ),
-                )
+            val question = (result.getOrNull() as? GoogleLinkOutcome.SwitchAwaitsConsent)?.loss?.toWarning()
+            if (question != null) {
+                // Not an outcome yet: the switch is stopped at the door, and stays stopped until
+                // one of the two buttons is tapped. The uid has not changed; nothing is removed.
+                heldQuestion.warning = question
+                _state.update { it.copy(pendingAccountSwitch = question) }
+                return@launch
             }
-            // Whichever way it went, the uid may have changed and everything on screen is about
-            // the account behind it.
-            onScreenShown()
+            settleLinkOutcome(result)
         }
+    }
+
+    override fun onConfirmAccountSwitch() {
+        if (_state.value.pendingAccountSwitch == null) return
+        heldQuestion.warning = null
+        scope.launch {
+            _state.update { it.copy(pendingAccountSwitch = null) }
+            // The warning was the consent (AD-8): from here the switch removes the previous owner's
+            // traces, and a failure to sign in leaves everything as it was.
+            settleLinkOutcome(useCases.confirmAccountSwitch())
+        }
+    }
+
+    override fun onDeclineAccountSwitch() {
+        if (_state.value.pendingAccountSwitch == null) return
+        heldQuestion.warning = null
+        useCases.declineAccountSwitch()
+        _state.update { it.copy(pendingAccountSwitch = null, isLinkingGoogle = false) }
+    }
+
+    /** Turns a finished link or switch into words, and re-reads the account behind the screen. */
+    private suspend fun settleLinkOutcome(result: Result<GoogleLinkOutcome>) {
+        _state.update { current ->
+            current.copy(
+                isLinkingGoogle = false,
+                message =
+                    result.fold(
+                        onSuccess = { outcome ->
+                            when (outcome) {
+                                GoogleLinkOutcome.Linked -> ProfileMessage.GoogleLinked
+                                // Said plainly. The alternative is somebody discovering on
+                                // their own that everything they had is no longer here.
+                                GoogleLinkOutcome.Switched -> ProfileMessage.GoogleSwitchedToExisting
+                                // Cannot happen here: the question was taken off the result
+                                // before it got this far. Named so the `when` stays exhaustive.
+                                is GoogleLinkOutcome.SwitchAwaitsConsent -> null
+                            }
+                        },
+                        onFailure = { error -> error.toFailureMessage() },
+                    ),
+            )
+        }
+        // Whichever way it went, the uid may have changed and everything on screen is about
+        // the account behind it.
+        onScreenShown()
     }
 
     override fun onScreenShown() {

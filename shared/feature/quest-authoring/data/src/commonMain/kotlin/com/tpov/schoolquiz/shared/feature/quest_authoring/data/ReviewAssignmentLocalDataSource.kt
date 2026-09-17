@@ -46,11 +46,9 @@ interface ReviewAssignmentLocalDataSource {
 class ReviewAssignmentLocalDataSourceImpl(
     private val dao: ReviewAssignmentDao,
 ) : ReviewAssignmentLocalDataSource {
-    override fun observeAssignments(ownerUid: String): Flow<List<ReviewAssignmentEntity>> =
-        dao.observeByOwner(ownerUid)
+    override fun observeAssignments(ownerUid: String): Flow<List<ReviewAssignmentEntity>> = dao.observeByOwner(ownerUid)
 
-    override suspend fun findAssignments(ownerUid: String): List<ReviewAssignmentEntity> =
-        dao.findByOwner(ownerUid)
+    override suspend fun findAssignments(ownerUid: String): List<ReviewAssignmentEntity> = dao.findByOwner(ownerUid)
 
     override fun observeAssignmentDetails(ownerUid: String): Flow<List<ReviewAssignmentWithQuestions>> =
         dao.observeDetailsByOwner(ownerUid)

@@ -17,14 +17,15 @@ fun UserStatsEntity.toDomain(): UserStats =
         goldHearts = goldHearts,
         gold = gold,
         currentSkill = currentSkill,
-        qualification = Qualification(
-            tester = testerLevel,
-            moderator = moderatorLevel,
-            sponsor = sponsorLevel,
-            translator = translatorLevel,
-            admin = adminLevel,
-            developer = developerLevel,
-        ),
+        qualification =
+            Qualification(
+                tester = testerLevel,
+                moderator = moderatorLevel,
+                sponsor = sponsorLevel,
+                translator = translatorLevel,
+                admin = adminLevel,
+                developer = developerLevel,
+            ),
     )
 
 fun RawUserStats.toEntity(uid: String): UserStatsEntity =

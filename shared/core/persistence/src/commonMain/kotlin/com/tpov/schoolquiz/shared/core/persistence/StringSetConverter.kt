@@ -5,7 +5,6 @@ import androidx.room.TypeConverter
 
 @ProvidedTypeConverter
 class StringSetConverter {
-
     @TypeConverter
     fun fromSet(value: Set<String>?): String? {
         require(value?.none { '\u001F' in it } != false) {

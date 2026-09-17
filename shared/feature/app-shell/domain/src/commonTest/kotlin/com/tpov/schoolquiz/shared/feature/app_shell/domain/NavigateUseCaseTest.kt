@@ -198,10 +198,11 @@ class NavigateUseCaseTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 34 select Arena when guest stats invisible returns no-op state`() {
-        // guest.currentSkill = 0, Arena requires USER >= 3000 → invisible
+    fun `scenario 34 select Catalog when guest stats invisible returns no-op state`() {
+        // guest.currentSkill = 0, Catalog requires USER >= 3000 → invisible.
+        // Прежде примером была арена; её порог снят, поэтому запрет показывается на Catalog.
         val state = stateWithInternetProfile() // Internet/Profile, guest stats
-        val result = useCase(state, Destination.SelectSection(DrawerSection.InternetSection.Arena))
+        val result = useCase(state, Destination.SelectSection(DrawerSection.InternetSection.Catalog))
         // state should be unchanged — visibility guard prevents navigation
         assertEquals(DrawerSection.InternetSection.Profile, result.newState.internetState.activeSection)
         assertEquals(state.activeTab, result.newState.activeTab)

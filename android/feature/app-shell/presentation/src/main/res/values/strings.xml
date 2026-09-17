@@ -76,4 +76,6 @@
     <string name="tournament_error_update_participants">Could not refresh participants</string>
     <string name="tournament_loading">Refreshing data</string>
     <string name="tournament_attempts_count">Attempts: %1$d</string>
+    <string name="drawer_sync_last_success">Last sync: %1$s</string>
+    <string name="drawer_sync_never">Not synced yet</string>
 </resources>

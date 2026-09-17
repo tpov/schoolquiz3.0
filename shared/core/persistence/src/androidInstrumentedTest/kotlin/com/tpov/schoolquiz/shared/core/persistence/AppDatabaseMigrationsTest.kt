@@ -8,6 +8,10 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration4to5
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration5to6
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration6to7
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration7to8
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration8to9
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration9to10
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -132,6 +136,7 @@ class AppDatabaseMigrationsTest {
                 )
                 """.trimIndent(),
             )
+            // Заявка на арену и её локальная половина — запертый черновик.
             db.execSQL(
                 """
                 INSERT INTO quest_arena_submission_outbox (
@@ -140,6 +145,31 @@ class AppDatabaseMigrationsTest {
                 ) VALUES (
                     'submission-1', 'draft-1', 'author-1', 7, 3000,
                     'lesson-1' || char(31) || 'lesson-2', 'arena', 2, NULL
+                )
+                """.trimIndent(),
+            )
+            db.execSQL(
+                """
+                INSERT INTO quest_drafts (
+                    id, ownerUid, catalogId, title, description, defaultLanguage,
+                    defaultDifficulty, status, localRevision, serverRevision, publicQuestId,
+                    createdAtMs, updatedAtMs, isActive, rejectionReason
+                ) VALUES (
+                    'draft-1', 'author-1', 'courses', 'Черновик', NULL, 'ru',
+                    'EASY', 'REVIEW_QUEUED', 7, NULL, NULL, 100, 3000, 1, NULL
+                )
+                """.trimIndent(),
+            )
+            // Чужой черновик той же формы: миграция трогает только те, чья заявка лежала.
+            db.execSQL(
+                """
+                INSERT INTO quest_drafts (
+                    id, ownerUid, catalogId, title, description, defaultLanguage,
+                    defaultDifficulty, status, localRevision, serverRevision, publicQuestId,
+                    createdAtMs, updatedAtMs, isActive, rejectionReason
+                ) VALUES (
+                    'draft-2', 'author-1', 'courses', 'Другой', NULL, 'ru',
+                    'EASY', 'REVIEW_QUEUED', 1, NULL, NULL, 100, 3000, 1, NULL
                 )
                 """.trimIndent(),
             )
@@ -170,7 +200,9 @@ class AppDatabaseMigrationsTest {
                 }
             }
 
-            assertEquals("три очереди — три записи, отправленная не в счёт", 3, rows.size)
+            // Заявка на арену не переезжает вовсе: её тело из прежних колонок не собирается, и
+            // приёмник отверг бы такую запись всегда (см. заголовок Migration5to6).
+            assertEquals("две переносимые очереди — две записи, отправленная не в счёт", 2, rows.size)
 
             val attempt = rows[0]
             assertEquals("lesson_runner.SUBMIT_ATTEMPT", attempt[1])
@@ -213,24 +245,23 @@ class AppDatabaseMigrationsTest {
                 rating[8],
             )
 
-            val arena = rows[2]
-            assertEquals("quest_authoring.SUBMIT_ARENA", arena[1])
-            assertEquals("quest_authoring-SUBMIT_ARENA-submission-1", arena[0])
-            assertEquals("author-1", arena[2])
-            assertEquals("quest_authoring:draft:draft-1", arena[3])
-            assertEquals("WAITING", arena[4])
-            // Накопленные попытки едут с записью: обнулить их значило бы дать безнадёжной заявке
-            // новый круг.
-            assertEquals("2", arena[5])
-            assertEquals("3000", arena[6])
-            assertEquals(
-                """{"submissionId":"submission-1","draftId":"draft-1","ownerUid":"author-1",""" +
-                    """"localRevision":7,"requestedAtMs":3000,""" +
-                    // Колонка звалась `lessonIds`, поле тела зовётся `targetLessonIds` — так его
-                    // пишет писатель новой заявки и так его читает приёмник.
-                    """"targetLessonIds":["lesson-1","lesson-2"],"targetShelf":"arena"}""",
-                arena[8],
-            )
+            // Локальная половина заявки снята здесь же: черновик снова редактируемый, причина
+            // написана для автора, а не для разработчика.
+            db.query("SELECT id, status, rejectionReason, updatedAtMs FROM quest_drafts ORDER BY id").use { c ->
+                assertTrue("черновик пропал", c.moveToFirst())
+                assertEquals("draft-1", c.getString(0))
+                assertEquals("DRAFT", c.getString(1))
+                val reason = c.getString(2)
+                assertTrue("причина обязана быть названа автору", !reason.isNullOrBlank())
+                assertFalse("причина не должна быть текстом приёмника", reason!!.contains("draft.catalogId"))
+                // Часов у миграции нет, а поле участвует в правиле расхождения с сервером.
+                assertEquals(3000L, c.getLong(3))
+
+                assertTrue(c.moveToNext())
+                assertEquals("draft-2", c.getString(0))
+                assertEquals("черновик без заявки не трогается", "REVIEW_QUEUED", c.getString(1))
+                assertEquals(null, c.getString(2))
+            }
 
             for (table in OLD_QUEUE_TABLES) {
                 db.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = '$table'").use { c ->
@@ -295,6 +326,241 @@ class AppDatabaseMigrationsTest {
         }
     }
 
+    /**
+     * Конфликт обязан пережить обновление приложения так же, как переживает перезапуск.
+     *
+     * Запись, лежащая в очереди в момент выката, — это действие игрока, которое ещё не доехало.
+     * Миграция добавляет колонку под серверную версию, и всё, чем эта запись была, обязано
+     * остаться собой: ключ, состояние, накопленные попытки и момент намерения. Новая колонка у
+     * неё пуста — конфликта она не видела.
+     */
+    @Test
+    fun migrate_6_to_7_adds_the_server_version_and_keeps_the_queued_record_intact() {
+        helper.createDatabase(DB_NAME, version = 6).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO outbox (
+                    mutation_id, owner_uid, operation, payload, entity_ref, expected_version,
+                    state, attempt_count, next_retry_at_ms, last_error, created_at_ms
+                ) VALUES (
+                    'quest_authoring-SUBMIT_ARENA-submission-1', 'author-1',
+                    'quest_authoring.SUBMIT_ARENA', '{"draftId":"draft-1"}',
+                    'quest_authoring:draft:draft-1', 4, 'WAITING', 3, 1500, 'network', 900
+                )
+                """.trimIndent(),
+            )
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 7, true, Migration6to7).use { db ->
+            db.query(
+                "SELECT mutation_id, state, attempt_count, created_at_ms, expected_version, " +
+                    "server_version FROM outbox",
+            ).use { c ->
+                assertTrue("запись, лежавшая в очереди до миграции, исчезла", c.moveToFirst())
+                assertEquals("quest_authoring-SUBMIT_ARENA-submission-1", c.getString(0))
+                assertEquals("WAITING", c.getString(1))
+                assertEquals(3, c.getInt(2))
+                assertEquals(900L, c.getLong(3))
+                assertEquals("ожидаемая версия не относится к этой миграции", 4L, c.getLong(4))
+                assertTrue("новая колонка обязана быть пустой у записи без конфликта", c.isNull(5))
+            }
+
+            // Колонка пишется, а не только существует: пустое значение отличимо от числа.
+            db.execSQL("UPDATE outbox SET state = 'CONFLICT', server_version = 7")
+            db.query("SELECT server_version FROM outbox").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(7L, c.getLong(0))
+            }
+        }
+    }
+
+    /**
+     * Курсор получает вторую половину, а первая остаётся тем же числом (AD-31).
+     *
+     * Курсор — самая дешёвая строка, которую нельзя терять молча: потеря значит перечитать журнал
+     * или, хуже, перескочить его кусок. У строки, дожившей с прежней схемы, вторая половина пуста:
+     * по лексикографическому сравнению это граница не позже прежней, и первый проход после
+     * обновления перечитает миллисекунду курсора целиком, а не пропустит её.
+     */
+    @Test
+    fun migrate_7_to_8_adds_the_document_half_of_the_cursor_and_keeps_the_time_half() {
+        helper.createDatabase(DB_NAME, version = 7).use { db ->
+            db.execSQL("INSERT INTO sync_state (collectionId, cursor) VALUES ('catalog_sync:cat-1', 1700)")
+            db.execSQL("INSERT INTO sync_state (collectionId, cursor) VALUES ('review_assignments:u-1', 2600)")
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 8, true, Migration7to8).use { db ->
+            db.query("SELECT cursor, doc_id FROM sync_state WHERE collectionId = 'catalog_sync:cat-1'").use { c ->
+                assertTrue("курсор, записанный до миграции, исчез", c.moveToFirst())
+                assertEquals("время читается тем же числом", 1700L, c.getLong(0))
+                assertEquals("вторая половина у прежней строки пуста", "", c.getString(1))
+            }
+            db.query("SELECT COUNT(*) FROM sync_state").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(2, c.getInt(0))
+            }
+            // Колонка пишется, а не только существует.
+            db.execSQL("UPDATE sync_state SET doc_id = 'quest_q-1' WHERE collectionId = 'catalog_sync:cat-1'")
+            db.query("SELECT doc_id FROM sync_state WHERE collectionId = 'catalog_sync:cat-1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("quest_q-1", c.getString(0))
+            }
+        }
+    }
+
+    /**
+     * След прогона заводится пустой таблицей, и ничего из прежнего он не трогает (история 4.2).
+     *
+     * До этой версии времени последнего успеха на устройстве не было вовсе — оно жило в памяти
+     * процесса, и холодный старт стирал его. Поэтому переносить нечего: проверяется, что таблица
+     * появилась, пишется по владельцу и читается по нему же, а строки соседей целы.
+     */
+    @Test
+    fun migrate_8_to_9_adds_the_run_trace_table_and_keeps_the_neighbours_intact() {
+        helper.createDatabase(DB_NAME, version = 8).use { db ->
+            db.execSQL(
+                "INSERT INTO sync_state (collectionId, cursor, doc_id) " +
+                    "VALUES ('catalog_sync:cat-1', 1700, 'quest_q-1')",
+            )
+            db.execSQL(
+                """
+                INSERT INTO outbox (
+                    mutation_id, owner_uid, operation, payload, entity_ref, expected_version,
+                    server_version, state, attempt_count, next_retry_at_ms, last_error, created_at_ms
+                ) VALUES (
+                    'lesson_runner-SUBMIT_ATTEMPT-attempt-1', 'uid-A',
+                    'lesson_runner.SUBMIT_ATTEMPT', '{"a":1}',
+                    'lesson_runner:attempt:attempt-1', NULL, NULL, 'WAITING', 0, 0, NULL, 900
+                )
+                """.trimIndent(),
+            )
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 9, true, Migration8to9).use { db ->
+            db.query("SELECT COUNT(*) FROM sync_run_trace").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("на прежнем устройстве следа не было — таблица пуста", 0, c.getInt(0))
+            }
+
+            // Таблица пишется, а не только существует, и ключ у неё — владелец.
+            db.execSQL(
+                "INSERT INTO sync_run_trace (owner_uid, last_success_at_ms, last_error_branch, " +
+                    "last_error_reason, last_error_server_version) " +
+                    "VALUES ('uid-A', 1700, NULL, NULL, NULL)",
+            )
+            db.execSQL(
+                "INSERT INTO sync_run_trace (owner_uid, last_success_at_ms, last_error_branch, " +
+                    "last_error_reason, last_error_server_version) " +
+                    "VALUES ('uid-B', 0, 'REFUSED', 'not enough gold', NULL)",
+            )
+            db.query("SELECT last_success_at_ms FROM sync_run_trace WHERE owner_uid = 'uid-A'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(1700L, c.getLong(0))
+            }
+            db.query("SELECT last_error_branch FROM sync_run_trace WHERE owner_uid = 'uid-B'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("ветвь лежит именем в своей колонке, а не текстом ошибки", "REFUSED", c.getString(0))
+            }
+
+            // Соседи целы: миграция ничего не пересоздаёт.
+            db.query("SELECT doc_id FROM sync_state WHERE collectionId = 'catalog_sync:cat-1'").use { c ->
+                assertTrue("курсор, записанный до миграции, исчез", c.moveToFirst())
+                assertEquals("quest_q-1", c.getString(0))
+            }
+            db.query("SELECT state FROM outbox").use { c ->
+                assertTrue("запись очереди, лежавшая до миграции, исчезла", c.moveToFirst())
+                assertEquals("WAITING", c.getString(0))
+            }
+        }
+    }
+
+    /**
+     * След прогона разводится по расписаниям: ключом становится пара «владелец + вид».
+     *
+     * До этой версии контентный и профильный прогоны писали в одну строку, и последний доложивший
+     * затирал соседа. Прежние строки не переносятся: вида у них нет, и приписать его нечем —
+     * записать чужой успех контентным значило бы повторить ровно ту ложь, которую эта версия
+     * убирает. Проверяется поэтому и то, что таблица после миграции пуста, и то, что она стала
+     * различать виды, и то, что соседние таблицы миграция не тронула.
+     */
+    @Test
+    fun migrate_9_to_10_keys_the_run_trace_by_kind_and_leaves_the_neighbours_intact() {
+        helper.createDatabase(DB_NAME, version = 9).use { db ->
+            db.execSQL(
+                "INSERT INTO sync_run_trace (owner_uid, last_success_at_ms, last_error_branch, " +
+                    "last_error_reason, last_error_server_version) " +
+                    "VALUES ('uid-A', 1700, 'NO_NETWORK', NULL, NULL)",
+            )
+            db.execSQL(
+                "INSERT INTO sync_state (collectionId, cursor, doc_id) " +
+                    "VALUES ('catalog_sync:cat-1', 1700, 'quest_q-1')",
+            )
+            db.execSQL(
+                """
+                INSERT INTO outbox (
+                    mutation_id, owner_uid, operation, payload, entity_ref, expected_version,
+                    server_version, state, attempt_count, next_retry_at_ms, last_error, created_at_ms
+                ) VALUES (
+                    'lesson_runner-SUBMIT_ATTEMPT-attempt-1', 'uid-A',
+                    'lesson_runner.SUBMIT_ATTEMPT', '{"a":1}',
+                    'lesson_runner:attempt:attempt-1', NULL, NULL, 'WAITING', 0, 0, NULL, 900
+                )
+                """.trimIndent(),
+            )
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 10, true, Migration9to10).use { db ->
+            db.query("SELECT COUNT(*) FROM sync_run_trace").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(
+                    "строку без вида приписать некому — таблица начинается пустой",
+                    0,
+                    c.getInt(0),
+                )
+            }
+
+            // Ключ — пара: у одного владельца теперь по строке на расписание, и вторая вставка
+            // не заменяет первую.
+            db.execSQL(
+                "INSERT INTO sync_run_trace (owner_uid, kind, last_success_at_ms, last_error_branch, " +
+                    "last_error_reason, last_error_server_version) " +
+                    "VALUES ('uid-A', 'CONTENT', 0, 'NO_NETWORK', NULL, NULL)",
+            )
+            db.execSQL(
+                "INSERT INTO sync_run_trace (owner_uid, kind, last_success_at_ms, last_error_branch, " +
+                    "last_error_reason, last_error_server_version) " +
+                    "VALUES ('uid-A', 'PROFILE', 2700, NULL, NULL, NULL)",
+            )
+            db.query("SELECT COUNT(*) FROM sync_run_trace WHERE owner_uid = 'uid-A'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("два расписания — две строки, а не одна затёртая", 2, c.getInt(0))
+            }
+            db.query(
+                "SELECT last_error_branch FROM sync_run_trace WHERE owner_uid = 'uid-A' AND kind = 'CONTENT'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("удачный профильный прогон не снял ветвь контентного", "NO_NETWORK", c.getString(0))
+            }
+
+            // Уборка прежнего владельца забирает все его виды разом (AD-8).
+            db.execSQL("DELETE FROM sync_run_trace WHERE owner_uid = 'uid-A'")
+            db.query("SELECT COUNT(*) FROM sync_run_trace").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("удаление по владельцу обязано забрать все его строки", 0, c.getInt(0))
+            }
+
+            // Соседи целы: миграция трогает только след.
+            db.query("SELECT doc_id FROM sync_state WHERE collectionId = 'catalog_sync:cat-1'").use { c ->
+                assertTrue("курсор, записанный до миграции, исчез", c.moveToFirst())
+                assertEquals("quest_q-1", c.getString(0))
+            }
+            db.query("SELECT state FROM outbox").use { c ->
+                assertTrue("запись очереди, лежавшая до миграции, исчезла", c.moveToFirst())
+                assertEquals("WAITING", c.getString(0))
+            }
+        }
+    }
+
     @Test
     fun migrate_all_the_way_from_1_validates_against_the_current_schema() {
         helper.createDatabase(DB_NAME, version = 1).close()
@@ -309,6 +575,10 @@ class AppDatabaseMigrationsTest {
             Migration3to4,
             Migration4to5,
             Migration5to6,
+            Migration6to7,
+            Migration7to8,
+            Migration8to9,
+            Migration9to10,
         ).close()
     }
 
@@ -316,7 +586,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 6
+        const val CURRENT_VERSION = 10
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES = listOf(

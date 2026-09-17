@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerD
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,8 +34,16 @@ class RunnerStateHolder(
      */
     var livesRemainingHearts: Int? = null
 
+    /**
+     * Подписка на пометку очереди для показанного прохождения. Живёт ровно столько, сколько на
+     * экране держится его результат: новая попытка спрашивает про свою запись, а не про прежнюю.
+     */
+    var syncMarkJob: Job? = null
+
     /** Fresh attempt on the same lesson (Run again) — keeps the scope and the life mirror. */
     fun resetForRestart() {
+        syncMarkJob?.cancel()
+        syncMarkJob = null
         pendingConfigChangeRestore = false
         snapshotBeforeStop = null
         currentDraftAnswer = null
@@ -48,6 +57,7 @@ class RunnerStateHolder(
         snapshotBeforeStop = null
         currentDraftAnswer = null
         livesRemainingHearts = null
+        syncMarkJob = null
         scope.cancel()
         uiState.value = RunnerUiState.Loading
         domainState = RunnerState.Loading

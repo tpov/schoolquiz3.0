@@ -1,11 +1,11 @@
 package com.tpov.schoolquiz.shared.feature.section.data
 
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.section.data.mapper.SectionDtoMapper.toEntity
 import com.tpov.schoolquiz.shared.feature.section.data.mapper.SectionMapper.toDomain
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
-import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,12 +14,10 @@ class SectionRepositoryImpl(
     private val local: SectionLocalDataSource,
     private val remote: SectionRemoteDataSource,
 ) : SectionRepository {
-
     override fun observeByQuest(questId: QuestId): Flow<List<Section>> =
         local.observeByQuest(questId.value).map { list -> list.map { it.toDomain() } }
 
-    override suspend fun getById(id: SectionId): Section? =
-        local.findById(id.value)?.toDomain()
+    override suspend fun getById(id: SectionId): Section? = local.findById(id.value)?.toDomain()
 
     override suspend fun refreshByIds(ids: Set<SectionId>): Result<Unit> {
         if (ids.isEmpty()) return Result.success(Unit)
@@ -31,11 +29,11 @@ class SectionRepositoryImpl(
                 local.deleteById(missingId)
             }
             for (dto in dtos) {
-                if (dto.archived) {
-                    local.deleteById(dto.id)
-                } else {
-                    local.upsertFromSyncList(dto.toEntity())
-                }
+                // `archived` СКРЫВАЕТ узел, а не удаляет его (AD-26, AC 7.6): строка и связанный с
+                // ней прогресс остаются в базе, а из выборок узел уходит — фильтр стоит в самом
+                // запросе DAO (`WHERE archived = 0`). Прежде здесь было `deleteById`, и архивация
+                // урока уносила у игрока скачанный урок вместе со всеми вопросами по каскаду FK.
+                local.upsertFromSyncList(dto.toEntity())
             }
             Result.success(Unit)
         } catch (e: CancellationException) {
@@ -45,20 +43,19 @@ class SectionRepositoryImpl(
         }
     }
 
-    override suspend fun refreshByParents(questIds: Set<QuestId>, cursor: Long): Result<Set<SectionId>> {
+    override suspend fun refreshByParents(
+        questIds: Set<QuestId>,
+        cursor: Long,
+    ): Result<Set<SectionId>> {
         if (questIds.isEmpty()) return Result.success(emptySet())
         return try {
             val dtos = remote.fetchChangedByParents(questIds.map { it.value }.toSet(), cursor)
             val changedIds = mutableSetOf<SectionId>()
             for (dto in dtos) {
-                val localEntity = local.findById(dto.id)
-                if (dto.archived) {
-                    val localVersion = localEntity?.version ?: 0L
-                    if (dto.version > localVersion) local.deleteById(dto.id)
-                } else {
-                    local.upsertByIdIfNewerVersion(dto.toEntity())
-                    changedIds.add(SectionId(dto.id))
-                }
+                // Тот же порядок и здесь: архивный узел записывается как скрытый, а не стирается.
+                // В список изменившихся он не попадает — спускаться в детей скрытого узла незачем.
+                local.upsertByIdIfNewerVersion(dto.toEntity())
+                if (!dto.archived) changedIds.add(SectionId(dto.id))
             }
             Result.success(changedIds)
         } catch (e: CancellationException) {

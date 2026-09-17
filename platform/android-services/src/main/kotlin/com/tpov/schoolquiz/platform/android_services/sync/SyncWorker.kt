@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.tpov.schoolquiz.shared.core.sync.SyncRun
+import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
 import com.tpov.schoolquiz.shared.core.sync.Syncable
 import java.util.concurrent.TimeUnit
 
@@ -11,8 +13,10 @@ class SyncWorker(
     appContext: Context,
     workerParams: WorkerParameters,
     private val syncables: List<Syncable>,
+    private val run: SyncRun,
 ) : CoroutineWorker(appContext, workerParams) {
-    override suspend fun doWork(): Result = if (performSync(syncables)) Result.success() else Result.retry()
+    override suspend fun doWork(): Result =
+        if (performSync(SyncRunKind.CONTENT, syncables, run)) Result.success() else Result.retry()
 
     companion object {
         const val WORK_NAME_PERIODIC = "periodic_sync"
@@ -30,17 +34,23 @@ class SyncWorker(
          *
          * Order is still honoured, because some steps are meant to run after others: the profile
          * is refreshed again after results are pushed, to pick up the rewards the server granted.
+         *
+         * Решение о том, что считать исходом прогона, живёт в [SyncRun], в общем коде: воркер —
+         * платформенная обёртка расписания, и знать про фичи, ветви ошибок и время ему незачем
+         * (AD-7, AD-9). Здесь остаётся только журнал: он и был единственным следом прогона, и
+         * теперь перестаёт им быть.
+         *
+         * Своё расписание воркер называет сам и обязан: след у каждого свой (AD-14), и общий на
+         * двоих означал, что удачный профильный прогон снимает ветвь упавшего контентного.
          */
-        internal suspend fun performSync(syncables: List<Syncable>): Boolean {
-            var allSucceeded = true
-            for (syncable in syncables) {
-                syncable.sync().onFailure { error ->
-                    Log.w(TAG, "Syncable failed: ${syncable.javaClass.name}", error)
-                    allSucceeded = false
-                }
-            }
-            return allSucceeded
-        }
+        internal suspend fun performSync(
+            kind: SyncRunKind,
+            syncables: List<Syncable>,
+            run: SyncRun,
+        ): Boolean =
+            run.run(kind, syncables) { syncable, error ->
+                Log.w(TAG, "Syncable failed: ${syncable.javaClass.name}", error)
+            }.isSuccess
 
         private const val TAG = "SchoolQuizSync"
     }

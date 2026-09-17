@@ -1,5 +1,9 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote
 
+import com.tpov.schoolquiz.shared.core.sync.SYNC_PAGE_SIZE
+import com.tpov.schoolquiz.shared.core.sync.SyncChangePage
+import com.tpov.schoolquiz.shared.core.sync.SyncCursor
+
 data class ReviewAssignmentDto(
     val id: String,
     val submissionId: String,
@@ -59,7 +63,16 @@ data class SubmitReviewActionDto(
 )
 
 interface ReviewAssignmentRemoteDataSource {
-    suspend fun fetchAssignmentChangesSince(cursorMs: Long): List<ReviewAssignmentChangeDto>
+    /**
+     * Одна страница журнала `admin/review/sync_changes`, начиная сразу после [cursor] (AD-31).
+     *
+     * Журнал ревью читается через callable, а не напрямую, но правило то же: продолжение по паре
+     * «время, id документа», размер страницы — [limit], непонятое считается, а не пропадает.
+     */
+    suspend fun fetchAssignmentChangePage(
+        cursor: SyncCursor,
+        limit: Int = SYNC_PAGE_SIZE,
+    ): SyncChangePage<ReviewAssignmentChangeDto>
 
     suspend fun fetchByIds(ids: Set<String>): List<ReviewAssignmentDto>
 

@@ -89,6 +89,8 @@
     <!-- NFT market: listings -->
     <string name="nft_sells">продаёт %1$s</string>
     <string name="nft_your_lot">ваш лот</string>
+    <string name="nft_cancel_queued">снятие в очереди</string>
+    <string name="nft_lot_sold">уже продан</string>
     <string name="nft_action_confirm">Подтвердить</string>
 
     <!-- NFT market: logos shelf -->
@@ -116,7 +118,7 @@
     <string name="nft_msg_claimed_free">Имя занято за вами</string>
     <string name="nft_msg_worn">Активное имя — %1$s</string>
     <string name="nft_msg_listed">Выставлено за %1$d</string>
-    <string name="nft_msg_listing_cancelled">Снято с продажи</string>
+    <string name="nft_msg_listing_cancel_queued">Снятие в очереди; лот исчезнет после обновления витрины</string>
     <string name="nft_msg_bought">Имя куплено, комиссия %1$d</string>
     <string name="nft_msg_logo_bought">Логотип ваш · −%1$d</string>
     <string name="nft_msg_logo_worn">Активный логотип — %1$s</string>

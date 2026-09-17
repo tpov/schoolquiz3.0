@@ -20,6 +20,8 @@ class SyncQuestionsUseCase(
      * @param cursor    local questionsCursor (max lastModifiedAt seen so far). Default 0L.
      * @return [Result.success] on completed sync; [Result.failure] on error.
      */
-    suspend operator fun invoke(lessonIds: Set<LessonId>, cursor: Long = 0L): Result<Unit> =
-        questions.refreshByParents(lessonIds, cursor)
+    suspend operator fun invoke(
+        lessonIds: Set<LessonId>,
+        cursor: Long = 0L,
+    ): Result<Unit> = questions.refreshByParents(lessonIds, cursor)
 }

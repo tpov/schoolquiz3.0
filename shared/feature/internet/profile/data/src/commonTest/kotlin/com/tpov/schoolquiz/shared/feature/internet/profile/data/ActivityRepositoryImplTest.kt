@@ -3,7 +3,7 @@ package com.tpov.schoolquiz.shared.feature.internet.profile.data
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEarning
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEntity
-import com.tpov.schoolquiz.shared.core.persistence.LessonResultAttemptOutboxEntity
+import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionEntity
 import kotlinx.coroutines.flow.Flow
@@ -187,7 +187,16 @@ private class FakeAttemptDao : LessonAttemptDao {
 
     override suspend fun upsertRepetitions(entities: List<QuestionRepetitionEntity>) = Unit
 
-    override suspend fun upsertOutboxRow(entity: LessonResultAttemptOutboxEntity) = Unit
+    override suspend fun enqueueOutboxRow(entity: OutboxEntity): Long = 0L
+
+    // Вставка тут никогда не подавляется, поэтому состояние занятого ключа не спрашивается.
+    override suspend fun outboxRowState(mutationId: String): String? = null
+
+    override suspend fun deleteAnswersOfAttempt(attemptId: String) = Unit
+
+    override suspend fun deleteAttempt(attemptId: String) {
+        rows.value = rows.value.filterNot { it.attemptId == attemptId }
+    }
 
     override fun observeByLesson(
         userId: String,

@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LoopWithTooManyJumpStatements:CatalogRepositoryImpl.kt$CatalogRepositoryImpl$while</ID>
+    <ID>NestedBlockDepth:CatalogRepositoryImpl.kt$CatalogRepositoryImpl$override suspend fun refreshFromRemote(): Result&lt;Set&lt;CatalogId&gt;&gt;</ID>
+    <ID>TooGenericExceptionCaught:CatalogRepositoryImpl.kt$CatalogRepositoryImpl$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

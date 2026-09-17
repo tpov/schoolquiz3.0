@@ -501,3 +501,6 @@ backfill.
 - source_spec: `_bmad-output/implementation-artifacts/spec-m1-3-refund-handler.md`
   summary: A clawed-back balance leaves a debt the device never shows.
   evidence: `goldShortfall` is written by the refund handler and is not part of `readEconomyBalance`, so a player whose gold was taken back below zero sees an unexplained balance until the receipt screen exists (story 5.4). Deliberate — story 1.3 adds no client code — but it must not ship to players in that state.
+- source_spec: `buildSrc/src/main/kotlin/KmpLibraryConventionPlugin.kt` (гейт починен 2026-09-03)
+  summary: 215 замечаний статического анализа зафиксированы отпечатками — это принятый долг, а не «чисто».
+  evidence: Гейт включён: ktlint применяется к 48 общим модулям (846 замечаний исправлено автоформатированием, 16 руками), detekt повешен на `check` настоящими задачами `detektMetadata*` и добавлен в `ciCheck`, порог понижен с десяти до нуля. Существующий долг записан в `detekt-baseline.xml` по модулям — 215 записей, из них большинство MagicNumber и TooGenericExceptionCaught. Новый код проверяется полностью: проверено пробным нарушением, сборка краснеет. Разбирать отпечатки стоит темами (числа с именами, сужение перехвата исключений), а не подряд; каждая снятая запись из отпечатка — необратимое улучшение, потому что вернуть её обратно гейт уже не даст.

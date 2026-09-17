@@ -76,6 +76,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /purchase_notifications/{messageId} {
+      // One document per Play notification message, written by playPurchaseNotifications. It is
+      // what makes a re-delivered message take nothing back a second time, and what tells a message
+      // that arrived and did nothing apart from a message that never arrived. Server bookkeeping in
+      // the same sense as the settlements beside it: readable, it would expose who was refunded
+      // what; writable, a message could be marked handled before it was.
+      allow read, write: if false;
+    }
+
     match /purchase_audit/{auditId} {
       // Who was credited what, for which token, under which version of configs/economy. Written
       // once by the server per settlement; nothing in the app reads it.
@@ -118,15 +127,21 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-
     match /quest_review_requests/{requestId} {
-      // Client only creates an outbox request. Processing/copying is server-only.
-      allow create: if request.auth != null
-        && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.processed == false;
+      // Заявку пишет только сервер — обработчик quest_authoring.SUBMIT_ARENA из общей очереди.
+      //
+      // Здесь стоял create для клиента, и это был путь мимо ключа идемпотентности. Правило кода не
+      // выполняет: отличить вторую доставку той же заявки от первой оно не может в принципе, а
+      // триггер на созданный документ обрабатывал такую заявку вообще без mutationId — то есть
+      // повторная подача проходила бы как новая работа. AD-6 запрещает сам путь, а не только его
+      // использование, поэтому он закрыт, хотя пользующегося им кода в приложении уже нет.
+      //
+      // Автор по-прежнему читает свою заявку: именно так до него доходит вердикт — статус
+      // PUBLISHED или REJECTED вместе с причиной отказа. Ревьюер читает чужие по своей
+      // квалификации.
       allow read: if request.auth != null
         && (resource.data.ownerUid == request.auth.uid || isReviewer());
-      allow update, delete: if false;
+      allow write: if false;
     }
 
     match /catalogs/{catalogId} {

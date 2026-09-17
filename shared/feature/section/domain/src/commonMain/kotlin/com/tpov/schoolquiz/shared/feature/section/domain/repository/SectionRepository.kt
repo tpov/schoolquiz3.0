@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
  *   AC#5 — SectionRepository must have observeByParent, refreshByParents, getById.
  */
 interface SectionRepository {
-
     /**
      * Observes sections belonging to the given [questId], sorted by [Section.order] ASC.
      *
@@ -49,5 +48,8 @@ interface SectionRepository {
      * @return [Result.success] containing the set of processed [SectionId]s (passed to theme sync
      *   as parentIds); [Result.failure] on network/permission errors.
      */
-    suspend fun refreshByParents(questIds: Set<QuestId>, cursor: Long): Result<Set<SectionId>>
+    suspend fun refreshByParents(
+        questIds: Set<QuestId>,
+        cursor: Long,
+    ): Result<Set<SectionId>>
 }

@@ -10,10 +10,11 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import com.google.firebase.functions.FirebaseFunctions
-import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
+import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.persistence.AppDatabase
 import com.tpov.schoolquiz.shared.core.persistence.RoomSyncStateRepository
+import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
 import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentLocalDataSourceImpl
@@ -24,6 +25,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaRevie
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaSectionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaThemeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewSegmentResultDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.SubmitReviewActionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.ReviewAssignmentSync
@@ -43,9 +45,8 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
     private val args = InstrumentationRegistry.getArguments()
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-    private val submissionRemote = FirebaseQuestArenaSubmissionRemoteDataSource(firestore)
-    private val reviewRemote =
-        FirebaseReviewAssignmentRemoteDataSource(FirebaseFunctions.getInstance(REGION))
+    private val functions = FirebaseFunctions.getInstance(REGION)
+    private val reviewRemote = FirebaseReviewAssignmentRemoteDataSource(functions)
 
     @Test
     fun pixelRunsFullReviewWorkflowAgainstProductionFirebase() =
@@ -63,19 +64,19 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
             delay(AUTH_BOOTSTRAP_DELAY_MS)
 
             signIn(tokens.owner, ids.ownerUid)
-            submissionRemote.submit(request(ids))
+            submitToArena(ids)
 
             waitForProcessed(ids)
             assertTrue(serverDoc(privateQuestPath(ids)).exists())
             assertTrue(serverDoc(privateSyncChangePath(ids)).exists())
 
             signIn(tokens.testerStrong, ids.testerStrongUid)
-            val changes = reviewRemote.fetchAssignmentChangesSince(0L)
+            val changes = reviewRemote.fetchAssignmentChangePage(SyncCursor.BEGINNING).changes
             val assignmentChange = changes.firstOrNull { it.id == assignmentId }
             assertNotNull("review assignment change must include $assignmentId", assignmentChange)
             assertTrue(
                 "cursor should not re-download the same admin/private sync change",
-                reviewRemote.fetchAssignmentChangesSince(assignmentChange!!.changedAtMs).none { it.id == assignmentId },
+                reviewRemote.fetchAssignmentChangePage(SyncCursor(assignmentChange!!.changedAtMs, assignmentChange.id)).changes.none { it.id == assignmentId },
             )
             val testerAssignment = reviewRemote.fetchByIds(setOf(assignmentId)).single()
             assertEquals(setOf(TESTING), testerAssignment.taskKinds)
@@ -189,7 +190,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
             val localAssignment = localAssignments.single()
             assertEquals(setOf(expectedTaskKind), localAssignment.assignment.taskKinds.toSet())
             assertEquals(expectedQuestionIds, localAssignment.questions.map { it.questionId }.toSet())
-            assertTrue(syncState.getCursor(reviewAssignmentSyncCursorId(uid)) > 0L)
+            assertTrue(syncState.getCursor(reviewAssignmentSyncCursorId(uid)).changedAtMs > 0L)
 
             val secondResult = sync.sync()
 
@@ -214,7 +215,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
 
             assertTrue(result.exceptionOrNull()?.message.orEmpty(), result.isSuccess)
             assertTrue(local.findAssignmentDetails(uid).isEmpty())
-            assertTrue(syncState.getCursor(reviewAssignmentSyncCursorId(uid)) > 0L)
+            assertTrue(syncState.getCursor(reviewAssignmentSyncCursorId(uid)).changedAtMs > 0L)
         } finally {
             database.close()
         }
@@ -284,6 +285,27 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
 
     private fun <T> Task<T>.awaitValue(): T = Tasks.await(this, DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
 
+    /**
+     * Подаёт заявку так же, как это делает приложение: через единственный приёмник (AD-6).
+     *
+     * Прямая запись в `quest_review_requests` снята — проверить ключ идемпотентности можно только
+     * там, где выполняется код, и этот путь теперь единственный. Тело собирает тот же писатель,
+     * что и очередь, поэтому тест проверяет именно ту строку, которая уедет в бою.
+     */
+    private fun submitToArena(ids: LiveIds) {
+        val row = QuestArenaOutboxWriter.row(request(ids))
+        functions
+            .getHttpsCallable("submitMutation")
+            .call(
+                mapOf(
+                    "mutationId" to row.mutationId,
+                    "operation" to OutboxOperations.SUBMIT_ARENA,
+                    "payload" to row.payload,
+                ),
+            )
+            .awaitValue()
+    }
+
     private fun requiredArg(name: String): String =
         requireNotNull(args.getString(name)?.takeIf { it.isNotBlank() }) {
             "Missing instrumentation argument: $name"
@@ -294,7 +316,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
             submissionId = ids.submissionId,
             draftId = ids.questId,
             ownerUid = ids.ownerUid,
-            localRevision = 1L,
+            expectedVersion = null,
             requestedAtMs = System.currentTimeMillis(),
             draft =
                 ArenaDraftDto(

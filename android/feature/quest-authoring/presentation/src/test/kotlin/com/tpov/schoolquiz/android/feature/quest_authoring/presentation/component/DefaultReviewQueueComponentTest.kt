@@ -6,6 +6,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentSyncUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
@@ -14,18 +15,22 @@ import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuest
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewActionSubmission
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignment
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentKind
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentSyncState
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewChecks
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestion
-import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitReviewActionCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewAssignmentRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitReviewActionUseCase
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -75,15 +80,82 @@ class DefaultReviewQueueComponentTest {
         component.onSubmitClick()
 
         assertEquals(UiMessage.Res(R.string.qa_error_choose_score), component.state.value.errorMessage)
-        assertTrue(repository.submittedCommands.isEmpty())
+        assertTrue(repository.queued.isEmpty())
 
         component.onScoreSelected(2)
         component.onSubmitClick()
 
-        val command = repository.submittedCommands.single()
+        val command = repository.queued.single().command
         assertEquals(ReviewAssignmentKind.TESTING, command.kind)
         assertEquals(2, command.score)
         assertNull(component.state.value.detail)
+    }
+
+    @Test
+    fun `submit closes the form the same frame and only queues the intent`() = runTest(testScheduler) {
+        val repository = FakeReviewAssignmentRepository(
+            initialAssignments = listOf(reviewAssignment(taskKinds = setOf(ReviewAssignmentKind.TESTING))),
+        )
+        // Очередь ещё не ответила — как Room, ушедший на IO. Форма ждать её не обязана.
+        repository.gate = CompletableDeferred()
+        val component = buildComponent(repository = repository)
+        component.onAssignmentSelected("assignment-1")
+        component.onScoreSelected(2)
+
+        component.onSubmitClick()
+
+        assertNull(component.state.value.detail, "форма закрывается тем же кадром")
+        assertEquals(UiMessage.Res(R.string.qa_review_queued), component.state.value.successMessage)
+        assertNull(component.state.value.errorMessage)
+        assertTrue(repository.queued.isEmpty(), "запись ещё не легла — и это не держит форму")
+
+        repository.gate?.complete(Unit)
+
+        val submission = repository.queued.single()
+        assertEquals("review-action-1", submission.id)
+        assertEquals("reviewer-1", submission.ownerUid)
+        assertEquals("assignment-1", submission.command.assignmentId)
+        // Строка задания не менялась: список тот же, что и до нажатия (AD-25).
+        assertEquals(listOf("assignment-1"), component.state.value.assignments.map { it.id })
+    }
+
+    @Test
+    fun `queue failure is reported without reopening the form`() = runTest(testScheduler) {
+        val repository = FakeReviewAssignmentRepository(
+            initialAssignments = listOf(reviewAssignment(taskKinds = setOf(ReviewAssignmentKind.TESTING))),
+            failure = IllegalStateException("disk full"),
+        )
+        val component = buildComponent(repository = repository)
+        component.onAssignmentSelected("assignment-1")
+        component.onScoreSelected(2)
+
+        component.onSubmitClick()
+
+        assertNull(component.state.value.detail)
+        assertNull(component.state.value.successMessage)
+        assertEquals(UiMessage.Raw("disk full"), component.state.value.errorMessage)
+    }
+
+    @Test
+    fun `card carries the queue mark for both outcomes`() = runTest(testScheduler) {
+        val repository = FakeReviewAssignmentRepository(
+            initialAssignments = listOf(reviewAssignment(taskKinds = setOf(ReviewAssignmentKind.TESTING))),
+        )
+        val component = buildComponent(repository = repository)
+
+        assertEquals(ReviewAssignmentSyncUi.NONE, component.state.value.assignments.single().syncState)
+
+        repository.syncStates.value = mapOf("assignment-1" to ReviewAssignmentSyncState.PENDING)
+        assertEquals(ReviewAssignmentSyncUi.PENDING, component.state.value.assignments.single().syncState)
+
+        // Задание переназначили или закрыли: сервер отказал окончательно, запись в карантине.
+        // Откатывать нечего — карточка рисует пометку по ответу очереди (AD-25, AD-28).
+        repository.syncStates.value = mapOf("assignment-1" to ReviewAssignmentSyncState.QUARANTINED)
+        assertEquals(ReviewAssignmentSyncUi.QUARANTINED, component.state.value.assignments.single().syncState)
+
+        // Фильтр перестраивает список, пометка при этом не теряется.
+        component.onFilterSelected(ReviewQueueFilter.TESTING)
+        assertEquals(ReviewAssignmentSyncUi.QUARANTINED, component.state.value.assignments.single().syncState)
     }
 
     @Test
@@ -106,7 +178,7 @@ class DefaultReviewQueueComponentTest {
         component.onSubmitClick()
 
         assertEquals(UiMessage.Res(R.string.qa_error_fill_all_translations), component.state.value.errorMessage)
-        assertTrue(repository.submittedCommands.isEmpty())
+        assertTrue(repository.queued.isEmpty())
 
         segments.forEach { segment ->
             component.onTranslationTextChanged(
@@ -117,7 +189,7 @@ class DefaultReviewQueueComponentTest {
         }
         component.onSubmitClick()
 
-        val command = repository.submittedCommands.single()
+        val command = repository.queued.single().command
         assertEquals(ReviewAssignmentKind.TRANSLATION, command.kind)
         assertEquals("en", command.language)
         val translatedQuestion = command.translatedQuestions.single()
@@ -166,7 +238,7 @@ class DefaultReviewQueueComponentTest {
         component.onSegmentAcceptedChanged(firstSegment.questionId, firstSegment.key, accepted = false)
         component.onSubmitClick()
 
-        val command = repository.submittedCommands.single()
+        val command = repository.queued.single().command
         assertEquals(ReviewAssignmentKind.TRANSLATION_REVIEW, command.kind)
         assertEquals("en", command.language)
         assertFalse(command.segmentResults.first { it.segmentKey == firstSegment.key }.accepted)
@@ -203,7 +275,13 @@ class DefaultReviewQueueComponentTest {
             componentContext = DefaultComponentContext(lifecycle),
             authRepository = authRepository,
             observeReviewAssignments = ObserveReviewAssignmentsUseCase(repository),
-            submitReviewAction = SubmitReviewActionUseCase(repository),
+            observeReviewAssignmentSync = ObserveReviewAssignmentSyncUseCase(repository),
+            submitReviewAction =
+                SubmitReviewActionUseCase(
+                    repository = repository,
+                    idProvider = { prefix -> "$prefix-1" },
+                    timestampProvider = { 5L },
+                ),
             questionContentParser = parser,
             mainContext = testDispatcher,
         )
@@ -300,15 +378,28 @@ class DefaultReviewQueueComponentTest {
 
     private class FakeReviewAssignmentRepository(
         initialAssignments: List<ReviewAssignment> = emptyList(),
+        private val failure: Throwable? = null,
     ) : ReviewAssignmentRepository {
         private val assignments = MutableStateFlow(initialAssignments)
-        val submittedCommands = mutableListOf<SubmitReviewActionCommand>()
+        val queued = mutableListOf<ReviewActionSubmission>()
+        val syncStates = MutableStateFlow<Map<String, ReviewAssignmentSyncState>>(emptyMap())
+
+        /** Пока не завершён, постановка в очередь висит — как запись на диск. */
+        var gate: CompletableDeferred<Unit>? = null
 
         override fun observeAssignments(ownerUid: String): Flow<List<ReviewAssignment>> = assignments
 
-        override suspend fun submitReviewAction(command: SubmitReviewActionCommand): Result<Unit> {
-            submittedCommands += command
+        override suspend fun queueReviewAction(submission: ReviewActionSubmission): Result<Unit> {
+            gate?.await()
+            failure?.let { return Result.failure(it) }
+            queued += submission
             return Result.success(Unit)
         }
+
+        override fun observeAssignmentSync(
+            ownerUid: String,
+            assignmentId: String,
+        ): Flow<ReviewAssignmentSyncState> =
+            syncStates.map { it[assignmentId] ?: ReviewAssignmentSyncState.NONE }
     }
 }

@@ -6,16 +6,17 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 
 object LessonMapper {
-    fun LessonEntity.toDomain(): Lesson = Lesson(
-        id = LessonId(id),
-        themeId = ThemeId(themeId),
-        title = title,
-        order = order,
-        version = version,
-        lastModifiedAt = lastModifiedAt,
-        archived = archived,
-        averageRating = averageRating,
-        ratingCount = ratingCount,
-        top3 = top3,
-    )
+    fun LessonEntity.toDomain(): Lesson =
+        Lesson(
+            id = LessonId(id),
+            themeId = ThemeId(themeId),
+            title = title,
+            order = order,
+            version = version,
+            lastModifiedAt = lastModifiedAt,
+            archived = archived,
+            averageRating = averageRating,
+            ratingCount = ratingCount,
+            top3 = top3,
+        )
 }

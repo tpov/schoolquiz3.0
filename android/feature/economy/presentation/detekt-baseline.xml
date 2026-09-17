@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:DefaultShopComponent.kt$DefaultShopComponent$( componentContext: ComponentContext, private val observeBalance: ObserveEconomyBalanceUseCase, private val getCatalog: GetShopCatalogUseCase, private val purchaseItem: PurchaseShopItemUseCase, private val logos: LogoRepository, private val profile: ProfileRepository, private val getReferralProgram: GetReferralProgramUseCase, private val nicknames: NicknameRepository, )</ID>
+  </CurrentIssues>
+</SmellBaseline>

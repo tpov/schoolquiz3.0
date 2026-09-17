@@ -36,8 +36,9 @@ data class ServedQuestion(
  * index of an unparsed question out of this list.
  */
 fun List<RunnerQuestion.Valid>.toServedQuestions(): List<ServedQuestion> {
-    val served = map { ServedQuestion(questionId = it.sourceId, codeAnswerIndex = it.codeAnswerIndex) }
-        .sortedBy { it.codeAnswerIndex }
+    val served =
+        map { ServedQuestion(questionId = it.sourceId, codeAnswerIndex = it.codeAnswerIndex) }
+            .sortedBy { it.codeAnswerIndex }
     require(served.distinctBy { it.codeAnswerIndex }.size == served.size) {
         "served positions must be unique: ${served.map { it.codeAnswerIndex }}"
     }

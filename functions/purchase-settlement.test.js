@@ -20,6 +20,7 @@ const {
   REASON_SKU_NOT_SOLD,
   REASON_TOKEN_OWNED_BY_ANOTHER_ACCOUNT,
   REASON_TOKEN_UNKNOWN,
+  SHORTFALL_FIELD,
   STATUS_CREDITED,
   STATUS_PENDING,
   accountIdFor,
@@ -32,6 +33,7 @@ const {
   successResponse,
 } = require("./purchase-verification");
 const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constants");
+const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
 
 /**
  * Путь денег целиком — с Firestore-подделкой, которая запоминает, что и куда было бы написано.
@@ -49,6 +51,8 @@ const USER_PATH = `users/${UID}`;
 const SETTLEMENT_PATH = `purchase_settlements/${ID}`;
 const RECEIPT_PATH = `users/${UID}/receipts/${ID}`;
 const AUDIT_PATH = `purchase_audit/${ID}`;
+const LEDGER_ID = `${UID}_${CURRENCY.GOLD}_${REASON.GOLD_PACK}_${ID}`;
+const LEDGER_ENTRY_PATH = `${LEDGER_PATH}/${LEDGER_ID}`;
 const CONSTANTS_DOC = {version: 7, goldPacks: {gold_pack_small: 12}};
 
 function playJson(overrides = {}) {
@@ -157,11 +161,13 @@ async function settle({db, play, payload = {purchaseToken: TOKEN, sku: SKU}, uid
 }
 
 /** Записи, которые транзакция обязана оставить, посчитанные тем же чистым кодом. */
-function expectedWrites({goldBefore, purchaseJson = playJson(), constantsDoc = CONSTANTS_DOC}) {
+function expectedWrites({goldBefore, shortfallBefore = 0, purchaseJson = playJson(), constantsDoc = CONSTANTS_DOC}) {
   const purchase = readProductPurchase(purchaseJson);
   const constants = readEconomyConstants(constantsDoc);
   const verdict = decideSettlement({existing: null, purchase, claimedSku: SKU, uid: UID, constants});
-  const goldAfter = goldBefore + verdict.credit.goldGranted;
+  const shortfallCleared = Math.min(shortfallBefore, verdict.credit.goldGranted);
+  const shortfallAfter = shortfallBefore - shortfallCleared;
+  const goldAfter = goldBefore + verdict.credit.goldGranted - shortfallCleared;
   const response = successResponse({sku: SKU, goldGranted: verdict.credit.goldGranted, gold: goldAfter, settlementId: ID});
   const bag = {
     id: ID, uid: UID, purchase, credit: verdict.credit, goldBefore, goldAfter,
@@ -169,9 +175,20 @@ function expectedWrites({goldBefore, purchaseJson = playJson(), constantsDoc = C
   };
   return {
     response,
+    goldAfter,
+    shortfallCleared,
+    shortfallAfter,
     settlement: settlementRecord({...bag, response}),
     receipt: receiptRecord(bag),
     audit: auditRecord(bag),
+    ledger: ledgerEntry({
+      uid: UID, currency: CURRENCY.GOLD, delta: goldAfter - goldBefore, reason: REASON.GOLD_PACK,
+      sourceId: ID, atMs: NOW,
+      details: {
+        sku: SKU, goldGranted: verdict.credit.goldGranted, quantity: verdict.credit.quantity,
+        shortfallCleared, shortfallAfter,
+      },
+    }),
   };
 }
 
@@ -179,7 +196,7 @@ function storedSettlement() {
   return expectedWrites({goldBefore: 5}).settlement;
 }
 
-async function testAVerifiedTokenWritesExactlyFourDocumentsInOneTransaction() {
+async function testAVerifiedTokenWritesEveryRecordOfTheCreditInOneTransaction() {
   const db = fakeDb({docs: {[USER_PATH]: {gold: 5, nolics: 3}, [ECONOMY_CONSTANTS_DOC]: CONSTANTS_DOC}});
   const play = fakePlay(found());
 
@@ -192,15 +209,21 @@ async function testAVerifiedTokenWritesExactlyFourDocumentsInOneTransaction() {
   assert.deepStrictEqual(play.calls, [{sku: SKU, purchaseToken: TOKEN}]);
   assert.strictEqual(db.transactions, 1);
 
-  assert.strictEqual(db.writes.length, 4, "ровно четыре записи");
+  assert.strictEqual(db.writes.length, 5, "баланс, расчёт, квитанция, аудит и строка книги");
   const byPath = Object.fromEntries(db.writes.map((write) => [write.path, write]));
   assert.deepStrictEqual(byPath[USER_PATH], {
-    op: "set", path: USER_PATH, data: {uid: UID, gold: 17, updatedAtMs: NOW}, options: {merge: true},
+    op: "set", path: USER_PATH,
+    data: {uid: UID, gold: 17, [SHORTFALL_FIELD]: 0, updatedAtMs: NOW}, options: {merge: true},
   });
   assert.deepStrictEqual(byPath[SETTLEMENT_PATH], {op: "create", path: SETTLEMENT_PATH, data: expected.settlement});
   assert.deepStrictEqual(byPath[RECEIPT_PATH], {op: "set", path: RECEIPT_PATH, data: expected.receipt, options: undefined});
   assert.deepStrictEqual(byPath[AUDIT_PATH], {op: "set", path: AUDIT_PATH, data: expected.audit, options: undefined});
   assert.strictEqual(byPath[AUDIT_PATH].data.constantsVersion, 7);
+  // Деньги перестают быть единственным движением, которого книга не видит.
+  assert.deepStrictEqual(byPath[LEDGER_ENTRY_PATH], {
+    op: "set", path: LEDGER_ENTRY_PATH, data: expected.ledger, options: {merge: true},
+  });
+  assert.strictEqual(expected.ledger.delta, 12);
   assert.strictEqual(JSON.stringify(db.writes).includes(TOKEN), false, "сырой токен не пишется");
   assert.deepStrictEqual(log.entries.error, []);
 }
@@ -336,6 +359,51 @@ async function testALostRaceOnCreateIsReportedAsUnavailableAndNothingIsWritten()
   assert.ok(log.entries.error[0].context.message.includes("ALREADY_EXISTS"));
 }
 
+async function testAnOwedBalanceIsClearedBeforeAnythingReachesTheBalance() {
+  // Возврат, которому нечего было снять, оставил недостачу. Следующее начисление гасит её первым, и
+  // до баланса доходит остаток — иначе потративший возвращённое покупал бы себе прощение долга.
+  const db = fakeDb({
+    docs: {
+      [USER_PATH]: {gold: 0, [SHORTFALL_FIELD]: 4},
+      [ECONOMY_CONSTANTS_DOC]: CONSTANTS_DOC,
+    },
+  });
+
+  const {outcome} = await settle({db, play: fakePlay(found())});
+
+  const expected = expectedWrites({goldBefore: 0, shortfallBefore: 4});
+  assert.strictEqual(expected.shortfallCleared, 4);
+  assert.strictEqual(outcome.response.goldGranted, 12, "выдано столько, сколько стоит пак");
+  assert.strictEqual(outcome.response.gold, 8, "а на баланс дошло за вычетом долга");
+  const byPath = Object.fromEntries(db.writes.map((write) => [write.path, write]));
+  assert.deepStrictEqual(byPath[USER_PATH].data, {uid: UID, gold: 8, [SHORTFALL_FIELD]: 0, updatedAtMs: NOW});
+  // Книга записывает настоящее движение баланса, а полная сумма и погашенный долг — в подробностях:
+  // иначе сумма строк перестала бы сходиться с балансом, и сверять по ней было бы нечего.
+  const ledger = byPath[LEDGER_ENTRY_PATH].data;
+  assert.strictEqual(ledger.delta, 8);
+  assert.strictEqual(ledger.details.goldGranted, 12);
+  assert.strictEqual(ledger.details.shortfallCleared, 4);
+  assert.strictEqual(ledger.details.shortfallAfter, 0);
+}
+
+async function testADebtBiggerThanTheGrantSwallowsItWholeAndLeavesNoLedgerRow() {
+  // Долг больше пака: баланс не двинулся, значит движения не было и строки в книге тоже.
+  const db = fakeDb({
+    docs: {
+      [USER_PATH]: {gold: 0, [SHORTFALL_FIELD]: 30},
+      [ECONOMY_CONSTANTS_DOC]: CONSTANTS_DOC,
+    },
+  });
+
+  const {outcome} = await settle({db, play: fakePlay(found())});
+
+  assert.strictEqual(outcome.response.gold, 0);
+  assert.strictEqual(db.writes.length, 4, "строки книги нет — баланс не двигался");
+  const byPath = Object.fromEntries(db.writes.map((write) => [write.path, write]));
+  assert.deepStrictEqual(byPath[USER_PATH].data, {uid: UID, gold: 0, [SHORTFALL_FIELD]: 18, updatedAtMs: NOW});
+  assert.strictEqual(byPath[LEDGER_ENTRY_PATH], undefined);
+}
+
 async function testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero() {
   const db = fakeDb({docs: {[USER_PATH]: {gold: 0}}});
 
@@ -352,13 +420,15 @@ async function testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero
 }
 
 (async () => {
-  await testAVerifiedTokenWritesExactlyFourDocumentsInOneTransaction();
+  await testAVerifiedTokenWritesEveryRecordOfTheCreditInOneTransaction();
   await testAKnownTokenIsAnsweredFromTheGateWithoutAskingPlay();
   await testATokenSettledBetweenTheGateAndTheTransactionReplaysAndWritesNothing();
   await testAPendingPurchaseWritesNothingAndIsNotAnError();
   await testEveryRefusalMapsToTheMatrixCodeAndWritesNothing();
   await testAnUnavailablePlayWritesNothingAndAsksTheClientToRetry();
   await testALostRaceOnCreateIsReportedAsUnavailableAndNothingIsWritten();
+  await testAnOwedBalanceIsClearedBeforeAnythingReachesTheBalance();
+  await testADebtBiggerThanTheGrantSwallowsItWholeAndLeavesNoLedgerRow();
   await testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero();
   console.log("purchase-settlement.test.js OK");
 })().catch((error) => {

@@ -11,8 +11,12 @@ import com.tpov.schoolquiz.shared.core.question_schema.OptionId
  */
 sealed interface UserAnswerDraft {
     data class SingleChoiceDraft(val selected: OptionId?) : UserAnswerDraft
+
     data class MultipleChoiceDraft(val selected: Set<OptionId>) : UserAnswerDraft
+
     data class OrderingDraft(val order: List<OptionId>) : UserAnswerDraft
+
     data class FillBlankDraft(val filled: Map<BlankId, CandidateId?>) : UserAnswerDraft
+
     data class SurveyDraft(val selected: Set<OptionId>) : UserAnswerDraft
 }

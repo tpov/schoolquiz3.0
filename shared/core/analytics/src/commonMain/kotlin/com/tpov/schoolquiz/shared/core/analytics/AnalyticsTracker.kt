@@ -18,7 +18,10 @@ interface AnalyticsTracker {
      * ever paid, which market they are in. Properties segment every later event, so they are set
      * once and left alone rather than re-set per screen.
      */
-    fun setUserProperty(property: UserProperty, value: String)
+    fun setUserProperty(
+        property: UserProperty,
+        value: String,
+    )
 
     /** Ties events to an account. Passing null detaches them, which is what logout must do. */
     fun setUserId(userId: String?)

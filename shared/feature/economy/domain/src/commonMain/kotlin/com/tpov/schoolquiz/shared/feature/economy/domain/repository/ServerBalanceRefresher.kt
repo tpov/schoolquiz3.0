@@ -12,7 +12,6 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.repository
  * the composition root is where the two meet.
  */
 interface ServerBalanceRefresher {
-
     /** Pulls the current balance. A failure leaves the old number on screen, nothing worse. */
     suspend fun refresh(): Result<Unit>
 }

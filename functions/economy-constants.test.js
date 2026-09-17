@@ -81,7 +81,7 @@ function testThePlasmaLadderCostsSixGoldInTotal() {
 function testTheServerDefaultsAreTheSharedFileVerbatim() {
   // Загрузочная копия на устройстве считает по этому же файлу (EconomyConstantsParityTest).
   // Разойдись они — игрок на новом устройстве увидел бы одну цену, а списали бы другую.
-  const shared = require("../config/economy-constants.json");
+  const shared = require("./config/economy-constants.json");
 
   assert.deepStrictEqual(readEconomyConstants(null), {
     version: shared.version,
@@ -142,7 +142,7 @@ function testAMissingGoldPacksSectionKeepsEveryKnownPackOnSale() {
 function testTheClientNeverSeesThePackSizes() {
   // Размеры паков — знание сервера: сумму называет он после проверки чека, а не клиент в запросе.
   // Белый список, а не «всё, кроме»: раздел, добавленный завтра, тоже не уедет сам по себе.
-  const shared = require("../config/economy-constants.json");
+  const shared = require("./config/economy-constants.json");
   const forClient = clientEconomyConstants(readEconomyConstants({goldPacks: {gold_pack_small: 999}}));
 
   assert.strictEqual("goldPacks" in forClient, false);

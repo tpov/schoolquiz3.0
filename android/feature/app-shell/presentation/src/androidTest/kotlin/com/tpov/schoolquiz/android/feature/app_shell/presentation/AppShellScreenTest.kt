@@ -53,8 +53,12 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
+import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
@@ -360,6 +364,17 @@ class AppShellScreenTest {
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
 
                 override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+            },
+            // Снимок здесь неподвижный: экран проверяется на вёрстку, а не на состояние очереди.
+            // Значения по умолчанию у этого параметра нет — забытая проводка не собирается.
+            syncStatusRepository = object : SyncStatusRepository {
+                override fun observeStatus(): Flow<SyncStatus> = MutableStateFlow(SyncStatus())
+
+                override suspend fun recordSuccess(kind: SyncRunKind, atMs: Long) = Unit
+
+                override suspend fun recordFailure(kind: SyncRunKind, error: SyncError, atMs: Long) = Unit
+
+                override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
             },
             myQuestsFactory = { _, _, _ ->
                 object : MyQuestsComponent {

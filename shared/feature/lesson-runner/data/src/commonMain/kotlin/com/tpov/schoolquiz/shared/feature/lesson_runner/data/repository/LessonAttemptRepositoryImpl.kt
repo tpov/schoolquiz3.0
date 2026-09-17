@@ -1,9 +1,9 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository
 
-import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionEntity
+import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.mapper.toDomain
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.mapper.toEntity
@@ -21,12 +21,13 @@ class LessonAttemptRepositoryImpl(
     private val outboxWriter: LessonResultOutboxWriter = LessonResultOutboxWriter.NoOp,
     private val repetitionDao: QuestionRepetitionDao? = null,
 ) : LessonAttemptRepository {
-
     override suspend fun save(attempt: Attempt): Result<Unit> =
         persist(attempt, emptyList(), served = null, claims = null)
 
-    override suspend fun save(attempt: Attempt, answers: List<AnsweredQuestion>): Result<Unit> =
-        persist(attempt, answers, served = null, claims = null)
+    override suspend fun save(
+        attempt: Attempt,
+        answers: List<AnsweredQuestion>,
+    ): Result<Unit> = persist(attempt, answers, served = null, claims = null)
 
     override suspend fun save(
         attempt: Attempt,
@@ -50,21 +51,22 @@ class LessonAttemptRepositoryImpl(
         answers: List<AnsweredQuestion>,
         served: List<ServedQuestion>?,
         claims: ChargeClaimMask?,
-    ): Result<Unit> = runCatching {
-        val answerEntities = answers.map { it.toEntity(attempt) }
-        val repetitionEntities = buildRepetitionStates(attempt, answers)
-        // Resolved before the transaction because it reads the lesson's ancestors; the row itself
-        // is written inside it, so the attempt can never be saved without being queued. The served
-        // list goes only into that row: the attempt row keeps its shape.
-        val outboxRow = outboxWriter.buildAttemptRow(attempt, answerEntities, served, claims)
+    ): Result<Unit> =
+        runCatching {
+            val answerEntities = answers.map { it.toEntity(attempt) }
+            val repetitionEntities = buildRepetitionStates(attempt, answers)
+            // Resolved before the transaction because it reads the lesson's ancestors; the row itself
+            // is written inside it, so the attempt can never be saved without being queued. The served
+            // list goes only into that row: the attempt row keeps its shape.
+            val outboxRow = outboxWriter.buildAttemptRow(attempt, answerEntities, served, claims)
 
-        attemptDao.saveAttemptWithAnswers(
-            attempt = attempt.toEntity(),
-            answers = answerEntities,
-            repetitions = repetitionEntities,
-            outboxRow = outboxRow,
-        )
-    }
+            attemptDao.saveAttemptWithAnswers(
+                attempt = attempt.toEntity(),
+                answers = answerEntities,
+                repetitions = repetitionEntities,
+                outboxRow = outboxRow,
+            )
+        }
 
     /**
      * Advances the repetition schedule for every answered question.
@@ -79,16 +81,18 @@ class LessonAttemptRepositoryImpl(
         val dao = repetitionDao ?: return emptyList()
         if (answers.isEmpty()) return emptyList()
 
-        val previous = dao
-            .findByQuestions(attempt.userId, answers.map { it.questionId.value })
-            .associateBy { it.questionId }
+        val previous =
+            dao
+                .findByQuestions(attempt.userId, answers.map { it.questionId.value })
+                .associateBy { it.questionId }
 
         return answers.map { answered ->
-            val next = SpacedRepetition.next(
-                previous = previous[answered.questionId.value]?.toDomain(),
-                score = answered.score,
-                answeredAtMs = answered.answeredAtMs,
-            )
+            val next =
+                SpacedRepetition.next(
+                    previous = previous[answered.questionId.value]?.toDomain(),
+                    score = answered.score,
+                    answeredAtMs = answered.answeredAtMs,
+                )
             next.toEntity(
                 userId = attempt.userId,
                 questionId = answered.questionId.value,
@@ -97,7 +101,10 @@ class LessonAttemptRepositoryImpl(
         }
     }
 
-    override fun observeByLesson(userId: String, lessonId: LessonId): Flow<List<Attempt>> =
+    override fun observeByLesson(
+        userId: String,
+        lessonId: LessonId,
+    ): Flow<List<Attempt>> =
         attemptDao.observeByLesson(userId, lessonId.value)
             .map { list -> list.map { it.toDomain() } }
 

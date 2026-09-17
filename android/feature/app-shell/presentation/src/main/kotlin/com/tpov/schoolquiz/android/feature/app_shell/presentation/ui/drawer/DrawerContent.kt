@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
@@ -37,6 +38,7 @@ fun DrawerContent(
     giftBoxCount: Int,
     onVersionTap: () -> Unit,
     onSyncNow: () -> Unit,
+    syncStatus: SyncStatus = SyncStatus(),
     onDismissQuizzes: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -82,6 +84,7 @@ fun DrawerContent(
             userStats = userStats,
             onVersionTap = onVersionTap,
             onSyncNow = onSyncNow,
+            syncStatus = syncStatus,
             onDismissQuizzes = onDismissQuizzes,
         )
     }

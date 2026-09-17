@@ -3,7 +3,10 @@ package com.tpov.schoolquiz.shared.feature.quest.domain.repository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestShelfChange
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestShelfSyncState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Domain boundary for reading, observing, and syncing [Quest]s.
@@ -21,7 +24,6 @@ import kotlinx.coroutines.flow.Flow
  *   Primary User Journeys 1, 2, 3, 7.
  */
 interface QuestRepository {
-
     /**
      * Observes quests authored by [authorUid].
      *
@@ -37,7 +39,10 @@ interface QuestRepository {
      *
      * Spec: FR#21, AC#47, Primary User Journey 7, Domain Test Scenario 26-27.
      */
-    fun observeMyQuests(authorUid: String, catalogId: CatalogId? = null): Flow<List<Quest>>
+    fun observeMyQuests(
+        authorUid: String,
+        catalogId: CatalogId? = null,
+    ): Flow<List<Quest>>
 
     /**
      * Observes public quests belonging to [catalogId] that are visible on [shelf].
@@ -54,7 +59,10 @@ interface QuestRepository {
      *
      * Spec: docs/features/quizzes-screen/plan/phase-01/backend.md, AC#1-4.
      */
-    fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>>
+    fun observeByCatalog(
+        catalogId: CatalogId,
+        shelf: String,
+    ): Flow<List<Quest>>
 
     /**
      * Observes archived quests from [catalogId] on [shelf] whose lesson questions
@@ -63,8 +71,10 @@ interface QuestRepository {
      * Used by the Courses/Home entry so users see only courses they downloaded,
      * while the Archive entry can still show the full downloadable catalog.
      */
-    fun observeDownloadedArchivedByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> =
-        observeByCatalog(catalogId, shelf)
+    fun observeDownloadedArchivedByCatalog(
+        catalogId: CatalogId,
+        shelf: String,
+    ): Flow<List<Quest>> = observeByCatalog(catalogId, shelf)
 
     /**
      * Observes quests where [visibleOn] contains [shelf].
@@ -95,16 +105,29 @@ interface QuestRepository {
     suspend fun refreshByIds(ids: Set<QuestId>): Result<Unit> = Result.success(Unit)
 
     /**
-     * Developer-only server operation that moves a public quest to exactly one shelf.
+     * Кладёт в очередь намерение перенести публичный квест на другую полку (AD-5, AD-6).
      *
-     * Server contract: updates `quests/{questId}.visibleOn = [targetShelf]`,
-     * bumps quest metadata, and writes one `catalogs/{catalogId}/sync_changes/quest_{questId}`
-     * record so clients refresh this single quest.
+     * Локальная строка квеста не меняется: полка — серверно-защищённое поле (AD-25). Сервер, приняв
+     * запись, пишет `quests/{questId}.visibleOn = [targetShelf]` и запись журнала
+     * `catalogs/{catalogId}/sync_changes/quest_{questId}`, по которой ближайшая синхронизация
+     * чтения и обновит локальную строку.
+     *
+     * Более раннее неотправленное намерение по тому же квесту снимается: очередь порядка не
+     * обещает (AD-27), и два переноса одного квеста доехали бы в произвольном порядке.
      */
-    suspend fun setPublicShelf(
+    suspend fun queueShelfChange(change: QuestShelfChange): Result<Unit> = Result.success(Unit)
+
+    /**
+     * Что очередь знает о переносе этого квеста — для пометки на карточке (AD-14, история 4.4).
+     *
+     * Ответ приходит из очереди по ссылке на сущность, а не из строки квеста: локально полка не
+     * меняется, и единственный след намерения — запись очереди. Карантин отличается от ожидания
+     * отдельным значением закрытого набора (AD-28).
+     */
+    fun observeShelfChangeState(
+        ownerUid: String,
         questId: QuestId,
-        targetShelf: String,
-    ): Result<Unit> = Result.success(Unit)
+    ): Flow<QuestShelfSyncState> = flowOf(QuestShelfSyncState.NONE)
 
     /**
      * Takes a published quest off every shelf. Server contract: `visibleOn = []` plus one

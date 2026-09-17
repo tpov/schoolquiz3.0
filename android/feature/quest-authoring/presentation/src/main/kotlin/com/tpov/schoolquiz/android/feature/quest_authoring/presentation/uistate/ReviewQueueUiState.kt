@@ -15,6 +15,16 @@ enum class ReviewQueueKindUi {
     TRANSLATION_REVIEW,
 }
 
+/**
+ * Что очередь знает про решение по заданию (AD-14). Карантин — не откат, а пометка: локальной
+ * половины у решения нет (AD-25), сервер ответил окончательно, и карточка говорит об этом словами.
+ */
+enum class ReviewAssignmentSyncUi {
+    NONE,
+    PENDING,
+    QUARANTINED,
+}
+
 enum class ReviewSegmentLabelKind {
     TEXT,
     OPTION,
@@ -38,7 +48,6 @@ data class ReviewQueueUiState(
     val detail: ReviewAssignmentDetailUiState? = null,
     val errorMessage: UiMessage? = null,
     val successMessage: UiMessage? = null,
-    val isSubmitting: Boolean = false,
 )
 
 data class ReviewAssignmentListItemUiState(
@@ -50,6 +59,7 @@ data class ReviewAssignmentListItemUiState(
     val testingScore: String?,
     val logicScore: String?,
     val translationScore: String?,
+    val syncState: ReviewAssignmentSyncUi = ReviewAssignmentSyncUi.NONE,
 )
 
 data class ReviewAssignmentDetailUiState(

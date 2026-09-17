@@ -23,10 +23,11 @@ sealed interface AnalyticsEvent {
     ) : AnalyticsEvent {
         override val name: String = "install_attributed"
         override val params: Map<String, AnalyticsValue>
-            get() = mapOf(
-                "referrer" to AnalyticsValue.Text(referrer),
-                "install_version" to AnalyticsValue.Text(installVersion),
-            )
+            get() =
+                mapOf(
+                    "referrer" to AnalyticsValue.Text(referrer),
+                    "install_version" to AnalyticsValue.Text(installVersion),
+                )
     }
 
     /** A lesson was opened for play. The top of the engagement funnel. */
@@ -36,10 +37,11 @@ sealed interface AnalyticsEvent {
     ) : AnalyticsEvent {
         override val name: String = "lesson_started"
         override val params: Map<String, AnalyticsValue>
-            get() = mapOf(
-                "lesson_id" to AnalyticsValue.Text(lessonId),
-                "difficulty" to AnalyticsValue.Text(difficulty),
-            )
+            get() =
+                mapOf(
+                    "lesson_id" to AnalyticsValue.Text(lessonId),
+                    "difficulty" to AnalyticsValue.Text(difficulty),
+                )
     }
 
     /** A lesson reached its result screen. [percent] is 0..100. */
@@ -51,12 +53,13 @@ sealed interface AnalyticsEvent {
     ) : AnalyticsEvent {
         override val name: String = "lesson_finished"
         override val params: Map<String, AnalyticsValue>
-            get() = mapOf(
-                "lesson_id" to AnalyticsValue.Text(lessonId),
-                "difficulty" to AnalyticsValue.Text(difficulty),
-                "percent" to AnalyticsValue.Count(percent.toLong()),
-                "stars" to AnalyticsValue.Count(stars.toLong()),
-            )
+            get() =
+                mapOf(
+                    "lesson_id" to AnalyticsValue.Text(lessonId),
+                    "difficulty" to AnalyticsValue.Text(difficulty),
+                    "percent" to AnalyticsValue.Count(percent.toLong()),
+                    "stars" to AnalyticsValue.Count(stars.toLong()),
+                )
     }
 
     /** A lesson was abandoned before the result screen. The other half of [LessonFinished]. */
@@ -66,10 +69,11 @@ sealed interface AnalyticsEvent {
     ) : AnalyticsEvent {
         override val name: String = "lesson_abandoned"
         override val params: Map<String, AnalyticsValue>
-            get() = mapOf(
-                "lesson_id" to AnalyticsValue.Text(lessonId),
-                "questions_answered" to AnalyticsValue.Count(questionsAnswered.toLong()),
-            )
+            get() =
+                mapOf(
+                    "lesson_id" to AnalyticsValue.Text(lessonId),
+                    "questions_answered" to AnalyticsValue.Count(questionsAnswered.toLong()),
+                )
     }
 
     /** The shop was opened. Without this the purchase rate has no denominator. */
@@ -99,11 +103,12 @@ sealed interface AnalyticsEvent {
     ) : AnalyticsEvent {
         override val name: String = "purchase_completed"
         override val params: Map<String, AnalyticsValue>
-            get() = mapOf(
-                "product_id" to AnalyticsValue.Text(productId),
-                "price_micros" to AnalyticsValue.Count(priceMicros),
-                "currency" to AnalyticsValue.Text(currency),
-            )
+            get() =
+                mapOf(
+                    "product_id" to AnalyticsValue.Text(productId),
+                    "price_micros" to AnalyticsValue.Count(priceMicros),
+                    "currency" to AnalyticsValue.Text(currency),
+                )
     }
 
     /** A purchase flow ended without a purchase. [reason] is a stable code, not a user message. */
@@ -113,10 +118,11 @@ sealed interface AnalyticsEvent {
     ) : AnalyticsEvent {
         override val name: String = "purchase_failed"
         override val params: Map<String, AnalyticsValue>
-            get() = mapOf(
-                "product_id" to AnalyticsValue.Text(productId),
-                "reason" to AnalyticsValue.Text(reason),
-            )
+            get() =
+                mapOf(
+                    "product_id" to AnalyticsValue.Text(productId),
+                    "reason" to AnalyticsValue.Text(reason),
+                )
     }
 
     /** A rewarded ad finished and the reward was granted. The ad-revenue denominator. */
@@ -144,7 +150,10 @@ sealed interface AnalyticsEvent {
  */
 sealed interface AnalyticsValue {
     data class Text(val value: String) : AnalyticsValue
+
     data class Count(val value: Long) : AnalyticsValue
+
     data class Amount(val value: Double) : AnalyticsValue
+
     data class Flag(val value: Boolean) : AnalyticsValue
 }

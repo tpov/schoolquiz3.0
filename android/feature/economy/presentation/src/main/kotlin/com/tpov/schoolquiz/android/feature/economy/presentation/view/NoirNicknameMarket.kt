@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
@@ -70,6 +71,7 @@ import com.tpov.schoolquiz.android.feature.economy.presentation.component.Nickna
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameShopState
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ListingCancelSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameRejection
@@ -397,6 +399,7 @@ private fun OwnedPanel(
                 OwnedNicknameRow(
                     owned = owned,
                     busy = state.processingNickname == owned.nickname,
+                    cancelSync = state.nicknameCancelSyncs[owned.nickname],
                     onWear = { onWear(owned.nickname) },
                     onList = { price -> onList(owned.nickname, price) },
                     onCancel = { onCancel(owned.nickname) },
@@ -416,6 +419,7 @@ private fun OwnedPanel(
 private fun OwnedNicknameRow(
     owned: OwnedNickname,
     busy: Boolean,
+    cancelSync: ListingCancelSync?,
     onWear: () -> Unit,
     onList: (Long) -> Unit,
     onCancel: () -> Unit,
@@ -456,8 +460,9 @@ private fun OwnedNicknameRow(
                 val meta =
                     when {
                         owned.active -> stringResource(R.string.nft_worn) to LocalNoirAccent.current
-                        owned.isForSale ->
-                            stringResource(R.string.nft_for_sale_price, owned.listedPrice ?: 0L) to NoirSuccess
+                        // The queue's word on the lot outranks the price: a removal that was
+                        // refused means the lot is gone, whatever the last refresh still shows.
+                        owned.isForSale -> cancelSyncMeta(cancelSync, owned.listedPrice ?: 0L)
                         else -> null
                     }
                 if (meta != null) {
@@ -467,6 +472,9 @@ private fun OwnedNicknameRow(
             when {
                 // Taking a lot down is offered even for the worn name: wearing one cancels its lot
                 // now, but an account that reached that state earlier needs a way out of it.
+                // A refused removal does not lock the button: the "already sold" word stays until
+                // the window refreshes, but the name may have been listed again since, and a new
+                // tap is what clears the old refusal.
                 owned.isForSale ->
                     MarketAction(
                         stringResource(R.string.nft_action_remove),
@@ -744,7 +752,10 @@ private fun OwnedLogoPanel(
                 OwnedLogoRow(
                     logo = logo,
                     worn = state.isWorn(logo.name),
-                    listing = state.logoListingsByName[logo.name],
+                    lot =
+                        state.logoListingsByName[logo.name]?.let {
+                            OwnLot(price = it.price, cancelSync = state.logoCancelSyncs[logo.name])
+                        },
                     busy = state.processingNickname == logo.name,
                     onWear = { onWear(logo.name) },
                     onList = { price -> onList(logo.name, price) },
@@ -767,7 +778,7 @@ private fun OwnedLogoPanel(
 private fun OwnedLogoRow(
     logo: ProfileLogo,
     worn: Boolean,
-    listing: LogoListing?,
+    lot: OwnLot?,
     busy: Boolean,
     onWear: () -> Unit,
     onList: (Long) -> Unit,
@@ -814,8 +825,7 @@ private fun OwnedLogoRow(
                 val meta =
                     when {
                         worn -> stringResource(R.string.nft_worn) to LocalNoirAccent.current
-                        listing != null ->
-                            stringResource(R.string.nft_for_sale_price, listing.price) to NoirSuccess
+                        lot != null -> cancelSyncMeta(lot.cancelSync, lot.price)
                         else -> null
                     }
                 if (meta != null) {
@@ -824,8 +834,9 @@ private fun OwnedLogoRow(
             }
             when {
                 // A logo can end up worn with its lot still up (an older state, like a name could);
-                // taking the lot down is the way out, and it stays offered.
-                listing != null ->
+                // taking the lot down is the way out, and it stays offered even after a refusal:
+                // the lot may have been listed again since, and a new tap clears the old refusal.
+                lot != null ->
                     MarketAction(
                         stringResource(R.string.nft_action_remove),
                         enabled = !busy,
@@ -850,14 +861,14 @@ private fun OwnedLogoRow(
                 }
             }
         }
-        if (worn && listing == null) {
+        if (worn && lot == null) {
             Text(
                 stringResource(R.string.nft_logo_worn_hint),
                 style = NoirType.rowSub.copy(color = NoirOutline),
                 modifier = Modifier.padding(bottom = 8.dp),
             )
         }
-        if (pricing && listing == null) {
+        if (pricing && lot == null) {
             PricingRow(
                 priceDraft = priceDraft,
                 onPriceChange = { priceDraft = it },
@@ -1131,3 +1142,26 @@ private fun SortLabel(
         modifier = Modifier.clickable { onSort(sort) }.padding(vertical = 6.dp),
     )
 }
+
+/**
+ * The line under a lot of yours: its price, or what the queue says about taking it down.
+ *
+ * Queued outranks the price because the price is about to stop mattering; refused outranks both
+ * because the lot is already somebody else's, whatever the last refresh still shows (AD-14).
+ */
+@Composable
+private fun cancelSyncMeta(
+    cancelSync: ListingCancelSync?,
+    price: Long,
+): Pair<String, Color> =
+    when (cancelSync) {
+        ListingCancelSync.REFUSED -> stringResource(R.string.nft_lot_sold) to NoirDanger
+        ListingCancelSync.QUEUED -> stringResource(R.string.nft_cancel_queued) to NoirTOff
+        null -> stringResource(R.string.nft_for_sale_price, price) to NoirSuccess
+    }
+
+/** A lot of yours as the row needs it: what it is up for, and what the queue says about taking it down. */
+private class OwnLot(
+    val price: Long,
+    val cancelSync: ListingCancelSync?,
+)

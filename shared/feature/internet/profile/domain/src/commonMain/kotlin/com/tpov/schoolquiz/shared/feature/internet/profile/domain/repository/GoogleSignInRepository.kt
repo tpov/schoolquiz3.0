@@ -13,4 +13,15 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.GoogleLi
  */
 interface GoogleSignInRepository {
     suspend fun linkGoogleAccount(host: AccountChooserHost): Result<GoogleLinkOutcome>
+
+    /**
+     * Доводит переключение, остановленное исходом [GoogleLinkOutcome.SwitchAwaitsConsent].
+     *
+     * Игрок согласился потерять неотправленное: вход выполняется, и следы прежнего владельца
+     * снимаются. Успех — [GoogleLinkOutcome.Switched]. Без ожидающего переключения — ошибка.
+     */
+    suspend fun confirmAccountSwitch(): Result<GoogleLinkOutcome>
+
+    /** Отказ: остаёмся в прежнем аккаунте, ничего не удалено, очередь продолжает обрабатываться. */
+    fun declineAccountSwitch()
 }

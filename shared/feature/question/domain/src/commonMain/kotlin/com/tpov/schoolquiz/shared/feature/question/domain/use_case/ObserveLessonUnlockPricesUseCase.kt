@@ -32,7 +32,6 @@ class ObserveLessonUnlockPricesUseCase(
     private val questionRepository: QuestionRepository,
     private val parser: QuestionContentParser,
 ) {
-
     /**
      * @param lessonIds уроки, чью цену нужно показать. Пустой список — пустая карта, без подписок.
      * @return цена в ноликах по идентификатору урока; урока без вопросов в карте нет.

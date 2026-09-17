@@ -43,6 +43,8 @@
     <string name="runner_result_kicker_easy">Урок пройдено · easy</string>
     <string name="runner_result_kicker_hard">Урок пройдено · hard</string>
     <string name="runner_result_save_warning">Результат не збережено — зникне під час наступної синхронізації</string>
+    <string name="runner_result_sync_not_sent">Ще не надіслано — піде під час наступної синхронізації</string>
+    <string name="runner_result_sync_quarantined">Не надіслано: це проходження до сервера не дійде. Синхронізація його не прийняла.</string>
     <string name="runner_result_best">Ваш найкращий %1$d%%</string>
     <string name="runner_result_again">Ще раз</string>
     <string name="runner_result_next">Далі →</string>

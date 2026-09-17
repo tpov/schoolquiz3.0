@@ -47,6 +47,10 @@
     <string name="qa_dest_arena">arena</string>
     <string name="qa_error_arena_missing_questions">Submission needs saved easy and hard questions in every lesson</string>
     <string name="qa_error_arena_enqueue_failed">Failed to queue the quest for the arena</string>
+    <string name="qa_error_arena_draft_missing">Draft not found</string>
+    <string name="qa_error_arena_draft_not_submittable">This quest is already submitted or waiting for a conflict to be resolved</string>
+    <string name="qa_error_arena_bad_shelf">A quest can only go to the arena or the archive</string>
+    <string name="qa_error_arena_foreign_lesson">One of the selected lessons belongs to another quest</string>
     <string name="qa_error_enter_quest_title">Enter the quest title</string>
     <string name="qa_error_enter_section_title">Enter the section title</string>
     <string name="qa_error_enter_theme_title">Enter the topic title</string>
@@ -103,7 +107,6 @@
     <string name="qa_review_no_translation">No translation</string>
     <string name="qa_review_accepted">Accepted</string>
     <string name="qa_review_submit">Submit</string>
-    <string name="qa_review_submitting">Submitting</string>
     <string name="qa_review_score_testing">Test: %1$s</string>
     <string name="qa_review_score_logic">Validation: %1$s</string>
     <string name="qa_review_score_translation">Translation: %1$s%%</string>
@@ -112,7 +115,9 @@
     <string name="qa_review_languages_review">review %1$s</string>
     <string name="qa_review_languages_none">languages not specified</string>
     <string name="qa_review_question_title">Question %1$d</string>
-    <string name="qa_review_submitted">Review submitted</string>
+    <string name="qa_review_queued">Review queued — it will be sent when online</string>
+    <string name="qa_review_sync_pending">Decision waiting to be sent</string>
+    <string name="qa_review_sync_quarantined">Decision not accepted: the assignment was closed or reassigned</string>
     <string name="qa_error_submit_review_failed">Failed to submit the review</string>
     <string name="qa_error_load_assignments_failed">Failed to load assignments</string>
     <string name="qa_error_choose_score">Choose a score from 1 to 3</string>
@@ -136,4 +141,11 @@
         <item quantity="one">%1$d question</item>
         <item quantity="other">%1$d questions</item>
     </plurals>
+
+    <string name="qa_conflict_banner">The quest moved to version %1$d on the server while your submission waited</string>
+    <string name="qa_conflict_banner_unknown_version">The server refused your submission as outdated but did not say which version the quest is on</string>
+    <string name="qa_conflict_unknown_version_hint">Your work is safe in the queue. Resubmitting becomes available once the quest arrives from the server with its version.</string>
+    <string name="qa_conflict_resubmit">Resubmit on top of version %1$d</string>
+    <string name="qa_conflict_resubmitted">Resubmitted on top of version %1$d</string>
+    <string name="qa_conflict_resolve_failed">Failed to resubmit the quest</string>
 </resources>

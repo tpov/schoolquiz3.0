@@ -63,6 +63,8 @@ class PlaceholderQuestCreateComponent(
 
     override fun onSubmitNodeToArenaLongClick(target: QuestArenaTargetNode) = Unit
 
+    override fun onResubmitOverServerVersionClick() = Unit
+
     override fun onQuestionsClick(difficulty: Difficulty) = Unit
 
     override fun onQuestionSelected(index: Int) = Unit

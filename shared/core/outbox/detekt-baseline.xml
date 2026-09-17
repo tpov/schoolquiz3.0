@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:OutboxPolicy.kt$OutboxLimits$1000</ID>
+    <ID>MagicNumber:OutboxPolicy.kt$OutboxLimits$24</ID>
+    <ID>MagicNumber:OutboxPolicy.kt$OutboxLimits$60</ID>
+    <ID>MagicNumber:OutboxPolicy.kt$OutboxLimits$60L</ID>
+    <ID>MagicNumber:OutboxPolicy.kt$OutboxLimits$7L</ID>
+    <ID>ReturnCount:AccountSwitchGuard.kt$AccountSwitchGuard$suspend fun flushBefore(uid: String): SwitchReadiness</ID>
+    <ID>ReturnCount:OutboxEngine.kt$OutboxEngine$private suspend fun step( record: OutboxRecord, nowMs: Long, ): StepOutcome</ID>
+    <ID>ReturnCount:OutboxPolicy.kt$OutboxPolicy$fun onFailure( record: OutboxRecord, error: SyncError, nowMs: Long, ): OutboxDecision</ID>
+  </CurrentIssues>
+</SmellBaseline>

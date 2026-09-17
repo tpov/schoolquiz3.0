@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthReposi
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -49,6 +51,7 @@ class DefaultMyQuestsComponent(
     private val authRepo: AuthRepository,
     private val observeMyQuests: ObserveMyQuestsUseCase,
     private val observeDraftSummaries: ObserveQuestDraftSummariesUseCase,
+    private val openQuestDraft: OpenQuestDraftUseCase,
     private val observeCatalogs: ObserveCatalogsUseCase,
     private val navigator: Navigator,
     private val onQuestDrillDown: (QuestDisplayItem) -> Unit = {},
@@ -137,8 +140,24 @@ class DefaultMyQuestsComponent(
         onQuestDrillDown(quest)
     }
 
+    /**
+     * Открыть выбранный черновик.
+     *
+     * Раньше отсюда уходил только переход на экран создания, а сам `draft` не использовался — и
+     * редактор открывал тот черновик, который случайно числился активным. С двумя черновиками
+     * автор попадал не туда, куда нажал, и ничем не мог это заметить.
+     *
+     * Переход делается после того, как выбор записан: экран читает активный черновик при
+     * открытии, и уйти на него раньше значит снова показать прежний.
+     */
     override fun onDraftClick(draft: DraftQuestDisplayItem) {
-        navigator.goTo(Destination.OpenQuestCreate)
+        scope.launch {
+            val uid = authRepo.currentUid()
+            if (uid != null) {
+                openQuestDraft(ownerUid = uid, draftId = draft.id)
+            }
+            navigator.goTo(Destination.OpenQuestCreate)
+        }
     }
 
     private class SelectedCatalogHolder : InstanceKeeper.Instance {
@@ -156,4 +175,5 @@ private fun QuestDraftSummary.toDisplayItem(): DraftQuestDisplayItem =
         status = status,
         questionCount = questionCount,
         isActive = isActive,
+        rejectionReason = rejectionReason,
     )

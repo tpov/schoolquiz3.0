@@ -47,4 +47,3 @@ interface SyncScheduler {
     /** Same contract as [applyFrequency], but for the profile's own, typically rarer cadence. */
     fun applyProfileFrequency(frequency: SyncFrequency)
 }
-

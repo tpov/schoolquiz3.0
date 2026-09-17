@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:Title.kt$Title.AMATEUR$20_000</ID>
+    <ID>MagicNumber:Title.kt$Title.AMATEUR$49_999</ID>
+    <ID>MagicNumber:Title.kt$Title.EXPERT$500_000</ID>
+    <ID>MagicNumber:Title.kt$Title.EXPERT$999_999</ID>
+    <ID>MagicNumber:Title.kt$Title.JUNIOR$100_000</ID>
+    <ID>MagicNumber:Title.kt$Title.JUNIOR$149_999</ID>
+    <ID>MagicNumber:Title.kt$Title.LEGEND$1_000_000</ID>
+    <ID>MagicNumber:Title.kt$Title.NOVICE$1_000</ID>
+    <ID>MagicNumber:Title.kt$Title.NOVICE$2_999</ID>
+    <ID>MagicNumber:Title.kt$Title.PLAYER$10_000</ID>
+    <ID>MagicNumber:Title.kt$Title.PLAYER$19_999</ID>
+    <ID>MagicNumber:Title.kt$Title.RECRUIT$999</ID>
+    <ID>MagicNumber:Title.kt$Title.SCRABBLE$50_000</ID>
+    <ID>MagicNumber:Title.kt$Title.SCRABBLE$99_999</ID>
+    <ID>MagicNumber:Title.kt$Title.SENIOR$300_000</ID>
+    <ID>MagicNumber:Title.kt$Title.SENIOR$499_999</ID>
+    <ID>MagicNumber:Title.kt$Title.TEACHER$150_000</ID>
+    <ID>MagicNumber:Title.kt$Title.TEACHER$299_999</ID>
+    <ID>MagicNumber:Title.kt$Title.TEACHINGS$3_000</ID>
+    <ID>MagicNumber:Title.kt$Title.TEACHINGS$9_999</ID>
+    <ID>ReturnCount:AppShellTransitions.kt$fun onBack(state: AppShellState): TransitionResult</ID>
+    <ID>ReturnCount:AppShellTransitions.kt$fun onSelectSection( state: AppShellState, section: DrawerSection, ): TransitionResult</ID>
+    <ID>ReturnCount:AppShellTransitions.kt$private fun popCurrentTabStack(state: AppShellState): AppShellState?</ID>
+    <ID>ReturnCount:AppShellTransitions.kt$private fun pushTournamentChild( state: AppShellState, event: DrawerSection.EventsSection, child: EventsConfig?, ): TransitionResult</ID>
+  </CurrentIssues>
+</SmellBaseline>

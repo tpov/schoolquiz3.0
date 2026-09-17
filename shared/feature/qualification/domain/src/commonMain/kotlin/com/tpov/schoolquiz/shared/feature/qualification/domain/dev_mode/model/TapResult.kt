@@ -15,7 +15,6 @@ package com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model
  * - [Reset]: tap arrived after timeout (elapsed > resetThresholdMillis). Count reset to 1.
  */
 sealed interface TapResult {
-
     val newProgress: TapProgress
 
     /** Tap registered. Sequence continues. [newProgress.count] = previous count + 1. */

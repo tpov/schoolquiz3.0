@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -52,17 +53,18 @@ class SectionRepositoryImplTest {
         assertEquals(setOf(SectionId("s1")), result.getOrThrow())
     }
 
-    // Matrix 2.3: section archived + newer version → deleted locally
+    // AC 7.6 / AD-26: `archived` СКРЫВАЕТ узел, а не стирает. Прежде здесь стояло `deleted`, и
+    // архивация уносила у игрока скачанное вместе с прогрессом по каскаду FK.
     @Test
-    fun `when section archived and newer version then deleted`() = runTest {
+    fun `when section archived and newer version then hidden but kept`() = runTest {
         fakeLocal.seed(listOf(makeEntity("s1", version = 1L)))
         fakeRemote.result = listOf(makeDto("s1", version = 2L, archived = true))
 
         val result = repository.refreshByParents(questIds, 0L)
 
         assertTrue(result.isSuccess)
-        assertTrue(fakeLocal.deletedIds.contains("s1"))
-        assertNull(fakeLocal.findById("s1"))
+        assertTrue(fakeLocal.deletedIds.isEmpty(), "archived скрывает узел, а не удаляет его (AD-26)")
+        assertNotNull(fakeLocal.findById("s1"))
     }
 
     // Matrix 2.5: dto.version == local.version → upsert called but entity not overwritten

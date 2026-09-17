@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
  * нарисовал витрину.
  */
 interface EconomyConstantsRepository {
-
     /** Текущая таблица. До первой удачной синхронизации — загрузочная копия. */
     fun observe(): Flow<EconomyConstants>
 

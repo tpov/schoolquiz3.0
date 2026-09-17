@@ -55,6 +55,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 buildUponDefaultConfig = true
                 allRules = false
                 config.setFrom(rootProject.files("config/detekt/detekt.yml"))
+                baseline = file("detekt-baseline.xml")
             }
 
             extensions.configure<KtlintExtension> {

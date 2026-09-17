@@ -6,6 +6,8 @@ import com.tpov.schoolquiz.shared.core.catalog.data.fake.FakeCatalogUrlResolver
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.persistence.CatalogEntity
 import com.tpov.schoolquiz.shared.core.catalog.data.fake.FakeSyncStateRepository
+import com.tpov.schoolquiz.shared.core.sync.SYNC_PAGE_SIZE
+import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -155,19 +157,59 @@ class CatalogRepositoryImplTest {
         assertNull(catalog)
     }
 
-    // AC#7: cursor=0 → fetchChangedSince called with 0 (first sync)
+    // AC#7: первый проход читает с начала — парой, а не одним числом (AD-31)
     @Test
-    fun `when cursor 0 then fetchChangedSince called with 0`() = runTest {
+    fun `when cursor 0 then fetchChangedSince called from the beginning`() = runTest {
         fakeRemote.result = Result.success(emptyList())
 
         repository.refreshFromRemote()
 
-        assertEquals(0L, fakeRemote.lastCursor)
+        assertEquals(SyncCursor.BEGINNING, fakeRemote.lastCursor)
+    }
+
+    @Test
+    fun `given a saved cursor then both halves of the pair go to the query`() = runTest {
+        // Прежде уходило одно `changedAtMs`, и вторая половина пары терялась: каталог, изменённый
+        // в ту же миллисекунду, не попадал в список никогда (AD-31).
+        fakeSyncState.setCursor("catalogs", SyncCursor(500L, "cat-7"))
+        fakeLocal.seed(
+            listOf(CatalogEntity(id = "cat-7", name = "Был", picturePath = null, pictureUrl = null, version = 1L, lastModifiedAt = 500L)),
+        )
+        fakeRemote.result = Result.success(emptyList())
+
+        repository.refreshFromRemote()
+
+        assertEquals(SyncCursor(500L, "cat-7"), fakeRemote.lastCursor)
+    }
+
+    @Test
+    fun `given a page as big as the limit then the next page is asked for`() = runTest {
+        // Выборка ограничена страницей: прежде `limit` не было вовсе, и на первом запуске
+        // вычитывалась вся коллекция `catalogs` одним ответом (AD-31).
+        fakeRemote.pagesFromCursor = true
+        fakeRemote.result = Result.success(
+            (1..SYNC_PAGE_SIZE + 3).map {
+                CatalogDto(
+                    id = "c-" + it.toString().padStart(4, '0'),
+                    name = "Каталог $it",
+                    picturePath = null,
+                    version = 1L,
+                    lastModifiedAt = it.toLong(),
+                    archived = false,
+                )
+            },
+        )
+
+        repository.refreshFromRemote()
+
+        assertEquals(2, fakeRemote.fetchChangedSinceCalls, "полная страница — повод зайти снова")
+        assertEquals(SYNC_PAGE_SIZE, fakeRemote.lastLimit)
+        assertNotNull(fakeLocal.findById("c-0203"), "остаток страницы обязан доехать этим же проходом")
     }
 
     @Test
     fun `when local catalogs empty then refresh uses full cursor to self heal`() = runTest {
-        fakeSyncState.setCursor("catalogs", 500L)
+        fakeSyncState.setCursor("catalogs", SyncCursor(500L, "что-то"))
         fakeLocal.seed(emptyList())
         fakeRemote.result = Result.success(
             listOf(
@@ -184,7 +226,7 @@ class CatalogRepositoryImplTest {
 
         repository.refreshFromRemote()
 
-        assertEquals(0L, fakeRemote.lastCursor)
+        assertEquals(SyncCursor.BEGINNING, fakeRemote.lastCursor)
         assertNotNull(fakeLocal.findById("courses"))
     }
 
@@ -206,9 +248,10 @@ class CatalogRepositoryImplTest {
         assertEquals(1, fakeLocal.upsertCallsFor["c3"] ?: 0)
     }
 
-    // AC#8: dto.archived=true + local exists + newer version → deleted locally
+    // AC 7.6 / AD-26: `archived` СКРЫВАЕТ каталог. Удаление строки каталога каскадит по FK через
+    // квесты, секции, темы и уроки до вопросов — архивация уносила весь скачанный курс.
     @Test
-    fun `when dto archived true and version newer then deleted`() = runTest {
+    fun `when dto archived true and version newer then hidden but kept`() = runTest {
         fakeLocal.seed(
             listOf(CatalogEntity(id = "c1", name = "Original", picturePath = null, pictureUrl = null, version = 2L)),
         )
@@ -218,8 +261,9 @@ class CatalogRepositoryImplTest {
 
         repository.refreshFromRemote()
 
-        assertTrue(fakeLocal.deletedIds.contains("c1"))
-        assertNull(fakeLocal.findById("c1"))
+        assertTrue(fakeLocal.deletedIds.isEmpty(), "archived скрывает каталог, а не удаляет его")
+        assertNotNull(fakeLocal.findById("c1"))
+        assertTrue(fakeLocal.findById("c1")?.archived == true, "строка обязана стать скрытой")
     }
 
     // Matrix 1.2: dto.archived=false, absent locally → inserted
@@ -394,7 +438,7 @@ class CatalogRepositoryImplTest {
         val result = repository.refreshFromRemote()
 
         assertTrue(result.isSuccess)
-        assertEquals(0L, fakeSyncState.getCursor("catalogs"))
+        assertEquals(0L, fakeSyncState.getCursor("catalogs").changedAtMs)
         assertTrue(fakeSyncState.setCursorCalls.isEmpty())
     }
 
@@ -405,7 +449,7 @@ class CatalogRepositoryImplTest {
 
         repository.refreshFromRemote()
 
-        assertEquals(0L, fakeSyncState.getCursor("catalogs"))
+        assertEquals(0L, fakeSyncState.getCursor("catalogs").changedAtMs)
         assertTrue(fakeSyncState.setCursorCalls.isEmpty())
     }
 
@@ -417,7 +461,7 @@ class CatalogRepositoryImplTest {
         val result = repository.refreshFromRemote()
 
         assertTrue(result.isFailure)
-        assertEquals(0L, fakeSyncState.getCursor("catalogs"))
+        assertEquals(0L, fakeSyncState.getCursor("catalogs").changedAtMs)
         assertTrue(fakeSyncState.setCursorCalls.isEmpty())
     }
 }

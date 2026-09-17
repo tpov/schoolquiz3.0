@@ -16,7 +16,6 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface QuestionContent : QuestionDisplay {
-
     /** Always present here, narrowing [QuestionDisplay.id], which a redacted payload may omit. */
     override val id: String
 
@@ -129,8 +128,12 @@ sealed interface QuestionContent : QuestionDisplay {
             require(id.isNotBlank()) { "MultipleChoice.id must not be blank" }
             require(text.isNotBlank()) { "MultipleChoice.text must not be blank" }
             require(options.size in 2..8) { "MultipleChoice.options.size must be in 2..8, got ${options.size}" }
-            require(options.map { it.id }.toSet().size == options.size) { "MultipleChoice.options must have unique ids" }
-            require(correctOptionIds.size >= 2) { "MultipleChoice.correctOptionIds.size must be >= 2, got ${correctOptionIds.size}" }
+            require(
+                options.map { it.id }.toSet().size == options.size,
+            ) { "MultipleChoice.options must have unique ids" }
+            require(correctOptionIds.size >= 2) {
+                "MultipleChoice.correctOptionIds.size must be >= 2, got ${correctOptionIds.size}"
+            }
             val optionIds = options.map { it.id }.toSet()
             require(correctOptionIds.all { it in optionIds }) {
                 "MultipleChoice.correctOptionIds must all be in options, got missing: ${correctOptionIds - optionIds}"
@@ -193,7 +196,9 @@ sealed interface QuestionContent : QuestionDisplay {
             require(candidates.size == 5 || candidates.size == 10) {
                 "FillBlank.candidates.size must be 5 or 10, got ${candidates.size}"
             }
-            require(candidates.map { it.id }.toSet().size == candidates.size) { "FillBlank.candidates must have unique ids" }
+            require(
+                candidates.map { it.id }.toSet().size == candidates.size,
+            ) { "FillBlank.candidates must have unique ids" }
             require(blanks.map { it.id }.toSet().size == blanks.size) { "FillBlank.blanks must have unique ids" }
             val candidateIds = candidates.map { it.id }.toSet()
             require(blanks.all { it.correctCandidateId in candidateIds }) {

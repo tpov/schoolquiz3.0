@@ -19,7 +19,6 @@ import kotlin.math.roundToLong
  * общий набор фикстур.
  */
 object UnlockPricing {
-
     /** Что именно покупается. */
     enum class Kind {
         /** Урок целиком: обе сложности, потому что открывает обе. */
