@@ -1,0 +1,38 @@
+# Firebase-эмуляторы SchoolQuiz MVP. Данные и инструменты лежат в /srv
+# (исключённые каталоги, см. DISK-MAP) и подключаются bind-монтированием.
+# Запуск: docker compose -f deploy/docker-compose.yml up -d
+services:
+  mvp-firebase:
+    image: node@sha256:813a7480f28fdadac1f7f5c824bcdad435b5bc1322a5968bbbdef8d058f9dff4
+    container_name: schoolquiz-mvp-firebase
+    entrypoint: docker-entrypoint.sh
+    command: ["/tools/firebase-cli/node_modules/.bin/firebase","emulators:start",
+      "--config","/repo/firebase.mvp.json","--project","demo-schoolquiz-mvp",
+      "--only","auth,firestore,functions","--non-interactive",
+      "--import","/tools/firebase-import",
+      "--export-on-exit","/tools/firebase-output-root/export"]
+    restart: "no"
+
+  tz06c-e2e:
+    image: node@sha256:813a7480f28fdadac1f7f5c824bcdad435b5bc1322a5968bbbdef8d058f9dff4
+    container_name: schoolquiz-tz06c-full-1xsjgy
+    entrypoint: docker-entrypoint.sh
+    command: ["/tools/firebase-cli/node_modules/.bin/firebase","emulators:start",
+      "--config","/repo/firebase.mvp.json","--project","demo-schoolquiz-mvp",
+      "--only","auth,firestore,functions","--non-interactive",
+      "--import","/tools/firebase-import",
+      "--export-on-exit","/tools/firebase-output-root/export"]
+    ports:
+      - "127.0.0.1:15001:5001"
+      - "127.0.0.1:18080:8080"
+      - "127.0.0.1:19099:9099"
+    volumes:
+      - "/srv/schoolquiz-mvp-tools-20260906/tz06c-full-e2e.1xsjgy/import:/tools/firebase-import:ro"
+      - "/srv/schoolquiz-mvp-tools-20260906/tz06c-full-e2e.1xsjgy/output-final:/tools/firebase-output-root"
+      - "/srv/schoolquiz-mvp-tools-20260906/tz06c-full-e2e.1xsjgy/runtime:/tmp"
+      - "/srv/schoolquiz-mvp-tools-20260906/tz06c-full-e2e.1xsjgy/worktree:/repo:ro"
+      - "/srv/schoolquiz-mvp-20260906/integration/functions/node_modules:/repo/functions/node_modules:ro"
+      - "/srv/schoolquiz-mvp-tools-20260906/firebase-cli:/tools/firebase-cli:ro"
+      - "/srv/schoolquiz-mvp-tools-20260906/jdk21:/tools/jdk21:ro"
+      - "/srv/schoolquiz-mvp-tools-20260906/firebase-emulators:/tools/firebase-emulators:ro"
+    restart: "no"
