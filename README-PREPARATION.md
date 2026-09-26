@@ -47,3 +47,8 @@ Android SDK и выполните `ANDROID_HOME=/path/to/sdk JAVA_HOME=/path/to/
 до Gradle-сборки. После переноса обновите `sdk.dir` в `local.properties`
 под новый Android SDK либо задайте `ANDROID_HOME`; не переносите чужой Firebase
 проект в тестовую среду. Приватные файлы должны иметь доступ только владельца.
+
+После `scripts/transfer.py restore` перенастройте только машинный путь SDK:
+`ANDROID_HOME=/path/to/sdk python3 scripts/prepare-android-config.py`.
+Скрипт сохраняет все прочие приватные параметры `local.properties`, задаёт
+права 0600 и не выводит их значения. При отсутствии файла он создаёт его.
