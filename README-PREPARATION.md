@@ -21,3 +21,22 @@ This is the canonical SchoolQuiz product root. `sq-merge` is a linked worktree, 
 внешний `/srv/schoolquiz-mvp-20260906/integration` после переноса не нужен
 для восстановления истории этого репозитория. Ветки архивов доступны в
 `refs/archive/integration/*` и `refs/archive/worktrees/*`.
+
+### Исторические исходники и проверка Android
+
+Основной переносимый исходник — Git этой папки. Все ветки прежнего
+`/srv/schoolquiz-mvp-20260906/integration`, снимки связанных worktree и
+28 ранее недостижимых commits доступны под `refs/archive/integration/*`.
+Их несохранённые правки и untracked-файлы лежат в закрытом
+`.local/history/worktrees-20260926`, в том числе manifest с исходными путями.
+Полный прежний `.git` со всеми dangling blob/tree сохранён в
+`.local/history/original-integration-git-20260926.tar.zst`. Игнорируемые файлы
+внешних worktree, включая потенциально уникальные Kotlin-тесты, сохранены
+в `.local/history/ignored-worktrees-20260926/*.tar.zst`; списки файлов рядом.
+Исторические архивы входят в закрытый `scripts/transfer.py export` и не должны
+публиковаться в Git.
+
+Для воспроизводимой проверки основного Android-приложения установите JDK 17,
+Android SDK и выполните `ANDROID_HOME=/path/to/sdk JAVA_HOME=/path/to/jdk17
+./gradlew :apps:android-next:assembleDebug --no-daemon`. `local.properties`
+создаётся локально при необходимости и никогда не входит в Git/образ.
