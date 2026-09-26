@@ -5,7 +5,7 @@
 - Candidate: `/workspace/projects/schoolquiz3.0-mvp-candidate`
 - Branch: `continuation/mvp-candidate-20260926`
 - Starting HEAD for this spike: `066651c2fe51ff589e3ce218438f205ac4dbb077`
-- Result commit and ending HEAD: `9e08858471b183384937d42548eea09539f51347` (`build(spike): isolate AGP 9 Room/KSP proof`). This is an experimental commit on the candidate branch, not a promotion to the main project.
+- Result commit and ending HEAD: `0ff9481e851b4731b37cebaf599662d272218684` (`build(spike): isolate AGP 9 Room/KSP proof`). This is an experimental commit on the candidate branch, not a promotion to the main project.
 - The existing lesson-runner performance changes and JDK/Gradle changes were already dirty before this spike and are not included in its commit.
 
 ## Scope and changes
