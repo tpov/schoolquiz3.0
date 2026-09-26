@@ -40,3 +40,10 @@ This is the canonical SchoolQuiz product root. `sq-merge` is a linked worktree, 
 Android SDK и выполните `ANDROID_HOME=/path/to/sdk JAVA_HOME=/path/to/jdk17
 ./gradlew :apps:android-next:assembleDebug --no-daemon`. `local.properties`
 создаётся локально при необходимости и никогда не входит в Git/образ.
+
+Для debug Android-сборки требуется собственный
+`apps/android-next/google-services.json`. Он исключён из Git, включён в
+закрытый export/restore вместе с `local.properties` и должен быть восстановлен
+до Gradle-сборки. После переноса обновите `sdk.dir` в `local.properties`
+под новый Android SDK либо задайте `ANDROID_HOME`; не переносите чужой Firebase
+проект в тестовую среду. Приватные файлы должны иметь доступ только владельца.

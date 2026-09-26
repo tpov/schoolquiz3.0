@@ -1,5 +1,7 @@
 {
   "paths": [
-    "@project/.local"
+    "@project/.local",
+    "@project/apps/android-next/google-services.json",
+    "@project/local.properties"
   ]
 }
