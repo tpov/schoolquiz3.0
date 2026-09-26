@@ -18,7 +18,12 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoeffi
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 
 /**
@@ -38,6 +43,7 @@ class StartLessonAttemptUseCase(
     private val clock: Clock,
     private val randomSeedProvider: () -> Long,
     private val timerCoefficients: TimerCoefficients = TimerCoefficients.Default,
+    private val preparationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     suspend operator fun invoke(
         lessonId: LessonId,
@@ -53,61 +59,22 @@ class StartLessonAttemptUseCase(
                 ?: return RunnerState.InitFailed(InitFailureReason.LessonNotFound)
 
         val questions = questionRepository.observeByLesson(lessonId).first()
-        val activeQuestions =
-            questions
-                .filter { !it.archived }
-                .dedupeTranslatedVariants()
-
-        val parsed = activeQuestions.map { q -> parser.readForRunner(q, mode) }
-
-        val valids = parsed.filterIsInstance<ParsedQuestion.Playable>().map { it.question }
-
-        // Only the redacted questions that could plausibly have been played at this difficulty.
-        // A redacted question that definitely belongs to the other pool explains nothing about why
-        // this one is empty, and counting it would make an easy-only lesson opened as hard blame
-        // redaction for what is simply an absence of hard questions.
-        val redactedForMode =
-            parsed
-                .filterIsInstance<ParsedQuestion.Redacted>()
-                .count { it.difficulty == mode || it.difficulty == null }
-
-        // Priority 1: active questions exist, none is playable, and none of the unplayable ones was
-        // redacted into this pool — so the payloads really are broken. The `redactedForMode == 0`
-        // guard is what makes a lesson mixing broken and redacted payloads report the redaction
-        // instead: a removed answer key is the more specific and the more actionable fact.
-        if (activeQuestions.isNotEmpty() && valids.isEmpty() && redactedForMode == 0) {
-            return RunnerState.InitFailed(InitFailureReason.NoValidQuestions)
-        }
-
-        val eligible = valids.filter { it.content.difficulty == mode }
-
-        // Priority 2: nothing left to play at this difficulty, and questions that might have filled
-        // it were withheld. Sits above EmptyPool because "there are none for this difficulty" is
-        // true but says nothing, when the reason there are none is that their answer keys were
-        // removed.
-        if (eligible.isEmpty() && redactedForMode > 0) {
-            return RunnerState.InitFailed(InitFailureReason.RedactedNotSupported)
-        }
-
-        // Priority 3: no eligible questions for selected difficulty
-        if (eligible.isEmpty()) {
-            return RunnerState.InitFailed(InitFailureReason.EmptyPool)
-        }
-
-        // Assign codeAnswerIndex per sorted eligible position (full pool, not subset)
-        val sorted = eligible.sortedWith(compareBy({ it.order }, { it.sourceId.value }))
-        val indexed = sorted.mapIndexed { idx, rq -> rq.copy(codeAnswerIndex = idx) }
+        val preparation = withContext(preparationDispatcher) { prepareQuestionPool(questions, mode, parser) }
+        val indexed =
+            when (preparation) {
+                is QuestionPoolPreparation.Failed -> return RunnerState.InitFailed(preparation.reason)
+                is QuestionPoolPreparation.Ready -> preparation.indexedQuestions
+            }
         val eligibleSize = indexed.size
 
         // Random subset (deterministic via seed)
         val seed = randomSeedProvider()
-        val subset = selectSubset(indexed, POOL_SIZE, seed)
-
-        // Random play order: selectSubset already shuffles via seed, keep the random order
-        // for question presentation. codeAnswerIndex on each item preserves stable code position.
-        val playOrder = subset
-
-        val initialCodeAnswer = CodeAnswer("0".repeat(eligibleSize))
+        val (playOrder, initialCodeAnswer) =
+            withContext(preparationDispatcher) {
+                // Random play order: selectSubset already shuffles via seed, keep the random order
+                // for question presentation. codeAnswerIndex preserves stable code position.
+                selectSubset(indexed, POOL_SIZE, seed) to CodeAnswer("0".repeat(eligibleSize))
+            }
 
         val nowMs = clock.now().toEpochMilliseconds()
         val firstDuration = computeTimer(playOrder.first().content, mode, timerCoefficients, sessionMode)
@@ -135,6 +102,60 @@ class StartLessonAttemptUseCase(
         const val POOL_SIZE = 20
     }
 }
+
+private sealed interface QuestionPoolPreparation {
+    data class Ready(val indexedQuestions: List<RunnerQuestion.Valid>) : QuestionPoolPreparation
+
+    data class Failed(val reason: InitFailureReason) : QuestionPoolPreparation
+}
+
+private suspend fun prepareQuestionPool(
+    questions: List<Question>,
+    mode: Difficulty,
+    parser: QuestionContentParser,
+): QuestionPoolPreparation {
+    val coroutineContext = currentCoroutineContext()
+    coroutineContext.ensureActive()
+    val activeQuestions = questions.filter { !it.archived }.dedupeTranslatedVariants()
+    coroutineContext.ensureActive()
+
+    val parsed = ArrayList<ParsedQuestion>(activeQuestions.size)
+    activeQuestions.forEachIndexed { index, question ->
+        if (index % PREPARATION_CANCELLATION_CHECK_INTERVAL == 0) coroutineContext.ensureActive()
+        parsed += parser.readForRunner(question, mode)
+    }
+    coroutineContext.ensureActive()
+
+    val valids = parsed.filterIsInstance<ParsedQuestion.Playable>().map { it.question }
+
+    // Only redacted questions that could plausibly have been played at this difficulty count.
+    val redactedForMode =
+        parsed
+            .filterIsInstance<ParsedQuestion.Redacted>()
+            .count { it.difficulty == mode || it.difficulty == null }
+
+    // Preserve failure priority: broken payloads are more actionable than a genuinely empty pool.
+    if (activeQuestions.isNotEmpty() && valids.isEmpty() && redactedForMode == 0) {
+        return QuestionPoolPreparation.Failed(InitFailureReason.NoValidQuestions)
+    }
+
+    val eligible = valids.filter { it.content.difficulty == mode }
+    if (eligible.isEmpty() && redactedForMode > 0) {
+        return QuestionPoolPreparation.Failed(InitFailureReason.RedactedNotSupported)
+    }
+    if (eligible.isEmpty()) {
+        return QuestionPoolPreparation.Failed(InitFailureReason.EmptyPool)
+    }
+
+    // Assign codeAnswerIndex per sorted eligible position (full pool, not subset).
+    val sorted = eligible.sortedWith(compareBy({ it.order }, { it.sourceId.value }))
+    coroutineContext.ensureActive()
+    val indexed = sorted.mapIndexed { index, question -> question.copy(codeAnswerIndex = index) }
+    coroutineContext.ensureActive()
+    return QuestionPoolPreparation.Ready(indexed)
+}
+
+private const val PREPARATION_CANCELLATION_CHECK_INTERVAL = 64
 
 private fun List<Question>.dedupeTranslatedVariants() =
     groupBy { it.id.value.canonicalQuestionId() }

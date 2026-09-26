@@ -17,7 +17,10 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.StartLessonAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -70,6 +73,29 @@ class StateMachineTest {
         setupValidLesson()
         val result = startUseCase(LessonId("lesson1"), Difficulty.EASY)
         assertIs<RunnerState.Ready>(result, "Spec scenario #78: success → Ready")
+    }
+
+    @Test
+    fun `question preparation and selection use the injected dispatcher`() = runTest {
+        setupValidLesson()
+        val preparationDispatcher = CountingDispatcher(StandardTestDispatcher(testScheduler))
+        val useCase =
+            StartLessonAttemptUseCase(
+                questionRepository = questionRepo,
+                lessonRepository = lessonRepo,
+                parser = parser,
+                authRepository = authRepo,
+                clock = clock,
+                randomSeedProvider = { 12345L },
+                preparationDispatcher = preparationDispatcher,
+            )
+
+        val result = useCase(LessonId("lesson1"), Difficulty.EASY)
+
+        val ready = assertIs<RunnerState.Ready>(result)
+        assertEquals(listOf("q1"), ready.playOrder.map { it.sourceId.value })
+        assertEquals(12345L, ready.seed)
+        assertTrue(preparationDispatcher.dispatchCount >= 2)
     }
 
     // ── Test 79: Loading → InitFailed ─────────────────────────────────────────
@@ -172,5 +198,17 @@ class StateMachineTest {
         val result = submitAnswer(state, answer, nowMs = 1_000_000L)
         assertEquals('9', result.codeAnswer.raw[2], "Score written at codeAnswerIndex=2")
         assertEquals('0', result.codeAnswer.raw[0], "Other positions unchanged")
+    }
+}
+
+private class CountingDispatcher(
+    private val delegate: CoroutineDispatcher,
+) : CoroutineDispatcher() {
+    var dispatchCount: Int = 0
+        private set
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        dispatchCount++
+        delegate.dispatch(context, block)
     }
 }
