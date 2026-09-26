@@ -1,0 +1,13 @@
+**
+!firebase.mvp.json
+!firestore.rules
+!functions/
+!functions/*.js
+!functions/config/
+!functions/config/*.json
+!functions/package.json
+!functions/package-lock.json
+!deploy/
+!deploy/firebase-cli/
+!deploy/firebase-cli/package.json
+!deploy/firebase-cli/package-lock.json

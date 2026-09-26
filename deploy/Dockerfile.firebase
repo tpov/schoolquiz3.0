@@ -1,0 +1,14 @@
+FROM eclipse-temurin:21-jre AS java
+FROM node:22-bookworm-slim
+COPY --from=java /opt/java/openjdk /opt/java/openjdk
+ENV JAVA_HOME=/opt/java/openjdk PATH=/opt/java/openjdk/bin:$PATH
+WORKDIR /tools/firebase-cli
+COPY deploy/firebase-cli/package*.json ./
+RUN npm ci --omit=dev
+WORKDIR /repo/functions
+COPY functions/package*.json ./
+RUN npm ci --omit=dev
+COPY functions/ ./
+WORKDIR /repo
+COPY firebase.mvp.json firestore.rules ./
+CMD ["sh", "-c", "if [ -f /state/import/firebase-export-metadata.json ]; then exec /tools/firebase-cli/node_modules/.bin/firebase emulators:start --config /repo/firebase.mvp.json --project demo-schoolquiz-mvp --only auth,firestore,functions --non-interactive --import /state/import --export-on-exit /state/export; else exec /tools/firebase-cli/node_modules/.bin/firebase emulators:start --config /repo/firebase.mvp.json --project demo-schoolquiz-mvp --only auth,firestore,functions --non-interactive --export-on-exit /state/export; fi"]

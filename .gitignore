@@ -380,3 +380,7 @@ hive-mind-prompt-*.txt
 
 # Дампы кучи JVM: падение сборки оставляет их в корне, весят сотни мегабайт.
 *.hprof
+
+.local/
+exports/
+config/environment
