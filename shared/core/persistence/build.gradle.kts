@@ -1,17 +1,7 @@
 plugins {
-    id("schoolquiz.kmp.library")
+    id("schoolquiz.kmp.library.agp9")
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
-}
-
-android {
-    namespace = "com.tpov.schoolquiz.shared.core.persistence"
-    defaultConfig {
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-    sourceSets {
-        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
-    }
 }
 
 kotlin {
@@ -29,7 +19,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.koin.android)
         }
-        androidInstrumentedTest.dependencies {
+        androidDeviceTest.dependencies {
             implementation(libs.androidx.room.testing)
             implementation(libs.androidx.test.ext.junit)
             implementation(libs.androidx.test.runner)
@@ -43,6 +33,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+
+    sourceSets.getByName("androidDeviceTest").kotlin.srcDir("src/androidInstrumentedTest/kotlin")
 }
 
 ksp {
@@ -52,4 +44,12 @@ ksp {
 dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspJvm", libs.androidx.room.compiler)
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.deviceTests.values.forEach { deviceTest ->
+            deviceTest.sources.assets?.addStaticSourceDirectory("$projectDir/schemas")
+        }
+    }
 }

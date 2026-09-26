@@ -1,9 +1,5 @@
 plugins {
-    id("schoolquiz.kmp.library")
-}
-
-android {
-    namespace = "com.tpov.schoolquiz.shared.core.catalog.domain"
+    id("schoolquiz.kmp.library.agp9")
 }
 
 kotlin {

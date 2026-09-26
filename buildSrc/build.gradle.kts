@@ -34,6 +34,10 @@ gradlePlugin {
             id = "schoolquiz.kmp.library"
             implementationClass = "KmpLibraryConventionPlugin"
         }
+        register("kmpLibraryAgp9") {
+            id = "schoolquiz.kmp.library.agp9"
+            implementationClass = "KmpLibraryAgp9ConventionPlugin"
+        }
         register("jvmLibrary") {
             id = "schoolquiz.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"

@@ -1,10 +1,6 @@
 plugins {
-    id("schoolquiz.kmp.library")
+    id("schoolquiz.kmp.library.agp9")
     alias(libs.plugins.kotlin.serialization)
-}
-
-android {
-    namespace = "com.tpov.schoolquiz.shared.core.leaderboard"
 }
 
 kotlin {
