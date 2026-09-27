@@ -40,7 +40,10 @@ class LessonContentSyncOrchestrator(
     suspend fun syncLessonContent(lessonId: LessonId): Result<Unit> =
         gate.withPass {
             try {
-                refreshContainingStructure(lessonId).onFailure { return@withPass Result.failure(it) }
+                // A runner needs the changed questions for this lesson, not a catalog-wide
+                // structure pass. Every question change is also written to this lesson's journal
+                // (functions/sync-changes.js); reading the catalog journal here made a cold open
+                // wait behind unrelated changes and other sync work.
                 syncQuestions(lessonId)
             } catch (e: CancellationException) {
                 throw e
@@ -66,14 +69,6 @@ class LessonContentSyncOrchestrator(
                 Result.failure(e)
             }
         }
-
-    private suspend fun refreshContainingStructure(lessonId: LessonId): Result<Unit> {
-        val lesson = lessonRepo.getById(lessonId) ?: return Result.success(Unit)
-        val theme = themeRepo.getById(lesson.themeId) ?: return Result.success(Unit)
-        val section = sectionRepo.getById(theme.sectionId) ?: return Result.success(Unit)
-        val quest = questRepo.getById(section.questId) ?: return Result.success(Unit)
-        return catalogSync.syncCatalogStructure(quest.catalogId)
-    }
 
     private suspend fun collectLessonIds(questId: QuestId): List<LessonId> {
         val sections = sectionRepo.observeByQuest(questId).first()

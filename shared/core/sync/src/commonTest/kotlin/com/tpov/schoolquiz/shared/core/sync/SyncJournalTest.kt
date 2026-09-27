@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.core.sync
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -114,14 +115,48 @@ class SyncJournalTest {
     }
 
     @Test
-    fun `given a page cap then the run stops there and the rest waits for the next run`() = runTest {
+    fun `given a page cap then the run reports incomplete and the next run resumes`() = runTest {
         val state = InMemorySyncStateRepository()
-        val journal = Journal((1L..5L).map { doc(it, "d$it") }, pageSize = 1)
+        val journal = Journal((1L..101L).map { doc(it, "d$it") }, pageSize = 2)
 
-        state.syncJournal<String>(cursorId = "j", maxPages = 2, fetch = journal::page, apply = { Result.success(Unit) })
+        val first = state.syncJournal<String>(
+            cursorId = "j",
+            fetch = journal::page,
+            apply = { Result.success(Unit) },
+        )
 
-        assertEquals(SyncCursor(2L, "d2"), state.getCursor("j"))
-        assertEquals(2, journal.requests.size)
+        assertTrue(first.isFailure)
+        val limit = assertIs<SyncJournalPageLimitException>(first.exceptionOrNull())
+        assertEquals("j", limit.cursorId)
+        assertEquals(MAX_PAGES_PER_RUN, limit.pagesRead)
+        assertEquals(SyncCursor(100L, "d100"), state.getCursor("j"))
+        assertEquals(MAX_PAGES_PER_RUN, journal.requests.size)
+
+        val resumed = state.syncJournal<String>(
+            cursorId = "j",
+            fetch = journal::page,
+            apply = { Result.success(Unit) },
+        )
+
+        assertEquals(Result.success(0), resumed)
+        assertEquals(SyncCursor(101L, "d101"), state.getCursor("j"))
+    }
+
+    @Test
+    fun `given the final page ends at the page cap then the run succeeds`() = runTest {
+        val state = InMemorySyncStateRepository()
+        // 49 full pages and a single-record final page exercise the exact 50-page default cap.
+        val journal = Journal((1L..99L).map { doc(it, "d$it") }, pageSize = 2)
+
+        val result = state.syncJournal<String>(
+            cursorId = "j",
+            fetch = journal::page,
+            apply = { Result.success(Unit) },
+        )
+
+        assertEquals(Result.success(0), result)
+        assertEquals(50, journal.requests.size)
+        assertEquals(SyncCursor(99L, "d99"), state.getCursor("j"))
     }
 
     @Test

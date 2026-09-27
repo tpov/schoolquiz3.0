@@ -144,7 +144,7 @@ class LessonContentSyncOrchestratorTest {
     }
 
     @Test
-    fun `sync lesson content refreshes containing structure then question ids`() = runTest {
+    fun `sync lesson content reads the lesson journal without waiting for the catalog journal`() = runTest {
         val catalogId = CatalogId("cat-1")
         val questId = QuestId("quest-1")
         val sectionId = SectionId("section-1")
@@ -167,10 +167,34 @@ class LessonContentSyncOrchestratorTest {
         val result = orchestrator.syncLessonContent(lessonId)
 
         assertTrue(result.isSuccess)
-        assertEquals(listOf(catalogId to SyncCursor.BEGINNING), catalogChanges.requests)
+        assertTrue(catalogChanges.requests.isEmpty(), "opening one lesson must not scan its whole catalog")
         assertEquals(setOf(QuestionId("question-1"), QuestionId("question-2")), questionRepo.lastRefreshByIds)
-        assertEquals(SyncCursor(110L, "question_ignored-question"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor.BEGINNING, syncState.getCursor(catalogSyncCursorId(catalogId)))
         assertEquals(SyncCursor(210L, "question-2"), syncState.getCursor(lessonContentSyncCursorId(lessonId)))
+    }
+
+    @Test
+    fun `explicit whole quest download still refreshes catalog structure and lesson questions`() = runTest {
+        val catalogId = CatalogId("cat-1")
+        val questId = QuestId("quest-1")
+        val sectionId = SectionId("section-1")
+        val themeId = ThemeId("theme-1")
+        val lessonId = LessonId("lesson-1")
+        seedPath(catalogId, questId, sectionId, themeId, lessonId)
+        catalogChanges.docs = mapOf(
+            catalogId to listOf(catalogChange(catalogId, CatalogSyncNodeType.Lesson, lessonId.value, 100L)),
+        )
+        lessonChanges.changesByLesson = mapOf(
+            lessonId to listOf(lessonChange(lessonId, "question-1", 200L)),
+        )
+
+        val result = orchestrator.syncQuestContent(questId)
+
+        assertTrue(result.isSuccess)
+        assertEquals(listOf(catalogId to SyncCursor.BEGINNING), catalogChanges.requests)
+        assertEquals(setOf(QuestionId("question-1")), questionRepo.lastRefreshByIds)
+        assertEquals(SyncCursor(100L, "lesson_lesson-1"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(200L, "question-1"), syncState.getCursor(lessonContentSyncCursorId(lessonId)))
     }
 
     @Test
