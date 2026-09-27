@@ -127,6 +127,7 @@ class DefaultLessonRunnerRootComponentTest {
         submitRatingUseCase: suspend (String, LessonId, AttemptId, Int) -> Result<Unit> = fakeSubmitRating::invoke,
         profileRepository: FakeProfileRepository? = null,
         attemptSyncMarks: FakeAttemptSyncMarkRepository = fakeSyncMarks,
+        contentSyncCallbacks: LessonRunnerContentSyncCallbacks = LessonRunnerContentSyncCallbacks(),
     ): DefaultLessonRunnerRootComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -150,6 +151,7 @@ class DefaultLessonRunnerRootComponentTest {
             profileRepository = profileRepository,
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
+            contentSyncCallbacks = contentSyncCallbacks,
             mainContext = Dispatchers.Unconfined,
         )
     }
@@ -1254,6 +1256,111 @@ class DefaultLessonRunnerRootComponentTest {
         val uiState = component.uiState.value
         assertIs<RunnerUiState.InitFailed>(uiState)
         assertEquals(RunnerUiState.InitFailureReason.EmptyPool, uiState.reason)
+    }
+
+    @Test
+    fun warmCachedStartSchedulesRefreshAfterReady() {
+        val events = mutableListOf<String>()
+        val component =
+            buildComponent(
+                startAttemptUseCase = { _, _, _ ->
+                    events += "start"
+                    makeReadyState(questions = 1)
+                },
+                contentSyncCallbacks =
+                    LessonRunnerContentSyncCallbacks(
+                        syncOnColdStart = {
+                            events += "sync"
+                            Result.success(Unit)
+                        },
+                        refreshAfterWarmStart = { events += "refresh" },
+                    ),
+            )
+
+        assertIs<RunnerUiState.Question>(component.uiState.value)
+        assertEquals(listOf("start", "refresh"), events)
+    }
+
+    @Test
+    fun coldCacheSyncRetriesLocalStartOnce() {
+        val events = mutableListOf<String>()
+        var startCount = 0
+        val component =
+            buildComponent(
+                startAttemptUseCase = { _, _, _ ->
+                    startCount++
+                    events += "start"
+                    if (startCount == 1) {
+                        RunnerState.InitFailed(InitFailureReason.NoLocalQuestions)
+                    } else {
+                        makeReadyState(questions = 1)
+                    }
+                },
+                contentSyncCallbacks =
+                    LessonRunnerContentSyncCallbacks(
+                        syncOnColdStart = {
+                            events += "sync"
+                            Result.success(Unit)
+                        },
+                        refreshAfterWarmStart = { events += "refresh" },
+                    ),
+            )
+
+        assertIs<RunnerUiState.Question>(component.uiState.value)
+        assertEquals(listOf("start", "sync", "start"), events)
+    }
+
+    @Test
+    fun failedColdCacheSyncKeepsOriginalFailureWithoutRepeatingStart() {
+        var startCount = 0
+        var syncCount = 0
+        val component =
+            buildComponent(
+                    startAttemptUseCase = { _, _, _ ->
+                    startCount++
+                    RunnerState.InitFailed(InitFailureReason.NoLocalQuestions)
+                },
+                contentSyncCallbacks =
+                    LessonRunnerContentSyncCallbacks(
+                        syncOnColdStart = {
+                            syncCount++
+                            Result.failure(IllegalStateException("offline"))
+                        },
+                    ),
+            )
+
+        assertEquals(1, startCount)
+        assertEquals(1, syncCount)
+        assertEquals(
+            RunnerUiState.InitFailureReason.EmptyPool,
+            assertIs<RunnerUiState.InitFailed>(component.uiState.value).reason,
+        )
+    }
+
+    @Test
+    fun cachedContentFailuresDoNotWaitForNetworkSync() {
+        for (reason in listOf(InitFailureReason.EmptyPool, InitFailureReason.NoValidQuestions)) {
+            var startCount = 0
+            var syncCount = 0
+            val component =
+                buildComponent(
+                    startAttemptUseCase = { _, _, _ ->
+                        startCount++
+                        RunnerState.InitFailed(reason)
+                    },
+                    contentSyncCallbacks =
+                        LessonRunnerContentSyncCallbacks(
+                            syncOnColdStart = {
+                                syncCount++
+                                Result.success(Unit)
+                            },
+                        ),
+                )
+
+            assertEquals(1, startCount, "start count for $reason")
+            assertEquals(0, syncCount, "cached content failure must not wait for sync: $reason")
+            assertIs<RunnerUiState.InitFailed>(component.uiState.value)
+        }
     }
 
     // ── PT-38: InitFailed(NoValidQuestions) → uiState=InitFailed ─────────────

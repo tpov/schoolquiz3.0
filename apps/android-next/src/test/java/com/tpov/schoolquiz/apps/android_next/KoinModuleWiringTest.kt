@@ -475,7 +475,7 @@ class KoinModuleWiringTest : KoinTest {
                 }
             }
             single<LessonRunnerComponentFactory> {
-                LessonRunnerComponentFactory { _, _, _, _ -> error("Not wired in KoinModuleWiringTest") }
+                LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not wired in KoinModuleWiringTest") }
             }
         }
 

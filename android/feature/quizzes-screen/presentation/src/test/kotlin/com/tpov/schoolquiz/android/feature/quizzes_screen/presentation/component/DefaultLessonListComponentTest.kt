@@ -198,6 +198,7 @@ class DefaultLessonListComponentTest {
         val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = false, isHardChecked = false)
 
         component.onLessonClick(lessonItem)
+        assertEquals(1, fakeNavigation.pushedConfigs.size, "Opening a lesson must not wait for content sync")
         advanceUntilIdle()
 
         val pushed = fakeNavigation.pushedConfigs.last()

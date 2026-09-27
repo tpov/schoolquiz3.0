@@ -15,6 +15,7 @@ class FakeQuestionRepository : QuestionRepository {
     var refreshCallCount = 0
     var refreshByIdsCallCount = 0
     var lastRefreshByIds: Set<QuestionId> = emptySet()
+    var beforeRefreshByIds: suspend () -> Unit = {}
     private var nextRefreshFailure: Throwable? = null
     private var nextRefreshByIdsFailure: Throwable? = null
 
@@ -36,6 +37,7 @@ class FakeQuestionRepository : QuestionRepository {
     override suspend fun refreshByIds(ids: Set<QuestionId>): Result<Unit> {
         refreshByIdsCallCount++
         lastRefreshByIds = ids
+        beforeRefreshByIds()
         val failure = nextRefreshByIdsFailure
         if (failure != null) {
             nextRefreshByIdsFailure = null
@@ -52,6 +54,7 @@ class FakeQuestionRepository : QuestionRepository {
         refreshCallCount = 0
         refreshByIdsCallCount = 0
         lastRefreshByIds = emptySet()
+        beforeRefreshByIds = {}
         nextRefreshFailure = null
         nextRefreshByIdsFailure = null
         cache.value = emptyMap()

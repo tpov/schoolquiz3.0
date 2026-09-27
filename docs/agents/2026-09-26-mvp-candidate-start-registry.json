@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-09-26T20:49:24Z",
+  "purpose": "Starting state for the School Quiz MVP continuation candidate; no credentials recorded.",
+  "candidate": {
+    "path": "/workspace/projects/schoolquiz3.0-mvp-candidate",
+    "branch": "continuation/mvp-candidate-20260926",
+    "head": "066651c2fe51ff589e3ce218438f205ac4dbb077",
+    "tree": "f66fba4fd2921e36b6a9fd0416a6a8f77f43738e",
+    "statusAtCapture": "clean",
+    "startLessonAttemptUseCaseSha256": "bf0c96d4283ad7edceb682d679bc652e17844c11ae3276bc63faca9471284da0",
+    "stateMachineTestSha256": "ebca0778d2ca6c5b9aa4b26c69df05ecab5d997fea14eb1bd0f19901b25c6df6",
+    "verificationAtCapture": {
+      "apkInCandidateCheckout": false,
+      "candidateBuildRun": false,
+      "candidateTestsRun": false
+    }
+  },
+  "sourceCheckout": {
+    "path": "/workspace/projects/schoolquiz3.0",
+    "branch": "sync/outbox-unification",
+    "head": "d9fb4cfafbca5c091ecd0928e5e80354510d571e",
+    "statusAtCapture": [
+      "D .serena/.gitignore",
+      "D .serena/project.yml",
+      "M buildSrc/build.gradle.kts",
+      "M buildSrc/src/main/kotlin/JvmLibraryConventionPlugin.kt",
+      "M buildSrc/src/main/kotlin/KmpLibraryConventionPlugin.kt",
+      "M gradle/libs.versions.toml",
+      "M gradle/wrapper/gradle-wrapper.properties",
+      "?? _bmad-output/planning-artifacts/research/project-state-2026-09-17.md"
+    ],
+    "preservation": "Existing changes belong to the owner and were not altered."
+  },
+  "serverToolchain": {
+    "defaultJava": "OpenJDK 25.0.4.1",
+    "installedAdditionalJdk": "Temurin 26.0.2.1+1",
+    "java27Installed": false,
+    "candidateGradleWrapper": "8.13",
+    "candidateAgp": "8.11.0",
+    "candidateKotlin": "2.3.10",
+    "candidateKsp": "2.3.7",
+    "androidSdkRoot": "/usr/lib/android-sdk",
+    "commandLineTools": true,
+    "platformTools": true,
+    "installedPlatforms": [],
+    "installedBuildTools": [],
+    "licenseFilesPresent": false,
+    "sdkLicenseAcceptance": "not accepted"
+  },
+  "device": {
+    "connection": "USB attached to local Mac; not visible to server ADB",
+    "model": "Samsung Galaxy A14 (SM-A145F)",
+    "android": "15",
+    "apiLevel": 35,
+    "installedMvpPackage": "com.tpov.schoolquiz.mvp",
+    "installedVersionName": "0.1.0-isolated",
+    "installedVersionCode": 1,
+    "installedTargetSdk": 35,
+    "foregroundAtCapture": "system firmware update confirmation screen; not interacted with",
+    "signatureMatch": "not checked"
+  },
+  "existingApk": {
+    "path": "/workspace/infrastructure/android-toolchain/mvp-apks/android-next-mvp-r4-stable.apk",
+    "bytes": 41417270,
+    "sha256": "87c7e6cb42e9cf79e72fb3fd89f31f73e5bc9e69f6ae956b80d05a46cf2bc030",
+    "relationToCandidate": "not established; package and signing certificate not yet verified"
+  },
+  "firebaseExport": {
+    "path": "/workspace/infrastructure/android-toolchain/firebase-export-staging/arena-e2b-cycle4-20260913/export",
+    "fileCount": 12,
+    "bytes": 31379966,
+    "sha256OfSortedFileSha256Manifest": "2e4237d84530f63520703c519803e3e4edd6f629fa8259e920bc4e7ba9e898ff",
+    "restorationValidated": false,
+    "changedByThisCapture": false
+  },
+  "containers": {
+    "schoolquiz-tz06c-full-1xsjgy": "Exited (255)",
+    "redroid": "Exited (255)",
+    "wsScrcpy": "Up",
+    "tpovSignals": "Up",
+    "tpovSignalsReplay": "Up",
+    "bgutilPot": "Up"
+  },
+  "evidenceBoundaries": [
+    "Firebase emulator currently has no running named container in the Docker inventory; data state was not queried in this capture.",
+    "The staging export is preserved and hashed but not proven safe to restore.",
+    "No APK was found in the candidate checkout.",
+    "No candidate build, test, install, or Maestro run has yet been performed.",
+    "The local device is available but must not be used until APK package, signature, and data-preserving update path are verified."
+  ]
+}

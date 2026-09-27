@@ -228,6 +228,7 @@ fun InitFailureReason.toUiReason(): RunnerUiState.InitFailureReason =
     when (this) {
         InitFailureReason.AuthRequired -> RunnerUiState.InitFailureReason.AuthRequired
         InitFailureReason.LessonNotFound -> RunnerUiState.InitFailureReason.LessonNotFound
+        InitFailureReason.NoLocalQuestions -> RunnerUiState.InitFailureReason.EmptyPool
         InitFailureReason.EmptyPool -> RunnerUiState.InitFailureReason.EmptyPool
         InitFailureReason.NoValidQuestions -> RunnerUiState.InitFailureReason.NoValidQuestions
         InitFailureReason.RedactedNotSupported -> RunnerUiState.InitFailureReason.RedactedNotSupported

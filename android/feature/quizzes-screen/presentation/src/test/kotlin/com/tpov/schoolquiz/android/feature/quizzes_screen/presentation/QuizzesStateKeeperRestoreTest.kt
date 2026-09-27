@@ -223,7 +223,7 @@ class QuizzesStateKeeperRestoreTest {
             catalogRepository = StubCatalogRepository(),
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
-            lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+            lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not expected") },
             arenaRunnerFactory = arenaRunnerFactory,
             arenaCatalogFactory =
                 ArenaLessonCatalogComponentFactory { child ->

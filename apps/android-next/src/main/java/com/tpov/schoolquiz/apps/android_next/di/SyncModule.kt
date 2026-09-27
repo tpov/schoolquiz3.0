@@ -277,6 +277,7 @@ val syncModule =
                 questionRepo = get<QuestionRepository>(),
                 syncStateRepo = get<SyncStateRepository>(),
                 syncChangeRemote = get(),
+                gate = get<SyncGate>(),
                 // Иначе непонятые записи журнала урока пропадают так же молча, как до AD-11.
                 status = get<SyncStatusRepository>(),
                 policy = get<JournalReadPolicy>(),

@@ -10,6 +10,9 @@ import com.arkivanov.essenty.lifecycle.stop
 import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogUiState
@@ -29,13 +32,32 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
+import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
+import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
+import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
+import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -79,6 +101,14 @@ class DefaultQuizzesComponentTest {
             ArenaRunnerComponentFactory { _, _ ->
                 error("Arena run not expected")
             },
+        sectionRepository: FakeSectionRepository = FakeSectionRepository(),
+        themeRepository: FakeThemeRepository = FakeThemeRepository(),
+        lessonRepository: FakeLessonRepository = FakeLessonRepository(),
+        lessonRunnerFactory: LessonRunnerComponentFactory =
+            LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not expected") },
+        lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
+        mainContext: CoroutineDispatcher = Dispatchers.Unconfined,
+        backgroundDispatcher: CoroutineDispatcher = Dispatchers.IO,
     ): DefaultQuizzesComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -92,9 +122,9 @@ class DefaultQuizzesComponentTest {
         return DefaultQuizzesComponent(
             componentContext = ctx,
             questRepository = questRepository,
-            sectionRepository = FakeSectionRepository(),
-            themeRepository = FakeThemeRepository(),
-            lessonRepository = FakeLessonRepository(),
+            sectionRepository = sectionRepository,
+            themeRepository = themeRepository,
+            lessonRepository = lessonRepository,
             lessonAttemptRepository = FakeLessonAttemptRepository(),
             authRepository = FakeAuthRepository(),
             economyRepository = FakeEconomyRepository(),
@@ -103,10 +133,12 @@ class DefaultQuizzesComponentTest {
             catalogRepository = StubCatalogRepository(),
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
-            lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+            lessonRunnerFactory = lessonRunnerFactory,
             arenaCatalogFactory = arenaFactory,
             arenaRunnerFactory = arenaRunnerFactory,
-            mainContext = Dispatchers.Unconfined,
+            lessonContentSync = lessonContentSync,
+            mainContext = mainContext,
+            backgroundDispatcher = backgroundDispatcher,
         )
     }
 
@@ -138,6 +170,65 @@ class DefaultQuizzesComponentTest {
         assertEquals(2, component.stackSize())
         component.popCurrentChild()
         assertIs<QuizzesChild.Idle>(component.childStack.value.active.instance)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun warmLessonRefreshIsScheduledAwayFromTheMainDispatcher() = runTest {
+        val backgroundScheduler = TestCoroutineScheduler()
+        val backgroundDispatcher = StandardTestDispatcher(backgroundScheduler)
+        val sectionRepository = FakeSectionRepository().apply {
+            emit(listOf(Section(SectionId("section"), QuestId("quest"), "Section", 0, 1, 0)))
+        }
+        val themeRepository = FakeThemeRepository().apply {
+            emit(listOf(Theme(ThemeId("theme"), SectionId("section"), "Theme", 0, 1, 0)))
+        }
+        val lessonRepository = FakeLessonRepository().apply {
+            emit(listOf(Lesson(LessonId("lesson"), ThemeId("theme"), "Lesson", 0, 1, 0)))
+        }
+        var syncStarted = false
+        var refreshAfterWarmStart: (() -> Unit)? = null
+        val component =
+            buildComponent(
+                sectionRepository = sectionRepository,
+                themeRepository = themeRepository,
+                lessonRepository = lessonRepository,
+                lessonRunnerFactory =
+                    LessonRunnerComponentFactory { _, _, _, _, callbacks ->
+                        refreshAfterWarmStart = callbacks.refreshAfterWarmStart
+                        StubLessonRunnerRootComponent
+                    },
+                lessonContentSync = {
+                    syncStarted = true
+                    Result.success(Unit)
+                },
+                mainContext = StandardTestDispatcher(testScheduler),
+                backgroundDispatcher = backgroundDispatcher,
+            )
+
+        component.openSectionList(QuestId("quest"), listOf(BreadcrumbRoot.Dynamic("Quest")))
+        runCurrent()
+        val sectionList = assertIs<QuizzesChild.SectionList>(component.childStack.value.active.instance).component
+        val section = assertIs<HierarchyListUiState.Loaded>(sectionList.uiState.value).items.single()
+        sectionList.onSectionClick(section)
+
+        runCurrent()
+        val themeList = assertIs<QuizzesChild.ThemeList>(component.childStack.value.active.instance).component
+        val theme = assertIs<HierarchyListUiState.Loaded>(themeList.uiState.value).items.single()
+        themeList.onThemeClick(theme)
+
+        runCurrent()
+        val lessonList = assertIs<QuizzesChild.LessonList>(component.childStack.value.active.instance).component
+        val lesson = assertIs<LessonListUiState.Loaded>(lessonList.uiState.value).items.single()
+        lessonList.onLessonClick(lesson)
+
+        val refresh = assertNotNull(refreshAfterWarmStart)
+        refresh()
+        runCurrent()
+        assertFalse(syncStarted, "Warm refresh must not run inline on the main dispatcher")
+
+        backgroundScheduler.runCurrent()
+        assertTrue(syncStarted, "Warm refresh should run when its background dispatcher advances")
     }
 
     /** Total items in stack: Idle anchor (backStack[0]) + everything above. */
@@ -463,4 +554,43 @@ class DefaultQuizzesComponentTest {
         assertNull(config.selectionTargetShelf)
         assertEquals(Difficulty.HARD, config.forcedLessonMode)
     }
+}
+
+private object StubLessonRunnerRootComponent : LessonRunnerRootComponent {
+    override val uiState: StateFlow<RunnerUiState> = MutableStateFlow(RunnerUiState.Loading)
+    override val events: Flow<RunnerEvent> = emptyFlow()
+    override val comments: StateFlow<List<LessonComment>> = MutableStateFlow(emptyList())
+    override val isHardMode: Boolean = false
+
+    override fun onAnswer(answer: UserAnswerDraft) = Unit
+
+    override fun onDraftChanged(draft: UserAnswerDraft) = Unit
+
+    override fun onTimeout() = Unit
+
+    override fun onContinue() = Unit
+
+    override fun onExit() = Unit
+
+    override fun onCrossButtonTap() = Unit
+
+    override fun onCrossConfirmed() = Unit
+
+    override fun onCrossCancelled() = Unit
+
+    override fun onSubmitRating(rating: Int) = Unit
+
+    override fun onSyncResult() = Unit
+
+    override fun onFinish() = Unit
+
+    override fun onRunAgain() = Unit
+
+    override fun onNextLesson() = Unit
+
+    override fun hintRequested(): Boolean = false
+
+    override fun onPostComment(text: String) = Unit
+
+    override fun onBack() = Unit
 }

@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-09-27T08:42:37Z",
+  "purpose": "Additive execution checkpoint. Preserves the 2026-09-26 start registry and records current build, device, and storage evidence.",
+  "candidate": {
+    "path": "/workspace/projects/schoolquiz3.0-mvp-candidate",
+    "branch": "continuation/mvp-candidate-20260926",
+    "head": "7472ac2592b77724b47fc91419c523433e0be45a",
+    "headTree": "dc8018b42889c4c9ef8047b5c126fd91e3edb32b",
+    "preCheckpointStatusLineCount": 25,
+    "preCheckpointTrackedModifiedFiles": 24,
+    "preCheckpointUntrackedFiles": [
+      "docs/agents/2026-09-26-mvp-candidate-start-registry.json"
+    ],
+    "diffSha256": "ea449413cb93133877a92d9f4fe8132f7281fa0812b3a9242e8b0bba5e94ca08",
+    "gitDiffCheck": "PASS",
+    "candidateBuild": "ROOT ANDROID APP BUILD NOT RUN; prior root configuration failures show AGP 8.11 uses Gradle InternalProblems removed in Gradle 9.6. No APK produced.",
+    "candidateTests": "PARTIAL: isolated sync JVM suite PASS (14 suites, 107 tests, 0 skipped/failures/errors); root ciCheck not run.",
+    "candidateApkCount": 0,
+    "commitForCurrentChanges": null,
+    "changedAreas": [
+      "lesson runner warm-cache/cold-cache content sync callbacks and regression tests",
+      "lesson question-pool preparation dispatcher and cancellation checks",
+      "shared sync gate across on-demand lesson content and catalog sync",
+      "Gradle/buildSrc compatibility changes"
+    ],
+    "isolatedSyncJvmTest": {
+      "command": "./gradlew -p toolchain-spike :shared:core:sync:jvmTest --offline --no-daemon --no-configuration-cache --no-build-cache --rerun-tasks --max-workers=1",
+      "result": "PASS",
+      "actualProductionAndTestSources": true,
+      "testSuites": 14,
+      "tests": 107,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "elapsed": "2m57s",
+      "toolchain": "OpenJDK 27+35, Gradle 9.8.0, isolated spike AGP 9.4.0 / KGP 2.4.20 / KSP 2.3.12",
+      "warnings": [
+        "LessonContentSyncOrchestratorTest uses ExperimentalCoroutinesApi runCurrent without opt-in.",
+        "Gradle reports deprecated features that will be incompatible with Gradle 10."
+      ],
+      "limitations": "JVM tests only; does not assemble the Android app or measure question-open latency on the connected phone."
+    }
+  },
+  "server": {
+    "host": "racknerd-5424b95",
+    "rootFilesystem": {
+      "device": "/dev/vda2",
+      "sizeGiB": 96,
+      "availableMiB": 21231,
+      "swapPartitionGiB": 3
+    },
+    "memory": {
+      "availableGiB": 4.7,
+      "swapUsedMiB": 696,
+      "devShmSizeGiB": 2.9,
+      "devShmUsedMiB": 0
+    },
+    "toolchain": {
+      "java": "OpenJDK 25.0.4.1 default; OpenJDK 27+35 at /opt/jdks/jdk-27 used for the isolated test",
+      "candidateGradleWrapper": "9.8.0",
+      "requestedBuildSrcJdk": 27,
+      "installedBuildSrcJdk": true,
+      "androidSdkRoot": "/usr/lib/android-sdk",
+      "appCompileSdk": 35,
+      "installedAndroidPlatforms": 0,
+      "installedAndroidBuildTools": 0,
+      "sdkLicensesAccepted": false
+    },
+    "activeGradleProcesses": 0,
+    "storageFindings": [
+      "The 3 GiB Gradle 8.13 cache belongs to another active project and was preserved.",
+      "The 6.9 GiB preparation backup and 14 GiB workspace archive/infrastructure trees were preserved.",
+      "The 285 MiB temporary Gradle 9.5.1 distribution was removed with owner approval.",
+      "The 423 MiB shared Gradle build cache was removed with owner approval.",
+      "The Gradle 9.5.1 (1.14 GB) and 9.7.1 (1.42 GB) version caches were removed with owner approval; active project wrappers do not use them.",
+      "The unused node:20-bookworm image was not removed because the active ws-scrcpy Dockerfile references it."
+    ],
+    "approvedCleanup": {
+      "removedPaths": [
+        "/root/.gradle/caches/build-cache-1",
+        "/tmp/schoolquiz-gradle-9.5.1",
+        "/root/.gradle/caches/9.5.1",
+        "/root/.gradle/caches/9.7.1"
+      ],
+      "sourceDataArchivesApksAndFirebaseExportTouched": false
+    },
+    "buildReadiness": "About 20.7 GiB is free. The isolated sync JVM suite passed. Root Android assembly is still blocked by the known AGP 8.11 / Gradle 9.8 InternalProblems incompatibility; Android SDK Platform 35/required Build Tools are absent and SDK licenses are not accepted.",
+    "astraResearch": "JDK 27+35 is GA and installed; use it explicitly. Astra recommends owner approval before advancing only the necessary build-tool compatibility slice and accepting/installing the required Android SDK packages; do not broaden to unrelated product-library updates."
+  },
+  "device": {
+    "connection": "USB connected to local Mac; confirmed visible locally, not visible to server ADB",
+    "serial": "RF8W80MBR3Z",
+    "model": "Samsung Galaxy A14 (SM-A145F)",
+    "android": "15",
+    "installedPackage": "com.tpov.schoolquiz.mvp",
+    "installedVersionName": "0.1.0-isolated",
+    "installedVersionCode": 1,
+    "candidateInstalled": false
+  },
+  "releaseArtifacts": {
+    "existingApk": {
+      "path": "/workspace/infrastructure/android-toolchain/mvp-apks/android-next-mvp-r4-stable.apk",
+      "bytes": 41417270,
+      "sha256": "87c7e6cb42e9cf79e72fb3fd89f31f73e5bc9e69f6ae956b80d05a46cf2bc030",
+      "relationToCandidate": "not established; not installed"
+    },
+    "savedFirebaseExport": {
+      "path": "/workspace/infrastructure/android-toolchain/firebase-export-staging/arena-e2b-cycle4-20260913/export",
+      "fileCount": 12,
+      "bytes": 31379966,
+      "sha256OfSortedFileSha256Manifest": "2e4237d84530f63520703c519803e3e4edd6f629fa8259e920bc4e7ba9e898ff",
+      "restorationValidated": false,
+      "changedByThisCheckpoint": false
+    },
+    "firebaseEmulator": "No running Firebase emulator container was found; no emulator was started or modified."
+  },
+  "productEvidence": {
+    "source": "docs/features/home-and-my-quests/0-spec.md, section 5, expected result around line 707",
+    "requirement": "After cascade sync, lesson questions are locally available in Room before the user opens the lesson.",
+    "currentCodeEvidence": "The candidate's warm start uses the local question repository and triggers refresh afterward; an empty cold cache synchronizes the lesson and retries once.",
+    "runtimeTiming": "NOT MEASURED on the attached device",
+    "acceptance": "NOT COMPLETE"
+  },
+  "nextGate": "Verify the candidate's JDK 27 toolchain availability and run the narrow offline JVM test with a 1 GiB free-space reserve; then install only required Android SDK packages and reassess before APK assembly. Only the specifically approved rebuildable caches were removed; no source data, archives, backups, APK, or Firebase export were changed."
+}

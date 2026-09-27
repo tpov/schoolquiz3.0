@@ -17,11 +17,15 @@ import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
-import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 
 class LessonContentSyncOrchestratorTest {
 
@@ -35,6 +39,7 @@ class LessonContentSyncOrchestratorTest {
     private lateinit var catalogChanges: FakeCatalogJournal
     private lateinit var lessonChanges: FakeLessonContentSyncChangeRemoteDataSource
     private lateinit var status: RecordingSyncStatus
+    private lateinit var syncGate: SyncGate
     private lateinit var orchestrator: LessonContentSyncOrchestrator
 
     @BeforeTest
@@ -49,6 +54,7 @@ class LessonContentSyncOrchestratorTest {
         catalogChanges = FakeCatalogJournal()
         lessonChanges = FakeLessonContentSyncChangeRemoteDataSource()
         status = RecordingSyncStatus()
+        syncGate = SyncGate()
         val catalogSync = CatalogSyncListOrchestrator(
             catalogRepo = catalogRepo,
             questRepo = questRepo,
@@ -58,6 +64,7 @@ class LessonContentSyncOrchestratorTest {
             questionRepo = questionRepo,
             syncStateRepo = syncState,
             syncChangeRemote = catalogChanges,
+            gate = syncGate,
         )
         orchestrator = LessonContentSyncOrchestrator(
             catalogSync = catalogSync,
@@ -69,6 +76,7 @@ class LessonContentSyncOrchestratorTest {
             syncStateRepo = syncState,
             syncChangeRemote = lessonChanges,
             status = status,
+            gate = syncGate,
         )
     }
 
@@ -94,6 +102,45 @@ class LessonContentSyncOrchestratorTest {
         orchestrator.syncLessonContent(LessonId("lesson-1"))
 
         assertEquals(0, status.byJournal[SyncJournals.LESSON_CONTENT], "иначе прошлое число живёт вечно")
+    }
+
+    @Test
+    fun `on-demand lesson sync holds the shared gate through content apply and cursor advance`() = runTest {
+        val catalogId = CatalogId("cat-1")
+        val questId = QuestId("quest-1")
+        val sectionId = SectionId("section-1")
+        val themeId = ThemeId("theme-1")
+        val lessonId = LessonId("lesson-1")
+        seedPath(catalogId, questId, sectionId, themeId, lessonId)
+        lessonChanges.changesByLesson = mapOf(
+            lessonId to listOf(lessonChange(lessonId, "question-1", 200L)),
+        )
+        val applyStarted = CompletableDeferred<Unit>()
+        val releaseApply = CompletableDeferred<Unit>()
+        questionRepo.beforeRefreshByIds = {
+            applyStarted.complete(Unit)
+            releaseApply.await()
+        }
+
+        val contentSync = async { orchestrator.syncLessonContent(lessonId) }
+        applyStarted.await()
+        var competingPassEntered = false
+        var cursorSeenByCompetingPass: SyncCursor? = null
+        val competingPass =
+            async {
+                syncGate.withPass {
+                    competingPassEntered = true
+                    cursorSeenByCompetingPass = syncState.getCursor(lessonContentSyncCursorId(lessonId))
+                }
+            }
+        runCurrent()
+
+        assertFalse(competingPassEntered, "another sync pass must wait while lesson content is being applied")
+        releaseApply.complete(Unit)
+        assertTrue(contentSync.await().isSuccess)
+        competingPass.await()
+        assertTrue(competingPassEntered)
+        assertEquals(SyncCursor(200L, "question-1"), cursorSeenByCompetingPass)
     }
 
     @Test

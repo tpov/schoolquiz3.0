@@ -34,31 +34,37 @@ class LessonContentSyncOrchestrator(
     private val status: SyncStatusRepository? = null,
     /** Строгость разбора — общая на все четыре журнала (AD-11). */
     private val policy: JournalReadPolicy = JournalReadPolicy.TOLERANT,
+    /** Same application gate as catalog reads and full resync; local lesson startup never waits on it. */
+    private val gate: SyncGate = SyncGate(),
 ) {
     suspend fun syncLessonContent(lessonId: LessonId): Result<Unit> =
-        try {
-            refreshContainingStructure(lessonId).onFailure { return Result.failure(it) }
-            syncQuestions(lessonId)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Result.failure(e)
+        gate.withPass {
+            try {
+                refreshContainingStructure(lessonId).onFailure { return@withPass Result.failure(it) }
+                syncQuestions(lessonId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
 
     suspend fun syncQuestContent(questId: QuestId): Result<Unit> =
-        try {
-            val quest = questRepo.getById(questId) ?: return Result.success(Unit)
-            catalogSync.syncCatalogStructure(quest.catalogId).onFailure { return Result.failure(it) }
+        gate.withPass {
+            try {
+                val quest = questRepo.getById(questId) ?: return@withPass Result.success(Unit)
+                catalogSync.syncCatalogStructure(quest.catalogId).onFailure { return@withPass Result.failure(it) }
 
-            val lessonIds = collectLessonIds(questId)
-            for (lessonId in lessonIds) {
-                syncQuestions(lessonId).onFailure { return Result.failure(it) }
+                val lessonIds = collectLessonIds(questId)
+                for (lessonId in lessonIds) {
+                    syncQuestions(lessonId).onFailure { return@withPass Result.failure(it) }
+                }
+                Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-            Result.success(Unit)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Result.failure(e)
         }
 
     private suspend fun refreshContainingStructure(lessonId: LessonId): Result<Unit> {

@@ -100,7 +100,7 @@ class CatalogSyncListOrchestrator(
     }
 
     suspend fun syncCatalogStructure(catalogId: CatalogId): Result<Unit> =
-        syncCatalog(catalogId, includeQuestions = false).map { }
+        gate.withPass { syncCatalog(catalogId, includeQuestions = false).map { } }
 
     /** @return сколько записей журнала этого каталога прочитать не удалось. */
     private suspend fun syncCatalog(

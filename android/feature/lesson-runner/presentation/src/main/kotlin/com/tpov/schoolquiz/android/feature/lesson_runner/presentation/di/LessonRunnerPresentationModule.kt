@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di
 import com.arkivanov.decompose.ComponentContext
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerContentSyncCallbacks
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunResultServices
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunServices
@@ -46,6 +47,7 @@ val lessonRunnerPresentationModule =
                 lessonId = parameters.get<LessonId>(),
                 mode = parameters.get<Difficulty>(),
                 sessionMode = parameters.get<SessionMode>(),
+                contentSyncCallbacks = parameters.get<LessonRunnerContentSyncCallbacks>(),
                 useCases =
                     LessonRunnerUseCases(
                         startAttempt = get<StartLessonAttemptUseCase>()::invoke,
@@ -67,8 +69,8 @@ val lessonRunnerPresentationModule =
         }
 
         single<LessonRunnerComponentFactory> {
-            LessonRunnerComponentFactory { ctx, lessonId, mode, sessionMode ->
-                get { parametersOf(ctx, lessonId, mode, sessionMode) }
+            LessonRunnerComponentFactory { ctx, lessonId, mode, sessionMode, contentSyncCallbacks ->
+                get { parametersOf(ctx, lessonId, mode, sessionMode, contentSyncCallbacks) }
             }
         }
     }

@@ -4,7 +4,10 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 class KmpLibraryConventionPlugin : Plugin<Project> {
@@ -18,7 +21,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<KotlinMultiplatformExtension> {
                 androidTarget()
                 jvm()
-                jvmToolchain(17)
+                jvmToolchain(27)
 
                 sourceSets.apply {
                     getByName("commonTest") {
@@ -26,6 +29,12 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                             implementation(kotlin("test"))
                         }
                     }
+                }
+            }
+
+            tasks.withType<KotlinCompile>().configureEach {
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_17)
                 }
             }
 

@@ -1,0 +1,26 @@
+appId: com.tpov.schoolquiz.mvp
+name: Open ordinary cached lesson on Ukrainian Android device
+---
+- launchApp:
+    clearState: false
+- assertVisible: "^ДОМАШНІ КВЕСТИ$"
+- assertVisible: "^MVP validated checks$"
+- tapOn: "^MVP validated checks$"
+- assertVisible: "^MVP smoke course$"
+- tapOn: "^MVP smoke course$"
+- assertVisible: "^MVP section$"
+- tapOn: "^MVP section$"
+- assertVisible: "^MVP theme$"
+- tapOn: "^MVP theme$"
+- assertVisible: "^MVP quick lesson$"
+- tapOn: "^MVP quick lesson$"
+- runFlow:
+    when:
+      visible: "^GOT IT$"
+    commands:
+      - tapOn: "^GOT IT$"
+- assertNotVisible: "^Questions are invalid$"
+- extendedWaitUntil:
+    visible: "^val$"
+    timeout: 30000
+- takeScreenshot: "ordinary-lesson-first-question-uk"

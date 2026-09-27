@@ -46,6 +46,16 @@ class EdgeCasesTest {
         attemptIdProvider = { AttemptId("start-attempt") },
     )
 
+    @Test
+    fun `given no locally cached questions when StartLessonAttemptUseCase then InitFailed NoLocalQuestions`() = runTest {
+        lessonRepo.addLesson(makeLesson(id = "lesson1"))
+
+        val result = startUseCase(LessonId("lesson1"), Difficulty.EASY)
+
+        assertIs<RunnerState.InitFailed>(result)
+        assertEquals(InitFailureReason.NoLocalQuestions, result.reason)
+    }
+
     // ── Test 58: EmptyPool ─────────────────────────────────────────────────────
 
     @Test

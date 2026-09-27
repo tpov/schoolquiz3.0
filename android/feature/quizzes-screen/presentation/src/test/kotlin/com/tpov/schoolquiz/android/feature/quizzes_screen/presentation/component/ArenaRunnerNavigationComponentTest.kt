@@ -157,7 +157,7 @@ class ArenaRunnerNavigationComponentTest {
                 entry = EntryStub(preparedState()),
                 stateKeeper = StateKeeperDispatcher(savedState.save()),
                 ordinaryRunnerFactory =
-                    LessonRunnerComponentFactory { _, _, _, _ ->
+                    LessonRunnerComponentFactory { _, _, _, _, _ ->
                         ordinaryCreates++
                         error("Ordinary runner must not be restored for an Arena route")
                     },
@@ -180,7 +180,7 @@ class ArenaRunnerNavigationComponentTest {
         backDispatcher: BackDispatcher = BackDispatcher(),
         stateKeeper: StateKeeperDispatcher = StateKeeperDispatcher(null),
         ordinaryRunnerFactory: LessonRunnerComponentFactory =
-            LessonRunnerComponentFactory { _, _, _, _ ->
+            LessonRunnerComponentFactory { _, _, _, _, _ ->
                 error("Not expected")
             },
         runnerFactory: ArenaRunnerComponentFactory,

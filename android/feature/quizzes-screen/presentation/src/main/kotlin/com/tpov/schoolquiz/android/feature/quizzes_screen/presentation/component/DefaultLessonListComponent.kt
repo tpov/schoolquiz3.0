@@ -61,14 +61,7 @@ class DefaultLessonListComponent(
      */
     private val queueLessonUnlock: LessonUnlockQueue,
     private val navigation: StackNavigation<QuizzesConfig>,
-    private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
-    /**
-     * Цена открытия каждого урока, в ноликах.
-     *
-     * Функцией, а не типом use case — по образцу [lessonContentSync] выше: вызывающие, которым
-     * цена не нужна, не обязаны её собирать. По умолчанию цен нет, и замок остаётся без числа —
-     * ровно то, чем он был до сих пор.
-     */
+    /** Цена открытия каждого урока, в ноликах. По умолчанию замок остаётся без числа. */
     private val observeUnlockPrices: (List<LessonId>) -> Flow<Map<LessonId, Int>> = { flowOf(emptyMap()) },
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonListComponent {
@@ -175,16 +168,13 @@ class DefaultLessonListComponent(
             }
         // AC-49: each new visit defaults to unchecked — clear before pushing runner.
         hardCheckedSet.update { it - lesson.id }
-        scope.launch {
-            lessonContentSync(LessonId(lesson.id))
-            navigation.pushNew(
-                QuizzesConfig.LessonRunner(
-                    lessonId = lesson.id,
-                    mode = mode,
-                    breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(lesson.title),
-                ),
-            )
-        }
+        navigation.pushNew(
+            QuizzesConfig.LessonRunner(
+                lessonId = lesson.id,
+                mode = mode,
+                breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(lesson.title),
+            ),
+        )
     }
 
     /**

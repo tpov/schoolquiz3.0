@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import com.android.build.api.dsl.LibraryExtension
 
 plugins {
     id("schoolquiz.android.compose.library")
@@ -72,9 +73,11 @@ val generateNoirTokens by tasks.registering {
     }
 }
 
-android {
+extensions.configure<LibraryExtension>("android") {
     namespace = "com.tpov.schoolquiz.android.core.designsystem"
-    sourceSets["main"].java.srcDir(noirTokensOutputDir)
+    sourceSets.named("main") {
+        java.srcDir(noirTokensOutputDir.get().asFile)
+    }
 }
 
 tasks.named("preBuild") {

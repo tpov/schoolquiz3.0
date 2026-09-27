@@ -18,6 +18,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.resolveIcons
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerContentSyncCallbacks
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
@@ -77,6 +78,7 @@ class DefaultQuizzesComponent(
     /** Цена открытия уроков — передаётся вниз в список уроков, где её показывает замок. */
     private val observeLessonUnlockPrices: (List<LessonId>) -> Flow<Map<LessonId, Int>> = { flowOf(emptyMap()) },
     private val mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+    private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ComponentContext by componentContext, QuizzesComponent, ArenaRunNavigation {
     private val navigation = StackNavigation<QuizzesConfig>()
 
@@ -396,15 +398,28 @@ class DefaultQuizzesComponent(
                         economyRepository,
                         queueLessonUnlock,
                         navigation,
-                        lessonContentSync,
                         observeLessonUnlockPrices,
                         mainContext,
                     ),
                 )
-            is QuizzesConfig.LessonRunner ->
+            is QuizzesConfig.LessonRunner -> {
+                val lessonId = LessonId(config.lessonId)
                 QuizzesChild.LessonRunner(
-                    lessonRunnerFactory.create(ctx, LessonId(config.lessonId), config.mode, config.sessionMode),
+                    lessonRunnerFactory.create(
+                        componentContext = ctx,
+                        lessonId = lessonId,
+                        mode = config.mode,
+                        sessionMode = config.sessionMode,
+                        contentSyncCallbacks =
+                            LessonRunnerContentSyncCallbacks(
+                                syncOnColdStart = { lessonContentSync(lessonId) },
+                                refreshAfterWarmStart = {
+                                    componentScope.launch(backgroundDispatcher) { lessonContentSync(lessonId) }
+                                },
+                            ),
+                    ),
                 )
+            }
             is QuizzesConfig.ArenaRunner ->
                 QuizzesChild.LessonRunner(
                     arenaRunnerFactory.create(

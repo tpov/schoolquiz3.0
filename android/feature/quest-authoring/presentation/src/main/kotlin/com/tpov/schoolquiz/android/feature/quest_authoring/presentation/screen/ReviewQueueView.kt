@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -198,6 +199,7 @@ private fun ReviewQueueList(
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ReviewAssignmentCard(
     item: ReviewAssignmentListItemUiState,
@@ -284,6 +286,7 @@ private fun ReviewScores(item: ReviewAssignmentListItemUiState) {
 }
 
 @Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ReviewDetail(
     detail: ReviewAssignmentDetailUiState,

@@ -72,6 +72,41 @@ class StateMachineTest {
         assertIs<RunnerState.Ready>(result, "Spec scenario #78: success → Ready")
     }
 
+    @Test
+    fun questionPreparationAndSelectionUseInjectedDispatcher() = runTest {
+        setupValidLesson()
+        var dispatchCount = 0
+        val delegate = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
+        val preparationDispatcher =
+            object : kotlinx.coroutines.CoroutineDispatcher() {
+                override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) {
+                    dispatchCount++
+                    delegate.dispatch(context, block)
+                }
+            }
+        val useCase =
+            StartLessonAttemptUseCase(
+                questionRepository = questionRepo,
+                lessonRepository = lessonRepo,
+                parser = parser,
+                authRepository = authRepo,
+                clock = clock,
+                randomSeedProvider = { 12345L },
+                attemptIdProvider = { AttemptId("background-attempt") },
+                preparationDispatcher = preparationDispatcher,
+            )
+
+        val result =
+            assertIs<RunnerState.Ready>(
+                useCase(LessonId("lesson1"), Difficulty.EASY),
+            )
+
+        assertEquals(AttemptId("background-attempt"), result.attemptId)
+        assertEquals(listOf("q1"), result.playOrder.map { it.sourceId.value })
+        assertEquals(12345L, result.seed)
+        assertTrue(dispatchCount >= 2)
+    }
+
     // ── Test 79: Loading → InitFailed ─────────────────────────────────────────
 
     @Test

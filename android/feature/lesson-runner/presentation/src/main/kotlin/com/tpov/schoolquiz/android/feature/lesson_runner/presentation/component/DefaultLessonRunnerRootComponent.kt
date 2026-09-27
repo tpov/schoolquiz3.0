@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnStop
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerContentSyncCallbacks
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toEventSaveError
@@ -31,6 +32,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTime
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.submitAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
@@ -43,6 +45,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -88,6 +91,7 @@ class DefaultLessonRunnerRootComponent(
      * measurement construct this component unchanged.
      */
     private val analytics: AnalyticsTracker = NoOpAnalyticsTracker,
+    private val contentSyncCallbacks: LessonRunnerContentSyncCallbacks = LessonRunnerContentSyncCallbacks(),
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonRunnerRootComponent {
     private val stateHolder =
@@ -359,7 +363,20 @@ class DefaultLessonRunnerRootComponent(
     }
 
     private suspend fun triggerStart() {
-        val result = useCases.startAttempt(lessonId, mode, sessionMode)
+        val localResult = useCases.startAttempt(lessonId, mode, sessionMode)
+        val (result, refreshWarmCache) =
+            when {
+                localResult is RunnerState.Ready -> localResult to true
+                localResult is RunnerState.InitFailed && localResult.reason.requiresContentSync() -> {
+                    val syncColdStart = contentSyncCallbacks.syncOnColdStart
+                    if (syncColdStart != null && syncColdLessonContent(syncColdStart).isSuccess) {
+                        useCases.startAttempt(lessonId, mode, sessionMode) to false
+                    } else {
+                        localResult to false
+                    }
+                }
+                else -> localResult to false
+            }
         stateHolder.domainState = result
         stateHolder.uiState.value =
             when (result) {
@@ -380,6 +397,36 @@ class DefaultLessonRunnerRootComponent(
                 is RunnerState.InitFailed -> RunnerUiState.InitFailed(result.reason.toUiReason())
                 else -> RunnerUiState.Loading
             }
+        if (refreshWarmCache && result is RunnerState.Ready) {
+            contentSyncCallbacks.refreshAfterWarmStart?.invoke()
+        }
+    }
+
+    private suspend fun syncColdLessonContent(sync: suspend () -> Result<Unit>): Result<Unit> {
+        val result =
+            try {
+                sync()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (exception: Exception) {
+                Result.failure(exception)
+            }
+        result.exceptionOrNull()?.let { failure ->
+            if (failure is CancellationException) throw failure
+        }
+        return result
+    }
+
+    private fun InitFailureReason.requiresContentSync(): Boolean =
+        when (this) {
+            InitFailureReason.LessonNotFound,
+            InitFailureReason.NoLocalQuestions,
+            -> true
+            InitFailureReason.EmptyPool,
+            InitFailureReason.NoValidQuestions,
+            InitFailureReason.AuthRequired,
+            InitFailureReason.RedactedNotSupported,
+            -> false
     }
 
     /**

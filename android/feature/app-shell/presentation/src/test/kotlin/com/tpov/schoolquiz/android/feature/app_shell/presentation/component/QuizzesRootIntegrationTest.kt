@@ -364,7 +364,7 @@ class QuizzesRootIntegrationTest {
                 },
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 retirePublicQuest = RetirePublicQuestUseCase(questRepository),
-                lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
+                lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not expected") },
                 arenaRunnerFactory = ArenaRunnerComponentFactory { _, _ -> error("Arena run not expected") },
                 arenaCatalogFactory = ArenaLessonCatalogComponentFactory {
                     error("Arena not expected in this fixture")

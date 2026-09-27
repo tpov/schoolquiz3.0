@@ -1,6 +1,9 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model
 
 sealed interface InitFailureReason {
+    /** No active questions are cached locally, so the runner may fetch the lesson content once. */
+    data object NoLocalQuestions : InitFailureReason
+
     data object EmptyPool : InitFailureReason
 
     data object NoValidQuestions : InitFailureReason
