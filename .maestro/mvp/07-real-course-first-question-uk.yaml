@@ -1,0 +1,40 @@
+appId: com.tpov.schoolquiz.mvp
+name: Full school course first question on Ukrainian Android device
+---
+- launchApp:
+    clearState: false
+- runFlow:
+    when:
+      notVisible: "^ДОМАШНІ КВЕСТИ$"
+    commands:
+      - tapOn: "Відкрити меню"
+      - tapOn: "Домашні квести"
+- tapOn: "Відкрити меню"
+- tapOn: "Налаштування"
+- scrollUntilVisible:
+    element:
+      text: "Перечитати все заново"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Перечитати все заново"
+- assertVisible: "Увесь вміст буде завантажено із сервера заново. Дій, що чекають на надсилання, це не торкнеться."
+- tapOn: "Перечитати"
+- tapOn: "Відкрити меню"
+- assertVisible: "Архів"
+- tapOn: "Архів"
+- extendedWaitUntil:
+    visible: "Математика: полный школьный курс"
+    timeout: 180000
+- tapOn: "Математика: полный школьный курс"
+- assertVisible: "Числа и вычисления"
+- tapOn: "Числа и вычисления"
+- assertVisible: "Натуральные и целые числа, делимость, НОД и НОК"
+- tapOn: "Натуральные и целые числа, делимость, НОД и НОК"
+- assertVisible: "Натуральные и целые числа: координатная прямая, модуль, сравнение"
+- evalScript: ${output.lessonOpenStartedAt = Date.now()}
+- tapOn: "Натуральные и целые числа: координатная прямая, модуль, сравнение"
+- extendedWaitUntil:
+    visible: "Перервати"
+    timeout: 15000
+- evalScript: ${console.log('COURSE_FIRST_QUESTION_MS=' + (Date.now() - output.lessonOpenStartedAt))}
+- takeScreenshot: "real-course-first-question-uk"
