@@ -74,7 +74,7 @@ class CatalogSyncListOrchestratorTest {
 
         assertEquals(3, status.unreadable)
         // Непонятое не пропало молча и не осталось перед курсором: иначе оно читалось бы вечно.
-        assertEquals(SyncCursor(12L, "legacy-3"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(12L, "legacy-3"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
     }
 
     @Test
@@ -101,10 +101,10 @@ class CatalogSyncListOrchestratorTest {
     }
 
     @Test
-    fun `sync fetches structure nodes from catalog change list and advances catalog cursor`() = runTest {
+    fun `full sync fetches catalog nodes and advances full content cursor`() = runTest {
         val catalogId = CatalogId("cat-1")
         catalogRepo.nextChangedIds = setOf(catalogId)
-        syncState.setCursor(catalogSyncCursorId(catalogId), SyncCursor(50L, "quest_old"))
+        syncState.setCursor(catalogContentSyncCursorId(catalogId), SyncCursor(50L, "quest_old"))
         journal.docs = mapOf(
             catalogId to listOf(
                 change(catalogId, CatalogSyncNodeType.Quest, "quest-1", 100L),
@@ -134,7 +134,7 @@ class CatalogSyncListOrchestratorTest {
         assertEquals(setOf(QuestionId("question-1")), questionRepo.lastRefreshByIds)
         // 170, а не 160: запись с пустым id прочитана и применить её нельзя никогда, поэтому
         // курсор проходит и её. Оставаться перед ней значит перечитывать её каждый проход.
-        assertEquals(SyncCursor(170L, "question_"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(170L, "question_"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
         // Курсор списка — такая же пара, как у журналов: время и id каталога (AD-31). Прежде сюда
         // писалось одно время с пустым id, и курс, ставший видимым в ту же миллисекунду, терялся.
         assertEquals(SyncCursor(1_000L, "cat-1"), syncState.getCursor(CATALOG_LIST_CURSOR_ID))
@@ -152,9 +152,9 @@ class CatalogSyncListOrchestratorTest {
     }
 
     @Test
-    fun `sync does not advance catalog change cursor when concrete node refresh fails`() = runTest {
+    fun `sync does not advance full content cursor when concrete node refresh fails`() = runTest {
         val catalogId = CatalogId("cat-1")
-        val cursorId = catalogSyncCursorId(catalogId)
+        val cursorId = catalogContentSyncCursorId(catalogId)
         catalogRepo.nextChangedIds = setOf(catalogId)
         syncState.setCursor(cursorId, SyncCursor(50L, "quest_old"))
         journal.docs = mapOf(catalogId to listOf(change(catalogId, CatalogSyncNodeType.Lesson, "lesson-1", 150L)))
@@ -184,12 +184,12 @@ class CatalogSyncListOrchestratorTest {
             journal.requests,
         )
         assertEquals(2, questionRepo.refreshByIdsCallCount)
-        assertEquals(SyncCursor(100L, "question_question-1"), syncState.getCursor(catalogSyncCursorId(firstCatalog)))
-        assertEquals(SyncCursor(200L, "question_question-2"), syncState.getCursor(catalogSyncCursorId(secondCatalog)))
+        assertEquals(SyncCursor(100L, "question_question-1"), syncState.getCursor(catalogContentSyncCursorId(firstCatalog)))
+        assertEquals(SyncCursor(200L, "question_question-2"), syncState.getCursor(catalogContentSyncCursorId(secondCatalog)))
     }
 
     @Test
-    fun `sync skips questions for courses catalog`() = runTest {
+    fun `sync caches questions for courses catalog`() = runTest {
         val catalogId = CatalogId("courses")
         catalogRepo.nextChangedIds = setOf(catalogId)
         journal.docs = mapOf(catalogId to listOf(change(catalogId, CatalogSyncNodeType.Question, "question-1", 100L)))
@@ -197,8 +197,31 @@ class CatalogSyncListOrchestratorTest {
         val result = orchestrator.sync()
 
         assertTrue(result.isSuccess)
-        assertEquals(0, questionRepo.refreshByIdsCallCount)
+        assertEquals(1, questionRepo.refreshByIdsCallCount)
+        assertEquals(setOf(QuestionId("question-1")), questionRepo.lastRefreshByIds)
+        assertEquals(SyncCursor(100L, "question_question-1"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
         assertEquals(SyncCursor(100L, "question_question-1"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+    }
+
+    @Test
+    fun `given legacy structure cursor is ahead then full sync still reads and caches question changes`() = runTest {
+        val catalogId = CatalogId("cat-1")
+        catalogRepo.nextChangedIds = setOf(catalogId)
+        syncState.setCursor(catalogSyncCursorId(catalogId), SyncCursor(500L, "lesson_old"))
+        journal.docs = mapOf(
+            catalogId to listOf(change(catalogId, CatalogSyncNodeType.Question, "question-1", 100L)),
+        )
+
+        val result = orchestrator.sync()
+
+        assertTrue(result.isSuccess)
+        assertEquals(
+            listOf(catalogId to SyncCursor.BEGINNING, CatalogId("courses") to SyncCursor.BEGINNING),
+            journal.requests,
+        )
+        assertEquals(setOf(QuestionId("question-1")), questionRepo.lastRefreshByIds)
+        assertEquals(SyncCursor(500L, "lesson_old"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(100L, "question_question-1"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
     }
 
     @Test
@@ -217,7 +240,7 @@ class CatalogSyncListOrchestratorTest {
         assertTrue(result.isSuccess)
         assertEquals(listOf(courses to SyncCursor.BEGINNING), journal.requests)
         assertEquals(setOf(QuestId("quest-course")), questRepo.lastRefreshByIds)
-        assertEquals(SyncCursor(100L, "quest_quest-course"), syncState.getCursor(catalogSyncCursorId(courses)))
+        assertEquals(SyncCursor(100L, "quest_quest-course"), syncState.getCursor(catalogContentSyncCursorId(courses)))
     }
 
     @Test
@@ -227,7 +250,7 @@ class CatalogSyncListOrchestratorTest {
         // пустой полке архива.
         val courses = CatalogId("courses")
         catalogRepo.nextChangedIds = setOf(courses)
-        syncState.setCursor(catalogSyncCursorId(courses), SyncCursor(500L, "quest_seen"))
+        syncState.setCursor(catalogContentSyncCursorId(courses), SyncCursor(500L, "quest_seen"))
         journal.docs = mapOf(courses to listOf(change(courses, CatalogSyncNodeType.Quest, "quest-course", 100L)))
 
         val result = orchestrator.sync()
@@ -253,6 +276,7 @@ class CatalogSyncListOrchestratorTest {
         assertEquals(setOf(LessonId("lesson-1")), lessonRepo.lastRefreshByIds)
         assertEquals(0, questionRepo.refreshByIdsCallCount)
         assertEquals(SyncCursor(200L, "question_question-1"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor.BEGINNING, syncState.getCursor(catalogContentSyncCursorId(catalogId)))
     }
 
     // --- Курсор — пара (AD-31, история 7.3) ---
@@ -270,7 +294,7 @@ class CatalogSyncListOrchestratorTest {
 
         orchestrator.sync()
         assertEquals(setOf(QuestId("quest-a"), QuestId("quest-b")), questRepo.lastRefreshByIds)
-        assertEquals(SyncCursor(1_000L, "quest_quest-b"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(1_000L, "quest_quest-b"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
         questRepo.resetAll()
 
         orchestrator.sync()
@@ -289,12 +313,12 @@ class CatalogSyncListOrchestratorTest {
                 change(catalogId, CatalogSyncNodeType.Quest, "quest-b", 1_000L),
             ),
         )
-        syncState.setCursor(catalogSyncCursorId(catalogId), SyncCursor(1_000L, "quest_quest-a"))
+        syncState.setCursor(catalogContentSyncCursorId(catalogId), SyncCursor(1_000L, "quest_quest-a"))
 
         orchestrator.sync()
 
         assertEquals(setOf(QuestId("quest-b")), questRepo.lastRefreshByIds)
-        assertEquals(SyncCursor(1_000L, "quest_quest-b"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(1_000L, "quest_quest-b"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
     }
 
     @Test
@@ -307,27 +331,27 @@ class CatalogSyncListOrchestratorTest {
         questRepo.seed(listOf(quest))
         questRepo.seedServerQuests(listOf(quest))
         journal.docs = mapOf(catalogId to listOf(change(catalogId, CatalogSyncNodeType.Quest, "quest-a", 1_000L)))
-        syncState.setCursor(catalogSyncCursorId(catalogId), SyncCursor(1_000L, ""))
+        syncState.setCursor(catalogContentSyncCursorId(catalogId), SyncCursor(1_000L, ""))
         val before = questRepo.snapshot()
 
         orchestrator.sync()
 
         assertEquals(setOf(QuestId("quest-a")), questRepo.lastRefreshByIds, "миллисекунда курсора перечитана")
         assertEquals(before, questRepo.snapshot(), "повторное применение не меняет ни одной строки")
-        assertEquals(SyncCursor(1_000L, "quest_quest-a"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(1_000L, "quest_quest-a"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
     }
 
     @Test
     fun `given the cursor is already ahead then a smaller page does not move it back`() = runTest {
         val catalogId = CatalogId("cat-1")
         catalogRepo.nextChangedIds = setOf(catalogId)
-        syncState.setCursor(catalogSyncCursorId(catalogId), SyncCursor(5_000L, "quest_z"))
+        syncState.setCursor(catalogContentSyncCursorId(catalogId), SyncCursor(5_000L, "quest_z"))
         journal.ignoreCursor = true
         journal.docs = mapOf(catalogId to listOf(change(catalogId, CatalogSyncNodeType.Quest, "quest-a", 100L)))
 
         orchestrator.sync()
 
-        assertEquals(SyncCursor(5_000L, "quest_z"), syncState.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor(5_000L, "quest_z"), syncState.getCursor(catalogContentSyncCursorId(catalogId)))
     }
 
     @Test
@@ -345,7 +369,7 @@ class CatalogSyncListOrchestratorTest {
 
         orchestrator.sync()
 
-        val cursorId = catalogSyncCursorId(catalogId)
+        val cursorId = catalogContentSyncCursorId(catalogId)
         assertEquals(
             listOf(catalogId to SyncCursor.BEGINNING, catalogId to SyncCursor(100L, "quest_quest-2"), CatalogId("courses") to SyncCursor.BEGINNING),
             journal.requests,
@@ -354,6 +378,7 @@ class CatalogSyncListOrchestratorTest {
             listOf(cursorId to SyncCursor(100L, "quest_quest-2"), cursorId to SyncCursor(200L, "quest_quest-3")),
             syncState.setCursorCalls.filter { it.first == cursorId },
         )
+        assertEquals(SyncCursor(200L, "quest_quest-3"), syncState.getCursor(catalogSyncCursorId(catalogId)))
     }
 
     // --- Удаление тремя способами и защитный fallback читателя (AD-26, история 7.6) ---

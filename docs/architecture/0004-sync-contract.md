@@ -107,7 +107,8 @@ fetchChangedSince(scope, cursor):
 | Ключ курсора | Область |
 |---|---|
 | `catalogs` | список каталогов |
-| `catalog_sync:{catalogId}` | контент каталога |
+| `catalog_sync:{catalogId}` | структура каталога при подготовке чтения урока; совместим со старыми установками и продвигается вместе с полным sync |
+| `catalog_content:{catalogId}` | полный контент каталога, включая вопросы; независим от старого структурного курсора и поэтому начинает backfill с начала |
 | `lesson_content:{lessonId}` | вопросы урока |
 | `private_quests:{uid}` | приватные квесты автора |
 | `review_assignments:{uid}` | задания на ревью |

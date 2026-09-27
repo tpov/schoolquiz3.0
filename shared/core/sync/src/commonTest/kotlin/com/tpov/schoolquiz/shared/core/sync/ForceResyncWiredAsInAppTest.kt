@@ -66,6 +66,7 @@ class ForceResyncWiredAsInAppTest {
         val gate = SyncGate()
         val state = InMemorySyncStateRepository()
         state.setCursor(catalogSyncCursorId(catalogId), SyncCursor(5_000L, "quest_q-9"))
+        state.setCursor(catalogContentSyncCursorId(catalogId), SyncCursor(6_000L, "question_q-9"))
         state.setCursor(CATALOG_LIST_CURSOR_ID, SyncCursor(9_000L))
         val catalogRepo = FakeCatalogRepository().apply { nextChangedIds = setOf(catalogId) }
         val resync = ForceResync(state, orchestrator(gate, state, catalogRepo), gate, syncRun())
@@ -75,6 +76,8 @@ class ForceResyncWiredAsInAppTest {
         assertNotNull(outcome, "ресинк повис на воротах — и повис уже после того, как курсоры удалены")
         assertTrue(outcome.isSuccess)
         assertEquals(1, catalogRepo.refreshCalls, "читающая сторона обязана отработать, а не ждать саму себя")
+        assertEquals(SyncCursor.BEGINNING, state.getCursor(catalogSyncCursorId(catalogId)))
+        assertEquals(SyncCursor.BEGINNING, state.getCursor(catalogContentSyncCursorId(catalogId)))
     }
 
     @Test

@@ -59,4 +59,13 @@ const val CATALOG_LIST_CURSOR_ID: String = "catalogs"
 
 fun catalogSyncCursorId(catalogId: CatalogId): String = "catalog_sync:${catalogId.value}"
 
+/**
+ * Cursor for the complete catalog payload, including questions.
+ *
+ * This deliberately starts independently from the legacy `catalog_sync` cursor: older clients
+ * could advance that cursor while reading structure only, so reusing it could permanently skip
+ * question changes on an upgraded installation.
+ */
+fun catalogContentSyncCursorId(catalogId: CatalogId): String = "catalog_content:${catalogId.value}"
+
 fun lessonContentSyncCursorId(lessonId: LessonId): String = "lesson_content:${lessonId.value}"

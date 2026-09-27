@@ -83,7 +83,8 @@ class CatalogSyncListOrchestrator(
             for (catalogId in catalogIds) {
                 syncCatalog(
                     catalogId,
-                    includeQuestions = catalogId.value != ON_DEMAND_COURSES_CATALOG_ID,
+                    cursorId = catalogContentSyncCursorId(catalogId),
+                    includeQuestions = true,
                 )
                     .onSuccess { unreadable += it }
                     .onFailure { if (firstFailure == null) firstFailure = it }
@@ -100,18 +101,25 @@ class CatalogSyncListOrchestrator(
     }
 
     suspend fun syncCatalogStructure(catalogId: CatalogId): Result<Unit> =
-        gate.withPass { syncCatalog(catalogId, includeQuestions = false).map { } }
+        gate.withPass {
+            syncCatalog(
+                catalogId = catalogId,
+                cursorId = catalogSyncCursorId(catalogId),
+                includeQuestions = false,
+            ).map { }
+        }
 
     /** @return сколько записей журнала этого каталога прочитать не удалось. */
     private suspend fun syncCatalog(
         catalogId: CatalogId,
+        cursorId: String,
         includeQuestions: Boolean,
     ): Result<Int> {
         catalogRepo.refreshByIds(setOf(catalogId)).onFailure { return Result.failure(it) }
         // Журнал читается страницами от сохранённого курсора-пары (AD-31). Форса «с нуля» здесь
         // нет: он существует только как явная операция ресинка (AD-30).
-        return syncStateRepo.syncJournal(
-            cursorId = catalogSyncCursorId(catalogId),
+        val result = syncStateRepo.syncJournal(
+            cursorId = cursorId,
             policy = policy,
             // Запись с пустым `id` столь же бесполезна, как и нераспознанная, и по той же
             // причине: узел, который надо перечитать, не назван. Раньше она отсеивалась молча.
@@ -119,6 +127,14 @@ class CatalogSyncListOrchestrator(
             fetch = { syncChangeRemote.fetchPage(catalogId, it) },
             apply = { applyChanges(it, includeQuestions) },
         )
+        if (includeQuestions) {
+            // The full pass has also applied every structure record through its current cursor.
+            // Mirror only after the journal returns: a failed page leaves the cursor at the last
+            // successfully applied page, and an older installation's farther-ahead cursor is
+            // preserved by SyncStateRepository's monotonic update.
+            syncStateRepo.setCursor(catalogSyncCursorId(catalogId), syncStateRepo.getCursor(cursorId))
+        }
+        return result
     }
 
     private suspend fun applyChanges(
