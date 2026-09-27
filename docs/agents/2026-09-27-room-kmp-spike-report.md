@@ -35,7 +35,15 @@ The 13-module closure uses a separate AGP 9 KMP convention. Persistence keeps it
 
 ## Next steps
 
-1. Reclaim or expand server disk space and get owner approval to install the Android platform/build-tools and accept their licenses.
+## Environment follow-up (2026-09-27)
+
+- Initial free space before Android verification was 949 MB. Investigation found a 1,769,770,411-byte /var/log/syslog whose repeated Android logd/init messages came from Redroid; it had not changed for over 13 hours, and both rsyslog.service and syslog.socket were inactive.
+- Before rotation, /var/log/syslog and /var/log/btmp were copied to the owner's local machine with restrictive permissions. Gzip integrity passed and the SHA-256 of each decompressed copy matched its server source.
+- apt-get clean removed only downloaded package archives and freed about 565 MB. The normal scheduled logrotate then moved the closed syslog to /var/log/syslog.1 and created a fresh 0640 syslog:adm file. The rotated file's SHA-256 still matched the preserved copy.
+- After confirming no process had the rotated file open, /var/log/syslog.1 was compressed to /var/log/syslog.1.gz (226,835,408 bytes). gzip -t passed and its decompressed SHA-256 matched the source. No log contents were discarded; btmp was left unchanged. Free space is now about 3.0 GB (97% used).
+- This is host-storage maintenance only: no product source or SDK package changed. Android Platform 34 and Build Tools 36 are still absent; SDK licenses remain unaccepted pending explicit owner approval.
+
+## Next steps
+
+1. After explicit owner approval, install Android Platform 34 and Build Tools 36.
 2. Rerun Android KSP with `--no-build-cache --rerun-tasks`.
-3. Verify Android compilation/AAR, schema assets, lint, and device migration tests.
-4. Only if those pass, ask Astra to reassess expanding the migration to the remaining KMP modules.
