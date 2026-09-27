@@ -63,7 +63,9 @@ class DefaultLessonListComponent(
     private val navigation: StackNavigation<QuizzesConfig>,
     /** Цена открытия каждого урока, в ноликах. По умолчанию замок остаётся без числа. */
     private val observeUnlockPrices: (List<LessonId>) -> Flow<Map<LessonId, Int>> = { flowOf(emptyMap()) },
+    private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+    private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ComponentContext by componentContext, LessonListComponent {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + coroutineContext)
@@ -85,6 +87,9 @@ class DefaultLessonListComponent(
 
     /** О каких отказах игроку уже сказали — чтобы не повторять одно и то же на каждой эмиссии. */
     private val announcedRefusals = mutableSetOf<LessonId>()
+
+    /** Course lessons are warmed once when they first become the next playable lesson. */
+    private val warmedCourseLessons = mutableSetOf<LessonId>()
 
     private val _messages = Channel<String>(Channel.BUFFERED)
     override val messages: Flow<String> = _messages.receiveAsFlow()
@@ -123,11 +128,28 @@ class DefaultLessonListComponent(
                 .catch { /* log */ }
                 .collect {
                     _uiState.value = it
+                    val loadedLessons = (it as? LessonListUiState.Loaded)?.items
                     shownLessons.value =
-                        (it as? LessonListUiState.Loaded)
-                            ?.items
+                        loadedLessons
                             ?.associate { item -> LessonId(item.id) to item.title }
                             .orEmpty()
+                    if (gatesSequentially) {
+                        val nextPlayableLesson =
+                            loadedLessons
+                                ?.firstOrNull { item -> item.access != LessonAccess.LOCKED }
+                                ?.let { item -> LessonId(item.id) }
+                        if (nextPlayableLesson != null && warmedCourseLessons.add(nextPlayableLesson)) {
+                            scope.launch(backgroundDispatcher) {
+                                try {
+                                    lessonContentSync(nextPlayableLesson)
+                                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                                    throw cancelled
+                                } catch (_: Exception) {
+                                    // The runner's cold-cache path remains the user-visible fallback.
+                                }
+                            }
+                        }
+                    }
                 }
         }
         // Покупка, ушедшая в карантин, откачена фичей lesson: нолики вернулись, урок закрылся

@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
@@ -42,6 +43,8 @@ class DefaultLessonListComponentTest {
 
     private val testScheduler = TestCoroutineScheduler()
     private val dispatcher = StandardTestDispatcher(testScheduler)
+    private val backgroundScheduler = TestCoroutineScheduler()
+    private val backgroundDispatcher = StandardTestDispatcher(backgroundScheduler)
     private lateinit var lifecycle: LifecycleRegistry
     private val fakeRepo = FakeLessonRepository()
     private val fakeAttemptRepo = FakeLessonAttemptRepository()
@@ -49,6 +52,7 @@ class DefaultLessonListComponentTest {
     private val fakeEconomyRepo = FakeEconomyRepository()
     private val fakeUnlockQueue = FakeLessonUnlockQueue()
     private val fakeNavigation = FakeStackNavigation()
+    private val syncedLessonIds = mutableListOf<LessonId>()
 
     @After
     fun tearDown() {
@@ -66,6 +70,7 @@ class DefaultLessonListComponentTest {
     private fun buildComponent(
         themeId: String = "t-1",
         breadcrumbs: List<BreadcrumbRoot> = dynamicCrumbs("Math", "Quest 1", "Section A", "Theme A"),
+        questType: QuestType = QuestType.REGULAR,
     ): DefaultLessonListComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -78,8 +83,13 @@ class DefaultLessonListComponentTest {
             authRepository = fakeAuthRepo,
             economyRepository = fakeEconomyRepo,
             queueLessonUnlock = fakeUnlockQueue,
-            config = QuizzesConfig.LessonList(themeId = themeId, breadcrumbs = breadcrumbs),
+            config = QuizzesConfig.LessonList(themeId = themeId, breadcrumbs = breadcrumbs, questType = questType),
+            lessonContentSync = { lessonId ->
+                syncedLessonIds += lessonId
+                Result.success(Unit)
+            },
             coroutineContext = dispatcher,
+            backgroundDispatcher = backgroundDispatcher,
         )
     }
 
@@ -132,6 +142,31 @@ class DefaultLessonListComponentTest {
         advanceUntilIdle()
         assertIs<LessonListUiState.Loaded>(component.uiState.value)
     }
+
+    @Test
+    fun `course list warms only the next playable lesson on background without delaying lesson navigation`() =
+        runTest(testScheduler) {
+            val component = buildComponent(themeId = "t-1", questType = QuestType.COURSE)
+            fakeRepo.emit(
+                listOf(
+                    lessonFixture(id = "second", themeId = "t-1", order = 1),
+                    lessonFixture(id = "first", themeId = "t-1", order = 0),
+                ),
+            )
+
+            testScheduler.advanceUntilIdle()
+
+            val state = component.uiState.value
+            assertIs<LessonListUiState.Loaded>(state)
+            assertEquals(listOf("OPEN", "LOCKED"), state.items.map { it.access.name })
+            assertEquals(emptyList(), syncedLessonIds, "UI collection must not wait for background content sync")
+
+            component.onLessonClick(state.items.first())
+            assertIs<QuizzesConfig.LessonRunner>(fakeNavigation.pushedConfigs.single())
+
+            backgroundScheduler.advanceUntilIdle()
+            assertEquals(listOf(LessonId("first")), syncedLessonIds)
+        }
 
     @Test
     fun `lessons are ordered by list order and map average rating`() = runTest(testScheduler) {

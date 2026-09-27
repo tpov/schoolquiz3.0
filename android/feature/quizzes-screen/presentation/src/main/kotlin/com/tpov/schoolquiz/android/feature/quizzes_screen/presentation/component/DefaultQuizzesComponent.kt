@@ -398,8 +398,10 @@ class DefaultQuizzesComponent(
                         economyRepository,
                         queueLessonUnlock,
                         navigation,
-                        observeLessonUnlockPrices,
-                        mainContext,
+                        observeUnlockPrices = observeLessonUnlockPrices,
+                        lessonContentSync = lessonContentSync,
+                        coroutineContext = mainContext,
+                        backgroundDispatcher = backgroundDispatcher,
                     ),
                 )
             is QuizzesConfig.LessonRunner -> {
