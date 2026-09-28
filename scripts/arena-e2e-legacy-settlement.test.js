@@ -5,7 +5,7 @@ const {test} = require("node:test");
 const {createHash} = require("node:crypto");
 const {attemptDocumentId} = require("../functions/arena-tickets");
 const {attemptFingerprint, attemptReceipt} = require("../functions/attempt-receipt");
-const {ROOM_SCHEMA_IDENTITY_HASH} = require("./arena-e2e-pending-settlement-reader");
+const {LEGACY_ROOM_SCHEMA, ROOM_SCHEMA_V15} = require("./arena-e2e-pending-settlement-reader");
 const {assertSettlementReceipt, ArenaE2eEvidenceError, LEDGER_PATH, eventPath} = require("./arena-e2e-evidence");
 const {FIX_COMMIT, assessLegacySettlement: assess, serverDigest, readServerSnapshot, readLocalProof,
   readServerEconomyEvidence, checkSdkEnvironment, mutationPath} = require("./arena-e2e-legacy-settlement");
@@ -44,7 +44,7 @@ function fixture() {
     ledger("reward-skill", ownerUid, "skillPoints", 62, "attempt_reward", attemptId),
   ]};
   const bodyJson = JSON.stringify(payload);
-  const local = {schemaVersion: 14, identityHash: ROOM_SCHEMA_IDENTITY_HASH, outboxCount: 0,
+  const local = {schemaVersion: LEGACY_ROOM_SCHEMA.version, identityHash: LEGACY_ROOM_SCHEMA.identityHash, outboxCount: 0,
     tickets: [{ownerUid, ticketId, attemptId, serverStatus: "RESERVED", localUse: "LAUNCHED", decision: "SETTLE"}],
     commands: [{ownerUid, ticketId, attemptId, commandId: attemptId, commandKind: "SETTLE", state: "PENDING",
       bodyJson, bodySha256: hash(bodyJson)}],
@@ -104,6 +104,13 @@ test("pinned historical record permits only local recovery, strict acceptance st
     input.snapshot.event.settlementReceipt), {code: "SETTLEMENT_ECONOMY_MISMATCH"});
   for (const privateValue of [input.context.ownerUid, input.context.ticketId, input.context.attemptId,
     "answers", "lifePoints", "payloadJson", "codeAnswer"]) assert.equal(JSON.stringify(result).includes(privateValue), false);
+});
+
+test("historical recovery rejects the exact current v15 Room schema pair", () => {
+  const input = fixture();
+  input.local.schemaVersion = ROOM_SCHEMA_V15.version;
+  input.local.identityHash = ROOM_SCHEMA_V15.identityHash;
+  assert.throws(() => assessLegacySettlement(input), {code: "LOCAL_PROOF_INVALID"});
 });
 
 test("post-recovery proof keeps the identical server digest and a distinct local proof", () => {
@@ -190,7 +197,7 @@ test("real SQLite read binds every field and rejects foreign duplicate receipt w
       "CREATE TABLE lesson_attempt_intents (owner_uid TEXT,attempt_id TEXT,mutation_id TEXT,operation TEXT,payload TEXT,entity_ref TEXT,expected_version INTEGER);" +
       "CREATE TABLE mutation_receipts (owner_uid TEXT,mutation_id TEXT,operation TEXT,entity_ref TEXT,payload_json TEXT);" +
       "CREATE TABLE outbox (mutation_id TEXT);");
-    db.prepare("INSERT INTO room_master_table VALUES (42,?)").run(ROOM_SCHEMA_IDENTITY_HASH);
+    db.prepare("INSERT INTO room_master_table VALUES (42,?)").run(LEGACY_ROOM_SCHEMA.identityHash);
     const t = input.local.tickets[0], c = input.local.commands[0], i = input.local.intents[0], r = input.local.receipts[0];
     db.prepare("INSERT INTO arena_ticket_records VALUES (?,?,?,?,?,?)").run(t.ownerUid,t.ticketId,t.attemptId,t.serverStatus,t.localUse,t.decision);
     db.prepare("INSERT INTO arena_command_journal VALUES (?,?,?,?,?,?,?,?)").run(c.ownerUid,c.ticketId,c.attemptId,c.commandKind,c.commandId,c.state,c.bodyJson,c.bodySha256);
@@ -204,5 +211,8 @@ test("real SQLite read binds every field and rejects foreign duplicate receipt w
     db.prepare("INSERT INTO mutation_receipts VALUES (?,?,?,?,?)").run("foreign",r.mutationId,r.operation,r.entityRef,r.payloadJson);
     assert.throws(() => assessLegacySettlement({...input, local: readLocalProof(input.context, {dbPath})}),
       {code: "LOCAL_PROOF_AMBIGUOUS"});
+    db.exec("PRAGMA user_version=" + ROOM_SCHEMA_V15.version);
+    db.prepare("UPDATE room_master_table SET identity_hash=? WHERE id=42").run(ROOM_SCHEMA_V15.identityHash);
+    assert.throws(() => readLocalProof(input.context, {dbPath}), {code: "LOCAL_PROOF_INVALID"});
   } finally { db.close(); fs.rmSync(dir, {recursive: true}); }
 });

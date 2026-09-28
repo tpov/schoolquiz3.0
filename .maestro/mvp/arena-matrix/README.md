@@ -70,10 +70,10 @@ plus a private **copy** of `schoolquiz.db` and any adjacent WAL/SHM sidecars mad
 stopped. It never opens adb or Firebase and emits only hashes, states, counts, and file digests;
 it never emits the owner, ticket, attempt, payload, answers, or errors stored by Room.
 
-The helper accepts only the installed C1+C3 Room v14 schema and its exact Room identity hash. It
+The helper accepts only explicitly paired Room v14 and v15 schemas and their exact identity hashes. It
 requires one intact frozen snapshot, one exact pending `SETTLE` command, the matching pending
 outbox row and first intent, no receipt for that mutation under any owner, and no locally scored
-attempt rows. It rejects an already delivered, ambiguous, malformed, mismatched, or newer schema
+attempt rows. It rejects an already delivered, ambiguous, malformed, mismatched, or unknown schema
 state rather than treating it as pending.
 
 Run it in the controlled Maestro container with Node v22's read-only `node:sqlite` runtime. There
@@ -212,8 +212,8 @@ contexts and Maestro logs stay in the private `0700` result directory.
 
 Before the online leaf can open the identity UI, the guard force-stops the retained app and the
 leaf makes ephemeral private copies of its Room database and one Firebase Auth Store preference.
-`scripts/arena-e2e-preparation-preflight-reader.js` accepts only the installed C1+C3 Room v14
-identity, proves that the persisted Firebase user and refreshable token bind the requested owner,
+`scripts/arena-e2e-preparation-preflight-reader.js` accepts only exact Room v14/v15 version and
+identity pairs, proves that the persisted Firebase user and refreshable token bind the requested owner,
 and rejects any outbox row, unresolved Arena command, reserved ticket, or orphaned submit/rating
 intent. It writes only hashes and counts; raw Room and Auth copies are removed before the leaf
 continues. This prevents a silent anonymous account from turning a financial run into a different

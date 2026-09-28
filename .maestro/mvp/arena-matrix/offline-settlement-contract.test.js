@@ -10,6 +10,7 @@ const {spawnSync} = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const {ROOM_SCHEMA_V14, ROOM_SCHEMA_V15} = require("../../../scripts/arena-e2e-pending-settlement-reader");
 
 const ROOT = __dirname;
 const runner = path.join(ROOT, "run-arena-offline-settlement.sh");
@@ -152,7 +153,8 @@ const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
 process.stdout.write(JSON.stringify({
   status: "PASS", readerVersion: "arena-e2e-preparation-preflight-reader-v1", sqliteAdapter: "fake-read-only",
   runId: flag("--run-id"), ownerUidSha256: hash(flag("--owner-uid")), accountRefSha256: hash(flag("--account-ref")),
-  room: {schemaVersion: 14, schemaIdentityHash: "ca5439bdc37decd3f21cb843d10bb3f4", databaseBytes: 12, walBytes: 0, shmBytes: 0},
+  room: {schemaVersion: Number(process.env.FAKE_PREFLIGHT_SCHEMA_VERSION || ${ROOM_SCHEMA_V15.version}),
+    schemaIdentityHash: process.env.FAKE_PREFLIGHT_SCHEMA_HASH || ${JSON.stringify(ROOM_SCHEMA_V15.identityHash)}, databaseBytes: 12, walBytes: 0, shmBytes: 0},
   auth: {cachedUser: true, accessTokenBound: true},
   quiescence: {outboxRows: 0, unresolvedArenaCommands: 0, reservedArenaTickets: 0, orphanedSubmitIntents: 0, orphanedRatingIntents: 0},
   documentWrites: 0,
@@ -271,10 +273,13 @@ function onlyOutput(value) {
   return outputs[0];
 }
 
-function testSealedSequenceHappyPath() {
+function testSealedSequenceHappyPath(schema) {
   const value = fixture();
   try {
-    const outcome = invoke(value);
+    const outcome = invoke(value, {
+      FAKE_PREFLIGHT_SCHEMA_VERSION: String(schema.version),
+      FAKE_PREFLIGHT_SCHEMA_HASH: schema.identityHash,
+    });
     assert.equal(outcome.status, 0, outcome.stderr);
     const output = onlyOutput(value);
     const handoff = JSON.parse(fs.readFileSync(path.join(output, "offline-settlement-handoff.json"), "utf8"));
@@ -296,6 +301,8 @@ function testSealedSequenceHappyPath() {
     const preparationPreflight = JSON.parse(fs.readFileSync(path.join(output, "preparation-preflight.json"), "utf8"));
     assert.equal(preparationPreflight.status, "PASS");
     assert.equal(preparationPreflight.readerVersion, "arena-e2e-preparation-preflight-reader-v1");
+    assert.deepEqual([preparationPreflight.room.schemaVersion, preparationPreflight.room.schemaIdentityHash],
+      [schema.version, schema.identityHash]);
     assert.equal(JSON.stringify(preparationPreflight).includes(ownerUid), false);
     const snapshot = state(value);
     assert.equal(snapshot.wifi, 1); assert.equal(snapshot.data, 1); assert.deepEqual(snapshot.mappings.sort(), [5001, 8080, 9099]);
@@ -323,6 +330,26 @@ function testInputMutationStopsBeforePrepare() {
     const snapshot = state(value);
     assert.equal(snapshot.wifi, 1); assert.equal(snapshot.data, 1); assert.deepEqual(snapshot.mappings.sort(), [5001, 8080, 9099]);
     assert.equal(snapshot.log.some((entry) => entry.type === "maestro" && entry.flow.endsWith("00-identity-preflight.yaml")), true);
+    assert.equal(snapshot.log.some((entry) => entry.type === "maestro" && entry.flow.endsWith("01-selected-hard-prepare.yaml")), false);
+    assert.equal(fs.existsSync(path.join(output, "prepared-ticket.json")), false);
+  } finally { value.dispose(); }
+}
+
+function testUnsupportedRoomSchemaStopsBeforePreparationAndTransportCut(version, identityHash) {
+  const value = fixture();
+  try {
+    const outcome = invoke(value, {
+      FAKE_PREFLIGHT_SCHEMA_VERSION: String(version),
+      FAKE_PREFLIGHT_SCHEMA_HASH: identityHash,
+    });
+    assert.equal(outcome.status, 2);
+    const output = onlyOutput(value);
+    const guardResult = JSON.parse(fs.readFileSync(path.join(output, "transport-guard-result.json"), "utf8"));
+    assert.equal(guardResult.status, "FAIL");
+    assert.equal(guardResult.errorCode, "PRE_CUT_CHILD_FAILED");
+    assert.equal(guardResult.cut.attempted, false);
+    const snapshot = state(value);
+    assert.equal(snapshot.wifi, 1); assert.equal(snapshot.data, 1); assert.deepEqual(snapshot.mappings.sort(), [5001, 8080, 9099]);
     assert.equal(snapshot.log.some((entry) => entry.type === "maestro" && entry.flow.endsWith("01-selected-hard-prepare.yaml")), false);
     assert.equal(fs.existsSync(path.join(output, "prepared-ticket.json")), false);
   } finally { value.dispose(); }
@@ -384,10 +411,17 @@ function testLeafStaticSafetyContract() {
   assert.equal(/03-sync-pending-settlement\.yaml/.test(source), false);
   assert.equal(/04-rate-two\.yaml/.test(source), false);
   assert.equal(/source\s+.*run-arena-e2b/.test(source), false);
+  for (const schema of [ROOM_SCHEMA_V14, ROOM_SCHEMA_V15]) {
+    assert.ok(source.includes(`JSON.stringify([${schema.version}, '${schema.identityHash}'])`),
+      "offline leaf Room allowlist differs from the pending reader");
+  }
 }
 
 testLeafStaticSafetyContract();
-testSealedSequenceHappyPath();
+testSealedSequenceHappyPath(ROOM_SCHEMA_V14);
+testSealedSequenceHappyPath(ROOM_SCHEMA_V15);
+testUnsupportedRoomSchemaStopsBeforePreparationAndTransportCut(ROOM_SCHEMA_V15.version, ROOM_SCHEMA_V14.identityHash);
+testUnsupportedRoomSchemaStopsBeforePreparationAndTransportCut(16, "f".repeat(32));
 testPreCutFailureDoesNotCutTransport();
 testInputMutationStopsBeforePrepare();
 testRecoveryRecordBlocksSecondPreparation();

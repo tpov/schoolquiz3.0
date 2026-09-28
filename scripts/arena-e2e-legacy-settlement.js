@@ -9,7 +9,7 @@ const {
   assertExactLedger, expectedTicketLedger, expectedAttemptLedger, eventPath,
 } = require("./arena-e2e-evidence");
 const {attemptFingerprint} = require("../functions/attempt-receipt");
-const {prepareInput, ROOM_SCHEMA_IDENTITY_HASH} = require("./arena-e2e-pending-settlement-reader");
+const {prepareInput, LEGACY_ROOM_SCHEMA} = require("./arena-e2e-pending-settlement-reader");
 
 const VERSION = "arena-legacy-settlement-recovery-v1";
 const FIX_COMMIT = "8dc782eab4bc85ecbea4ebe72c4c00755932beba";
@@ -61,7 +61,7 @@ function assessLegacySettlement({context, snapshot, local, incident}, reviewedSe
       !same(event.settlementResponse.receipts[0], receipt) ||
       !same(event.settlementResponse.reward, receipt.reward)) fail("RESPONSE_RECEIPT_MISMATCH");
 
-  if (local.schemaVersion !== 14 || local.identityHash !== ROOM_SCHEMA_IDENTITY_HASH ||
+  if (local.schemaVersion !== LEGACY_ROOM_SCHEMA.version || local.identityHash !== LEGACY_ROOM_SCHEMA.identityHash ||
       local.outboxCount !== 0) fail("LOCAL_PROOF_INVALID");
   const row = one(local.tickets);
   const command = one(local.commands);
@@ -155,7 +155,7 @@ function readLocalProof(context, input) {
     const schemaVersion = db.prepare("PRAGMA user_version").get().user_version;
     if (schemaVersion !== 14) fail("LOCAL_PROOF_INVALID");
     const identityHash = db.prepare("SELECT identity_hash FROM room_master_table WHERE id=42").get()?.identity_hash;
-    if (identityHash !== ROOM_SCHEMA_IDENTITY_HASH) fail("LOCAL_PROOF_INVALID");
+    if (identityHash !== LEGACY_ROOM_SCHEMA.identityHash) fail("LOCAL_PROOF_INVALID");
     const id = mutationId(context);
     return {schemaVersion, identityHash,
       tickets: db.prepare("SELECT owner_uid AS ownerUid, ticket_id AS ticketId, attempt_id AS attemptId, " +

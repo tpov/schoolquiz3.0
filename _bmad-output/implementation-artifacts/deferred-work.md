@@ -504,3 +504,7 @@ backfill.
 - source_spec: `buildSrc/src/main/kotlin/KmpLibraryConventionPlugin.kt` (гейт починен 2026-09-03)
   summary: 215 замечаний статического анализа зафиксированы отпечатками — это принятый долг, а не «чисто».
   evidence: Гейт включён: ktlint применяется к 48 общим модулям (846 замечаний исправлено автоформатированием, 16 руками), detekt повешен на `check` настоящими задачами `detektMetadata*` и добавлен в `ciCheck`, порог понижен с десяти до нуля. Существующий долг записан в `detekt-baseline.xml` по модулям — 215 записей, из них большинство MagicNumber и TooGenericExceptionCaught. Новый код проверяется полностью: проверено пробным нарушением, сборка краснеет. Разбирать отпечатки стоит темами (числа с именами, сужение перехвата исключений), а не подряд; каждая снятая запись из отпечатка — необратимое улучшение, потому что вернуть её обратно гейт уже не даст.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-arena-room-v15-evidence-readers.md`
+  summary: The offline Arena launcher accepts a PASS preflight whose quiescence object omits required counters.
+  evidence: `validate_preparation_preflight()` checks `Object.values(q).some(...)`; an empty object or one missing a count yields no nonzero values and passes this gate. The reader currently emits all five counts, so this is a pre-existing contract-hardening issue, not caused by the Room v15 change. Require exactly the five zero-valued counters in a dedicated follow-up before using this launcher for Arena acceptance.

@@ -495,9 +495,15 @@ const [file, runId, ownerUid, accountRef] = process.argv.slice(2);
 const value = JSON.parse(fs.readFileSync(file, 'utf8'));
 const hash = (text) => crypto.createHash('sha256').update(text).digest('hex');
 const q = value.quiescence;
+const supportedRoomSchemas = new Set([
+  JSON.stringify([14, 'ca5439bdc37decd3f21cb843d10bb3f4']),
+  JSON.stringify([15, 'e3a1b9e13aff4304afeba070b8895b6c']),
+]);
+const room = value.room;
+const roomSchemaSupported = room && supportedRoomSchemas.has(JSON.stringify([room.schemaVersion, room.schemaIdentityHash]));
 if (value.status !== 'PASS' || value.readerVersion !== 'arena-e2e-preparation-preflight-reader-v1' || value.runId !== runId ||
     value.ownerUidSha256 !== hash(ownerUid) || value.accountRefSha256 !== hash(accountRef) ||
-    value.auth?.cachedUser !== true || value.auth?.accessTokenBound !== true || !q ||
+    value.auth?.cachedUser !== true || value.auth?.accessTokenBound !== true || !roomSchemaSupported || !q ||
     Object.values(q).some((count) => count !== 0) || value.documentWrites !== 0) process.exit(2);
 NODE
     then

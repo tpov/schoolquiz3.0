@@ -8,7 +8,9 @@ const path = require("node:path");
 const {attemptDocumentId} = require("../functions/arena-tickets");
 const {
   PendingSettlementReaderError,
-  ROOM_SCHEMA_IDENTITY_HASH,
+  ROOM_SCHEMA_V14,
+  ROOM_SCHEMA_V15,
+  SUPPORTED_ROOM_SCHEMAS,
   parseCli,
   prepareInput,
   createNodeSqliteAdapter,
@@ -27,6 +29,15 @@ const context = {runId: "arena-pending-run-001", ownerUid, ticketId, attemptId};
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function testSupportedSchemasMatchGeneratedRoomSchemas() {
+  const schemaDirectory = path.join(__dirname, "../shared/core/persistence/schemas/com.tpov.schoolquiz.shared.core.persistence.AppDatabase");
+  const generated = [14, 15].map((version) => {
+    const schema = JSON.parse(fs.readFileSync(path.join(schemaDirectory, version + ".json"), "utf8"));
+    return {version: schema.database.version, identityHash: schema.database.identityHash};
+  });
+  assert.deepEqual(SUPPORTED_ROOM_SCHEMAS, generated);
 }
 
 function settlementBody(overrides = {}) {
@@ -101,7 +112,7 @@ function rows(overrides = {}) {
   return {
     schema: [{user_version: 14, ...(overrides.schema || {})}],
     roomMasterTables: [{name: "room_master_table", ...(overrides.roomMasterTable || {})}],
-    roomIdentity: [{identityHash: ROOM_SCHEMA_IDENTITY_HASH, ...(overrides.roomIdentity || {})}],
+    roomIdentity: [{identityHash: ROOM_SCHEMA_V14.identityHash, ...(overrides.roomIdentity || {})}],
     tickets: [{
       ownerUid,
       ticketId,
@@ -162,7 +173,7 @@ async function testProjectsOnlySafePendingFields() {
   assert.equal(result.storage, "Room");
   assert.match(result.bindingSha256, /^[a-f0-9]{64}$/);
   assert.equal(result.roomSchemaVersion, 14);
-  assert.equal(result.roomSchemaIdentityHash, ROOM_SCHEMA_IDENTITY_HASH);
+  assert.equal(result.roomSchemaIdentityHash, ROOM_SCHEMA_V14.identityHash);
   assert.equal(result.ticketState.decision, "SETTLE");
   assert.equal(result.pendingSettlement.outboxState, "WAITING");
   assert.equal(result.pendingSettlement.localReceiptCount, 0);
@@ -172,9 +183,21 @@ async function testProjectsOnlySafePendingFields() {
   }
 }
 
+function testAcceptsExactV15SchemaPair() {
+  const result = assertPendingSettlement(rows({
+    schema: {user_version: ROOM_SCHEMA_V15.version},
+    roomIdentity: {identityHash: ROOM_SCHEMA_V15.identityHash},
+  }), context);
+  assert.equal(result.schemaVersion, ROOM_SCHEMA_V15.version);
+  assert.equal(result.schemaIdentityHash, ROOM_SCHEMA_V15.identityHash);
+}
+
 function testRejectsBrokenLinkage() {
   const cases = [
     [rows({schema: {user_version: 15}}), "UNSUPPORTED_ROOM_SCHEMA"],
+    [rows({schema: {user_version: 15}, roomIdentity: {identityHash: ROOM_SCHEMA_V14.identityHash}}), "UNSUPPORTED_ROOM_SCHEMA"],
+    [rows({schema: {user_version: 14}, roomIdentity: {identityHash: ROOM_SCHEMA_V15.identityHash}}), "UNSUPPORTED_ROOM_SCHEMA"],
+    [rows({schema: {user_version: 16}, roomIdentity: {identityHash: "f".repeat(32)}}), "UNSUPPORTED_ROOM_SCHEMA"],
     [rows({roomMasterTable: {name: "other_table"}}), "UNSUPPORTED_ROOM_SCHEMA"],
     [rows({roomIdentity: {identityHash: "different-room-schema"}}), "UNSUPPORTED_ROOM_SCHEMA"],
     [rows({ticket: {snapshotSha256: "0".repeat(64)}}), "TICKET_STATE_MISMATCH"],
@@ -200,7 +223,7 @@ function testRejectsBrokenLinkage() {
   throwsCode(() => assertPendingSettlement({...rows(), outbox: [rows().outbox[0], rows().outbox[0]]}, context), "OUTBOX_AMBIGUOUS");
 }
 
-function makeFixtureDatabase(directory, {foreignReceipt = false, roomMaster = true} = {}) {
+function makeFixtureDatabase(directory, {foreignReceipt = false, roomMaster = true, schema = ROOM_SCHEMA_V14} = {}) {
   let DatabaseSync;
   try {
     ({DatabaseSync} = require("node:sqlite"));
@@ -225,9 +248,9 @@ function makeFixtureDatabase(directory, {foreignReceipt = false, roomMaster = tr
       "CREATE TABLE question_answers (attempt_id TEXT);",
       ...(roomMaster ? [
         "CREATE TABLE room_master_table (id INTEGER PRIMARY KEY, identity_hash TEXT);",
-        "INSERT INTO room_master_table(id, identity_hash) VALUES(42, '" + ROOM_SCHEMA_IDENTITY_HASH + "');",
+        "INSERT INTO room_master_table(id, identity_hash) VALUES(42, '" + schema.identityHash + "');",
       ] : []),
-      "PRAGMA user_version = 14;",
+      "PRAGMA user_version = " + schema.version + ";",
     ].join(" "));
     const candidate = rows();
     const ticket = candidate.tickets[0];
@@ -282,6 +305,26 @@ async function testRuntimeAdapterIsReadOnlyWhenAvailable() {
   }
 }
 
+async function testRuntimeAcceptsV15DatabaseReadOnlyWhenAvailable() {
+  const adapter = createNodeSqliteAdapter();
+  if (!adapter) {
+    console.log("SKIP node:sqlite v15 integration: runtime unavailable");
+    return;
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "arena-pending-settlement-reader-v15-"));
+  try {
+    const databasePath = makeFixtureDatabase(directory, {schema: ROOM_SCHEMA_V15});
+    const input = prepareInput({...context, db: databasePath});
+    const before = sha256File(databasePath);
+    const result = await readPendingSettlementContext(context, {adapter, input});
+    assert.equal(result.roomSchemaVersion, ROOM_SCHEMA_V15.version);
+    assert.equal(result.roomSchemaIdentityHash, ROOM_SCHEMA_V15.identityHash);
+    assert.equal(sha256File(databasePath), before);
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+}
+
 async function testRuntimeRejectsReceiptForSameMutationFromAnotherOwner() {
   const adapter = createNodeSqliteAdapter();
   if (!adapter) {
@@ -321,10 +364,13 @@ async function testRuntimeRejectsV14DatabaseWithoutCandidateRoomIdentity() {
 }
 
 (async () => {
+  testSupportedSchemasMatchGeneratedRoomSchemas();
   testCliRequiresOneBoundRun();
   await testProjectsOnlySafePendingFields();
+  testAcceptsExactV15SchemaPair();
   testRejectsBrokenLinkage();
   await testRuntimeAdapterIsReadOnlyWhenAvailable();
+  await testRuntimeAcceptsV15DatabaseReadOnlyWhenAvailable();
   await testRuntimeRejectsReceiptForSameMutationFromAnotherOwner();
   await testRuntimeRejectsV14DatabaseWithoutCandidateRoomIdentity();
   console.log("arena-e2e-pending-settlement-reader.test.js OK");

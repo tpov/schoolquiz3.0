@@ -5,10 +5,9 @@ const {createHash} = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const {ROOM_SCHEMA_V14, ROOM_SCHEMA_V15} = require("./arena-e2e-pending-settlement-reader");
 const {
   PreparationPreflightError,
-  ROOM_SCHEMA_IDENTITY_HASH,
-  ROOM_SCHEMA_VERSION,
   blockedResult,
   readPreparationPreflight,
 } = require("./arena-e2e-preparation-preflight-reader");
@@ -36,8 +35,8 @@ function authXml(owner, options = {}) {
 
 function rows(overrides = {}) {
   return {
-    schema: {user_version: ROOM_SCHEMA_VERSION},
-    roomMaster: {identityHash: ROOM_SCHEMA_IDENTITY_HASH},
+    schema: {user_version: ROOM_SCHEMA_V14.version},
+    roomMaster: {identityHash: ROOM_SCHEMA_V14.identityHash},
     outbox: {count: 0},
     commands: {count: 0},
     reservedTickets: {count: 0},
@@ -60,6 +59,30 @@ function fixture({authOwner = OWNER, queryRows = rows()} = {}) {
   };
 }
 
+function makeRoomDatabase(databasePath, schema) {
+  const {DatabaseSync} = require("node:sqlite");
+  const db = new DatabaseSync(databasePath);
+  try {
+    db.exec([
+      "CREATE TABLE room_master_table (id INTEGER PRIMARY KEY, identity_hash TEXT);",
+      "CREATE TABLE outbox (owner_uid TEXT, mutation_id TEXT);",
+      "CREATE TABLE arena_command_journal (command_kind TEXT, state TEXT);",
+      "CREATE TABLE arena_ticket_records (server_status TEXT);",
+      "CREATE TABLE lesson_attempt_intents (operation TEXT, owner_uid TEXT, mutation_id TEXT);",
+      "CREATE TABLE mutation_receipts (owner_uid TEXT, mutation_id TEXT);",
+      "CREATE TABLE arena_frozen_rating_intents (owner_uid TEXT, mutation_id TEXT);",
+      "PRAGMA user_version = " + schema.version + ";",
+    ].join(" "));
+    db.prepare("INSERT INTO room_master_table(id, identity_hash) VALUES (42, ?)").run(schema.identityHash);
+  } finally {
+    db.close();
+  }
+}
+
+function sha256File(filePath) {
+  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
 function throwsCode(action, code) {
   assert.throws(action, (error) => error instanceof PreparationPreflightError && error.code === code);
 }
@@ -69,6 +92,8 @@ function testAcceptsExactPersistedOwnerAndQuiescentRoom() {
   try {
     const result = readPreparationPreflight(value.context, value.adapter);
     assert.equal(result.status, "PASS");
+    assert.equal(result.room.schemaVersion, ROOM_SCHEMA_V14.version);
+    assert.equal(result.room.schemaIdentityHash, ROOM_SCHEMA_V14.identityHash);
     assert.equal(result.ownerUidSha256, ownerHash());
     assert.equal(JSON.stringify(result).includes(OWNER), false);
     assert.deepEqual(result.quiescence, {
@@ -80,6 +105,72 @@ function testAcceptsExactPersistedOwnerAndQuiescentRoom() {
     });
   } finally {
     value.dispose();
+  }
+}
+
+function testAcceptsV15AndRejectsUnpairedRoomSchemas() {
+  const current = fixture({queryRows: rows({
+    schema: {user_version: ROOM_SCHEMA_V15.version},
+    roomMaster: {identityHash: ROOM_SCHEMA_V15.identityHash},
+  })});
+  try {
+    const result = readPreparationPreflight(current.context, current.adapter);
+    assert.equal(result.room.schemaVersion, ROOM_SCHEMA_V15.version);
+    assert.equal(result.room.schemaIdentityHash, ROOM_SCHEMA_V15.identityHash);
+  } finally {
+    current.dispose();
+  }
+
+  for (const queryRows of [
+    rows({schema: {user_version: ROOM_SCHEMA_V15.version}}),
+    rows({schema: {user_version: ROOM_SCHEMA_V14.version}, roomMaster: {identityHash: ROOM_SCHEMA_V15.identityHash}}),
+    rows({schema: {user_version: 16}, roomMaster: {identityHash: "f".repeat(32)}}),
+  ]) {
+    const value = fixture({queryRows});
+    try {
+      throwsCode(() => readPreparationPreflight(value.context, value.adapter), "UNSUPPORTED_ROOM_SCHEMA");
+    } finally {
+      value.dispose();
+    }
+  }
+}
+
+function testRejectsInvalidAdapterOutputBeforeSchemaValidation() {
+  const value = fixture({queryRows: null});
+  try {
+    throwsCode(() => readPreparationPreflight(value.context, value.adapter), "SQLITE_OUTPUT_INVALID");
+  } finally {
+    value.dispose();
+  }
+}
+
+function testRuntimeReadsBothSupportedSchemasWithoutWriting() {
+  try {
+    require("node:sqlite");
+  } catch {
+    console.log("SKIP node:sqlite preparation-preflight integration: runtime unavailable");
+    return;
+  }
+  for (const schema of [ROOM_SCHEMA_V14, ROOM_SCHEMA_V15]) {
+    const value = fixture();
+    try {
+      fs.rmSync(value.context.db);
+      makeRoomDatabase(value.context.db, schema);
+      const before = sha256File(value.context.db);
+      const result = readPreparationPreflight(value.context);
+      assert.equal(result.room.schemaVersion, schema.version);
+      assert.equal(result.room.schemaIdentityHash, schema.identityHash);
+      assert.deepEqual(result.quiescence, {
+        outboxRows: 0,
+        unresolvedArenaCommands: 0,
+        reservedArenaTickets: 0,
+        orphanedSubmitIntents: 0,
+        orphanedRatingIntents: 0,
+      });
+      assert.equal(sha256File(value.context.db), before);
+    } finally {
+      value.dispose();
+    }
   }
 }
 
@@ -153,6 +244,9 @@ function testRedactsBlockedQuiescenceForARecoveryOperator() {
 }
 
 testAcceptsExactPersistedOwnerAndQuiescentRoom();
+testAcceptsV15AndRejectsUnpairedRoomSchemas();
+testRejectsInvalidAdapterOutputBeforeSchemaValidation();
+testRuntimeReadsBothSupportedSchemasWithoutWriting();
 testRejectsDifferentPersistedOwnerBeforeRoomResult();
 testAcceptsFirebaseEmulatorUnsignedJwt();
 testRejectsCachedIdentityWithoutRefreshCredential();

@@ -7,10 +7,9 @@
 const {createHash} = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
+const {identifyRoomSchema} = require("./arena-e2e-pending-settlement-reader");
 
 const VERSION = "arena-e2e-preparation-preflight-reader-v1";
-const ROOM_SCHEMA_VERSION = 14;
-const ROOM_SCHEMA_IDENTITY_HASH = "ca5439bdc37decd3f21cb843d10bb3f4";
 const AUTH_USER_KEY = "com.google.firebase.auth.FIREBASE_USER";
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
 const MAX_AUTH_PREFS_BYTES = 1024 * 1024;
@@ -256,11 +255,15 @@ function createNodeSqliteAdapter() {
   };
 }
 
+function assertSupportedRoomSchema(rows) {
+  const roomSchema = identifyRoomSchema(rows?.schema?.user_version, rows?.roomMaster?.identityHash);
+  if (!roomSchema) fail("UNSUPPORTED_ROOM_SCHEMA", "Room snapshot has an unsupported version/identity pair");
+  return roomSchema;
+}
+
 function assertQuiescent(rows) {
   if (!rows || typeof rows !== "object") fail("SQLITE_OUTPUT_INVALID", "SQLite adapter returned an invalid result");
-  if (rows.schema?.user_version !== ROOM_SCHEMA_VERSION || rows.roomMaster?.identityHash !== ROOM_SCHEMA_IDENTITY_HASH) {
-    fail("UNSUPPORTED_ROOM_SCHEMA", "Room snapshot is not the installed C1+C3 schema");
-  }
+  const roomSchema = assertSupportedRoomSchema(rows);
   const quiescence = {
     outboxRows: requireCount(rows.outbox, "outbox"),
     unresolvedArenaCommands: requireCount(rows.commands, "arena command"),
@@ -271,14 +274,14 @@ function assertQuiescent(rows) {
   if (Object.values(quiescence).some((value) => value !== 0)) {
     fail("PREPARATION_NOT_QUIESCENT", "the stopped app has unresolved financial state; recovery is required before prepare", {quiescence});
   }
-  return quiescence;
+  return {quiescence, roomSchema};
 }
 
 function readPreparationPreflight(context, adapter = createNodeSqliteAdapter()) {
   if (!adapter) fail("SQLITE_UNAVAILABLE", "node:sqlite is required for the preparation preflight reader");
   const input = prepareInput(context);
   const identity = assertPersistedCurrentUser(input.authPrefsPath, context.ownerUid);
-  const quiescence = assertQuiescent(adapter.query(input));
+  const {quiescence, roomSchema} = assertQuiescent(adapter.query(input));
   return {
     status: "PASS",
     readerVersion: VERSION,
@@ -287,8 +290,8 @@ function readPreparationPreflight(context, adapter = createNodeSqliteAdapter()) 
     ownerUidSha256: sha256(context.ownerUid),
     accountRefSha256: sha256(context.accountRef),
     room: {
-      schemaVersion: ROOM_SCHEMA_VERSION,
-      schemaIdentityHash: ROOM_SCHEMA_IDENTITY_HASH,
+      schemaVersion: roomSchema.version,
+      schemaIdentityHash: roomSchema.identityHash,
       databaseBytes: input.dbBytes,
       walBytes: input.walBytes,
       shmBytes: input.shmBytes,
@@ -343,8 +346,6 @@ if (require.main === module) {
 
 module.exports = {
   VERSION,
-  ROOM_SCHEMA_VERSION,
-  ROOM_SCHEMA_IDENTITY_HASH,
   PreparationPreflightError,
   parseCli,
   assertPersistedCurrentUser,

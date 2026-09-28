@@ -3,8 +3,8 @@
 // Read-only proof of one frozen, pending Arena SETTLE delivery. It reads only a copied Room
 // database (and its adjacent WAL/SHM sidecars). It never opens adb, Firebase, or the source DB
 // for writing, and its result intentionally excludes bodies, owner IDs, answers, and errors.
-// It accepts only schema v14, the schema of the installed C1+C3 candidate; a newer development
-// schema is rejected rather than silently being treated as equivalent evidence.
+// It accepts only explicitly paired Room versions and identity hashes. Unknown or cross-paired
+// schemas are rejected rather than silently being treated as equivalent evidence.
 
 const {createHash} = require("node:crypto");
 const fs = require("node:fs");
@@ -13,12 +13,23 @@ const {attemptDocumentId} = require("../functions/arena-tickets");
 
 const VERSION = "arena-e2e-pending-settlement-reader-v1";
 const SUBMIT_ATTEMPT = "lesson_runner.SUBMIT_ATTEMPT";
-const ROOM_SCHEMA_VERSION = 14;
-// `shared/core/persistence/schemas/.../14.json`: accepting only the integer PRAGMA value would
-// let an unrelated SQLite database masquerade as the installed C1+C3 Room schema.
-const ROOM_SCHEMA_IDENTITY_HASH = "ca5439bdc37decd3f21cb843d10bb3f4";
+const ROOM_SCHEMA_V14 = Object.freeze({
+  version: 14,
+  identityHash: "ca5439bdc37decd3f21cb843d10bb3f4",
+});
+const ROOM_SCHEMA_V15 = Object.freeze({
+  version: 15,
+  identityHash: "e3a1b9e13aff4304afeba070b8895b6c",
+});
+const LEGACY_ROOM_SCHEMA = ROOM_SCHEMA_V14;
+const SUPPORTED_ROOM_SCHEMAS = Object.freeze([ROOM_SCHEMA_V14, ROOM_SCHEMA_V15]);
 const MAX_BODY_BYTES = 500_000;
 const MAX_SNAPSHOT_BYTES = 1_000_000;
+
+function identifyRoomSchema(version, identityHash) {
+  if (!Number.isSafeInteger(version)) return null;
+  return SUPPORTED_ROOM_SCHEMAS.find((schema) => schema.version === version && schema.identityHash === identityHash) || null;
+}
 
 class PendingSettlementReaderError extends Error {
   constructor(code, message = code) {
@@ -348,17 +359,14 @@ function payloadBinding(body, context) {
 function assertPendingSettlement(rows, context) {
   if (!isRecord(rows)) fail("SQLITE_OUTPUT_INVALID", "SQLite adapter did not return an object");
   const schema = requireSingle(rows.schema, "Room schema", "SQLITE_OUTPUT_INVALID", "SQLITE_OUTPUT_INVALID");
-  if (safeWhole(schema.user_version, "schema.user_version") !== ROOM_SCHEMA_VERSION) {
-    fail("UNSUPPORTED_ROOM_SCHEMA", "Room schema is not the installed C1+C3 schema");
-  }
+  const schemaVersion = safeWhole(schema.user_version, "schema.user_version", 1);
   const master = requireSingle(rows.roomMasterTables, "Room master table", "UNSUPPORTED_ROOM_SCHEMA", "SQLITE_OUTPUT_INVALID");
   if (master.name !== "room_master_table") {
-    fail("UNSUPPORTED_ROOM_SCHEMA", "Room master table is not the installed C1+C3 schema");
+    fail("UNSUPPORTED_ROOM_SCHEMA", "Room master table is not supported");
   }
   const roomIdentity = requireSingle(rows.roomIdentity, "Room identity", "UNSUPPORTED_ROOM_SCHEMA", "SQLITE_OUTPUT_INVALID");
-  if (roomIdentity.identityHash !== ROOM_SCHEMA_IDENTITY_HASH) {
-    fail("UNSUPPORTED_ROOM_SCHEMA", "Room identity is not the installed C1+C3 schema");
-  }
+  const roomSchema = identifyRoomSchema(schemaVersion, roomIdentity.identityHash);
+  if (!roomSchema) fail("UNSUPPORTED_ROOM_SCHEMA", "Room schema version and identity are not an approved pair");
   const ticket = requireSingle(rows.tickets, "ticket", "TICKET_NOT_FOUND", "TICKET_AMBIGUOUS");
   if (ticket.ownerUid !== context.ownerUid || ticket.ticketId !== context.ticketId || ticket.attemptId !== context.attemptId ||
       ticket.serverStatus !== "RESERVED" || ticket.localUse !== "LAUNCHED" || ticket.decision !== "SETTLE" ||
@@ -416,8 +424,8 @@ function assertPendingSettlement(rows, context) {
     command,
     outbox,
     mutationId,
-    schemaVersion: schema.user_version,
-    schemaIdentityHash: roomIdentity.identityHash,
+    schemaVersion: roomSchema.version,
+    schemaIdentityHash: roomSchema.identityHash,
     attemptRows,
     answerRows,
   };
@@ -496,7 +504,11 @@ if (require.main === module) {
 
 module.exports = {
   VERSION,
-  ROOM_SCHEMA_IDENTITY_HASH,
+  ROOM_SCHEMA_V14,
+  ROOM_SCHEMA_V15,
+  LEGACY_ROOM_SCHEMA,
+  SUPPORTED_ROOM_SCHEMAS,
+  identifyRoomSchema,
   PendingSettlementReaderError,
   parseCli,
   usage,
