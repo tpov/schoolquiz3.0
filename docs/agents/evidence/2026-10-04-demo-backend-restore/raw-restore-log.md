@@ -1,5 +1,7 @@
 # Demo backend restore — raw evidence log (2026-10-04)
 
+schemaVersion: 1, capturedAtUtc: 2026-10-04T17:50:00Z
+
 All commands executed on the VPS (`ssh racknerd`). Times UTC. Container: `schoolquiz-demo-firebase-20261004`.
 
 ## 1. Pre-restore staged export re-verification (~17:20Z)
@@ -25,7 +27,7 @@ Pre-existing containers `schoolquiz-course-device-20260927` and `schoolquiz-less
 
 First `docker run` attempt (17:24Z) failed: firebase-cli could not spawn `java -version` — the original lesson-device container carried an explicit `PATH` including `/tools/jdk21/bin`; the failed container was removed (`docker rm -f`) and recreated with the full env below. No data directories were written by the failed attempt (emulators never started).
 
-Final creation (17:25:41Z, container id a25b269bfdfa…, also re-created on restart by `docker start`):
+Final creation (17:25:41Z, container id a25b269bfdfa…, restarted after the control stop via `docker start`; same container, same id):
 
 ```
 docker run -d --name schoolquiz-demo-firebase-20261004 \
@@ -99,8 +101,10 @@ Two failed attempts first (recorded for the record, no side effects): (a) `--exp
 Verification:
 
 ```
-find .../control-save-1 -type f | wc -l → 12
-auth users in control-save-1/auth_export/accounts.json → 98
+find /workspace/infrastructure/android-toolchain/firebase-exports/demo-restore-20261004/control-save-1 -type f | wc -l
+→ 12
+python3 -c "import json; print('control-save-1 auth users:', len(json.load(open('/workspace/infrastructure/android-toolchain/firebase-exports/demo-restore-20261004/control-save-1/auth_export/accounts.json'))['users']))"
+→ control-save-1 auth users: 98
 ```
 
 ## 6. Stop (export-on-exit) and restart (~17:41Z)

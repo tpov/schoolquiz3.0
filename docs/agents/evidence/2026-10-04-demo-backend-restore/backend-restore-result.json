@@ -16,14 +16,20 @@
   },
   "restoreVerification": {
     "stagedManifestSha256": "2e4237d84530f63520703c519803e3e4edd6f629fa8259e920bc4e7ba9e898ff",
-    "manifestRecipe": "cd <staged export> && find \"$PWD\" -type f | sort | xargs sha256sum | sha256sum",
+    "manifestRecipe": "cd /workspace/infrastructure/android-toolchain/firebase-export-staging/arena-e2b-cycle4-20260913/export && find \"$PWD\" -type f | sort | xargs sha256sum | sha256sum",
     "fileCount": 12,
     "totalBytes": 31379966,
     "perFileHashes": "staged-export-sha256.txt"
   },
+  "environmentIdentity": {
+    "firebaseToolsCli": "15.29.0 (from /workspace/infrastructure/android-toolchain/firebase-cli/node_modules/firebase-tools/package.json)",
+    "nodeImage": "node:22-bookworm-slim",
+    "nodeImageRepoDigest": "node@sha256:813a7480f28fdadac1f7f5c824bcdad435b5bc1322a5968bbbdef8d058f9dff4 (docker inspect RepoDigests; container image id sha256:813a7480… matches)"
+  },
+  "lifecycle": "The container schoolquiz-demo-firebase-20261004 is intentionally left running on 127.0.0.1:18090/19090 for downstream epics; stop/start ownership is the owner's and downstream epics'.",
   "baselineSpotChecks": {
     "authUsers": 98,
-    "walletDoc": { "path": "users/1wqSlL9TOX1h28ifZGixKxBugdSJ", "lifePoints": 1000, "standardHearts": 10, "goldHearts": 3, "nolics": 1000 },
+    "walletDoc": { "path": "users/1wqSlL9TOX1h28ifZGixKxBugdSJ", "lifePoints": "1000", "standardHearts": "10", "goldHearts": "3", "nolics": "1000", "note": "values are strings exactly as carried in the captured Firestore REST payload (integerValue rendered as string); nolics exists in the captured document though the spec's wallet list did not name it" },
     "lessonCt": "lessons/ct_796451cb56504585ab586b3c8cf1a47e_lesson present",
     "lessonQcalc": "lessons/qcalc_59d41cdbdfb642c9ba0a47d14c661df7_lesson present",
     "season": "arena_seasons/5990-Q4 present, status=FINALIZED",

@@ -73,10 +73,27 @@
   },
   "reproducibility": {
     "verifiedInputs": "HEAD, tree hash, diff sha256 and certificate recorded at build time; a re-run of the same command at the same HEAD with the same working tree must reproduce these identity inputs (APK bytes may vary only if inputs change)",
-    "backendBinding": "candidate pairs with the restored demo backend in docs/agents/evidence/2026-10-04-demo-backend-restore/ (container schoolquiz-demo-firebase-20261004, ports 18090/19090)"
+    "backendBinding": "candidate pairs with the restored demo backend in docs/agents/evidence/2026-10-04-demo-backend-restore/ (container schoolquiz-demo-firebase-20261004, ports 18090/19090)",
+    "results": [
+      {
+        "date": "2026-10-04",
+        "source": "re-run of candidateBuild.command on the VPS; raw log docs/agents/evidence/2026-10-04-mvp-apk-identity/assemble-mvp-rerun.log",
+        "buildResult": "BUILD SUCCESSFUL in 4m 52s (854 actionable tasks: 35 executed, 819 up-to-date)",
+        "apkSha256": "eeb8fc6e6c4dcc6f06ba3168c3a945323450cc3e8b50942975797198a63a5fbb",
+        "apkBytes": 42038981,
+        "certificate": "identical to candidate.signing (00:33:E7:FA:2C:7E:32:86:5A:5E:99:82:7A:06:8B:EC:76:52:90:4A:A2:76:E1:DB:9C:F4:23:D7:5E:6C:47:D3)"
+      },
+      {
+        "date": "2026-10-04",
+        "source": "independent orchestrator verification run later the same day",
+        "buildResult": "BUILD SUCCESSFUL",
+        "apkSha256": "eeb8fc6e6c4dcc6f06ba3168c3a945323450cc3e8b50942975797198a63a5fbb",
+        "apkBytes": 42038981,
+        "certificate": "identical"
+      }
+    ]
   },
   "deviations": [
     "Spec Code Map said apps/android-next/src/mvp/google-services.json carries project 'school-quiz-89336951'; the actual mvp variant carries project_id 'demo-schoolquiz-mvp' (project_number 123456789000). Recorded as found."
-  ],
-  "buildLog": "docs/agents/evidence/2026-10-04-mvp-apk-identity/assemble-mvp-build.log"
+  ]
 }

@@ -24,6 +24,11 @@
     ],
     "rootCause": "The debug build variant's google-services.json is an untracked local file (.gitignore lines 'debug/' and '**/google-services.json'); it exists in the owner's Mac checkout but not on the VPS worktree. Only apps/android-next/src/mvp/google-services.json is tracked, which is why assembleMvp passes while ciCheck's assembleDebug leg fails. This is the pre-existing baseline state of the worktree; this run introduced no change to it."
   },
+  "inlinedOutput": {
+    "failureBlockRun1": "* What went wrong:\nExecution failed for task ':apps:android-next:processDebugGoogleServices' (registered by plugin 'com.android.internal.application').\n> File google-services.json is missing. \n  The Google Services Plugin cannot function without it. \n  Searched locations: /workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/apps/android-next/src/debug/google-services.json, /workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/apps/android-next/src/debug/google-services.json, /workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/apps/android-next/src/google-services.json, /workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/apps/android-next/src/debug/google-services.json, /workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/apps/android-next/src/Debug/google-services.json, /workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/apps/android-next/google-services.json",
+    "tailRun1": "BUILD FAILED in 19s\n8 actionable tasks: 4 executed, 4 up-to-date",
+    "tailRun2": "BUILD FAILED in 15s\n8 actionable tasks: 1 executed, 7 up-to-date\nEXIT_CODE=1"
+  },
   "runs": [
     {
       "log": "root-cicheck-run1.log",

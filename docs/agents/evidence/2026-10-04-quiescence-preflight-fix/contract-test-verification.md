@@ -1,5 +1,7 @@
 # Quiescence preflight fix — contract test verification (2026-10-04)
 
+schemaVersion: 1, capturedAtUtc: 2026-10-04T17:58:00Z
+
 Production fix: `.maestro/mvp/arena-matrix/run-arena-offline-settlement-leaf.sh`,
 `validate_preparation_preflight()` — exact-shape gate (non-null, non-array object, sorted key set
 exactly the five known counters, every value `typeof "number"` and `=== 0`), else `process.exit(2)`.
