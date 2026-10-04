@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-10-04T17:55:00Z",
+  "purpose": "Story 1.2 (epic-candidate-rig): identify the MVP candidate at HEAD 1e596126 by rebuilding with assembleMvp and recording APK, signing certificate, Room schema, config and flags. The previously documented APK/certificate predate HEAD and were stale.",
+  "candidate": {
+    "path": "/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate",
+    "branch": "continuation/mvp-candidate-20260926",
+    "head": "1e5961263a4c1ac85ad03eb7894a51bf44228a4a",
+    "headTree": "b074448db574e93f94838808eb877576715fe85b",
+    "diffSha256": "402cc656178d0d764394cf45c44e3e570a669813e90d840beb566eaeeb9689aa",
+    "diffNote": "git diff | sha256sum over the working tree at build time: owner's pre-existing uncommitted changes plus this run's leaf fix (.maestro/mvp/arena-matrix/run-arena-offline-settlement-leaf.sh). apps/ shared/ buildSrc/ gradle/ are clean in git, so the app build is reproducible from HEAD."
+  },
+  "candidateBuild": {
+    "command": "JAVA_HOME=/opt/jdks/jdk-27 ./gradlew :apps:android-next:assembleMvp --no-parallel --max-workers=1 --no-configuration-cache",
+    "result": "PASS: BUILD SUCCESSFUL in 1m 15s (854 actionable tasks: 36 executed, 818 up-to-date)",
+    "buildLog": "docs/agents/evidence/2026-10-04-mvp-apk-identity/assemble-mvp-build.log",
+    "apkPath": "apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk",
+    "apkBytes": 42038981,
+    "apkSha256": "eeb8fc6e6c4dcc6f06ba3168c3a945323450cc3e8b50942975797198a63a5fbb",
+    "builtAtUtc": "2026-10-04T17:40:00Z (apk mtime)",
+    "supersededApk": {
+      "note": "APK recorded in the 2026-09-27 checkpoint predated this HEAD (built at 15fedc22); its sha256 78937196... and cert 73d39c9c... are stale and no longer the candidate identity."
+    }
+  },
+  "signing": {
+    "keystore": "/root/.android/debug.keystore (no signingConfig block on the mvp build type; inherits debug)",
+    "apkCertSha256": "00:33:E7:FA:2C:7E:32:86:5A:5E:99:82:7A:06:8B:EC:76:52:90:4A:A2:76:E1:DB:9C:F4:23:D7:5E:6C:47:D3",
+    "keystoreCertSha256": "00:33:E7:FA:2C:7E:32:86:5A:5E:99:82:7A:06:8B:EC:76:52:90:4A:A2:76:E1:DB:9C:F4:23:D7:5E:6C:47:D3",
+    "apksignerVerify": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug; SHA-256 digest matches the keystore certificate",
+    "keystoreValidUntil": "Tue Sep 12 14:58:53 UTC 2056"
+  },
+  "package": {
+    "applicationId": "com.tpov.schoolquiz.mvp",
+    "versionCode": 1,
+    "versionName": "0.1.0-isolated",
+    "aapt2Badging": "package: name='com.tpov.schoolquiz.mvp' versionCode='1' versionName='0.1.0-isolated'",
+    "label": "School Quiz · MVP test"
+  },
+  "roomSchema": {
+    "database": "com.tpov.schoolquiz.shared.core.persistence.AppDatabase",
+    "version": 15,
+    "source": "shared/core/persistence/src/commonMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/AppDatabase.kt:38",
+    "exportedSchemas": [
+      "shared/core/persistence/schemas/com.tpov.schoolquiz.shared.core.persistence.AppDatabase/14.json",
+      "shared/core/persistence/schemas/com.tpov.schoolquiz.shared.core.persistence.AppDatabase/15.json"
+    ],
+    "pinnedBy": [
+      "shared/core/persistence/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/core/persistence/AppDatabaseMigrationsTest.kt",
+      "shared/core/persistence/src/commonTest/kotlin/com/tpov/schoolquiz/shared/core/persistence/MigrationCoverageTest.kt"
+    ]
+  },
+  "configAndFlags": {
+    "googleServicesMvp": {
+      "path": "apps/android-next/src/mvp/google-services.json",
+      "projectId": "demo-schoolquiz-mvp",
+      "projectNumber": "123456789000"
+    },
+    "emulatorSuite": "firebase.mvp.json (auth+firestore for the demo emulator backend; Functions planned but node_modules absent)",
+    "rootDeploy": "firebase.json",
+    "economyFixtures": [
+      "config/activity-kind-fixtures.json",
+      "config/charge-claim-fixtures.json",
+      "config/gift-box-fixtures.json",
+      "config/lesson-allocated-seconds-fixtures.json",
+      "config/unlock-price-fixtures.json"
+    ],
+    "firestoreSecurity": ["firestore.rules", "firestore.indexes.json"],
+    "buildConfig": {
+      "MVP_EMULATORS": true,
+      "FIREBASE_APP_CHECK_DEBUG_SECRET": ""
+    },
+    "localProperties": "untracked; never printed or committed"
+  },
+  "reproducibility": {
+    "verifiedInputs": "HEAD, tree hash, diff sha256 and certificate recorded at build time; a re-run of the same command at the same HEAD with the same working tree must reproduce these identity inputs (APK bytes may vary only if inputs change)",
+    "backendBinding": "candidate pairs with the restored demo backend in docs/agents/evidence/2026-10-04-demo-backend-restore/ (container schoolquiz-demo-firebase-20261004, ports 18090/19090)"
+  },
+  "deviations": [
+    "Spec Code Map said apps/android-next/src/mvp/google-services.json carries project 'school-quiz-89336951'; the actual mvp variant carries project_id 'demo-schoolquiz-mvp' (project_number 123456789000). Recorded as found."
+  ],
+  "buildLog": "docs/agents/evidence/2026-10-04-mvp-apk-identity/assemble-mvp-build.log"
+}

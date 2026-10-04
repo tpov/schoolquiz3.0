@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-10-04T17:50:00Z",
+  "purpose": "Story 1.1 (epic-candidate-rig): restore the demo Firebase emulator backend from the hash-verified staged export into a new container, new output directories and new loopback ports, and prove a control save/stop/start cycle retains the saved data.",
+  "candidate": {
+    "containerName": "schoolquiz-demo-firebase-20261004",
+    "image": "node:22-bookworm-slim",
+    "projectId": "demo-schoolquiz-mvp",
+    "ports": { "firestore": "127.0.0.1:18090", "auth": "127.0.0.1:19090" },
+    "memoryBytes": 1468006400,
+    "entrypoint": "/tools/firebase-cli/node_modules/.bin/firebase",
+    "command": "emulators:start --config /repo/firebase.mvp.json --project demo-schoolquiz-mvp --only auth,firestore --non-interactive --import /tools/firebase-import --export-on-exit /tools/firebase-output-root/export",
+    "importSource": "/workspace/infrastructure/android-toolchain/firebase-export-staging/arena-e2b-cycle4-20260913/export (mounted :ro at /tools/firebase-import)",
+    "outputRoot": "/workspace/infrastructure/android-toolchain/firebase-exports/demo-restore-20261004",
+    "runtimeTmp": "/workspace/infrastructure/android-toolchain/firebase-runtime/demo-restore-20261004"
+  },
+  "restoreVerification": {
+    "stagedManifestSha256": "2e4237d84530f63520703c519803e3e4edd6f629fa8259e920bc4e7ba9e898ff",
+    "manifestRecipe": "cd <staged export> && find \"$PWD\" -type f | sort | xargs sha256sum | sha256sum",
+    "fileCount": 12,
+    "totalBytes": 31379966,
+    "perFileHashes": "staged-export-sha256.txt"
+  },
+  "baselineSpotChecks": {
+    "authUsers": 98,
+    "walletDoc": { "path": "users/1wqSlL9TOX1h28ifZGixKxBugdSJ", "lifePoints": 1000, "standardHearts": 10, "goldHearts": 3, "nolics": 1000 },
+    "lessonCt": "lessons/ct_796451cb56504585ab586b3c8cf1a47e_lesson present",
+    "lessonQcalc": "lessons/qcalc_59d41cdbdfb642c9ba0a47d14c661df7_lesson present",
+    "season": "arena_seasons/5990-Q4 present, status=FINALIZED",
+    "historyDocs": 0
+  },
+  "controlSave": {
+    "command": "docker exec -w /tmp schoolquiz-demo-firebase-20261004 firebase emulators:export /tools/firebase-output-root/control-save-1 --config /repo/firebase.mvp.json --project demo-schoolquiz-mvp --non-interactive",
+    "result": "Export complete",
+    "fileCount": 12,
+    "authUsers": 98
+  },
+  "restartCycle": {
+    "stop": "docker stop fired --export-on-exit; export-on-exit output: 12 files, 98 auth users",
+    "start": "docker start re-imported the read-only staged export (logs confirm /tools/firebase-import source)",
+    "postRestartSpotChecks": {
+      "authUsers": 98,
+      "walletRetained": true,
+      "lessonCtPresent": true,
+      "lessonQcalcPresent": true,
+      "seasonPresent": true,
+      "historyDocs": 0
+    }
+  },
+  "deviations": [
+    "Spec spot-check 'seasons/5990-Q4' exists as 'arena_seasons/5990-Q4' in this backend.",
+    "Wallet fields live on users/<uid> (718 docs with lifePoints/standardHearts/goldHearts), not profiles/<uid>; profiles carry uid/nickname/syntheticCatalogRun.",
+    "history: 0 documents before and after restart; staged export LevelDB contains no history kind markers, so the restored state is byte-faithful to the canonical staged baseline.",
+    "emulators:export in firebase-tools here takes the export path positionally (no --export-dir flag) and requires a writable cwd plus explicit --config."
+  ],
+  "rawLog": "raw-restore-log.md",
+  "stories": { "1.1": "PASS" }
+}

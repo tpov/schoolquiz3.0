@@ -1,0 +1,55 @@
+# tickets.toml — epic-candidate-rig: stories in build order.
+# Inception breakdown of the epic's Done-when (epic-candidate-rig.md, 2026-10-04).
+# Table order is the build order; `id` names a story for good and is not an order.
+# 1.1, 1.2 and 1.4 are mutually independent; 1.6 follows 1.2; 1.3 and 1.5 are
+# owner-side device work (hitl) and block nothing else in this epic.
+
+[[story]]
+id = "1.1"
+slug = "restore-demo-backend"
+title = "Restore the demo Firebase container from the verified export into a new directory; control save/restart retains account, wallet, lessons, history"
+covers = ["CAP-20"]
+after = []
+status = "done" # 2026-10-04 run: container schoolquiz-demo-firebase-20261004 (18090/19090); save/restart proof PASS (docs/agents/evidence/2026-10-04-demo-backend-restore/)
+
+[[story]]
+id = "1.2"
+slug = "identify-candidate"
+title = "Identify one candidate at HEAD 1e596126: assembleMvp on the VPS, APK SHA-256, signing certificate, Room schema, config, flags — recorded"
+covers = ["CAP-20"]
+after = []
+status = "done" # 2026-10-04 run: APK eeb8fc6e…, cert 00:33:E7:FA…, schema v15; identity + reproducibility re-run recorded (docs/agents/2026-10-04-mvp-apk-identity.json)
+
+[[story]]
+id = "1.3"
+slug = "install-over-populated-device"
+title = "Install the candidate over the populated Samsung installation; content, history, authentication, installation identity and pending operations retained (CAP-20)"
+covers = ["CAP-20"]
+after = [{ story = "1.1", needs = "restored demo backend" }, { story = "1.2", needs = "identified candidate APK" }]
+hitl = true # physical Samsung RF8W80MBR3Z, USB to the owner's Mac only
+status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch: device not visible to server ADB (docs/agents/2026-10-04-epic1-rig-run.json)
+
+[[story]]
+id = "1.4"
+slug = "fix-quiescence-preflight"
+title = "Quiescence preflight regression GREEN: exactly five known counters, each numeric zero, gate the run; malformed preflight stops before Maestro and network changes"
+covers = ["CAP-20"]
+after = []
+status = "done" # 2026-10-04 run: leaf fixed; owner RED oracle green unmodified; revert-check reproduces the line-393 RED (docs/agents/evidence/2026-10-04-quiescence-preflight-fix/)
+
+[[story]]
+id = "1.5"
+slug = "device-inventory"
+title = "Device inventory (serial, Android, app, signature, DB schema, role, GMS/Play); missing settings recorded as external dependencies, not blocking"
+covers = ["CAP-20"]
+after = []
+hitl = true # requires the physical devices
+status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch: physical devices not visible to server ADB (docs/agents/2026-10-04-epic1-rig-run.json)
+
+[[story]]
+id = "1.6"
+slug = "root-cicheck"
+title = "Root ciCheck run on the candidate at least once with the result recorded"
+covers = ["CAP-20"]
+after = [{ story = "1.2", needs = "identified candidate source state" }]
+status = "done" # 2026-10-04 run: ciCheck executed and recorded — RED, exit 1, :apps:android-next:processDebugGoogleServices (debug google-services.json is an untracked owner-local file); breakdown in docs/agents/evidence/2026-10-04-root-cicheck/

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-10-04T18:20:00Z",
+  "purpose": "Story 1.6 (epic-candidate-rig): run root ciCheck on the candidate at HEAD 1e596126 and record the result.",
+  "candidate": {
+    "head": "1e5961263a4c1ac85ad03eb7894a51bf44228a4a",
+    "branch": "continuation/mvp-candidate-20260926",
+    "command": "JAVA_HOME=/opt/jdks/jdk-27 ./gradlew ciCheck --no-configuration-cache --no-parallel --max-workers=1"
+  },
+  "result": "FAIL",
+  "exitCode": 1,
+  "failingTasks": [
+    ":apps:android-next:processDebugGoogleServices"
+  ],
+  "failingTaskBreakdown": {
+    "task": ":apps:android-next:processDebugGoogleServices",
+    "registeredBy": "plugin 'com.android.internal.application'",
+    "error": "File google-services.json is missing. The Google Services Plugin cannot function without it.",
+    "searchedLocations": [
+      "apps/android-next/src/debug/google-services.json",
+      "apps/android-next/src/google-services.json",
+      "apps/android-next/src/Debug/google-services.json",
+      "apps/android-next/google-services.json"
+    ],
+    "rootCause": "The debug build variant's google-services.json is an untracked local file (.gitignore lines 'debug/' and '**/google-services.json'); it exists in the owner's Mac checkout but not on the VPS worktree. Only apps/android-next/src/mvp/google-services.json is tracked, which is why assembleMvp passes while ciCheck's assembleDebug leg fails. This is the pre-existing baseline state of the worktree; this run introduced no change to it."
+  },
+  "runs": [
+    {
+      "log": "root-cicheck-run1.log",
+      "note": "first full ciCheck run for this epic; BUILD FAILED in 19s, 8 actionable tasks: 4 executed, 4 up-to-date",
+      "exitCodeNotCaptured": true
+    },
+    {
+      "log": "root-cicheck-run2-exit-code.log",
+      "note": "rerun to capture the exact exit code; identical deterministic failure, BUILD FAILED in 15s",
+      "exitCode": 1
+    }
+  ],
+  "notRun": "detekt/ktlint/scriptsTest/functionsTest and the test suites never executed: ciCheck aborts at the first failing task (assembleDebug leg) in the configuration/executed graph",
+  "stories": { "1.6": "RECORDED (FAIL with failing-task breakdown; epic Done-when 6 'run at least once with the result recorded' is satisfied by this record)" }
+}
