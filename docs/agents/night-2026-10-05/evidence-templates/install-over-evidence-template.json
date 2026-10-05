@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": null,
+  "story": "1.3",
+  "slug": "install-over-populated-device",
+  "covers": ["CAP-20"],
+  "operator": "",
+  "device": {
+    "serial": null,
+    "model": null,
+    "androidRelease": null,
+    "connection": "usb"
+  },
+  "candidate": {
+    "apkFile": "android-next-mvp.apk",
+    "apkSha256Local": null,
+    "apkSha256Expected": "eeb8fc6e6c4dcc6f06ba3168c3a945323450cc3e8b50942975797198a63a5fbb",
+    "sha256Matched": null,
+    "certSha256Expected": "00:33:E7:FA:2C:7E:32:86:5A:5E:99:82:7A:06:8B:EC:76:52:90:4A:A2:76:E1:DB:9C:F4:23:D7:5E:6C:47:D3",
+    "apksignerVerifyRun": false,
+    "package": "com.tpov.schoolquiz.mvp"
+  },
+  "backend": {
+    "container": "schoolquiz-demo-firebase-20261004",
+    "sshTunnelActive": null,
+    "curlAuthHttpStatus": null,
+    "curlFirestoreHttpStatus": null,
+    "adbReverseList": []
+  },
+  "beforeInstall": {
+    "packageInfo": { "versionName": null, "versionCode": null, "firstInstallTime": null, "lastUpdateTime": null },
+    "room": { "userVersion": null, "identityHash": null, "identityHashMatchedV15": null },
+    "counts": {
+      "outbox": null,
+      "lesson_attempts": null,
+      "lesson_attempt_intents": null,
+      "arena_ticket_records": null,
+      "arena_frozen_rating_intents": null,
+      "mutation_receipts": null
+    },
+    "accountUid": null,
+    "backendUserDoc": { "lifePoints": null, "standardHearts": null, "goldHearts": null, "nolics": null },
+    "authStoreXmlFiles": [],
+    "androidId": null,
+    "rawOutputs": []
+  },
+  "install": {
+    "command": "adb -s <serial> install -r android-next-mvp.apk",
+    "output": null,
+    "success": null,
+    "note": ""
+  },
+  "afterInstall": {
+    "packageInfo": { "versionName": null, "versionCode": null, "firstInstallTime": null, "lastUpdateTime": null },
+    "room": { "userVersion": null, "identityHash": null, "identityHashMatchedV15": null },
+    "counts": {
+      "outbox": null,
+      "lesson_attempts": null,
+      "lesson_attempt_intents": null,
+      "arena_ticket_records": null,
+      "arena_frozen_rating_intents": null,
+      "mutation_receipts": null
+    },
+    "accountUid": null,
+    "backendUserDoc": { "lifePoints": null, "standardHearts": null, "goldHearts": null, "nolics": null },
+    "authStoreXmlFiles": [],
+    "androidId": null,
+    "catalogLoadsInApp": null,
+    "targetLessonOpensInApp": null,
+    "rawOutputs": []
+  },
+  "retentionChecks": [
+    { "item": "account", "retained": null, "evidence": "" },
+    { "item": "wallet", "retained": null, "evidence": "" },
+    { "item": "content/lessons", "retained": null, "evidence": "" },
+    { "item": "history", "retained": null, "evidence": "" },
+    { "item": "installation identity", "retained": null, "evidence": "" },
+    { "item": "pending operations", "retained": null, "evidence": "" }
+  ],
+  "deviations": [],
+  "result": null,
+  "resultNote": "",
+  "stories": { "1.3": null }
+}

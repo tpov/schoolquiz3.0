@@ -3,6 +3,9 @@
 # Table order is the build order; `id` names a story for good and is not an order.
 # 1.1, 1.2 and 1.4 are mutually independent; 1.6 follows 1.2; 1.3 and 1.5 are
 # owner-side device work (hitl) and block nothing else in this epic.
+# 1.7 (2026-10-05 night track E) is a DRAFT without a status line: it cannot be
+# dispatched until the owner-local debug google-services.json is placed in
+# apps/android-next/ (untracked by policy). Baseline: docs/agents/evidence/2026-10-05-cicheck-baseline/
 
 [[story]]
 id = "1.1"
@@ -53,3 +56,13 @@ title = "Root ciCheck run on the candidate at least once with the result recorde
 covers = ["CAP-20"]
 after = [{ story = "1.2", needs = "identified candidate source state" }]
 status = "done" # 2026-10-04 run: ciCheck executed and recorded — RED, exit 1, :apps:android-next:processDebugGoogleServices (debug google-services.json is an untracked owner-local file); breakdown in docs/agents/evidence/2026-10-04-root-cicheck/
+
+[[story]]
+id = "1.7"
+slug = "rerun-cicheck-record"
+title = "Re-run root ciCheck once the owner-local debug google-services.json is placed in apps/android-next/ (canonical apps/android-next/src/debug/google-services.json, untracked by policy) and record the full result with exit code and, on failure, the failing-task breakdown — docs/agents/evidence/<date>-rerun-cicheck/"
+covers = ["CAP-20"]
+after = [] # no story dependency; the input is an owner-local untracked file, not another story
+hitl = false # a Gradle run, not device work; the owner supplies the file (Mac checkout) or runs the gate on the Mac
+# draft, no status on purpose: RED baseline confirmed 2026-10-05 without a new build in
+# docs/agents/evidence/2026-10-05-cicheck-baseline/ (condition to lift RED, what the record does NOT prove).

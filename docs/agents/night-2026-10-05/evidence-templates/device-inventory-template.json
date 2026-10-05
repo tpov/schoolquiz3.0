@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": null,
+  "story": "1.5",
+  "slug": "device-inventory",
+  "covers": ["CAP-20"],
+  "operator": "",
+  "expectedSchema": {
+    "roomVersion": 15,
+    "identityHashV15": "e3a1b9e13aff4304afeba070b8895b6c",
+    "identityHashV14": "ca5439bdc37decd3f21cb843d10bb3f4"
+  },
+  "devices": [
+    {
+      "role": null,
+      "serial": "RF8W80MBR3Z",
+      "transport": "usb",
+      "model": null,
+      "brand": null,
+      "androidRelease": null,
+      "sdkInt": null,
+      "securityPatch": null,
+      "cpuAbi": null,
+      "app": {
+        "present": null,
+        "package": "com.tpov.schoolquiz.mvp",
+        "versionName": null,
+        "versionCode": null,
+        "firstInstallTime": null,
+        "lastUpdateTime": null,
+        "baseApkPath": null,
+        "signatureVerifiedAgainstCandidate": null,
+        "roomUserVersion": null,
+        "roomIdentityHash": null,
+        "roomIdentityHashMatches": null
+      },
+      "gms": { "present": null, "versionName": null },
+      "playStore": { "present": null, "versionName": null },
+      "playAccountSignedIn": null,
+      "notes": ""
+    },
+    {
+      "role": null,
+      "serial": "adb-56271FDCH00C5S-ow9AvR._adb-tls-connect._tcp",
+      "transport": "wireless-adb-tls",
+      "model": null,
+      "brand": null,
+      "androidRelease": null,
+      "sdkInt": null,
+      "securityPatch": null,
+      "cpuAbi": null,
+      "app": {
+        "present": null,
+        "package": "com.tpov.schoolquiz.mvp",
+        "versionName": null,
+        "versionCode": null,
+        "firstInstallTime": null,
+        "lastUpdateTime": null,
+        "baseApkPath": null,
+        "signatureVerifiedAgainstCandidate": null,
+        "roomUserVersion": null,
+        "roomIdentityHash": null,
+        "roomIdentityHashMatches": null
+      },
+      "gms": { "present": null, "versionName": null },
+      "playStore": { "present": null, "versionName": null },
+      "playAccountSignedIn": null,
+      "notes": ""
+    }
+  ],
+  "externalDependencies": [],
+  "deviations": [],
+  "result": null,
+  "resultNote": "",
+  "stories": { "1.5": null }
+}

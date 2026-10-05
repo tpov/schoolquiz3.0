@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-10-05T18:33:45Z",
+  "purpose": "Night track E: the requested live control export (docker exec emulators:export into a NEW control-save-night-20261005) could NOT be performed: the container schoolquiz-demo-firebase-20261004 was found EXITED before the export. This record documents the observed night state, the forensic timeline, at-rest data integrity checks that WERE performed, and the ready-to-run command for the owner/morning. The container was NOT started, stopped or restarted by this track, and no emulator data was modified.",
+  "requestedTask": "docker exec schoolquiz-demo-firebase-20261004 → emulators:export → control-save-night-20261005",
+  "taskStatus": "NOT_PERFORMED",
+  "notPerformedBecause": "docker exec requires a running container; the container exited at 2026-10-05T17:59:47Z with code 137 before the night track reached this task. Restarting it is explicitly forbidden for this track (night plan: 'Контейнер не останавливать/не перезапускать'; evidence 2026-10-04: stop/start ownership is the owner's and downstream epics').",
+  "containerStateObserved": {
+    "name": "schoolquiz-demo-firebase-20261004",
+    "firstSeenTonight": "Up 24 hours (docker ps at ~2026-10-05T17:16Z, before the night tracks' docker work)",
+    "exitCode": 137,
+    "oomKilled": false,
+    "finishedAt": "2026-10-05T17:59:47.811847509Z",
+    "logTailEvidence": "docker logs --tail 30: emulators 'Received SIGTERM for the first time. Starting a clean shutdown', then 'Automatically exporting data using --export-on-exit /tools/firebase-output-root/export', then 'Exporting data to: /tools/firebase-output-root/export' — the SIGKILL (137) arrived during that export; no export-on-exit files were written (see atRestIntegrity).",
+    "sigtermOrigin": "not determined; this track ran no docker stop/kill/pause/restart commands tonight (only docker ps/inspect/logs and one docker run --rm node:22 container for the contract test)"
+  },
+  "atRestIntegrityChecksPerformed": [
+    "staged import source (mounted :ro at /tools/firebase-import): cd /workspace/infrastructure/android-toolchain/firebase-export-staging/arena-e2b-cycle4-20260913/export && find \"$PWD\" -type f | sort | xargs sha256sum | sha256sum → 2e4237d84530f63520703c519803e3e4edd6f629fa8259e920bc4e7ba9e898ff — matches the manifest recorded in docs/agents/evidence/2026-10-04-demo-backend-restore/backend-restore-result.json",
+    "control-save-1 (2026-10-04T17:37:36Z): 12 files, auth users = 98 (len(accounts.json['users']))",
+    "export (--export-on-exit output of the 04.10 restart cycle, 2026-10-04T17:37:56Z): 12 files, auth users = 98",
+    "interrupted export-on-exit tonight wrote NOTHING: all mtimes in both output dirs are 2026-10-04; no temp remnants in the mounted output root"
+  ],
+  "consequences": [
+    "The last durable state of the demo backend remains the 2026-10-04 baseline (staged export sha 2e4237d8…; control-save-1 / export, 98 auth users each).",
+    "Any emulator-state changes made against the RUNNING container after the 04.10 restart (~17:41Z) were in-memory only and are LOST — the export-on-exit was killed before writing.",
+    "The morning hitl session (runbook-hitl-1.3-1.5.md §0/§3) needs the container STARTED first: docker start schoolquiz-demo-firebase-20261004 re-imports the read-only staged export by design (same cycle as 04.10), then the reachability curls apply."
+  ],
+  "readyToRunNightExportForFuture": "docker exec -w /tmp schoolquiz-demo-firebase-20261004 /tools/firebase-cli/node_modules/.bin/firebase emulators:export /tools/firebase-output-root/control-save-night-20261005 --config /repo/firebase.mvp.json --project demo-schoolquiz-mvp --non-interactive  (invoke while the container is Up; verified invocation shape from docs/agents/evidence/2026-10-04-demo-backend-restore/raw-restore-log.md §5)",
+  "stories": { "4 (night task)": "NOT_PERFORMED — documented instead; at-rest integrity verified" }
+}
