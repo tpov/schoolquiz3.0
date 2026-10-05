@@ -1,0 +1,79 @@
+# tickets.toml — epic-ordinary-delivery: stories in build order.
+# Inception breakdown of the epic's Done-when (epic-ordinary-delivery.md, night 2026-10-05/06).
+# Table order is the build order; `id` names a story for good and is not an order.
+# Scope rule for this inception (fixed assumption): a story is dispatchable "now" when the
+# orchestrator can prove it locally from this tree — code + JVM/node-free tests only. Anything
+# needing a physical device, Play, a live demo backend/emulator or an owner decision is
+# dispatch = "blocked" with the reason named. Real-phone confirmation of the same behavior rides
+# the epic-candidate-rig device stories (1.3/1.5), story 2.7 and final acceptance, not these.
+
+[[story]]
+id = "2.1"
+slug = "ordinary-lesson-offline-restart"
+title = "Обычный урок завершается офлайн из подготовленного запаса и после рестарта показывает ту же попытку/исход; готовый сохранённый вопрос появляется без добавленного сетевого гейта (CAP-1) — доказательство: JVM-тесты персистентности attempt/outcome и переходов RunnerLogic, симуляция рестарта переоткрытием базы; evidence docs/agents/evidence/<дата>-ordinary-lesson-offline-restart/"
+covers = ["CAP-1"]
+after = []
+hitl = false # JVM-доказательство; настоящий телефон идёт отдельно (1.3/1.5/2.7, приёмка)
+status = "todo" # dispatch now: весь нужный код в дереве (shared/feature/lesson-runner, shared/core/persistence); существующие JVM-тесты расширить рестарт-ветвью и сетевым-гейт-отрицанием
+
+[[story]]
+id = "2.2"
+slug = "outbox-120-drain"
+title = "Очередь из 120 действий сливается до авторитетных результатов без повторной ручной синхронизации; отменённый/искажённый ответ не фабрикует успех и не дублирует эффекты (CAP-18) — доказательство: JVM-прогон OutboxEngine с fake-транспортом на 120 записях (3 батча по 50) плюс ветви карантина/конфликта/перезревания; evidence docs/agents/evidence/<дата>-outbox-120-drain/"
+covers = ["CAP-18"]
+after = [{ story = "2.1", needs = "attempt/rating rows enqueued by the lesson writer" }]
+hitl = false # фейковый транспорт = локально; слив на живом demo-backend остаётся приёмке
+status = "todo" # dispatch now: движок уже пакует по 50 и не глушит очередь на отказе (OutboxEngine); тест-кейс 120 + malformed/cancelled ветви пишутся против общего кода
+
+[[story]]
+id = "2.3"
+slug = "account-roundtrip-isolation"
+title = "A→B→A и новая сессия того же UID сохраняют владение: ни чужих действий в очереди, ни приватных данных, ни двойного расчёта (CAP-19) — доказательство: JVM-тесты AccountSwitchGuard (flushBefore/forgetAfterSwitch/switchAndForget), смены OutboxSession.generation и owner-гейтов движка; evidence docs/agents/evidence/<дата>-account-roundtrip-isolation/"
+covers = ["CAP-19"]
+after = []
+hitl = false # два физических устройства в этой истории не нужны: изоляция доказывается на уровне guard/движка/сессий
+status = "todo" # dispatch now: AccountSwitchGuard и owner/epoch-гейты в дереве; негативные ветви (поздний ответ прежнего владельца, запись под чужим uid) покрываются JVM-тестами
+
+[[story]]
+id = "2.4"
+slug = "config-refresh-failure-terms"
+title = "Ошибка обновления конфига сохраняет известные значения и никогда не показывает ноль; изменившиеся платные условия требуют нового согласия (CAP-16) — доказательство: JVM-тесты EconomyConstantsRepositoryImpl (refresh failure держит снапшот) и нового consent-гейта на изменившиеся платные условия; evidence docs/agents/evidence/<дата>-config-refresh-failure-terms/"
+covers = ["CAP-16"]
+after = []
+hitl = false
+status = "todo" # dispatch now: хранение снапшота при отказе уже реализовано (EconomyConstantsRepositoryImpl.refresh); consent-гейт — новая логика домена/data + JVM-тесты, серверные числа не нужны
+
+[[story]]
+id = "2.5"
+slug = "online-o2-contract-adoption"
+title = "Контракт ONLINE-O2 доведён из черновика ночи (epic-ordinary-delivery/online-o2-contract-draft.md) до полной редакции: delivery/ready-ACK receipt, identity/retry, связь со стартом answer-clock, поведение при потере ACK; EXAM AD-3 процитирован как существующее доказательство без перезаписи; инварианты identity/retry закреплены JVM-тестами; evidence docs/agents/evidence/<дата>-online-o2-contract-adoption/"
+covers = ["CAP-1", "CAP-18"]
+after = []
+hitl = false
+status = "todo" # dispatch now: черновик уже лежит рядом в этом каталоге; финальное утверждение владельцем — отдельный вопрос в отчёте ночи, блокером dispatch не является
+
+[[story]]
+id = "2.6"
+slug = "online-next-question-transition"
+title = "Один онлайн-переход next-question по принятому ONLINE-O2: серверное событие завершения вопроса/окна, квитанция готовности, старт часов ответа следующего вопроса без неограниченной паузы и без замещающих часов после потерянного ACK; доказательство: один реальный переход через callable-приёмник на demo-backend + контрактные тесты обеих сторон; evidence docs/agents/evidence/<дата>-online-next-question-transition/"
+covers = ["CAP-1", "CAP-18"]
+after = [{ story = "2.5", needs = "adopted ONLINE-O2 contract" }]
+hitl = false # телефон не обязателен: переход доказывается callable-тестом; при желании повторяется на устройстве в 2.7
+status = "blocked" # НЕ dispatch now: нужен живой приёмник на demo-backend (Firebase callable + Node/эмулятор) — среда шире «код+JVM»; серверную сторону готовит оркестратор после поднятия demo-среды из 1.1
+
+[[story]]
+id = "2.7"
+slug = "update-over-populated-journey"
+title = "Acceptance-кейсы update-over-populated для этого пути проходят на кандидате (вместе с epic-candidate-rig): контент, история, аутентификация, identity установки и незавершённые операции сохраняются на пути обычного урока офлайн/рестарт/очередь/смена аккаунта/конфиг (CAP-20 поверх CAP-1/16/18/19); evidence docs/agents/evidence/<дата>-update-over-populated-journey/"
+covers = ["CAP-20", "CAP-1", "CAP-16", "CAP-18", "CAP-19"]
+after = [
+  { story = "1.1", needs = "restored demo backend" },
+  { story = "1.2", needs = "identified candidate APK" },
+  { story = "2.1", needs = "offline lesson path" },
+  { story = "2.2", needs = "120-action drain" },
+  { story = "2.3", needs = "account isolation" },
+  { story = "2.4", needs = "config consistency" },
+  { story = "2.6", needs = "one online transition" },
+]
+hitl = true # физический Samsung (RF8W80MBR3Z), USB к Mac владельца — как 1.3/1.5
+status = "blocked" # NOT RUN: устройство не видно серверному ADB (см. 2026-10-04-epic1-rig-run.json); выполняет владелец/оркестратор при доступном устройстве
