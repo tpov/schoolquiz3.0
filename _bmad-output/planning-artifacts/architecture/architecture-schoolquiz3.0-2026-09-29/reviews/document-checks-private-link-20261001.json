@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-01",
+  "scope": "Standalone private quiz optional expiry/manual disable; started attempts may finish",
+  "result": "PASS",
+  "AD_preservation": {
+    "retained_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "changed_ADs": [
+      29
+    ],
+    "all_other_AD_blocks_unchanged": true,
+    "baseline": "/tmp/schoolquiz-private-link-20261001/main/ARCHITECTURE-SPINE.md"
+  },
+  "lint_findings": 0,
+  "missing_links": [],
+  "whitespace": [],
+  "reviews": [
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-link-rubric-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-link-reality-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-link-adversarial-20261001.md"
+  ],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "071d83d96fc73592f2b0e22d006e6e902d5efb1aca2bd5902bdc623be33f3998",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "31e94bbe041d14cb8b3e9fb6dcc7029ee4dc7727d732c0b015829c98e20229e3",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "50396d5947745ab12871edeee65cbde46595cf0efac2d9e4d0b9151c28158df8",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "cab0fe2bfc372dd32d9da9f4762da04be63a7a42e4eb468172e1d7239230f9a8"
+  },
+  "runtime": "NOT RUN — documentation only",
+  "remaining": "Defaults and effect of other setting changes (show-result/attempt limit) on active attempts; timeout-result projection; named technical contracts"
+}

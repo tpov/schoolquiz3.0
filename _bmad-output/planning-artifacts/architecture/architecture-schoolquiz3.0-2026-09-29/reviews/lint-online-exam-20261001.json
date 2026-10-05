@@ -1,0 +1,16 @@
+{
+  "ok": false,
+  "spine": "ARCHITECTURE-SPINE.md",
+  "total_findings": 1,
+  "by_severity": {
+    "low": 1
+  },
+  "findings": [
+    {
+      "category": "placeholder",
+      "severity": "low",
+      "detail": "possible unfilled template token (verify): '{uid}'",
+      "location": "ARCHITECTURE-SPINE.md (line 95)"
+    }
+  ]
+}

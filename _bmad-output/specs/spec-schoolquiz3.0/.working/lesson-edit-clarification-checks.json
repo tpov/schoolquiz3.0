@@ -1,0 +1,14 @@
+{
+  "change": "Existing lesson title immutable; no lesson description; unsupported tariff question retired without setting a fee",
+  "capabilities": 23,
+  "unchanged_questions": [
+    "OQ-2",
+    "OQ-3",
+    "OQ-4",
+    "OQ-5"
+  ],
+  "ux_unchanged": true,
+  "spec_sha256": "b4214cd3bd23093f4646c1c6f662e418d756b980320199c1a4a07bf06a15a1a0",
+  "published_verified": true,
+  "runtime_or_code_changes": false
+}

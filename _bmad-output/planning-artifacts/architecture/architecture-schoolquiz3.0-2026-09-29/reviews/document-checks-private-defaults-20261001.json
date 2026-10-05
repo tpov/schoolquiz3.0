@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-01",
+  "scope": "Owner confirmation of new private quiz defaults: one attempt, hidden result, no link expiry",
+  "result": "PASS",
+  "AD_preservation": {
+    "retained_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "changed_ADs": [
+      29
+    ],
+    "all_other_AD_blocks_unchanged": true,
+    "baseline": "/tmp/schoolquiz-private-defaults-20261001/main/ARCHITECTURE-SPINE.md"
+  },
+  "lint_findings": 0,
+  "missing_links": [],
+  "whitespace": [],
+  "reviews": [
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-defaults-rubric-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-defaults-reality-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-defaults-adversarial-20261001.md"
+  ],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "296e45efd977783c06a97bf523e93276d718271687c28704bdaa6b058880b528",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "4e07217474bb774704c0c015d9db079d99e473ab08cf9b2af4ce1deba513a702",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "d6fdb3064cf63ace9a56f134ad114be342f6dcf8e94caecdf9ec20d4e28c88a7",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "ef986ee566df5556653849439d8e6e4dae33e2e0105ac50ce5fc093d609e3606"
+  },
+  "runtime": "NOT RUN — documentation only",
+  "remaining": "Effect of changed show-result/attempt limit on existing attempts and timeout-result projection; product name; technical contracts"
+}

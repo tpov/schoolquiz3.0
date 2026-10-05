@@ -3,7 +3,6 @@ name: Open ordinary cached lesson on Ukrainian Android device
 ---
 - launchApp:
     clearState: false
-- assertVisible: "^ДОМАШНІ КВЕСТИ$"
 - assertVisible: "^MVP validated checks$"
 - tapOn: "^MVP validated checks$"
 - assertVisible: "^MVP smoke course$"

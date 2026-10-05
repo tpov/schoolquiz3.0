@@ -1,0 +1,8 @@
+{
+  "ownerDecision": "2026-09-30 [ADOPTED] owner answered «Оставлять исходную награду»: a confirmed-fault correction leaves already settled nolics/XP and the existing reward-accounted maximum unchanged. No top-up, recoupment, second effect, downward reset or upward accounting from the corrected score. Future attempts use actual accounted history. An original pending financial effect retains its earned terminal-result/basis inputs on retry. First-ever corrected theme pass with no first-pass receipt remains eligible once under the existing rule, using frozen worth and b0. Closes QEX2 economic policy; certificate policy remains separate.",
+  "adversarialFix": "2026-09-30 adversarial H1 resolved by C2: commit corrected result head with recomputed theme best/admission atomically, or atomically establish durable correction-generation pending barrier/work at head commit. Final-start charge transaction checks current/applied correction generation and readiness for required themes, refusing pending/unavailable before debit. Stale asynchronous projection cannot restore invalid admission; materialization publishes only current generation. Active sittings retain frozen inputs.",
+  "remaining": [
+    "Q-EX-5 activation",
+    "Q-EX-7 optional scope"
+  ]
+}

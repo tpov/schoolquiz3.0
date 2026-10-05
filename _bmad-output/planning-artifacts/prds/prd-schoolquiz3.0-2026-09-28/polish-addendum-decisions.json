@@ -1,0 +1,15 @@
+{
+  "accepted": [
+    "S1a",
+    "S1b",
+    "S2a",
+    "S2b",
+    "S3",
+    "P1",
+    "P2",
+    "P3"
+  ],
+  "declined": [],
+  "order": "structure then prose",
+  "result_sha256": "a33ea4680d347a24cfae47457682b6c8948d3ef283c8f6249a1b37f58100d747"
+}

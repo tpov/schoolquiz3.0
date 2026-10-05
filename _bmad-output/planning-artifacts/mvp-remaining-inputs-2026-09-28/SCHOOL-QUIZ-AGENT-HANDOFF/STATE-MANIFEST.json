@@ -1,0 +1,891 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-09-07T06:05:39.210Z",
+  "purpose": "Read-only continuation inventory; not backup, authorization, import script or readiness proof",
+  "server": "204.44.66.27",
+  "serverRoot": "/srv/schoolquiz-mvp-20260906/integration",
+  "branch": "integration/mvp-20260906",
+  "head": "550a640453e6a6bcf779f94013f947248a282f9e",
+  "mirror": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit",
+  "currentScopedSourceCount": 40,
+  "serverHashesMatchLocal": true,
+  "excludes": [
+    "Unrelated dirty/untracked user files",
+    "Credentials",
+    "Device data",
+    "Database exports",
+    "Build outputs",
+    "Git objects"
+  ],
+  "rootOverride": {
+    "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSourceTest.kt",
+    "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSourceTest.kt",
+    "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSourceTest.kt",
+    "sha256": "5d2e60beb51d3a3ad0e547bb4915aef23413ea09b6935dbd2a495e3d341205e2"
+  },
+  "currentSources": [
+    {
+      "path": "android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt",
+      "sha256": "5f6fa9e9e8c0ac72b409e15c9ed5e8f08496a74c5c3a55d8b93a573a6631a427"
+    },
+    {
+      "path": "android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/tab/InternetTabComponent.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/tab/InternetTabComponent.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/tab/InternetTabComponent.kt",
+      "sha256": "1166f7e955e14d3cb4926180ad91c2c3c25a1b42faaaf22cc240bc8b45771c8b"
+    },
+    {
+      "path": "android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt",
+      "sha256": "44caff4d40afcc76acbd91581e0187da7a18f6320227c4d16528f7a313fab039"
+    },
+    {
+      "path": "android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/DefaultRootComponentTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/DefaultRootComponentTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/DefaultRootComponentTest.kt",
+      "sha256": "5c106d807a46b6e2e0f93fe751d05fd6a22551ae542ba0769dfeb4a6d3ee4d66"
+    },
+    {
+      "path": "android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/QuizzesRootIntegrationTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/QuizzesRootIntegrationTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/QuizzesRootIntegrationTest.kt",
+      "sha256": "12797f1e878827bcec4f1869f57c9f2a811e1fe3cf2238208322bb4232884bf4"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreenTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreenTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreenTest.kt",
+      "sha256": "d728039b641cd8f050bcbd181193dc07758ba147942a9c79d679900f7428c9bb"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ArenaLessonCatalogComponent.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ArenaLessonCatalogComponent.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ArenaLessonCatalogComponent.kt",
+      "sha256": "2aeb1880101bb026c871b33de9e637b86df95a93653ff3d0b788a24062a1d37b"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponent.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponent.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponent.kt",
+      "sha256": "ecd03171f30b95f39533159eca2d906db7a261e97a7c289fe547cf161120e83f"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt",
+      "sha256": "90046ce496fa308387705d67953061ccea7321484956c8722fc282910a9cdbcc"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt",
+      "sha256": "30b050ad64586ec81295e749b12eb4e334d9c41a0addba432b9d3c3c2f3af199"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt",
+      "sha256": "d9794bfcc1f1b1bae4a1dfa372f2c97631fcf36c3db51a602fba31180ccd33d4"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt",
+      "sha256": "14afb28065487685a73cf6f3a316abd7e86da213472901d477af582e63efb902"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreen.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreen.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreen.kt",
+      "sha256": "c65309d391a816e64538cbc7c62aec4bef991d895dd950e8a58d43419ede7777"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt",
+      "sha256": "0d80db57d8077193a975ecd84a5fa3197f78e5a427ecbeac4e2e888c72d44828"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/res/values-ru/strings.xml",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/res/values-ru/strings.xml",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/res/values-ru/strings.xml",
+      "sha256": "e766a643ca5265ce4fafb89289e2a12dd729970c1a7bdfc9c4b086af3851fc5e"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/res/values-uk/strings.xml",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/res/values-uk/strings.xml",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/res/values-uk/strings.xml",
+      "sha256": "49ff3f001e6e5d7f2696307bb0b017dacd2f2c6d54c211a5d1608393a2647f1f"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/main/res/values/strings.xml",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/main/res/values/strings.xml",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/main/res/values/strings.xml",
+      "sha256": "af5a96d7fe87d277a850bd48651f5e8b57d11dd3d5ceb44a4b5ac020f56b07d3"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/DefaultQuizzesComponentTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/DefaultQuizzesComponentTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/DefaultQuizzesComponentTest.kt",
+      "sha256": "4440e27728a7435e56f48b12b4eca9c004feaeb6bd4da5ff27dfd5d4b70276d3"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesConfigSerializationTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesConfigSerializationTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesConfigSerializationTest.kt",
+      "sha256": "c522025995c5a5c2c487b65151cb68405b47bc37b762c938885201c2f1e6fc42"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesStateKeeperRestoreTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesStateKeeperRestoreTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesStateKeeperRestoreTest.kt",
+      "sha256": "69c12f6bc63417191138cd1a352e64de0fad5f7ac7900cf568ad3d2164dfdd12"
+    },
+    {
+      "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponentTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponentTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponentTest.kt",
+      "sha256": "f9b07bf15d722b191663f3e958031e923d48b314ddcb42b7fa4bff1aca700225"
+    },
+    {
+      "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/ArenaCallableExchange.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/ArenaCallableExchange.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/ArenaCallableExchange.kt",
+      "sha256": "03d7eff8b61803d7820fedea1632f7a002983bec8930e1a5711c359893b03bf7"
+    },
+    {
+      "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSource.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSource.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSource.kt",
+      "sha256": "94aeef7df1ba24942b028d9454f53bd2a0d6b6a2c1c5c6da629662e4c343e424"
+    },
+    {
+      "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSource.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSource.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSource.kt",
+      "sha256": "0e7999ef3756e865a44f0ece50277337a0dd028c11aac0d6bfac2d5f76adf60b"
+    },
+    {
+      "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/di/FirebaseModule.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/di/FirebaseModule.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/di/FirebaseModule.kt",
+      "sha256": "5044554bf279370cb4752a3e92c854b300286c6b028ecfdaa3b05a57b559875b"
+    },
+    {
+      "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaKoinWiringTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaKoinWiringTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaKoinWiringTest.kt",
+      "sha256": "ac1c2f52467b4801b51122e0338968564770bd1354e1236033b987dd357be519"
+    },
+    {
+      "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSourceTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSourceTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSourceTest.kt",
+      "sha256": "dca754974c90605d7d4d2d8cc079ff24368463ece6abcc2725de7394ed581548"
+    },
+    {
+      "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSourceTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSourceTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSourceTest.kt",
+      "sha256": "5d2e60beb51d3a3ad0e547bb4915aef23413ea09b6935dbd2a495e3d341205e2"
+    },
+    {
+      "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketStatusRemoteDataSourceTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketStatusRemoteDataSourceTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketStatusRemoteDataSourceTest.kt",
+      "sha256": "cfd195880c459a5b2c49ac900c0e1ac3d6280a057903625743daa5c2cecee0cb"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/androidMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/di/ArenaDataModule.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/androidMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/di/ArenaDataModule.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/androidMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/di/ArenaDataModule.kt",
+      "sha256": "1cfc429747602fea0b58e198e6c90cf94db15533f59638f310f2508fc2e8aa64"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolver.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolver.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolver.kt",
+      "sha256": "5447b56697e5129678fec8111513868caced63a78d7001ae88ce01a48338b4a3"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaTicketJournal.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaTicketJournal.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaTicketJournal.kt",
+      "sha256": "2651c4c74052bc3222ab1733fe9513e13246e35a8fd9ff2f3a2ad87b8ea9e666"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketRemoteDataSource.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketRemoteDataSource.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketRemoteDataSource.kt",
+      "sha256": "6bf7f021ac3d66352b763cade7bac088848468f2783da4f235967cab44ddfc07"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketStatusRemoteDataSource.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketStatusRemoteDataSource.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketStatusRemoteDataSource.kt",
+      "sha256": "dba63de3561a90439ea90ae0477f8db72fe122fda86ac282bda953abfc72bb91"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProvider.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProvider.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProvider.kt",
+      "sha256": "67a0f40e34ea4e04ad90e82b77e74d654a3e570553c4fc42633f8f17b59571e4"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolverTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolverTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolverTest.kt",
+      "sha256": "f116cde5962efd0987979cbbf70e69bd965040aadf03f09209c8403c44068b0b"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalBoundaryTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalBoundaryTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalBoundaryTest.kt",
+      "sha256": "ca6638807ddb5191731c1e9974ea188b0791a4650ba7058d47ac6153632f5a0f"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalFakes.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalFakes.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalFakes.kt",
+      "sha256": "ad7a949f767ef367fbffb394e75e1d055c908a14c85f9166f4124e53ed5abe38"
+    },
+    {
+      "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProviderTest.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProviderTest.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProviderTest.kt",
+      "sha256": "9c70c61271876000e9972ebdb75609d58f3fee20d3a9fbffc988345e270875e8"
+    },
+    {
+      "path": "shared/feature/lesson-runner/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/domain/repository/ArenaSessionProvider.kt",
+      "localPath": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit/shared/feature/lesson-runner/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/domain/repository/ArenaSessionProvider.kt",
+      "serverPath": "/srv/schoolquiz-mvp-20260906/integration/shared/feature/lesson-runner/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/domain/repository/ArenaSessionProvider.kt",
+      "sha256": "ddd746d3e638381a468eb0562dcca73e19289e2c3f325d128799364829980b85"
+    }
+  ],
+  "drafts": [
+    {
+      "name": "arena-session-boundary",
+      "status": "IMPORTED_UNCOMMITTED_WITH_ROOT_TEST_OVERRIDE",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-session-boundary",
+      "manifest": "handoff-manifest.json",
+      "manifestSha256": "6ddfd7b4a2c004f754c1ab5c5751221c9eeb9de63a7dece840ce96370e95a40e",
+      "files": [
+        {
+          "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/ArenaCallableExchange.kt",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "sha256": "03d7eff8b61803d7820fedea1632f7a002983bec8930e1a5711c359893b03bf7",
+          "bytes": 1356
+        },
+        {
+          "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSource.kt",
+          "change": "modify",
+          "preimageSha256": "5ab4ffbc5f6d375dc393e433c6c9580eb2506d880610fa7f1a6f68f4119d0533",
+          "preimageBytes": 7114,
+          "sha256": "94aeef7df1ba24942b028d9454f53bd2a0d6b6a2c1c5c6da629662e4c343e424",
+          "bytes": 7269
+        },
+        {
+          "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSource.kt",
+          "change": "modify",
+          "preimageSha256": "e75ca1a1ddab9619d2379418f394e83a229ba1a0468dae32857c2da6ccc30615",
+          "preimageBytes": 11712,
+          "sha256": "0e7999ef3756e865a44f0ece50277337a0dd028c11aac0d6bfac2d5f76adf60b",
+          "bytes": 13540
+        },
+        {
+          "path": "platform/firebase/src/main/kotlin/com/tpov/schoolquiz/platform/firebase/di/FirebaseModule.kt",
+          "change": "modify",
+          "preimageSha256": "2414a273010731fdf920be06458ee68c05d99185b564e3ebfb2404be8a9ddfb8",
+          "preimageBytes": 8129,
+          "sha256": "5044554bf279370cb4752a3e92c854b300286c6b028ecfdaa3b05a57b559875b",
+          "bytes": 8159
+        },
+        {
+          "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaKoinWiringTest.kt",
+          "change": "modify",
+          "preimageSha256": "18e1633853733b908832d2396a689b48f7d4126040317358a5dad8b3cdccaf39",
+          "preimageBytes": 11524,
+          "sha256": "ac1c2f52467b4801b51122e0338968564770bd1354e1236033b987dd357be519",
+          "bytes": 14846
+        },
+        {
+          "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaLessonCatalogRemoteDataSourceTest.kt",
+          "change": "modify",
+          "preimageSha256": "ca342752ab24f5d3544ae5040ca2e64612654bc66b10effd2e3ce5c339efed31",
+          "preimageBytes": 13338,
+          "sha256": "dca754974c90605d7d4d2d8cc079ff24368463ece6abcc2725de7394ed581548",
+          "bytes": 15113
+        },
+        {
+          "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketRemoteDataSourceTest.kt",
+          "change": "modify",
+          "preimageSha256": "1c5cf6861d23baefc9b6e6894dd3b087109e7174879367acff1cf26c49b9eff0",
+          "preimageBytes": 16188,
+          "sha256": "26d0cd77affdbafe07ea797a3f66b48ddfd5913f741d0ee3d0d225769c65c3d5",
+          "bytes": 26662
+        },
+        {
+          "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaTicketStatusRemoteDataSourceTest.kt",
+          "change": "modify",
+          "preimageSha256": "77b4a8b6a7ad798750c302efead736d796c770abf26b7894d0fbafbd83961171",
+          "preimageBytes": 12050,
+          "sha256": "cfd195880c459a5b2c49ac900c0e1ac3d6280a057903625743daa5c2cecee0cb",
+          "bytes": 15471
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolver.kt",
+          "change": "modify",
+          "preimageSha256": "5ef820f04816d28fc9a7c27544b2ea73ba7518a6949399ac5b5ec4f49578f80b",
+          "preimageBytes": 5039,
+          "sha256": "5447b56697e5129678fec8111513868caced63a78d7001ae88ce01a48338b4a3",
+          "bytes": 5543
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaTicketJournal.kt",
+          "change": "modify",
+          "preimageSha256": "77384dc51a565d3194dcf078558912c837392e8d6e4965cd2e60fcd075b14562",
+          "preimageBytes": 17275,
+          "sha256": "2651c4c74052bc3222ab1733fe9513e13246e35a8fd9ff2f3a2ad87b8ea9e666",
+          "bytes": 17473
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketRemoteDataSource.kt",
+          "change": "modify",
+          "preimageSha256": "85a410d45b006287fd9a626f8f2b71635570f3251409b14b4fb923bc2363adce",
+          "preimageBytes": 1271,
+          "sha256": "6bf7f021ac3d66352b763cade7bac088848468f2783da4f235967cab44ddfc07",
+          "bytes": 1949
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/remote/ArenaTicketStatusRemoteDataSource.kt",
+          "change": "modify",
+          "preimageSha256": "53b6f1b650fd81da877cc5a0b75c9133072dc3014b6191103792054e8f558faa",
+          "preimageBytes": 505,
+          "sha256": "dba63de3561a90439ea90ae0477f8db72fe122fda86ac282bda953abfc72bb91",
+          "bytes": 809
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaCancelledSettlementResolverTest.kt",
+          "change": "modify",
+          "preimageSha256": "02757ccaaa6650215c37bf11ece18859bea83b43c02832a7f4ab53d233e49462",
+          "preimageBytes": 21925,
+          "sha256": "f116cde5962efd0987979cbbf70e69bd965040aadf03f09209c8403c44068b0b",
+          "bytes": 24453
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalBoundaryTest.kt",
+          "change": "modify",
+          "preimageSha256": "58e21d0d4c5acbe119c467f8cb9cedc75dbe981b720533c8543afd99f1cc9272",
+          "preimageBytes": 8871,
+          "sha256": "ca6638807ddb5191731c1e9974ea188b0791a4650ba7058d47ac6153632f5a0f",
+          "bytes": 12018
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalFakes.kt",
+          "change": "modify",
+          "preimageSha256": "0669b6347c97324b618aa2adb254557fde5913e9714a0773a8d330c4efb60974",
+          "preimageBytes": 32492,
+          "sha256": "ad7a949f767ef367fbffb394e75e1d055c908a14c85f9166f4124e53ed5abe38",
+          "bytes": 34051
+        }
+      ]
+    },
+    {
+      "name": "arena-catalog-ui",
+      "status": "IMPORTED_UNCOMMITTED",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-catalog-ui",
+      "manifest": "handoff-manifest.json",
+      "manifestSha256": "c6cefdb9979d40a60e0cbb05f3fcb072bfb07ed56340c057d2b3721ea707e649",
+      "files": [
+        {
+          "path": "shared/feature/lesson-runner/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/domain/repository/ArenaSessionProvider.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 434,
+          "sha256": "ddd746d3e638381a468eb0562dcca73e19289e2c3f325d128799364829980b85"
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProvider.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 692,
+          "sha256": "67a0f40e34ea4e04ad90e82b77e74d654a3e570553c4fc42633f8f17b59571e4"
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/androidMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/di/ArenaDataModule.kt",
+          "preimageSha256": "0cf75ab823932a315f629904498090cee6fed16ad6fed1e654ac5a52fe01c1ef",
+          "preimageStatus": "EXISTING",
+          "size": 2917,
+          "sha256": "1cfc429747602fea0b58e198e6c90cf94db15533f59638f310f2508fc2e8aa64"
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/OutboxArenaSessionProviderTest.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 1876,
+          "sha256": "9c70c61271876000e9972ebdb75609d58f3fee20d3a9fbffc988345e270875e8"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ArenaLessonCatalogComponent.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 1209,
+          "sha256": "2aeb1880101bb026c871b33de9e637b86df95a93653ff3d0b788a24062a1d37b"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponent.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 9585,
+          "sha256": "ecd03171f30b95f39533159eca2d906db7a261e97a7c289fe547cf161120e83f"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreen.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 9224,
+          "sha256": "c65309d391a816e64538cbc7c62aec4bef991d895dd950e8a58d43419ede7777"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt",
+          "preimageSha256": "350b7805124d26a3014c062c70e0bf4e69bb3688a5b3ec8f6270b0187449ebae",
+          "preimageStatus": "EXISTING",
+          "size": 20521,
+          "sha256": "90046ce496fa308387705d67953061ccea7321484956c8722fc282910a9cdbcc"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt",
+          "preimageSha256": "d2dbf74f5492790d0cf48edfd07be7bf8bb991a54248e8bf677a09609ab03469",
+          "preimageStatus": "EXISTING",
+          "size": 2807,
+          "sha256": "d9794bfcc1f1b1bae4a1dfa372f2c97631fcf36c3db51a602fba31180ccd33d4"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt",
+          "preimageSha256": "b6d7110a21244b7ab73e4ba1c7bce70d306898d78e9aa35e26496f60a24343d0",
+          "preimageStatus": "EXISTING",
+          "size": 840,
+          "sha256": "30b050ad64586ec81295e749b12eb4e334d9c41a0addba432b9d3c3c2f3af199"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt",
+          "preimageSha256": "30563be61cb4608f90177185d43ffa217737a8019e6284e11462f0430aea3f20",
+          "preimageStatus": "EXISTING",
+          "size": 4041,
+          "sha256": "0d80db57d8077193a975ecd84a5fa3197f78e5a427ecbeac4e2e888c72d44828"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt",
+          "preimageSha256": "67a09fb2e8c4a37aea61ac73b2e1ef80842ba0e12c3fc0a70ecab08ee92afd2d",
+          "preimageStatus": "EXISTING",
+          "size": 3078,
+          "sha256": "14afb28065487685a73cf6f3a316abd7e86da213472901d477af582e63efb902"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/res/values/strings.xml",
+          "preimageSha256": "dafef976777aa2250ecc1244c156a8977b55a3eb87002931458198183230cf17",
+          "preimageStatus": "EXISTING",
+          "size": 4277,
+          "sha256": "af5a96d7fe87d277a850bd48651f5e8b57d11dd3d5ceb44a4b5ac020f56b07d3"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/res/values-ru/strings.xml",
+          "preimageSha256": "0cf8124891ec2c5078efcda76533007495164e5903b41cc3049e1d393ec2a9d0",
+          "preimageStatus": "EXISTING",
+          "size": 5398,
+          "sha256": "e766a643ca5265ce4fafb89289e2a12dd729970c1a7bdfc9c4b086af3851fc5e"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/main/res/values-uk/strings.xml",
+          "preimageSha256": "f475b00c6d8775f11ba4f7d276717c007bbe239453e0ee9465549c312976edb4",
+          "preimageStatus": "EXISTING",
+          "size": 5510,
+          "sha256": "49ff3f001e6e5d7f2696307bb0b017dacd2f2c6d54c211a5d1608393a2647f1f"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultArenaLessonCatalogComponentTest.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 23092,
+          "sha256": "f9b07bf15d722b191663f3e958031e923d48b314ddcb42b7fa4bff1aca700225"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ArenaLessonCatalogScreenTest.kt",
+          "preimageSha256": null,
+          "preimageStatus": "ABSENT",
+          "size": 6319,
+          "sha256": "d728039b641cd8f050bcbd181193dc07758ba147942a9c79d679900f7428c9bb"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/DefaultQuizzesComponentTest.kt",
+          "preimageSha256": "d6c5adf24a61b07b54a5952aac44e3b3d87b3b0bf1e50038ce176678ab0411d2",
+          "preimageStatus": "EXISTING",
+          "size": 21086,
+          "sha256": "4440e27728a7435e56f48b12b4eca9c004feaeb6bd4da5ff27dfd5d4b70276d3"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesStateKeeperRestoreTest.kt",
+          "preimageSha256": "0a6a3ce593c856c0ab53e1f2615d3c286048c192514400d87d60c1eb28d8eda3",
+          "preimageStatus": "EXISTING",
+          "size": 17804,
+          "sha256": "69c12f6bc63417191138cd1a352e64de0fad5f7ac7900cf568ad3d2164dfdd12"
+        },
+        {
+          "path": "android/feature/quizzes-screen/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/QuizzesConfigSerializationTest.kt",
+          "preimageSha256": "d34b171c4eb3c93cdd237fd85546366457b2f85f53ec1625d1e5bdf928518fec",
+          "preimageStatus": "EXISTING",
+          "size": 13270,
+          "sha256": "c522025995c5a5c2c487b65151cb68405b47bc37b762c938885201c2f1e6fc42"
+        },
+        {
+          "path": "android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/QuizzesRootIntegrationTest.kt",
+          "preimageSha256": "61433353d82b55eafcb1d757371f7cae00ca2f381d08ba1c97be0fe7418c6d7b",
+          "preimageStatus": "EXISTING",
+          "size": 32715,
+          "sha256": "12797f1e878827bcec4f1869f57c9f2a811e1fe3cf2238208322bb4232884bf4"
+        },
+        {
+          "path": "android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt",
+          "preimageSha256": "1156da969059f158a63e8015ffb9790ba2ba79f5feaf5dc2fbfbdc26b97f1a9a",
+          "preimageStatus": "EXISTING",
+          "size": 42515,
+          "sha256": "44caff4d40afcc76acbd91581e0187da7a18f6320227c4d16528f7a313fab039"
+        },
+        {
+          "path": "android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt",
+          "preimageSha256": "671943de1ded2c0eb57308288fad9637ce061f3331de73c870a14085867efa5a",
+          "preimageStatus": "EXISTING",
+          "size": 22855,
+          "sha256": "5f6fa9e9e8c0ac72b409e15c9ed5e8f08496a74c5c3a55d8b93a573a6631a427"
+        }
+      ]
+    },
+    {
+      "name": "arena-internet-default-fix",
+      "status": "IMPORTED_UNCOMMITTED_DEVICE_RETEST_PENDING",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-internet-default-fix",
+      "manifest": "manifest.json",
+      "manifestSha256": "a9361cbb64d7996fdb9b202cd2823313207863e2582c3468eb1cdf234dd08f8f",
+      "files": [
+        {
+          "path": "android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/tab/InternetTabComponent.kt",
+          "preimage": {
+            "size": 1236,
+            "sha256": "a2d67439d701491b11f0b228d5e98b246d789e6f4a7293c158fd8b082ac6e19f"
+          },
+          "size": 1529,
+          "sha256": "1166f7e955e14d3cb4926180ad91c2c3c25a1b42faaaf22cc240bc8b45771c8b"
+        },
+        {
+          "path": "android/feature/app-shell/presentation/src/test/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/DefaultRootComponentTest.kt",
+          "preimage": {
+            "size": 28343,
+            "sha256": "53ea697d415fc8b778762d8d95b0d17e215c7738d9339dfceb6404f665a25a88"
+          },
+          "size": 30417,
+          "sha256": "5c106d807a46b6e2e0f93fe751d05fd6a22551ae542ba0769dfeb4a6d3ee4d66"
+        }
+      ]
+    },
+    {
+      "name": "arena-entry-facade",
+      "status": "REVIEWED_NOT_IMPORTED_NOT_COMPILED",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-entry-facade",
+      "manifest": "handoff-manifest.json",
+      "manifestSha256": "543ba9918dddf0a387744e7323a3b767b29443e3f3e0825ee1aafa9582ad7c9d",
+      "files": [
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaEntryLocalMapper.kt",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "sha256": "f38e7be9a7492bcbf4ac969f0183b4760eae6607dab4a53fb0e6af7e2ebaf1f2",
+          "bytes": 6337,
+          "authoredTests": 0
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/ArenaEntryRepositoryImpl.kt",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "sha256": "9b89ccdcc25e8f094ac517bf197eb9136ce48391626ea94ff910217cfafbf66c",
+          "bytes": 14848,
+          "authoredTests": 0
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaEntryLocalMapperTest.kt",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "sha256": "dd768740fbf9067becd9ca5f667c45bda22e488c4eedaef8e46cd4c63b55b36d",
+          "bytes": 13019,
+          "authoredTests": 13
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/ArenaEntryRepositoryImplTest.kt",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "sha256": "84b26a4141ba1a4d83785adc2327ce08a96271a6ac604f555b1624449b222bea",
+          "bytes": 34547,
+          "authoredTests": 19
+        },
+        {
+          "path": "shared/feature/lesson-runner/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/domain/model/ArenaEntryLocalState.kt",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "sha256": "33be2df709686f353feb40c8d018edf5f26c52c269e877cda9988e5e4a455d37",
+          "bytes": 2870,
+          "authoredTests": 0
+        },
+        {
+          "path": "shared/feature/lesson-runner/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/domain/repository/ArenaEntryRepository.kt",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "sha256": "21e08950dab20e0ff80d4d00d3b63d9dad8f487a6ad3f1c502e2c1c070c5a215",
+          "bytes": 3319,
+          "authoredTests": 0
+        }
+      ]
+    },
+    {
+      "name": "arena-run-read",
+      "status": "REVISION_2_REVIEWED_NOT_IMPORTED_NOT_COMPILED",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-run-read",
+      "manifest": "handoff-manifest.json",
+      "manifestSha256": "d671d16ab5b6dd1372f608b284add793b1e3d7d398cf6b25accde1eeaecac0aa",
+      "files": [
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaRunReadView.kt",
+          "preimage": "ABSENT",
+          "sha256": "b94db353c7aa4b012d33a537680acbd692cbc31bbd97decb2e53c81b4d3f7b43",
+          "bytes": 4437,
+          "lines": 96
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaTicketJournal.kt",
+          "preimage": "2651c4c74052bc3222ab1733fe9513e13246e35a8fd9ff2f3a2ad87b8ea9e666",
+          "sha256": "3fbdb2a3ba4e9737b3a71b3800fdd100b45096a9a0403f88d768e65c249979df",
+          "bytes": 18072,
+          "lines": 415
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/ArenaRunRepositoryImpl.kt",
+          "preimage": "ABSENT",
+          "sha256": "9742e8be937d42ceb36892b9645e7a8b8ddd3a433d480c63349796a0c234d25d",
+          "bytes": 5586,
+          "lines": 106
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalRunViewTest.kt",
+          "preimage": "ABSENT",
+          "sha256": "1d82f2b1c5f4ab4053be3f581ae89408a00b3785952a903c48a55f2017c9bc33",
+          "bytes": 26050,
+          "lines": 591
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/repository/ArenaRunRepositoryImplTest.kt",
+          "preimage": "ABSENT",
+          "sha256": "4fa3bc94d59066febb8328b80d612024855f197458e2322b2f76cccad700d50c",
+          "bytes": 13663,
+          "lines": 296
+        },
+        {
+          "path": "shared/feature/lesson-runner/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/domain/repository/ArenaRunRepository.kt",
+          "preimage": "ABSENT",
+          "sha256": "fa739460921abb59594bfda04839b0ecc37d5c7ac394fcf5a5935c1c79eaf6de",
+          "bytes": 2177,
+          "lines": 50
+        }
+      ]
+    },
+    {
+      "name": "arena-entry-koin-wiring",
+      "status": "REVIEWED_NOT_IMPORTED_NOT_COMPILED",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-entry-koin-wiring",
+      "manifest": "handoff-manifest.json",
+      "manifestSha256": "646cfc396e737590d24b61c94c746917d1fc4dbc42aae35a483fd9440de56055",
+      "files": [
+        {
+          "path": "shared/feature/lesson-runner/data/src/androidMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/di/ArenaDataModule.kt",
+          "change": "modify",
+          "preimageSha256": "1cfc429747602fea0b58e198e6c90cf94db15533f59638f310f2508fc2e8aa64",
+          "preimageBytes": 2917,
+          "sha256": "47e01dbdd9c0ea6a32da932ec99f08e59864b4743ea996106fb13f14d1ca4548",
+          "bytes": 4593,
+          "baselineTests": 0,
+          "authoredTests": 0
+        },
+        {
+          "path": "apps/android-next/src/test/java/com/tpov/schoolquiz/apps/android_next/ArenaKoinWiringTest.kt",
+          "change": "modify",
+          "preimageSha256": "a767684528ce8ee05ef9d4e930a6bd441c4496833a8d927a1fb60671b334e8df",
+          "preimageBytes": 13529,
+          "sha256": "b048f3a1518c510227c10f09694edf53ac29c4b895e8a4f74bb8bc097b6a54f1",
+          "bytes": 21490,
+          "baselineTests": 6,
+          "authoredTests": 10
+        },
+        {
+          "path": "platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/arena/FirebaseArenaKoinWiringTest.kt",
+          "change": "modify",
+          "preimageSha256": "ac1c2f52467b4801b51122e0338968564770bd1354e1236033b987dd357be519",
+          "preimageBytes": 14846,
+          "sha256": "c863013065b72e97f180c513baf724f717591ceb6c94f153fa661b0621f5f4c9",
+          "bytes": 18903,
+          "baselineTests": 11,
+          "authoredTests": 13
+        },
+        {
+          "path": "platform/firebase/build.gradle.kts",
+          "change": "modify",
+          "preimageSha256": "ebf4834e5a299860bd952a3d12e84e6b216ddf34183f57e68e3b6e33a59cf6fd",
+          "preimageBytes": 4514,
+          "sha256": "20b907f2804b0f5a0feb4374366e3953dcb70fe66ccb0a621d182f40543f59ee",
+          "bytes": 4560,
+          "baselineTests": 0,
+          "authoredTests": 0
+        }
+      ]
+    },
+    {
+      "name": "arena-checkpoint-write-guards",
+      "status": "DRAFT_NOT_ROOT_REVIEWED_NOT_IMPORTED_NOT_COMPILED",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-checkpoint-write-guards",
+      "manifest": "handoff-manifest.json",
+      "manifestSha256": "6aba81946c9e955a5199612a114e3887faa442a7cc2e37b092b1bf879871542f",
+      "files": [
+        {
+          "path": "shared/core/persistence/src/commonMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/ArenaCheckpointValidator.kt",
+          "baseRoot": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit",
+          "preimage": "b40ce07b3881a0cc64d289280ddf1055143d037981ab3239097bec81df0af6bd",
+          "sha256": "01052f6bf909a02ad7802840b4579f95ef77013127d8329d47755dfba1fe79f2",
+          "bytes": 1544,
+          "lines": 52,
+          "preimageArtifact": "preimages/ArenaCheckpointValidator.kt.txt"
+        },
+        {
+          "path": "shared/core/persistence/src/commonMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/ArenaTicketDao.kt",
+          "baseRoot": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit",
+          "preimage": "f7ac7a8d46f11b6f63e8047500a95cb79ac544c66a3ad169351923dd5d4215b1",
+          "sha256": "fd487dc7b9c56cd5f22e7173525b5dafe73f07bc2f9bd949afae5487dd3ad89e",
+          "bytes": 21340,
+          "lines": 531,
+          "preimageArtifact": "preimages/ArenaTicketDao.kt.txt"
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaTicketJournal.kt",
+          "baseRoot": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-run-read",
+          "preimage": "3fbdb2a3ba4e9737b3a71b3800fdd100b45096a9a0403f88d768e65c249979df",
+          "sha256": "b4a7a30394ea4d6c434acd14441145e8efaeb1b05c1a1d312747c2b18c00537f",
+          "bytes": 19070,
+          "lines": 438,
+          "preimageArtifact": "preimages/ArenaTicketJournal.kt.txt"
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaJournalFakes.kt",
+          "baseRoot": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit",
+          "preimage": "ad7a949f767ef367fbffb394e75e1d055c908a14c85f9166f4124e53ed5abe38",
+          "sha256": "b7c274b4e3af7a4ab05b0957d54faa193b63e46f7825f882dae50b044fb4ded7",
+          "bytes": 35124,
+          "lines": 780,
+          "preimageArtifact": "preimages/ArenaJournalFakes.kt.txt"
+        },
+        {
+          "path": "shared/core/persistence/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/core/persistence/ArenaTicketJournalPersistenceTest.kt",
+          "baseRoot": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit",
+          "preimage": "4105b79078297ce32f974cfd66e90a5f156835b0e22adcf427a7b99ffceff7c6",
+          "sha256": "eb43f760527d9b3b5dbc6eabe52dc0973e74de17499a01d42365189fb2e3e796",
+          "bytes": 33129,
+          "lines": 743,
+          "preimageArtifact": "preimages/ArenaTicketJournalPersistenceTest.kt.txt"
+        },
+        {
+          "path": "shared/feature/lesson-runner/data/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/feature/lesson_runner/data/arena/ArenaTicketJournalTest.kt",
+          "baseRoot": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/integration-edit",
+          "preimage": "378b16ffb11b9a3010e61bd9924abfebe2ea4850d458135cd713d65babd1fe67",
+          "sha256": "433df3f29e54cf48b8f5174fbfce403c64463c09e1977746671bb7acf626d898",
+          "bytes": 31604,
+          "lines": 677,
+          "preimageArtifact": "preimages/ArenaTicketJournalTest.kt.txt"
+        }
+      ]
+    },
+    {
+      "name": "arena-catalog-ui-smoke-r2",
+      "status": "NOT_IMPORTED_ORACLE_PROBE_FAILED_FLOW_NOT_RUN",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-catalog-ui-smoke-r2",
+      "manifest": "manifest.json",
+      "manifestSha256": "e7ebb3c6d3338b702dc938b6d63b97cd495524c8a3d3cabdbad23a8abca9ba49",
+      "files": [
+        {
+          "path": ".maestro/mvp/04-arena-lesson-catalog.yaml",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "preimageAbsentVerified": true,
+          "sha256": "98b8ed141ee17b0dfbaf1e7034e9541ab609b4919f51146abbdfacdaff73480e",
+          "bytes": 2538
+        },
+        {
+          "path": "scripts/mvp-arena-catalog-ui-oracle.js",
+          "change": "add",
+          "preimageSha256": null,
+          "preimageBytes": null,
+          "preimageAbsentVerified": true,
+          "sha256": "f2102f151f1a832f92461a326866e1dca419b435ec6a27d25132046cd1a59bec",
+          "bytes": 19224
+        }
+      ]
+    },
+    {
+      "name": "arena-fixed-user-protocol-diagnostic",
+      "status": "DRAFT_NOT_ROOT_CODE_REVIEWED_NOT_RUN_ON_SERVER",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/arena-fixed-user-protocol-diagnostic",
+      "manifest": "manifest.json",
+      "manifestSha256": "70123e7970d339fd2068e6007b10bd3ddc2e27c8b4dafafecccc517e52051b55",
+      "files": [
+        {
+          "path": "fixed-user-protocol-diagnostic.js",
+          "bytes": 7071,
+          "sha256": "dc572f0fd26d569ae5de02942b277e617d400339d6e0a697bc1b5968f2fae83d"
+        },
+        {
+          "path": "README.md",
+          "bytes": 7700,
+          "sha256": "3c4936c12ac0865cc06b2bd8164d5a27d2445115c2a0689e801ecf847a5d9912"
+        }
+      ]
+    },
+    {
+      "name": "qualification-compact-spike",
+      "status": "PROTOTYPE_ONLY_NOT_PRODUCTION_EQUIVALENT",
+      "directory": "/Users/tpov/Documents/Codex/2026-09-06/school-quiz/work/implementation-drafts/qualification-compact-spike",
+      "manifest": "handoff-manifest.json",
+      "manifestSha256": "2c8b174df91cdd64280c96eac2910ecb88e0294fe4ab1b0df37ff0440f48fc98",
+      "files": [
+        {
+          "path": "qualification-compact.js",
+          "preimage": "ABSENT_DRAFT_NEW",
+          "sha256": "0d80a7339bfd4101d1de1dc8a7c38a5c6378c568a4e317fa2ea8c33e1331c3b0",
+          "bytes": 13584,
+          "lines": 231
+        },
+        {
+          "path": "qualification-compact.test.js",
+          "preimage": "ABSENT_DRAFT_NEW",
+          "sha256": "83278f311f062ac54135e2e473be10e4cb9ce614ca5e26ee8db11168736daffe",
+          "bytes": 20457,
+          "lines": 295
+        }
+      ]
+    }
+  ]
+}

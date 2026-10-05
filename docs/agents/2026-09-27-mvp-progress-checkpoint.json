@@ -1,28 +1,31 @@
 {
   "schemaVersion": 1,
-  "capturedAtUtc": "2026-09-27T08:42:37Z",
-  "purpose": "Additive execution checkpoint. Preserves the 2026-09-26 start registry and records current build, device, and storage evidence.",
+  "capturedAtUtc": "2026-09-27T14:40:36Z",
+  "purpose": "Additive execution checkpoint. Preserves the 2026-09-26 start registry and records candidate build plus ordinary-lesson offline evidence. Resource/storage figures below remain the earlier 08:42 UTC snapshot; no storage action was taken in this checkpoint.",
   "candidate": {
-    "path": "/workspace/projects/schoolquiz3.0-mvp-candidate",
+    "path": "/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate",
     "branch": "continuation/mvp-candidate-20260926",
-    "head": "7472ac2592b77724b47fc91419c523433e0be45a",
-    "headTree": "dc8018b42889c4c9ef8047b5c126fd91e3edb32b",
-    "preCheckpointStatusLineCount": 25,
-    "preCheckpointTrackedModifiedFiles": 24,
+    "head": "15fedc22880d18830086be60b1ec6b4265470239",
+    "headTree": "ab11a00156a734dc8e6d37ab827d6c886209c284",
+    "preCheckpointStatusLineCount": 5,
+    "preCheckpointTrackedModifiedFiles": 2,
     "preCheckpointUntrackedFiles": [
-      "docs/agents/2026-09-26-mvp-candidate-start-registry.json"
+      "docs/agents/evidence/2026-09-27-ordinary-lesson-offline/question-screen.png",
+      "docs/agents/evidence/2026-09-27-ordinary-lesson-offline/result.xml",
+      "docs/agents/evidence/2026-09-27-ordinary-lesson-offline/commands-(Open ordinary cached lesson on Ukrainian Android device).json"
     ],
-    "diffSha256": "ea449413cb93133877a92d9f4fe8132f7281fa0812b3a9242e8b0bba5e94ca08",
+    "diffSha256": "7f62238121114d5fc57dd0f6cb59a506ebf3ea16b6f90c7ed74634a053d5f934",
     "gitDiffCheck": "PASS",
-    "candidateBuild": "ROOT ANDROID APP BUILD NOT RUN; prior root configuration failures show AGP 8.11 uses Gradle InternalProblems removed in Gradle 9.6. No APK produced.",
-    "candidateTests": "PARTIAL: isolated sync JVM suite PASS (14 suites, 107 tests, 0 skipped/failures/errors); root ciCheck not run.",
-    "candidateApkCount": 0,
+    "candidateBuild": "PASS: :apps:android-next:assembleMvp on the VPS using Gradle 9.8.0, OpenJDK 27, --no-parallel, --max-workers=1, 2 GiB Gradle heap and in-process Kotlin compiler. 854 actionable tasks (391 executed, 59 from cache, 404 up-to-date), 2m; the first unconstrained attempt was killed by the host OOM killer. APK SHA-256 52c13e24582906d261f24e743d9f89e6fdba6fed0cd90f698fc797728c13d847; isolated test signing certificate verified.",
+    "candidateTests": "PARTIAL: isolated sync JVM suite PASS (14 suites, 107 tests, 0 skipped/failures/errors); Maestro ordinary cached lesson flow PASS both online and with Wi-Fi plus backend ADB routes disabled (1 flow, 41 seconds); root ciCheck not run. The flow total includes navigation and automation overhead and is not a clean lesson-open latency measurement.",
+    "candidateApkCount": 1,
     "commitForCurrentChanges": null,
     "changedAreas": [
       "lesson runner warm-cache/cold-cache content sync callbacks and regression tests",
       "lesson question-pool preparation dispatcher and cancellation checks",
       "shared sync gate across on-demand lesson content and catalog sync",
-      "Gradle/buildSrc compatibility changes"
+      "Gradle/buildSrc compatibility changes",
+      "Maestro ordinary-lesson flow selector aligned with the candidate Home card"
     ],
     "isolatedSyncJvmTest": {
       "command": "./gradlew -p toolchain-spike :shared:core:sync:jvmTest --offline --no-daemon --no-configuration-cache --no-build-cache --rerun-tasks --max-workers=1",
@@ -44,6 +47,7 @@
   },
   "server": {
     "host": "racknerd-5424b95",
+    "resourceSnapshotAtUtc": "2026-09-27T08:42:37Z",
     "rootFilesystem": {
       "device": "/dev/vda2",
       "sizeGiB": 96,
@@ -57,15 +61,18 @@
       "devShmUsedMiB": 0
     },
     "toolchain": {
-      "java": "OpenJDK 25.0.4.1 default; OpenJDK 27+35 at /opt/jdks/jdk-27 used for the isolated test",
+      "java": "OpenJDK 25.0.4.1 default; OpenJDK 27+35 at /opt/jdks/jdk-27 used for the candidate Android build",
       "candidateGradleWrapper": "9.8.0",
+      "candidateAgp": "9.3.1",
+      "candidateKotlin": "2.4.20",
+      "candidateKsp": "2.3.12",
       "requestedBuildSrcJdk": 27,
       "installedBuildSrcJdk": true,
-      "androidSdkRoot": "/usr/lib/android-sdk",
-      "appCompileSdk": 35,
-      "installedAndroidPlatforms": 0,
-      "installedAndroidBuildTools": 0,
-      "sdkLicensesAccepted": false
+      "androidSdkRoot": "/workspace/infrastructure/android-toolchain/sdk",
+      "appCompileSdk": 34,
+      "installedAndroidPlatforms": [34, 35, 36],
+      "installedAndroidBuildTools": ["34.0.0", "35.0.0", "36.0.0"],
+      "sdkLicensesAccepted": true
     },
     "activeGradleProcesses": 0,
     "storageFindings": [
@@ -85,7 +92,7 @@
       ],
       "sourceDataArchivesApksAndFirebaseExportTouched": false
     },
-    "buildReadiness": "About 20.7 GiB is free. The isolated sync JVM suite passed. Root Android assembly is still blocked by the known AGP 8.11 / Gradle 9.8 InternalProblems incompatibility; Android SDK Platform 35/required Build Tools are absent and SDK licenses are not accepted.",
+    "buildReadiness": "Candidate :apps:android-next:assembleMvp succeeds with the constrained invocation recorded above. Required Android SDK packages are installed. Root ciCheck and final release acceptance remain outstanding.",
     "astraResearch": "JDK 27+35 is GA and installed; use it explicitly. Astra recommends owner approval before advancing only the necessary build-tool compatibility slice and accepting/installing the required Android SDK packages; do not broaden to unrelated product-library updates."
   },
   "device": {
@@ -96,9 +103,19 @@
     "installedPackage": "com.tpov.schoolquiz.mvp",
     "installedVersionName": "0.1.0-isolated",
     "installedVersionCode": 1,
-    "candidateInstalled": false
+    "candidateInstalled": true,
+    "installedCandidateApkSha256": "52c13e24582906d261f24e743d9f89e6fdba6fed0cd90f698fc797728c13d847",
+    "offlineCachedLessonTest": "PASS on Samsung Galaxy A14: Wi-Fi disabled, mobile data already off, both ADB backend routes removed; app relaunched, navigated Home → MVP validated checks → smoke course → section → theme → lesson, and rendered the first question. Wi-Fi and both ADB routes restored afterward.",
+    "offlineEvidence": "docs/agents/evidence/2026-09-27-ordinary-lesson-offline/"
   },
   "releaseArtifacts": {
+    "candidateApk": {
+      "path": "/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk",
+      "bytes": 42038981,
+      "sha256": "52c13e24582906d261f24e743d9f89e6fdba6fed0cd90f698fc797728c13d847",
+      "certificateSha256": "73d39c9caeac685788d5f466dc7668e60be42445879f2883a124c32230db81d9",
+      "installedOnAttachedDevice": true
+    },
     "existingApk": {
       "path": "/workspace/infrastructure/android-toolchain/mvp-apks/android-next-mvp-r4-stable.apk",
       "bytes": 41417270,
@@ -113,14 +130,15 @@
       "restorationValidated": false,
       "changedByThisCheckpoint": false
     },
-    "firebaseEmulator": "No running Firebase emulator container was found; no emulator was started or modified."
+    "firebaseEmulator": "Firestore and Auth emulator endpoints returned HTTP 200 through the existing local SSH tunnels. Device ADB reverse routes were restored after the offline test; this checkpoint did not modify server containers."
   },
   "productEvidence": {
     "source": "docs/features/home-and-my-quests/0-spec.md, section 5, expected result around line 707",
     "requirement": "After cascade sync, lesson questions are locally available in Room before the user opens the lesson.",
     "currentCodeEvidence": "The candidate's warm start uses the local question repository and triggers refresh afterward; an empty cold cache synchronizes the lesson and retries once.",
-    "runtimeTiming": "NOT MEASURED on the attached device",
-    "acceptance": "NOT COMPLETE"
+    "runtimeTiming": "No product-grade elapsed metric established. The successful Maestro flow takes 41 seconds end-to-end, including navigation/automation overhead, so this is not the lesson-open duration. Direct screen capture shows the loading indicator resolving into the first question, but the capture alignment is not precise enough for a millisecond claim.",
+    "runtimeDeviceTest": "PASS offline on the 2-question MVP smoke fixture. This proves the exercised cached path does not require Wi-Fi/backend access; it does not yet measure a production-size course or reproduce the owner's original slow course.",
+    "acceptance": "NOT COMPLETE: representative production course latency, root ciCheck, remaining product TZs and final owner acceptance remain open."
   },
-  "nextGate": "Verify the candidate's JDK 27 toolchain availability and run the narrow offline JVM test with a 1 GiB free-space reserve; then install only required Android SDK packages and reassess before APK assembly. Only the specifically approved rebuildable caches were removed; no source data, archives, backups, APK, or Firebase export were changed."
+  "nextGate": "Use the owner's representative ordinary course (the current device test is a 2-question MVP fixture) to isolate the original slow-open report and record a clean elapsed time; then continue the remaining MVP product slices and run root ciCheck. No storage/cache action was taken in this checkpoint."
 }

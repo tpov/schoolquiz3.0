@@ -1,0 +1,24 @@
+{
+  "new_progress_coefficients": {
+    "ordinary": 2,
+    "theme": 3,
+    "final": 10
+  },
+  "final_repeated_coefficient": 0.1,
+  "difficulty_and_time": "separate",
+  "reward_history": "atomic reward-accounted maximum, independent of latest certificate",
+  "theme_payout": "first pass only",
+  "final_payout": "any terminal attempt, no invented minimum",
+  "cooldown_hours": {
+    "theme": 24,
+    "final": 168
+  },
+  "remaining_reward_work": "technical mixed-base/time/currency-rounding fixtures",
+  "coherence": "PASS",
+  "preservation": "PASS",
+  "architecture_review": "PASS",
+  "http_verified": true,
+  "spec_sha256": "41924bf5c3fdb9e3a535a6659d2d19f4298f70f3fbc63b1c9f6d4312ebe2d974",
+  "html_sha256": "dad052eb4d7f8cb5e988f939b5e104ec1994a00a5a43b3529809ffccd2af162e",
+  "runtime_changes": false
+}

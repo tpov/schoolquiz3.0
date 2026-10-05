@@ -1,181 +1,132 @@
 # Epic breakdown
 
-How the work splits, in what order, and what each epic can be shipped without.
+Reconciled 2026-09-30 with [ARCHITECTURE-SPINE.md](ARCHITECTURE-SPINE.md). E1–E10 and AD/CAP identities remain stable. These are work boundaries, not claims of readiness or permission to deploy. Existing implementations must be inspected before a story treats an old seed as missing code. [EXAM-TECH-1](assessment-technical-contracts.md) C1/C2 arithmetic/C3/C4 and [arithmetic fixtures](assessment-contract-fixtures.json) are adopted contracts; C2 settled-award economics preserves original receipts/accounted progress, and concrete Q-EX-5 settings/evidence remain before activation.
 
-Derived from `ARCHITECTURE-SPINE.md`. Epic ids are stable; the AD and CAP references are the contract each epic is built against.
-
-## Order and dependencies
+## Dependencies
 
 ```mermaid
-graph LR
-    E1["E1 · Scoring to core"]
-    E2["E2 · Hard answers off the device"]
-    E3["E3 · Sequential lessons"]
-    E4["E4 · Session machinery"]
-    E5["E5 · Publication index & eligibility"]
-    E6["E6 · Theme tests"]
-    E7["E7 · Item quality"]
-    E8["E8 · Final exam"]
-    E9["E9 · Certificate & verification"]
-    E10["E10 · Author & player surfaces"]
-
-    E1 --> E2
-    E1 --> E4
-    E2 --> E6
+flowchart LR
+    E1["E1 Scoring contracts"] --> E2["E2 HARD redaction and pending results"]
+    E1 --> E4["E4 Exam lifecycle"]
+    E2 --> E6["E6 Theme tests"]
     E4 --> E6
-    E5 --> E6
-    E6 --> E7
-    E6 --> E8
+    E5["E5 Approved versioned bank"] --> E6
+    E6 --> E7["E7 Quality and corrections"]
+    E6 --> E8["E8 Final exam"]
     E5 --> E8
+    E7 --> E9["E9 Certificate and verification"]
     E8 --> E9
+    E5 --> E10["E10 Author/player surfaces"]
     E6 --> E10
-    E5 --> E10
+    E3["E3 Sequential lessons and purchase"] --> E6
 ```
 
-`E3` and `E9` hang off nothing structural — see their rows.
+The E9 model/verification contract can be designed in parallel; actual issuance waits for the accepted final-exam and correction contracts.
 
-## The epics
+## E1 — Ratify shared scoring contracts
 
-### E1 — Scoring moves to core
+**Governed by:** AD-7, AD-21, AD-37.
 
-**Governed by:** AD-7 · **Serves:** every later epic
+The Kotlin core scoring module and JavaScript assessment scorer already exist. Inspect current callers and shared fixtures; add only missing integration. No second per-mode arithmetic. Client assessment presentation consumes results without invoking scoring.
 
-Move `evaluateAnswer`, `computePercentScore`, `computeStars` and the all-easy-correct predicate out of `lesson-runner`'s domain into `shared/core/scoring`. Pure move plus import updates; the JS mirror in `functions/result-verification.js` is unchanged but gains a comment binding the two.
+**Acceptance:** server/client shared arithmetic fixtures remain consistent; exam callers use the server scorer; ordinary behavior and tournament scoring contracts are preserved. This document records no new test result.
 
-Ships alone, changes no behaviour, and every test that exists should still pass untouched. Do it first because four callers arrive later and each one done before this is a call site to rewrite.
+## E2 — HARD keys and deferred ordinary results
 
-**Done when:** `lesson-runner` no longer owns a scoring function, and nothing outside `core` imports one from it.
+**Governed by:** AD-2, AD-5, AD-6, AD-32. **Depends on:** E1.
 
----
+Reuse existing key storage/redaction and verify all required question types. HARD ordinary play remains offline-capable with an explicitly pending score until server confirmation. EASY local scoring remains available. Redacted types do not weaken ordinary QuestionContent invariants.
 
-### E2 — Hard answers stop reaching the device
+**Acceptance:** private keys and implicit Ordering answers do not reach client projections; ordinary HARD offline→sync yields a confirmed result without an invented local zero. Exam responses also exclude codeAnswer and per-item verdicts.
 
-**Governed by:** AD-5, AD-6 · **Depends on:** E1
+## E3 — Sequential lessons, progress and purchases
 
-The largest and least glamorous epic, and the one everything else assumes.
+**Governed by:** AD-18, AD-20, AD-27, AD-34. **Serves:** CAP-1, CAP-9, CAP-11.
 
-Publication stops writing the correct answer into a hard question's client-readable payload. Hard lesson attempts therefore can no longer be scored on the device: the client collects answers, uploads them, and the server returns the percent and the lesson-level advice. Easy questions are untouched — they reveal the answer during play, so they keep it.
+Reuse the existing course gate and ordinary unlock operation, including its offline unlock + provisional local nolics debit + outbox Room transaction, stable server confirmation and visible quarantine rollback. Implement C3 manifest-bound required-EASY coverage: freeze canonical question/revision and raw-answer provenance in existing ordinary attempts/outbox, validate server-side, union successful exact tokens across attempts and bind the confirmed projection to required-set hash/generation/receipts. Preserve ordinary offline progression and add no server ticket. Purchase opens access, never grants completion. No restoration of obsolete flat 10/20 tariffs.
 
-This changes offline lesson play for hard mode: the result arrives on sync, not immediately. That is a product-visible change and needs its own UI treatment.
+**Acceptance:** local ordinary progression works offline; confirmed progress gates the exam; bought unplayed lessons remain unpassed; retries do not repeat purchase effects. Do not equate a rounded star floor or arbitrary twenty-question subset with full required coverage. Cover a required30-token lesson through20+10; repeated20, wrong revision, forged digit/help and ambiguous legacy evidence do not grant admission. Recheck current manifest and confirmed generation atomically before exam charge; upload ACK alone is insufficient.
 
-**Watch for:** the client currently computes `codeAnswer` and the server verifies the arithmetic. After this, hard sittings have no client-side digits at all, so the two paths must not both claim to produce a `codeAnswer`.
+## E4 — Exam-specific online lifecycle
 
-**Done when:** a hard question's payload on the device contains no correct answer, a hard attempt played offline scores correctly after sync, and easy play is byte-identical to before.
+**Governed by:** AD-1–4, AD-17, AD-21, AD-29–32. **Depends on:** E1.
 
----
+Build missing exam lifecycle and adapters using narrow shared answer/redaction/scoring/identity contracts. Keep existing tournament lifecycle and continuous timing separate. Implement idempotent start/recovery, first-ack deadline, first-answer receipt, finish request and single exam-sweeper terminal writer.
 
-### E3 — Sequential lessons and purchase
+**Acceptance:** lost responses recover the same session/charge; ack and answer retries never extend time or overwrite evidence; abandonment eventually produces one terminal result. First-question gap is bounded. No runtime is started by this planning artifact.
 
-**Governed by:** AD-18, AD-20 · **Depends on:** nothing structural · **Serves:** CAP-11
+**Recovery contract:** apply C4 bounded sweep/wrap, CAS/fencing, non-starving poison handling and the same capability under isolated controlled driver or production existing v2 onSchedule wake-up. Verify overlap/crash/lost-fence/backlog recovery without changing deadlines or receipts. Concrete environment allowlist, cadence/budgets and runtime evidence remain prerequisites before activation.
 
-Inside a course catalog, a lesson opens when the previous one is passed, or when it is bought with nolics — any locked lesson, not only the next. The purchase is a server call, because `pointsNolics` lives in `users/{uid}` and the profile sync overwrites the local copy.
+## E5 — Approved versioned draw bank and eligibility
 
-Independently shippable and independently valuable. It is a prerequisite of the theme test *gate* in product terms but not in code, so it can ship long before anything else here.
+**Governed by:** AD-10–15, AD-22–23, AD-25, AD-35.
 
-**Done when:** lesson 3 cannot be started while lesson 2 is unpassed and unbought; buying opens the bought lesson and leaves its stars at zero.
+Publication records approved question revisions and immutable private-key bindings in a server-only index split by hierarchy and difficulty. C1 also binds one ordinary worth-source revision per canonical identity, canonical eligible pool counts/time sums and frozen reward basis/hash before spending; translations cannot inflate financial worth. Count distinct question identities. All required independent checks and approval establish eligibility; remove obsolete pretest stages.
 
----
+Keep the course certification threshold separate from the per-sitting draw threshold. Refuse author edits that voluntarily break certification; curator quarantine can reduce current availability and block new final exams. Retain historical revisions for audit and frozen active banks, not as available count.
 
-### E4 — The online session machinery
+**Acceptance:** re-publication does not inflate counts; a new approved revision needs no statistical incubation; failed siblings do not block valid independently approved questions; too-small new draws refuse before charge.
 
-**Governed by:** AD-1, AD-2, AD-3, AD-4 · **Depends on:** E1
+## E6 — One mixed theme test and admission projection
 
-`shared/core/online-session` plus the callables that back it: start, acknowledge, submit, finish, fetch result. The redacted question type lives here, including the shuffled-`items` handling for `Ordering`. Nothing in this epic knows what a theme test or a final exam is.
+**Governed by:** AD-8–9, AD-14, AD-18, AD-21–22, AD-26–29, AD-34–37. **Depends on:** E2, E3, E4, E5.
 
-This is where the risk in the whole feature sits — reconnect races, deadline arithmetic, terminal states, retries. Build it here and debug it at low stakes in E6, rather than discovering it under a certificate.
+A theme test is one mixed 5-EASY/15-HARD sitting with default 60% pass mark, 100-unit charge and a rolling 24-hour per-user/theme cooldown from terminal closure, including timeout/abandonment. No difficulty rungs or phases. Terminal result and one best/passed projection commit together; first-pass reward identity is user/theme. Server ThemeTest stars use roundHalfUp(30*p/100) tenths on a linear 0–3 scale; pass/fail still uses percent. For both nolics and XP, NEW-progress coefficient3 replaces ordinary NEW2 while difficulty/allocated-time factors and weighted marginal bands remain separate.
 
-**Done when:** a session can be driven end to end against the emulator, a client that goes silent past the gap timeout gets a terminated sitting with its remainder scored wrong, and no correct answer appears anywhere in a captured response.
+Passed themes carry across content updates by stable course/theme identity; only new required themes need another test. A confirmed-fault rescore remains a separate exception to monotonic progress.
 
----
+**Acceptance:** ordinary worse retakes do not lower best, retry does not duplicate reward, required new themes block final admission, changed question content alone does not reset a passed theme. Result contains only server aggregates and safe advice.
 
-### E5 — Publication index and certification eligibility
+**Reward contract:** AD-36 retains first-pass-only payout and stable user/theme identity; earlier failed unpaid theme attempts leave reward-accounted progress at zero. Payout receipt/accounted progress commit atomically even if rounding yields zero. Implement adopted C1 capped5/15 ordinary-worth means, exact weighted marginal tariff and independent XP/nolics half-up rounding against its fixtures. A first-ever pass created by valid correction pays once only if the theme receipt is absent, from original frozen basis and b0; C2 keeps already-settled receipt/accounted progress unchanged without any adjustment. Star display is settled by AD-37 and does not determine reward rounding.
 
-**Governed by:** AD-10, AD-11, AD-12, AD-13 · **Depends on:** nothing structural
+## E7 — Review signals and attributable corrections
 
-One pass over each publication submission that accumulates, per theme and per course, the sets of question ids split by difficulty — and derives from their sizes both the draw index the exams need and the certification eligibility the author sees. Counting is by id set, never by increment. The pass also refuses an update that would drop a certifiable course below the bar.
+**Governed by:** AD-15–17, AD-19, AD-22–24. **Depends on:** E6 for end-to-end sitting correction.
 
-Can be built and deployed before any exam exists; it simply starts accumulating.
+Required independent review belongs to the content publication flow. Statistics and complaints provide repeat-review signals, not automatic verdicts. Confirmed errors leave future draw pools; correction versions preserve original attempts and can recompute admission in either direction.
 
-**Done when:** re-publishing an edited question does not change any count; a course crossing 12 theme tests at 100 easy and 100 hard flips to eligible; an update that would drop it below is refused.
+**Acceptance:** a signal alone does not remove content or revoke a certificate; confirmed correction retains original evidence, affects the intended revision's sittings and is replay-safe. Active banks stay frozen. Already issued certificate identity, signed score/claims, dates, expiry and validity remain unchanged when our question error lowers its earning result.
 
----
+**Arithmetic contract:** use C2 original-slot cumulative exclusions, nested scorer truncation, captured pass mark, idempotent correction/CAS head and the versioned fixtures. All-excluded and missing-evidence are distinct nonnumeric states that cannot reuse invalid admission proof. Recompute from original evidence rather than a rounded predecessor. **Economic acceptance:** already-settled nolics/XP receipt and reward-accounted maximum remain unchanged; corrected score causes no top-up, recoupment, reset or advance. First-ever corrected theme pass still follows the one-time rule when no receipt exists. **Race acceptance:** atomically commit correction head with admission/best or its durable pending generation barrier; reject obsolete materialization. New final start atomically checks current/applied correction generation and refuses pending/unavailable before charge, never trusting stale passed data. Active sittings remain unchanged. Do not treat old lesson-statistics comments as proof that a production pipeline is wired.
 
-### E6 — Theme tests
+A correction that changes a formerly failed final to passing does not authorize a new certificate for that sitting; only a new successful final sitting can earn one. Issuance already earned at original successful terminal closure, including pending signing, remains unchanged.
 
-**Governed by:** AD-8, AD-9, AD-14, AD-18 · **Depends on:** E2, E4, E5
+## E8 — Final exam on the current course
 
-The first caller of the session machinery. Draw, cooldown, charge, the easy and hard rungs, the monotonic admission record written in the scoring transaction, and theme stars read from that record.
+**Governed by:** AD-9, AD-14, AD-18–19, AD-25–29, AD-34–36. **Depends on:** E5, E6.
 
-This is the rehearsal — for the player and for us. Every mechanism the final exam needs is exercised here where the stake is stars.
+A distinct course-level sitting uses the latest approved course version and requires all current required themes passed, with carried passes for existing stable theme identities. It draws 20 HARD, defaults to 60%, costs 200 units and has its own rolling 168-hour (7-day) user-scoped final:{courseId} cooldown from terminal closure, including timeout/abandonment. Same-sitting recovery does not create another charge or cooldown anchor. Active sitting inputs never change after publication edits.
 
-**Done when:** a theme test can be sat, scored and shown; the admission record improves and never falls; a second start inside 23 hours is refused with the time it returns; the theme's stars come from the best sitting and never from its lessons.
+**Acceptance:** a new unpassed theme blocks admission; changed questions in a passed theme alone do not. Insufficient certification or draw bank blocks a new final before spending. Section completion alone issues no certificate. Every terminal final attempt, including failed attempts and retakes, is eligible for nolics and XP without a guaranteed positive minimum. NEW10 replaces ordinary NEW2; previously accounted bands use0.1, with separate difficulty/allocated-time factors. HARD final effective coefficients are NEW30 and REPEATED0.3 by marginal band, never uniform across the sitting. Certificate issuance still requires a successful final.
 
----
+**Reward acceptance:** keep a durable user/assessment reward-accounted maximum independent of latest-certificate score/history. Lower score, renewal or another sitting cannot reset paid progress. Commit accounted progress and payout receipt atomically even for rounded-zero reward; same-sitting replay must not duplicate it. **Technical contract:** implement C1 frozen canonical-pool20-HARD worth, exact marginal arithmetic and independent currency rounding; integrate its fixtures. Ordinary worth stays independent of all-HARD answer-time policy. C2 keeps already-settled reward receipt and accounted maximum unchanged by correction.
 
-### E7 — Item quality
+## E9 — Certificate and public verification
 
-**Governed by:** AD-15, AD-16, AD-17 · **Depends on:** E6
+**Governed by:** AD-19, AD-24. **Depends on:** E8 for issuance; E7 correction contract.
 
-Sittings are persisted. New hard questions ride unscored until their statistics clear the bar. An item whose failures concentrate among high scorers is flagged. A confirmed bad item is removed and affected sittings are rescored. Players can flag an item as unclear.
+Implement server issuance/signing, immutable attestation snapshot, original one-year validity and public verification. For every successful final, including renewal, commit the result and immutable issuance fact atomically with durable signing/publication work. Freeze a distinct issuanceId for each new successful sitting, earning resultVersion, claims, own one-year dates, key identity and server-owned total earning order. Perform signing outside the transaction; show pending explicitly and retry fulfillment using the same fact, never reevaluating a later corrected grade or moving the dates. Freeze public attestation fields instead of joining mutable profile/course data; retain verification-key identity/material needed to verify earlier signatures across rotation. Exam owns issuance/signing/verification; profile reuses a read-only certificate list/projection and UI through the exam contract. A generic client completion event is not authority. Apply C4 verified-artifact CAS publication under issuance/digest/fence; first verified artifact wins without requiring deterministic signature bytes. Preserve old-key signing for bound pending facts and historic verification on rotation. Concrete provider/algorithm, secret bindings and key-recovery evidence are required before activation.
 
-Half of it exists: `lesson-statistics.js` already records which options were picked. The missing half is correlating an item against its sitting's total.
+**Acceptance:** signed-out verification shows original earning data. Replay of one sitting creates no duplicate; a different successful sitting creates a distinct immutable certificate. Renewal before or after expiry follows existing admission/charge/cooldown. A later 70% pass replaces a displayed 90% certificate without mutating the 90% record; a failed retake creates none and leaves the display unchanged. Each new pass freezes its own one-year term; retries never shift dates. Default selection uses authoritative earning order, not score or async signature completion; delayed older signing cannot replace a newer projection, and the latest pending issuance remains explicit. A content-fault downward rescore neither changes nor revokes any issued certificate, including its score and original expiry. Theme best-result/admission and administrative revocation rules are unchanged.
 
-Must ship before the final exam counts for anything, because it is the only thing standing between a mis-keyed hard question and a certificate.
+**Correction acceptance:** a previously failed final becomes passing after authorized rescore: record the corrected result, issue no certificate and retain any currently displayed certificate. A new successful sitting is required. Do not cancel a pending issuance from an originally successful final.
 
-**Done when:** a deliberately mis-keyed question is flagged from synthetic sittings without any human reading it, and a rescore updates the affected results.
+## E10 — Author and player surfaces
 
----
+**Governed by:** AD-6, AD-8–10, AD-18–19, AD-23, AD-33–35, AD-37. **Depends on:** E5, E6, plus E9 for certificate views.
 
-### E8 — The final exam
+Provide current-bank eligibility, typed admission/start refusals, all theme/final cooldowns, safe result advice, certificate list and public verification. Preserve the latest full-MVP UX/PRD requirements. An existing screen is not proof that the updated flow is accepted.
 
-**Governed by:** AD-9, AD-14, AD-19 · **Depends on:** E5, E6
+**Acceptance:** unknown, pending, unavailable and confirmed states remain distinct; historical bank counts do not imply a usable new draw; results render server values without per-item leakage. Never imply an existing certificate lost validity because our question was corrected.
 
-The course-level sitting: admitted by every theme test passed at the player's course version, hard questions only, 20 drawn uniformly, 60% to pass, one sitting per 23 hours, unlimited retakes.
+## Scope and outstanding decisions
 
-By this point it is a configuration of E4 plus an admission predicate — which is the whole reason E4 was built as machinery.
+Theme tests and certificates are both current-MVP work. Ordering theme tests before final issuance is an implementation dependency, not permission to defer certificates beyond the MVP.
 
-**Done when:** one unpassed theme test anywhere keeps it shut; a pass produces a result that carries no per-question information.
+No new engine migration, leaderboard or deployment authorization is introduced here. ThemeTest linear 0–3 stars and half-up tenths are settled by AD-37; NEW reward coefficients ordinary2/theme3/final10, already-accounted final0.1, every-terminal-final eligibility and durable reward-history accounting are confirmed by AD-36. C1 now specifies ordinary-worth basis, capped mixed time, exact weighted arithmetic and independent currency rounding with fixture oracles; do not add a whole-reward multiplier. Certificate renewal identity/history and latest-display semantics are settled by AD-19. C2 arithmetic, C3 exact-token coverage and C4 provider-neutral worker/signing recovery are adopted. C2 arithmetic and settled-award preservation are closed, including the correction/admission generation barrier; concrete Q-EX-5 provider/algorithm/environment/cadence/retention/runbook evidence remains before activation. Implementation and runtime verification have not occurred. Optional placement/course-star surfaces remain deferred.
 
----
+## Confirmed assessment timer clarification
 
-### E9 — Certificate and public verification
+Every ThemeTest and FinalExam question uses the ordinary HARD answer-time rule, including the five EASY theme positions: seconds=max(5,roundHalfUp(chars*0.24)), with the ordinary character-count convention and image equivalent100. Do not multiply by examFactor0.75. Difficulty labels, scoring and 5-EASY/15-HARD composition remain unchanged; capture the timer rule with the sitting. Validate 100-character questions as24 seconds in both assessment modes, for both theme difficulties; keep the5-second floor and unchanged acknowledgement/deadline recovery. This is a target contract; the inherited code's examFactor0.75 still needs an implementation change.
 
-**Governed by:** AD-19 · **Depends on:** E8 to *issue*, nothing to *build*
-
-The `Certificate` model in the profile domain, server signing, the one-year validity, the attestation snapshot, and the unauthenticated verification endpoint with its page.
-
-The model and the endpoint depend on nothing and can be built in parallel from day one; only issuance waits for E8. Splitting it that way keeps the longest-lead item off the critical path.
-
-**Done when:** a signed-out visitor resolves a verification link and sees the sitting, the percent, the date, the pass mark and the bank size; the client never constructs or validates a certificate.
-
----
-
-### E10 — Author and player surfaces
-
-**Governed by:** AD-6, AD-10, AD-18 · **Depends on:** E5, E6
-
-The screens the round table found and the spec turned into capabilities:
-
-- the author's certification line, showing distance from the first minute rather than a verdict at publish time;
-- the exam lock screen distinguishing "not unlocked" from "unlocked but not passed";
-- one place showing every ticking cooldown;
-- the result screen's lesson-level advice, and no "next exam" as its primary action;
-- a start door shown once per session, not once per sitting;
-- an acknowledgement after each answer that is deliberately identical every time, because any pixel that varies reads as a verdict.
-
-**Done when:** a player who bought a theme open can see, in words, that its lessons are unpassed rather than unavailable.
-
-## What can ship on its own
-
-| Epic | Ships alone | Why it might go early |
-| --- | --- | --- |
-| E1 | yes | pure refactor, zero behaviour change |
-| E3 | yes | product value with no dependency on assessment at all |
-| E5 | yes | starts accumulating before anything reads it |
-| E9 model + endpoint | yes | longest lead, no dependency until issuance |
-
-## The seam
-
-The spine draws one deliberate seam, and the architect's argument for its direction stands: **theme tests before the certificate.** The risk in this feature is the server session — redaction, deadlines, reconnect races, retries — and that is debugged where the stake is stars, not where the stake is a document an employer opens. Shipping the certificate first would produce a verifier for an empty set and leave the session untested for months.
-
-The one thing that does move earlier is E9's model and endpoint, which turned out to depend on nothing.
+Final admission projection acceptance: a new valid theme sitting commits while a correction materializer is pending; the older materializer cannot erase that new pass. Terminal and correction writes coordinate the same full aggregate generation, and stale publication retries.

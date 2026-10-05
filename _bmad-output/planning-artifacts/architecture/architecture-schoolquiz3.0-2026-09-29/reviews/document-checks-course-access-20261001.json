@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-01",
+  "scope": "Private course tournament audience owner clarification",
+  "result": "PASS",
+  "old_AD_ids_preserved": true,
+  "changed_ADs": [
+    17
+  ],
+  "all_other_AD_blocks_unchanged": true,
+  "spine_lint_findings": 0,
+  "missing_local_links": [],
+  "trailing_whitespace": [],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "09ceadf034d3a84cf5dc7fa030fe42549341f8b4f9ca67863379ed273f3ebb5c",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "4a2b7e6d682c75552a5ecc21e3cfaf291e1e06ea8cea03cdd9773ef7f9cdfe22",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "d55720eb2724e562dd38a0930bf69775daf1dc1af5a21918d91d79d57d24be45"
+  },
+  "runtime": "NOT RUN — docs only"
+}

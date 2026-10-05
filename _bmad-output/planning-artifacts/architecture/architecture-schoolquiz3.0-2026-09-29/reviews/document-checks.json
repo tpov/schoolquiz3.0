@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "files_checked": 10,
+  "local_links_checked": 65,
+  "existing_mount_links_mapped_to_vps": 20,
+  "broken_local_links": [],
+  "ids": {
+    "main_ad": {
+      "count": 24,
+      "sequential_unique": true
+    },
+    "exam_ad": {
+      "count": 37,
+      "sequential_unique": true
+    },
+    "exam_cap": {
+      "count": 21,
+      "sequential_unique": true
+    },
+    "prd_fr": {
+      "count": 56,
+      "sequential_unique": true
+    }
+  },
+  "git_diff_check_exit": 0,
+  "lint_main_findings": 0,
+  "lint_exam_findings": 1,
+  "exam_lint_triage": "low {uid} is an intentional Firestore variable path users/{uid}, not an unfilled template; reviewed and ignored",
+  "review_reports": [
+    "review-rubric.md",
+    "review-reality.md",
+    "review-adversarial.md",
+    "reconcile-prd.md",
+    "reconcile-baseline.md",
+    "reconcile-exam.md"
+  ],
+  "final_sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "180f3952247c42408346da1ddeddfd8e77411d48e3e9fdfa5f62d7981717709e",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/ARCHITECTURE-SPINE.md": "cd975c96de7911c52be952dc9b48563318ba19643ae5a1c90612067392900716",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/solution-design.md": "cfeeb8fec595ad43423b612bd55767fb94a5b57333ddad1352eefaca9aaa5714",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/epic-breakdown.md": "2954815708d5ab495acd3f6d3ce85e8971fee612dda18321a7c9ed22189a6227",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/e2-plan.md": "b19e6f9d7d975ee013cc588e87bb1cfae54a5e6d8609b079c59692eff4e95a20",
+    "_bmad-output/planning-artifacts/prds/prd-schoolquiz3.0-2026-09-28/prd.md": "60ea4c10fffbd81b3f390b6dadeca4dbcbce6d87a3ef9225a3fd893b1ac5575c",
+    "_bmad-output/planning-artifacts/prds/prd-schoolquiz3.0-2026-09-28/addendum.md": "253b1e324fb111c782d1d743afe06f44857efd3083a367f8650dcd2e89c71935",
+    "_bmad-output/specs/spec-theme-exams/SPEC.md": "830f35d298101da94beb52a97b8af561de47623fd05bcd45d636424e8551f6e3",
+    "_bmad-output/specs/spec-theme-exams/exam-protocol.md": "6fca68712a9c794a3e8d91e40be63601f05606c5f11d27ec3bebd24e3fe563a2",
+    "docs/architecture/0007-certificates.md": "36cb6aafdb70821cce4dc449c718dd1602b680f07530332921859c4f9b254030"
+  },
+  "runtime_and_builds": "NOT RUN; documentation only"
+}

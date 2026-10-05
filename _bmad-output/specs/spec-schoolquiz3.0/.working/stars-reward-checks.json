@@ -1,0 +1,18 @@
+{
+  "accepted": {
+    "theme_stars": "linear0..3, server tenths half-up",
+    "reward_multiplier": "additional theme3/final10 on ordinary rewards",
+    "hard_final_tariff": 30
+  },
+  "open": [
+    "mixed assessment base/time/rounding",
+    "final reward eligibility/repeats"
+  ],
+  "coherence": "PASS",
+  "preservation": "PASS",
+  "architecture_review": "PASS",
+  "http_verified": true,
+  "spec_sha256": "e2adef1dfb2446eb7772e68e8f8cf5be489c149bb62adbe3a12c5405e4b61a5e",
+  "html_sha256": "af1faaf2927ccbbf0dfe1217112182d16545798cfd3a7299681504452155ac81",
+  "runtime_changes": false
+}

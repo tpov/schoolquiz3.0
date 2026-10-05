@@ -1,5 +1,8 @@
 # E2 — Hard answers stop reaching the device
 
+> **Historical plan — superseded for current implementation (2026-09-29).** This is the August extraction plan, preserved as evidence rather than an active task list or a statement of current defects. Scoring/redaction modules and later database migrations already exist. Use the current [exam spine](ARCHITECTURE-SPINE.md), [epic breakdown](epic-breakdown.md) and [initiative spine](../architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md); inspect current code before deriving remaining work. Do not recreate these modules or apply the historical schema 3→4/5 steps to the active candidate.
+
+
 **Gate for every step:** `./gradlew ciCheck --no-configuration-cache` **and** `cd functions && npm test`. Note up front: nothing wires the second into the first — `build.gradle.kts:26-34` (`ciCheck`) does not touch `functions/`, and `functions/package.json:9` is a hand-maintained file list not referenced by any predeploy hook (`"lint"` at `:8` is the only predeploy). Step 1 fixes that or the "shared fixture set run on both sides in CI" of AD-7 has no harness.
 
 ---

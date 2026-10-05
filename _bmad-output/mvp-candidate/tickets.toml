@@ -1,0 +1,72 @@
+# tickets.toml — mvp-candidate initiative: epics in build order.
+# Table order is the build order; `id` names an epic for good and is not an order.
+# Entries (story breakdowns) are planned at each epic's inception in its own folder's tickets.toml.
+
+[[epic]]
+id = 1
+slug = "epic-candidate-rig"
+title = "Candidate and rig: restore, identify, measure"
+covers = ["CAP-20"]
+
+[[epic]]
+id = 2
+slug = "epic-ordinary-delivery"
+title = "Ordinary learning and durable delivery"
+covers = ["CAP-1", "CAP-16", "CAP-18", "CAP-19"]
+after = [{ epic = 1, needs = "identified candidate, restored demo backend, device inventory and the Maestro rig" }]
+
+[[epic]]
+id = 3
+slug = "epic-arena-completion"
+title = "Arena: durable attempts, ratings, season"
+covers = ["CAP-7", "CAP-8", "CAP-9", "CAP-10"]
+after = [{ epic = 1, needs = "rig and restored demo accounts/fixtures" }, { epic = 2, needs = "ONLINE-O2 shared delivery/ready-ACK contract for online HARD transitions" }]
+
+[[epic]]
+id = 4
+slug = "epic-authoring-review"
+title = "Authoring, review, publication and curation"
+covers = ["CAP-2", "CAP-3", "CAP-4", "CAP-5", "CAP-6"]
+after = [{ epic = 1, needs = "identified candidate" }, { epic = 2, needs = "durable delivery and config foundations" }]
+
+[[epic]]
+id = 5
+slug = "epic-competitions"
+title = "Competitions: qualification tournament to championship"
+covers = ["CAP-11", "CAP-12"]
+after = [{ epic = 2, needs = "ONLINE-O2 contract" }, { epic = 3, needs = "full-cohort qualification machinery and Arena attempt cycle" }, { epic = 4, needs = "published eligible courses for competitions" }]
+
+[[epic]]
+id = 6
+slug = "epic-exams-certificates"
+title = "Theme tests, final exams and certificates"
+covers = ["CAP-21", "CAP-22", "CAP-23"]
+after = [{ epic = 2, needs = "ONLINE-O2 contract and ordinary progress evidence" }, { epic = 4, needs = "published approved question banks" }]
+
+[[epic]]
+id = 7
+slug = "epic-commerce"
+title = "Store, premium, boxes, purchases and refunds"
+covers = ["CAP-13", "CAP-14", "CAP-15"]
+after = [{ epic = 1, needs = "identified candidate and device/Play inventory" }, { epic = 2, needs = "config consistency and wallet/receipt foundations" }]
+
+[[epic]]
+id = 8
+slug = "epic-social-features"
+title = "Polls, private quizzes, operation history"
+covers = ["CAP-24", "CAP-25", "CAP-26"]
+after = [{ epic = 2, needs = "durable delivery, projection and ledger foundations" }]
+
+[[epic]]
+id = 9
+slug = "epic-ux-noir"
+title = "Final NOIR experience across all journeys"
+covers = ["CAP-17"]
+after = [{ epic = 2, needs = "ordinary journeys to restyle" }, { epic = 3, needs = "Arena journeys to restyle" }, { epic = 4, needs = "authoring journeys to restyle" }, { epic = 5, needs = "competition journeys to restyle" }, { epic = 6, needs = "exam and certificate journeys to restyle" }, { epic = 7, needs = "commerce journeys to restyle" }, { epic = 8, needs = "polls/private-quiz/history journeys to restyle" }]
+
+[[epic]]
+id = 10
+slug = "epic-final-acceptance"
+title = "Final acceptance of the identified candidate"
+covers = []
+after = [{ epic = 2, needs = "ordinary delivery durable" }, { epic = 3, needs = "Arena accepted" }, { epic = 4, needs = "authoring accepted" }, { epic = 5, needs = "competitions accepted" }, { epic = 6, needs = "exams and certificates accepted" }, { epic = 7, needs = "commerce accepted" }, { epic = 8, needs = "social features accepted" }, { epic = 9, needs = "final UX implemented" }]

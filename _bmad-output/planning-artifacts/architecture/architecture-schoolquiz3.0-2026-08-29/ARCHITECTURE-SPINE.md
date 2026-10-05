@@ -3,389 +3,309 @@ name: 'Theme tests, the final exam, and the course certificate'
 type: architecture-spine
 purpose: build-substrate
 altitude: feature
-paradigm: 'Layered Clean Architecture (inherited) with a server-authoritative session for assessment'
-scope: 'Theme tests, the final exam, admission, certification eligibility, and the course certificate — for schoolquiz3.0'
+paradigm: 'Layered Clean Architecture with separate server-authoritative assessment and tournament lifecycles'
+scope: 'Theme tests, final exam, admission, certification eligibility and course certificate'
 status: final
 created: '2026-08-29'
-updated: '2026-08-30'
+updated: '2026-10-01'
 binds: [CAP-1, CAP-2, CAP-3, CAP-4, CAP-5, CAP-6, CAP-7, CAP-8, CAP-9, CAP-10, CAP-11, CAP-12, CAP-13, CAP-14, CAP-15, CAP-16, CAP-17, CAP-18, CAP-19, CAP-20, CAP-21]
-sources: []
+sources:
+  - '../../../specs/spec-theme-exams/.memlog.md'
+  - '../architecture-schoolquiz3.0-2026-09-29/.memlog.md'
 companions:
+  - 'assessment-technical-contracts.md'
+  - 'assessment-contract-fixtures.json'
   - '../../../specs/spec-theme-exams/SPEC.md'
-  - '../../../../docs/architecture/0003-question-schema.md'
-  - '../../../../docs/architecture/0004-sync-contract.md'
-  - '../../../../docs/architecture/0005-quest-lifecycle.md'
+  - '../../../specs/spec-theme-exams/exam-protocol.md'
   - '../../../../docs/architecture/0007-certificates.md'
 ---
 
-# Architecture Spine — Theme tests, the final exam, and the course certificate
+# Architecture Spine — Theme tests, final exam and certificate
+
+This reconciliation preserves AD-1 through AD-37 and the owner's September 29–October 1 decisions. [EXAM-TECH-1](assessment-technical-contracts.md) C1, C2 arithmetic, C3 and C4 are adopted target contracts with [fixture oracles](assessment-contract-fixtures.json). C2 economics preserves original settled awards as confirmed by the owner; Q-EX-5 retains activation prerequisites. Adoption is not implementation, runtime acceptance or whole-MVP agreement. The current initiative spine and PRD govern the rest of the MVP.
+
+Competition terminology follows [initiative AD-17](../architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md): **турнир** is the first qualification part; **чемпионат** is the second final part, including its bracket and matches. Existing `tournament*`/`event` identifiers retain their technical meaning for the competition lifecycle; this naming update does not change assessment contracts.
 
 ## Design Paradigm
 
-The app is layered Clean Architecture across KMP modules, and that is inherited unchanged: `domain` is pure Kotlin, `data` holds Room and Firebase adapters, `presentation` holds Decompose components, `ui` holds Compose, `core` holds shared contracts, `platform` holds SDK adapters.
+Inherited layered Clean Architecture: pure Kotlin domain, data adapters, Decompose components, Compose rendering and callbacks. Ordinary lessons and Arena retain their offline lifecycle; EASY can score locally, while HARD results wait for server processing. Theme tests and the final exam use an online server-owned lifecycle. Tournaments retain their separate server-owned lifecycle; reconciling their fixed global cutoff with the shared online next-question window remains an initiative integration blocker.
 
-What this feature adds is a second, deliberately opposite paradigm running beside the first:
+Shared contracts cover answer representation, redaction, scoring arithmetic, operation identity and the adopted online next-question recovery window (initiative AD-31). They do not merge lifecycle state machines or terminal ownership. Mode-specific answer allowances and initial delivery remain separate.
 
-| | Offline-first play (existing) | Server-authoritative assessment (new) |
-| --- | --- | --- |
-| Who owns the session | the device | the server |
-| Who scores | the client, server re-verifies the arithmetic | the server, exclusively |
-| When the player learns the result | immediately | when the server says |
-| What is on the device | questions and their answers | questions; answers for easy only |
-| Failure mode | queue and retry | the session ends |
-
-The two never blend. A component belongs to one paradigm or the other, and the boundary is the presence of the correct answer on the device. Everything downstream — where code lives, what syncs, who computes a score — falls out of that single split.
+```mermaid
+flowchart TD
+    UI["Assessment presentation"] --> AS["Assessment domain and data"]
+    AS --> EX["Exam lifecycle and server calls"]
+    TS["Tournament lifecycle and server calls"] --> C["Shared contracts: identity, answers, redaction, scoring"]
+    EX --> C
+    LR["Ordinary lesson and Arena lifecycle"] --> C
+    EX --> RES["Private sitting and correction history"]
+    EX --> AD["Admission projections"]
+    EX --> CERT["Certificate issuance and verification"]
+    PUB["Approved content revisions"] --> IDX["Versioned draw index"]
+    IDX --> EX
+```
 
 ## Invariants & Rules
 
-```mermaid
-graph TD
-    UI["android/feature/*/presentation + ui"]
-    ASSESS["shared/feature/assessment/{domain,data}"]
-    ONLINE["shared/core/online-session"]
-    SCORING["shared/core/scoring"]
-    RUNNER["shared/feature/lesson-runner"]
-    PROFILE["shared/feature/internet/profile"]
-    FN["functions/ (Cloud Functions)"]
-    PUB["publication pass"]
-
-    UI --> ASSESS
-    UI --> RUNNER
-    ASSESS --> ONLINE
-    ASSESS --> SCORING
-    RUNNER --> SCORING
-    ONLINE --> SCORING
-    ASSESS -.calls.-> FN
-    FN --> PUB
-    FN -.issues.-> PROFILE
-    RUNNER -.never.-> ONLINE
-    ONLINE -.never.-> ASSESS
-```
-
-Dashed `never` edges are prohibitions, not omissions.
-
-### AD-1 — The online-session machinery is core, not a feature `[ADOPTED]`
+### AD-1 — Share basic contracts; keep lifecycle ownership separate `[ADOPTED]`
 
 - **Binds:** CAP-2, CAP-3, CAP-4, CAP-5, CAP-6, CAP-10
-- **Prevents:** tournaments depending on a module named after exams; the cross-feature import the project rules treat as debt.
-- **Rule:** session lifecycle, question delivery, deadline handling and terminal states live in `shared/core/online-session` and reference no feature type. Callers pass their draw scope, pass rule and completion effect in. `shared/feature/assessment` is the first caller.
-- **Premise, stated as a bet:** tournaments are intended to become the second caller. Today they are not — they are derived from ordinary uploaded lesson attempts inside `submitLessonResultEvents` and ranked afterwards, with no server-owned session anywhere. If that intent is abandoned, this AD loses most of its case and the machinery should collapse back into the feature.
+- **Prevents:** importing exam policy into tournaments or rebuilding the working tournament runtime to host exams.
+- **Rule:** exam and tournament lifecycle, timing and termination belong to their respective domains. Shared core contracts contain no feature types or common lifecycle policy. Reuse scoring, answer/redaction and idempotency conventions through narrow adapters. No mandatory shared online-session state machine.
 
-### AD-2 — The client never reads the session document `[ADOPTED]`
+### AD-2 — The client never reads private session documents `[ADOPTED]`
 
 - **Binds:** CAP-2, CAP-5
-- **Prevents:** redaction becoming a Firestore-rules problem, where one wrong rule leaks correct answers silently.
-- **Rule:** all session traffic goes through callable functions. No client reads `exam_sessions/**` directly, and no security rule grants that read. Redaction is enforced in function code, on one path.
+- **Prevents:** leaking private answer keys through a permissive document rule.
+- **Rule:** exam session traffic uses authenticated server calls with ownership checks and explicit public projections. Private sessions, keys and draw indices have no client-readable path.
 
-### AD-3 — The deadline starts at the client's acknowledgement `[ADOPTED]`
+### AD-3 — A question deadline starts at its first acknowledgement `[ADOPTED]`
 
 - **Binds:** CAP-4
-- **Prevents:** charging network latency to the player, and equally the reverse — a client buying time by claiming a slow load.
-- **Rule:** the server issues a question, the client acknowledges that the text has rendered, and the per-question deadline runs from that acknowledgement. The acknowledgement itself is bounded by AD-4. Image is delivered before text; text arrival is the start signal because it is the fast half.
+- **Prevents:** network latency consuming answer time or retries restarting the clock.
+- **Rule:** the server delivers image before question text; the first acknowledgement that the text rendered fixes its deadline. Later acknowledgements return that deadline unchanged. The first-question waiting-for-acknowledgement interval retains its existing bound; subsequent questions use the 60-second connection/download window in AD-30. Expiry of the original answer deadline automatically closes the current question as unanswered and advances toward the next question; reconnect cannot reopen it or extend that deadline. A timely accepted answer remains committed under AD-31. Every ThemeTest and FinalExam question uses the ordinary HARD answer-time rule, including the five EASY theme positions: seconds=max(5,roundHalfUp(chars*0.24)), with the ordinary character-count convention and image equivalent100. Do not multiply by examFactor0.75. Difficulty labels, scoring and 5-EASY/15-HARD composition remain unchanged; capture the timer rule with the sitting.
 
-### AD-4 — A broken session scores its remainder as wrong `[ADOPTED]`
+### AD-4 — A broken sitting scores its remainder as unanswered `[ADOPTED]`
 
 - **Binds:** CAP-4, CAP-10, CAP-12
-- **Prevents:** abandoning a bad sitting to protect one's statistics; and an ambiguous third state between passed and failed.
-- **Rule:** if more than the gap timeout (~60s) passes between the player's answer reaching the server and the next question's acknowledgement, the session terminates. Every unanswered question scores the lowest digit, the sitting is recorded, and it consumes its cooldown. `buildCodeAnswerOnAbort` is the existing precedent for the fill.
+- **Prevents:** abandoning a losing sitting to avoid recording it.
+- **Rule:** an expired acknowledgement gap or early finish closes the sitting through AD-30. Expiry of one answer deadline closes that question as unanswered and, while questions remain, starts the next-question window; it is not by itself expiry of that window or early finish. Unanswered scored positions receive the normal lowest score digit (digit1), never a paid correct skip or correct-answer progress. Closing the final question requests normal terminalization without an unnecessary 60-second wait. The sitting remains recorded and consumes its cooldown; reconnect cannot restart it.
 
-### AD-5 — Scoring authority follows answer availability `[ADOPTED]`
+### AD-5 — Ordinary scoring follows answer availability `[ADOPTED]`
 
-- **Binds:** CAP-5, CAP-6, all lesson play
-- **Prevents:** two scoring paths disagreeing, and the client being asked to score what it cannot see.
-- **Rule:** easy questions publish with their correct answer and are scored on the device, as today — they reveal the answer during play anyway. Hard questions publish **without** their correct answer and are scored only by the server. There is no third arrangement, and no client code branches on which it has.
-- **Consequence this AD owns, not the reader:** hard *lesson* play is server-scored too. A hard lesson attempt collects answers, uploads them, and receives its percent and advice on sync — the offline result is deferred, not immediate. `evaluateAnswer` is never called on a hard question client-side; a redacted payload never reaches `QuestionContent`, whose `init` would throw, and never falls through `evaluateAnswer`'s `else` branch, which would silently score every hard attempt as zero.
+- **Binds:** CAP-5, CAP-6, ordinary lesson play
+- **Prevents:** client scoring without a key or treating a redacted HARD result as zero.
+- **Rule:** ordinary EASY questions may carry keys and score locally; HARD keys never publish to the device. Ordinary HARD answers upload for server scoring, with a pending result until confirmation. Redacted payloads use their own types, not nullable correctness inside ordinary QuestionContent. This does not change ordinary offline, pause or recovery behavior. All assessment questions follow AD-21.
 
-### AD-6 — Results carry topics, never items `[ADOPTED]`
+### AD-6 — Public results expose aggregates and safe advice `[ADOPTED]`
 
 - **Binds:** CAP-5, CAP-6, CAP-16
-- **Prevents:** retakes degenerating into search with feedback, which collapses the 60% pass mark within a few sittings.
-- **Rule:** a finished sitting returns the aggregate score, pass/fail, and a ranked list of lessons to revisit. It never returns per-question correctness, the correct answer, or anything from which a single item's answer can be inferred. Lesson attribution comes from each question's `lessonId`.
+- **Prevents:** retries becoming a per-question answer search.
+- **Rule:** return aggregate percent, stars, pass/fail and safe lesson-level advice; never correct answers, per-item verdicts or codeAnswer. Private persisted score digits remain server-only. Advice also follows AD-33.
 
-### AD-7 — One scoring implementation, one mirror `[ADOPTED]`
+### AD-7 — Scoring arithmetic has one implementation per platform `[ADOPTED]`
 
-- **Binds:** all scoring, on both sides
-- **Prevents:** four callers each growing their own arithmetic and the star scale drifting between them.
-- **Rule:** `evaluateAnswer`, `computePercentScore`, `computeStars` and the all-easy-correct predicate move from `lesson-runner`'s domain to `shared/core/scoring`, taking the value types they are expressed in — `Score`, `CodeAnswer`, `PercentScore`, `Stars` — with them. `computePercentScore` is `internal` today and the all-easy-correct rule is an extension property on `CodeAnswer`, not a function; both become core API.
-- **On the server there is exactly one JavaScript scoring module**, and it is new. `functions/result-verification.js` mirrors only `recomputePercentScore` today; nothing mirrors `evaluateAnswer` or `computeStars`. AD-5 makes the server the exclusive scorer of hard answers, so that module must exist — it is `assessment-scoring.js`, it absorbs `result-verification.js`'s arithmetic rather than sitting beside it, and it is the only JS implementation. Kotlin and JS change in the same commit, pinned by a shared fixture set run on both sides in CI.
+- **Binds:** all scoring
+- **Prevents:** different callers disagreeing on digits, percent or rounding.
+- **Rule:** shared/core/scoring owns Kotlin arithmetic and its value types. The server uses the existing assessment-scoring.js arithmetic through adapters, not independent formulas in each mode. Kotlin/JS arithmetic changes together and uses shared fixtures. Timer/economy mirrors follow their own current contract.
 
-### AD-8 — Admission is one monotonic record, written in the scoring transaction `[ADOPTED]`
+### AD-8 — Admission is one transactional projection per user and theme `[ADOPTED]`
 
 - **Binds:** CAP-1, CAP-7, CAP-9, CAP-16, CAP-17
-- **Prevents:** a window where a result exists and its admission does not; and out-of-order trigger delivery lowering a best score.
-- **Rule:** one record per `(uid, themeId)` holding the best sitting percent and a passed flag, under `users/{uid}`. One mixed sitting produces one number, so the record needs no per-difficulty split. It is written by the same call that scores the sitting, in the same transaction, never by a trigger. Updates are monotonic — a value only ever improves — which makes them idempotent under replay. The theme's stars and the final exam's admission both read this record and nothing else.
+- **Prevents:** a result without its admission update and separate best EASY/HARD interpretations.
+- **Rule:** one record under users/{uid}, keyed by theme, holds one best mixed-sitting percent and passed state. The terminal scoring transaction writes the result and admission together. Ordinary writes improve monotonically; only the versioned correction path in AD-24 may lower it.
 
-### AD-9 — Admission compares a set against a course version `[ADOPTED]`
+### AD-9 — Final admission compares theme identities for a course version `[ADOPTED]`
 
 - **Binds:** CAP-1, CAP-9, CAP-16
-- **Prevents:** an author adding a theme and thereby admitting whoever slipped through before it existed.
-- **Rule:** admission compares the set of passed theme ids against the course's theme set at the player's course version, never a count against a count. The version the player is working through governs what they are earning.
+- **Prevents:** matching counts admitting a player who passed the wrong themes.
+- **Rule:** compare the passed theme-id set with required theme ids for the authoritative course version, using AD-26. Use the latest approved course version for each new start; passed stable theme identities carry according to AD-25. Clients cannot select an older course version.
 
-### AD-10 — Certification eligibility is computed in the publication pass, by id set `[ADOPTED]`
-
-- **Binds:** CAP-8, CAP-19
-- **Prevents:** an incrementing counter crediting a 60-question course with 200 after four edits, because publication re-publishes edited questions through the same merge.
-- **Rule:** the publication pass maintains cumulative sets of question ids per theme and per course, split by difficulty, and derives eligibility from their sizes. Nothing counts by increment. The pass sees one submission at a time; the accumulation, not the submission, is the source of truth.
-
-### AD-11 — The submission validator is not the course validator `[ADOPTED]`
-
-- **Binds:** CAP-19
-- **Prevents:** the course-level minimum being placed in `QuestAuthoringValidation`, where it would reject every course's first submission.
-- **Rule:** `QuestAuthoringValidation`'s `hasEasy && hasHard` stays a property of one submission. Certification minimums are a property of the accumulated course and are evaluated only where AD-10 accumulates them.
-
-### AD-12 — A certifiable course cannot be de-certified by its author `[ADOPTED]`
+### AD-10 — Eligibility counts distinct approved questions `[ADOPTED]`
 
 - **Binds:** CAP-8, CAP-19
-- **Prevents:** a player who passed every theme test being stranded at the final exam by an edit.
-- **Rule:** the publication pass refuses an update that would drop a course below the certification minimums. Eligibility is therefore monotonic once reached, and no per-player freezing is needed.
+- **Prevents:** repeated publication inflating bank size.
+- **Rule:** publication maintains versioned sets of question identities with the approved revision binding, split by theme/course and EASY/HARD. Count each question once, excluding quarantined revisions from current available counts. Certification minimum remains twelve theme tests, each with at least 100 EASY and 100 HARD questions.
 
-### AD-13 — The draw index is built at publication and split by difficulty `[ADOPTED]`
+### AD-11 — Submission validation does not enforce whole-course thresholds `[ADOPTED]`
+
+- **Binds:** CAP-19, PRD FR-6
+- **Prevents:** rejecting the first submission or holding approved questions behind failed siblings.
+- **Rule:** apply submission-level schema rules separately from accumulated bank eligibility. Independently approved questions can publish through a valid new version; failed questions return for correction without blocking approved siblings.
+
+### AD-12 — Author edits cannot remove established certification eligibility `[ADOPTED]`
+
+- **Binds:** CAP-8, CAP-19
+- **Prevents:** an author voluntarily dropping a certifiable course below its required bank.
+- **Rule:** refuse author publication that would breach existing certification minimums. This does not prohibit curator quarantine of confirmed errors. If quarantine reduces current availability below certification requirements, new final exams are blocked until the bank is repaired; theme tests retain their separate AD-35 draw gate. Historical records never substitute for available questions.
+
+### AD-13 — Publication owns the versioned draw index `[ADOPTED]`
 
 - **Binds:** CAP-3, CAP-16
-- **Prevents:** a course-wide fan-out on every exam start, per player, inside a capped instance budget; and a hard draw reading the easy half of the course.
-- **Rule:** the same publication pass that accumulates AD-10 writes a server-only draw index — question ids per theme and per course, split easy/hard, and split again by scorable versus pretest per AD-22. No client reads this index.
-- **Why an index rather than a query:** published questions live in a flat `questions/{id}` collection carrying only `lessonId`. Narrowing to a theme is *possible* — lessons carry `themeId`, and `whereIn("lessonId", …)` already exists on the client — but it costs a lesson fan-out per theme and a whole-course fan-out per final exam, on every start, per player. The index trades a write at publication for that read.
+- **Prevents:** per-start course fan-out and accidental selection of an unapproved revision.
+- **Rule:** publication builds the server-only theme/course draw index split by difficulty, binding immutable approved revisions and their private keys. There is no mandatory pretest pool. A new revision replaces the old one for new draws only after its own required approval.
 
-### AD-14 — The draw is uniform random over what the player could have seen `[ADOPTED]`
+### AD-14 — Each sitting uses a uniform draw with fixed composition `[ADOPTED]`
 
 - **Binds:** CAP-3, CAP-16
-- **Prevents:** two implementations inventing different selection policies, and an adaptive scheme arriving before there is data to tune it.
-- **Rule:** the server draws 20 questions uniformly at random from the index, scoped to the subtree of the hierarchy node being assessed — the theme for a theme test, the course for the final exam — and to the questions published in the player's course version. A theme test draws 5 easy and 15 hard, mixed in presentation order; the final exam draws 20 hard. No ranking, no adaptive selection, no exposure weighting, and no filtering by what the player previously answered. Exposure control is Deferred.
-- **The composition is a security parameter, not a pacing one.** Easy answers reach the device because offline lessons need them, so easy marks are readable by anyone willing to read their own database. Five of twenty caps that free share at 25%, which leaves a 60% bar needing 7 of 15 hard — guessable 6% of the time, against 76% at an even split.
+- **Prevents:** incompatible draw sizes or hidden adaptive policies.
+- **Rule:** uniformly select twenty distinct eligible questions within the assessed hierarchy and applicable course version. A theme test mixes five EASY and fifteen HARD; a final exam contains twenty HARD. No within-sitting easy gate, ranking, exposure weighting or history filtering. Two random sittings may coincidentally repeat a set.
 
-### AD-15 — New hard questions are unscored until they prove themselves `[ADOPTED]`
+### AD-15 — Approval of a revision admits it to the exam bank `[ADOPTED]`
 
-- **Binds:** CAP-6, CAP-14
-- **Prevents:** a broken hard question silently costing marks that nobody can contest, which is otherwise undetectable once answers reach no one.
-- **Rule:** a newly authored hard question enters live sittings as an unscored pretest item, indistinguishable to the player, and contributes to no one's score until its statistics clear the quality bar. A sitting carries its 20 scored questions plus a small number of pretest ones.
+- **Binds:** CAP-3, CAP-6, CAP-14, CAP-19
+- **Prevents:** a cold-start deadlock and a second statistical prerequisite after content approval.
+- **Rule:** every question revision, initial or subsequent, becomes exam-eligible after all required independent checks and approval. Mandatory hidden unscored items and accumulated statistics as a prerequisite are removed from the current MVP. Existing roles, independence and version-specific review remain binding.
 
-### AD-16 — Item quality is judged by discrimination, and a bad item triggers rescoring `[ADOPTED]`
+### AD-16 — Quality signals lead to review; confirmed faults lead to correction `[ADOPTED]`
 
-- **Binds:** CAP-14, CAP-21
-- **Prevents:** the fairness hole that opens as soon as no player can see which item they failed.
-- **Rule:** an item whose failures concentrate among players who scored well overall is flagged — a negative point-biserial correlation is the canonical signature of a wrong key. A confirmed bad item is **quarantined, never deleted** (AD-23), and every affected sitting is rescored (AD-24) — possible only because AD-17 keeps them. Players may also flag an item as unclear, without being told anything about correctness.
-- **Starting point is thinner than it looks:** `functions/lesson-statistics.js` contains `summarizeLessonAnswers` and `summarizeAnswerDistribution`, but nothing in `index.js` requires the module — it is dead code, has never run against real data, and its `selectedOptionIds` has no `survey` branch despite claiming to cover polls. The raw material is real (`answerPayload` is stored per answer), but the aggregation is to be written, not merely extended.
+- **Binds:** CAP-14, CAP-21, PRD FR-6/7
+- **Prevents:** an automated statistic being treated as proof of a wrong key.
+- **Rule:** statistics and reports are review signals, not automatic removal or revocation. A confirmed error is quarantined by the authorized content process, with a reason and revision identity. Preserve already issued/started banks and process affected results through AD-24. Review covers affected dependent content and translations.
 
-### AD-17 — Every sitting is persisted, separately from lesson attempts `[ADOPTED]`
+### AD-17 — Preserve original sittings and versioned corrections `[ADOPTED]`
 
 - **Binds:** CAP-14, CAP-21
-- **Prevents:** discovering after launch that the pass rate against the 60% bar cannot be measured, and losing the ability to rescore.
-- **Rule:** each sitting is stored server-side with its player, exam, questions drawn, answers, timings, percent and outcome. It is not folded into `result_events`, and no client write reaches it.
+- **Prevents:** losing reconstruction evidence after content edits.
+- **Rule:** persist sittings separately from ordinary result_events, with player, exam, immutable selected revisions/keys, rule snapshot, answers, timings and original outcome. Corrections append attributable result versions; they do not replace the original evidence. Clients cannot write this store.
 
-### AD-18 — Cooldown and spending are server-held `[ADOPTED]`
+### AD-18 — Starts and purchases settle on the server `[ADOPTED]`
 
-- **Binds:** CAP-12, CAP-13, CAP-11
-- **Prevents:** a price that flickers — deducted locally, restored by the next profile sync — and a cooldown a client can lie about.
-- **Rule:** the 23-hour cooldown belongs to an exam, not to a player, and is enforced server-side under the canonical key of AD-28. Charge for a sitting and nolics for a lesson unlock are both deducted in the same call that grants the thing, because the balances live in `users/{uid}` and `ProfileRepositoryImpl` overwrites the local profile with the remote one wholesale.
-- **Nolics live in two fields and both are read.** The server writes `pointsNolics` and `nolics`; `FirebaseUserStatsDataSource` reads `pointsNolics` while `FirebaseEconomyRemoteDataSource` reads `nolics`. Any deduction writes both, or one of the two client paths shows a balance that was never charged.
+- **Binds:** CAP-11, CAP-12, CAP-13
+- **Prevents:** duplicate charges and local deductions erased by profile refresh.
+- **Rule:** successful theme-test start costs 1 full STANDARD charge (100 points); successful final-exam start costs 2 full STANDARD charges (200 points), from server configuration. STANDARD-only entry is inherited from spec-charges CAP-1 and its round-1 decision: plasma never pays the toll and there is no pool split to choose. Reconcile legacy final300 configuration before enabling real debit; that value is implementation drift, and reward basis C1 remains independent of the debit pool. Session creation and charge are atomic and idempotent; refused starts cost nothing. Cooldown is rolling 24 hours for ThemeTest per user/theme and rolling 168 hours (7 days) for FinalExam per user/course, from terminal closure including timeout or abandonment. Recovery of the same open sitting creates neither another charge nor a new cooldown anchor. Ordinary lesson unlocks preserve their accepted offline local half: unlock + provisional nolics debit + outbox in one Room transaction, same operation on retry and visible rollback on quarantine; the server confirms the financial fact. The prohibition on device-side exam charging does not prohibit that path. Do not restore obsolete flat unlock prices or standalone local debits.
 
-### AD-19 — The certificate is server-issued, server-verified, and carries its own context `[ADOPTED]`
+### AD-19 — Certificates remain immutable; the latest earned issuance is displayed `[ADOPTED]`
 
 - **Binds:** CAP-8, CAP-18
-- **Prevents:** a public page one day asserting something that was true and stopped being true.
-- **Rule:** only the final exam's terminal state issues a certificate, signed with a server secret and verified only by the server, per ADR-0007. It carries the sitting, the percent, the date, the pass mark in force and the size of the bank it was drawn from, and it is valid for one year. The client never constructs or validates one.
+- **Prevents:** corrections mutating earned claims, best-score display hiding a later pass, and delayed signing replacing a newer certificate.
+- **Rule:** only a successful final-exam terminal result authorizes issuance; failure creates no certificate and does not replace the current one. A new final sitting is allowed before or after expiry under the existing admission, charge and cooldown rules. Each new successful sitting creates a distinct immutable certificate with its own one-year term from that earning outcome; earlier certificates remain in history without changed identity, claims or dates. Default display selects the latest by authoritative server earning chronology even when its passing score is lower, never the highest score or signing-completion order. Exam owns issuance/signing/verification; profile consumes its read-only projection/UI. For every successful final, terminal success, its immutable logical issuance fact and durable signing/publication work commit atomically. Bind issuanceId, sitting, earning resultVersion, percent/pass mark, bank snapshot, frozen public claims, issuedAt/expiresAt, key identity and server-owned total earning order at that boundary. Signing/publication fulfill this fact outside the transaction with explicit pending state; replay keeps the same issuance identity, eligibility and dates. Delayed fulfillment of an older issuance cannot replace the newer projection; a rollback commits neither success nor issuance. Public attestation never joins mutable profile/course fields. A later downward correction caused by our question error preserves each issued certificate exactly, including original expiry and validity on this ground; record correction separately without extending the term. Retain verification material for earlier signatures across rotation; no new crypto provider/algorithm is selected. Theme best-result/admission policy and separate administrative revocation grounds are unchanged. A correction that changes a formerly failed final to passing does not authorize a new certificate for that sitting; only a new successful final sitting can earn one. Issuance already earned at original successful terminal closure, including pending signing, remains unchanged.
 
-### AD-20 — Content provisioning is neither runner's concern `[ADOPTED]`
+### AD-20 — Provisioning remains outside exam lifecycle `[ADOPTED]`
 
-- **Binds:** the arena boundary
-- **Prevents:** arena's daily quota and purchase rules being built inside the offline runner or the online session machinery.
-- **Rule:** how content reaches a device — arena's ten-a-day quota, purchased extras, difficulty-aware selection — is a provisioning policy in its own right. Arena is offline play with a provisioning policy, not an online session, and it never reaches for `shared/core/online-session`.
+- **Binds:** ordinary lessons and Arena
+- **Prevents:** offline ticket, quota or purchase policy entering exam timing.
+- **Rule:** existing Arena and ordinary content provisioning remain separate from assessment. Their current PRD authorization, reserve, offline and recovery rules apply. Old Arena quota/price seeds in this run do not override the later PRD.
 
-### AD-21 — Every sitting is server-scored, both rungs `[ADOPTED]`
+### AD-21 — Every assessment answer is server-scored `[ADOPTED]`
 
 - **Binds:** CAP-2, CAP-5, CAP-6, CAP-9
-- **Prevents:** a patched client posting 100% on easy sittings, clearing AD-9's admission set and reaching the certificate. AD-5 alone would license exactly that, since easy answers *are* on the device.
-- **Rule:** AD-5 governs lesson play only. Every sitting run through `online-session` — easy rung, hard rung, final exam — is scored exclusively by `assessment-scoring.js`. The client posts answers, never digits and never a percent, and `assessment/presentation` links no scoring function.
+- **Prevents:** client-generated EASY scores clearing final admission.
+- **Rule:** both difficulties in a theme test and every final-exam question are scored on the server. The client sends bound answers, never authoritative score digits, stars or percent. Assessment presentation invokes no scoring function.
 
-### AD-22 — Pretest items never change what a player is scored out of `[ADOPTED]`
+### AD-22 — All twenty served questions are scored `[ADOPTED]`
 
 - **Binds:** CAP-14, CAP-16
-- **Prevents:** two arithmetics for the same play — 12 of 20 under one builder, 11 of 17 under another — and a `codeAnswer` whose percent depends on whether pretest positions were written as digits.
-- **Rule:** a sitting's scored set is exactly the draw size after pretest exclusion. Pretest items come from a pool AD-13's index keeps separate from the scorable one, they occupy `'0'` positions in `codeAnswer` so `computePercentScore` never averages over them, and their count is server config. They still consume AD-3 deadlines and AD-30's gap budget, because the player must not be able to tell which they are.
+- **Prevents:** an extra hidden denominator or obsolete pretest score positions.
+- **Rule:** each newly started sitting has exactly twenty scored questions and no mandatory unscored additions. Confirmed post-sitting corrections use explicit versioned correction rules under AD-24, not pretest markers.
 
-### AD-23 — Eligibility counts scorable items, and bad items are quarantined `[ADOPTED]`
+### AD-23 — Quarantine preserves history, not availability `[ADOPTED]`
 
 - **Binds:** CAP-8, CAP-14, CAP-19
-- **Prevents:** a course reading "200 of 200" on the author's certification line while no sitting can open because every item is unpromoted; and AD-16's removal de-certifying a course through a door AD-12 does not watch.
-- **Rule:** AD-10 accumulates and AD-19 reports the **scorable** set — promoted, not quarantined. A confirmed bad item is quarantined, which removes it from AD-13's draw pool but leaves it in the record, so no removal can cross a certification threshold downward. The author's line shows both numbers: how many questions exist and how many can be examined on.
+- **Prevents:** counting quarantined items to manufacture a usable bank.
+- **Rule:** retain quarantined revisions for audit and frozen issued banks; remove them from new eligible draws and current available counts. Show existence/history separately from currently approved availability. Apply AD-35 to new starts; do not infer certification eligibility from historical counts.
 
-### AD-24 — Rescoring corrects in both directions; admission is recomputed, not merged `[ADOPTED]`
+### AD-24 — Corrections reproduce original evidence without rewriting certificates `[ADOPTED]`
 
-- **Binds:** CAP-14, CAP-17, CAP-21
-- **Prevents:** the fairness fix applying one-way. A wrong key marks some players wrong who were right *and* some right who were wrong, so an AD-8 record that only ever improves would keep the undeserved passes and drop the deserved corrections.
-- **Rule:** sitting scores are corrigible in both directions by `item-quality.js`, stamped with a rescore version. After a rescore the AD-8 record is **recomputed from the player's sittings**, not monotonically merged. Monotonicity remains the rule for ordinary writes; a rescore is the one authorised exception and is the only writer allowed to lower a record.
+- **Binds:** CAP-14, CAP-17, CAP-18, CAP-21
+- **Prevents:** order-dependent arithmetic, invalid evidence preserving admission, duplicate effects and retrospective certificate creation.
+- **Rule:** authorized confirmed-fault exclusions follow EXAM-TECH-1 C2: map cumulative exclusions to distinct original slots and reproduce retained digits from frozen evidence/scoringVersion. For retained N>0, percent=floor(sum(floor(100*(digit_i-1)/8))/N); unanswered positions remain digit1, excluded positions leave both sum and denominator. Use captured pass mark and AD-37 star mapping; never infer denominator from submitted answers. Append attributable correction version, immutable evidence digest and idempotent correctionId/body, then CAS head. Commit that head and recomputed theme admission/best atomically, or atomically advance its durable correction generation/pending barrier. Materialization must match current result/correction version and generation; obsolete work cannot overwrite a newer projection. New final start verifies current/applied correction generation and readiness in its start/charge transaction, refusing pending/unavailable before spending; queued work cannot authorize through stale passed state. Recompute from usable latest results across sittings; an independent valid pass still suffices and already started sittings stay frozen. UNSCORABLE_ALL_EXCLUDED and CORRECTION_PENDING_EVIDENCE have no score/pass/stars and cannot use a known-invalid old result as current admission proof. No invented compensation or cooldown reset. Original evidence and AD-19 certificate entitlement remain unchanged, including signing pending; correcting a failed final to pass issues no certificate. A first-ever theme pass may pay once if no award receipt exists, using original frozen basis and b0 atomically with admission. Preserve every already settled nolics/XP receipt and reward-accounted maximum exactly: correction performs no top-up, recoupment, reset or advance from corrected score. The shared theme aggregate generation covers every input-changing result write, including a newly terminal theme sitting while a correction is pending. All terminal/correction writers advance or transactionally coordinate that same generation. A materializer must validate the full input generation before publishing, so a stale correction result cannot overwrite a newer valid theme pass; retry recomputation against the new generation instead.
 
-### AD-25 — `courseVersion` is one server-owned counter `[ADOPTED]`
+### AD-25 — New starts use the current course; stable theme passes carry `[ADOPTED]`
 
 - **Binds:** CAP-1, CAP-9, CAP-16
-- **Prevents:** admission anchoring to `version` while the draw anchors to `contentsVersion` or `lastModifiedAt` — three counters exist, none of them is a course version, and adding a theme bumps a different one than editing a question.
-- **Rule:** the publication pass maintains a single monotonic `courseVersion`, bumped by any structural or question change. It is stored on the AD-8 record, set when the player first passes a theme test of that course, and advanced only by an explicit server rule. The client never supplies it and cannot pin an old one.
+- **Prevents:** clients pinning obsolete admission rules or edits changing an active sitting.
+- **Rule:** publication owns authoritative courseVersion for structure and question changes. Each new start uses the latest approved version; issued sittings retain their frozen inputs. A passed record carries by stable (courseId, themeId) when that theme's question content changes. Only newly added required themes need another pass; extra archived ids are ignored. This carry does not prevent AD-24 from correcting a result whose evidence was actually erroneous.
 
-### AD-26 — The admission comparison is subset, over non-archived themes `[ADOPTED]`
+### AD-26 — Admission requires a subset over non-archived themes `[ADOPTED]`
 
 - **Binds:** CAP-1, CAP-9
-- **Prevents:** an author archiving a theme and permanently locking every player who passed it out of the final exam, which strict set equality would do.
-- **Rule:** every non-archived theme id of the course at the player's `courseVersion` must appear in the passed set. Extra ids — themes since archived — are ignored, never disqualifying.
+- **Prevents:** an extra historical passed theme disqualifying its owner.
+- **Rule:** every required non-archived theme id at the applicable course version must occur in the passed set. Extra ids are ignored.
 
-### AD-27 — Lesson progress has one server-side owner, and the gate waits for the outbox `[ADOPTED]`
+### AD-27 — Exam admission requires confirmed manifest-bound EASY coverage `[ADOPTED]`
 
 - **Binds:** CAP-1, CAP-11
-- **Prevents:** the exact success moment lying. A player clears the last lesson offline, the entry unlocks locally, they spend a charge, and the server refuses because the outbox has not drained.
-- **Rule:** `lesson-progress.js` owns the server-side "lesson passed" aggregate and is written by `submitLessonResultEvents`. `startThemeTest` requires the theme's outbox to be drained; the client flushes first, and an undrained outbox returns a typed `ResultsNotSynced` refusal **before** any charge is taken.
+- **Prevents:** star/count/forged-digit admission, lost revision provenance and charging before confirmed full coverage.
+- **Rule:** learning ingestion owns EXAM-TECH-1 C3: publication supplies immutable required-EASY canonical question/revision manifest; ordinary attempt/outbox evidence freezes its reference, answer, timing and permitted-help provenance without adding an offline ticket. Validate owner, revision/membership and full-credit answer against approved immutable content. Union successful exact tokens across attempts; requiredTokens must be a subset of confirmedSuccessfulTokens at the current manifest. Repeated tokens count once, counts/stars and a twenty-question subset do not prove coverage. New/revised required tokens need proof, unchanged exact tokens carry; already-passed stable themes still follow AD-25/26. Evidence, receipt and projection commit atomically or expose a durable pending materialization barrier. New start atomically rechecks current manifest and confirmed generation before charge: incomplete Locked, relevant undelivered/unmaterialized progress ResultsNotSynced, missing authority Unavailable. Empty/legacy unknown is not silently complete; upload ACK alone is insufficient. Ordinary offline progression stays immediate and ingestion never repays rewards.
 
-### AD-28 — The final exam is one hard-only sitting, with its own record and key `[ADOPTED]`
+### AD-28 — Final results and cooldowns have their own identity `[ADOPTED]`
 
 - **Binds:** CAP-8, CAP-12, CAP-16, CAP-18
-- **Prevents:** a second builder giving the course an easy and a hard final exam, which would split the cooldown key, leave two terminal states with no rule for which issues the certificate, and write `themeId = courseId` into the admission collection, poisoning AD-26's comparison.
-- **Rule:** neither assessment has a ladder inside it. A theme test is one mixed sitting and the final exam is one hard-only sitting; the final exam's result lives in its own record keyed `(uid, courseId)` in a collection distinct from the AD-8 one. Cooldown keys are canonical and carry no rung segment: `theme:{themeId}` and `final:{courseId}`.
+- **Prevents:** using a course id as a theme id or inventing separate exam rungs.
+- **Rule:** theme and final are each one sitting type. Final results are keyed by user/course in a collection distinct from theme admission. Canonical cooldown keys are theme:{themeId} for rolling 24 hours and final:{courseId} for rolling 168 hours, scoped to the user with no difficulty segment; terminal closure is the anchor.
 
-### AD-29 — A session is singular, resumable, and charged once `[ADOPTED]`
+### AD-29 — One open sitting per exam is recoverable without a second charge `[ADOPTED]`
 
 - **Binds:** CAP-2, CAP-10, CAP-12, CAP-13
-- **Prevents:** a lost start response burning a charge and a 23-hour window on a session nobody can reach — AD-2 forbids reading it, and no listed call resumes it. And two devices acknowledging the same index, where AD-3 would hand the second one a fresh deadline: unlimited time, by the exact mechanism AD-3 exists to close.
-- **Rule:** at most one open session per `(uid, exam)`. A start call against an exam with an open session returns that session and charges nothing. Only a terminal session opens a cooldown window. The first acknowledgement of a question index wins; later ones return the original deadline verbatim.
+- **Prevents:** lost start responses burning another charge or restarting deadlines.
+- **Rule:** at most one open sitting per user/exam. Starting against an existing open sitting recovers it; original operation identity remains bound. Only terminal closure, including timeout or abandonment, opens the mode-specific cooldown window; recovery never restarts this anchor or creates another debit. Recovery returns the current authoritative question/deadline; it does not pause or extend it.
 
-### AD-30 — One terminator, and the gap clock starts at session creation `[ADOPTED]`
+### AD-30 — One fenced exam worker owns terminalization and durable recovery `[ADOPTED]`
 
 - **Binds:** CAP-4, CAP-10, CAP-21
-- **Prevents:** a first question held open forever, since AD-4's gap is defined between an answer and the next acknowledgement and there is no answer before the first; and a sweeper racing a late `submitAnswer` to write the same terminal state twice into the AD-8 transaction and the AD-17 sitting.
-- **Rule:** the gap clock starts at session creation and resets on every answer receipt, first question included. Exactly one terminator — a scheduled sweeper — may write a terminal state, as a compare-and-set on the session. Foreground calls may only advance a session, never terminate it. `fetchSittingResult` on a still-open session returns a typed open state, not an error and not a partial score.
+- **Prevents:** competing terminal writers, abandoned sittings stuck open, cursor starvation and stale worker publication.
+- **Rule:** the exam sweeper is the sole logical compare-and-set terminal writer; foreground only advances, reads or requests finish. EXAM-TECH-1 C4 fixes injected trusted clock/store, bounded durable sweep with wrap, mutation fencing, retry/overlap/crash convergence and non-starving actionable poison work. Isolated test/demo calls the same capability; production uses the existing Firebase Functions v2 onSchedule wake-up adapter, not an exactly-once promise. Clients choose no worker clock/cursor/lease, and scheduler delay never extends deadlines. The first acknowledgement gap begins at sitting creation and retains its existing bound without a new duration choice. Each subsequent connection/download gap uses the shared server-owned configuration of initiative AD-31, default60 seconds, captured in the sitting rule snapshot; no exam-specific hardcoded value or later config change resets the window. Its anchor is authoritative closure of the preceding question: its timely accepted answer or its original answer-deadline expiry. Reconnect, retries and delayed sweeps preserve that anchor. No gap truncates or extends an active answer allowance; question expiry advances as unanswered, while gap expiry requests terminalization under AD-4. After the final question closes, terminalization proceeds without another delivery gap. Still-open result reads return typed open state. Signing claims fenced durable work, signs/verifies exact frozen claims/key outside TX, and CAS-publishes against issuance identity/digest/fence; first verified artifact wins. Rotation preserves pending-bound signing and historic verification material; missing keys remain recoverable pending. Concrete provider/algorithm/environment/cadence/runbook proof stays Q-EX-5 before activation. Tournament settlement retains its own policy.
 
-### AD-31 — Answer writes are idempotent per question `[ADOPTED]`
+### AD-31 — Answer commitment is idempotent per question `[ADOPTED]`
 
 - **Binds:** CAP-4, CAP-5
-- **Prevents:** an honest retry destroying a correct answer. The answer lands, the response is lost, the client retries past the deadline, and the stored `Score(9)` is overwritten with the timeout digit — on the one write that decides a 100%-easy pass.
-- **Rule:** idempotency is keyed `(sittingId, questionIndex)`, not only `sittingId`. The first write wins; a later write returns the stored acknowledgement and never re-scores.
+- **Prevents:** retries replacing accepted answers with timeout or different answers.
+- **Rule:** the first committed answer for sittingId/questionIndex wins. Bind owner, question revision and payload identity; identical retry returns its receipt and conflicting reuse cannot overwrite it or advance the next question. Preserve server receipt time across recoverable server processing failures.
 
-### AD-32 — Ordering answers travel in canonical ids, un-permuted exactly once `[ADOPTED]`
+### AD-32 — Ordering uses a single canonical answer frame `[ADOPTED]`
 
 - **Binds:** CAP-5, CAP-14
-- **Prevents:** the shuffle being undone twice — scoring a correct answer as wrong — or not at all. Neither shows up in tests, because AD-21 leaves no Kotlin scorer on the exam path to disagree with.
-- **Rule:** the wire answer is expressed in server-issued item ids. Un-permutation happens exactly once, at the `online-session` boundary. AD-17 persists the canonical answer *and* the permutation, so an AD-24 rescore reads it in the same frame it was written.
+- **Prevents:** applying shuffle reversal twice during scoring or rescore.
+- **Rule:** wire answers use issued item identities. Map to canonical identities exactly once at the boundary, retaining the issued permutation and canonical answer in private evidence. Redaction includes shuffling where order itself exposes correctness.
 
-### AD-33 — Advice is fixed-length and never resolves to one item `[ADOPTED]`
+### AD-33 — Advice must not identify one failed item `[ADOPTED]`
 
 - **Binds:** CAP-6
-- **Prevents:** AD-6 leaking through its own rule. One wrong answer produces one named lesson; if that lesson contributed one question to the draw, the player has just been told which item they failed.
-- **Rule:** advice is a fixed-length list emitted at every score including a perfect one, and a lesson contributing fewer than a configured number of items to the sitting is never named. Where a sitting cannot support that, advice is drawn from the admission record's history rather than from the one sitting.
+- **Prevents:** a one-item lesson name exposing that item's verdict.
+- **Rule:** use a fixed-length advice list at every score, including perfect scores; do not name lessons contributing fewer than the configured support threshold. When the sitting cannot support safe advice, use the admission history rather than a single-item inference.
 
-### AD-34 — Cooldowns and unlocks are server-written records under `users/{uid}` `[ADOPTED]`
+### AD-34 — Cooldown projections cover both assessment kinds `[ADOPTED]`
 
 - **Binds:** CAP-11, CAP-13, CAP-20
-- **Prevents:** CAP-20 having no data source — AD-2 forbids reading sessions and no listed call enumerates cooldowns — so one builder hangs cooldowns off the profile and another off the admission record; and a lesson unlock stored client-side being erased by the profile's wholesale overwrite.
-- **Rule:** the AD-8 record carries a server-written cooldown projection, and it is CAP-20's only source. `unlockLesson` joins the callable list, lives with the economy code that already holds the spend helpers, and writes the unlock as a record under `users/{uid}`.
+- **Prevents:** final-exam cooldowns disappearing from the overview.
+- **Rule:** expose server-written user-scoped cooldown projections for theme tests on their admission records and final exams on their distinct course-result records. No private session read is needed. Confirmed lesson unlocks remain server-owned economy records; their provisional ordinary offline projection and pending debit follow AD-18, never standing in for server-confirmed EASY admission.
 
-### AD-35 — A pool below the draw cannot open a sitting `[ADOPTED]`
+### AD-35 — Insufficient available pools refuse before spending `[ADOPTED]`
 
 - **Binds:** CAP-3, CAP-12, CAP-13
-- **Prevents:** the existing `selectSubset` precedent quietly serving 14 questions against a bar tuned for 20, writing a `bestEasyPercent` incomparable across themes — and doing it in the normal case, since a non-certifiable course still has theme tests.
-- **Rule:** a difficulty whose scorable pool is below its share of the draw cannot open a sitting — 5 easy and 15 hard for a theme test, 20 hard for the final exam, each checked against its own pool. `PoolTooSmall` joins the typed refusal set. The publication pass records per-theme, per-rung scorable pool sizes so the client can render the lock without guessing. Charge is deducted only after a successful draw, in the same transaction.
+- **Prevents:** silently shorter exams or paying for a failed draw.
+- **Rule:** a theme test requires at least five approved available EASY and fifteen HARD revisions; a final requires twenty HARD, independently of the larger certification thresholds. PoolTooSmall refuses before session/charge commitment. Publication exposes versioned available counts for the UI; the server rechecks at start.
 
-### AD-36 — Payouts are first-pass only `[ADOPTED]`
+### AD-36 — Assessment rewards freeze ordinary worth and marginal accounting `[ADOPTED]`
 
 - **Binds:** CAP-13, CAP-15, CAP-16
-- **Prevents:** a nolics faucet. Retakes are unlimited at one a day, so crediting on every passing sitting pays forever, and it mutates the same balance AD-18 deducts from in a different call.
-- **Rule:** a payout is keyed `(uid, themeId, rung)` with an `awardedAt`, written in the same transaction as the AD-8 record, and unaffected by an AD-24 rescore.
+- **Prevents:** answer-timer or random-draw repricing, mixed-base/rounding drift and repaying accounted progress.
+- **Rule:** EXAM-TECH-1 C1 and its fixture oracle define the exact reward contract. Publication chooses one canonical ordinary worth-source revision per eligible question, deduplicates translations, and freezes pool counts/time sums, basis manifest/hash and rewardRuleVersion at start; unknown basis refuses before charge. Ordinary EASY/HARD worth is independent of the all-HARD assessment answer timer. Theme TE=halfUp(5*sum(sE)/countE), TH=halfUp(15*sum(sH)/countH); final TE0, TH=halfUp(20*sum(sH)/countH); B=(TE+3TH)/720. Preserve cumulative marginal tariff W: P=c*max(W(p)-W(b),0)+r*W(min(p,b)), R=P*B; theme c3/r0 first-pass-only, final c10/r0.1 every terminal sitting. Compute XP=halfUp(R) and nolics=halfUp(R/10) independently from exact unrounded R using checked integer/rational arithmetic. No extra whole-reward multiplier, per-band currency rounding, elapsed-time substitution or later-content rebasing. Durable per-user/assessment b is independent of latest certificate/theme best and never resets on lower results or renewal. One transaction binds eligibility, receipt, wallet/XP effects and bNext=max(b,p), including rounded zero; retries return the same sitting effect. Failed unpaid themes leave b0; first corrected theme pass may use its frozen basis/b0 once if award absent. C2 preserves any already-settled nolics/XP receipt and accounted maximum exactly; corrected score creates no top-up, recoupment, reset or advance.
 
-### AD-37 — Exam results are rendered verbatim `[ADOPTED]`
+### AD-37 — Exam results render the authoritative percent and star projection `[ADOPTED]`
 
 - **Binds:** CAP-6, CAP-7
-- **Prevents:** the client recomputing stars from the percent and drifting from the server by a tenth, on the screen the certificate chain hangs off. Kotlin truncates integer division where JS would round, and AD-7's same-commit rule cannot catch a divergence that only appears on a path with no Kotlin scorer.
-- **Rule:** an exam result is rendered exactly as the server sent it. `assessment/presentation` does not depend on `shared/core/scoring`.
+- **Prevents:** mixed-sitting star scales diverging, display rounding changing admission, and client recomputation differing from the server.
+- **Rule:** ThemeTest uses a linear 0–3-star scale from overall percent p: the server computes starsTenths=roundHalfUp(30*p/100), for p in [0,100], retaining tenths and half-up rounding. Examples: 60%=1.8, 95%=2.9, 100%=3.0. Pass/fail uses the original authoritative percent and applied pass mark, never rounded stars. Theme best-result policy is unchanged. Assessment presentation renders returned percent, stars, pass state and advice without recomputation or a scoring dependency.
 
 ## Consistency Conventions
 
-| Concern | Convention |
+| Concern | Rule |
 | --- | --- |
-| Naming | Assessment types are `ThemeTest` and `FinalExam`; the shared machinery says `Session`. Never `exam` for a theme-level thing — the vocabulary split is contractual, not cosmetic. |
-| Callables | `startThemeTest`, `startFinalExam`, `acknowledgeQuestion`, `submitAnswer`, `finishSitting`, `fetchSittingResult`, `unlockLesson`. One verb, one noun, no batch variants. |
-| Ids | `sittingId` is client-generated and idempotent, matching the existing `attemptId` contract; answer writes are idempotent on `(sittingId, questionIndex)` per AD-31; everything else is server-generated. |
-| Redacted payloads | A redacted question is its own type on the wire and in `shared/core/online-session`. `QuestionContent` is never made nullable to accommodate it — its `init` invariants would throw and ordinary lessons would silently score as wrong. |
-| Ordering questions | Redaction is not field-stripping: the server shuffles `items` and holds the permutation, because the order of `items` **is** the answer. |
-| Surveys | Excluded from every draw. They score full marks for any answer and would be free correctness. |
-| Errors | A refused start returns a typed reason the UI renders — `Locked`, `Cooldown`, `InsufficientCharge`, `LadderNotReached`, `ResultsNotSynced`, `PoolTooSmall` — never a generic failure. |
-| Config | The pass mark, the 23-hour cooldown, the gap timeout, the draw size, the easy/hard composition and the certification minimums are server config, not code constants. The pass mark is additionally per-course, settable by the author or an algorithm. |
-| Auth-scoped flows | Anything under `users/{uid}` is observed through `currentUidFlow().flatMapLatest { … }` per the project rule, emitting guest defaults on logout. |
-
-## Stack
-
-Ratified from the existing project, not chosen here. Versions read from `gradle/libs.versions.toml` and `functions/package.json` on 2026-08-29.
-
-| Name | Version |
-| --- | --- |
-| Kotlin (KMP) | 2.3.10 |
-| Android Gradle Plugin | 8.11.0 |
-| kotlinx-coroutines | 1.10.2 |
-| kotlinx-serialization | 1.7.3 |
-| kotlinx-datetime | 0.5.0 |
-| Decompose | 3.1.0 |
-| Essenty | 2.1.0 |
-| Koin | 3.5.6 |
-| Compose BOM | 2024.09.02 |
-| Firebase BOM (Android) | 33.2.0 |
-| Cloud Functions runtime | Node 22 |
-| firebase-functions (Node) | ^7.2.5 |
-| firebase-admin (Node) | ^13.8.0 |
+| Assessment names | ThemeTest is контрольная; FinalExam is the course экзамен. |
+| Calls | startThemeTest, startFinalExam, acknowledgeQuestion, submitAnswer, finishSitting, fetchSittingResult. A recovery/start returns current state; finish requests terminalization. |
+| Identity | Persistent client operation/sitting identity is bound to owner and immutable request; server checks remain authoritative. |
+| Redaction | Separate answer-free payload types; Survey is excluded. No key, future question or codeAnswer in client projections. |
+| Refused start | Typed Locked, Cooldown, InsufficientCharge, ResultsNotSynced, PoolTooSmall, plus explicit unavailable server state; no obsolete LadderNotReached. |
+| Rules snapshot | Server config owns pass mark (default 60%), mode-specific rolling cooldown (theme 24 hours, final 168 hours), the existing initial ACK bound, the adopted 60-second subsequent connection/download window, composition, prices and minimums. A sitting binds its applied rule version. |
+| Auth scope | User flows switch on current uid; stale responses cannot update another account or session. |
+| Content corrections | New revision needs its own required checks; unaffected checks retain valid provenance. Frozen issued banks do not mutate. |
 
 ## Structural Seed
 
-```text
-shared/core/scoring/                      # moved out of lesson-runner: evaluate, percent, stars, all-easy-correct
-shared/core/online-session/               # session lifecycle, redacted question type, deadlines, terminal states
-shared/feature/assessment/domain/         # ThemeTest, FinalExam, admission record, use cases
-shared/feature/assessment/data/           # callable client, Room cache of entities and results
-android/feature/assessment/presentation/  # Decompose components + Compose screens
-functions/
-  assessment-session.js                   # start / acknowledge / submit / finish / fetch
-  assessment-draw.js                      # uniform draw over the publication index
-  assessment-scoring.js                   # the ONE JS scorer; absorbs result-verification.js
-  lesson-progress.js                      # server-side lesson-passed aggregate (AD-27)
-  item-quality.js                         # discrimination, pretest promotion, rescoring
-  certification.js                        # eligibility accumulation, certificate issue, verification
-```
+Existing Kotlin scoring and server assessment-scoring, answer redaction and ordinary result processing are reused. Existing tournament session/controller/worker code owns tournament behavior. Assessment domain/data and its presentation add exam-specific lifecycle calls, immutable sitting storage, admission, draw and certificate orchestration. Core gains only missing neutral contracts justified by actual shared callers.
 
-```mermaid
-erDiagram
-    COURSE ||--o{ THEME : contains
-    THEME ||--o{ LESSON : contains
-    LESSON ||--o{ QUESTION : contains
-    THEME ||--|| THEME_TEST : "has one"
-    COURSE ||--|| FINAL_EXAM : "has one"
-    THEME_TEST ||--o{ SITTING : "is sat as"
-    FINAL_EXAM ||--o{ SITTING : "is sat as"
-    PLAYER ||--o{ SITTING : sits
-    PLAYER ||--o{ ADMISSION_RECORD : holds
-    THEME ||--o{ ADMISSION_RECORD : "scoped to"
-    FINAL_EXAM ||--o{ CERTIFICATE : issues
-    PLAYER ||--o{ CERTIFICATE : owns
-```
+Technology versions are inherited from the active candidate's verified project/toolchain contract; the August version table is retired rather than treated as a new dependency choice.
 
 ## Capability → Architecture Map
 
-| Capability | Lives in | Governed by |
-| --- | --- | --- |
-| CAP-1, CAP-9 admission and ladder | assessment/domain + `certification.js` | AD-8, AD-9 |
-| CAP-2, CAP-10 session ownership and interruption | `online-session` + `assessment-session.js` | AD-1, AD-2, AD-4 |
-| CAP-3, CAP-16 draw and the final exam | `assessment-draw.js` | AD-13, AD-14 |
-| CAP-4 deadlines | `online-session` + `assessment-session.js` | AD-3, AD-4 |
-| CAP-5, CAP-6 no feedback, server result | `assessment-scoring.js` | AD-5, AD-6, AD-7 |
-| CAP-7, CAP-15 theme stars and payout | assessment/domain + AD-8 record | AD-8 |
-| CAP-8, CAP-18 the certificate | `certification.js` + profile domain | AD-19, ADR-0007 |
-| CAP-11 sequential lessons and purchase | quizzes-screen presentation + `certification.js` | AD-18, AD-20 |
-| CAP-12, CAP-13 cooldown and charge | `assessment-session.js` | AD-18 |
-| CAP-14 anti-cheat and item quality | `item-quality.js` | AD-15, AD-16, AD-17 |
-| CAP-17 admission record | `users/{uid}` subtree | AD-8 |
-| CAP-19 author certification line | quest-authoring presentation | AD-10, AD-11, AD-12 |
-| CAP-20 cooldown overview | assessment presentation | AD-18 |
-| CAP-21 sitting persistence | `item-quality.js` store | AD-17 |
+| Capability | Governing decisions |
+| --- | --- |
+| CAP-1, CAP-9, CAP-11, CAP-17 | AD-8, AD-9, AD-18, AD-25, AD-26, AD-27 |
+| CAP-2–6, CAP-10 | AD-1–7, AD-21, AD-29–33, AD-37 |
+| CAP-7, CAP-15 | AD-8, AD-24, AD-36, AD-37 |
+| CAP-8, CAP-16, CAP-18 | AD-9, AD-14, AD-19, AD-25, AD-28, AD-35 |
+| CAP-12, CAP-13, CAP-20 | AD-18, AD-28–31, AD-34, AD-35 |
+| CAP-14, CAP-19, CAP-21 | AD-10–17, AD-22–24 |
 
-## Deferred
+## Open Questions and Deferred
 
-- **Exposure control.** AD-14 fixes a uniform draw. Randomesque or Sympson-Hetter selection needs exposure data that does not exist yet; revisit once sittings have accumulated.
-- **A self-contained verification link.** AD-19 makes verification depend on the server being alive, so certificates die with the domain. Packing the signed payload into the link would let the page survive as a static file — roughly a day's work. Revisit before the first certificate turns a year old.
-- **Tournaments.** The second caller of `shared/core/online-session`. Its scoring, ranking and scheduling are not decided here; AD-1 exists so it does not have to be.
-- **Arena provisioning.** AD-20 names the boundary and stops there. The quota, the purchase rules and the difficulty-aware selection are their own design.
-- **The life-points-to-charge rename.** Touches the shop, the profile, the server economy and the legacy price list. Not this feature's diff.
-- **What replaces `lifeCharged` as the economic throttle on lesson attempts.** It gates four things, and `attemptId` idempotency already ships; only a daily cap on paid attempts remains to be designed.
-- **Theme placement / leaderboards.** CAP-15 allows a placement; whether it ranks against the theme, the course or everyone is undecided.
-- **Whether a course carries stars of its own** from the final exam, as a theme does from its test.
+- **Exam debit implementation (UX-O1):** 100/200 STANDARD points are adopted; plasma and a pool split are not open product alternatives. Before real debit, reconcile legacy final300 configuration and prove the economic adapter against [spec-charges CAP-1](../../../specs/spec-charges/SPEC.md). C1–C4 remain unchanged.
+- **Shared online-window integration:** initiative AD-31 owns the adopted 60-second next-question window. The existing tournament global cutoff can expire inside that window; resolve that conflict before enabling the affected shared adapter. This exam contract neither shortens the guaranteed window nor invents a match/stage extension.
+
+- **Execution activation (Q-EX-5 remainder):** C4 worker/signing/recovery boundaries and controlled-driver/production wake-up adapters are adopted. Choose concrete signing provider/algorithm, secret bindings, environment allowlist, cadence/budgets/retention and prove the runbook before enabling the relevant environment; no service activation is authorized here.
+- **Exposure control:** uniform draw remains; revisit only with measured exposure data.
+- **Standalone verification:** server verification remains; revisit a self-contained verifier before availability requirements change.
+- **Theme placement and course stars:** defer their separate product rules before building those optional surfaces.

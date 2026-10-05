@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-01",
+  "scope": "Private quiz recovery timeout yields full-quiz result, remaining questions unanswered",
+  "result": "PASS",
+  "AD_preservation": {
+    "retained_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "changed_ADs": [
+      29
+    ],
+    "all_other_AD_blocks_unchanged": true,
+    "baseline": "/tmp/schoolquiz-private-final-rules-20261001/main/ARCHITECTURE-SPINE.md"
+  },
+  "lint_findings": 0,
+  "missing_links": [],
+  "whitespace": [],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "3de2248ac08d36dbde3d6bedf7c58ff92698060cb90c5336e26864e8dae09cc2",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "cc8a15eedde1051ec2cb910ddf4a62588ec6be6c6007f2b802869ffad0723360",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "9a2253b730425914e3f33b14fa29808bda20a19d17376298eb61b2eb5052a60b",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "e47fdf1da27b99a4dd1121b63cbd16792d490c6e6be3f1f439b51721d1087dd1"
+  },
+  "runtime": "NOT RUN — documentation only",
+  "remaining": "Attempt-limit setting change semantics and final category name are pending owner answers; named technical contracts remain",
+  "reviews": [
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-final-rules-rubric-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-final-rules-reality-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-final-rules-adversarial-20261001.md"
+  ]
+}

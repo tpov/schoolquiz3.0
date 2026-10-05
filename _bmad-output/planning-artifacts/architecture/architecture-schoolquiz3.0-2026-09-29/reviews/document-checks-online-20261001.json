@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-01",
+  "scope": "Owner online/private/review clarification; documentation only",
+  "decisions": {
+    "initiative": {
+      "retained_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "amended_ids": [
+        2,
+        4,
+        14,
+        15,
+        26,
+        29
+      ],
+      "added_ids": [
+        31
+      ],
+      "unchanged_other_decisions": true
+    },
+    "exam": {
+      "retained_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37
+      ],
+      "amended_ids": [
+        3,
+        4,
+        18,
+        30
+      ],
+      "added_ids": [],
+      "unchanged_other_decisions": true
+    }
+  },
+  "missing_local_links": [],
+  "trailing_whitespace": [],
+  "spine_status": "final",
+  "reviews": [
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-online-rubric-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-online-reality-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-online-adversarial-20261001.md"
+  ],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "4ab19ffa026130b4893ee489cf5b8b59cb1d26725586903d629cef286ab07a22",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/ARCHITECTURE-SPINE.md": "7f5b5fbf49a96e7c1bf833a990a3ebf876c7051a287eee3f4b4bcba17b9a264c",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "a5b61061e8bb8cea044fe92872cff0fc1a908b2f66f94de7113529d3926a0bc7",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "f0bccc960409aa0b9ec68a40b5f2d8a7ce989d39b0a56f98f868e526728e4eca",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "ddbf8a2954c24bb5a6c57b585f6acc4061e7f5a7bdb5a3e5e18a76d368febd10",
+    "_bmad-output/specs/spec-theme-exams/exam-protocol.md": "4c23067e4a9a2d6e06c7e339a07373cd7ea5e7bd71ce2fd5e35b998b3325f373"
+  },
+  "runtime_checks": "NOT RUN — no code changed",
+  "known_lint_warning": "EXAM literal users/{uid} is a real schema path, not a placeholder",
+  "remaining_contract_gates": [
+    "ONLINE-O1 tournament timing budget",
+    "ONLINE-O2 shared delivery/ready-ACK contract"
+  ]
+}
