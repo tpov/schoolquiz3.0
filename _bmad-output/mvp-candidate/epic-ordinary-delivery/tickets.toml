@@ -1,11 +1,17 @@
 # tickets.toml — epic-ordinary-delivery: stories in build order.
-# Inception breakdown of the epic's Done-when (epic-ordinary-delivery.md, night 2026-10-05/06).
+# Inception breakdown of the epic's Done-when (epic-ordinary-delivery.md, night 2026-10-05/06;
+# revised after the independent critic review the same night).
 # Table order is the build order; `id` names a story for good and is not an order.
+# Done-when 4 is split client/server (2.4 now / 2.8 blocked): AD-5 puts the shown-terms check on
+# the server, and a client-only proof must not close the epic criterion.
+# Done-when 5 is split written/adopted/proven (2.5 now / 2.9 blocked / 2.6 blocked): each of the
+# three parts has a named owner.
 # Scope rule for this inception (fixed assumption): a story is dispatchable "now" when the
 # orchestrator can prove it locally from this tree — code + JVM/node-free tests only. Anything
-# needing a physical device, Play, a live demo backend/emulator or an owner decision is
-# dispatch = "blocked" with the reason named. Real-phone confirmation of the same behavior rides
-# the epic-candidate-rig device stories (1.3/1.5), story 2.7 and final acceptance, not these.
+# needing a physical device, Play, a live demo backend/emulator (Node contract tests, Firebase
+# callables) or an owner decision is dispatch = "blocked" with the reason named. Real-phone
+# confirmation of the same behavior rides the epic-candidate-rig device stories (1.3/1.5), story
+# 2.7 and final acceptance, not these.
 
 [[story]]
 id = "2.1"
@@ -37,29 +43,47 @@ status = "todo" # dispatch now: AccountSwitchGuard и owner/epoch-гейты в 
 [[story]]
 id = "2.4"
 slug = "config-refresh-failure-terms"
-title = "Ошибка обновления конфига сохраняет известные значения и никогда не показывает ноль; изменившиеся платные условия требуют нового согласия (CAP-16) — доказательство: JVM-тесты EconomyConstantsRepositoryImpl (refresh failure держит снапшот) и нового consent-гейта на изменившиеся платные условия; evidence docs/agents/evidence/<дата>-config-refresh-failure-terms/"
+title = "Клиентская половина CAP-16: ошибка обновления конфига сохраняет известные значения и никогда не показывает ноль; клиент требует нового согласия при расхождении захваченных условий операции с текущими — доказательство: JVM-тесты EconomyConstantsRepositoryImpl (refresh failure держит снапшот) и нового consent-гейта; серверную проверку shown terms несёт 2.8; evidence docs/agents/evidence/<дата>-config-refresh-failure-terms/"
 covers = ["CAP-16"]
 after = []
 hitl = false
-status = "todo" # dispatch now: хранение снапшота при отказе уже реализовано (EconomyConstantsRepositoryImpl.refresh); consent-гейт — новая логика домена/data + JVM-тесты, серверные числа не нужны
+status = "todo" # dispatch now: хранение снапшота при отказе уже реализовано (EconomyConstantsRepositoryImpl.refresh); consent-гейт — новая логика домена/data + JVM-тесты; серверная половина AD-5 («новая mutation проверяет relevant shown terms сервером») — отдельная blocked-история 2.8, чтобы Done-when 4 эпика не закрывался клиентской половиной
+
+[[story]]
+id = "2.8"
+slug = "server-shown-terms-check"
+title = "Серверная половина CAP-16/AD-5: новая mutation проверяет relevant shown terms сервером; изменившиеся платные условия отклоняются без свежего согласия игрока — доказательство: контрактные Node-тесты приёмника (submitMutation / реестр MUTATION_HANDLERS в functions/index.js) против demo-backend; evidence docs/agents/evidence/<дата>-server-shown-terms-check/"
+covers = ["CAP-16"]
+after = [{ story = "2.4", needs = "client consent gate on captured-vs-current terms" }]
+hitl = false
+status = "blocked" # серверная половина (реестр MUTATION_HANDLERS, functions/index.js:1482; приёмник submitMutation, functions/index.js:1591 + Node-контрактные тесты) — вне локально доказуемого «код+JVM» по scope-правилу файла; проверок consent/shown terms в приёмнике сегодня нет: grep по functions/index.js на consent/shownTerms/платн/услови даёт единственное нерелевантное совпадение «услови» на :4639 (предел Firestore in-запроса)
 
 [[story]]
 id = "2.5"
 slug = "online-o2-contract-adoption"
-title = "Контракт ONLINE-O2 доведён из черновика ночи (epic-ordinary-delivery/online-o2-contract-draft.md) до полной редакции: delivery/ready-ACK receipt, identity/retry, связь со стартом answer-clock, поведение при потере ACK; EXAM AD-3 процитирован как существующее доказательство без перезаписи; инварианты identity/retry закреплены JVM-тестами; evidence docs/agents/evidence/<дата>-online-o2-contract-adoption/"
+title = "Контракт ONLINE-O2 записан в полной редакции по закрытому чек-листу гейта (contract-map.md, Remaining gates): (1) событие завершения вопроса/окна; (2) delivery/ready-ACK receipt с разбивкой по режимам (экзамен — первый ACK закрепляет deadline; остальные — deadline от серверной выдачи, ACK идемпотентен); (3) identity/retry; (4) связь со стартом answer-clock по режимам; (5) потеря ACK без бесконечного gap и замещающих часов; (6) EXAM AD-3 процитирован как существующее доказательство без перезаписи; инварианты identity/retry закреплены JVM-тестами; evidence docs/agents/evidence/<дата>-online-o2-contract-adoption/"
 covers = ["CAP-1", "CAP-18"]
 after = []
 hitl = false
-status = "todo" # dispatch now: черновик уже лежит рядом в этом каталоге; финальное утверждение владельцем — отдельный вопрос в отчёте ночи, блокером dispatch не является
+status = "todo" # dispatch now: чек-лист закрывается локально (черновик уже в этом каталоге); три части Done-when 5 эпика («written, adopted and proven») разнесены по владельцам: written → 2.5, adopted → 2.9 (владелец), proven → 2.6
+
+[[story]]
+id = "2.9"
+slug = "adopt-online-o2"
+title = "Владелец утверждает контракт ONLINE-O2 в редакции 2.5 — третья часть Done-when 5 эпика «adopted»; результат: решение владельца, привязанное к конкретной редакции документа (вопрос В1 отчёта ночи)"
+covers = ["CAP-1", "CAP-18"]
+after = [{ story = "2.5", needs = "full contract edition per checklist" }]
+hitl = false # не устройство/Play; blocked — по scope-правилу файла: решение владельца вне локально доказуемого
+status = "blocked" # требует решения владельца; без него 2.6 не стартует, а потребители контракта (эпики 3/5/6) остаются за гейтом
 
 [[story]]
 id = "2.6"
 slug = "online-next-question-transition"
 title = "Один онлайн-переход next-question по принятому ONLINE-O2: серверное событие завершения вопроса/окна, квитанция готовности, старт часов ответа следующего вопроса без неограниченной паузы и без замещающих часов после потерянного ACK; доказательство: один реальный переход через callable-приёмник на demo-backend + контрактные тесты обеих сторон; evidence docs/agents/evidence/<дата>-online-next-question-transition/"
 covers = ["CAP-1", "CAP-18"]
-after = [{ story = "2.5", needs = "adopted ONLINE-O2 contract" }]
+after = [{ story = "2.5", needs = "full contract edition per checklist" }, { story = "2.9", needs = "adopted contract" }, { story = "1.1", needs = "restored demo backend" }]
 hitl = false # телефон не обязателен: переход доказывается callable-тестом; при желании повторяется на устройстве в 2.7
-status = "blocked" # НЕ dispatch now: нужен живой приёмник на demo-backend (Firebase callable + Node/эмулятор) — среда шире «код+JVM»; серверную сторону готовит оркестратор после поднятия demo-среды из 1.1
+status = "blocked" # доказательство требует серверной половины — Firebase callable в реестре MUTATION_HANDLERS (functions/index.js:1482) и Node-контрактных тестов, что исключено scope-правилом файла («код+JVM»); demo-контейнер из 1.1 уже поднят и оставлен работать (docs/agents/evidence/2026-10-04-demo-backend-restore/backend-restore-result.json, lifecycle) — ограничение именно scope, не среда
 
 [[story]]
 id = "2.7"
@@ -69,6 +93,7 @@ covers = ["CAP-20", "CAP-1", "CAP-16", "CAP-18", "CAP-19"]
 after = [
   { story = "1.1", needs = "restored demo backend" },
   { story = "1.2", needs = "identified candidate APK" },
+  { story = "1.3", needs = "populated installation updated by the candidate" },
   { story = "2.1", needs = "offline lesson path" },
   { story = "2.2", needs = "120-action drain" },
   { story = "2.3", needs = "account isolation" },
