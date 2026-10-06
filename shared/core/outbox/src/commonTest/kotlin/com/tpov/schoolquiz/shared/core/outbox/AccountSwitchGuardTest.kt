@@ -469,4 +469,92 @@ class AccountSwitchGuardTest {
                 assertEquals(0, summary.examined, "проход после снятия не находит записей прежнего владельца")
             }
         }
+
+    // ── switchAndForget: вход и снятие следов под одним замком ──────────────────────────────
+
+    @Test
+    fun `given the sign-in lands on another account then the departing owner is forgotten and the arrival is not`() =
+        runTest {
+            val store = FakeOutboxStore()
+            store.seed(
+                record(1),
+                record(2, state = OutboxState.CONFLICT),
+                record(3, state = OutboxState.QUARANTINED),
+                record(4, owner = other),
+            )
+            val traces = RecordingTraces(left = mapOf(uid to listOf(OwnerDataKind.UNPUBLISHED_QUEST_DRAFTS)))
+
+            val newUid = guard(store, traces) { Result.success(Unit) }.switchAndForget(listOf(uid)) { other }
+
+            assertEquals(other, newUid)
+            assertEquals(
+                listOf(other),
+                store.all.map { it.ownerUid },
+                "записи прежнего владельца сняты во всех состояниях, записи прибывшего целы",
+            )
+            assertEquals(listOf(uid), traces.forgotten, "следы сняты у уходящего, не у прибывшего")
+        }
+
+    @Test
+    fun `given the roundtrip returns to the same account then nothing of his is forgotten`() =
+        runTest {
+            // A→B→A: возвращение к себе — не потеря, а приход владельца. Записи и черновики,
+            // оставленные прежней сессией того же uid, остаются его: их дочитает новая сессия
+            // (новый generation) под его же uid. Забыть при возвращении надо только того, кто был
+            // между двумя сессиями.
+            val store = FakeOutboxStore()
+            store.seed(record(1), record(2, state = OutboxState.CONFLICT), record(3, owner = other))
+            val traces = RecordingTraces(left = mapOf(uid to listOf(OwnerDataKind.ANSWER_HISTORY)))
+
+            val newUid =
+                guard(store, traces) { Result.success(Unit) }
+                    .switchAndForget(listOf(other, uid)) { uid }
+
+            assertEquals(uid, newUid)
+            assertEquals(listOf(uid, uid), store.all.map { it.ownerUid }, "свои записи — во всех состояниях — целы")
+            assertEquals(listOf(other), traces.forgotten, "снят промежуточный владелец, не вернувшийся")
+            assertEquals(
+                listOf(OwnerDataKind.ANSWER_HISTORY),
+                traces.lossesOf(uid),
+                "и свои личные следы возвращенец не потерял",
+            )
+        }
+
+    @Test
+    fun `given the sign-in fails then nothing is forgotten and the error goes up`() =
+        runTest {
+            // Вход не состоялся — прежний владелец всё ещё действующий, и снимать его следы
+            // нечем оправдать. Ошибка входа доходит до вызывающего: молчаливое «переключились»
+            // оставило бы игрока в чужом аккаунте.
+            val store = FakeOutboxStore()
+            store.seed(record(1))
+            val traces = RecordingTraces()
+
+            val failure =
+                runCatching {
+                    guard(store, traces) { Result.success(Unit) }.switchAndForget(listOf(uid)) {
+                        throw SyncFailure(SyncError.NoNetwork)
+                    }
+                }.exceptionOrNull()
+
+            assertTrue(failure is SyncFailure)
+            assertEquals(1, store.all.size, "не удавшийся вход не снимает записи")
+            assertTrue(traces.forgotten.isEmpty(), "и личные следы тоже")
+        }
+
+    @Test
+    fun `given blank and repeated previous uids then each real predecessor is forgotten exactly once`() =
+        runTest {
+            val store = FakeOutboxStore()
+            store.seed(record(1, owner = other))
+            val traces = RecordingTraces()
+
+            val newUid =
+                guard(store, traces) { Result.success(Unit) }
+                    .switchAndForget(listOf("", other, other)) { "arrived" }
+
+            assertEquals("arrived", newUid)
+            assertEquals(listOf(other), traces.forgotten)
+            assertTrue(store.all.isEmpty(), "записи каждого настоящего прежнего владельца сняты")
+        }
 }
