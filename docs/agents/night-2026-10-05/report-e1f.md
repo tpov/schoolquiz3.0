@@ -113,6 +113,55 @@ Forensics (всё — чтение):
 read-only staged export). Каталог `control-save-night-20261005` НЕ создавался —
 пустышка не нужна.
 
+## 5. Утренний подъём 06.10 (решение владельца) — ВЫПОЛНЕНО, задача 4 закрыта
+
+Решение владельца: поднять `schoolquiz-demo-firebase-20261004` из staged-экспорта
+тем же способом, что при восстановлении 04.10, **без** `--restart`-политики. Выполнено
+06.10 (контейнер StartedAt **2026-10-06T20:05:20Z** UTC); способ — `docker start`
+существующего контейнера, как в evidence §6 восстановления 04.10 и примечании runbook §0.
+
+Пред-проверки (до подъёма):
+
+- Контейнер в состоянии из §4: `Exited (137)`, FinishedAt `2026-10-05T17:59:47Z`
+  (`docker inspect`); конфигурация не менялась — entrypoint/command и 7 маунтов
+  совпадают с `raw-restore-log.md:33-52`.
+- Staged-источник перехэширован той же командой, что evidence §1
+  (`find | sort | xargs sha256sum | sha256sum`) →
+  `2e4237d84530f63520703c519803e3e4edd6f629fa8259e920bc4e7ba9e898ff`, 12 файлов —
+  манифест 04.10 совпал.
+- Порты 18090/19090 свободны (`ss -tln`); RestartPolicy контейнера уже `no`
+  (`{"Name":"no","MaximumRetryCount":0}`) — рестарт-политика не добавлялась.
+
+Подъём и проверки живости (записано, что именно ответило):
+
+- `docker start schoolquiz-demo-firebase-20261004` → Up; в логе старта —
+  «Importing data from /tools/firebase-import/firestore_export/…» (staged-источник)
+  и «✔ All emulators ready!».
+- `curl http://127.0.0.1:18090/` → тело `Ok`, **HTTP 200** (Firestore).
+- `curl http://127.0.0.1:19090/` → `{"authEmulator":{"ready":true,…}}`, **HTTP 200** (Auth).
+- `POST /identitytoolkit.googleapis.com/v1/projects/demo-schoolquiz-mvp/accounts:query`
+  (Bearer owner) → **userInfoCount: 98** — базлайн.
+- Firestore REST spot-check `users/1wqSlL9TOX1h28ifZGixKxBugdSJ` →
+  lifePoints=1000, standardHearts=10, goldHearts=3, nolics=1000 — значения базлайна
+  04.10 (`backend-restore-result.json:32`); состояние эмулятора = staged-базлайн,
+  как и задумано при `docker start`.
+
+Контрольный экспорт (закрывает задачу 4 / вопрос владельцу 1-вариант А):
+
+```
+docker exec -w /tmp schoolquiz-demo-firebase-20261004 \
+  /tools/firebase-cli/node_modules/.bin/firebase \
+  emulators:export /tools/firebase-output-root/control-save-night-20261005 \
+  --config /repo/firebase.mvp.json --project demo-schoolquiz-mvp --non-interactive
+→ i  Found running emulator hub … → ✔  Export complete
+```
+
+- Каталог: `/workspace/infrastructure/android-toolchain/firebase-exports/demo-restore-20261004/control-save-night-20261005`
+  (рядом с `control-save-1` и `export`), создан экспортом заново.
+- **12 файлов**, 31 380 531 байт; **98 auth-пользователей**
+  (`len(accounts.json['users'])`) — полный аналог control-save-1 из evidence §5.
+- Контейнер НЕ останавливался: после экспорта — `Up`, `RestartPolicy=no`.
+
 ## Итог по задачам
 
 | # | Задача | Статус |
