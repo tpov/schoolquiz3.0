@@ -32,8 +32,27 @@ object OutboxOperations {
     /** Online-created box opening; retries resolve the same permanent server operation. */
     const val OPEN_GIFT_BOX: String = "economy.OPEN_GIFT_BOX"
 
-    /** Shared by lifetime policy, transport classification and Room's parameterized queries. */
-    val permanentReceiptOperations: Set<String> = setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX)
+    /**
+     * Квитанция готовности онлайн-перехода next-question (ONLINE-O2 §4, история 2.6 эпика
+     * `epic-ordinary-delivery`).
+     *
+     * Пер-вопросная квитанция перехода, а не терминальный расчёт: ответы идут по существующим
+     * каналам режима, ready-ACK их не подменяет и не дублирует. Имя операции и кодирование тройки
+     * `(attemptId, questionIndex, windowId)` в sourceId фиксирует контракт; кодирование живёт во
+     * владеющей фиче (`lesson-runner:data`), серверная половина — реестр `MUTATION_HANDLERS`
+     * (`functions/index.js`), совпадение имён сторожит `OutboxOperationsRegistryTest`.
+     */
+    const val READY_ACK: String = "lesson_runner.READY_ACK"
+
+    /**
+     * Shared by lifetime policy, transport classification and Room's parameterized queries.
+     *
+     * READY_ACK входит сюда по правилу retry контракта (ONLINE-O2 §6.1): готовый ready-ACK живёт
+     * только внутри активной попытки, его правило — «повтор возвращает то же», без
+     * возрастного карантина и лимита попыток — перезревание убило бы вопрос раньше его
+     * собственного deadline, прямое нарушение §7. Решение о включении и имя операции — истории 2.6.
+     */
+    val permanentReceiptOperations: Set<String> = setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX, READY_ACK)
 
     /** Оценка квеста, поставленная после урока. */
     const val SUBMIT_RATING: String = "lesson_runner.SUBMIT_RATING"

@@ -49,6 +49,7 @@ class OutboxOperationsRegistryTest {
             OutboxOperations.UNLOCK_LESSON,
             OutboxOperations.SUBMIT_ATTEMPT,
             OutboxOperations.OPEN_GIFT_BOX,
+            OutboxOperations.READY_ACK,
             OutboxOperations.SUBMIT_RATING,
             OutboxOperations.SUBMIT_ARENA,
             OutboxOperations.SUBMIT_REVIEW,

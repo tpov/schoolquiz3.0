@@ -129,6 +129,18 @@ const {buildScoringPool} = require("./scoring-pool");
 const {FAULT, scoreAttempt} = require("./attempt-scoring");
 const {STATUS: ATTEMPT_STATUS, attemptFingerprint, attemptReceipt, replayFault} = require("./attempt-receipt");
 const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
+// Онлайн-переход next-question по ONLINE-O2 (история 2.6): чистые вердикты окна; Firestore и часы
+// подводят обёртки ниже.
+const {
+  WINDOW_OPEN,
+  deliveryUpdate,
+  deliveryVerdict,
+  expiryUpdate,
+  openQuestionWindow,
+  readyAckVerdict,
+  sameWindowIntent,
+  windowDocumentId,
+} = require("./lesson-question-window");
 const {
   maxLifePoints,
   spendLifePoints,
@@ -1490,6 +1502,11 @@ const MUTATION_HANDLERS = {
   "lesson_runner.SUBMIT_ATTEMPT": (uid, payload) => applyLessonResultEvents(uid, [payload || {}]),
   // Оценка квеста.
   "lesson_runner.SUBMIT_RATING": (uid, payload) => applyQuestRatingEvents(uid, [payload || {}]),
+  // Квитанция готовности онлайн-перехода next-question (ONLINE-O2 §4, история 2.6). Пер-вопросная
+  // квитанция перехода, не терминальный расчёт: deadline возвращается из документа окна — тот,
+  // что закрепила серверная выдача, — и никогда не читается из тела ACK. Repeat ключа отвечает
+  // сохранённой квитанцией силами самого приёмника, до обработчика не доходя.
+  "lesson_runner.READY_ACK": (uid, payload, now) => applyLessonReadyAck(uid, payload || {}, now),
   // The opening itself owns a permanent receipt; queue leases may expire without rerolling it.
   "economy.OPEN_GIFT_BOX": (uid, payload) => callBoxOperation({auth: {uid}, data: payload}, BOX_KIND.OPEN),
   // Заявка черновика на арену. Раньше она писалась в Firestore напрямую и проверку ключа
@@ -1710,6 +1727,199 @@ async function releaseReservation(keyRef, reservation) {
     if (numberValue(existing.reservedAtMs, -1) !== numberValue(reservation.reservedAtMs, -2)) return;
     transaction.delete(keyRef);
   });
+}
+
+// ─── Онлайн-переход next-question (ONLINE-O2, история 2.6) ──────────────────────────────────────
+
+/**
+ * Окна загрузки следующего вопроса, по документу на переход.
+ *
+ * Один переход = одна пара `(attemptId, completedQuestionIndex)`; идентификатор документа
+ * детерминирован ею, поэтому повтор события завершения читает то же окно, а не открывает второе
+ * (§7: потерянный ACK не создаёт нового окна).
+ */
+const LESSON_QUESTION_WINDOW_COLLECTION = "lesson_question_windows";
+
+function lessonWindowRef(attemptId, completedQuestionIndex) {
+  return db
+    .collection(LESSON_QUESTION_WINDOW_COLLECTION)
+    .doc(windowDocumentId(attemptId, completedQuestionIndex));
+}
+
+/** Обязательная строка тела: отсутствие — расхождение клиента с контрактом, а не пустота. */
+function requiredWindowString(value, name) {
+  const text = stringValue(value);
+  if (!text) throw new HttpsError("invalid-argument", `${name} is required`);
+  return text;
+}
+
+function wholeIndex(value, name) {
+  const parsed = numberValue(value, -1);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new HttpsError("invalid-argument", `${name} must be a non-negative integer`);
+  }
+  return parsed;
+}
+
+/** Что клиент видит об окне: identity перехода и захваченная конфигурация, без выдачи. */
+function windowView(record) {
+  return {
+    schemaVersion: 1,
+    windowId: record.windowId,
+    attemptId: record.attemptId,
+    completedQuestionIndex: record.completedQuestionIndex,
+    nextQuestionIndex: record.nextQuestionIndex,
+    state: record.state,
+    windowSeconds: record.windowSeconds,
+    allocatedSeconds: record.allocatedSeconds,
+    openedAtMs: record.openedAtMs,
+    expiresAtMs: record.expiresAtMs,
+  };
+}
+
+/** Пул урока нужной сложности по серверному содержимому — то же правило, что у цены урока. */
+async function lessonQuestionPoolSize(lessonId, isHard) {
+  const snapshot = await db.collection("questions").where("lessonId", "==", lessonId).get();
+  return lessonPoolSize(snapshot.docs.map(questionDocumentFor), isHard);
+}
+
+/**
+ * Событие завершения вопроса и открытие окна загрузки (ONLINE-O2 §2–§3).
+ *
+ * Демо-поверхность перехода истории 2.6: момент завершения ставит сервер (свои часы, не тело
+ * запроса), константа окна и секунды ответа следующего вопроса захватываются в документ при
+ * открытии. Содержимое следующего вопроса сервер читает сам и отказ окончательно, если вопрос
+ * чужой, архивный или его не существует: клиент не назначает серверные факты (AD-21). Повтор
+ * события с тем же телом возвращает то же окно; с другим — конфликт (AD-6). После последнего
+ * вопроса окно не начинается (§3) — пул считает сервер по содержимому урока.
+ *
+ * Тип завершения (принятый своевременный ответ или исходный expiry) здесь не разбирается: оба
+ * события открывают одно и то же окно (§2), а их различение — дело расчёта попытки, который идёт
+ * по `lesson_runner.SUBMIT_ATTEMPT` и ready-ACK не подменяется.
+ */
+exports.beginLessonQuestionWindow = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const data = request.data || {};
+  const attemptId = requiredWindowString(data.attemptId, "attemptId");
+  const lessonId = requiredWindowString(data.lessonId, "lessonId");
+  const lessonVersion = Math.max(0, Math.trunc(numberValue(data.lessonVersion, 0)));
+  const completedQuestionIndex = wholeIndex(data.completedQuestionIndex, "completedQuestionIndex");
+  const isHard = stringValue(data.difficulty, "HARD").toUpperCase() !== "EASY";
+
+  // После последнего вопроса окно не начинается (§3): пул знает сервер, до любых полей выдачи.
+  const poolSize = await lessonQuestionPoolSize(lessonId, isHard);
+  if (completedQuestionIndex + 1 >= poolSize) {
+    throw new HttpsError("invalid-argument", "no next question: the completed question is the last of the pool");
+  }
+
+  const nextQuestionId = requiredWindowString(data.nextQuestionId, "nextQuestionId");
+
+  const intent = {attemptId, lessonId, lessonVersion, completedQuestionIndex, nextQuestionId, isHard};
+  const docRef = lessonWindowRef(attemptId, completedQuestionIndex);
+  const record = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(docRef);
+    const existing = snapshot.exists ? snapshot.data() : null;
+    if (existing) {
+      if (!sameWindowIntent(existing, intent)) {
+        throw new HttpsError("invalid-argument", "window already opened for a different transition");
+      }
+      return existing;
+    }
+    // Содержимое вопроса читает сервер: секунды ответа считаются здесь и замораживаются в окне
+    // (§3, captured config) — тело запроса на deadline не влияет (§5).
+    const questionDoc = await transaction.get(db.collection("questions").doc(nextQuestionId));
+    const question = questionDoc.exists ? questionDocumentFor(questionDoc) : null;
+    if (!question || question.lessonId !== lessonId || question.archived === true) {
+      throw new HttpsError("invalid-argument", `next question ${nextQuestionId} is not part of lesson ${lessonId}`);
+    }
+    const created = openQuestionWindow({
+      ...intent,
+      nextQuestionContent: questionRowFrom(question).content,
+      nowMs: Date.now(),
+    });
+    transaction.set(docRef, created);
+    return created;
+  });
+  return windowView(record);
+});
+
+/**
+ * Запрос следующего вопроса — выдача внутри окна (ONLINE-O2 §3).
+ *
+ * Первая выдача стартует часы ответа серверным «сейчас» плюс захваченные секунды; повтор
+ * возвращает тот же вопрос с тем же deadline и серверным остатком — вторую выдачу повтор не
+ * создаёт (§3, §5). Окно, истекшее без выдачи, закрывается без ответа: попытке не объявляется
+ * победа таймауту и не выдаётся платная попытка (§7).
+ */
+exports.fetchNextLessonQuestion = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const data = request.data || {};
+  const attemptId = requiredWindowString(data.attemptId, "attemptId");
+  const completedQuestionIndex = wholeIndex(data.completedQuestionIndex, "completedQuestionIndex");
+  const nowMs = Date.now();
+
+  const docRef = lessonWindowRef(attemptId, completedQuestionIndex);
+  const verdict = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(docRef);
+    const record = snapshot.exists ? snapshot.data() : null;
+    const outcome = deliveryVerdict(record, nowMs);
+    if (outcome.status === "ISSUE") {
+      transaction.set(docRef, {...record, ...deliveryUpdate(outcome.issued)});
+    }
+    if (outcome.status === "WINDOW_EXPIRED" && record && record.state !== WINDOW_EXPIRED) {
+      transaction.set(docRef, {...record, ...expiryUpdate(nowMs)});
+    }
+    return outcome;
+  });
+
+  if (verdict.status === "NO_WINDOW") {
+    throw new HttpsError("invalid-argument", "unknown next-question window");
+  }
+  if (verdict.status === "WINDOW_EXPIRED") {
+    return {
+      status: "WINDOW_EXPIRED",
+      windowId: verdict.record ? verdict.record.windowId : null,
+      closedAtMs: nowMs,
+      serverNowMs: nowMs,
+    };
+  }
+  const issued = verdict.issued;
+  return {
+    status: "DELIVERED",
+    windowId: verdict.record.windowId,
+    questionIndex: issued.questionIndex,
+    questionId: issued.questionId,
+    issuedAtMs: issued.issuedAtMs,
+    answerDeadlineMs: issued.answerDeadlineMs,
+    remainderMs: verdict.status === "DELIVERED" ? verdict.remainderMs : Math.max(0, issued.answerDeadlineMs - nowMs),
+    serverNowMs: nowMs,
+  };
+});
+
+/**
+ * Приёмник ready-ACK — серверная половина квитанции готовности (ONLINE-O2 §4, §6.2).
+ *
+ * Один приёмник со всеми мутациями (AD-7); дедуп и «повтор ключа возвращает сохранённый результат»
+ * делает сам `submitMutation` до обработчика. Здесь только связь с окном: identity сверяется с
+ * документом, а квитанция собирается из серверных фактов выдачи — ни moment, ни deadline из тела
+ * не читаются (§5: замещающих часов нет; повтор возвращает уже закреплённый deadline).
+ */
+async function applyLessonReadyAck(uid, payload, now) {
+  const attemptId = requiredWindowString(payload.attemptId, "attemptId");
+  const windowId = requiredWindowString(payload.windowId, "windowId");
+  const questionIndex = wholeIndex(payload.questionIndex, "questionIndex");
+  if (stringValue(payload.userId) && stringValue(payload.userId) !== uid) {
+    throw new HttpsError("permission-denied", "Ready-ack ownerUid must match authenticated uid");
+  }
+  if (questionIndex < 1) {
+    throw new HttpsError("invalid-argument", "ready-ack names no delivered question");
+  }
+  const snapshot = await lessonWindowRef(attemptId, questionIndex - 1).get();
+  const verdict = readyAckVerdict(snapshot.exists ? snapshot.data() : null, {attemptId, questionIndex, windowId}, now);
+  if (!verdict.ok) throw new HttpsError(verdict.code, verdict.reason);
+  return verdict.receipt;
 }
 
 exports.submitLessonResultEvents = onCall(CALLABLE_OPTIONS, async (request) => {
