@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import com.tpov.schoolquiz.platform.android_services.economy.PreferencesEconomyConstantsStore
+import com.tpov.schoolquiz.platform.android_services.economy.PreferencesEconomyTermsConsentStore
 import com.tpov.schoolquiz.platform.android_services.network.AndroidNetworkMonitor
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
@@ -50,6 +51,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.PendingLoc
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsStore
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsSync
+import com.tpov.schoolquiz.shared.feature.economy.data.EconomyTermsConsentStore
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.outbox.ListingCancelQuarantine
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.sync.ProfileBootstrapSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
@@ -208,6 +210,9 @@ val syncModule =
             )
         }
         single<EconomyConstantsStore> { PreferencesEconomyConstantsStore(androidContext()) }
+        // Согласие на платные условия лежит рядом с таблицей — в тех же настройках. Перезапись
+        // согласия синхронизация не имеет права: таблицу пишет сервер, согласие — только игрок.
+        single<EconomyTermsConsentStore> { PreferencesEconomyTermsConsentStore(androidContext()) }
         // Личные следы прежнего владельца вне очереди (AD-8): перечень закрыт и назван здесь —
         // ключи личных курсоров двух фич. Курсоры общего контента в него не входят.
         // Локальные траты, о которых сервер ещё не знает. Профиль вычитает это число из снимка,

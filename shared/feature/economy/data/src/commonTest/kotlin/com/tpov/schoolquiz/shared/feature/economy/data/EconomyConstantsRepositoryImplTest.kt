@@ -6,7 +6,9 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ActivityKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 
@@ -97,6 +99,95 @@ class EconomyConstantsRepositoryImplTest {
     }
 
     @Test
+    fun `given the server is unreachable then not a single known price turns into zero`() = runTest {
+        // CAP-16: отказ сохраняет известные значения. Ноль в прейскуранте — не «бесплатно», а
+        // витрина, обещающая попытку даром, которой сервер потом не подтвердит.
+        val dearer =
+            EconomyConstants.BOOTSTRAP.copy(
+                version = 2L,
+                activityPrices = EconomyConstants.BOOTSTRAP_PRICES + (ActivityKind.TOURNAMENT to 900),
+                standard = EconomyConstants.BOOTSTRAP.standard.copy(maxOwned = 7),
+            )
+        val repo =
+            EconomyConstantsRepositoryImpl(
+                Remote { throw IllegalStateException("сети нет") },
+                Store(dearer),
+            )
+
+        assertTrue(repo.refresh().isFailure)
+
+        val held = repo.observe().first()
+        ActivityKind.entries.forEach { kind ->
+            assertEquals(dearer.priceOf(kind), held.priceOf(kind), "цена $kind")
+            assertTrue(held.priceOf(kind) >= 0)
+        }
+        assertEquals(7, held.standard.maxOwned)
+    }
+
+    @Test
+    fun `given the server is unreachable on a device that never synced then the bootstrap pricelist stays in force`() =
+        runTest {
+            // Устройство, ни разу не синхронизировавшееся, при обрыве не остаётся без таблицы:
+            // загрузочная копия — не нули.
+            val repo =
+                EconomyConstantsRepositoryImpl(
+                    Remote { throw IllegalStateException("сети нет") },
+                    Store(),
+                )
+
+            assertTrue(repo.refresh().isFailure)
+
+            val held = repo.observe().first()
+            assertEquals(EconomyConstants.BOOTSTRAP, held)
+            assertTrue(ActivityKind.entries.all { held.priceOf(it) > 0 })
+        }
+
+    @Test
+    fun `given the server is unreachable then the store is not touched by the failure`() = runTest {
+        // Отказ — не приезд новой таблицы: перезаписывать хранилище нечем, и попытка «сохранить
+        // отказ» стёрла бы последнюю хорошую копию.
+        val store = Store(newer)
+        val repo =
+            EconomyConstantsRepositoryImpl(
+                Remote { throw IllegalStateException("сети нет") },
+                store,
+            )
+
+        assertTrue(repo.refresh().isFailure)
+
+        assertEquals(0, store.writes)
+        assertEquals(newer, store.read())
+    }
+
+    @Test
+    fun `given the store rejects the new table then the running table is not swapped halfway`() =
+        runTest {
+            // Кэш принимает целый согласованный снимок (AD-5): упавшая запись оставляет работать
+            // прежнюю таблицу целиком, а не её половину.
+            val store = RejectingWriteStore(newer)
+            val next = newer.copy(version = 6L)
+            val repo =
+                EconomyConstantsRepositoryImpl(Remote { EconomyConstantsResponse.Table(next) }, store)
+
+            assertTrue(repo.refresh().isFailure)
+            assertEquals(newer, repo.observe().first())
+        }
+
+    @Test
+    fun `given cancellation while fetching then refresh rethrows instead of reporting a failure`() = runTest {
+        // Отмена — не сетевой отказ: проглотив её в Result.failure, синхронизация продолжила бы
+        // работу, которую у неё отозвали.
+        val repo =
+            EconomyConstantsRepositoryImpl(
+                Remote { throw CancellationException("scope закрыт") },
+                Store(newer),
+            )
+
+        assertFailsWith<CancellationException> { repo.refresh() }
+        assertEquals(newer, repo.observe().first())
+    }
+
+    @Test
     fun `given a price changed on the server then the device prices by the new table`() = runTest {
         val dearer =
             EconomyConstants.BOOTSTRAP.copy(
@@ -108,5 +199,19 @@ class EconomyConstantsRepositoryImplTest {
         repo.refresh()
 
         assertEquals(900, repo.observe().first().priceOf(ActivityKind.TOURNAMENT))
+    }
+
+    /** Хранилище, отказывающее в записи: эмуляция сбоя платформенного хранилища в момент приезда таблицы. */
+    private class RejectingWriteStore(held: EconomyConstants) : EconomyConstantsStore {
+        private var backing: EconomyConstants? = held
+        var writeAttempts = 0
+            private set
+
+        override fun read(): EconomyConstants? = backing
+
+        override fun write(constants: EconomyConstants) {
+            writeAttempts++
+            throw IllegalStateException("хранилище недоступно")
+        }
     }
 }

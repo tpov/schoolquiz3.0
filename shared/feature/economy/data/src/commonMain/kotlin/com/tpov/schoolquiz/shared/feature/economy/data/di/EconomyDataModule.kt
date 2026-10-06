@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsRepositor
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyConstantsSync
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyLocalDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.EconomyRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.economy.data.EconomyTermsConsentGateImpl
 import com.tpov.schoolquiz.shared.feature.economy.data.GiftBoxIntentStore
 import com.tpov.schoolquiz.shared.feature.economy.data.GiftBoxRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.economy.data.OutboxGiftBoxDelivery
@@ -12,6 +13,7 @@ import com.tpov.schoolquiz.shared.feature.economy.data.RoomGiftBoxIntentStore
 import com.tpov.schoolquiz.shared.feature.economy.data.UnsettledPurchaseSettler
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyConstantsRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyTermsConsentGate
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +41,12 @@ fun economyDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): M
             EconomyConstantsRepositoryImpl(remote = get(), store = get())
         }
         single { EconomyConstantsSync(get()) }
+        // Согласие с платными условиями, как и сама таблица, не auth-scoped: цены от того, кто
+        // вошёл, не зависят. Хранилище согласия платформенное, биндится в composition root рядом
+        // с EconomyConstantsStore.
+        single<EconomyTermsConsentGate> {
+            EconomyTermsConsentGateImpl(constants = get(), store = get())
+        }
         single<GiftBoxIntentStore> { RoomGiftBoxIntentStore(get()) }
         single<GiftBoxRepository> {
             GiftBoxRepositoryImpl(
