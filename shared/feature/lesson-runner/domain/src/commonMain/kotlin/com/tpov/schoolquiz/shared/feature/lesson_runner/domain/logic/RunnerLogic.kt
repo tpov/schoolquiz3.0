@@ -150,20 +150,23 @@ fun computeHardUnlocked(attempts: List<Attempt>): Boolean =
 /**
  * Computes per-question timer in seconds.
  * Formula: max(5, round(charsCount × k)); +100 chars if image present.
+ *
+ * EXAM:AD-3: «Do not multiply by examFactor0.75» — every exam question, including the EASY theme
+ * positions, gets the ordinary allowance for its difficulty. [sessionMode] stays in the signature
+ * because exam deadlines are pinned by their own ACK contract (EXAM:AD-3/AD-15), not scaled here.
  */
 fun computeTimer(
     content: QuestionDisplay,
     mode: Difficulty,
     coefficients: TimerCoefficients,
-    sessionMode: SessionMode = SessionMode.LEARNING,
+    @Suppress("UNUSED_PARAMETER") sessionMode: SessionMode = SessionMode.LEARNING,
 ): TimerDuration {
     val charsCount = content.charsCount
-    val base =
+    val k =
         when (mode) {
             Difficulty.EASY -> coefficients.kEasy
             Difficulty.HARD -> coefficients.kHard
         }
-    val k = if (sessionMode == SessionMode.EXAM) base * coefficients.examFactor else base
     val seconds = maxOf(5, (charsCount * k + 0.5).toInt())
     return TimerDuration(seconds)
 }
