@@ -8,6 +8,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -203,5 +204,58 @@ class LessonAttemptIntentPersistenceTest {
             val store = RoomOutboxStore(db.outboxDao())
             assertEquals(listOf("generic"), store.dueRecords("uid-A", now, 50).map { it.mutationId })
             assertEquals(2, store.dueRecords("uid-A", now + 5000, 50).size)
+        }
+
+    // ── ordinary-lesson-offline-restart (epic 2.1) ─────────────────────────────
+
+    /**
+     * Обычный урок завершён офлайн; процесс умер; приложение открыло ту же базу заново.
+     * Показанной после рестарта попыткой/исходом остаются ровно те же строки — и ряд очереди,
+     * который ещё не уехал (сеть не участвовала), не мешает их читать.
+     */
+    @Test
+    fun restartReopenShowsTheSameAttemptOutcomeAndTheStillWaitingQueueRow() =
+        runTest {
+            save()
+            val attemptBefore = db.lessonAttemptDao().findAttempt("a1")
+            val answersBefore = db.lessonAttemptDao().findAttemptAnswers("a1")
+            val intentBefore = db.lessonAttemptDao().findAttemptIntent("a1")
+            val queuedBefore = db.outboxDao().findByMutationId(row().mutationId)!!
+
+            db.close()
+            db = open()
+
+            assertEquals(attemptBefore, db.lessonAttemptDao().findAttempt("a1"))
+            assertEquals(answersBefore, db.lessonAttemptDao().findAttemptAnswers("a1"))
+            assertEquals(intentBefore, db.lessonAttemptDao().findAttemptIntent("a1"))
+            assertEquals(queuedBefore, db.outboxDao().findByMutationId(row().mutationId))
+            // То, что после рестарта показывает экран урока, читается тем же observeByLesson.
+            assertEquals(listOf(attemptBefore), db.lessonAttemptDao().observeByLesson("uid-A", "lesson-1").first())
+            // Исход (проценты, момент завершения) виден в earnings-проекции без сети.
+            val earning = db.lessonAttemptDao().observeEarningsSince("uid-A", 0).first().single()
+            assertEquals(100, earning.percentScore)
+            assertEquals(1000L, earning.completedAt)
+            // Сетевой гейт отсутствует: результат читаем, пока ряд очереди не отправлен и
+            // серверной квитанции не существует.
+            assertEquals("WAITING", db.outboxDao().findByMutationId(row().mutationId)!!.state)
+            assertNull(db.mutationReceiptDao().find("uid-A", row().mutationId))
+        }
+
+    /** После рестарта тот же исход не задваивается и не переписывается. */
+    @Test
+    fun afterRestartIdenticalResaveAddsNoRowAndChangedOutcomeConflicts() =
+        runTest {
+            save()
+            db.close()
+            db = open()
+
+            save() // тот же терминальный запрос после рестарта
+            val queued = db.outboxDao().findByMutationId(row().mutationId)!!
+            assertEquals("WAITING", queued.state)
+            assertEquals(0, queued.attemptCount)
+            assertEquals(1, db.outboxDao().countPending("uid-A"))
+
+            assertTrue(runCatching { save(row("ABORTED")) }.exceptionOrNull() is AttemptIntentConflict)
+            assertEquals(attempt, db.lessonAttemptDao().findAttempt("a1"))
         }
 }
