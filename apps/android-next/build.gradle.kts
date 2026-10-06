@@ -2,8 +2,12 @@ import java.util.Properties
 
 plugins {
     id("schoolquiz.android.compose.application")
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.firebase.crashlytics)
+    // google-services.json is machine-private (**/google-services.json is gitignored): it exists
+    // on the owner's checkout but not in fresh worktrees, and an unconditional
+    // process<Variant>GoogleServices then fails the whole build. Keep both plugins resolvable
+    // here and apply them below only when the config file is actually present.
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 }
 
 fun String.toBuildConfigString(): String = "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
@@ -26,6 +30,19 @@ val firebaseAppCheckDebugSecret: String =
                 properties.getProperty("firebase.appcheck.debug.secret")
             }
             .orEmpty()
+
+// The google-services plugin is applied only where the machine has the Firebase config, mirroring
+// the runtime stance in AuthModule.googleWebClientId: a missing generated resource is a graceful
+// degradation, not a build failure for everyone without the private file. The paths are the ones
+// the plugin itself searches (see its "Searched locations" list): module root, src/, src/debug/.
+val googleServicesConfig: java.io.File? =
+    listOf("google-services.json", "src/google-services.json", "src/debug/google-services.json")
+        .map { file(it) }
+        .firstOrNull { it.exists() }
+if (googleServicesConfig != null) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
+}
 
 android {
     namespace = "com.tpov.schoolquiz.apps.android_next"
