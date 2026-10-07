@@ -12,6 +12,10 @@
 # callables) or an owner decision is dispatch = "blocked" with the reason named. Real-phone
 # confirmation of the same behavior rides the epic-candidate-rig device stories (1.3/1.5), story
 # 2.7 and final acceptance, not these.
+# Amendment 2026-10-07: the demo backend was raised by the owner's 06.10 decision (container
+# schoolquiz-demo-firebase-20261004, no restart policy) and the owner dispatched server-side work,
+# so the backend/Node-test clause no longer blocks 2.8; statuses below updated to actual
+# (night-impl commits + evidence 2026-10-06-*).
 
 [[story]]
 id = "2.1"
@@ -20,7 +24,7 @@ title = "Обычный урок завершается офлайн из под
 covers = ["CAP-1"]
 after = []
 hitl = false # JVM-доказательство; настоящий телефон идёт отдельно (1.3/1.5/2.7, приёмка)
-status = "todo" # dispatch now: весь нужный код в дереве (shared/feature/lesson-runner, shared/core/persistence); существующие JVM-тесты расширить рестарт-ветвью и сетевым-гейт-отрицанием
+status = "done" # 2026-10-06 night run: 0064f01d, orchestrator gate PASS (persistence + lesson-runner + presentation:test); evidence docs/agents/evidence/2026-10-06-ordinary-lesson-offline-restart/
 
 [[story]]
 id = "2.2"
@@ -29,7 +33,7 @@ title = "Очередь из 120 действий сливается до авт
 covers = ["CAP-18"]
 after = [{ story = "2.1", needs = "attempt/rating rows enqueued by the lesson writer" }]
 hitl = false # фейковый транспорт = локально; слив на живом demo-backend остаётся приёмке
-status = "todo" # dispatch now: движок уже пакует по 50 и не глушит очередь на отказе (OutboxEngine); тест-кейс 120 + malformed/cancelled ветви пишутся против общего кода
+status = "done" # 2026-10-06 night run: 42a5df00, orchestrator gate PASS (OutboxDrain120Test, 5 кейсов); evidence docs/agents/evidence/2026-10-06-outbox-120-drain/
 
 [[story]]
 id = "2.3"
@@ -38,7 +42,7 @@ title = "A→B→A и новая сессия того же UID сохраняю
 covers = ["CAP-19"]
 after = []
 hitl = false # два физических устройства в этой истории не нужны: изоляция доказывается на уровне guard/движка/сессий
-status = "todo" # dispatch now: AccountSwitchGuard и owner/epoch-гейты в дереве; негативные ветви (поздний ответ прежнего владельца, запись под чужим uid) покрываются JVM-тестами
+status = "done" # 2026-10-06 night run: 5fb40db4, orchestrator gate PASS (AccountSwitchGuard + outbox + auth/profile:data + platform:firebase:test); evidence docs/agents/evidence/2026-10-06-account-roundtrip-isolation/
 
 [[story]]
 id = "2.4"
@@ -47,7 +51,7 @@ title = "Клиентская половина CAP-16: ошибка обновл
 covers = ["CAP-16"]
 after = []
 hitl = false
-status = "todo" # dispatch now: хранение снапшота при отказе уже реализовано (EconomyConstantsRepositoryImpl.refresh); consent-гейт — новая логика домена/data + JVM-тесты; серверная половина AD-5 («новая mutation проверяет relevant shown terms сервером») — отдельная blocked-история 2.8, чтобы Done-when 4 эпика не закрывался клиентской половиной
+status = "done" # 2026-10-06 night run: fe6cfc6d, orchestrator gate PASS (24 новых теста economy domain/data, consent-гейт); evidence docs/agents/evidence/2026-10-06-config-refresh-failure-terms/
 
 [[story]]
 id = "2.8"
@@ -56,7 +60,7 @@ title = "Серверная половина CAP-16/AD-5: новая mutation п
 covers = ["CAP-16"]
 after = [{ story = "2.4", needs = "client consent gate on captured-vs-current terms" }]
 hitl = false
-status = "blocked" # серверная половина (реестр MUTATION_HANDLERS, functions/index.js:1482; приёмник submitMutation, functions/index.js:1591 + Node-контрактные тесты) — вне локально доказуемого «код+JVM» по scope-правилу файла; проверок consent/shown terms в приёмнике сегодня нет: grep по functions/index.js на consent/shownTerms/платн/услови даёт единственное нерелевантное совпадение «услови» на :4639 (предел Firestore in-запроса)
+status = "todo" # разблокирована 2026-10-07: demo-backend поднят решением владельца 06.10 (контейнер schoolquiz-demo-firebase-20261004, 98 пользователей), Node-контрактные тесты против него разрешены; серверная половина (реестр MUTATION_HANDLERS, functions/index.js:1482; приёмник submitMutation, functions/index.js:1591) — проверок consent/shown terms в приёмнике сегодня нет: grep по functions/index.js на consent/shownTerms/платн/услови даёт единственное нерелевантное совпадение «услови» на :4639 (предел Firestore in-запроса)
 
 [[story]]
 id = "2.5"
@@ -65,7 +69,7 @@ title = "Контракт ONLINE-O2 записан в полной редакц�
 covers = ["CAP-1", "CAP-18"]
 after = []
 hitl = false
-status = "todo" # dispatch now: чек-лист закрывается локально (черновик уже в этом каталоге); три части Done-when 5 эпика («written, adopted and proven») разнесены по владельцам: written → 2.5, adopted → 2.9 (владелец), proven → 2.6
+status = "done" # 2026-10-06 night run: cf8884dd, orchestrator gate PASS (полная редакция контракта online-o2-contract.md; попытка 2 — первая упала на неверном литерале самого теста, test-only фикс); evidence docs/agents/evidence/2026-10-06-online-o2-contract-adoption/
 
 [[story]]
 id = "2.9"
@@ -83,7 +87,7 @@ title = "Один онлайн-переход next-question по принято�
 covers = ["CAP-1", "CAP-18"]
 after = [{ story = "2.5", needs = "full contract edition per checklist" }, { story = "2.9", needs = "adopted contract" }, { story = "1.1", needs = "restored demo backend" }]
 hitl = false # телефон не обязателен: переход доказывается callable-тестом; при желании повторяется на устройстве в 2.7
-status = "blocked" # доказательство требует серверной половины — Firebase callable в реестре MUTATION_HANDLERS (functions/index.js:1482) и Node-контрактных тестов, что исключено scope-правилом файла («код+JVM»); demo-контейнер из 1.1 уже поднят и оставлен работать (docs/agents/evidence/2026-10-04-demo-backend-restore/backend-restore-result.json, lifecycle) — ограничение именно scope, не среда
+status = "done" # 2026-10-06: 1b207cc2 (взята по явному решению владельца 06.10 при формально открытом 2.9 — правило часов утверждено, полная редакция контракта не принята); гейт PASS (outbox + lesson-runner data:test); объём «код+JVM»: живого callable на demo-контейнере не было (functions-эмулятор не поднят), повтор на устройстве — в 2.7/приёмке; evidence docs/agents/evidence/2026-10-06-online-next-question-transition/
 
 [[story]]
 id = "2.7"
