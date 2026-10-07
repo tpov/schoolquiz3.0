@@ -156,7 +156,9 @@ process.stdout.write(JSON.stringify({
   room: {schemaVersion: Number(process.env.FAKE_PREFLIGHT_SCHEMA_VERSION || ${ROOM_SCHEMA_V15.version}),
     schemaIdentityHash: process.env.FAKE_PREFLIGHT_SCHEMA_HASH || ${JSON.stringify(ROOM_SCHEMA_V15.identityHash)}, databaseBytes: 12, walBytes: 0, shmBytes: 0},
   auth: {cachedUser: true, accessTokenBound: true},
-  quiescence: {outboxRows: 0, unresolvedArenaCommands: 0, reservedArenaTickets: 0, orphanedSubmitIntents: 0, orphanedRatingIntents: 0},
+  quiescence: process.env.FAKE_PREFLIGHT_QUIESCENCE_JSON === undefined
+    ? {outboxRows: 0, unresolvedArenaCommands: 0, reservedArenaTickets: 0, orphanedSubmitIntents: 0, orphanedRatingIntents: 0}
+    : JSON.parse(process.env.FAKE_PREFLIGHT_QUIESCENCE_JSON),
   documentWrites: 0,
 }) + "\n");
 `;
@@ -384,6 +386,25 @@ function testRecoveryRecordBlocksSecondPreparation() {
   } finally { value.dispose(); }
 }
 
+function testInvalidQuiescenceStopsBeforePreparationAndTransportCut(quiescence) {
+  const value = fixture();
+  try {
+    const outcome = invoke(value, {FAKE_PREFLIGHT_QUIESCENCE_JSON: JSON.stringify(quiescence)});
+    assert.equal(outcome.status, 2, "unsafe quiescence passed: " + JSON.stringify(quiescence));
+    const output = onlyOutput(value);
+    const guardResult = JSON.parse(fs.readFileSync(path.join(output, "transport-guard-result.json"), "utf8"));
+    assert.equal(guardResult.status, "FAIL");
+    assert.equal(guardResult.errorCode, "PRE_CUT_CHILD_FAILED");
+    assert.equal(guardResult.cut.attempted, false);
+    const snapshot = state(value);
+    assert.equal(snapshot.wifi, 1);
+    assert.equal(snapshot.data, 1);
+    assert.deepEqual(snapshot.mappings.sort(), [5001, 8080, 9099]);
+    assert.equal(snapshot.log.some((entry) => entry.type === "maestro"), false);
+    assert.equal(fs.existsSync(path.join(output, "prepared-ticket.json")), false);
+  } finally { value.dispose(); }
+}
+
 function testPreCutFailureDoesNotCutTransport() {
   const value = fixture();
   try {
@@ -422,6 +443,16 @@ testSealedSequenceHappyPath(ROOM_SCHEMA_V14);
 testSealedSequenceHappyPath(ROOM_SCHEMA_V15);
 testUnsupportedRoomSchemaStopsBeforePreparationAndTransportCut(ROOM_SCHEMA_V15.version, ROOM_SCHEMA_V14.identityHash);
 testUnsupportedRoomSchemaStopsBeforePreparationAndTransportCut(16, "f".repeat(32));
+const quiescent = {outboxRows: 0, unresolvedArenaCommands: 0, reservedArenaTickets: 0, orphanedSubmitIntents: 0, orphanedRatingIntents: 0};
+for (const invalid of [{}, null, [], [0, 0, 0, 0, 0], "", {...quiescent, extraCounter: 0}, {...quiescent, outboxRows: "0"}]) {
+  testInvalidQuiescenceStopsBeforePreparationAndTransportCut(invalid);
+}
+for (const key of Object.keys(quiescent)) {
+  const missing = {...quiescent};
+  delete missing[key];
+  testInvalidQuiescenceStopsBeforePreparationAndTransportCut(missing);
+  testInvalidQuiescenceStopsBeforePreparationAndTransportCut({...quiescent, [key]: 1});
+}
 testPreCutFailureDoesNotCutTransport();
 testInputMutationStopsBeforePrepare();
 testRecoveryRecordBlocksSecondPreparation();
