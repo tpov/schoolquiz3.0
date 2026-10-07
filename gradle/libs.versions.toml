@@ -1,8 +1,8 @@
 [versions]
 # Build tooling
 agp = "8.11.0"
-kotlin = "2.3.10"
-ksp = "2.3.7"
+kotlin = "2.4.10"
+ksp = "2.3.11"
 detekt = "1.23.6"
 ktlint = "12.1.0"
 logger-plugin = "1.0.0"
