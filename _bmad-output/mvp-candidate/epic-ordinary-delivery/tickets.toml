@@ -60,7 +60,7 @@ title = "Серверная половина CAP-16/AD-5: новая mutation п
 covers = ["CAP-16"]
 after = [{ story = "2.4", needs = "client consent gate on captured-vs-current terms" }]
 hitl = false
-status = "todo" # разблокирована 2026-10-07: demo-backend поднят решением владельца 06.10 (контейнер schoolquiz-demo-firebase-20261004, 98 пользователей), Node-контрактные тесты против него разрешены; серверная половина (реестр MUTATION_HANDLERS, functions/index.js:1482; приёмник submitMutation, functions/index.js:1591) — проверок consent/shown terms в приёмнике сегодня нет: grep по functions/index.js на consent/shownTerms/платн/услови даёт единственное нерелевантное совпадение «услови» на :4639 (предел Firestore in-запроса)
+status = "done" # 2026-10-07: 77e51f59 — приёмник проверяет captured terms платных операций (реестр: SUBMIT_ATTEMPT), отсутствие/расхождение согласия — окончательный failed-precondition с поименованным изменением, replay мимо сверки; доказательство: 8-кейсовая приёмниковая сюита против demo-backend + 13 чистых, гейт 90/92 (2 красных сюиты — предсуществующий дрейф ветки, атрибуция в evidence); evidence docs/agents/evidence/2026-10-07-server-shown-terms-check/; открыт стык: клиент пока не шлёт capturedTerms (кандидат 2.12)
 
 [[story]]
 id = "2.5"
