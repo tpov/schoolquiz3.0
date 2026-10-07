@@ -146,10 +146,13 @@ const {
   spendLifePoints,
 } = require("./life-points");
 
-admin.initializeApp();
+// Контрактные тесты приёмника инициализируют приложение сами — с projectId эмулятора и до
+// загрузки модуля; повторная инициализация здесь упала бы на уже существующем приложении.
+// Сюиты с инъекцией подставляют admin-заглушку без поля `apps` — ей нужен безусловный вызов,
+// поэтому пустота apps проверяется только там, где о ней есть что читать.
+if (!admin.apps || admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 db.settings({ignoreUndefinedProperties: true});
-
 const REGION = "us-central1";
 /**
  * Every function is capped at a handful of instances.
@@ -1445,6 +1448,13 @@ const {
   versionVerdict,
 } = require("./mutation-queue.js");
 
+const {
+  TERMS_CONSENT_DETAIL,
+  payableTermsProjection,
+  readCapturedTerms,
+  termsVerdict,
+} = require("./mutation-terms.js");
+
 // Единственное место, где рождается новое значение version (AD-12). Ни один узел не получает
 // число, присланное клиентом, и ни одно место не считает следующую версию своим способом.
 const {
@@ -1551,6 +1561,21 @@ const MUTATION_VERSION_SOURCES = {
 };
 
 /**
+ * Чьи мутации обязаны назвать согласие с платными условиями (CAP-16, серверная половина AD-5).
+ *
+ * Критерий один: вердикт операции читает согласованную таблицу `configs/economy`. Сегодня это
+ * прохождение урока — цена попытки (`activityPrice`) и потолок зарядов при списании берутся
+ * из таблицы в момент применения; выполнение по ценам, с которыми игрок не соглашался, и есть
+ * скрытая переоценка. Добавление платной операции — добавление её сюда рядом с обработчиком.
+ *
+ * Кого здесь нет и почему. Разблокировка урока цену берёт не из таблицы, а из времени самого
+ * урока (`unlockPrice` по allocated seconds) — сверять согласие с таблицей не с чем. Оценка,
+ * квитанция READY_ACK, заявка на арену, решение ревьюера, полка и снятие лотов денег не читают
+ * вовсе. Открытие бокса — начисление, а не списание.
+ */
+const MUTATION_TERMS_OPERATIONS = new Set(["lesson_runner.SUBMIT_ATTEMPT"]);
+
+/**
  * Текущая версия квеста по приватному документу автора.
  *
  * Владелец — из авторизации, а не из тела: путь к приватному документу и есть проверка права, и
@@ -1626,6 +1651,13 @@ exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
 
   const body = parseMutationPayload(request.data.payload);
   if (!body.valid) throw new HttpsError("invalid-argument", body.reason);
+
+  // Форма согласия проверяется до резервирования ключа по той же причине, что и форма
+  // `expected_version`: криво собранный конверт не должен сжигать ключ, который клиенту потом
+  // нечем будет повторить. Само отсутствие согласия — не ошибка формы: повтор известного ключа
+  // возвращает сохранённое без всякой сверки, и его отсутствие обязательным не бывает.
+  const captured = readCapturedTerms(request.data);
+  if (!captured.valid) throw new HttpsError("invalid-argument", captured.reason);
   const requestFingerprint = attemptFingerprint(uid, {operation, payload: body.payload, expectedVersion: expected.expectedVersion});
 
   const now = Date.now();
@@ -1642,6 +1674,9 @@ exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
     const verdict = gateVerdict(existing, uid, mutationId, operation, now);
     if (verdict.decision === DECISION_EXECUTE) {
       verdict.reservation.requestFingerprint = requestFingerprint;
+      // Принятые условия фиксируются в операции (AD-5): по записи ключа видно, под какой
+      // редакцией таблицы эффект был применён. У операций без релевантных условий поля нет.
+      if (captured.captured) verdict.reservation.termsVersion = captured.captured.version;
       transaction.set(keyRef, verdict.reservation);
     }
     return verdict;
@@ -1685,6 +1720,27 @@ exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
         `Entity moved to version ${verdict.serverVersion}`,
         versionConflictDetail(verdict.serverVersion),
       );
+    }
+  }
+
+  // Сверка согласия с текущей таблицей — после резервирования ключа и до обработчика, как сверка
+  // версии: расхождение условий — не применение эффекта (AD-24), эффект по ним не считается, и
+  // ключ обязан освободиться целиком. Повтор известного ключа сюда не доходит (он вернул
+  // сохранённое ещё в гейте) — согласие повторно не переспрашивает. Согласовавший старые цены
+  // игрок получит свежую таблицу при следующей синхронизации, согласится заново, и повтор той же
+  // мутации пройдёт уже по новым.
+  if (MUTATION_TERMS_OPERATIONS.has(operation)) {
+    if (!captured.captured) {
+      // Платная операция без согласия не выполняется: игроку сначала показывают текущие
+      // условия, согласие фиксируется, и только тогда операция едет. Повтор этого не изменит,
+      // поэтому отказ окончательный до нового согласия.
+      await releaseReservation(keyRef, gate.reservation);
+      throw new HttpsError("failed-precondition", `operation ${operation} requires captured payable terms`, {code: TERMS_CONSENT_DETAIL});
+    }
+    const terms = termsVerdict(captured.captured, payableTermsProjection(await readEconomyConstantsDocument()));
+    if (!terms.sufficient) {
+      await releaseReservation(keyRef, gate.reservation);
+      throw new HttpsError("failed-precondition", "Payable terms changed since consent", {code: TERMS_CONSENT_DETAIL, change: terms.change});
     }
   }
 

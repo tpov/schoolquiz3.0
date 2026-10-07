@@ -5,7 +5,17 @@ const Module = require("module");
 
 const {createFirestoreStub} = require("./_firestore-stub");
 const {ANSWERS, publishLesson, servedQuestions} = require("./_scored-lesson-fixture");
-const {POINTS_PER_CHARGE} = require("./economy-constants");
+const {POINTS_PER_CHARGE, readEconomyConstants} = require("./economy-constants");
+const {payableTermsProjection} = require("./mutation-terms");
+
+/**
+ * Свежее согласие для конвертов `submitMutation` (история 2.8): платная операция без него
+ * отклоняется ещё до обработчика, а эти кейсы — про очередь и квитанцию, не про согласие.
+ * Согласие собирается из таблицы мира тем же кодом, которым приёмник строит текущую проекцию.
+ */
+function freshTerms() {
+  return payableTermsProjection(readEconomyConstants(world()["configs/economy"] || null));
+}
 
 /**
  * `submitLessonResultEvents` end to end, over a store, with nothing stubbed inside `index.js`.
@@ -476,7 +486,7 @@ test("one attempt on a lesson nobody can read leaves the rest of the batch alone
 test("queue loses completion acknowledgement after payment, then recovers the original receipt", async () => {
   store.reset(world());
   const request = {auth: {uid: UID}, data: {mutationId: "receipt-queue-1",
-    operation: "lesson_runner.SUBMIT_ATTEMPT", payload: JSON.stringify(serverScoredBody())}};
+    operation: "lesson_runner.SUBMIT_ATTEMPT", payload: JSON.stringify(serverScoredBody()), capturedTerms: freshTerms()}};
   const key = "mutation_keys/2ac154d7801a_receipt-queue-1";
   let keyCommits = 0;
   store.fail = (kind, path) => kind === "commit" && path === key && ++keyCommits === 2 ? "lost acknowledgement" : null;
@@ -501,7 +511,7 @@ test("queue loses completion acknowledgement after payment, then recovers the or
 test("a mutation key freezes operation and payload, and invalid JSON never reserves it", async () => {
   store.reset(world());
   const request = {auth: {uid: UID}, data: {mutationId: "receipt-queue-2",
-    operation: "lesson_runner.SUBMIT_ATTEMPT", payload: JSON.stringify(serverScoredBody())}};
+    operation: "lesson_runner.SUBMIT_ATTEMPT", payload: JSON.stringify(serverScoredBody()), capturedTerms: freshTerms()}};
   await assert.rejects(functions.submitMutation.run({...request, data: {...request.data, payload: "{"}}),
     (error) => error.code === "invalid-argument");
   assert.equal(store.writes.length, 0);

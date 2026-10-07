@@ -30,6 +30,14 @@ function isDocumentPath(path) {
   return path.split("/").length % 2 === 0;
 }
 
+/**
+ * Надгробие отложенного удаления в транзакции: запись `pending` с ним вместо данных к коммиту
+ * убирает документ. Реальная транзакция Firestore умеет `delete`, и код приёмника им пользуется
+ * (`releaseReservation`), поэтому заглушка без него превращала бы честную ветку освобождения
+ * ключа в TypeError ещё до проверки сути.
+ */
+const DELETE = Symbol("delete");
+
 /** A value written through `FieldValue.increment`. Named so `clean()` in index.js passes it through. */
 class IncrementTransform {
   constructor(by) {
@@ -259,6 +267,10 @@ function createFirestoreStub(seed, options) {
           record("write", ref.path);
           pending.push([ref.path, data, writeOptions]);
         },
+        delete: (ref) => {
+          record("write", ref.path);
+          pending.push([ref.path, DELETE, undefined]);
+        },
       };
       let result = await body(transaction);
       if (store.retryTransactionOnce) {
@@ -275,7 +287,14 @@ function createFirestoreStub(seed, options) {
       // fake commit may make a broken money transaction look correct.
       for (const [path] of pending) maybeFail("commit", path);
       for (const path of created) if (store.documents.has(path)) throw new Error("ALREADY_EXISTS");
-      for (const [path, data, writeOptions] of pending) writeDocument(path, data, writeOptions);
+      for (const [path, data, writeOptions] of pending) {
+        if (data === DELETE) {
+          store.documents.delete(path);
+          store.writes.push({path, data: undefined, merge: false, deleted: true});
+        } else {
+          writeDocument(path, data, writeOptions);
+        }
+      }
       return result;
     },
   };
