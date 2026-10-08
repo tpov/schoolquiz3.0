@@ -1,0 +1,92 @@
+# tickets.toml — epic-social-features: stories in build order.
+# Inception 2026-10-08: the approved night draft (night/e3-e8-drafts, 18905ade) converted to the
+# canonical breakdown per owner decision batch 2 item 1 (owner-decisions-2026-10-08.md). Story set
+# is the draft's, unchanged (6 stories); statuses set to actual at inception.
+# Scope rule for this inception (fixed assumption, epic-2 precedent): a story is dispatchable
+# "ready" when the orchestrator can prove it from this tree — code + JVM/Node tests, including Node
+# contract tests against the restored demo backend (container schoolquiz-demo-firebase-20261004).
+# Эпик after = epic-2 (durable delivery, projection fencing, ledger identity) — DONE.
+# Допущение прогона (из черновика, остаётся в силе): авторские «Начисления» (8.6) дополнительно
+# потребляют серверные views выплат TZ06B из эпика 4 — контракт в after истории 8.6;
+# вынесено в «Вопросы владельцу» отчёта ночи. TZ06B (4.2) — ready в эпике 4.
+
+[[story]]
+id = "8.1"
+slug = "ux-o7-poll-contracts"
+title = "UX-O7 poll contracts (OQ-7) before vote writes: series/revision identity, respondent-question uniqueness, delivery/recovery, one counts snapshot; retry is not a second vote, editing before submission grants no post-vote revision; evidence docs/agents/evidence/<date>-ux-o7-polls/"
+covers = ["CAP-24"]
+after = [{ epic = 2, needs = "delivery/projection foundations" }]
+waits = [
+  "OQ-7/UX-O7: сам контракт пишется этой историей (contract-map Remaining gates: «…before real vote writes»)",
+  "epic-2: delivery foundations — DONE",
+]
+status = "ready" # контракт-авторинг (документ + закрепляющие тесты) с этого дерева
+
+[[story]]
+id = "8.2"
+slug = "poll-series-run"
+title = "A poll series runs end to end (AD-28): author creates 2–8 options single/multiple choice without correctness/difficulty; one confirmed nonempty choice set per participant; distribution hidden until the confirmed vote; percentages over distinct respondents per question so multi-choice totals may exceed 100%; retry never adds another vote; series progress/statistics keep identity; evidence docs/agents/evidence/<date>-polls/"
+covers = ["CAP-24"]
+after = [{ story = "8.1", needs = "UX-O7 contracts" }, { epic = 2, needs = "delivery foundations" }]
+waits = [
+  "epic-2: delivery foundations — DONE",
+  "8.1: UX-O7 contracts",
+  "hitl: device proof of vote/retry/distribution flow",
+]
+hitl = true
+status = "blocked" # hitl + after 8.1
+
+[[story]]
+id = "8.3"
+slug = "private-quiz-authoring-defaults"
+title = "Private quiz authoring (AD-29): flat HARD-only set in category «Приватные квизы»; author controls attempt limit ≥1, show-result and optional absolute link expiry; defaults 1 attempt / hidden result / no expiry; loading an existing quiz keeps its settings; evidence docs/agents/evidence/<date>-private-quiz-authoring/"
+covers = ["CAP-25"]
+after = [{ epic = 2, needs = "delivery foundations" }]
+waits = [
+  "epic-2: delivery foundations — DONE",
+  "hitl: device proof of the authoring screen",
+]
+hitl = true
+status = "blocked" # hitl; UX-O4 продуктовые решения закрыты; автопродление/перевыпуск ссылки не назначены
+
+[[story]]
+id = "8.4"
+slug = "private-quiz-run-limits-visibility"
+title = "A private quiz runs under AD-29: new start atomically checks enabled/unexpired link and startedCount < current limit then increments; limit changes preserve startedCount and never interrupt a started attempt's original deadlines; closing/expiring the link closes only new starts; recovery timeout scores the whole quiz with remaining questions unanswered (no paid-correct effect); current show-result governs every own result incl. past attempts while author statistics remain; evidence docs/agents/evidence/<date>-private-quiz-run/"
+covers = ["CAP-25"]
+after = [{ story = "8.3", needs = "quiz authoring" }, { epic = 2, needs = "delivery foundations and ONLINE-O2" }]
+waits = [
+  "epic-2/ONLINE-O2 — DONE (2.5/2.6/2.9)",
+  "epic-2: delivery/projection foundations — DONE",
+  "8.3: quiz authoring (hitl)",
+  "hitl: device proof incl. two-device and timeout cases",
+]
+hitl = true
+status = "blocked" # hitl + after 8.3 (hitl)
+
+[[story]]
+id = "8.5"
+slug = "private-quiz-no-charges-no-deferral"
+title = "Negative proof (Done-when 3): private quizzes use no STANDARD/PLASMA charges for entry/hints/skips, create no deferred continuation (recovery only within original deadlines/AD-31), no replacement fee is invented, timed skip is not a paid correct answer; tests assert absence of charge/deferral paths; evidence docs/agents/evidence/<date>-private-quiz-negative/"
+covers = ["CAP-25"]
+after = [{ story = "8.4", needs = "running quiz flow" }]
+waits = [
+  "epic-2: ledger foundations to prove no charges were used — DONE",
+  "8.4: running quiz flow (hitl)",
+]
+status = "blocked" # server/node + типовые тесты, устройство не обязательно, но after 8.4 (hitl); негативные тесты пишутся против реального flow из 8.4
+
+[[story]]
+id = "8.6"
+slug = "history-and-earnings-projections"
+title = "Operation history and author lesson earnings (AD-30) read one authorized economy projection: consistent identity/date/reason/signed amount/resource/status; filters, expansion and continued bounded pagination preserve context; pending is never credited, unlike resources are never summed; account switch reveals nothing foreign; reading creates no financial effect (Done-when 4/5); author payouts come from the TZ06B views contract; evidence docs/agents/evidence/<date>-history/"
+covers = ["CAP-26"]
+after = [{ epic = 2, needs = "projection fencing and ledger identity foundations" }, { epic = 4, needs = "TZ06B author-payout views (contract between epics)" }]
+waits = [
+  "epic-2: durable delivery, projection fencing and ledger identity — DONE",
+  "OQ-7/UX-O10/O12: own-ledger projection contract — bounded order/cursors and allowed fields fixed before the adapter (contract-map Remaining gates); контракт ещё не написан",
+  "epic-4: TZ06B author-payout views — 4.2 ready (не выполнен на момент инцепции)",
+  "hitl: device proof incl. account A→B→A",
+]
+hitl = true
+status = "blocked" # hitl + контракт UX-O10/O12 + TZ06B (4.2); device-половина не стартует без обоих контрактов

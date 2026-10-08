@@ -1,0 +1,111 @@
+# tickets.toml — epic-commerce: stories in build order.
+# Inception 2026-10-08: the approved night draft (night/e3-e8-drafts, 18905ade) converted to the
+# canonical breakdown per owner decision batch 2 item 1 (owner-decisions-2026-10-08.md). Story set
+# is the draft's, unchanged (8 stories); statuses set to actual at inception.
+# Scope rule for this inception (fixed assumption, epic-2 precedent): a story is dispatchable
+# "ready" when the orchestrator can prove it from this tree — code + JVM/Node tests, including Node
+# contract tests against the restored demo backend (container schoolquiz-demo-firebase-20261004).
+# ОСОБОЕ УКАЗАНИЕ ПРОГОНА (из черновика, остаётся в силе): inventory Play SKU и денежных цен —
+# ВНЕШНЯЯ зависимость (владелец, Play Console). SKU НЕ сочиняются; 7.1 — история-внешний-вход;
+# реальные sandbox-кейсы 7.6 без него NOT_RUN. Fake Billing проверяется отдельно от Play (план §4).
+
+[[story]]
+id = "7.1"
+slug = "play-sku-price-inventory"
+title = "EXTERNAL INPUT (owner, hitl): Play Console inventory recorded — concrete product SKUs, money prices, license-tester/test account, billing setup for the candidate; this draft invents NO SKUs and NO money prices; missing settings are recorded as external dependencies per plan §2 Шаг 0, not silently substituted; evidence docs/agents/evidence/<date>-play-inventory/"
+covers = ["CAP-15"]
+after = [{ epic = 1, needs = "device inventory (story 1.5) and identified candidate" }]
+waits = [
+  "external/hitl: owner Play Console — SKUs, money prices, test account (OQ-5 environment/device/Play inventory gate)",
+  "epic-1: device inventory story 1.5 (GMS/Play columns) — blocked (hitl, adb пуст 2026-10-08 вечером)",
+]
+hitl = true
+status = "blocked" # внешний вход владельца; блокер для 7.6; остальные server/gold-истории не ждут
+
+[[story]]
+id = "7.2"
+slug = "store-gold-prices-and-unavailable-products"
+title = "Store surface on server-owned gold prices: full prices shown, premium durations normalized per 30 days for comparison only (AD-19); unconfigured products visibly unavailable, never silently purchasable; changed payable terms demand fresh consent (CAP-16); evidence docs/agents/evidence/<date>-store-surface/"
+covers = ["CAP-13"]
+after = [{ epic = 2, needs = "CAP-16 config consistency and wallet foundations" }]
+waits = [
+  "epic-2: config consistency (CAP-16) and wallet/receipt foundations — DONE (2.4/2.8/2.12)",
+  "hitl: device proof of the store screen states (unavailable, insufficient funds)",
+]
+hitl = true
+status = "blocked" # gold-цены — сервер (план §3 TZ09A); денежные цены Play в этой истории НЕ используются; device proof — hitl
+
+[[story]]
+id = "7.3"
+slug = "premium-grants-and-regeneration"
+title = "Premium from server-owned grants/used/remaining (AD-19): expiry and both doubled regeneration effects incl. holds/overlaps and independent remaining time; hasPremium/local animation is not the source of truth; evidence docs/agents/evidence/<date>-premium-effects/"
+covers = ["CAP-13"]
+after = [{ epic = 2, needs = "wallet/receipt foundations" }]
+waits = [
+  "epic-2: economy foundations — DONE",
+  "hitl: device proof of regeneration UI",
+]
+hitl = true
+status = "blocked" # hitl
+
+[[story]]
+id = "7.4"
+slug = "boxes-streak-and-premium-gift"
+title = "Boxes per AD-19: ten-day ordinary streak grant automatic on entry, independent of Premium; Premium daily gift is an explicit «Получить подарок» claim without an ad (entry never triggers it); both sources keep own limits/receipts over common stock; other awards do not consume those limits; retry of one source cannot consume or duplicate the other; evidence docs/agents/evidence/<date>-boxes/"
+covers = ["CAP-14"]
+after = [{ epic = 2, needs = "ledger/receipt foundations" }]
+waits = [
+  "epic-2: ledger foundations — DONE",
+  "hitl: device proof of both gift sources (separate claims)",
+]
+hitl = true
+status = "blocked" # hitl
+
+[[story]]
+id = "7.5"
+slug = "box-opening-loss-restart"
+title = "Online box opening survives loss/restart by returning the same stored reward: one result/receipt fixed before the reward is shown (AD-19), replay returns it, no re-roll; evidence docs/agents/evidence/<date>-box-opening/"
+covers = ["CAP-14"]
+after = [{ story = "7.4", needs = "box sources/limits" }]
+waits = [
+  "epic-2: ledger foundations — DONE",
+  "hitl: device restart/loss run",
+]
+hitl = true
+status = "blocked" # hitl + after 7.4 (hitl)
+
+[[story]]
+id = "7.6"
+slug = "play-sandbox-purchase-restore-refund"
+title = "Real Play sandbox matrix (CAP-15, plan matrix 6 / §4 покупки): purchase/restore/refund in both orders and concurrently, loss of response then delivery, partially used premium refund touches only unused remainder of the original grant, foreign-account and duplicate grants rejected, restore available with new sales disabled, ambiguous verification stays pending and grants nothing; Fake Billing tested separately from Play; SKUs/prices per story 7.1 inventory — no invented products; evidence docs/agents/evidence/<date>-play-sandbox/"
+covers = ["CAP-15"]
+after = [{ story = "7.1", needs = "recorded Play SKU/price inventory" }, { story = "7.7", needs = "server provenance/fence enforcement" }, { epic = 1, needs = "identified candidate and devices" }]
+waits = [
+  "external/hitl: real Play sandbox on the owner's devices/test account (story 7.1 inventory)",
+  "epic-1: devices (1.3/1.5 hitl) and candidate — candidate DONE (1.2)",
+  "epic-2: receipt foundations — DONE",
+]
+hitl = true
+status = "blocked" # внешний вход 7.1 + устройства; недоступные Play/device проверки остаются явно незавершёнными (SPEC Success signal), не выдумываются
+
+[[story]]
+id = "7.7"
+slug = "purchase-provenance-server-enforcement"
+title = "Server-side purchase integrity (AD-18): authoritative Play verification with account/app/product/order/quantity binding before any grant; pending/unverified grants nothing; permanent token fence, cumulative immutable refund receipts, monotonic refundableQuantity; RTDN triggers verification, not a money command; sales-off keeps query/recovery/refunds; node/rules tests green; evidence docs/agents/evidence/<date>-purchase-provenance/"
+covers = ["CAP-15"]
+after = [{ epic = 2, needs = "wallet/receipt foundations" }]
+waits = [
+  "epic-2: economy/receipt foundations — DONE (2.4/2.8/2.12)",
+]
+status = "ready" # server/node-часть целиком с этого дерева (node/rules tests против demo-backend); sandbox-подтверждение — 7.6 (внешнее), на 7.7 не влияет
+
+[[story]]
+id = "7.8"
+slug = "tz10b-dependency-audit"
+title = "TZ10B dependency audit as its own separate commit: current audit, minimal compatible updates, clean install, current Node/HTTP/Firebase/rules checks green; dependency-only changes separated from financial changes and verified on the candidate's actual base (AD-22); evidence docs/agents/evidence/<date>-tz10b-audit/"
+covers = []
+after = [{ epic = 1, needs = "candidate base to audit against" }]
+waits = [
+  "epic-1: candidate base — DONE (1.2)",
+]
+status = "ready" # covers пуст намеренно: cross-cutting NFR-7 (совместимость), не CAP-13..15; отдельный commit — само требование истории
