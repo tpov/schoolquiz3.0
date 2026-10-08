@@ -1,0 +1,171 @@
+# tickets-draft.toml — DRAFT, epic-arena-completion: stories in build order.
+# Ночной черновик (2026-10-05, ветка night/e3-e8-drafts) для инсепшена эпика.
+# НЕ является финальным tickets.toml эпика: финальный breakdown создаётся на инсепшене.
+# Источники: epic-arena-completion.md Done-when 1–5; USER-CONTINUATION-PLAN §2
+# (Шаг 3 «Первое полное прохождение, пункт 2б», Шаг 4 «Остальная матрица»), §4 (деньги/сезон).
+# Каждая история: refined = false, явный `waits` (что ждёт: epic-1 / epic-2 / ONLINE-O2 / hitl / внешнее / OQ).
+# hitl = физические телефоны владельца (план §4: Android-эмулятор не использовать, запуск с VPS).
+# Оффлайн/подготовленные пути ONLINE-O2 НЕ ждут (epic notes); онлайн HARD-переходы — ждут.
+
+[[story]]
+id = "3.1"
+slug = "arena-first-full-pass"
+title = "First full pass per plan §2 step 3 (2б): SELECTED/HARD prepare → start → saved answer → restart → same attempt → settle → rating 2 → RATE_LESSON, with ticket/attempt/progress surviving restart and SETTLE+RATE_LESSON receipts consistent with the frozen ticket (two-receipt oracle PASS); evidence docs/agents/evidence/<date>-arena-first-full-pass/"
+covers = ["CAP-7", "CAP-8", "CAP-9"]
+after = [{ epic = 1, needs = "restored demo backend, demo accounts/fixtures, identified candidate and GREEN quiescence preflight fix (stories 1.1–1.4)" }]
+waits = [
+  "epic-1: rig, restored backend/fixtures, identified candidate, quiescence preflight fix (the known RED blocks every Arena matrix run per epic-1 Done-when 4)",
+  "hitl: physical device run from VPS (plan §4: real phones only, no emulator)",
+]
+refined = false
+hitl = true
+status = "draft" # подготовленный E2B runner есть (.maestro/mvp/arena-e2b/), прогон не выполнялся
+
+[[story]]
+id = "3.2"
+slug = "arena-online-o2-adapter"
+title = "Arena online HARD next-question transitions adopt the shared ONLINE-O2 delivery/ready-ACK contract (AD-31): original deadline continues through disconnect, captured window config survives retry, no second answer clock, no unbounded gap after lost ACK; contract conformance proof per transition; evidence docs/agents/evidence/<date>-arena-online-o2/"
+covers = ["CAP-8"]
+after = [{ epic = 2, needs = "ONLINE-O2 contract written, adopted and proven on one online next-question transition" }, { story = "3.1", needs = "first full pass runnable" }]
+waits = [
+  "epic-2/ONLINE-O2: shared delivery/ready-ACK receipt contract (landing entry in epic-2, Done-when 5)",
+  "epic-1: candidate and backend",
+]
+refined = false
+status = "draft" # оффлайн/подготовленные пути эпика 3 этого контракта не ждут
+
+[[story]]
+id = "3.3"
+slug = "arena-fault-fixture-rig"
+title = "Arena matrix fault/fixture rig: controlled demo proxy drops submitMutation only after upstream ACK (submit-mutation-drop-proxy.js sidecar wired to one exact mutation/attempt ID), real-offline device network control with retained management, demo fixtures manifest for missing roles/banks (fixtures only set conditions, app performs the rated runs); evidence docs/agents/evidence/<date>-arena-fault-rig/"
+covers = ["CAP-7", "CAP-8"]
+after = [{ epic = 1, needs = "restored demo backend and demo accounts/fixtures" }]
+waits = [
+  "epic-1: restored backend and fixtures manifest home (plan §2 Шаг 4: недостающие роли/банки — отдельные demo-фикстуры с манифестом)",
+  "hitl: real-offline requires the physical device (network cut with control retained)",
+]
+refined = false
+hitl = true
+status = "draft" # прокси-скрипт существует, fault-run не выполнялся
+
+[[story]]
+id = "3.4"
+slug = "arena-lost-answer-after-commit"
+title = "Lost answer after server commit: proxy-cut submitMutation repeats the SAME operation ID (AD-6/AD-11) — no new debit/reserve, retained SETTLE survives sent/terminal/quarantine, exactly one final settlement; evidence docs/agents/evidence/<date>-arena-lost-answer/"
+covers = ["CAP-8"]
+after = [{ story = "3.3", needs = "fault proxy and fixtures rig" }, { story = "3.1", needs = "first full pass baseline" }]
+waits = [
+  "epic-1: restored backend",
+  "hitl: physical device fault run",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "3.5"
+slug = "arena-real-offline-easy-hard"
+title = "Real offline from prepared stock: EASY and HARD attempts run offline, restart returns the same attempt/outcome, delivery completes after network return; distinct no-network vs backend-unavailable diagnostics; evidence docs/agents/evidence/<date>-arena-real-offline/"
+covers = ["CAP-7", "CAP-8"]
+after = [{ story = "3.3", needs = "real-offline device control and prepared stock" }]
+waits = [
+  "epic-1: restored backend",
+  "hitl: physical device with genuinely cut network",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "3.6"
+slug = "arena-queued-rating"
+title = "Rating Queued: rating 2 from a prior confirmed result survives restart, explicit sync delivers RATE_LESSON for the same owner/lesson/confirmed attempt, rating receipt differs from settlement receipt, no replay of the changed rating; evidence docs/agents/evidence/<date>-arena-queued-rating/"
+covers = ["CAP-9"]
+after = [{ story = "3.1", needs = "confirmed result and rating queue" }]
+waits = [
+  "epic-1: restored backend",
+  "hitl: physical device restart/sync run",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "3.7"
+slug = "arena-quotas-concurrency"
+title = "Quotas and concurrency: 20 random issuances per day, 5 concurrently prepared selected tickets, frozen ticket terms per difficulty; issued tickets unchanged by later config; evidence docs/agents/evidence/<date>-arena-quotas/"
+covers = ["CAP-7"]
+after = [{ story = "3.1", needs = "prepare path proven" }]
+waits = [
+  "epic-1: restored backend and demo fixtures (roles/banks)",
+  "hitl: physical device run",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "3.8"
+slug = "arena-price-immutability-and-races"
+title = "Price frozen after prepare (quote not re-evaluated), cancel/settle race yields exactly one final effect with unresolved intent retained (retained SETTLE stays reconcilable), late completion of a cancelled ticket does not pay twice, unknown HARD score is never zero; evidence docs/agents/evidence/<date>-arena-races/"
+covers = ["CAP-8"]
+after = [{ story = "3.1", needs = "prepare/settle baseline" }]
+waits = [
+  "epic-1: restored backend",
+  "hitl: physical device race runs",
+]
+refined = false
+hitl = true
+status = "draft" # закрывает Done-when 5 эпика
+
+[[story]]
+id = "3.9"
+slug = "arena-account-switch-and-late-answers"
+title = "Account A→B→A, late answers and one ticket on two devices: no adoption of another session's work, late answers create no new financial effect, one shared ticket yields at most one settlement while distinct tickets keep own legal outcomes; evidence docs/agents/evidence/<date>-arena-accounts/"
+covers = ["CAP-8", "CAP-9"]
+after = [{ story = "3.1", needs = "baseline attempt cycle" }]
+waits = [
+  "epic-1: restored backend, two demo accounts",
+  "hitl: two physical devices for the shared-ticket case",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "3.10"
+slug = "arena-hardware-back-dispatcher"
+title = "Hardware Back through the system dispatcher on Arena routes (run-system-back-catalog.sh: verified Home → unloaded catalog → Back → Arena root → Back → same verified Home, hierarchy checked before each Back, no prepared-ticket surfaces); evidence docs/agents/evidence/<date>-arena-back/"
+covers = ["CAP-7"]
+after = [{ story = "3.1", needs = "identified candidate installed" }]
+waits = [
+  "epic-1: selector map captured from the installed candidate (immutable input)",
+  "hitl: physical device run",
+]
+refined = false
+hitl = true
+status = "draft" # harness-скрипт существует, прогон не выполнялся
+
+[[story]]
+id = "3.11"
+slug = "arena-price-rating-conservation"
+title = "Prices and ratings use the full eligible set (no truncated page) with fractional author shares conserved: prices 1 and 100; 5 payments of 1 credit the author 4 total; operation retry has no second effect (plan §4 деньги; AD-13/AD-9); node/server conservation tests green in the runner registry; evidence docs/agents/evidence/<date>-arena-conservation/"
+covers = ["CAP-9"]
+after = [{ epic = 1, needs = "restored backend and demo fixtures with roles/banks" }]
+waits = [
+  "epic-1: demo fixtures manifest for roles/banks (fixtures prepare conditions, app performs rated runs)",
+]
+refined = false
+status = "draft" # server/node-часть проверяема на VPS без устройства; UI-подтверждение входит в 3.1/3.6
+
+[[story]]
+id = "3.12"
+slug = "arena-season-finalization"
+title = "Quarterly season settles once from the complete eligible input: UTC quarter, adopted minimum/tie/no-winner rules, resumable single award, competitive finalize; §4 season fixtures (19/20 distinct pasts, quarter change, tie, no winner) green; published winner/award immutable; evidence docs/agents/evidence/<date>-arena-season/"
+covers = ["CAP-10"]
+after = [{ story = "3.11", needs = "conserving price/rating calculation" }, { epic = 1, needs = "restored backend, trusted server test clock" }]
+waits = [
+  "epic-1: restored backend and fixtures; server worker capability runs via demo controlled ticks (AD-23)",
+]
+refined = false
+status = "draft" # server/node-часть; существующие arena-season-finalization.js / arena-season-worker.js — база, их статус не проверялся в этом прогоне
