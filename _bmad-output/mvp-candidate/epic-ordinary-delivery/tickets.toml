@@ -128,4 +128,4 @@ after = [
   { story = "2.6", needs = "one online transition" },
 ]
 hitl = true # физический Samsung (RF8W80MBR3Z), USB к Mac владельца — как 1.3/1.5
-status = "blocked" # NOT RUN: устройство не видно серверному ADB (см. 2026-10-04-epic1-rig-run.json); выполняет владелец/оркестратор при доступном устройстве
+status = "blocked" # NOT RUN: устройство не видно серверному ADB (2026-10-04-epic1-rig-run.json); попытка вечера 2026-10-08 по решению владельца №2: adb devices пуст после рестарта сервера, reverse-форвардов нет — остаётся blocked (docs/agents/evidence/2026-10-08-hitl-device-attempt/); выполняет владелец/оркестратор при доступном устройстве

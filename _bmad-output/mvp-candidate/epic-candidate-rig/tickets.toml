@@ -27,7 +27,7 @@ title = "Install the candidate over the populated Samsung installation; content,
 covers = ["CAP-20"]
 after = [{ story = "1.1", needs = "restored demo backend" }, { story = "1.2", needs = "identified candidate APK" }]
 hitl = true # physical Samsung RF8W80MBR3Z, USB to the owner's Mac only
-status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch: device not visible to server ADB (docs/agents/2026-10-04-epic1-rig-run.json)
+status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch (device not visible to server ADB, docs/agents/2026-10-04-epic1-rig-run.json); 2026-10-08 evening attempt per owner decision #2: adb devices empty after server restart, no reverse-forward sockets — still blocked (docs/agents/evidence/2026-10-08-hitl-device-attempt/)
 
 [[story]]
 id = "1.4"
@@ -44,7 +44,7 @@ title = "Device inventory (serial, Android, app, signature, DB schema, role, GMS
 covers = ["CAP-20"]
 after = []
 hitl = true # requires the physical devices
-status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch: physical devices not visible to server ADB (docs/agents/2026-10-04-epic1-rig-run.json)
+status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch (docs/agents/2026-10-04-epic1-rig-run.json); 2026-10-08 evening attempt per owner decision #2: adb devices empty, no reverse-forward sockets — still blocked (docs/agents/evidence/2026-10-08-hitl-device-attempt/)
 
 [[story]]
 id = "1.6"
