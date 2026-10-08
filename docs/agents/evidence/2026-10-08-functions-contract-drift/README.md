@@ -71,3 +71,29 @@ in the module is green, including the 2.12 wiring).
   the crash — the server path was broken, and the client's JVM contract tests mock the wire).
 - The arena hash re-pin means the next callable addition will fail the same guard until
   re-pinned with attribution — that is the guard working as designed.
+
+## Shift close-out — wide gate on this branch (all pre-existing, attributed)
+
+After the three stories landed (2.12 `3fc3e3c7`, 2.9 `bde3f864`, 2.13 `3cd09fe0`), the
+night-shaped wide gate was run for the record:
+
+- `sgw ./gradlew test allTests detekt ktlintCheck assembleMvp` — red, and every red is
+  pre-existing, none of it from today's diff:
+  - Robolectric `RoboCookieManager` NoClassDefFoundError on JDK 27 (`:platform:android-services
+    :testDebugUnitTest`) and Mockito/ByteBuddy cannot inline-mock Room on JDK 27
+    (`ArenaKoinWiringTest`) — the same families the night report's О6 verdict counted on the
+    clean base (proposed story 2.11 «test-env on JDK 27», not chartered today);
+  - `KoinModuleWiringTest.it09e…` — «No value found for type LessonRunnerContentSyncCallbacks»,
+    the documented base-level wiring mismatch;
+  - the two stale arena fixture pins (`platform:firebase`) — the owner follow-up above;
+  - `detekt` itself cannot run on this branch: «Invalid value (27) passed to --jvm-target» —
+    the branch predates the 07.10 toolchain uplift that fixed detekt on the main checkout
+    (same 2.11 territory);
+  - `assembleMvp` dies in `mergeExtDexMvp` with `D8: OutOfMemoryError` under the owner-set
+    1G daemon heap caps (server AGENTS.md: limits are owner decisions and must not be
+    raised without one). The merge is size-of-app work, not a correctness signal.
+
+The green gates of record for today's work remain the per-story module gates (2.12) and the
+functions 92/92 (2.13); nothing in today's diff is covered by any of the red families above.
+
+
