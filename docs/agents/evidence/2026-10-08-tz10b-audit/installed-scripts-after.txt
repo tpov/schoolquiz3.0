@@ -1,0 +1,6 @@
+scripts@1.0.0 /workspace/projects/schoolquiz3.0/.local/worktrees/night-impl/scripts
+├── @firebase/rules-unit-testing@5.0.2
+├── firebase-admin@13.10.0
+├── googleapis@171.4.0
+└── idb@7.1.1
+

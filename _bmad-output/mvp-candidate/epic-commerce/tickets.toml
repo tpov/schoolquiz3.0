@@ -108,4 +108,4 @@ after = [{ epic = 1, needs = "candidate base to audit against" }]
 waits = [
   "epic-1: candidate base — DONE (1.2)",
 ]
-status = "ready" # covers пуст намеренно: cross-cutting NFR-7 (совместимость), не CAP-13..15; отдельный commit — само требование истории
+status = "done" # 2026-10-08: 7f2af2fa — отдельный dependency-only commit (functions/package.json + 3 lockfile); аудит 19→8 (functions, оба critical ушли in-range), 18→13 (scripts), noir 0; чистые npm ci; гейты после обновления: functions 92/92 (no-env) и 92/92 (demo-backend), scripts npm test + lint зелёные; residual — uuid/grpc только мажорами (не форсировано); evidence docs/agents/evidence/2026-10-08-tz10b-audit/; rules-emulator-test NOT RUN (firebase emulators:exec вне текущего runner-реестра VPS)
