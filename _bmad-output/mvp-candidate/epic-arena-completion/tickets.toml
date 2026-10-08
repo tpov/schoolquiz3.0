@@ -1,0 +1,164 @@
+# tickets.toml — epic-arena-completion: stories in build order.
+# Inception 2026-10-08: the approved night draft (night/e3-e8-drafts, 18905ade) converted to the
+# canonical breakdown per owner decision batch 2 item 1 (owner-decisions-2026-10-08.md). Story set
+# is the draft's, unchanged (12 stories); statuses set to actual at inception.
+# Scope rule for this inception (fixed assumption, epic-2 precedent): a story is dispatchable
+# "ready" when the orchestrator can prove it from this tree — code + JVM/Node tests, including
+# Node contract tests against the restored demo backend (container schoolquiz-demo-firebase-20261004).
+# Anything needing a physical device, two devices, or an owner/external input is "blocked" with the
+# reason named; real-phone confirmation rides hitl stories and final acceptance.
+# Epic-3 specifics: oффлайн/подготовленные пути ONLINE-O2 не ждут; онлайн HARD-переходы ждут 3.1.
+# The demo fixtures manifest for roles/banks (plan §2 Шаг 4) does NOT exist yet — it is the server
+# half of 3.3 and the gate of 3.11 (and 3.12 after it).
+
+[[story]]
+id = "3.1"
+slug = "arena-first-full-pass"
+title = "First full pass per plan §2 step 3 (2б): SELECTED/HARD prepare → start → saved answer → restart → same attempt → settle → rating 2 → RATE_LESSON, with ticket/attempt/progress surviving restart and SETTLE+RATE_LESSON receipts consistent with the frozen ticket (two-receipt oracle PASS); evidence docs/agents/evidence/<date>-arena-first-full-pass/"
+covers = ["CAP-7", "CAP-8", "CAP-9"]
+after = [{ epic = 1, needs = "restored demo backend, demo accounts/fixtures, identified candidate and GREEN quiescence preflight fix (stories 1.1–1.4)" }]
+waits = [
+  "epic-1: rig, restored backend/fixtures, identified candidate, quiescence preflight fix — DONE (1.1/1.2/1.4/1.6; 1.3/1.5 hitl остаются вне этого ожидания)",
+  "hitl: physical device run from VPS (plan §4: real phones only, no emulator)",
+]
+hitl = true
+status = "blocked" # hitl: устройство не видно серверному ADB — попытка вечера 2026-10-08, adb devices пуст (docs/agents/evidence/2026-10-08-hitl-device-attempt/); подготовленный E2B runner есть (.maestro/mvp/arena-e2b/), прогон не выполнялся
+
+[[story]]
+id = "3.2"
+slug = "arena-online-o2-adapter"
+title = "Arena online HARD next-question transitions adopt the shared ONLINE-O2 delivery/ready-ACK contract (AD-31): original deadline continues through disconnect, captured window config survives retry, no second answer clock, no unbounded gap after lost ACK; contract conformance proof per transition; evidence docs/agents/evidence/<date>-arena-online-o2/"
+covers = ["CAP-8"]
+after = [{ epic = 2, needs = "ONLINE-O2 contract written, adopted and proven on one online next-question transition" }, { story = "3.1", needs = "first full pass runnable" }]
+waits = [
+  "epic-2/ONLINE-O2 — DONE (2.5/2.6/2.9; contract epic-ordinary-delivery/online-o2-contract.md, принят владельцем 2026-10-08, blob e142341e…)",
+  "3.1: first full pass runnable (hitl)",
+]
+status = "blocked" # единственный незакрытый after — 3.1 (hitl); оффлайн/подготовленные пути эпика 3 этого контракта не ждут
+
+[[story]]
+id = "3.3"
+slug = "arena-fault-fixture-rig"
+title = "Arena matrix fault/fixture rig: controlled demo proxy drops submitMutation only after upstream ACK (submit-mutation-drop-proxy.js sidecar wired to one exact mutation/attempt ID), real-offline device network control with retained management, demo fixtures manifest for missing roles/banks (fixtures only set conditions, app performs the rated runs); evidence docs/agents/evidence/<date>-arena-fault-rig/"
+covers = ["CAP-7", "CAP-8"]
+after = [{ epic = 1, needs = "restored demo backend and demo accounts/fixtures" }]
+waits = [
+  "epic-1: restored backend — DONE (1.1); fixtures manifest home (plan §2 Шаг 4: недостающие роли/банки — отдельные demo-фикстуры с манифестом) — манифест ещё не существует",
+  "hitl: real-offline requires the physical device (network cut with control retained)",
+]
+hitl = true
+status = "blocked" # смешанная история. СЕРВЕРНАЯ ПОЛОВИНА (прокси submit-mutation-drop-proxy.js к demo-backend + demo fixtures manifest ролей/банков) диспетчируема с этого дерева и является предпосылкой 3.11; если выполняется раньше устройства, фиксируется как server-half progress в evidence, история остаётся открытой до device-половины. Device-половина (real-offline) — hitl: устройство не видно (docs/agents/evidence/2026-10-08-hitl-device-attempt/); прокси-скрипт существует, fault-run не выполнялся
+
+[[story]]
+id = "3.4"
+slug = "arena-lost-answer-after-commit"
+title = "Lost answer after server commit: proxy-cut submitMutation repeats the SAME operation ID (AD-6/AD-11) — no new debit/reserve, retained SETTLE survives sent/terminal/quarantine, exactly one final settlement; evidence docs/agents/evidence/<date>-arena-lost-answer/"
+covers = ["CAP-8"]
+after = [{ story = "3.3", needs = "fault proxy and fixtures rig" }, { story = "3.1", needs = "first full pass baseline" }]
+waits = [
+  "epic-1: restored backend — DONE (1.1)",
+  "hitl: physical device fault run",
+]
+hitl = true
+status = "blocked" # hitl (device fault run) + after 3.3/3.1
+
+[[story]]
+id = "3.5"
+slug = "arena-real-offline-easy-hard"
+title = "Real offline from prepared stock: EASY and HARD attempts run offline, restart returns the same attempt/outcome, delivery completes after network return; distinct no-network vs backend-unavailable diagnostics; evidence docs/agents/evidence/<date>-arena-real-offline/"
+covers = ["CAP-7", "CAP-8"]
+after = [{ story = "3.3", needs = "real-offline device control and prepared stock" }]
+waits = [
+  "epic-1: restored backend — DONE (1.1)",
+  "hitl: physical device with genuinely cut network",
+]
+hitl = true
+status = "blocked" # hitl
+
+[[story]]
+id = "3.6"
+slug = "arena-queued-rating"
+title = "Rating Queued: rating 2 from a prior confirmed result survives restart, explicit sync delivers RATE_LESSON for the same owner/lesson/confirmed attempt, rating receipt differs from settlement receipt, no replay of the changed rating; evidence docs/agents/evidence/<date>-arena-queued-rating/"
+covers = ["CAP-9"]
+after = [{ story = "3.1", needs = "confirmed result and rating queue" }]
+waits = [
+  "epic-1: restored backend — DONE (1.1)",
+  "hitl: physical device restart/sync run",
+]
+hitl = true
+status = "blocked" # hitl + after 3.1
+
+[[story]]
+id = "3.7"
+slug = "arena-quotas-concurrency"
+title = "Quotas and concurrency: 20 random issuances per day, 5 concurrently prepared selected tickets, frozen ticket terms per difficulty; issued tickets unchanged by later config; evidence docs/agents/evidence/<date>-arena-quotas/"
+covers = ["CAP-7"]
+after = [{ story = "3.1", needs = "prepare path proven" }]
+waits = [
+  "epic-1: restored backend and demo fixtures (roles/banks) — backend DONE (1.1), fixtures manifest отсутствует (server half 3.3)",
+  "hitl: physical device run",
+]
+hitl = true
+status = "blocked" # hitl + after 3.1
+
+[[story]]
+id = "3.8"
+slug = "arena-price-immutability-and-races"
+title = "Price frozen after prepare (quote not re-evaluated), cancel/settle race yields exactly one final effect with unresolved intent retained (retained SETTLE stays reconcilable), late completion of a cancelled ticket does not pay twice, unknown HARD score is never zero; evidence docs/agents/evidence/<date>-arena-races/"
+covers = ["CAP-8"]
+after = [{ story = "3.1", needs = "prepare/settle baseline" }]
+waits = [
+  "epic-1: restored backend — DONE (1.1)",
+  "hitl: physical device race runs",
+]
+hitl = true
+status = "blocked" # hitl + after 3.1; закрывает Done-when 5 эпика
+
+[[story]]
+id = "3.9"
+slug = "arena-account-switch-and-late-answers"
+title = "Account A→B→A, late answers and one ticket on two devices: no adoption of another session's work, late answers create no new financial effect, one shared ticket yields at most one settlement while distinct tickets keep own legal outcomes; evidence docs/agents/evidence/<date>-arena-accounts/"
+covers = ["CAP-8", "CAP-9"]
+after = [{ story = "3.1", needs = "baseline attempt cycle" }]
+waits = [
+  "epic-1: restored backend, two demo accounts — backend DONE (1.1), второй аккаунт через fixtures",
+  "hitl: two physical devices for the shared-ticket case",
+]
+hitl = true
+status = "blocked" # hitl (два устройства)
+
+[[story]]
+id = "3.10"
+slug = "arena-hardware-back-dispatcher"
+title = "Hardware Back through the system dispatcher on Arena routes (run-system-back-catalog.sh: verified Home → unloaded catalog → Back → Arena root → Back → same verified Home, hierarchy checked before each Back, no prepared-ticket surfaces); evidence docs/agents/evidence/<date>-arena-back/"
+covers = ["CAP-7"]
+after = [{ story = "3.1", needs = "identified candidate installed" }]
+waits = [
+  "epic-1: selector map captured from the installed candidate (immutable input) — 1.5 hitl",
+  "hitl: physical device run",
+]
+hitl = true
+status = "blocked" # hitl; harness-скрипт существует, прогон не выполнялся
+
+[[story]]
+id = "3.11"
+slug = "arena-price-rating-conservation"
+title = "Prices and ratings use the full eligible set (no truncated page) with fractional author shares conserved: prices 1 and 100; 5 payments of 1 credit the author 4 total; operation retry has no second effect (plan §4 деньги; AD-13/AD-9); node/server conservation tests green in the runner registry; evidence docs/agents/evidence/<date>-arena-conservation/"
+covers = ["CAP-9"]
+after = [{ epic = 1, needs = "restored backend and demo fixtures with roles/banks" }]
+waits = [
+  "epic-1: demo fixtures manifest for roles/banks — НЕ СУЩЕСТВУЕТ; создаётся серверной половиной 3.3 (plan §2 Шаг 4)",
+]
+status = "blocked" # устройства не требует (server/node-часть проверяема на VPS; UI-подтверждение входит в 3.1/3.6), но манифест фикстур ролей/банков отсутствует — путь: server half 3.3 → 3.11
+
+[[story]]
+id = "3.12"
+slug = "arena-season-finalization"
+title = "Quarterly season settles once from the complete eligible input: UTC quarter, adopted minimum/tie/no-winner rules, resumable single award, competitive finalize; §4 season fixtures (19/20 distinct pasts, quarter change, tie, no winner) green; published winner/award immutable; evidence docs/agents/evidence/<date>-arena-season/"
+covers = ["CAP-10"]
+after = [{ story = "3.11", needs = "conserving price/rating calculation" }, { epic = 1, needs = "restored backend, trusted server test clock" }]
+waits = [
+  "epic-1: restored backend — DONE (1.1); fixtures; server worker capability runs via demo controlled ticks (AD-23)",
+  "3.11: conserving price/rating calculation",
+]
+status = "blocked" # server/node-часть, но after 3.11 (та же цепочка фикстур); существующие arena-season-finalization.js / arena-season-worker.js — база, их статус не проверялся в этом прогоне
