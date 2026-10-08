@@ -54,6 +54,22 @@ object OutboxOperations {
      */
     val permanentReceiptOperations: Set<String> = setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX, READY_ACK)
 
+    /**
+     * Операции, чья мутация ведётся по согласию игрока с платными условиями (CAP-16, AD-5).
+     *
+     * Клиентский двойник реестра `MUTATION_TERMS_OPERATIONS` в `functions/index.js`: транспорт
+     * прикладывает к конверту `capturedTerms` — захваченный снимок платных условий, — а сервер
+     * сверяет его с текущей таблицей и отвергает операцию с пометкой `terms-consent-required`,
+     * если согласие устарело. Совпадение двух реестров сторожит
+     * `OutboxOperationsRegistryTest`: расхождение — это либо отправка согласия, которое сервер
+     * не читает, либо платная операция без согласия, которую сервер отвергнет окончательно.
+     *
+     * Критерий совпадает с серверным и живёт там же, в реестре: цена попытки берётся из
+     * согласованной таблицы, потолок заряда применяется при расчёте. `lesson.UNLOCK` не входит:
+     * он платится из выделенного уроку времени, а не из таблицы.
+     */
+    val termsConsentOperations: Set<String> = setOf(SUBMIT_ATTEMPT)
+
     /** Оценка квеста, поставленная после урока. */
     const val SUBMIT_RATING: String = "lesson_runner.SUBMIT_RATING"
 

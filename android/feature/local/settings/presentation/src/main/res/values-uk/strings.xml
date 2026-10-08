@@ -55,6 +55,7 @@
     <string name="settings_sync_error_precondition">Чекає, поки доїде попередня дія</string>
     <string name="settings_sync_error_refused">Сервер відмовив у дії</string>
     <string name="settings_sync_error_version_conflict">На сервері новіша версія</string>
+    <string name="settings_sync_error_terms_consent">Чекає згоди з новими умовами</string>
     <string name="settings_sync_error_unknown">Щось пішло не так, спробуємо ще раз</string>
     <string name="settings_sync_note_unreadable">%1$d змін не вдалося прочитати — цей вміст лишився попереднім</string>
     <string name="settings_resync">Перечитати все заново</string>

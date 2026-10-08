@@ -212,6 +212,25 @@ interface OutboxDao {
     )
     fun observeCounts(ownerUid: String): Flow<OutboxCountsRow>
 
+    /**
+     * Возвращает в отправку записи, ждущие согласия с платными условиями: конфликт по согласию —
+     * ожидание решения игрока, и согласие этот конфликт решает (CAP-16).
+     *
+     * Фильтр по операциям реестра согласия обязателен: конфликт версий решается новой мутацией
+     * поверх серверной версии (AD-24), и общий «вернуть все конфликтные» отправил бы её заново
+     * по старой. Ключ, тело и счётчик попыток не трогаются — мутация та же, изменилось только
+     * согласие рядом с ней; причина последней неудачи стирается, поскольку следующим же отказом
+     * или успехом будет переписана.
+     */
+    @Query(
+        """
+        UPDATE outbox
+        SET state = 'WAITING', next_retry_at_ms = 0, last_error = NULL
+        WHERE state = 'CONFLICT' AND operation IN (:operations)
+        """,
+    )
+    suspend fun requeueConflictedTerms(operations: Set<String> = OutboxOperations.termsConsentOperations): Int
+
     /** Записи прежнего владельца после смены аккаунта уезжать не должны (AD-8). */
     @Query("DELETE FROM outbox WHERE owner_uid = :ownerUid")
     suspend fun deleteAllOf(ownerUid: String)

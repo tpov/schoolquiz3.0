@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
+import com.tpov.schoolquiz.shared.core.outbox.OutboxConsentRequeue
 import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
@@ -23,7 +24,19 @@ import kotlinx.coroutines.flow.map
 class RoomOutboxStore(
     private val dao: OutboxDao,
     private val limits: OutboxLimits = OutboxLimits(),
-) : OutboxStore, OutboxRemainderSource {
+) : OutboxStore,
+    OutboxRemainderSource,
+    OutboxConsentRequeue {
+    /**
+     * Согласие, на которое игрок согласился, возвращает ждущие записи в отправку (CAP-16).
+     *
+     * Владельца запрос не сужает — согласие не auth-scoped, и согласившийся аккаунт снимает
+     * ожидание записей всех владельцев устройства; каждая из них по-прежнему уедет только под
+     * своим `owner_uid` (AD-8). Фильтр по операциям согласия живёт в самом запросе: конфликт
+     * версий этот путь не трогает — его решает новая мутация (AD-24), а не повтор старой.
+     */
+    override suspend fun requeueConflictedTerms(): Int = dao.requeueConflictedTerms()
+
     /**
      * Кладёт запись — отвергая ту, чья ссылка живёт не в том пространстве имён, что её операция
      * (NFR4).

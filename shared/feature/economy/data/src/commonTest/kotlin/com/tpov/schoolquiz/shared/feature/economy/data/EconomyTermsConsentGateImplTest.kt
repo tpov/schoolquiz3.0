@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.economy.data
 
+import com.tpov.schoolquiz.shared.core.outbox.OutboxConsentRequeue
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyConstantsResponse
 import com.tpov.schoolquiz.shared.feature.economy.domain.logic.PriceChange
@@ -8,6 +9,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ActivityKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PayableTerms
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyConstantsRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyTermsConsentGate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -33,6 +35,17 @@ class EconomyTermsConsentGateImplTest {
         }
     }
 
+    /** Очередь на памяти: принятие согласия обязано снимать её ожидание (история 2.12). */
+    private class RecordingRequeue : OutboxConsentRequeue {
+        var calls = 0
+            private set
+
+        override suspend fun requeueConflictedTerms(): Int {
+            calls++
+            return 0
+        }
+    }
+
     private class Remote(
         private val answer: (Long) -> EconomyConstantsResponse,
     ) : EconomyConstantsRemoteDataSource {
@@ -49,26 +62,34 @@ class EconomyTermsConsentGateImplTest {
     private fun constantsRepo(remote: EconomyConstantsRemoteDataSource): EconomyConstantsRepository =
         EconomyConstantsRepositoryImpl(remote = remote, store = MemoryConstantsStore())
 
+    private fun gate(
+        remote: EconomyConstantsRemoteDataSource,
+        store: ConsentStore,
+        requeue: OutboxConsentRequeue,
+    ): EconomyTermsConsentGate = EconomyTermsConsentGateImpl(constantsRepo(remote), store, requeue)
+
     @Test
     fun `given the player never consented then the verdict demands the first consent`() {
-        val remote = Remote { EconomyConstantsResponse.Unchanged }
-        val gate = EconomyTermsConsentGateImpl(constantsRepo(remote), ConsentStore())
-
-        val required = assertIs<TermsConsentVerdict.Required>(gate.verdict())
+        val required =
+            assertIs<TermsConsentVerdict.Required>(
+                gate(Remote { EconomyConstantsResponse.Unchanged }, ConsentStore(), RecordingRequeue()).verdict(),
+            )
         assertNull(required.change, "первого согласия не было — называть изменение нечем")
         assertEquals(PayableTerms.BOOTSTRAP, required.to)
     }
 
     @Test
-    fun `given the player accepts then the current terms are captured and the verdict turns sufficient`() {
+    fun `given the player accepts then the current terms are captured and the verdict turns sufficient`() = runTest {
         val store = ConsentStore()
-        val gate = EconomyTermsConsentGateImpl(constantsRepo(Remote { EconomyConstantsResponse.Unchanged }), store)
+        val requeue = RecordingRequeue()
+        val consentGate = gate(Remote { EconomyConstantsResponse.Unchanged }, store, requeue)
 
-        gate.acceptCurrentTerms()
+        consentGate.acceptCurrentTerms()
 
         assertEquals(1, store.writes)
         assertEquals(PayableTerms.BOOTSTRAP, store.read(), "согласие захватило снимок платных условий")
-        assertEquals(TermsConsentVerdict.Sufficient, gate.verdict())
+        assertEquals(TermsConsentVerdict.Sufficient, consentGate.verdict())
+        assertEquals(1, requeue.calls, "принятие согласия снимает ожидание очереди")
     }
 
     @Test
@@ -80,13 +101,13 @@ class EconomyTermsConsentGateImplTest {
                     remote = Remote { EconomyConstantsResponse.Table(dearer) },
                     store = MemoryConstantsStore(),
                 )
-            val gate = EconomyTermsConsentGateImpl(constants = repo, store = store)
-            gate.acceptCurrentTerms()
-            assertEquals(TermsConsentVerdict.Sufficient, gate.verdict())
+            val consentGate = EconomyTermsConsentGateImpl(constants = repo, store = store, requeue = RecordingRequeue())
+            consentGate.acceptCurrentTerms()
+            assertEquals(TermsConsentVerdict.Sufficient, consentGate.verdict())
 
             repo.refresh()
 
-            val required = assertIs<TermsConsentVerdict.Required>(gate.verdict())
+            val required = assertIs<TermsConsentVerdict.Required>(consentGate.verdict())
             val change = requireNotNull(required.change)
             assertEquals(
                 mapOf(ActivityKind.TOURNAMENT to PriceChange(from = 500, to = 900)),
@@ -106,12 +127,12 @@ class EconomyTermsConsentGateImplTest {
                 remote = Remote { throw IllegalStateException("сети нет") },
                 store = MemoryConstantsStore(),
             )
-        val gate = EconomyTermsConsentGateImpl(constants = repo, store = store)
-        gate.acceptCurrentTerms()
+        val consentGate = EconomyTermsConsentGateImpl(constants = repo, store = store, requeue = RecordingRequeue())
+        consentGate.acceptCurrentTerms()
 
         assertTrue(repo.refresh().isFailure)
 
-        assertEquals(TermsConsentVerdict.Sufficient, gate.verdict())
+        assertEquals(TermsConsentVerdict.Sufficient, consentGate.verdict())
     }
 
     @Test
@@ -125,24 +146,24 @@ class EconomyTermsConsentGateImplTest {
                     remote = Remote { throw IllegalStateException("сети нет") },
                     store = MemoryConstantsStore(),
                 )
-            val gate = EconomyTermsConsentGateImpl(constants = repo, store = store)
-            gate.acceptCurrentTerms()
-            val capturedBefore = requireNotNull(gate.capturedTerms())
+            val consentGate = EconomyTermsConsentGateImpl(constants = repo, store = store, requeue = RecordingRequeue())
+            consentGate.acceptCurrentTerms()
+            val capturedBefore = requireNotNull(consentGate.capturedTerms())
 
             repo.refresh()
-            gate.acceptCurrentTerms()
+            consentGate.acceptCurrentTerms()
 
-            assertEquals(capturedBefore, gate.capturedTerms())
+            assertEquals(capturedBefore, consentGate.capturedTerms())
         }
 
     @Test
     fun `given a discarded consent record then the verdict demands consent again`() {
         // Испорченная запись отброшена хранилищем целиком: безопасное направление — спросить заново,
         // а не вести платную операцию по непонятно каким условиям.
-        val remote = Remote { EconomyConstantsResponse.Unchanged }
-        val gate = EconomyTermsConsentGateImpl(constantsRepo(remote), ConsentStore())
+        val consentGate =
+            gate(Remote { EconomyConstantsResponse.Unchanged }, ConsentStore(), RecordingRequeue())
 
-        assertIs<TermsConsentVerdict.Required>(gate.verdict())
+        assertIs<TermsConsentVerdict.Required>(consentGate.verdict())
     }
 }
 

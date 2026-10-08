@@ -16,6 +16,8 @@ kotlin {
             implementation(project(":shared:feature:economy:domain"))
             implementation(project(":shared:feature:internet:profile:domain"))
             implementation(project(":shared:core:persistence"))
+            // Принятие согласия возвращает ждущие записи очереди в отправку (CAP-16).
+            implementation(project(":shared:core:outbox"))
             // Досеттлер просыпается на возвращении связи — знание о ней контракт core.
             implementation(project(":shared:core:network"))
             implementation(project(":shared:core:sync"))

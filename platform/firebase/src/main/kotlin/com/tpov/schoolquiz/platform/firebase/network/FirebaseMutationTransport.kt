@@ -26,6 +26,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class FirebaseMutationTransport(
     private val functions: FirebaseFunctions,
     private val networkMonitor: NetworkMonitor,
+    private val capturedTerms: CapturedTermsJson,
 ) : MutationTransport {
     override suspend fun send(record: OutboxRecord): Result<MutationResponse> {
         if (!networkMonitor.isOnline()) return Result.failure(SyncFailure(SyncError.NoNetwork))
@@ -34,7 +35,7 @@ class FirebaseMutationTransport(
                 functions
                     .getHttpsCallable(SUBMIT_MUTATION)
                     .withAppTimeout()
-                    .call(record.toPayload())
+                    .call(mutationEnvelope(record, capturedTerms.of(record.operation)))
                     .await()
             Result.success(MutationResponse(mutationResponseJson(response.data)))
         } catch (e: CancellationException) {
@@ -74,14 +75,6 @@ class FirebaseMutationTransport(
      * `payload` едет строкой, как и лежит в очереди: ядро в него не смотрит, а разбирает его
      * обработчик на сервере — одна таблица на все типы действий (AD-5) тем и держится.
      */
-    private fun OutboxRecord.toPayload(): Map<String, Any?> =
-        buildMap {
-            put(MUTATION_ID, mutationId)
-            put(OPERATION, operation)
-            put(PAYLOAD, payload)
-            expectedVersion?.let { put(EXPECTED_VERSION, it) }
-        }
-
     private companion object {
         const val SUBMIT_MUTATION = "submitMutation"
         const val MUTATION_ID = "mutationId"
@@ -89,6 +82,45 @@ class FirebaseMutationTransport(
         const val PAYLOAD = "payload"
         const val EXPECTED_VERSION = "expectedVersion"
     }
+}
+
+/**
+ * Конверт мутации — чистая сборка без SDK: [OutboxRecord] плюс согласие с платными условиями,
+ * если для этой операции оно есть.
+ *
+ * `capturedTerms` едет строкой — сервер читает обе формы (объект и строку) одной трактовкой с
+ * `parseMutationPayload`, а согласие у клиента и так хранится строкой настроек. Отсутствие поля —
+ * не пропуск, а честное «согласия нет»: сервер ответит `terms-consent-required`, и запись
+ * переедет в ветвь ожидания согласия, вместо того чтобы притвориться согласованной.
+ */
+internal fun mutationEnvelope(
+    record: OutboxRecord,
+    capturedTermsJson: String?,
+): Map<String, Any?> =
+    buildMap {
+        put(KEY_MUTATION_ID, record.mutationId)
+        put(KEY_OPERATION, record.operation)
+        put(KEY_PAYLOAD, record.payload)
+        record.expectedVersion?.let { put(KEY_EXPECTED_VERSION, it) }
+        capturedTermsJson?.let { put(KEY_CAPTURED_TERMS, it) }
+    }
+
+private const val KEY_MUTATION_ID = "mutationId"
+private const val KEY_OPERATION = "operation"
+private const val KEY_PAYLOAD = "payload"
+private const val KEY_EXPECTED_VERSION = "expectedVersion"
+private const val KEY_CAPTURED_TERMS = "capturedTerms"
+
+/**
+ * Захваченное согласие с платными условиями одной операции — строкой для конверта.
+ *
+ * Реализация знает реестр операций с релевантными условиями (`OutboxOperations
+ * .termsConsentOperations`) и хранилище согласия; транспорт — нет: он не разбирает ни смысл
+ * операций, ни смысл строк, которые возит (AD-7).
+ */
+fun interface CapturedTermsJson {
+    /** JSON согласия — или `null`, когда для операции согласия нет и не должно быть. */
+    fun of(operation: String): String?
 }
 
 /** A permission/deployment/auth problem must not silently roll back a held financial attempt.

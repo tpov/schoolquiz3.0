@@ -91,4 +91,41 @@ class OutboxOperationsRegistryTest {
 
         assertEquals(emptyList(), computed, "ключ реестра, посчитанный из переменной: $computed")
     }
+
+    /** Реестр операций, чья мутация сверяется с согласием игрока, — текстом из приёмника. */
+    private val serverTermsOperations: Set<String> by lazy {
+        val body =
+            Regex("""const MUTATION_TERMS_OPERATIONS = new Set\(\[(.*?)\]\);""", RegexOption.DOT_MATCHES_ALL)
+                .find(source)
+                ?.groupValues
+                ?.get(1)
+        assertTrue(body != null, "не нашёл реестр MUTATION_TERMS_OPERATIONS в functions/index.js")
+        Regex(""""([A-Za-z0-9_.]+)"""")
+            .findAll(body!!)
+            .map { it.groupValues[1] }
+            .toSet()
+    }
+
+    @Test
+    fun `given the client terms registry then the server checks consent for exactly those operations`() {
+        // Операция согласия без серверной сверки: клиент возит согласие, которое никто не читает.
+        val unchecked = OutboxOperations.termsConsentOperations - serverTermsOperations
+        assertEquals(
+            emptySet(),
+            unchecked,
+            "клиент прикладывает согласие, которое приёмник не сверяет: $unchecked",
+        )
+    }
+
+    @Test
+    fun `given the server terms registry then the client attaches consent to exactly those operations`() {
+        // Серверная сверка без клиентского согласия: платная мутация уедет без capturedTerms и
+        // будет отвергнута окончательно — тот стык, который закрыла история 2.12.
+        val unattached = serverTermsOperations - OutboxOperations.termsConsentOperations
+        assertEquals(
+            emptySet(),
+            unattached,
+            "приёмник сверяет согласие, которого клиент не прикладывает: $unattached",
+        )
+    }
 }

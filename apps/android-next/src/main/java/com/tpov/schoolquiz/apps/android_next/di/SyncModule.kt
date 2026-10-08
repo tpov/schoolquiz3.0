@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.outbox.AccountSwitchGuard
 import com.tpov.schoolquiz.shared.core.outbox.MutationReceiptStore
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
+import com.tpov.schoolquiz.shared.core.outbox.OutboxConsentRequeue
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxQuarantineRouter
@@ -131,6 +132,10 @@ val syncModule =
         // Остаток по всем пяти состояниям и список владельцев, оставивших строки, — вопрос смены
         // аккаунта (AD-8). Та же реализация, другой смысл: выборка «что поедет» на него не отвечает.
         single<OutboxRemainderSource> { get<RoomOutboxStore>() }
+        // Принятие согласия с платными условиями возвращает ждущие записи в отправку (CAP-16).
+        // Та же таблица, другой смысл: гейт согласия знает момент решения, очередь — только
+        // состояние записей.
+        single<OutboxConsentRequeue> { get<RoomOutboxStore>() }
         single<QuarantineListener> {
             OutboxQuarantineRouter(
                 handlers =

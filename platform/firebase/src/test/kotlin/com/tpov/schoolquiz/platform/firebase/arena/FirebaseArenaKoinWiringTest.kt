@@ -7,6 +7,9 @@ import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
+import com.tpov.schoolquiz.shared.feature.economy.domain.logic.TermsConsentVerdict
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PayableTerms
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyTermsConsentGate
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
@@ -273,6 +276,7 @@ class FirebaseArenaKoinWiringTest {
                     single<FirebaseFunctions> { f.functions }
                     single<OutboxSessionProvider> { f.sessions }
                     single<NetworkMonitor> { f.network }
+                    single<EconomyTermsConsentGate> { f.noConsent }
                 },
             )
         try {
@@ -374,6 +378,17 @@ class FirebaseArenaKoinWiringTest {
                 }
             }
 
+        // Транспорт несёт capturedTerms (CAP-16): здешний граф поднимает firebaseModule целиком,
+        // и согласие в этих тестах — «нет и не спрашиваем».
+        val noConsent =
+            object : EconomyTermsConsentGate {
+                override fun capturedTerms(): PayableTerms? = null
+
+                override fun verdict(): TermsConsentVerdict = TermsConsentVerdict.Required(PayableTerms.BOOTSTRAP, change = null)
+
+                override suspend fun acceptCurrentTerms() = Unit
+            }
+
         fun graph(
             includeNetwork: Boolean = true,
             includeEngine: Boolean = true,
@@ -388,6 +403,7 @@ class FirebaseArenaKoinWiringTest {
                         single<Clock> { clock }
                     }
                     single<OutboxSessionProvider> { sessions }
+                    single<EconomyTermsConsentGate> { noConsent }
                     if (includeNetwork) single<NetworkMonitor> { network }
                 },
             )

@@ -55,6 +55,7 @@
     <string name="settings_sync_error_precondition">Waiting for an earlier action to arrive</string>
     <string name="settings_sync_error_refused">The server refused the action</string>
     <string name="settings_sync_error_version_conflict">The server has a newer version of this</string>
+    <string name="settings_sync_error_terms_consent">Waiting for consent to the new terms</string>
     <string name="settings_sync_error_unknown">Something went wrong; it will be tried again</string>
     <string name="settings_sync_note_unreadable">%1$d changes could not be read; that content stayed as it was</string>
     <string name="settings_resync">Re-read everything</string>

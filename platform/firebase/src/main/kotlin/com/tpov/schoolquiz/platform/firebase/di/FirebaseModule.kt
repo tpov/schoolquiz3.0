@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSo
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.network.EconomyCapturedTermsJson
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseOutboxSessionProvider
 import com.tpov.schoolquiz.platform.firebase.network.namingFailures
@@ -89,9 +90,15 @@ val firebaseModule =
         }
         single<ArenaLessonCatalogRemoteDataSource> { get<FirebaseArenaLessonCatalogRemoteDataSource>() }
         // Единственный адрес очереди (AD-6): новая операция появляется обработчиком на сервере,
-        // а не новым путём на клиенте.
+        // а не новым путём на клиенте. Захваченное согласие платных операций едет в конверте
+        // (CAP-16): сервер сверяет его с текущей таблицей, и отказ по согласию паркует запись,
+        // а не карантинит.
         single<MutationTransport> {
-            FirebaseMutationTransport(functions = get(), networkMonitor = get())
+            FirebaseMutationTransport(
+                functions = get(),
+                networkMonitor = get(),
+                capturedTerms = EconomyCapturedTermsJson(gate = get()),
+            )
         }
         single<UserStatsDataSource> {
             FirebaseUserStatsDataSource(

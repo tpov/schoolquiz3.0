@@ -41,6 +41,17 @@ const val PRECONDITION_PENDING_DETAIL: String = "precondition-pending"
  * `VERSION_CONFLICT_DETAIL` и `versionConflictDetail` в `functions/mutation-queue.js`.
  */
 const val VERSION_CONFLICT_DETAIL: String = "version-conflict"
+
+/**
+ * Пометка, которой сервер называет отказ по согласию с платными условиями (CAP-16, AD-5),
+ * и поле объекта, в котором она едет.
+ *
+ * Детали здесь — объект, как у [VERSION_CONFLICT_DETAIL]: рядом с пометкой сервер кладёт
+ * `change` — что именно в платных полях разошлось, — но ветви решения оно не нужно: условия и
+ * расхождение клиент называет сам из своих таблиц, а показывает их согласующий экран. Значение
+ * и форма обязаны совпадать с `TERMS_CONSENT_DETAIL` в `functions/mutation-terms.js`.
+ */
+const val TERMS_CONSENT_DETAIL: String = "terms-consent-required"
 private const val DETAIL_CODE = "code"
 private const val DETAIL_SERVER_VERSION = "serverVersion"
 
@@ -97,11 +108,14 @@ internal fun syncErrorForCode(
 
         // Отличить «ещё нет» от «нет» может только сервер, и он говорит это в деталях: сам по
         // себе FAILED_PRECONDITION в этом проекте означает отказ («не хватает ноликов»).
+        // Отказ по согласию с платными условиями — третий случай, и ветвь у него своя: не
+        // карантин (откатывать нечего — попытка написана) и не вечный повтор (без согласия
+        // повтор вернёт тот же отказ), а ожидание решения игрока, как конфликт версий.
         "FAILED_PRECONDITION" ->
-            if (details == PRECONDITION_PENDING_DETAIL) {
-                SyncError.PreconditionNotMet
-            } else {
-                refused(code, message)
+            when {
+                details == PRECONDITION_PENDING_DETAIL -> SyncError.PreconditionNotMet
+                details.namesCode(TERMS_CONSENT_DETAIL) -> SyncError.TermsConsentRequired
+                else -> refused(code, message)
             }
 
         // Сервер занят, а не отказал. Cloud Run под нагрузкой отдаёт 429, SDK превращает его в
@@ -141,6 +155,10 @@ private fun serverVersionFrom(details: Any?): Long? {
         else -> null
     }
 }
+
+/** Читает ли объект деталей пометку с именем ветви — тем же чтением, что и [serverVersionFrom]. */
+private fun Any?.namesCode(expected: String): Boolean =
+    (this as? Map<*, *>)?.get(DETAIL_CODE) == expected
 
 private fun refused(
     code: String,

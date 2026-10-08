@@ -117,6 +117,51 @@ class CallableErrorsTest {
         )
     }
 
+    // ── Согласие с платными условиями: ожидание решения, не отказ (CAP-16) ────
+
+    @Test
+    fun `given the terms refusal detail then the consent branch, not quarantine`() {
+        // Ровно то, что кладёт приёмник 2.8 в details: {code: terms-consent-required}. Карантин
+        // здесь откатил бы написанную попытку, повтор без согласия вернул бы тот же отказ —
+        // запись ждёт решения игрока, как конфликт версий.
+        val error =
+            forCode(
+                "FAILED_PRECONDITION",
+                message = "operation lesson_runner.SUBMIT_ATTEMPT requires captured payable terms",
+                details = mapOf("code" to TERMS_CONSENT_DETAIL),
+            )
+
+        assertEquals(SyncError.TermsConsentRequired, error)
+        assertEquals(SyncError.Disposition.CONFLICT, error.disposition)
+    }
+
+    @Test
+    fun `given the terms refusal with the named change then the branch is still the consent one`() {
+        // `change` — материал согласующего экрана, а не ветви решения; она обязана не зависеть
+        // от того, назвал ли сервер изменение.
+        val error =
+            forCode(
+                "FAILED_PRECONDITION",
+                details = mapOf("code" to TERMS_CONSENT_DETAIL, "change" to mapOf("field" to "activityPrices.TOURNAMENT")),
+            )
+
+        assertEquals(SyncError.TermsConsentRequired, error)
+    }
+
+    @Test
+    fun `given a foreign detail object on failed precondition then refused, not consent`() {
+        // Чужой FAILED_PRECONDITION с объектом деталей — обычный отказ: ветвь согласия читает
+        // только свою пометку.
+        assertEquals(
+            SyncError.Refused("Broken profile"),
+            forCode("FAILED_PRECONDITION", "Broken profile", details = mapOf("code" to "something-else")),
+        )
+        assertEquals(
+            SyncError.Refused("Broken profile"),
+            forCode("FAILED_PRECONDITION", "Broken profile", details = "terms-consent-required"),
+        )
+    }
+
     // ── Конфликт версий ───────────────────────────────────────────────────────
 
     @Test

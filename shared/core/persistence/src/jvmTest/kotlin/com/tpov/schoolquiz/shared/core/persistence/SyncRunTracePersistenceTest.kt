@@ -95,6 +95,20 @@ class SyncRunTracePersistenceTest {
     }
 
     @Test
+    fun theTermsConsentBranchComesBackAsTheConsentBranch() = runTest {
+        // Ветвь согласия — data object без состояния: назад из схемы поднимается та же ветвь,
+        // а не «неизвестно» и не отказ (CAP-16, история 2.12).
+        store.recordFailure(previous, content, SyncError.TermsConsentRequired)
+
+        db.close()
+        db = open()
+        val afterRestart =
+            RoomSyncRunTraceStore(db.syncRunTraceDao()).observeTraces(previous).first().traceOf(content)
+
+        assertEquals(SyncError.TermsConsentRequired, afterRestart.lastError)
+    }
+
+    @Test
     fun theTraceOfOneOwnerIsNotTheTraceOfAnother() = runTest {
         store.recordSuccess(previous, content, atMs = 1_000L)
         store.recordSuccess(next, content, atMs = 2_000L)

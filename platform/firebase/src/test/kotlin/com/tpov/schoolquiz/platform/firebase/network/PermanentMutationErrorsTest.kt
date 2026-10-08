@@ -17,4 +17,24 @@ class PermanentMutationErrorsTest {
             }
         }
     }
+
+    @Test fun termsRefusalKeepsItsBranchForPermanentOperations() {
+        // Защита вечных квитанций откартинивает их отказы, поднимая их в Unknown (вечный повтор).
+        // Отказ по согласию — не отказ, а ожидание решения игрока: подменять его повтором
+        // значило бы снова спрятать от игрока единственную дверь, которой запись открывается
+        // (CAP-16, история 2.12).
+        for (operation in OutboxOperations.termsConsentOperations) {
+            val error =
+                mutationErrorForCode(
+                    operation,
+                    "FAILED_PRECONDITION",
+                    "operation $operation requires captured payable terms",
+                    mapOf("code" to TERMS_CONSENT_DETAIL),
+                )
+            assertTrue(
+                "$operation: ветвь согласия подменена ${error::class.simpleName}",
+                error is SyncError.TermsConsentRequired,
+            )
+        }
+    }
 }

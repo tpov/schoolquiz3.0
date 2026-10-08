@@ -100,11 +100,12 @@ internal object SyncErrorBranch {
     const val PRECONDITION_NOT_MET = "PRECONDITION_NOT_MET"
     const val REFUSED = "REFUSED"
     const val VERSION_CONFLICT = "VERSION_CONFLICT"
+    const val TERMS_CONSENT_REQUIRED = "TERMS_CONSENT_REQUIRED"
     const val UNKNOWN = "UNKNOWN"
 }
 
 /**
- * Ветвь именем — исчерпывающим `when`, поэтому шестая ветвь не соберётся, а не запишется как
+ * Ветвь именем — исчерпывающим `when`, поэтому новая ветвь не соберётся, а не запишется как
  * `UNKNOWN` молча (AD-15).
  */
 internal fun SyncError.branchName(): String =
@@ -113,6 +114,7 @@ internal fun SyncError.branchName(): String =
         SyncError.PreconditionNotMet -> SyncErrorBranch.PRECONDITION_NOT_MET
         is SyncError.Refused -> SyncErrorBranch.REFUSED
         is SyncError.VersionConflict -> SyncErrorBranch.VERSION_CONFLICT
+        SyncError.TermsConsentRequired -> SyncErrorBranch.TERMS_CONSENT_REQUIRED
         is SyncError.Unknown -> SyncErrorBranch.UNKNOWN
     }
 
@@ -130,6 +132,7 @@ private fun SyncRunTraceEntity.toTrace(): SyncRunTrace {
             SyncErrorBranch.PRECONDITION_NOT_MET -> SyncError.PreconditionNotMet
             SyncErrorBranch.REFUSED -> SyncError.Refused(lastErrorReason.orEmpty())
             SyncErrorBranch.VERSION_CONFLICT -> SyncError.VersionConflict(lastErrorServerVersion)
+            SyncErrorBranch.TERMS_CONSENT_REQUIRED -> SyncError.TermsConsentRequired
             // Строка, записанная версией приложения, которой здесь ещё не было: ветвь неизвестна,
             // но неудача была — молчать о ней хуже, чем назвать её неизвестной.
             else -> SyncError.Unknown()

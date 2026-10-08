@@ -43,9 +43,10 @@ fun economyDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): M
         single { EconomyConstantsSync(get()) }
         // Согласие с платными условиями, как и сама таблица, не auth-scoped: цены от того, кто
         // вошёл, не зависят. Хранилище согласия платформенное, биндится в composition root рядом
-        // с EconomyConstantsStore.
+        // с EconomyConstantsStore. Принятие согласия снимает ожидание очереди (CAP-16): возврат
+        // ждущих записей — контракт ядра outbox.
         single<EconomyTermsConsentGate> {
-            EconomyTermsConsentGateImpl(constants = get(), store = get())
+            EconomyTermsConsentGateImpl(constants = get(), store = get(), requeue = get())
         }
         single<GiftBoxIntentStore> { RoomGiftBoxIntentStore(get()) }
         single<GiftBoxRepository> {

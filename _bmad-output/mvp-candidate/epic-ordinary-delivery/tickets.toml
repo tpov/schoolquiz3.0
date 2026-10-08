@@ -73,7 +73,7 @@ title = "Клиентская половина стыка 2.8: транспор�
 covers = ["CAP-16"]
 after = [{ story = "2.8", needs = "server shown-terms check with the named refusal detail" }]
 hitl = false
-status = "todo" # заведена решением владельца 2026-10-08 (стык 2.8: клиент не шлёт capturedTerms — кандидат получает отказ submit)
+status = "done" # 2026-10-08: транспорт прикладывает capturedTerms по реестру-двойнику (сторож реестра расширен на MUTATION_TERMS_OPERATIONS), отказ terms-consent-required — шестая ветвь SyncError с дверью CONFLICT (не карантин AD-28 и не вечный повтор), acceptCurrentTerms (теперь suspend) возвращает ждущие записи под теми же ключами; гейт: network+outbox+persistence+economy:data+firebase зелёные, кроме 2 предсуществующих fixture-pin тестов (атрибуция в evidence, на владельца); попутно починен предсуществующий счётчик BoxOpeningMarkerPersistenceTest (литерал 2.6-эры); evidence docs/agents/evidence/2026-10-08-client-terms-attach/
 
 [[story]]
 id = "2.5"

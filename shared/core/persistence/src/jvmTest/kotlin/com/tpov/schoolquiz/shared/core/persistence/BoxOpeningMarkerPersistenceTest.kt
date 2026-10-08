@@ -154,7 +154,13 @@ class BoxOpeningMarkerPersistenceTest {
             dao.reserveSynchronousIntent(row, marker(row))
             assertEquals(0, dao.due("A", now, 100, 50).size)
             assertEquals(0, dao.expired("A", now, 100, 50).size)
-            assertEquals(2, dao.due("A", now + 10, 100, 50).size)
+            // По одному на каждую операцию вечных квитанций: реестр растёт вместе с контрактом
+            // (2.6 добавил READY_ACK), и ожидаемое число обязано идти от него, а не от литерала
+            // той ночи, когда их было две.
+            assertEquals(
+                OutboxOperations.permanentReceiptOperations.size,
+                dao.due("A", now + 10, 100, 50).size,
+            )
             assertEquals(listOf("WAITING"), dao.due("B", now, 100, 50).map { it.state })
         }
 
