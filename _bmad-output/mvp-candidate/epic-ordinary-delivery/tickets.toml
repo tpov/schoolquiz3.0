@@ -16,6 +16,10 @@
 # schoolquiz-demo-firebase-20261004, no restart policy) and the owner dispatched server-side work,
 # so the backend/Node-test clause no longer blocks 2.8; statuses below updated to actual
 # (night-impl commits + evidence 2026-10-06-*).
+# Amendment 2026-10-08: five owner decisions (owner-decisions-2026-10-08.md) — the full ONLINE-O2
+# contract edition is APPROVED (2.9 unblocked), stories 2.12 and 2.13 are chartered (the 2.8 open
+# join and the two pre-existing red functions suites), 2.7/1.3/1.5 stay blocked on the owner's
+# physical device, epics 3/4/7/8 inception drafts stay un-dispatched without a separate approval.
 
 [[story]]
 id = "2.1"
@@ -63,6 +67,15 @@ hitl = false
 status = "done" # 2026-10-07: 77e51f59 — приёмник проверяет captured terms платных операций (реестр: SUBMIT_ATTEMPT), отсутствие/расхождение согласия — окончательный failed-precondition с поименованным изменением, replay мимо сверки; доказательство: 8-кейсовая приёмниковая сюита против demo-backend + 13 чистых, гейт 90/92 (2 красных сюиты — предсуществующий дрейф ветки, атрибуция в evidence); evidence docs/agents/evidence/2026-10-07-server-shown-terms-check/; открыт стык: клиент пока не шлёт capturedTerms (кандидат 2.12)
 
 [[story]]
+id = "2.12"
+slug = "client-terms-attach"
+title = "Клиентская половина стыка 2.8: транспорт прикладывает capturedTerms к операциям реестра платных условий (клиентский двойник MUTATION_TERMS_OPERATIONS), отказ сервера terms-consent-required паркует запись как ждущую решения игрока — не карантин и не вечный повтор, — а согласие игрока возвращает её в отправку под тем же mutationId; доказательство: JVM-тесты конверта транспорта, таблицы решений, реестра-двойника и возврата в очередь; evidence docs/agents/evidence/<дата>-client-terms-attach/"
+covers = ["CAP-16"]
+after = [{ story = "2.8", needs = "server shown-terms check with the named refusal detail" }]
+hitl = false
+status = "todo" # заведена решением владельца 2026-10-08 (стык 2.8: клиент не шлёт capturedTerms — кандидат получает отказ submit)
+
+[[story]]
 id = "2.5"
 slug = "online-o2-contract-adoption"
 title = "Контракт ONLINE-O2 записан в полной редакции по закрытому чек-листу гейта (contract-map.md, Remaining gates): (1) событие завершения вопроса/окна; (2) delivery/ready-ACK receipt с разбивкой по режимам (экзамен — первый ACK закрепляет deadline; остальные — deadline от серверной выдачи, ACK идемпотентен); (3) identity/retry; (4) связь со стартом answer-clock по режимам; (5) потеря ACK без бесконечного gap и замещающих часов; (6) EXAM AD-3 процитирован как существующее доказательство без перезаписи; инварианты identity/retry закреплены JVM-тестами; evidence docs/agents/evidence/<дата>-online-o2-contract-adoption/"
@@ -79,6 +92,16 @@ covers = ["CAP-1", "CAP-18"]
 after = [{ story = "2.5", needs = "full contract edition per checklist" }]
 hitl = false # не устройство/Play; blocked — по scope-правилу файла: решение владельца вне локально доказуемого
 status = "blocked" # требует решения владельца; без него 2.6 не стартует, а потребители контракта (эпики 3/5/6) остаются за гейтом
+# 2026-10-08: разблокирована — владелец УТВЕРДИЛ полную редакцию контракта (owner-decisions-2026-10-08.md, п.1); принятие редакции исполняется по BMad-циклу после 2.12
+
+[[story]]
+id = "2.13"
+slug = "functions-contract-drift"
+title = "Починка двух предсуществующих красных functions-сюит ветки: arena-lifecycle-views-handler (1/6 — закреплённый sha256 вызываемой поверхности разошёлся) и lesson-ready-ack-handler (3/8 — assertions окна/часов 2.6-эры); атрибуция — не ночной код, идентично на чистой базе (evidence 2026-10-07); доказательство: полный functions-гейт зелёный и против demo-backend, и без него; evidence docs/agents/evidence/<дата>-functions-contract-drift/"
+covers = []
+after = [{ story = "2.8", needs = "stub transaction.delete moved lesson-ready-ack to its real assertions" }]
+hitl = false
+status = "todo" # заведена решением владельца 2026-10-08 (два красных сюита вне ночных веток)
 
 [[story]]
 id = "2.6"
