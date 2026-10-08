@@ -133,6 +133,7 @@ const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesso
 // подводят обёртки ниже.
 const {
   WINDOW_OPEN,
+  WINDOW_EXPIRED,
   deliveryUpdate,
   deliveryVerdict,
   expiryUpdate,

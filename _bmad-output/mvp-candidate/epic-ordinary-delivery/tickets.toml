@@ -101,7 +101,7 @@ title = "Починка двух предсуществующих красных
 covers = []
 after = [{ story = "2.8", needs = "stub transaction.delete moved lesson-ready-ack to its real assertions" }]
 hitl = false
-status = "todo" # заведена решением владельца 2026-10-08 (два красных сюита вне ночных веток)
+status = "done" # 2026-10-08: обе сюиты зелёные и весь functions-гейт 92/92 (без эмулятора и против demo-backend; логи в evidence). arena: re-pin закреплённого sha256 (2.6 добавил два next-question callable — атрибуция в тесте); ready-ack: два слоя — harness-часы ждали await (тестовый фикс) и под ними вскрылся настоящий баг 2.6: в index.js не был импортирован WINDOW_EXPIRED (ReferenceError на ветке истечения окна) — починен одной строкой импорта; третья семья предсуществующих красных — stale fixture-pin в platform:firebase (2 теста) — НЕ чинилась: регенерация капчур-фикстур требует процедуры владельца (атрибуция и follow-up в evidence); demo-контейнер поднят docker start по постоянному решению владельца, после прогонов чист; evidence docs/agents/evidence/2026-10-08-functions-contract-drift/
 
 [[story]]
 id = "2.6"

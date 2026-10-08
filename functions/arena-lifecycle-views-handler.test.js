@@ -65,7 +65,11 @@ const ENDPOINTS = Object.freeze([
 // includes the explicitly reviewed Arena season finalization callables and its scheduler. Keeping
 // it frozen catches an accidental deletion or unrelated new callable, unlike comparing this
 // module to itself when SOURCE defaults to __dirname.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "c6582f3aca2e920a58d871da0ff611a60054351638b4801aa186aa251785b029";
+// Pinned 2026-09-13 (99091eb5, «make season finalization resumable»). Re-pinned 2026-10-08
+// (story 2.13): story 2.6 (1b207cc2) legitimately added the two ONLINE-O2 next-question
+// callables — beginLessonQuestionWindow and fetchNextLessonQuestion — and nobody re-pinned
+// the accepted set; the callable names and the hash cover them now.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "9f17310cc1a4b2bbe7629625b97e0d28366ba39d47518977d8623c8e39180ad9";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

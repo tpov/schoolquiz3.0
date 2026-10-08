@@ -76,12 +76,20 @@ function readyAckPayload(attemptId, questionIndex, windowId) {
   return JSON.stringify({attemptId, userId: UID, questionIndex, windowId});
 }
 
-/** Controls `Date.now()` inside `index.js` for the duration of `fn`. */
-function withFixedClock(atMs, fn) {
+/** Controls `Date.now()` inside `index.js` for the duration of `fn`.
+ *
+ * The helpers below await `fn` INSIDE the fixed-clock window (story 2.13 fix): every callable
+ * here is `onCall(async …)`, whose body resumes on microtasks — a synchronous helper restored
+ * the real clock before the transaction callbacks ran, so the server moments under test were
+ * the wall clock, and the window/deadline assertions failed against it. The production clock
+ * use is `Date.now()` at the transaction, exactly as the contract wants; only the harness was
+ * born red (the suite shipped with 2.6 and its gate covered the JVM half only).
+ */
+async function withFixedClock(atMs, fn) {
   const realNow = Date.now;
   Date.now = () => atMs;
   try {
-    return fn();
+    return await fn();
   } finally {
     Date.now = realNow;
   }
