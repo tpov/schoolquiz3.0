@@ -1,0 +1,105 @@
+{
+ "run": "20261009191049",
+ "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+ "lesson": "live-o2-20261009191049-lesson",
+ "attempt": "attempt-live-o2-20261009191049-1",
+ "steps": [
+  {
+   "step": "world",
+   "questions": [
+    "live-o2-20261009191049-q0",
+    "live-o2-20261009191049-q1",
+    "live-o2-20261009191049-q2",
+    "live-o2-20261009191049-q3",
+    "live-o2-20261009191049-q4"
+   ]
+  },
+  {
+   "step": "auth",
+   "uidFromEmulator": true
+  },
+  {
+   "step": "begin",
+   "hostNowMs": 1791573053766,
+   "result": {
+    "schemaVersion": 1,
+    "windowId": "win_a55653e22b73",
+    "attemptId": "attempt-live-o2-20261009191049-1",
+    "completedQuestionIndex": 2,
+    "nextQuestionIndex": 3,
+    "state": "OPEN",
+    "windowSeconds": 60,
+    "allocatedSeconds": 24,
+    "openedAtMs": 1791573053738,
+    "expiresAtMs": 1791573113738
+   }
+  },
+  {
+   "step": "deliver",
+   "result": {
+    "status": "DELIVERED",
+    "windowId": "win_a55653e22b73",
+    "questionIndex": 3,
+    "questionId": "live-o2-20261009191049-q3",
+    "issuedAtMs": 1791573055910,
+    "answerDeadlineMs": 1791573079910,
+    "remainderMs": 24000,
+    "serverNowMs": 1791573055910
+   }
+  },
+  {
+   "step": "deliver-repeat",
+   "sameQuestion": true,
+   "sameDeadline": true,
+   "remainderMs": 23937
+  },
+  {
+   "step": "ready-ack",
+   "replayed": false,
+   "result": {
+    "schemaVersion": 1,
+    "status": "ACKED",
+    "attemptId": "attempt-live-o2-20261009191049-1",
+    "questionIndex": 3,
+    "windowId": "win_a55653e22b73",
+    "issuedAtMs": 1791573055910,
+    "answerDeadlineMs": 1791573079910,
+    "ackedAtMs": 1791573056025
+   }
+  },
+  {
+   "step": "ready-ack-replay",
+   "replayed": true,
+   "identical": true
+  }
+ ],
+ "windowDocs": [
+  {
+   "path": "qw_62d4d3ae8339",
+   "data": {
+    "schemaVersion": 1,
+    "windowId": "win_a55653e22b73",
+    "attemptId": "attempt-live-o2-20261009191049-1",
+    "lessonId": "live-o2-20261009191049-lesson",
+    "lessonVersion": 1,
+    "completedQuestionIndex": 2,
+    "nextQuestionIndex": 3,
+    "nextQuestionId": "live-o2-20261009191049-q3",
+    "difficulty": "HARD",
+    "windowSeconds": 60,
+    "allocatedSeconds": 24,
+    "openedAtMs": 1791573053738,
+    "expiresAtMs": 1791573113738,
+    "state": "DELIVERED",
+    "delivery": {
+     "questionIndex": 3,
+     "questionId": "live-o2-20261009191049-q3",
+     "issuedAtMs": 1791573055910,
+     "answerDeadlineMs": 1791573079910
+    },
+    "closedAtMs": null,
+    "closedReason": null
+   }
+  }
+ ]
+}

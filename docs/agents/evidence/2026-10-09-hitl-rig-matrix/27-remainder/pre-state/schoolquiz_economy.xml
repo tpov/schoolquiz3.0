@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <string name="economy_terms_consent">{"version":0,"standard":{"maxOwned":10,"regenMs":3600000,"priceLadder":[1000,2000,5000,10000,20000],"currency":"NOLICS","requiresSettledAccount":false,"premiumRegenDivisor":1},"plasma":{"maxOwned":3,"regenMs":86400000,"priceLadder":[1,2,3],"currency":"GOLD","requiresSettledAccount":true,"premiumRegenDivisor":1},"activityPrices":{"ORDINARY_LESSON":33,"ARENA":50,"THEME_TEST":100,"FINAL_EXAM":300,"TOURNAMENT":500}}</string>
+</map>
