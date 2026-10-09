@@ -1,0 +1,72 @@
+{
+  "atIso": "2026-10-09T21:40:28.026Z",
+  "documentWrites": 0,
+  "user": {
+    "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+    "nickname": "UserYF9FS9",
+    "nolics": 2,
+    "pointsNolics": 2,
+    "reservedNolics": 0,
+    "skillPoints": 49,
+    "pointsSkill": 49,
+    "lifePoints": 450,
+    "reservedLifePoints": 0,
+    "reservedPlasmaPoints": 0,
+    "plasmaPoints": 0
+  },
+  "TICKETS_COUNT": 3,
+  "tickets": [
+    {
+      "id": "8374ce0dae87dd0036710778a7c2cfe8605730571c73c562450ad85c3e478180",
+      "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "151497c7ba30b07d15852747b64d3357eddd6068013d109d0115599e8c939990",
+        "receiptId": "arena-settle:8374ce0dae87dd0036710778a7c2cfe8605730571c73c562450ad85c3e478180",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "lifeCost": 50,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "aab909956f75aeeb31397578683c7e14e0dc202053a8978c8a2aacec614ac751",
+      "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "3da6a7c31b4dd99d51846a5814ac117b72f3ebc1ba75b28c054574b5e1177c6b",
+        "receiptId": "arena-settle:aab909956f75aeeb31397578683c7e14e0dc202053a8978c8a2aacec614ac751",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "lifeCost": 50,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "f143f023b9b6e12c227cf79e07f9b19759a7d6a2db70eb2ea99bbf6f96975d69",
+      "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "cf575a94463d638eedc742391001560ff21d7b9bf2b5e1b25647f529d3b29079",
+        "receiptId": "arena-settle:f143f023b9b6e12c227cf79e07f9b19759a7d6a2db70eb2ea99bbf6f96975d69",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "lifeCost": 50,
+      "dayId": "2026-10-09"
+    }
+  ],
+  "MUTATION_KEYS_COUNT": 30
+}
