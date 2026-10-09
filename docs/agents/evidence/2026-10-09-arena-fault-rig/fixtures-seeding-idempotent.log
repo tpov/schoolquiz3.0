@@ -1,0 +1,25 @@
+demo fixtures: created 0, verified 24
+  verified auth/D0h0rHZGJVoU22cADZV8yb2lz1KT
+  verified auth/1qWvMnl9qYWsJCD58wGzLWv3G6Ju
+  verified auth/demoarena_curator_m
+  verified profiles/demoarena_curator_m
+  verified auth/demoarena_player_a
+  verified users/demoarena_player_a
+  verified auth/demoarena_player_b
+  verified users/demoarena_player_b
+  verified lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1
+  verified quests/ac_0ecb34aeec8b4557b13a390f10b3a548_quest
+  verified catalogs/ac_0ecb34aeec8b4557b13a390f10b3a548_catalog
+  verified admin/review/lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1
+  verified admin/review/lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1/reviews/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1-rec-testing
+  verified admin/review/lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1/reviews/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1-rec-logic
+  verified lesson_placements/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1
+  verified lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1
+  verified lessons/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1
+  verified quests/ac_6ba84b006f7d423f8630ac7802407eb0_quest
+  verified catalogs/ac_6ba84b006f7d423f8630ac7802407eb0_catalog
+  verified admin/review/lessons/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1
+  verified admin/review/lessons/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1/reviews/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1-rec-testing
+  verified admin/review/lessons/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1/reviews/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1-rec-logic
+  verified lesson_placements/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1
+  verified lesson_ratings/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1

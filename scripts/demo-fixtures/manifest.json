@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "story": "3.3 (server half, epic-arena-completion)",
+  "plan": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/USER-CONTINUATION-PLAN.md §2 Шаг 4",
+  "purpose": "Demo fixtures for the Arena matrix rows. Fixtures only set conditions (ratings, placements, review records, curator/player roles); the app performs the rated runs. Consumers: 3.11 (conservation, prices 1/100), matrix device rows (3.4-3.10), 3.12 (season fixtures are deferred there, not seeded here).",
+  "backend": {
+    "container": "schoolquiz-demo-firebase-20261004",
+    "projectId": "demo-schoolquiz-mvp",
+    "firestoreHost": "127.0.0.1:18090",
+    "authHost": "127.0.0.1:19090",
+    "provenance": "restored 2026-10-04 from firebase-export-staging/arena-e2b-cycle4-20260913 (98 anonymous auth accounts, archived ac_* quest chains) + synthetic catalog fixture chains ac_* re-written 2026-10-08 (catalogs/themes/sections/lessons). REST reads of rules-closed collections look 'empty' — they are 403; the admin-SDK view (seeder/verifier) is authoritative."
+  },
+  "namespaceRule": "Seeded fixture paths carry demoarena_; pinned preconditions (ac_* chain docs, export-era author uids, the bank-low rating) are verified, never written or rewritten — the fixture run performs zero overwrites.",
+  "roles": [
+    {
+      "id": "author-low",
+      "uid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+      "seeded": false,
+      "purpose": "pinned export-era author of the arena-bank-low ac_* chain (quests/ac_0ecb34….quest.authorUid, verified); its auth account already exists in the demo backend; receives the 80% author share (AD-13/AD-9) of price-1 entries"
+    },
+    {
+      "id": "author-high",
+      "uid": "1qWvMnl9qYWsJCD58wGzLWv3G6Ju",
+      "seeded": false,
+      "purpose": "pinned export-era author of the arena-bank-high ac_* chain (quests/ac_6ba84b00….quest.authorUid, verified); auth account already exists; receives the 80% author share of price-100 entries"
+    },
+    {
+      "id": "curator-m",
+      "uid": "demoarena_curator_m",
+      "seeded": true,
+      "auth": {"displayName": "demo arena fixture curator M"},
+      "profile": {"doc": "profiles/demoarena_curator_m", "fields": {"adminLevel": 100}},
+      "purpose": "trusted curator (isArenaCurator: adminLevel >= 100) for review/lifecycle views; reviewerUid of the accepted review records (must differ from the bank owners)"
+    },
+    {
+      "id": "player-a",
+      "uid": "demoarena_player_a",
+      "seeded": true,
+      "auth": {"displayName": "demo arena fixture player A"},
+      "profile": null,
+      "economy": {"doc": "users/demoarena_player_a", "fields": {"gold": 100000}},
+      "purpose": "ordinary player, device A owner; initial balance covers price-100 entries and repeated price-1 rows"
+    },
+    {
+      "id": "player-b",
+      "uid": "demoarena_player_b",
+      "seeded": true,
+      "auth": {"displayName": "demo arena fixture player B"},
+      "profile": null,
+      "economy": {"doc": "users/demoarena_player_b", "fields": {"gold": 100000}},
+      "purpose": "second owner for A->B->A switch and two-device rows (3.9/3.10)"
+    }
+  ],
+  "banks": [
+    {
+      "id": "arena-bank-low",
+      "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+      "chain": {
+        "run": "ac_0ecb34aeec8b4557b13a390f10b3a548",
+        "themeId": "ac_0ecb34aeec8b4557b13a390f10b3a548_theme",
+        "sectionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_section",
+        "questId": "ac_0ecb34aeec8b4557b13a390f10b3a548_quest",
+        "catalogId": "ac_0ecb34aeec8b4557b13a390f10b3a548_catalog",
+        "lessonVersion": 1,
+        "reviewSubmissionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_submission_0",
+        "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT"
+      },
+      "rating": {"ratingSum": 2, "ratingCount": 1, "ratingVersion": 1, "seeded": false},
+      "expectedPriceNolics": 1,
+      "expectedWeightedScore": "42/21 (rating 2/1 + Bayesian prior 40/20) — pinned export-era rating, the universe minimum",
+      "purpose": "lowest-rated bank -> price 1; the five-payments-of-1 conservation row (author nets 4 total at 80/20)"
+    },
+    {
+      "id": "arena-bank-high",
+      "lessonId": "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1",
+      "chain": {
+        "run": "ac_6ba84b006f7d423f8630ac7802407eb0",
+        "themeId": "ac_6ba84b006f7d423f8630ac7802407eb0_theme",
+        "sectionId": "ac_6ba84b006f7d423f8630ac7802407eb0_section",
+        "questId": "ac_6ba84b006f7d423f8630ac7802407eb0_quest",
+        "catalogId": "ac_6ba84b006f7d423f8630ac7802407eb0_catalog",
+        "lessonVersion": 1,
+        "reviewSubmissionId": "ac_6ba84b006f7d423f8630ac7802407eb0_submission_0",
+        "authorUid": "1qWvMnl9qYWsJCD58wGzLWv3G6Ju"
+      },
+      "rating": {"ratingSum": 3, "ratingCount": 1, "ratingVersion": 1, "seeded": true},
+      "expectedPriceNolics": 100,
+      "expectedWeightedScore": "43/21 (rating 3/1 + Bayesian prior 40/20) — the universe maximum",
+      "purpose": "highest-rated bank -> price 100 (two-level universe: level 1 of 2 maps to 1+99)"
+    }
+  ],
+  "pinnedPreconditions": [
+    {"doc": "lessons/{lessonId}", "verified": "version == chain.lessonVersion, themeId == chain.themeId, no archived flag", "written": false},
+    {"doc": "quests/{questId}", "verified": "authorUid == chain.authorUid, catalogId == chain.catalogId (chain export-era docs; archived state irrelevant to the lesson context loader)", "written": false},
+    {"doc": "catalogs/{catalogId}", "verified": "questType == REGULAR (public catalog fixture)", "written": false}
+  ],
+  "perBankServerRows": [
+    {"doc": "admin/review/lessons/{lessonId}", "fields": {"status": "PUBLISHED", "ownerUid": "{chain.authorUid}", "questId": "{questId}", "submissionId": "{reviewSubmissionId}", "sourceLanguages": ["en"]}},
+    {"doc": "admin/review/lessons/{lessonId}/reviews/{lessonId}-rec-testing", "fields": {"kind": "TESTING", "reviewerUid": "demoarena_curator_m", "reviewerLevelAtSubmit": 100, "score": 3, "submissionId": "{reviewSubmissionId}", "acceptedByServer": true}},
+    {"doc": "admin/review/lessons/{lessonId}/reviews/{lessonId}-rec-logic", "fields": {"kind": "LOGIC", "reviewerUid": "demoarena_curator_m", "reviewerLevelAtSubmit": 100, "score": 3, "submissionId": "{reviewSubmissionId}", "acceptedByServer": true}},
+    {"doc": "lesson_placements/{lessonId}", "fields": {"shelf": "arena", "previousShelf": "review", "authorUid": "{chain.authorUid}", "contentVersion": "{lessonVersion}", "placementVersion": 1}},
+    {"doc": "lesson_ratings/{lessonId}", "fields": {"ratingSum": "{rating.ratingSum}", "ratingCount": "{rating.ratingCount}", "ratingVersion": "{rating.ratingVersion}", "seededOnly": "created only when rating.seeded is true; otherwise a pinned precondition (bank-low carries its export-era 2-star rating)"}}
+  ],
+  "pinnedPreconditionsExtra": [
+    {"doc": "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1", "verified": "ratingSum 2, ratingCount 1, ratingVersion 1, authorUid D0h0rHZGJVoU22cADZV8yb2lz1KT (export-era 2-star rating; the universe minimum)"}
+  ],
+  "chainFacts": {
+    "loadArenaLessonContext": "lessons/{id} -> themes/{themeId}.sectionId -> sections/{sectionId}.questId -> quests/{questId}.authorUid/catalogId -> catalogs/{catalogId}.questType (REGULAR); reviewApproved requires admin review status PUBLISHED with ownerUid/questId/submissionId matching and lessonPassed over accepted records (TESTING and LOGIC both >= 2; sourceLanguages satisfied by the source language itself)",
+    "eligibleUniverse": "lesson_placements where shelf==arena, identity-matched against the context above and lessons/{id} (version/theme), priced by assignLessonPrices over lesson_ratings (relative scale: minimum -> 1, maximum -> 100)"
+  },
+  "universeBaseline": "The demo backend carries a 15-row arena universe of export-era fixtures (four ac_* chains, aeu_* targets, one lesson-UUID bank) beyond the two manifest banks. Prices are relative over the whole universe: the verifier pins bank-low at price 1 (the 2-star 42/21 score ties with unrated 40/20 rows at the bottom level, which is legitimate) and bank-high as the sole price-100 row; any future fixture that breaks an extreme fails verification instead of silently invalidating the conservation rows.",
+  "seasonFixtures": {
+    "status": "deferred to 3.12",
+    "note": "arena_seasons / quarter clock / 19-20 distinct pasts are 3.12 scope (§4 season fixtures); this manifest does not seed them"
+  },
+  "seeding": {
+    "command": "FIRESTORE_EMULATOR_HOST=127.0.0.1:18090 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:19090 GCLOUD_PROJECT=demo-schoolquiz-mvp node scripts/demo-fixtures/seed-demo-fixtures.js",
+    "mechanism": "firebase-admin (Firestore + Auth) against the emulators — admin path, security rules do not apply; idempotent: existing fixture docs are verified against the manifest and left, missing ones created; drift on a seeded fixture or a pinned precondition is a named refusal; never touches non-fixture docs",
+    "cleanup": "remove the three seeded auth uids (demoarena_*), profiles/demoarena_*, users/demoarena_*, and the per-bank rows above (admin review docs, lesson_placements, lesson_ratings for the two pinned lesson ids); pinned preconditions are export-era residue and stay"
+  },
+  "verification": {
+    "command": "FIRESTORE_EMULATOR_HOST=127.0.0.1:18090 GCLOUD_PROJECT=demo-schoolquiz-mvp node scripts/demo-fixtures/verify-demo-fixtures.js",
+    "proof": "runs the production createArenaEligibleUniverse with the production lesson-context loader against the demo backend (read-only) and requires the two banks to hold priceNolics 1 and 100 — the sole minimum and maximum of the whole universe"
+  }
+}
