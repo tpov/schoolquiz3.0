@@ -1,0 +1,48 @@
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "status": "CONTEXT",
+  "readerVersion": "arena-e2e-attempt-progress-reader-v1",
+  "documentWrites": 0,
+  "networkCalls": 0,
+  "deviceCalls": 0,
+  "storage": "Room",
+  "queryAdapter": "node:sqlite",
+  "runId": "arena35-easy-restart",
+  "ticketId": "8cec4267b9d3fbc746ab77accc4bedb061dbc4f6289a9a6f395bd296ff68abc9",
+  "attemptId": "c9a8ee137848214ede938973582d5b2cffa79231a2477cac0419bd81164b647a",
+  "ticketState": {
+    "serverStatus": "RESERVED",
+    "localUse": "LAUNCHED",
+    "decision": "NONE",
+    "checkpointRevision": 1,
+    "snapshotSha256": "9fe071dfb6b11704547d0fa783fec7d523a8f559d4a2b29ed3a00c0da2a95f18"
+  },
+  "progress": {
+    "checkpointSchemaVersion": 1,
+    "checkpointSha256": "5d37cef5a3943327c58b8e79c1e53831d6acd7ce3aa45b8c9472aefd806c0b19",
+    "phase": "FEEDBACK",
+    "indexInPool": 0,
+    "acceptedAnswerCount": 0,
+    "currentDraftPresent": true,
+    "pendingFeedbackPresent": true,
+    "pendingFeedbackIndex": 0,
+    "isCompleted": false
+  },
+  "snapshot": {
+    "database": {
+      "file": "schoolquiz.db",
+      "bytes": 516096,
+      "sha256": "ede136277b6d5720247a7cc8d0dc72f036a63334aeb2fa9f8a46efec9fa3c291"
+    },
+    "wal": {
+      "file": "schoolquiz.db-wal",
+      "bytes": 457352,
+      "sha256": "e4881dcb730c769a64b0c2d1a48f8070ca852c75df26e8939df339db80a9c522"
+    },
+    "shm": {
+      "file": "schoolquiz.db-shm",
+      "bytes": 32768,
+      "sha256": "0eff9dfc82b5236137f478ae1406cd1613cc11a1ff5f74529d63d23f0b99aa4b"
+    }
+  }
+}

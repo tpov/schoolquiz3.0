@@ -1,0 +1,18 @@
+== CUT TRANSCRIPT (3.5) 22:50:21Z
+--- baseline reverses
+host-12 tcp:9099 tcp:19090
+host-12 tcp:8080 tcp:18090
+host-12 tcp:5001 tcp:5001
+
+--- baseline radios (wifi_on, mobile_data)
+0
+1
+--- app force-stop (fixed sequence step)
+STOPPED
+--- remove exactly the three mappings
+--- radio toggles (svc data has no radio on redroid — documented no-op)
+--- verify cut: reverses count + radios + LIVE ADB CONTROL
+1
+0
+0
+ADB_CONTROL_ALIVE 22:50:22Z
