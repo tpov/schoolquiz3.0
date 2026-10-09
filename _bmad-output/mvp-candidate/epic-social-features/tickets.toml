@@ -20,7 +20,7 @@ waits = [
   "OQ-7/UX-O7: сам контракт пишется этой историей (contract-map Remaining gates: «…before real vote writes»)",
   "epic-2: delivery foundations — DONE",
 ]
-status = "ready" # контракт-авторинг (документ + закрепляющие тесты) с этого дерева
+status = "done" # 2026-10-09: полная редакция контракта ux-o7-poll-contract.md (гейт UX-O7 закрыт построчно: identity тройки §2, уникальность §3, delivery/recovery §4, один снапшот счётов §5, retry≠второй голос §6.1, правка до отправки §6.2); закрепляющие транспортные тесты UxO7PollVoteIdentityContractTest 4/4 зелёные, гейт sgw :shared:core:outbox:jvmTest BUILD SUCCESSFUL; константа/реестр голоса — с 8.2 (OutboxOperationsRegistryTest); evidence docs/agents/evidence/2026-10-09-ux-o7-polls/
 
 [[story]]
 id = "8.2"
