@@ -32,7 +32,7 @@ after = [{ epic = 1, needs = "restored demo backend and demo accounts with autho
 waits = [
   "epic-1: restored backend — DONE (1.1, 98 auth users); роль-фикстуры при отсутствии нужных — demo-фикстуры по plan §2 Шаг 4 (общий манифест с server half 3.3 эпика 3)",
 ]
-status = "ready" # серверная/node-часть, физическое устройство не требуется; UI-подключение — 4.3; эти views — контракт для эпика 8 (CAP-26 авторские «Начисления», AD-30)
+status = "done" # 2026-10-09: вью-семья TZ06B аудирована целиком (6 callable-проекций, серверная проверка автор/куратор, курсорная пагинация, разрешённые причины отказа, роялти); дозаполнен пробел — rules-реестр не проверял закрытие private-коллекций: +22 кейса (deny чтения/записи + текстовое закрепление явных блоков); гейты: rules 171/171 под эмуляторами, functions 92/92 без env и против demo-backend; evidence docs/agents/evidence/2026-10-09-tz06b-views/
 
 [[story]]
 id = "4.3"

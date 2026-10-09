@@ -537,6 +537,85 @@ async function testServerOnlyCollections() {
 }
 
 /**
+ * Приватность authoring-views (TZ06B, эпик 4, история 4.2).
+ *
+ * Статусы размещений, история решений, причины отказа и авторские выплаты читаются ТОЛЬКО через
+ * серверные проекции-вью (`listOwnedLessonLifecycle`, `listCuratorLessonLifecycle`,
+ * `getLessonLifecycle`, `listLessonLifecycleHistory`, `listMyArenaRoyalty`,
+ * `listMyQuestReviewSubmissions`): raw-коллекции за ними обязаны оставаться закрытыми даже для
+ * рецензента и администратора — «public cards/history must use a purpose-specific server
+ * projection, never these raw records» (firestore.rules).
+ *
+ * Как и с `question_keys` выше: deny-проверка слепа к удалению правила (default-deny даёт тот же
+ * отказ, что и явный блок), поэтому для полностью закрытых коллекций рядом стоит текстовое
+ * закрепление явного блока. `lesson_ratings` — единственная читаемая клиентом коллекция этой
+ * семьи, и её поведенческая проверка — это allow на чтение и deny на запись.
+ */
+async function testAuthoringViewsPrivacy() {
+  // Размещения: статус и lastRejection видит только серверная проекция.
+  await deny("lesson_placements: игрок не читает", () =>
+    db("player").doc("lesson_placements/les-1").get());
+  await deny("lesson_placements: автор не читает своё", () =>
+    db("author").doc("lesson_placements/les-1").get());
+  await deny("lesson_placements: админ не читает", () =>
+    db("admin").doc("lesson_placements/les-1").get());
+  await deny("lesson_placements: игрок не пишет", () =>
+    db("player").doc("lesson_placements/les-2").set({authorUid: "player"}));
+
+  // Рейтинги: карточка публична для вошедших, запись — сервер; голоса закрыты целиком.
+  await allow("lesson_ratings: вошедший читает карточку", () =>
+    db("player").doc("lesson_ratings/les-1").get());
+  await deny("lesson_ratings: игрок не пишет", () =>
+    db("player").doc("lesson_ratings/les-1").set({rating: 5}));
+  await deny("lesson_ratings: админ не пишет", () =>
+    db("admin").doc("lesson_ratings/les-1").update({rating: 1}));
+  await deny("lesson_ratings/votes: игрок не читает", () =>
+    db("player").doc("lesson_ratings/les-1/votes/vote-1").get());
+  await deny("lesson_ratings/votes: игрок не пишет", () =>
+    db("player").doc("lesson_ratings/les-1/votes/vote-1").set({uid: "player"}));
+
+  // Заявки ревью: черновики и ревьюерская операционка; автору — только проекция списка.
+  await deny("quest_review_requests: автор не читает свою", () =>
+    db("author").doc("quest_review_requests/req-1").get());
+  await deny("quest_review_requests: рецензент не читает", () =>
+    db("tester").doc("quest_review_requests/req-1").get());
+  await deny("quest_review_requests: автор не пишет", () =>
+    db("author").doc("quest_review_requests/req-2").set({authorUid: "author"}));
+
+  // Выплаты: роялти-счета и валютный журнал — серверная бухгалтерия автора/куратора.
+  await deny("arena_royalty_accounts: автор не читает свой", () =>
+    db("author").doc("arena_royalty_accounts/author").get());
+  await deny("arena_royalty_accounts: админ не читает", () =>
+    db("admin").doc("arena_royalty_accounts/author").get());
+  await deny("arena_royalty_accounts: игрок не пишет", () =>
+    db("player").doc("arena_royalty_accounts/player").set({balance: 1000}));
+  await deny("audit/currency_ledger: игрок не читает выплаты", () =>
+    db("player").doc("audit/currency_ledger/entries/entry-1").get());
+  await deny("audit/currency_ledger: админ не читает", () =>
+    db("admin").doc("audit/currency_ledger/entries/entry-1").get());
+  await deny("audit/currency_ledger: игрок не пишет", () =>
+    db("player").doc("audit/currency_ledger/entries/entry-2").set({nolics: 100}));
+
+  // Текстовое закрепление явных блоков: удаление правила поведенческую deny-проверку не ломает.
+  const rulesText = fs.readFileSync(RULES_PATH, "utf8");
+  const closedBlocks = [
+    ["lesson_placements", "match /lesson_placements/{document=**}"],
+    ["quest_review_requests", "match /quest_review_requests/{requestId}"],
+    ["arena_royalty_accounts", "match /arena_royalty_accounts/{document=**}"],
+    ["audit", "match /audit/{document=**}"],
+  ];
+  for (const [name, marker] of closedBlocks) {
+    const at = rulesText.indexOf(marker);
+    const block = at < 0 ? "" : rulesText.slice(at, at + 800);
+    results.push({
+      label: `${name}: явный отказ присутствует в тексте правил`,
+      ok: at >= 0 && block.includes("allow read, write: if false;"),
+      error: `в firestore.rules нет явного блока закрытия ${name} (TZ06B: raw-коллекции читает только серверная проекция)`,
+    });
+  }
+}
+
+/**
  * users/{uid}/devices/{token} — адреса доставки push (Story 10.1, AD-20).
  *
  * Владелец пишет и удаляет только свои: чужой токен иначе можно было бы подменить и увести чужие
@@ -592,6 +671,7 @@ async function main() {
   await testLessonComments();
   await testReportsAndBans();
   await testServerOnlyCollections();
+  await testAuthoringViewsPrivacy();
 
   await testEnv.cleanup();
 
