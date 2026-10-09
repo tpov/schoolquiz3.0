@@ -60,7 +60,7 @@ waits = [
   "hitl: physical device fault run",
 ]
 hitl = true
-status = "blocked" # hitl (device fault run) + after 3.3/3.1
+status = "done" # 2026-10-10, ночь: FAULT-ПРОГОН НА РИГЕ (evidence docs/agents/evidence/2026-10-10-arena-lost-answer/), игрок ck3D…. Prepare тикета cf55e0ec… (RESERVED, цена 1 + 50 charges, prepare без мутации, keys 30) → маршрутный срез → оффлайн-попытка (q1=val закчекпоинчен) → pending SETTLE доказан ридером владельца (WAITING ac0, 0 receipt) → прокси владельца на маршруте 5001 с приватным биндингом точной мутации: первый запрос дошёл до upstream (200, эффект закоммичен: тикет SETTLED, terminal = моя попытка 50%, keys 30→31, reservedNolics 1→0, skill +1), ответ сброшен — аудит UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED; outbox-движок повторил сам — 5 точных повторов закрыты прокси локально, ВСЕ 6 requestSha256 идентичны b7b1965e… (байт-в-байт тот же operation ID, AD-6/AD-11); retained SETTLE пережил цикл WAITING(ac3)/NoNetwork — повторимая ветвь, не карантин, тело не менялось → SIGTERM прокси, точный базлайн маршрута → прямая доставка: сервер ответил сохранённым результатом, квитанция «Completion confirmed by the server» (50%, код 19, skill +1, life 50). Оракул ровно-один: keys 31→31 (второго нет), док мутации один, completedAtMs не изменился, receipts ровно 1, outbox-строка очищена, ровно 1 локальная квитанция, чужие ops uid A не тронуты. Честно: карантинная ветвь SyncError в прогоне не участвует (сбой соединения = класс NoNetwork, обязан быть повторимым — так и было); срез маршрутный; 50% vs 0% в 3.3 — чекпоинт-тайминг. Кода не менялось, гейтов не требуется.
 
 [[story]]
 id = "3.5"
