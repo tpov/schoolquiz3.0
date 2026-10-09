@@ -1,0 +1,6 @@
+mutation_keys total: 28
+{"mut":"_ATTEMPT-3da6a7c31b4dd99d51846a5814ac117b72f3ebc1b","state":"completed","status":"SETTLED","score":0,"code":"11","ticket":"aab909956f","sp":0}
+{"mut":"_ATTEMPT-cf575a94463d638eedc742391001560ff21d7b9bf","state":"completed","status":"SETTLED","score":50,"code":"19","ticket":"f143f023b9","sp":18}
+{"mut":"ACK-attempt-live-o2-20261009191049-1-q3-window-win","state":"completed","ticket":""}
+{"mut":"_RATING-1cdc7ca62621647f61c22cc8473c7f5301b20726b7","state":"completed","status":"APPLIED","ticket":""}
+{"mut":"_ATTEMPT-ce864e51-4259-484c-bb1a-60f41cb60dc5","state":"completed","status":"SETTLED","score":100,"code":"99","ticket":"","sp":31}
