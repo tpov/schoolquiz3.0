@@ -58,7 +58,7 @@ waits = [
   "OQ-7/UX-O6: сам контракт пишется этой историей (contract-map Remaining gates: «…contract before independently built editor/adapters»)",
   "epic-2: delivery foundations for shared serialization — DONE",
 ]
-status = "ready" # контракт-авторинг (документ + закрепляющие тесты) с этого дерева; эпик-предпосылки закрыты
+status = "done" # 2026-10-09: контракт UX-O6 полной редакцией (ux-o6-annotation-contract.md, 8 разделов по чек-листу гейта) + закрепляющие тесты UxO6AnnotationSerializationContractTest (5/5); гейты: question-schema:jvmTest зелёный целиком, functions 92/92 (кросс-языковые фикстуры целы); утверждение владельцем — не deliverable истории (цикл как у 2.9); evidence docs/agents/evidence/2026-10-09-ux-o6-contract/
 
 [[story]]
 id = "4.5"
