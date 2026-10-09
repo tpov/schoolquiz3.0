@@ -1,0 +1,22 @@
+appId: com.tpov.schoolquiz.mvp
+name: Redroid population - sync now
+---
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "HOME QUESTS"
+    timeout: 60000
+- runFlow:
+    when:
+      notVisible: "SYNC NOW"
+    commands:
+      - tapOn: "Open menu"
+- extendedWaitUntil:
+    visible: "SYNC NOW"
+    timeout: 30000
+- tapOn: "SYNC NOW"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 180000
+- assertNotVisible: "Not synced yet"
+- takeScreenshot: "sync-done"

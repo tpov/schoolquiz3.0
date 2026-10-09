@@ -1,0 +1,16 @@
+appId: com.tpov.schoolquiz.mvp
+name: Redroid sync probe
+---
+- extendedWaitUntil:
+    visible: "HOME QUESTS"
+    timeout: 60000
+- runFlow:
+    when:
+      notVisible: "SYNC NOW"
+    commands:
+      - tapOn: "Open menu"
+- tapOn: "SYNC NOW"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 60000
+- takeScreenshot: "sync-probe-result"

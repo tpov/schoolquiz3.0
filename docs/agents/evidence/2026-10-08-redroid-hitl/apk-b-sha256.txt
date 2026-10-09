@@ -1,0 +1,1 @@
+61acb69392d19a11b2947f2dcd8fe1476bed89b445e371b55244ca9229f1fd55  /workspace/projects/schoolquiz3.0/.local/worktrees/night-impl/apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk

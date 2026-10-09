@@ -1,0 +1,17 @@
+appId: com.tpov.schoolquiz.mvp
+name: Redroid sync retry
+---
+- extendedWaitUntil:
+    visible: "HOME QUESTS"
+    timeout: 60000
+- tapOn: "Open menu"
+- extendedWaitUntil:
+    visible: "SYNC NOW"
+    timeout: 30000
+- tapOn:
+    text: "SYNC NOW"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 120000
+- takeScreenshot: "sync-done2"

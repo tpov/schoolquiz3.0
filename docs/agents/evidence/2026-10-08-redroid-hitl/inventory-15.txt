@@ -1,0 +1,35 @@
+# redroid device inventory (story 1.5) — 2026-10-08 23:14 UTC
+
+## device
+container: schoolquiz-emu (redroid/redroid:12.0.0-latest, --memory 1g --memory-swap 3072m, privileged)
+adb serial: 172.17.0.5:5555 (tcp), also emulator-5554 transport
+ro.product.model=redroid12_x86_64
+ro.product.device=redroid_x86_64
+ro.build.version.release=12
+ro.build.version.sdk=31
+ro.build.fingerprint=redroid/redroid_x86_64/redroid_x86_64:12/SP1A.210812.016.C2/eng.frank.20240527.144937:userdebug/test-keys
+ro.hardware=redroid
+ro.serialno=
+display: Physical size: 720x1280 / Physical density: 320
+cpu abilist: x86_64,arm64-v8a,x86,armeabi-v7a,armeabi
+cgroup memory.max: 1073741824 (1 GiB RAM cap per owner decision); memory-swap widened to 3 GiB during the run (lmkd killed the app under swap exhaustion — see README)
+
+## installed app (com.tpov.schoolquiz.mvp)
+    versionCode=1 minSdk=26 targetSdk=35
+    versionName=0.1.0-isolated
+    firstInstallTime=2026-10-08 22:06:07
+    lastUpdateTime=2026-10-08 23:10:48
+apk signing cert (both A and B): 00:33:E7:FA:2C:7E:32:86:5A:5E:99:82:7A:06:8B:EC:76:52:90:4A:A2:76:E1:DB:9C:F4:23:D7:5E:6C:47:D3 (debug keystore /root/.android/debug.keystore, per 2026-10-04 identity)
+
+## Room schema
+AppDatabase version 15 (shared/core/persistence/.../AppDatabase.kt:38, same on A and B); app DB schoolquiz.db present with 28 tables (see population-before-update/)
+
+## role
+rig emulator standing in for device C (ordinary player) of the multi-device runbook; NOT a battle-session device (owner decision 21:55): demo backend only, no production accounts
+
+## GMS / Play
+ABSENT: no GMS, no Play Store (com.google.android.gms / com.android.vending not installed)
+consequence: app runs on Firebase emulators (MVP_EMULATORS=true); Play-dependent paths (Play Integrity App Check, billing) out of scope — recorded as external dependency, not blocking (story 1.5 wording)
+
+## launcher note
+com.android.launcher3 disabled during the run (crash-looped under memory pressure); app driven via am start + Maestro

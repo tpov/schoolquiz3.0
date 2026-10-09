@@ -1,0 +1,50 @@
+appId: com.tpov.schoolquiz.mvp
+name: Redroid complete lesson on B
+---
+- extendedWaitUntil:
+    visible: "HOME QUESTS"
+    timeout: 60000
+- tapOn: "MVP validated checks"
+- extendedWaitUntil:
+    visible: "MVP smoke course"
+    timeout: 30000
+- tapOn: "MVP smoke course"
+- extendedWaitUntil:
+    visible: "MVP section"
+    timeout: 30000
+- tapOn: "MVP section"
+- extendedWaitUntil:
+    visible: "MVP theme"
+    timeout: 30000
+- tapOn: "MVP theme"
+- extendedWaitUntil:
+    visible: "MVP quick lesson"
+    timeout: 30000
+- tapOn: "MVP quick lesson"
+- runFlow:
+    when:
+      visible: "GOT IT"
+    commands:
+      - tapOn: "GOT IT"
+- extendedWaitUntil:
+    visible: "val"
+    timeout: 45000
+- tapOn: "val"
+- extendedWaitUntil:
+    visible: "CORRECT"
+    timeout: 20000
+- tapOn:
+    point: 360x600
+- extendedWaitUntil:
+    visible: "val"
+    timeout: 45000
+- tapOn: "val"
+- extendedWaitUntil:
+    visible: "CORRECT"
+    timeout: 20000
+- tapOn:
+    point: 360x600
+- extendedWaitUntil:
+    visible: "LESSON COMPLETE"
+    timeout: 45000
+- takeScreenshot: "lesson2-complete"

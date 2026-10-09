@@ -26,8 +26,8 @@ slug = "install-over-populated-device"
 title = "Install the candidate over the populated Samsung installation; content, history, authentication, installation identity and pending operations retained (CAP-20)"
 covers = ["CAP-20"]
 after = [{ story = "1.1", needs = "restored demo backend" }, { story = "1.2", needs = "identified candidate APK" }]
-hitl = true # physical Samsung RF8W80MBR3Z, USB to the owner's Mac only
-status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch (device not visible to server ADB, docs/agents/2026-10-04-epic1-rig-run.json); 2026-10-08 evening attempt per owner decision #2: adb devices empty after server restart, no reverse-forward sockets — still blocked (docs/agents/evidence/2026-10-08-hitl-device-attempt/)
+hitl = true # physical Samsung RF8W80MBR3Z, USB to the owner's Mac only; 2026-10-08/09 выполнено на redroid-риге по решению владельца 21:55 (физическое устройство недоступно): эмулятор заменяет устройство, demo backend only, ничего аккаунтного
+status = "done" # 2026-10-09: кандидат B (sha256 61acb693…, тот же debug-сертификат) поставлен install -r поверх населённого A; контент, история (попытки/ответы/повторения), аутентификация (тот же anonymous uid), identity установки (firstInstallTime) и незавершённые операции (outbox-оп 6856201c, payload побайтово идентичен) удержаны — построчное сравнение трёх снапшотов в evidence; evidence docs/agents/evidence/2026-10-08-redroid-hitl/ + docs/agents/evidence/2026-10-09-update-over-populated-journey/
 
 [[story]]
 id = "1.4"
@@ -43,8 +43,8 @@ slug = "device-inventory"
 title = "Device inventory (serial, Android, app, signature, DB schema, role, GMS/Play); missing settings recorded as external dependencies, not blocking"
 covers = ["CAP-20"]
 after = []
-hitl = true # requires the physical devices
-status = "blocked" # NOT RUN in the 2026-10-04 server-side dispatch (docs/agents/2026-10-04-epic1-rig-run.json); 2026-10-08 evening attempt per owner decision #2: adb devices empty, no reverse-forward sockets — still blocked (docs/agents/evidence/2026-10-08-hitl-device-attempt/)
+hitl = true # requires the physical devices; 2026-10-08/09 снято на redroid-риге по решению владельца 21:55
+status = "done" # 2026-10-09: inventory-15.txt — redroid12_x86_64, Android 12 (SDK 31), com.tpov.schoolquiz.mvp 0.1.0-isolated vc1, debug-сертификат 00:33:E7:FA…, Room v15 (30 таблиц), роль = устройство C (обычный игрок), GMS/Play отсутствуют — Play-зависимые пути записаны как внешняя зависимость, не блокирует (по формулировке истории); evidence docs/agents/evidence/2026-10-08-redroid-hitl/
 
 [[story]]
 id = "1.6"
