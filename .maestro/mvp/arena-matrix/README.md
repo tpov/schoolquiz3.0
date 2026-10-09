@@ -62,6 +62,20 @@ The test uses an artificial loopback HTTP server. It exercises exact matching, o
 under a concurrent retry, successful-response loss, pass-through traffic, non-success handling,
 private artifacts, and invalid configuration. It does not change Firebase or an Android device.
 
+### Server-half fault run (no device)
+
+`submit-drop-server-fault-run.js` proves the same injected condition against the demo backend
+without a device: a scripted callable client (fixture player from `scripts/demo-fixtures/`) sends
+one `lesson_runner.SUBMIT_ATTEMPT` through the proxy to a host functions emulator wired to the
+demo backend, and then requires, in order: the connection dropped after a complete successful
+upstream response, `mutation_keys` completed on the server with exactly one receipt, a direct
+retry with the same mutation ID answered as `{replayed: true}` with no second effect, a second
+proxied attempt closed locally, and a final audit status of
+`UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED`. It is a transport/idempotency proof: the
+arena-ticketed variant of this row (prepare → RESERVED → SETTLE with royalty) remains device
+work. Run it with the demo project and emulator hosts in the environment and one absolute
+private 0700 parent directory as the only argument.
+
 ## Pending SETTLE Room reader
 
 `scripts/arena-e2e-pending-settlement-reader.js` is a read-only local proof helper for a future

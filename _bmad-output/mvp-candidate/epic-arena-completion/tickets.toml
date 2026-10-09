@@ -43,11 +43,11 @@ title = "Arena matrix fault/fixture rig: controlled demo proxy drops submitMutat
 covers = ["CAP-7", "CAP-8"]
 after = [{ epic = 1, needs = "restored demo backend and demo accounts/fixtures" }]
 waits = [
-  "epic-1: restored backend — DONE (1.1); fixtures manifest home (plan §2 Шаг 4: недостающие роли/банки — отдельные demo-фикстуры с манифестом) — манифест ещё не существует",
+  "epic-1: restored backend — DONE (1.1); fixtures manifest home — DONE 09.10 (scripts/demo-fixtures/manifest.json, серверная половина этой истории)",
   "hitl: real-offline requires the physical device (network cut with control retained)",
 ]
 hitl = true
-status = "blocked" # смешанная история. СЕРВЕРНАЯ ПОЛОВИНА (прокси submit-mutation-drop-proxy.js к demo-backend + demo fixtures manifest ролей/банков) диспетчируема с этого дерева и является предпосылкой 3.11; если выполняется раньше устройства, фиксируется как server-half progress в evidence, история остаётся открытой до device-половины. Device-половина (real-offline) — hitl: устройство не видно (docs/agents/evidence/2026-10-08-hitl-device-attempt/); прокси-скрипт существует, fault-run не выполнялся
+status = "blocked" # смешанная история. СЕРВЕРНАЯ ПОЛОВИНА ВЫПОЛНЕНА 09.10 (evidence docs/agents/evidence/2026-10-09-arena-fault-rig/): (a) манифест демо-фикстур scripts/demo-fixtures/ — роли (закреплённые экспорт-era авторы + засеянные куратор/игроки), два банка на ценах 1 и 100, ноль перезаписей, проверка продакшн-юниверсом (предпосылка 3.11 СОЗДАНА); (b) прокси привязан к demo-backend: хостовый functions-эмулятор + скриптованный клиент, дроп после полного upstream-ACK доказан (аудит UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED), прямой повтор того же mutationId отвечен {replayed:true} без второго эффекта, точный повтор через прокси блокируется локально. Device-половина (real-offline + тикет RESERVED→SETTLE; ARENA_TICKET_REQUIRED воспроизведён честным отказом) — hitl; история остаётся открытой до неё
 
 [[story]]
 id = "3.4"
