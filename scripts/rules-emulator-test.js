@@ -616,6 +616,87 @@ async function testAuthoringViewsPrivacy() {
 }
 
 /**
+ * Приватность покупочного контура (AD-18, эпик 7, история 7.7).
+ *
+ * Целостность покупки держится на серверной бухгалтерии, которую клиент не должен ни читать
+ * (чужие покупки/возвраты), ни тем более писать (отметить token погашенным, подделать receipt,
+ * снять permanent fence, исказить audit). Grant следует только за авторизованной серверной
+ * верификацией, поэтому всё это закрыто даже от владельца и администратора. Единственная
+ * клиент-читаемая часть — собственные `users/{uid}/receipts` (как «вам начислено 60 золота»
+ * доходит до устройства); запись туда закрыта всем, включая владельца.
+ *
+ * Как и в блоке `question_keys` выше: deny-проверка слепа к удалению правила, поэтому для
+ * полностью закрытых коллекций рядом стоит текстовое закрепление явного блока.
+ */
+async function testPurchaseIntegrityPrivacy() {
+  // Settlements: один документ на token; чтение выдало бы чужие покупки, запись позволила бы
+  // объявить token погашенным (или вернуть к погашению) рукой.
+  await deny("purchase_settlements: игрок не читает", () =>
+    db("player").doc("purchase_settlements/settle-1").get());
+  await deny("purchase_settlements: админ не читает", () =>
+    db("admin").doc("purchase_settlements/settle-1").get());
+  await deny("purchase_settlements: игрок не пишет", () =>
+    db("player").doc("purchase_settlements/settle-1").set({state: "SETTLED"}));
+
+  // Permanent token fence: ни владелец, ни «администрация» не читают и не снимают.
+  await deny("purchase_revocations: игрок не читает fence", () =>
+    db("player").doc("purchase_revocations/tok-1").get());
+  await deny("purchase_revocations: админ не читает fence", () =>
+    db("admin").doc("purchase_revocations/tok-1").get());
+  await deny("purchase_revocations: админ не снимает fence", () =>
+    db("admin").doc("purchase_revocations/tok-1").set({revoked: false}));
+  await deny("purchase_revocations: игрок не пишет fence", () =>
+    db("player").doc("purchase_revocations/tok-2").set({revoked: true}));
+
+  // Audit: кто, что и по какой версии таблицы получил — только сервер/консоль оператора.
+  await deny("purchase_audit: игрок не читает", () =>
+    db("player").doc("purchase_audit/audit-1").get());
+  await deny("purchase_audit: игрок не пишет", () =>
+    db("player").doc("purchase_audit/audit-1").set({nolics: 100}));
+
+  // Premium-лоты: происхождение и остатки конкретных grants.
+  await deny("premium_accounts: владелец не читает лоты", () =>
+    db("player").doc("premium_accounts/player").get());
+  await deny("premium_accounts: админ не пишет", () =>
+    db("admin").doc("premium_accounts/player").set({premiumUntilMs: 9e15}));
+
+  // RTDN-бухгалтерия: пометка «сообщение обработано» не ставится рукой.
+  await deny("purchase_notifications: игрок не читает", () =>
+    db("player").doc("purchase_notifications/msg-1").get());
+  await deny("purchase_notifications: игрок не помечает обработанным", () =>
+    db("player").doc("purchase_notifications/msg-1").set({handled: true}));
+
+  // Receipts: владелец читает свои, чужой и гость — нет; пишет только сервер.
+  await allow("receipts: владелец читает свой", () =>
+    db("player").doc("users/player/receipts/r-1").get());
+  await deny("receipts: чужой не читает", () =>
+    db("outsider").doc("users/player/receipts/r-1").get());
+  await deny("receipts: гость не читает", () =>
+    db("guest").doc("users/player/receipts/r-1").get());
+  await deny("receipts: владелец не пишет себе квитанцию", () =>
+    db("player").doc("users/player/receipts/r-2").set({gold: 1000}));
+
+  // Текстовое закрепление явных блоков закрытия.
+  const rulesText = fs.readFileSync(RULES_PATH, "utf8");
+  const closedBlocks = [
+    ["purchase_settlements", "match /purchase_settlements/{settlementId}"],
+    ["purchase_revocations", "match /purchase_revocations/{document=**}"],
+    ["purchase_notifications", "match /purchase_notifications/{messageId}"],
+    ["purchase_audit", "match /purchase_audit/{auditId}"],
+    ["premium_accounts", "match /premium_accounts/{document=**}"],
+  ];
+  for (const [name, marker] of closedBlocks) {
+    const at = rulesText.indexOf(marker);
+    const block = at < 0 ? "" : rulesText.slice(at, at + 800);
+    results.push({
+      label: `${name}: явный отказ присутствует в тексте правил`,
+      ok: at >= 0 && block.includes("allow read, write: if false;"),
+      error: `в firestore.rules нет явного блока закрытия ${name} (AD-18: покупочная бухгалтерия не для клиента)`,
+    });
+  }
+}
+
+/**
  * users/{uid}/devices/{token} — адреса доставки push (Story 10.1, AD-20).
  *
  * Владелец пишет и удаляет только свои: чужой токен иначе можно было бы подменить и увести чужие
@@ -672,6 +753,7 @@ async function main() {
   await testReportsAndBans();
   await testServerOnlyCollections();
   await testAuthoringViewsPrivacy();
+  await testPurchaseIntegrityPrivacy();
 
   await testEnv.cleanup();
 

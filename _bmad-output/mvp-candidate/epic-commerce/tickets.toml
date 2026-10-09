@@ -97,7 +97,7 @@ after = [{ epic = 2, needs = "wallet/receipt foundations" }]
 waits = [
   "epic-2: economy/receipt foundations — DONE (2.4/2.8/2.12)",
 ]
-status = "ready" # server/node-часть целиком с этого дерева (node/rules tests против demo-backend); sandbox-подтверждение — 7.6 (внешнее), на 7.7 не влияет
+status = "done" # 2026-10-09: покупочный серверный контур аудирован против AD-18 по всем 8 пунктам чек-листа (существует с эпохальных коммитов c5895b65/fcf9c2bf/c7742584, закреплён своими тестами); дозаполнен rules-контур приватности: +22 проверки purchase_*/receipts + текстовые якоря 5 блоков закрытия (4.2-паттерн); гейты: rules 193/193 (171+22), functions 92/92 без env и 92/92 против demo-backend; sandbox-подтверждение реальным Play-платежом остаётся за 7.6 (внешнее); evidence docs/agents/evidence/2026-10-09-purchase-provenance/
 
 [[story]]
 id = "7.8"
