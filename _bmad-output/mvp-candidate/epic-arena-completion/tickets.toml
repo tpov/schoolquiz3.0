@@ -161,4 +161,4 @@ waits = [
   "epic-1: restored backend — DONE (1.1); fixtures; server worker capability runs via demo controlled ticks (AD-23)",
   "3.11: conserving price/rating calculation",
 ]
-status = "blocked" # server/node-часть, но after 3.11 (та же цепочка фикстур); существующие arena-season-finalization.js / arena-season-worker.js — база, их статус не проверялся в этом прогоне
+status = "done" # 2026-10-09: node/server-часть аудирована по чек-листу — всё существовало (включая resumable-ревизию 99091eb5) и закреплено в реестре раннера: UTC-квартал (service:352 + policy Q1/Q2), 19/20 различных прошлых → no winner без наград (service:385), tie-break правила (policy:192), resumable PENDING→PUBLISHED + воркер-курсор/lease/батчи>501 (service:401, worker.test:68-114), конкурентная финализация SEASON_ALREADY_FINALIZING/MUTATION_REUSE/CURATOR_REQUIRED, опубликованный результат иммутабелен (repeat deepEqual, одна ledger-строка arena_season, boxCount 50 точно); гейт functions 92/92 (утро 09.10, functions/ не менялась); демо-засев сезонного состояния — при device/worker-строках с управляемыми тиками; evidence docs/agents/evidence/2026-10-09-arena-season/

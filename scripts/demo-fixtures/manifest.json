@@ -37,7 +37,7 @@
       "uid": "demoarena_player_a",
       "seeded": true,
       "auth": {"displayName": "demo arena fixture player A"},
-      "profile": null,
+      "profile": {"doc": "profiles/demoarena_player_a", "fields": {}},
       "economy": {"doc": "users/demoarena_player_a", "fields": {"gold": 100000}},
       "purpose": "ordinary player, device A owner; initial balance covers price-100 entries and repeated price-1 rows"
     },
@@ -46,9 +46,9 @@
       "uid": "demoarena_player_b",
       "seeded": true,
       "auth": {"displayName": "demo arena fixture player B"},
-      "profile": null,
+      "profile": {"doc": "profiles/demoarena_player_b", "fields": {}},
       "economy": {"doc": "users/demoarena_player_b", "fields": {"gold": 100000}},
-      "purpose": "second owner for A->B->A switch and two-device rows (3.9/3.10)"
+      "purpose": "second owner for A->B->A switch and two-device rows (3.9/3.10); profiles exist because submitMutation requires a trusted profile for every caller (requireProfile)"
     }
   ],
   "banks": [
@@ -110,8 +110,8 @@
   },
   "universeBaseline": "The demo backend carries a 15-row arena universe of export-era fixtures (four ac_* chains, aeu_* targets, one lesson-UUID bank) beyond the two manifest banks. Prices are relative over the whole universe: the verifier pins bank-low at price 1 (the 2-star 42/21 score ties with unrated 40/20 rows at the bottom level, which is legitimate) and bank-high as the sole price-100 row; any future fixture that breaks an extreme fails verification instead of silently invalidating the conservation rows.",
   "seasonFixtures": {
-    "status": "deferred to 3.12",
-    "note": "arena_seasons / quarter clock / 19-20 distinct pasts are 3.12 scope (§4 season fixtures); this manifest does not seed them"
+    "status": "node-side verified 2026-10-09 (story 3.12, evidence docs/agents/evidence/2026-10-09-arena-season/); demo seeding still deferred",
+    "note": "arena_seasons / quarter clock / 19-20 distinct pasts are proven by the runner-registry suites with synthetic actors; seeding season state into the demo backend is only needed for device/worker rows with controlled ticks and happens when those rows are dispatched"
   },
   "seeding": {
     "command": "FIRESTORE_EMULATOR_HOST=127.0.0.1:18090 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:19090 GCLOUD_PROJECT=demo-schoolquiz-mvp node scripts/demo-fixtures/seed-demo-fixtures.js",
