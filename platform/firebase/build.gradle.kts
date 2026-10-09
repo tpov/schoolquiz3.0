@@ -64,6 +64,9 @@ dependencies {
     implementation(libs.play.services.basement)
     testImplementation(libs.junit4)
     testImplementation(libs.mockk)
+    // Сомкнутая проверка demo-фабрики App Check: рефлексия инициализатора обязана находить
+    // провайдера, когда он на класспасе (в mvp-сборку его добавляет mvpImplementation).
+    testImplementation(libs.firebase.appcheck.debug)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotlinx.datetime)
     // Сквозные проверки идут от брошенного исключения SDK до снимка состояния синхронизации, то

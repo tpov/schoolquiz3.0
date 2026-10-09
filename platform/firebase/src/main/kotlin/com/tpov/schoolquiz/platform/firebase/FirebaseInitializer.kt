@@ -29,7 +29,14 @@ fun initializeFirebaseSecurity(
         FirebaseFunctions.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FUNCTIONS)
         FirebaseDatabase.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.DATABASE)
         FirebaseStorage.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.STORAGE)
-        // App Check/Integrity has no local emulator. The demo never contacts its live service.
+        // App Check/Integrity has no local emulator, and the demo never contacts its live
+        // service. Но вызываемая функция склеивает App Check-задачу с auth-токеном в один whenAll
+        // (FirebaseContextProvider.getContext), поэтому без установленной фабрики любой callable
+        // падает до сети — «1 out of 2 underlying tasks failed». Debug-провайдер отвечает
+        // локально и существует только в demo-сборке (mvpImplementation).
+        debugAppCheckProviderFactoryOrNull()?.let {
+            FirebaseAppCheck.getInstance(firebaseApp).installAppCheckProviderFactory(it)
+        }
         return
     }
     val providerFactory =
@@ -54,7 +61,7 @@ private object MvpEmulatorPorts {
     const val STORAGE = 9199
 }
 
-private fun debugAppCheckProviderFactoryOrNull(): AppCheckProviderFactory? =
+internal fun debugAppCheckProviderFactoryOrNull(): AppCheckProviderFactory? =
     runCatching {
         Class
             .forName("com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory")

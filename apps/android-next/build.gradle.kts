@@ -159,6 +159,10 @@ dependencies {
     testImplementation(libs.androidx.room.runtime)
     testImplementation(libs.mockito.core)
     testImplementation(project(":shared:core:stats"))
+    // Debug App Check только в mvp/demo-сборке: без установленной фабрики callable падает до
+    // сети («1 out of 2 underlying tasks failed») — platform/firebase находит провайдера
+    // рефлексией по класспасу.
+    add("mvpImplementation", libs.firebase.appcheck.debug)
     testImplementation(project(":shared:core:question-schema"))
     testImplementation(project(":shared:feature:lesson-runner:domain"))
     testImplementation(project(":android:feature:lesson-runner:presentation"))
