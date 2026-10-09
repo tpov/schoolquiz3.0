@@ -147,9 +147,9 @@ title = "Prices and ratings use the full eligible set (no truncated page) with f
 covers = ["CAP-9"]
 after = [{ epic = 1, needs = "restored backend and demo fixtures with roles/banks" }]
 waits = [
-  "epic-1: demo fixtures manifest for roles/banks — НЕ СУЩЕСТВУЕТ; создаётся серверной половиной 3.3 (plan §2 Шаг 4)",
+  "epic-1: demo fixtures manifest for roles/banks — DONE 09.10 (scripts/demo-fixtures/, серверная половина 3.3)",
 ]
-status = "blocked" # устройства не требует (server/node-часть проверяема на VPS; UI-подтверждение входит в 3.1/3.6), но манифест фикстур ролей/банков отсутствует — путь: server half 3.3 → 3.11
+status = "done" # 2026-10-09: консервационный контур аудирован по всем пунктам чек-листа — всё существовало и уже закреплено в реестре раннера: полный набор без усечения (universe fail-closed UNIVERSE_TOO_LARGE, arena-eligible-universe.test.js:71), цены 1/100 (arena-policy.test.js:101-123 + ЖИВАЯ привязка: банки манифеста держат 1 и 100 в 15-строчном юниверсе демо — verify-demo-fixtures), 5×1→автор 4 (arena-policy.test.js:211 пятинный escrow + arena-entry-runtime.test.js:132 путь оседания), доли консервированы на разбиениях/MAX_SAFE_INTEGER (:231), повтор без второго эффекта (runtime :111/:166 already-exists + транспортный replay-пруф 3.3b); гейты: functions 92/92 (утро 09.10, консервационные сюиты в составе); evidence docs/agents/evidence/2026-10-09-arena-conservation/
 
 [[story]]
 id = "3.12"
