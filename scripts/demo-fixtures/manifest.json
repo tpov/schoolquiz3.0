@@ -65,9 +65,9 @@
         "reviewSubmissionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_submission_0",
         "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT"
       },
-      "rating": {"ratingSum": 2, "ratingCount": 1, "ratingVersion": 1, "seeded": false},
+      "rating": {"ratingSum": 4, "ratingCount": 2, "ratingVersion": 2, "seeded": false},
       "expectedPriceNolics": 1,
-      "expectedWeightedScore": "42/21 (rating 2/1 + Bayesian prior 40/20) — pinned export-era rating, the universe minimum",
+      "expectedWeightedScore": "44/22 (rating 4/2 + Bayesian prior 40/20) — the universe minimum; export-era 2/1 plus the app's own RATE_LESSON 2★ of hitl 3.1 (receipt lesson_runner-SUBMIT_RATING-1cdc7ca6…, evidence 2026-10-09-hitl-rig-matrix/31-arena-first-pass): fraction 2.0 unchanged, price stays 1",
       "purpose": "lowest-rated bank -> price 1; the five-payments-of-1 conservation row (author nets 4 total at 80/20)"
     },
     {
@@ -89,6 +89,47 @@
       "purpose": "highest-rated bank -> price 100 (two-level universe: level 1 of 2 maps to 1+99)"
     }
   ],
+  "easyBank": {
+    "id": "arena-bank-easy",
+    "story": "3.5 (real offline from prepared stock: EASY+HARD)",
+    "run": "demoarena_easy1",
+    "lessonId": "demoarena_easy1_lesson_1",
+    "title": "Demo easy fixture 1",
+    "authorRole": "author-low",
+    "lessonVersion": 1,
+    "reviewSubmissionId": "demoarena_easy1_submission_0",
+    "seededAtMs": 1791590400000,
+    "rating": {"ratingSum": 2, "ratingCount": 1, "ratingVersion": 1},
+    "expectedPriceNolics": 1,
+    "expectedWeightedScore": "42/21 — ties the minimum level with arena-bank-low (2.0), so the 1/100 extremums stay pinned",
+    "purpose": "the only EASY-capable bank in the universe (every ac_*/aeu_* bank is HARD-only and arena loadEntry refuses NO_QUESTIONS_FOR_DIFFICULTY otherwise); questions follow the mvp-smoke EASY SingleChoice schema — full content served to the client, FULL_CONTENT grading key server-side",
+    "questions": [
+      {
+        "questionId": "demoarena_easy1_question_0",
+        "order": 0,
+        "text": "Which keyword declares a read-only binding?",
+        "options": [
+          {"id": "a", "text": "var"},
+          {"id": "b", "text": "val"},
+          {"id": "c", "text": "lateinit"}
+        ],
+        "correctOptionId": "b",
+        "info": "val is the read-only one"
+      },
+      {
+        "questionId": "demoarena_easy1_question_1",
+        "order": 1,
+        "text": "Which keyword declares a mutable binding?",
+        "options": [
+          {"id": "a", "text": "var"},
+          {"id": "b", "text": "val"},
+          {"id": "c", "text": "lateinit"}
+        ],
+        "correctOptionId": "a",
+        "info": "var is the mutable one"
+      }
+    ]
+  },
   "pinnedPreconditions": [
     {"doc": "lessons/{lessonId}", "verified": "version == chain.lessonVersion, themeId == chain.themeId, no archived flag", "written": false},
     {"doc": "quests/{questId}", "verified": "authorUid == chain.authorUid, catalogId == chain.catalogId (chain export-era docs; archived state irrelevant to the lesson context loader)", "written": false},
@@ -102,7 +143,7 @@
     {"doc": "lesson_ratings/{lessonId}", "fields": {"ratingSum": "{rating.ratingSum}", "ratingCount": "{rating.ratingCount}", "ratingVersion": "{rating.ratingVersion}", "seededOnly": "created only when rating.seeded is true; otherwise a pinned precondition (bank-low carries its export-era 2-star rating)"}}
   ],
   "pinnedPreconditionsExtra": [
-    {"doc": "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1", "verified": "ratingSum 2, ratingCount 1, ratingVersion 1, authorUid D0h0rHZGJVoU22cADZV8yb2lz1KT (export-era 2-star rating; the universe minimum)"}
+    {"doc": "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1", "verified": "ratingSum 4, ratingCount 2, ratingVersion 2, authorUid D0h0rHZGJVoU22cADZV8yb2lz1KT (export-era 2/1 advanced to 4/2 by the app's own RATE_LESSON 2★ of hitl 3.1; fraction 2.0 = the universe minimum)"}
   ],
   "chainFacts": {
     "loadArenaLessonContext": "lessons/{id} -> themes/{themeId}.sectionId -> sections/{sectionId}.questId -> quests/{questId}.authorUid/catalogId -> catalogs/{catalogId}.questType (REGULAR); reviewApproved requires admin review status PUBLISHED with ownerUid/questId/submissionId matching and lessonPassed over accepted records (TESTING and LOGIC both >= 2; sourceLanguages satisfied by the source language itself)",

@@ -161,9 +161,65 @@ async function seedBank(bank) {
   await seedRating(bank);
 }
 
+// EASY-банк (история 3.5): полная seeded-цепочка demoarena_easy1_* — единственный в юниверсе
+// урок с EASY-вопросами (ac_*/aeu_* банки несут только HARD, и loadEntry отказывает
+// NO_QUESTIONS_FOR_DIFFICULTY). Схема вопросов — как у дымовых EASY-уроков (SingleChoice с
+// полным содержимым); серверно EASY получает ключ FULL_CONTENT. Рейтинг 2/1 = 42/21 делит
+// нижний уровень шкалы с arena-bank-low, поэтому цены 1/100 не сдвигаются.
+async function seedEasyBank(easy) {
+  const run = easy.run;
+  const authorUid = manifest.roles.find((role) => role.id === easy.authorRole).uid;
+  const curatorUid = manifest.roles.find((role) => role.id === "curator-m").uid;
+  const chain = {
+    catalog: `${run}_catalog`,
+    quest: `${run}_quest`,
+    section: `${run}_section`,
+    theme: `${run}_theme`,
+    lesson: easy.lessonId,
+  };
+  await assertPinnedAuthUser(authorUid);
+  await assertOrCreateDoc(`catalogs/${chain.catalog}`, {questType: "REGULAR", version: 1, syntheticCatalogRun: run});
+  await assertOrCreateDoc(`quests/${chain.quest}`, {
+    catalogId: chain.catalog, authorUid, version: 1, syntheticCatalogRun: run,
+  });
+  await assertOrCreateDoc(`sections/${chain.section}`, {questId: chain.quest, version: 1, syntheticCatalogRun: run});
+  await assertOrCreateDoc(`themes/${chain.theme}`, {sectionId: chain.section, version: 1, syntheticCatalogRun: run});
+  await assertOrCreateDoc(`lessons/${chain.lesson}`, {
+    themeId: chain.theme, title: easy.title, version: easy.lessonVersion,
+    reviewSubmissionId: easy.reviewSubmissionId,
+    reviewApprovedAtMs: easy.seededAtMs, publishedAtMs: easy.seededAtMs,
+    syntheticCatalogRun: run,
+  });
+  for (const question of easy.questions) {
+    const payload = JSON.stringify({
+      type: "SingleChoice", text: question.text, imageUrl: null,
+      options: question.options, correctOptionId: question.correctOptionId,
+      info: question.info, difficulty: "EASY", id: question.questionId,
+    });
+    await assertOrCreateDoc(`questions/${question.questionId}`, {
+      version: 1, archived: false, id: question.questionId, lessonId: chain.lesson,
+      text: question.text, difficulty: "EASY", language: "en", languageLevel: 0,
+      order: question.order, payload,
+    });
+  }
+  for (const [docPath, fields] of bankRowSpecs({
+    chain: {
+      authorUid, questId: chain.quest, lessonVersion: easy.lessonVersion,
+      reviewSubmissionId: easy.reviewSubmissionId, lessonId: chain.lesson,
+    },
+    lessonId: chain.lesson,
+  })) await assertOrCreateDoc(docPath, fields);
+  await assertOrCreateDoc(`lesson_ratings/${chain.lesson}`, {
+    lessonId: chain.lesson, authorUid,
+    ratingSum: easy.rating.ratingSum, ratingCount: easy.rating.ratingCount,
+    ratingVersion: easy.rating.ratingVersion,
+  });
+}
+
 (async () => {
   for (const role of manifest.roles) await seedRole(role);
   for (const bank of manifest.banks) await seedBank(bank);
+  if (manifest.easyBank) await seedEasyBank(manifest.easyBank);
   console.log(`demo fixtures: created ${created.length}, verified ${verified.length}`);
   for (const item of created) console.log("  created", item);
   for (const item of verified) console.log("  verified", item);

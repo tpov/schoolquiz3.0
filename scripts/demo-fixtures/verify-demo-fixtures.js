@@ -79,6 +79,45 @@ const {createArenaEligibleUniverse} = require(path.join(functionsDir, "arena-eli
   const byPrice = new Map(universe.rows.map((row) => [row.priceNolics, row.lessonId]));
   assert.equal(byPrice.get(100), expected.find((want) => want.priceNolics === 100).lessonId,
     "bank-high must be the maximum-priced row (price 100)");
+
+  if (manifest.easyBank) {
+    const easy = manifest.easyBank;
+    const authorUid = manifest.roles.find((role) => role.id === easy.authorRole).uid;
+    const row = byLesson.get(easy.lessonId);
+    assert.ok(row, `easy bank ${easy.lessonId} is not arena-eligible`);
+    assert.equal(row.priceNolics, easy.expectedPriceNolics, "easy bank price");
+    assert.equal(row.authorUid, authorUid, "easy bank author");
+    assert.equal(row.contentVersion, easy.lessonVersion, "easy bank contentVersion");
+    // Производственный контекст (тем же загрузчиком, которым сервер считает элигибельность):
+    // урок опубликован, одобрен ревью и принадлежит REGULAR-каталогу.
+    const context = await db.runTransaction(async (transaction) =>
+      loadArenaLessonContext(transaction, easy.lessonId), {readOnly: true});
+    assert.ok(context, "easy bank lesson context missing");
+    assert.equal(context.authorUid, authorUid, "easy bank context author");
+    assert.equal(context.questType, "REGULAR", "easy bank context quest type");
+    assert.equal(context.published, true, "easy bank context must be published");
+    assert.equal(context.reviewApproved, true, "easy bank context must be review-approved");
+    assert.equal(context.contentVersion, easy.lessonVersion, "easy bank context version");
+    // EASY-банк обязан нести EASY-вопросы с редактируемым полным содержимым — ровно то,
+    // чего лишён каждый ac_*/aeu_* банк (там loadEntry отказывает NO_QUESTIONS_FOR_DIFFICULTY).
+    const questionSnapshot = await db.collection("questions")
+      .where("lessonId", "==", easy.lessonId).get();
+    const questionDocs = questionSnapshot.docs.map((doc) => doc.data() || {});
+    const {redact, STATUS} = require(path.join(functionsDir, "question-redaction.js"));
+    assert.equal(questionDocs.length, easy.questions.length, "easy bank question count");
+    for (const [index, want] of easy.questions.entries()) {
+      const doc = questionDocs.find((q) => q.id === want.questionId);
+      assert.ok(doc, `easy bank question ${want.questionId} missing`);
+      assert.equal(doc.difficulty, "EASY", `easy bank question ${want.questionId} difficulty`);
+      assert.equal(doc.order, index, `easy bank question ${want.questionId} order`);
+      const split = redact(String(doc.payload), "EASY", {questionId: want.questionId});
+      assert.equal(split.status, STATUS.REDACTED, `easy bank question ${want.questionId} redaction`);
+      assert.equal(JSON.parse(split.publicPayload).correctOptionId, undefined,
+        `easy bank question ${want.questionId} public half must not leak the grading key`);
+    }
+    console.log(`VERIFIED: easy bank ${easy.lessonId} is eligible at price ${row.priceNolics}, ` +
+      `review-approved, with ${easy.questions.length} EASY redactable question(s)`);
+  }
   console.log("VERIFIED: arena banks hold prices 1 and 100 exactly as the manifest expects");
 })().catch((error) => {
   console.error("demo fixtures verification failed:", error.message);
