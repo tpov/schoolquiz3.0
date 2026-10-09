@@ -1,0 +1,143 @@
+{
+  "atIso": "2026-10-09T23:26:38.742Z",
+  "documentWrites": 0,
+  "user": {
+    "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+    "nickname": "UserYF9FS9",
+    "nolics": 5,
+    "reservedNolics": 0,
+    "skillPoints": 98,
+    "lifePoints": 401,
+    "reservedLifePoints": 0
+  },
+  "TICKETS_COUNT": 6,
+  "tickets": [
+    {
+      "id": "8374ce0dae87dd0036710778a7c2cfe8605730571c73c562450ad85c3e478180",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "151497c7ba30b07d15852747b64d3357eddd6068013d109d0115599e8c939990",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "8cec4267b9d3fbc746ab77accc4bedb061dbc4f6289a9a6f395bd296ff68abc9",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "c9a8ee137848214ede938973582d5b2cffa79231a2477cac0419bd81164b647a",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "aab909956f75aeeb31397578683c7e14e0dc202053a8978c8a2aacec614ac751",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "3da6a7c31b4dd99d51846a5814ac117b72f3ebc1ba75b28c054574b5e1177c6b",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "c4848342091c86edd53d0e57cf3d9faf97ff6ddfd410c346910d3098835d51ab",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "4f8a9361039387b5906586726b102e2240c1de6599510c7a8f64392df2f062f1",
+        "percentScore": 50,
+        "consumedNolics": 0,
+        "consumedLifePoints": 50
+      },
+      "mode": "RANDOM",
+      "difficulty": "HARD",
+      "priceNolics": 0,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "cf55e0ecec2c44da0991f1ed7c574d40e02722fe582abb7b5d45ae26a0517708",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "1e6b742f737f5c6c4b957d1782048d1327536354621f7c3d3c872aafeaf43cf6",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "f143f023b9b6e12c227cf79e07f9b19759a7d6a2db70eb2ea99bbf6f96975d69",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "cf575a94463d638eedc742391001560ff21d7b9bf2b5e1b25647f529d3b29079",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    }
+  ],
+  "MUTATION_KEYS_COUNT": 34,
+  "RATE_LESSON_RECORDS": [
+    {
+      "docIdPrefix": "6d55d2d3da0e",
+      "mutationId": "lesson_runner-SUBMIT_RATING-1cdc7ca62621647f61c22cc8473c7f5301b20726b71d9d7793cf98634227835d",
+      "receiptOperation": "RATE_LESSON",
+      "status": "APPLIED",
+      "payloadHash": "d615622efe1244539ad1537a5f8cf9e0d8411e0a2999244240a5a1d72ef7bcd2",
+      "decidedAtMs": 1791573737962,
+      "innerResult": {
+        "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+        "ratingId": "arena-rating:a15faf09cb48755608270bf7105f8d3052a67ccdc05b5a39d892b20fe886d7da",
+        "acceptedAtMs": 1791573737962,
+        "replacesLatest": true,
+        "seasonId": "2026-Q4",
+        "aggregate": {
+          "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+          "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+          "ratingSum": 4,
+          "ratingCount": 2,
+          "weightedScore": {
+            "numerator": 44,
+            "denominator": 22
+          },
+          "averageRating": 2,
+          "ratingVersion": 2,
+          "ratingUpdatedAtMs": 1791573737962
+        }
+      },
+      "wrapperAccepted": 1,
+      "completedAtMs": 1791573738240,
+      "replayed": null
+    }
+  ],
+  "RATE_LESSON_APPLIED_COUNT": 1,
+  "lessonRatings": {
+    "lessonId": "demoarena_easy1_lesson_1",
+    "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+    "ratingSum": 2,
+    "ratingCount": 1,
+    "ratingVersion": 1
+  },
+  "lessonVotes": []
+}

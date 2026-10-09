@@ -85,8 +85,8 @@ waits = [
   "epic-1: restored backend — DONE (1.1)",
   "hitl: physical device restart/sync run",
 ]
-hitl = true
-status = "blocked" # hitl + after 3.1
+status = "done" # 2026-10-10, ночь: ПОЛНЫЙ ПРОГОН НА РИГЕ (docs/agents/evidence/2026-10-10-arena-queued-rating/), игрок ck3D…. Рейтинг 2 из подтверждённого результата 3.5 (тикет 8cec4267, попытка c9a8ee13, SETTLED 100%): Rate 2 на квитанции → «Your rating (2) is queued to send», outbox op lesson_runner-SUBMIT_RATING-9eb0a9ba WAITING (attempt 0), intent+маркер урока созданы, локальной квитанции нет; сервер под очередью нетронут (keys 34, агрегат 2/1 v1, голосов 0). Force-stop+реланч: та же квитанция показывает queued — очередь пережила смерть процесса, payload байт-стабилен. Явная досылка «Send queued rating» → «Your rating (2) was accepted»: keys 34→35 ровно +1 (APPLIED RATE_LESSON, payloadHash совпадает с локальной квитанцией), голос в lesson_ratings …/votes привязан к тому же владельцу/уроку/зачтённой попытке (attemptId c9a8ee13, completion SETTLED settledAtMs = сеттлмент 3.5 байт-в-байт), агрегат 2/1→4/2 v2, seasonId 2026-Q4; карточка каталога «Demo easy fixture 1» в UI: Player ratings 1→2. Квитанция рейтинга ≠ квитанция сеттлмента: разные docId (e0030bce… vs df0cfcd1…), операции (RATE_LESSON APPLIED vs SUBMIT_ATTEMPT SETTLED 100%), локальные entity_ref (rating:… vs attempt:…). No-replay: после ещё одного рестарта квитанция терминальна («was accepted», кнопок Rate/досылки нет — канал изменения рейтинга в UI не существует; чужая квитанция уже-оценённого урока 3.1 показывает «A rating exists…» без Rate), финальное чтение после всех блужданий: keys 35, записей RATE_LESSON у игрока 2, агрегат и голос байт-в-байт равны моменту доставки. Кода не менялось, гейтов не требуется; честно: серверную замену голоса новой мутацией (replacesLatest) зондом не трогали — изменил бы агрегат вне истории приложения; screencap чёрный (FLAG_SECURE) — визуальный контроль device-строкой.
+hitl = true # 2026-10-10, ночь: выполнено на redroid-риге по действующему решению владельца о hitl-матрице на риге
 
 [[story]]
 id = "3.7"
