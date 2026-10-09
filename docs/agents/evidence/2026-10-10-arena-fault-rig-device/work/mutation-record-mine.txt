@@ -1,0 +1,33 @@
+KEYS_FOR_MY_MUTATION 1
+{
+ "docId": "e53b0e4cc6a7_lesson_runner-SUB",
+ "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+ "operation": "lesson_runner.SUBMIT_ATTEMPT",
+ "state": "completed",
+ "completedAtMs": 1791580002551,
+ "result": {
+  "accepted": 1,
+  "reward": {
+   "skillPoints": 0,
+   "nolics": 0
+  },
+  "receipts": [
+   {
+    "schemaVersion": 1,
+    "receiptId": "attempt:3c60b8a7bafb6aa98f073c036a5dff72fc8a78a29e87452a8fdfe56337da0f32",
+    "attemptId": "151497c7ba30b07d15852747b64d3357eddd6068013d109d0115599e8c939990",
+    "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+    "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+    "lessonVersion": 1,
+    "status": "SETTLED",
+    "completed": true,
+    "settledAtMs": 1791580002445,
+    "codeAnswer": "11",
+    "percentScore": 0,
+    "lifePointsSpent": 50,
+    "plasmaPointsSpent": 0,
+    "reward": {
+     "skillPoints": 0,
+     "nolics": 0
+    },
+    "ticketId": "8374ce0da

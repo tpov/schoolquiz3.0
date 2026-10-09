@@ -1,0 +1,4 @@
+TICKET_WHILE_CUT {"status":"RESERVED","terminal":null}
+MUTATION_KEYS_WHILE_CUT 29
+ATTEMPT_RECORDS 0
+BALANCE_WHILE_CUT {"nolics":2,"skillPoints":49,"lifePoints":450,"reservedNolics":1}

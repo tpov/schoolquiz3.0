@@ -1,0 +1,52 @@
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "status": "CONTEXT",
+  "readerVersion": "arena-e2e-pending-settlement-reader-v1",
+  "documentWrites": 0,
+  "networkCalls": 0,
+  "deviceCalls": 0,
+  "storage": "Room",
+  "queryAdapter": "node:sqlite",
+  "runId": "fault-rig-device-33",
+  "bindingSha256": "49251d3c3975a134c38f696ea00aa3cfc12b4cc8e2beeeb3492a14d0a8dd792e",
+  "roomSchemaVersion": 15,
+  "roomSchemaIdentityHash": "e3a1b9e13aff4304afeba070b8895b6c",
+  "ticketState": {
+    "serverStatus": "RESERVED",
+    "localUse": "LAUNCHED",
+    "decision": "SETTLE",
+    "checkpointRevision": 4,
+    "snapshotSha256": "a14a317680e2945fbe78ee94972f944e74be2ab7a2603d078a575de8771779ed"
+  },
+  "pendingSettlement": {
+    "commandState": "PENDING",
+    "commandBodySha256": "26854d2da4ff70100fe7e830e85a323ceff3e3b44b73279fe9c0adbd4c1a0373",
+    "commandLastFailurePresent": false,
+    "mutationIdSha256": "e53b0e4cc6a729d11e85656826bacc2dcdd3d704ef44ef7d62c0de3cfa5331c5",
+    "outboxState": "WAITING",
+    "outboxAttemptCount": 1,
+    "outboxNextRetryAtMs": 1791579912503,
+    "outboxLastErrorPresent": true,
+    "firstIntentPresent": true,
+    "localReceiptCount": 0,
+    "localScoredAttemptRows": 0,
+    "localScoredAnswerRows": 0
+  },
+  "snapshot": {
+    "database": {
+      "file": "schoolquiz.db",
+      "bytes": 495616,
+      "sha256": "9fad3122e6c982b5540216ff190bca1e89becce6a4aa0032dce0debae6360e0f"
+    },
+    "wal": {
+      "file": "schoolquiz.db-wal",
+      "bytes": 444992,
+      "sha256": "69736ffdf6bf255925b0fdb7536340776692145dcf89391dfb7c326a86693ffb"
+    },
+    "shm": {
+      "file": "schoolquiz.db-shm",
+      "bytes": 32768,
+      "sha256": "5658e821d4954310c904049b5f7b06b64a73508fbca8db8d09ff68e5352eb8e6"
+    }
+  }
+}
