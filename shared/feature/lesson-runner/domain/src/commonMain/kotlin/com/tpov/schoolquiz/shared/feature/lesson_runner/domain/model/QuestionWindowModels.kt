@@ -1,14 +1,12 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model
 
-/**
- * Проводные факты онлайн-перехода next-question по общему контракту ONLINE-O2
- * (эпик `epic-ordinary-delivery`, `online-o2-contract.md`; серверная половина —
- * `beginLessonQuestionWindow`/`fetchNextLessonQuestion`, история 2.6).
- *
- * Модели режимно-нейтральны: арену приводит к ним [com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ArenaOnlineO2Adapter],
- * ordinary-онлайн делает то же своим адаптером. Ни одна из них не несёт клиентского времени как
- * источника deadline — только серверные факты выдачи (§5, замещающих часов нет).
- */
+// Проводные факты онлайн-перехода next-question по общему контракту ONLINE-O2
+// (эпик `epic-ordinary-delivery`, `online-o2-contract.md`; серверная половина —
+// `beginLessonQuestionWindow`/`fetchNextLessonQuestion`, история 2.6).
+//
+// Модели режимно-нейтральны: арену приводит к ним ArenaOnlineO2Adapter, ordinary-онлайн делает то
+// же своим адаптером. Ни одна из них не несёт клиентского времени как источника deadline — только
+// серверные факты выдачи (§5, замещающих часов нет).
 
 /**
  * Тело события завершения вопроса — запрос открытия окна загрузки (§2–§3).

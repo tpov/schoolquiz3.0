@@ -18,14 +18,11 @@ import kotlinx.serialization.json.longOrNull
  * дрейф формы не читается молча. Числа сервера — только в безопасном целочисленном диапазоне.
  */
 class QuestionWindowWireParser {
-
     /** Разбор вида окна из `beginLessonQuestionWindow` (identity + захваченная конфигурация). */
-    fun parseWindowView(wire: String): QuestionWindowView =
-        fail { parseWindowViewOrThrow(wire) }
+    fun parseWindowView(wire: String): QuestionWindowView = fail { parseWindowViewOrThrow(wire) }
 
     /** Разбор вердикта `fetchNextLessonQuestion`: выдача или истёкшее окно (§3/§7). */
-    fun parseDeliveryVerdict(wire: String): QuestionDeliveryVerdict =
-        fail { parseDeliveryVerdictOrThrow(wire) }
+    fun parseDeliveryVerdict(wire: String): QuestionDeliveryVerdict = fail { parseDeliveryVerdictOrThrow(wire) }
 
     private fun parseWindowViewOrThrow(wire: String): QuestionWindowView {
         val root = objectValue(wire)
@@ -95,19 +92,16 @@ class QuestionWindowWireParser {
         }
     }
 
-    private fun objectValue(wire: String): JsonObject =
-        Json.parseToJsonElement(wire) as? JsonObject ?: invalid()
+    private fun objectValue(wire: String): JsonObject = Json.parseToJsonElement(wire) as? JsonObject ?: invalid()
 
     private fun JsonObject.exact(vararg keys: String) {
         val expected = keys.toSet()
         if (keys.size != expected.size || this.keys != expected) invalid()
     }
 
-    private fun JsonObject.text(key: String): String? =
-        (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.content
+    private fun JsonObject.text(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.content
 
-    private fun JsonObject.int(key: String): Int? =
-        (this[key] as? JsonPrimitive)?.takeUnless { it.isString }?.intOrNull
+    private fun JsonObject.int(key: String): Int? = (this[key] as? JsonPrimitive)?.takeUnless { it.isString }?.intOrNull
 
     private fun JsonObject.whole(key: String): Long? =
         (this[key] as? JsonPrimitive)?.takeUnless { it.isString }?.longOrNull

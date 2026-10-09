@@ -36,7 +36,6 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaR
  *   чужая позиция или чужой вопрос не читаются и не меняют локальное состояние.
  */
 object ArenaOnlineO2Adapter {
-
     /**
      * Запрос окна перехода из [completedQuestionIndex], или `null` — окна нет.
      *
@@ -193,9 +192,10 @@ object ArenaOnlineO2Adapter {
     ): ArenaOnlineO2ExpiryDecision {
         require(completedQuestionIndex >= 0) { "completedQuestionIndex must be non-negative" }
         val checkpoint = current.checkpoint
-        require(checkpoint.phase != ArenaRunnerPhase.ANSWERING || checkpoint.indexInPool != completedQuestionIndex + 1) {
-            "expired window cannot close a question that is already answering"
-        }
+        val onDeliveredSlot =
+            checkpoint.phase == ArenaRunnerPhase.ANSWERING &&
+                checkpoint.indexInPool == completedQuestionIndex + 1
+        require(!onDeliveredSlot) { "expired window cannot close a question that is already answering" }
         view?.let { requireWindowIdentity(binding(current), completedQuestionIndex, it) }
         expired.windowId?.let { id -> require(id.isNotBlank()) { "expired windowId must not be blank" } }
         require(expired.closedAtMs >= 0 && expired.serverNowMs >= 0) { "expiry times must be non-negative" }
@@ -211,7 +211,9 @@ object ArenaOnlineO2Adapter {
         view: QuestionWindowView,
         verdict: QuestionDeliveryVerdict.Delivered,
     ) {
-        require(verdict.windowId == view.windowId) { "delivery window ${verdict.windowId} is not the opened ${view.windowId}" }
+        require(verdict.windowId == view.windowId) {
+            "delivery window ${verdict.windowId} is not the opened ${view.windowId}"
+        }
     }
 
     private fun binding(current: ArenaRunRead.Continuable): ArenaRunnerCheckpointBinding = current.binding
