@@ -89,3 +89,23 @@ sealed interface QuestionDeliveryVerdict {
         val serverNowMs: Long,
     ) : QuestionDeliveryVerdict
 }
+
+/** Типовой отказ поверхности окна: приватные детали транспорта наружу не выходят. */
+enum class QuestionWindowFailureKind {
+    /** Сессии нет — вызов некому предъявить. */
+    ACCOUNT_UNAVAILABLE,
+
+    /** Сессия сменилась на границе вызова, включая A→B→A. */
+    ACCOUNT_CHANGED,
+
+    /** Провод не разобран: форма/диапазоны нарушены, «неизвестно» не становится фактом. */
+    MALFORMED_RESPONSE,
+
+    /** Сервер отказал по телу: расхождение клиента с контрактом перехода. */
+    INVALID_REQUEST,
+
+    /** Остальное серверное: отказ или недоступность без поименованной клиентской причины. */
+    SERVER_FAILURE,
+}
+
+class QuestionWindowFailure(val kind: QuestionWindowFailureKind) : Exception(kind.name)
