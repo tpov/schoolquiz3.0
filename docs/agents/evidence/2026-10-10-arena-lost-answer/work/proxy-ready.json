@@ -1,0 +1,6 @@
+{
+  "artifactVersion": 1,
+  "status": "READY",
+  "auditSha256": "256ead4df817d2e98d1396916392e2f1a65cf8daf6f550065a27ac2ffe6924eb",
+  "listenPort": 35619
+}

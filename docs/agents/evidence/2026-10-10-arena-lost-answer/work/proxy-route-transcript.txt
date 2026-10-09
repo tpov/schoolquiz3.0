@@ -1,0 +1,11 @@
+== PROXY-ROUTE RESTORE 21:56:03Z
+9099
+8080
+5001
+--- reverses now (5001 must point at the proxy listener)
+host-16 tcp:9099 tcp:19090
+host-16 tcp:8080 tcp:18090
+host-16 tcp:5001 tcp:35619
+
+--- radio baseline: wifi_on=0 mobile_data=1
+ADB_CONTROL_ALIVE 21:56:03Z

@@ -1,0 +1,64 @@
+{
+  "artifactVersion": 1,
+  "status": "UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED",
+  "configSha256": "ac67a1f10f80e6f3ef5fec5582aa99af0eba713bb66f3067af52283059db3079",
+  "target": {
+    "path": "/demo-schoolquiz-mvp/us-central1/submitMutation",
+    "operation": "lesson_runner.SUBMIT_ATTEMPT",
+    "mutationIdSha256": "39b0c8a4db25004bb0b5db1e6bbbc39c7ce30e66ad541e64e86b5a90dbd2d2aa",
+    "attemptIdSha256": "dd98fc9a62254deb54fe07ba94fcbd59fefb9c55e5b7f1e6cc47805bdfce28e0"
+  },
+  "events": [
+    {
+      "atMs": 1791582935333,
+      "type": "READY"
+    },
+    {
+      "atMs": 1791582990850,
+      "type": "EXACT_TARGET_SENT_UPSTREAM",
+      "requestSha256": "b7b1965e32c83ee854ead6694bd92eb17d30222f208cf8bea90ba742d0279231"
+    },
+    {
+      "atMs": 1791582991411,
+      "type": "EXACT_TARGET_UPSTREAM_HEADERS",
+      "statusCode": 200,
+      "requestSha256": "b7b1965e32c83ee854ead6694bd92eb17d30222f208cf8bea90ba742d0279231"
+    },
+    {
+      "atMs": 1791582991412,
+      "type": "UPSTREAM_RESPONSE_COMPLETE_AFTER_DROP",
+      "statusCode": 200,
+      "responseBytes": 695,
+      "responseSha256": "6c8a2aa19c337aa3b2cd39e311f306c8fc1ed96f7c1f2036e864b01874ef5859"
+    },
+    {
+      "atMs": 1791582991423,
+      "type": "EXACT_TARGET_BLOCKED_AFTER_DROP",
+      "requestSha256": "b7b1965e32c83ee854ead6694bd92eb17d30222f208cf8bea90ba742d0279231"
+    },
+    {
+      "atMs": 1791583023256,
+      "type": "EXACT_TARGET_BLOCKED_AFTER_DROP",
+      "requestSha256": "b7b1965e32c83ee854ead6694bd92eb17d30222f208cf8bea90ba742d0279231"
+    },
+    {
+      "atMs": 1791583023267,
+      "type": "EXACT_TARGET_BLOCKED_AFTER_DROP",
+      "requestSha256": "b7b1965e32c83ee854ead6694bd92eb17d30222f208cf8bea90ba742d0279231"
+    },
+    {
+      "atMs": 1791583084656,
+      "type": "EXACT_TARGET_BLOCKED_AFTER_DROP",
+      "requestSha256": "b7b1965e32c83ee854ead6694bd92eb17d30222f208cf8bea90ba742d0279231"
+    },
+    {
+      "atMs": 1791583084669,
+      "type": "EXACT_TARGET_BLOCKED_AFTER_DROP",
+      "requestSha256": "b7b1965e32c83ee854ead6694bd92eb17d30222f208cf8bea90ba742d0279231"
+    }
+  ],
+  "listen": {
+    "host": "127.0.0.1",
+    "port": 35619
+  }
+}
