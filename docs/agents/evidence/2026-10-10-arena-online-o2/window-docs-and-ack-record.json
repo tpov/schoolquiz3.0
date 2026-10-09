@@ -1,0 +1,65 @@
+{
+ "windowMain": {
+  "schemaVersion": 1,
+  "windowId": "win_bf1bfa513f5c",
+  "attemptId": "cf575a94463d638eedc742391001560ff21d7b9bf2b5e1b25647f529d3b29079",
+  "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+  "lessonVersion": 1,
+  "completedQuestionIndex": 0,
+  "nextQuestionIndex": 1,
+  "nextQuestionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_question_1",
+  "difficulty": "HARD",
+  "windowSeconds": 60,
+  "allocatedSeconds": 14,
+  "openedAtMs": 1791578209694,
+  "expiresAtMs": 1791578269694,
+  "state": "DELIVERED",
+  "delivery": {
+   "questionIndex": 1,
+   "questionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_question_1",
+   "issuedAtMs": 1791578209904,
+   "answerDeadlineMs": 1791578223904
+  },
+  "closedAtMs": null,
+  "closedReason": null
+ },
+ "windowExpiry": {
+  "schemaVersion": 1,
+  "windowId": "win_a0dd066a55ca",
+  "attemptId": "3da6a7c31b4dd99d51846a5814ac117b72f3ebc1b",
+  "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+  "lessonVersion": 1,
+  "completedQuestionIndex": 0,
+  "nextQuestionIndex": 1,
+  "nextQuestionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_question_1",
+  "difficulty": "HARD",
+  "windowSeconds": 60,
+  "allocatedSeconds": 14,
+  "openedAtMs": 1791578210461,
+  "expiresAtMs": 1791578270461,
+  "state": "EXPIRED",
+  "delivery": null,
+  "closedAtMs": 1791578271503,
+  "closedReason": "WINDOW_EXPIRED"
+ },
+ "ackKeyRecord": {
+  "mutationId": "lesson_runner-READY_ACK-cf575a94463d638eedc742391001560ff21d7b9bf2b5e1b25647f529d3b29079-q1-window-win_bf1bfa513f5c",
+  "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+  "operation": "lesson_runner.READY_ACK",
+  "state": "completed",
+  "reservedAtMs": 1791578210126,
+  "expiresAtMs": 1794170210182,
+  "requestFingerprint": "31bfdb1c01bd970cb9527881a22f9304208490dd5bd32d3b4a2fab62874a3aaf",
+  "completedAtMs": 1791578210182,
+  "result": {
+   "schemaVersion": 1,
+   "status": "ACKED",
+   "attemptId": "cf575a94463d638eedc742391001560ff21d7b9bf2b5e1b25647f529d3b29079",
+   "questionIndex": 1,
+   "windowId": "win_bf1bfa513f5c",
+   "issuedAtMs": 1791578209904,
+   "answerDeadlineMs": 1791578223904,
+   "ackedAtMs": 1791578210126
+  }
+ }
+}
