@@ -3,8 +3,8 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.compone
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.QuestionEditorHistory
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankAnswerSpec
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.QuestionEditorHistory
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.buildFillBlankRuntimeText
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.extractFillBlankAnswers
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.extractProtectedTextSegments
@@ -1094,8 +1094,10 @@ class DefaultQuestCreateComponent(
             // Редактор пересобран из сохранённого черновика — прежняя история правок описывала
             // предыдущую сессию и после сохранения продолжаться не может.
             editorHistory.clear()
-            _state.update {
-                activeBundle?.applyStructureToState(it, editor?.let(editorHistory::attach)) ?: it.copy(activeDraftTitle = null, editor = null)
+            _state.update { current ->
+                val installed = editor?.let(editorHistory::attach)
+                activeBundle?.applyStructureToState(current, installed)
+                    ?: current.copy(activeDraftTitle = null, editor = null)
             }
             activeBundle?.draft?.catalogId?.let(::observeQuestsForCatalog)
             observeDraftConflict(uid, activeBundle?.draft?.id)
