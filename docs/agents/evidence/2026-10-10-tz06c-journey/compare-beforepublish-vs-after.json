@@ -1,0 +1,17 @@
+{
+  "added": [
+    "quests/draft-a3dp5ho5seql",
+    "sections/draft-section-84gfcxnkv547",
+    "themes/draft-theme-pb43ny3hlhde",
+    "lessons/draft-lesson-1ipfqlp4zwmwu",
+    "lesson_placements/draft-lesson-1ipfqlp4zwmwu"
+  ],
+  "removed": [],
+  "changed": [
+    "lesson_placements/demoarena_easy1_lesson_1",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog/quests/draft-a3dp5ho5seql",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/sync_changes/mvp-smoke-v1-catalog_draft-a3dp5ho5seql",
+    "quest_review_requests/arena-submission-12mj3wl0uy0j4",
+    "admin/review/lessons/draft-lesson-1ipfqlp4zwmwu"
+  ]
+}
