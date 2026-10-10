@@ -1,6 +1,10 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultAuthorLifecycleComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultCuratorComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
@@ -38,6 +42,27 @@ val questAuthoringPresentationModule =
                 observeReviewAssignmentSync = get(),
                 submitReviewAction = get(),
                 questionContentParser = get(),
+            )
+        }
+
+        factory<CuratorComponent> { (ctx: ComponentContext) ->
+            DefaultCuratorComponent(
+                componentContext = ctx,
+                authRepository = get(),
+                listCurator = get(),
+                listHistory = get(),
+                transitionLesson = get(),
+                idProvider = get(),
+            )
+        }
+
+        factory<AuthorLifecycleComponent> { (ctx: ComponentContext) ->
+            DefaultAuthorLifecycleComponent(
+                componentContext = ctx,
+                authRepository = get(),
+                listOwned = get(),
+                listHistory = get(),
+                listRoyalty = get(),
             )
         }
     }

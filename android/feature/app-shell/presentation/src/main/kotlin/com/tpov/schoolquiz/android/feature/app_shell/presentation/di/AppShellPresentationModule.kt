@@ -8,6 +8,10 @@ import com.tpov.schoolquiz.android.feature.internet.profile.presentation.compone
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
@@ -60,6 +64,20 @@ val appShellPresentationModule =
                         koin.get(ReviewQueueComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderReviewQueueComponent()
+                    }
+                },
+                curatorFactory = { compCtx ->
+                    runCatching<CuratorComponent> {
+                        koin.get(CuratorComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderCuratorComponent()
+                    }
+                },
+                authorLifecycleFactory = { compCtx ->
+                    runCatching<AuthorLifecycleComponent> {
+                        koin.get(AuthorLifecycleComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderAuthorLifecycleComponent()
                     }
                 },
                 profileFactory = { compCtx ->

@@ -50,6 +50,16 @@ sealed interface DrawerSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
+        // emptyMap (always visible) — как у ReviewQueue: настоящий гейт разрешений серверный (TZ06B),
+        // не-автор видит пустую страницу, не-куратор — отказ view.
+        data object AuthorLifecycle : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
+        data object Curation : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
         // emptyMap (always visible)
         data object Settings : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()

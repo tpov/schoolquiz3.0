@@ -28,6 +28,12 @@ sealed interface LocalConfig : TabConfig {
 
     data object ReviewQueueRoot : LocalConfig
 
+    /** Author view of TZ06B lifecycle projections (statuses, history, royalties). */
+    data object AuthorLifecycleRoot : LocalConfig
+
+    /** Curator surface TZ06C: placements, decisions, transitions. */
+    data object CuratorRoot : LocalConfig
+
     data object SettingsRoot : LocalConfig
 
     /** Always exists as type; rendered as UnderConstructionScreen("Недоступно") in release. */

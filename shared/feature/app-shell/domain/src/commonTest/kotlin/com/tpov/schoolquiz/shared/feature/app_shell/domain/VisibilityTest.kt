@@ -195,14 +195,18 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 22 visibleSections LOCAL guest returns HomeQuests Archive ReviewQueue MyQuests Settings`() {
+    fun `scenario 22 visibleSections LOCAL guest returns the seven always-visible sections`() {
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
         // DesignCatalog removed from LocalSection (now DrawerFooterAction).
+        // AuthorLifecycle/Curation (TZ06C) are always visible like ReviewQueue: the real
+        // permission gate is server-side, the screen shows the refusal.
         assertEquals(
             listOf(
                 DrawerSection.LocalSection.HomeQuests,
                 DrawerSection.LocalSection.Archive,
                 DrawerSection.LocalSection.ReviewQueue,
+                DrawerSection.LocalSection.AuthorLifecycle,
+                DrawerSection.LocalSection.Curation,
                 DrawerSection.LocalSection.MyQuests,
                 DrawerSection.LocalSection.Settings,
             ),
@@ -369,13 +373,16 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules LOCAL has exactly 5 sections HomeQuests Archive ReviewQueue MyQuests Settings`() {
-        // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction)
+    fun `visibility rules LOCAL has exactly 7 always-visible sections`() {
+        // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction);
+        // AuthorLifecycle/Curation join ReviewQueue with no client-side role gate (TZ06C).
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
-        assertEquals(5, sections.size)
+        assertEquals(7, sections.size)
         assertTrue(sections.contains(DrawerSection.LocalSection.HomeQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Archive))
         assertTrue(sections.contains(DrawerSection.LocalSection.ReviewQueue))
+        assertTrue(sections.contains(DrawerSection.LocalSection.AuthorLifecycle))
+        assertTrue(sections.contains(DrawerSection.LocalSection.Curation))
         assertTrue(sections.contains(DrawerSection.LocalSection.MyQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Settings))
     }

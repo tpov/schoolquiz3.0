@@ -18,6 +18,10 @@ import com.tpov.schoolquiz.android.feature.internet.profile.presentation.compone
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
@@ -137,6 +141,8 @@ class DefaultRootComponent(
         PlaceholderQuestCreateComponent(nav)
     },
     reviewQueueFactory: (ComponentContext) -> ReviewQueueComponent = { PlaceholderReviewQueueComponent() },
+    curatorFactory: (ComponentContext) -> CuratorComponent = { PlaceholderCuratorComponent() },
+    authorLifecycleFactory: (ComponentContext) -> AuthorLifecycleComponent = { PlaceholderAuthorLifecycleComponent() },
     profileFactory: (ComponentContext) -> ProfileComponent = { PlaceholderProfileComponent() },
     shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
@@ -245,6 +251,14 @@ class DefaultRootComponent(
     val reviewQueueComponent: ReviewQueueComponent =
         reviewQueueFactory(
             childContext("ReviewQueueContent"),
+        )
+    val curatorComponent: CuratorComponent =
+        curatorFactory(
+            childContext("CuratorContent"),
+        )
+    val authorLifecycleComponent: AuthorLifecycleComponent =
+        authorLifecycleFactory(
+            childContext("AuthorLifecycleContent"),
         )
     val profileComponent: ProfileComponent =
         profileFactory(

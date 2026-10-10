@@ -1,9 +1,9 @@
 package com.tpov.schoolquiz.platform.firebase.quest_authoring
 
 import java.io.File
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 /**
  * Клиент и сервер называют callable-поверхность TZ06B одинаково.
@@ -16,8 +16,8 @@ import kotlin.test.assertTrue
  */
 class LifecycleCallableNamesTest {
     private val source: String by lazy {
-        val file = File("../../../functions/index.js")
-        assertTrue(file.exists(), "нет functions/index.js: ${file.absolutePath}")
+        val file = File("../../functions/index.js")
+        assertTrue("нет functions/index.js: ${file.absolutePath}", file.exists())
         file.readText()
     }
 
@@ -38,13 +38,13 @@ class LifecycleCallableNamesTest {
                     .find(source)
                     ?.groupValues
                     ?.get(1)
-            assertEquals(method, found, "exports.$callable обязан диспатчить метод \"$method\"")
+            assertEquals("exports.$callable обязан диспатчить метод \"$method\"", method, found)
         }
     }
 
     @Test
     fun `curator transition rides the arena service transition callable`() {
         val line = Regex("""exports\.setLessonPlacement = onCall\(CALLABLE_OPTIONS, \(request\) => callArenaService\("(\w+)", request\)\);""").find(source)
-        assertEquals("transitionLesson", line?.groupValues?.get(1), "exports.setLessonPlacement обязан вести в transitionLesson")
+        assertEquals("exports.setLessonPlacement обязан вести в transitionLesson", "transitionLesson", line?.groupValues?.get(1))
     }
 }

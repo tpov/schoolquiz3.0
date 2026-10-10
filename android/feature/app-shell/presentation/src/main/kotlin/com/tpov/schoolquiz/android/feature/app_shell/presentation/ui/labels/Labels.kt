@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -67,6 +68,8 @@ val DrawerSection.labelRes: Int
             DrawerSection.LocalSection.HomeQuests -> R.string.section_home_quests
             DrawerSection.LocalSection.Archive -> R.string.section_archive
             DrawerSection.LocalSection.ReviewQueue -> R.string.section_review_queue
+            DrawerSection.LocalSection.AuthorLifecycle -> R.string.section_author_lifecycle
+            DrawerSection.LocalSection.Curation -> R.string.section_curation
             DrawerSection.LocalSection.Settings -> R.string.section_settings
             DrawerSection.InternetSection.Arena -> R.string.section_arena
             DrawerSection.InternetSection.Catalog -> R.string.section_catalog
@@ -90,6 +93,8 @@ val DrawerSection.icon: ImageVector
             DrawerSection.LocalSection.HomeQuests -> Icons.Default.Home
             DrawerSection.LocalSection.Archive -> Icons.Default.Book
             DrawerSection.LocalSection.ReviewQueue -> Icons.Default.Book
+            DrawerSection.LocalSection.AuthorLifecycle -> Icons.Default.Book
+            DrawerSection.LocalSection.Curation -> Icons.Default.FactCheck
             DrawerSection.LocalSection.Settings -> Icons.Default.Settings
             DrawerSection.InternetSection.Arena -> Icons.Default.Stadium
             DrawerSection.InternetSection.Catalog -> Icons.Default.Book
@@ -114,6 +119,8 @@ val TabConfig.labelRes: Int
                     LocalConfig.HomeQuestsRoot -> R.string.section_home_quests
                     LocalConfig.ArchiveRoot -> R.string.section_archive
                     LocalConfig.ReviewQueueRoot -> R.string.section_review_queue
+                    LocalConfig.AuthorLifecycleRoot -> R.string.section_author_lifecycle
+                    LocalConfig.CuratorRoot -> R.string.section_curation
                     LocalConfig.SettingsRoot -> R.string.section_settings
                     LocalConfig.DesignCatalogRoot -> R.string.config_design_catalog
                     LocalConfig.EmptyRoot -> R.string.tab_local

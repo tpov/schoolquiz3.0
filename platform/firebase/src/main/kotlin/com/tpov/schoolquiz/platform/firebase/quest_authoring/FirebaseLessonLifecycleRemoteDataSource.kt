@@ -1,9 +1,9 @@
 package com.tpov.schoolquiz.platform.firebase.quest_authoring
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.platform.firebase.network.toSyncError
 import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
-import com.tpov.schoolquiz.shared.core.network.toSyncError
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.LessonLifecycleWireParser
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonHistoryPage

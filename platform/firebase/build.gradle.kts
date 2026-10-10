@@ -25,6 +25,7 @@ dependencies {
     implementation(project(":shared:core:catalog:data"))
     implementation(project(":shared:feature:quest:data"))
     implementation(project(":shared:feature:quest-authoring:data"))
+    implementation(project(":shared:feature:quest-authoring:domain"))
     implementation(project(":shared:feature:internet:profile:data"))
     implementation(project(":shared:feature:internet:profile:domain"))
     implementation(project(":shared:feature:internet:leaderboard:data"))

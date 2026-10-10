@@ -88,6 +88,8 @@ fun visibleSections(
                 DrawerSection.LocalSection.HomeQuests,
                 DrawerSection.LocalSection.Archive,
                 DrawerSection.LocalSection.ReviewQueue,
+                DrawerSection.LocalSection.AuthorLifecycle,
+                DrawerSection.LocalSection.Curation,
                 DrawerSection.LocalSection.MyQuests,
                 DrawerSection.LocalSection.Settings,
             ).filter { isVisible(it, stats) }
@@ -136,6 +138,8 @@ fun rootOf(section: DrawerSection): TabConfig =
         DrawerSection.LocalSection.HomeQuests -> LocalConfig.HomeQuestsRoot
         DrawerSection.LocalSection.Archive -> LocalConfig.ArchiveRoot
         DrawerSection.LocalSection.ReviewQueue -> LocalConfig.ReviewQueueRoot
+        DrawerSection.LocalSection.AuthorLifecycle -> LocalConfig.AuthorLifecycleRoot
+        DrawerSection.LocalSection.Curation -> LocalConfig.CuratorRoot
         DrawerSection.LocalSection.Settings -> LocalConfig.SettingsRoot
         DrawerSection.InternetSection.Arena -> InternetConfig.ArenaRoot
         DrawerSection.InternetSection.Catalog -> InternetConfig.CatalogRoot
