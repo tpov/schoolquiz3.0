@@ -1,0 +1,82 @@
+{
+ "quest_drafts": [
+  {
+   "id": "draft-r6oc6azq80h3",
+   "ownerUid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+   "catalogId": "mvp-smoke-v1-catalog",
+   "title": "TZ06Equest",
+   "description": null,
+   "defaultLanguage": "ru",
+   "defaultDifficulty": "EASY",
+   "status": "REVIEW_QUEUED",
+   "localRevision": 3,
+   "serverRevision": null,
+   "publicQuestId": null,
+   "createdAtMs": 1791638383328,
+   "updatedAtMs": 1791641281215,
+   "isActive": 1,
+   "rejectionReason": null,
+   "activeSubmissionId": "arena-submission-zq8lz01icnm0"
+  },
+  {
+   "id": "draft-1nhsv533ldxva",
+   "ownerUid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+   "catalogId": "mvp-smoke-v1-catalog",
+   "title": "Новый квест",
+   "description": null,
+   "defaultLanguage": "ru",
+   "defaultDifficulty": "EASY",
+   "status": "SAVED",
+   "localRevision": 1,
+   "serverRevision": null,
+   "publicQuestId": null,
+   "createdAtMs": 1791641564111,
+   "updatedAtMs": 1791641564111,
+   "isActive": 0,
+   "rejectionReason": null,
+   "activeSubmissionId": null
+  }
+ ],
+ "draft_questions": [
+  {
+   "id": "draft-question-1btr5o9tsz0yy",
+   "draftId": "draft-r6oc6azq80h3",
+   "lessonId": "draft-lesson-to3wvgtrw62p",
+   "type": "FILL_BLANK",
+   "language": "ru",
+   "difficulty": "EASY",
+   "order": 0,
+   "text": "Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq",
+   "imagePath": null,
+   "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"EASY\",\"text\":\"Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[],\"info\":null}",
+   "validationState": "SAVED",
+   "updatedAtMs": 1791640113014,
+   "languageLevel": 1
+  },
+  {
+   "id": "draft-question-11fiq63acfk04",
+   "draftId": "draft-r6oc6azq80h3",
+   "lessonId": "draft-lesson-to3wvgtrw62p",
+   "type": "FILL_BLANK",
+   "language": "ru",
+   "difficulty": "HARD",
+   "order": 1,
+   "text": "Kotlin compiles to JVM bytecode ___ text",
+   "imagePath": null,
+   "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"HARD\",\"text\":\"Kotlin compiles to JVM bytecode ___ text\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[\"text\"],\"info\":null}",
+   "validationState": "SAVED",
+   "updatedAtMs": 1791641237492,
+   "languageLevel": 1
+  }
+ ],
+ "mutation_receipts": [
+  {
+   "owner_uid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+   "mutation_id": "quest_authoring-SUBMIT_ARENA-arena-submission-zq8lz01icnm0",
+   "operation": "quest_authoring.SUBMIT_ARENA",
+   "entity_ref": "quest_authoring:draft:draft-r6oc6azq80h3",
+   "payload_json": "{\"replayed\":false,\"result\":{\"adminLessonTaskPaths\":[\"admin/review/lessons/draft-lesson-to3wvgtrw62p\"],\"privateQuestPath\":\"private/GxeLc2TZJ9U4ZHTAPdS4YzKpWx87/catalogs/mvp-smoke-v1-catalog/quests/draft-r6oc6azq80h3\",\"submissionId\":\"arena-submission-zq8lz01icnm0\"}}",
+   "received_at_ms": 1791641376770
+  }
+ ]
+}

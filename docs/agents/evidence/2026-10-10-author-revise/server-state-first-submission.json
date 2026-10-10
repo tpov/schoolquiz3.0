@@ -1,0 +1,145 @@
+{
+  "capturedAtMs": 1791641497935,
+  "submission": {
+    "submissionId": "arena-submission-zq8lz01icnm0",
+    "ownerUid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+    "draftId": "draft-r6oc6azq80h3",
+    "status": "UNDER_REVIEW",
+    "processed": true,
+    "processedAtMs": 1791641376659,
+    "requestedAtMs": 1791641281215,
+    "localRevision": 0,
+    "targetShelf": "arena",
+    "targetLessonIds": [
+      "draft-lesson-to3wvgtrw62p"
+    ],
+    "draftTitle": "TZ06Equest",
+    "draftDescription": null,
+    "draftDefaultDifficulty": "EASY",
+    "lessons": [
+      {
+        "id": "draft-lesson-to3wvgtrw62p",
+        "draftId": "draft-r6oc6azq80h3",
+        "themeId": "draft-theme-7nupluphaq5m",
+        "title": "TZ06ELesson",
+        "order": 0
+      }
+    ],
+    "questions": [
+      {
+        "id": "draft-question-1btr5o9tsz0yy",
+        "draftId": "draft-r6oc6azq80h3",
+        "lessonId": "draft-lesson-to3wvgtrw62p",
+        "type": "FILL_BLANK",
+        "language": "ru",
+        "languageLevel": 1,
+        "difficulty": "EASY",
+        "order": 0,
+        "text": "Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq",
+        "imagePath": null,
+        "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"EASY\",\"text\":\"Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[],\"info\":null}",
+        "updatedAtMs": 1791640113014
+      },
+      {
+        "id": "draft-question-11fiq63acfk04",
+        "draftId": "draft-r6oc6azq80h3",
+        "lessonId": "draft-lesson-to3wvgtrw62p",
+        "type": "FILL_BLANK",
+        "language": "ru",
+        "languageLevel": 1,
+        "difficulty": "HARD",
+        "order": 1,
+        "text": "Kotlin compiles to JVM bytecode ___ text",
+        "imagePath": null,
+        "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"HARD\",\"text\":\"Kotlin compiles to JVM bytecode ___ text\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[\"text\"],\"info\":null}",
+        "updatedAtMs": 1791641237492
+      }
+    ],
+    "review": {
+      "isLogicReviewed": false,
+      "translationScore": null,
+      "testingScore": null,
+      "isTranslationReviewed": false,
+      "logicScore": null,
+      "translatedLanguages": {
+        "ru": 1
+      },
+      "isTested": false
+    }
+  },
+  "privateTree": {
+    "mvp-smoke-v1-catalog": {
+      "draft-r6oc6azq80h3": {
+        "draftId": "draft-r6oc6azq80h3",
+        "publicQuestId": null,
+        "createdAtMs": 1791638383328,
+        "targetLessonIds": [
+          "draft-lesson-to3wvgtrw62p"
+        ],
+        "localRevision": 0,
+        "targetShelf": "arena",
+        "description": null,
+        "title": "TZ06Equest",
+        "catalogId": "mvp-smoke-v1-catalog",
+        "defaultDifficulty": "EASY",
+        "defaultLanguage": "ru",
+        "submissionId": "arena-submission-zq8lz01icnm0",
+        "updatedAtMs": 1791641237492,
+        "review": {
+          "isLogicReviewed": false,
+          "translationScore": null,
+          "testingScore": null,
+          "isTranslationReviewed": false,
+          "logicScore": null,
+          "translatedLanguages": {
+            "ru": 1
+          },
+          "isTested": false
+        },
+        "id": "draft-r6oc6azq80h3",
+        "ownerUid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+        "changedAtMs": 1791641376659
+      }
+    }
+  },
+  "authorProfile": {
+    "uid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+    "adminLevel": 0,
+    "walletFields": [],
+    "allKeys": [
+      "developerLevel",
+      "adminLevel",
+      "createdAtMs",
+      "knownLanguages",
+      "uid",
+      "reviewReputation",
+      "sponsorLevel",
+      "nickname",
+      "testerLevel",
+      "translatorLevel",
+      "moderatorLevel",
+      "status",
+      "updatedAtMs"
+    ]
+  },
+  "mutationKeysForSubmission": [
+    {
+      "id": "6d777ad8d639_quest_authoring-SUBMIT_ARENA-arena-submission-zq8lz01icnm0",
+      "mutationId": "quest_authoring-SUBMIT_ARENA-arena-submission-zq8lz01icnm0",
+      "uid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+      "operation": "quest_authoring.SUBMIT_ARENA",
+      "state": "completed",
+      "reservedAtMs": 1791641376564,
+      "expiresAtMs": 1794233376748,
+      "requestFingerprint": "4380416539bf813b9fc90f5fab5ad873f8f581745f18379a726dcd7f3296eeec",
+      "completedAtMs": 1791641376748,
+      "result": {
+        "submissionId": "arena-submission-zq8lz01icnm0",
+        "privateQuestPath": "private/GxeLc2TZJ9U4ZHTAPdS4YzKpWx87/catalogs/mvp-smoke-v1-catalog/quests/draft-r6oc6azq80h3",
+        "adminLessonTaskPaths": [
+          "admin/review/lessons/draft-lesson-to3wvgtrw62p"
+        ]
+      }
+    }
+  ]
+}
