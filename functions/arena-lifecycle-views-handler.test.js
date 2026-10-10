@@ -182,6 +182,12 @@ function world() {
     "quest_review_requests/legacy-old": reviewSubmission("author", "draft-legacy", "REJECTED", NOW - 30,
       {rejectionReason: "Old author-visible reason"}),
     "quest_review_requests/legacy-current": reviewSubmission("author", "draft-legacy", "UNDER_REVIEW", NOW - 1),
+    "quest_review_requests/submission-in-review": reviewSubmission("author", "draft-in-review", "UNDER_REVIEW", NOW - 2,
+      {failedStages: ["TRANSLATION", "TESTING"],
+        questionOutcomes: [
+          {questionId: "q2", testingScore: 1, passed: false},
+          {questionId: "q1", testingScore: 2.5, passed: true},
+        ]}),
   };
 }
 
@@ -308,19 +314,27 @@ test("actual callable enforces author/curator scope, hides foreign lesson existe
   assertNoPrivate(ownEmptyRoyalty);
 
   const outcomes = await call("listMyQuestReviewSubmissions", "author", {
-    submissionIds: ["submission-rejected", "submission-published"], legacyDraftIds: [],
+    submissionIds: ["submission-rejected", "submission-published", "submission-in-review"], legacyDraftIds: [],
   });
   assert.deepEqual(outcomes, {viewVersion: "quest-review-submissions-v1", entries: [
-    {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED", rejectionReason: null},
+    {submissionId: "submission-in-review", draftId: "draft-in-review", status: "UNDER_REVIEW",
+      rejectionReason: null, failedStages: ["TESTING", "TRANSLATION"],
+      questionOutcomes: [
+        {questionId: "q1", testingScore: 2.5, passed: true},
+        {questionId: "q2", testingScore: 1, passed: false},
+      ]},
+    {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED",
+      rejectionReason: null, failedStages: [], questionOutcomes: []},
     {submissionId: "submission-rejected", draftId: "draft-rejected", status: "REJECTED",
-      rejectionReason: "Correct the unsupported question format"},
+      rejectionReason: "Correct the unsupported question format", failedStages: [], questionOutcomes: []},
   ]});
   assertNoRawReviewRequest(outcomes);
   const legacyOutcome = await call("listMyQuestReviewSubmissions", "author", {
     submissionIds: [], legacyDraftIds: ["draft-legacy"],
   });
   assert.deepEqual(legacyOutcome.entries, [
-    {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null},
+    {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null,
+      failedStages: [], questionOutcomes: []},
   ]);
   assertNoRawReviewRequest(legacyOutcome);
   const foreignOutcome = await call("listMyQuestReviewSubmissions", "author", {

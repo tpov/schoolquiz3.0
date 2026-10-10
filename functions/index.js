@@ -4317,8 +4317,10 @@ async function processArenaRequest(request) {
       processedAtMs: now,
       lastError: null,
       status: "UNDER_REVIEW",
-      // Свежая заявка не прошла ещё ничего: стадии называются сразу, а не молчанием.
+      // Свежая заявка не прошла ещё ничего: стадии называются сразу, а не молчанием,
+      // по-вопросных исходов TESTING пока нет — пустой список, а не отсутствие поля.
       failedStages: initialFailedStages(request),
+      questionOutcomes: [],
     }),
     {merge: true},
   );
@@ -4812,12 +4814,20 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   const allReady = targetTasks.every((task) => lessonPassed(task.checks, task, config));
   if (!allReady) {
     // Автор видит, КАКИЕ стадии не пущены, поимённо и без чьей-либо причины: стадии считаются
-    // из оценок, причина — атрибут только отклонения.
+    // из оценок, причина — атрибут только отклонения. Рядом лежат и по-вопросные исходы
+    // TESTING (CAP-3): какой вопрос оценён, сколько он набрал и прошёл ли порог.
     const failedStages = Array.from(
       new Set(targetTasks.flatMap((task) => failedReviewStages(task.checks, task, config))),
     ).sort();
+    const questionOutcomes = Array.from(
+      new Map(
+        targetTasks
+          .flatMap((task) => task.checks.questionOutcomes || [])
+          .map((outcome) => [outcome.questionId, outcome]),
+      ).values(),
+    ).sort((a, b) => (a.questionId < b.questionId ? -1 : a.questionId > b.questionId ? 1 : 0));
     await requestSnapshot.ref.set(
-      {status: "UNDER_REVIEW", updatedAtMs: now, failedStages},
+      {status: "UNDER_REVIEW", updatedAtMs: now, failedStages, questionOutcomes},
       {merge: true},
     );
     return false;
@@ -5753,12 +5763,20 @@ function translatedLanguages(task, records) {
     byLanguage.get(language).push(record);
   }
   for (const [language, languageRecords] of byLanguage.entries()) {
+    // «Незавершённого перевода не существует»: вопрос без текста (и без картинки) — не перевод,
+    // и такая запись никогда не засчитывает язык, что бы ни было в счётчике вопросов (CAP-3).
     const completed = languageRecords
       .filter((record) => (record.translatedQuestions || []).length >= sourceQuestionCount)
+      .filter((record) => record.translatedQuestions.every(carriesContent))
       .sort((a, b) => b.reviewerLevelAtSubmit - a.reviewerLevelAtSubmit)[0];
     if (completed) result[language] = completed.reviewerLevelAtSubmit;
   }
   return result;
+}
+
+function carriesContent(question) {
+  return (question.text !== null && question.text !== undefined && String(question.text).trim().length > 0) ||
+    (question.imagePath !== null && question.imagePath !== undefined);
 }
 
 function requiredLanguages(task, config) {
@@ -6320,12 +6338,29 @@ function normalizeSubmitAction(data) {
     language: nullableString(data.language),
     targetReviewId: nullableString(data.targetReviewId),
     translatedQuestions: listMaps(data.translatedQuestions).map((item) => normalizeQuestion(item)),
-    segmentResults: listMaps(data.segmentResults).map((item) => ({
-      questionId: stringValue(item.questionId),
-      segmentKey: stringValue(item.segmentKey),
-      accepted: Boolean(item.accepted),
-    })),
+    segmentResults: listMaps(data.segmentResults).map(normalizeSegmentDecision),
   };
+}
+
+/**
+ * Сегментное решение перевода — явное: correct/error; отсутствие решения — unchecked, и оно
+ * никогда не хранится как одобрение. Молчаливая approved-булева вида «accepted: true» без
+ * решения проводом запрещена: именно она позволяла сегменту пройти, пока ревьюер молчал.
+ */
+function normalizeSegmentDecision(item) {
+  const questionId = stringValue(item.questionId);
+  const segmentKey = stringValue(item.segmentKey);
+  const raw = item.decision === null || item.decision === undefined ? null : stringValue(item.decision);
+  if (raw === null) {
+    throw new HttpsError(
+      "invalid-argument",
+      `segmentResults[${questionId}/${segmentKey}] requires an explicit decision "correct" or "error"`,
+    );
+  }
+  if (raw !== "correct" && raw !== "error") {
+    throw new HttpsError("invalid-argument", `segmentResults[${questionId}/${segmentKey}] decision must be "correct" or "error"`);
+  }
+  return {questionId, segmentKey, decision: raw, accepted: raw === "correct"};
 }
 
 /**
@@ -6400,6 +6435,7 @@ function normalizeReviewRecord(data, fallbackId, fallbackLessonId) {
     segmentResults: listMaps(data.segmentResults).map((item) => ({
       questionId: stringValue(item.questionId),
       segmentKey: stringValue(item.segmentKey),
+      decision: stringValue(item.decision, item.accepted ? "correct" : "error"),
       accepted: Boolean(item.accepted),
     })),
     translatedQuestions: listMaps(data.translatedQuestions).map((item) => normalizeQuestion(item)),
@@ -6488,6 +6524,7 @@ function reviewRecordToDocument(record) {
     segmentResults: (record.segmentResults || []).map((item) => ({
       questionId: item.questionId,
       segmentKey: item.segmentKey,
+      decision: item.decision,
       accepted: item.accepted,
     })),
     translatedQuestions: (record.translatedQuestions || []).map(questionToDocument),

@@ -194,3 +194,104 @@ test("unqualified tester is refused", async () => {
     (error) => error.code === "permission-denied",
   );
 });
+
+/**
+ * Перевод и сегментные решения (вторая половина 4.6): язык засчитывает только запись, где у
+ * каждого вопроса есть содержание; решение по сегменту — явное correct/error, молчаливый
+ * `accepted` проводом запрещён, а решение остаётся в записи.
+ */
+function translationWorld(extra = {}) {
+  const base = world();
+  return {
+    ...base,
+    "configs/arena_review": {requiredLanguages: ["uk"]},
+    "profiles/translator": {translatorLevel: 100, knownLanguages: ["en", "uk"]},
+    "profiles/segreviewer": {translatorLevel: 200, knownLanguages: ["en", "uk"]},
+    [TASK_PATH]: {
+      ...base[TASK_PATH],
+      checks: {isTested: true, testingScore: 3, isLogicReviewed: true, logicScore: 3},
+    },
+    ...extra,
+  };
+}
+
+function translatedQuestion(id, text) {
+  return {id, lessonId: "lesson", type: "QA", language: "uk", text, payload: "{}", updatedAtMs: 1};
+}
+
+test("a translation with content on every question credits the language", async () => {
+  reset(translationWorld());
+  const translation = await submit("translator", {
+    assignmentId: "submission_lesson", lessonId: "lesson", kind: "TRANSLATION", language: "uk",
+    translatedQuestions: [translatedQuestion("q1", "один"), translatedQuestion("q2", "два")],
+  });
+  assert.deepEqual(translation.aggregate.translatedLanguages, {uk: 100});
+});
+
+test("missing text is never auto-approved: a blank question does not credit the language", async () => {
+  reset(translationWorld());
+  const translation = await submit("translator", {
+    assignmentId: "submission_lesson", lessonId: "lesson", kind: "TRANSLATION", language: "uk",
+    translatedQuestions: [translatedQuestion("q1", "один"), translatedQuestion("q2", "   ")],
+  });
+  assert.deepEqual(translation.aggregate.translatedLanguages, {},
+    "the language stays untranslated while a question carries no content");
+});
+
+async function submitTranslation() {
+  // Реальный порядок цикла на чистом задании: тестирование и логика закрывают допуск перевода,
+  // запись перевода открывает язык сегментному ревью.
+  reset(translationWorld({
+    [TASK_PATH]: {...translationWorld()[TASK_PATH], checks: {}},
+  }));
+  await submit("tester", testingAction(3));
+  await submit("reviewer", {assignmentId: "submission_lesson", lessonId: "lesson", kind: "LOGIC", score: 3});
+  await submit("translator", {
+    assignmentId: "submission_lesson", lessonId: "lesson", kind: "TRANSLATION", language: "uk",
+    translatedQuestions: [translatedQuestion("q1", "один"), translatedQuestion("q2", "два")],
+  });
+}
+
+test("a silent accepted boolean is not a segment decision: the wire requires correct/error", async () => {
+  reset(translationWorld());
+  await submitTranslation();
+  await assert.rejects(
+    () => submit("segreviewer", {
+      assignmentId: "submission_lesson", lessonId: "lesson", kind: "TRANSLATION_REVIEW", language: "uk",
+      segmentResults: [{questionId: "q1", segmentKey: "text", accepted: true}],
+    }),
+    (error) => error.code === "invalid-argument" && /explicit decision/.test(error.message),
+  );
+});
+
+test("an explicit decision outside correct/error is refused", async () => {
+  reset(translationWorld());
+  await submitTranslation();
+  await assert.rejects(
+    () => submit("segreviewer", {
+      assignmentId: "submission_lesson", lessonId: "lesson", kind: "TRANSLATION_REVIEW", language: "uk",
+      segmentResults: [{questionId: "q1", segmentKey: "text", decision: "maybe"}],
+    }),
+    (error) => error.code === "invalid-argument" && /"correct" or "error"/.test(error.message),
+  );
+});
+
+test("explicit segment decisions are stored with their decision and score the translation", async () => {
+  reset(translationWorld());
+  await submitTranslation();
+  const review = await submit("segreviewer", {
+    assignmentId: "submission_lesson", lessonId: "lesson", kind: "TRANSLATION_REVIEW", language: "uk",
+    segmentResults: [
+      {questionId: "q1", segmentKey: "text", decision: "correct"},
+      {questionId: "q2", segmentKey: "text", decision: "error"},
+    ],
+  });
+  assert.equal(review.aggregate.translationScore, 50);
+  const stored = [...store.documents.entries()]
+    .find(([path, doc]) => path.startsWith(`${TASK_PATH}/reviews/`) && doc.kind === "TRANSLATION_REVIEW");
+  assert.ok(stored, "the translation review record exists");
+  assert.deepEqual(stored[1].segmentResults, [
+    {questionId: "q1", segmentKey: "text", decision: "correct", accepted: true},
+    {questionId: "q2", segmentKey: "text", decision: "error", accepted: false},
+  ]);
+});

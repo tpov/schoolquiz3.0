@@ -298,9 +298,10 @@ test("author outcome view binds exact submissions or bounded legacy drafts to Au
     submissionIds: ["submission-rejected", "submission-published"], legacyDraftIds: [],
   }});
   assert.deepEqual(exact, {viewVersion: REVIEW_SUBMISSION_VIEW_VERSION, entries: [
-    {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED", rejectionReason: null},
+    {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED", rejectionReason: null,
+      failedStages: [], questionOutcomes: []},
     {submissionId: "submission-rejected", draftId: "draft-rejected", status: "REJECTED",
-      rejectionReason: "Correct the unsupported question format"},
+      rejectionReason: "Correct the unsupported question format", failedStages: [], questionOutcomes: []},
   ]});
   noPrivate(exact);
 
@@ -308,7 +309,8 @@ test("author outcome view binds exact submissions or bounded legacy drafts to Au
     submissionIds: [], legacyDraftIds: ["draft-legacy"],
   }});
   assert.deepEqual(legacy, {viewVersion: REVIEW_SUBMISSION_VIEW_VERSION, entries: [
-    {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null},
+    {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null,
+      failedStages: [], questionOutcomes: []},
   ]});
   noPrivate(legacy);
 
@@ -334,6 +336,24 @@ test("author outcome view rejects malformed identity lists before reads and fail
   ));
   await rejects(f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
     submissionIds: ["submission-rejected"], legacyDraftIds: [],
+  }}), "UNAVAILABLE");
+  assert.deepEqual(f.writes, []);
+
+  // По-вопросные исходы с чужим/битым составом не доезжают до автора: просьба была только про
+  // названные заявки, а мусор в поле — generic unavailable, а не сфабрикованный DTO.
+  f.documents.set("quest_review_requests/submission-in-review", reviewSubmission(
+    "author", "draft-in-review", "UNDER_REVIEW", 105,
+    {failedStages: ["TESTING"], questionOutcomes: [{questionId: "q1", testingScore: 9, passed: true}]},
+  ));
+  await rejects(f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-in-review"], legacyDraftIds: [],
+  }}), "UNAVAILABLE");
+  f.documents.set("quest_review_requests/submission-in-review", reviewSubmission(
+    "author", "draft-in-review", "UNDER_REVIEW", 105,
+    {failedStages: ["MADE_UP_STAGE"], questionOutcomes: []},
+  ));
+  await rejects(f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-in-review"], legacyDraftIds: [],
   }}), "UNAVAILABLE");
   assert.deepEqual(f.writes, []);
 });

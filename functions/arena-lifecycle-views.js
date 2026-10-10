@@ -25,6 +25,8 @@ const CURSOR_VERSION = 1;
 const CURSOR_NONCE_BYTES = 12;
 const CURSOR_TAG_BYTES = 16;
 const REVIEW_SUBMISSION_STATUSES = new Set(["PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED"]);
+// Stages the submission document may name as not passed; the author reads them verbatim (CAP-3).
+const REVIEW_STAGES = new Set(["TESTING", "LOGIC", "TRANSLATION"]);
 // A reviewer writes this explanation specifically for the author. It is not a free pass to ship
 // an unbounded request document through a callable response.
 const MAX_AUTHOR_REJECTION_REASON_BYTES = 1000;
@@ -226,8 +228,36 @@ function reviewSubmissionEntry(snapshot, uid, expectedDraftId = null) {
   unavailable(plain(raw) && raw.ownerUid === uid && identifier(raw.draftId) &&
     REVIEW_SUBMISSION_STATUSES.has(raw.status));
   if (expectedDraftId !== null) unavailable(raw.draftId === expectedDraftId && unsigned(raw.processedAtMs));
+  // Named failed stages and per-question TESTING outcomes live only while a submission can still
+  // change; a terminal row keeps its history but the author's verdict is the status itself.
+  const inFlight = raw.status === "PROCESSING" || raw.status === "UNDER_REVIEW";
   return {submissionId, draftId: raw.draftId, status: raw.status,
-    rejectionReason: raw.status === "REJECTED" ? authorVisibleRejectionReason(raw.rejectionReason) : null};
+    rejectionReason: raw.status === "REJECTED" ? authorVisibleRejectionReason(raw.rejectionReason) : null,
+    failedStages: inFlight ? reviewFailedStages(raw.failedStages) : [],
+    questionOutcomes: inFlight ? reviewQuestionOutcomes(raw.questionOutcomes) : []};
+}
+
+function reviewFailedStages(raw) {
+  if (raw === undefined || raw === null) return [];
+  unavailable(Array.isArray(raw) && raw.every((stage) => REVIEW_STAGES.has(stage)));
+  return [...new Set(raw)].sort();
+}
+
+function reviewQuestionOutcomes(raw) {
+  if (raw === undefined || raw === null) return [];
+  unavailable(Array.isArray(raw));
+  const seen = new Set();
+  return raw.map((outcome) => {
+    unavailable(plain(outcome) && identifier(outcome.questionId) &&
+      (outcome.testingScore === null || scoreAverage(outcome.testingScore)) &&
+      typeof outcome.passed === "boolean");
+    unavailable(seen.add(outcome.questionId));
+    return {questionId: outcome.questionId, testingScore: outcome.testingScore, passed: outcome.passed};
+  }).sort((a, b) => (a.questionId < b.questionId ? -1 : a.questionId > b.questionId ? 1 : 0));
+}
+
+function scoreAverage(value) {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 3;
 }
 
 /**
