@@ -200,6 +200,12 @@ internal fun upsertFillBlankAnswerMarker(
     return segments.toAuthorMarkupText()
 }
 
+/**
+ * Снятие метки оставляет текст (AD-27, UX-O6 §4): blank перестаёт быть пробелом, но его слово
+ * возвращается в вопрос как обычный текст, а не исчезает вместе с меткой. Метка — разметка
+ * поверх текста, и её снятие не редактирует сам текст; вычеркнуть слово — отдельное решение
+ * автора, а undo возвращает метку и слово одним шагом.
+ */
 internal fun removeFillBlankAnswerMarker(
     text: String,
     answerIndex: Int,
@@ -207,13 +213,17 @@ internal fun removeFillBlankAnswerMarker(
     var blankIndex = 0
     return parseAuthorMarkup(text)
         .segments
-        .filterNot { segment ->
+        .flatMap { segment ->
             if (!segment.isBlank) {
-                false
+                listOf(segment)
             } else {
-                val shouldRemove = blankIndex == answerIndex
+                val shouldDemote = blankIndex == answerIndex
                 blankIndex += 1
-                shouldRemove
+                if (shouldDemote) {
+                    listOf(segment.copy(isBlank = false, isProtected = false))
+                } else {
+                    listOf(segment)
+                }
             }
         }
         .toAuthorMarkupText()

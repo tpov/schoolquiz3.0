@@ -11,6 +11,8 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
+import com.tpov.schoolquiz.shared.core.question_schema.OptionId
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
@@ -23,7 +25,9 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepositor
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLesson
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionValidationState
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSection
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSectionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftTheme
@@ -61,6 +65,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -228,6 +233,68 @@ class DefaultQuestCreateComponentUndoRedoTest {
         assertNull(restored.lastSavedMessage)
     }
 
+    @Test
+    fun `given a new empty question then leaving creates no record`() = runTest(testScheduler) {
+        // UX-18/§4: пустой новый слот ≠ стёртый существующий вопрос. Пустой слот не пишется —
+        // отсутствие записи в черновике честно означает «вопрос не создан».
+        val repository = FakeBundleRepository()
+        val component = component(repository)
+        component.onQuestionsClick(Difficulty.EASY)
+
+        component.onQuestionSelected(0)
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(
+            repository.upserts.isEmpty(),
+            "пустой новый слот не создаёт запись в черновике",
+        )
+        assertNull(component.state.value.editor?.errorMessage, "уход от пустого слота — не ошибка")
+    }
+
+    @Test
+    fun `given a cleared existing question then the empty form cannot overwrite the saved record`() =
+        runTest(testScheduler) {
+            val repository = FakeBundleRepository(savedSingleChoiceQuestion())
+            val component = component(repository)
+            component.onQuestionsClick(Difficulty.EASY)
+            val opened = assertNotNull(component.state.value.editor)
+            assertNotNull(opened.selectedQuestionId, "открыт сохранённый вопрос")
+            assertEquals("Вопрос?", opened.text)
+
+            component.onQuestionTextChanged("")
+            component.onBackToStructureClick()
+            testScheduler.advanceUntilIdle()
+
+            assertTrue(
+                repository.upserts.isEmpty(),
+                "стёртая форма не перезаписывает сохранённый вопрос",
+            )
+            assertNotNull(component.state.value.editor, "автор остаётся в редакторе")
+            assertNotNull(
+                component.state.value.editor?.errorMessage,
+                "названо, почему уйти нельзя",
+            )
+        }
+
+    @Test
+    fun `given partially invalid input then the editor keeps it while the author works`() =
+        runTest(testScheduler) {
+            // UX-18: частичный невалидный ввод сохраняется в редакторе; валидация полной
+            // формы — на сохранении, а не на каждом нажатии.
+            val repository = FakeBundleRepository()
+            val component = component(repository)
+            component.onQuestionsClick(Difficulty.EASY)
+            component.onQuestionTextChanged("Вопрос без вариантов")
+
+            component.onQuestionSelected(0)
+            testScheduler.advanceUntilIdle()
+
+            val editor = assertNotNull(component.state.value.editor, "редактор не выбросил работу")
+            assertEquals("Вопрос без вариантов", editor.text, "частичный ввод остался")
+            assertNotNull(editor.errorMessage, "названо, чего не хватает")
+            assertTrue(repository.upserts.isEmpty(), "невалидный вопрос не пишется в черновик")
+        }
+
     private fun component(repository: FakeBundleRepository = FakeBundleRepository()): DefaultQuestCreateComponent {
         lifecycle = LifecycleRegistry()
         val component =
@@ -281,9 +348,11 @@ class DefaultQuestCreateComponentUndoRedoTest {
         override fun observeUid(): Flow<String?> = flowOf(OWNER_UID)
     }
 
-    /** Черновик с одним уроком и без вопросов: редактор открывается на новом пустом вопросе. */
-    private class FakeBundleRepository : QuestAuthoringRepository {
-        private val bundle = MutableStateFlow(activeBundle())
+    /** Черновик с одним уроком и опциональными сохранёнными вопросами. */
+    private class FakeBundleRepository(vararg questions: DraftQuestion) : QuestAuthoringRepository {
+        val upserts = mutableListOf<DraftQuestion>()
+
+        private val bundle = MutableStateFlow(activeBundle(questions.toList()))
 
         override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummary>> = flowOf(emptyList())
 
@@ -300,7 +369,10 @@ class DefaultQuestCreateComponentUndoRedoTest {
 
         override suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit> = Result.success(Unit)
 
-        override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> = Result.success(Unit)
+        override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> {
+            upserts += question
+            return Result.success(Unit)
+        }
 
         override suspend fun queueArenaSubmission(submission: QuestArenaSubmission): Result<Unit> =
             Result.success(Unit)
@@ -391,7 +463,7 @@ class DefaultQuestCreateComponentUndoRedoTest {
         val DRAFT_ID = QuestDraftId("draft-1")
         val LESSON_ID = DraftLessonId("lesson-1")
 
-        fun activeBundle(): QuestAuthoringBundle =
+        fun activeBundle(questions: List<DraftQuestion> = emptyList()): QuestAuthoringBundle =
             QuestAuthoringBundle(
                 draft =
                     QuestDraft(
@@ -439,7 +511,40 @@ class DefaultQuestCreateComponentUndoRedoTest {
                             order = 0,
                         ),
                     ),
-                questions = emptyList(),
+                questions = questions,
             )
+
+        /** Сохранённый single-choice вопрос черновика — подопытный «стёртого существующего». */
+        fun savedSingleChoiceQuestion(): DraftQuestion {
+            val content =
+                QuestionContent.SingleChoice(
+                    id = "question-1",
+                    difficulty = Difficulty.EASY,
+                    text = "Вопрос?",
+                    imageUrl = null,
+                    options =
+                        listOf(
+                            QuestionContent.Option(id = OptionId("opt-0"), text = "Да"),
+                            QuestionContent.Option(id = OptionId("opt-1"), text = "Нет"),
+                        ),
+                    correctOptionId = OptionId("opt-0"),
+                    info = null,
+                )
+            val payload = Json { encodeDefaults = true }.encodeToString(QuestionContent.serializer(), content)
+            return DraftQuestion(
+                id = DraftQuestionId("question-1"),
+                draftId = DRAFT_ID,
+                lessonId = LESSON_ID,
+                type = DraftQuestionType.SINGLE_CHOICE,
+                language = "ru",
+                difficulty = Difficulty.EASY,
+                order = 0,
+                text = content.text,
+                imagePath = null,
+                payload = payload,
+                validationState = DraftQuestionValidationState.SAVED,
+                updatedAtMs = 1_000L,
+            )
+        }
     }
 }

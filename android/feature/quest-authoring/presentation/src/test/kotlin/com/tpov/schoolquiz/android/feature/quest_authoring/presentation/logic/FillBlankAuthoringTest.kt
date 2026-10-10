@@ -140,13 +140,61 @@ class FillBlankAuthoringTest {
     }
 
     @Test
-    fun `given answer markers when remove second answer then removes second marker`() {
+    fun `given answer markers when remove second answer then the word stays as plain text`() {
+        // AD-27 (UX-O6 §4): снятие метки не редактирует текст — слово возвращается как текст.
         val result =
             removeFillBlankAnswerMarker(
                 text = "JetBrains создал **Kotlin** и **Compose**",
                 answerIndex = 1,
             )
 
-        assertEquals("JetBrains создал **Kotlin** и", result)
+        assertEquals("JetBrains создал **Kotlin** и Compose", result)
+    }
+
+    @Test
+    fun `given removed blank word then it is no longer extracted as an answer`() {
+        val demoted =
+            removeFillBlankAnswerMarker(
+                text = "JetBrains создал **Kotlin** и **Compose**",
+                answerIndex = 1,
+            )
+
+        assertEquals(
+            listOf(FillBlankAnswerSpec(text = "Kotlin")),
+            extractFillBlankAnswers(demoted),
+            "снятое слово не остаётся ответом: метка снята, а не спрятана",
+        )
+    }
+
+    @Test
+    fun `given two blanks when the first answer changes then the second blank keeps its answer`() {
+        // UX-O6 §3/§4: i-й маркер отвечает i-й записи blanks; правка одного вхождения
+        // не сдвигает чужую связку.
+        val result =
+            upsertFillBlankAnswerMarker(
+                text = "JetBrains создал **Kotlin** и **blank**",
+                answerIndex = 1,
+                answer = FillBlankAnswerSpec(text = "Compose"),
+            )
+
+        assertEquals("JetBrains создал **Kotlin** и **Compose**", result)
+    }
+
+    @Test
+    fun `given repeated word in text when answers bind then only the claimed occurrence is marked`() {
+        // AD-27: одна аннотация не распространяется на другие одинаковые слова.
+        val segments =
+            buildFillBlankVisualSegments(
+                text = "Kotlin и Kotlin",
+                answers = listOf(FillBlankAnswerSpec("Kotlin")),
+            )
+
+        assertEquals(
+            listOf(
+                FillBlankVisualSegment(text = "Kotlin", isBlank = true, isProtected = false),
+                FillBlankVisualSegment(text = " и Kotlin", isBlank = false, isProtected = false),
+            ),
+            segments,
+        )
     }
 }
