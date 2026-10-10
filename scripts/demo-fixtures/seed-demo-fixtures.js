@@ -116,7 +116,13 @@ function bankRowSpecs(bank) {
       kind: "LOGIC", reviewerUid: curatorUid, reviewerLevelAtSubmit: 100, score: 3,
       submissionId: reviewSubmissionId, acceptedByServer: true,
     }],
+    // Полная форма placement под контракт lifecycle-views (4.3): lessonId/questType/updatedAtMs
+    // обязательны — частичная форма роняет listCuratorLessonLifecycle и авторский список.
+    // Экспорт-era цепочки (ac_*) уже несут полную форму — не навязываю им значение easy-банка.
     [`lesson_placements/${lessonId}`, {
+      ...(bank.seededAtMs
+        ? {lessonId, questType: "REGULAR", updatedAtMs: bank.seededAtMs}
+        : {}),
       shelf: "arena", previousShelf: "review", authorUid,
       contentVersion: lessonVersion, placementVersion: 1,
     }],
