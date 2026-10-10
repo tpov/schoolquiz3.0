@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -527,7 +525,6 @@ private fun FillBlankQuestionCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun FillBlankTransformedPreview(state: QuestQuestionEditorUiState) {
@@ -544,9 +541,12 @@ private fun FillBlankTransformedPreview(state: QuestQuestionEditorUiState) {
         contentColor = NoirT1,
         border = BorderStroke(1.dp, schoolQuizDesignLightBorderColor()),
     ) {
-        FlowRow(
+        // Column, а не FlowRow: модуль компилируется против compose-foundation 1.7 (BOM
+        // 2024.09.02), а в APK попадает 1.9.x, где бинарная сигнатура FlowRow другая —
+        // на риге это падало NoSuchMethodError при первом же непустом тексте. Сегментов
+        // в черновике единицы, вертикальный стек их смысл не меняет.
+        Column(
             modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             segments.forEach { segment ->
