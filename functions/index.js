@@ -108,6 +108,15 @@ const {
   overspendVerdict,
   settleClaims,
 } = require("./charge-claims");
+const {
+  TENTHS_PER_NOLIC,
+  buildReviewUnits,
+  buildSettlementManifest,
+  normalizeReviewFeeTariffs,
+  reviewFeeNolics,
+  settleReviewFeeTenths,
+  walletCreditForEntitlement,
+} = require("./review-fee");
 const {ADMIN_REVIEW_SYNC_CHANGES, writeSyncChanges} = require("./sync-changes");
 const {readReviewAssignmentChanges, resolveReviewAssignments} = require("./review-journal");
 const {
@@ -690,6 +699,9 @@ exports.rejectReviewSubmission = onCall(CALLABLE_OPTIONS, async (request) => {
     ...task,
     rejectedAtMs: now,
     rejectedByUid: uid,
+    // Уровень судьи на момент отклонения: расчёт цикла платит за обоснованное отклонение как за
+    // завершённую работу (AD-10), а уровня у отклонения без этого поля нет.
+    rejectedReviewerLevelAtSubmit: Math.max(levelFor(profile, "TESTING"), levelFor(profile, "LOGIC")),
     rejectionReason: reason,
     status: "REJECTED",
     changedAtMs: now,
@@ -708,6 +720,8 @@ exports.rejectReviewSubmission = onCall(CALLABLE_OPTIONS, async (request) => {
     {merge: true},
   );
   await batch.commit();
+  // Отклонение — тоже полный цикл (CAP-4): фонд делится, остаток сгорает, возврата платы нет.
+  await settleReviewFeeCycle(task.submissionId, "REJECTED", now);
   return {assignmentId, submissionId: task.submissionId, rejectedAtMs: now, reason};
 });
 
@@ -4295,41 +4309,302 @@ async function processArenaRequest(request) {
 
   const now = Date.now();
   const adminTasks = toAdminLessonTasks(request, now);
-  const batch = db.batch();
-  writePrivateHierarchyToBatch(batch, request, now);
-  writeAdminReviewLessonTasksToBatch(batch, adminTasks);
-  batch.set(
-    db.collection("quest_review_requests").doc(request.submissionId),
+  // Плата и принятие заявки — одна транзакция (CAP-4): подача без денег не принимается, принятая
+  // подача без платы не существует. Записи прежнего батча здесь не теряют ни поля.
+  return db.runTransaction(async (transaction) => {
+    const charge = await planReviewFeeCharge(transaction, request);
+    writePrivateHierarchyToBatch(transaction, request, now);
+    writeAdminReviewLessonTasksToBatch(transaction, adminTasks);
+    transaction.set(
+      db.collection("quest_review_requests").doc(request.submissionId),
+      clean({
+        // Тело заявки целиком, а не одна отметка об обработке.
+        //
+        // Раньше документ создавал клиент прямой записью, а триггер лишь дописывал `processed`.
+        // Прямая запись снята (AD-6), и писать сюда стало некому: без `ownerUid`, `draftId`,
+        // `draft`, `sections`, `themes`, `lessons` и `questions` публикация строит квест по пустому
+        // идентификатору (`quests/`), а автор не находит свой вердикт — выборка вердиктов идёт
+        // по `ownerUid` и требует `draftId`, и правило чтения смотрит на тот же `ownerUid`.
+        //
+        // Состав полей — ровно тот, что читает `normalizeRequest`: документ обязан пережить
+        // перезапуск и остаться единственным источником для `publishSubmissionIfReady`, которая
+        // перечитывает его спустя дни после подачи.
+        ...requestToDocument(request),
+        processed: true,
+        processedAtMs: now,
+        lastError: null,
+        status: "UNDER_REVIEW",
+        // Свежая заявка не прошла ещё ничего: стадии называются сразу, а не молчанием,
+        // по-вопросных исходов TESTING пока нет — пустой список, а не отсутствие поля.
+        failedStages: initialFailedStages(request),
+        questionOutcomes: [],
+      }),
+      {merge: true},
+    );
+    const reviewFee = charge
+      ? writeReviewFeeChargeToTransaction(transaction, request, charge, now)
+      : null;
+    return {
+      submissionId: request.submissionId,
+      privateQuestPath: privateQuestPath(request.ownerUid, request.draft.catalogId, request.draft.id),
+      adminLessonTaskPaths: adminTasks.map((task) => adminLessonPath(task.lessonId)),
+      reviewFee,
+    };
+  });
+}
+
+// ─── Платный цикл проверки: плата и расчёт (AD-10, история 4.7) ─────────────────────────────────
+
+/** Где живут документы платного цикла. Коллекции закрыты правилами от клиентов. */
+const REVIEW_FEE_TARIFFS_DOC = "configs/review_fee";
+const REVIEW_FEE_CYCLES = "review_fee_cycles";
+const REVIEW_FEE_QUESTS = "review_fee_quests";
+const REVIEW_FEE_MANIFESTS = "review_fee_manifests";
+
+/** Поле кошелька с дробным остатком вознаграждений проверки; отдельный carry от доли Арены (AD-9). */
+const REVIEW_FEE_CARRY_FIELD = "reviewFeeCarryTenths";
+
+/**
+ * Тарифы платы из `configs/review_fee` — или принятые владельцем по умолчанию.
+ *
+ * Испорченный тариф отказывает громко всем платным подачам: тихое возвращение к умолчанию
+ * выглядело бы как цена, которой владельцем не принято.
+ */
+async function readReviewFeeTariffs() {
+  const snapshot = await db.doc(REVIEW_FEE_TARIFFS_DOC).get();
+  try {
+    return normalizeReviewFeeTariffs(snapshot.exists ? snapshot.data() : null);
+  } catch (error) {
+    throw new HttpsError("failed-precondition", `${REVIEW_FEE_TARIFFS_DOC}: ${error.message}`);
+  }
+}
+
+/**
+ * Решение о плате за принимаемую заявку: тариф, проверка денег, ключи для записи.
+ *
+ * Идемпотентность платы — документ цикла: повтор приёмки той же заявки (упавший инстанс,
+ * догоняющий обработчик) находит его и плату не повторяет. Квест с оплаченной подачей или
+ * публичной версией платит тариф перепроверки, первая подача — первоначальный.
+ *
+ * @returns {object|null} null, когда цикл уже оплачен.
+ */
+async function planReviewFeeCharge(transaction, request) {
+  const cycleRef = db.doc(`${REVIEW_FEE_CYCLES}/${request.submissionId}`);
+  if ((await transaction.get(cycleRef)).exists) return null;
+
+  const questRef = db.doc(`${REVIEW_FEE_QUESTS}/${request.draft.id}`);
+  const [questSnap, publicSnap, tariffs] = await Promise.all([
+    transaction.get(questRef),
+    transaction.get(db.doc(`quests/${request.draft.id}`)),
+    readReviewFeeTariffs(),
+  ]);
+  const priorCycle = questSnap.exists || publicSnap.exists;
+  const feeNolics = reviewFeeNolics({tariffs, priorCycle, questionCount: request.questions.length});
+
+  const userRef = db.doc(`users/${request.ownerUid}`);
+  const userSnap = await transaction.get(userRef);
+  const userData = userSnap.exists ? userSnap.data() || {} : {};
+  const balance = nonNegativeInteger(userData.pointsNolics, numberValue(userData.nolics, 0));
+  if (balance < feeNolics) {
+    // Окончательный отказ: повтор заявки с тем же кошельком изменит нечего — денег по-прежнему нет.
+    throw new HttpsError(
+      "failed-precondition",
+      `REVIEW_FEE_INSUFFICIENT: cycle fee ${feeNolics} nolics exceeds balance ${balance}`,
+    );
+  }
+  return {
+    feeNolics,
+    tariff: priorCycle ? "recheck" : "initial",
+    tariffRevision: tariffs.revision,
+    questionCount: request.questions.length,
+    balance,
+    userRef,
+    questRef,
+    questSnap,
+    cycleRef,
+  };
+}
+
+/** Само списание: кошелёк, документ цикла, счётчик циклов квеста и строка книги денег. */
+function writeReviewFeeChargeToTransaction(transaction, request, charge, now) {
+  transaction.set(
+    charge.userRef,
+    clean({pointsNolics: charge.balance - charge.feeNolics, updatedAtMs: now}),
+    {merge: true},
+  );
+  transaction.create(charge.cycleRef, clean({
+    submissionId: request.submissionId,
+    ownerUid: request.ownerUid,
+    questId: request.draft.id,
+    catalogId: request.draft.catalogId,
+    status: "PAID",
+    feeNolics: charge.feeNolics,
+    feeTenths: charge.feeNolics * TENTHS_PER_NOLIC,
+    tariff: charge.tariff,
+    tariffRevision: charge.tariffRevision,
+    questionCount: charge.questionCount,
+    chargedAtMs: now,
+  }));
+  transaction.set(
+    charge.questRef,
     clean({
-      // Тело заявки целиком, а не одна отметка об обработке.
-      //
-      // Раньше документ создавал клиент прямой записью, а триггер лишь дописывал `processed`.
-      // Прямая запись снята (AD-6), и писать сюда стало некому: без `ownerUid`, `draftId`,
-      // `draft`, `sections`, `themes`, `lessons` и `questions` публикация строит квест по пустому
-      // идентификатору (`quests/`), а автор не находит свой вердикт — выборка вердиктов идёт
-      // по `ownerUid` и требует `draftId`, и правило чтения смотрит на тот же `ownerUid`.
-      //
-      // Состав полей — ровно тот, что читает `normalizeRequest`: документ обязан пережить
-      // перезапуск и остаться единственным источником для `publishSubmissionIfReady`, которая
-      // перечитывает его спустя дни после подачи.
-      ...requestToDocument(request),
-      processed: true,
-      processedAtMs: now,
-      lastError: null,
-      status: "UNDER_REVIEW",
-      // Свежая заявка не прошла ещё ничего: стадии называются сразу, а не молчанием,
-      // по-вопросных исходов TESTING пока нет — пустой список, а не отсутствие поля.
-      failedStages: initialFailedStages(request),
-      questionOutcomes: [],
+      questId: request.draft.id,
+      ownerUid: request.ownerUid,
+      catalogId: request.draft.catalogId,
+      lastSubmissionId: request.submissionId,
+      lastChargedAtMs: now,
+      cycles: numberValue(charge.questSnap.exists ? (charge.questSnap.data() || {}).cycles : 0, 0) + 1,
     }),
     {merge: true},
   );
-  await batch.commit();
+  for (const entry of ledgerEntries({
+    uid: request.ownerUid,
+    reason: REASON.REVIEW_FEE,
+    sourceId: request.submissionId,
+    atMs: now,
+    deltas: {[CURRENCY.NOLICS]: -charge.feeNolics},
+    details: {tariff: charge.tariff, questionCount: charge.questionCount, tariffRevision: charge.tariffRevision},
+  })) {
+    transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+  }
   return {
-    submissionId: request.submissionId,
-    privateQuestPath: privateQuestPath(request.ownerUid, request.draft.catalogId, request.draft.id),
-    adminLessonTaskPaths: adminTasks.map((task) => adminLessonPath(task.lessonId)),
+    feeNolics: charge.feeNolics,
+    tariff: charge.tariff,
+    tariffRevision: charge.tariffRevision,
+    questionCount: charge.questionCount,
   };
+}
+
+/**
+ * Расчёт платного цикла: фонд делится между проверяющими, остаток сгорает (AD-10).
+ *
+ * Вызывается на терминальном переходе (PUBLISHED — включая возврат заявки автору с отказом, — и
+ * REJECTED) и повторно при каждом обращении к уже терминальной заявке: расчёт идемпотентен
+ * статусом цикла, так что упавший между публикацией и расчётом инстанс догоняется следующим же
+ * действием, а не теряет деньги проверяющих. Заявка, не дошедшая до терминала, фонд не делит и
+ * не сжигает (OQ-2 не добавлен); заявка без оплаченного цикла (бывшие до введения платы) не
+ * рассчитывается вовсе.
+ */
+async function settleReviewFeeCycle(submissionId, outcome, now) {
+  const requestSnapshot = await db.collection("quest_review_requests").doc(submissionId).get();
+  if (!requestSnapshot.exists) return {settled: false, reason: "no-request"};
+  const status = stringValue((requestSnapshot.data() || {}).status);
+  if (status !== "PUBLISHED" && status !== "REJECTED") return {settled: false, reason: "not-terminal"};
+
+  const cycleRef = db.doc(`${REVIEW_FEE_CYCLES}/${submissionId}`);
+  const cycleSnap = await cycleRef.get();
+  if (!cycleSnap.exists) return {settled: false, reason: "unpaid"};
+  const cycle = cycleSnap.data() || {};
+  if (cycle.status === "SETTLED") return {settled: true, replayed: true};
+
+  const request = normalizeRequest(requestSnapshot.data(), submissionId);
+  const lessonIds =
+    request.targetLessonIds.length > 0
+      ? request.targetLessonIds
+      : request.lessons.map((lesson) => lesson.id);
+  const taskByLessonId = {};
+  const recordsByLessonId = {};
+  for (const lessonId of lessonIds) {
+    const taskSnapshot = await db.doc(adminLessonPath(lessonId)).get();
+    if (taskSnapshot.exists) taskByLessonId[lessonId] = await adminLessonSnapshotToTask(taskSnapshot);
+    recordsByLessonId[lessonId] = await readReviewRecords(lessonId, submissionId);
+  }
+  const units = buildReviewUnits({
+    submissionId,
+    lessonIds,
+    taskByLessonId,
+    recordsByLessonId,
+    ownerUid: request.ownerUid,
+  });
+  const plan = settleReviewFeeTenths({feeTenths: numberValue(cycle.feeTenths, 0), units});
+  const entitlementByReviewer = new Map();
+  for (const allocation of plan.allocations) {
+    const unit = units.find((item) => item.unitId === allocation.unitId);
+    entitlementByReviewer.set(
+      unit.reviewerUid,
+      (entitlementByReviewer.get(unit.reviewerUid) || 0) + allocation.entitlementTenths,
+    );
+  }
+
+  return db.runTransaction(async (transaction) => {
+    const current = await transaction.get(cycleRef);
+    if (!current.exists || (current.data() || {}).status === "SETTLED") {
+      return {settled: true, replayed: true};
+    }
+    const wallets = [];
+    for (const [uid, entitlementTenths] of Array.from(entitlementByReviewer.entries()).sort()) {
+      const userSnap = await transaction.get(db.doc(`users/${uid}`));
+      const userData = userSnap.exists ? userSnap.data() || {} : {};
+      const credit = walletCreditForEntitlement({
+        priorCarryTenths: nonNegativeInteger(userData[REVIEW_FEE_CARRY_FIELD], 0),
+        entitlementTenths,
+      });
+      wallets.push({
+        uid,
+        entitlementTenths,
+        priorCarryTenths: nonNegativeInteger(userData[REVIEW_FEE_CARRY_FIELD], 0),
+        creditedNolics: credit.creditedNolics,
+        nextCarryTenths: credit.nextCarryTenths,
+        balance: nonNegativeInteger(userData.pointsNolics, numberValue(userData.nolics, 0)),
+      });
+    }
+    const manifest = buildSettlementManifest({
+      submissionId,
+      ownerUid: request.ownerUid,
+      questId: request.draft.id,
+      outcome,
+      settledAtMs: now,
+      feeNolics: numberValue(cycle.feeNolics, 0),
+      tariff: cycle.tariff || null,
+      tariffRevision: numberValue(cycle.tariffRevision, 1),
+      units,
+      allocations: plan.allocations,
+      wallets,
+    });
+    // Неизменяемость манифеста — create: второй расчёт того же цикла не существует.
+    transaction.create(db.doc(`${REVIEW_FEE_MANIFESTS}/${submissionId}`), clean(manifest));
+    // Кошельки пишутся из исходного массива: в манифесте баланса нет — он состояние кошелька,
+    // а не факт расчёта. К этому месту buildSettlementManifest уже сверил арифметику carry.
+    for (const wallet of wallets) {
+      transaction.set(
+        db.doc(`users/${wallet.uid}`),
+        clean({
+          pointsNolics: wallet.balance + wallet.creditedNolics,
+          [REVIEW_FEE_CARRY_FIELD]: wallet.nextCarryTenths,
+          updatedAtMs: now,
+        }),
+        {merge: true},
+      );
+      for (const entry of ledgerEntries({
+        uid: wallet.uid,
+        reason: REASON.REVIEW_REWARD,
+        sourceId: submissionId,
+        atMs: now,
+        deltas: {[CURRENCY.NOLICS]: wallet.creditedNolics},
+        details: {
+          entitlementTenths: wallet.entitlementTenths,
+          priorCarryTenths: wallet.priorCarryTenths,
+          newCarryTenths: wallet.nextCarryTenths,
+        },
+      })) {
+        transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+      }
+    }
+    transaction.set(
+      cycleRef,
+      clean({
+        status: "SETTLED",
+        outcome,
+        settledAtMs: now,
+        manifestPath: `${REVIEW_FEE_MANIFESTS}/${submissionId}`,
+        sumEntitlementTenths: manifest.sumEntitlementTenths,
+        burnTenths: manifest.burnTenths,
+      }),
+      {merge: true},
+    );
+    return {settled: true, replayed: false, sumEntitlementTenths: manifest.sumEntitlementTenths,
+      burnTenths: manifest.burnTenths};
+  });
 }
 
 /**
@@ -4778,10 +5053,19 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   const requestSnapshot = await db.collection("quest_review_requests").doc(submissionId).get();
   if (!requestSnapshot.exists) return false;
   const request = normalizeRequest(requestSnapshot.data() || {}, submissionId);
-  if (request.status === "PUBLISHED") return false;
+  // Терминальные заявки фонд делят при каждом обращении: расчёт идемпотентен статусом цикла, и
+  // вызов, увидевший уже рассчитанный цикл, стоит двух чтений. Заявка, ставшая терминальной в
+  // упавшем перед расчётом инстансе, догоняется первым же следующим действием (AD-9).
+  if (request.status === "PUBLISHED") {
+    await settleReviewFeeCycle(submissionId, "PUBLISHED", now);
+    return false;
+  }
   // A rejected submission is finished. The author resubmits to try again, which mints a new
   // submission id — this one never publishes, not even through the nightly reconcile.
-  if (request.status === "REJECTED") return false;
+  if (request.status === "REJECTED") {
+    await settleReviewFeeCycle(submissionId, "REJECTED", now);
+    return false;
+  }
 
   const taskSnapshot = await db.collection("admin/review/lessons")
     .where("submissionId", "==", submissionId)
@@ -4801,6 +5085,7 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   }
   if (targetTasks.some((task) => task.rejectedAtMs)) {
     await requestSnapshot.ref.set({status: "REJECTED", updatedAtMs: now}, {merge: true});
+    await settleReviewFeeCycle(submissionId, "REJECTED", now);
     return false;
   }
   // A stored aggregate is not proof: older clients could submit their own checks, and review
@@ -4924,6 +5209,9 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   await batch.commit();
   // Публикация зафиксирована — автору уходит повод синхронизироваться, не данные (AD-20).
   await notifyUser(PUSH_EVENTS.QUEST_PUBLISHED, request.draft.id, request.ownerUid);
+  // Полный цикл: фонд делится сразу за публикацией. Отказ расчёта не отменяет публикацию — его
+  // догонит следующий вызов на этой заявке (см. терминальные ветки выше).
+  await settleReviewFeeCycle(submissionId, "PUBLISHED", Date.now());
   return true;
 }
 
@@ -5221,6 +5509,11 @@ function adminDocuments(tasks) {
       generation: numberValue(task.generation, 1),
       rejectedAtMs: task.rejectedAtMs || null,
       rejectedByUid: task.rejectedByUid || null,
+      // Уровень судьи на момент отклонения: расчёт платного цикла платит за отклонение как за
+      // работу (AD-10), и без этого поля в документе юнит отклонения не существует.
+      rejectedReviewerLevelAtSubmit: task.rejectedReviewerLevelAtSubmit === undefined
+        ? null
+        : task.rejectedReviewerLevelAtSubmit,
       rejectionReason: task.rejectionReason || null,
       targetShelf: task.targetShelf,
       availableLanguages: Array.from(availableLanguages(task)).sort(),
@@ -6012,6 +6305,10 @@ async function adminLessonSnapshotToTask(snapshot) {
     generation: numberValue(data.generation, 1),
     rejectedAtMs: numberValue(data.rejectedAtMs, 0) || null,
     rejectedByUid: nullableString(data.rejectedByUid),
+    rejectedReviewerLevelAtSubmit: data.rejectedReviewerLevelAtSubmit === null ||
+      data.rejectedReviewerLevelAtSubmit === undefined
+      ? null
+      : numberValue(data.rejectedReviewerLevelAtSubmit, 0),
     rejectionReason: nullableString(data.rejectionReason),
     createdAtMs: numberValue(data.createdAtMs, 0),
     changedAtMs: numberValue(data.changedAtMs, numberValue(data.createdAtMs, 0)),

@@ -129,7 +129,23 @@ function createFirestoreStub(seed, options) {
     return {
       id: path.slice(path.lastIndexOf("/") + 1),
       exists: data !== undefined,
-      ref: {path, collection: (name) => collectionRef(`${path}/${name}`)},
+      // ref с записью: обработчики дописывают документ через снимок (`requestSnapshot.ref.set`),
+      // и дописывание идёт в то же хранилище, что и запись через ссылку.
+      ref: {
+        path,
+        collection: (name) => collectionRef(`${path}/${name}`),
+        set: async (patch, writeOptions) => {
+          record("write", path);
+          maybeFail("write", path);
+          writeDocument(path, patch, writeOptions);
+        },
+        update: async (patch) => {
+          record("write", path);
+          maybeFail("write", path);
+          if (!store.documents.has(path)) throw new Error("NOT_FOUND");
+          writeDocument(path, patch, {merge: true});
+        },
+      },
       data: () => (data === undefined ? undefined : {...data}),
       updateTime: data === undefined ? undefined : Timestamp.fromMillis(0),
     };

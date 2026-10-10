@@ -13,8 +13,11 @@
  * — описание не существует: публичные документы квеста и урока строятся без ключа
  *   `description` вовсе (проверка исходником — построитель рядом с записью);
  *
- * — заявка денег не читает: подача без вопросов невозможна, а принятие заявки не трогает
- *   кошелёк автора — «no zero fee is inferred», тарифа на метаданные не появляется.
+ * — деньги платного цикла (AD-10, история 4.7): принятие заявки списывает тариф ровно один раз
+ *   (повтор приёмки не платит второй раз), отказ оставляет кошелёк нетронутым, денег на тариф не
+ *   хватает — окончательный отказ до всякой записи. Тарифа «за метаданные» не появляется: платит
+ *   заявка с вопросами по тарифу из `configs/review_fee`, и никакого другого повода списания
+ *   подача не изобретает.
  *
  * Прогон поведенческий: настоящий `submitMutation` против стаба Firestore, как в
  * `arena-handler.test.js`.
@@ -38,7 +41,7 @@ const PUBLISHED_TITLE = "Урок о падежах";
 function world(extra = {}) {
   return {
     "profiles/author": {uid: "author", testerLevel: 0, adminLevel: 0},
-    "users/author": {uid: "author", boxCount: 2, lifePoints: 300, goldCoins: 7},
+    "users/author": {uid: "author", boxCount: 2, lifePoints: 300, goldCoins: 7, pointsNolics: 1500},
     "lessons/lesson-1": {themeId: "theme-1", title: PUBLISHED_TITLE, version: 2, archived: false},
     ...extra,
   };
@@ -116,21 +119,63 @@ test("a submission that renames an existing lesson is refused before any write",
   assert.equal(store.documents.get("admin/review/lessons/lesson-1"), undefined,
     "задание ревью не открыто");
   assert.equal(store.documents.get("users/author").lifePoints, 300,
-    "кошелёк автора не тронут");
+    "кошелёк автора не тронут — плата не доходит до refusal-before-write");
 });
 
-test("a submission keeping the published title is accepted and charges nothing", async () => {
+test("an accepted submission charges the initial tariff exactly once (paid cycle, AD-10)", async () => {
   store.reset(world());
   const result = await submit("resubmit-1", submissionBody(PUBLISHED_TITLE));
 
   assert.equal(result.replayed, false);
+  assert.equal(result.result.reviewFee.feeNolics, 1000);
+  assert.equal(result.result.reviewFee.tariff, "initial");
   const request = store.documents.get("quest_review_requests/submission-1");
   assert.ok(request, "заявка записана целиком");
   assert.equal(request.status, "UNDER_REVIEW");
   assert.equal(request.draft.title, "Квест");
-  assert.equal(store.documents.get("users/author").lifePoints, 300,
-    "подача заявки — не платная операция");
-  assert.equal(store.documents.get("users/author").boxCount, 2);
+  assert.equal(store.documents.get("users/author").pointsNolics, 500,
+    "тариф первоначальной подачи списан при принятии");
+  assert.equal(store.documents.get("users/author").lifePoints, 300);
+  const cycle = store.documents.get("review_fee_cycles/submission-1");
+  assert.ok(cycle, "оплаченный цикл зафиксирован");
+  assert.equal(cycle.status, "PAID");
+  assert.equal(cycle.feeNolics, 1000);
+  assert.ok(store.documents.get("review_fee_quests/quest-1"), "квест помнит оплаченную подачу");
+  assert.ok(
+    [...store.documents.keys()].some((path) => path.startsWith("audit/currency_ledger/entries/")),
+    "плата видна в книге денег",
+  );
+
+  // Повтор приёмки той же заявки платит ровно один раз.
+  await functions.submitMutation.run({
+    auth: {uid: "author"},
+    data: {mutationId: "resubmit-1", operation: "quest_authoring.SUBMIT_ARENA", payload: JSON.stringify(submissionBody(PUBLISHED_TITLE))},
+  });
+  assert.equal(store.documents.get("users/author").pointsNolics, 500, "повтор платы не существует");
+});
+
+test("a submission without money for the tariff is refused before any write", async () => {
+  store.reset(world({"users/author": {uid: "author", boxCount: 2, lifePoints: 300, pointsNolics: 999}}));
+  await assert.rejects(
+    submit("poor-1", submissionBody(PUBLISHED_TITLE)),
+    (error) => error.code === "failed-precondition" && /REVIEW_FEE_INSUFFICIENT/.test(error.message),
+  );
+  assert.equal(store.documents.get("quest_review_requests/submission-1"), undefined,
+    "заявка без платы не принята");
+  assert.equal(store.documents.get("review_fee_cycles/submission-1"), undefined);
+  assert.ok(
+    ![...store.documents.keys()].some((path) => path.startsWith("mutation_keys/")),
+    "окончательный отказ освобождает ключ",
+  );
+});
+
+test("a resubmission of an already-paid quest pays the recheck tariff per question", async () => {
+  store.reset(world({"review_fee_quests/quest-1": {questId: "quest-1", cycles: 1}}));
+  const result = await submit("recheck-1", submissionBody(PUBLISHED_TITLE));
+  assert.equal(result.result.reviewFee.tariff, "recheck");
+  assert.equal(result.result.reviewFee.feeNolics, 100,
+    "один вопрос заявки — один тариф перепроверки");
+  assert.equal(store.documents.get("users/author").pointsNolics, 1400);
 });
 
 test("a first submission of a new lesson needs no title comparison to pass", async () => {

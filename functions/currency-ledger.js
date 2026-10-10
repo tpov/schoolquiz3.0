@@ -88,6 +88,10 @@ const REASON = {
   ARENA_AUTHOR_ROYALTY: "arena_author_royalty",
   ARENA_ROYALTY_SINK: "arena_royalty_sink",
   ARENA_ROYALTY_CARRY: "arena_royalty_carry",
+  /** Плата автора за принятый цикл проверки: списание тарифа с кошелька (AD-10, история 4.7). */
+  REVIEW_FEE: "review_fee",
+  /** Вознаграждение проверяющему после полного цикла: целые нолики из десятых entitlement. */
+  REVIEW_REWARD: "review_reward",
 };
 
 const REASONS = Object.values(REASON);

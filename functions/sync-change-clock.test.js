@@ -163,8 +163,9 @@ function testThePrivateJournalGetsTheServerClockOfItsOwnBatch() {
     /const now = Date\.now\(\)/.test(caller),
     "серверное время обработчика заявки считается им самим",
   );
+  // Принятие заявки — транзакция платы (4.7): писатель тот же, имя переменной сменилось.
   assert.ok(
-    /writePrivateHierarchyToBatch\(batch, request, now\)/.test(caller),
+    /writePrivateHierarchyToBatch\((batch|transaction), request, now\)/.test(caller),
     "посчитанное серверное время обязано доехать до приватного дерева, а не остаться в соседней строке",
   );
 }
