@@ -1,0 +1,13 @@
+{
+ "viewVersion": "arena-lifecycle-views-v1",
+ "entries": [
+  {
+   "fromShelf": "arena",
+   "targetShelf": "home",
+   "status": "REJECTED",
+   "reasonCode": "INVALID_TRANSITION",
+   "decidedAtMs": 1791665156293
+  }
+ ],
+ "nextCursor": null
+}

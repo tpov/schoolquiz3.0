@@ -1,14 +1,18 @@
+
+> test
+> node run-tests.js
+
 activity-kind-fixtures.test.js OK (11 cases)
 activity-kind.test.js OK
-✔ only current independently approved regular public lessons enter the priced universe (20.270942ms)
-✔ equal exact scores share a price and excluded rows do not influence eligible pricing (3.632692ms)
-✔ truncated placement query and corrupt rating fail closed (41.029603ms)
-✔ root loader fan-out shares the 12000-document cap (289.531378ms)
-✔ document reads deduplicate only within one callback while queries remain current (4.965257ms)
-✔ a complete 1000-row common review graph fits only through callback-local document deduplication (1283.188484ms)
-✔ concurrent universe reads share a single build and expose immutable safe values (2.063512ms)
-✔ eligible IDs use deterministic codepoint order, never locale collation (1.281702ms)
-✔ a reused transaction object gets a new callback reader and never reuses abandoned context (1.320639ms)
+✔ only current independently approved regular public lessons enter the priced universe (17.651661ms)
+✔ equal exact scores share a price and excluded rows do not influence eligible pricing (3.729753ms)
+✔ truncated placement query and corrupt rating fail closed (22.670561ms)
+✔ root loader fan-out shares the 12000-document cap (270.165552ms)
+✔ document reads deduplicate only within one callback while queries remain current (3.195413ms)
+✔ a complete 1000-row common review graph fits only through callback-local document deduplication (1223.660885ms)
+✔ concurrent universe reads share a single build and expose immutable safe values (1.835864ms)
+✔ eligible IDs use deterministic codepoint order, never locale collation (1.336902ms)
+✔ a reused transaction object gets a new callback reader and never reuses abandoned context (1.382806ms)
 ℹ tests 9
 ℹ suites 0
 ℹ pass 9
@@ -16,51 +20,51 @@ activity-kind.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1675.483842
-✔ prepare and cancel bind the new client's expected Auth owner before any financial effects (38.734489ms)
-✔ real endpoints reserve trusted price/charges and settle from the frozen bank after editing and retirement (18.39841ms)
-✔ ticket terminal and result receipt share one canonical settlement timestamp (10.925912ms)
-✔ five one-nolic accepted runs conserve author four, sink one, with separate independent holds (25.80983ms)
-✔ HARD plasma is additional to the held activity cost; unpaid skip never drops the denominator (12.086475ms)
-✔ cancel and settle are mutually exclusive; another owner or attempt cannot spend the hold (13.608054ms)
-✔ failed economic commit rolls back result, ticket, payer, author and ledger; replay can finish (5.965905ms)
-✔ missing or mismatched frozen key remains retryable with its hold, not a fabricated zero score (5.404884ms)
-✔ server-selected random is free; missing independent approval refuses before reserving (4.767881ms)
-✔ stale placement author/version rejects selected and random preparation before any hold (5.22009ms)
-✔ corrupt eligible aggregate is unavailable and never reaches a wallet write (1.897097ms)
-✔ preparation reuses the callback-local economy snapshot for its regeneration plan (11.216552ms)
-✔ a reviewed Arena lesson may belong to a course kept in the on-demand archive (4.902615ms)
-✔ new Arena attempts cannot bypass ticket payments through the old result endpoint; old history is preserved only (13.146893ms)
-✔ selected top level costs 100 and price remains frozen after ratings change (6.124684ms)
-✔ a full eligible index preserves the 12000 cap and rejects selected or random prepare before writes (3199.426174ms)
-✔ a retried issue rereads withdrawal on the same Transaction object and creates no hold (3.792625ms)
-✔ a retried issue freezes the newly committed price, not the abandoned transaction's cache (4.656889ms)
-✔ a reused Transaction accepts its new authoritative price within the explicitly confirmed ceiling (4.182245ms)
-✔ a reused Transaction refuses repricing above confirmation without committing its abandoned hold or receipt (6.402505ms)
-✔ callable ceiling replay is immutable after rating changes, while no-ceiling legacy replay still works (5.578319ms)
-✔ callable zero ceiling spends nothing and random never accepts a selected-price confirmation (2.660545ms)
-✔ EASY can restore an already split trusted bank and still receives authoritative scoring (3.749853ms)
-✔ real missing-id source stays untouched; actual EASY producer stamps trusted identity before hold (3.607569ms)
-✔ EASY embedded metadata {"id":"foreign"} rejects before wallet/checkpoint/quota writes (2.007651ms)
-✔ EASY embedded metadata {"id":null} rejects before wallet/checkpoint/quota writes (1.50848ms)
-✔ EASY embedded metadata {"difficulty":"HARD"} rejects before wallet/checkpoint/quota writes (1.442461ms)
-✔ EASY Survey missing modern metadata is normalized and participation semantics retained (2.200454ms)
-✔ HARD embedded metadata {"id":"foreign"} rejects before wallet/checkpoint/quota writes (1.666628ms)
-✔ HARD embedded metadata {"id":null} rejects before wallet/checkpoint/quota writes (1.511305ms)
-✔ HARD embedded metadata {"difficulty":"EASY"} rejects before wallet/checkpoint/quota writes (1.513799ms)
-✔ HARD Survey missing modern metadata is normalized and participation semantics retained (1.954295ms)
-✔ HARD SingleChoice ALREADY_REDACTED nested grading field rejects before every write (2.324863ms)
-✔ HARD SingleChoice valid ALREADY_REDACTED retains exact public bytes and IDs (6.00621ms)
-✔ HARD MultipleChoice ALREADY_REDACTED nested grading field rejects before every write (2.054396ms)
-✔ HARD MultipleChoice valid ALREADY_REDACTED retains exact public bytes and IDs (2.53143ms)
-✔ HARD Ordering ALREADY_REDACTED nested grading field rejects before every write (2.774178ms)
-✔ HARD Ordering valid ALREADY_REDACTED retains exact public bytes and IDs (3.151176ms)
-✔ HARD FillBlank ALREADY_REDACTED nested grading field rejects before every write (2.786438ms)
-✔ HARD FillBlank valid ALREADY_REDACTED retains exact public bytes and IDs (3.294382ms)
-✔ EASY restored redacted payload receives missing metadata from its real document, not key claims (3.0801ms)
-✔ HARD duplicate raw key cannot hide secret bytes before a clean last-value public schema (1.907694ms)
-✔ random HARD skips unsafe banks without consuming quota, charge hold or premium checkpoint (2.035761ms)
-✔ old unsafe HARD issue replay and recovery fail closed; immutable hold can still be cancelled (6.625624ms)
+ℹ duration_ms 1567.65276
+✔ prepare and cancel bind the new client's expected Auth owner before any financial effects (38.718653ms)
+✔ real endpoints reserve trusted price/charges and settle from the frozen bank after editing and retirement (15.446491ms)
+✔ ticket terminal and result receipt share one canonical settlement timestamp (7.250246ms)
+✔ five one-nolic accepted runs conserve author four, sink one, with separate independent holds (20.303188ms)
+✔ HARD plasma is additional to the held activity cost; unpaid skip never drops the denominator (11.978872ms)
+✔ cancel and settle are mutually exclusive; another owner or attempt cannot spend the hold (15.839116ms)
+✔ failed economic commit rolls back result, ticket, payer, author and ledger; replay can finish (5.029897ms)
+✔ missing or mismatched frozen key remains retryable with its hold, not a fabricated zero score (4.976309ms)
+✔ server-selected random is free; missing independent approval refuses before reserving (6.009031ms)
+✔ stale placement author/version rejects selected and random preparation before any hold (5.063777ms)
+✔ corrupt eligible aggregate is unavailable and never reaches a wallet write (1.788802ms)
+✔ preparation reuses the callback-local economy snapshot for its regeneration plan (5.454953ms)
+✔ a reviewed Arena lesson may belong to a course kept in the on-demand archive (3.862198ms)
+✔ new Arena attempts cannot bypass ticket payments through the old result endpoint; old history is preserved only (20.946789ms)
+✔ selected top level costs 100 and price remains frozen after ratings change (4.249378ms)
+✔ a full eligible index preserves the 12000 cap and rejects selected or random prepare before writes (3567.730037ms)
+✔ a retried issue rereads withdrawal on the same Transaction object and creates no hold (3.053482ms)
+✔ a retried issue freezes the newly committed price, not the abandoned transaction's cache (3.795847ms)
+✔ a reused Transaction accepts its new authoritative price within the explicitly confirmed ceiling (4.867105ms)
+✔ a reused Transaction refuses repricing above confirmation without committing its abandoned hold or receipt (6.886317ms)
+✔ callable ceiling replay is immutable after rating changes, while no-ceiling legacy replay still works (5.966447ms)
+✔ callable zero ceiling spends nothing and random never accepts a selected-price confirmation (2.700544ms)
+✔ EASY can restore an already split trusted bank and still receives authoritative scoring (4.907247ms)
+✔ real missing-id source stays untouched; actual EASY producer stamps trusted identity before hold (4.542236ms)
+✔ EASY embedded metadata {"id":"foreign"} rejects before wallet/checkpoint/quota writes (2.62463ms)
+✔ EASY embedded metadata {"id":null} rejects before wallet/checkpoint/quota writes (2.073944ms)
+✔ EASY embedded metadata {"difficulty":"HARD"} rejects before wallet/checkpoint/quota writes (1.852587ms)
+✔ EASY Survey missing modern metadata is normalized and participation semantics retained (2.881222ms)
+✔ HARD embedded metadata {"id":"foreign"} rejects before wallet/checkpoint/quota writes (2.041981ms)
+✔ HARD embedded metadata {"id":null} rejects before wallet/checkpoint/quota writes (5.431793ms)
+✔ HARD embedded metadata {"difficulty":"EASY"} rejects before wallet/checkpoint/quota writes (1.923698ms)
+✔ HARD Survey missing modern metadata is normalized and participation semantics retained (4.380686ms)
+✔ HARD SingleChoice ALREADY_REDACTED nested grading field rejects before every write (3.371876ms)
+✔ HARD SingleChoice valid ALREADY_REDACTED retains exact public bytes and IDs (3.163544ms)
+✔ HARD MultipleChoice ALREADY_REDACTED nested grading field rejects before every write (2.362399ms)
+✔ HARD MultipleChoice valid ALREADY_REDACTED retains exact public bytes and IDs (2.669171ms)
+✔ HARD Ordering ALREADY_REDACTED nested grading field rejects before every write (3.20143ms)
+✔ HARD Ordering valid ALREADY_REDACTED retains exact public bytes and IDs (4.228373ms)
+✔ HARD FillBlank ALREADY_REDACTED nested grading field rejects before every write (3.734117ms)
+✔ HARD FillBlank valid ALREADY_REDACTED retains exact public bytes and IDs (3.333163ms)
+✔ EASY restored redacted payload receives missing metadata from its real document, not key claims (3.656771ms)
+✔ HARD duplicate raw key cannot hide secret bytes before a clean last-value public schema (2.069735ms)
+✔ random HARD skips unsafe banks without consuming quota, charge hold or premium checkpoint (1.919595ms)
+✔ old unsafe HARD issue replay and recovery fail closed; immutable hold can still be cancelled (6.333846ms)
 ℹ tests 44
 ℹ suites 0
 ℹ pass 44
@@ -68,15 +72,15 @@ activity-kind.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 3492.021841
+ℹ duration_ms 3855.464416
 {"reason":"SETTLEMENT_PENDING","severity":"WARNING","message":"Arena operation needs retry or repair"}
 {"reason":"SERVER_FAILURE","severity":"WARNING","message":"Arena operation needs retry or repair"}
-✔ real handlers require curator and independently accepted records of the published submission (17.26004ms)
-✔ real lesson promotion pays each milestone once and leaves the archive parent and sibling alone (16.091938ms)
-✔ archive course marker does not retire its reviewed lesson; actual retirement and archived descendants do (3.731542ms)
-✔ queued rating waits for settlement and changes one lesson only, with an immutable replay receipt (9.457732ms)
-✔ box award and public placement rollback together after a failed commit (5.278984ms)
-✔ lesson journal advances on repeated server milliseconds and ignores client clock and course rating (5.426359ms)
+✔ real handlers require curator and independently accepted records of the published submission (11.392668ms)
+✔ real lesson promotion pays each milestone once and leaves the archive parent and sibling alone (16.170812ms)
+✔ archive course marker does not retire its reviewed lesson; actual retirement and archived descendants do (3.665511ms)
+✔ queued rating waits for settlement and changes one lesson only, with an immutable replay receipt (8.5427ms)
+✔ box award and public placement rollback together after a failed commit (4.271109ms)
+✔ lesson journal advances on repeated server milliseconds and ignores client clock and course rating (4.154005ms)
 ℹ tests 6
 ℹ suites 0
 ℹ pass 6
@@ -84,18 +88,18 @@ activity-kind.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 100.767213
-✔ only one new capability is registered; every pre-existing handler name is preserved (3.242753ms)
-✔ unauthenticated request is denied with a fixed reason before any reads or effects (10.649815ms)
-✔ extra uid/owner fields and malformed payloads are rejected, never spread over server Auth (3.619255ms)
-✔ actual callable uses real catalog and root review loader with no wallet, ticket or audit reads/writes (10.287578ms)
-✔ a real context withdrawal is excluded rather than trusting client eligibility (4.143939ms)
-✔ corrupt existing rating maps to generic unavailable with CATALOG_INVALID, not score zero (2.900327ms)
-✔ changed cursor maps to explicit CATALOG_CHANGED without allocating tickets or mutation receipts (6.60392ms)
-✔ real placement overflow maps to resource-exhausted and never yields a truncated page (30.551538ms)
-✔ SDK failure text, document paths and details do not escape the callable (2.074625ms)
-✔ unknown SDK codes are not echoed even when uppercase or shaped like a known transport status (4.093883ms)
-✔ identical reads preserve snapshot and page results without any permanent read receipt (2.751166ms)
+ℹ duration_ms 82.584981
+✔ only one new capability is registered; every pre-existing handler name is preserved (3.774472ms)
+✔ unauthenticated request is denied with a fixed reason before any reads or effects (7.911138ms)
+✔ extra uid/owner fields and malformed payloads are rejected, never spread over server Auth (4.540955ms)
+✔ actual callable uses real catalog and root review loader with no wallet, ticket or audit reads/writes (12.694781ms)
+✔ a real context withdrawal is excluded rather than trusting client eligibility (3.252602ms)
+✔ corrupt existing rating maps to generic unavailable with CATALOG_INVALID, not score zero (3.136478ms)
+✔ changed cursor maps to explicit CATALOG_CHANGED without allocating tickets or mutation receipts (7.824641ms)
+✔ real placement overflow maps to resource-exhausted and never yields a truncated page (33.840206ms)
+✔ SDK failure text, document paths and details do not escape the callable (2.426518ms)
+✔ unknown SDK codes are not echoed even when uppercase or shaped like a known transport status (4.980044ms)
+✔ identical reads preserve snapshot and page results without any permanent read receipt (3.822212ms)
 ℹ tests 11
 ℹ suites 0
 ℹ pass 11
@@ -103,38 +107,38 @@ activity-kind.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 114.918698
-✔ Auth and strict request/cursor validation precede all reads and writes (16.816245ms)
-✔ actual root review loader + actual published key producer yield only safe lesson metadata (18.983978ms)
-✔ real placement producer output is readable without copying its audit fields (7.944639ms)
-✔ all lessons including unrated prior=2 sort by exact fraction; equivalent fractions share price (7.013575ms)
-✔ distinct rational levels remain distinct when division rounds them to the same Number (3.758549ms)
-✔ pagination covers every eligible lesson once, defaults to 20 and allows 50 with deterministic replay (244.855877ms)
-✔ cursor detects unseen pricing, display, version, membership and eligibility changes without writes (40.12523ms)
-✔ private payload and audit text do not enter the public fingerprint (4.828646ms)
-✔ stale placement author/version are absent from catalog and cannot influence its confirmed quote (38.066541ms)
-✔ COURSE/SURVEY, stale review, unpublished and mismatched placement author/version are excluded (10.773527ms)
-✔ metadata listing never invents bank availability or fills unknown title with a fake value (1.640907ms)
-✔ placement lookahead refuses 1001 rather than silently pricing/listing 1000 (46.495144ms)
-✔ catalog pricing-universe limit matches current runtime, and exactly 1000 raw rows are allowed (10.992595ms)
-✔ actual root's unbounded review query is bounded with +1 and never receives truncated reviews (26.662304ms)
-✔ exactly 12000 document reads are permitted without an off-by-one rejection (229.574292ms)
-✔ total read budget is explicit even for repeated injected reads (235.749424ms)
-✔ same-Transaction optimistic retry rebuilds metadata/pricing and resets the per-callback budget (375.926703ms)
-✔ response byte ceiling refuses oversized public title instead of truncation (34.854674ms)
-✔ response ceiling includes envelope/cursor overhead, not just individual cards (45.857426ms)
-✔ a syntactically valid cursor with an unknown last lesson cannot silently return an empty tail (2.219097ms)
-✔ invalid stored rating never becomes zero or a guessed price (3.623993ms)
-✔ existing rating document rejects missing ratingSum, without an unrated fallback (1.255742ms)
-✔ existing rating document rejects null ratingSum, without an unrated fallback (0.736184ms)
-✔ existing rating document rejects missing ratingCount, without an unrated fallback (0.741928ms)
-✔ existing rating document rejects null ratingCount, without an unrated fallback (0.821269ms)
-✔ existing rating document rejects missing ratingVersion, without an unrated fallback (0.810852ms)
-✔ existing rating document rejects null ratingVersion, without an unrated fallback (1.097779ms)
-✔ an existing empty rating document is corruption, not an absent document (1.26747ms)
-✔ a wholly absent rating document legitimately yields the unrated prior and price one (1.082858ms)
-✔ an existing complete zero aggregate is valid, with every integer field explicitly present (1.012877ms)
-✔ loader failure stays a failure, and an actually empty catalog is a valid read-only response (1.062824ms)
+ℹ duration_ms 123.917411
+✔ Auth and strict request/cursor validation precede all reads and writes (13.719493ms)
+✔ actual root review loader + actual published key producer yield only safe lesson metadata (16.907185ms)
+✔ real placement producer output is readable without copying its audit fields (11.025467ms)
+✔ all lessons including unrated prior=2 sort by exact fraction; equivalent fractions share price (7.884627ms)
+✔ distinct rational levels remain distinct when division rounds them to the same Number (3.736179ms)
+✔ pagination covers every eligible lesson once, defaults to 20 and allows 50 with deterministic replay (164.450547ms)
+✔ cursor detects unseen pricing, display, version, membership and eligibility changes without writes (47.136026ms)
+✔ private payload and audit text do not enter the public fingerprint (6.646754ms)
+✔ stale placement author/version are absent from catalog and cannot influence its confirmed quote (36.728976ms)
+✔ COURSE/SURVEY, stale review, unpublished and mismatched placement author/version are excluded (8.446481ms)
+✔ metadata listing never invents bank availability or fills unknown title with a fake value (20.799878ms)
+✔ placement lookahead refuses 1001 rather than silently pricing/listing 1000 (23.723384ms)
+✔ catalog pricing-universe limit matches current runtime, and exactly 1000 raw rows are allowed (10.681996ms)
+✔ actual root's unbounded review query is bounded with +1 and never receives truncated reviews (37.728023ms)
+✔ exactly 12000 document reads are permitted without an off-by-one rejection (214.578556ms)
+✔ total read budget is explicit even for repeated injected reads (240.94695ms)
+✔ same-Transaction optimistic retry rebuilds metadata/pricing and resets the per-callback budget (345.103457ms)
+✔ response byte ceiling refuses oversized public title instead of truncation (29.255689ms)
+✔ response ceiling includes envelope/cursor overhead, not just individual cards (43.417146ms)
+✔ a syntactically valid cursor with an unknown last lesson cannot silently return an empty tail (2.34341ms)
+✔ invalid stored rating never becomes zero or a guessed price (3.491949ms)
+✔ existing rating document rejects missing ratingSum, without an unrated fallback (1.000976ms)
+✔ existing rating document rejects null ratingSum, without an unrated fallback (0.696943ms)
+✔ existing rating document rejects missing ratingCount, without an unrated fallback (0.992366ms)
+✔ existing rating document rejects null ratingCount, without an unrated fallback (1.064735ms)
+✔ existing rating document rejects missing ratingVersion, without an unrated fallback (0.954675ms)
+✔ existing rating document rejects null ratingVersion, without an unrated fallback (0.88147ms)
+✔ an existing empty rating document is corruption, not an absent document (1.006559ms)
+✔ a wholly absent rating document legitimately yields the unrated prior and price one (1.103559ms)
+✔ an existing complete zero aggregate is valid, with every integer field explicitly present (0.987648ms)
+✔ loader failure stays a failure, and an actually empty catalog is a valid read-only response (1.20034ms)
 ℹ tests 31
 ℹ suites 0
 ℹ pass 31
@@ -142,13 +146,13 @@ activity-kind.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1435.493244
-✔ TZ06B lifecycle readers preserve the accepted callable surface (4.903536ms)
-✔ every lifecycle callable rejects missing Auth before a source read or effect (7.226651ms)
-✔ payload authority spoofing and malformed cursor/body fail at the callable boundary before reads (6.011068ms)
-✔ actual callable enforces author/curator scope, hides foreign lesson existence, and projects no raw private field (28.196786ms)
-✔ lifecycle context stays bounded when a lesson has a large historic review journal (3.087904ms)
-✔ backend and corrupt-source failures become generic unavailable errors without fallback reads or writes (4.750441ms)
+ℹ duration_ms 1317.816384
+✔ TZ06B lifecycle readers preserve the accepted callable surface (4.682215ms)
+✔ every lifecycle callable rejects missing Auth before a source read or effect (6.84158ms)
+✔ payload authority spoofing and malformed cursor/body fail at the callable boundary before reads (6.688888ms)
+✔ actual callable enforces author/curator scope, hides foreign lesson existence, and projects no raw private field (25.832193ms)
+✔ lifecycle context stays bounded when a lesson has a large historic review journal (3.238465ms)
+✔ backend and corrupt-source failures become generic unavailable errors without fallback reads or writes (4.706802ms)
 ℹ tests 6
 ℹ suites 0
 ℹ pass 6
@@ -156,18 +160,18 @@ activity-kind.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 91.672438
-✔ payloads are strict and invalid authority data is refused before every domain read (6.714558ms)
-✔ owner list uses an exclusive bounded document cursor, validates current ownership, and returns an allowlist DTO (5.53124ms)
-✔ current root ownership parity fails closed instead of trusting a stale placement author (3.733645ms)
-✔ a concrete lifecycle is owner-or-curator scoped, represents an unplaced or first-rejected lesson as REVIEW, and hides existence from outsiders (2.628212ms)
-✔ curator list checks only the server role and a plain author cannot spoof that role (2.399916ms)
-✔ history uses an encrypted account-and-lesson-bound cursor, preserves duplicate timestamps, and never projects actor or mutation data (5.319298ms)
-✔ royalty reader returns only actual author credits, uses a descending bounded cursor, and keeps payer/source/carry data private (2.394535ms)
-✔ author outcome view binds exact submissions or bounded legacy drafts to Auth and never returns request bodies (1.998698ms)
-✔ author outcome view rejects malformed identity lists before reads and fails closed on a corrupt visible reason (1.895188ms)
-✔ a corrupt raw history or royalty row becomes a generic unavailable result rather than a fabricated DTO (1.705471ms)
-✔ a missing or malformed server cursor key fails closed instead of falling back to a reversible token (1.002093ms)
+ℹ duration_ms 87.047828
+✔ payloads are strict and invalid authority data is refused before every domain read (7.530155ms)
+✔ owner list uses an exclusive bounded document cursor, validates current ownership, and returns an allowlist DTO (6.222287ms)
+✔ current root ownership parity fails closed instead of trusting a stale placement author (3.295251ms)
+✔ a concrete lifecycle is owner-or-curator scoped, represents an unplaced or first-rejected lesson as REVIEW, and hides existence from outsiders (2.58667ms)
+✔ curator list checks only the server role and a plain author cannot spoof that role (2.466631ms)
+✔ history uses an encrypted account-and-lesson-bound cursor, preserves duplicate timestamps, and never projects actor or mutation data (5.772086ms)
+✔ royalty reader returns only actual author credits, uses a descending bounded cursor, and keeps payer/source/carry data private (2.946989ms)
+✔ author outcome view binds exact submissions or bounded legacy drafts to Auth and never returns request bodies (2.473984ms)
+✔ author outcome view rejects malformed identity lists before reads and fails closed on a corrupt visible reason (2.406457ms)
+✔ a corrupt raw history or royalty row becomes a generic unavailable result rather than a fabricated DTO (1.946991ms)
+✔ a missing or malformed server cursor key fails closed instead of falling back to a reversible token (1.376513ms)
 ℹ tests 11
 ℹ suites 0
 ℹ pass 11
@@ -175,26 +179,26 @@ activity-kind.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 49.420975
+ℹ duration_ms 57.586639
 PASS: raw lesson placement and moderation history have a private storage boundary
-✔ latest eligible vote per player and lesson; retries, owner and incomplete attempts do not count (5.21946ms)
-✔ votes require matching settled receipt; absent, wrong lesson and premature votes are excluded (0.540222ms)
-✔ same acceptedAt uses stable ratingId, independent of input order (2.599077ms)
-✔ conflicting retry bodies are rejected instead of silently replacing trusted facts (1.182302ms)
-✔ invalid numeric input fails closed; weighted arithmetic never returns unsafe integers (1.141947ms)
-✔ exact fractions, not rounded displays, define shared score levels (0.944168ms)
-✔ prices are ordinal across distinct rated levels, not the numerical distance between scores (0.978145ms)
-✔ rounded ordinal prices remain monotonic and exact ties get the same price (1.708339ms)
-✔ quarters are UTC, half-open, and cross year/leap-day boundaries (4.056573ms)
-✔ season counts distinct eligible players, not retries; 19 cannot win (4.843583ms)
-✔ season filters acceptance time before latest-vote selection; start included, end excluded (0.858982ms)
-✔ season winner tie-breaks are score, voter count, older publication, stable lesson ID (1.53962ms)
-✔ course/survey, not-yet-published and pre-publication ratings do not win the Arena season (1.182805ms)
-✔ five one-nolic payments pay author four, sink one, and clear the conserved reserve (0.668746ms)
-✔ royalty split is partition-independent and safe at MAX_SAFE_INTEGER (0.857216ms)
-✔ only curator-gated consecutive REGULAR lesson advancement awards 15 and 20 BOXES (1.012863ms)
-✔ season ten BOXES uses an independent season key and never advances a shelf (1.395058ms)
-✔ helpers do not mutate input and all outputs round-trip through JSON (1.479349ms)
+✔ latest eligible vote per player and lesson; retries, owner and incomplete attempts do not count (8.276891ms)
+✔ votes require matching settled receipt; absent, wrong lesson and premature votes are excluded (0.881324ms)
+✔ same acceptedAt uses stable ratingId, independent of input order (5.419754ms)
+✔ conflicting retry bodies are rejected instead of silently replacing trusted facts (1.378116ms)
+✔ invalid numeric input fails closed; weighted arithmetic never returns unsafe integers (1.10472ms)
+✔ exact fractions, not rounded displays, define shared score levels (0.968869ms)
+✔ prices are ordinal across distinct rated levels, not the numerical distance between scores (0.84474ms)
+✔ rounded ordinal prices remain monotonic and exact ties get the same price (1.947082ms)
+✔ quarters are UTC, half-open, and cross year/leap-day boundaries (0.748378ms)
+✔ season counts distinct eligible players, not retries; 19 cannot win (4.847196ms)
+✔ season filters acceptance time before latest-vote selection; start included, end excluded (0.980455ms)
+✔ season winner tie-breaks are score, voter count, older publication, stable lesson ID (2.19018ms)
+✔ course/survey, not-yet-published and pre-publication ratings do not win the Arena season (1.306174ms)
+✔ five one-nolic payments pay author four, sink one, and clear the conserved reserve (0.715955ms)
+✔ royalty split is partition-independent and safe at MAX_SAFE_INTEGER (0.885544ms)
+✔ only curator-gated consecutive REGULAR lesson advancement awards 15 and 20 BOXES (1.157513ms)
+✔ season ten BOXES uses an independent season key and never advances a shelf (1.286948ms)
+✔ helpers do not mutate input and all outputs round-trip through JSON (1.653534ms)
 ℹ tests 18
 ℹ suites 0
 ℹ pass 18
@@ -202,28 +206,28 @@ PASS: raw lesson placement and moderation history have a private storage boundar
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 48.878842
-✔ SingleChoice: exact emitter schema passes without rewriting payload, order, IDs or key (8.280453ms)
-✔ SingleChoice: arbitrary root private data and declared-row nested grading data are rejected (1.144248ms)
-✔ MultipleChoice: exact emitter schema passes without rewriting payload, order, IDs or key (1.730246ms)
-✔ MultipleChoice: arbitrary root private data and declared-row nested grading data are rejected (3.970104ms)
-✔ Ordering: exact emitter schema passes without rewriting payload, order, IDs or key (2.184006ms)
-✔ Ordering: arbitrary root private data and declared-row nested grading data are rejected (0.844106ms)
-✔ FillBlank: exact emitter schema passes without rewriting payload, order, IDs or key (2.088432ms)
-✔ FillBlank: arbitrary root private data and declared-row nested grading data are rejected (1.284781ms)
-✔ Survey: exact emitter schema passes without rewriting payload, order, IDs or key (0.965361ms)
-✔ Survey: arbitrary root private data and declared-row nested grading data are rejected (1.11582ms)
-✔ duplicate root keys cannot retain an earlier secret, including escaped-name alias (1.037946ms)
-✔ duplicate nested keys cannot retain a private object under an earlier scalar field (0.581749ms)
-✔ JSON-looking quoted text, escapes and repeated keys in separate row objects remain legal (1.440662ms)
-✔ missing/null/broken key or cross-question key never makes a redacted question deliverable (1.171743ms)
-✔ FillBlank protected segments must satisfy the emitter's existing no-answer-text rule (2.377166ms)
-✔ wrong metadata, row values, duplicate row IDs and missing imageUrl are refused (1.131694ms)
-✔ old redacted content may omit optional metadata but modern Survey cannot (0.68677ms)
-✔ modern missing metadata is filled without mutating the real production-shaped fixture (0.554739ms)
-✔ normalization refuses existing metadata conflicts, including null and blank (0.354145ms)
-✔ legacy dialect remains unchanged rather than pretending to be a modern complete question (0.318874ms)
-✔ malformed/nonobject/oversize/deep JSON fails closed without stack overflow (5.177343ms)
+ℹ duration_ms 54.898318
+✔ SingleChoice: exact emitter schema passes without rewriting payload, order, IDs or key (6.425661ms)
+✔ SingleChoice: arbitrary root private data and declared-row nested grading data are rejected (0.826365ms)
+✔ MultipleChoice: exact emitter schema passes without rewriting payload, order, IDs or key (1.245991ms)
+✔ MultipleChoice: arbitrary root private data and declared-row nested grading data are rejected (0.612645ms)
+✔ Ordering: exact emitter schema passes without rewriting payload, order, IDs or key (3.808705ms)
+✔ Ordering: arbitrary root private data and declared-row nested grading data are rejected (0.694446ms)
+✔ FillBlank: exact emitter schema passes without rewriting payload, order, IDs or key (3.3469ms)
+✔ FillBlank: arbitrary root private data and declared-row nested grading data are rejected (0.552239ms)
+✔ Survey: exact emitter schema passes without rewriting payload, order, IDs or key (0.511771ms)
+✔ Survey: arbitrary root private data and declared-row nested grading data are rejected (0.65836ms)
+✔ duplicate root keys cannot retain an earlier secret, including escaped-name alias (0.914766ms)
+✔ duplicate nested keys cannot retain a private object under an earlier scalar field (0.453755ms)
+✔ JSON-looking quoted text, escapes and repeated keys in separate row objects remain legal (0.740309ms)
+✔ missing/null/broken key or cross-question key never makes a redacted question deliverable (1.587203ms)
+✔ FillBlank protected segments must satisfy the emitter's existing no-answer-text rule (1.996659ms)
+✔ wrong metadata, row values, duplicate row IDs and missing imageUrl are refused (1.59116ms)
+✔ old redacted content may omit optional metadata but modern Survey cannot (0.62704ms)
+✔ modern missing metadata is filled without mutating the real production-shaped fixture (0.482495ms)
+✔ normalization refuses existing metadata conflicts, including null and blank (0.29552ms)
+✔ legacy dialect remains unchanged rather than pretending to be a modern complete question (0.292722ms)
+✔ malformed/nonobject/oversize/deep JSON fails closed without stack overflow (4.813867ms)
 ℹ tests 21
 ℹ suites 0
 ℹ pass 21
@@ -231,7 +235,7 @@ PASS: raw lesson placement and moderation history have a private storage boundar
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 58.767829
+ℹ duration_ms 49.782267
 ok — документ заявки несёт каждое поле, которое читает normalizeRequest
 ok — документ заявки не несёт полей, которых никто не читает
 ok — вопрос заявки round-trip: questionToDocument против normalizeQuestion
@@ -239,11 +243,11 @@ ok — отметки автора round-trip: checksToCallableMap против 
 ok — обработчик заявки пишет тело, а не одну отметку об обработке
 ok — поля, по которым автор находит свой вердикт, попадают в документ
 6 of 6 cases passed
-✔ server-only sweep pages finalizing seasons, stores a cursor, and never reads query payload (9.398152ms)
-✔ cursor resumes then wraps without scanning historical terminal seasons (3.14842ms)
-✔ one live sweep lease excludes a second invocation and stale safe errors do not leak (3.255014ms)
-✔ time budget and trusted operational limits cannot be widened by a caller (6.069141ms)
-✔ bounded batches eliminate one-minute-per-page delay for cohorts above 501 rows (20.74439ms)
+✔ server-only sweep pages finalizing seasons, stores a cursor, and never reads query payload (12.116698ms)
+✔ cursor resumes then wraps without scanning historical terminal seasons (4.635199ms)
+✔ one live sweep lease excludes a second invocation and stale safe errors do not leak (4.61432ms)
+✔ time budget and trusted operational limits cannot be widened by a caller (7.452864ms)
+✔ bounded batches eliminate one-minute-per-page delay for cohorts above 501 rows (26.944286ms)
 ℹ tests 5
 ℹ suites 0
 ℹ pass 5
@@ -251,40 +255,40 @@ ok — поля, по которым автор находит свой верд
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 68.460748
-✔ rating requires authenticated identity, own settled completed receipt and excludes author (14.464915ms)
-✔ accepted rating writes lesson aggregate, immutable season vote and mutation receipt in one commit (5.525188ms)
-✔ pre-reservation immutable Arena receipts retain their original JSON payload hash contract (2.649194ms)
-✔ new Arena mutation IDs are bounded after legacy replay lookup (3.037113ms)
-✔ same mutation replays unchanged, altered retry refuses, later eligible vote replaces not increments player count (3.78891ms)
-✔ concurrent different players retry aggregate conflict without losing a vote; same mutation commits once (4.527173ms)
-✔ non-Arena completion can rate lesson but cannot manufacture an Arena season vote (1.232852ms)
-✔ transaction failure leaves no partial rating, aggregate or receipt (1.863503ms)
-✔ trusted curator role gates placements; rejection and its reason survive later admission (2.669064ms)
-✔ ratings never manufacture curator approval; confirmed-fault removal stops new use and leaves frozen attempts intact (6.311112ms)
-✔ current review approval is required, rejection state is retained, COURSE cannot enter ordinary ladder (2.08405ms)
-✔ milestones credit 15/20 canonical BOXES exactly once across concurrent requests, leave and republish (4.36344ms)
-✔ role revocation races are retried before award, and failed promotion commit writes nothing (1.47ms)
-✔ ended UTC season finalizes frozen Arena membership after lesson moved away; award ten once per quarter (313.703372ms)
-✔ season cannot be finalized by a player and 19 distinct ratings award no boxes (220.550748ms)
-✔ resumable finalizer handles a source page with repeated attempt data and preserves the canonical latest vote (276.143088ms)
-✔ checkpoint map order is non-authoritative, but a broken reservation ends in review without money or a receipt (58.988077ms)
-✔ finalization status is curator-only, bounded, and exposes no job cursor, lease, or source rows (2.347245ms)
-✔ worker path quarantines missing or corrupt finalization state without a receipt or award (7.863751ms)
-✔ quarantine transaction does not overwrite a concurrently terminal season (1.475955ms)
-✔ sealed impossible policy data is quarantined rather than retried as an outage (1.712598ms)
-✔ self-hashed malformed and path-copied frozen rows are quarantined before they affect a winner (58.622595ms)
-✔ a stale selected candidate is rejected even when its envelope is recomputed (19.953231ms)
-✔ a valid partial aggregate replay is rejected before it can affect the winner (246.162061ms)
-✔ a coordinated rollback of both selected or aggregate mirrors cannot pass the sealed semantic root (227.543468ms)
-✔ source Merkle roots are required by aggregation, winner selection, and checkpoint audit (95.095255ms)
-✔ an empty finished map rejects a self-sealed noncanonical Merkle root (16.127003ms)
-✔ a 257-row zero-XOR replacement set cannot forge a source-derived selection tree (8197.027581ms)
-✔ a key may split inside an existing compressed Merkle edge (83.423702ms)
-﹣ a 4097-key source-derived trie remains sparse and keeps every transaction bounded (0.136606ms) # SKIP
-✔ missing frozen member, vote, selected, verified-selected, or aggregate rows cannot silently shorten a run (65.308773ms)
-✔ tampered frozen aggregate or pre-existing award marker quarantines without payment (422.305616ms)
-✔ a pending season reservation fences reused mutation IDs from rating and placement writes (2.368117ms)
+ℹ duration_ms 83.022988
+✔ rating requires authenticated identity, own settled completed receipt and excludes author (11.235407ms)
+✔ accepted rating writes lesson aggregate, immutable season vote and mutation receipt in one commit (5.242423ms)
+✔ pre-reservation immutable Arena receipts retain their original JSON payload hash contract (2.151988ms)
+✔ new Arena mutation IDs are bounded after legacy replay lookup (2.990779ms)
+✔ same mutation replays unchanged, altered retry refuses, later eligible vote replaces not increments player count (2.931358ms)
+✔ concurrent different players retry aggregate conflict without losing a vote; same mutation commits once (3.741589ms)
+✔ non-Arena completion can rate lesson but cannot manufacture an Arena season vote (1.235041ms)
+✔ transaction failure leaves no partial rating, aggregate or receipt (1.686579ms)
+✔ trusted curator role gates placements; rejection and its reason survive later admission (2.614243ms)
+✔ ratings never manufacture curator approval; confirmed-fault removal stops new use and leaves frozen attempts intact (6.344044ms)
+✔ current review approval is required, rejection state is retained, COURSE cannot enter ordinary ladder (1.992374ms)
+✔ milestones credit 15/20 canonical BOXES exactly once across concurrent requests, leave and republish (4.560723ms)
+✔ role revocation races are retried before award, and failed promotion commit writes nothing (1.580043ms)
+✔ ended UTC season finalizes frozen Arena membership after lesson moved away; award ten once per quarter (330.038039ms)
+✔ season cannot be finalized by a player and 19 distinct ratings award no boxes (293.671462ms)
+✔ resumable finalizer handles a source page with repeated attempt data and preserves the canonical latest vote (290.398764ms)
+✔ checkpoint map order is non-authoritative, but a broken reservation ends in review without money or a receipt (46.008627ms)
+✔ finalization status is curator-only, bounded, and exposes no job cursor, lease, or source rows (2.860662ms)
+✔ worker path quarantines missing or corrupt finalization state without a receipt or award (8.278089ms)
+✔ quarantine transaction does not overwrite a concurrently terminal season (1.725841ms)
+✔ sealed impossible policy data is quarantined rather than retried as an outage (2.626773ms)
+✔ self-hashed malformed and path-copied frozen rows are quarantined before they affect a winner (64.194014ms)
+✔ a stale selected candidate is rejected even when its envelope is recomputed (23.231951ms)
+✔ a valid partial aggregate replay is rejected before it can affect the winner (346.701816ms)
+✔ a coordinated rollback of both selected or aggregate mirrors cannot pass the sealed semantic root (224.999336ms)
+✔ source Merkle roots are required by aggregation, winner selection, and checkpoint audit (104.38851ms)
+✔ an empty finished map rejects a self-sealed noncanonical Merkle root (16.487934ms)
+✔ a 257-row zero-XOR replacement set cannot forge a source-derived selection tree (9253.829277ms)
+✔ a key may split inside an existing compressed Merkle edge (139.084305ms)
+﹣ a 4097-key source-derived trie remains sparse and keeps every transaction bounded (0.206861ms) # SKIP
+✔ missing frozen member, vote, selected, verified-selected, or aggregate rows cannot silently shorten a run (108.99379ms)
+✔ tampered frozen aggregate or pre-existing award marker quarantines without payment (648.920367ms)
+✔ a pending season reservation fences reused mutation IDs from rating and placement writes (2.329492ms)
 ℹ tests 33
 ℹ suites 0
 ℹ pass 32
@@ -292,45 +296,45 @@ ok — поля, по которым автор находит свой верд
 ℹ cancelled 0
 ℹ skipped 1
 ℹ todo 0
-ℹ duration_ms 10393.82591
-✔ old HARD root unsafe content: no public delivery or rewrite, header recovery and full cancellation work (21.846006ms)
-✔ old HARD nested unsafe content: no public delivery or rewrite, header recovery and full cancellation work (4.243263ms)
-✔ old HARD duplicate unsafe content: no public delivery or rewrite, header recovery and full cancellation work (2.705698ms)
-✔ old HARD metadata unsafe content: no public delivery or rewrite, header recovery and full cancellation work (3.295285ms)
-✔ old HARD private-key unsafe content: no public delivery or rewrite, header recovery and full cancellation work (3.472431ms)
-✔ recovery returns the actual issued public protocol including requestId and EASY hints (2.313626ms)
-✔ HARD recovery preserves the already-issued redacted payload, never its private grading key (1.778033ms)
-✔ confirmed-price issuance is recoverable without replaying or guessing the original ceiling (1.729359ms)
-✔ strict projection drops future private fields at every typed stored-object boundary (2.966707ms)
-✔ get rejects cross-account access like a missing ticket and never reads a wallet (2.735474ms)
-✔ payload authority, unknown fields, invalid IDs and invalid page sizes fail before reads (4.370315ms)
-✔ list filters owner and current RESERVED state in its query and returns no banks or balances (6.211983ms)
-✔ exclusive document-ID cursor uses a bounded lookahead without skipping its extra row (7.58345ms)
-✔ maximum page returns twenty plus a cursor; query overflow or unstable ordering fails closed (14.871863ms)
-✔ cursor does not depend on a still-RESERVED cursor document and pages are not an atomic inventory (28.110324ms)
-✔ terminal CANCELLED and SETTLED recovery uses frozen questions even when live source disappears (3.550333ms)
-✔ one get snapshot stays internally consistent when cancellation races with its read (1.94568ms)
-✔ one list query snapshot stays internally consistent when cancellation races with selection (1.845746ms)
-✔ corrupt required headers fail UNAVAILABLE instead of defaulting amounts or pretending empty (10.781026ms)
-✔ corrupt question or terminal structure is unavailable, never a fabricated result (3.803221ms)
-✔ recovery never restores random quota, releases holds, creates an intent or starts a transaction (3.745356ms)
-✔ store failures are retryable UNAVAILABLE, not an empty list or a missing ticket (1.383681ms)
-✔ status projects actual issued, cancelled and settled headers/receipts, never launch permission or a balance (3.546595ms)
-✔ status keeps a real cancellation readable with a missing frozen bank (1.859604ms)
-✔ status keeps a real cancellation readable with a empty frozen bank (1.147036ms)
-✔ status keeps a real cancellation readable with a malformed frozen bank (1.277342ms)
-✔ status keeps a real cancellation readable with a unsafe-hard frozen bank (1.610934ms)
-✔ status keeps a real cancellation readable with a missing-key frozen bank (1.581861ms)
-✔ status drops unknown/private fields from header and both terminal variants without reading their bank (2.338503ms)
-✔ status is owner-bound, strict and read-only: caller authority and malformed IDs are refused before reads (3.450673ms)
-✔ status rejects corrupt required header identity and amounts even if its terminal looks valid (7.25706ms)
-✔ status requires a permanent cancellation receipt with exact identity and full hold conservation (5.374843ms)
-✔ status requires a real settled receipt with finite score, exact attempt and conserved spending (9.934626ms)
-✔ status never fabricates a RESERVED terminal receipt or downgrades an unknown state (3.108622ms)
-✔ status for RANDOM preserves zero payments and spent quota, including actual settle/cancel receipts (3.02826ms)
-✔ status uses one internally consistent snapshot during a racing cancel (1.549481ms)
-✔ status uses one internally consistent snapshot during a racing settle (1.858698ms)
-✔ status backend failure stays retryable UNAVAILABLE and never returns a synthetic terminal state (1.010312ms)
+ℹ duration_ms 11989.173651
+✔ old HARD root unsafe content: no public delivery or rewrite, header recovery and full cancellation work (29.109674ms)
+✔ old HARD nested unsafe content: no public delivery or rewrite, header recovery and full cancellation work (7.182976ms)
+✔ old HARD duplicate unsafe content: no public delivery or rewrite, header recovery and full cancellation work (4.45578ms)
+✔ old HARD metadata unsafe content: no public delivery or rewrite, header recovery and full cancellation work (3.963578ms)
+✔ old HARD private-key unsafe content: no public delivery or rewrite, header recovery and full cancellation work (3.982404ms)
+✔ recovery returns the actual issued public protocol including requestId and EASY hints (2.349002ms)
+✔ HARD recovery preserves the already-issued redacted payload, never its private grading key (2.226459ms)
+✔ confirmed-price issuance is recoverable without replaying or guessing the original ceiling (2.036448ms)
+✔ strict projection drops future private fields at every typed stored-object boundary (2.93343ms)
+✔ get rejects cross-account access like a missing ticket and never reads a wallet (2.550539ms)
+✔ payload authority, unknown fields, invalid IDs and invalid page sizes fail before reads (4.973912ms)
+✔ list filters owner and current RESERVED state in its query and returns no banks or balances (7.153743ms)
+✔ exclusive document-ID cursor uses a bounded lookahead without skipping its extra row (8.539419ms)
+✔ maximum page returns twenty plus a cursor; query overflow or unstable ordering fails closed (16.838363ms)
+✔ cursor does not depend on a still-RESERVED cursor document and pages are not an atomic inventory (31.942298ms)
+✔ terminal CANCELLED and SETTLED recovery uses frozen questions even when live source disappears (3.645676ms)
+✔ one get snapshot stays internally consistent when cancellation races with its read (2.293194ms)
+✔ one list query snapshot stays internally consistent when cancellation races with selection (1.596886ms)
+✔ corrupt required headers fail UNAVAILABLE instead of defaulting amounts or pretending empty (13.419442ms)
+✔ corrupt question or terminal structure is unavailable, never a fabricated result (6.262131ms)
+✔ recovery never restores random quota, releases holds, creates an intent or starts a transaction (2.883255ms)
+✔ store failures are retryable UNAVAILABLE, not an empty list or a missing ticket (1.422595ms)
+✔ status projects actual issued, cancelled and settled headers/receipts, never launch permission or a balance (4.305386ms)
+✔ status keeps a real cancellation readable with a missing frozen bank (2.264861ms)
+✔ status keeps a real cancellation readable with a empty frozen bank (1.528864ms)
+✔ status keeps a real cancellation readable with a malformed frozen bank (1.631547ms)
+✔ status keeps a real cancellation readable with a unsafe-hard frozen bank (1.702834ms)
+✔ status keeps a real cancellation readable with a missing-key frozen bank (1.68044ms)
+✔ status drops unknown/private fields from header and both terminal variants without reading their bank (4.72498ms)
+✔ status is owner-bound, strict and read-only: caller authority and malformed IDs are refused before reads (3.076318ms)
+✔ status rejects corrupt required header identity and amounts even if its terminal looks valid (8.518978ms)
+✔ status requires a permanent cancellation receipt with exact identity and full hold conservation (5.92554ms)
+✔ status requires a real settled receipt with finite score, exact attempt and conserved spending (11.198419ms)
+✔ status never fabricates a RESERVED terminal receipt or downgrades an unknown state (2.065438ms)
+✔ status for RANDOM preserves zero payments and spent quota, including actual settle/cancel receipts (2.984242ms)
+✔ status uses one internally consistent snapshot during a racing cancel (1.423064ms)
+✔ status uses one internally consistent snapshot during a racing settle (2.118591ms)
+✔ status backend failure stays retryable UNAVAILABLE and never returns a synthetic terminal state (1.111218ms)
 ℹ tests 38
 ℹ suites 0
 ℹ pass 38
@@ -338,15 +342,15 @@ ok — поля, по которым автор находит свой верд
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 207.763263
-✔ actual status callable requires authenticated identity before reading any document (7.28966ms)
-✔ actual status callable rejects payload authority, unknown fields and malformed IDs without reads (4.496204ms)
-✔ actual status callable does not distinguish a foreign permanent ticket from a missing one (2.487574ms)
-✔ actual status callable returns exact RESERVED header/receipt without any bank or wallet reads (2.405467ms)
-✔ actual status callable returns exact CANCELLED header/receipt without any bank or wallet reads (1.25695ms)
-✔ actual status callable returns exact SETTLED header/receipt without any bank or wallet reads (1.109602ms)
-✔ actual status callable maps invalid stored identity/conservation to retryable unavailable, never fabricated zero (7.915977ms)
-✔ actual status callable sanitizes backend failures without reading fallback collections or writing (1.692276ms)
+ℹ duration_ms 250.211649
+✔ actual status callable requires authenticated identity before reading any document (6.896662ms)
+✔ actual status callable rejects payload authority, unknown fields and malformed IDs without reads (4.379208ms)
+✔ actual status callable does not distinguish a foreign permanent ticket from a missing one (2.323304ms)
+✔ actual status callable returns exact RESERVED header/receipt without any bank or wallet reads (2.298488ms)
+✔ actual status callable returns exact CANCELLED header/receipt without any bank or wallet reads (1.160142ms)
+✔ actual status callable returns exact SETTLED header/receipt without any bank or wallet reads (1.115478ms)
+✔ actual status callable maps invalid stored identity/conservation to retryable unavailable, never fabricated zero (12.638815ms)
+✔ actual status callable sanitizes backend failures without reading fallback collections or writing (0.954179ms)
 ℹ tests 8
 ℹ suites 0
 ℹ pass 8
@@ -354,35 +358,35 @@ ok — поля, по которым автор находит свой верд
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 76.675275
-✔ issue reserves available balances and returns immutable redacted version, price and attempt (11.548637ms)
-✔ one callback-local entry context is shared by selected/random loading and preparation regeneration (4.062187ms)
-✔ auth, selected admission and immutable question snapshot are enforced before any hold (8.460883ms)
-✔ selected ceiling permits the actual price at or below confirmation and does not charge the ceiling (1.969731ms)
-✔ a lower or zero selected ceiling refuses without any hold, receipt or regeneration checkpoint (2.511535ms)
-✔ only exact safe integer selected ceilings 0 through 100 are accepted; supplied undefined is not absence (2.378024ms)
-✔ random entry rejects any supplied ceiling instead of silently ignoring it (0.999183ms)
-✔ a confirmed request replays its original ticket after repricing but cannot change or omit its ceiling (2.023457ms)
-✔ omitted ceiling retains the exact old request hash and old ticket replay is never upgraded (1.592092ms)
-✔ competing confirmations on the same request ID create one immutable ticket and hold (2.265706ms)
-✔ two devices cannot overspend available money or charges; insufficient issue is atomic (3.039711ms)
-✔ concurrent replay issues one ticket and selected reservations are capped at five until terminal (8.212214ms)
-✔ random is server-chosen, zero nolics and twenty UTC-day issues; cancellation never returns quota (17.465357ms)
-✔ two devices competing for the last random quota slot cannot issue twenty-one (6.425358ms)
-✔ cancel releases only its own hold once, has no expiry and cancelled ticket never awards (3.850248ms)
-✔ cancel advances long-absence regeneration under old holds before returning them, respecting the total cap (1.130566ms)
-✔ cancel catch-up checkpoints keep exact holds and omit cancellation receipt until caught up (1.089275ms)
-✔ another account or a second attempt cannot cancel or redeem the ticket (0.944594ms)
-✔ multiple ticket readsets in one transaction refuse rather than overwrite shared hold or carry state (1.268142ms)
-✔ trusted completed scoring, immutable context and digest are required; unscorable remains held (2.408457ms)
-✔ unified settlement commits result, holds, author, carry and ledgers once without second life debit (2.027905ms)
-✔ offline ticket settles its frozen form after publication changes; random completion pays no royalty (0.841738ms)
-✔ receipt and every financial write roll back together on planner, callback and commit failure (1.602832ms)
-✔ cancel and unified settlement race is exclusive; no refund plus reward outcome (2.082449ms)
-✔ five one-nolic payments conserve real reserve: author four, sink one, carry zero (4.547396ms)
-✔ concurrent separate tickets serialize shared author carry; self-author merges root rewards without overwriting (5.750028ms)
-✔ trusted regen advances with held life in cap, checkpoint retry neither reserves nor consumes random quota (0.915001ms)
-✔ unsafe balances, broken own-hold totals, author overflow and reserve commit failure cannot partially write (2.500339ms)
+ℹ duration_ms 63.688247
+✔ issue reserves available balances and returns immutable redacted version, price and attempt (19.487358ms)
+✔ one callback-local entry context is shared by selected/random loading and preparation regeneration (12.730563ms)
+✔ auth, selected admission and immutable question snapshot are enforced before any hold (6.557658ms)
+✔ selected ceiling permits the actual price at or below confirmation and does not charge the ceiling (2.332405ms)
+✔ a lower or zero selected ceiling refuses without any hold, receipt or regeneration checkpoint (3.370094ms)
+✔ only exact safe integer selected ceilings 0 through 100 are accepted; supplied undefined is not absence (2.621377ms)
+✔ random entry rejects any supplied ceiling instead of silently ignoring it (1.370335ms)
+✔ a confirmed request replays its original ticket after repricing but cannot change or omit its ceiling (2.252913ms)
+✔ omitted ceiling retains the exact old request hash and old ticket replay is never upgraded (1.828942ms)
+✔ competing confirmations on the same request ID create one immutable ticket and hold (2.843492ms)
+✔ two devices cannot overspend available money or charges; insufficient issue is atomic (3.971808ms)
+✔ concurrent replay issues one ticket and selected reservations are capped at five until terminal (14.35255ms)
+✔ random is server-chosen, zero nolics and twenty UTC-day issues; cancellation never returns quota (19.553754ms)
+✔ two devices competing for the last random quota slot cannot issue twenty-one (9.134964ms)
+✔ cancel releases only its own hold once, has no expiry and cancelled ticket never awards (3.593654ms)
+✔ cancel advances long-absence regeneration under old holds before returning them, respecting the total cap (3.568448ms)
+✔ cancel catch-up checkpoints keep exact holds and omit cancellation receipt until caught up (1.545774ms)
+✔ another account or a second attempt cannot cancel or redeem the ticket (1.363185ms)
+✔ multiple ticket readsets in one transaction refuse rather than overwrite shared hold or carry state (1.780295ms)
+✔ trusted completed scoring, immutable context and digest are required; unscorable remains held (3.943981ms)
+✔ unified settlement commits result, holds, author, carry and ledgers once without second life debit (3.222263ms)
+✔ offline ticket settles its frozen form after publication changes; random completion pays no royalty (1.116561ms)
+✔ receipt and every financial write roll back together on planner, callback and commit failure (2.080283ms)
+✔ cancel and unified settlement race is exclusive; no refund plus reward outcome (3.272272ms)
+✔ five one-nolic payments conserve real reserve: author four, sink one, carry zero (6.629492ms)
+✔ concurrent separate tickets serialize shared author carry; self-author merges root rewards without overwriting (11.656903ms)
+✔ trusted regen advances with held life in cap, checkpoint retry neither reserves nor consumes random quota (1.814952ms)
+✔ unsafe balances, broken own-hold totals, author overflow and reserve commit failure cannot partially write (4.444464ms)
 ℹ tests 28
 ℹ suites 0
 ℹ pass 28
@@ -390,7 +394,7 @@ ok — поля, по которым автор находит свой верд
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 126.089638
+ℹ duration_ms 187.154329
 assessment-scoring tests passed (87 shared fixture cases)
 {"attemptId":"server-1","lessonId":"lesson-handler","payable":false,"unread":null,"poolReason":null,"poolDetail":null,"versionDrift":null,"missingCount":5,"missingQuestions":[{"questionId":"q-single","codeAnswerIndex":0},{"questionId":"q-multi","codeAnswerIndex":1},{"questionId":"q-order","codeAnswerIndex":2},{"questionId":"q-blank","codeAnswerIndex":3},{"questionId":"q-survey","codeAnswerIndex":4}],"unscorableCount":1,"omitted":0,"serverFaultCount":1,"serverFaultReasons":["lesson-missing"],"severity":"WARNING","message":"attempt-scoring: a hard attempt the server scored did not come out clean"}
 {"attemptId":"server-1","message":"attempt-scoring: could not check whether an attempt was already stored","severity":"WARNING"}
@@ -399,11 +403,11 @@ assessment-scoring tests passed (87 shared fixture cases)
 {"attemptId":"server-lost","lessonId":"lesson-that-is-not-there","payable":false,"unread":null,"poolReason":null,"poolDetail":null,"versionDrift":null,"missingCount":5,"missingQuestions":[{"questionId":"q-single","codeAnswerIndex":0},{"questionId":"q-multi","codeAnswerIndex":1},{"questionId":"q-order","codeAnswerIndex":2},{"questionId":"q-blank","codeAnswerIndex":3},{"questionId":"q-survey","codeAnswerIndex":4}],"unscorableCount":1,"omitted":0,"serverFaultCount":1,"serverFaultReasons":["lesson-missing"],"severity":"WARNING","message":"attempt-scoring: a hard attempt the server scored did not come out clean"}
 attempt-handler.test.js OK (21 cases)
 attempt-intake.test.js OK (45 cases)
-✔ fingerprint ignores map ordering but retains owner, values and array order (5.185962ms)
-✔ settled receipt contains actual costs and reward, with a stable account-scoped id (3.666122ms)
-✔ unknown, rejected and legacy scores are null, never synthetic zero (1.100317ms)
-✔ settled score and exact integer accounting are validated (0.509496ms)
-✔ replay cannot change owner, lesson, version, scope or first payload (0.383984ms)
+✔ fingerprint ignores map ordering but retains owner, values and array order (3.458955ms)
+✔ settled receipt contains actual costs and reward, with a stable account-scoped id (2.538193ms)
+✔ unknown, rejected and legacy scores are null, never synthetic zero (0.908422ms)
+✔ settled score and exact integer accounting are validated (0.497484ms)
+✔ replay cannot change owner, lesson, version, scope or first payload (0.55918ms)
 ℹ tests 5
 ℹ suites 0
 ℹ pass 5
@@ -411,7 +415,7 @@ attempt-intake.test.js OK (45 cases)
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 26.499309
+ℹ duration_ms 25.375912
 attempt-scoring.test.js OK (29 cases)
 attempt-wiring.test.js OK (26 cases)
 ok - lost response replays exact reward, permanent receipt and once-only box/nolics movement
@@ -432,8 +436,8 @@ ok - failed commit rolls back box, reward, premium, receipt and ledger together
 ok - composable read/plan/write commits with caller's combined user patch and never reads after writes
 ok - long premium catch-up cannot spend box or expose a reward before final atomic opening
 box-service: 17 behavioral tests passed
-✔ canonical JSON is independent of Firestore map insertion order (2.4139ms)
-✔ canonical JSON rejects values that cannot be a stable checkpoint (1.217048ms)
+✔ canonical JSON is independent of Firestore map insertion order (1.85955ms)
+✔ canonical JSON rejects values that cannot be a stable checkpoint (1.034341ms)
 ℹ tests 2
 ℹ suites 0
 ℹ pass 2
@@ -441,16 +445,16 @@ box-service: 17 behavioral tests passed
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 20.022885
+ℹ duration_ms 20.054588
 catalog-redaction-plan.test.js OK (21 cases)
 charge-claim-fixtures.test.js OK (14 cases)
 charge-claims.test.js OK
 course-tournament-controller: 42 behavioral cases passed
-✔ all explicit tournament handlers require Auth before reads/writes (14.898042ms)
-✔ real root course review loader prepares an archive bank and reserves boxes once (124.132315ms)
-✔ root wrappers do not permit owner spoofing or public worker dispatch (82.778693ms)
-✔ root session call derives owner/form and preserves answer replay without grading leaks (101.705632ms)
-✔ source preparation error is stable and contains no private content (2.617804ms)
+✔ all explicit tournament handlers require Auth before reads/writes (11.652273ms)
+✔ real root course review loader prepares an archive bank and reserves boxes once (183.470523ms)
+✔ root wrappers do not permit owner spoofing or public worker dispatch (85.584074ms)
+✔ root session call derives owner/form and preserves answer replay without grading leaks (100.180221ms)
+✔ source preparation error is stable and contains no private content (2.710844ms)
 ℹ tests 5
 ℹ suites 0
 ℹ pass 5
@@ -458,17 +462,17 @@ course-tournament-controller: 42 behavioral cases passed
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 361.908576
+ℹ duration_ms 428.129905
 currency-ledger.test.js OK
 review-replay-idempotency: all tests passed
 receiver-releases-on-refusal: all tests passed
 deferred-actions.test.js: all 9 tests passed
 deploy-package.test.js OK
 economy-constants.test.js OK
-✔ real opening requires persistent owner-bound id and never trusts client reward (23.822875ms)
-✔ opening failure rolls back box, reward, premium, ledger and receipt together (4.074904ms)
-✔ queued opening and direct recovery share the permanent financial receipt (6.405475ms)
-✔ profile refresh preserves offline anchor; daily premium is a separate once-per-day server claim (17.33649ms)
+✔ real opening requires persistent owner-bound id and never trusts client reward (19.442557ms)
+✔ opening failure rolls back box, reward, premium, ledger and receipt together (8.907605ms)
+✔ queued opening and direct recovery share the permanent financial receipt (5.65482ms)
+✔ profile refresh preserves offline anchor; daily premium is a separate once-per-day server claim (12.994114ms)
 ℹ tests 4
 ℹ suites 0
 ℹ pass 4
@@ -476,7 +480,7 @@ economy-constants.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 84.803872
+ℹ duration_ms 86.24342
 entity-version.test.js: all tests passed
 gift-box-fixtures.test.js OK (12 cases)
 gift-box-rewards: all shipped branches/ranges, trophy exclusion and entropy contract passed
@@ -495,9 +499,9 @@ resolveOperation: all tests passed
 parseMutationPayload: all tests passed
 expected_version: all tests passed
 mutation-terms.test.js OK
-✔ MVP fixture is a demo-only separate application, not a real Firebase project credential (5.508988ms)
-✔ demo configuration is checked before remote initialization and live telemetry/store starters are gated (2.454703ms)
-✔ cleartext is restricted to local emulator loopback and automatic telemetry is disabled in MVP manifest (3.219985ms)
+✔ MVP fixture is a demo-only separate application, not a real Firebase project credential (3.617718ms)
+✔ demo configuration is checked before remote initialization and live telemetry/store starters are gated (1.427734ms)
+✔ cleartext is restricted to local emulator loopback and automatic telemetry is disabled in MVP manifest (2.245118ms)
 ℹ tests 3
 ℹ suites 0
 ℹ pass 3
@@ -505,7 +509,7 @@ mutation-terms.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 33.049957
+ℹ duration_ms 21.682847
 nicknames tests passed
 play-developer-api.test.js OK
 ok - sticky legacy bool never fabricates premium; bootstrap is permanent
@@ -538,18 +542,18 @@ ok - four-pass catch-up never acknowledges a stranded refund, redelivery finishe
 premium-purchases: 12 behavioral tests passed
 purchase-clawback.test.js OK
 purchase-notifications.test.js OK
-✔ partial refund before credit fences the token and credits only V2 refundable quantity (17.939028ms)
-✔ a partial RTDN racing a held credit is observed before the credit transaction and cannot grant stale full quantity (2.794723ms)
-✔ a new multi-quantity grant uses V2 remaining quantity even without an RTDN, and replay calls neither Play API (1.938554ms)
-✔ a new multi-quantity grant fails retryably on unavailable or mismatching V2 proof, without writes (2.798457ms)
-✔ a new multi-quantity grant with zero V2 remaining quantity is refused without a grant (1.188011ms)
-✔ a SKU enabled after V2 preflight cannot receive an unverified multi-quantity V1 grant (1.412354ms)
-✔ a fresher partial fence between V2 read and transaction can only lower the multi-quantity grant (1.965424ms)
-✔ concurrent distinct partial notifications apply one cumulative delta and preserve separate evidence (5.933276ms)
-✔ V2 outage or mismatch leaves a pending fence and makes no balance, receipt or audit change (15.479694ms)
-✔ a final full refund after a partial removes only the remaining units and receives a new operation id (5.424478ms)
-✔ a legacy one-shot settlement upgrades atomically on its first partial and never overwrites cumulative evidence (4.724728ms)
-✔ malformed additive provenance fails closed; a full refund keeps its frozen quantity if V1 reports zero (3.453591ms)
+✔ partial refund before credit fences the token and credits only V2 refundable quantity (26.935246ms)
+✔ a partial RTDN racing a held credit is observed before the credit transaction and cannot grant stale full quantity (3.59966ms)
+✔ a new multi-quantity grant uses V2 remaining quantity even without an RTDN, and replay calls neither Play API (2.194783ms)
+✔ a new multi-quantity grant fails retryably on unavailable or mismatching V2 proof, without writes (3.814242ms)
+✔ a new multi-quantity grant with zero V2 remaining quantity is refused without a grant (1.03805ms)
+✔ a SKU enabled after V2 preflight cannot receive an unverified multi-quantity V1 grant (1.563042ms)
+✔ a fresher partial fence between V2 read and transaction can only lower the multi-quantity grant (2.522266ms)
+✔ concurrent distinct partial notifications apply one cumulative delta and preserve separate evidence (7.238346ms)
+✔ V2 outage or mismatch leaves a pending fence and makes no balance, receipt or audit change (21.124389ms)
+✔ a final full refund after a partial removes only the remaining units and receives a new operation id (6.538946ms)
+✔ a legacy one-shot settlement upgrades atomically on its first partial and never overwrites cumulative evidence (5.604942ms)
+✔ malformed additive provenance fails closed; a full refund keeps its frozen quantity if V1 reports zero (4.317371ms)
 ℹ tests 12
 ℹ suites 0
 ℹ pass 12
@@ -557,39 +561,39 @@ purchase-notifications.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 86.185167
-✔ GOLD: refund finishes while grant holds an earlier PURCHASED response (10.80184ms)
-✔ GOLD: grant commits between refund's old ABSENT read and its transaction (7.280033ms)
-✔ GOLD: legacy NOTHING_TO_TAKE replay upgrades missing token fence (1.154756ms)
-✔ PREMIUM: refund finishes while grant holds an earlier PURCHASED response (1.634386ms)
-✔ PREMIUM: grant commits between refund's old ABSENT read and its transaction (8.51817ms)
-✔ PREMIUM: legacy NOTHING_TO_TAKE replay upgrades missing token fence (0.930401ms)
-✔ legacy PLAY_DISAGREES replay rechecks Play and settles its existing grant (2.111163ms)
-✔ ordinary credit then confirmed refund remains exactly once (2.089764ms)
-✔ PENDING is retryable, never forfeiture; later Play confirmation resolves, settled=false (2.570383ms)
-✔ PENDING is retryable, never forfeiture; later Play confirmation resolves, settled=true (3.826273ms)
-✔ another package: no full-revocation fence or balance change (0.611194ms)
-✔ subscription: no full-revocation fence or balance change (0.778021ms)
-✔ unknown refund type: no full-revocation fence or balance change (0.486704ms)
-✔ missing product type: no full-revocation fence or balance change (0.476292ms)
-✔ missing order: no full-revocation fence or balance change (0.370051ms)
-✔ test notification: no full-revocation fence or balance change (0.377875ms)
-✔ new purchase: no full-revocation fence or balance change (0.491823ms)
-✔ ambiguous types: no full-revocation fence or balance change (0.351826ms)
-✔ missing event clock: no full-revocation fence or balance change (0.408734ms)
-✔ unreadable or missing Pub/Sub id never fences a token (0.934119ms)
-✔ API outage persists pending only and redelivery does not strand the refund (1.316178ms)
-✔ confirmed ownerless not-found proof needs no invented SKU (1.01195ms)
-✔ known owner remains checked ahead of pending and confirmed fence (2.637629ms)
-✔ wrong API SKU, order or buyer never confirms or claws back a known purchase (6.05826ms)
-✔ wrong V2 order, SKU, unknown state and unsupported line count remain pending (2.226113ms)
-✔ pending one-time cancellation uses its exact SKU, never an arbitrary different item (0.993375ms)
-✔ failed fence commit is not acknowledged and a safe later retry succeeds (1.187508ms)
-✔ failed confirmation keeps only pending fence and no acknowledged notification (1.319845ms)
-✔ permanent source marker contains no raw token or guessed owner (2.39998ms)
-✔ a wrong RTDN order cannot claw back a known token even when lookup says not-found (1.177297ms)
-✔ a legacy message id cannot be rebound to a different token (3.186469ms)
-✔ a corrupted pending fence cannot silently become credit or a confirmed refund (0.621588ms)
+ℹ duration_ms 115.047069
+✔ GOLD: refund finishes while grant holds an earlier PURCHASED response (13.424022ms)
+✔ GOLD: grant commits between refund's old ABSENT read and its transaction (10.199185ms)
+✔ GOLD: legacy NOTHING_TO_TAKE replay upgrades missing token fence (1.410766ms)
+✔ PREMIUM: refund finishes while grant holds an earlier PURCHASED response (4.836917ms)
+✔ PREMIUM: grant commits between refund's old ABSENT read and its transaction (11.772493ms)
+✔ PREMIUM: legacy NOTHING_TO_TAKE replay upgrades missing token fence (1.121112ms)
+✔ legacy PLAY_DISAGREES replay rechecks Play and settles its existing grant (2.682487ms)
+✔ ordinary credit then confirmed refund remains exactly once (2.793682ms)
+✔ PENDING is retryable, never forfeiture; later Play confirmation resolves, settled=false (3.422628ms)
+✔ PENDING is retryable, never forfeiture; later Play confirmation resolves, settled=true (5.110165ms)
+✔ another package: no full-revocation fence or balance change (0.708993ms)
+✔ subscription: no full-revocation fence or balance change (0.793251ms)
+✔ unknown refund type: no full-revocation fence or balance change (0.520091ms)
+✔ missing product type: no full-revocation fence or balance change (0.659936ms)
+✔ missing order: no full-revocation fence or balance change (0.580427ms)
+✔ test notification: no full-revocation fence or balance change (0.531074ms)
+✔ new purchase: no full-revocation fence or balance change (0.801099ms)
+✔ ambiguous types: no full-revocation fence or balance change (0.423689ms)
+✔ missing event clock: no full-revocation fence or balance change (0.441167ms)
+✔ unreadable or missing Pub/Sub id never fences a token (1.630487ms)
+✔ API outage persists pending only and redelivery does not strand the refund (4.419044ms)
+✔ confirmed ownerless not-found proof needs no invented SKU (1.343991ms)
+✔ known owner remains checked ahead of pending and confirmed fence (3.156912ms)
+✔ wrong API SKU, order or buyer never confirms or claws back a known purchase (7.901116ms)
+✔ wrong V2 order, SKU, unknown state and unsupported line count remain pending (2.951571ms)
+✔ pending one-time cancellation uses its exact SKU, never an arbitrary different item (1.230284ms)
+✔ failed fence commit is not acknowledged and a safe later retry succeeds (2.939705ms)
+✔ failed confirmation keeps only pending fence and no acknowledged notification (2.124579ms)
+✔ permanent source marker contains no raw token or guessed owner (5.91636ms)
+✔ a wrong RTDN order cannot claw back a known token even when lookup says not-found (1.394204ms)
+✔ a legacy message id cannot be rebound to a different token (3.356495ms)
+✔ a corrupted pending fence cannot silently become credit or a confirmed refund (0.697558ms)
 ℹ tests 32
 ℹ suites 0
 ℹ pass 32
@@ -597,19 +601,19 @@ purchase-notifications.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 89.799677
+ℹ duration_ms 124.132715
 purchase-settlement.test.js OK
 PASS: permanent purchase revocations have an explicit private storage boundary
 purchase-verification.test.js OK
 rating-push-recipients: ok
 push-notifications.test.js: ok
-✔ a submission that renames an existing lesson is refused before any write (14.119711ms)
-✔ an accepted submission charges the initial tariff exactly once (paid cycle, AD-10) (15.781598ms)
-✔ a submission without money for the tariff is refused before any write (1.782876ms)
-✔ a resubmission of an already-paid quest pays the recheck tariff per question (3.209147ms)
-✔ a first submission of a new lesson needs no title comparison to pass (3.595412ms)
-✔ a questionless submission is refused and releases the key (1.529383ms)
-✔ public documents are built without a description key (5.832458ms)
+✔ a submission that renames an existing lesson is refused before any write (11.624181ms)
+✔ an accepted submission charges the initial tariff exactly once (paid cycle, AD-10) (19.106501ms)
+✔ a submission without money for the tariff is refused before any write (2.335123ms)
+✔ a resubmission of an already-paid quest pays the recheck tariff per question (4.182694ms)
+✔ a first submission of a new lesson needs no title comparison to pass (6.316965ms)
+✔ a questionless submission is refused and releases the key (1.982729ms)
+✔ public documents are built without a description key (7.409228ms)
 ℹ tests 7
 ℹ suites 0
 ℹ pass 7
@@ -617,16 +621,16 @@ push-notifications.test.js: ok
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 83.418148
+ℹ duration_ms 110.379043
 question-key-store.test.js OK (35 cases)
 question-redaction-wire.test.js OK (11 cases)
 question-redaction.test.js OK (26 cases)
 result-verification tests passed
-✔ acceptance charges the tariff once; a justified rejection settles the cycle and conserves it (42.258391ms)
-✔ settlement is idempotent: replays change no wallet and rewrite no manifest (23.698312ms)
-✔ fractional entitlements ride the carry into the next cycle of the same reviewer (20.116577ms)
-✔ an unfinished cycle settles nothing: no manifest, no burn, untouched wallets (7.230649ms)
-✔ the PUBLISHED terminal state settles too: the queue replay of an existing review catches it up (5.016023ms)
+✔ acceptance charges the tariff once; a justified rejection settles the cycle and conserves it (49.280092ms)
+✔ settlement is idempotent: replays change no wallet and rewrite no manifest (23.164151ms)
+✔ fractional entitlements ride the carry into the next cycle of the same reviewer (18.984357ms)
+✔ an unfinished cycle settles nothing: no manifest, no burn, untouched wallets (6.215601ms)
+✔ the PUBLISHED terminal state settles too: the queue replay of an existing review catches it up (3.304528ms)
 ℹ tests 5
 ℹ suites 0
 ℹ pass 5
@@ -634,23 +638,23 @@ result-verification tests passed
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 139.893755
-✔ tariffs default to the owner-accepted prices and refuse broken values loudly (5.104903ms)
-✔ fee: initial full submission 1000, recheck 100 per question, never per stage or reviewer (0.611241ms)
-✔ ΣLi below the fee: every level is paid whole, the remainder burns (6.076604ms)
-✔ ΣLi equal to the fee: everything is paid, nothing burns (0.527835ms)
-✔ ΣLi above the fee: proportional floors, leftover tenths descend by remainder (1.083336ms)
-✔ remainder tie is broken by the stable unit id ascending (0.640622ms)
-✔ no units: the whole fund burns; zero fee pays nothing and burns nothing (0.627394ms)
-✔ products stay exact far beyond the floating-point safe range (0.957236ms)
-✔ conservation holds across a deterministic sweep of fees and level mixes (10.628557ms)
-✔ wallet credit floors whole nolics and keeps the carry (1.08439ms)
-✔ units merge directions per (lesson, reviewer) and fix the level with the first completed result (1.13784ms)
-✔ same-time records break the level tie by record id, and the owner never earns (0.390297ms)
-✔ incomplete work creates no unit: partial translation, missing score, silent segments, foreign submissions (0.577482ms)
-✔ a record of another submission never earns in this cycle, even with the same reviewer (0.298403ms)
-✔ justified rejection earns its judge a unit at the recorded level, once, and never to the author (0.662934ms)
-✔ manifest records the calculation version and refuses to enshrine broken conservation (1.250554ms)
+ℹ duration_ms 167.394634
+✔ tariffs default to the owner-accepted prices and refuse broken values loudly (5.271594ms)
+✔ fee: initial full submission 1000, recheck 100 per question, never per stage or reviewer (0.684023ms)
+✔ ΣLi below the fee: every level is paid whole, the remainder burns (3.713187ms)
+✔ ΣLi equal to the fee: everything is paid, nothing burns (0.649094ms)
+✔ ΣLi above the fee: proportional floors, leftover tenths descend by remainder (1.165816ms)
+✔ remainder tie is broken by the stable unit id ascending (0.930635ms)
+✔ no units: the whole fund burns; zero fee pays nothing and burns nothing (0.559734ms)
+✔ products stay exact far beyond the floating-point safe range (1.11957ms)
+✔ conservation holds across a deterministic sweep of fees and level mixes (11.401315ms)
+✔ wallet credit floors whole nolics and keeps the carry (1.730846ms)
+✔ units merge directions per (lesson, reviewer) and fix the level with the first completed result (1.549181ms)
+✔ same-time records break the level tie by record id, and the owner never earns (0.801417ms)
+✔ incomplete work creates no unit: partial translation, missing score, silent segments, foreign submissions (0.795776ms)
+✔ a record of another submission never earns in this cycle, even with the same reviewer (0.357564ms)
+✔ justified rejection earns its judge a unit at the recorded level, once, and never to the author (0.709102ms)
+✔ manifest records the calculation version and refuses to enshrine broken conservation (1.745342ms)
 ℹ tests 16
 ℹ suites 0
 ℹ pass 16
@@ -658,31 +662,31 @@ result-verification tests passed
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 50.096904
+ℹ duration_ms 57.312039
 review-journal-wire.test.js OK
 review-journal.test.js OK
 scoring-pool.test.js OK (19 cases)
 submit-mutation-terms.test.js SKIP (нет FIRESTORE_EMULATOR_HOST — приёмниковая сюита едет против эмулятора)
 sync-change-clock.test.js OK
 sync-changes.test.js OK
-✔ default threshold 2: every-question score 3 with LOGIC 3 readies the lesson and binds config revision and generation (24.911434ms)
-✔ score 1 under the default threshold fails TESTING by name, without any reviewer reason (2.971101ms)
-✔ config threshold 1 admits score 1; the result carries the applied config revision (2.426459ms)
-✔ config threshold 3 refuses score 2 (3.107038ms)
-✔ out-of-range config threshold refuses loudly instead of clamping (2.369129ms)
-✔ TESTING without per-question scores is refused: the review must cover every question (1.406036ms)
-✔ partial coverage names the missing question (1.177381ms)
-✔ unknown and duplicated question ids are refused (2.286551ms)
-✔ question score outside 1..3 is refused (1.349116ms)
-✔ mixed per-question scores: the failing question is named in its outcome (2.800172ms)
-✔ the author cannot test their own lesson (independence is per review, not per question) (1.040228ms)
-✔ unqualified tester is refused (0.89424ms)
-✔ a translation with content on every question credits the language (4.084883ms)
-✔ missing text is never auto-approved: a blank question does not credit the language (2.398808ms)
-✔ a silent accepted boolean is not a segment decision: the wire requires correct/error (5.951623ms)
-✔ an explicit decision outside correct/error is refused (4.731052ms)
-✔ explicit segment decisions are stored with their decision and score the translation (7.95406ms)
-✔ a merged translation does not reopen the revision's testing: outcomes stay on the source questions (9.741194ms)
+✔ default threshold 2: every-question score 3 with LOGIC 3 readies the lesson and binds config revision and generation (26.99023ms)
+✔ score 1 under the default threshold fails TESTING by name, without any reviewer reason (2.243429ms)
+✔ config threshold 1 admits score 1; the result carries the applied config revision (2.049344ms)
+✔ config threshold 3 refuses score 2 (4.757379ms)
+✔ out-of-range config threshold refuses loudly instead of clamping (3.36625ms)
+✔ TESTING without per-question scores is refused: the review must cover every question (1.32839ms)
+✔ partial coverage names the missing question (1.223116ms)
+✔ unknown and duplicated question ids are refused (2.280131ms)
+✔ question score outside 1..3 is refused (1.500257ms)
+✔ mixed per-question scores: the failing question is named in its outcome (2.392067ms)
+✔ the author cannot test their own lesson (independence is per review, not per question) (4.097639ms)
+✔ unqualified tester is refused (0.749351ms)
+✔ a translation with content on every question credits the language (4.222919ms)
+✔ missing text is never auto-approved: a blank question does not credit the language (1.775798ms)
+✔ a silent accepted boolean is not a segment decision: the wire requires correct/error (6.280371ms)
+✔ an explicit decision outside correct/error is refused (3.925237ms)
+✔ explicit segment decisions are stored with their decision and score the translation (6.734344ms)
+✔ a merged translation does not reopen the revision's testing: outcomes stay on the source questions (3.26183ms)
 ℹ tests 18
 ℹ suites 0
 ℹ pass 18
@@ -690,23 +694,23 @@ sync-changes.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 120.007838
-✔ preflight requires reviewed published course or admitted Arena source and enough eligible questions (17.308126ms)
-✔ three common seeded EASY forms are deterministic and use 60 distinct immutable question references (9.287365ms)
-✔ qualification permits one attempt per round, including abort; retries are deterministic (2.671088ms)
-✔ top16 uses authoritative LS places without recalculating ratings (1.426741ms)
-✔ standard bracket places top1/top2 in opposite halves, has no bronze game and 3-day stages (22.286286ms)
-✔ zero/one qualifier cancels; tiny entrant counts finish with automatic byes and no fake losers (10.709823ms)
-✔ meeting cutoff: one offers -> other forfeits; both offer without agreement -> double out (1.768552ms)
-✔ mutual confirmation is required; fake clock starts only after both ready and never pauses (1.152033ms)
-✔ one-hour agreed window is half-open: absent one loses, both absent are out (0.85037ms)
-✔ first mutually confirmed slot is fixed despite later alternative agreements (1.033277ms)
-✔ played result compares percent, then elapsed time, then qualification seed (0.699548ms)
-✔ double-outs propagate to empty nodes; technical losers never receive second or third (2.759925ms)
-✔ terminal outcomes are immutable, belong to the match, and cannot precede feeder matches (3.562018ms)
-✔ double-out feeds a bye without inventing another played match or a losing participant (1.473146ms)
-✔ fund validates two thirds, rejects fourth place, conserves paid plus unused and keeps payout IDs stable (1.445882ms)
-✔ outputs are JSON-serializable; helpers preserve inputs and reject unsafe arithmetic (4.546124ms)
+ℹ duration_ms 153.851007
+✔ preflight requires reviewed published course or admitted Arena source and enough eligible questions (20.05793ms)
+✔ three common seeded EASY forms are deterministic and use 60 distinct immutable question references (10.59666ms)
+✔ qualification permits one attempt per round, including abort; retries are deterministic (2.024654ms)
+✔ top16 uses authoritative LS places without recalculating ratings (1.368045ms)
+✔ standard bracket places top1/top2 in opposite halves, has no bronze game and 3-day stages (24.734326ms)
+✔ zero/one qualifier cancels; tiny entrant counts finish with automatic byes and no fake losers (12.290554ms)
+✔ meeting cutoff: one offers -> other forfeits; both offer without agreement -> double out (2.957361ms)
+✔ mutual confirmation is required; fake clock starts only after both ready and never pauses (1.381061ms)
+✔ one-hour agreed window is half-open: absent one loses, both absent are out (1.084256ms)
+✔ first mutually confirmed slot is fixed despite later alternative agreements (1.439583ms)
+✔ played result compares percent, then elapsed time, then qualification seed (0.70241ms)
+✔ double-outs propagate to empty nodes; technical losers never receive second or third (3.756128ms)
+✔ terminal outcomes are immutable, belong to the match, and cannot precede feeder matches (5.749371ms)
+✔ double-out feeds a bye without inventing another played match or a losing participant (1.901503ms)
+✔ fund validates two thirds, rejects fourth place, conserves paid plus unused and keeps payout IDs stable (1.8873ms)
+✔ outputs are JSON-serializable; helpers preserve inputs and reject unsafe arithmetic (7.016808ms)
 ℹ tests 16
 ℹ suites 0
 ℹ pass 16
@@ -714,41 +718,41 @@ sync-changes.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 103.397849
-{"case":"durable-calculation","players":502,"runs":502,"calls":35,"ms":1703,"rssBytes":154488832,"reads":8380,"maxTransactionReads":305,"maxTransactionWrites":101,"inputFingerprint":"8a10a847e6b6682cca7d2c94c060d0bcf02e6633ba46cd408f521cff0ed2bc04","rankingFingerprint":"7873a92e1d1b902cfff533fcd70d8f188ee0125be7a0eb7654280993b6d96251"}
-{"case":"durable-calculation","players":501,"runs":1503,"calls":55,"ms":3363,"rssBytes":259129344,"reads":22544,"maxTransactionReads":655,"maxTransactionWrites":101,"inputFingerprint":"134faf15db9315cfd0b9a476dc28840c4650eb67b17d0d5e15d856c40bb86a37","rankingFingerprint":"a3fd258a9e49a038e58938ce9a0bd1eb7c0220542cca4cb6e37147b9706c7b18"}
-{"case":"durable-calculation","players":4096,"runs":4096,"calls":248,"ms":32012,"rssBytes":455352320,"reads":68014,"maxTransactionReads":305,"maxTransactionWrites":101,"inputFingerprint":"dca86ba74683bd6843e293220d0eda01f2f1f7abe12dde8a6a340abf73f3668b","rankingFingerprint":"0c32601d38b9ba9fabe57496917fb69054a0fbfcdb2183d8fb3594f4cd5e2ba6"}
-{"case":"durable-calculation","players":4097,"runs":4097,"calls":248,"ms":31888,"rssBytes":420831232,"reads":68030,"maxTransactionReads":305,"maxTransactionWrites":101,"inputFingerprint":"060496998970824636a20bfd475cc941ad63be4f11bcfb2d63370475ba8ec82d","rankingFingerprint":"480ce5ff86cb834cda9634c1fe4036b83d7aa3208cadfbb9cfffacb2e6976311"}
-✔ full durable phases preserve complete 0-player cohort and funds (60.470924ms)
-✔ full durable phases preserve complete 1-player cohort and funds (37.344743ms)
-✔ full durable phases preserve complete 2-player cohort and funds (38.533923ms)
-✔ full durable phases preserve complete 15-player cohort and funds (107.90851ms)
-✔ full durable phases preserve complete 16-player cohort and funds (101.580163ms)
-✔ full durable phases preserve complete 17-player cohort and funds (94.193105ms)
-✔ calculator accepts the manifest produced by the actual durable scanner (72.576414ms)
-✔ restart after every phase and different page sizes equal uninterrupted execution (254.408548ms)
-✔ failed VALIDATE commit rolls back semantic progress and retries the same page (51.972884ms)
-✔ failed REDUCE commit rolls back semantic progress and retries the same page (55.678486ms)
-✔ failed SOLVE commit rolls back semantic progress and retries the same page (42.266087ms)
-✔ failed PROJECT commit rolls back semantic progress and retries the same page (39.394966ms)
-✔ failed PUBLISH commit rolls back semantic progress and retries the same page (44.439198ms)
-✔ automatic transaction callback retry cannot duplicate masks, players, runs or publication (140.726903ms)
-✔ concurrent invocations have one lease owner and eventually the same single publication (166.79289ms)
-✔ expired lease is recoverable while stale worker cannot overwrite replacement ownership (33.244152ms)
-✔ deadline reached during source reads discards the page, then resumes without financial effects (38.962408ms)
-✔ already-expired invocation creates no job or ranking (4.043102ms)
-✔ source identity, manifest chunk, checkpoint and counted source corruption fail closed (34.874055ms)
-✔ REDUCE revalidates missing/changed scan, session and copied player after VALIDATE (56.430099ms)
-✔ PROJECT revalidates missing/changed scan, session and copied player after VALIDATE (116.779076ms)
-✔ deleted/substituted player projection cannot hide a missing cohort member (13.326999ms)
-✔ both old calculation publishers refuse a selected version without creating a ranking (33.798484ms)
-✔ malformed prior ranking cannot be reported as successful replay (38.604792ms)
-✔ unpublished work selected under a different UID runtime cannot acquire a job (2.113011ms)
-✔ terminal event rejects unfinished acquisition but replays immutable published ranking (96.205946ms)
-✔ durable 502 players / 502 runs finishes across bounded invocations (1707.752939ms)
-✔ durable 501 players / 1503 runs finishes across bounded invocations (3363.706226ms)
-✔ durable 4096 players / 4096 runs finishes across bounded invocations (32014.31822ms)
-✔ durable 4097 players / 4097 runs finishes across bounded invocations (31891.333404ms)
+ℹ duration_ms 122.205441
+{"case":"durable-calculation","players":502,"runs":502,"calls":35,"ms":1625,"rssBytes":161812480,"reads":8380,"maxTransactionReads":305,"maxTransactionWrites":101,"inputFingerprint":"8a10a847e6b6682cca7d2c94c060d0bcf02e6633ba46cd408f521cff0ed2bc04","rankingFingerprint":"7873a92e1d1b902cfff533fcd70d8f188ee0125be7a0eb7654280993b6d96251"}
+{"case":"durable-calculation","players":501,"runs":1503,"calls":55,"ms":3812,"rssBytes":278556672,"reads":22544,"maxTransactionReads":655,"maxTransactionWrites":101,"inputFingerprint":"134faf15db9315cfd0b9a476dc28840c4650eb67b17d0d5e15d856c40bb86a37","rankingFingerprint":"a3fd258a9e49a038e58938ce9a0bd1eb7c0220542cca4cb6e37147b9706c7b18"}
+{"case":"durable-calculation","players":4096,"runs":4096,"calls":248,"ms":36172,"rssBytes":390967296,"reads":68014,"maxTransactionReads":305,"maxTransactionWrites":101,"inputFingerprint":"dca86ba74683bd6843e293220d0eda01f2f1f7abe12dde8a6a340abf73f3668b","rankingFingerprint":"0c32601d38b9ba9fabe57496917fb69054a0fbfcdb2183d8fb3594f4cd5e2ba6"}
+{"case":"durable-calculation","players":4097,"runs":4097,"calls":248,"ms":36420,"rssBytes":425963520,"reads":68030,"maxTransactionReads":305,"maxTransactionWrites":101,"inputFingerprint":"060496998970824636a20bfd475cc941ad63be4f11bcfb2d63370475ba8ec82d","rankingFingerprint":"480ce5ff86cb834cda9634c1fe4036b83d7aa3208cadfbb9cfffacb2e6976311"}
+✔ full durable phases preserve complete 0-player cohort and funds (84.442025ms)
+✔ full durable phases preserve complete 1-player cohort and funds (47.89065ms)
+✔ full durable phases preserve complete 2-player cohort and funds (73.362529ms)
+✔ full durable phases preserve complete 15-player cohort and funds (136.411536ms)
+✔ full durable phases preserve complete 16-player cohort and funds (142.554737ms)
+✔ full durable phases preserve complete 17-player cohort and funds (141.2182ms)
+✔ calculator accepts the manifest produced by the actual durable scanner (108.243622ms)
+✔ restart after every phase and different page sizes equal uninterrupted execution (441.072513ms)
+✔ failed VALIDATE commit rolls back semantic progress and retries the same page (85.155831ms)
+✔ failed REDUCE commit rolls back semantic progress and retries the same page (47.629886ms)
+✔ failed SOLVE commit rolls back semantic progress and retries the same page (54.771227ms)
+✔ failed PROJECT commit rolls back semantic progress and retries the same page (74.970372ms)
+✔ failed PUBLISH commit rolls back semantic progress and retries the same page (57.816622ms)
+✔ automatic transaction callback retry cannot duplicate masks, players, runs or publication (153.117883ms)
+✔ concurrent invocations have one lease owner and eventually the same single publication (122.796494ms)
+✔ expired lease is recoverable while stale worker cannot overwrite replacement ownership (38.231563ms)
+✔ deadline reached during source reads discards the page, then resumes without financial effects (48.938904ms)
+✔ already-expired invocation creates no job or ranking (3.038302ms)
+✔ source identity, manifest chunk, checkpoint and counted source corruption fail closed (30.849924ms)
+✔ REDUCE revalidates missing/changed scan, session and copied player after VALIDATE (78.079936ms)
+✔ PROJECT revalidates missing/changed scan, session and copied player after VALIDATE (128.365584ms)
+✔ deleted/substituted player projection cannot hide a missing cohort member (14.932453ms)
+✔ both old calculation publishers refuse a selected version without creating a ranking (53.463165ms)
+✔ malformed prior ranking cannot be reported as successful replay (37.378553ms)
+✔ unpublished work selected under a different UID runtime cannot acquire a job (2.278132ms)
+✔ terminal event rejects unfinished acquisition but replays immutable published ranking (130.380175ms)
+✔ durable 502 players / 502 runs finishes across bounded invocations (1630.20849ms)
+✔ durable 501 players / 1503 runs finishes across bounded invocations (3812.998589ms)
+✔ durable 4096 players / 4096 runs finishes across bounded invocations (36175.159613ms)
+✔ durable 4097 players / 4097 runs finishes across bounded invocations (36423.827537ms)
 ℹ tests 30
 ℹ suites 0
 ℹ pass 30
@@ -756,30 +760,30 @@ sync-changes.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 70779.989713
-{"case":"502 distinct players","players":502,"runs":502,"ms":181,"rssBytes":73228288,"inputFingerprint":"4ecf535e926399e213174a9c73efd608d2d42ec240108ef7df5a2b92e816429a","outputFingerprint":"ca5f5dbf907b06954bb6f8129e09babccfb1ebe493ad7e5a98a3c6d25d2d53cb","reductionBytes":1343}
-{"case":"1503 runs","players":501,"runs":1503,"ms":187,"rssBytes":73752576,"inputFingerprint":"597759d676a5fae0b5ae9561bbf02b2b3ccb6f795a710365e37e13099442be1e","outputFingerprint":"1aaba8d890253853c333c84ded157a7e5699167cdb910bda85bed984c8b96b54","reductionBytes":1365}
-{"case":"4096 players","players":4096,"runs":4096,"ms":1287,"rssBytes":85233664,"inputFingerprint":"ba9fc572ea350086cfaae9f7a51cd901629915127bdc38876de1ca7a8e1a9caf","outputFingerprint":"afac6b58ab1df9c08f04418c9d1268f02080ecf068d8a78010f333afa2833e08","reductionBytes":1351}
-{"case":"4097 players beyond prototype bound","players":4097,"runs":4097,"ms":1362,"rssBytes":107831296,"inputFingerprint":"df5b361333c07e077e9dbd7caa31750abf7a0c31b36a2000eb21de1edfddb429","outputFingerprint":"49cceb1d0f769301c7248a6cdceb853536b3148705f6bd4db3826c1fd0542a39","reductionBytes":1351}
-✔ zero players and singleton forms yield no fictional qualifiers (16.122123ms)
-✔ exact rational rounding fixes the approved 32-player tie without changing elapsed precedence (44.593435ms)
-✔ rating-point half ties and negative rounded zero are canonical exact JSON (16.133696ms)
-✔ disconnected components and an uncounted singleton retain their independent gauges (7.581149ms)
-✔ all seven membership masks satisfy independent pairwise equations and preserve missing rounds (15.783146ms)
-✔ 128 deterministic mixed cohorts satisfy exact objective and complete top16 (1276.354284ms)
-✔ elapsed only breaks rating/statistic ties; unknown elapsed remains behind measured (3.738569ms)
-✔ complete player results can arrive in any round order with identical checkpoints (1.930979ms)
-✔ private cursor encoding preserves UTF16 order and legacy Unicode component stability (6.880178ms)
-✔ page boundaries, JSON roundtrips and retried page callback do not change accumulators (155.165037ms)
-✔ incomplete reduction/projection and a replacement player cannot yield a complete ranking (7.704179ms)
-✔ replaying an already committed cursor, unknown fields and malformed projection fail without mutation (6.628622ms)
-✔ checkpoint corruption or changed version is rejected at every public phase (6.744789ms)
-✔ invalid frozen cohort contracts are rejected before any reduction (0.670949ms)
-✔ every unknown-elapsed result remains representable through JSON (3.611937ms)
-✔ 502 distinct players: full input, bounded state and deterministic complete top16 (188.152015ms)
-✔ 1503 runs: full input, bounded state and deterministic complete top16 (188.725049ms)
-✔ 4096 players: full input, bounded state and deterministic complete top16 (1294.3996ms)
-✔ 4097 players beyond prototype bound: full input, bounded state and deterministic complete top16 (1367.044042ms)
+ℹ duration_ms 80418.578896
+{"case":"502 distinct players","players":502,"runs":502,"ms":163,"rssBytes":72835072,"inputFingerprint":"4ecf535e926399e213174a9c73efd608d2d42ec240108ef7df5a2b92e816429a","outputFingerprint":"ca5f5dbf907b06954bb6f8129e09babccfb1ebe493ad7e5a98a3c6d25d2d53cb","reductionBytes":1343}
+{"case":"1503 runs","players":501,"runs":1503,"ms":176,"rssBytes":73490432,"inputFingerprint":"597759d676a5fae0b5ae9561bbf02b2b3ccb6f795a710365e37e13099442be1e","outputFingerprint":"1aaba8d890253853c333c84ded157a7e5699167cdb910bda85bed984c8b96b54","reductionBytes":1365}
+{"case":"4096 players","players":4096,"runs":4096,"ms":1209,"rssBytes":85000192,"inputFingerprint":"ba9fc572ea350086cfaae9f7a51cd901629915127bdc38876de1ca7a8e1a9caf","outputFingerprint":"afac6b58ab1df9c08f04418c9d1268f02080ecf068d8a78010f333afa2833e08","reductionBytes":1351}
+{"case":"4097 players beyond prototype bound","players":4097,"runs":4097,"ms":1355,"rssBytes":107851776,"inputFingerprint":"df5b361333c07e077e9dbd7caa31750abf7a0c31b36a2000eb21de1edfddb429","outputFingerprint":"49cceb1d0f769301c7248a6cdceb853536b3148705f6bd4db3826c1fd0542a39","reductionBytes":1351}
+✔ zero players and singleton forms yield no fictional qualifiers (16.316702ms)
+✔ exact rational rounding fixes the approved 32-player tie without changing elapsed precedence (40.604212ms)
+✔ rating-point half ties and negative rounded zero are canonical exact JSON (15.653425ms)
+✔ disconnected components and an uncounted singleton retain their independent gauges (6.869385ms)
+✔ all seven membership masks satisfy independent pairwise equations and preserve missing rounds (15.01883ms)
+✔ 128 deterministic mixed cohorts satisfy exact objective and complete top16 (1180.867529ms)
+✔ elapsed only breaks rating/statistic ties; unknown elapsed remains behind measured (3.289461ms)
+✔ complete player results can arrive in any round order with identical checkpoints (1.60321ms)
+✔ private cursor encoding preserves UTF16 order and legacy Unicode component stability (5.343105ms)
+✔ page boundaries, JSON roundtrips and retried page callback do not change accumulators (140.612456ms)
+✔ incomplete reduction/projection and a replacement player cannot yield a complete ranking (6.844607ms)
+✔ replaying an already committed cursor, unknown fields and malformed projection fail without mutation (5.581918ms)
+✔ checkpoint corruption or changed version is rejected at every public phase (5.258533ms)
+✔ invalid frozen cohort contracts are rejected before any reduction (0.599182ms)
+✔ every unknown-elapsed result remains representable through JSON (3.059759ms)
+✔ 502 distinct players: full input, bounded state and deterministic complete top16 (169.509015ms)
+✔ 1503 runs: full input, bounded state and deterministic complete top16 (177.634325ms)
+✔ 4096 players: full input, bounded state and deterministic complete top16 (1216.850955ms)
+✔ 4097 players beyond prototype bound: full input, bounded state and deterministic complete top16 (1360.976813ms)
 ℹ tests 19
 ℹ suites 0
 ℹ pass 19
@@ -787,7 +791,7 @@ sync-changes.test.js OK
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 4626.441622
+ℹ duration_ms 4389.863232
 ok - worker fences admissions, settles timed-out sessions and publishes only complete existing LS
 ok - fence closes even an in-flight admission using a captured pre-cutoff server time
 ok - truncated operational scan cannot publish complete ranking; larger budget safely retries
@@ -807,11 +811,11 @@ ok - version selection commit failure rolls back the fence and contract together
 ok - versioned published result replays unchanged and corrupted version provenance is rejected
 tournament-qualification-freeze: 17 behavioral tests passed
 tournament-qualification-scan: 23 behavioral cases passed
-✔ deterministic version contract binds all immutable inputs and exact core semantics (10.063123ms)
-✔ changed source, forms, timing, clock, version or fence cannot resume selected work (10.130491ms)
-✔ legacy publisher accepts only its original unversioned fence (1.406295ms)
-✔ ranking schema and version cannot cross legacy/selected event boundaries (4.652808ms)
-✔ published version provenance remains readable after runtime upgrade, while new computation refuses it (2.081022ms)
+✔ deterministic version contract binds all immutable inputs and exact core semantics (6.98032ms)
+✔ changed source, forms, timing, clock, version or fence cannot resume selected work (7.302754ms)
+✔ legacy publisher accepts only its original unversioned fence (1.070051ms)
+✔ ranking schema and version cannot cross legacy/selected event boundaries (4.202577ms)
+✔ published version provenance remains readable after runtime upgrade, while new computation refuses it (1.95058ms)
 ℹ tests 5
 ℹ suites 0
 ℹ pass 5
@@ -819,7 +823,7 @@ tournament-qualification-scan: 23 behavioral cases passed
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 46.612162
+ℹ duration_ms 35.262999
 tournament-qualification: LS parity, immutable-order fingerprint, complete-cutoff/pending guard, duplicate entries/session ids, result bindings and singleton semantics passed
 tournament-ranking tests passed
 ok - create reserves exact boxes with ledger, immutable 3x20 forms and private keys

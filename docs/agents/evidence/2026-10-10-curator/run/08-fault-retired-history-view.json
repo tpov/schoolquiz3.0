@@ -1,0 +1,13 @@
+{
+ "viewVersion": "arena-lifecycle-views-v1",
+ "entries": [
+  {
+   "fromShelf": "arena",
+   "targetShelf": "retired",
+   "status": "APPLIED",
+   "reasonCode": null,
+   "decidedAtMs": 1791666756979
+  }
+ ],
+ "nextCursor": null
+}

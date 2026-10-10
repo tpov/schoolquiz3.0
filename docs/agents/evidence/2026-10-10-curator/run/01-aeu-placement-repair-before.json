@@ -1,0 +1,42 @@
+{
+  "aeu_7d433c732adf45a7b1c665260571b707_stale": {
+    "lessonId": "aeu_7d433c732adf45a7b1c665260571b707_stale",
+    "shelf": "arena",
+    "authorUid": "aeu_7d433c732adf45a7b1c665260571b707_wrong_author",
+    "contentVersion": 1,
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789265259930,
+    "syntheticEligibleUniverseRun": "aeu_7d433c732adf45a7b1c665260571b707"
+  },
+  "aeu_7d433c732adf45a7b1c665260571b707_target": {
+    "lessonId": "aeu_7d433c732adf45a7b1c665260571b707_target",
+    "shelf": "arena",
+    "authorUid": "LDHhjcZvolmgdZvPBk98g2htZPqr",
+    "contentVersion": 1,
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789265259929,
+    "syntheticEligibleUniverseRun": "aeu_7d433c732adf45a7b1c665260571b707"
+  },
+  "aeu_f2229bcc8ac745cc85934c7226193825_stale": {
+    "lessonId": "aeu_f2229bcc8ac745cc85934c7226193825_stale",
+    "shelf": "arena",
+    "authorUid": "aeu_f2229bcc8ac745cc85934c7226193825_wrong_author",
+    "contentVersion": 1,
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789242170023,
+    "syntheticEligibleUniverseRun": "aeu_f2229bcc8ac745cc85934c7226193825"
+  },
+  "aeu_f2229bcc8ac745cc85934c7226193825_target": {
+    "lessonId": "aeu_f2229bcc8ac745cc85934c7226193825_target",
+    "shelf": "arena",
+    "authorUid": "Cf34oIUi8Hc3kQnRsQZv2EA338qJ",
+    "contentVersion": 1,
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789242170022,
+    "syntheticEligibleUniverseRun": "aeu_f2229bcc8ac745cc85934c7226193825"
+  }
+}
