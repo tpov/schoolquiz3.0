@@ -273,3 +273,53 @@ test("an unfinished cycle settles nothing: no manifest, no burn, untouched walle
   assert.equal(state.tester.pointsNolics, 0, "выплат до полного цикла нет");
   assert.equal(ledgerRows().some((row) => row.reason === "review_reward"), false);
 });
+
+test("the PUBLISHED terminal state settles too: the queue replay of an existing review catches it up", async () => {
+  // Упавший после публикации инстанс догоняется повтором ревью через очередь: запись с pinned id
+  // уже есть, обработчик отвечает эквивалентом сохранённого результата — и терминальная заявка
+  // всё равно прогоняет расчёт (AD-9: durable idempotent chain, а не «повезёт — не повезёт»).
+  const pinnedId = "m_fee-publish-replay";
+  store.reset(world({
+    "quest_review_requests/submission": {
+      submissionId: "submission",
+      status: "PUBLISHED",
+      ownerUid: "author",
+      publishedAtMs: 5,
+      targetLessonIds: [],
+      lessons: [{id: "lesson", title: "Lesson"}],
+      draft: {id: "quest", catalogId: "catalog"},
+      processed: true,
+    },
+    [`${TASK_PATH}/reviews/${pinnedId}`]: {
+      id: pinnedId,
+      submissionId: "submission",
+      lessonId: "lesson",
+      kind: "TESTING",
+      reviewerUid: "tester",
+      reviewerLevelAtSubmit: 100,
+      score: 3,
+      questionScores: [{questionId: "q1", score: 3}],
+      createdAtMs: 10,
+      acceptedByServer: true,
+      segmentResults: [],
+      translatedQuestions: [],
+    },
+    [CYCLE]: {submissionId: "submission", ownerUid: "author", questId: "quest", status: "PAID",
+      feeNolics: 1000, feeTenths: 10000, tariff: "initial", tariffRevision: 1, questionCount: 1},
+  }));
+
+  await functions.submitMutation.run({
+    auth: {uid: "tester"},
+    data: {mutationId: "fee-publish-replay", operation: "quest_authoring.SUBMIT_REVIEW",
+      payload: JSON.stringify({assignmentId: "submission_lesson", lessonId: "lesson", kind: "TESTING",
+        score: 3, questionScores: [{questionId: "q1", score: 3}]})},
+  });
+
+  const state = settlementState();
+  assert.equal(state.cycle.status, "SETTLED");
+  assert.equal(state.cycle.outcome, "PUBLISHED");
+  assert.ok(state.manifest, "публикация тоже полный цикл: манифест записан");
+  assert.equal(state.manifest.sumEntitlementTenths, 100, "один юнит: тестер, уровень 100");
+  assert.equal(state.manifest.burnTenths, 9900);
+  assert.equal(state.tester.pointsNolics, 10);
+});
