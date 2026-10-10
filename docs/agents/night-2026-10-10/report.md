@@ -525,3 +525,78 @@ done; основная работа — undo/redo редактора, держа
 
 Коммиты смены 8: `b3d87107` (ktlint файлов истории), `9730438f` (journey-тул),
 `d55ab3d3` (evidence), `4f9d42da` (реестр).
+
+---
+
+# Смена 9-продолжение (10.10, вечер): 4.6 independent-testing-review-threshold закрыта
+
+Старт с 8c4fcf2a — продолжение оборвавшейся смены 9: код 4.6 был закоммичен (c1012e76 диспетч,
+fdf4d469 порог+биндинг, 48581283 сегменты, 478e5384 провод, 82364e5a reviewer UI, c8eb0169
+journey-тул, 8c4fcf2a FlowRow), живой прогон на риге шёл 16:25–16:49 (дампы rig-46…58, rig-
+ревью ушло через outbox, скриптованное второе ревью легло на сервер) — но evidence, гейты и
+реестр остались неоформленными. Смена: реконструкция по серверному состоянию, добитие journey,
+регресс-фикс, гейты, оформление. Файлы владельца (.maestro/**, local.properties) не тронуты.
+
+## Сделано
+
+**4.6 independent-testing-review-threshold — ЗАКРЫТА, статус done**
+(`evidence/2026-10-10-testing-review/`, четыре коммита: 9999bd17 фикс → 297af3ba ktlint →
+65ee932b evidence → реестр/отчёт):
+
+- **Порог доказан живьём на смешанных оценках**: rig-ревью (User28BUFJ, по-вопросные 1,1 через
+  UI + outbox, квитанция `quest_authoring-SUBMIT_REVIEW-review-action-…` в Room рига) +
+  скриптованное 3,3 → средние ровно 2.0 = дефолтный порог → все вопросы passed; одиночная 1
+  держит вопрос непройденным (1 валит, 2/3 пропускают — и сюитой, и арифметикой записей).
+- **Настраиваемость + биндинг живьём**: configs/arena_review {порог 3, rev 2} → те же записи
+  2.33 → все failed; {порог 2, rev 3} → 2.5 → passed. Каждый агрегат везёт
+  appliedConfigRevision+assignmentGeneration; порог вне 1..3 громко отказывает (сюита).
+- **Цикл**: LOGIC 2 → failedStages ["LOGIC"] без причины; пустой перевод не засчитал en
+  (missing text never approved); полный → {en:100} → PUBLISHED version 1; сегментные
+  correct/error → translationScore 50; молчаливый accepted → 400 «explicit decision»; автор —
+  view-callable PUBLISHED/failedStages[] + settle на риге (auth-store восстановлен из бэкапа,
+  activeSubmissionId очищен, updatedAtMs = момент публикации).
+- **Регрессия найдена и починена (9999bd17)**: влитые __en-варианты перевода попадали в
+  по-вопросные исходы 4.6 и молча снимали isTested (ломало publish-путь required-languages);
+  testingQuestionOutcomes теперь судит только исходную ревизию; +кейс в сюиту (94/94).
+
+## Гейты
+
+functions 94/94; quest-authoring domain+data+presentation BUILD SUCCESSFUL; firebase 272 теста
+(ровно 2 предсуществующих fixture-pin — атрибуция 2026-10-08); ktlint-модули истории зелёные
+после 297af3ba (полная проверка красная на файлах 4.3-эры — список владельца); detekt —
+предсуществующий --jvm-target 27 (владелец). Логи gate-*.log в evidence.
+
+## Риг и окружение
+
+Риг: дампы rig-46…64; FLAG_SECURE (доказательства = дампы); SystemUI перезапускался ещё раз —
+данные пережили; после блока проверок force-stop, Room-выжимка снята, adb disconnect,
+schoolquiz-emu остановлен. Demo-backend поднят всё время; functions-эмулятор перезапущен этой
+сменой (фикс 9999bd17) — первый перезапуск БЕЗ env-проводки: один вызов ушёл в metadata и умер
+по таймауту БЕЗ каких-либо записей (инцидент задокументирован в evidence README), после
+повторного старта с FIRESTORE/AUTH_EMULATOR_HOST все вызовы — на demo-backend.
+configs/arena_review оставлен в финальном состоянии journey {threshold 2, required [en],
+revision 3} — документированное решение, не дефолт. Попутные demo-фикстуры ролей (translator
+100, seg-reviewer 200) — по plan §2 Шаг 4.
+
+## На владельца (новое к прежнему списку)
+
+1. ktlint-красные вне матрицы теперь и в presentation/platform-firebase файлах 4.3-эры
+   (FirebaseModule, FirebaseLessonLifecycleRemoteDataSource, DefaultCuratorComponent,
+   DefaultAuthorLifecycleComponent — 1db295c4/8b125e61; конфигурация ktlint с тех пор не
+   менялась): починить файлы или принять красную полную проверку модулей.
+2. UX-хвост 4.6: отдельный экран рендеринга по-вопросных исходов/failedStages у автора
+   (сейчас: серверный view + клиентский парсер, локальный settle терминальных вердиктов).
+3. Прежний список в силе: 7.1 Play Console; 3.9 — два устройства; fixture-pin (процедура
+   владельца); detekt --jvm-target 27; визуальная приёмка (FLAG_SECURE);
+   gradle.properties/local.properties.
+
+## Очередь после смены 9
+
+Эпик 4: **4.7 paid-review-cycle-conservation** (after 4.6 — диспетчабельна: server/node
+консервация fee=rewards+burn под AD-10; OQ-2 остаётся parked) и **4.8 curator-transitions**
+(hitl → риг) — обе открываются; 4.9 / 8.2 / 8.3 (hitl → риг); 4.10 после 4.6 (hitl); 8.4–8.6
+ждут своих after; 7.x — Play/GMS (7.1 не трогать); 3.9 — владелец.
+
+Коммиты смены 9: c1012e76 (диспетч), fdf4d469, 48581283, 478e5384, 82364e5a (код, день),
+c8eb0169 (тул), 8c4fcf2a (FlowRow), 9999bd17 (регресс-фикс), 297af3ba (ktlint), 65ee932b
+(evidence), реестр/отчёт — этим коммитом.
