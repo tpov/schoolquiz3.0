@@ -129,7 +129,7 @@ function createFirestoreStub(seed, options) {
     return {
       id: path.slice(path.lastIndexOf("/") + 1),
       exists: data !== undefined,
-      ref: {path},
+      ref: {path, collection: (name) => collectionRef(`${path}/${name}`)},
       data: () => (data === undefined ? undefined : {...data}),
       updateTime: data === undefined ? undefined : Timestamp.fromMillis(0),
     };

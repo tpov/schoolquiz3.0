@@ -195,11 +195,20 @@ async function review(submissionId, reviewerUid, score) {
   assert.notEqual(ownerUid, reviewerUid, "the reviewer must not be the author");
   const token = await playerIdToken(reviewerUid);
 
+  // TESTING с 4.6 оценивает каждый вопрос ревизии: questionScores покрывает вопросный состав
+  // задания ровно — приёмник отказывает неполному набору (один независимый ревью на вопрос).
+  // Состав задания живёт в подколлекции admin/review/lessons/{lesson}/quests/{quest}/questions.
+  const questId = taskDoc.data().questId;
+  const questionsSnapshot = await taskDoc.ref
+    .collection("quests").doc(questId).collection("questions").get();
+  const ids = questionsSnapshot.docs.map((doc) => doc.id);
+  assert.ok(ids.length > 0, "task must carry its question subcollection for per-question testing");
+  const questionScores = ids.map((questionId) => ({questionId, score}));
   const testing = await callable(SUBMIT_REVIEW_PATH,
-    {assignmentId, lessonId, kind: "TESTING", score, language: null}, token);
+    {assignmentId, lessonId, kind: "TESTING", score, questionScores, language: null}, token);
   assert.equal(testing.status, 200, `TESTING review must be accepted: ${JSON.stringify(testing.json)}`);
   assert.equal(testing.json.result.published, false, "TESTING alone must not publish");
-  console.log(`REVIEW TESTING score=${score} -> aggregate ${JSON.stringify(testing.json.result.aggregate)}`);
+  console.log(`REVIEW TESTING score=${score} questionScores=${questionScores.length} -> aggregate ${JSON.stringify(testing.json.result.aggregate)}`);
 
   const logic = await callable(SUBMIT_REVIEW_PATH,
     {assignmentId, lessonId, kind: "LOGIC", score, language: null}, token);

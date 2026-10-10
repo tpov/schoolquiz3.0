@@ -237,8 +237,9 @@ const ACTIVE_LEVEL_WINDOW = 100;
 const ACCEPTED_TRANSLATION_SEGMENT_POINTS = 5;
 const REJECTED_TRANSLATION_SEGMENT_POINTS = -1;
 const REVIEW_PASS_LEVEL = 100;
-// Review scores run 1..3. Two clears the stage; one is a refusal, not a quiet approval.
-const REVIEW_MIN_PASSING_SCORE = 2;
+// Review scores run 1..3; the pass mark lives in configs/arena_review.testingPassScore
+// (default 2) so the owner can raise the bar without a deploy. One is a refusal, not a quiet
+// approval.
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PUBLIC_SCOPE = "public";
 const PRIVATE_SCOPE = "private";
@@ -4316,6 +4317,8 @@ async function processArenaRequest(request) {
       processedAtMs: now,
       lastError: null,
       status: "UNDER_REVIEW",
+      // Свежая заявка не прошла ещё ничего: стадии называются сразу, а не молчанием.
+      failedStages: initialFailedStages(request),
     }),
     {merge: true},
   );
@@ -4808,7 +4811,15 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   }
   const allReady = targetTasks.every((task) => lessonPassed(task.checks, task, config));
   if (!allReady) {
-    await requestSnapshot.ref.set({status: "UNDER_REVIEW", updatedAtMs: now}, {merge: true});
+    // Автор видит, КАКИЕ стадии не пущены, поимённо и без чьей-либо причины: стадии считаются
+    // из оценок, причина — атрибут только отклонения.
+    const failedStages = Array.from(
+      new Set(targetTasks.flatMap((task) => failedReviewStages(task.checks, task, config))),
+    ).sort();
+    await requestSnapshot.ref.set(
+      {status: "UNDER_REVIEW", updatedAtMs: now, failedStages},
+      {merge: true},
+    );
     return false;
   }
 
@@ -5197,6 +5208,7 @@ function adminDocuments(tasks) {
       createdAtMs: task.createdAtMs,
       changedAtMs: task.changedAtMs,
       status: task.status || lessonReviewStatus(task.checks, task, null),
+      generation: numberValue(task.generation, 1),
       rejectedAtMs: task.rejectedAtMs || null,
       rejectedByUid: task.rejectedByUid || null,
       rejectionReason: task.rejectionReason || null,
@@ -5395,6 +5407,9 @@ function toAdminLessonTasks(request, createdAtMs) {
       lessonId: lesson.id,
       title: lesson.title,
       targetShelf: request.targetShelf,
+      // Поколение заданий: одна ревизия заявки — одно поколение; результат ревью едет с номером
+      // поколения, чтобы перегенерация заданий была видна в уже принятых решениях.
+      generation: 1,
       createdAtMs,
       changedAtMs: createdAtMs,
       // Author claims about testing/logic/translation never grant publication authority.
@@ -5572,6 +5587,7 @@ function rebuildAggregate(task, records, config) {
     (!task.submissionId || record.submissionId === task.submissionId));
   const testing = scoreAggregate(accepted, "TESTING");
   const logic = scoreAggregate(accepted, "LOGIC");
+  const questionOutcomes = testingQuestionOutcomes(task, accepted, config);
   const translated = translatedLanguages(task, accepted);
   const required = requiredLanguages(task, config);
   const reviewedSegments = accepted
@@ -5583,22 +5599,104 @@ function rebuildAggregate(task, records, config) {
       : null;
   return {
     checks: {
-      isTested: testing.score !== null,
+      // Стадия закрыта оценкой урока И, когда задание знает состав вопросов, проходом каждого:
+      // задание без вопросного состава (старые записи) судится по оценке урока, как прежде.
+      isTested:
+        stagePassed(testing.score, config) &&
+        (questionOutcomes.length === 0 || questionOutcomes.every((outcome) => outcome.passed)),
       testingScore: testing.score,
+      questionOutcomes,
       isLogicReviewed: logic.score !== null,
       logicScore: logic.score,
       isTranslationReviewed: Array.from(required).every((language) => Object.prototype.hasOwnProperty.call(translated, language)),
       translationScore,
       translatedLanguages: translated,
+      // Результат привязан к тому, ПОД ЧЕМ он посчитан: ревизия конфига и поколение заданий
+      // едут вместе с проверками, чтобы смена порога посреди цикла не переписывала задним
+      // числом уже принятые решения.
+      appliedConfigRevision: numberValue(config && config.configRevision, 1),
+      assignmentGeneration: numberValue(task && task.generation, 1),
     },
     reviewerDeltas: testing.reviewerDeltas.concat(logic.reviewerDeltas),
   };
+}
+
+/**
+ * По-вопросные исходы TESTING: один независимый ревью (≠ автор) на каждый вопрос ревизии.
+ *
+ * Оценка вопроса — среднее по принятым записям, отдавшим за него вопросную оценку; вопрос
+ * пропущен, когда оценён и его среднее дошло до порога из конфига. Вопрос без единой оценки
+ * остаётся неоценённым (testingScore null) — тишина никогда не считается одобрением.
+ */
+function testingQuestionOutcomes(task, acceptedRecords, config) {
+  const threshold = numberValue(config && config.testingPassScore, DEFAULT_TESTING_PASS_SCORE);
+  const taskQuestions = Array.isArray(task.questions) ? task.questions : [];
+  const outcomes = taskQuestions.map((question) => {
+    const scores = [];
+    for (const record of acceptedRecords) {
+      if (record.kind !== "TESTING") continue;
+      const perQuestion = (record.questionScores || []).find((entry) => entry.questionId === question.id);
+      if (perQuestion && perQuestion.score !== null && perQuestion.score !== undefined) {
+        scores.push(numberValue(perQuestion.score, null));
+      }
+    }
+    if (scores.length === 0) {
+      return {questionId: question.id, testingScore: null, passed: false};
+    }
+    const score = scores.reduce((sum, value) => sum + value, 0) / scores.length;
+    return {questionId: question.id, testingScore: score, passed: score >= threshold};
+  });
+  // Урок без вопросного списка (старые задания) живёт по записям с вопросными оценками как есть:
+  // пустой список вопросов не может превратить isTested в ложь, когда стадия закрыта оценками.
+  if (taskQuestions.length === 0) return [];
+  return outcomes;
 }
 
 function lessonReviewStatus(checks, task, config) {
   // A rejection is terminal until the author resubmits, so it outranks the score arithmetic.
   if (task && task.rejectedAtMs) return "REJECTED";
   return lessonPassed(checks, task, config) ? "READY_FOR_PUBLICATION" : "UNDER_REVIEW";
+}
+
+/**
+ * Какие стадии не пущены, поимённо — без всякой причины от ревьюера.
+ *
+ * Причина — атрибут отклонения (rejectReviewSubmission требует её обязательно); проваленная
+ * стадия вычисляется из оценок и говорит сама за себя: автор видит, ЧТО не прошло (TESTING /
+ * LOGIC / TRANSLATION), и чинит именно это. Ничего не не пущено — пустой список.
+ */
+/**
+ * Стадии, не пройденные свежей заявкой (ещё до первого ревью): тестирование и логика ждут
+ * оценок, перевод — требуемых языков. Автор видит это с момента подачи.
+ */
+function initialFailedStages(request) {
+  const tasks = request.lessons.map((lesson) => {
+    const lessonQuestions = request.questions.filter((question) => question.lessonId === lesson.id);
+    return {
+      checks: reviewToChecks({}),
+      questions: lessonQuestions,
+      sourceLanguages: new Set(lessonQuestions.map((question) => normalizeLanguage(question.language))),
+    };
+  });
+  return Array.from(new Set(tasks.flatMap((task) => failedReviewStages(task.checks, task, null)))).sort();
+}
+
+function failedReviewStages(checks, task, config) {
+  const failed = [];
+  if (!stagePassed(checks.testingScore, config) || !checks.isTested) failed.push("TESTING");
+  if (!stagePassed(checks.logicScore, config) || !checks.isLogicReviewed) failed.push("LOGIC");
+  const required = requiredLanguages(task, config);
+  const translated = checks.translatedLanguages || {};
+  const sourceLanguages = new Set(
+    Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean),
+  );
+  const translationMissing = Array.from(required).some(
+    (language) =>
+      !sourceLanguages.has(normalizeLanguage(language)) &&
+      numberValue(translated[language], 0) < REVIEW_PASS_LEVEL,
+  );
+  if (translationMissing) failed.push("TRANSLATION");
+  return failed;
 }
 
 function lessonPassed(checks, task, config) {
@@ -5608,8 +5706,10 @@ function lessonPassed(checks, task, config) {
     Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean),
   );
   return (
-    stagePassed(checks.testingScore) &&
-    stagePassed(checks.logicScore) &&
+    stagePassed(checks.testingScore, config) &&
+    checks.isTested &&
+    stagePassed(checks.logicScore, config) &&
+    checks.isLogicReviewed &&
     Array.from(required).every((language) =>
       sourceLanguages.has(normalizeLanguage(language)) ||
       numberValue(translated[language], 0) >= REVIEW_PASS_LEVEL
@@ -5680,6 +5780,13 @@ function actionToRecord(action, profile, task, config, existingRecords, now, pin
     if (action.score === null || action.score === undefined) {
       throw new HttpsError("invalid-argument", `${action.kind} requires score`);
     }
+    // TESTING оценивает КАЖДЫЙ вопрос ревизии (один независимый ревью на вопрос); LOGIC судит
+    // урок целиком. Вопросный список задания — единственный источник состава: чужой/лишний id
+    // и пропущенный вопрос собираются здесь, на приёмнике, а не доверяются проводу.
+    let questionScores = [];
+    if (action.kind === "TESTING") {
+      questionScores = validatedTestingQuestionScores(action.questionScores, task);
+    }
     return {
       id: reviewId,
       lessonId: action.lessonId,
@@ -5687,6 +5794,7 @@ function actionToRecord(action, profile, task, config, existingRecords, now, pin
       reviewerUid: profile.uid,
       reviewerLevelAtSubmit: reviewerLevel,
       score: action.score,
+      questionScores,
       createdAtMs: now,
       acceptedByServer: true,
       segmentResults: [],
@@ -5875,6 +5983,7 @@ async function adminLessonSnapshotToTask(snapshot) {
     title: stringValue(data.title),
     targetShelf: targetShelfValue(data.targetShelf),
     status: stringValue(data.status, "UNDER_REVIEW"),
+    generation: numberValue(data.generation, 1),
     rejectedAtMs: numberValue(data.rejectedAtMs, 0) || null,
     rejectedByUid: nullableString(data.rejectedByUid),
     rejectionReason: nullableString(data.rejectionReason),
@@ -5898,12 +6007,30 @@ async function readReviewRecords(lessonId, submissionId = null) {
 
 async function readArenaReviewConfig() {
   const snapshot = await db.doc("configs/arena_review").get();
-  if (!snapshot.exists) return null;
+  if (!snapshot.exists) return defaultArenaReviewConfig();
   const data = snapshot.data() || {};
+  const testingPassScore = numberValue(data.testingPassScore, DEFAULT_TESTING_PASS_SCORE);
+  // Порог решает судьбу контента: тихо исправленный неверный порог ловит ошибку слишком поздно —
+  // конфиг с числом вне 1..3 громко отказывает всем ревью-путям, пока владелец не починит.
+  if (!Number.isInteger(testingPassScore) || testingPassScore < 1 || testingPassScore > 3) {
+    throw new HttpsError(
+      "failed-precondition",
+      `configs/arena_review.testingPassScore must be an integer in 1..3, got ${data.testingPassScore}`,
+    );
+  }
   return {
     requiredLanguages: stringArray(data.requiredLanguages),
+    testingPassScore,
+    configRevision: numberValue(data.configRevision, 1),
     updatedAtMs: numberValue(data.updatedAtMs, 0),
   };
+}
+
+/** Порог, при котором TESTING-оценка пропускает вопрос/ревизию (1..3: 1 валит, 2 и 3 пропускают). */
+const DEFAULT_TESTING_PASS_SCORE = 2;
+
+function defaultArenaReviewConfig() {
+  return {requiredLanguages: [], testingPassScore: DEFAULT_TESTING_PASS_SCORE, configRevision: 1, updatedAtMs: 0};
 }
 
 async function requireProfile(uid) {
@@ -6186,6 +6313,10 @@ function normalizeSubmitAction(data) {
     lessonId: stringValue(data.lessonId),
     kind: stringValue(data.kind),
     score,
+    questionScores: listMaps(data.questionScores).map((item) => ({
+      questionId: stringValue(item.questionId),
+      score: numberValue(item.score, null),
+    })),
     language: nullableString(data.language),
     targetReviewId: nullableString(data.targetReviewId),
     translatedQuestions: listMaps(data.translatedQuestions).map((item) => normalizeQuestion(item)),
@@ -6195,6 +6326,41 @@ function normalizeSubmitAction(data) {
       accepted: Boolean(item.accepted),
     })),
   };
+}
+
+/**
+ * Вопросные оценки TESTING: покрытие ровно вопросного состава задания, оценки в 1..3.
+ *
+ * Один независимый ревью на вопрос — это состав, названный заданием: не хватает вопроса — ревью
+ * неполно; лишний или чужой id — провод собран мимо задания. Порог здесь не проверяется:
+ * низкая оценка — валидное решение, а не ошибка провода.
+ */
+function validatedTestingQuestionScores(questionScores, task) {
+  const expected = new Set((task.questions || []).map((question) => question.id));
+  if (expected.size === 0) {
+    throw new HttpsError("failed-precondition", "Assignment carries no questions to test");
+  }
+  const seen = new Set();
+  for (const entry of questionScores) {
+    if (!entry.questionId) {
+      throw new HttpsError("invalid-argument", "questionScores entry requires questionId");
+    }
+    if (entry.score === null || entry.score === undefined || entry.score < 1 || entry.score > 3 || !Number.isInteger(entry.score)) {
+      throw new HttpsError("invalid-argument", `questionScores[${entry.questionId}] score must be an integer in 1..3`);
+    }
+    if (!expected.has(entry.questionId)) {
+      throw new HttpsError("invalid-argument", `questionScores names unknown question ${entry.questionId}`);
+    }
+    if (seen.has(entry.questionId)) {
+      throw new HttpsError("invalid-argument", `questionScores duplicates question ${entry.questionId}`);
+    }
+    seen.add(entry.questionId);
+  }
+  const missing = Array.from(expected).filter((id) => !seen.has(id));
+  if (missing.length > 0) {
+    throw new HttpsError("invalid-argument", `questionScores must cover every question, missing: ${missing.join(", ")}`);
+  }
+  return questionScores.map((entry) => ({questionId: entry.questionId, score: entry.score}));
 }
 
 function normalizeQuestion(data, fallbackId) {
@@ -6223,6 +6389,10 @@ function normalizeReviewRecord(data, fallbackId, fallbackLessonId) {
     reviewerUid: stringValue(data.reviewerUid),
     reviewerLevelAtSubmit: numberValue(data.reviewerLevelAtSubmit, 0),
     score: data.score === null || data.score === undefined ? null : numberValue(data.score, null),
+    questionScores: listMaps(data.questionScores).map((item) => ({
+      questionId: stringValue(item.questionId),
+      score: numberValue(item.score, null),
+    })),
     language: nullableString(data.language),
     targetReviewId: nullableString(data.targetReviewId),
     createdAtMs: numberValue(data.createdAtMs, 0),
@@ -6241,6 +6411,11 @@ function reviewToChecks(review, fallbackLanguages) {
   return {
     isTested: Boolean(review && review.isTested),
     testingScore: nullableNumber(review && review.testingScore),
+    questionOutcomes: listMaps(review && review.questionOutcomes).map((item) => ({
+      questionId: stringValue(item.questionId),
+      testingScore: nullableNumber(item.testingScore),
+      passed: Boolean(item.passed),
+    })),
     isLogicReviewed: Boolean(review && review.isLogicReviewed),
     logicScore: nullableNumber(review && review.logicScore),
     isTranslationReviewed: Boolean(review && review.isTranslationReviewed),
@@ -6250,6 +6425,8 @@ function reviewToChecks(review, fallbackLanguages) {
         : null,
     translatedLanguages:
       Object.keys(translated).length > 0 ? translated : (fallbackLanguages || {}),
+    appliedConfigRevision: nullableNumber(review && review.appliedConfigRevision),
+    assignmentGeneration: nullableNumber(review && review.assignmentGeneration),
   };
 }
 
@@ -6257,11 +6434,20 @@ function checksToCallableMap(checks) {
   return {
     isTested: Boolean(checks.isTested),
     testingScore: checks.testingScore === undefined ? null : checks.testingScore,
+    questionOutcomes: (checks.questionOutcomes || []).map((outcome) => ({
+      questionId: outcome.questionId,
+      testingScore: outcome.testingScore === undefined ? null : outcome.testingScore,
+      passed: Boolean(outcome.passed),
+    })),
     isLogicReviewed: Boolean(checks.isLogicReviewed),
     logicScore: checks.logicScore === undefined ? null : checks.logicScore,
     isTranslationReviewed: Boolean(checks.isTranslationReviewed),
     translationScore: checks.translationScore === undefined ? null : checks.translationScore,
     translatedLanguages: checks.translatedLanguages || {},
+    appliedConfigRevision:
+      checks.appliedConfigRevision === undefined ? null : checks.appliedConfigRevision,
+    assignmentGeneration:
+      checks.assignmentGeneration === undefined ? null : checks.assignmentGeneration,
   };
 }
 
@@ -6291,6 +6477,10 @@ function reviewRecordToDocument(record) {
     reviewerUid: record.reviewerUid,
     reviewerLevelAtSubmit: record.reviewerLevelAtSubmit,
     score: record.score,
+    questionScores: (record.questionScores || []).map((item) => ({
+      questionId: item.questionId,
+      score: item.score,
+    })),
     language: record.language,
     targetReviewId: record.targetReviewId,
     createdAtMs: record.createdAtMs,
@@ -6369,16 +6559,18 @@ function hasLogicResult(checks) {
 }
 
 /**
- * A stage clears when its score reaches the pass mark. Scores run 1..3 and the mark is 2, so the
- * lowest score is a refusal rather than an approval.
+ * A stage clears when its score reaches the pass mark. Scores run 1..3 and the mark comes from
+ * `configs/arena_review.testingPassScore` (default 2), so the lowest score is a refusal rather
+ * than an approval, and the owner can raise the bar without a deploy.
  *
  * Until this existed, publication asked only whether a score was PRESENT — a reviewer scoring 1
  * published the quest exactly as a reviewer scoring 3 did, which made the whole review stage
  * decorative. A score below the mark leaves the lesson UNDER_REVIEW indefinitely; raising it
  * publishes without any other action, and the reject action below is the way to send it back.
  */
-function stagePassed(score) {
-  return score !== null && score !== undefined && score >= REVIEW_MIN_PASSING_SCORE;
+function stagePassed(score, config) {
+  const threshold = numberValue(config && config.testingPassScore, DEFAULT_TESTING_PASS_SCORE);
+  return score !== null && score !== undefined && score >= threshold;
 }
 
 function isReadyForTranslation(checks) {
