@@ -68,8 +68,10 @@ const ENDPOINTS = Object.freeze([
 // Pinned 2026-09-13 (99091eb5, «make season finalization resumable»). Re-pinned 2026-10-08
 // (story 2.13): story 2.6 (1b207cc2) legitimately added the two ONLINE-O2 next-question
 // callables — beginLessonQuestionWindow and fetchNextLessonQuestion — and nobody re-pinned
-// the accepted set; the callable names and the hash cover them now.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "9f17310cc1a4b2bbe7629625b97e0d28366ba39d47518977d8623c8e39180ad9";
+// the accepted set; the callable names and the hash cover them now. Re-pinned 2026-10-10
+// (story 4.9): listInboxItems joins the surface — the shared inbox reader (AD-20), covered
+// by its own boundary suite inbox-views.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "390946cb25faa60337e44d021f811e929a6883782a4e1589485ea5db7deabcdc";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

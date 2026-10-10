@@ -628,6 +628,43 @@ async function testAuthoringViewsPrivacy() {
  * Как и в блоке `question_keys` выше: deny-проверка слепа к удалению правила, поэтому для
  * полностью закрытых коллекций рядом стоит текстовое закрепление явного блока.
  */
+/**
+ * Приватность общего inbox (AD-20, эпик 4, история 4.9).
+ *
+ * Приватный отчёт об ошибке урока адресован разрешённому автору этого урока, и единственный
+ * читатель кроме репортёра — тот автор. Оба читают через серверную вью (`listInboxItems`), где и
+ * живёт проверка права: роль ревьюера/куратора сама по себе доступа не даёт. Клиентские чтения
+ * коллекции отдали бы приватный текст всякому вошедшему, клиентские записи позволили бы подделать
+ * адресацию — сервер выводит автора урока из документа размещения сам.
+ *
+ * Публичное обсуждение (`lessonComments`) остаётся отдельной поверхностью со своими правилами —
+ * inbox его не приватизирует и не расширяет.
+ */
+async function testInboxPrivacy() {
+  await deny("lesson_error_reports: игрок не читает", () =>
+    db("player").doc("lesson_error_reports/rep-1").get());
+  await deny("lesson_error_reports: репортёр не читает своё", () =>
+    db("author").doc("lesson_error_reports/rep-1").get());
+  await deny("lesson_error_reports: модератор не читает", () =>
+    db("moderator").doc("lesson_error_reports/rep-1").get());
+  await deny("lesson_error_reports: админ не читает", () =>
+    db("admin").doc("lesson_error_reports/rep-1").get());
+  await deny("lesson_error_reports: игрок не пишет", () =>
+    db("player").doc("lesson_error_reports/rep-2").set({lessonId: "les-1", text: "forged"}));
+  await deny("lesson_error_reports: админ не пишет", () =>
+    db("admin").doc("lesson_error_reports/rep-3").set({lessonId: "les-1", text: "forged"}));
+
+  // Текстовое закрепление явного блока закрытия: deny-проверка слепа к удалению правила.
+  const rulesText = fs.readFileSync(RULES_PATH, "utf8");
+  const at = rulesText.indexOf("match /lesson_error_reports/{reportId}");
+  const block = at < 0 ? "" : rulesText.slice(at, at + 800);
+  results.push({
+    label: "lesson_error_reports: явный отказ присутствует в тексте правил",
+    ok: at >= 0 && block.includes("allow read, write: if false;"),
+    error: "в firestore.rules нет явного блока закрытия lesson_error_reports (AD-20: приватный отчёт читает только серверная вью)",
+  });
+}
+
 async function testPurchaseIntegrityPrivacy() {
   // Settlements: один документ на token; чтение выдало бы чужие покупки, запись позволила бы
   // объявить token погашенным (или вернуть к погашению) рукой.
@@ -753,6 +790,7 @@ async function main() {
   await testReportsAndBans();
   await testServerOnlyCollections();
   await testAuthoringViewsPrivacy();
+  await testInboxPrivacy();
   await testPurchaseIntegrityPrivacy();
 
   await testEnv.cleanup();

@@ -86,6 +86,7 @@ const {createArenaLessonCatalog} = require("./arena-lesson-catalog");
 const {
   createArenaLifecycleViews, ArenaLifecycleViewError, MAX_AUTHOR_REJECTION_REASON_BYTES,
 } = require("./arena-lifecycle-views");
+const {createInboxViews, InboxViewError} = require("./inbox-views");
 const {createCourseTournamentController} = require("./course-tournament-controller");
 const {createTournamentWorker, FUNCTION_TIMEOUT_MS} = require("./tournament-worker");
 const {
@@ -386,6 +387,7 @@ const arenaLifecycleViews = createArenaLifecycleViews({
   db, loadLessonContext: loadArenaLifecycleContext, isCurator: isArenaCurator,
   readCursorKey: () => ARENA_LIFECYCLE_CURSOR_SECRET.value(),
 });
+const inboxViews = createInboxViews({db});
 exports.listArenaLessons = onCall(CALLABLE_OPTIONS, async (request) => {
   try {
     const uid = requireAuthUid(request);
@@ -430,6 +432,22 @@ async function callArenaLifecycleView(method, request) {
     throw new HttpsError(code, "Lesson lifecycle could not be loaded", {reason});
   }
 }
+// Общий inbox (AD-20): автор читает адресованные ему приватные отчёты и комментарии к своим
+// урокам. Проверка права живёт во вью (отбор по lessonAuthorUid/authorUid), ошибка — без деталей
+// хранилища: наружу едет только поименованная причина.
+exports.listInboxItems = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  try {
+    return await inboxViews.list({uid, payload: request.data});
+  } catch (error) {
+    const reason = !request || !request.auth || !request.auth.uid ? "UNAUTHENTICATED" :
+      error instanceof InboxViewError ? error.code : "UNAVAILABLE";
+    const code = reason === "UNAUTHENTICATED" ? "unauthenticated" :
+      reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+        reason === "SOURCE_TOO_LARGE" ? "resource-exhausted" : "unavailable";
+    throw new HttpsError(code, "Inbox could not be loaded", {reason});
+  }
+});
 const arenaTicketRecovery = createArenaTicketRecovery({db});
 exports.listArenaEntryTickets = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("list", request));
 exports.fetchArenaEntryTicket = onCall(CALLABLE_OPTIONS, (request) => callArenaTicketRecovery("get", request));
@@ -1549,6 +1567,10 @@ const MUTATION_HANDLERS = {
   // в отличие от покупки. Лот, купленный за время ожидания, — окончательный отказ.
   "profile.CANCEL_NICKNAME_LISTING": (uid, payload) => applyCancelNicknameListing(uid, payload),
   "profile.CANCEL_LOGO_LISTING": (uid, payload) => applyCancelLogoListing(uid, payload),
+  // Приватный отчёт об ошибке урока — общий inbox (AD-20). Откладывается по AD-3: текст про весь
+  // урок и его id уже лежат в теле, адресата (разрешённого автора) сервер выводит сам из
+  // документа размещения, а повтор по ключу возвращает ту же запись.
+  "lesson_report.SUBMIT_ERROR": (uid, payload) => applyLessonErrorReport(uid, payload),
 };
 
 /**
@@ -1618,6 +1640,70 @@ async function readPrivateQuestVersion(uid, catalogId, questId) {
  * что проверка обязана не пустить. Дальше работает тот же обработчик, что и у документа,
  * созданного триггером, — второй копии этой логики не существует.
  */
+/**
+ * Приватный отчёт об ошибке урока — тело, общее для очереди и (в будущем) прямого вызова.
+ *
+ * Форма намеренно узкая: `reportId`, `lessonId`, текст про весь урок. Полей вопросов здесь нет по
+ * построению (AD-20) — отчёт не может переоткрыть ни вопрос, ни ответ, потому что таких полей
+ * приёмник не принимает вовсе. Адресат выводится сервером из документа размещения: тело не
+ * называет получателя, подставленный в него чужой uid адресацию не меняет.
+ *
+ * Отказ «урока нет на размещении» окончательный: у записи, которая его получил, не появится
+ * адресат от повтора — локальную половину уводит в карантин владеющая фича.
+ */
+async function applyLessonErrorReport(uid, payload) {
+  const data = payload || {};
+  // Тело — только три named-поля: лишний ключ (токен, payload вопроса, будущая форма) —
+  // несовпадение контракта, а не повод что-то записать (AD-20: исключённое не доезжает до базы).
+  const unknown = Object.keys(data).filter((key) => !["reportId", "lessonId", "text"].includes(key));
+  if (unknown.length > 0) {
+    throw new HttpsError("invalid-argument", `Unsupported report fields: ${unknown.sort().join(", ")}`);
+  }
+  const reportId = stringValue(data.reportId);
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(reportId)) {
+    throw new HttpsError("invalid-argument", "reportId is required");
+  }
+  const lessonId = stringValue(data.lessonId);
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(lessonId)) {
+    throw new HttpsError("invalid-argument", "lessonId is required");
+  }
+  const text = stringValue(data.text).trim();
+  if (!text) throw new HttpsError("invalid-argument", "text is required");
+  if (text.length > 1000) throw new HttpsError("invalid-argument", "text is too long");
+
+  const reportRef = db.collection("lesson_error_reports").doc(reportId);
+  // Ручей защищает ключ приёмника (AD-1), но обработчик может умереть после записи, до неё —
+  // резерв протухнет и повтор придёт заново. Читаем документ: повтор возвращает то, что уже
+  // записано, а не вторую запись с новым моментом.
+  const existing = await reportRef.get();
+  if (existing.exists) {
+    const stored = existing.data() || {};
+    return {reportId, lessonId: stringValue(stored.lessonId), createdAtMs: numberValue(stored.createdAtMs, 0)};
+  }
+
+  const placementSnapshot = await db.collection("lesson_placements").doc(lessonId).get();
+  const lessonAuthorUid = nullableString(
+    placementSnapshot.exists ? placementSnapshot.data().authorUid : null,
+  );
+  if (!lessonAuthorUid) {
+    throw new HttpsError("failed-precondition", `Lesson ${lessonId} is not placed`);
+  }
+
+  const now = Date.now();
+  await reportRef.set(
+    clean({
+      reportId,
+      lessonId,
+      lessonAuthorUid,
+      reporterUid: uid,
+      text,
+      schemaVersion: 1,
+      createdAtMs: now,
+    }),
+  );
+  return {reportId, lessonId, createdAtMs: now};
+}
+
 async function applyArenaSubmission(uid, payload) {
   const data = payload || {};
   const submissionId = stringValue(data.submissionId);

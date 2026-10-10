@@ -278,6 +278,16 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /lesson_error_reports/{reportId} {
+      // Private lesson-error reports (AD-20, CAP-6): the report is addressed to the permitted
+      // author of one lesson, and the only reader besides the reporter is that author. Both read
+      // through the server view (`listInboxItems`), where the permission check lives; opening
+      // client reads here would hand every signed-in account the private text, and client writes
+      // would let a caller forge the addressing (the server resolves the lesson author itself at
+      // submission). Reviewer/curator roles grant nothing here on purpose.
+      allow read, write: if false;
+    }
+
     match /tournaments/{tournamentId} {
       // Tournament tables are server-written from lesson result events.
       // Authenticated clients may read public standings and participant lists.
