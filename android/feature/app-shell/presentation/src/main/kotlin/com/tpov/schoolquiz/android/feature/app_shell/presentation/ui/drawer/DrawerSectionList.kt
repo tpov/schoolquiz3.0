@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.drawer
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
@@ -28,7 +30,10 @@ fun DrawerSectionList(
 ) {
     val sections = visibleSections(tab, userStats)
 
-    Column(modifier = modifier) {
+    // Секций стало больше, чем влезает между шапкой и футером на низких экранах: без прокрутки
+    // хвост списка обрезается футером и оказывается недостижим вовсе (TZ06C: кураторская
+    // поверхность живёт внизу списка).
+    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
         sections.forEach { section ->
             BrandDrawerItem(
                 label = section.displayName,
