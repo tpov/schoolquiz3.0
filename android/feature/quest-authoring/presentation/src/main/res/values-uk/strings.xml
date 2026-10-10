@@ -155,7 +155,7 @@
     <string name="qa_curator_title">Кураторська</string>
     <string name="qa_curator_permission_denied">Розміщення бачить лише куратор</string>
     <string name="qa_curator_reason_required">Спершу назвіть причину переходу</string>
-    <string name="qa_curator_reason_label">Причина (обов'язкова)</string>
+    <string name="qa_curator_reason_label">Причина (обов\'язкова)</string>
     <string name="qa_curator_transition_title">Перехід обраного уроку</string>
     <string name="qa_curator_transition_review">На перевірку</string>
     <string name="qa_curator_transition_arena">На арену</string>
