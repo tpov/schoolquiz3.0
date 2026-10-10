@@ -3,8 +3,6 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -201,7 +199,6 @@ private fun ReviewQueueList(
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ReviewAssignmentCard(
     item: ReviewAssignmentListItemUiState,
@@ -223,7 +220,10 @@ private fun ReviewAssignmentCard(
                 style = NoirType.rowSub,
                 color = NoirT3,
             )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Column вместо FlowRow: бинарная сигнатура FlowRow в APK (compose-foundation 1.9.x)
+            // расходится с той, под которой компилируется модуль (1.7) — живой риг падал с
+            // NoSuchMethodError на карточке задания (тот же класс дрейфа, что c8e98463).
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item.kinds.forEach { kind ->
                     AssistChip(onClick = {}, label = { Text(kind.displayName) })
                 }
@@ -288,7 +288,6 @@ private fun ReviewScores(item: ReviewAssignmentListItemUiState) {
 }
 
 @Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ReviewDetail(
     detail: ReviewAssignmentDetailUiState,
@@ -319,7 +318,7 @@ private fun ReviewDetail(
             }
         }
         if (detail.availableLanguages.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 detail.availableLanguages.forEach { language ->
                     FilterChip(
                         selected = detail.selectedLanguage == language,
