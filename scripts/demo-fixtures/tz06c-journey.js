@@ -139,7 +139,7 @@ async function playerIdToken(uid) {
 }
 
 async function callable(urlPath, payload, token) {
-  const response = await fetch(urlPath, {
+  const response = await fetch(`http://127.0.0.1:${HOSTS.upstream}${urlPath}`, {
     method: "POST",
     headers: {"content-type": "application/json", authorization: `Bearer ${token}`},
     body: JSON.stringify({data: payload}),
@@ -185,10 +185,14 @@ async function statusOf(submissionId) {
 async function review(submissionId, reviewerUid, score) {
   const tasks = await db.collection("admin/review/lessons").where("submissionId", "==", submissionId).get();
   assert.equal(tasks.size, 1, "the journey submission carries exactly one lesson task");
-  const task = tasks.docs[0];
-  const assignmentId = task.id;
-  const lessonId = (task.data() || {}).lessonId;
-  assert.equal(typeof lessonId, "string", "task must name its lesson");
+  const taskDoc = tasks.docs[0];
+  // Тело задания: doc id = урок, поле assignmentId = ключ для callables (AD-11), ownerUid = автор.
+  const assignmentId = taskDoc.data().assignmentId;
+  const lessonId = taskDoc.data().id;
+  const ownerUid = taskDoc.data().ownerUid;
+  assert.equal(typeof assignmentId, "string", "task must carry its assignment id");
+  assert.equal(typeof lessonId, "string", "task must carry its lesson id");
+  assert.notEqual(ownerUid, reviewerUid, "the reviewer must not be the author");
   const token = await playerIdToken(reviewerUid);
 
   const testing = await callable(SUBMIT_REVIEW_PATH,
@@ -218,6 +222,17 @@ async function catalog() {
   }, null, 2));
 }
 
+// Кураторский переход реальным callable (setLessonPlacement). Ключ мутации — намерение
+// вызывающего; повтор ключа отвечает сохранённым решением сервера (AD-2).
+async function transition(lessonId, curatorUid, targetShelf, reason, mutationId) {
+  assert.ok(/^[A-Za-z0-9]{20,128}$/.test(curatorUid), "curator uid must look like a firebase uid");
+  assert.ok(/^[A-Za-z0-9-]{6,128}$/.test(mutationId), "mutationId must be a key-shaped string");
+  const token = await playerIdToken(curatorUid);
+  const response = await callable(`/${PROJECT}/us-central1/setLessonPlacement`,
+    {lessonId, targetShelf, reason, mutationId}, token);
+  console.log(JSON.stringify({httpStatus: response.status, body: response.json}, null, 2));
+}
+
 async function main() {
   const [cmd, ...args] = process.argv.slice(2);
   const {writeFileSync, readFileSync} = require("node:fs");
@@ -238,6 +253,8 @@ async function main() {
     await statusOf(args[0]);
   } else if (cmd === "catalog") {
     await catalog();
+  } else if (cmd === "transition") {
+    await transition(args[0], args[1], args[2], args[3], args[4]);
   } else {
     throw new Error(`unknown command: ${cmd}`);
   }
