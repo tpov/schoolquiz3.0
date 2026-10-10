@@ -85,7 +85,7 @@ waits = [
   "hitl: device proof of the reviewer flow",
 ]
 hitl = true
-status = "blocked" # hitl + after 4.3 (hitl); UX-O1/O4/O5 решения закрыты; доказательство кода/прав/конкурентности — требуется (contract-map)
+status = "in-progress" # 2026-10-10, смена 9 (продолжение): диспетч — after 4.2/4.3 done, hitl ревьюера — на redroid-риге по инструкции владельца; скриптованный ревьюер тула 4.3 готов обслужить journey; впереди порог/конфиг/сегментные решения и по-вопросные исходы
 
 [[story]]
 id = "4.7"
