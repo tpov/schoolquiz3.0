@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.data.di
 
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.LessonLifecycleRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSourceImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringRepositoryImpl
@@ -11,8 +12,10 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArena
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ReviewActionQuarantine
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringTimestampProvider
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonLifecycleRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewAssignmentRepository
 import org.koin.dsl.module
@@ -22,6 +25,9 @@ val questAuthoringDataModule =
         single<QuestAuthoringLocalDataSource> { QuestAuthoringLocalDataSourceImpl(get()) }
         single<ReviewAssignmentLocalDataSource> { ReviewAssignmentLocalDataSourceImpl(get()) }
         single<QuestAuthoringRepository> { QuestAuthoringRepositoryImpl(get(), get(), get()) }
+        // Проекции TZ06B и кураторский переход — прямой callable без локальной половины (AD-25);
+        // транспортBinding (Firebase) подключается в platform-модуле.
+        single<LessonLifecycleRepository> { LessonLifecycleRepositoryImpl(remote = get<LessonLifecycleRemoteDataSource>()) }
         // Решение ревьюера уходит общей очередью, а не callable (AD-6): репозиторию нужен только
         // локальный источник и сама очередь.
         single<ReviewAssignmentRepository> {

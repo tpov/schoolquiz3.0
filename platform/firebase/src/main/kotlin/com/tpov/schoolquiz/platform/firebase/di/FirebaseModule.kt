@@ -20,6 +20,7 @@ import com.tpov.schoolquiz.platform.firebase.network.namingFailures
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseLogoRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
@@ -48,6 +49,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketS
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaWalletRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
@@ -152,6 +154,9 @@ val firebaseModule =
         }
         single<QuestArenaSubmissionRemoteDataSource> {
             FirebaseQuestArenaSubmissionRemoteDataSource(functions = get()).namingFailures()
+        }
+        single<LessonLifecycleRemoteDataSource> {
+            FirebaseLessonLifecycleRemoteDataSource(functions = get())
         }
         single<QuestPrivateRemoteDataSource> {
             FirebaseQuestPrivateRemoteDataSource(

@@ -3,6 +3,10 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetArenaReadinessUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListCuratorLifecycleUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListLessonHistoryUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListLessonRoyaltyUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListOwnedLifecycleUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
@@ -12,6 +16,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Resolv
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitReviewActionUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.TransitionLessonUseCase
 import org.koin.dsl.module
 
 val questAuthoringDomainModule =
@@ -19,6 +24,10 @@ val questAuthoringDomainModule =
         factory { CreateQuestDraftUseCase(get(), get(), get()) }
         factory { GetActiveQuestDraftUseCase(get()) }
         factory { GetArenaReadinessUseCase(get()) }
+        factory { ListCuratorLifecycleUseCase(get()) }
+        factory { ListLessonHistoryUseCase(get()) }
+        factory { ListLessonRoyaltyUseCase(get()) }
+        factory { ListOwnedLifecycleUseCase(get()) }
         factory { ObserveQuestDraftConflictUseCase(get()) }
         factory { ObserveQuestDraftSummariesUseCase(get()) }
         factory { ObserveReviewAssignmentsUseCase(get()) }
@@ -28,4 +37,5 @@ val questAuthoringDomainModule =
         factory { SaveDraftQuestionUseCase(get(), get(), get(), get()) }
         factory { SubmitReviewActionUseCase(get(), get(), get()) }
         factory { SubmitQuestDraftToArenaUseCase(get(), get(), get()) }
+        factory { TransitionLessonUseCase(get()) }
     }
