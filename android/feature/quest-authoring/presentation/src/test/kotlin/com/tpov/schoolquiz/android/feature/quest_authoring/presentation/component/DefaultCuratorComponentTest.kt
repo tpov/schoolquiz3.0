@@ -6,6 +6,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.TransitionConfirmation
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
@@ -99,7 +100,7 @@ class DefaultCuratorComponentTest {
     fun `transition without a reason is refused locally`() = runTest(testScheduler) {
         val fakes = FakeUseCases(ownedEntries = listOf(lifecycleEntry("lesson-1")))
         val component = buildComponent(fakes)
-        component.onLessonSelected("lesson-1")
+        openMenuAndRequest(component, "lesson-1", LessonShelf.ARENA)
 
         component.onTransitionClick(LessonShelf.ARENA)
 
@@ -111,7 +112,7 @@ class DefaultCuratorComponentTest {
     fun `applied transition closes the intent and re-reads the page`() = runTest(testScheduler) {
         val fakes = FakeUseCases(ownedEntries = listOf(lifecycleEntry("lesson-1")))
         val component = buildComponent(fakes)
-        component.onLessonSelected("lesson-1")
+        openMenuAndRequest(component, "lesson-1", LessonShelf.ARENA)
         component.onReasonChanged("admit after review")
 
         component.onTransitionClick(LessonShelf.ARENA)
@@ -130,13 +131,99 @@ class DefaultCuratorComponentTest {
     fun `reason is required by the use case too`() = runTest(testScheduler) {
         val fakes = FakeUseCases(ownedEntries = listOf(lifecycleEntry("lesson-1")))
         val component = buildComponent(fakes)
-        component.onLessonSelected("lesson-1")
+        openMenuAndRequest(component, "lesson-1", LessonShelf.ARENA)
         component.onReasonChanged("   ")
 
         component.onTransitionClick(LessonShelf.ARENA)
 
         assertEquals(UiMessage.Res(R.string.qa_curator_reason_required), component.state.value.errorMessage)
         assertTrue(fakes.transitionCalls.isEmpty())
+    }
+
+    @Test
+    fun `short tap opens the lesson without any transition surface`() = runTest(testScheduler) {
+        val fakes = FakeUseCases(ownedEntries = listOf(lifecycleEntry("lesson-1")))
+        val component = buildComponent(fakes)
+
+        component.onLessonSelected("lesson-1")
+
+        assertEquals("lesson-1", component.state.value.selectedLessonId)
+        assertNull(component.state.value.menuLessonId)
+        assertNull(component.state.value.pendingConfirmation)
+        assertTrue(fakes.transitionCalls.isEmpty())
+    }
+
+    @Test
+    fun `long press opens the menu for its lesson and dismissal closes it`() = runTest(testScheduler) {
+        val fakes = FakeUseCases(ownedEntries = listOf(lifecycleEntry("lesson-1")))
+        val component = buildComponent(fakes)
+
+        component.onLessonMenuRequested("lesson-1")
+        assertEquals("lesson-1", component.state.value.menuLessonId)
+
+        component.onMenuDismissed()
+        assertNull(component.state.value.menuLessonId)
+        assertTrue(fakes.transitionCalls.isEmpty())
+    }
+
+    @Test
+    fun `a menu item assigns the target and confirmation is a separate step`() = runTest(testScheduler) {
+        val fakes = FakeUseCases(ownedEntries = listOf(lifecycleEntry("lesson-1")))
+        val component = buildComponent(fakes)
+        component.onLessonMenuRequested("lesson-1")
+
+        component.onTransitionRequested(LessonShelf.RETIRED)
+
+        assertNull(component.state.value.menuLessonId)
+        assertEquals(TransitionConfirmation("lesson-1", LessonShelf.RETIRED), component.state.value.pendingConfirmation)
+        assertTrue(fakes.transitionCalls.isEmpty(), "nothing is sent before the confirmation")
+
+        component.onConfirmationDismissed()
+        assertNull(component.state.value.pendingConfirmation)
+        assertTrue(fakes.transitionCalls.isEmpty())
+    }
+
+    @Test
+    fun `confirmation sends the transition for the menu lesson, not the selected one`() = runTest(testScheduler) {
+        val fakes = FakeUseCases(
+            ownedEntries = listOf(lifecycleEntry("lesson-1"), lifecycleEntry("lesson-2")),
+        )
+        val component = buildComponent(fakes)
+        component.onLessonSelected("lesson-1")
+        component.onReasonChanged("retire after confirmed fault")
+        component.onLessonMenuRequested("lesson-2")
+        component.onTransitionRequested(LessonShelf.RETIRED)
+
+        component.onTransitionClick(LessonShelf.RETIRED)
+
+        val (uid, command, mutationId) = fakes.transitionCalls.single()
+        assertEquals("lesson-2", command.lessonId, "the decision follows the menu lesson")
+        assertEquals(LessonShelf.RETIRED, command.targetShelf)
+        assertEquals("uid-a", uid)
+        assertEquals("transition-1", mutationId)
+        assertNull(component.state.value.pendingConfirmation, "a receipt closes the confirmation")
+    }
+
+    @Test
+    fun `confirm without a pending confirmation sends nothing`() = runTest(testScheduler) {
+        val fakes = FakeUseCases(ownedEntries = listOf(lifecycleEntry("lesson-1")))
+        val component = buildComponent(fakes)
+        component.onLessonSelected("lesson-1")
+        component.onReasonChanged("orphan confirm")
+
+        component.onTransitionClick(LessonShelf.ARENA)
+
+        assertTrue(fakes.transitionCalls.isEmpty())
+        assertNull(component.state.value.errorMessage)
+    }
+
+    private fun openMenuAndRequest(
+        component: DefaultCuratorComponent,
+        lessonId: String,
+        target: LessonShelf,
+    ) {
+        component.onLessonMenuRequested(lessonId)
+        component.onTransitionRequested(target)
     }
 
     private fun buildComponent(fakes: FakeUseCases): DefaultCuratorComponent {

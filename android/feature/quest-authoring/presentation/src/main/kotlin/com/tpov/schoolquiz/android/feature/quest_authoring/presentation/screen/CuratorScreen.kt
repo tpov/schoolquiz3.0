@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,14 +10,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -36,8 +41,11 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonShe
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonTransitionDecision
 
 /**
- * Кураторская поверхность TZ06C: список размещений, история решений выбранного урока и переход
- * с обязательной причиной. Разрешения и реальный исход решает сервер — экран показывает.
+ * Кураторская поверхность TZ06C + 4.8 (AD-21): короткий тап карточки открывает урок (статус,
+ * флаги, историю решений), long press и равнозначный semantic action открывают меню разрешённых
+ * «Разместить»/«Снять», пункт меню назначает цель, и решение уходит серверу только после
+ * подтверждения в диалоге с обязательной причиной. Разрешения и исход решает сервер — экран
+ * показывает; отказ сервера полку не меняет, прежняя редакция остаётся на карточке (CAP-5).
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -70,7 +78,11 @@ fun CuratorScreen(
                         LifecycleEntryCard(
                             entry = entry,
                             selected = entry.lessonId == state.selectedLessonId,
+                            menuOpen = entry.lessonId == state.menuLessonId,
                             onClick = { component.onLessonSelected(entry.lessonId) },
+                            onLongClick = { component.onLessonMenuRequested(entry.lessonId) },
+                            onMenuDismiss = component::onMenuDismissed,
+                            onTargetChosen = component::onTransitionRequested,
                         )
                     }
                     if (state.canLoadMore) {
@@ -88,7 +100,6 @@ fun CuratorScreen(
                                 loading = state.historyIsLoading,
                             )
                         }
-                        item { TransitionCard(state, component) }
                     }
                 }
                 state.lastDecision?.let { decision ->
@@ -117,52 +128,95 @@ fun CuratorScreen(
             }
         }
     }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun TransitionCard(
-    state: CuratorUiState,
-    component: CuratorComponent,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(stringResource(R.string.qa_curator_transition_title), style = NoirType.groupTitle)
-            OutlinedTextField(
-                value = state.reasonDraft,
-                onValueChange = component::onReasonChanged,
-                label = { Text(stringResource(R.string.qa_curator_reason_label)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TRANSITION_TARGETS.forEach { target ->
-                    Button(
-                        onClick = { component.onTransitionClick(target) },
-                        enabled = !state.isTransitioning,
-                    ) {
-                        Text(stringResource(target.transitionLabelRes()))
-                    }
-                }
-            }
-            if (state.isTransitioning) CircularProgressIndicator()
-        }
+    state.pendingConfirmation?.let { confirmation ->
+        TransitionConfirmDialog(
+            state = state,
+            lessonId = confirmation.lessonId,
+            target = confirmation.target,
+            onConfirm = { component.onTransitionClick(confirmation.target) },
+            onDismiss = component::onConfirmationDismissed,
+            onReasonChanged = component::onReasonChanged,
+        )
     }
 }
 
+/** Диалог подтверждения (AD-21): решение уходит серверу только отсюда, с причиной. */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun TransitionConfirmDialog(
+    state: CuratorUiState,
+    lessonId: String,
+    target: LessonShelf,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    onReasonChanged: (String) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.qa_curator_confirm_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(
+                        R.string.qa_curator_confirm_text,
+                        lessonId,
+                        stringResource(target.transitionLabelRes()),
+                    ),
+                    style = NoirType.rowSub,
+                )
+                OutlinedTextField(
+                    value = state.reasonDraft,
+                    onValueChange = onReasonChanged,
+                    label = { Text(stringResource(R.string.qa_curator_reason_label)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (state.isTransitioning) CircularProgressIndicator()
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !state.isTransitioning) {
+                Text(stringResource(R.string.qa_curator_confirm_positive))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isTransitioning) {
+                Text(stringResource(R.string.qa_curator_confirm_negative))
+            }
+        },
+    )
+}
+
+/**
+ * Карточка урока: тап — открыть. У куратора добавляется long press/semantic action — меню
+ * переходов (AD-21); авторская поверхность переиспользует карточку без меню как есть.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 internal fun LifecycleEntryCard(
     entry: LessonLifecycleEntry,
     selected: Boolean,
     onClick: () -> Unit,
+    menuOpen: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+    onMenuDismiss: () -> Unit = {},
+    onTargetChosen: (LessonShelf) -> Unit = {},
 ) {
     Card(
-        onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = NoirS1),
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            if (onLongClick != null) {
+                Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick,
+                        // Равнозначный semantic action для long press (AD-21): доступность называет жест.
+                        onLongClickLabel = stringResource(R.string.qa_curator_menu_open),
+                    )
+            } else {
+                Modifier.fillMaxWidth()
+            },
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -194,6 +248,16 @@ internal fun LifecycleEntryCard(
             )
             if (selected) {
                 Text(stringResource(R.string.qa_lifecycle_selected), style = NoirType.rowSub)
+            }
+            // Меню разрешённых целей: «Разместить» (arena/tournament/home) и «Снять»
+            // (retired/rejected). Проверку допустимости самого перехода ведёт сервер.
+            DropdownMenu(expanded = menuOpen, onDismissRequest = onMenuDismiss) {
+                TRANSITION_TARGETS.forEach { target ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(target.transitionLabelRes())) },
+                        onClick = { onTargetChosen(target) },
+                    )
+                }
             }
         }
     }

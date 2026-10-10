@@ -159,7 +159,11 @@
     <string name="qa_curator_permission_denied">Curator role is required to see placements</string>
     <string name="qa_curator_reason_required">Name the reason for the transition first</string>
     <string name="qa_curator_reason_label">Reason (required)</string>
-    <string name="qa_curator_transition_title">Transition the selected lesson</string>
+    <string name="qa_curator_menu_open">Transition menu for this lesson</string>
+    <string name="qa_curator_confirm_title">Confirm the transition</string>
+    <string name="qa_curator_confirm_text">Lesson %1$s → %2$s. The reason is recorded with the decision.</string>
+    <string name="qa_curator_confirm_positive">Confirm</string>
+    <string name="qa_curator_confirm_negative">Cancel</string>
     <string name="qa_curator_transition_review">To review</string>
     <string name="qa_curator_transition_arena">To arena</string>
     <string name="qa_curator_transition_tournament">To tournament</string>

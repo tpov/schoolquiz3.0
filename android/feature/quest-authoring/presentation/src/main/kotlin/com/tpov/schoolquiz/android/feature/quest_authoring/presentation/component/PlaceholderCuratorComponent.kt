@@ -15,6 +15,14 @@ class PlaceholderCuratorComponent : CuratorComponent {
 
     override fun onLessonSelected(lessonId: String) = Unit
 
+    override fun onLessonMenuRequested(lessonId: String) = Unit
+
+    override fun onMenuDismissed() = Unit
+
+    override fun onTransitionRequested(target: LessonShelf) = Unit
+
+    override fun onConfirmationDismissed() = Unit
+
     override fun onReasonChanged(value: String) = Unit
 
     override fun onTransitionClick(target: LessonShelf) = Unit

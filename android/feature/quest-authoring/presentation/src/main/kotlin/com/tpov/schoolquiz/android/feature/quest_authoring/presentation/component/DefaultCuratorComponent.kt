@@ -5,13 +5,13 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.CuratorUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.TransitionConfirmation
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonShelf
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonTransitionCommand
-import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonTransitionDecision
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListCuratorLifecycleUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListLessonHistoryUseCase
@@ -19,7 +19,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Transi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,8 +67,34 @@ class DefaultCuratorComponent(
     }
 
     override fun onLessonSelected(lessonId: String) {
+        // Короткий тап открывает урок (AD-21): статус, флаги, история решений. Меню не трогает.
         _state.update { it.copy(selectedLessonId = lessonId, historyIsLoading = true) }
         loadHistory(lessonId)
+    }
+
+    override fun onLessonMenuRequested(lessonId: String) {
+        // Единственный вход в переходы — long press карточки и равнозначный semantic action
+        // (AD-21): меню принадлежит уроку, на котором вызван жест.
+        _state.update { it.copy(menuLessonId = lessonId) }
+    }
+
+    override fun onMenuDismissed() {
+        _state.update { it.copy(menuLessonId = null) }
+    }
+
+    override fun onTransitionRequested(target: LessonShelf) {
+        val lessonId = _state.value.menuLessonId ?: return
+        // Меню закрывается, решение ещё не отправлено: цель ждёт подтверждения с причиной.
+        _state.update {
+            it.copy(
+                menuLessonId = null,
+                pendingConfirmation = TransitionConfirmation(lessonId, target),
+            )
+        }
+    }
+
+    override fun onConfirmationDismissed() {
+        _state.update { it.copy(pendingConfirmation = null) }
     }
 
     override fun onReasonChanged(value: String) {
@@ -79,17 +104,22 @@ class DefaultCuratorComponent(
     override fun onTransitionClick(target: LessonShelf) {
         val snapshot = _state.value
         val uid = currentUid ?: return
-        val lessonId = snapshot.selectedLessonId ?: return
+        // Урок и цель назначает подтверждение, а не выбранная карточка: меню могло быть вызвано
+        // на другом уроке, и решение уезжает именно за тем уроком, за которым оно принято.
+        val confirmation = snapshot.pendingConfirmation?.takeIf { it.target == target } ?: return
+        val lessonId = confirmation.lessonId
         if (snapshot.isTransitioning) return
         val reason = snapshot.reasonDraft.trim()
         if (reason.isEmpty()) {
             _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_curator_reason_required)) }
             return
         }
-        val pending = pendingTransition?.takeIf { it.target == target } ?: PendingTransition(
-            target = target,
-            mutationId = idProvider.nextId(MUTATION_PREFIX),
-        )
+        val pending =
+            pendingTransition?.takeIf { it.lessonId == lessonId && it.target == target } ?: PendingTransition(
+                lessonId = lessonId,
+                target = target,
+                mutationId = idProvider.nextId(MUTATION_PREFIX),
+            )
         pendingTransition = pending
         _state.update { it.copy(isTransitioning = true, lastDecision = null, errorMessage = null) }
         scope.launch {
@@ -101,7 +131,7 @@ class DefaultCuratorComponent(
                 )
             pendingTransition = null
             _state.update {
-                it.copy(isTransitioning = false)
+                it.copy(isTransitioning = false, pendingConfirmation = null)
             }
             result.fold(
                 onSuccess = { decision ->
@@ -112,7 +142,8 @@ class DefaultCuratorComponent(
                             errorMessage = null,
                         )
                     }
-                    // Полка могла измениться — перечитываем и список, и историю выбранного урока.
+                    // Полка могла измениться — перечитываем и список, и историю открытого урока.
+                    // Отказ сервера полку не меняет: прежняя редакция остаётся видимой (CAP-5).
                     reload()
                     loadHistory(lessonId)
                 },
@@ -132,21 +163,21 @@ class DefaultCuratorComponent(
 
     private fun observeAuth() {
         scope.launch {
-                authRepository.observeUid().collect { uid ->
-                    currentUid = uid
-                    if (uid.isNullOrBlank()) {
-                        _state.update {
-                            CuratorUiState(
-                                isLoading = false,
-                                permissionDenied = false,
-                                errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready),
-                            )
-                        }
-                    } else {
-                        reload()
+            authRepository.observeUid().collect { uid ->
+                currentUid = uid
+                if (uid.isNullOrBlank()) {
+                    _state.update {
+                        CuratorUiState(
+                            isLoading = false,
+                            permissionDenied = false,
+                            errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready),
+                        )
                     }
+                } else {
+                    reload()
                 }
             }
+        }
     }
 
     private fun reload() {
@@ -214,6 +245,7 @@ class DefaultCuratorComponent(
             ?: UiMessage.Res(R.string.qa_lifecycle_error_unknown)
 
     private data class PendingTransition(
+        val lessonId: String,
         val target: LessonShelf,
         val mutationId: String,
     )

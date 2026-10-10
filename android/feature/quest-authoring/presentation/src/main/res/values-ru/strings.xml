@@ -161,7 +161,11 @@
     <string name="qa_curator_permission_denied">Размещения видит только куратор</string>
     <string name="qa_curator_reason_required">Сначала назовите причину перехода</string>
     <string name="qa_curator_reason_label">Причина (обязательна)</string>
-    <string name="qa_curator_transition_title">Переход выбранного урока</string>
+    <string name="qa_curator_menu_open">Меню переходов для этого урока</string>
+    <string name="qa_curator_confirm_title">Подтвердите переход</string>
+    <string name="qa_curator_confirm_text">Урок %1$s → %2$s. Причина записывается вместе с решением.</string>
+    <string name="qa_curator_confirm_positive">Подтвердить</string>
+    <string name="qa_curator_confirm_negative">Отмена</string>
     <string name="qa_curator_transition_review">На проверку</string>
     <string name="qa_curator_transition_arena">На арену</string>
     <string name="qa_curator_transition_tournament">На турнир</string>

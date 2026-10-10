@@ -163,7 +163,11 @@
     <string name="qa_curator_permission_denied">Розміщення бачить лише куратор</string>
     <string name="qa_curator_reason_required">Спершу назвіть причину переходу</string>
     <string name="qa_curator_reason_label">Причина (обов\'язкова)</string>
-    <string name="qa_curator_transition_title">Перехід обраного уроку</string>
+    <string name="qa_curator_menu_open">Меню переходів для цього уроку</string>
+    <string name="qa_curator_confirm_title">Підтвердіть перехід</string>
+    <string name="qa_curator_confirm_text">Урок %1$s → %2$s. Причина записується разом з рішенням.</string>
+    <string name="qa_curator_confirm_positive">Підтвердити</string>
+    <string name="qa_curator_confirm_negative">Скасувати</string>
     <string name="qa_curator_transition_review">На перевірку</string>
     <string name="qa_curator_transition_arena">На арену</string>
     <string name="qa_curator_transition_tournament">На турнір</string>

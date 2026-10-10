@@ -142,4 +142,3 @@ class DefaultAuthorLifecycleComponent(
         error.syncErrorOrNull()?.let { UiMessage.Raw(it.toString()) }
             ?: UiMessage.Res(R.string.qa_lifecycle_error_unknown)
 }
-

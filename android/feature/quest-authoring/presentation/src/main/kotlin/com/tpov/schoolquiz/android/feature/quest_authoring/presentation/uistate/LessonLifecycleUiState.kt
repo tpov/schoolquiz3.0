@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonHistoryEntry
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonLifecycleEntry
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonRoyaltySummary
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonShelf
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonTransitionDecision
 
 /**
@@ -23,6 +24,19 @@ data class CuratorUiState(
     val reasonDraft: String = "",
     val isTransitioning: Boolean = false,
     val lastDecision: LessonTransitionDecision? = null,
+    /** Урок, чьё меню переходов открыто long press (AD-21); null — меню закрыто. */
+    val menuLessonId: String? = null,
+    /** Назначенный из меню переход, ждущий подтверждения с причиной. */
+    val pendingConfirmation: TransitionConfirmation? = null,
+)
+
+/**
+ * Назначенный переход под подтверждением: урок и цель зафиксированы меню, причина — черновик
+ * состояния. Решение уходит серверу только «Подтвердить» (AD-21).
+ */
+data class TransitionConfirmation(
+    val lessonId: String,
+    val target: LessonShelf,
 )
 
 data class AuthorLifecycleUiState(
