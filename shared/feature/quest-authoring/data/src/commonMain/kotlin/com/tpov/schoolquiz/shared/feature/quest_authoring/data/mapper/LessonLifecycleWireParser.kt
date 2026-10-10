@@ -72,7 +72,9 @@ object LessonLifecycleWireParser {
         command: LessonTransitionCommand,
     ): LessonTransitionDecision {
         val root = requiredObject(data, "transition receipt")
-        check((root[SHEMA_VERSION_FIELD] as? Long) == TRANSITION_SCHEMA_VERSION.toLong()) {
+        // Android callable SDK кладёт JSON-числа не только в Long (живой прогон 4.3: schemaVersion
+        // приехал не Long, хотя поля view-ответов тем же SDK едут Long/Int) — сверяю через Number.
+        check((root[SHEMA_VERSION_FIELD] as? Number)?.toLong() == TRANSITION_SCHEMA_VERSION.toLong()) {
             "Transition receipt has an unsupported schema version"
         }
         check(root.string(MUTATION_ID) != null) { "Transition receipt has no mutation id" }

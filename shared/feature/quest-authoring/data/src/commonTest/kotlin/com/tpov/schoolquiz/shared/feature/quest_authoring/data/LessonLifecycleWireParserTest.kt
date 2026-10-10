@@ -223,4 +223,47 @@ class LessonLifecycleWireParserTest {
             )
         }
     }
+
+    @Test
+    fun `transition receipt accepts the schema version in every integer wire form`() {
+        // Живой прогон 4.3: Android callable SDK отдал schemaVersion не Long, и прежний
+        // `as? Long` отбрасывал честную квитанцию как «unsupported schema version».
+        val command = LessonTransitionCommand("lesson-1", LessonShelf.ARENA, "admit")
+        for (wireForm in listOf(1, 1.0)) {
+            val decision =
+                LessonLifecycleWireParser.transitionDecision(
+                    mapOf(
+                        "schemaVersion" to wireForm,
+                        "mutationId" to "mutation-4",
+                        "decidedAtMs" to 11_000,
+                        "status" to "APPLIED",
+                        "result" to
+                            mapOf(
+                                "lessonId" to "lesson-1",
+                                "fromShelf" to "review",
+                                "targetShelf" to "arena",
+                            ),
+                    ),
+                    command,
+                )
+            assertTrue(decision is LessonTransitionDecision.Applied)
+        }
+        assertFailsWith<IllegalStateException> {
+            LessonLifecycleWireParser.transitionDecision(
+                mapOf(
+                    "schemaVersion" to 2L,
+                    "mutationId" to "mutation-5",
+                    "decidedAtMs" to 12_000L,
+                    "status" to "APPLIED",
+                    "result" to
+                        mapOf(
+                            "lessonId" to "lesson-1",
+                            "fromShelf" to "review",
+                            "targetShelf" to "arena",
+                        ),
+                ),
+                command,
+            )
+        }
+    }
 }
