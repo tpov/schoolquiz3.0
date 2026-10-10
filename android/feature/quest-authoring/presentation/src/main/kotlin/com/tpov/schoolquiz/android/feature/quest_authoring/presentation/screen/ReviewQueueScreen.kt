@@ -21,9 +21,10 @@ fun ReviewQueueScreen(
         onAssignmentSelected = component::onAssignmentSelected,
         onBackToListClick = component::onBackToListClick,
         onScoreSelected = component::onScoreSelected,
+        onQuestionScoreSelected = component::onQuestionScoreSelected,
         onLanguageSelected = component::onLanguageSelected,
         onTranslationTextChanged = component::onTranslationTextChanged,
-        onSegmentAcceptedChanged = component::onSegmentAcceptedChanged,
+        onSegmentDecided = component::onSegmentDecided,
         onSubmitClick = component::onSubmitClick,
         modifier = modifier,
     )

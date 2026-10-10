@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentDecisionUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentLabelKind
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
@@ -22,7 +23,9 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAss
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentKind
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentSyncState
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestionScore
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecision
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecisionKind
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitReviewActionCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentsUseCase
@@ -136,16 +139,29 @@ class DefaultReviewQueueComponent(
         }
     }
 
-    override fun onSegmentAcceptedChanged(
+    override fun onQuestionScoreSelected(
+        questionId: String,
+        score: Int,
+    ) {
+        if (score !in MIN_REVIEW_SCORE..MAX_REVIEW_SCORE) return
+        _state.update { state ->
+            state.copy(
+                detail = state.detail?.mapQuestion(questionId) { it.copy(score = score) },
+                errorMessage = null,
+            )
+        }
+    }
+
+    override fun onSegmentDecided(
         questionId: String,
         segmentKey: String,
-        accepted: Boolean,
+        decision: ReviewSegmentDecisionUi,
     ) {
         _state.update { state ->
             state.copy(
                 detail =
                     state.detail?.mapSegment(questionId, segmentKey) {
-                        it.copy(accepted = accepted)
+                        it.copy(decision = decision)
                     },
                 errorMessage = null,
             )
@@ -274,11 +290,31 @@ class DefaultReviewQueueComponent(
                     _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_choose_score)) }
                     return null
                 }
+                // TESTING судит каждый вопрос ревизии (4.6): неотмеченный вопрос не даёт подать.
+                // LOGIC оценивает урок целиком — вопросных оценок у него нет.
+                val questionScores =
+                    if (kind == ReviewQueueKindUi.TESTING) {
+                        questions.map { question ->
+                            ReviewQuestionScore(
+                                questionId = question.id,
+                                score =
+                                    question.score ?: run {
+                                        _state.update {
+                                            it.copy(errorMessage = UiMessage.Res(R.string.qa_error_score_all_questions))
+                                        }
+                                        return null
+                                    },
+                            )
+                        }
+                    } else {
+                        emptyList()
+                    }
                 SubmitReviewActionCommand(
                     assignmentId = assignmentId,
                     lessonId = lessonId,
                     kind = kind.toDomainKind(),
                     score = score,
+                    questionScores = questionScores,
                 )
             }
             ReviewQueueKindUi.TRANSLATION -> {
@@ -307,6 +343,13 @@ class DefaultReviewQueueComponent(
                     _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_choose_review_language)) }
                     return null
                 }
+                val undecided =
+                    questions.any { question -> question.segments.any { it.decision == null } }
+                if (undecided) {
+                    // Решения по сегментам явные и полные до подачи (CAP-3): unchecked не едет.
+                    _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_decide_all_segments)) }
+                    return null
+                }
                 SubmitReviewActionCommand(
                     assignmentId = assignmentId,
                     lessonId = lessonId,
@@ -318,7 +361,12 @@ class DefaultReviewQueueComponent(
                                 ReviewSegmentDecision(
                                     questionId = question.id,
                                     segmentKey = it.key,
-                                    accepted = it.accepted,
+                                    decision =
+                                        when (it.decision) {
+                                            ReviewSegmentDecisionUi.CORRECT -> ReviewSegmentDecisionKind.CORRECT
+                                            ReviewSegmentDecisionUi.ERROR -> ReviewSegmentDecisionKind.ERROR
+                                            null -> return null
+                                        },
                                 )
                             }
                         },
@@ -460,7 +508,6 @@ class DefaultReviewQueueComponent(
                         labelArg = it.arg,
                         sourceText = it.text,
                         translatedText = translatedText,
-                        accepted = translatedText.isNotBlank(),
                     )
                 },
         )
@@ -597,6 +644,12 @@ class DefaultReviewQueueComponent(
             fallbackText = text,
             fallbackDifficulty = runCatching { Difficulty.valueOf(difficulty) }.getOrDefault(Difficulty.EASY),
         ).getOrNull()
+
+    private fun ReviewAssignmentDetailUiState.mapQuestion(
+        questionId: String,
+        transform: (ReviewQuestionUiState) -> ReviewQuestionUiState,
+    ): ReviewAssignmentDetailUiState =
+        copy(questions = questions.map { question -> if (question.id == questionId) transform(question) else question })
 
     private fun ReviewAssignmentDetailUiState.mapSegment(
         questionId: String,

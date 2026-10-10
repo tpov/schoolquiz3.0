@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentSyncUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentDecisionUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
@@ -21,6 +22,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAss
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentSyncState
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewChecks
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestionScore
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecisionKind
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewAssignmentRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentsUseCase
@@ -42,7 +45,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -85,9 +87,17 @@ class DefaultReviewQueueComponentTest {
         component.onScoreSelected(2)
         component.onSubmitClick()
 
+        // 4.6: оценки урока мало — TESTING судит каждый вопрос ревизии.
+        assertEquals(UiMessage.Res(R.string.qa_error_score_all_questions), component.state.value.errorMessage)
+        assertTrue(repository.queued.isEmpty())
+
+        component.onQuestionScoreSelected("question-1", 2)
+        component.onSubmitClick()
+
         val command = repository.queued.single().command
         assertEquals(ReviewAssignmentKind.TESTING, command.kind)
         assertEquals(2, command.score)
+        assertEquals(listOf(ReviewQuestionScore("question-1", 2)), command.questionScores)
         assertNull(component.state.value.detail)
     }
 
@@ -101,6 +111,7 @@ class DefaultReviewQueueComponentTest {
         val component = buildComponent(repository = repository)
         component.onAssignmentSelected("assignment-1")
         component.onScoreSelected(2)
+        component.onQuestionScoreSelected("question-1", 2)
 
         component.onSubmitClick()
 
@@ -128,6 +139,7 @@ class DefaultReviewQueueComponentTest {
         val component = buildComponent(repository = repository)
         component.onAssignmentSelected("assignment-1")
         component.onScoreSelected(2)
+        component.onQuestionScoreSelected("question-1", 2)
 
         component.onSubmitClick()
 
@@ -232,20 +244,30 @@ class DefaultReviewQueueComponentTest {
 
         val detail = requireNotNull(component.state.value.detail)
         assertEquals(ReviewQueueKindUi.TRANSLATION_REVIEW, detail.kind)
-        val firstSegment = detail.questions.single().segments.first()
-        assertTrue(detail.questions.single().segments.all { it.accepted })
+        val segments = detail.questions.single().segments
+        val firstSegment = segments.first()
+        // Сегменты начинаются нерешёнными: молчаливого одобрения больше нет (CAP-3).
+        assertTrue(segments.all { it.decision == null })
 
-        component.onSegmentAcceptedChanged(firstSegment.questionId, firstSegment.key, accepted = false)
+        component.onSubmitClick()
+        assertEquals(UiMessage.Res(R.string.qa_error_decide_all_segments), component.state.value.errorMessage)
+        assertTrue(repository.queued.isEmpty())
+
+        component.onSegmentDecided(firstSegment.questionId, firstSegment.key, ReviewSegmentDecisionUi.ERROR)
+        segments.drop(1).forEach { segment ->
+            component.onSegmentDecided(segment.questionId, segment.key, ReviewSegmentDecisionUi.CORRECT)
+        }
         component.onSubmitClick()
 
         val command = repository.queued.single().command
         assertEquals(ReviewAssignmentKind.TRANSLATION_REVIEW, command.kind)
         assertEquals("en", command.language)
-        assertFalse(command.segmentResults.first { it.segmentKey == firstSegment.key }.accepted)
+        assertEquals(ReviewSegmentDecisionKind.ERROR, command.segmentResults.first { it.segmentKey == firstSegment.key }.decision)
+        assertTrue(command.segmentResults.drop(1).all { it.decision == ReviewSegmentDecisionKind.CORRECT })
     }
 
     @Test
-    fun `translation review marks missing target text as rejected by default`() = runTest(testScheduler) {
+    fun `translation review starts undecided even when the target text is missing`() = runTest(testScheduler) {
         val repository = FakeReviewAssignmentRepository(
             initialAssignments =
                 listOf(
@@ -262,7 +284,9 @@ class DefaultReviewQueueComponentTest {
 
         val segments = requireNotNull(component.state.value.detail).questions.single().segments
         assertTrue(segments.all { it.translatedText.isBlank() })
-        assertTrue(segments.all { !it.accepted })
+        // Отсутствующий перевод подсвечивается, но решение остаётся за ревьюером: никакой
+        // автоотметки — ни одобрения, ни отказа (CAP-3).
+        assertTrue(segments.all { it.decision == null })
     }
 
     private fun buildComponent(

@@ -108,6 +108,11 @@
     <string name="qa_review_translation_label">Translation</string>
     <string name="qa_review_no_translation">No translation</string>
     <string name="qa_review_accepted">Accepted</string>
+    <string name="qa_review_correct">Correct</string>
+    <string name="qa_review_error">Error</string>
+    <string name="qa_review_question_score_label">Score for this question</string>
+    <string name="qa_error_score_all_questions">Score every question</string>
+    <string name="qa_error_decide_all_segments">Decide every segment: correct or error</string>
     <string name="qa_review_submit">Submit</string>
     <string name="qa_review_score_testing">Test: %1$s</string>
     <string name="qa_review_score_logic">Validation: %1$s</string>

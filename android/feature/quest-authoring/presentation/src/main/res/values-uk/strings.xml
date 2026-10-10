@@ -108,6 +108,11 @@
     <string name="qa_review_translation_label">Переклад</string>
     <string name="qa_review_no_translation">Немає перекладу</string>
     <string name="qa_review_accepted">Прийнято</string>
+    <string name="qa_review_correct">Вірно</string>
+    <string name="qa_review_error">Помилка</string>
+    <string name="qa_review_question_score_label">Оцінка за це питання</string>
+    <string name="qa_error_score_all_questions">Оцініть кожне питання</string>
+    <string name="qa_error_decide_all_segments">Вирішіть кожен сегмент: вірно чи помилка</string>
     <string name="qa_review_submit">Надіслати</string>
     <string name="qa_review_score_testing">Тест: %1$s</string>
     <string name="qa_review_score_logic">Валідація: %1$s</string>

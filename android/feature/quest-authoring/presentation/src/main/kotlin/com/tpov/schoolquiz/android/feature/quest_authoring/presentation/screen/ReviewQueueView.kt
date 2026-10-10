@@ -57,6 +57,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentLabelKind
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentDecisionUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentUiState
 
 @Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
@@ -69,9 +70,10 @@ fun ReviewQueueView(
     onAssignmentSelected: (String) -> Unit,
     onBackToListClick: () -> Unit,
     onScoreSelected: (Int) -> Unit,
+    onQuestionScoreSelected: (String, Int) -> Unit,
     onLanguageSelected: (String) -> Unit,
     onTranslationTextChanged: (String, String, String) -> Unit,
-    onSegmentAcceptedChanged: (String, String, Boolean) -> Unit,
+    onSegmentDecided: (String, String, ReviewSegmentDecisionUi) -> Unit,
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -96,9 +98,10 @@ fun ReviewQueueView(
                 detail = state.detail,
                 onBackToListClick = onBackToListClick,
                 onScoreSelected = onScoreSelected,
+                onQuestionScoreSelected = onQuestionScoreSelected,
                 onLanguageSelected = onLanguageSelected,
                 onTranslationTextChanged = onTranslationTextChanged,
-                onSegmentAcceptedChanged = onSegmentAcceptedChanged,
+                onSegmentDecided = onSegmentDecided,
                 onSubmitClick = onSubmitClick,
                 modifier = Modifier.weight(1f),
             )
@@ -292,9 +295,10 @@ private fun ReviewDetail(
     detail: ReviewAssignmentDetailUiState,
     onBackToListClick: () -> Unit,
     onScoreSelected: (Int) -> Unit,
+    onQuestionScoreSelected: (String, Int) -> Unit,
     onLanguageSelected: (String) -> Unit,
     onTranslationTextChanged: (String, String, String) -> Unit,
-    onSegmentAcceptedChanged: (String, String, Boolean) -> Unit,
+    onSegmentDecided: (String, String, ReviewSegmentDecisionUi) -> Unit,
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -337,8 +341,9 @@ private fun ReviewDetail(
                 ReviewQuestionBlock(
                     question = question,
                     kind = detail.kind,
+                    onQuestionScoreSelected = onQuestionScoreSelected,
                     onTranslationTextChanged = onTranslationTextChanged,
-                    onSegmentAcceptedChanged = onSegmentAcceptedChanged,
+                    onSegmentDecided = onSegmentDecided,
                 )
             }
         }
@@ -383,8 +388,9 @@ private fun ScorePicker(
 private fun ReviewQuestionBlock(
     question: ReviewQuestionUiState,
     kind: ReviewQueueKindUi,
+    onQuestionScoreSelected: (String, Int) -> Unit,
     onTranslationTextChanged: (String, String, String) -> Unit,
-    onSegmentAcceptedChanged: (String, String, Boolean) -> Unit,
+    onSegmentDecided: (String, String, ReviewSegmentDecisionUi) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -395,13 +401,26 @@ private fun ReviewQuestionBlock(
             style = NoirType.groupTitle,
         )
         Text(text = question.text, style = NoirType.rowSub)
+        if (kind == ReviewQueueKindUi.TESTING) {
+            // TESTING судит каждый вопрос ревизии (4.6): оценка вопроса — отдельное явное
+            // решение ревьюера, а не переиспользование оценки урока.
+            ScorePicker(
+                selectedScore = question.score,
+                onScoreSelected = { onQuestionScoreSelected(question.id, it) },
+            )
+            Text(
+                text = stringResource(R.string.qa_review_question_score_label),
+                style = NoirType.kicker,
+                color = NoirT3,
+            )
+        }
         if (question.segments.isNotEmpty()) {
             question.segments.forEach { segment ->
                 ReviewSegmentRow(
                     segment = segment,
                     kind = kind,
                     onTranslationTextChanged = onTranslationTextChanged,
-                    onSegmentAcceptedChanged = onSegmentAcceptedChanged,
+                    onSegmentDecided = onSegmentDecided,
                 )
             }
         }
@@ -415,7 +434,7 @@ private fun ReviewSegmentRow(
     segment: ReviewSegmentUiState,
     kind: ReviewQueueKindUi,
     onTranslationTextChanged: (String, String, String) -> Unit,
-    onSegmentAcceptedChanged: (String, String, Boolean) -> Unit,
+    onSegmentDecided: (String, String, ReviewSegmentDecisionUi) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -449,12 +468,19 @@ private fun ReviewSegmentRow(
                         LocalNoirAccent.current
                     },
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = segment.accepted,
-                    onCheckedChange = { onSegmentAcceptedChanged(segment.questionId, segment.key, it) },
+            // Решение явное и видимое: пока ревьюер не выбрал, сегмент не решён —
+            // молчаливого «accepted» больше нет (CAP-3).
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = segment.decision == ReviewSegmentDecisionUi.CORRECT,
+                    onClick = { onSegmentDecided(segment.questionId, segment.key, ReviewSegmentDecisionUi.CORRECT) },
+                    label = { Text(stringResource(R.string.qa_review_correct)) },
                 )
-                Text(stringResource(R.string.qa_review_accepted))
+                FilterChip(
+                    selected = segment.decision == ReviewSegmentDecisionUi.ERROR,
+                    onClick = { onSegmentDecided(segment.questionId, segment.key, ReviewSegmentDecisionUi.ERROR) },
+                    label = { Text(stringResource(R.string.qa_review_error)) },
+                )
             }
         }
     }

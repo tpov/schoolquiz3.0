@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.platform.firebase.quest_authoring
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestionReviewOutcome
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcome
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcomeRequest
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.MAX_QUEST_REVIEW_OUTCOME_TARGETS
@@ -73,7 +74,43 @@ internal fun questReviewSubmissionOutcomes(
             draftId = draftId,
             status = status,
             rejectionReason = reason,
+            failedStages = entry.failedStages(),
+            questionOutcomes = entry.questionOutcomes(),
         )
+    }
+}
+
+/**
+ * Стадии и по-вопросные исходы — аддитивные поля вью: старый документ отвечает их отсутствием,
+ * и это честная пустота. Битое поле — не пустота, а повод перечитать: оседать на мусоре синхронизация
+ * не должна.
+ */
+private const val MAX_FAILED_STAGES = 8
+private const val MAX_QUESTION_OUTCOMES = 64
+
+private fun Map<*, *>.failedStages(): List<String> {
+    val raw = this[FAILED_STAGES] ?: return emptyList()
+    val stages = raw as? List<*> ?: throw IllegalStateException("Review outcome failed stages are not a list")
+    check(stages.size <= MAX_FAILED_STAGES) { "Review outcome names too many failed stages" }
+    return stages.map { stage ->
+        stage as? String ?: throw IllegalStateException("Review outcome failed stage is not a string")
+    }
+}
+
+private fun Map<*, *>.questionOutcomes(): List<QuestionReviewOutcome> {
+    val raw = this[QUESTION_OUTCOMES] ?: return emptyList()
+    val outcomes = raw as? List<*> ?: throw IllegalStateException("Review outcome list is not a list")
+    check(outcomes.size <= MAX_QUESTION_OUTCOMES) { "Review outcome exceeds its question bound" }
+    return outcomes.map { item ->
+        val outcome = item as? Map<*, *> ?: throw IllegalStateException("Review outcome entry is not an object")
+        val questionId = outcome.requiredString(QUESTION_ID)
+        val testingScore = when (val score = outcome[TESTING_SCORE]) {
+            null -> null
+            is Number -> score.toDouble()
+            else -> throw IllegalStateException("Review outcome testing score is not a number")
+        }
+        val passed = outcome[PASSED] as? Boolean ?: throw IllegalStateException("Review outcome passed flag is missing")
+        QuestionReviewOutcome(questionId = questionId, testingScore = testingScore, passed = passed)
     }
 }
 
@@ -92,4 +129,9 @@ private const val SUBMISSION_ID = "submissionId"
 private const val DRAFT_ID = "draftId"
 private const val STATUS = "status"
 private const val REJECTION_REASON = "rejectionReason"
+private const val FAILED_STAGES = "failedStages"
+private const val QUESTION_OUTCOMES = "questionOutcomes"
+private const val QUESTION_ID = "questionId"
+private const val TESTING_SCORE = "testingScore"
+private const val PASSED = "passed"
 private val REVIEW_SUBMISSION_STATUSES = setOf("PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED")

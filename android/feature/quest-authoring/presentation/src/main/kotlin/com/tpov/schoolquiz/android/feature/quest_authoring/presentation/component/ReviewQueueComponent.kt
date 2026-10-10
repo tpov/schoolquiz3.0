@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component
 
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentDecisionUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
 import kotlinx.coroutines.flow.StateFlow
 
@@ -27,10 +28,15 @@ interface ReviewQueueComponent {
         value: String,
     )
 
-    fun onSegmentAcceptedChanged(
+    fun onQuestionScoreSelected(
+        questionId: String,
+        score: Int,
+    )
+
+    fun onSegmentDecided(
         questionId: String,
         segmentKey: String,
-        accepted: Boolean,
+        decision: ReviewSegmentDecisionUi,
     )
 
     fun onSubmitClick()

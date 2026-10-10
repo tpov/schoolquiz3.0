@@ -25,6 +25,12 @@ enum class ReviewAssignmentSyncUi {
     QUARANTINED,
 }
 
+/** Экранное решение по сегменту: `null` — сегмент ещё не решён, и подать такую форму нельзя. */
+enum class ReviewSegmentDecisionUi {
+    CORRECT,
+    ERROR,
+}
+
 enum class ReviewSegmentLabelKind {
     TEXT,
     OPTION,
@@ -78,6 +84,8 @@ data class ReviewQuestionUiState(
     val order: Int,
     val language: String,
     val text: String,
+    /** TESTING оценивает каждый вопрос; `null` — ревьюер ещё не решил этот вопрос. */
+    val score: Int? = null,
     val segments: List<ReviewSegmentUiState> = emptyList(),
 )
 
@@ -88,5 +96,6 @@ data class ReviewSegmentUiState(
     val labelArg: String? = null,
     val sourceText: String,
     val translatedText: String,
-    val accepted: Boolean = true,
+    /** Явное решение ревьюера; молчаливого одобрения нет — по умолчанию сегмент не решён. */
+    val decision: ReviewSegmentDecisionUi? = null,
 )

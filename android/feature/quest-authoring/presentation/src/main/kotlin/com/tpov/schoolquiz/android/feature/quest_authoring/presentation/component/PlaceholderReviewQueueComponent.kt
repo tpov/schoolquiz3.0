@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component
 
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentDecisionUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,10 +30,15 @@ class PlaceholderReviewQueueComponent : ReviewQueueComponent {
         value: String,
     ) = Unit
 
-    override fun onSegmentAcceptedChanged(
+    override fun onQuestionScoreSelected(
+        questionId: String,
+        score: Int,
+    ) = Unit
+
+    override fun onSegmentDecided(
         questionId: String,
         segmentKey: String,
-        accepted: Boolean,
+        decision: ReviewSegmentDecisionUi,
     ) = Unit
 
     override fun onSubmitClick() = Unit

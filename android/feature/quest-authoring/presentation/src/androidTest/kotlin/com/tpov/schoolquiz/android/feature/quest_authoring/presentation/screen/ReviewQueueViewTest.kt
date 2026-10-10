@@ -64,7 +64,8 @@ class ReviewQueueViewTest {
                     onScoreSelected = {},
                     onLanguageSelected = {},
                     onTranslationTextChanged = { _, _, _ -> },
-                    onSegmentAcceptedChanged = { _, _, _ -> },
+                    onQuestionScoreSelected = { _, _ -> },
+                    onSegmentDecided = { _, _, _ -> },
                     onSubmitClick = {},
                 )
             }
@@ -123,7 +124,8 @@ class ReviewQueueViewTest {
                     onScoreSelected = {},
                     onLanguageSelected = {},
                     onTranslationTextChanged = { _, _, _ -> },
-                    onSegmentAcceptedChanged = { _, _, _ -> },
+                    onQuestionScoreSelected = { _, _ -> },
+                    onSegmentDecided = { _, _, _ -> },
                     onSubmitClick = {},
                 )
             }

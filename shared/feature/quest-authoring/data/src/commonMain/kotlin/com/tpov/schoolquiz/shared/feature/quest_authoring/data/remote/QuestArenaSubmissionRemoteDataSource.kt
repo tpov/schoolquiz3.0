@@ -18,12 +18,23 @@ data class QuestSubmissionOutcomeRequest(
     }
 }
 
+/** По-вопросный исход TESTING, названный сервером автору (CAP-3): средняя оценка и порог. */
+data class QuestionReviewOutcome(
+    val questionId: String,
+    val testingScore: Double?,
+    val passed: Boolean,
+)
+
 /** What the server decided about a submission the author sent. */
 data class QuestSubmissionOutcome(
     val submissionId: String,
     val draftId: String,
     val status: String,
     val rejectionReason: String?,
+    /** Стадии, не пущенные поимённо; пусто у терминальных исходов и старых документов. */
+    val failedStages: List<String> = emptyList(),
+    /** TESTING-исходы по вопросам ревизии; пусто, пока ревью не начал читать порог. */
+    val questionOutcomes: List<QuestionReviewOutcome> = emptyList(),
 ) {
     val isRejected: Boolean get() = status == STATUS_REJECTED
 
