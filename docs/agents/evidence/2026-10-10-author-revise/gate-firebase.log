@@ -1,0 +1,1001 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/root/.gradle/wrapper/dists/gradle-9.8.0-bin/3m7h6ceboy5k31n8kzwzuxssm/gradle-9.8.0/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:compileKotlin UP-TO-DATE
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:pluginDescriptors UP-TO-DATE
+> Task :buildSrc:processResources UP-TO-DATE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+
+> Configure project :apps:android-next
+WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+Add android.sync.suppressAgpWarnings=UNSUPPORTED_PROJECT_OPTION_USE to the gradle.properties file to suppress this warning.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+Add android.sync.suppressAgpWarnings=UNSUPPORTED_PROJECT_OPTION_USE to the gradle.properties file to suppress this warning.
+WARNING: API 'applicationVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling applicationVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+Add android.sync.suppressAgpWarnings=DEPRECATED_DSL to the gradle.properties file to suppress this warning.
+WARNING: API 'testVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling testVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+Add android.sync.suppressAgpWarnings=DEPRECATED_DSL to the gradle.properties file to suppress this warning.
+WARNING: API 'unitTestVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling unitTestVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+Add android.sync.suppressAgpWarnings=DEPRECATED_DSL to the gradle.properties file to suppress this warning.
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':apps:android-next' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+w: [33m[1m⚠️ Deprecated Gradle Property 'kotlin.mpp.androidSourceSetLayoutVersion' Used[0m[0m
+The `kotlin.mpp.androidSourceSetLayoutVersion` deprecated property is used in your build.
+[32m[1mSolutions:[0m[0m
+[32m * [3mIt is unsupported, please stop using it.[0m[0m
+[32m * [3mAndroid Source Set Layout V2 is enabled by default and can't be changed. Leave your questions here https://youtrack.jetbrains.com/issue/KT-82265[0m[0m
+
+
+> Configure project :platform:android-services
+WARNING: API 'libraryVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling libraryVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+Add android.sync.suppressAgpWarnings=DEPRECATED_DSL to the gradle.properties file to suppress this warning.
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':platform:android-services' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :platform:billing
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':platform:billing' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :platform:crypto
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':platform:crypto' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :platform:firebase
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':platform:firebase' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :platform:telegram
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':platform:telegram' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:core:designsystem
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:core:designsystem' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:core:navigation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:core:navigation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:core:userguide
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:core:userguide' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:analytics
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:foundation
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:logger
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:model
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:preferences
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:stats
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:test
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:app-shell:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:app-shell:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:economy:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:economy:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:lesson-runner:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:lesson-runner:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:minigame:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:minigame:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:qualification:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:qualification:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:quest:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:quest:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:quest-authoring:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:quest-authoring:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:quizzes-screen:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:quizzes-screen:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :shared:core:catalog:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:app-shell:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:app-shell:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:economy:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:economy:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:lesson:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:lesson-runner:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:lesson-runner:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:minigame:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:minigame:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:qualification:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:qualification:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:quest:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:quest-authoring:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:quest-authoring:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:question:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:section:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:theme:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:internet:auth:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:internet:auth:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:internet:leaderboard:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:internet:leaderboard:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:internet:profile:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:internet:profile:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:internet:social:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:internet:social:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :android:feature:local:settings:presentation
+w: [33m[1m⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage[0m[0m
+The 'org.jetbrains.kotlin.android' plugin in project ':android:feature:local:settings:presentation' is no longer required for Kotlin support since AGP 9.0.
+[32m[1mSolution:[0m[0m
+[32m[3mRemove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-built-in-kotlin[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:auth:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:auth:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:leaderboard:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:leaderboard:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:profile:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:profile:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:social:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:internet:social:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:local:settings:data
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Configure project :shared:feature:local:settings:domain
+w: [33m[1m⚠️ The 'org.jetbrains.kotlin.multiplatform' plugin deprecated compatibility with Android Gradle plugin: 'com.android.library'[0m[0m
+The 'org.jetbrains.kotlin.multiplatform' plugin is not compatible with 'com.android.library' starting with Android Gradle Plugin 9.0.0.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease use the 'com.android.kotlin.multiplatform.library' plugin instead of 'com.android.library'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/gradle/agp-new-kmp[0m[36m for more details.[0m
+
+
+> Task :shared:core:analytics:preBuild UP-TO-DATE
+> Task :platform:firebase:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:analytics:preDebugBuild UP-TO-DATE
+> Task :platform:firebase:preBuild UP-TO-DATE
+> Task :platform:firebase:preDebugBuild UP-TO-DATE
+> Task :shared:core:analytics:generateDebugResources UP-TO-DATE
+> Task :shared:core:analytics:packageDebugResources UP-TO-DATE
+> Task :shared:core:analytics:processDebugNavigationResources UP-TO-DATE
+> Task :shared:core:analytics:parseDebugLocalResources UP-TO-DATE
+> Task :shared:core:analytics:generateDebugRFile UP-TO-DATE
+> Task :shared:core:foundation:preBuild UP-TO-DATE
+> Task :shared:core:foundation:preDebugBuild UP-TO-DATE
+> Task :shared:core:foundation:generateDebugResources UP-TO-DATE
+> Task :shared:core:foundation:packageDebugResources UP-TO-DATE
+> Task :shared:core:foundation:processDebugNavigationResources UP-TO-DATE
+> Task :shared:core:foundation:parseDebugLocalResources UP-TO-DATE
+> Task :shared:core:foundation:generateDebugRFile UP-TO-DATE
+> Task :shared:core:stats:preBuild UP-TO-DATE
+> Task :shared:core:stats:preDebugBuild UP-TO-DATE
+> Task :shared:core:stats:generateDebugResources UP-TO-DATE
+> Task :shared:core:stats:packageDebugResources UP-TO-DATE
+> Task :shared:core:stats:processDebugNavigationResources UP-TO-DATE
+> Task :shared:core:stats:parseDebugLocalResources UP-TO-DATE
+> Task :shared:core:stats:generateDebugRFile UP-TO-DATE
+> Task :shared:core:catalog:data:preBuild UP-TO-DATE
+> Task :shared:core:catalog:data:preDebugBuild UP-TO-DATE
+> Task :shared:core:catalog:data:generateDebugResources UP-TO-DATE
+> Task :shared:core:catalog:data:packageDebugResources UP-TO-DATE
+> Task :shared:core:catalog:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:core:catalog:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:core:catalog:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:app-shell:domain:preBuild UP-TO-DATE
+> Task :shared:feature:app-shell:domain:preDebugBuild UP-TO-DATE
+> Task :shared:feature:app-shell:domain:generateDebugResources UP-TO-DATE
+> Task :shared:feature:app-shell:domain:packageDebugResources UP-TO-DATE
+> Task :shared:feature:app-shell:domain:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:app-shell:domain:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:app-shell:domain:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:economy:data:preBuild UP-TO-DATE
+> Task :shared:feature:economy:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:economy:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:economy:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:economy:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:economy:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:economy:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:economy:domain:preBuild UP-TO-DATE
+> Task :shared:feature:economy:domain:preDebugBuild UP-TO-DATE
+> Task :shared:feature:economy:domain:generateDebugResources UP-TO-DATE
+> Task :shared:feature:economy:domain:packageDebugResources UP-TO-DATE
+> Task :shared:feature:economy:domain:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:economy:domain:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:economy:domain:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:lesson:data:preBuild UP-TO-DATE
+> Task :shared:feature:lesson:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:lesson:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:lesson:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:lesson:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:lesson:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:lesson:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:preBuild UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:preBuild UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:preDebugBuild UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:generateDebugResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:packageDebugResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:quest:data:preBuild UP-TO-DATE
+> Task :shared:feature:quest:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:quest:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:quest:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:quest:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:quest:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:quest:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:preBuild UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:preBuild UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:preDebugBuild UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:generateDebugResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:packageDebugResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:question:data:preBuild UP-TO-DATE
+> Task :shared:feature:question:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:question:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:question:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:question:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:question:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:question:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:section:data:preBuild UP-TO-DATE
+> Task :shared:feature:section:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:section:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:section:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:section:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:section:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:section:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:theme:data:preBuild UP-TO-DATE
+> Task :shared:feature:theme:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:theme:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:theme:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:theme:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:theme:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:theme:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:preBuild UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:preBuild UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:preDebugBuild UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:generateDebugResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:packageDebugResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:internet:profile:data:preBuild UP-TO-DATE
+> Task :shared:feature:internet:profile:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:internet:profile:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:internet:profile:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:internet:profile:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:internet:profile:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:internet:profile:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:preBuild UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:preDebugBuild UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:generateDebugResources UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:packageDebugResources UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:generateDebugRFile UP-TO-DATE
+> Task :shared:core:analytics:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:analytics:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:analytics:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:core:analytics:javaPreCompileDebug UP-TO-DATE
+> Task :shared:core:analytics:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:core:analytics:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:core:leaderboard:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:leaderboard:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:leaderboard:compileAndroidMain UP-TO-DATE
+> Task :shared:core:leaderboard:androidPreBuild UP-TO-DATE
+> Task :shared:core:leaderboard:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:leaderboard:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:network:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:network:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:network:compileAndroidMain UP-TO-DATE
+> Task :shared:core:network:androidPreBuild UP-TO-DATE
+> Task :shared:core:network:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:network:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:outbox:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:outbox:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:outbox:compileAndroidMain UP-TO-DATE
+> Task :shared:core:outbox:androidPreBuild UP-TO-DATE
+> Task :shared:core:outbox:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:outbox:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:question-schema:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:question-schema:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:question-schema:compileAndroidMain UP-TO-DATE
+> Task :shared:core:question-schema:androidPreBuild UP-TO-DATE
+> Task :shared:core:question-schema:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:question-schema:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:scoring:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:scoring:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:scoring:compileAndroidMain UP-TO-DATE
+> Task :shared:core:scoring:androidPreBuild UP-TO-DATE
+> Task :shared:core:scoring:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:scoring:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:stats:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:stats:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:stats:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:core:stats:javaPreCompileDebug UP-TO-DATE
+> Task :shared:core:stats:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:core:stats:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:core:sync:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:sync:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:catalog:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:catalog:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:catalog:domain:compileAndroidMain UP-TO-DATE
+> Task :shared:core:catalog:domain:androidPreBuild UP-TO-DATE
+> Task :shared:core:catalog:domain:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:catalog:domain:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:feature:lesson:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:lesson:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:quest:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:quest:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:quest:domain:compileAndroidMain UP-TO-DATE
+> Task :shared:feature:quest:domain:androidPreBuild UP-TO-DATE
+> Task :shared:feature:quest:domain:preAndroidMainBuild UP-TO-DATE
+> Task :shared:feature:quest:domain:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:feature:section:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:section:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:section:domain:compileAndroidMain UP-TO-DATE
+> Task :shared:feature:section:domain:androidPreBuild UP-TO-DATE
+> Task :shared:feature:section:domain:preAndroidMainBuild UP-TO-DATE
+> Task :shared:feature:section:domain:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:feature:theme:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:theme:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:theme:domain:compileAndroidMain UP-TO-DATE
+> Task :shared:feature:theme:domain:androidPreBuild UP-TO-DATE
+> Task :shared:feature:theme:domain:preAndroidMainBuild UP-TO-DATE
+> Task :shared:feature:theme:domain:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:feature:lesson:domain:compileAndroidMain UP-TO-DATE
+> Task :shared:feature:lesson:domain:androidPreBuild UP-TO-DATE
+> Task :shared:feature:lesson:domain:preAndroidMainBuild UP-TO-DATE
+> Task :shared:feature:lesson:domain:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:feature:question:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:question:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:question:domain:compileAndroidMain UP-TO-DATE
+> Task :shared:feature:question:domain:androidPreBuild UP-TO-DATE
+> Task :shared:feature:question:domain:preAndroidMainBuild UP-TO-DATE
+> Task :shared:feature:question:domain:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:sync:compileAndroidMain UP-TO-DATE
+> Task :shared:core:sync:androidPreBuild UP-TO-DATE
+> Task :shared:core:sync:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:sync:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:persistence:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:persistence:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :platform:firebase:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :platform:firebase:generateDebugResources UP-TO-DATE
+> Task :platform:firebase:packageDebugResources UP-TO-DATE
+> Task :platform:firebase:processDebugNavigationResources UP-TO-DATE
+> Task :platform:firebase:parseDebugLocalResources UP-TO-DATE
+> Task :shared:core:persistence:kspAndroidMain UP-TO-DATE
+> Task :shared:core:persistence:compileAndroidMain UP-TO-DATE
+> Task :shared:core:persistence:androidPreBuild UP-TO-DATE
+> Task :shared:core:persistence:preAndroidMainBuild UP-TO-DATE
+> Task :shared:core:persistence:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :shared:core:catalog:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:catalog:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:catalog:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:core:catalog:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:core:catalog:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:core:catalog:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:core:foundation:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:core:foundation:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:core:foundation:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:core:foundation:javaPreCompileDebug UP-TO-DATE
+> Task :shared:core:foundation:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:core:foundation:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:app-shell:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:app-shell:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:app-shell:domain:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:app-shell:domain:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:app-shell:domain:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:app-shell:domain:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:economy:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:economy:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:economy:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:economy:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:economy:domain:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:economy:domain:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:economy:domain:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:economy:domain:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:internet:profile:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:internet:profile:domain:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:internet:profile:domain:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:economy:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:economy:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:economy:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:economy:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:lesson:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:lesson:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:lesson:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:lesson:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:lesson:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:lesson:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:lesson-runner:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:lesson-runner:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:lesson-runner:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:lesson-runner:domain:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:lesson-runner:domain:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:lesson-runner:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :platform:firebase:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :platform:firebase:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:quest:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:quest:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:quest-authoring:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:quest-authoring:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:quest-authoring:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:quest-authoring:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:quest:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:quest:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:quest:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:quest:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:question:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:quest-authoring:domain:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:question:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:quest-authoring:domain:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:quest-authoring:domain:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:question:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:question:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:question:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:question:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:quest-authoring:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:section:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:section:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:theme:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:theme:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:section:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:section:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:theme:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:section:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:theme:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:section:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:theme:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:theme:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:internet:leaderboard:domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:internet:leaderboard:domain:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:internet:leaderboard:domain:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:internet:leaderboard:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:internet:profile:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:internet:profile:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:internet:leaderboard:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:internet:leaderboard:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :platform:firebase:javaPreCompileDebug UP-TO-DATE
+> Task :platform:firebase:preDebugUnitTestBuild UP-TO-DATE
+> Task :shared:feature:app-shell:data:preBuild UP-TO-DATE
+> Task :shared:feature:app-shell:data:preDebugBuild UP-TO-DATE
+> Task :shared:feature:app-shell:data:generateDebugResources UP-TO-DATE
+> Task :shared:feature:app-shell:data:packageDebugResources UP-TO-DATE
+> Task :shared:feature:app-shell:data:processDebugNavigationResources UP-TO-DATE
+> Task :shared:feature:app-shell:data:parseDebugLocalResources UP-TO-DATE
+> Task :shared:feature:internet:profile:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:app-shell:data:generateDebugRFile UP-TO-DATE
+> Task :shared:feature:internet:profile:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:internet:profile:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:internet:profile:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:feature:app-shell:data:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:feature:app-shell:data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:feature:app-shell:data:compileDebugKotlinAndroid UP-TO-DATE
+> Task :shared:feature:app-shell:data:javaPreCompileDebug UP-TO-DATE
+> Task :shared:feature:app-shell:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:feature:app-shell:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:core:analytics:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:core:analytics:processDebugJavaRes UP-TO-DATE
+> Task :shared:core:foundation:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:core:foundation:processDebugJavaRes UP-TO-DATE
+> Task :shared:core:leaderboard:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :platform:firebase:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :shared:core:leaderboard:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:network:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:network:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:outbox:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:outbox:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:persistence:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:persistence:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:question-schema:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:question-schema:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:scoring:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:scoring:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:stats:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:core:stats:processDebugJavaRes UP-TO-DATE
+> Task :shared:core:sync:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:sync:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:core:catalog:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:core:catalog:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:core:catalog:domain:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:core:catalog:domain:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:feature:app-shell:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:app-shell:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:app-shell:domain:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:app-shell:domain:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:economy:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:economy:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:economy:domain:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:economy:domain:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:lesson:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:lesson:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:lesson:domain:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:feature:lesson:domain:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:lesson-runner:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:lesson-runner:domain:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:quest:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:quest:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:quest:domain:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:feature:quest:domain:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:quest-authoring:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:quest-authoring:domain:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:question:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:question:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:question:domain:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:feature:question:domain:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:feature:section:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:section:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:section:domain:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:feature:section:domain:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:feature:theme:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:theme:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:theme:domain:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :shared:feature:theme:domain:processAndroidMainJavaRes UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:internet:leaderboard:domain:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:internet:profile:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:internet:profile:data:processDebugJavaRes UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:feature:internet:profile:domain:processDebugJavaRes UP-TO-DATE
+> Task :platform:firebase:compileDebugKotlin UP-TO-DATE
+> Task :platform:firebase:compileDebugJavaWithJavac NO-SOURCE
+> Task :platform:firebase:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :platform:firebase:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :platform:firebase:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :platform:firebase:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :platform:firebase:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :platform:firebase:processDebugJavaRes UP-TO-DATE
+> Task :platform:firebase:processDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :platform:firebase:testDebugUnitTest
+
+FirebaseArenaLessonCatalogRemoteDataSourceTest > generatedPublicContractAndCallableNameRemainBoundToActualProducer FAILED
+    org.junit.ComparisonFailure at FirebaseArenaLessonCatalogRemoteDataSourceTest.kt:226
+
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: Final field code in class com.google.firebase.functions.FirebaseFunctionsException has been mutated reflectively by class io.mockk.InternalPlatformDsl in unnamed module @37883b97 (file:/root/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-dsl-jvm/1.13.10/b1e3ea7af44726ec0ca9e4a754174f025efd2316/mockk-dsl-jvm-1.13.10.jar)
+WARNING: Use --enable-final-field-mutation=ALL-UNNAMED to avoid a warning
+WARNING: Mutating final fields will be blocked in a future release unless final field mutation is enabled
+
+> Task :platform:firebase:testDebugUnitTest
+
+FirebaseArenaTicketRemoteDataSourceTest > fixtureHashesAndCallableNamesAreBoundToActualServerSources FAILED
+    org.junit.ComparisonFailure at FirebaseArenaTicketRemoteDataSourceTest.kt:284
+
+270 tests completed, 2 failed
+
+> Task :platform:firebase:testDebugUnitTest FAILED
+
+[Incubating] Problems report is available at: file:///workspace/projects/schoolquiz3.0/.local/worktrees/night-impl/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':platform:firebase:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///workspace/projects/schoolquiz3.0/.local/worktrees/night-impl/platform/firebase/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 20s
+318 actionable tasks: 35 executed, 283 up-to-date
