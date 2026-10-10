@@ -46,7 +46,7 @@ waits = [
   "hitl: physical device run of the create→review→publish journey",
 ]
 hitl = true
-status = "blocked" # hitl + after 4.2
+status = "done" # 2026-10-10: проводка+живой journey на риге закрыты. Код: клиентская половина TZ06B (домен/репозиторий над 5 view-callables + setLessonPlacement, строгий парсер, names-guard к index.js) + поверхности TZ06C (кураторский экран с обязательной причиной и AD-2-ключом, авторский lifecycle+роялти, drawer) — 1db295c4/8b125e61 + 4 фикса из живого прогона (d1d33b2b, 2ac55e07, 636b1212 — каст schemaVersion квитанции, b3d87107 ktlint); journey 07:09–07:54 UTC: автор создаёт TZ06CLesson в приложении, сервер отказывает не-куратору, скриптованный независимый ревьюер (≠ автор, реальный submitReviewAction) TESTING 3 + LOGIC 3 публикует заявку, куратор через UI проводит review→arena («Applied: lesson placed to arena») плюс честный внутриквитанционный отказ на RETIRED; новая-версия-требует-допуска — серверная половина (arena-service: REVIEW_APPROVAL_REQUIRED + contentVersion в placement) + journey (re-apply не поднял contentVersion); байт-оракул дерева before-publish→after: removed 0, инородных касаний нет (один пин сидера атрибутирован); гейты: domain 15 + data 144 + presentation 31 зелёные, firebase 270 (ровно 2 предсуществующих fixture-pin, атрибуция 2026-10-08), detekt+ktlint зелёные; границы в evidence (ревьюер скриптованный, FLAG_SECURE, данные рига вымыты переустановкой APK, живой v2-раунд — предмет 4.5); evidence docs/agents/evidence/2026-10-10-tz06c-journey/
 
 [[story]]
 id = "4.4"
