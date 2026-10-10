@@ -119,6 +119,8 @@ fun QuestCreateScreen(
             onFillBlankDistractorChanged = component::onFillBlankDistractorChanged,
             onFillBlankDistractorAdded = component::onFillBlankDistractorAdded,
             onFillBlankDistractorRemoved = component::onFillBlankDistractorRemoved,
+            onEditorUndoClick = component::onEditorUndoClick,
+            onEditorRedoClick = component::onEditorRedoClick,
             modifier = modifier,
         )
     } else {

@@ -86,6 +86,8 @@
     <string name="qa_editor_add_distractor">Добавить неправильный</string>
     <string name="qa_editor_new_question_number">Новый %1$d</string>
     <string name="qa_cd_back_to_structure">К структуре</string>
+    <string name="qa_cd_undo">Отменить правку</string>
+    <string name="qa_cd_redo">Вернуть правку</string>
     <string name="qa_cd_add_photo">Добавить фото</string>
     <string name="qa_cd_edit">Редактировать</string>
     <string name="qa_cd_preview">Превью</string>

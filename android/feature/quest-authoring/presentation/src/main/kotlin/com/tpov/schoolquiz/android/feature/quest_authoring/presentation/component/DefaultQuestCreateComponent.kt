@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.compone
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.QuestionEditorHistory
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankAnswerSpec
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.buildFillBlankRuntimeText
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.extractFillBlankAnswers
@@ -115,6 +116,7 @@ class DefaultQuestCreateComponent(
     private val scope = CoroutineScope(componentJob + mainContext)
     private val _state = MutableStateFlow(QuestCreateUiState())
     private val questionJson = Json { encodeDefaults = true }
+    private val editorHistory = QuestionEditorHistory()
     private var ownerUid: String? = null
     private var activeBundle: QuestAuthoringBundle? = null
     private var questsJob: Job? = null
@@ -470,34 +472,34 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onQuestionTypeSelected(value: DraftQuestionType) {
-        updateEditor { it.copy(type = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditable { it.copy(type = value, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onQuestionDifficultySelected(value: Difficulty) {
-        updateEditor { it.copy(difficulty = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditable { it.copy(difficulty = value, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onQuestionLanguageChanged(value: String) {
-        updateEditor { it.copy(language = value.trim(), errorMessage = null, lastSavedMessage = null) }
+        updateEditable { it.copy(language = value.trim(), errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onQuestionTextChanged(value: String) {
-        updateEditor { it.copy(text = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditable { it.copy(text = value, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onQuestionImagePathChanged(value: String) {
-        updateEditor { it.copy(imagePath = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditable { it.copy(imagePath = value, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onQuestionInfoChanged(value: String) {
-        updateEditor { it.copy(info = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditable { it.copy(info = value, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onOptionTextChanged(
         index: Int,
         value: String,
     ) {
-        updateEditor {
+        updateEditable {
             it.copy(
                 optionTexts = it.optionTexts.withValue(index, value),
                 errorMessage = null,
@@ -507,7 +509,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onOptionAdded() {
-        updateEditor {
+        updateEditable {
             if (it.optionTexts.size >= MAX_EDITOR_ROWS) {
                 it
             } else {
@@ -521,7 +523,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onOptionRemoved(index: Int) {
-        updateEditor {
+        updateEditable {
             if (it.optionTexts.size <= MIN_EDITOR_ROWS) {
                 it
             } else {
@@ -541,11 +543,11 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onSingleCorrectSelected(index: Int) {
-        updateEditor { it.copy(correctSingleIndex = index, errorMessage = null, lastSavedMessage = null) }
+        updateEditable { it.copy(correctSingleIndex = index, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onMultipleCorrectToggled(index: Int) {
-        updateEditor {
+        updateEditable {
             val nextIndexes =
                 if (index in it.correctMultipleIndexes) {
                     it.correctMultipleIndexes - index
@@ -560,7 +562,7 @@ class DefaultQuestCreateComponent(
         index: Int,
         value: String,
     ) {
-        updateEditor {
+        updateEditable {
             it.copy(
                 orderingItems = it.orderingItems.withValue(index, value),
                 errorMessage = null,
@@ -570,7 +572,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onOrderingItemAdded() {
-        updateEditor {
+        updateEditable {
             if (it.orderingItems.size >= MAX_EDITOR_ROWS) {
                 it
             } else {
@@ -584,7 +586,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onOrderingItemRemoved(index: Int) {
-        updateEditor {
+        updateEditable {
             if (it.orderingItems.size <= MIN_EDITOR_ROWS) {
                 it
             } else {
@@ -598,14 +600,14 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onFillBlankTextChanged(value: String) {
-        updateEditor {
+        updateEditable {
             it.withSyncedFillBlankText(value)
                 .copy(errorMessage = null, lastSavedMessage = null)
         }
     }
 
     override fun onFillBlankMarkerAdded(kind: FillBlankMarkerKind) {
-        updateEditor {
+        updateEditable {
             it.withSyncedFillBlankText(it.fillBlankText.appendFillBlankMarker(kind))
                 .copy(errorMessage = null, lastSavedMessage = null)
         }
@@ -615,8 +617,8 @@ class DefaultQuestCreateComponent(
         index: Int,
         value: String,
     ) {
-        updateEditor {
-            val currentAnswer = it.fillBlankAnswers.getOrNull(index) ?: return@updateEditor it
+        updateEditable {
+            val currentAnswer = it.fillBlankAnswers.getOrNull(index) ?: return@updateEditable it
             val nextAnswer = currentAnswer.copy(text = value)
             it.copy(
                 fillBlankText =
@@ -643,8 +645,8 @@ class DefaultQuestCreateComponent(
         index: Int,
         value: Boolean,
     ) {
-        updateEditor {
-            val currentAnswer = it.fillBlankAnswers.getOrNull(index) ?: return@updateEditor it
+        updateEditable {
+            val currentAnswer = it.fillBlankAnswers.getOrNull(index) ?: return@updateEditable it
             it.copy(
                 fillBlankText =
                     upsertFillBlankAnswerMarker(
@@ -667,7 +669,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onFillBlankAnswerAdded() {
-        updateEditor {
+        updateEditable {
             if (it.fillBlankAnswers.size >= MAX_FILL_BLANK_ANSWERS) {
                 it
             } else {
@@ -688,7 +690,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onFillBlankAnswerRemoved(index: Int) {
-        updateEditor {
+        updateEditable {
             if (it.fillBlankAnswers.size <= MIN_FILL_BLANK_ANSWERS) {
                 it
             } else {
@@ -710,7 +712,7 @@ class DefaultQuestCreateComponent(
         index: Int,
         value: String,
     ) {
-        updateEditor {
+        updateEditable {
             it.copy(
                 fillBlankDistractors = it.fillBlankDistractors.withValue(index, value),
                 errorMessage = null,
@@ -720,7 +722,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onFillBlankDistractorAdded() {
-        updateEditor {
+        updateEditable {
             if (it.fillBlankAnswers.size + it.fillBlankDistractors.size >= MAX_FILL_BLANK_CANDIDATES) {
                 it
             } else {
@@ -734,7 +736,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onFillBlankDistractorRemoved(index: Int) {
-        updateEditor {
+        updateEditable {
             it.copy(
                 fillBlankDistractors = it.fillBlankDistractors.removeAtOrSame(index),
                 errorMessage = null,
@@ -757,6 +759,7 @@ class DefaultQuestCreateComponent(
 
     override fun onBackToStructureClick() {
         navigateFromEditor {
+            editorHistory.clear()
             _state.update { it.copy(editor = null, errorMessage = null) }
         }
     }
@@ -1088,8 +1091,11 @@ class DefaultQuestCreateComponent(
                 } else {
                     null
                 }
+            // Редактор пересобран из сохранённого черновика — прежняя история правок описывала
+            // предыдущую сессию и после сохранения продолжаться не может.
+            editorHistory.clear()
             _state.update {
-                activeBundle?.applyStructureToState(it, editor) ?: it.copy(activeDraftTitle = null, editor = null)
+                activeBundle?.applyStructureToState(it, editor?.let(editorHistory::attach)) ?: it.copy(activeDraftTitle = null, editor = null)
             }
             activeBundle?.draft?.catalogId?.let(::observeQuestsForCatalog)
             observeDraftConflict(uid, activeBundle?.draft?.id)
@@ -1166,7 +1172,9 @@ class DefaultQuestCreateComponent(
                 openNewQuestion = selectedQuestionId == null,
                 difficulty = difficulty,
             )
-        _state.update { it.copy(editor = editor, errorMessage = null) }
+        // Новый вопрос — новая сессия правки: история предыдущего вопроса чужому снимку не достаётся.
+        editorHistory.clear()
+        _state.update { it.copy(editor = editor?.let(editorHistory::attach), errorMessage = null) }
     }
 
     private fun updateEditor(transform: (QuestQuestionEditorUiState) -> QuestQuestionEditorUiState) {
@@ -1174,6 +1182,36 @@ class DefaultQuestCreateComponent(
             current.copy(editor = current.editor?.let(transform))
         }
     }
+
+    /**
+     * Содержательная правка вопроса: прежний снимок уходит в историю прежде, чем применить новую.
+     *
+     * Единица undo/redo — целый снимок редактора, поэтому текст и его метки восстанавливаются
+     * вместе (UX-O6 §4, AD-27). Служебные переходы (сохранение, ошибки, превью) заводит
+     * [updateEditor] — историю они не трогают.
+     */
+    private fun updateEditable(transform: (QuestQuestionEditorUiState) -> QuestQuestionEditorUiState) {
+        _state.update { current ->
+            val editor = current.editor ?: return@update current
+            editorHistory.push(editor)
+            current.copy(editor = editorHistory.attach(transform(editor)))
+        }
+    }
+
+    override fun onEditorUndoClick() {
+        val current = _state.value.editor ?: return
+        val restored = editorHistory.undo(current) ?: return
+        _state.update { it.copy(editor = editorHistory.attach(restored.clearTransientFeedback())) }
+    }
+
+    override fun onEditorRedoClick() {
+        val current = _state.value.editor ?: return
+        val restored = editorHistory.redo(current) ?: return
+        _state.update { it.copy(editor = editorHistory.attach(restored.clearTransientFeedback())) }
+    }
+
+    private fun QuestQuestionEditorUiState.clearTransientFeedback(): QuestQuestionEditorUiState =
+        copy(errorMessage = null, lastSavedMessage = null)
 
     private fun buildQuestionContent(editor: QuestQuestionEditorUiState): Result<QuestionContent> =
         runCatching {

@@ -88,6 +88,8 @@
     <string name="qa_editor_add_distractor">Додати неправильний</string>
     <string name="qa_editor_new_question_number">Новий %1$d</string>
     <string name="qa_cd_back_to_structure">До структури</string>
+    <string name="qa_cd_undo">Скасувати правку</string>
+    <string name="qa_cd_redo">Повернути правку</string>
     <string name="qa_cd_add_photo">Додати фото</string>
     <string name="qa_cd_edit">Редагувати</string>
     <string name="qa_cd_preview">Прев\'ю</string>

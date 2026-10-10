@@ -49,6 +49,8 @@ data class QuestQuestionEditorUiState(
     val isPreviewVisible: Boolean = false,
     val errorMessage: UiMessage? = null,
     val lastSavedMessage: UiMessage? = null,
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false,
 ) {
     val displayQuestionNumber: Int
         get() = activeIndex + 1

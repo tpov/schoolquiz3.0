@@ -88,6 +88,8 @@
     <string name="qa_editor_add_distractor">Add wrong</string>
     <string name="qa_editor_new_question_number">New %1$d</string>
     <string name="qa_cd_back_to_structure">Back to structure</string>
+    <string name="qa_cd_undo">Undo edit</string>
+    <string name="qa_cd_redo">Redo edit</string>
     <string name="qa_cd_add_photo">Add photo</string>
     <string name="qa_cd_edit">Edit</string>
     <string name="qa_cd_preview">Preview</string>

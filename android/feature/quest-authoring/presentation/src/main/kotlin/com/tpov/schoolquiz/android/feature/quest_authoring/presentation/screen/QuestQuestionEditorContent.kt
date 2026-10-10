@@ -26,6 +26,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
@@ -124,6 +126,8 @@ fun QuestQuestionEditorContent(
     onFillBlankDistractorChanged: (index: Int, value: String) -> Unit,
     onFillBlankDistractorAdded: () -> Unit,
     onFillBlankDistractorRemoved: (Int) -> Unit,
+    onEditorUndoClick: () -> Unit,
+    onEditorRedoClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -132,6 +136,8 @@ fun QuestQuestionEditorContent(
             onBackClick = onBackClick,
             onQuestionImageClick = onQuestionImageClick,
             onQuestionPreviewClick = onQuestionPreviewClick,
+            onEditorUndoClick = onEditorUndoClick,
+            onEditorRedoClick = onEditorRedoClick,
         )
         if (state.isPreviewVisible) {
             Box(
@@ -207,6 +213,8 @@ private fun EditorTopPanel(
     onBackClick: () -> Unit,
     onQuestionImageClick: () -> Unit,
     onQuestionPreviewClick: () -> Unit,
+    onEditorUndoClick: () -> Unit,
+    onEditorRedoClick: () -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -238,6 +246,24 @@ private fun EditorTopPanel(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
+                IconButton(
+                    onClick = onEditorUndoClick,
+                    enabled = state.canUndo && !state.isSaving,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Undo,
+                        contentDescription = stringResource(R.string.qa_cd_undo),
+                    )
+                }
+                IconButton(
+                    onClick = onEditorRedoClick,
+                    enabled = state.canRedo && !state.isSaving,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Redo,
+                        contentDescription = stringResource(R.string.qa_cd_redo),
+                    )
+                }
                 IconButton(onClick = onQuestionImageClick) {
                     Icon(Icons.Filled.Image, contentDescription = stringResource(R.string.qa_cd_add_photo))
                 }
@@ -1506,6 +1532,8 @@ private fun QuestQuestionEditorContentPreview() {
             onFillBlankDistractorChanged = { _, _ -> },
             onFillBlankDistractorAdded = {},
             onFillBlankDistractorRemoved = {},
+            onEditorUndoClick = {},
+            onEditorRedoClick = {},
         )
     }
 }

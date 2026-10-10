@@ -138,6 +138,10 @@ class PlaceholderQuestCreateComponent(
 
     override fun onSaveQuestionClick() = Unit
 
+    override fun onEditorUndoClick() = Unit
+
+    override fun onEditorRedoClick() = Unit
+
     override fun onQuestionPreviewClick() = Unit
 
     override fun onBackToStructureClick() = Unit

@@ -131,6 +131,15 @@ interface QuestCreateComponent {
 
     fun onSaveQuestionClick()
 
+    /**
+     * Отменить последнюю содержательную правку вопроса (UX-O6 §4): текст и его метки
+     * возвращаются вместе, одна правка — один шаг истории.
+     */
+    fun onEditorUndoClick()
+
+    /** Вернуть правку, отменённую последним undo. */
+    fun onEditorRedoClick()
+
     fun onQuestionPreviewClick()
 
     fun onBackToStructureClick()
