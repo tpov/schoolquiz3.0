@@ -72,7 +72,7 @@ waits = [
   "hitl: device proof of edit/undo/redo round-trip",
 ]
 hitl = true
-status = "blocked" # hitl + after 4.3 (hitl)/4.4
+status = "in-progress" # 2026-10-10 shift 9: разблокирована (4.3/4.4 done, hitl — на redroid-риге по инструкции владельца); код-половина сядена (11a194ff undo/redo, bfcc1906 mark removal, f28b056c title immutable receiver, 3d0cafed ktlint); впереди гейты и rig-раундтрип
 
 [[story]]
 id = "4.6"
