@@ -295,3 +295,21 @@ test("explicit segment decisions are stored with their decision and score the tr
     {questionId: "q2", segmentKey: "text", decision: "error", accepted: false},
   ]);
 });
+
+test("a merged translation does not reopen the revision's testing: outcomes stay on the source questions", async () => {
+  reset(translationWorld({
+    [TASK_PATH]: {...translationWorld()[TASK_PATH], checks: {}},
+  }));
+  const testing = await submit("tester", testingAction(3));
+  assert.deepEqual(testing.aggregate.questionOutcomes.map((outcome) => outcome.questionId), ["q1", "q2"]);
+  await submit("reviewer", {assignmentId: "submission_lesson", lessonId: "lesson", kind: "LOGIC", score: 3});
+  const translation = await submit("translator", {
+    assignmentId: "submission_lesson", lessonId: "lesson", kind: "TRANSLATION", language: "uk",
+    translatedQuestions: [translatedQuestion("q1", "один"), translatedQuestion("q2", "два")],
+  });
+  assert.equal(translation.aggregate.isTested, true,
+    "a translation arriving after the fact must not revoke the passed testing");
+  assert.deepEqual(translation.aggregate.questionOutcomes.map((outcome) => outcome.questionId), ["q1", "q2"],
+    "per-question outcomes judge the source revision, not the merged translation variants");
+  assert.deepEqual(translation.aggregate.translatedLanguages, {uk: 100});
+});

@@ -5640,7 +5640,15 @@ function rebuildAggregate(task, records, config) {
  */
 function testingQuestionOutcomes(task, acceptedRecords, config) {
   const threshold = numberValue(config && config.testingPassScore, DEFAULT_TESTING_PASS_SCORE);
-  const taskQuestions = Array.isArray(task.questions) ? task.questions : [];
+  // Ревизию судят по её собственному составу: переведённые варианты (`__<lang>`, влитые
+  // mergeQuestions после допуска перевода) — новый языковой контент, а не неоценённые вопросы
+  // ревизии; их появление не отзывает уже пройденное тестирование. Вопрос без языка
+  // классифицировать нельзя — он остаётся (задания прежних версий языка не несли).
+  const sources = new Set(Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean));
+  const taskQuestions = (Array.isArray(task.questions) ? task.questions : []).filter((question) => {
+    const language = normalizeLanguage(question.language);
+    return sources.size === 0 || language === "" || sources.has(language);
+  });
   const outcomes = taskQuestions.map((question) => {
     const scores = [];
     for (const record of acceptedRecords) {
