@@ -136,3 +136,66 @@ i  functions: Finished "us-central1-rejectReviewSubmission" in 234.88341ms
 i  functions: Beginning execution of "us-central1-submitMutation"
 >  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
 i  functions: Finished "us-central1-submitMutation" in 92.755846ms
+i  functions: Trying to access secret ARENA_LIFECYCLE_CURSOR_SECRET@latest
+⬢  functions: Unable to access secret environment variables from Google Cloud Secret Manager. Make sure the credential used for the Functions Emulator have access or provide override values in /workspace/projects/schoolquiz3.0/.local/worktrees/night-impl/functions/.secret.local:
+	FirebaseError: Unable to refresh auth: not yet authenticated.
+i  functions: Trying to access secret ARENA_LIFECYCLE_CURSOR_SECRET@latest
+⬢  functions: Unable to access secret environment variables from Google Cloud Secret Manager. Make sure the credential used for the Functions Emulator have access or provide override values in /workspace/projects/schoolquiz3.0/.local/worktrees/night-impl/functions/.secret.local:
+	FirebaseError: Unable to refresh auth: not yet authenticated.
+i  functions: Trying to access secret ARENA_LIFECYCLE_CURSOR_SECRET@latest
+⬢  functions: Unable to access secret environment variables from Google Cloud Secret Manager. Make sure the credential used for the Functions Emulator have access or provide override values in /workspace/projects/schoolquiz3.0/.local/worktrees/night-impl/functions/.secret.local:
+	FirebaseError: Unable to refresh auth: not yet authenticated.
+i  functions: Beginning execution of "us-central1-listOwnedLessonLifecycle"
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+i  functions: Beginning execution of "us-central1-listMyArenaRoyalty"
+i  functions: Beginning execution of "us-central1-ensureUserProfile"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listOwnedLessonLifecycle" in 1385.851333ms
+i  functions: Finished "us-central1-listMyArenaRoyalty" in 1350.16113ms
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 1562.505231ms
+i  functions: Finished "us-central1-ensureUserProfile" in 1526.297051ms
+i  functions: Beginning execution of "us-central1-ensureUserProfile"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-ensureUserProfile" in 184.882776ms
+i  functions: Beginning execution of "us-central1-ensureUserProfile"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-ensureUserProfile" in 152.635896ms
+i  functions: Beginning execution of "us-central1-fetchOwnedNicknames"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-fetchOwnedNicknames" in 669.59223ms
+i  functions: Beginning execution of "us-central1-fetchReviewAssignmentChanges"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-fetchReviewAssignmentChanges" in 699.928039ms
+i  functions: Beginning execution of "us-central1-fetchLeagueStanding"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-fetchLeagueStanding" in 877.430242ms
+i  functions: Beginning execution of "us-central1-fetchReviewAssignments"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-fetchReviewAssignments" in 1150.63742ms
+i  functions: Beginning execution of "us-central1-getEconomyConstants"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-getEconomyConstants" in 742.634614ms
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 18.722486ms
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 17.982513ms
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 372.543751ms
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 199.504465ms
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 1026.557075ms
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 1363.920887ms
+i  functions: Beginning execution of "us-central1-listCuratorLessonLifecycle"
+>  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"}
+i  functions: Finished "us-central1-listCuratorLessonLifecycle" in 835.052562ms

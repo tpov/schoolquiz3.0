@@ -217,6 +217,26 @@ class DefaultCuratorComponentTest {
         assertNull(component.state.value.errorMessage)
     }
 
+    @Test
+    fun `a failed transition keeps the page as it was`() = runTest(testScheduler) {
+        val fakes = FakeUseCases(
+            ownedEntries = listOf(lifecycleEntry("lesson-1")),
+            transitionResult = Result.failure(SyncFailure(SyncError.Refused("INVALID_TRANSITION"))),
+        )
+        val component = buildComponent(fakes)
+        openMenuAndRequest(component, "lesson-1", LessonShelf.HOME)
+        component.onReasonChanged("attempted skipped rung")
+
+        component.onTransitionClick(LessonShelf.HOME)
+
+        assertEquals(1, fakes.curatorCalls.size, "the refusal must not re-read the page")
+        assertEquals(listOf(lifecycleEntry("lesson-1")), component.state.value.entries, "the prior revision stays visible")
+        assertNull(component.state.value.lastDecision)
+        assertNull(component.state.value.pendingConfirmation)
+        assertEquals(false, component.state.value.isTransitioning)
+        assertEquals(UiMessage.Raw(SyncError.Refused("INVALID_TRANSITION").toString()), component.state.value.errorMessage)
+    }
+
     private fun openMenuAndRequest(
         component: DefaultCuratorComponent,
         lessonId: String,
@@ -268,6 +288,7 @@ class DefaultCuratorComponentTest {
         private val ownedEntries: List<LessonLifecycleEntry> = emptyList(),
         private val history: List<LessonHistoryEntry> = emptyList(),
         private val curatorResult: Result<LessonLifecyclePage>? = null,
+        private val transitionResult: Result<LessonTransitionDecision>? = null,
     ) : com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonLifecycleRepository {
         val curatorCalls = mutableListOf<Array<String?>>()
         val historyCalls = mutableListOf<Pair<String, String>>()
@@ -312,7 +333,7 @@ class DefaultCuratorComponentTest {
             mutationId: String,
         ): Result<LessonTransitionDecision> {
             transitionCalls.add(Triple(ownerUid, command, mutationId))
-            return Result.success(
+            return transitionResult ?: Result.success(
                 LessonTransitionDecision.Applied(command.lessonId, LessonShelf.REVIEW, command.targetShelf, 1L),
             )
         }

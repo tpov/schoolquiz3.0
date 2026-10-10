@@ -32,11 +32,13 @@ fun initializeFirebaseSecurity(
         // App Check/Integrity has no local emulator, and the demo never contacts its live
         // service. Но вызываемая функция склеивает App Check-задачу с auth-токеном в один whenAll
         // (FirebaseContextProvider.getContext), поэтому без установленной фабрики любой callable
-        // падает до сети — «1 out of 2 underlying tasks failed». Debug-провайдер отвечает
-        // локально и существует только в demo-сборке (mvpImplementation).
-        debugAppCheckProviderFactoryOrNull()?.let {
-            FirebaseAppCheck.getInstance(firebaseApp).installAppCheckProviderFactory(it)
-        }
+        // падает до сети — «1 out of 2 underlying tasks failed». Эмулятор функции токен не
+        // проверяет («app:MISSING» проходит), поэтому demo-ветка ставит локальную фабрику: она
+        // отвечает сразу и живого App Check-бэкенда не касается — debug-провайдер обменивает
+        // токен по сети и после переустановок упирается в его «Too many attempts».
+        FirebaseAppCheck
+            .getInstance(firebaseApp)
+            .installAppCheckProviderFactory(DemoLocalAppCheckProviderFactory)
         return
     }
     val providerFactory =

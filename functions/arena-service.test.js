@@ -305,6 +305,29 @@ test("trusted curator role gates placements; rejection and its reason survive la
   assert.ok(log.some((r) => r.status === "APPLIED" && r.targetShelf === "arena"));
 });
 
+test("ratings never manufacture curator approval; confirmed-fault removal stops new use and leaves frozen attempts intact", async () => {
+  const f = setup();
+  const attemptId = f.completion("player");
+  const frozen = clone(f.db.read(`server_results/${attemptId}`));
+  for (let voter = 0; voter < 5; voter++) await f.rate(`voter-${voter}`, 3);
+  assert.equal(f.db.read("lesson_ratings/lesson").ratingCount, 5);
+  assert.equal(f.db.read("lesson_placements/lesson"), undefined, "ratings alone never admit a lesson");
+
+  await f.move("arena");
+  assert.equal(f.db.read("lesson_placements/lesson").shelf, "arena");
+
+  const retired = await f.move("retired", "retire-fault", "confirmed fault: broken answer key");
+  assert.equal(retired.status, "APPLIED");
+  assert.equal(f.db.read("lesson_placements/lesson").shelf, "retired");
+  assert.equal(f.db.read("lesson_placements/lesson").lastReason, "confirmed fault: broken answer key");
+  assert.deepEqual(f.db.read(`server_results/${attemptId}`), frozen, "removal must not rewrite frozen attempts");
+
+  const forge = await f.service.transitionLesson({uid: "voter-0", mutationId: "forge-readmit", lessonId: "lesson",
+    targetShelf: "arena", reason: "player asks it back"});
+  assert.equal(forge.result.code, "CURATOR_REQUIRED");
+  assert.equal(f.db.read("lesson_placements/lesson").shelf, "retired");
+});
+
 test("current review approval is required, rejection state is retained, COURSE cannot enter ordinary ladder", async () => {
   const f = setup();
   await f.move("rejected", "review-reject", "incorrect answers");
