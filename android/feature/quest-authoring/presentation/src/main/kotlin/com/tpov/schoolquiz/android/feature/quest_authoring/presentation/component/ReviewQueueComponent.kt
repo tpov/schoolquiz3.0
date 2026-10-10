@@ -40,4 +40,14 @@ interface ReviewQueueComponent {
     )
 
     fun onSubmitClick()
+
+    /** «Сообщить об ошибке» на открытом задании: открыть диалог приватного отчёта (AD-20). */
+    fun onReportErrorRequested()
+
+    fun onReportErrorDismissed()
+
+    fun onReportErrorTextChanged(value: String)
+
+    /** «Отправить» в диалоге: отчёт уходит общей очередью под ключом намерения (AD-2, AD-6). */
+    fun onReportErrorSubmit()
 }

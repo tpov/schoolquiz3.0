@@ -12,6 +12,9 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultInboxComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
@@ -78,6 +81,13 @@ val appShellPresentationModule =
                         koin.get(AuthorLifecycleComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderAuthorLifecycleComponent()
+                    }
+                },
+                inboxFactory = { compCtx ->
+                    runCatching<InboxComponent> {
+                        koin.get(InboxComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderInboxComponent()
                     }
                 },
                 profileFactory = { compCtx ->

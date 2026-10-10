@@ -34,6 +34,9 @@ sealed interface LocalConfig : TabConfig {
     /** Curator surface TZ06C: placements, decisions, transitions. */
     data object CuratorRoot : LocalConfig
 
+    /** Shared inbox (AD-20): private error reports + public comments addressed to the author. */
+    data object InboxRoot : LocalConfig
+
     data object SettingsRoot : LocalConfig
 
     /** Always exists as type; rendered as UnderConstructionScreen("Недоступно") in release. */

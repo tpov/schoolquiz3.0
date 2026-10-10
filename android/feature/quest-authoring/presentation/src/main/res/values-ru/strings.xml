@@ -186,4 +186,16 @@
     <string name="qa_lifecycle_refresh">Обновить</string>
     <string name="qa_lifecycle_selected">Выбрано</string>
     <string name="qa_lifecycle_error_unknown">Серверную проекцию прочитать не удалось</string>
+    <string name="qa_inbox_title">Входящие</string>
+    <string name="qa_inbox_refresh">Обновить</string>
+    <string name="qa_inbox_empty">Пока ничего адресованного вам</string>
+    <string name="qa_inbox_kind_private_report">Приватный отчёт</string>
+    <string name="qa_inbox_kind_comment">Комментарий</string>
+    <string name="qa_inbox_readers_author_only">Приватно: читает только автор урока</string>
+    <string name="qa_inbox_readers_public">Публичный комментарий от %1$s</string>
+    <string name="qa_review_report_error">Сообщить об ошибке</string>
+    <string name="qa_review_report_dialog_title">Приватный отчёт об ошибке</string>
+    <string name="qa_review_report_hint">Что не так с уроком целиком? Это прочитает только его автор.</string>
+    <string name="qa_review_report_blank">Сначала опишите проблему</string>
+    <string name="qa_review_report_done">Отчёт поставлен в очередь автору урока</string>
 </resources>

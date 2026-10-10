@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -72,6 +73,10 @@ fun ReviewQueueView(
     onTranslationTextChanged: (String, String, String) -> Unit,
     onSegmentDecided: (String, String, ReviewSegmentDecisionUi) -> Unit,
     onSubmitClick: () -> Unit,
+    onReportErrorRequested: () -> Unit,
+    onReportErrorDismissed: () -> Unit,
+    onReportErrorTextChanged: (String) -> Unit,
+    onReportErrorSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -100,6 +105,7 @@ fun ReviewQueueView(
                 onTranslationTextChanged = onTranslationTextChanged,
                 onSegmentDecided = onSegmentDecided,
                 onSubmitClick = onSubmitClick,
+                onReportErrorRequested = onReportErrorRequested,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -108,6 +114,14 @@ fun ReviewQueueView(
         }
         state.successMessage?.let {
             Text(text = it.resolveText(), color = LocalNoirAccent.current)
+        }
+        if (state.reportDialogOpen) {
+            ReportErrorDialog(
+                state = state,
+                onDismiss = onReportErrorDismissed,
+                onTextChanged = onReportErrorTextChanged,
+                onSubmit = onReportErrorSubmit,
+            )
         }
     }
 }
@@ -298,6 +312,7 @@ private fun ReviewDetail(
     onTranslationTextChanged: (String, String, String) -> Unit,
     onSegmentDecided: (String, String, ReviewSegmentDecisionUi) -> Unit,
     onSubmitClick: () -> Unit,
+    onReportErrorRequested: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -353,7 +368,62 @@ private fun ReviewDetail(
             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
             Text(text = stringResource(R.string.qa_review_submit))
         }
+        // Приватный отчёт — отдельная дверь рядом с решением: текст про весь урок, читает его
+        // только автор (AD-20), вопросы и ответы через него не едут.
+        TextButton(
+            onClick = onReportErrorRequested,
+            modifier = Modifier.fillMaxWidth().testTag("review-report-error"),
+        ) {
+            Text(text = stringResource(R.string.qa_review_report_error))
+        }
     }
+}
+
+/** Диалог приватного отчёта: обязательный текст, пока едет — закрытие не бросает отправку. */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ReportErrorDialog(
+    state: ReviewQueueUiState,
+    onDismiss: () -> Unit,
+    onTextChanged: (String) -> Unit,
+    onSubmit: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.qa_review_report_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.qa_review_report_hint),
+                    style = NoirType.rowSub,
+                    color = NoirT3,
+                )
+                OutlinedTextField(
+                    value = state.reportTextDraft,
+                    onValueChange = onTextChanged,
+                    modifier = Modifier.fillMaxWidth().testTag("review-report-text"),
+                    minLines = 3,
+                )
+                state.reportError?.let {
+                    Text(text = it.resolveText(), color = NoirDanger, style = NoirType.rowSub)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSubmit,
+                enabled = !state.reportSubmitting,
+                modifier = Modifier.testTag("review-report-submit"),
+            ) {
+                Text(stringResource(R.string.qa_review_report_error))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.reportSubmitting) {
+                Text(stringResource(R.string.qa_cd_back))
+            }
+        },
+    )
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

@@ -54,6 +54,11 @@ data class ReviewQueueUiState(
     val detail: ReviewAssignmentDetailUiState? = null,
     val errorMessage: UiMessage? = null,
     val successMessage: UiMessage? = null,
+    /** Диалог приватного отчёта об ошибке открыт поверх деталей задания (AD-20). */
+    val reportDialogOpen: Boolean = false,
+    val reportTextDraft: String = "",
+    val reportSubmitting: Boolean = false,
+    val reportError: UiMessage? = null,
 )
 
 data class ReviewAssignmentListItemUiState(

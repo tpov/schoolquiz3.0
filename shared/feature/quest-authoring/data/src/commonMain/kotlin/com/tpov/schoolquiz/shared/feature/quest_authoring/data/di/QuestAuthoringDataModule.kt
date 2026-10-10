@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.data.di
 
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.LessonLifecycleRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.InboxRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSourceImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringRepositoryImpl
@@ -13,9 +14,11 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ReviewActi
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonLifecycleRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.InboxRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewAssignmentRepository
 import org.koin.dsl.module
@@ -36,6 +39,10 @@ val questAuthoringDataModule =
         // локальный источник и сама очередь.
         single<ReviewAssignmentRepository> {
             ReviewAssignmentRepositoryImpl(local = get<ReviewAssignmentLocalDataSource>(), outbox = get<OutboxStore>())
+        }
+        // Общий inbox (AD-20): чтение — view-транспорт (Firebase), подача отчёта — общая очередь.
+        single<InboxRepository> {
+            InboxRepositoryImpl(remote = get<InboxRemoteDataSource>(), outbox = get<OutboxStore>())
         }
         // Откат локальной половины при карантине — решение владеющей фичи (AD-28).
         single { QuestArenaQuarantineRollback(get(), get()) }

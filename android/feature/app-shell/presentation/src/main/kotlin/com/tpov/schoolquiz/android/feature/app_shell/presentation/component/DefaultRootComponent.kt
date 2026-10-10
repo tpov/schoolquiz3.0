@@ -22,6 +22,8 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
@@ -143,6 +145,7 @@ class DefaultRootComponent(
     reviewQueueFactory: (ComponentContext) -> ReviewQueueComponent = { PlaceholderReviewQueueComponent() },
     curatorFactory: (ComponentContext) -> CuratorComponent = { PlaceholderCuratorComponent() },
     authorLifecycleFactory: (ComponentContext) -> AuthorLifecycleComponent = { PlaceholderAuthorLifecycleComponent() },
+    inboxFactory: (ComponentContext) -> InboxComponent = { PlaceholderInboxComponent() },
     profileFactory: (ComponentContext) -> ProfileComponent = { PlaceholderProfileComponent() },
     shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
@@ -259,6 +262,10 @@ class DefaultRootComponent(
     val authorLifecycleComponent: AuthorLifecycleComponent =
         authorLifecycleFactory(
             childContext("AuthorLifecycleContent"),
+        )
+    val inboxComponent: InboxComponent =
+        inboxFactory(
+            childContext("InboxContent"),
         )
     val profileComponent: ProfileComponent =
         profileFactory(

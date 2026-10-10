@@ -5,8 +5,10 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultAuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultCuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultReviewQueueComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
@@ -41,6 +43,7 @@ val questAuthoringPresentationModule =
                 observeReviewAssignments = get(),
                 observeReviewAssignmentSync = get(),
                 submitReviewAction = get(),
+                submitLessonErrorReport = get(),
                 questionContentParser = get(),
             )
         }
@@ -63,6 +66,14 @@ val questAuthoringPresentationModule =
                 listOwned = get(),
                 listHistory = get(),
                 listRoyalty = get(),
+            )
+        }
+
+        factory<InboxComponent> { (ctx: ComponentContext) ->
+            DefaultInboxComponent(
+                componentContext = ctx,
+                authRepository = get(),
+                listInboxItems = get(),
             )
         }
     }

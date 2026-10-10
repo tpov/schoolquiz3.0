@@ -60,6 +60,11 @@ sealed interface DrawerSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
+        // emptyMap — настоящий гейт разрешений серверный (AD-20): не-автор видит пустой список.
+        data object Inbox : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
         // emptyMap (always visible)
         data object Settings : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()

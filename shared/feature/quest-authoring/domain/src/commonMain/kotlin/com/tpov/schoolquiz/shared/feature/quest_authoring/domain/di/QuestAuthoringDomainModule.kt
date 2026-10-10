@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Create
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetArenaReadinessUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListCuratorLifecycleUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListInboxItemsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListLessonHistoryUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListLessonRoyaltyUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListOwnedLifecycleUseCase
@@ -14,6 +15,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Observ
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ResolveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitLessonErrorReportUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitReviewActionUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.TransitionLessonUseCase
@@ -25,6 +27,7 @@ val questAuthoringDomainModule =
         factory { GetActiveQuestDraftUseCase(get()) }
         factory { GetArenaReadinessUseCase(get()) }
         factory { ListCuratorLifecycleUseCase(get()) }
+        factory { ListInboxItemsUseCase(get()) }
         factory { ListLessonHistoryUseCase(get()) }
         factory { ListLessonRoyaltyUseCase(get()) }
         factory { ListOwnedLifecycleUseCase(get()) }
@@ -36,6 +39,7 @@ val questAuthoringDomainModule =
         factory { ResolveQuestDraftConflictUseCase(get()) }
         factory { SaveDraftQuestionUseCase(get(), get(), get(), get()) }
         factory { SubmitReviewActionUseCase(get(), get(), get()) }
+        factory { SubmitLessonErrorReportUseCase(get(), get(), get()) }
         factory { SubmitQuestDraftToArenaUseCase(get(), get(), get()) }
         factory { TransitionLessonUseCase(get()) }
     }

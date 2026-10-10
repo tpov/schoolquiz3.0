@@ -27,6 +27,11 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSeg
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewAssignmentRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentsUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.InboxAnchor
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.InboxPage
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonErrorReportSubmission
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.InboxRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitLessonErrorReportUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitReviewActionUseCase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -306,6 +311,12 @@ class DefaultReviewQueueComponentTest {
                     idProvider = { prefix -> "$prefix-1" },
                     timestampProvider = { 5L },
                 ),
+            submitLessonErrorReport =
+                SubmitLessonErrorReportUseCase(
+                    repository = FakeInboxRepository(),
+                    idProvider = { prefix -> "$prefix-1" },
+                    timestampProvider = { 5L },
+                ),
             questionContentParser = parser,
             mainContext = testDispatcher,
         )
@@ -398,6 +409,16 @@ class DefaultReviewQueueComponentTest {
         override suspend fun currentUid(): String? = uid.value
 
         override fun observeUid(): Flow<String?> = uid
+    }
+
+    private class FakeInboxRepository : InboxRepository {
+        override suspend fun listInboxItems(
+            pageSize: Int,
+            after: InboxAnchor?,
+        ): Result<InboxPage> = Result.success(InboxPage(emptyList(), null))
+
+        override suspend fun queueErrorReport(submission: LessonErrorReportSubmission): Result<Unit> =
+            Result.success(Unit)
     }
 
     private class FakeReviewAssignmentRepository(

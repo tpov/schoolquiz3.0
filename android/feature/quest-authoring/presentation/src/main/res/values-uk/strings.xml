@@ -188,4 +188,16 @@
     <string name="qa_lifecycle_refresh">Оновити</string>
     <string name="qa_lifecycle_selected">Обрано</string>
     <string name="qa_lifecycle_error_unknown">Серверну проєкцію прочитати не вдалося</string>
+    <string name="qa_inbox_title">Вхідні</string>
+    <string name="qa_inbox_refresh">Оновити</string>
+    <string name="qa_inbox_empty">Поки нічого адресованого вам</string>
+    <string name="qa_inbox_kind_private_report">Приватний звіт</string>
+    <string name="qa_inbox_kind_comment">Коментар</string>
+    <string name="qa_inbox_readers_author_only">Приватно: читає лише автор уроку</string>
+    <string name="qa_inbox_readers_public">Публічний коментар від %1$s</string>
+    <string name="qa_review_report_error">Повідомити про помилку</string>
+    <string name="qa_review_report_dialog_title">Приватний звіт про помилку</string>
+    <string name="qa_review_report_hint">Що не так з уроком загалом? Це прочитає лише його автор.</string>
+    <string name="qa_review_report_blank">Спочатку опишіть проблему</string>
+    <string name="qa_review_report_done">Звіт поставлено в чергу автору уроку</string>
 </resources>

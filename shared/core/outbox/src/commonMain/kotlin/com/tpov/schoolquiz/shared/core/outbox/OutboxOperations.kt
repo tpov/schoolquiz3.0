@@ -98,6 +98,16 @@ object OutboxOperations {
     const val SET_SHELF: String = "quest.SET_SHELF"
 
     /**
+     * Приватный отчёт об ошибке урока — общий inbox (AD-20, история 4.9 эпика authoring-review).
+     *
+     * Откладывается по AD-3: тело — текст про весь урок и его id, адресата (разрешённого автора)
+     * сервер выводит из документа размещения сам. Повтор по ключу не создаёт второй отчёт.
+     * Имя в пространстве владеющей фичи `lesson_report`; серверная половина — реестр
+     * `MUTATION_HANDLERS` (`functions/index.js`), совпадение сторожит `OutboxOperationsRegistryTest`.
+     */
+    const val SUBMIT_LESSON_ERROR: String = "lesson_report.SUBMIT_ERROR"
+
+    /**
      * Ключ идемпотентности, выведенный из идентификатора самого действия.
      *
      * Ключ рождается вместе с намерением игрока и не меняется ни при одной попытке (AD-2).

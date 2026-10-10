@@ -34,6 +34,7 @@ fun rootLocalStackForSection(section: DrawerSection.LocalSection): NavStack<Loca
         DrawerSection.LocalSection.ReviewQueue -> NavStack(LocalConfig.ReviewQueueRoot)
         DrawerSection.LocalSection.AuthorLifecycle -> NavStack(LocalConfig.AuthorLifecycleRoot)
         DrawerSection.LocalSection.Curation -> NavStack(LocalConfig.CuratorRoot)
+        DrawerSection.LocalSection.Inbox -> NavStack(LocalConfig.InboxRoot)
         DrawerSection.LocalSection.Settings -> NavStack(LocalConfig.SettingsRoot)
     }
 

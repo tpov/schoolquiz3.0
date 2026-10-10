@@ -26,6 +26,10 @@ fun ReviewQueueScreen(
         onTranslationTextChanged = component::onTranslationTextChanged,
         onSegmentDecided = component::onSegmentDecided,
         onSubmitClick = component::onSubmitClick,
+        onReportErrorRequested = component::onReportErrorRequested,
+        onReportErrorDismissed = component::onReportErrorDismissed,
+        onReportErrorTextChanged = component::onReportErrorTextChanged,
+        onReportErrorSubmit = component::onReportErrorSubmit,
         modifier = modifier,
     )
 }

@@ -26,9 +26,11 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQue
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestionScore
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecision
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecisionKind
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitLessonErrorReportCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitReviewActionCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentsUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitLessonErrorReportUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitReviewActionUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +59,7 @@ class DefaultReviewQueueComponent(
     private val observeReviewAssignments: ObserveReviewAssignmentsUseCase,
     private val observeReviewAssignmentSync: ObserveReviewAssignmentSyncUseCase,
     private val submitReviewAction: SubmitReviewActionUseCase,
+    private val submitLessonErrorReport: SubmitLessonErrorReportUseCase,
     private val questionContentParser: QuestionContentParser,
     mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ReviewQueueComponent, ComponentContext by componentContext {
@@ -192,6 +195,56 @@ class DefaultReviewQueueComponent(
                         errorMessage =
                             error.message?.let(UiMessage::Raw)
                                 ?: UiMessage.Res(R.string.qa_error_submit_review_failed),
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onReportErrorRequested() {
+        if (_state.value.detail == null) return
+        _state.update { it.copy(reportDialogOpen = true, reportTextDraft = "", reportError = null) }
+    }
+
+    override fun onReportErrorDismissed() {
+        // Пока отчёт ещё едет в очередь, диалог не бросают закрытием по неосторожности (AD-14).
+        if (!_state.value.reportSubmitting) {
+            _state.update { it.copy(reportDialogOpen = false, reportError = null) }
+        }
+    }
+
+    override fun onReportErrorTextChanged(value: String) {
+        _state.update { it.copy(reportTextDraft = value) }
+    }
+
+    override fun onReportErrorSubmit() {
+        val detail = _state.value.detail ?: return
+        val assignment = assignments.firstOrNull { it.id == detail.assignmentId } ?: return
+        if (_state.value.reportSubmitting) return
+        val text = _state.value.reportTextDraft.trim()
+        if (text.isEmpty()) {
+            _state.update { it.copy(reportError = UiMessage.Res(R.string.qa_review_report_blank)) }
+            return
+        }
+        _state.update { it.copy(reportSubmitting = true, reportError = null) }
+        scope.launch {
+            val result = submitLessonErrorReport(
+                assignment.ownerUid,
+                SubmitLessonErrorReportCommand(detail.lessonId, text),
+            )
+            _state.update { state ->
+                if (result.isSuccess) {
+                    state.copy(
+                        reportSubmitting = false,
+                        reportDialogOpen = false,
+                        reportTextDraft = "",
+                        successMessage = UiMessage.Res(R.string.qa_review_report_done),
+                    )
+                } else {
+                    state.copy(
+                        reportSubmitting = false,
+                        reportError = result.exceptionOrNull()?.message?.let(UiMessage::Raw)
+                            ?: UiMessage.Res(R.string.qa_review_report_blank),
                     )
                 }
             }

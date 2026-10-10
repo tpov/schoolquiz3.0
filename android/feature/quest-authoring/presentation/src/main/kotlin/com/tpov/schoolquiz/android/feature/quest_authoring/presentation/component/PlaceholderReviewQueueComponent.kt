@@ -42,4 +42,12 @@ class PlaceholderReviewQueueComponent : ReviewQueueComponent {
     ) = Unit
 
     override fun onSubmitClick() = Unit
+
+    override fun onReportErrorRequested() = Unit
+
+    override fun onReportErrorDismissed() = Unit
+
+    override fun onReportErrorTextChanged(value: String) = Unit
+
+    override fun onReportErrorSubmit() = Unit
 }

@@ -184,4 +184,16 @@
     <string name="qa_lifecycle_refresh">Refresh</string>
     <string name="qa_lifecycle_selected">Selected</string>
     <string name="qa_lifecycle_error_unknown">The server view could not be read</string>
+    <string name="qa_inbox_title">Inbox</string>
+    <string name="qa_inbox_refresh">Refresh</string>
+    <string name="qa_inbox_empty">Nothing addressed to you yet</string>
+    <string name="qa_inbox_kind_private_report">Private report</string>
+    <string name="qa_inbox_kind_comment">Comment</string>
+    <string name="qa_inbox_readers_author_only">Private: only the lesson\'s author reads this</string>
+    <string name="qa_inbox_readers_public">Public comment by %1$s</string>
+    <string name="qa_review_report_error">Report an error</string>
+    <string name="qa_review_report_dialog_title">Private error report</string>
+    <string name="qa_review_report_hint">What is wrong with the whole lesson? Only its author will read this.</string>
+    <string name="qa_review_report_blank">Describe the problem first</string>
+    <string name="qa_review_report_done">Report queued for the lesson\'s author</string>
 </resources>

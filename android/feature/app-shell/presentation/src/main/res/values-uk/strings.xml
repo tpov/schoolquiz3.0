@@ -14,6 +14,7 @@
     <string name="section_review_queue">Перевірка</string>
     <string name="section_author_lifecycle">Мої уроки: статуси</string>
     <string name="section_curation">Кураторська</string>
+    <string name="section_inbox">Вхідні</string>
     <string name="section_settings">Налаштування</string>
     <string name="section_arena">Арена</string>
     <string name="section_catalog">Каталог</string>
