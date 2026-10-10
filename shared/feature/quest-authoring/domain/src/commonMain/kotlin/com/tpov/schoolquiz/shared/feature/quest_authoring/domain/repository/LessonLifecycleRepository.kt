@@ -16,10 +16,18 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonTra
  */
 interface LessonLifecycleRepository {
     /** Размещения уроков автора (view `listOwnedLessonLifecycle`). */
-    suspend fun listOwned(ownerUid: String, afterLessonId: String?, pageSize: Int): Result<LessonLifecyclePage>
+    suspend fun listOwned(
+        ownerUid: String,
+        afterLessonId: String?,
+        pageSize: Int,
+    ): Result<LessonLifecyclePage>
 
     /** Все размещения для куратора (view `listCuratorLessonLifecycle`); не-куратору — отказ. */
-    suspend fun listCurator(ownerUid: String, afterLessonId: String?, pageSize: Int): Result<LessonLifecyclePage>
+    suspend fun listCurator(
+        ownerUid: String,
+        afterLessonId: String?,
+        pageSize: Int,
+    ): Result<LessonLifecyclePage>
 
     /** История переходов одного урока (view `listLessonLifecycleHistory`). */
     suspend fun listHistory(
@@ -30,7 +38,11 @@ interface LessonLifecycleRepository {
     ): Result<LessonHistoryPage>
 
     /** Авторские роялти арены (view `listMyArenaRoyalty`). */
-    suspend fun listRoyalty(ownerUid: String, cursor: String?, pageSize: Int): Result<LessonRoyaltyPage>
+    suspend fun listRoyalty(
+        ownerUid: String,
+        cursor: String?,
+        pageSize: Int,
+    ): Result<LessonRoyaltyPage>
 
     /**
      * Кураторский переход (callable `setLessonPlacement`). [mutationId] рождается с намерением

@@ -128,17 +128,18 @@ object LessonLifecycleWireParser {
             reviewApproved = entry.requiredBoolean(REVIEW_APPROVED),
             rating = rating,
             state = state,
-            placement = entry[PLACEMENT]?.let { placementRaw ->
-                val placement = requiredObject(placementRaw, "placement")
-                LessonPlacement(
-                    shelf = shelf(placement.string(SHELF)),
-                    previousShelf = shelf(placement.string(PREVIOUS_SHELF)),
-                    contentVersion = placement.unsigned(CONTENT_VERSION),
-                    currentVersion = placement.requiredBoolean(CURRENT_VERSION),
-                    placementVersion = placement.unsigned(PLACEMENT_VERSION),
-                    updatedAtMs = placement.requiredLong(UPDATED_AT_MS),
-                )
-            },
+            placement =
+                entry[PLACEMENT]?.let { placementRaw ->
+                    val placement = requiredObject(placementRaw, "placement")
+                    LessonPlacement(
+                        shelf = shelf(placement.string(SHELF)),
+                        previousShelf = shelf(placement.string(PREVIOUS_SHELF)),
+                        contentVersion = placement.unsigned(CONTENT_VERSION),
+                        currentVersion = placement.requiredBoolean(CURRENT_VERSION),
+                        placementVersion = placement.unsigned(PLACEMENT_VERSION),
+                        updatedAtMs = placement.requiredLong(UPDATED_AT_MS),
+                    )
+                },
         )
     }
 
@@ -169,8 +170,7 @@ object LessonLifecycleWireParser {
     private fun requiredObject(
         data: Any?,
         what: String,
-    ): Map<*, *> =
-        data as? Map<*, *> ?: error("$what response is not an object")
+    ): Map<*, *> = data as? Map<*, *> ?: error("$what response is not an object")
 
     private fun requireVersion(
         root: Map<*, *>,
@@ -182,8 +182,7 @@ object LessonLifecycleWireParser {
     private fun Map<*, *>.objectField(key: String): Map<*, *> =
         this[key] as? Map<*, *> ?: error("Field $key is not an object")
 
-    private fun Map<*, *>.list(key: String): List<Any?> =
-        this[key] as? List<*> ?: error("Field $key is not a list")
+    private fun Map<*, *>.list(key: String): List<Any?> = this[key] as? List<*> ?: error("Field $key is not a list")
 
     private fun Map<*, *>.string(key: String): String? = this[key] as? String
 

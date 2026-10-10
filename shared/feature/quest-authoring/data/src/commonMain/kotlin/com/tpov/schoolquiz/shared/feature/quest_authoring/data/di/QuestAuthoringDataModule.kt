@@ -27,7 +27,11 @@ val questAuthoringDataModule =
         single<QuestAuthoringRepository> { QuestAuthoringRepositoryImpl(get(), get(), get()) }
         // Проекции TZ06B и кураторский переход — прямой callable без локальной половины (AD-25);
         // транспортBinding (Firebase) подключается в platform-модуле.
-        single<LessonLifecycleRepository> { LessonLifecycleRepositoryImpl(remote = get<LessonLifecycleRemoteDataSource>()) }
+        single<LessonLifecycleRepository> {
+            LessonLifecycleRepositoryImpl(
+                remote = get<LessonLifecycleRemoteDataSource>(),
+            )
+        }
         // Решение ревьюера уходит общей очередью, а не callable (AD-6): репозиторию нужен только
         // локальный источник и сама очередь.
         single<ReviewAssignmentRepository> {
