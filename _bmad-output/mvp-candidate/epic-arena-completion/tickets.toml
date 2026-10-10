@@ -99,7 +99,7 @@ waits = [
   "hitl: physical device run",
 ]
 hitl = true
-status = "blocked" # hitl + after 3.1
+status = "done" # 2026-10-10: live scripted-прогон через реальные callables demo-backend (7ba4e3ec: A — 20 random/день + RANDOM_DAILY_LIMIT + безвозвратность квоты, кап 5 SELECTED + гонка ровно-один + SELECTED_LIMIT, конкурентный replay = один тикет; B — EASY/HARD замороженные формы, replay байт-в-байт, окно мутации рейтинга {3,1}: выданный тикет заморожен, PRICE_CHANGED на устаревшем потолке, frozen-отмены вернули 1+1) + device-половина на риге (69f0c28d: каталог 16/16 с экстремумами 1/100, кошелёк 5/0 в UI, обход 16 локальных тикетов без aq37-утечек, квитанция 8cec4267 с замороженными 1 нолик + 50 зарядов и принятым рейтингом нетронута); оракул байт-в-байт, верификатор VERIFIED; функции-гейт 92/92; evidence docs/agents/evidence/2026-10-10-arena-quotas/
 
 [[story]]
 id = "3.8"
