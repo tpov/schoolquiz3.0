@@ -1,0 +1,113 @@
+{
+ "story": "3.8 arena-price-immutability-and-races",
+ "startedAt": "2026-10-10T04:17:47.199Z",
+ "requestTag": "ar38d",
+ "rigPlayer": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+ "parts": {
+  "frozenSettle": {
+   "ticketId": "cf8f96ef6030fee75c224f42da2b88c168d9798b636fca0c2f411e2d71d96d62",
+   "attemptId": "50b218eaf135bdd02cca9e4502b0983a23d066361117982772e8d976c2aeaa92",
+   "quoteDuringSettle": 100,
+   "consumedNolics": 1,
+   "percentScore": 100,
+   "royaltySum": 1,
+   "replayIdentical": true
+  },
+  "quoteRestored": true,
+  "settleFirst": {
+   "ticketId": "b193511128b38993ff47f5538615428ed912479735bbd5ce7fd162dbec7a0c8f",
+   "cancelResult": "SETTLED",
+   "noRelease": true,
+   "replayIdentical": true,
+   "statusCallable": "SETTLED"
+  },
+  "cancelFirst": {
+   "ticketId": "64da9a52ef6d12198826407216dad7fbfc05714dfb32207297ce9e8190bbb936",
+   "refusal": "TICKET_CANCELLED",
+   "secondRefusal": "TICKET_CANCELLED",
+   "noEvent": true,
+   "noRoyalty": true,
+   "noReward": true,
+   "keysUnchanged": true,
+   "statusCallable": "CANCELLED"
+  },
+  "concurrentRace": {
+   "ticketId": "16e7e93341531b1fcbffd4ca6202338092c1cf7d07610fc89bfa24f5c936a1c5",
+   "cancelStatus": 200,
+   "settleStatus": 200,
+   "settleRefusal": null,
+   "terminal": "SETTLED",
+   "effect": "SETTLED once"
+  },
+  "unknownNeverZero": {
+   "ticketId": "71de380f49f2a919d23f142f7952bfe44968d49d785ec5de693c46d70f62968d",
+   "codeAnswer": "11",
+   "percentScore": 0,
+   "consumedNolics": 1,
+   "noNotShownDigits": true
+  },
+  "unknownStaysUnknown": {
+   "ticketId": "61e3d7413e797a218eb23004ce8807ae6f29a422157f521eb73bc55c2c3231e4",
+   "refusal": "EXPLICIT_CANCELLATION_REQUIRED",
+   "terminalWhileUnresolved": null,
+   "noEvent": true,
+   "cancelRelease": {
+    "receiptId": "arena-cancel:61e3d7413e797a218eb23004ce8807ae6f29a422157f521eb73bc55c2c3231e4",
+    "cancelledAtMs": 1791605880337,
+    "releasedNolics": 1,
+    "releasedLifePoints": 50
+   }
+  }
+ },
+ "notes": [
+  "economy topped up {\"lifePoints\":153,\"pointsNolics\":0} -> {\"lifePoints\":300,\"pointsNolics\":8} (settled arena attempts consume their frozen price and life; the rig player's regen and exhausted lessonBest no longer offset a rerun)"
+ ],
+ "topUp": {
+  "from": {
+   "lifePoints": 153,
+   "pointsNolics": 0
+  },
+  "to": {
+   "lifePoints": 300,
+   "pointsNolics": 8
+  }
+ },
+ "baseline": {
+  "wallet": {
+   "nolics": 8,
+   "lifePoints": 300,
+   "reservedNolics": 0,
+   "reservedLifePoints": 150,
+   "arenaSelectedHeldCount": 0,
+   "skillPoints": 161
+  },
+  "keys": 22,
+  "rating": {
+   "ratingSum": 4,
+   "ratingCount": 2,
+   "ratingVersion": 2
+  }
+ },
+ "final": {
+  "wallet": {
+   "nolics": 4,
+   "lifePoints": 103,
+   "reservedNolics": 0,
+   "reservedLifePoints": 150,
+   "arenaSelectedHeldCount": 0,
+   "skillPoints": 168
+  },
+  "walletBefore": {
+   "nolics": 8,
+   "lifePoints": 300,
+   "reservedNolics": 0,
+   "reservedLifePoints": 150,
+   "arenaSelectedHeldCount": 0,
+   "skillPoints": 161
+  },
+  "keysBefore": 22,
+  "keysAfter": 26,
+  "settlesWon": 4,
+  "nolicsDelta": -4
+ }
+}
