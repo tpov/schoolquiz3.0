@@ -1,0 +1,127 @@
+[ {
+  "command" : {
+    "defineVariablesCommand" : {
+      "env" : {
+        "MATRIX_RUN_ID" : "arena38-sb-001",
+        "MATRIX_SELECTOR_HOME" : "^HOME QUESTS$",
+        "MATRIX_SELECTOR_INTERNET" : "^INTERNET$",
+        "MATRIX_SELECTOR_OPEN_MENU" : "^Open menu$",
+        "MATRIX_SELECTOR_ARENA_NAV" : "^ARENA$",
+        "MATRIX_SELECTOR_ARENA_TITLE" : "^Arena lessons$",
+        "MATRIX_SELECTOR_OPEN_CATALOG" : "^Open lesson catalog$",
+        "MATRIX_SELECTOR_CATALOG_PROMPT" : "^Press Load lessons to request the catalog\\.$",
+        "MATRIX_SELECTOR_LOAD_LESSONS" : "^Load lessons$",
+        "MATRIX_SELECTOR_LOADED_CATALOG" : "^Loaded [0-9]+ of [0-9]+ lessons$",
+        "MATRIX_SELECTOR_ARENA_ROOT_PREVIEW" : "^Catalog preview only\\. Entry preparation and play are not connected yet\\.$",
+        "MATRIX_SELECTOR_ARENA_RESERVATIONS" : "^Arena reservations$",
+        "MATRIX_SELECTOR_PREPARE" : "^Prepare selected lesson$",
+        "MATRIX_SELECTOR_CONFIRM_PREPARATION" : "^Confirm preparation$",
+        "MATRIX_SELECTOR_CONFIRM_CANCELLATION" : "^Confirm cancellation$",
+        "MATRIX_SELECTOR_TICKET_LABEL" : "^Ticket: .+$",
+        "MATRIX_SELECTOR_TICKET_STATE" : "^(?:Prepared locally\\. Starting requires a separate validated run\\.|Existing run: resume or reconcile; do not restart from zero\\.|Cancellation pending\\. Funds are not confirmed released\\.|Result is waiting for server settlement\\.|A terminal server state is saved\\. Pending local work may still need reconciliation\\.|This record needs server recovery\\. Do not create a replacement to resolve it\\.)$",
+        "MATRIX_SELECTOR_START" : "^Start this prepared attempt$",
+        "MATRIX_SELECTOR_OPEN_SAVED" : "^Open saved attempt or result$",
+        "MATRIX_SELECTOR_SYNCHRONIZE" : "^Synchronize$",
+        "MATRIX_SELECTOR_RATING_PROMPT" : "^Rate this lesson$",
+        "MATRIX_SELECTOR_RUNNER_ACTIVE" : "^(?:Exit lesson|Resume this lesson\\?|Continue lesson|Are you sure\\? Attempt progress will be lost|Reading the saved attempt…|Saving the final submission…|Submission saved on this device\\. Waiting for the server result and accounting receipt\\.|Cancellation saved on this device\\. The server has not confirmed the release of reserved resources\\.|The ticket is settled, but a verified result receipt is still required\\.)$",
+        "MATRIX_SELECTOR_RECEIPT" : "^(?:Arena result receipt|Waiting for server confirmation\\. Score and rewards are not confirmed yet\\.|Completion confirmed by the server|Score and charges confirmed; completion is not confirmed\\.|The server saved this attempt without a score\\. It is not a zero\\.|The server did not accept this attempt\\.|Legacy record: no server scoring proof is available\\.|Server confirmation could not be verified\\. Result is unknown\\.)$",
+        "MATRIX_SELECTOR_RATING" : "^(?:Rate this lesson|Rate [123]|Your rating \\([123]\\) is queued to send\\.|Your rating \\([123]\\) was accepted\\.|A rating exists, but server acceptance cannot be verified\\.|Rating is unavailable for this receipt\\.|Rating was not saved\\. Try again\\.|Send queued rating)$",
+        "MAESTRO_FILENAME" : "00-launch-retained",
+        "MAESTRO_DEVICE_UDID" : "localhost:5555",
+        "MAESTRO_SHARD_ID" : "1",
+        "MAESTRO_SHARD_INDEX" : "0"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607676991,
+    "duration" : 20,
+    "sequenceNumber" : 0,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "defineVariablesCommand" : {
+        "env" : {
+          "MATRIX_RUN_ID" : "arena38-sb-001",
+          "MATRIX_SELECTOR_HOME" : "^HOME QUESTS$",
+          "MATRIX_SELECTOR_INTERNET" : "^INTERNET$",
+          "MATRIX_SELECTOR_OPEN_MENU" : "^Open menu$",
+          "MATRIX_SELECTOR_ARENA_NAV" : "^ARENA$",
+          "MATRIX_SELECTOR_ARENA_TITLE" : "^Arena lessons$",
+          "MATRIX_SELECTOR_OPEN_CATALOG" : "^Open lesson catalog$",
+          "MATRIX_SELECTOR_CATALOG_PROMPT" : "^Press Load lessons to request the catalog\\.$",
+          "MATRIX_SELECTOR_LOAD_LESSONS" : "^Load lessons$",
+          "MATRIX_SELECTOR_LOADED_CATALOG" : "^Loaded [0-9]+ of [0-9]+ lessons$",
+          "MATRIX_SELECTOR_ARENA_ROOT_PREVIEW" : "^Catalog preview only\\. Entry preparation and play are not connected yet\\.$",
+          "MATRIX_SELECTOR_ARENA_RESERVATIONS" : "^Arena reservations$",
+          "MATRIX_SELECTOR_PREPARE" : "^Prepare selected lesson$",
+          "MATRIX_SELECTOR_CONFIRM_PREPARATION" : "^Confirm preparation$",
+          "MATRIX_SELECTOR_CONFIRM_CANCELLATION" : "^Confirm cancellation$",
+          "MATRIX_SELECTOR_TICKET_LABEL" : "^Ticket: .+$",
+          "MATRIX_SELECTOR_TICKET_STATE" : "^(?:Prepared locally\\. Starting requires a separate validated run\\.|Existing run: resume or reconcile; do not restart from zero\\.|Cancellation pending\\. Funds are not confirmed released\\.|Result is waiting for server settlement\\.|A terminal server state is saved\\. Pending local work may still need reconciliation\\.|This record needs server recovery\\. Do not create a replacement to resolve it\\.)$",
+          "MATRIX_SELECTOR_START" : "^Start this prepared attempt$",
+          "MATRIX_SELECTOR_OPEN_SAVED" : "^Open saved attempt or result$",
+          "MATRIX_SELECTOR_SYNCHRONIZE" : "^Synchronize$",
+          "MATRIX_SELECTOR_RATING_PROMPT" : "^Rate this lesson$",
+          "MATRIX_SELECTOR_RUNNER_ACTIVE" : "^(?:Exit lesson|Resume this lesson\\?|Continue lesson|Are you sure\\? Attempt progress will be lost|Reading the saved attempt…|Saving the final submission…|Submission saved on this device\\. Waiting for the server result and accounting receipt\\.|Cancellation saved on this device\\. The server has not confirmed the release of reserved resources\\.|The ticket is settled, but a verified result receipt is still required\\.)$",
+          "MATRIX_SELECTOR_RECEIPT" : "^(?:Arena result receipt|Waiting for server confirmation\\. Score and rewards are not confirmed yet\\.|Completion confirmed by the server|Score and charges confirmed; completion is not confirmed\\.|The server saved this attempt without a score\\. It is not a zero\\.|The server did not accept this attempt\\.|Legacy record: no server scoring proof is available\\.|Server confirmation could not be verified\\. Result is unknown\\.)$",
+          "MATRIX_SELECTOR_RATING" : "^(?:Rate this lesson|Rate [123]|Your rating \\([123]\\) is queued to send\\.|Your rating \\([123]\\) was accepted\\.|A rating exists, but server acceptance cannot be verified\\.|Rating is unavailable for this receipt\\.|Rating was not saved\\. Try again\\.|Send queued rating)$",
+          "MAESTRO_FILENAME" : "00-launch-retained",
+          "MAESTRO_DEVICE_UDID" : "localhost:5555",
+          "MAESTRO_SHARD_ID" : "1",
+          "MAESTRO_SHARD_INDEX" : "0"
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "applyConfigurationCommand" : {
+      "config" : {
+        "appId" : "com.tpov.schoolquiz.mvp",
+        "name" : "Arena matrix launch retained application"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607677014,
+    "duration" : 3,
+    "sequenceNumber" : 1,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "applyConfigurationCommand" : {
+        "config" : {
+          "appId" : "com.tpov.schoolquiz.mvp",
+          "name" : "Arena matrix launch retained application"
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "launchAppCommand" : {
+      "appId" : "com.tpov.schoolquiz.mvp",
+      "clearState" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607677019,
+    "duration" : 1280,
+    "sequenceNumber" : 2,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "launchAppCommand" : {
+        "appId" : "com.tpov.schoolquiz.mvp",
+        "clearState" : false,
+        "optional" : false
+      }
+    }
+  }
+} ]

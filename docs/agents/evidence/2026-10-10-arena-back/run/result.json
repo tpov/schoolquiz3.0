@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "phaseStatus": "PASS",
+  "phase": "system-back-catalog",
+  "runId": "arena38-sb-001",
+  "nextRequired": "none",
+  "resultArtifactVersion": 1
+}

@@ -137,8 +137,8 @@ waits = [
   "epic-1: selector map captured from the installed candidate (immutable input) — 1.5 hitl",
   "hitl: physical device run",
 ]
-hitl = true
-status = "blocked" # hitl; harness-скрипт существует, прогон не выполнялся
+hitl = true # 2026-10-10, ночь: выполнено на redroid-риге по действующему решению владельца о hitl-матрице на риге
+status = "done" # 2026-10-10, ночь: владельческий harness run-system-back-catalog.sh (runner не менялся, sha256 b0da6d62… в run-manifest) прогнан на риге — PASS, nextRequired none: верифицированный Home → выгруженный каталог → KEYCODE_BACK → верифицированный Arena root → KEYCODE_BACK → тот же верифицированный Home; все 4 поверхности CONTEXT с нулевыми unsafe-маркерами (никаких prepared-ticket/runner/receipt поверхностей; иерархии сняты перед каждым Back). Идентичность кандидата сверена harness-ом: installed base.apk 22a81c8a… = APK C (4003a978…), сертификат apksigner-ом; selector map 23 ключа (селекторы сняты с этой установки, OPEN_CATALOG/ARENA_ROOT_PREVIEW испытаны живьём ассессором). Честно: скриншоты чёрные (FLAG_SECURE) — визуальная приёмка остаётся device-строкой владельца. evidence docs/agents/evidence/2026-10-10-arena-back/
 
 [[story]]
 id = "3.11"
