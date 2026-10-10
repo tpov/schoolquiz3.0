@@ -98,7 +98,7 @@ waits = [
   "4.6: review cycle (hitl)",
   "OQ-2: parked — abandonment outcome NOT added; owner decides only before adding it (spec Open questions)",
 ]
-status = "blocked" # server/node-консервация проверяема без устройства, но after 4.6 (hitl); OQ-2 остаётся parked
+status = "done" # 2026-10-10: консервация сервером (AD-10): плата тарифа одной транзакцией с принятием заявки (идемпотентна документом review_fee_cycles, отказ без записей при нехватке), расчёт на терминале PUBLISHED/обоснованном REJECTED + догон при каждом обращении к терминальной заявке; десятые нолика, floors+остатки по убыванию, ничья по unitId, BigInt без float; манифест review_fee_manifests/{submissionId} неизменяем (tx.create), carry проверяющего свой (reviewFeeCarryTenths); отклонение платит судье по rejectedReviewerLevelAtSubmit; чужая submissionId цикл не кормит; незавершённый цикл фонд не делит (OQ-2 parked). Тарифы configs/review_fee (дефолт 1000/100, revision); перепроверка = 100×все вопросы (модель ревью перепроверяет заявку целиком — граница в evidence, отчёту владельцу). Доказательство: чистая сюита 16 кейсов + приёмниковая сюита (5 кейсов) на стабе, функции-гейт 96/96 чисто и против demo-backend; живой journey против demo (callable-путь): cycle1 10000t=255t+9745t, carry 5→+11, идемпотентность байт-в-байт, cycle3 PAID без манифеста; firebase-гейт 272 (2 предсуществующих fixture-pin). evidence docs/agents/evidence/2026-10-10-review-fee/
 
 [[story]]
 id = "4.8"
