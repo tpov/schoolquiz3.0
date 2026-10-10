@@ -2,11 +2,11 @@ package com.tpov.schoolquiz.platform.firebase.quest_authoring
 
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.MAX_QUEST_REVIEW_OUTCOME_TARGETS
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestionReviewOutcome
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcome
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcomeRequest
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.MAX_QUEST_REVIEW_OUTCOME_TARGETS
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestionReviewOutcome
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -57,10 +57,11 @@ internal fun questReviewSubmissionOutcomes(
         val draftId = entry.requiredString(DRAFT_ID)
         val status = entry.requiredString(STATUS)
         check(status in REVIEW_SUBMISSION_STATUSES) { "Review outcome has an unsupported status" }
-        val reason = entry[REJECTION_REASON]?.let { it as? String ?: throw IllegalStateException("Invalid rejection reason") }
-        check(if (status == QuestSubmissionOutcome.STATUS_REJECTED) !reason.isNullOrBlank() else reason == null) {
-            "Review outcome carries an invalid author-visible reason"
-        }
+        val reason =
+            entry[REJECTION_REASON]?.let { it as? String ?: throw IllegalStateException("Invalid rejection reason") }
+        check(
+            if (status == QuestSubmissionOutcome.STATUS_REJECTED) !reason.isNullOrBlank() else reason == null,
+        ) { "Review outcome carries an invalid author-visible reason" }
         check(seenSubmissionIds.add(submissionId)) { "Review outcome response repeats a submission" }
         if (submissionId in request.submissionIds) {
             // The shared sync verifies the exact draft/submission pairing against Room before it
@@ -104,11 +105,12 @@ private fun Map<*, *>.questionOutcomes(): List<QuestionReviewOutcome> {
     return outcomes.map { item ->
         val outcome = item as? Map<*, *> ?: throw IllegalStateException("Review outcome entry is not an object")
         val questionId = outcome.requiredString(QUESTION_ID)
-        val testingScore = when (val score = outcome[TESTING_SCORE]) {
-            null -> null
-            is Number -> score.toDouble()
-            else -> throw IllegalStateException("Review outcome testing score is not a number")
-        }
+        val testingScore =
+            when (val score = outcome[TESTING_SCORE]) {
+                null -> null
+                is Number -> score.toDouble()
+                else -> throw IllegalStateException("Review outcome testing score is not a number")
+            }
         val passed = outcome[PASSED] as? Boolean ?: throw IllegalStateException("Review outcome passed flag is missing")
         QuestionReviewOutcome(questionId = questionId, testingScore = testingScore, passed = passed)
     }

@@ -11,6 +11,16 @@
 //   compare <before> <after>           — побайтовый диф двух снапшотов (кроме разрешённых)
 //   bootstrap-curator <uid>            — profiles/{uid}.adminLevel = 100 (demo-фиксур роли)
 //   review <submissionId> <reviewerUid> <score> — TESTING, затем LOGIC по заданиям заявки
+//   review-questions <submissionId> <reviewerUid> <s1,s2,…> — TESTING с по-вопросными оценками
+//                                        (4.6: порог виден на смешанных оценках, без LOGIC)
+//   author-outcomes <submissionId> <authorUid> — listMyQuestReviewSubmissions автором живьём:
+//                                        именованные стадии + по-вопросные исходы (CAP-3)
+//   translate <submissionId> <translatorUid> <lang> [blankQuestionId] — TRANSLATION реальным
+//                                        приёмником; blankQuestionId подаёт вопрос без текста
+//                                        (missing text never auto-approved)
+//   review-segments <submissionId> <reviewerUid> <lang> <qid:key:decision,…> | silent
+//                                        — TRANSLATION_REVIEW с явными решениями; `silent`
+//                                        шлёт старый accepted-булев и ждёт отказа провода
 //   status <submissionId>              — заявка: статус, задания, агрегат проверок
 //   catalog                            — listArenaLessons живьём (карточки + версии)
 
@@ -218,6 +228,108 @@ async function review(submissionId, reviewerUid, score) {
   console.log(`REVIEW OK submission ${submissionId} published=${logic.json.result.published}`);
 }
 
+// По-вопросный TESTING-ревью (4.6): оценки из CSV ровно на состав задания; приёмник сам
+// отвергает неполный/чужой набор. LOGIC здесь не подаётся — исход порога читают из заявки.
+async function reviewQuestions(submissionId, reviewerUid, scoresCsv) {
+  const scores = scoresCsv.split(",").map((value) => Number(value));
+  const task = await journeyTask(submissionId);
+  assert.equal(scores.length, task.questionIds.length, "scores must cover the assignment question set");
+  const token = await playerIdToken(reviewerUid);
+  const response = await callable(SUBMIT_REVIEW_PATH, {
+    assignmentId: task.assignmentId,
+    lessonId: task.lessonId,
+    kind: "TESTING",
+    score: Math.min(...scores),
+    questionScores: task.questionIds.map((questionId, index) => ({questionId, score: scores[index]})),
+    language: null,
+  }, token);
+  assert.equal(response.status, 200, `TESTING must be accepted: ${JSON.stringify(response.json)}`);
+  console.log(`REVIEW-QUESTIONS ${submissionId} scores=[${scores.join(",")}] -> ${JSON.stringify(response.json.result.aggregate)}`);
+}
+
+// Автор читает свои вердикты реальным вью-callable: поимённые стадии и по-вопросные исходы.
+async function authorOutcomes(submissionId, authorUid) {
+  const token = await playerIdToken(authorUid);
+  const response = await callable(`/${PROJECT}/us-central1/listMyQuestReviewSubmissions`,
+    {submissionIds: [submissionId], legacyDraftIds: []}, token);
+  assert.equal(response.status, 200, `author view must answer: ${JSON.stringify(response.json)}`);
+  const entry = (response.json.result.entries || []).find((row) => row.submissionId === submissionId);
+  console.log(JSON.stringify(entry || {missing: true}, null, 2));
+}
+
+// Задание заявки: единственный урок + состав вопросов из подколлекции задания.
+async function journeyTask(submissionId) {
+  const tasks = await db.collection("admin/review/lessons").where("submissionId", "==", submissionId).get();
+  assert.equal(tasks.size, 1, "the journey submission carries exactly one lesson task");
+  const taskDoc = tasks.docs[0];
+  const data = taskDoc.data();
+  const questionsSnapshot = await taskDoc.ref
+    .collection("quests").doc(data.questId).collection("questions").get();
+  const questionIds = questionsSnapshot.docs.map((doc) => doc.id);
+  assert.ok(questionIds.length > 0, "task must carry its question subcollection");
+  return {taskDoc, data, assignmentId: data.assignmentId, lessonId: data.id, ownerUid: data.ownerUid,
+    questId: data.questId, questionIds};
+}
+
+// TRANSLATION реальным приёмником: перевод строится из состава задания (текст = lang:id).
+// [blankQuestionId] оставляет одному вопросу пустой текст — язык не должен засчитаться.
+async function translate(submissionId, translatorUid, language, blankQuestionId) {
+  const task = await journeyTask(submissionId);
+  const questionsSnapshot = await task.taskDoc.ref
+    .collection("quests").doc(task.questId).collection("questions").get();
+  const translated = questionsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    lessonId: task.lessonId,
+    type: doc.data().type || "QA",
+    language,
+    text: doc.id === blankQuestionId ? "" : `${language}:${doc.id}`,
+    payload: doc.data().payload || "{}",
+    updatedAtMs: Date.now(),
+  }));
+  const token = await playerIdToken(translatorUid);
+  const response = await callable(SUBMIT_REVIEW_PATH, {
+    assignmentId: task.assignmentId, lessonId: task.lessonId, kind: "TRANSLATION",
+    language, translatedQuestions: translated, segmentResults: [], questionScores: [],
+  }, token);
+  console.log(JSON.stringify({httpStatus: response.status, aggregate: response.json.result ? response.json.result.aggregate : response.json}, null, 2));
+}
+
+// TRANSLATION_REVIEW с явными решениями по сегментам; `silent` доказывает отказ старого
+// провода (accepted-булев без решения).
+async function reviewSegments(submissionId, reviewerUid, language, decisionsArg) {
+  const task = await journeyTask(submissionId);
+  const token = await playerIdToken(reviewerUid);
+  if (decisionsArg === "silent") {
+    const response = await callable(SUBMIT_REVIEW_PATH, {
+      assignmentId: task.assignmentId, lessonId: task.lessonId, kind: "TRANSLATION_REVIEW",
+      language, segmentResults: [{questionId: task.questionIds[0], segmentKey: "text", accepted: true}],
+    }, token);
+    assert.equal(response.status, 400, "the silent accepted boolean must be refused by the wire");
+    assert.match(JSON.stringify(response.json), /explicit decision/, "the refusal must name the explicit decision");
+    console.log(`SEGMENTS-SILENT REFUSED (explicit decision required): ${JSON.stringify(response.json)}`);
+    return;
+  }
+  const decisions = new Map(decisionsArg.split(",").map((entry) => {
+    const [questionId, segmentKey, decision] = entry.split(":");
+    return [`${questionId}|${segmentKey}`, decision];
+  }));
+  const segmentResults = task.questionIds.flatMap((questionId) =>
+    ["text"].map((segmentKey) => ({
+      questionId,
+      segmentKey,
+      decision: decisions.get(`${questionId}|${segmentKey}`),
+    })),
+  );
+  assert.ok(segmentResults.every((segment) => segment.decision === "correct" || segment.decision === "error"),
+    "every segment needs an explicit correct/error decision");
+  const response = await callable(SUBMIT_REVIEW_PATH, {
+    assignmentId: task.assignmentId, lessonId: task.lessonId, kind: "TRANSLATION_REVIEW",
+    language, segmentResults, questionScores: [],
+  }, token);
+  assert.equal(response.status, 200, `TRANSLATION_REVIEW must be accepted: ${JSON.stringify(response.json)}`);
+  console.log(`SEGMENTS OK -> ${JSON.stringify(response.json.result.aggregate)}`);
+}
+
 async function catalog() {
   const token = await playerIdToken("cbynDghgyOf5exjIrEH57oeOjPzf");
   const response = await callable(CATALOG_PATH, {pageSize: 50}, token);
@@ -258,6 +370,14 @@ async function main() {
     await bootstrapCurator(args[0]);
   } else if (cmd === "review") {
     await review(args[0], args[1], Number(args[2]));
+  } else if (cmd === "review-questions") {
+    await reviewQuestions(args[0], args[1], args[2]);
+  } else if (cmd === "author-outcomes") {
+    await authorOutcomes(args[0], args[1]);
+  } else if (cmd === "translate") {
+    await translate(args[0], args[1], args[2], args[3]);
+  } else if (cmd === "review-segments") {
+    await reviewSegments(args[0], args[1], args[2], args[3]);
   } else if (cmd === "status") {
     await statusOf(args[0]);
   } else if (cmd === "catalog") {

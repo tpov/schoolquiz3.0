@@ -1,8 +1,8 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component
 
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentDecisionUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentDecisionUi
 import kotlinx.coroutines.flow.StateFlow
 
 interface ReviewQueueComponent {
