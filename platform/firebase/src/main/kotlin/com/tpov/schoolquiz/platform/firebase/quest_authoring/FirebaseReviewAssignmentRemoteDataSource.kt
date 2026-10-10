@@ -196,9 +196,10 @@ class FirebaseReviewAssignmentRemoteDataSource(
             LESSON_ID to lessonId,
             KIND to kind,
             SCORE to score,
-            QUESTION_SCORES to questionScores.map { score ->
-                mapOf(QUESTION_ID to score.questionId, SCORE to score.score)
-            },
+            QUESTION_SCORES to
+                questionScores.map { score ->
+                    mapOf(QUESTION_ID to score.questionId, SCORE to score.score)
+                },
             LANGUAGE to language,
             TARGET_REVIEW_ID to targetReviewId,
             TRANSLATED_QUESTIONS to translatedQuestions.map { it.toCallableMap() },
