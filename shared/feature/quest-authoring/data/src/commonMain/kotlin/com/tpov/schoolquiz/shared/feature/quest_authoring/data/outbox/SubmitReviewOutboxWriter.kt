@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewActionSubmission
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestionScore
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecision
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitReviewActionCommand
 import kotlinx.serialization.json.JsonNull
@@ -71,6 +72,7 @@ object SubmitReviewOutboxWriter {
             putNullable("score", score)
             putNullable("language", language)
             putNullable("targetReviewId", targetReviewId)
+            put("questionScores", buildJsonArray { questionScores.forEach { add(it.toJson()) } })
             put("translatedQuestions", buildJsonArray { translatedQuestions.forEach { add(it.toJson()) } })
             put("segmentResults", buildJsonArray { segmentResults.forEach { add(it.toJson()) } })
         }
@@ -92,11 +94,18 @@ object SubmitReviewOutboxWriter {
             put("updatedAtMs", updatedAtMs)
         }
 
+    private fun ReviewQuestionScore.toJson(): JsonObject =
+        buildJsonObject {
+            put("questionId", questionId)
+            put("score", score)
+        }
+
+    /** Решение едет явно: приёмник молчаливый `accepted` без решения отвергает (CAP-3). */
     private fun ReviewSegmentDecision.toJson(): JsonObject =
         buildJsonObject {
             put("questionId", questionId)
             put("segmentKey", segmentKey)
-            put("accepted", accepted)
+            put("decision", decision.name.lowercase())
         }
 
     /** Пусто — это `null`, а не пропущенное поле: разница на приёмнике значимая. */

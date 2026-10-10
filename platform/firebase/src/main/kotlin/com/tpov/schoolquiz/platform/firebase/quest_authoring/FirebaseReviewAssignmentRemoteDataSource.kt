@@ -196,6 +196,9 @@ class FirebaseReviewAssignmentRemoteDataSource(
             LESSON_ID to lessonId,
             KIND to kind,
             SCORE to score,
+            QUESTION_SCORES to questionScores.map { score ->
+                mapOf(QUESTION_ID to score.questionId, SCORE to score.score)
+            },
             LANGUAGE to language,
             TARGET_REVIEW_ID to targetReviewId,
             TRANSLATED_QUESTIONS to translatedQuestions.map { it.toCallableMap() },
@@ -222,7 +225,7 @@ class FirebaseReviewAssignmentRemoteDataSource(
         mapOf(
             QUESTION_ID to questionId,
             SEGMENT_KEY to segmentKey,
-            ACCEPTED to accepted,
+            DECISION to decision,
         )
 
     private fun Map<*, *>?.list(field: String): List<Map<*, *>> =
@@ -309,8 +312,9 @@ class FirebaseReviewAssignmentRemoteDataSource(
         const val TARGET_REVIEW_ID = "targetReviewId"
         const val TRANSLATED_QUESTIONS = "translatedQuestions"
         const val SEGMENT_RESULTS = "segmentResults"
+        const val QUESTION_SCORES = "questionScores"
         const val QUESTION_ID = "questionId"
         const val SEGMENT_KEY = "segmentKey"
-        const val ACCEPTED = "accepted"
+        const val DECISION = "decision"
     }
 }

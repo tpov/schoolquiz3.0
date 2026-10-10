@@ -21,6 +21,9 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.SubmitRevi
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewActionSubmission
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentKind
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewAssignmentSyncState
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestionScore
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecision
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewSegmentDecisionKind
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitReviewActionCommand
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +37,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.fail
@@ -94,7 +98,58 @@ class ReviewAssignmentRepositoryImplTest {
             assertEquals(JsonNull, payload.getValue("targetReviewId"))
             assertEquals(0, payload.getValue("translatedQuestions").jsonArray.size)
             assertEquals(0, payload.getValue("segmentResults").jsonArray.size)
+            assertEquals(0, payload.getValue("questionScores").jsonArray.size)
         }
+
+    @Test
+    fun payloadCarriesPerQuestionScores_andExplicitSegmentDecisions() =
+        runTest {
+            val outbox = FakeOutboxStore()
+            val repository = ReviewAssignmentRepositoryImpl(FakeLocal(), outbox)
+
+            repository.queueReviewAction(
+                submission(score = 3).copy(
+                    command =
+                        submission(score = 3).command.copy(
+                            questionScores =
+                                listOf(
+                                    ReviewQuestionScore("q1", 3),
+                                    ReviewQuestionScore("q2", 1),
+                                ),
+                            segmentResults =
+                                listOf(
+                                    ReviewSegmentDecision("q1", "text", ReviewSegmentDecisionKind.CORRECT),
+                                    ReviewSegmentDecision("q1", "option:A", ReviewSegmentDecisionKind.ERROR),
+                                ),
+                        ),
+                ),
+            )
+
+            val payload = Json.parseToJsonElement(outbox.all.single().payload).jsonObject
+            assertEquals(
+                listOf("q1" to 3, "q2" to 1),
+                payload.getValue("questionScores").jsonArray.map {
+                    val entry = it.jsonObject
+                    entry.getValue("questionId").jsonPrimitive.content to
+                        entry.getValue("score").jsonPrimitive.content.toInt()
+                },
+            )
+            assertEquals(
+                listOf("correct", "error"),
+                payload.getValue("segmentResults").jsonArray.map {
+                    it.jsonObject.getValue("decision").jsonPrimitive.content
+                },
+            )
+            // Молчаливого одобрения в проводе больше нет: решение — единственный носитель смысла.
+            assertEquals(null, payload.getValue("segmentResults").jsonArray[0].jsonObject["accepted"])
+        }
+
+    @Test
+    fun perQuestionScoreOutsideTheScaleIsRefusedBeforeTheQueue() {
+        assertFailsWith<IllegalArgumentException> { ReviewQuestionScore("q1", 0) }
+        assertFailsWith<IllegalArgumentException> { ReviewQuestionScore("q1", 4) }
+        assertFailsWith<IllegalArgumentException> { ReviewQuestionScore(" ", 2) }
+    }
 
     @Test
     fun theSameIntentAlwaysGetsTheSameKey_andAnotherIntentAnotherOne() {

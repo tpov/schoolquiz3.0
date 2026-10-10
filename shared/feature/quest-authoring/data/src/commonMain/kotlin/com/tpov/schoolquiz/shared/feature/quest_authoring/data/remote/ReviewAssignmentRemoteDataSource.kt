@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote
 import com.tpov.schoolquiz.shared.core.sync.SYNC_PAGE_SIZE
 import com.tpov.schoolquiz.shared.core.sync.SyncChangePage
 import com.tpov.schoolquiz.shared.core.sync.SyncCursor
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestionScore
 
 data class ReviewAssignmentDto(
     val id: String,
@@ -48,14 +49,22 @@ data class ReviewAssignmentChangeDto(
 data class ReviewSegmentResultDto(
     val questionId: String,
     val segmentKey: String,
-    val accepted: Boolean,
-)
+    /** Явное решение проводом: `correct` или `error`; молчаливого одобрения не существует (CAP-3). */
+    val decision: String,
+) {
+    init {
+        require(decision == "correct" || decision == "error") {
+            "ReviewSegmentResultDto.decision must be \"correct\" or \"error\", got $decision"
+        }
+    }
+}
 
 data class SubmitReviewActionDto(
     val assignmentId: String,
     val lessonId: String,
     val kind: String,
     val score: Int? = null,
+    val questionScores: List<ReviewQuestionScore> = emptyList(),
     val language: String? = null,
     val targetReviewId: String? = null,
     val translatedQuestions: List<ArenaQuestionDto> = emptyList(),

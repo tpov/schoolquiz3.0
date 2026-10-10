@@ -29,6 +29,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArena
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcomeRequest
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewSegmentResultDto
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewQuestionScore
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.SubmitReviewActionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.ReviewAssignmentSync
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.reviewAssignmentSyncCursorId
@@ -98,6 +99,8 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
                     lessonId = ids.lessonId,
                     kind = TESTING,
                     score = 1,
+                    questionScores =
+                        listOf(ids.questionId, ids.hardQuestionId).map { ReviewQuestionScore(it, 1) },
                 ),
             )
 
@@ -108,6 +111,8 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
                     lessonId = ids.lessonId,
                     kind = TESTING,
                     score = 3,
+                    questionScores =
+                        listOf(ids.questionId, ids.hardQuestionId).map { ReviewQuestionScore(it, 3) },
                 ),
             )
             waitForAdminLesson(ids) { it.doubleValue("testingScore") == 3.0 }
@@ -161,8 +166,8 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
                     language = "en",
                     segmentResults =
                         listOf(
-                            ReviewSegmentResultDto(ids.questionId, "text", accepted = true),
-                            ReviewSegmentResultDto(ids.questionId, "option:A", accepted = false),
+                            ReviewSegmentResultDto(ids.questionId, "text", decision = "correct"),
+                            ReviewSegmentResultDto(ids.questionId, "option:A", decision = "error"),
                         ),
                 ),
             )
