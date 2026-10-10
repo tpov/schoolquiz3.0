@@ -1618,7 +1618,31 @@ async function applyArenaSubmission(uid, payload) {
     // фича по карантину (AD-28), вернув черновик автору в редактируемое состояние.
     throw new HttpsError("invalid-argument", "Submission carries no questions");
   }
+  await assertLessonTitlesUnchanged(request);
   return processArenaRequest(request);
+}
+
+/**
+ * Заголовок уже существующего урока неизменен (SPEC Constraints, история 4.5).
+ *
+ * Публикация перезаписывает документы заявки с `{merge: true}`, и заголовок с провода затёр бы
+ * публичный молча. Клиентского пути переименовать существующий урок нет — заголовок заполняется
+ * один раз при создании урока и едет по проводу без изменений, — поэтому расхождение здесь
+ * значит ровно одно: тело заявки собрано вопреки этому правилу. Отказ до всякой записи: заявка
+ * не создаётся, приватное дерево не пишется, ключ мутации освобождается обработчиком.
+ */
+async function assertLessonTitlesUnchanged(request) {
+  for (const lesson of request.lessons) {
+    const snapshot = await db.doc(`lessons/${lesson.id}`).get();
+    if (!snapshot.exists) continue;
+    const existingTitle = stringValue(snapshot.data() && snapshot.data().title);
+    if (existingTitle !== lesson.title) {
+      throw new HttpsError(
+        "failed-precondition",
+        `LESSON_TITLE_IMMUTABLE: lesson ${lesson.id} is already published with a different title`,
+      );
+    }
+  }
 }
 
 /**
