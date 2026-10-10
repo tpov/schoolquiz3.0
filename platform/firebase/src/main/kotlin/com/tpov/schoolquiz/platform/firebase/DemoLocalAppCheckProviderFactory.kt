@@ -30,6 +30,11 @@ private object DemoLocalAppCheckProvider : AppCheckProvider {
             },
         )
 
-    private const val TOKEN = "demo-local-appcheck"
+    // SDK на клиенте разбирает токен как JWT (TokenParser: ≥2 секций, payload — base64url-JSON)
+    // и бракует строку без секций до отправки, поэтому константа несёт форму JWT. exp — в
+    // секундах и внутри Integer: читатель кеша приводит claim к Integer напрямую, и большие
+    // значения роняют процесс на старте (DefaultAppCheckToken.getLongFromClaimsSafely).
+    private const val TOKEN =
+        "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJleHAiOjIxNDc0ODMwMDAsInN1YiI6ImRlbW8tbG9jYWwtYXBwY2hlY2sifQ.demo-local-signature"
     private const val TTL_MS = 60L * 60 * 1000
 }

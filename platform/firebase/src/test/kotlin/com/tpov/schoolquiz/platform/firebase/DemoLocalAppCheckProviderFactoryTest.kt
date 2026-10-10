@@ -35,4 +35,18 @@ class DemoLocalAppCheckProviderFactoryTest {
         assertNotEquals("просроченный кеш не должен реанимировать callable", 0L, first.expireTimeMillis)
         assertTrue(second.expireTimeMillis >= first.expireTimeMillis)
     }
+
+    @Test
+    fun `given the demo token then the SDK can parse its claims`() {
+        val provider = DemoLocalAppCheckProviderFactory.create(mockk<FirebaseApp>())
+
+        val token = provider.getToken().result.token
+
+        val sections = token.split(".")
+        assertTrue("SDK разбирает токен как JWT и бракует строку без секций", sections.size >= 3)
+        val padding = "==".take((4 - sections[1].length % 4) % 4)
+        val json = String(java.util.Base64.getUrlDecoder().decode(sections[1] + padding))
+        // Читатель кеша приводит exp к Integer напрямую: Long в claim роняет процесс на старте.
+        assertTrue("exp обязан быть секундами внутри Integer: $json", json.contains("\"exp\":2147483000"))
+    }
 }
