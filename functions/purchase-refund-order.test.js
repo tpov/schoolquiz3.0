@@ -170,7 +170,6 @@ for (const hasSettlement of [false, true]) {
 
 const invalidSignals = [
   ["another package", {packageName: "com.other.app"}],
-  ["subscription", {voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 1, refundType: 1, orderId: "GPA.fixture-order"}}],
   ["unknown refund type", {voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 2, refundType: 3, orderId: "GPA.fixture-order"}}],
   ["missing product type", {voidedPurchaseNotification: {purchaseToken: TOKEN, refundType: 1, orderId: "GPA.fixture-order"}}],
   ["missing order", {voidedPurchaseNotification: {purchaseToken: TOKEN, productType: 2, refundType: 1}}],
@@ -190,6 +189,32 @@ for (const [label, change] of invalidSignals) {
     assert.equal(calls, 0);
   });
 }
+
+test("subscription void (productType 1) fences the token: ownerless confirms, owned parks", async () => {
+  // Возврат подписки (премиум) пока не снимает время — какое состояние Play подтверждает возврат
+  // подписки, решает отдельная история. Молча пройти он не может: токен закрывается забором, а
+  // возврат остаётся в записи сообщений.
+  const {db, sku} = fixture("PREMIUM");
+  const subVoid = message({voidedPurchaseNotification: {
+    purchaseToken: TOKEN, orderId: "GPA.fixture-order", productType: 1, refundType: 1}});
+  // Хозяина нет: Play отвечает за токен «отменена» — забор подтверждается, начисления не было.
+  await refund(db, sku, play(sku), subVoid);
+  assert.equal(db.store.get(FENCE).state, "CONFIRMED_REVOKED");
+  assert.equal(db.store.get(NOTICE).result, "NOTHING_TO_TAKE");
+  assert.equal(db.store.get(USER).gold, 20);
+  // Хозяин есть (премиум начислен): возврат паркуется — время и запись расчёта не тронуты,
+  // токен закрыт от повторного начисления.
+  const owned = fixture("PREMIUM");
+  assert.equal((await buy(owned.db, owned.sku)).response.status, "CREDITED");
+  const premiumUntil = owned.db.store.get(USER).premiumUntilMs;
+  await refund(owned.db, owned.sku, play(owned.sku), subVoid);
+  assert.equal(owned.db.store.get(FENCE).state, "PENDING_VERIFICATION");
+  assert.equal(owned.db.store.get(FENCE).signal.kind, "SUBSCRIPTION_VOID");
+  assert.equal(owned.db.store.get(SETTLEMENT).status, "CREDITED");
+  assert.equal(owned.db.store.get(USER).premiumUntilMs, premiumUntil);
+  assert.match(owned.db.store.get(NOTICE).detail, /subscription refund parked/);
+  assert.equal((await buy(owned.db, owned.sku)).kind, "unavailable");
+});
 
 test("unreadable or missing Pub/Sub id never fences a token", async () => {
   for (const msg of [{messageId: "bad-json", data: Buffer.from("no json").toString("base64")},

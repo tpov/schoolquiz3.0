@@ -2,9 +2,9 @@
 title: 'M1.3 — A refund takes back what it paid for, exactly once'
 type: 'feature'
 created: '2026-09-03'
-status: 'in-progress'
+status: 'done'
 baseline_commit: '4614edca4ec9f53ed7dad5c695edd8e6dced2ffc'
-review_loop_iteration: 0
+review_loop_iteration: 1
 story_key: '1-3-обработчик-возвратов-и-отзывов'
 sprint_status_file: '_bmad-output/implementation-artifacts/sprint-status-monetisation.yaml'
 context:
@@ -83,3 +83,61 @@ context:
 **Commands:**
 - `cd functions && npm run lint && npm test` -- expected: every suite prints OK, including the two new ones.
 - Manual: the topic and its subscription do not exist yet, so the trigger is verified by reading and by the module tests; note this in the report.
+
+### Review Findings
+
+Code review 2026-10-11, thorough (blind-hunter + edge-case-hunter + verification-gap + intent-alignment).
+
+- [x] [Review][Patch] A subscription refund (productType 1) was dropped silently: premium refund
+  left the time running and the token re-creditable [purchase-revocations.js:revocationSignal,
+  purchase-clawback.js] — fixed (containment): `SUBSCRIPTION_VOID` signal admitted; an ownerless
+  void confirms through token-only V2; a void over a live settlement parks durably (record +
+  PENDING fence blocks re-credit). Nothing is taken on the notification alone — the frozen Never
+  forbids it until the premium-corroboration decision below.
+- [x] [Review][Patch] A concurrent duplicate delivery could overwrite the message record that
+  moved money with a later «nothing was taken» verdict [purchase-clawback.js:record] — fixed:
+  record() never rewrites a CLAWED_BACK record; the late duplicate answers REPLAYED. (The guard's
+  concurrent window itself is unreachable from sequential fakes; the delivered-again fast path is
+  what tests pin.)
+- [x] [Review][Patch] Premium ledger rows were written with a private copy of the closed ledger
+  vocabulary, so no closed-list test could catch a divergence [premium-economy.js] — fixed:
+  `PREMIUM_LEDGER_CURRENCY`/`PREMIUM_LEDGER_REASONS` consume `CURRENCY.PREMIUM_MS`/`REASON.PREMIUM_*`;
+  vocabulary-tie test added.
+- [x] [Review][Patch] The premium refund receipt's display fields (messageKey, params, currency,
+  premiumGrantId) and the refund audit's premium provenance were asserted by no test
+  [premium-purchases.test.js] — fixed: the refund test pins them.
+- [x] [Review][Defer] Full premium clawback is not wired: a parked subscription refund neither
+  revokes time nor has a decided Play corroboration [purchase-clawback.js SUBSCRIPTION_VOID park] —
+  deferred: story-sized design (subscriptionsv2 does not flag refunds cleanly; renewal orderIds can
+  rebind the fence; subscriptionNotification REVOKED types ride the renewal gate) and an owner
+  decision; until then the park keeps the token fenced and the refund on record.
+- [x] [Review][Defer] A partial RTDN that finds the token fully refunded (V2 CANCELLED or
+  refundableQuantity 0) can never be reconciled — the last refunded unit's gold stays
+  [purchase-revocations.js:partialRefundProofFromV2] — deferred: the emptied partial must land in
+  the full clawback path; needs the Play-semantics answer (whether refundType 1 always follows).
+- [x] [Review][Defer] A partial-amount refund of a quantity-1 purchase is unreconcilable in the
+  whole-unit model and redelivers until dropped [purchase-revocations.js:partialObservation] —
+  deferred: needs the conservative-full-clawback decision (over-collect vs under-collect).
+- [x] [Review][Defer] A PENDING fence whose RTDN exhausts Pub/Sub retries wedges credit for that
+  token forever [purchase-settlement.js:revocationSettlementGate] — deferred: correct for genuinely
+  refunded tokens; the escape (credit-time re-verification against Play) is a design change.
+- [x] [Review][Defer] Parked refunds, repair-required throws and PLAY_DISAGREES acks are visible
+  only as purchase_notifications documents and log lines; no operator surface consumes them —
+  deferred: reconciliation/operator view is its own story; includes the malformed-provenance case
+  the full path acks and the partial path redelivers.
+- [x] [Review][Decision] The revocation fence (purchase-revocations.js) changes how verifyPurchase
+  decides a credit — the spec's Ask First surface — and supersedes two matrix rows (never-credited
+  now demands Play confirmation; play-disagrees throws instead of acking) — recorded as a negotiated
+  amendment: all three serve the frozen Never, nothing moves on a notification alone; surfaced to
+  the owner in the shift report.
+
+**Rejected**
+- Partial RTDN after the settlement is already refunded redelivers forever — false: the ingress
+  gate records ALREADY_REFUNDED before the partial branch (purchase-clawback.js:189-196); the
+  in-transaction ALREADY_REFUNDED throw fires only in the ingress→transaction race, and the
+  redelivered message then takes the recorded path.
+- Stale out-of-order partial RTDNs burn the retry window without a terminal record — rejected low:
+  money-safe by construction (messageId replay plus monotonic quantities), rare, and a
+  terminal-record fix adds branches to the money path.
+- English comments in purchase-revocations.js against the spec's «Russian in functions/» —
+  rejected low: cosmetic; a translation sweep would touch every fence line for no behavior.

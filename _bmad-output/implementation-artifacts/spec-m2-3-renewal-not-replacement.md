@@ -2,9 +2,9 @@
 title: 'M2.3 — Renewal, not replacement'
 type: 'feature'
 created: '2026-10-11'
-status: 'review'
+status: 'done'
 baseline_commit: 'd59a0299'
-review_loop_iteration: 0
+review_loop_iteration: 1
 story_key: '2-3-продление-а-не-замена'
 sprint_status_file: '_bmad-output/implementation-artifacts/sprint-status-monetisation.yaml'
 context:

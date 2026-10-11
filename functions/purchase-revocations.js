@@ -40,6 +40,14 @@ function revocationSignal(notification, packageName) {
       token(voided.purchaseToken) && text(voided.orderId)) {
     return {kind: "ONE_TIME_PARTIAL_VOID", orderId: voided.orderId, sku: "", eventTimeMs};
   }
+  // A subscription void (productType 1) is how Play reports a refunded premium purchase. It is
+  // fenced and recorded, but no time is revoked here: which Play state corroborates a subscription
+  // refund is its own decision (deferred-work). Dropping the message instead would leave refunded
+  // premium running and the token re-creditable.
+  if (object(voided) && voided.productType === 1 && [1, 2].includes(voided.refundType) &&
+      token(voided.purchaseToken) && text(voided.orderId)) {
+    return {kind: "SUBSCRIPTION_VOID", orderId: voided.orderId, sku: "", eventTimeMs};
+  }
   const canceled = notification.oneTimeProductNotification;
   if (object(canceled) && canceled.notificationType === 2 && token(canceled.purchaseToken) &&
       typeof canceled.sku === "string" && SKU_PATTERN.test(canceled.sku)) {
@@ -57,7 +65,7 @@ function readRevocationFence(raw, {id, packageName}) {
       (packageName && raw.packageName !== packageName) ||
       ![REVOCATION_PENDING, REVOCATION_CONFIRMED, REVOCATION_PARTIAL].includes(raw.state) ||
       !time(raw.createdAtMs) || !text(raw.firstNotificationId) || !object(raw.signal) ||
-      !["ONE_TIME_FULL_VOID", "ONE_TIME_PARTIAL_VOID", "ONE_TIME_PENDING_CANCELED"].includes(raw.signal.kind) ||
+      !["ONE_TIME_FULL_VOID", "ONE_TIME_PARTIAL_VOID", "ONE_TIME_PENDING_CANCELED", "SUBSCRIPTION_VOID"].includes(raw.signal.kind) ||
       !time(raw.signal.eventTimeMs) ||
       (hasPartial && (schemaVersion !== 2 || !partialObservation(raw.partial))) ||
       (raw.state === REVOCATION_PARTIAL &&

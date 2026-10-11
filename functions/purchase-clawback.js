@@ -226,6 +226,18 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
     });
     return {kind: CLAWBACK_NOTHING_TO_TAKE};
   }
+  if (signal.kind === "SUBSCRIPTION_VOID") {
+    // Возврат подписки (премиум) пока не снимает время: какое состояние Play подтверждает возврат
+    // подписки — отдельное решение (deferred-work). Возврат фиксируется записью, а ожидающий забор
+    // из ingress-транзакции не даёт токену начисляться заново: ack с чистым листом означал бы
+    // премию, оплаченную дважды — деньгами Play и временем на счету.
+    return record(notificationRef, {
+      messageId, notification, kind, result: CLAWBACK_OUTCOME_RECORDED, settlementId: id,
+      sku: settlement && settlement.sku, uid: settlement && settlement.uid,
+      publishTimeMs, now,
+      detail: "subscription refund parked; premium clawback is not wired yet and the pending fence blocks re-credit",
+    });
+  }
   if (gate) throw new Error("Settlement provenance is not refundable; redeliver for repair");
 
   const uid = stringValue(settlement.uid);
@@ -577,6 +589,12 @@ function tokenBoundGrantSource(sourceId, id) {
 
 /** Записывает сообщение и возвращает его же результат: одна запись, один ответ. */
 async function record(notificationRef, fields) {
+  // Параллельная доставка того же id успела записать результат, которым деньги двинулись; её
+  // авторство не переписывается вердиктом «здесь ничего не снято», приехавшим вторым.
+  const existing = await notificationRef.get();
+  if (existing.exists && existing.data()?.result === CLAWBACK_OUTCOME_CLAWED_BACK) {
+    return {kind: CLAWBACK_OUTCOME_REPLAYED, replayed: true};
+  }
   await notificationRef.set(notificationRecord(fields));
   return {kind: fields.result};
 }

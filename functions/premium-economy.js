@@ -19,7 +19,7 @@
  */
 
 const crypto = require("crypto");
-const {LEDGER_PATH, CURRENCY} = require("./currency-ledger");
+const {LEDGER_PATH, CURRENCY, REASON} = require("./currency-ledger");
 const {
   LEGACY_GRANT_ID, SOURCE, createPremiumState, bootstrapLegacyPremium,
   advancePremium, issuePremium, refundPlayPremium, regeneratePremiumPoints,
@@ -29,10 +29,13 @@ const PREMIUM_ACCOUNTS_COLLECTION = "premium_accounts";
 const PREMIUM_LOT_BATCH = 64;
 const PREMIUM_CATCHUP_PASSES = 4;
 const PREMIUM_CATCHUP = "PREMIUM_CATCHUP";
-const PREMIUM_LEDGER_CURRENCY = "premiumMs";
+// Словарь премиум-строк книги берётся из закрытых списков currency-ledger, а не своим набором
+// строк: сверка читает закрытый список, и премия, припишущая себя своим словарём, стала бы
+// движением, которого в нём некому объяснить.
+const PREMIUM_LEDGER_CURRENCY = CURRENCY.PREMIUM_MS;
 const PREMIUM_LEDGER_REASONS = Object.freeze({
-  GRANT: "premium_grant", REFUND: "premium_refund", CONSUME: "premium_time",
-  LEGACY: "premium_legacy", REGEN: "premium_regen",
+  GRANT: REASON.PREMIUM_GRANT, REFUND: REASON.PREMIUM_REFUND, CONSUME: REASON.PREMIUM_TIME,
+  LEGACY: REASON.PREMIUM_LEGACY, REGEN: REASON.PREMIUM_REGEN,
 });
 
 function fail(code, message) { const error = new Error(message); error.code = code; throw error; }

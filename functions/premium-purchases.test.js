@@ -8,8 +8,9 @@ const {settlementId, accountIdFor, SHORTFALL_FIELD, PLAY_OUTCOME_FOUND, PLAY_OUT
 const {settlePurchase, settleSubscriptionRenewal} = require("./purchase-settlement");
 const {clawBackPurchase} = require("./purchase-clawback");
 const {refundDocId} = require("./purchase-notifications");
-const {premiumGrantId, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
-const {LEDGER_PATH} = require("./currency-ledger");
+const {premiumGrantId, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy,
+  PREMIUM_LEDGER_CURRENCY, PREMIUM_LEDGER_REASONS} = require("./premium-economy");
+const {LEDGER_PATH, CURRENCY, REASONS} = require("./currency-ledger");
 
 const T = 1_800_000_000_000;
 const UID = "premium-buyer";
@@ -227,12 +228,58 @@ test("refund revokes only unused exact Play grant; BOX/GOLD/other Play preserved
   assert.equal(db.store.get(SETTLEMENT).status, "REFUNDED");
   assert.equal(db.store.get(SETTLEMENT).premiumConsumedMs, 600);
   assert.equal(db.store.get(`users/${UID}/receipts/${refundDocId(ID)}`).amount, -(DAY_MS - 600));
+  // Квитанция возврата читается клиентом как ключ и параметры: премиум-ветка называется так же
+  // громко, как золотая, — и падает так же громко, если поле потеряется.
+  const refundReceipt = db.store.get(`users/${UID}/receipts/${refundDocId(ID)}`);
+  assert.equal(refundReceipt.messageKey, "receipt.premium_refunded");
+  assert.equal(refundReceipt.currency, "PREMIUM_MS");
+  assert.equal(refundReceipt.premiumGrantId, GRANT_ID);
+  assert.deepEqual(refundReceipt.params, {sku: SKU, premiumRevokedMs: DAY_MS - 600,
+    premiumConsumedMs: 600, premiumUntilMs: T + 600 + 38 * DAY_MS});
+  const refundAudit = db.store.get(`purchase_audit/${refundDocId(ID)}`);
+  assert.equal(refundAudit.productKind, "PREMIUM");
+  assert.equal(refundAudit.premiumGrantId, GRANT_ID);
+  assert.equal(refundAudit.premiumGrantedMs, DAY_MS);
   const writes = db.commits.length;
   assert.equal((await refund(db, T + 600)).replayed, true);
   assert.equal(db.commits.length, writes);
   const recheck = await refund(db, T + 600, {message: notification(TOKEN, "different-rtdn-id")});
   assert.equal(recheck.kind, "ALREADY_REFUNDED");
   assert.equal(db.store.get(LOT + GRANT_ID).revokedMs, DAY_MS - 600);
+});
+
+test("a real subscription void (productType 1) parks durably: recorded, premium kept, token fenced", async () => {
+  // Play помечает возврат подписки productType 1. Он пока не снимает время (какое состояние Play
+  // подтверждает возврат подписки — отдельное решение), но и не проходит молча: запись о возврате
+  // остаётся, а ожидающий забор не даёт токену начисляться заново.
+  const db = makeDb();
+  await buy(db);
+  const premiumUntilMs = db.store.get(USER).premiumUntilMs;
+  const value = {version: "1.0", packageName: PACKAGE, eventTimeMillis: String(T + 100),
+    voidedPurchaseNotification: {purchaseToken: TOKEN, orderId: "GPA.1111-2222-3333-44444",
+      productType: 1, refundType: 1}};
+  const message = {messageId: "premium-subscription-void", publishTime: new Date(T + 100).toISOString(),
+    data: Buffer.from(JSON.stringify(value)).toString("base64")};
+  const result = await clawBackPurchase({db, playApi: fakePlay(), now: T + 200, message, readGold, log: fakeLog()});
+  assert.equal(result.kind, "RECORDED");
+  assert.equal(db.store.get(USER).premiumUntilMs, premiumUntilMs);
+  assert.equal(db.store.get(SETTLEMENT).status, "CREDITED");
+  const record = db.store.get("purchase_notifications/premium-subscription-void");
+  assert.equal(record.result, "RECORDED");
+  assert.match(record.detail, /subscription refund parked/);
+  const fence = db.store.get(`purchase_revocations/${ID}`);
+  assert.equal(fence.state, "PENDING_VERIFICATION");
+  assert.equal(fence.signal.kind, "SUBSCRIPTION_VOID");
+  const retry = await buy(db, T + 300);
+  assert.equal(retry.kind, "unavailable");
+  assert.equal(retry.reason, "Play refund verification is pending; retry later");
+});
+
+test("premium ledger rows speak the closed currency-ledger vocabulary", () => {
+  assert.equal(PREMIUM_LEDGER_CURRENCY, CURRENCY.PREMIUM_MS);
+  assert.deepEqual(Object.values(PREMIUM_LEDGER_REASONS).sort(),
+    ["premium_grant", "premium_legacy", "premium_refund", "premium_regen", "premium_time"]);
+  for (const reason of Object.values(PREMIUM_LEDGER_REASONS)) assert.ok(REASONS.includes(reason));
 });
 
 test("legacy future provenance survives purchase and later exhausted-lot refund", async () => {
