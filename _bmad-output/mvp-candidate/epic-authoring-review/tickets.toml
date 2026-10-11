@@ -121,10 +121,10 @@ covers = ["CAP-6"]
 after = [{ epic = 2, needs = "shared inbox rides the delivery foundations (epic notes)" }]
 waits = [
   "epic-2: delivery/projection foundations for the shared inbox — DONE",
-  "hitl: device proof of the private-report path",
+  "hitl: device proof of the private-report path — DONE 2026-10-11 (redroid-риг)",
 ]
-hitl = true
-status = "blocked" # hitl (rules-часть без устройства возможна, но история требует device proof)
+hitl = true # 2026-10-10/11 выполнено на redroid-риге по действующему решению владельца о hitl-матрице на риге
+status = "done" # 2026-10-11: сервер+клиент (смена 12: 619fe796, b83c20dd; гейты e25af346 — functions 97/97, rules 200/200 (+7 inbox), firebase 275) + живой device journey (смена 13, evidence docs/agents/evidence/2026-10-10-inbox/). UI-подача отчёта из review-queue detail («Report queued for the lesson's author», outbox drain 02:18), адресат (куратор — автор урока, приложение не открывавший) получил его реальным view, репортёр-куратор (adminLevel 100) отчёта не видел — роль сама по себе права не даёт, публичный комментарий едет отдельным kind/readers, replay прежним ключом вернул сохранённое без дубля; оракул 40→50: 23 добавления / 0 удалений / 0 изменений. Находка для владельца: UserYXJZY9 в дампах — nickname профиля, не auth-uid (настоящий 34M7Xw… из auth-store), фикстуры перенацелены. Риг остановлен после блока.
 
 [[story]]
 id = "4.10"
