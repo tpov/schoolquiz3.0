@@ -32,3 +32,10 @@
 - Оффер trial-3d на нём: Free trial 3 дня, new customer acquisition — АКТИВЕН.
 - Деактивированы: premium-1d-prepaid, premium-7d-prepaid, premium-30d-prepaid, premium-365d-prepaid (все Inactive).
 - Истории про 4 длительности (2-1 и связанные) — выполнять как «одна месячная автоподписка + триал 3 дня».
+
+## RTDN настроен (2026-10-11)
+- Топик: projects/school-quiz-89336951/topics/play-rtdn (существовал ранее, есть Eventarc-подписка eventarc-us-central1-playpurchasenotifications).
+- Права: google-play-developer-notifications@system.gserviceaccount.com → roles/pubsub.publisher (ВАЖНО: правильный SA — «-notifications-», НЕ «-publish-» — тот не существует, документация/консоль подтверждают).
+- Play Console: Monetization setup → Enable real-time notifications ✓, топик вписан и сохранён (Save changes), сохранность проверена после перезагрузки.
+- Как делалось: Cloud Shell владельца в браузере (gcloud auth login --no-launch-browser + код из консент-страницы). UI-диалог Grant access ложно валидирует системные SA — не тратить на него время, сразу Cloud Shell.
+- Остаток: push-доставку топика в функции подтверждает story 1.3 (триггер написан и проверен тестами, топик теперь существует); sandbox-покупка закроет цепочку end-to-end.
