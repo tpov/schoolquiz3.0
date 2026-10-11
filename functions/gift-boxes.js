@@ -28,6 +28,15 @@ const BOXES_PER_DAY_CEILING = 2;
 /** Сколько из дневного потолка может дать серия. Остальное — реклама, и это не её модуль. */
 const STREAK_BOXES_PER_DAY = 1;
 
+/** Сколько засчитанных просмотров рекламы стоят одну коробку. */
+const AD_VIEWS_PER_BOX = 5;
+
+/** Сколько коробок в сутки может дать реклама. Вторая — у серии, и вместе это потолок. */
+const AD_BOXES_PER_DAY = 1;
+
+/** Часы рекламной коробки на документе игрока: выдача не раньше этого момента. */
+const AD_BOX_CLOCK_FIELD = "nextAdRewardBoxAtMs";
+
 function nonNegativeInt(value) {
   const number = Math.floor(Number(value));
   return Number.isFinite(number) && number > 0 ? number : 0;
@@ -160,6 +169,9 @@ function boxOverclaimRecord({uid, stored, claimed, verdict, recordedAtMs}) {
 }
 
 module.exports = {
+  AD_BOXES_PER_DAY,
+  AD_BOX_CLOCK_FIELD,
+  AD_VIEWS_PER_BOX,
   BOXES_PER_DAY_CEILING,
   DAY_MS,
   STREAK_BOXES_PER_DAY,

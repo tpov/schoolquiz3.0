@@ -13,6 +13,13 @@
  */
 
 const {
+  AD_BOXES_PER_DAY,
+  AD_BOX_CLOCK_FIELD,
+  AD_VIEWS_PER_BOX,
+  DAY_MS,
+} = require("./gift-boxes");
+const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
+const {
   AD_REWARD_CONFIRMED,
   AD_REWARD_FORGED,
   AD_REWARD_FOREIGN,
@@ -48,6 +55,26 @@ function fail(code, message) { const error = new Error(message); error.code = co
 function exactNonNegative(value, label) {
   if (!Number.isSafeInteger(value) || value < 0) fail("INVALID_ARGUMENT", `${label} must be an exact nonnegative integer`);
   return value;
+}
+
+/**
+ * Чистый план выдачи рекламной коробки (история 3.2).
+ *
+ * Коробка стоит `AD_VIEWS_PER_BOX` засчитанных просмотров и выдаётся на пересечении кратного
+ * пяти — других моментов у неё нет. Суточный потолок — `AD_BOXES_PER_DAY` по собственным часам:
+ * выдача не раньше `nextAdBoxAtMs`, катящиеся сутки от последней выдачи, как у премиального
+ * бонуса. Пересечение, пришедшее в занятые сутки, не сгорает: просмотры остались в счётчике,
+ * следующее пересечение попробует снова.
+ */
+function planAdRewardBox({views, nextAdBoxAtMs, nowMs}) {
+  const at = exactNonNegative(nowMs, "server time");
+  if (!Number.isSafeInteger(views) || views <= 0 || views % AD_VIEWS_PER_BOX !== 0) {
+    return {issueBox: false, nextAdBoxAtMs: exactNonNegative(nextAdBoxAtMs || 0, AD_BOX_CLOCK_FIELD)};
+  }
+  if (at < exactNonNegative(nextAdBoxAtMs || 0, AD_BOX_CLOCK_FIELD)) {
+    return {issueBox: false, nextAdBoxAtMs: nextAdBoxAtMs};
+  }
+  return {issueBox: true, nextAdBoxAtMs: at + AD_BOXES_PER_DAY * DAY_MS};
 }
 
 /**
@@ -100,9 +127,32 @@ async function confirmAdReward({db, callback, now}) {
         }
         const stored = userSnapshot.exists ? userSnapshot.data() || {} : {};
         const views = exactNonNegative(Math.floor(Number(stored[AD_REWARD_VIEWS_FIELD] || 0)), AD_REWARD_VIEWS_FIELD);
+        const countedViews = views + 1;
+        // Выдача и её потолок — в той же транзакции, что и подтверждение: обойти часы отдельным
+        // вызовом нельзя, их нет вне этой транзакции.
+        const plan = planAdRewardBox({views: countedViews, nextAdBoxAtMs: stored[AD_BOX_CLOCK_FIELD], nowMs: now});
+        const userPatch = {uid, [AD_REWARD_VIEWS_FIELD]: countedViews, updatedAtMs: now};
+        if (plan.issueBox) {
+          const boxCount = exactNonNegative(Math.floor(Number(stored.boxCount === undefined || stored.boxCount === null ? 0 : stored.boxCount)), "boxCount");
+          userPatch.boxCount = boxCount + 1;
+          userPatch[AD_BOX_CLOCK_FIELD] = plan.nextAdBoxAtMs;
+        }
         transaction.create(guardRef, adRewardConfirmationRecord({callback, nowMs: now}));
         transaction.set(callbackRef, adRewardCallbackRecord({callback, verdict: AD_REWARD_CONFIRMED, nowMs: now}), {merge: true});
-        transaction.set(userRef, {uid, [AD_REWARD_VIEWS_FIELD]: views + 1, updatedAtMs: now}, {merge: true});
+        transaction.set(userRef, userPatch, {merge: true});
+        if (plan.issueBox) {
+          // Движение коробок видно книге, как и всякое другое (box-service.js делает то же).
+          const entry = ledgerEntry({
+            uid,
+            currency: CURRENCY.BOXES,
+            delta: 1,
+            reason: REASON.GIFT_BOX,
+            sourceId: `${adRewardConfirmationId(callback.params.transactionId)}_ad`,
+            atMs: now,
+            details: {source: "AD", views: countedViews},
+          });
+          if (entry) transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+        }
         result = {verdict: AD_REWARD_CONFIRMED, reason: null};
       });
     } catch (error) {
@@ -173,4 +223,5 @@ module.exports = {
   AD_REWARD_OUTCOME_UNAVAILABLE,
   AD_REWARD_VIEWS_FIELD,
   applyAdReward,
+  planAdRewardBox,
 };

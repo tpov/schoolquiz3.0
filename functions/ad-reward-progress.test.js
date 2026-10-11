@@ -15,6 +15,8 @@ const {
 } = require("./ad-reward-verification");
 const {AD_REWARD_CALLBACKS_COLLECTION, AD_REWARD_CONFIRMATIONS_COLLECTION, AD_REWARD_VIEWS_FIELD,
   AD_REWARD_OUTCOME_ACKNOWLEDGED, AD_REWARD_OUTCOME_UNAVAILABLE, applyAdReward} = require("./ad-reward-progress");
+const {AD_BOX_CLOCK_FIELD, AD_VIEWS_PER_BOX, DAY_MS} = require("./gift-boxes");
+const {CURRENCY, LEDGER_PATH, REASON} = require("./currency-ledger");
 
 const T = 1_800_000_000_000;
 const UID = "box-player";
@@ -43,7 +45,7 @@ const throwingKeys = async () => { throw new Error("key server down"); };
 const log = {warn() {}, error() {}};
 const guardPath = (transaction) => `${AD_REWARD_CONFIRMATIONS_COLLECTION}/${adRewardConfirmationId(transaction)}`;
 const callbackPath = (rawQuery) => `${AD_REWARD_CALLBACKS_COLLECTION}/${adRewardCallbackId(readAdRewardCallback(rawQuery))}`;
-const run = (db, rawQuery, fetchKeys = null) => applyAdReward({db, rawQuery, fetchKeys: fetchKeys || (async () => KEYS), now: T, log});
+const run = (db, rawQuery, fetchKeys = null, now = T) => applyAdReward({db, rawQuery, fetchKeys: fetchKeys || (async () => KEYS), now, log});
 
 const TESTS = [];
 function test(name, body) { TESTS.push({name, body}); }
@@ -193,6 +195,111 @@ test("firestore rules close both ad-reward collections to every client", () => {
     const body = rules.slice(block, rules.indexOf("\n    }", block));
     assert.match(body, /allow read, write: if false;/, collection);
   }
+});
+
+test("four confirmed views earn nothing: the box waits for the fifth", async () => {
+  const db = makeDb();
+  for (let index = 1; index <= 4; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  assert.equal(db.store.get(USER)[AD_REWARD_VIEWS_FIELD], 4);
+  assert.equal(db.store.get(USER).boxCount, 2);
+  assert.equal(db.store.get(USER)[AD_BOX_CLOCK_FIELD], undefined);
+});
+
+test("the fifth confirmed view issues exactly one box, clock and ledger in the same transaction", async () => {
+  const db = makeDb();
+  for (let index = 1; index <= 5; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  const user = db.store.get(USER);
+  assert.equal(user[AD_REWARD_VIEWS_FIELD], 5);
+  assert.equal(user.boxCount, 3);
+  assert.equal(user[AD_BOX_CLOCK_FIELD], T + DAY_MS);
+  const rows = [...db.store.entries()].filter(([path]) => path.startsWith(`${LEDGER_PATH}/`))
+    .map(([, value]) => value).filter((entry) => entry.currency === CURRENCY.BOXES);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].delta, 1);
+  assert.equal(rows[0].reason, REASON.GIFT_BOX);
+  assert.equal(rows[0].details.source, "AD");
+  assert.equal(rows[0].details.views, 5);
+});
+
+test("views six to nine earn nothing again", async () => {
+  const db = makeDb();
+  for (let index = 1; index <= 9; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  assert.equal(db.store.get(USER).boxCount, 3);
+  assert.equal(db.store.get(USER)[AD_REWARD_VIEWS_FIELD], 9);
+});
+
+test("the tenth view in the same day hits the ceiling: no box, the clock untouched, views kept", async () => {
+  const db = makeDb();
+  for (let index = 1; index <= 10; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  const user = db.store.get(USER);
+  assert.equal(user.boxCount, 3);
+  assert.equal(user[AD_REWARD_VIEWS_FIELD], 10);
+  assert.equal(user[AD_BOX_CLOCK_FIELD], T + DAY_MS);
+});
+
+test("a next-day confirmation that is not a crossing still issues nothing", async () => {
+  const db = makeDb();
+  for (let index = 1; index <= 10; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  // Одиннадцатый просмотр на следующие сутки: часы истекли, но пересечения нет — коробки нет.
+  await run(db, reward({transaction: "tx-view-00000015"}), null, T + DAY_MS + 1);
+  const user = db.store.get(USER);
+  assert.equal(user[AD_REWARD_VIEWS_FIELD], 11);
+  assert.equal(user.boxCount, 3);
+});
+
+test("a crossing on the next day after five more views issues exactly one box", async () => {
+  const db = makeDb();
+  for (let index = 1; index <= 10; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  for (let index = 11; index <= 15; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}), null, T + DAY_MS + 1);
+  }
+  const user = db.store.get(USER);
+  assert.equal(user[AD_REWARD_VIEWS_FIELD], 15);
+  assert.equal(user.boxCount, 4);
+  assert.equal(user[AD_BOX_CLOCK_FIELD], T + DAY_MS + 1 + DAY_MS);
+});
+
+test("the streak's box for the day does not block the ad box: two sources, two boxes, one ceiling", async () => {
+  // Стрик уже выдал свою коробку за сутки (boxCount 3 — из box-service VISIT); рекламная
+  // выдаёт свою: у источников раздельные часы, вместе — не больше двух.
+  const db = makeDb({boxCount: 3, boxStreakDays: 11, nextBoxAtMs: T + DAY_MS});
+  for (let index = 1; index <= 5; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  const user = db.store.get(USER);
+  assert.equal(user.boxCount, 4);
+  assert.equal(user[AD_BOX_CLOCK_FIELD], T + DAY_MS);
+});
+
+test("a corrupt boxCount fails the issuance loudly and writes nothing", async () => {
+  const db = makeDb({boxCount: "garbage"});
+  for (let index = 1; index <= 4; index++) {
+    await run(db, reward({transaction: `tx-view-000000${index}`}));
+  }
+  await assert.rejects(run(db, reward({transaction: "tx-view-00000005"})), {code: "INVALID_ARGUMENT"});
+  assert.equal(db.store.get(USER).boxCount, "garbage");
+  assert.equal(db.store.get(USER)[AD_REWARD_VIEWS_FIELD], 4);
+  assert.equal(db.store.has(guardPath("tx-view-00000005")), false);
+});
+
+test("the plan is pure: crossing and free clock decide, everything else declines", () => {
+  const {planAdRewardBox} = require("./ad-reward-progress");
+  assert.deepEqual(planAdRewardBox({views: 4, nextAdBoxAtMs: 0, nowMs: T}), {issueBox: false, nextAdBoxAtMs: 0});
+  assert.deepEqual(planAdRewardBox({views: 5, nextAdBoxAtMs: 0, nowMs: T}), {issueBox: true, nextAdBoxAtMs: T + DAY_MS});
+  assert.deepEqual(planAdRewardBox({views: 5, nextAdBoxAtMs: T + 1, nowMs: T}), {issueBox: false, nextAdBoxAtMs: T + 1});
+  assert.deepEqual(planAdRewardBox({views: 10, nextAdBoxAtMs: T + 1, nowMs: T + DAY_MS + 1}), {issueBox: true, nextAdBoxAtMs: T + DAY_MS + 1 + DAY_MS});
 });
 
 async function main() {
