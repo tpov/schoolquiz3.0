@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.shopItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.storeProductId
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -145,7 +146,10 @@ class GetShopCatalogUseCaseTest {
         )
         assertTrue(packs.all { it.isAvailable }, "названный магазином пак продаётся")
         assertTrue(
-            packs.zip(store).all { (row, record) -> row.storeProduct?.formattedPrice == record.formattedPrice },
+            // Каждая запись магазина продаётся своей строкой полки: пара ищется по id, а не позицией.
+            store.all { record ->
+                packs.single { it.id == record.id.shopItem() }.storeProduct?.formattedPrice == record.formattedPrice
+            },
             "строка цены доезжает без изменений",
         )
         assertTrue(packs.all { it.price?.currency == ShopCurrency.EXTERNAL }, "EXTERNAL — разметка, не число")

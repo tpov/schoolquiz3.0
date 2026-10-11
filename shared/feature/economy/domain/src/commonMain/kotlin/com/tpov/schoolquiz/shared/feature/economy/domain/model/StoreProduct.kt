@@ -42,9 +42,11 @@ fun StoreProductId.shopItem(): ShopItemId =
 /**
  * The store product behind a shelf record, or null for everything the store does not sell.
  *
- * Both directions live in this one file so the next paid product (premium, epic 2) extends exactly
- * two `when`s and nowhere else. The entries are spelled out qualified: both enums have identically
- * named entries in one package, and an unqualified name here is a coin flip.
+ * Both directions live in this one file so the next paid product extends exactly two `when`s and
+ * nowhere else. The entries are spelled out qualified: both enums have identically named entries in
+ * one package, and an unqualified name here is a coin flip. The `when` stays exhaustive rather than
+ * ending in `else`: a new paid record without a store product must fail compilation here, not
+ * surface as a row nobody can ever buy.
  */
 fun ShopItemId.storeProductId(): StoreProductId? =
     when (this) {
@@ -52,7 +54,14 @@ fun ShopItemId.storeProductId(): StoreProductId? =
         ShopItemId.GOLD_PACK_MEDIUM -> StoreProductId.GOLD_PACK_MEDIUM
         ShopItemId.GOLD_PACK_LARGE -> StoreProductId.GOLD_PACK_LARGE
         ShopItemId.PREMIUM -> StoreProductId.PREMIUM_30D
-        else -> null
+        ShopItemId.STANDARD_HEART_SLOT,
+        ShopItemId.GOLD_HEART,
+        ShopItemId.QUIZ_SLOT,
+        ShopItemId.AD_REWARD_BOX,
+        ShopItemId.DONATE_GOOGLE_PLAY,
+        ShopItemId.REFERRAL_PROGRAM,
+        ShopItemId.NICKNAME_MARKET,
+        -> null
     }
 
 /**

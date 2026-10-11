@@ -117,6 +117,39 @@ class DefaultShopComponentGoldPackTest {
         }
 
     @Test
+    fun `given the store adapter threw when the shop opens then the shelf explains instead of crashing`() =
+        runTest(scheduler) {
+            // Адаптер Play бросает IllegalStateException на не-OK ответ queryProductDetails:
+            // упавший вопрос магазина — строка с объяснением, а не рухнувший экран.
+            store.loadError = IllegalStateException("queryProductDetails: SERVICE_UNAVAILABLE")
+
+            val component = component()
+
+            assertEquals(StoreShelfStatus.UNAVAILABLE, component.state.value.storeShelf)
+            val pack = component.state.value.items.single { it.id == ShopItemId.GOLD_PACK_SMALL }
+            assertTrue(!pack.isAvailable, "упавший магазин не продаёт")
+            assertTrue(
+                component.state.value.items.any { it.id == ShopItemId.GOLD_PACK_LARGE },
+                "полка не пустеет",
+            )
+        }
+
+    @Test
+    fun `given the player is offline when the pack is tapped then the failure reaches the message line`() =
+        runTest(scheduler) {
+            val component = component(online = false)
+
+            component.obtainEvent(ShopViewEvent.Purchase(ShopItemId.GOLD_PACK_SMALL))
+
+            assertTrue(
+                component.state.value.message is ShopMessage.Failure,
+                "отказ до Play доходит словами ошибки, а не тишиной",
+            )
+            assertEquals(null, component.state.value.processingItemId)
+            assertTrue(store.purchaseCalls.isEmpty(), "офлайн-покупка до Play не доходит")
+        }
+
+    @Test
     fun `given a credited purchase when the pack is tapped then the message names the server amount`() =
         runTest(scheduler) {
             store.outcome = BillingOutcome.Purchased(purchase())
@@ -240,7 +273,10 @@ class DefaultShopComponentGoldPackTest {
             assertTrue(store.acknowledgedTokens.isEmpty())
         }
 
-    private fun component(constants: EconomyConstants = EconomyConstants.BOOTSTRAP): DefaultShopComponent {
+    private fun component(
+        constants: EconomyConstants = EconomyConstants.BOOTSTRAP,
+        online: Boolean = true,
+    ): DefaultShopComponent {
         lifecycle = LifecycleRegistry()
         return DefaultShopComponent(
             componentContext = DefaultComponentContext(lifecycle),
@@ -252,7 +288,7 @@ class DefaultShopComponentGoldPackTest {
             buyGoldPack =
                 BuyGoldPackUseCase(
                     billing = store,
-                    networkMonitor = FakeNetworkMonitor(),
+                    networkMonitor = FakeNetworkMonitor(online),
                     settlePurchase =
                         SettlePurchaseUseCase(
                             billing = store,
@@ -312,12 +348,18 @@ class DefaultShopComponentGoldPackTest {
         val verifier = FakeVerifier()
         var outcome: BillingOutcome = BillingOutcome.Cancelled
         var productAnswer: Result<List<StoreProduct>> = Result.success(emptyList())
+
+        /** Заданный тестом бросок вместо ответа: адаптер Play так отвечает на не-OK queryProductDetails. */
+        var loadError: Throwable? = null
         val purchaseCalls = mutableListOf<Pair<StoreProductId, String>>()
         val consumedTokens = mutableListOf<String>()
         val acknowledgedTokens = mutableListOf<String>()
         private val queue = MutableStateFlow<List<BillingPurchase>>(emptyList())
 
-        override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> = productAnswer
+        override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> {
+            loadError?.let { throw it }
+            return productAnswer
+        }
 
         override fun observeUnsettledPurchases(): Flow<List<BillingPurchase>> = queue
 
@@ -361,10 +403,12 @@ class DefaultShopComponentGoldPackTest {
         override suspend fun refresh(): Result<Unit> = Result.success(Unit)
     }
 
-    private class FakeNetworkMonitor : NetworkMonitor {
-        override fun observeOnline(): Flow<Boolean> = flowOf(true)
+    private class FakeNetworkMonitor(
+        private val online: Boolean = true,
+    ) : NetworkMonitor {
+        override fun observeOnline(): Flow<Boolean> = flowOf(online)
 
-        override suspend fun isOnline(): Boolean = true
+        override suspend fun isOnline(): Boolean = online
     }
 
     private class FakeNicknameRepository : NicknameRepository {

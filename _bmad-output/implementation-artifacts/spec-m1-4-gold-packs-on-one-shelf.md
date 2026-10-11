@@ -2,9 +2,9 @@
 title: 'M1.4 — Gold packs on one shelf'
 type: 'feature'
 created: '2026-10-11'
-status: 'review'
+status: 'done'
 baseline_commit: '5b0ddeb3'
-review_loop_iteration: 0
+review_loop_iteration: 1
 story_key: '1-4-паки-золота-на-одной-полке'
 sprint_status_file: '_bmad-output/implementation-artifacts/sprint-status-monetisation.yaml'
 context:
@@ -128,3 +128,56 @@ shop open); emit analytics (story 1.5); touch other sessions' uncommitted files 
 - `sgw ./gradlew :shared:feature:economy:domain:allTests :android:feature:economy:presentation:testDebugUnitTest --no-configuration-cache`
 - `sgw ./gradlew :shared:feature:economy:domain:ktlintCheck :android:feature:economy:presentation:ktlintCheck --no-configuration-cache`
 - `sgw ./gradlew :apps:android-next:assembleDebug --no-configuration-cache`
+
+### Review Findings
+
+Code review 2026-10-11, thorough (blind-hunter + edge-case-hunter + verification-gap + intent-alignment).
+
+- [x] [Review][Patch] Uncaught store exception crashed the shop screen [DefaultShopComponent.kt] —
+  fixed: the shelf question folds a throwing adapter (`queryProducts` throws `IllegalStateException`
+  on a non-OK `queryProductDetails`) into `StoreShelf.Unreachable`; adapter-throw test added.
+- [x] [Review][Patch] A future paid record compiled into an unpurchasable row
+  [StoreProduct.kt:storeProductId] — fixed: the `when` is exhaustive; a new paid id without a store
+  product now fails compilation instead of shipping as a forever-locked row.
+- [x] [Review][Patch] Catalog test paired rows and store records by position
+  [GetShopCatalogUseCaseTest.kt] — fixed: pairs are matched by id, not by list order.
+- [x] [Review][Patch] Offline pack-tap failure path was untested
+  [DefaultShopComponentGoldPackTest.kt] — fixed: offline test asserts the `Failure` message reaches
+  the message line and Play is never opened.
+- [x] [Review][Defer] Console configured partially or empty reads «Google Play недоступен» on every
+  pack row; the `NotConfigured` ending is unreachable in production [PlayBillingRepository.kt
+  `productsOrFailure`] — deferred: needs an owner decision on adapter semantics (Ask First:
+  platform/billing); the console is fully configured today.
+- [x] [Review][Defer] Koin wiring of `LoadStoreShelfUseCase` / the `ShopComponent` factory is
+  verified by no test [EconomyDomainModule.kt] — deferred: the wiring harness is known-red (it09e);
+  add resolution assertions when it09e is fixed.
+- [x] [Review][Defer] The rendered shelf (price string, store title, lock lines) has no UI test
+  [NoirShopStore.kt] — deferred: needs a compose-ui-test dependency in the module (spec Ask First).
+- [x] [Review][Defer] DONATE_GOOGLE_PLAY lock line («waiting for the billing module») is stale next
+  to live store rows [NoirShopStore.kt] — deferred: the donate flow is owner intent.
+- [x] [Review][Defer] it09e `KoinModuleWiringTest` known-red was documented in sprint status but not
+  recorded in deferred-work — deferred: pre-existing, recorded now.
+
+**Rejected**
+- READY-but-unquoted row shows «недоступен» — false: `productsOrFailure` fails the whole load when
+  any requested SKU is missing, so a Ready shelf has every pack quoted; the `else` line under READY
+  is unreachable.
+- `StoreShelf.Unreachable` KDoc's «did not return every requested product» has no code behind it —
+  false: partial answers arrive as adapter failures, which is exactly that semantic.
+- Raw refusal code in the player message — false: the spec matrix prescribes «message carries the
+  machine code».
+- `GOLD_PACK_*` wire names lack a server counterpart — false: the server settles by `playSku`; wire
+  names are client catalog records.
+- `title=""`/`description=""` placeholders — false: every catalog row carries empty copy (domain
+  holds data, not copy; the view resolves wording).
+- Blank `formattedPrice` renders an empty price label — false: Play fills `formattedPrice` for
+  returned products; not reachable.
+- Credited purchase with a stale balance — false: the balance arrives via the server-refresh flow
+  (the M1.2 mechanism, unchanged here).
+- «Цены появятся, когда он ответит» over-promises — rejected low: reopening the shop re-asks; an
+  auto-retry would add a new dependency.
+- Test fakes duplicated instead of shared — rejected low: a restructure with marginal harm.
+- Locale terms пак/набір/pack diverge — rejected low: a copy decision; each locale is internally
+  consistent.
+- Same icon for all three packs — rejected low: design, not a defect.
+- TermsConsentGate whitespace edit — false: a deliberate ktlint fix (commit e606c9a4).

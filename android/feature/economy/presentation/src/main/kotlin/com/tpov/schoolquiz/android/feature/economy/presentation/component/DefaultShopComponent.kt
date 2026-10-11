@@ -428,7 +428,16 @@ class DefaultShopComponent(
      */
     private fun refreshStoreShelf() {
         scope.launch {
-            val shelf = loadStoreShelf()
+            // Магазин обязан отвечать итогом, а не броском, но адаптер Play на не-OK ответ
+            // queryProductDetails бросает: упавший вопрос — недоступный магазин, а не рухнувший экран.
+            val shelf =
+                try {
+                    loadStoreShelf()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: IllegalStateException) {
+                    StoreShelf.Unreachable
+                }
             storeProducts = (shelf as? StoreShelf.Ready)?.products ?: emptyList()
             _state.update {
                 it.copy(

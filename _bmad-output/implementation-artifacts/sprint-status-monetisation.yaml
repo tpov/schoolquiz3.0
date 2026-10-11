@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 09-03-2026 14:20
+last_updated: 10-11-2026 14:57
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -52,8 +52,11 @@ development_status:
   1-3-обработчик-возвратов-и-отзывов: review  # написан и зелёный, НЕ закоммичен: четыре общих файла заняты
   # незакоммиченной работой соседних потоков (index.js, firestore.rules, package.json, currency-ledger.js).
   # Топик play-rtdn и подписка тоже ещё не заведены — триггер проверен чтением и тестами модулей.
-  1-4-паки-золота-на-одной-полке: review  # spec-m1-4-gold-packs-on-one-shelf.md — полка, цены из магазина,
-    # покупка путём 1.2; гейты домена и презентации зелёные; it09e KoinModuleWiringTest падал и до истории
+  1-4-паки-золота-на-одной-полке: done  # spec-m1-4-gold-packs-on-one-shelf.md — полка, цены из магазина,
+    # покупка путём 1.2; гейты домена и презентации зелёные; it09e KoinModuleWiringTest падал и до истории.
+    # Code review 2026-10-11 (4 линзы): 4 патча применены — полка переживает бросок адаптера Play
+    # (queryProducts кидает на не-OK), storeProductId() исчерпывающий when, тесты офлайн-отказа и
+    # пар по id; 5 defer в deferred-work (NotConfigured недостижим в проде, koin-wiring без теста и др.)
     # (тест-заглушки lesson-runner без LessonRunnerContentSyncCallbacks)
   1-5-воронка-магазина-видна: review  # spec-m1-5-shop-funnel-visible.md — событие завершения эмитит расчёт
     # после CREDITED, один на токен; открытие/старт/отказ — компонент; найденный дабл-эмит на replay закрыт
