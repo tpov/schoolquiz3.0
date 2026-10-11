@@ -20,3 +20,8 @@
 2. Обход: заполнять поле через native setter + диспатч input/change/compositionend (bubbles), затем blur; guard повторять перед каждым Save. Реальные клики по радио/дропдаунам обязательны (JS-клик по radio Prepaid не рендерит секцию Duration → модель без billingPeriod → save фейл).
 3. «Set prices»: select all по gridcell (не по checkbox), кнопка «Set price» (не «Set prices»), цена UAH → Update. Статусы «Error Set a price» в таблице бывают несброшенной отрисовкой виртуального скролла — проверять медленным скроллом до низа (реальные ошибки видны в row innerText).
 4. Покупка в приложении: buy option ID = base plan ID (prepaid) — для проверки покупок использовать premium-1d-prepaid и т.д.
+
+## Правка владельца (2026-10-11): дневной тариф убран
+«Уберем оплату на день, используя старые цены» — base plan premium-1d-prepaid ДЕАКТИВИРОВАН через Play Console (статус Inactive). Подписка premium_1d остаётся без активных планов → недоступна к покупке.
+Итоговая полка: premium_7d (200 UAH/неделя), premium_30d (650 UAH/месяц), premium_365d (5000 UAH/год).
+История 2-1 «четыре длительности» = ТРИ длительности. В промпт лупа schoolquiz внесено.
