@@ -71,7 +71,6 @@ sealed interface TermsConsentVerdict {
  * (blocked-история 2.8), здесь клиент отказывается проводить старое согласие поверх новых цен.
  */
 object TermsConsentGate {
-
     /**
      * @param captured условия, с которыми игрок согласился; `null`, если согласия ещё не было.
      * @param current таблица, действующая на устройстве сейчас.
