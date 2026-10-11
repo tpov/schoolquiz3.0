@@ -286,7 +286,7 @@ async function main() {
     const token = await playerIdToken(uid);
     // Правила lessonComments: create для любого вошедшего, поля allowlist-ом, authorUid == uid.
     const response = await fetch(
-      `http://127.0.0.1:${HOSTS.firestore}/v1/projects/${PROJECT}/databases/(default)/documents/lessonComments`,
+      `http://${HOSTS.firestore}/v1/projects/${PROJECT}/databases/(default)/documents/lessonComments`,
       {method: "POST", headers: {"content-type": "application/json", authorization: `Bearer ${token}`},
         body: JSON.stringify({fields: {
           lessonId: {stringValue: lessonId},
