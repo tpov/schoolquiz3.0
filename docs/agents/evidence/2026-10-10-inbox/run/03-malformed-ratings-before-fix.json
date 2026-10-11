@@ -1,0 +1,88 @@
+{
+ "fixedAtMs": 1791680748369,
+ "count": 11,
+ "before": {
+  "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_2": {
+   "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_2",
+   "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+   "ratingSum": 2,
+   "ratingCount": 1,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548"
+  },
+  "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3": {
+   "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+   "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+   "ratingSum": 4,
+   "ratingCount": 2,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548"
+  },
+  "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_2": {
+   "lessonId": "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_2",
+   "authorUid": "1qWvMnl9qYWsJCD58wGzLWv3G6Ju",
+   "ratingSum": 2,
+   "ratingCount": 1,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_6ba84b006f7d423f8630ac7802407eb0"
+  },
+  "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_3": {
+   "lessonId": "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_3",
+   "authorUid": "1qWvMnl9qYWsJCD58wGzLWv3G6Ju",
+   "ratingSum": 4,
+   "ratingCount": 2,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_6ba84b006f7d423f8630ac7802407eb0"
+  },
+  "ac_7ad0e33fd17e4709b16f433d90304e94_lesson_2": {
+   "lessonId": "ac_7ad0e33fd17e4709b16f433d90304e94_lesson_2",
+   "authorUid": "QVt4A8gOubSRLWkzadS7VGsS2ASc",
+   "ratingSum": 2,
+   "ratingCount": 1,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_7ad0e33fd17e4709b16f433d90304e94"
+  },
+  "ac_7ad0e33fd17e4709b16f433d90304e94_lesson_3": {
+   "lessonId": "ac_7ad0e33fd17e4709b16f433d90304e94_lesson_3",
+   "authorUid": "QVt4A8gOubSRLWkzadS7VGsS2ASc",
+   "ratingSum": 4,
+   "ratingCount": 2,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_7ad0e33fd17e4709b16f433d90304e94"
+  },
+  "ac_b563a9845b1f4f279683d321ed54ca51_lesson_2": {
+   "lessonId": "ac_b563a9845b1f4f279683d321ed54ca51_lesson_2",
+   "authorUid": "cPbebnDrF7To3GMmM7OXk5QApLsN",
+   "ratingSum": 2,
+   "ratingCount": 1,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_b563a9845b1f4f279683d321ed54ca51"
+  },
+  "ac_b563a9845b1f4f279683d321ed54ca51_lesson_3": {
+   "lessonId": "ac_b563a9845b1f4f279683d321ed54ca51_lesson_3",
+   "authorUid": "cPbebnDrF7To3GMmM7OXk5QApLsN",
+   "ratingSum": 4,
+   "ratingCount": 2,
+   "ratingVersion": 1,
+   "syntheticCatalogRun": "ac_b563a9845b1f4f279683d321ed54ca51"
+  },
+  "aeu_7d433c732adf45a7b1c665260571b707_stale": {
+   "ratingSum": 3,
+   "ratingCount": 1,
+   "ratingVersion": 1,
+   "syntheticEligibleUniverseRun": "aeu_7d433c732adf45a7b1c665260571b707"
+  },
+  "aeu_7d433c732adf45a7b1c665260571b707_target": {
+   "ratingSum": 2,
+   "ratingCount": 1,
+   "ratingVersion": 1,
+   "syntheticEligibleUniverseRun": "aeu_7d433c732adf45a7b1c665260571b707"
+  },
+  "aeu_f2229bcc8ac745cc85934c7226193825_stale": {
+   "ratingSum": 3,
+   "ratingCount": 1,
+   "ratingVersion": 1,
+   "syntheticEligibleUniverseRun": "aeu_f2229bcc8ac745cc85934c7226193825"
+  }
+ }
+}

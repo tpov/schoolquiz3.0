@@ -1,0 +1,90 @@
+{
+ "foundAtMs": 1791679896233,
+ "count": 6,
+ "orphans": [
+  {
+   "id": "ap_rules_0326b15be9b848ed9e8b8b8f8097bf84",
+   "data": {
+    "lessonId": "ap_rules_0326b15be9b848ed9e8b8b8f8097bf84",
+    "authorUid": "688Gu1nWfylmSRgwsQoMcviQlhlc",
+    "shelf": "review",
+    "syntheticRun": "ap_rules_0326b15be9b848ed9e8b8b8f8097bf84",
+    "lastRejection": {
+     "code": "SYNTHETIC_REFUSAL",
+     "reason": "Private synthetic moderation detail",
+     "actorUid": "CRxMCckkCSYeN6a065XGCwl84bMR"
+    }
+   }
+  },
+  {
+   "id": "ap_rules_2134396ec6c14c9499f768721d0ec1f7",
+   "data": {
+    "lessonId": "ap_rules_2134396ec6c14c9499f768721d0ec1f7",
+    "authorUid": "97Rz3QSAiLhO2yy9Do5KUxeoGM7K",
+    "shelf": "review",
+    "syntheticRun": "ap_rules_2134396ec6c14c9499f768721d0ec1f7",
+    "lastRejection": {
+     "code": "SYNTHETIC_REFUSAL",
+     "reason": "Private synthetic moderation detail",
+     "actorUid": "OpCSnbZjYzLNme8PBxMArQF81clD"
+    }
+   }
+  },
+  {
+   "id": "ap_rules_3769243d8e0e4637b453a627c9c86b65",
+   "data": {
+    "lessonId": "ap_rules_3769243d8e0e4637b453a627c9c86b65",
+    "authorUid": "Si1ktmlgEv5thif81sZB05gHWVFx",
+    "shelf": "review",
+    "syntheticRun": "ap_rules_3769243d8e0e4637b453a627c9c86b65",
+    "lastRejection": {
+     "code": "SYNTHETIC_REFUSAL",
+     "reason": "Private synthetic moderation detail",
+     "actorUid": "TKtH4U1z7afjFujXqS6gwjry1ZX4"
+    }
+   }
+  },
+  {
+   "id": "ap_rules_776b1a117f714cc39c7e613bed5bc76b",
+   "data": {
+    "lessonId": "ap_rules_776b1a117f714cc39c7e613bed5bc76b",
+    "authorUid": "whRjcN6iUYczL6u9VVVblNOJvbEJ",
+    "shelf": "review",
+    "syntheticRun": "ap_rules_776b1a117f714cc39c7e613bed5bc76b",
+    "lastRejection": {
+     "code": "SYNTHETIC_REFUSAL",
+     "reason": "Private synthetic moderation detail",
+     "actorUid": "S1Cs74HGe29OyyZfBVpB8xckFD7u"
+    }
+   }
+  },
+  {
+   "id": "ap_rules_92e9762f6e464aaa9bb55729e19a48ef",
+   "data": {
+    "lessonId": "ap_rules_92e9762f6e464aaa9bb55729e19a48ef",
+    "authorUid": "a1KzXz72H7Hjpa5rolzKS9nqJfnK",
+    "shelf": "review",
+    "syntheticRun": "ap_rules_92e9762f6e464aaa9bb55729e19a48ef",
+    "lastRejection": {
+     "code": "SYNTHETIC_REFUSAL",
+     "reason": "Private synthetic moderation detail",
+     "actorUid": "GvMIZ9tsLTn4pV8YgTIIsZJA7Tua"
+    }
+   }
+  },
+  {
+   "id": "ap_rules_9b69761a423f49a3b752156fb2e71bcb",
+   "data": {
+    "lessonId": "ap_rules_9b69761a423f49a3b752156fb2e71bcb",
+    "authorUid": "W2wNDy3JIafmgLhspOQt0g9YAVPf",
+    "shelf": "review",
+    "syntheticRun": "ap_rules_9b69761a423f49a3b752156fb2e71bcb",
+    "lastRejection": {
+     "code": "SYNTHETIC_REFUSAL",
+     "reason": "Private synthetic moderation detail",
+     "actorUid": "ItxagXtjrFUm6UNtp7lL4AYbBeuD"
+    }
+   }
+  }
+ ]
+}
