@@ -71,6 +71,7 @@ include(":shared:feature:qualification:domain")
 include(":shared:feature:qualification:data")
 include(":shared:feature:economy:domain")
 include(":shared:feature:economy:data")
+include(":shared:feature:ads:domain")
 include(":shared:feature:minigame:domain")
 include(":shared:feature:minigame:data")
 
