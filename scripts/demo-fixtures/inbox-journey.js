@@ -10,13 +10,22 @@
 //   GCLOUD_PROJECT=demo-schoolquiz-mvp FIRESTORE_EMULATOR_HOST=127.0.0.1:18090 \
 //   FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:19090 node scripts/demo-fixtures/inbox-journey.js <cmd> …
 // Команды:
-//   snapshot <file>                       — дамп дерева в JSON (форма 00-before-tree)
+//   snapshot <file>                       — дамп дерева в JSON (форма 00-before-tree + inbox-поверхности)
 //   compare <before> <after>              — побайтовый диф двух снапшотов
 //   inbox-as <uid> <file>                 — listInboxItems живьём (полный ответ view)
 //   read-state <file> <lessonId>          — плейсмент/отчёты/комментарии/заявка/задание урока
 //   seed-comment <uid> <nickname> <lessonId> <text> — комментарий через Firestore REST под
 //                                            idToken uid (правила: any signed-in, allowlist полей)
 //   replay-as <uid> <reportId> <lessonId> <text> — submitMutation прежним ключом отчёта
+//   bootstrap-reviewer <uid>              — profiles/{uid}.adminLevel = 100 (demo-фикстура роли,
+//                                            прецедент bootstrap-curator тула tz06c)
+//   seed-lesson <prefix> <authorUid> <title> — мини-цепочка урока под inbox-journey (каталог/
+//                                            quest/section/theme/lesson + 2 вопроса + placement
+//                                            home), прецедент seedEasyBank сеялки 3.3
+//   seed-review-task <submissionId> <lessonId> <ownerUid> — открытое задание UNDER_REVIEW (checks
+//                                            пусты) + вопросная подколлекция + запись журнала
+//                                            ревью; форму держат readAdminReviewLessonTasksByIds
+//                                            и adminLessonSnapshotToTask приёмника
 
 const assert = require("node:assert/strict");
 const path = require("node:path");
@@ -37,12 +46,15 @@ const admin = require(path.join(repoRoot, "functions", "node_modules", "firebase
 admin.initializeApp({projectId: PROJECT});
 const db = admin.firestore();
 
-// Тот же перечень, что у снапшота 2026-10-10 (00-before-tree 4.8): публичные корни,
-// голоса рейтингом и рекурсивные приватные деревья. Labels совпадают — compare байт-в-байт
-// с тула curator-journey (эпик-4 оракулы сравнимы между сменами).
+// Перечень 00-before-tree 4.8 (публичные корни, голоса рейтингом, рекурсивные приватные деревья)
+// расширен поверхностями самой истории 4.9: приватные отчёты, публичные комментарии, ключи
+// мутаций (идемпотентность приёмника), вопросы, журнал ревью, конфиги и каталоги цепочек.
+// Сравнение с чужим снапшотом легально: compare берёт объединение label-ов.
 const ROOT_COLLECTIONS = [
   "quests", "sections", "themes", "lessons", "lesson_placements", "lesson_ratings",
-  "quest_review_requests", "admin/review/lessons",
+  "quest_review_requests", "admin/review/lessons", "catalogs", "questions",
+  "lesson_error_reports", "lessonComments", "mutation_keys", "configs",
+  "admin/review/sync_changes",
 ];
 
 async function dumpCollection(prefix) {
@@ -150,6 +162,98 @@ async function readState(lessonId, submissionId) {
   };
 }
 
+async function assertDocAbsent(docPath) {
+  const snapshot = await db.doc(docPath).get();
+  assert.ok(!snapshot.exists, `fixture path already taken: ${docPath}`);
+}
+
+function questionPayload(questionId, lessonId, order) {
+  return JSON.stringify({
+    type: "SingleChoice",
+    text: `Inbox journey question ${order} of ${lessonId}`,
+    imageUrl: null,
+    options: [
+      {id: "o1", text: `Correct answer of question ${order}`},
+      {id: "o2", text: `Wrong answer of question ${order}`},
+    ],
+    correctOptionId: "o1",
+    info: "Journey fixture question",
+    difficulty: "HARD",
+    id: questionId,
+  });
+}
+
+async function seedLesson(prefix, authorUid, title) {
+  assert.ok(/^[a-z0-9]{3,20}$/.test(prefix), "prefix must be a short lowercase id");
+  assert.ok(/^[A-Za-z0-9_-]{1,128}$/.test(authorUid), "authorUid must look like a uid");
+  const ids = {
+    catalog: `${prefix}_catalog`, quest: `${prefix}_quest`, section: `${prefix}_section`,
+    theme: `${prefix}_theme`, lesson: `${prefix}_lesson`,
+  };
+  for (const path of [`catalogs/${ids.catalog}`, `quests/${ids.quest}`, `sections/${ids.section}`,
+    `themes/${ids.theme}`, `lessons/${ids.lesson}`, `lesson_placements/${ids.lesson}`]) {
+    await assertDocAbsent(path);
+  }
+  const now = Date.now();
+  await db.doc(`catalogs/${ids.catalog}`).set({questType: "REGULAR", version: 1});
+  await db.doc(`quests/${ids.quest}`).set({catalogId: ids.catalog, authorUid, version: 1});
+  await db.doc(`sections/${ids.section}`).set({questId: ids.quest, version: 1});
+  await db.doc(`themes/${ids.theme}`).set({sectionId: ids.section, version: 1});
+  // Полная форма placement (lessonId/questType/updatedAtMs) — по прецеденту сеялки 3.3: частичная
+  // форма роняет lifecycle-вью, а inbox адресат читает authorUid именно отсюда.
+  await db.doc(`lesson_placements/${ids.lesson}`).set({
+    lessonId: ids.lesson, questType: "REGULAR", updatedAtMs: now,
+    shelf: "home", previousShelf: "review", authorUid, contentVersion: 1, placementVersion: 1,
+  });
+  await db.doc(`lessons/${ids.lesson}`).set({
+    themeId: ids.theme, title, version: 1, reviewApprovedAtMs: now, publishedAtMs: now,
+  });
+  for (const order of [0, 1]) {
+    const questionId = `q_${prefix}_${order}`;
+    const payload = questionPayload(questionId, ids.lesson, order);
+    await db.doc(`questions/${questionId}`).set({
+      version: 1, archived: false, id: questionId, lessonId: ids.lesson,
+      text: `Inbox journey question ${order}`, difficulty: "HARD", language: "en", languageLevel: 0,
+      order, payload,
+    });
+  }
+  console.log(`SEED-LESSON OK ${ids.lesson} author=${authorUid} title="${title}"`);
+  return ids;
+}
+
+async function seedReviewTask(submissionId, lessonId, ownerUid) {
+  assert.ok(/^[A-Za-z0-9_-]{1,128}$/.test(submissionId), "submissionId must be a doc-safe id");
+  const prefix = lessonId.replace(/_lesson$/, "");
+  const assignmentId = `${submissionId}_${lessonId}`;
+  const taskPath = `admin/review/lessons/${lessonId}`;
+  const journalPath = `admin/review/sync_changes/${assignmentId}`;
+  await assertDocAbsent(taskPath);
+  await assertDocAbsent(journalPath);
+  const lesson = await db.doc(`lessons/${lessonId}`).get();
+  assert.ok(lesson.exists, `lesson must exist: ${lessonId}`);
+  const placement = await db.doc(`lesson_placements/${lessonId}`).get();
+  assert.ok(placement.exists, `lesson must stay placed for the report addressee: ${lessonId}`);
+  assert.equal(placement.data().authorUid, ownerUid, "task ownerUid must match the placement author");
+  // checks пусты: openTasksFor держит TESTING открытым, adminLevel 100 даёт его ревьюеру.
+  const now = Date.now();
+  await db.doc(taskPath).set({
+    assignmentId, submissionId, ownerUid, lessonId,
+    catalogId: `${prefix}_catalog`, draftId: `${prefix}_quest`, questId: `${prefix}_quest`,
+    title: lesson.data().title, createdAtMs: now, changedAtMs: now, status: "UNDER_REVIEW",
+    sourceLanguages: ["en"], checks: {},
+  });
+  for (const order of [0, 1]) {
+    const publicQuestion = await db.doc(`questions/q_${prefix}_${order}`).get();
+    assert.ok(publicQuestion.exists, `public question must exist: q_${prefix}_${order}`);
+    await db.doc(taskPath).collection("quests").doc(`${prefix}_quest`)
+      .collection("questions").doc(publicQuestion.id)
+      .set({...publicQuestion.data(), draftId: submissionId, updatedAtMs: now});
+  }
+  // Тело записи журнала — ровно три поля (AD-11); id документа = id задания как есть.
+  await db.doc(journalPath).set({type: "review_assignment", id: assignmentId, changedAtMs: now});
+  console.log(`SEED-TASK OK assignmentId=${assignmentId} owner=${ownerUid}`);
+}
+
 async function main() {
   const [cmd, ...args] = process.argv.slice(2);
   if (cmd === "snapshot") {
@@ -206,6 +310,21 @@ async function main() {
     }, token);
     writeJson(`replay-${reportId}.json`, {uid, status: reply.status, reply: reply.json});
     console.log(`REPLAY status=${reply.status} reply=${JSON.stringify(reply.json)}`);
+  } else if (cmd === "bootstrap-reviewer") {
+    const [uid] = args;
+    assert.ok(/^[A-Za-z0-9_-]{20,128}$|^User[A-Za-z0-9]{6,}$/.test(uid), "uid must look like a firebase uid");
+    await db.doc(`profiles/${uid}`).set({adminLevel: 100, testerLevel: 0}, {merge: true});
+    const doc = await db.doc(`profiles/${uid}`).get();
+    assert.equal(doc.data().adminLevel, 100, "adminLevel must be 100 after bootstrap");
+    console.log(`BOOTSTRAP-REVIEWER OK profiles/${uid}.adminLevel=100`);
+  } else if (cmd === "seed-lesson") {
+    const [prefix, authorUid, ...titleParts] = args;
+    const title = titleParts.join(" ");
+    assert.ok(title.trim().length > 0, "lesson title is required");
+    await seedLesson(prefix, authorUid, title.trim());
+  } else if (cmd === "seed-review-task") {
+    const [submissionId, lessonId, ownerUid] = args;
+    await seedReviewTask(submissionId, lessonId, ownerUid);
   } else {
     throw new Error(`unknown command: ${cmd}`);
   }
