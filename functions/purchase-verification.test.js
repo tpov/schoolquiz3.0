@@ -632,6 +632,8 @@ function testAnActiveFullTermSubscriptionGrantsTheTableDays() {
   assert.strictEqual(verdict.credit.premiumDays, 30, "полный срок — дни таблицы");
   assert.strictEqual(verdict.credit.premiumGrantedMs, 30 * 86_400_000);
   assert.strictEqual(verdict.credit.goldGranted, 0, "премиум — не золото");
+  // Срок едет с решением: им назван грант и его хранит запись расчёта (история 2.3).
+  assert.strictEqual(verdict.credit.subscriptionExpiryMs, NOW + 30 * 86_400_000);
 }
 
 function testATrialTermGrantsTheWholeDaysPlaySellsNotTheTableCeiling() {
@@ -708,6 +710,75 @@ function testASubscriptionLineItemForAnotherSkuIsRefusedAsAMismatch() {
   assert.strictEqual(verdict.reasonCode, "SKU_MISMATCH");
 }
 
+// ---------------------------------------------------------------------------
+// История 2.3: продление — тот же токен, сдвинувшийся вперёд срок.
+// ---------------------------------------------------------------------------
+
+const TERM_1 = NOW + 30 * 86_400_000;
+const GRANT_OF_RECORD = `play_${"a".repeat(64)}`;
+
+/** Запись расчёта первого срока: та форма, что транзакция пишет по решению «начислить». */
+function premiumRecord({expiryMs = TERM_1} = {}) {
+  const id = settlementId(TOKEN);
+  const credit = {
+    sku: SKU_PREMIUM, productKind: PRODUCT_PREMIUM, premiumDays: 30,
+    premiumGrantedMs: 30 * 86_400_000, quantity: 1, subscriptionExpiryMs: expiryMs,
+    goldGranted: 0, goldPerUnit: 0, isTest: false, constantsVersion: 7,
+  };
+  const response = successResponse({
+    sku: SKU_PREMIUM, goldGranted: 0, gold: 5, settlementId: id, productKind: PRODUCT_PREMIUM,
+    premiumGrantedMs: 30 * 86_400_000, premiumUntilMs: NOW + 30 * 86_400_000, premiumGrantId: GRANT_OF_RECORD,
+  });
+  return settlementRecord({
+    id, uid: UID, purchase: playSubscription(), credit, goldBefore: 5, goldAfter: 5,
+    constantsDoc: ECONOMY_CONSTANTS_DOC, now: NOW, response,
+    premiumGrantId: GRANT_OF_RECORD, premiumUntilMs: NOW + 30 * 86_400_000,
+  });
+}
+
+function testASettledPremiumReplaysWhileTheFreshTermIsNotLater() {
+  const record = premiumRecord();
+  const stored = decideSubscription({existing: record});
+  assert.strictEqual(stored.decision, SETTLEMENT_REPLAY);
+  assert.deepStrictEqual(stored.response, record.response, "повтор отвечает сохранённым ответом срока");
+  // Тот же и меньший срок — тоже повтор: ничего оплаченного дважды не начисляется.
+  for (const fresh of [TERM_1, TERM_1 - 86_400_000]) {
+    const again = decideSubscription({
+      existing: record,
+      purchase: playSubscription({lineItems: [{productId: SKU_PREMIUM, expiryTime: new Date(fresh).toISOString()}]}),
+    });
+    assert.strictEqual(again.decision, SETTLEMENT_REPLAY, `fresh ${fresh}`);
+    assert.strictEqual(again.credit, undefined);
+  }
+}
+
+function testASettledPremiumHasNoVerdictUntilPlayWasAsked() {
+  // Предварительный гейт (до запроса к Play) не может знать, не продлился ли срок: повтор
+  // премиум-записи стоит ровно один чт subscriptionsv2.
+  assert.strictEqual(settlementGate(premiumRecord(), UID), null);
+  // Спрошен, но срока прочесть не удалось — записанный остаётся правдой, это повтор.
+  const gate = settlementGate(premiumRecord(), UID, null);
+  assert.strictEqual(gate.decision, SETTLEMENT_REPLAY);
+}
+
+function testALaterTermSettlesAsARenewalThroughTheFullDecision() {
+  const term2 = TERM_1 + 30 * 86_400_000;
+  const purchase = playSubscription({
+    lineItems: [{productId: SKU_PREMIUM, expiryTime: new Date(term2).toISOString()}],
+  });
+  const verdict = decideSubscription({existing: premiumRecord(), purchase, now: TERM_1});
+  assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT, verdict.reason);
+  assert.strictEqual(verdict.credit.premiumDays, 30, "целые сутки нового срока, потолок — таблица");
+  assert.strictEqual(verdict.credit.subscriptionExpiryMs, term2, "грант нового срока назван им же");
+}
+
+function testAnUnreadableFreshTermReplaysTheRecordedOne() {
+  // Play ответил, а срока в нём нет: записанный срок уже оплачен и рассчитан — повтор, а не отказ.
+  const purchase = playSubscription({lineItems: [{productId: SKU_PREMIUM, expiryTime: "not-a-date"}]});
+  const verdict = decideSubscription({existing: premiumRecord(), purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_REPLAY);
+}
+
 testTheCallableIsWiredTheWayTheSpecSays();
 
 testAnActiveFullTermSubscriptionGrantsTheTableDays();
@@ -720,5 +791,9 @@ testAPremiumSkuWithoutASubscriptionLookupIsRefusedBeforeAnyGrant();
 testASubscriptionTermThatAlreadyPassedGrantsNothing();
 testASubscriptionMarkedForAnotherAccountIsRefused();
 testASubscriptionLineItemForAnotherSkuIsRefusedAsAMismatch();
+testASettledPremiumReplaysWhileTheFreshTermIsNotLater();
+testASettledPremiumHasNoVerdictUntilPlayWasAsked();
+testALaterTermSettlesAsARenewalThroughTheFullDecision();
+testAnUnreadableFreshTermReplaysTheRecordedOne();
 
 console.log("purchase-verification.test.js OK");

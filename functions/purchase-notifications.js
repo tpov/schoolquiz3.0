@@ -52,6 +52,15 @@ const ONE_TIME_PRODUCT_PURCHASED = 1;
 const ONE_TIME_PRODUCT_CANCELED = 2;
 
 /**
+ * `subscriptionNotification.notificationType`, двигающие срок вперёд (история 2.3): 1 —
+ * восстановлена после сбоя платежа, 2 — продлена, 7 — возобновлена после приостановки. Право
+ * живёт до срока в lineItem, и только эти типы означают, что срок мог вырасти. Остальные —
+ * отмена, приостановка, отзыв — право не двигают вперёд: отмена и отзыв остаются делом
+ * `voidedPurchaseNotification` (история 1.3), и второй путь к ним здесь не заводится.
+ */
+const SUBSCRIPTION_TERM_MOVED_TYPES = Object.freeze([1, 2, 7]);
+
+/**
  * Решение по возврату.
  *
  * CLAW_BACK — снять выданное. ALREADY_REFUNDED — по этому токену уже сняли (второе сообщение о том
@@ -139,6 +148,21 @@ function tokenOf(notification) {
 /** Пакет, о котором уведомление. Чужой пакет — не наше дело. */
 function packageOf(notification) {
   return isObject(notification) ? stringValue(notification.packageName) : "";
+}
+
+/**
+ * Токен подписки из уведомления о продлении — пустая строка, если это не оно.
+ *
+ * Читается только `subscriptionNotification` с типом, способным сдвинуть срок: его достаточно,
+ * чтобы найти запись расчёта и запустить тот же расчёт, что и чек с устройства. Решение всё равно
+ * принимает свежий ответ Play, а не тип сообщения.
+ */
+function readSubscriptionRenewal(notification) {
+  if (!isObject(notification) || !isObject(notification.subscriptionNotification)) return "";
+  const source = notification.subscriptionNotification;
+  if (!SUBSCRIPTION_TERM_MOVED_TYPES.includes(intOrNull(source.notificationType))) return "";
+  const token = source.purchaseToken;
+  return typeof token === "string" && token && token.length <= MAX_TOKEN_LENGTH ? token : "";
 }
 
 /**
@@ -537,6 +561,7 @@ module.exports = {
   notificationKind,
   notificationRecord,
   packageOf,
+  readSubscriptionRenewal,
   refundAuditRecord,
   refundDocId,
   refundReceiptRecord,

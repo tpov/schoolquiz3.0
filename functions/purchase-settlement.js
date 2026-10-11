@@ -57,6 +57,8 @@ const {
 const SETTLEMENT_OUTCOME_RESPONSE = "response";
 const SETTLEMENT_OUTCOME_REFUSE = "refuse";
 const SETTLEMENT_OUTCOME_UNAVAILABLE = "unavailable";
+/** Продление, которому этот сервер нечего рассчитывать: признано, ничего не записано. */
+const SETTLEMENT_OUTCOME_IGNORED = "ignored";
 
 /** Пишется ошибкой: чинится не кодом, а владельцем в Play Console. */
 const ACCESS_REFUSED_HINT =
@@ -97,6 +99,9 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
   // Известный токен отвечается до того, как спрошен Play. Повтору проверка не нужна — сохранённый
   // ответ и есть проверка, — а после погашения Play ответил бы «погашена», что для токена без
   // записи расчёта было бы отказом. Чужой токен отклоняется здесь же, не выдавая, что он есть.
+  // Подписка — исключение по состоянию, не по владельцу: у премиум-записи с записанным сроком
+  // вердикта здесь нет (гейт молчит), потому что тот же токен может приехать продлением, и узнает
+  // об этом только свежий ответ Play.
   const known = await settlementRef.get();
   const revocation = await revocationRef.get();
   let fence;
@@ -227,7 +232,13 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
 
       const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
       if (decision.credit.productKind === PRODUCT_PREMIUM) {
-        const operation = {kind: "GRANT", source: SOURCE.PLAY, sourceId: id, days: decision.credit.premiumDays};
+        // Подписка живёт через продления: грант каждого оплаченного срока называется токеном и
+        // этим сроком (история 2.3). Тот же срок — тот же грант: переигранная транзакция узнаёт
+        // свой лот и не заводит второй; сдвинувшийся вперёд срок Play — новый лот поверх старых,
+        // и дата окончания становится max(сейчас, окончание) + срок.
+        const termId = `${id}_${decision.credit.subscriptionExpiryMs}`;
+        const renewals = existing ? settledRenewals(existing) + 1 : 0;
+        const operation = {kind: "GRANT", source: SOURCE.PLAY, sourceId: termId, days: decision.credit.premiumDays};
         const snapshot = await readPremiumEconomy({db, transaction, uid, operation});
         const plan = planPremiumEconomy({snapshot, userData, constants, now, operation});
         if (plan.caughtUp && plan.outcome !== "GRANTED") {
@@ -243,12 +254,17 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
           premiumGrantedMs: decision.credit.premiumGrantedMs, ...premium,
         });
         const settled = {
-          id, uid, purchase, credit: decision.credit, goldBefore: gold, goldAfter: gold,
+          id, docId: termId, uid, purchase, credit: decision.credit, goldBefore: gold, goldAfter: gold,
           constantsDoc: ECONOMY_CONSTANTS_DOC, now: plan.header.asOfMs, partialRefund: adjustment.partial, ...premium,
         };
-        transaction.create(settlementRef, settlementRecord({...settled, response}));
-        transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(id), receiptRecord(settled));
-        transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(id), auditRecord(settled));
+        const record = settlementRecord({...settled, response});
+        // Первый срок заводит запись `create`-ом: если параллельный вызов рассчитал токен первым,
+        // транзакция падает и на повторе отвечает повтором. Продление запись обновляет — она о
+        // новом сроке того же токена, а повторную выдачу того же срока отсёк лот.
+        if (existing) transaction.set(settlementRef, {...record, subscriptionRenewals: renewals});
+        else transaction.create(settlementRef, record);
+        transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(termId), receiptRecord(settled));
+        transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(termId), auditRecord(settled));
         return {decision: SETTLEMENT_CREDIT, response};
       }
       const goldBefore = readGold(userData);
@@ -317,6 +333,45 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
   return outcomeOf(verdict, {id, sku, log});
 }
 
+/** Сколько сроков этого токена уже рассчитано: поле появляется с первым продлением. */
+function settledRenewals(existing) {
+  const parsed = Number(existing && existing.subscriptionRenewals);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
+}
+
+/**
+ * Продление по уведомлению Play (история 2.3): тот же расчёт, другой повод.
+ *
+ * В сообщении нет ни uid, ни SKU — оба живут в записи расчёта, которую токен уже завёл, покупая
+ * подписку с устройства. Дальше работает тот же `settlePurchase` без единой уступки: свежий ответ
+ * Play, тот же гейт, та же транзакция, тот же грант «токен и срок». Записи нет — токен никогда не
+ * начислялся (подписка куплена до этого сервера или чужая): сообщение признаётся и не повторяется,
+ * потому что повтор не создаст того, что отсутствовало. Вердикта нет — ошибка: сообщение приедет
+ * снова, и тогда, возможно, Play ответит.
+ *
+ * @returns {Promise<{kind: string, response?: object}>} исход `settlePurchase` или `IGNORED`.
+ */
+async function settleSubscriptionRenewal({db, playApi, now, purchaseToken, readGold, log}) {
+  const id = settlementId(purchaseToken);
+  const known = await db.collection(PURCHASE_SETTLEMENTS_COLLECTION).doc(id).get();
+  if (!known.exists) {
+    log.warn("settleSubscriptionRenewal: renewal for a token this server never settled; acknowledged", {
+      settlementId: id,
+    });
+    return {kind: SETTLEMENT_OUTCOME_IGNORED};
+  }
+  const record = known.data() || {};
+  return settlePurchase({
+    db, playApi, now, uid: stringValue(record.uid),
+    payload: {purchaseToken, sku: stringValue(record.sku)},
+    readGold, log,
+  });
+}
+
+function stringValue(value) {
+  return value === null || value === undefined ? "" : String(value);
+}
+
 /** Переводит чистый вердикт в исход: ответ как есть, или отказ с кодом и причиной. */
 function outcomeOf(verdict, {id, sku, log}) {
   if (verdict.decision === SETTLEMENT_REVOCATION_PENDING) return {
@@ -353,6 +408,8 @@ module.exports = {
   SETTLEMENT_OUTCOME_REFUSE,
   SETTLEMENT_OUTCOME_RESPONSE,
   SETTLEMENT_OUTCOME_UNAVAILABLE,
+  SETTLEMENT_OUTCOME_IGNORED,
   SKU_NOT_SOLD_HINT,
   settlePurchase,
+  settleSubscriptionRenewal,
 };

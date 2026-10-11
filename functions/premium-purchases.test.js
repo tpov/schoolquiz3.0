@@ -4,8 +4,8 @@ const assert = require("assert/strict");
 const {premiumTestDb} = require("./premium-test-db");
 const {DAY_MS, SOURCE, LEGACY_GRANT_ID} = require("./premium-grants");
 const {readEconomyConstants, premiumSaleOffer, ECONOMY_CONSTANTS_DOC} = require("./economy-constants");
-const {settlementId, accountIdFor, SHORTFALL_FIELD, PLAY_OUTCOME_FOUND} = require("./purchase-verification");
-const {settlePurchase} = require("./purchase-settlement");
+const {settlementId, accountIdFor, SHORTFALL_FIELD, PLAY_OUTCOME_FOUND, PLAY_OUTCOME_NOT_FOUND, PLAY_OUTCOME_UNAVAILABLE} = require("./purchase-verification");
+const {settlePurchase, settleSubscriptionRenewal} = require("./purchase-settlement");
 const {clawBackPurchase} = require("./purchase-clawback");
 const {refundDocId} = require("./purchase-notifications");
 const {premiumGrantId, readPremiumEconomy, planPremiumEconomy, writePremiumEconomy} = require("./premium-economy");
@@ -17,13 +17,17 @@ const PACKAGE = "com.tpov.schoolquiz";
 const SKU = "owner.configured_membership"; // Test fixture, deliberately not a production default.
 const TOKEN = "valid-test-purchase-token-1234567890";
 const ID = settlementId(TOKEN);
+// Срок, который фейковый Play отвечает на subscriptionsv2: грант называется токеном и сроком
+// (история 2.3), так что грант и документы срока выводятся из него же.
+const EXPIRY = T + 365 * DAY_MS;
+const TERM_ID = `${ID}_${EXPIRY}`;
 const USER = `users/${UID}`;
 const HEADER = `premium_accounts/${UID}`;
 const LOT = `${HEADER}/lots/`;
 const SETTLEMENT = `purchase_settlements/${ID}`;
-const RECEIPT = `users/${UID}/receipts/${ID}`;
-const AUDIT = `purchase_audit/${ID}`;
-const GRANT_ID = premiumGrantId(SOURCE.PLAY, ID);
+const RECEIPT = `users/${UID}/receipts/${TERM_ID}`;
+const AUDIT = `purchase_audit/${TERM_ID}`;
+const GRANT_ID = premiumGrantId(SOURCE.PLAY, TERM_ID);
 const config = (days = 1, extra = {}) => ({version: 20, standard: {regenMs: 100_000}, plasma: {regenMs: 100_000},
   premiumProducts: {[SKU]: {days, salesEnabled: true}}, ...extra});
 const user = () => ({gold: 40, [SHORTFALL_FIELD]: 11, standardHearts: 5, goldHearts: 1,
@@ -43,12 +47,14 @@ function fakePlay(overrides = {}) {
   }, async getSubscriptionPurchaseV2(token) {
     calls.push({token});
     // Срок на год вперёд: грант режется потолком товарной строки таблицы, так что сам срок в
-    // этих тестах задаёт конфиг, а не фейк Play.
+    // этих тестах задаёт конфиг, а не фейк Play. Продление (история 2.3) подставляет больший
+    // срок тем же токеном — читая `expiry` из opts.
+    const expiry = overrides.expiry === undefined ? EXPIRY : overrides.expiry;
     return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
       subscriptionState: 2, startTime: new Date(T - 1000).toISOString(),
       latestOrderId: "GPA.1111-2222-3333-44444", regionCode: "UA",
       externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
-      lineItems: [{productId: SKU, expiryTime: new Date(T + 365 * DAY_MS).toISOString()}],
+      lineItems: [{productId: SKU, expiryTime: new Date(expiry).toISOString()}],
     }};
   }};
 }
@@ -115,8 +121,9 @@ test("all four configured Play durations settle atomically without changing gold
     assert.equal(db.store.get(USER).gold, 40);
     assert.equal(db.store.get(USER)[SHORTFALL_FIELD], 11);
     assert.equal(db.store.get(HEADER).totalRemainingMs, days * DAY_MS);
-    assert.equal(db.store.get(LOT + GRANT_ID).sourceId, ID);
+    assert.equal(db.store.get(LOT + GRANT_ID).sourceId, TERM_ID);
     assert.equal(db.store.get(SETTLEMENT).premiumDays, days);
+    assert.equal(db.store.get(SETTLEMENT).subscriptionExpiryMs, EXPIRY);
     assert.equal(db.store.get(RECEIPT).currency, "PREMIUM_MS");
     assert.equal(db.store.get(AUDIT).premiumGrantedMs, days * DAY_MS);
     const ledger = [...db.store].filter(([path]) => path.startsWith(`${LEDGER_PATH}/`)).map(([, row]) => row);
@@ -131,12 +138,46 @@ test("sales off does not block verified paid receipt; removed config does not bl
   const db = makeDb(config(7, {premiumProducts: {[SKU]: {days: 7, salesEnabled: false}}}));
   assert.equal((await buy(db)).kind, "response");
   db.store.set(ECONOMY_CONSTANTS_DOC, {});
-  const noPlay = {getProductPurchase() { throw new Error("known purchase must replay before Play"); }};
-  const replay = await buy(db, T + 100, {playApi: noPlay});
+  // Повтор рассчитанного премиум-токена больше не отвечает до Play (история 2.3): свежий срок —
+  // единственный способ узнать продление. Но конфиг ему не нужен: без таблицы маршрут уводит на
+  // товарный endpoint, там токен подписки не находится — и решение отвечает сохранённым ответом.
+  const noConfig = {packageName: PACKAGE, async getProductPurchase() {
+    return {outcome: PLAY_OUTCOME_NOT_FOUND, status: 404};
+  }};
+  const replay = await buy(db, T + 100, {playApi: noConfig});
   assert.deepEqual(replay.response, db.store.get(SETTLEMENT).response);
   const returned = await refund(db, T + 100);
   assert.equal(returned.kind, "CLAWED_BACK");
   assert.equal(returned.premiumRevokedMs, 7 * DAY_MS - 100);
+});
+
+test("renewal extends instead of replacing: later expiry, same token, one grant per term", async () => {
+  const db = makeDb(config(7));
+  assert.equal((await buy(db)).response.premiumUntilMs, T + 7 * DAY_MS);
+  const renewedAt = T + DAY_MS;
+  const renewedExpiry = EXPIRY + 30 * DAY_MS;
+  const result = await buy(db, renewedAt, {playApi: fakePlay({expiry: renewedExpiry})});
+  assert.equal(result.kind, "response");
+  // max(сейчас, окончание) + длительность: лот поверх активного, а не вместо него.
+  assert.equal(result.response.premiumUntilMs, T + 14 * DAY_MS);
+  const renewalGrantId = premiumGrantId(SOURCE.PLAY, `${ID}_${renewedExpiry}`);
+  assert.equal(result.response.premiumGrantId, renewalGrantId);
+  assert.equal(db.store.get(HEADER).totalRemainingMs, 13 * DAY_MS);
+  assert.equal(db.store.get(HEADER).nextSequence, 2);
+  const record = db.store.get(SETTLEMENT);
+  assert.equal(record.subscriptionExpiryMs, renewedExpiry);
+  assert.equal(record.subscriptionRenewals, 1);
+  assert.equal(record.premiumGrantId, renewalGrantId);
+  // Квитанция и аудит срока — рядом, не поверх первого.
+  assert.equal(db.store.get(`users/${UID}/receipts/${TERM_ID}`).createdAtMs, T);
+  assert.equal(db.store.get(`users/${UID}/receipts/${ID}_${renewedExpiry}`).amount, 7 * DAY_MS);
+  assert.equal(db.store.get(`purchase_audit/${ID}_${renewedExpiry}`).premiumDays, 7);
+  // Тот же срок ещё раз — повтор: ни лота, ни квитанции, ни движения книги.
+  const writes = db.commits.flat().length;
+  const replay = await buy(db, renewedAt + 100, {playApi: fakePlay({expiry: renewedExpiry})});
+  assert.deepEqual(replay.response, record.response);
+  assert.equal(db.commits.flat().length, writes);
+  assert.equal(db.store.get(HEADER).nextSequence, 2);
 });
 
 test("unknown paid SKU is unconsumed with explicit config diagnostic, can retry after config repair", async () => {
@@ -240,6 +281,32 @@ test("settlement-to-grant mismatch cannot revoke another Play purchase", async (
   await assert.rejects(refund(db, T + 100), /provenance disagree/);
   assert.deepEqual([...db.store].filter(([path]) => !path.startsWith("purchase_revocations/")), before);
   assert.equal(db.store.get(`purchase_revocations/${ID}`).state, "PENDING_VERIFICATION");
+});
+
+test("renewal notification rides the record to the same settlement", async () => {
+  // RTDN не знает ни uid, ни SKU — оба живут в записи расчёта; дальше работает тот же
+  // settlePurchase без единой уступки (история 2.3).
+  const db = makeDb(config(7));
+  await buy(db);
+  const later = EXPIRY + 30 * DAY_MS;
+  const log = fakeLog();
+  const outcome = await settleSubscriptionRenewal({db, playApi: fakePlay({expiry: later}), now: T + DAY_MS,
+    purchaseToken: TOKEN, readGold, log});
+  assert.equal(outcome.kind, "response");
+  assert.equal(outcome.response.premiumUntilMs, T + 14 * DAY_MS);
+  // Токен никогда не начислялся: признано, записей нет, повторов не просит.
+  const stranger = makeDb(config(7));
+  const ignored = await settleSubscriptionRenewal({db: stranger, playApi: fakePlay(), now: T,
+    purchaseToken: "never-settled-token-1234567890", readGold, log});
+  assert.equal(ignored.kind, "ignored");
+  assert.equal(stranger.store.has(HEADER), false);
+  assert.match(JSON.stringify(log.entries), /never settled/);
+  // Play молчит — вердикта нет, сообщение приедет снова (index.js бросает по unavailable).
+  const silent = await settleSubscriptionRenewal({db,
+    playApi: {packageName: PACKAGE,
+      async getSubscriptionPurchaseV2() { return {outcome: PLAY_OUTCOME_UNAVAILABLE, status: 503}; }},
+    now: T, purchaseToken: TOKEN, readGold, log});
+  assert.equal(silent.kind, "unavailable");
 });
 
 async function longHistory() {

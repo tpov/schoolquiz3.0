@@ -2,7 +2,7 @@
 title: 'M2.3 — Renewal, not replacement'
 type: 'feature'
 created: '2026-10-11'
-status: 'in-progress'
+status: 'review'
 baseline_commit: 'd59a0299'
 review_loop_iteration: 0
 story_key: '2-3-продление-а-не-замена'
@@ -112,13 +112,18 @@ decide "has premium" anywhere a date is available; touch owner files
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Engine law tests: extension over active/expired, single debit, replay idempotence.
-- [ ] Settlement: expiry-aware gate, per-term grant id, record update + receipt/audit per term.
-- [ ] RTDN: term-moving subscription notifications re-run the settlement; unknown records
+- [x] Engine law tests: extension over active/expired, single debit, replay idempotence.
+- [x] Settlement: expiry-aware gate, per-term grant id, record update + receipt/audit per term.
+- [x] RTDN: term-moving subscription notifications re-run the settlement; unknown records
       acknowledged.
-- [ ] Client: `hasPremium` from the date in the stats sync; noir screens compare with now.
-- [ ] Gates via `sgw ./gradlew` for touched modules; functions `node run-tests.js`.
-- [ ] `sprint-status-monetisation.yaml`: 2-3 → review.
+- [x] Client: `hasPremium` from the date in the stats sync; noir screens compare with now.
+- [x] Gates via `sgw ./gradlew` for touched modules; functions `node run-tests.js` (100/100).
+      Known reds, not the story's: 2 arena fixture-pin tests, `platform:firebase` ktlint fails
+      identically at HEAD (no violation in the touched files).
+- [x] Rig (HITL): install + shop opens, premium row intact
+      (`docs/agents/evidence/2026-10-11-renewal-not-replacement/`); the renewal itself needs a
+      GMS device with a sandbox subscription — stays with the owner.
+- [x] `sprint-status-monetisation.yaml`: 2-3 → review.
 
 **Acceptance Criteria:**
 - Given у игрока активный или истёкший премиум, when приходит новый любым путём (деньги, золото,

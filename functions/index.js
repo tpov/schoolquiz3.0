@@ -61,8 +61,10 @@ const {
   SETTLEMENT_OUTCOME_REFUSE,
   SETTLEMENT_OUTCOME_UNAVAILABLE,
   settlePurchase,
+  settleSubscriptionRenewal,
 } = require("./purchase-settlement");
 const {clawBackPurchase} = require("./purchase-clawback");
+const {decodeNotification, readSubscriptionRenewal} = require("./purchase-notifications");
 const {applyBoxOperation, BOX_KIND} = require("./box-service");
 const {readBoxState} = require("./gift-boxes");
 const {GIFT_BOX_LOGO_NAMES} = require("./gift-box-rewards");
@@ -3779,11 +3781,34 @@ exports.verifyPurchase = onCall(MONETARY_CALLABLE_OPTIONS, async (request) => {
 exports.playPurchaseNotifications = onMessagePublished(
   {...MONETARY_FUNCTION_OPTIONS, topic: PLAY_RTDN_TOPIC, retry: true},
   async (event) => {
+    const message = event.data && event.data.message;
+    // Продление (история 2.3) идёт первым: его токен — повод запустить тот же расчёт, что и чек
+    // с устройства, а снять нечего. Семейства уведомлений не пересекаются, поэтому всё прочее —
+    // по-прежнему возвраты.
+    const renewalToken = readSubscriptionRenewal(decodeNotification(message));
+    if (renewalToken) {
+      const outcome = await settleSubscriptionRenewal({
+        db,
+        playApi: playDeveloperApi(),
+        now: Date.now(),
+        purchaseToken: renewalToken,
+        readGold: (data) => readEconomyBalance(data).gold,
+        log: logger,
+      });
+      if (outcome.kind === SETTLEMENT_OUTCOME_UNAVAILABLE) {
+        // Вердикта нет — ничего не записано; повторная доставка попробует снова.
+        throw new Error("Play Developer API unavailable; redeliver this renewal notification");
+      }
+      if (outcome.kind === SETTLEMENT_OUTCOME_REFUSE) {
+        logger.warn("playPurchaseNotifications: renewal refused", {reason: outcome.reason, reasonCode: outcome.reasonCode});
+      }
+      return;
+    }
     await clawBackPurchase({
       db,
       playApi: playDeveloperApi(),
       now: Date.now(),
-      message: event.data && event.data.message,
+      message,
       readGold: (data) => readEconomyBalance(data).gold,
       log: logger,
     });

@@ -67,9 +67,13 @@ development_status:
     # констант; коробка: datePremium через premium-economy (уже было, подтверждено тестами).
     # Клиент: PremiumGoldOffer, парсинг, полка (строка Premium первой), роутинг по валюте строки.
     # functions 100/100; гейты Kotlin зелёные (2 арена fixture-pin — известные, владельца)
-  2-3-продление-а-не-замена: in-progress  # spec-m2-3-renewal-not-replacement.md —
-    # продление подписки тем же токеном (expiry-aware settlement), RTDN RENEWED/RECOVERED/RESTARTED,
-    # признак «есть премиум» из даты; движок лотов уже даёт max(now, окончание) + длительность
+  2-3-продление-а-не-замена: review  # spec-m2-3-renewal-not-replacement.md — подписка продлевается,
+    # а не заменяется: гейт повтора различает сроки того же токена (тот же → повтор, больший → новый
+    # лот «settlementId_срок», запись обновляется, квитанция/аудит срока отдельные); RTDN типы
+    # {RENEWED, RECOVERED, RESTARTED} идут тем же расчётом через запись (uid оттуда); клэкбэк
+    # принимает лот с суффиксом срока; клиентский «есть премиум» — из premiumUntilMs против часов.
+    # Движок лотов дал формулу max(сейчас, окончание) + длительность без изменений — тесты закрепили.
+    # functions 100/100; red: 2 арена fixture-pin, ktlint platform:firebase (падает и на HEAD)
   2-4-премиум-без-преимущества: backlog
   epic-2-retrospective: optional
 

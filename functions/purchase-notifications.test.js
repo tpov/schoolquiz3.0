@@ -23,6 +23,7 @@ const {
   notificationKind,
   notificationRecord,
   packageOf,
+  readSubscriptionRenewal,
   refundAuditRecord,
   refundDocId,
   refundReceiptRecord,
@@ -382,9 +383,33 @@ function testTheTriggerIsWiredTheWayTheSpecSays() {
   assert.ok(body.includes("MONETARY_FUNCTION_OPTIONS"), "свой предел инстансов, не глобальная единица");
   assert.ok(body.includes("topic: PLAY_RTDN_TOPIC"), "имя топика — константа модуля, не секрет");
   assert.ok(body.includes("retry: true"), "недоставленное сообщение обязано приехать снова");
+  assert.ok(body.includes("readSubscriptionRenewal("), "продление опознаётся до возвратов (история 2.3)");
+  assert.ok(body.includes("settleSubscriptionRenewal("), "продление идёт тем же расчётом, что и чек");
   assert.ok(body.includes("clawBackPurchase("), "триггер делегирует purchase-clawback.js");
   assert.ok(!body.includes("increment("), "золото — абсолютом, не increment");
   assert.ok(!body.includes("acknowledge") && !body.includes("consume"), "этот путь у Play только читает");
+}
+
+function testARenewalIsReadFromTermMovingSubscriptionTypesOnly() {
+  // История 2.3: продление — тот же расчёт по другому поводу. Токен читается только из
+  // subscriptionNotification с типом, способным сдвинуть срок вперёд; остальные типы, возвраты
+  // и одно-товарные уведомления продлениями не являются.
+  const renewed = (type, overrides = {}) => ({
+    version: "1.0", packageName: PACKAGE, eventTimeMillis: String(NOW),
+    subscriptionNotification: {version: "1.0", notificationType: type, purchaseToken: TOKEN, subscriptionId: "premium_30d", ...overrides},
+  });
+  for (const type of [1, 2, 7]) {
+    assert.strictEqual(readSubscriptionRenewal(renewed(type)), TOKEN, `type ${type} двигает срок`);
+  }
+  for (const type of [3, 4, 5, 6, 12, 13, 20]) {
+    assert.strictEqual(readSubscriptionRenewal(renewed(type)), "", `type ${type} срок не двигает`);
+  }
+  assert.strictEqual(readSubscriptionRenewal(voided()), "", "возврат — не продление");
+  assert.strictEqual(readSubscriptionRenewal({subscriptionNotification: {notificationType: 2}}), "",
+    "токена нет — читать нечего");
+  assert.strictEqual(readSubscriptionRenewal({subscriptionNotification: {notificationType: 2, purchaseToken: "x".repeat(MAX_TOKEN_LENGTH + 1)}}), "",
+    "токен длиннее потолка — не токен");
+  assert.strictEqual(readSubscriptionRenewal(null), "");
 }
 
 function testTheCollectionIsTheOneTheRulesClose() {
@@ -406,6 +431,7 @@ testTheRecordsOfARefundNameWhatTheAuditNeeds();
 testPartialDecisionUsesOnlyTheV2CumulativeQuantity();
 testTheRecordOfAMessageSaysWhatArrivedAndHowItEnded();
 testTheTriggerIsWiredTheWayTheSpecSays();
+testARenewalIsReadFromTermMovingSubscriptionTypesOnly();
 testTheCollectionIsTheOneTheRulesClose();
 
 console.log("purchase-notifications.test.js OK");

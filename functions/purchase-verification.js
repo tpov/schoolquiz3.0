@@ -350,7 +350,8 @@ function purchaseFromLookup(lookup) {
 }
 
 /**
- * Вердикт по уже существующей записи расчёта — до того, как спрашивать Play.
+ * Вердикт по уже существующей записи расчёта — до того, как спрашивать Play, и ещё раз внутри
+ * транзакции.
  *
  * Порядок тот же, что у ключей очереди (`gateVerdict` в mutation-queue.js): сначала владелец,
  * потом состояние. Чужой токен — не повтор, а попытка прочитать чужой результат, и ответа он не
@@ -360,9 +361,21 @@ function purchaseFromLookup(lookup) {
  * ответ «начислено» по возвращённой покупке значило бы дать погасить то, за что деньги уже
  * вернули.
  *
- * @returns {object|null} null, если записи нет и решать должен полный разбор.
+ * Подписка — единственное начисление, чей повтор умеет быть новостью: тот же токен живёт через
+ * продления, и срок в lineItem двигается вперёд. Поэтому премиум-запись с записанным сроком
+ * повторяется только при свежем сроке Play не больше записанного: больший срок — «решает полный
+ * разбор», и продление станет новым лотом (история 2.3); срок, который Play прочесть не удалось,
+ * записанного не превосходит — повтор. Пока Play не спрошен (`freshExpiry === undefined`, так
+ * зовёт предварительный гейт), у премиума вердикта нет: спросить Play ради свежего срока — цена
+ * того, что продление вообще доходит до счёта.
+ *
+ * @param {object|null} existing запись `purchase_settlements/{id}`, если она есть.
+ * @param {string} uid кто предъявляет чек.
+ * @param {number|null|undefined} freshExpiry срок из свежего ответа Play; `null` — спрошен, но
+ *   срока нет, `undefined` — ещё не спрошен.
+ * @returns {object|null} null, если вердикта нет и решать должен полный разбор.
  */
-function settlementGate(existing, uid) {
+function settlementGate(existing, uid, freshExpiry) {
   if (!existing) return null;
   if (stringValue(existing.uid) !== stringValue(uid)) {
     return refuse(
@@ -372,6 +385,20 @@ function settlementGate(existing, uid) {
   if (existing.status !== STATUS_CREDITED) {
     return refuse("failed-precondition", "settlement is not in credited state", REASON_SETTLEMENT_NOT_CREDITED);
   }
+  if (subscriptionTermRecorded(existing)) {
+    if (freshExpiry === undefined) return null;
+    if (freshExpiry === null) return replay(existing);
+    if (freshExpiry > existing.subscriptionExpiryMs) return null;
+  }
+  return {decision: SETTLEMENT_REPLAY, reason: "already settled", response: replayResponse(existing)};
+}
+
+/** Премиум-запись с записанным сроком — единственная, чей повтор может оказаться продлением. */
+function subscriptionTermRecorded(existing) {
+  return existing.productKind === PRODUCT_PREMIUM && Number.isSafeInteger(existing.subscriptionExpiryMs);
+}
+
+function replay(existing) {
   return {decision: SETTLEMENT_REPLAY, reason: "already settled", response: replayResponse(existing)};
 }
 
@@ -391,10 +418,10 @@ function settlementGate(existing, uid) {
  * @param {object} constants таблица, приведённая `readEconomyConstants`.
  */
 function decideSettlement({existing, purchase, claimedSku, uid, constants, creditedQuantity, now}) {
-  const gate = settlementGate(existing, uid);
+  const sku = stringValue(claimedSku);
+  const gate = settlementGate(existing, uid, subscriptionExpiryForSku(purchase, sku));
   if (gate) return gate;
 
-  const sku = stringValue(claimedSku);
   if (!purchase) {
     return refuse("permission-denied", "Play does not recognise this purchase token", REASON_TOKEN_UNKNOWN);
   }
@@ -457,6 +484,9 @@ function decideSettlement({existing, purchase, claimedSku, uid, constants, credi
       credit: {
         sku, productKind: PRODUCT_PREMIUM, premiumDays: days,
         premiumGrantedMs: durationMsForDays(days), quantity: 1,
+        // Срок едет с решением: грант называется токеном и сроком (история 2.3), а запись расчёта
+        // хранит его, чтобы следующий повтор отличил продление от того же оплаченного срока.
+        subscriptionExpiryMs: expiry,
         goldGranted: 0, goldPerUnit: 0, isTest: purchase.isTest,
         constantsVersion: safeNumber(constants && constants.version, 0),
       },
@@ -652,17 +682,20 @@ function settlementRecord({
 /**
  * Квитанция игроку: ключ и параметры, не текст. Текст собирает устройство на своём языке —
  * украинский интерфейс обязателен по закону, и сервер языка игрока не знает.
+ *
+ * `docId` называет документ срока: продление (история 2.3) пишет свою квитанцию рядом, а не поверх
+ * первой, — `settlementId` внутри остаётся токеном, привязкой к той же записи расчёта.
  */
-function receiptRecord({id, uid, credit, now, premiumGrantId, premiumUntilMs}) {
+function receiptRecord({id, docId, uid, credit, now, premiumGrantId, premiumUntilMs}) {
   if (credit.productKind === PRODUCT_PREMIUM) return {
-    receiptId: stringValue(id), uid: stringValue(uid), kind: RECEIPT_KIND_PURCHASE_CREDITED,
+    receiptId: stringValue(docId ?? id), uid: stringValue(uid), kind: RECEIPT_KIND_PURCHASE_CREDITED,
     messageKey: "receipt.premium_credited",
     params: {sku: credit.sku, days: credit.premiumDays, premiumGrantedMs: credit.premiumGrantedMs, premiumUntilMs},
     amount: credit.premiumGrantedMs, currency: "PREMIUM_MS", premiumGrantId,
     settlementId: stringValue(id), createdAtMs: safeNumber(now, 0),
   };
   return {
-    receiptId: stringValue(id),
+    receiptId: stringValue(docId ?? id),
     uid: stringValue(uid),
     kind: RECEIPT_KIND_PURCHASE_CREDITED,
     messageKey: RECEIPT_MESSAGE_GOLD_PACK_CREDITED,
@@ -682,11 +715,12 @@ function receiptRecord({id, uid, credit, now, premiumGrantId, premiumUntilMs}) {
  * Аудит: кто, токен (его id), SKU, сумма, документ констант с версией.
  *
  * Версия — то, ради чего запись существует: смена цены не ретроактивна, и без записи о том, под
- * какой таблицей принималось решение, доказать это потом нечем.
+ * какой таблицей принималось решение, доказать это потом нечем. `docId` — документ срока для
+ * продления (история 2.3): каждый оплаченный срок оставляет свою строку аудита.
  */
-function auditRecord({id, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now, premiumGrantId, premiumUntilMs}) {
+function auditRecord({id, docId, uid, purchase, credit, goldBefore, goldAfter, constantsDoc, now, premiumGrantId, premiumUntilMs}) {
   return {
-    auditId: stringValue(id),
+    auditId: stringValue(docId ?? id),
     action: AUDIT_ACTION_PURCHASE_CREDIT,
     uid: stringValue(uid),
     settlementId: stringValue(id),
@@ -709,6 +743,7 @@ function premiumRecordFields(credit, premiumGrantId, premiumUntilMs) {
   return credit.productKind === PRODUCT_PREMIUM ? {
     productKind: PRODUCT_PREMIUM, premiumDays: credit.premiumDays,
     premiumGrantedMs: credit.premiumGrantedMs, premiumGrantId, premiumUntilMs,
+    subscriptionExpiryMs: credit.subscriptionExpiryMs,
   } : {};
 }
 

@@ -91,6 +91,27 @@ test("grant replay is idempotent and conflicting duration rejected without write
   assert.deepEqual([...db.store], before);
 });
 
+test("a grant over active premium extends it: max(now, end) + duration, never a replacement", async () => {
+  // История 2.3: покупка поверх активного премиума прикладывает срок к окончанию, а чей-то
+  // грант, пришедший в середине, начинается строго после него — FIFO лотов и есть формула AC.
+  const db = premiumTestDb({[USER]: user()});
+  await step(db, T, grant(SOURCE.GOLD, "g", 7));
+  const renewal = await step(db, T + 2 * DAY_MS, grant(SOURCE.PLAY, "p", 30));
+  assert.equal(renewal.premiumUntilMs, T + 37 * DAY_MS);
+  assert.equal(renewal.premiumGrantedMs, 30 * DAY_MS);
+  assert.equal(db.store.get(USER).premiumUntilMs, T + 37 * DAY_MS);
+});
+
+test("a grant over expired premium starts from now, not from the stale end", async () => {
+  const db = premiumTestDb({[USER]: user()});
+  await step(db, T, grant(SOURCE.GOLD, "g", 7));
+  const after = await step(db, T + 30 * DAY_MS);
+  assert.equal(after.premiumUntilMs, 0, "истёкший премиум не хранит флага");
+  const fresh = await step(db, T + 30 * DAY_MS, grant(SOURCE.PLAY, "p", 3));
+  assert.equal(fresh.premiumUntilMs, T + 33 * DAY_MS);
+  assert.equal(db.store.get(USER).hasPremium, true);
+});
+
 test("both balances get x2 only until expiry, then normal rate; no cap banking", async () => {
   const db = premiumTestDb({[USER]: user({premiumUntilMs: T + 600})});
   await step(db, T);

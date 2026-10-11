@@ -280,8 +280,13 @@ async function clawBackPurchase({db, playApi, now, message, readGold, log}) {
       if (decision.clawback.productKind === PRODUCT_PREMIUM) {
         const operation = {kind: "REFUND", grantId: decision.clawback.premiumGrantId};
         const snapshot = await readPremiumEconomy({db, transaction, uid, operation});
-        if (operation.grantId !== premiumGrantId(SOURCE.PLAY, id) || !snapshot.target ||
-            snapshot.target.source !== SOURCE.PLAY || snapshot.target.sourceId !== id ||
+        // Лот подписки называется токеном и сроком (история 2.3): возвращается тот, что записан в
+        // расчёте, — но только если его происхождение действительно привязано к этому токену, а
+        // запись расчёта и лот agree в днях. Чужой лот по подправленной записи не откроется.
+        if (operation.grantId !== premiumGrantId(SOURCE.PLAY, snapshot.target ? snapshot.target.sourceId : "") ||
+            !tokenBoundGrantSource(snapshot.target && snapshot.target.sourceId, id) ||
+            !snapshot.target ||
+            snapshot.target.source !== SOURCE.PLAY ||
             snapshot.target.durationMs !== decision.clawback.premiumGrantedMs ||
             snapshot.target.durationMs !== durationMsForDays(decision.clawback.premiumDays)) {
           throw new Error("Premium purchase settlement and grant provenance disagree; repair required");
@@ -558,6 +563,16 @@ function nextRefundRevision(settlement) {
     throw new Error("Refund revision requires repair");
   }
   return prior + 1;
+}
+
+/**
+ * sourceId лота привязан к токену: либо сам id расчёта (первый срок), либо тот же id со сроком
+ * продления — `id_expiryMs` (история 2.3). Всё остальное — чужой лот, как бы ни называлась запись.
+ */
+function tokenBoundGrantSource(sourceId, id) {
+  if (sourceId === id) return true;
+  if (typeof sourceId !== "string" || !sourceId.startsWith(`${id}_`)) return false;
+  return /^[1-9][0-9]{0,15}$/.test(sourceId.slice(id.length + 1));
 }
 
 /** Записывает сообщение и возвращает его же результат: одна запись, один ответ. */

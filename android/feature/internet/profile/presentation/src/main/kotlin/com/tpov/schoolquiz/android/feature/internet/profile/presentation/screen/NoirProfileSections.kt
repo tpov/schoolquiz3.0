@@ -190,7 +190,8 @@ internal fun ProfileIdentityRow(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text(state.profile.status.displayName.uppercase(), style = NoirType.kicker)
-                if (state.profile.premiumUntilMs > 0L) {
+                // Признак «есть премиум» — из даты против часов (история 2.3): срок мог уже пройти.
+                if (state.profile.premiumUntilMs > System.currentTimeMillis()) {
                     Text("PREMIUM", style = NoirType.kicker.copy(color = NoirGold))
                 }
             }

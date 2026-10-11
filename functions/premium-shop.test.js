@@ -90,6 +90,23 @@ test("without gold nothing moves: no term, no ledger, no user change", async () 
   assert.equal([...db.store].filter(([path]) => path.startsWith(`${LEDGER_PATH}/`)).length, 0);
 });
 
+test("buying over active premium debits once and extends: max(now, end) + term", async () => {
+  // История 2.3: второй покупкой игрок докупает срок, а не перезапускает его; цена — за один
+  // срок, один раз. Источник выдачи назван моментом покупки, поэтому переигранная транзакция
+  // узнаёт свой лот и не списывает золото второй раз.
+  const db = premiumTestDb({[USER]: {gold: 1100}, [ECONOMY_CONSTANTS_DOC]: config()});
+  await buy(db);
+  const again = await buy(db, T + DAY_MS);
+  assert.equal(again.balance.gold, 100);
+  assert.equal(again.offer.days, 30);
+  assert.equal(db.store.get(HEADER).totalRemainingMs, 59 * DAY_MS);
+  assert.equal(db.store.get(USER).premiumUntilMs, T + 60 * DAY_MS);
+  assert.equal([...db.store].filter(([path]) => path.startsWith(`${HEADER}/lots/`)).length, 2);
+  const ledger = [...db.store].filter(([path]) => path.startsWith(`${LEDGER_PATH}/`)).map(([, row]) => row);
+  assert.equal(ledger.filter((row) => row.reason === REASON.PREMIUM_GOLD_PURCHASE)
+    .reduce((n, row) => n + row.delta, 0), -1000);
+});
+
 test("a table without a gold offer refuses before any read of the account", async () => {
   const db = premiumTestDb({[USER]: {gold: 600}, [ECONOMY_CONSTANTS_DOC]: config({})});
   try {

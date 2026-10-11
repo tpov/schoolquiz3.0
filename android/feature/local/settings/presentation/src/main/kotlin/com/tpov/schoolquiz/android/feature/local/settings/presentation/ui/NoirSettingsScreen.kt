@@ -173,15 +173,17 @@ private fun GameStatsGroup(profile: UserProfile) {
         SettingRow(stringResource(R.string.settings_skill_points), "${profile.skillPoints} XP")
         // Premium was a switch on the old screen. It is granted by the server, so a switch here
         // would be a control that refuses to move — the state is the whole truth.
+        // Признак «есть премиум» — из даты против часов (история 2.3): записанный срок мог уже пройти.
+        val premiumActive = profile.premiumUntilMs > System.currentTimeMillis()
         SettingRow(
             label = stringResource(R.string.settings_premium),
             value =
-                if (profile.premiumUntilMs > 0L) {
+                if (premiumActive) {
                     stringResource(R.string.settings_premium_active)
                 } else {
                     stringResource(R.string.settings_premium_no)
                 },
-            valueTint = if (profile.premiumUntilMs > 0L) NoirGold else NoirT3,
+            valueTint = if (premiumActive) NoirGold else NoirT3,
             showDivider = false,
         )
     }

@@ -3,7 +3,6 @@ package com.tpov.schoolquiz.platform.firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.schoolquiz.platform.firebase.util.booleanField
 import com.tpov.schoolquiz.platform.firebase.util.intField
 import com.tpov.schoolquiz.platform.firebase.util.longField
 import com.tpov.schoolquiz.shared.core.stats.AuthUidChanged
@@ -17,6 +16,8 @@ import kotlinx.coroutines.tasks.await
 class FirebaseUserStatsDataSource(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
+    /** Часы для признака премиума; отдельный параметр — чтобы тесты двигали время. */
+    private val nowMs: () -> Long = System::currentTimeMillis,
 ) : UserStatsDataSource {
     private val currentUid: String?
         get() = auth.currentUser?.uid
@@ -50,7 +51,7 @@ class FirebaseUserStatsDataSource(
                         }
                         // trySend result ignored: Firestore emits ~1/s, buffer overflow is unlikely
                         trySend(
-                            snapshot?.toRawUserStats() ?: RawUserStats(),
+                            snapshot?.toRawUserStats(nowMs) ?: RawUserStats(),
                         )
                     }
             awaitClose {
@@ -62,16 +63,18 @@ class FirebaseUserStatsDataSource(
     override suspend fun fetchRaw(): RawUserStats {
         val uid = currentUid ?: return RawUserStats()
         val snapshot = firestore.collection("users").document(uid).get().await()
-        return snapshot.toRawUserStats() ?: RawUserStats()
+        return snapshot.toRawUserStats(nowMs) ?: RawUserStats()
     }
 }
 
-private fun DocumentSnapshot.toRawUserStats(): RawUserStats? {
+private fun DocumentSnapshot.toRawUserStats(nowMs: () -> Long): RawUserStats? {
     if (!exists()) return null
     return RawUserStats(
         nickname = getString("nickname") ?: "",
         avatarUrl = getString("avatarUrl")?.takeIf { it.startsWith("https://") },
-        hasPremium = booleanField("hasPremium") ?: false,
+        // Признак «есть премиум» вычисляется из даты (история 2.3): серверное булево в документе
+        // обновляется только транзакцией премиум-движка и после истечения срока может отставать.
+        hasPremium = (longField("premiumUntilMs") ?: 0L) > nowMs(),
         streakDays = intField("streakDays") ?: 0,
         stars = longField("stars") ?: 0L,
         nolics = longField("pointsNolics") ?: 0L,
