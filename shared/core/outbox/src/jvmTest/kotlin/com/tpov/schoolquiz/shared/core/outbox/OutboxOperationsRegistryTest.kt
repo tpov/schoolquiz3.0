@@ -55,6 +55,8 @@ class OutboxOperationsRegistryTest {
             OutboxOperations.SUBMIT_REVIEW,
             OutboxOperations.SET_SHELF,
             OutboxOperations.SUBMIT_LESSON_ERROR,
+            OutboxOperations.SUBMIT_POLL_VOTE,
+            OutboxOperations.PUBLISH_POLL_SERIES,
             OutboxOperations.CANCEL_NICKNAME_LISTING,
             OutboxOperations.CANCEL_LOGO_LISTING,
         )

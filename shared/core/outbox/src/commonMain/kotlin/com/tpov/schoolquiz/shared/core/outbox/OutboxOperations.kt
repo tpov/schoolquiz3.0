@@ -51,8 +51,9 @@ object OutboxOperations {
      * только внутри активной попытки, его правило — «повтор возвращает то же», без
      * возрастного карантина и лимита попыток — перезревание убило бы вопрос раньше его
      * собственного deadline, прямое нарушение §7. Решение о включении и имя операции — истории 2.6.
+     * SUBMIT_POLL_VOTE — по правилу §4 контракта UX-O7 (история 8.2): тот же мотив.
      */
-    val permanentReceiptOperations: Set<String> = setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX, READY_ACK)
+    val permanentReceiptOperations: Set<String> = setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX, READY_ACK, SUBMIT_POLL_VOTE)
 
     /**
      * Операции, чья мутация ведётся по согласию игрока с платными условиями (CAP-16, AD-5).
@@ -106,6 +107,27 @@ object OutboxOperations {
      * `MUTATION_HANDLERS` (`functions/index.js`), совпадение сторожит `OutboxOperationsRegistryTest`.
      */
     const val SUBMIT_LESSON_ERROR: String = "lesson_report.SUBMIT_ERROR"
+
+    /**
+     * Голос опроса (UX-O7 §2/§4, история 8.2 эпика `epic-social-features`).
+     *
+     * Тело — один замороженный набор `selectedOptionIds` (AD-28), ключ выводится из тройки
+     * серия/revision/вопрос (`sourceId = "series-<id>-r<rev>-q<idx>"`), entity_ref — серия
+     * (`polls.SERIES:<id>`). Входит в [permanentReceiptOperations] по правилу §4: принятый
+     * голос живёт «повтор возвращает то же» без возрастного карантина — состаривание в карантин
+     * открыло бы участнику второй голос после карантина, прямое нарушение §3. В
+     * [termsConsentOperations] голос не входит: опросы не платные.
+     */
+    const val SUBMIT_POLL_VOTE: String = "polls.SUBMIT_VOTE"
+
+    /**
+     * Публикация серии опросов единым draft (UX-O7 §6.2, история 8.2).
+     *
+     * Откладывается по AD-3: всё содержание серии едет в теле, эффекта вне его нет. Ключ
+     * выводится из серии и ожидаемой следующей revision — то же намерение даёт тот же ключ,
+     * переиздание того же содержания сервер отвечает no-op без новой revision.
+     */
+    const val PUBLISH_POLL_SERIES: String = "polls.PUBLISH_SERIES"
 
     /**
      * Ключ идемпотентности, выведенный из идентификатора самого действия.
