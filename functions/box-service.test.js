@@ -45,7 +45,7 @@ function play(state = 0) {
       consumptionState: state === 0 ? 0 : 1, quantity: 1, purchaseTimeMillis: String(T), orderId: "GPA.1111-2222-3333-44444"}};
   }, async getSubscriptionPurchaseV2() {
     return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
-      subscriptionState: state === 0 ? 2 : 6, startTime: new Date(T).toISOString(),
+      subscriptionState: state === 0 ? "SUBSCRIPTION_STATE_ACTIVE" : "SUBSCRIPTION_STATE_EXPIRED", startTime: new Date(T).toISOString(),
       latestOrderId: "GPA.1111-2222-3333-44444", regionCode: "UA",
       externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
       lineItems: [{productId: SKU, expiryTime: new Date(T + 365 * 86_400_000).toISOString()}]}};

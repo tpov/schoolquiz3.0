@@ -240,5 +240,6 @@ module.exports = {
   createPlayDeveloperApi,
   productPurchaseUrl,
   productPurchaseByTokenUrl,
+  subscriptionPurchaseV2Url,
   readProductPurchaseV2,
 };

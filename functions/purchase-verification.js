@@ -64,6 +64,37 @@ const CONSUMPTION_STATE_CONSUMED = 1;
 const PURCHASE_TYPE_TEST = 0;
 
 /**
+ * `purchaseType` подписки (`purchases.subscriptionsv2`): нумерация ОТЛИЧАЕТСЯ от товарной —
+ * здесь тест лицензионного тестера это 1 (товарный endpoint называет тестом 0).
+ */
+const SUBSCRIPTION_PURCHASE_TYPE_TEST = 1;
+
+/**
+ * Имена состояний подписки, как их отдаёт REST `purchases.subscriptionsv2.get`: proto-enum в JSON
+ * сериализуется строкой-именем, не числом. Числа оставлены рядом — форма ответа менялась между
+ * версиями API, и читать надо обе.
+ */
+const SUBSCRIPTION_STATE_WIRE_NAMES = {
+  SUBSCRIPTION_STATE_UNSPECIFIED: 0,
+  SUBSCRIPTION_STATE_PENDING: 1,
+  SUBSCRIPTION_STATE_ACTIVE: 2,
+  SUBSCRIPTION_STATE_PAUSED: 3,
+  SUBSCRIPTION_STATE_IN_GRACE_PERIOD: 4,
+  SUBSCRIPTION_STATE_ON_HOLD: 5,
+  SUBSCRIPTION_STATE_EXPIRED: 6,
+};
+
+/** Состояние подписки с провода: имя-строкой или число; нечитаемое — `null`, не ноль. */
+function subscriptionStateFromWire(value) {
+  const asNumber = intOrNull(value);
+  if (asNumber !== null) return asNumber;
+  if (typeof value === "string" && Object.prototype.hasOwnProperty.call(SUBSCRIPTION_STATE_WIRE_NAMES, value)) {
+    return SUBSCRIPTION_STATE_WIRE_NAMES[value];
+  }
+  return null;
+}
+
+/**
  * Исходы запроса к Play. Словарь объявлен здесь, и play-developer-api.js говорит им же.
  *
  * Три, а не код HTTP: решение принимается по типу исхода, не по числу. NOT_FOUND — Play токена не
@@ -126,6 +157,7 @@ const DAY_MS = 86_400_000;
  * держит entitlement включённым. PENDING — платёж ещё не прошёл; PAUSED, ON_HOLD и EXPIRED —
  * права сейчас нет, что бы ни было в сроке.
  */
+const SUBSCRIPTION_STATE_UNSPECIFIED = 0;
 const SUBSCRIPTION_STATE_PENDING = 1;
 const SUBSCRIPTION_STATE_ACTIVE = 2;
 const SUBSCRIPTION_STATE_IN_GRACE_PERIOD = 4;
@@ -247,8 +279,9 @@ function readProductPurchase(apiJson) {
  */
 function readSubscriptionPurchaseV2(apiJson) {
   if (!apiJson || typeof apiJson !== "object" || Array.isArray(apiJson)) return null;
-  const state = intOrNull(apiJson.subscriptionState);
+  const state = subscriptionStateFromWire(apiJson.subscriptionState);
   const lineItems = Array.isArray(apiJson.lineItems) ? apiJson.lineItems : [];
+  const purchaseType = intOrNull(apiJson.purchaseType);
   return {
     // Единственный lineItem называет товар: проверка «SKU совпадает с заявленным» работает по
     // той же форме, что у одноразовой покупки. Ноль или несколько lineItems — пустая строка,
@@ -257,14 +290,14 @@ function readSubscriptionPurchaseV2(apiJson) {
     orderId: stringValue(apiJson.latestOrderId),
     purchaseState: subscriptionStateToPurchaseState(state),
     consumptionState: CONSUMPTION_STATE_UNCONSUMED,
-    purchaseType: null,
+    purchaseType,
     quantity: 1,
     purchaseTimeMs: rfc3339ToMs(apiJson.startTime) ?? 0,
     acknowledgementState: null,
     regionCode: stringValue(apiJson.regionCode),
     obfuscatedExternalAccountId:
       stringValue(apiJson.externalAccountIdentifiers && apiJson.externalAccountIdentifiers.obfuscatedExternalAccountId),
-    isTest: false,
+    isTest: purchaseType === SUBSCRIPTION_PURCHASE_TYPE_TEST,
     subscriptionState: state,
     // Срок ставит только matchingSubscriptionLineItem — токен без него сроком не владеет.
     subscriptionExpiryMs: null,
@@ -295,6 +328,9 @@ function subscriptionStateToPurchaseState(state) {
     return PURCHASE_STATE_PURCHASED;
   }
   if (state === SUBSCRIPTION_STATE_PENDING) return PURCHASE_STATE_PENDING;
+  // Нечитаемое и неспецифицированное — «неизвестно», не ложное «покупка отменена»: у прото-значения
+  // по умолчанию нет никакой информации о деньгах игрока, и вердикта из него не сделать.
+  if (state === null || state === SUBSCRIPTION_STATE_UNSPECIFIED) return null;
   return PURCHASE_STATE_CANCELED;
 }
 
@@ -528,18 +564,19 @@ function premiumProduct(constants, sku) {
 /**
  * Целые сутки срока подписки в границах товарной строки.
  *
- * Пол суток теряются в квантовании нарочно: грант длиннее оплаченного срока — это кредит игроку
- * за счёт кассы, а грант «потолка таблицы» при триале выдавал бы месяц за три бесплатных дня.
- * Срок, который уже прошёл, прав не назначает.
+ * Срок, который уже прошёл, прав не назначает. Но живой хвост срока — живой: матрица отказывает
+ * только при `expiry ≤ now`, поэтому хвост короче суток квантуется в минимум один день, а не
+ * в окончательный отказ человеку, который за эти часы заплатил. Грант длиннее оплаченного срока
+ * не бывает: потолок таблицы держит и триал.
  *
  * @returns {number|null} суток для гранта или `null`, если права уже нет.
  */
 function subscriptionTermDays({expiryMs, tableDays, now}) {
   if (!Number.isSafeInteger(expiryMs) || !Number.isSafeInteger(now)) return null;
   if (!Number.isSafeInteger(tableDays) || tableDays < 1) return null;
+  if (expiryMs <= now) return null;
   const wholeDays = Math.floor((expiryMs - now) / DAY_MS);
-  if (wholeDays < 1) return null;
-  return Math.min(wholeDays, tableDays);
+  return Math.max(1, Math.min(wholeDays, tableDays));
 }
 
 /**

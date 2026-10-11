@@ -130,6 +130,8 @@ class SettlePurchaseUseCaseTest {
             assertEquals(PurchaseOutcome.Credited(StoreProductId.PREMIUM_30D, 0L), result.getOrNull())
             assertEquals(listOf("sub-token-1"), billing.acknowledgedTokens)
             assertTrue(billing.consumedTokens.isEmpty(), "подписка не гасится — погашенный токен не продлевается")
+            // Тот же порядок, другой жест: расчёт — подтверждение — перечитывание.
+            assertEquals(listOf("verify", "acknowledge", "refresh"), journal)
         }
 
     @Test

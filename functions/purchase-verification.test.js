@@ -602,7 +602,7 @@ const SKU_PREMIUM = "premium_30d";
 function playSubscription(overrides = {}) {
   return readSubscriptionPurchaseV2({
     kind: "androidpublisher#subscriptionPurchaseV2",
-    subscriptionState: 2,
+    subscriptionState: "SUBSCRIPTION_STATE_ACTIVE",
     startTime: "2026-10-11T10:00:00.000Z",
     latestOrderId: "GPA.3333-4444-5555-66666",
     regionCode: "UA",
@@ -648,13 +648,13 @@ function testATrialTermGrantsTheWholeDaysPlaySellsNotTheTableCeiling() {
 }
 
 function testAGracePeriodSubscriptionStillCountsAsEntitled() {
-  const purchase = playSubscription({subscriptionState: 4});
+  const purchase = playSubscription({subscriptionState: "SUBSCRIPTION_STATE_IN_GRACE_PERIOD"});
   const verdict = decideSubscription({purchase});
   assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT, verdict.reason);
 }
 
 function testAPendingSubscriptionGrantsNothingAndIsNotAnError() {
-  const purchase = playSubscription({subscriptionState: 1});
+  const purchase = playSubscription({subscriptionState: "SUBSCRIPTION_STATE_PENDING"});
   const verdict = decideSubscription({purchase});
   assert.strictEqual(verdict.decision, SETTLEMENT_PENDING, verdict.reason);
 }
@@ -662,7 +662,7 @@ function testAPendingSubscriptionGrantsNothingAndIsNotAnError() {
 function testAPausedOrExpiredSubscriptionIsRefusedByItsState() {
   // Пауза, hold и истёкшая подписка сводятся к «покупка не в силе» — тому же отказу, что и у
   // товара: права сейчас нет. SUBSCRIPTION_NOT_ACTIVE остаётся аномалии «ACTIVE, но срок прошёл».
-  for (const state of [3, 5, 6]) {
+  for (const state of ["SUBSCRIPTION_STATE_PAUSED", "SUBSCRIPTION_STATE_ON_HOLD", "SUBSCRIPTION_STATE_EXPIRED"]) {
     const verdict = decideSubscription({purchase: playSubscription({subscriptionState: state})});
     assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE, `state ${state}`);
     assert.strictEqual(verdict.reasonCode, "PURCHASE_CANCELED", `state ${state}`);
@@ -690,6 +690,44 @@ function testASubscriptionTermThatAlreadyPassedGrantsNothing() {
   const verdict = decideSubscription({purchase});
   assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
   assert.strictEqual(verdict.reasonCode, "SUBSCRIPTION_NOT_ACTIVE");
+}
+
+function testALiveTermTailShorterThanADayIsCreditedAsOneDay() {
+  // Матрица отказывает только при `expiry <= now`: живой хвост срока — оплаченные часы, и
+  // квантование даёт за них минимум сутки, а не окончательный отказ платившему.
+  const purchase = playSubscription({
+    lineItems: [{productId: SKU_PREMIUM, expiryTime: new Date(NOW + 6 * 3_600_000).toISOString()}],
+  });
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT, verdict.reason);
+  assert.strictEqual(verdict.credit.premiumDays, 1, "живой хвост — сутки, не отказ");
+  assert.strictEqual(verdict.credit.premiumGrantedMs, 86_400_000);
+}
+
+function testAnUnreadableSubscriptionStateIsRefusedAsUnknownNotCancelled() {
+  // REST сериализует proto-enum именем; нечитаемое состояние — «неизвестно», а не ложное
+  // «покупка отменена» тому, чья подписка, возможно, активна. Неспецифицированное значение —
+  // та же пустота: за ним нет никакой информации о деньгах игрока.
+  for (const state of ["SOMETHING_NEW", "SUBSCRIPTION_STATE_UNSPECIFIED", 0]) {
+    const verdict = decideSubscription({purchase: playSubscription({subscriptionState: state})});
+    assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE, `state ${state}`);
+    assert.strictEqual(verdict.reasonCode, "PURCHASE_STATE_UNKNOWN", `state ${state}`);
+  }
+}
+
+function testASubscriptionPurchaseTypeNamesTestPurchases() {
+  // Нумерация purchaseType у подписок своя: тест лицензионного тестера — 1 (у товара — 0).
+  const purchase = playSubscription({purchaseType: 1});
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT, verdict.reason);
+  assert.strictEqual(verdict.credit.isTest, true, "тест-покупка подписки помечена как тестовая");
+}
+
+function testAPremiumQuantityAboveOneIsRefusedWithoutASettlement() {
+  // Квантование премиума держит сервер до чтения срока: две штуки за раз подписка не продаёт.
+  const verdict = decideSubscription({purchase: playPurchase({productId: SKU_PREMIUM, quantity: 2})});
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, "PREMIUM_QUANTITY_UNSUPPORTED");
 }
 
 function testASubscriptionMarkedForAnotherAccountIsRefused() {
@@ -789,6 +827,10 @@ testAPausedOrExpiredSubscriptionIsRefusedByItsState();
 testASubscriptionWithAnUnreadableTermIsRefusedRatherThanGuessed();
 testAPremiumSkuWithoutASubscriptionLookupIsRefusedBeforeAnyGrant();
 testASubscriptionTermThatAlreadyPassedGrantsNothing();
+testALiveTermTailShorterThanADayIsCreditedAsOneDay();
+testAnUnreadableSubscriptionStateIsRefusedAsUnknownNotCancelled();
+testASubscriptionPurchaseTypeNamesTestPurchases();
+testAPremiumQuantityAboveOneIsRefusedWithoutASettlement();
 testASubscriptionMarkedForAnotherAccountIsRefused();
 testASubscriptionLineItemForAnotherSkuIsRefusedAsAMismatch();
 testASettledPremiumReplaysWhileTheFreshTermIsNotLater();

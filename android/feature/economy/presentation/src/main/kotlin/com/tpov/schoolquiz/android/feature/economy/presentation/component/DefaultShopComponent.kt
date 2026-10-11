@@ -518,7 +518,7 @@ class DefaultShopComponent(
             // неудачном CAS, и заикнувшийся апдейт насчитал бы исход покупки дважды.
             val (message, failure) =
                 result.fold(
-                    onSuccess = { outcome -> outcome.shopMessage() to outcome.failureEvent(productId) },
+                    onSuccess = { outcome -> outcome.shopMessage(productId) to outcome.failureEvent(productId) },
                     onFailure = { error ->
                         ShopMessage.Failure(error.errorDetail()) to
                             AnalyticsEvent.PurchaseFailed(
@@ -556,7 +556,7 @@ class DefaultShopComponent(
             else -> ERROR_REASON
         }
 
-    private fun PurchaseOutcome.shopMessage(): ShopMessage =
+    private fun PurchaseOutcome.shopMessage(productId: StoreProductId): ShopMessage =
         when (this) {
             // Подписка и пак — разные слова: премиум приходит сроком на профиле, пак — золотом
             // на балансе, и «начислено N золота» за подписку было бы ложью.
@@ -566,7 +566,9 @@ class DefaultShopComponent(
                 } else {
                     ShopMessage.GoldCredited(goldGranted)
                 }
-            PurchaseOutcome.Pending -> ShopMessage.PurchasePending
+            // «Золото придёт» — ложь подписке: она приходит сроком на профиле, не золотом.
+            PurchaseOutcome.Pending ->
+                if (productId.isSubscription) ShopMessage.PremiumPending else ShopMessage.PurchasePending
             PurchaseOutcome.Cancelled -> ShopMessage.PurchaseCancelled
             is PurchaseOutcome.Refused -> ShopMessage.PurchaseRefused(code.name)
         }

@@ -141,3 +141,62 @@ other sessions' uncommitted files (`gradle.properties`, `local.properties`, `fun
 - `sgw ./gradlew :platform:billing:testDebugUnitTest :android:feature:economy:presentation:testDebugUnitTest :apps:android-next:testDebugUnitTest --no-configuration-cache`
 - `sgw ./gradlew ktlintCheck detekt --no-configuration-cache` (touched modules)
 - `sgw ./gradlew :apps:android-next:assembleDebug --no-configuration-cache`
+
+## Code review 2026-10-11, thorough (blind-hunter + edge-case-hunter + verification-gap + intent-alignment)
+
+- [x] [Review][Patch] Every real `subscriptionsv2` answer read as an unreadable state
+  [purchase-verification.js `readSubscriptionPurchaseV2`] — fixed: REST serializes the proto-enum as
+  its NAME (`"SUBSCRIPTION_STATE_ACTIVE"`), the reader asked `intOrNull` and got `null`;
+  `subscriptionStateFromWire` reads both the name and the number, and an unreadable value is now the
+  named `PURCHASE_STATE_UNKNOWN` refusal instead of a false «purchase was canceled» — a possibly
+  active subscription is not a canceled one. Fixtures across the suites switched to the wire form.
+- [x] [Review][Patch] `SUBSCRIPTION_STATE_UNSPECIFIED` refused as «canceled» — fixed: the
+  proto-default carries no information about the player's money; it is refused as
+  `PURCHASE_STATE_UNKNOWN` like any unreadable state (test extended to the number and the name).
+- [x] [Review][Patch] A license-tester sandbox subscription lost its test mark
+  [purchase-verification.js] — fixed: `subscriptionsv2` numbers `purchaseType` differently (test = 1,
+  products = 0) and the reader hard-coded `isTest: false`; the field is read, and the settlement,
+  audit rows tag sandbox buys as tests.
+- [x] [Review][Patch] A live tail shorter than a day refused a paying player
+  [purchase-verification.js `subscriptionTermDays`] — fixed: the matrix refuses only at
+  `expiry ≤ now`; a tail of hours quantizes to one day instead of `SUBSCRIPTION_NOT_ACTIVE`. The
+  table cap still bounds the grant.
+- [x] [Review][Patch] Unreadable economy constants left the settlement with no verdict to name
+  [purchase-settlement.js] — fixed: the routing read is guarded (same shape as the fence read); a
+  broken table yields `UNAVAILABLE` — no endpoint can be chosen without it, the client retries later.
+  Test: constants get failing → unavailable, zero writes, no transaction.
+- [x] [Review][Patch] A one-time product token could land in the subscription memory
+  [PlayBillingRepository.kt] — fixed: only `ProductType.SUBS` query results feed
+  `subscriptionTokens`; a pack token there would be acknowledged instead of consumed and stuck in
+  the queue forever.
+- [x] [Review][Patch] An offer with empty phases crashed the price [PlayBillingRepository.kt
+  `priceOf`] — fixed: `lastOrNull() ?: return null`; an unpriceable offer is a row without a price,
+  not a fallen shelf.
+- [x] [Review][Patch] «Золото придёт» — ложь ожидающей подписке [DefaultShopComponent.kt,
+  ShopMessage.kt, ShopView.kt, strings ×3 locales] — fixed: a pending subscription says premium
+  activates when Play confirms it (`PremiumPending`), not that gold arrives.
+- [x] [Review][Patch] The acknowledged gesture was invisible in the settler fake
+  [UnsettledPurchaseSettlerTest.kt, SettlePurchaseUseCaseTest.kt] — fixed: acknowledged tokens get
+  their own book (a swapped hand-back gesture must be visible in what the fake learned), and the
+  verify→acknowledge→refresh order is pinned by the journal.
+
+**Defer**
+- [Review][Defer] The real `subscriptionsv2` wire answer (state names, `purchaseType` numbering) is
+  pinned by fixtures only — confirming it against a live Play answer needs a GMS device with a
+  sandbox subscription; redroid has no GMS. Stays with the owner's device (the story's rig note).
+
+**Rejected**
+- Unknown subscription state should be `UNAVAILABLE`, not a refusal — false: the answer IS readable,
+  its state is just not one this server knows; the refusal is terminal but leaves no settlement
+  record, so a later re-presentation after a server update re-decides with fresh Play data.
+- The min-1-day tail grant lets one token be settled day after day — false: the token replays to the
+  same saved answer; a greater expiry is a renewal with its own lot (M2.3's gate).
+- `purchaseState: null` breaks `decideSettlement`'s switch — false: the default branch names it
+  (`PURCHASE_STATE_UNKNOWN`), refusal with no movement.
+- The constants guard hides real corruption forever — false: `UNAVAILABLE` is the retryable
+  outcome by design; refusing would be terminal for a config problem the owner can fix in a minute.
+- `ShopMessage` exhaustiveness broken elsewhere by the new case — false: compile gate green; the
+  only rendering `when` is `resolvedText`, extended.
+- APK gate: `assembleDebug` has no client in `google-services.json` (mvp-only json, applicationId
+  `com.tpov.schoolquiz.mvp`) — environmental, not a story defect; the gate that runs in this tree is
+  `assembleMvp` (green). `:apps:android-next:testDebugUnitTest` is blocked by the same json.

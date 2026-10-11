@@ -74,7 +74,7 @@ function found(overrides = {}) {
   return {outcome: PLAY_OUTCOME_FOUND, status: 200, code: null, reason: null, purchase: playJson(overrides)};
 }
 
-function fakeDb({docs = {}, beforeTransaction = null, createFails = false} = {}) {
+function fakeDb({docs = {}, beforeTransaction = null, createFails = false, failingGets = []} = {}) {
   const store = new Map(Object.entries(docs));
   const writes = [];
   let transactions = 0;
@@ -86,6 +86,7 @@ function fakeDb({docs = {}, beforeTransaction = null, createFails = false} = {})
   const docRef = (docPath) => ({
     path: docPath,
     async get() {
+      if (failingGets.includes(docPath)) throw new Error(`get failed: ${docPath}`);
       return snapshot(docPath);
     },
     collection(name) {
@@ -419,6 +420,18 @@ async function testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero
   assert.strictEqual(settlement.status, STATUS_CREDITED);
 }
 
+async function testAnUnreadableConstantsTableNamesNoVerdictAndWritesNothing() {
+  // Класс товара без таблицы не выбрать — вердикта о токене нет: недоступность, а не отказ.
+  // Клиент повторит позже тем же путём; покупка до тех пор непогашена, транзакция не открыта.
+  const db = fakeDb({docs: {[USER_PATH]: {gold: 0}}, failingGets: [ECONOMY_CONSTANTS_DOC]});
+
+  const {outcome} = await settle({db, play: fakePlay(found())});
+
+  assert.strictEqual(outcome.kind, SETTLEMENT_OUTCOME_UNAVAILABLE);
+  assert.strictEqual(db.writes.length, 0, "таблица не читается — записей нет");
+  assert.strictEqual(db.transactions, 0, "до транзакции дело не доходит");
+}
+
 (async () => {
   await testAVerifiedTokenWritesEveryRecordOfTheCreditInOneTransaction();
   await testAKnownTokenIsAnsweredFromTheGateWithoutAskingPlay();
@@ -430,6 +443,7 @@ async function testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero
   await testAnOwedBalanceIsClearedBeforeAnythingReachesTheBalance();
   await testADebtBiggerThanTheGrantSwallowsItWholeAndLeavesNoLedgerRow();
   await testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero();
+  await testAnUnreadableConstantsTableNamesNoVerdictAndWritesNothing();
   console.log("purchase-settlement.test.js OK");
 })().catch((error) => {
   console.error(error);

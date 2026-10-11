@@ -42,7 +42,7 @@ function play(sku, state = 1) {
       productLineItem: [{productId: sku}]}}),
     // Подписка приезжает из своего endpoint'а и в своей форме: активная — со сроком вперёд.
     getSubscriptionPurchaseV2: async () => ({outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
-      subscriptionState: state === 0 ? 2 : 6,
+      subscriptionState: state === 0 ? "SUBSCRIPTION_STATE_ACTIVE" : "SUBSCRIPTION_STATE_EXPIRED",
       startTime: new Date(T - 1000).toISOString(), latestOrderId: "GPA.fixture-order", regionCode: "UA",
       externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
       lineItems: [{productId: sku, expiryTime: new Date(T + 365 * 86_400_000).toISOString()}]}})};
@@ -79,7 +79,7 @@ for (const kind of ["GOLD", "PREMIUM"]) {
       async getSubscriptionPurchaseV2() {
         started.resolve(); await release.promise; // Задержка держится на том запросе, к которому уходит токен.
         return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
-          subscriptionState: 2, startTime: new Date(T - 1000).toISOString(),
+          subscriptionState: "SUBSCRIPTION_STATE_ACTIVE", startTime: new Date(T - 1000).toISOString(),
           latestOrderId: "GPA.fixture-order", regionCode: "UA",
           externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
           lineItems: [{productId: sku, expiryTime: new Date(T + 365 * 86_400_000).toISOString()}]}};

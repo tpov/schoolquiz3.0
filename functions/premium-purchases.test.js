@@ -51,7 +51,7 @@ function fakePlay(overrides = {}) {
     // срок тем же токеном — читая `expiry` из opts.
     const expiry = overrides.expiry === undefined ? EXPIRY : overrides.expiry;
     return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
-      subscriptionState: 2, startTime: new Date(T - 1000).toISOString(),
+      subscriptionState: "SUBSCRIPTION_STATE_ACTIVE", startTime: new Date(T - 1000).toISOString(),
       latestOrderId: "GPA.1111-2222-3333-44444", regionCode: "UA",
       externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
       lineItems: [{productId: SKU, expiryTime: new Date(expiry).toISOString()}],

@@ -287,6 +287,7 @@ private class SettlerFakeBillingRepository : BillingRepository {
     private val unsettled = MutableStateFlow<List<BillingPurchase>>(emptyList())
 
     val consumedTokens = mutableListOf<String>()
+    val acknowledgedTokens = mutableListOf<String>()
     var refreshUnsettledCalls: Int = 0
         private set
 
@@ -301,7 +302,9 @@ private class SettlerFakeBillingRepository : BillingRepository {
     ): BillingOutcome = BillingOutcome.Cancelled
 
     override suspend fun acknowledge(purchaseToken: String): Result<Unit> {
-        consumedTokens += purchaseToken
+        // Своя книга, не погашение: подмена жеста (подписка погашена, пак подтверждён) обязана
+        // быть видной в учёбе фейка, а не раствориться в общем списке.
+        acknowledgedTokens += purchaseToken
         // Same leaving-the-queue rule as a consume: an acknowledged subscription is out.
         backlog.removeAll { it.purchaseToken == purchaseToken }
         unsettled.value = unsettled.value.filterNot { it.purchaseToken == purchaseToken }

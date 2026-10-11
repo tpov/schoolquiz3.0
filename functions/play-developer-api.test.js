@@ -8,6 +8,7 @@ const {
   createPlayDeveloperApi,
   productPurchaseUrl,
   productPurchaseByTokenUrl,
+  subscriptionPurchaseV2Url,
   readProductPurchaseV2,
 } = require("./play-developer-api");
 const {
@@ -222,6 +223,46 @@ function testV2QuantityReaderRequiresExactlyOneCompleteSafeLineItem() {
   "JSON-number strings are normalized only when exactly safe integers");
 }
 
+
+async function testSubscriptionV2NamesExactPackageAndEncodedTokenAndPassesTheAnswerThrough() {
+  // Единственный источник факта о премиум-токене: путь, кодировка и классификация отказа
+  // проверяются теми же гейтами, что у товарных endpoint'ов.
+  const data = {
+    kind: "androidpublisher#subscriptionPurchaseV2",
+    subscriptionState: "SUBSCRIPTION_STATE_ACTIVE",
+    lineItems: [{productId: "premium_30d"}],
+  };
+  const {auth, client} = api(() => ({status: 200, data}), {packageName: "com.example.app"});
+
+  assert.deepStrictEqual(await client.getSubscriptionPurchaseV2(TOKEN),
+    {outcome: PLAY_OUTCOME_FOUND, status: 200, code: null, reason: null, purchase: data});
+
+  assert.strictEqual(auth.calls.length, 1);
+  const {url, method, timeout} = auth.calls[0];
+  assert.strictEqual(
+    url,
+    "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.example.app" +
+      `/purchases/subscriptionsv2/tokens/${encodeURIComponent(TOKEN)}`,
+  );
+  assert.strictEqual(url, subscriptionPurchaseV2Url("com.example.app", TOKEN));
+  assert.ok(!url.includes(" ") && !url.includes("#") && !url.includes("?"), "путь закодирован");
+  assert.strictEqual(method, "GET");
+  assert.strictEqual(timeout, REQUEST_TIMEOUT_MS);
+
+  const missing = api(({url}) => {
+    throw gaxiosError({status: 404, reason: "notFound", url});
+  }, {packageName: "com.example.app"});
+  const notFound = await missing.client.getSubscriptionPurchaseV2(TOKEN);
+  assert.strictEqual(notFound.outcome, PLAY_OUTCOME_NOT_FOUND, "404 — токена Play не знает");
+  assertNeverCarriesTheToken(notFound, "404");
+
+  const broken = api(({url}) => {
+    throw gaxiosError({status: 400, reason: "unknownQueryParam", url});
+  }, {packageName: "com.example.app"});
+  const unavailable = await broken.client.getSubscriptionPurchaseV2(TOKEN);
+  assert.strictEqual(unavailable.outcome, PLAY_OUTCOME_UNAVAILABLE, "400 о форме запроса — не вердикт");
+}
+
 (async () => {
   await testTheRequestNamesThePackageSkuAndTokenExactly();
   await testAFoundPurchaseIsReturnedAsPlaySentIt();
@@ -231,6 +272,7 @@ function testV2QuantityReaderRequiresExactlyOneCompleteSafeLineItem() {
   await testANetworkErrorWithoutAStatusIsUnavailableAndKeepsItsCode();
   await testTokenOnlyV2NamesExactPackageAndEncodedTokenWithoutInventingSku();
   await testTokenOnlyV2RetainsSafeErrorClassificationWithoutLeakingToken();
+  await testSubscriptionV2NamesExactPackageAndEncodedTokenAndPassesTheAnswerThrough();
   testV2QuantityReaderRequiresExactlyOneCompleteSafeLineItem();
   console.log("play-developer-api.test.js OK");
 })().catch((error) => {

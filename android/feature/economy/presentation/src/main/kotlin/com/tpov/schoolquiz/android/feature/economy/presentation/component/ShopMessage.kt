@@ -49,6 +49,9 @@ sealed interface ShopMessage {
     /** Деньги ещё не двинулись: платёж доедет, покупка останется в очереди Play. */
     data object PurchasePending : ShopMessage
 
+    /** Платёж подписки ещё не прошёл: премиум включится, когда Play подтвердит платёж. */
+    data object PremiumPending : ShopMessage
+
     /** Игрок закрыл платёжное окно. Ничего не случилось — и притворяться ошибкой нечего. */
     data object PurchaseCancelled : ShopMessage
 

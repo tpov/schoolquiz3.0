@@ -241,8 +241,10 @@ class PlayBillingRepository(
     }
 
     /**
-     * Отдаёт токен магазину тем жестом, которого токен требует: пак гасится, подписка
-     * подтверждается. Выбор — по памяти о токенах-подписках, не по догадке вызывающего.
+     * Гасит токен — или, если это подписка, переводит жест в подтверждение.
+     *
+     * Маршрут выбирает домен, по `isSubscription` товара; память о токенах-подписках здесь —
+     * страховка от будущего прямого вызова, а не второй маршрутизатор.
      */
     override suspend fun consume(purchaseToken: String): Result<Unit> {
         if (!ensureConnected()) {
@@ -307,11 +309,15 @@ class PlayBillingRepository(
                     }
                     // Подписка подтверждённая — не очередь: её факт у сервера есть, продление придёт
                     // уведомлением Play, а активная подписка возвращалась бы из запроса вечно.
-                    subscriptionTokens.addAll(
-                        result.purchasesList
-                            .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
-                            .map { it.purchaseToken },
-                    )
+                    // Только SUBS: токен одноразового товара, попавший в память подписок, ушёл бы
+                    // в acknowledge вместо погашения и застрял бы в очереди навсегда.
+                    if (productType == BillingClient.ProductType.SUBS) {
+                        subscriptionTokens.addAll(
+                            result.purchasesList
+                                .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                                .map { it.purchaseToken },
+                        )
+                    }
                     val settled =
                         if (productType == BillingClient.ProductType.SUBS) {
                             result.purchasesList.filter { !it.isAcknowledged }
@@ -433,7 +439,9 @@ class PlayBillingRepository(
         // Подписка показывает цену последней фазы выбранного оффера — той, что станет платёжем.
         if (id.isSubscription) {
             val offer = preferredSubscriptionOffer(toOfferShapes()) ?: return null
-            val phase = offer.phases.last()
+            // Пустой список фаз у живого оффера Play не обещает, но и `.last()` на нём не нужен:
+            // упавшая цена — строка без товара, а не рухнувшая полка.
+            val phase = offer.phases.lastOrNull() ?: return null
             return StoreProduct(
                 id = id,
                 title = title,

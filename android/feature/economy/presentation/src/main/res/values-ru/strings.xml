@@ -61,6 +61,7 @@
     <string name="shop_msg_unavailable">Магазин пока недоступен</string>
     <string name="shop_msg_gold_credited">Зачислено %1$d золота</string>
     <string name="shop_msg_purchase_pending">Платёж обрабатывается — золото придёт автоматически</string>
+    <string name="shop_msg_premium_pending">Платёж обрабатывается — премиум включится, когда Play подтвердит платёж</string>
     <string name="shop_msg_premium_activated">Премиум активен</string>
     <string name="shop_msg_purchase_cancelled">Покупка отменена</string>
     <string name="shop_msg_purchase_refused">Покупка не прошла (%1$s)</string>

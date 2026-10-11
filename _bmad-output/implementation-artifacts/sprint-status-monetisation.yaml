@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 10-11-2026 15:40
+last_updated: 10-11-2026 16:35
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -67,12 +67,19 @@ development_status:
   epic-1-retrospective: optional
 
   epic-2: in-progress
-  2-1-четыре-длительности-за-деньги: review  # spec-m2-1-premium-is-one-subscription.md — по финальной
+  2-1-четыре-длительности-за-деньги: done  # spec-m2-1-premium-is-one-subscription.md — по финальной
     # модели владельца: ОДНА подписка premium_30d (base premium-30d-autorenew + оффер trial-3d);
     # premium_1d/7d/365d деактивированы и не показываются. Сервер спрашивает subscriptionsv2, грант —
     # целые сутки срока Play в потолке таблицы; клиент подтверждает (acknowledge), не гасит.
-    # functions 99/99; гейты Kotlin зелёные (it09e и ArenaKoin — известные, не из истории);
-    # detekt на Android-модулях сломан экологически (jvm-target 27 не поддержан CLI)
+    # Code review 2026-10-11 (4 линзы): 9 патчей применены — состояния subscriptionsv2 читаются
+    # в проводной форме (имя-enum, не число; нечитаемое/UNSPECIFIED — PURCHASE_STATE_UNKNOWN,
+    # не ложное «отменена»), тестерные покупки помечены (purchaseType=1 → isTest), живой хвост
+    # срока короче суток квантуется в день, неопределяемая таблица констант → UNAVAILABLE без
+    # записей, память подписочных токенов только из SUBS-запроса, цена пустого оффера не падает,
+    # «золото придёт» заменено PremiumPending (×3 локали), жест acknowledge виден в книге фейка.
+    # functions 101/101; гейты Kotlin зелёные; assembleMvp зелёный (assembleDebug средово
+    # невозможен: в google-services.json нет клиента debug-applicationId); defer: живая форма
+    # ответа subscriptionsv2 подтверждается только на GMS-устройстве владельца
   2-2-премиум-за-золото-и-из-коробки: review  # spec-m2-2-premium-for-gold-and-from-a-box.md —
     # золото: premium-shop.js (одно золотое предложение таблицы, списание+грант одной транзакцией,
     # ключ premium_gold_{uid}_{now}), PREMIUM в applyShopPurchase, premiumGoldOffers в белом списке

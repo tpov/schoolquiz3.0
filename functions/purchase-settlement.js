@@ -117,7 +117,14 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
   // спрашивается старый товарный endpoint: у золотого токена он и есть дом правды, а решение всё
   // равно откажет или потребует повтора — испорченная таблица не меняет этого.
   const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
-  const routingConstants = readEconomyConstants((await constantsRef.get()).data() || null);
+  let routingConstants;
+  try {
+    routingConstants = readEconomyConstants((await constantsRef.get()).data() || null);
+  } catch (_) {
+    // Таблица не читается — выбрать endpoint нельзя, а значит вердикта о токене нет. Как и
+    // недоступный Play: клиент повторит позже тем же путём, покупка до тех пор непогашена.
+    return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Purchase verification requires repair; retry later"};
+  }
   const isSubscriptionSku =
     premiumProduct(routingConstants, sku) !== null && goldPackAmount(routingConstants, sku) === null;
   const lookup = isSubscriptionSku ?

@@ -62,6 +62,7 @@
     <string name="shop_msg_unavailable">The shop is not available yet</string>
     <string name="shop_msg_gold_credited">%1$d gold credited</string>
     <string name="shop_msg_purchase_pending">Payment is processing — gold arrives automatically</string>
+    <string name="shop_msg_premium_pending">Payment is processing — premium activates when Play confirms it</string>
     <string name="shop_msg_premium_activated">Premium is active</string>
     <string name="shop_msg_purchase_cancelled">Purchase cancelled</string>
     <string name="shop_msg_purchase_refused">The purchase was refused (%1$s)</string>

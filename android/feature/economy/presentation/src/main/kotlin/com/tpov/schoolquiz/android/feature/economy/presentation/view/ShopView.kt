@@ -778,6 +778,7 @@ private fun ShopMessage.resolvedText(): String =
         is ShopMessage.GoldCredited -> stringResource(R.string.shop_msg_gold_credited, gold)
         ShopMessage.PremiumActivated -> stringResource(R.string.shop_msg_premium_activated)
         ShopMessage.PurchasePending -> stringResource(R.string.shop_msg_purchase_pending)
+        ShopMessage.PremiumPending -> stringResource(R.string.shop_msg_premium_pending)
         ShopMessage.PurchaseCancelled -> stringResource(R.string.shop_msg_purchase_cancelled)
         is ShopMessage.PurchaseRefused -> stringResource(R.string.shop_msg_purchase_refused, code)
         is ShopMessage.Notice -> text
