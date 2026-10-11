@@ -38,7 +38,12 @@ development_status:
   epic-0: in-progress
   0-1-запросить-продление-в-play-console: backlog  # действие владельца в Play Console, разработкой не закрывается
   0-2-поднять-play-billing-до-8-затем-до-9: done
-  0-3-поднять-targetsdk-и-compilesdk-до-36: backlog  # отложена в deferred-work.md — делать на чистом дереве
+  0-3-поднять-targetsdk-и-compilesdk-до-36: backlog  # разбор 2026-10-11: критичная часть УЖЕ закрыта —
+    # конвенции buildSrc держат приложение на compileSdk 35 / targetSdk 35, собранный APK
+    # (android-next-mvp) отвечает targetSdkVersion:'35', требование Google «35+ с 31 авг» выполнено;
+    # скрытие от новых пользователей снимается публикацией (действие владельца). Остаток истории —
+    # плановый подъём до 36 (Android 16: edge-to-edge уже в силе с 35, предиктивный бэк, прогон
+    # экранов) — делать отдельно от монетизации, KMP-библиотеки и legacy всё ещё на 34
   epic-0-retrospective: optional
 
   epic-1: in-progress
