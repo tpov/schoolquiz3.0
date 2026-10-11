@@ -25,6 +25,7 @@ const {
   PURCHASE_AUDIT_COLLECTION,
   PURCHASE_SETTLEMENTS_COLLECTION,
   PRODUCT_PREMIUM,
+  PRODUCT_BOX,
   PURCHASE_STATE_PURCHASED,
   REASON_PURCHASE_CANCELED,
   REASON_REQUEST_INVALID,
@@ -238,6 +239,37 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
       if (decision.decision !== SETTLEMENT_CREDIT) return decision;
 
       const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+      if (decision.credit.productKind === PRODUCT_BOX) {
+        // Купленная коробка (история 3.3) приходит в тот же boxCount, из которого её берут серия,
+        // реклама и премиум-бонус: отдельного счётчика нет, содержимое решит единственный OPEN.
+        // Золотая недостача коробок не касается и не гасится ими — это разные валюты книги.
+        const boxBefore = storedBoxCount(userData);
+        const boxAfter = boxBefore + decision.credit.boxesGranted;
+        const goldNow = readGold(userData);
+        const response = successResponse({
+          sku, goldGranted: 0, gold: goldNow, settlementId: id,
+          productKind: PRODUCT_BOX, boxesGranted: decision.credit.boxesGranted,
+        });
+        const settled = {
+          id, uid, purchase, credit: decision.credit, goldBefore: goldNow, goldAfter: goldNow,
+          constantsDoc: ECONOMY_CONSTANTS_DOC, now, partialRefund: adjustment.partial,
+        };
+        transaction.set(userRef, {uid, boxCount: boxAfter, updatedAtMs: now}, {merge: true});
+        transaction.create(settlementRef, settlementRecord({...settled, response}));
+        transaction.set(userRef.collection(RECEIPTS_SUBCOLLECTION).doc(id), receiptRecord(settled));
+        transaction.set(db.collection(PURCHASE_AUDIT_COLLECTION).doc(id), auditRecord(settled));
+        const entry = ledgerEntry({
+          uid,
+          currency: CURRENCY.BOXES,
+          delta: decision.credit.boxesGranted,
+          reason: REASON.BOX_PACK,
+          sourceId: id,
+          atMs: now,
+          details: {sku, boxesGranted: decision.credit.boxesGranted, quantity: decision.credit.quantity},
+        });
+        if (entry) transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+        return {decision: SETTLEMENT_CREDIT, response};
+      }
       if (decision.credit.productKind === PRODUCT_PREMIUM) {
         // Подписка живёт через продления: грант каждого оплаченного срока называется токеном и
         // этим сроком (история 2.3). Тот же срок — тот же грант: переигранная транзакция узнаёт
@@ -344,6 +376,19 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
 function settledRenewals(existing) {
   const parsed = Number(existing && existing.subscriptionRenewals);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
+}
+
+/**
+ * Коробки игрока строгим целым: поле пишет только сервер, испорченное — ремонт, а не ноль.
+ *
+ * Ноль — честное отсутствие: игрок без коробок покупает первую. Отсутствующее поле и есть ноль.
+ */
+function storedBoxCount(userData) {
+  const value = userData && userData.boxCount !== undefined && userData.boxCount !== null ? userData.boxCount : 0;
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error("stored boxCount is corrupt; repair required");
+  }
+  return value;
 }
 
 /**

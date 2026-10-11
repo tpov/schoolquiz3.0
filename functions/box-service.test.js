@@ -227,6 +227,19 @@ test("an empty opening never issues its preselected premium roll, and old refusa
   assert.equal(db.store.get(USER).boxCount, 1);
 });
 
+test("the drop table has exactly one caller: bought and earned boxes open through the same roll", () => {
+  // История 3.3: второй таблицы дропа в коде нет — не «мы не нашли», а скан исходников.
+  // GIFT_BOX_LOGO_NAMES в index.js — витринный список имён, не функция дропа.
+  const fs = require("fs");
+  const path = require("path");
+  const sources = fs.readdirSync(__dirname)
+    .filter((name) => name.endsWith(".js") && !name.endsWith(".test.js"))
+    .map((name) => ({name, text: fs.readFileSync(path.join(__dirname, name), "utf8")}));
+  const callers = sources.filter((file) => file.text.includes("generateGiftBoxReward"));
+  assert.deepEqual(callers.map((file) => file.name).sort(), ["box-service.js", "gift-box-rewards.js"],
+    "дроп вызывает только box-service: купленная и заработанная коробки открываются одним roll'ом");
+});
+
 test("gold drops clear refund debt first and journal only actual spendable gold increase", async () => {
   for (const shortfall of [30, 15, 0]) {
     const db = makeDb({[SHORTFALL_FIELD]: shortfall});

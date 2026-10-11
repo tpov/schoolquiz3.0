@@ -64,6 +64,7 @@ function testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves() {
     "arena_ticket_reserve",
     "attempt_reward",
     "attempt_toll",
+    "box_pack",
     "charge_claim",
     "gift_box",
     "gold_pack",

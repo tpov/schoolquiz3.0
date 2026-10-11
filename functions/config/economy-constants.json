@@ -38,6 +38,7 @@
     "gold_pack_medium": 60,
     "gold_pack_large": 150
   },
+  "boxPacks": {},
   "clockSkewToleranceMs": 0,
   "auditEnabled": true,
   "premiumGoldOffers": []

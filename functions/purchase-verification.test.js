@@ -817,6 +817,75 @@ function testAnUnreadableFreshTermReplaysTheRecordedOne() {
   assert.strictEqual(verdict.decision, SETTLEMENT_REPLAY);
 }
 
+function testABoxPackIsADecisionOfItsOwnClass() {
+  // Купленная коробка (история 3.3): третий класс товара рядом с золотом и премиумом.
+  const constants = readEconomyConstants({boxPacks: {box_pack_single: 1, box_pack_triple: 3}});
+  const verdict = decideSettlement({
+    existing: null, purchase: playPurchase({productId: "box_pack_single"}),
+    claimedSku: "box_pack_single", uid: UID, constants, now: NOW,
+  });
+  assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT);
+  assert.strictEqual(verdict.credit.productKind, "BOX");
+  assert.strictEqual(verdict.credit.boxesGranted, 1);
+  assert.strictEqual(verdict.credit.goldGranted, 0);
+  assert.strictEqual(verdict.credit.boxesPerUnit, 1);
+
+  const triple = decideSettlement({
+    existing: null, purchase: playPurchase({productId: "box_pack_triple", quantity: 2}),
+    claimedSku: "box_pack_triple", uid: UID, constants, now: NOW,
+  });
+  assert.strictEqual(triple.credit.boxesGranted, 6);
+  assert.strictEqual(triple.credit.quantity, 2);
+
+  const response = successResponse({
+    sku: "box_pack_single", goldGranted: 0, gold: 5, settlementId: "id-1",
+    productKind: "BOX", boxesGranted: 3,
+  });
+  assert.strictEqual(response.productKind, "BOX");
+  assert.strictEqual(response.boxesGranted, 3);
+  assert.strictEqual(response.goldGranted, 0);
+
+  const receipt = receiptRecord({
+    id: "id-1", uid: UID, now: NOW,
+    credit: {productKind: "BOX", sku: "box_pack_single", boxesGranted: 3, quantity: 3},
+  });
+  assert.strictEqual(receipt.messageKey, "receipt.box_pack_credited");
+  assert.strictEqual(receipt.currency, "BOXES");
+  assert.strictEqual(receipt.amount, 3);
+}
+
+function testABoxSkuOutsideTheTableIsRefusedNotCreditedAtZero() {
+  const constants = readEconomyConstants({boxPacks: {box_pack_single: 1}});
+  const verdict = decideSettlement({
+    existing: null, purchase: playPurchase({productId: "box_pack_other"}),
+    claimedSku: "box_pack_other", uid: UID, constants, now: NOW,
+  });
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, REASON_SKU_NOT_SOLD);
+}
+
+function testAnSkuInTwoProductClassesIsARefusedConflict() {
+  // Двойная запись — испорченная таблица: класс товара у SKU ровно один.
+  const both = readEconomyConstants({goldPacks: {box_pack_single: 9}, boxPacks: {box_pack_single: 1}});
+  const verdict = decideSettlement({
+    existing: null, purchase: playPurchase({productId: "box_pack_single"}),
+    claimedSku: "box_pack_single", uid: UID, constants: both, now: NOW,
+  });
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, REASON_SKU_NOT_SOLD);
+
+  const withPremium = readEconomyConstants({
+    boxPacks: {premium_double: 1},
+    premiumProducts: {premium_double: {days: 1, salesEnabled: true}},
+  });
+  const againstPremium = decideSettlement({
+    existing: null, purchase: playPurchase({productId: "premium_double"}),
+    claimedSku: "premium_double", uid: UID, constants: withPremium, now: NOW,
+  });
+  assert.strictEqual(againstPremium.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(againstPremium.reasonCode, REASON_SKU_NOT_SOLD);
+}
+
 testTheCallableIsWiredTheWayTheSpecSays();
 
 testAnActiveFullTermSubscriptionGrantsTheTableDays();
@@ -837,5 +906,8 @@ testASettledPremiumReplaysWhileTheFreshTermIsNotLater();
 testASettledPremiumHasNoVerdictUntilPlayWasAsked();
 testALaterTermSettlesAsARenewalThroughTheFullDecision();
 testAnUnreadableFreshTermReplaysTheRecordedOne();
+testABoxPackIsADecisionOfItsOwnClass();
+testABoxSkuOutsideTheTableIsRefusedNotCreditedAtZero();
+testAnSkuInTwoProductClassesIsARefusedConflict();
 
 console.log("purchase-verification.test.js OK");

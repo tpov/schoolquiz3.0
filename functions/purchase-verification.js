@@ -25,6 +25,7 @@
 const crypto = require("crypto");
 const {PREMIUM_DAYS, durationMsForDays} = require("./premium-grants");
 const PRODUCT_PREMIUM = "PREMIUM";
+const PRODUCT_BOX = "BOX";
 
 /** Расчёты по токенам: один документ на токен, ключ — sha256 токена. */
 const PURCHASE_SETTLEMENTS_COLLECTION = "purchase_settlements";
@@ -497,8 +498,12 @@ function decideSettlement({existing, purchase, claimedSku, uid, constants, credi
   }
 
   const goldPerUnit = goldPackAmount(constants, sku);
+  const boxesPerUnit = boxPackAmount(constants, sku);
   const premium = premiumProduct(constants, sku);
-  if (premium && goldPerUnit !== null) return refuse("invalid-argument", "SKU has conflicting product classes", REASON_SKU_NOT_SOLD);
+  // Класс товара у SKU ровно один: двойная запись — испорченная таблица, и расчёт её не угадывает.
+  if ((premium && goldPerUnit !== null) || (premium && boxesPerUnit !== null) || (goldPerUnit !== null && boxesPerUnit !== null)) {
+    return refuse("invalid-argument", "SKU has conflicting product classes", REASON_SKU_NOT_SOLD);
+  }
   if (premium) {
     if (purchase.quantity !== 1) return refuse("failed-precondition", "Premium supports one item per purchase", REASON_PREMIUM_QUANTITY_UNSUPPORTED);
     // Подписка продаёт срок до конкретной даты Play, а не «товар на N дней»: грант квантуется
@@ -528,15 +533,35 @@ function decideSettlement({existing, purchase, claimedSku, uid, constants, credi
       },
     };
   }
-  if (goldPerUnit === null) return refuse("invalid-argument", `sku ${sku} is not sold`, REASON_SKU_NOT_SOLD);
+  if (goldPerUnit === null && boxesPerUnit === null) {
+    return refuse("invalid-argument", `sku ${sku} is not sold`, REASON_SKU_NOT_SOLD);
+  }
 
   // A V2-confirmed partial refund that arrived before credit can reduce the amount that reaches
   // the balance. This is trusted server-side state, never a client field. It must still describe
   // a positive subset of the V1 purchase; otherwise the transaction retries for repair.
   const quantity = creditedQuantity === undefined ? purchase.quantity : creditedQuantity;
+  const perUnit = goldPerUnit !== null ? goldPerUnit : boxesPerUnit;
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > purchase.quantity ||
-      !Number.isSafeInteger(goldPerUnit * quantity)) {
+      !Number.isSafeInteger(perUnit * quantity)) {
     return refuse("failed-precondition", "purchase quantity is unreadable", REASON_QUANTITY_UNREADABLE);
+  }
+
+  if (boxesPerUnit !== null) {
+    return {
+      decision: SETTLEMENT_CREDIT,
+      reason: "verified",
+      credit: {
+        sku,
+        productKind: PRODUCT_BOX,
+        boxesPerUnit,
+        quantity,
+        boxesGranted: boxesPerUnit * quantity,
+        goldGranted: 0, goldPerUnit: 0,
+        isTest: purchase.isTest,
+        constantsVersion: safeNumber(constants && constants.version, 0),
+      },
+    };
   }
 
   return {
@@ -597,6 +622,21 @@ function goldPackAmount(constants, sku) {
 }
 
 /**
+ * Коробочный пак (история 3.3): SKU → коробок за единицу, тот же язык, что у `goldPackAmount`.
+ *
+ * Ноль — «не продаётся»: клиенту нельзя ответить «начислено» за ничего. Таблица живёт в
+ * `configs/economy.boxPacks` и на устройство не уезжает; SKU вне её — отказ расчёта, а не ноль.
+ */
+function boxPackAmount(constants, sku) {
+  const packs = constants && constants.boxPacks;
+  if (!packs || typeof packs !== "object" || !Object.prototype.hasOwnProperty.call(packs, sku)) {
+    return null;
+  }
+  const amount = packs[sku];
+  return Number.isInteger(amount) && amount >= 1 ? amount : null;
+}
+
+/**
  * Поле недостачи в документе пользователя: сколько золота возврат не смог снять.
  *
  * Отдельное поле, а не отрицательный баланс: золото неотрицательно всегда (ADM-19), и весь
@@ -633,7 +673,7 @@ function refuse(code, reason, reasonCode) {
 }
 
 /** Ответ на начисление. Сохраняется в записи расчёта и возвращается на повтор без изменений. */
-function successResponse({sku, goldGranted, gold, settlementId: id, productKind, premiumGrantedMs, premiumUntilMs, premiumGrantId}) {
+function successResponse({sku, goldGranted, gold, settlementId: id, productKind, premiumGrantedMs, premiumUntilMs, premiumGrantId, boxesGranted}) {
   return {
     status: STATUS_CREDITED,
     sku: stringValue(sku),
@@ -643,6 +683,7 @@ function successResponse({sku, goldGranted, gold, settlementId: id, productKind,
     ...(productKind === PRODUCT_PREMIUM ? {
       productKind, premiumGrantedMs, premiumUntilMs, premiumGrantId,
     } : {}),
+    ...(productKind === PRODUCT_BOX ? {productKind, boxesGranted: safeNumber(boxesGranted, 0)} : {}),
   };
 }
 
@@ -668,6 +709,7 @@ function replayResponse(existing) {
     premiumGrantedMs: existing.premiumGrantedMs,
     premiumUntilMs: existing.premiumUntilMs,
     premiumGrantId: existing.premiumGrantId,
+    boxesGranted: existing.boxesGranted,
   });
 }
 
@@ -731,6 +773,13 @@ function receiptRecord({id, docId, uid, credit, now, premiumGrantId, premiumUnti
     amount: credit.premiumGrantedMs, currency: "PREMIUM_MS", premiumGrantId,
     settlementId: stringValue(id), createdAtMs: safeNumber(now, 0),
   };
+  if (credit.productKind === PRODUCT_BOX) return {
+    receiptId: stringValue(docId ?? id), uid: stringValue(uid), kind: RECEIPT_KIND_PURCHASE_CREDITED,
+    messageKey: "receipt.box_pack_credited",
+    params: {sku: stringValue(credit.sku), boxes: safeNumber(credit.boxesGranted, 0), quantity: safeNumber(credit.quantity, 1)},
+    amount: safeNumber(credit.boxesGranted, 0), currency: "BOXES",
+    settlementId: stringValue(id), createdAtMs: safeNumber(now, 0),
+  };
   return {
     receiptId: stringValue(docId ?? id),
     uid: stringValue(uid),
@@ -773,6 +822,7 @@ function auditRecord({id, docId, uid, purchase, credit, goldBefore, goldAfter, c
     isTest: credit.isTest === true,
     atMs: safeNumber(now, 0),
     ...premiumRecordFields(credit, premiumGrantId, premiumUntilMs),
+    ...(credit.productKind === PRODUCT_BOX ? {productKind: PRODUCT_BOX, boxesPerUnit: safeNumber(credit.boxesPerUnit, 0), boxesGranted: safeNumber(credit.boxesGranted, 0)} : {}),
   };
 }
 
@@ -837,6 +887,7 @@ module.exports = {
   PURCHASE_STATE_PURCHASED,
   PURCHASE_STATE_CANCELED,
   PRODUCT_PREMIUM,
+  PRODUCT_BOX,
   REASON_CODES,
   REASON_CONSUMED_WITHOUT_SETTLEMENT,
   REASON_CONSUMPTION_STATE_UNKNOWN,
@@ -870,6 +921,7 @@ module.exports = {
   decideSettlement,
   goldAfterClawback,
   goldPackAmount,
+  boxPackAmount,
   pendingResponse,
   premiumProduct,
   purchaseFromLookup,

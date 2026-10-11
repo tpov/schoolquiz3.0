@@ -89,10 +89,36 @@ function testTheServerDefaultsAreTheSharedFileVerbatim() {
     plasma: shared.plasma,
     activityPrices: shared.activityPrices,
     goldPacks: shared.goldPacks,
+    boxPacks: shared.boxPacks,
     premiumProducts: {},
     clockSkewToleranceMs: shared.clockSkewToleranceMs,
     auditEnabled: shared.auditEnabled,
   });
+}
+
+function testBoxPacksAreReadLikeGoldPacksAndStayServerKnowledge() {
+  // Коробочные товары (история 3.3): тот же язык, что у золотых паков. Ноль — «не продаётся»,
+  // а не бесплатная коробка; посторонний SKU правильной формы принимается — так товар заводится
+  // на сервере до релиза клиента.
+  const constants = readEconomyConstants({
+    boxPacks: {
+      box_pack_single: 1,
+      box_pack_triple: 3,
+      box_pack_zero: 0,
+      box_pack_fraction: 1.5,
+      "Bad Sku": 2,
+    },
+  });
+  assert.strictEqual(constants.boxPacks.box_pack_single, 1);
+  assert.strictEqual(constants.boxPacks.box_pack_triple, 3);
+  assert.strictEqual(constants.boxPacks.box_pack_zero, undefined, "ноль — испорченная запись, а не цена");
+  assert.strictEqual(constants.boxPacks.box_pack_fraction, undefined);
+  assert.strictEqual(constants.boxPacks["Bad Sku"], undefined);
+  // Серверное знание: на устройство раздел не уезжает, как goldPacks.
+  assert.strictEqual(Object.prototype.hasOwnProperty.call(clientEconomyConstants(constants), "boxPacks"), false);
+  // Пустая таблица и испорченный документ вырождаются в пустые начальные значения, не в отказ.
+  assert.deepStrictEqual(readEconomyConstants(null).boxPacks, {});
+  assert.deepStrictEqual(readEconomyConstants({boxPacks: "нет"}).boxPacks, {});
 }
 
 function testGoldPacksAreReadStrictlyAndFallBackToTheInitialSizes() {
@@ -147,11 +173,12 @@ function testTheClientNeverSeesThePackSizes() {
   const forClient = clientEconomyConstants(readEconomyConstants({goldPacks: {gold_pack_small: 999}}));
 
   assert.strictEqual("goldPacks" in forClient, false);
+  assert.strictEqual("boxPacks" in forClient, false, "коробочные паки — тоже серверное знание");
   assert.deepStrictEqual(
     Object.keys(forClient).sort(),
     ["activityPrices", "auditEnabled", "clockSkewToleranceMs", "plasma", "premiumGoldOffers", "standard", "version"],
   );
-  const {goldPacks, ...withoutPacks} = shared;
+  const {goldPacks, boxPacks, ...withoutPacks} = shared;
   assert.ok(goldPacks, "в общем файле раздел есть");
   assert.deepStrictEqual(clientEconomyConstants(readEconomyConstants(null)), withoutPacks);
   assert.strictEqual(ECONOMY_CONSTANTS_DOC, "configs/economy");
@@ -211,5 +238,6 @@ testGoldPacksAreReadStrictlyAndFallBackToTheInitialSizes();
 testTheSkuShapeIsOneDefinitionSharedWithTheVerifier();
 testAMissingGoldPacksSectionKeepsEveryKnownPackOnSale();
 testTheClientNeverSeesThePackSizes();
+testBoxPacksAreReadLikeGoldPacksAndStayServerKnowledge();
 
 console.log("economy-constants.test.js OK");

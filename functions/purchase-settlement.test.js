@@ -432,6 +432,131 @@ async function testAnUnreadableConstantsTableNamesNoVerdictAndWritesNothing() {
   assert.strictEqual(db.transactions, 0, "до транзакции дело не доходит");
 }
 
+const BOX_SKU = "box_pack_single";
+const BOX_CONSTANTS_DOC = {version: 8, boxPacks: {[BOX_SKU]: 1}};
+const BOX_LEDGER_ID = `${UID}_${CURRENCY.BOXES}_${REASON.BOX_PACK}_${ID}`;
+const BOX_LEDGER_ENTRY_PATH = `${LEDGER_PATH}/${BOX_LEDGER_ID}`;
+
+function boxPlayJson(overrides = {}) {
+  return {...playJson({productId: BOX_SKU, obfuscatedExternalAccountId: accountIdFor(UID)}), ...overrides};
+}
+
+function boxFound(overrides = {}) {
+  return {outcome: PLAY_OUTCOME_FOUND, status: 200, code: null, reason: null, purchase: boxPlayJson(overrides)};
+}
+
+function expectedBoxWrites({boxBefore = 2, purchaseJson = boxPlayJson(), constantsDoc = BOX_CONSTANTS_DOC}) {
+  const purchase = readProductPurchase(purchaseJson);
+  const constants = readEconomyConstants(constantsDoc);
+  const verdict = decideSettlement({existing: null, purchase, claimedSku: BOX_SKU, uid: UID, constants});
+  const gold = 5;
+  const response = successResponse({
+    sku: BOX_SKU, goldGranted: 0, gold, settlementId: ID, productKind: "BOX", boxesGranted: verdict.credit.boxesGranted,
+  });
+  const bag = {
+    id: ID, uid: UID, purchase, credit: verdict.credit, goldBefore: gold, goldAfter: gold,
+    constantsDoc: ECONOMY_CONSTANTS_DOC, now: NOW,
+  };
+  return {
+    response,
+    boxAfter: boxBefore + verdict.credit.boxesGranted,
+    settlement: settlementRecord({...bag, response}),
+    receipt: receiptRecord(bag),
+    audit: auditRecord(bag),
+    ledger: ledgerEntry({
+      uid: UID, currency: CURRENCY.BOXES, delta: verdict.credit.boxesGranted, reason: REASON.BOX_PACK,
+      sourceId: ID, atMs: NOW, details: {sku: BOX_SKU, boxesGranted: verdict.credit.boxesGranted, quantity: verdict.credit.quantity},
+    }),
+  };
+}
+
+async function testABoughtBoxLandsInTheSameBoxCountWithItsOwnLedgerReason() {
+  const db = fakeDb({docs: {[USER_PATH]: {gold: 5, boxCount: 2}, [ECONOMY_CONSTANTS_DOC]: BOX_CONSTANTS_DOC}});
+
+  const {outcome, log} = await settle({db, play: fakePlay(boxFound()), payload: {purchaseToken: TOKEN, sku: BOX_SKU}});
+
+  const expected = expectedBoxWrites({boxBefore: 2});
+  assert.strictEqual(outcome.kind, SETTLEMENT_OUTCOME_RESPONSE);
+  assert.deepStrictEqual(outcome.response, expected.response);
+  assert.strictEqual(outcome.response.productKind, "BOX");
+  assert.strictEqual(outcome.response.boxesGranted, 1);
+  assert.strictEqual(outcome.response.goldGranted, 0);
+  assert.strictEqual(outcome.response.gold, 5, "золото коробкой не тронуто");
+  assert.deepStrictEqual(log.entries.error, []);
+
+  assert.strictEqual(db.writes.length, 5, "баланс, расчёт, квитанция, аудит и строка книги");
+  const byPath = Object.fromEntries(db.writes.map((write) => [write.path, write]));
+  assert.deepStrictEqual(byPath[USER_PATH], {
+    op: "set", path: USER_PATH,
+    data: {uid: UID, boxCount: 3, updatedAtMs: NOW}, options: {merge: true},
+  });
+  assert.deepStrictEqual(byPath[SETTLEMENT_PATH], {op: "create", path: SETTLEMENT_PATH, data: expected.settlement});
+  assert.deepStrictEqual(byPath[RECEIPT_PATH], {op: "set", path: RECEIPT_PATH, data: expected.receipt, options: undefined});
+  assert.strictEqual(expected.receipt.currency, "BOXES");
+  assert.strictEqual(expected.receipt.messageKey, "receipt.box_pack_credited");
+  assert.deepStrictEqual(byPath[AUDIT_PATH], {op: "set", path: AUDIT_PATH, data: expected.audit, options: undefined});
+  assert.strictEqual(byPath[AUDIT_PATH].data.productKind, "BOX");
+  assert.deepStrictEqual(byPath[BOX_LEDGER_ENTRY_PATH], {
+    op: "set", path: BOX_LEDGER_ENTRY_PATH, data: expected.ledger, options: {merge: true},
+  });
+  assert.strictEqual(expected.ledger.reason, "box_pack");
+}
+
+async function testABoughtBoxQuantityMultipliesAndStaysOnTheProductEndpoint() {
+  // q=3 коробок за одну покупку: умножение как у золота, и тот же multi-quantity порядок —
+  // V2-доказательство обязательно (playApi.getProductPurchaseByToken), иначе вердикта нет.
+  const v2 = {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
+    orderId: "GPA.3333-4444-5555-66666",
+    obfuscatedExternalAccountId: accountIdFor(UID),
+    productLineItem: [{productId: BOX_SKU, productOfferDetails: {quantity: 3, refundableQuantity: 3}}],
+    purchaseStateContext: {purchaseState: "PURCHASED"},
+  }};
+  const play = {
+    async getProductPurchase() { return boxFound({quantity: 3}); },
+    async getProductPurchaseByToken() { return v2; },
+  };
+  const db = fakeDb({docs: {[USER_PATH]: {gold: 5}, [ECONOMY_CONSTANTS_DOC]: BOX_CONSTANTS_DOC}});
+
+  const {outcome} = await settle({db, play, payload: {purchaseToken: TOKEN, sku: BOX_SKU}});
+
+  assert.strictEqual(outcome.kind, SETTLEMENT_OUTCOME_RESPONSE);
+  assert.strictEqual(outcome.response.boxesGranted, 3);
+  const userWrite = db.writes.find((write) => write.path === USER_PATH);
+  assert.strictEqual(userWrite.data.boxCount, 3);
+}
+
+async function testABoughtBoxForAPlayerWithoutBoxesStartsTheCounterAtOne() {
+  const db = fakeDb({docs: {[USER_PATH]: {gold: 5}, [ECONOMY_CONSTANTS_DOC]: BOX_CONSTANTS_DOC}});
+
+  const {outcome} = await settle({db, play: fakePlay(boxFound()), payload: {purchaseToken: TOKEN, sku: BOX_SKU}});
+
+  assert.strictEqual(outcome.kind, SETTLEMENT_OUTCOME_RESPONSE);
+  const userWrite = db.writes.find((write) => write.path === USER_PATH);
+  assert.strictEqual(userWrite.data.boxCount, 1);
+}
+
+async function testACorruptBoxCountRefusesTheCreditAndWritesNothing() {
+  const db = fakeDb({docs: {[USER_PATH]: {gold: 5, boxCount: "garbage"}, [ECONOMY_CONSTANTS_DOC]: BOX_CONSTANTS_DOC}});
+
+  const {outcome} = await settle({db, play: fakePlay(boxFound()), payload: {purchaseToken: TOKEN, sku: BOX_SKU}});
+
+  assert.strictEqual(outcome.kind, SETTLEMENT_OUTCOME_UNAVAILABLE);
+  assert.strictEqual(db.writes.length, 0, "транзакция откатилась — ничего не записано");
+}
+
+async function testABoughtBoxIgnoresTheGoldShortfall() {
+  // Недостача — валюта GOLD: коробка приходит целиком и долг не трогает.
+  const db = fakeDb({docs: {[USER_PATH]: {gold: 0, [SHORTFALL_FIELD]: 40, boxCount: 0}, [ECONOMY_CONSTANTS_DOC]: BOX_CONSTANTS_DOC}});
+
+  const {outcome} = await settle({db, play: fakePlay(boxFound()), payload: {purchaseToken: TOKEN, sku: BOX_SKU}});
+
+  assert.strictEqual(outcome.kind, SETTLEMENT_OUTCOME_RESPONSE);
+  const userWrite = db.writes.find((write) => write.path === USER_PATH);
+  assert.strictEqual(userWrite.data.boxCount, 1);
+  assert.strictEqual(userWrite.data[SHORTFALL_FIELD], undefined, "коробка недостачу не трогает");
+  assert.strictEqual(userWrite.data.gold, undefined, "золото коробкой не тронуто");
+}
+
 (async () => {
   await testAVerifiedTokenWritesEveryRecordOfTheCreditInOneTransaction();
   await testAKnownTokenIsAnsweredFromTheGateWithoutAskingPlay();
@@ -444,6 +569,11 @@ async function testAnUnreadableConstantsTableNamesNoVerdictAndWritesNothing() {
   await testADebtBiggerThanTheGrantSwallowsItWholeAndLeavesNoLedgerRow();
   await testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero();
   await testAnUnreadableConstantsTableNamesNoVerdictAndWritesNothing();
+  await testABoughtBoxLandsInTheSameBoxCountWithItsOwnLedgerReason();
+  await testABoughtBoxQuantityMultipliesAndStaysOnTheProductEndpoint();
+  await testABoughtBoxForAPlayerWithoutBoxesStartsTheCounterAtOne();
+  await testACorruptBoxCountRefusesTheCreditAndWritesNothing();
+  await testABoughtBoxIgnoresTheGoldShortfall();
   console.log("purchase-settlement.test.js OK");
 })().catch((error) => {
   console.error(error);

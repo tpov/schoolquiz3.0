@@ -144,6 +144,28 @@ function goldPacks(value) {
   return packs;
 }
 
+/**
+ * Коробочные паки (история 3.3): SKU → коробок за единицу покупки, тот же язык, что у золотых.
+ *
+ * Начальные значения пусты: известных коробочных товаров пока нет, SKU заводит оператор на
+ * сервере правильной формы — механизм тот же, что у `goldPacks`. SKU, которого в таблице нет,
+ * не продаётся: расчёт отклонит его, а не начислит ноль. Раздел — серверное знание: на устройство
+ * он не уезжает, как `goldPacks`.
+ */
+function boxPacks(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const packs = {};
+  for (const [sku, amount] of Object.entries(DEFAULTS.boxPacks || {})) {
+    packs[sku] = packAmount(source[sku], amount);
+  }
+  for (const [sku, amount] of Object.entries(source)) {
+    if (Object.prototype.hasOwnProperty.call(packs, sku) || !SKU_PATTERN.test(sku)) continue;
+    const parsed = packAmount(amount, null);
+    if (parsed !== null) packs[sku] = parsed;
+  }
+  return packs;
+}
+
 /** Exact configured Play ids only. No SKU, duration or price is silently invented. */
 function premiumProducts(value) {
   const products = {};
@@ -197,6 +219,7 @@ function readEconomyConstants(document, fallbackVersion) {
     plasma: chargeRules(source.plasma, DEFAULTS.plasma),
     activityPrices: activityPrices(source.activityPrices),
     goldPacks: goldPacks(source.goldPacks),
+    boxPacks: boxPacks(source.boxPacks),
     premiumProducts: premiumProducts(source.premiumProducts),
     clockSkewToleranceMs: nonNegativeInt(source.clockSkewToleranceMs, DEFAULTS.clockSkewToleranceMs),
     auditEnabled: typeof source.auditEnabled === "boolean" ?
