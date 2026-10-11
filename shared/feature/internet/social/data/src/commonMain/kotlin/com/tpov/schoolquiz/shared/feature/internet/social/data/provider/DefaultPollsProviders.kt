@@ -2,8 +2,8 @@ package com.tpov.schoolquiz.shared.feature.internet.social.data.provider
 
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.provider.PollsIdProvider
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.provider.PollsTimestampProvider
-import kotlin.random.Random
 import kotlinx.datetime.Clock
+import kotlin.random.Random
 
 /** Идентификатор намерения: префикс + случайный хвост, как у остальных фич. */
 class DefaultPollsIdProvider : PollsIdProvider {

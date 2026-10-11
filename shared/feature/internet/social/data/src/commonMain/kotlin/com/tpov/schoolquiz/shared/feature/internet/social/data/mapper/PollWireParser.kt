@@ -27,18 +27,20 @@ object PollWireParser {
         val root = requiredObject(data, "poll question state")
         requireVersion(root)
         val questionRaw = requiredObject(root[QUESTION], "poll question")
-        val question = PollQuestion(
-            questionIndex = questionRaw.requiredLong(QUESTION_INDEX).toInt(),
-            text = questionRaw.requiredText(TEXT),
-            mode = PollMode.of(questionRaw.requiredText(MODE)),
-            options = questionRaw.list(OPTIONS).map { optionRaw ->
-                val option = requiredObject(optionRaw, "poll option")
-                PollOption(
-                    optionId = option.requiredText(OPTION_ID),
-                    text = option.requiredText(TEXT),
-                )
-            },
-        )
+        val question =
+            PollQuestion(
+                questionIndex = questionRaw.requiredLong(QUESTION_INDEX).toInt(),
+                text = questionRaw.requiredText(TEXT),
+                mode = PollMode.of(questionRaw.requiredText(MODE)),
+                options =
+                    questionRaw.list(OPTIONS).map { optionRaw ->
+                        val option = requiredObject(optionRaw, "poll option")
+                        PollOption(
+                            optionId = option.requiredText(OPTION_ID),
+                            text = option.requiredText(TEXT),
+                        )
+                    },
+            )
         return PollQuestionState(
             seriesId = root.requiredText(SERIES_ID),
             title = root.requiredText(TITLE),
@@ -47,25 +49,29 @@ object PollWireParser {
             questionCount = root.requiredLong(QUESTION_COUNT).toInt(),
             questionIndex = root.requiredLong(QUESTION_INDEX).toInt(),
             question = question,
-            ownVote = root[OWN_VOTE]?.let { ownRaw ->
-                val own = requiredObject(ownRaw, "own vote")
-                PollOwnVote(
-                    selectedOptionIds = own.list(SELECTED_OPTION_IDS).map { value ->
-                        (value as? String ?: error("selectedOptionIds must be strings"))
-                    },
-                    acceptedAtMs = own.requiredLong(ACCEPTED_AT_MS),
-                )
-            },
-            distribution = root[DISTRIBUTION]?.let { distributionRaw ->
-                val distribution = requiredObject(distributionRaw, "poll distribution")
-                val counts = requiredObject(distribution[OPTION_COUNTS], "option counts")
-                PollDistribution(
-                    optionCounts = counts.entries.associate { (key, value) ->
-                        key.toString() to (value as? Number ?: error("option count is not a number")).toInt()
-                    },
-                    respondentCount = distribution.requiredLong(RESPONDENT_COUNT).toInt(),
-                )
-            },
+            ownVote =
+                root[OWN_VOTE]?.let { ownRaw ->
+                    val own = requiredObject(ownRaw, "own vote")
+                    PollOwnVote(
+                        selectedOptionIds =
+                            own.list(SELECTED_OPTION_IDS).map { value ->
+                                (value as? String ?: error("selectedOptionIds must be strings"))
+                            },
+                        acceptedAtMs = own.requiredLong(ACCEPTED_AT_MS),
+                    )
+                },
+            distribution =
+                root[DISTRIBUTION]?.let { distributionRaw ->
+                    val distribution = requiredObject(distributionRaw, "poll distribution")
+                    val counts = requiredObject(distribution[OPTION_COUNTS], "option counts")
+                    PollDistribution(
+                        optionCounts =
+                            counts.entries.associate { (key, value) ->
+                                key.toString() to (value as? Number ?: error("option count is not a number")).toInt()
+                            },
+                        respondentCount = distribution.requiredLong(RESPONDENT_COUNT).toInt(),
+                    )
+                },
         )
     }
 

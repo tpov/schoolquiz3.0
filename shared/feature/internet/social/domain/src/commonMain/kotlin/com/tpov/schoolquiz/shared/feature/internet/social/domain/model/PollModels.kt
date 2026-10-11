@@ -1,6 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.internet.social.domain.model
 
-/**
+/*
  * Домен опросов (UX-O7, история 8.2 эпика `epic-social-features`).
  *
  * Идентичность голоса — тройка серия/revision/вопрос (контракт §2); серия — единый draft,
@@ -15,8 +15,9 @@ enum class PollMode(val wire: String) {
     ;
 
     companion object {
-        fun of(wire: String): PollMode = entries.firstOrNull { it.wire == wire }
-            ?: throw IllegalArgumentException("Unsupported poll mode: $wire")
+        fun of(wire: String): PollMode =
+            entries.firstOrNull { it.wire == wire }
+                ?: throw IllegalArgumentException("Unsupported poll mode: $wire")
     }
 }
 

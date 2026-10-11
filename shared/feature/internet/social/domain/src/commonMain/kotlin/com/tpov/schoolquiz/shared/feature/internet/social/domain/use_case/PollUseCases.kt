@@ -123,21 +123,23 @@ class PublishPollSeriesUseCase(
             val title = draft.title.trim()
             require(title.isNotEmpty() && title.length <= 200) { "series title is required (<= 200)" }
             require(draft.questions.isNotEmpty() && draft.questions.size <= 50) { "series needs 1..50 questions" }
-            val questions = draft.questions.mapIndexedNotNull { index, question ->
-                question.toQuestion(index)
-            }
+            val questions =
+                draft.questions.mapIndexedNotNull { index, question ->
+                    question.toQuestion(index)
+                }
             require(questions.size == draft.questions.size) { "every question carries 2..8 named options" }
             repository.queuePublish(
                 PollPublishSubmission(
                     id = idProvider.nextId("poll-publish"),
                     ownerUid = ownerUid,
                     requestedAtMs = timestampProvider.nowMs(),
-                    command = PollPublishCommand(
-                        seriesId = seriesId,
-                        title = title,
-                        expectedRevisionId = expectedRevisionId,
-                        questions = questions,
-                    ),
+                    command =
+                        PollPublishCommand(
+                            seriesId = seriesId,
+                            title = title,
+                            expectedRevisionId = expectedRevisionId,
+                            questions = questions,
+                        ),
                 ),
             )
         } catch (e: CancellationException) {
@@ -149,12 +151,13 @@ class PublishPollSeriesUseCase(
     private fun PollQuestionDraft.toQuestion(index: Int): PollQuestion? {
         val text = this.text.trim()
         if (text.isEmpty() || text.length > 500) return null
-        val options = optionTexts
-            .mapIndexed { optionIndex, optionText -> optionText.trim() }
-            .filter { it.isNotEmpty() }
-            .mapIndexed { optionIndex, optionText ->
-                PollOption(optionId = "opt-${optionIndex + 1}", text = optionText.take(200))
-            }
+        val options =
+            optionTexts
+                .mapIndexed { optionIndex, optionText -> optionText.trim() }
+                .filter { it.isNotEmpty() }
+                .mapIndexed { optionIndex, optionText ->
+                    PollOption(optionId = "opt-${optionIndex + 1}", text = optionText.take(200))
+                }
         if (options.size < 2 || options.size > 8) return null
         return PollQuestion(
             questionIndex = index,

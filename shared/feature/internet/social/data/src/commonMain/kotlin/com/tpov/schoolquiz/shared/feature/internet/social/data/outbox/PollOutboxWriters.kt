@@ -30,20 +30,30 @@ object PollOutboxWriters {
     fun seriesRef(seriesId: String): String = SERIES_REF_PREFIX + seriesId
 
     /** §2: `sourceId = "series-<seriesId>-r<revisionId>-q<questionIndex>"`. */
-    fun voteSourceId(seriesId: String, revisionId: Long, questionIndex: Int): String =
-        "series-$seriesId-r$revisionId-q$questionIndex"
+    fun voteSourceId(
+        seriesId: String,
+        revisionId: Long,
+        questionIndex: Int,
+    ): String = "series-$seriesId-r$revisionId-q$questionIndex"
 
     /** Ожидаемая следующая revision в ключе публикации: то же намерение — тот же ключ. */
-    fun publishSourceId(seriesId: String, expectedRevisionId: Long): String =
-        "series-$seriesId-r${expectedRevisionId + 1}"
+    fun publishSourceId(
+        seriesId: String,
+        expectedRevisionId: Long,
+    ): String = "series-$seriesId-r${expectedRevisionId + 1}"
 
     fun voteRecord(submission: PollVoteSubmission): OutboxRecord =
         OutboxRecord(
             id = 0L,
-            mutationId = OutboxOperations.mutationKey(
-                OutboxOperations.SUBMIT_POLL_VOTE,
-                voteSourceId(submission.command.seriesId, submission.command.revisionId, submission.command.questionIndex),
-            ),
+            mutationId =
+                OutboxOperations.mutationKey(
+                    OutboxOperations.SUBMIT_POLL_VOTE,
+                    voteSourceId(
+                        submission.command.seriesId,
+                        submission.command.revisionId,
+                        submission.command.questionIndex,
+                    ),
+                ),
             ownerUid = submission.ownerUid,
             operation = OutboxOperations.SUBMIT_POLL_VOTE,
             payload = votePayload(submission).toString(),
@@ -55,10 +65,11 @@ object PollOutboxWriters {
     fun publishRecord(submission: PollPublishSubmission): OutboxRecord =
         OutboxRecord(
             id = 0L,
-            mutationId = OutboxOperations.mutationKey(
-                OutboxOperations.PUBLISH_POLL_SERIES,
-                publishSourceId(submission.command.seriesId, submission.command.expectedRevisionId),
-            ),
+            mutationId =
+                OutboxOperations.mutationKey(
+                    OutboxOperations.PUBLISH_POLL_SERIES,
+                    publishSourceId(submission.command.seriesId, submission.command.expectedRevisionId),
+                ),
             ownerUid = submission.ownerUid,
             operation = OutboxOperations.PUBLISH_POLL_SERIES,
             payload = publishPayload(submission).toString(),
