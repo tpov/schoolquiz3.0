@@ -67,6 +67,9 @@ class FirebaseUserStatsDataSource(
     }
 }
 
+/** Признак «есть премиум»: дата против часов; пропавший срок — премиума нет (история 2.3). */
+internal fun hasPremiumAt(untilMs: Long?, nowMs: () -> Long): Boolean = (untilMs ?: 0L) > nowMs()
+
 private fun DocumentSnapshot.toRawUserStats(nowMs: () -> Long): RawUserStats? {
     if (!exists()) return null
     return RawUserStats(
@@ -74,7 +77,7 @@ private fun DocumentSnapshot.toRawUserStats(nowMs: () -> Long): RawUserStats? {
         avatarUrl = getString("avatarUrl")?.takeIf { it.startsWith("https://") },
         // Признак «есть премиум» вычисляется из даты (история 2.3): серверное булево в документе
         // обновляется только транзакцией премиум-движка и после истечения срока может отставать.
-        hasPremium = (longField("premiumUntilMs") ?: 0L) > nowMs(),
+        hasPremium = hasPremiumAt(longField("premiumUntilMs"), nowMs),
         streakDays = intField("streakDays") ?: 0,
         stars = longField("stars") ?: 0L,
         nolics = longField("pointsNolics") ?: 0L,

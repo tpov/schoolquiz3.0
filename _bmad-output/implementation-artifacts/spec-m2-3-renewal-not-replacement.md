@@ -143,3 +143,30 @@ decide "has premium" anywhere a date is available; touch owner files
 - Rig (HITL): install, shop opens, premium row explains the unreachable store; renewal itself needs
   a GMS device with a sandbox subscription — stays with the owner.
 </frozen-after-approval>
+
+## Code review 2026-10-11, thorough (blind-hunter + edge-case-hunter + verification-gap + intent-alignment)
+
+- [x] [Review][Patch] The premium sign's contract was asserted nowhere on the client
+  [FirebaseUserStatsDataSource.kt, UserStatsPremiumSignTest.kt] — fixed: the date-against-clock
+  computation is extracted into a named `hasPremiumAt` and pinned — a live tail is premium, the
+  boundary is strict (a term ending this instant is over), a missing or zero term is never premium.
+  Of the spec's promised mapper test this pins the contract; the DocumentSnapshot wiring (the field
+  name `premiumUntilMs` itself) is deferred — it needs a snapshot test double, and the module has no
+  mocking dependency (Ask First).
+
+**Rejected**
+- A renewal can crash the premium branch the way M2.2's same-millisecond replay did — false: the
+  expiry gate answers same/earlier/unreadable terms with the replay before the transaction; only a
+  strictly later term reaches the grant, its grant id is new, so `GRANTED` is the only possible
+  outcome, and anything else throws the named provenance repair.
+- Two racing renewal notifications grant the term twice — false: Firestore serializes the
+  transactions; the loser's retry re-reads the updated record and the now-equal term replays.
+- `settleSubscriptionRenewal` trusts the record's uid blindly — false: the uid comes from the
+  settlement record this server wrote, the owner check still runs inside the gate on the re-run, and
+  a token this server never settled is an acknowledged `IGNORED`, not a retry storm.
+- `readEconomyBalance` still ships a stored boolean — false: the server computes `hasPremium` from
+  `premiumUntilMs > Date.now()`; the wire field is a projection of the date, and the noir screens
+  compare the date with the clock themselves.
+- RTDN redelivery can stack renewals while Play is unreachable — false: an `UNAVAILABLE` outcome
+  throws and the message is redelivered; a refusal is logged and acknowledged; the settlement itself
+  is idempotent by token and term.
