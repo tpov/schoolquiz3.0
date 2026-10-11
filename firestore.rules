@@ -104,6 +104,19 @@ service cloud.firestore {
     match /arena_season_votes/{document=**} { allow read, write: if false; }
     match /arena_season_worker_state/{document=**} { allow read, write: if false; }
     match /box_operations/{document=**} { allow read, write: if false; }
+    match /ad_reward_confirmations/{document=**} {
+      // One document per confirmed ad-network transaction (keyed by its sha256), written by the SSV
+      // callback endpoint in the same transaction as the view progress. It is what makes a
+      // re-delivered confirmation count nothing the second time. Readable, it would expose another
+      // account's ad history; writable, a confirmation could be planted without the network's
+      // signature — the only thing the whole path trusts.
+      allow read, write: if false;
+    }
+    match /ad_reward_callbacks/{document=**} {
+      // One row per delivered SSV callback — confirmed, replayed, forged or unreadable. The fraud
+      // evidence side of the confirmations above; as unforgeable as the guard it accompanies.
+      allow read, write: if false;
+    }
     match /arena_entry_tickets/{document=**} { allow read, write: if false; }
     match /arena_ticket_quotas/{document=**} { allow read, write: if false; }
     match /arena_ticket_cancellations/{document=**} { allow read, write: if false; }

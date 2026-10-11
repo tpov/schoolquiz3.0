@@ -1,0 +1,8 @@
+# Overrides for bmad-build-auto (this renderer version reads them from here
+# instead of --set flags). Matches the route named by the invocation:
+# full cycle with thorough review for the monetisation epic runs.
+# Committed to the repo — applies to every unattended build on this project.
+
+[workflow]
+route = "full"
+review = "thorough"

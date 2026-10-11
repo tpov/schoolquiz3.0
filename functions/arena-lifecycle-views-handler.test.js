@@ -72,8 +72,11 @@ const ENDPOINTS = Object.freeze([
 // (story 4.9): listInboxItems joins the surface — the shared inbox reader (AD-20), covered
 // by its own boundary suite inbox-views.test.js. Re-pinned 2026-10-11 (story 8.2): the two
 // poll readers — listPollSeries and getPollQuestionState (UX-O7) — join the surface, covered
-// by their own boundary suite poll-views.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "f4eb0590ae59ffb7732b6a9ecf146616ae914f90851c5fb2160c060cb3361e02";
+// by their own boundary suite poll-views.test.js. Re-pinned 2026-10-11 (story 3.1): the
+// AdMob SSV callback endpoint adMobRewardConfirmed joins the surface — an onRequest called by
+// Google, not a callable; covered by its own suites ad-reward-verification.test.js and
+// ad-reward-progress.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "d72a6dfbfbc02e41df5e3a833bd0e34f8fccb042171ab3a32fd6e884dc56851e";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

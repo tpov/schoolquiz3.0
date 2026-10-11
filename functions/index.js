@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 // primitives independently in that environment; injected test namespaces retain their types.
 const firestoreTypes = admin.firestore.Timestamp ? admin.firestore : require("firebase-admin/firestore");
 const crypto = require("crypto");
+const https = require("https");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onMessagePublished} = require("firebase-functions/v2/pubsub");
@@ -68,6 +69,8 @@ const {decodeNotification, readSubscriptionRenewal} = require("./purchase-notifi
 const {applyBoxOperation, BOX_KIND} = require("./box-service");
 const {readBoxState} = require("./gift-boxes");
 const {GIFT_BOX_LOGO_NAMES} = require("./gift-box-rewards");
+const {ADMOB_VERIFIER_KEYS_URL, adRewardQueryFromUrl} = require("./ad-reward-verification");
+const {applyAdReward, AD_REWARD_OUTCOME_ACKNOWLEDGED} = require("./ad-reward-progress");
 const {
   readPremiumEconomy, planPremiumEconomy, writePremiumEconomy,
   PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES,
@@ -3979,6 +3982,71 @@ exports.setPublicQuestShelf = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   return applySetPublicQuestShelf(uid, request.data || {});
 });
+
+/** Кэш публичных ключей подписи SSV. Ротация объявляет себя незнакомым key_id, кэш живёт сутки. */
+const AD_REWARD_KEYS_CACHE_MS = 24 * 60 * 60 * 1000;
+let adRewardVerifierKeysCache = null;
+
+/** Документ ключей по адресу; отказ сети, статуса или разбора — исключение (исход UNAVAILABLE). */
+function fetchVerifierKeysDocument(url) {
+  return new Promise((resolve, reject) => {
+    const request = https.get(url, (response) => {
+      if (response.statusCode !== 200) {
+        response.resume();
+        reject(new Error(`verifier keys HTTP ${response.statusCode}`));
+        return;
+      }
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        try {
+          resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+        } catch (error) {
+          reject(new Error(`verifier keys unreadable: ${error.message}`));
+        }
+      });
+    });
+    request.on("error", reject);
+    request.setTimeout(5000, () => request.destroy(new Error("verifier keys timed out")));
+  });
+}
+
+/** Ключи для транзакции подтверждения: кэш, а по требованию — свежий забор без кэша. */
+async function adRewardVerifierKeys(force) {
+  if (!force && adRewardVerifierKeysCache && Date.now() - adRewardVerifierKeysCache.fetchedAtMs < AD_REWARD_KEYS_CACHE_MS) {
+    return adRewardVerifierKeysCache.document;
+  }
+  const document = await fetchVerifierKeysDocument(ADMOB_VERIFIER_KEYS_URL);
+  adRewardVerifierKeysCache = {fetchedAtMs: Date.now(), document};
+  return document;
+}
+
+/**
+ * SSV-подтверждение награды за рекламу (история 3.1).
+ *
+ * Вызывает Google, поэтому вход открыт по смыслу ([CALLABLE_OPTIONS]) — но решает подпись, а не
+ * происхождение: без честной подписи сеть не подтверждает ни строки. Всё содержательное — чистая
+ * верификация (ad-reward-verification.js) и одна транзакция подтверждения с внедрённым Firestore
+ * (ad-reward-progress.js); здесь только запрос, ключи с кэшем и ответ. 200 на всё решённое —
+ * включая подделки и повторы: Google повторяет не-200, а повторы мусора не нужны. 500 — единственный
+ * исход без вердикта (ключи недоступны): ничего не записано, повтор придёт свежим списком ключей.
+ *
+ * URL этого endpoint'а регистрируется в консоли AdMob при настройке SSV — действие владельца,
+ * пока отложенное закрытым аккаунтом сети.
+ */
+exports.adMobRewardConfirmed = onRequest(
+  {region: "us-central1", maxInstances: 2, invoker: "public"},
+  async (request, response) => {
+    const {outcome} = await applyAdReward({
+      db,
+      rawQuery: adRewardQueryFromUrl(request.url),
+      fetchKeys: adRewardVerifierKeys,
+      now: Date.now(),
+      log: logger,
+    });
+    response.status(outcome === AD_REWARD_OUTCOME_ACKNOWLEDGED ? 200 : 500).send("OK");
+  },
+);
 
 /**
  * Перенос публичного квеста на полку — тело, общее для прямого вызова и для очереди.
