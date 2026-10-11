@@ -1,0 +1,14 @@
+{
+ "uid": "34M7XwdduXxbpYcmiP7BPqyXjZy9",
+ "status": 200,
+ "reply": {
+  "result": {
+   "replayed": true,
+   "result": {
+    "reportId": "lesson-error-rw1yvr9hq56e",
+    "lessonId": "ibx1_lesson",
+    "createdAtMs": 1791685102784
+   }
+  }
+ }
+}
