@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 10-11-2026 16:35
+last_updated: 10-11-2026 17:05
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -80,12 +80,16 @@ development_status:
     # functions 101/101; гейты Kotlin зелёные; assembleMvp зелёный (assembleDebug средово
     # невозможен: в google-services.json нет клиента debug-applicationId); defer: живая форма
     # ответа subscriptionsv2 подтверждается только на GMS-устройстве владельца
-  2-2-премиум-за-золото-и-из-коробки: review  # spec-m2-2-premium-for-gold-and-from-a-box.md —
+  2-2-премиум-за-золото-и-из-коробки: done  # spec-m2-2-premium-for-gold-and-from-a-box.md —
     # золото: premium-shop.js (одно золотое предложение таблицы, списание+грант одной транзакцией,
     # ключ premium_gold_{uid}_{now}), PREMIUM в applyShopPurchase, premiumGoldOffers в белом списке
     # констант; коробка: datePremium через premium-economy (уже было, подтверждено тестами).
     # Клиент: PremiumGoldOffer, парсинг, полка (строка Premium первой), роутинг по валюте строки.
-    # functions 100/100; гейты Kotlin зелёные (2 арена fixture-pin — известные, владельца)
+    # Code review 2026-10-11 (4 линзы): 2 патча — именованные отказы покупки доехали до клиента
+    # (applyShopPurchase переводит коды premium-shop в HttpsError, как box-путь; без перевода
+    # «недостаточно золота» приезжала безымянной INTERNAL), повтор покупки в ту же миллисекунду
+    # отвечает состоянием (REPLAYED движка), а не падает INTERNAL — NFR2, тест добавлен.
+    # functions 101/101; задача владельца (строка goldPrice в configs/economy) остаётся открытой
   2-3-продление-а-не-замена: review  # spec-m2-3-renewal-not-replacement.md — подписка продлевается,
     # а не заменяется: гейт повтора различает сроки того же токена (тот же → повтор, больший → новый
     # лот «settlementId_срок», запись обновляется, квитанция/аудит срока отдельные); RTDN типы

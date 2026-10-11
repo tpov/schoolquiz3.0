@@ -119,6 +119,19 @@ test("a table without a gold offer refuses before any read of the account", asyn
   assert.equal(db.store.get(USER).gold, 600);
 });
 
+test("the same millisecond is the same purchase: no second debit, no second lot, no crash", async () => {
+  // Матрица NFR2: повтор в ту же миллисекунду выводит тот же named key; грант дедуплицируется,
+  // кошелёк не платит второй раз, и повтор отвечает состоянием, а не INTERNAL.
+  const db = premiumTestDb({[USER]: {gold: 1100}, [ECONOMY_CONSTANTS_DOC]: config()});
+  await buy(db);
+  const replay = await buy(db, T);
+  assert.equal(replay.balance.gold, 600, "повтор отвечает состоянием после первой покупки — списания нет");
+  assert.equal([...db.store].filter(([path]) => path.startsWith(`${HEADER}/lots/`)).length, 1);
+  const ledger = [...db.store].filter(([path]) => path.startsWith(`${LEDGER_PATH}/`)).map(([, row]) => row);
+  assert.equal(ledger.filter((row) => row.reason === REASON.PREMIUM_GOLD_PURCHASE)
+    .reduce((n, row) => n + row.delta, 0), -500, "одна проводка покупки");
+});
+
 test("the client pricelist carries the offer: sku, term and gold price, nothing else", () => {
   const {clientEconomyConstants} = require("./economy-constants");
   const offers = clientEconomyConstants(readEconomyConstants(config())).premiumGoldOffers;

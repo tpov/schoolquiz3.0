@@ -64,7 +64,13 @@ async function purchasePremiumWithGold({db, transaction, uid, storedUser, econom
   if (before.gold < offer.goldPrice) fail("FAILED_PRECONDITION", "Not enough gold");
   plan =
     planPremiumEconomy({snapshot: premiumSnapshot, userData: storedUser, constants: economy, now, operation});
-  if (!plan.caughtUp || plan.outcome !== "GRANTED") {
+  if (!plan.caughtUp) return {caughtUp: false, plan};
+  if (plan.outcome === "REPLAYED") {
+    // Тот же момент уже выдал свой лот: повторный звонок — тот же жест, а не новая покупка.
+    // Золото не списывается второй раз (NFR2), и ответ — состояние как есть, не краш.
+    return {caughtUp: true, balance: readBalance({...storedUser, ...plan.userPatch}), offer, plan};
+  }
+  if (plan.outcome !== "GRANTED") {
     fail("INTERNAL", "Premium grant disagrees with its purchase");
   }
   const balance = {...readBalance({...storedUser, ...plan.userPatch}), gold: before.gold - offer.goldPrice};

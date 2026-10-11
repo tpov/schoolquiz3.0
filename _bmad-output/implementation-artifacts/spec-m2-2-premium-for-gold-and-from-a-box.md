@@ -106,3 +106,33 @@ second-guess the store record on the device; touch owner files (`gradle.properti
 - `cd functions && node run-tests.js`
 - `sgw ./gradlew :shared:feature:economy:domain:allTests :shared:feature:economy:data:allTests :platform:firebase:testDebugUnitTest :android:feature:economy:presentation:testDebugUnitTest --no-configuration-cache`
 - `sgw ./gradlew :apps:android-next:assembleMvp --no-configuration-cache`
+
+## Code review 2026-10-11, thorough (blind-hunter + edge-case-hunter + verification-gap + intent-alignment)
+
+- [x] [Review][Patch] The named refusals of the gold buy died unnamed [index.js
+  `applyShopPurchase`] — fixed: `purchasePremiumWithGold` throws plain coded errors
+  (`FAILED_PRECONDITION` for a short wallet, `INVALID_ARGUMENT` for a table that no longer sells),
+  and the callable let them escape as an anonymous INTERNAL; the box path translates its codes, and
+  the shop path now does the same. The client's `CallableErrors` branches on `FAILED_PRECONDITION` —
+  «недостаточно золота» доехала бы до игрока как серверная авария.
+- [x] [Review][Patch] A purchase replayed within the same millisecond crashed instead of replaying
+  [premium-shop.js `purchasePremiumWithGold`] — fixed: the engine answers `REPLAYED` for an
+  already-issued named key, and the branch treated every non-GRANTED outcome as an impossible
+  INTERNAL. The replay now answers the settled state — no second debit, no second lot, one ledger
+  row (the matrix's NFR2 row; test pins it).
+- [x] [Review][Defer] — none new: the operator's `goldPrice` row in `configs/economy` stays the
+  story's tracked owner decision (the unchecked task above); without it the shelf sells premium
+  through Play only, by design.
+
+**Rejected**
+- A client retry after a successful buy double-charges — false by the model: every callable
+  invocation is a purchase; the matrix's NFR2 dedupe covers one invocation's transaction replay and
+  (now) the same-millisecond double call, and the funds check bounds an accidental second buy.
+- `premiumGoldSaleOffer` sorts SKUs, so the pick is order-dependent — false: exactly one sells, zero
+  or two sell nothing; the sort only makes the pricelist deterministic.
+- A gold-quoted row ignores the live Play subscription — false: routing by the row's own words is
+  the spec's model; the store record rides along for copy, the row's currency decides the path.
+- Catch-up charges could drain gold below the price before the check — false: the funds check reads
+  the caught-up balance, and the debit is applied only after the grant plan agrees (`GRANTED`).
+- A corrupt `premiumGoldOffers` row renders a broken price — false: parsing drops the row whole
+  (`mapNotNull` plus the model's `require`), and the shelf falls back to the store record.

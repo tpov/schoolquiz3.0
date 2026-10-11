@@ -3667,62 +3667,72 @@ exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
   // той, по которой клиент нарисовал витрину (economy-constants.md).
   const economy = await readEconomyConstantsDocument();
   let response = null;
-  await runEconomyTransaction(async (transaction) => {
-    const snapshot = await transaction.get(userRef);
-    const storedUser = snapshot.exists ? snapshot.data() || {} : {};
-    let premiumPlan;
-    let balance;
-    if (itemId === SHOP_ITEM_PREMIUM) {
-      // Премиум за золото (история 2.2): цену и сам факт «продаётся» называет таблица, золото и
-      // срок идут одной транзакцией на общем движке премиума. Запись лота и проводки — внутри.
-      const purchased =
-        await purchasePremiumWithGold({db, transaction, uid, storedUser, economy, now, readBalance: readEconomyBalance});
-      if (!purchased.caughtUp) return writePremiumCheckpoint(transaction, uid, purchased.plan);
-      premiumPlan = purchased.plan;
-      balance = purchased.balance;
-    } else {
-      premiumPlan = await advancePremiumInTransaction(transaction, uid, storedUser, economy, now);
-      if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
-      const current = readEconomyBalance({...storedUser, ...premiumPlan.userPatch});
-      balance = applyShopPurchaseToBalance(current, itemId, economy);
-      // Покупка слота — движение сразу двух валют: платы и того, что за неё дали. Идентификатор
-      // выводится из момента и предмета: та же покупка, переигранная транзакцией, — одна строка.
-      for (const entry of ledgerEntries({
-        uid,
-        reason: REASON.SLOT_PURCHASE,
-        sourceId: `${itemId}_${now}`,
-        atMs: now,
-        deltas: {
-          [CURRENCY.NOLICS]: balance.nolics - current.nolics,
-          [CURRENCY.GOLD]: balance.gold - current.gold,
-          [CURRENCY.PLASMA_CHARGE_POINTS]: balance.plasmaPoints - current.plasmaPoints,
-        },
-        details: {itemId, standardHearts: balance.standardHearts, goldHearts: balance.goldHearts},
-      })) {
-        transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+  try {
+    await runEconomyTransaction(async (transaction) => {
+      const snapshot = await transaction.get(userRef);
+      const storedUser = snapshot.exists ? snapshot.data() || {} : {};
+      let premiumPlan;
+      let balance;
+      if (itemId === SHOP_ITEM_PREMIUM) {
+        // Премиум за золото (история 2.2): цену и сам факт «продаётся» называет таблица, золото и
+        // срок идут одной транзакцией на общем движке премиума. Запись лота и проводки — внутри.
+        const purchased =
+          await purchasePremiumWithGold({db, transaction, uid, storedUser, economy, now, readBalance: readEconomyBalance});
+        if (!purchased.caughtUp) return writePremiumCheckpoint(transaction, uid, purchased.plan);
+        premiumPlan = purchased.plan;
+        balance = purchased.balance;
+      } else {
+        premiumPlan = await advancePremiumInTransaction(transaction, uid, storedUser, economy, now);
+        if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
+        const current = readEconomyBalance({...storedUser, ...premiumPlan.userPatch});
+        balance = applyShopPurchaseToBalance(current, itemId, economy);
+        // Покупка слота — движение сразу двух валют: платы и того, что за неё дали. Идентификатор
+        // выводится из момента и предмета: та же покупка, переигранная транзакцией, — одна строка.
+        for (const entry of ledgerEntries({
+          uid,
+          reason: REASON.SLOT_PURCHASE,
+          sourceId: `${itemId}_${now}`,
+          atMs: now,
+          deltas: {
+            [CURRENCY.NOLICS]: balance.nolics - current.nolics,
+            [CURRENCY.GOLD]: balance.gold - current.gold,
+            [CURRENCY.PLASMA_CHARGE_POINTS]: balance.plasmaPoints - current.plasmaPoints,
+          },
+          details: {itemId, standardHearts: balance.standardHearts, goldHearts: balance.goldHearts},
+        })) {
+          transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+        }
       }
-    }
-    writePremiumEconomy({db, transaction, uid, plan: premiumPlan});
-    transaction.set(
-      userRef,
-      clean({
-        ...premiumPlan.userPatch,
-        uid,
-        updatedAtMs: now,
-        hasPremium: balance.hasPremium,
-        streakDays: balance.streakDays,
-        stars: balance.stars,
-        pointsNolics: balance.nolics,
-        nolics: balance.nolics,
-        standardHearts: balance.standardHearts,
-        goldHearts: balance.goldHearts,
-        plasmaPoints: balance.plasmaPoints,
-        gold: balance.gold,
-      }),
-      {merge: true},
-    );
-    response = {itemId, balance};
-  });
+      writePremiumEconomy({db, transaction, uid, plan: premiumPlan});
+      transaction.set(
+        userRef,
+        clean({
+          ...premiumPlan.userPatch,
+          uid,
+          updatedAtMs: now,
+          hasPremium: balance.hasPremium,
+          streakDays: balance.streakDays,
+          stars: balance.stars,
+          pointsNolics: balance.nolics,
+          nolics: balance.nolics,
+          standardHearts: balance.standardHearts,
+          goldHearts: balance.goldHearts,
+          plasmaPoints: balance.plasmaPoints,
+          gold: balance.gold,
+        }),
+        {merge: true},
+      );
+      response = {itemId, balance};
+    });
+  } catch (error) {
+    // Отказы покупки идут именованными кодами: премиум за золото называет FAILED_PRECONDITION
+    // (кошелёк короток) и INVALID_ARGUMENT (таблица не продаёт) из premium-shop.js, слот —
+    // HttpsError напрямую. Клиент ветвится по коду провода, поэтому подделка обязана доехать
+    // именованной, а не безымянной INTERNAL; немые ошибки уходят как были.
+    const codes = {INVALID_ARGUMENT: "invalid-argument", FAILED_PRECONDITION: "failed-precondition", INTERNAL: "internal"};
+    if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
+    throw error;
+  }
   return response;
 });
 
