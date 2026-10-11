@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 10-11-2026 17:40
+last_updated: 10-11-2026 18:05
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -66,7 +66,8 @@ development_status:
     # не-аккаунт, цена без нулей, восстановленная нога. 3 defer + 2 новых известных красных app-shell
   epic-1-retrospective: optional
 
-  epic-2: in-progress
+  epic-2: done  # 2.1–2.4 закрыты code review 2026-10-11; открытая задача владельца (строка goldPrice
+    # в configs/economy для продажи премиума за золото) не код — витрина пока продаёт премиум через Play
   2-1-четыре-длительности-за-деньги: done  # spec-m2-1-premium-is-one-subscription.md — по финальной
     # модели владельца: ОДНА подписка premium_30d (base premium-30d-autorenew + оффер trial-3d);
     # premium_1d/7d/365d деактивированы и не показываются. Сервер спрашивает subscriptionsv2, грант —
@@ -101,12 +102,16 @@ development_status:
     # DocumentSnapshot) отложена — нужна подделка снапшота, зависимости нет (Ask First). Гейт
     # сроков, продление и RTDN уже покрыты premium-purchases/purchase-notifications тестами.
     # functions 101/101; :platform:firebase тесты зелёные (2 арена fixture-pin — известные, владельца)
-  2-4-премиум-без-преимущества: review  # spec-m2-4-premium-without-advantage.md — свойство зажато
+  2-4-премиум-без-преимущества: done  # spec-m2-4-premium-without-advantage.md — свойство зажато
     # забором: premium-neutrality.test.js подсовывает премиальные поля в три шва дохода (счёт,
     # места, коробка) и требует побитового равенства; статически модули счёта/ранга не упоминают
     # премиум (gift-box-rewards исключён: дроп МОЖЕТ выдавать премиум), правила не выдают
     # привилегий по спонсорскому уровню, каждое упоминание спонсора — перенос или показ.
-    # Прод-код не менялся: аудит нашёл поверхность уже чистой. functions 101/101
+    # Прод-код не менялся: аудит нашёл поверхность уже чистой.
+    # Code review 2026-10-11 (4 линзы): 2 усиления забора — премиальные поля подсовываются и в
+    # каждую строку вопросов/ответов (чтение премиума со строки падает так же громко), четыре
+    # модуля квалификации добавлены в статический список (решают, кто дойдёт до рейтинга).
+    # functions 101/101
   epic-2-retrospective: optional
 
   epic-3: backlog  # риск: 01.09 AdMob перебросил на страницу «аккаунт закрыт» (admob.google.com/signup/info/account-closed) — без живого аккаунта AdMob эпик реализуем только до показа рекламы

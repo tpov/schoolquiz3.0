@@ -91,3 +91,26 @@ the sponsor level; let a sponsor level do anything but be displayed.
 **Commands:**
 - `cd functions && node premium-neutrality.test.js`
 - `cd functions && node run-tests.js`
+
+## Code review 2026-10-11, thorough (blind-hunter + edge-case-hunter + verification-gap + intent-alignment)
+
+- [x] [Review][Patch] The behavioral score pin injected premium only at the input's root
+  [premium-neutrality.test.js] — fixed: the fields now ride every question row, every served row and
+  every answer row too; a branch reading premium off a row falls as loudly as one reading the root.
+- [x] [Review][Patch] Qualification was outside the static fence — fixed: it decides who reaches
+  the ranking at all, the same comparison seam as placement; the four `tournament-qualification*`
+  modules are premium-clean today and join the list.
+
+**Rejected**
+- The qualification seam also needs a behavioral pin — false by construction: a module that may not
+  even name premium cannot branch on it; the static fence is the stronger check there, and the
+  behavioral pins cover the input-channel case on the score, placement and box seams.
+- The sponsor mention whitelist is brittle — by design: it is a fence, and a refactor that breaks
+  the shape fails the test with the line in the message, asking to re-classify it as copy or
+  display.
+- The stored `hasPremium` in the user document violates the fence — false: it is a display echo
+  written server-side (the audit's classification); the client reads the date (M2.3), and the
+  server's own balance computes it from the date.
+- The box's static exemption is a loophole — false: the roll's signature takes only trophies and
+  eight entropy draws; premium can enter only as the awarded content, which the same-entropy pin
+  holds.

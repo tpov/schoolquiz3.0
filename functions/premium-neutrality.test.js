@@ -62,7 +62,16 @@ test("the same answers score the same with premium fields all over the input", (
   const scored = scoreAttempt(plain);
   assert.equal(scored.scorable, true);
   assert.equal(scored.percentScore, 50);
-  assert.deepStrictEqual(scoreAttempt({...plain, ...premiumFields}), scored, "счёт не видел премиума");
+  // Поля подсовываются не только поверху: каждая строка вопросов и ответов тоже «щедрая» —
+  // ветка, читающая премиум со строки, должна упасть так же громко, как читающая с корня.
+  const premiumEverywhere = {
+    ...plain,
+    ...premiumFields,
+    questions: plain.questions.map((q) => ({...q, ...premiumFields})),
+    served: plain.served.map((s) => ({...s, ...premiumFields})),
+    answers: plain.answers.map((a) => ({...a, ...premiumFields})),
+  };
+  assert.deepStrictEqual(scoreAttempt(premiumEverywhere), scored, "счёт не видел премиума");
 });
 
 test("two players with identical play take identical places, premium or not", () => {
@@ -94,14 +103,19 @@ test("a box opens the same for a sponsor and for a payer: entropy is the only ch
   assert.deepEqual(generateGiftBoxReward(["old-trophy"], entropy), generateGiftBoxReward(["old-trophy"], [...entropy]));
 });
 
-test("the scoring, ranking and drop modules never mention premium", () => {
+test("the scoring, ranking, qualification and drop modules never mention premium", () => {
   // gift-box-rewards.js упомянут нарочно не здесь: коробка может ВЫДАТЬ премиум (дроп 2.2) —
   // это право выдаваемого, а не вход рулки; его нейтральность держат сигнатура и тест выше.
+  // Квалификация решает, кто вообще дойдёт до рейтинга, — тот же шов сравнения, что и места.
   for (const file of [
     "attempt-scoring.js",
     "assessment-scoring.js",
     "result-verification.js",
     "tournament-ranking.js",
+    "tournament-qualification.js",
+    "tournament-qualification-scan.js",
+    "tournament-qualification-freeze.js",
+    "tournament-qualification-version.js",
   ]) {
     const source = fs.readFileSync(path.join(__dirname, file), "utf8");
     assert.doesNotMatch(source, /premium/i, `${file} узнал о премиуме`);
