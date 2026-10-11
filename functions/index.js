@@ -87,6 +87,7 @@ const {
   createArenaLifecycleViews, ArenaLifecycleViewError, MAX_AUTHOR_REJECTION_REASON_BYTES,
 } = require("./arena-lifecycle-views");
 const {createInboxViews, InboxViewError} = require("./inbox-views");
+const {createPollViews, PollViewError} = require("./poll-views");
 const {createCourseTournamentController} = require("./course-tournament-controller");
 const {createTournamentWorker, FUNCTION_TIMEOUT_MS} = require("./tournament-worker");
 const {
@@ -388,6 +389,37 @@ const arenaLifecycleViews = createArenaLifecycleViews({
   readCursorKey: () => ARENA_LIFECYCLE_CURSOR_SECRET.value(),
 });
 const inboxViews = createInboxViews({db});
+// Опросы (UX-O7, история 8.2): список серий и состояние вопроса — читающие view-коллблы;
+// записи (публикация, голос) идут единственным приёмником мутаций (AD-6/AD-7).
+const pollViews = createPollViews({db});
+exports.listPollSeries = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  try {
+    return await pollViews.list({uid, payload: request.data});
+  } catch (error) {
+    const reason = !request || !request.auth || !request.auth.uid ? "UNAUTHENTICATED" :
+      error instanceof PollViewError ? error.code : "UNAVAILABLE";
+    const code = reason === "UNAUTHENTICATED" ? "unauthenticated" :
+      reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+        reason === "NOT_FOUND" ? "not-found" :
+          reason === "SOURCE_TOO_LARGE" ? "resource-exhausted" : "unavailable";
+    throw new HttpsError(code, "Poll series could not be loaded", {reason});
+  }
+});
+exports.getPollQuestionState = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  try {
+    return await pollViews.questionState({uid, payload: request.data});
+  } catch (error) {
+    const reason = !request || !request.auth || !request.auth.uid ? "UNAUTHENTICATED" :
+      error instanceof PollViewError ? error.code : "UNAVAILABLE";
+    const code = reason === "UNAUTHENTICATED" ? "unauthenticated" :
+      reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+        reason === "NOT_FOUND" ? "not-found" :
+          reason === "SOURCE_TOO_LARGE" ? "resource-exhausted" : "unavailable";
+    throw new HttpsError(code, "Poll question state could not be loaded", {reason});
+  }
+});
 exports.listArenaLessons = onCall(CALLABLE_OPTIONS, async (request) => {
   try {
     const uid = requireAuthUid(request);
@@ -1571,6 +1603,16 @@ const MUTATION_HANDLERS = {
   // урок и его id уже лежат в теле, адресата (разрешённого автора) сервер выводит сам из
   // документа размещения, а повтор по ключу возвращает ту же запись.
   "lesson_report.SUBMIT_ERROR": (uid, payload) => applyLessonErrorReport(uid, payload),
+  // Публикация серии опросов единым draft (UX-O7 §6.2, история 8.2). Откладывается по AD-3: всё
+  // содержание серии едет в теле, эффекта вне его нет. Повтор того же намерения (тот же ключ)
+  // возвращает сохранённую revision; повторная публикация того же содержания — no-op без
+  // новой revision: переоткрывать голосование переизданием нельзя.
+  "polls.PUBLISH_SERIES": (uid, payload) => applyPublishPollSeries(uid, payload),
+  // Голос опроса (UX-O7 §2/§3, история 8.2). Тело — один замороженный набор (AD-6/AD-28);
+  // уникальность (участник, серия, revision, вопрос) — серверная, документом с
+  // детерминированным id: голос под новым ключом (переустановка, второе устройство) упирается
+  // в ту же уникальность и не создаёт второй голос (§3).
+  "polls.SUBMIT_VOTE": (uid, payload) => applyPollVote(uid, payload),
 };
 
 /**
@@ -1702,6 +1744,257 @@ async function applyLessonErrorReport(uid, payload) {
     }),
   );
   return {reportId, lessonId, createdAtMs: now};
+}
+
+/** Годится ли строка в идентификатор серии/варианта опроса (короткий charset — и в id документа). */
+function isPollId(value) {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(stringValue(value));
+}
+
+/**
+ * Нормализует содержание серии из тела публикации: канонические вопросы с опциями или бросок.
+ *
+ * Правила UX-O7 §2 и AD-28: варианты 2–8, single/multiple, без correctness/сложности и уроковой
+ * иерархии; вопрос идентичен `(revisionId, questionIndex)`, поэтому индексы канонизируются
+ * позициями массива. Тексты тримируются: пустая строка после трима — отказ.
+ */
+function normalizePollSeriesDraft(data) {
+  const questions = data.questions.map((question, index) => {
+    if (!isPlainObject(question)) {
+      throw new HttpsError("invalid-argument", `Question ${index} is not an object`);
+    }
+    const unknown = Object.keys(question).filter((key) =>
+      !["questionIndex", "text", "mode", "options"].includes(key));
+    if (unknown.length > 0) {
+      throw new HttpsError("invalid-argument", `Unsupported question fields: ${unknown.sort().join(", ")}`);
+    }
+    if (numberValue(question.questionIndex, -1) !== index) {
+      throw new HttpsError("invalid-argument", "questionIndex must equal the array position");
+    }
+    const text = stringValue(question.text).trim();
+    if (!text || text.length > 500) {
+      throw new HttpsError("invalid-argument", `Question ${index} text is required (<= 500 chars)`);
+    }
+    const mode = stringValue(question.mode);
+    if (mode !== "SINGLE" && mode !== "MULTIPLE") {
+      throw new HttpsError("invalid-argument", `Question ${index} mode must be SINGLE or MULTIPLE`);
+    }
+    if (!Array.isArray(question.options) || question.options.length < 2 || question.options.length > 8) {
+      throw new HttpsError("invalid-argument", `Question ${index} needs 2..8 options`);
+    }
+    const seenOptions = new Set();
+    const options = question.options.map((option) => {
+      if (!isPlainObject(option)) {
+        throw new HttpsError("invalid-argument", `Question ${index} option is not an object`);
+      }
+      const optionUnknown = Object.keys(option).filter((key) => !["optionId", "text"].includes(key));
+      if (optionUnknown.length > 0) {
+        throw new HttpsError("invalid-argument", `Unsupported option fields: ${optionUnknown.sort().join(", ")}`);
+      }
+      const optionId = stringValue(option.optionId);
+      if (!isPollId(optionId)) {
+        throw new HttpsError("invalid-argument", `Question ${index} optionId is required`);
+      }
+      if (seenOptions.has(optionId)) {
+        throw new HttpsError("invalid-argument", `Question ${index} duplicates optionId ${optionId}`);
+      }
+      seenOptions.add(optionId);
+      const optionText = stringValue(option.text).trim();
+      if (!optionText || optionText.length > 200) {
+        throw new HttpsError("invalid-argument", `Question ${index} option text is required (<= 200 chars)`);
+      }
+      return {optionId, text: optionText};
+    });
+    return {questionIndex: index, text, mode, options};
+  });
+  return questions;
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+/**
+ * Публикация серии опросов (UX-O7 §6.2, история 8.2): единый draft становится опубликованной
+ * revision. Серия, за которой автор редактировал устаревшую revision, отказывается поименованным
+ * конфликтом — клиент перечитывает список и решает сам; сервер не решает за автора.
+ *
+ * Идемпотентность двух слоёв: ключ мутации защищает повтор намерения (тот же ключ — тот же
+ * ответ), а одинаковое содержание поверх текущей revision — no-op без новой revision (§6.2:
+ * переиздание не переписывает и не «переоткрывает» принятые голоса).
+ */
+async function applyPublishPollSeries(uid, payload) {
+  const data = payload || {};
+  const unknown = Object.keys(data).filter((key) =>
+    !["seriesId", "title", "expectedRevisionId", "questions"].includes(key));
+  if (unknown.length > 0) {
+    throw new HttpsError("invalid-argument", `Unsupported series fields: ${unknown.sort().join(", ")}`);
+  }
+  const seriesId = stringValue(data.seriesId);
+  if (!isPollId(seriesId)) throw new HttpsError("invalid-argument", "seriesId is required");
+  const title = stringValue(data.title).trim();
+  if (!title || title.length > 200) {
+    throw new HttpsError("invalid-argument", "title is required (<= 200 chars)");
+  }
+  if (!Number.isSafeInteger(data.expectedRevisionId) || data.expectedRevisionId < 0) {
+    throw new HttpsError("invalid-argument", "expectedRevisionId is required");
+  }
+  if (!Array.isArray(data.questions) || data.questions.length < 1 || data.questions.length > 50) {
+    throw new HttpsError("invalid-argument", "series needs 1..50 questions");
+  }
+  const questions = normalizePollSeriesDraft(data);
+
+  const seriesRef = db.collection("poll_series").doc(seriesId);
+  const existing = await seriesRef.get();
+  const now = Date.now();
+
+  if (existing.exists) {
+    const stored = existing.data() || {};
+    const currentRevisionId = numberValue(stored.revisionId, 0);
+    const sameContent = stored.revision &&
+      JSON.stringify(stored.revision.questions) === JSON.stringify(questions) &&
+      stringValue(stored.title) === title;
+    // Повтор намерения после протухшего резерва ключа: тот же ожидаемый базис уже опубликован
+    // (current = expected + 1) и содержание то же — возвращаем то, что уже стоит, без второй
+    // revision.
+    if (currentRevisionId === data.expectedRevisionId + 1 && sameContent) {
+      return {seriesId, revisionId: currentRevisionId, questionCount: questions.length};
+    }
+    if (currentRevisionId === data.expectedRevisionId) {
+      if (sameContent) {
+        // Переиздание того же содержания — no-op: новая revision переоткрыла бы голосование
+        // с нуля, а §6.2 переизданием принятые голоса не переписывает и не «переоткрывает».
+        return {seriesId, revisionId: currentRevisionId, questionCount: questions.length};
+      }
+      const revisionId = currentRevisionId + 1;
+      await seriesRef.set(clean({
+        seriesId,
+        authorUid: uid,
+        title,
+        revisionId,
+        revision: {revisionId, publishedAtMs: now, questions},
+        schemaVersion: 1,
+        updatedAtMs: now,
+        createdAtMs: numberValue(stored.createdAtMs, now),
+      }), {merge: false});
+      return {seriesId, revisionId, questionCount: questions.length};
+    }
+    throw new HttpsError(
+      "failed-precondition",
+      `POLL_SERIES_REVISION_CONFLICT: expected ${data.expectedRevisionId}, current ${currentRevisionId}`,
+    );
+  }
+
+  if (data.expectedRevisionId !== 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      `POLL_SERIES_REVISION_CONFLICT: expected ${data.expectedRevisionId}, current 0 (series does not exist)`,
+    );
+  }
+  await seriesRef.set(clean({
+    seriesId,
+    authorUid: uid,
+    title,
+    revisionId: 1,
+    revision: {revisionId: 1, publishedAtMs: now, questions},
+    schemaVersion: 1,
+    updatedAtMs: now,
+    createdAtMs: now,
+  }), {merge: false});
+  return {seriesId, revisionId: 1, questionCount: questions.length};
+}
+
+/**
+ * Голос опроса (UX-O7 §2/§3, история 8.2): один подтверждённый непустой набор участника на вопрос
+ * тройки идентичности. Уникальность `(participant, seriesId, revisionId, questionIndex)`
+ * держит документ с детерминированным id — она серверная и переживает переустановку клиента:
+ * повтор под новым ключом операции читает тот же документ и возвращает принятый набор,
+ * не создавая второй голос.
+ */
+async function applyPollVote(uid, payload) {
+  const data = payload || {};
+  const unknown = Object.keys(data).filter((key) =>
+    !["seriesId", "revisionId", "questionIndex", "selectedOptionIds", "confirmedAtMs"].includes(key));
+  if (unknown.length > 0) {
+    throw new HttpsError("invalid-argument", `Unsupported vote fields: ${unknown.sort().join(", ")}`);
+  }
+  const seriesId = stringValue(data.seriesId);
+  if (!isPollId(seriesId)) throw new HttpsError("invalid-argument", "seriesId is required");
+  if (!Number.isSafeInteger(data.revisionId) || data.revisionId < 1) {
+    throw new HttpsError("invalid-argument", "revisionId is required");
+  }
+  if (!Number.isSafeInteger(data.questionIndex) || data.questionIndex < 0) {
+    throw new HttpsError("invalid-argument", "questionIndex is required");
+  }
+  const selected = Array.isArray(data.selectedOptionIds) ? data.selectedOptionIds.map(stringValue) : [];
+  if (selected.length < 1 || selected.length > 8 || new Set(selected).size !== selected.length ||
+    selected.some((optionId) => !isPollId(optionId))) {
+    throw new HttpsError("invalid-argument", "selectedOptionIds must be 1..8 distinct option ids");
+  }
+  if (!Number.isSafeInteger(data.confirmedAtMs) || data.confirmedAtMs < 0) {
+    throw new HttpsError("invalid-argument", "confirmedAtMs is required");
+  }
+
+  const seriesSnapshot = await db.collection("poll_series").doc(seriesId).get();
+  if (!seriesSnapshot.exists) {
+    throw new HttpsError("failed-precondition", "POLL_SERIES_NOT_FOUND");
+  }
+  const series = seriesSnapshot.data() || {};
+  const currentRevisionId = numberValue(series.revisionId, 0);
+  if (data.revisionId !== currentRevisionId) {
+    // Голос существует только для опубликованной revision (UX-O7 §6.2): устаревшая —
+    // окончательный отказ, новую revision клиент увидит при перечитывании.
+    throw new HttpsError(
+      "failed-precondition",
+      `POLL_SERIES_REVISION_MISMATCH: voted ${data.revisionId}, published ${currentRevisionId}`,
+    );
+  }
+  const questions = Array.isArray((series.revision || {}).questions) ? series.revision.questions : [];
+  const question = questions[data.questionIndex];
+  if (!isPlainObject(question) || numberValue(question.questionIndex, -1) !== data.questionIndex) {
+    throw new HttpsError("invalid-argument", "questionIndex is out of range");
+  }
+  const knownOptions = new Set((question.options || []).map((option) => stringValue(option.optionId)));
+  const unknownOptions = selected.filter((optionId) => !knownOptions.has(optionId));
+  if (unknownOptions.length > 0) {
+    throw new HttpsError("invalid-argument", `Unknown option ids: ${unknownOptions.sort().join(", ")}`);
+  }
+  // Кардинальность режима — часть определения серии: SINGLE-вопрос с двумя отметками —
+  // тело, собранное вопреки контракту, а не другой голос.
+  if (question.mode === "SINGLE" && selected.length !== 1) {
+    throw new HttpsError("invalid-argument", "SINGLE question accepts exactly one option");
+  }
+
+  const voteId = `${seriesId}-r${data.revisionId}-q${data.questionIndex}-${uid}`;
+  const voteRef = db.collection("poll_votes").doc(voteId);
+
+  // Ручей защищает ключ приёмника, но повтор по протухшему резерву и голос под новым ключом
+  // (переустановка, второе устройство) приходят в обработчик заново: уникальность — здесь.
+  const stored = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(voteRef);
+    if (snapshot.exists) return snapshot.data() || {};
+    const acceptedAtMs = Date.now();
+    const vote = clean({
+      voteId,
+      seriesId,
+      revisionId: data.revisionId,
+      questionIndex: data.questionIndex,
+      participantUid: uid,
+      selectedOptionIds: selected,
+      clientConfirmedAtMs: data.confirmedAtMs,
+      acceptedAtMs,
+      schemaVersion: 1,
+    });
+    transaction.create(voteRef, vote);
+    return vote;
+  });
+  return {
+    seriesId,
+    revisionId: data.revisionId,
+    questionIndex: data.questionIndex,
+    selectedOptionIds: stringArray(stored.selectedOptionIds),
+    acceptedAtMs: numberValue(stored.acceptedAtMs, 0),
+  };
 }
 
 async function applyArenaSubmission(uid, payload) {

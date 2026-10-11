@@ -70,8 +70,10 @@ const ENDPOINTS = Object.freeze([
 // callables — beginLessonQuestionWindow and fetchNextLessonQuestion — and nobody re-pinned
 // the accepted set; the callable names and the hash cover them now. Re-pinned 2026-10-10
 // (story 4.9): listInboxItems joins the surface — the shared inbox reader (AD-20), covered
-// by its own boundary suite inbox-views.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "390946cb25faa60337e44d021f811e929a6883782a4e1589485ea5db7deabcdc";
+// by its own boundary suite inbox-views.test.js. Re-pinned 2026-10-11 (story 8.2): the two
+// poll readers — listPollSeries and getPollQuestionState (UX-O7) — join the surface, covered
+// by their own boundary suite poll-views.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "f4eb0590ae59ffb7732b6a9ecf146616ae914f90851c5fb2160c060cb3361e02";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
