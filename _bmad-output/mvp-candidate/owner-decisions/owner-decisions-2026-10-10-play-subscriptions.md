@@ -25,3 +25,10 @@
 «Уберем оплату на день, используя старые цены» — base plan premium-1d-prepaid ДЕАКТИВИРОВАН через Play Console (статус Inactive). Подписка premium_1d остаётся без активных планов → недоступна к покупке.
 Итоговая полка: premium_7d (200 UAH/неделя), premium_30d (650 UAH/месяц), premium_365d (5000 UAH/год).
 История 2-1 «четыре длительности» = ТРИ длительности. В промпт лупа schoolquiz внесено.
+
+## ФИНАЛЬНАЯ МОДЕЛЬ (2026-10-11, решение владельца)
+«Давай сделаем одну подписку месячную с автопополнением и 3 дня бесплатно, 200 грн в месяц».
+- premium_30d / base plan premium-30d-autorenew: Monthly, auto-renewing, 200 UAH/мес — АКТИВЕН.
+- Оффер trial-3d на нём: Free trial 3 дня, new customer acquisition — АКТИВЕН.
+- Деактивированы: premium-1d-prepaid, premium-7d-prepaid, premium-30d-prepaid, premium-365d-prepaid (все Inactive).
+- Истории про 4 длительности (2-1 и связанные) — выполнять как «одна месячная автоподписка + триал 3 дня».
