@@ -6,6 +6,8 @@ import com.tpov.schoolquiz.android.feature.economy.presentation.component.Placeh
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.PlaceholderProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PlaceholderPollsComponent
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
@@ -88,6 +90,13 @@ val appShellPresentationModule =
                         koin.get(InboxComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderInboxComponent()
+                    }
+                },
+                pollsFactory = { compCtx ->
+                    runCatching<PollsComponent> {
+                        koin.get(PollsComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderPollsComponent()
                     }
                 },
                 profileFactory = { compCtx ->

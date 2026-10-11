@@ -65,6 +65,14 @@ sealed interface DrawerSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
+        // emptyMap — как у Inbox: настоящий гейт содержимого серверный (UX-O7, история 8.2) —
+        // опубликованные серии читает view, право решает сервер. Порог секции Social таба
+        // INTERNET (Row 9) не тронут: полка интерфейса опросов на LOCAL — решение о точке входа
+        // MVP, перенос под Social — продуктовое решение владельца.
+        data object Polls : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
         // emptyMap (always visible)
         data object Settings : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()

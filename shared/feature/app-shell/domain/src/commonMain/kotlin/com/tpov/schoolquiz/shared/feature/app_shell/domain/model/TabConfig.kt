@@ -37,6 +37,9 @@ sealed interface LocalConfig : TabConfig {
     /** Shared inbox (AD-20): private error reports + public comments addressed to the author. */
     data object InboxRoot : LocalConfig
 
+    /** Polls surface (UX-O7, история 8.2): series list, voting, authoring. */
+    data object PollsRoot : LocalConfig
+
     data object SettingsRoot : LocalConfig
 
     /** Always exists as type; rendered as UnderConstructionScreen("Недоступно") in release. */

@@ -14,6 +14,8 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultShopTabComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PlaceholderPollsComponent
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.PlaceholderProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
@@ -146,6 +148,7 @@ class DefaultRootComponent(
     curatorFactory: (ComponentContext) -> CuratorComponent = { PlaceholderCuratorComponent() },
     authorLifecycleFactory: (ComponentContext) -> AuthorLifecycleComponent = { PlaceholderAuthorLifecycleComponent() },
     inboxFactory: (ComponentContext) -> InboxComponent = { PlaceholderInboxComponent() },
+    pollsFactory: (ComponentContext) -> PollsComponent = { PlaceholderPollsComponent() },
     profileFactory: (ComponentContext) -> ProfileComponent = { PlaceholderProfileComponent() },
     shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
@@ -266,6 +269,10 @@ class DefaultRootComponent(
     val inboxComponent: InboxComponent =
         inboxFactory(
             childContext("InboxContent"),
+        )
+    val pollsComponent: PollsComponent =
+        pollsFactory(
+            childContext("PollsContent"),
         )
     val profileComponent: ProfileComponent =
         profileFactory(

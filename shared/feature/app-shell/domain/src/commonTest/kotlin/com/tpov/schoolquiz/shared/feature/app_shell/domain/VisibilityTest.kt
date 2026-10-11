@@ -195,11 +195,13 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 22 visibleSections LOCAL guest returns the seven always-visible sections`() {
+    fun `scenario 22 visibleSections LOCAL guest returns the always-visible sections`() {
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
         // DesignCatalog removed from LocalSection (now DrawerFooterAction).
         // AuthorLifecycle/Curation (TZ06C) are always visible like ReviewQueue: the real
-        // permission gate is server-side, the screen shows the refusal.
+        // permission gate is server-side, the screen shows the refusal. Inbox (4.9, AD-20) and
+        // Polls (8.2, UX-O7) join the same rule — the list drifted red at 4.9 and is re-pinned
+        // here with the two server-gated sections.
         assertEquals(
             listOf(
                 DrawerSection.LocalSection.HomeQuests,
@@ -207,6 +209,8 @@ class VisibilityTest {
                 DrawerSection.LocalSection.ReviewQueue,
                 DrawerSection.LocalSection.AuthorLifecycle,
                 DrawerSection.LocalSection.Curation,
+                DrawerSection.LocalSection.Inbox,
+                DrawerSection.LocalSection.Polls,
                 DrawerSection.LocalSection.MyQuests,
                 DrawerSection.LocalSection.Settings,
             ),
@@ -373,16 +377,19 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules LOCAL has exactly 7 always-visible sections`() {
+    fun `visibility rules LOCAL has exactly nine always-visible sections`() {
         // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction);
-        // AuthorLifecycle/Curation join ReviewQueue with no client-side role gate (TZ06C).
+        // AuthorLifecycle/Curation join ReviewQueue with no client-side role gate (TZ06C);
+        // Inbox (4.9) and Polls (8.2) follow the same server-gated rule.
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
-        assertEquals(7, sections.size)
+        assertEquals(9, sections.size)
         assertTrue(sections.contains(DrawerSection.LocalSection.HomeQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Archive))
         assertTrue(sections.contains(DrawerSection.LocalSection.ReviewQueue))
         assertTrue(sections.contains(DrawerSection.LocalSection.AuthorLifecycle))
         assertTrue(sections.contains(DrawerSection.LocalSection.Curation))
+        assertTrue(sections.contains(DrawerSection.LocalSection.Inbox))
+        assertTrue(sections.contains(DrawerSection.LocalSection.Polls))
         assertTrue(sections.contains(DrawerSection.LocalSection.MyQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Settings))
     }

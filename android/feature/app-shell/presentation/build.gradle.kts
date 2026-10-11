@@ -22,6 +22,7 @@ dependencies {
     implementation(project(":android:feature:economy:presentation"))
     implementation(project(":android:feature:quest:presentation"))
     implementation(project(":android:feature:quest-authoring:presentation"))
+    implementation(project(":android:feature:internet:social:presentation"))
     implementation(project(":android:feature:quizzes-screen:presentation"))
     implementation(project(":shared:feature:quest:domain"))
     implementation(project(":shared:feature:internet:leaderboard:domain"))

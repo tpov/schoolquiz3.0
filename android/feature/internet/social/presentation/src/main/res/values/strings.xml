@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="polls_title">Опросы</string>
+    <string name="polls_refresh">Обновить</string>
+    <string name="polls_empty">Опросов пока нет</string>
+    <string name="polls_create">Новая серия</string>
+    <string name="polls_author_title">Новая серия опросов</string>
+    <string name="polls_publish">Опубликовать</string>
+    <string name="polls_publish_queued">Серия отправлена, ждёт подтверждения сервера</string>
+    <string name="polls_cancel">Отмена</string>
+    <string name="polls_add_question">Добавить вопрос</string>
+    <string name="polls_remove_question">Убрать вопрос</string>
+    <string name="polls_question_label">Вопрос %1$d</string>
+    <string name="polls_question_hint">Текст вопроса</string>
+    <string name="polls_option_hint">Вариант %1$d</string>
+    <string name="polls_add_option">Добавить вариант</string>
+    <string name="polls_remove_option">Убрать вариант</string>
+    <string name="polls_mode_single">Один вариант</string>
+    <string name="polls_mode_multiple">Несколько вариантов</string>
+    <string name="polls_title_hint">Название серии</string>
+    <string name="polls_question_of">Вопрос %1$d из %2$d</string>
+    <string name="polls_vote">Проголосовать</string>
+    <string name="polls_vote_queued">Голос отправлен, ждёт подтверждения сервера</string>
+    <string name="polls_vote_empty">Выберите хотя бы один вариант</string>
+    <string name="polls_next">Следующий вопрос</string>
+    <string name="polls_back_to_list">К списку серий</string>
+    <string name="polls_your_vote">Ваш голос принят</string>
+    <string name="polls_distribution_hidden">Распределение откроется после вашего голоса</string>
+    <string name="polls_respondents">Ответило: %1$d</string>
+    <string name="polls_own_series">Ваша серия</string>
+    <string name="polls_progress">Ответлено: %1$d из %2$d</string>
+    <string name="polls_error_unknown">Не удалось загрузить опросы</string>
+    <string name="polls_error_auth_not_ready">Войдите, чтобы видеть опросы</string>
+</resources>

@@ -68,6 +68,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScree
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.AuthorLifecycleScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.CuratorScreen
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.screen.PollsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.InboxScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.QuestCreateScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.ReviewQueueScreen
@@ -496,6 +497,11 @@ private fun LocalTabContent(
                 is LocalConfig.InboxRoot ->
                     InboxScreen(
                         component = rootComponent.inboxComponent,
+                        modifier = Modifier.padding(paddingValues),
+                    )
+                is LocalConfig.PollsRoot ->
+                    PollsScreen(
+                        component = rootComponent.pollsComponent,
                         modifier = Modifier.padding(paddingValues),
                     )
                 is LocalConfig.SettingsRoot -> {
