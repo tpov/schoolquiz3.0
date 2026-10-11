@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.use_case
 
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakeBillingRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakeNetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakePurchaseVerifier
@@ -40,6 +41,7 @@ class BuyGoldPackUseCaseTest {
                     billing = billing,
                     verifier = verifier,
                     balanceRefresher = refresher,
+                    analytics = NoOpAnalyticsTracker,
                 ),
             currentUidFlow = { uid },
             // Deliberately not the identity: the store must receive the *tag*, never the raw

@@ -1,5 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.economy.domain.fake
 
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.core.analytics.UserProperty
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
@@ -195,4 +198,20 @@ class FakeServerBalanceRefresher(
         journal += "refresh"
         return if (fails) Result.failure(IllegalStateException("refresh failed")) else Result.success(Unit)
     }
+}
+
+/** The funnel's memory: every event the settlement path emitted, in order. */
+class RecordingAnalyticsTracker : AnalyticsTracker {
+    val events = mutableListOf<AnalyticsEvent>()
+
+    override fun track(event: AnalyticsEvent) {
+        events += event
+    }
+
+    override fun setUserProperty(
+        property: UserProperty,
+        value: String,
+    ) = Unit
+
+    override fun setUserId(userId: String?) = Unit
 }

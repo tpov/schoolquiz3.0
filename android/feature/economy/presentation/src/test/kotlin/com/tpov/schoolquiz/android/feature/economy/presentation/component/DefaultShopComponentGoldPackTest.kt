@@ -4,6 +4,8 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
@@ -67,6 +69,7 @@ class DefaultShopComponentGoldPackTest {
     private lateinit var lifecycle: LifecycleRegistry
 
     private val store = FakeStoreBilling()
+    private val analytics = RecordingTracker()
 
     @Before
     fun setUp() {
@@ -121,6 +124,16 @@ class DefaultShopComponentGoldPackTest {
             assertEquals(ShopMessage.GoldCredited(10), component.state.value.message)
             assertEquals(null, component.state.value.processingItemId)
             assertEquals(listOf(StoreProductId.GOLD_PACK_SMALL to "tag"), store.purchaseCalls)
+            // Порядок воронки собирается сам: открытие — компонент, старт — компонент до Play,
+            // завершение — расчёт, когда сервер уже подтвердил начисление.
+            assertEquals(
+                listOf(
+                    AnalyticsEvent.ShopOpened,
+                    AnalyticsEvent.PurchaseStarted("gold_pack_small"),
+                    AnalyticsEvent.PurchaseCompleted("gold_pack_small", 1_990_000L, "UAH"),
+                ),
+                analytics.events,
+            )
         }
 
     @Test
@@ -132,6 +145,14 @@ class DefaultShopComponentGoldPackTest {
 
             assertEquals(ShopMessage.PurchaseCancelled, component.state.value.message)
             assertTrue(store.consumedTokens.isEmpty(), "отменённая покупка не гасится")
+            assertEquals(
+                listOf(
+                    AnalyticsEvent.ShopOpened,
+                    AnalyticsEvent.PurchaseStarted("gold_pack_small"),
+                    AnalyticsEvent.PurchaseFailed("gold_pack_small", "cancelled"),
+                ),
+                analytics.events,
+            )
         }
 
     @Test
@@ -144,6 +165,14 @@ class DefaultShopComponentGoldPackTest {
 
         assertEquals(ShopMessage.PurchaseRefused("SKU_NOT_SOLD"), component.state.value.message)
         assertTrue(store.consumedTokens.isEmpty(), "отказ не гасит покупку")
+        assertEquals(
+            listOf(
+                AnalyticsEvent.ShopOpened,
+                AnalyticsEvent.PurchaseStarted("gold_pack_small"),
+                AnalyticsEvent.PurchaseFailed("gold_pack_small", "SKU_NOT_SOLD"),
+            ),
+            analytics.events,
+        )
     }
 
     @Test
@@ -154,6 +183,11 @@ class DefaultShopComponentGoldPackTest {
         component.obtainEvent(ShopViewEvent.Purchase(ShopItemId.GOLD_PACK_SMALL))
 
         assertEquals(ShopMessage.PurchasePending, component.state.value.message)
+        // Платёж не состоялся и не отказал: в воронке пока висит только старт.
+        assertEquals(
+            listOf(AnalyticsEvent.ShopOpened, AnalyticsEvent.PurchaseStarted("gold_pack_small")),
+            analytics.events,
+        )
     }
 
     private fun component(): DefaultShopComponent {
@@ -165,6 +199,7 @@ class DefaultShopComponentGoldPackTest {
             getCatalog = GetShopCatalogUseCase(),
             loadStoreShelf = LoadStoreShelfUseCase(store),
             purchaseItem = PurchaseShopItemUseCase(economy),
+            analytics = analytics,
             buyGoldPack =
                 BuyGoldPackUseCase(
                     billing = store,
@@ -174,6 +209,7 @@ class DefaultShopComponentGoldPackTest {
                             billing = store,
                             verifier = store.verifier,
                             balanceRefresher = FakeBalanceRefresher(),
+                            analytics = analytics,
                             log = { _, _ -> },
                         ),
                     currentUidFlow = { flowOf("uid-1") },
@@ -205,6 +241,22 @@ class DefaultShopComponentGoldPackTest {
             priceMicros = 1_990_000L,
             currency = "UAH",
         )
+
+    /** Память воронки этого теста: порядок событий важнее их числа. */
+    private class RecordingTracker : AnalyticsTracker {
+        val events = mutableListOf<AnalyticsEvent>()
+
+        override fun track(event: AnalyticsEvent) {
+            events += event
+        }
+
+        override fun setUserProperty(
+            property: com.tpov.schoolquiz.shared.core.analytics.UserProperty,
+            value: String,
+        ) = Unit
+
+        override fun setUserId(userId: String?) = Unit
+    }
 
     /** Магазин, отвечающий тем, что задал тест: товары — из [productAnswer], покупки — из [outcome]. */
     private class FakeStoreBilling : BillingRepository {

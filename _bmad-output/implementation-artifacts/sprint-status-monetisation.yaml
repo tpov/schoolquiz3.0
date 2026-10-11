@@ -50,7 +50,8 @@ development_status:
   1-4-паки-золота-на-одной-полке: review  # spec-m1-4-gold-packs-on-one-shelf.md — полка, цены из магазина,
     # покупка путём 1.2; гейты домена и презентации зелёные; it09e KoinModuleWiringTest падал и до истории
     # (тест-заглушки lesson-runner без LessonRunnerContentSyncCallbacks)
-  1-5-воронка-магазина-видна: backlog
+  1-5-воронка-магазина-видна: review  # spec-m1-5-shop-funnel-visible.md — событие завершения эмитит расчёт
+    # после CREDITED, один на токен; открытие/старт/отказ — компонент; найденный дабл-эмит на replay закрыт
   epic-1-retrospective: optional
 
   epic-2: backlog

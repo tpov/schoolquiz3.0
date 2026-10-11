@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.economy.presentation.component
 
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
@@ -62,6 +63,7 @@ internal fun inertBuyGoldPack(billing: BillingRepository = StubStoreBilling()): 
                     object : ServerBalanceRefresher {
                         override suspend fun refresh(): Result<Unit> = Result.success(Unit)
                     },
+                analytics = NoOpAnalyticsTracker,
             ),
         currentUidFlow = { flowOf(null) },
         buyerTag = { tag -> tag },

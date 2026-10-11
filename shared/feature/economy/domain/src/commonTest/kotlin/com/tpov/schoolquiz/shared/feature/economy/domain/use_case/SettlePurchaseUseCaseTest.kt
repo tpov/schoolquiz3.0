@@ -3,7 +3,9 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.use_case
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakeBillingRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.fake.RecordingAnalyticsTracker
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakePurchaseVerifier
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakeServerBalanceRefresher
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.billingPurchase
@@ -11,6 +13,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusalCode
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusedException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,11 +30,14 @@ class SettlePurchaseUseCaseTest {
     private val verifier = FakePurchaseVerifier(journal = journal)
     private val refresher = FakeServerBalanceRefresher(journal = journal)
 
+    private val analytics = RecordingAnalyticsTracker()
+
     private val settle =
         SettlePurchaseUseCase(
             billing = billing,
             verifier = verifier,
             balanceRefresher = refresher,
+            analytics = analytics,
         )
 
     // Matrix: "Buy, happy path" — the settlement half.
@@ -64,6 +70,54 @@ class SettlePurchaseUseCaseTest {
 
             assertEquals(first.getOrNull(), second.getOrNull())
             assertEquals(listOf("verify", "consume", "refresh"), journal)
+        }
+
+    // Funnel (story 1.5): the completion event is the settlement's own, emitted on CREDITED with
+    // the price the store took, and nowhere else.
+    @Test
+    fun `the credited settlement emits purchase completed with the store price`() =
+        runTest {
+            verifier.credits("t-1", goldGranted = 60L)
+
+            settle(billingPurchase(token = "t-1"))
+
+            assertEquals(
+                listOf<AnalyticsEvent>(
+                    AnalyticsEvent.PurchaseCompleted(
+                        productId = StoreProductId.GOLD_PACK_SMALL.playSku,
+                        priceMicros = 0L,
+                        currency = "",
+                    ),
+                ),
+                analytics.events,
+            )
+        }
+
+    @Test
+    fun `pending, refusals and failures emit no completion event`() =
+        runTest {
+            verifier.pends("t-pending")
+            settle(billingPurchase(token = "t-pending"))
+            verifier.fails("t-refused") { PurchaseRefusedException(PurchaseRefusalCode.SKU_NOT_SOLD, "not sold") }
+            settle(billingPurchase(token = "t-refused"))
+            verifier.fails("t-failed") { SyncFailure(SyncError.NoNetwork) }
+            settle(billingPurchase(token = "t-failed"))
+
+            assertTrue(analytics.events.isEmpty(), "не-начисления не являются завершением покупки")
+        }
+
+    @Test
+    fun `a waiting caller does not emit a second completion for the same token`() =
+        runTest {
+            verifier.credits("t-1", goldGranted = 60L)
+            val purchase = billingPurchase(token = "t-1")
+
+            val owner = launch { settle(purchase) }
+            val waiter = launch { settle(purchase) }
+            owner.join()
+            waiter.join()
+
+            assertEquals(1, analytics.events.size, "токен завершается один раз в воронке")
         }
 
     // Matrix: "Server pending" — nothing consumed, not an error, purchase stays in Play's queue.

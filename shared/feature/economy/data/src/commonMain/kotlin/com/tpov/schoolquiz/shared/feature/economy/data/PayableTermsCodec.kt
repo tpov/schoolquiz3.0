@@ -30,7 +30,6 @@ import kotlinx.serialization.json.put
  * платную операцию по половине согласия.
  */
 object PayableTermsCodec {
-
     fun toJson(terms: PayableTerms): String =
         buildJsonObject {
             put("version", terms.version)

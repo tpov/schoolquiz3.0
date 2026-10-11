@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.economy.domain.use_case
 
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusedException
@@ -42,6 +44,15 @@ class SettlePurchaseUseCase(
     private val verifier: PurchaseVerifier,
     private val balanceRefresher: ServerBalanceRefresher,
     /**
+     * Куда уходит событие завершения покупки.
+     *
+     * Эмитит именно расчёт, а не вызвавший его экран: подтверждение сервера и есть место события
+     * (воронка 1.5), и у этой точки один хозяин — восстановленная сеттлером покупка доезжает до
+     * воронки тем же событием, а ждущий второго звонка по токену не эмитит ничего, потому что
+     * верификацию он не запускал.
+     */
+    private val analytics: AnalyticsTracker,
+    /**
      * Where a swallowed failure goes. Defaults to nowhere so the domain owes nothing to a logging
      * framework; the composition root hands it a real sink.
      */
@@ -50,6 +61,16 @@ class SettlePurchaseUseCase(
     /** Settlements running right now, by token. The value is what a second caller waits on. */
     private val inFlight = mutableMapOf<String, CompletableDeferred<Result<PurchaseOutcome>>>()
     private val guard = Mutex()
+
+    /**
+     * Токены, чьё завершение воронка уже насчитала.
+     *
+     * Сервер отвечает `CREDITED` на каждый повтор рассчитанного токена — так переживается и упавший
+     * consume, и поднятый после смерти процесс. Покупка при этом одна, и событие завершения — тоже:
+     * повторный расчёт тем же токеном не насчитывает второе. Память процесса, не хранилище: токен
+     * и так живёт в очереди магазина, а после перезапуска повторное событие честнее потери.
+     */
+    private val funnelCreditedTokens = mutableSetOf<String>()
 
     /**
      * Settles [purchase].
@@ -107,6 +128,18 @@ class SettlePurchaseUseCase(
             is PurchaseVerification.Pending -> PurchaseOutcome.Pending
 
             is PurchaseVerification.Credited -> {
+                // Событие воронки — здесь и только здесь: факт «сервер начислил» уже случился,
+                // цена — та, что назвал магазин и которая списана с игрока, не наша выкладка.
+                // Один токен — одно завершение, сколько бы раз сервер ни ответил `CREDITED`.
+                if (funnelCreditedTokens.add(purchase.purchaseToken)) {
+                    analytics.track(
+                        AnalyticsEvent.PurchaseCompleted(
+                            productId = purchase.productId.playSku,
+                            priceMicros = purchase.priceMicros,
+                            currency = purchase.currency,
+                        ),
+                    )
+                }
                 consume(purchase)
                 // Runs even when the consume failed: the money is on the account either way, and
                 // the player should see it there.

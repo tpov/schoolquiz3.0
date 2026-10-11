@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.economy.data
 
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
@@ -51,6 +52,7 @@ class UnsettledPurchaseSettlerTest {
                     billing = billing,
                     verifier = verifier,
                     balanceRefresher = refresher,
+                    analytics = NoOpAnalyticsTracker,
                 ),
             scope = scope,
         )
@@ -158,6 +160,7 @@ class UnsettledPurchaseSettlerTest {
                     billing = billing,
                     verifier = verifier,
                     balanceRefresher = refresher,
+                    analytics = NoOpAnalyticsTracker,
                 )
             val purchase = purchase("t-1")
             verifier.creditsWhenReleased("t-1")
@@ -187,6 +190,7 @@ class UnsettledPurchaseSettlerTest {
                     billing = billing,
                     verifier = verifier,
                     balanceRefresher = refresher,
+                    analytics = NoOpAnalyticsTracker,
                 )
             verifier.credits("t-1")
 

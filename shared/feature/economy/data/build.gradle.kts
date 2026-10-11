@@ -24,6 +24,8 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
+            // Тесты сеттлера конструируют расчёт, а тот требует трекер воронки — контракт core.
+            implementation(project(":shared:core:analytics"))
         }
     }
 }

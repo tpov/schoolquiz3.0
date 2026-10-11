@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralProgramUseCase
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
@@ -171,6 +172,7 @@ class DefaultShopComponentCancelListingTest {
             loadStoreShelf = LoadStoreShelfUseCase(StubStoreBilling()),
             purchaseItem = PurchaseShopItemUseCase(economy),
             buyGoldPack = inertBuyGoldPack(),
+            analytics = NoOpAnalyticsTracker,
             logos = logos,
             profile = FakeProfileRepository(),
             getReferralProgram = GetReferralProgramUseCase(economy),

@@ -49,6 +49,9 @@ fun economyDomainModule(
                 billing = get(),
                 verifier = get(),
                 balanceRefresher = get(),
+                // Разрешается в момент первого расчёта, когда весь граф поднят: приложение всегда
+                // биндит трекер (боевой или изолированный), и wiring-тест требует этого же.
+                analytics = get(),
                 log = log,
             )
         }

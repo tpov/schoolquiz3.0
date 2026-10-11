@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.android.feature.economy.presentation.component
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
@@ -43,6 +45,7 @@ class DefaultShopComponent(
     private val loadStoreShelf: LoadStoreShelfUseCase,
     private val purchaseItem: PurchaseShopItemUseCase,
     private val buyGoldPack: BuyGoldPackUseCase,
+    private val analytics: AnalyticsTracker,
     private val logos: LogoRepository,
     private val profile: ProfileRepository,
     private val getReferralProgram: GetReferralProgramUseCase,
@@ -70,6 +73,8 @@ class DefaultShopComponent(
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
+        // Верх воронки (история 1.5): экран открыт — знаменатель конверсии существует.
+        analytics.track(AnalyticsEvent.ShopOpened)
         scope.launch {
             _state.update { it.copy(referralProgram = getReferralProgram.execute()) }
         }
@@ -479,7 +484,8 @@ class DefaultShopComponent(
      * Все четыре исхода [PurchaseOutcome] — не ошибки, у каждого свои слова: «начислено» называет
      * сумму, которую назвал сервер, «отменено» не делает из жеста игрока аварию. Баланс после
      * начисления приходит сам — расчёт перечитывает его с сервера, и поток баланса перестилает
-     * полку.
+     * полку. Событие завершения воронки отсюда не эмитится: его место — расчёт, где сервер уже
+     * сказал своё слово; здесь остаются старт и отказ.
      */
     private fun purchaseInStore(
         itemId: ShopItemId,
@@ -487,19 +493,54 @@ class DefaultShopComponent(
     ) {
         scope.launch {
             _state.update { it.copy(processingItemId = itemId, message = null) }
+            analytics.track(AnalyticsEvent.PurchaseStarted(productId.playSku))
             val result = buyGoldPack(productId)
             _state.update { current ->
                 current.copy(
                     processingItemId = null,
                     message =
                         result.fold(
-                            onSuccess = { outcome -> outcome.shopMessage() },
-                            onFailure = { error -> ShopMessage.Failure(error.errorDetail()) },
+                            onSuccess = { outcome ->
+                                outcome.failureEvent(productId)?.let(analytics::track)
+                                outcome.shopMessage()
+                            },
+                            onFailure = { error ->
+                                analytics.track(
+                                    AnalyticsEvent.PurchaseFailed(
+                                        productId = productId.playSku,
+                                        reason = error.failureReason(),
+                                    ),
+                                )
+                                ShopMessage.Failure(error.errorDetail())
+                            },
                         ),
                 )
             }
         }
     }
+
+    /**
+     * Отказ покупки, как его называет воронка: стабильный код, не фраза для игрока (AD-15).
+     *
+     * `Pending` и «начислено» — не отказы: первое дорешает сеттлер, у второго своё событие в
+     * расчёте. Всё остальное — отказ: игрок закрыл окно, сервер назвал причину или ответ не пришёл.
+     */
+    private fun PurchaseOutcome.failureEvent(productId: StoreProductId): AnalyticsEvent.PurchaseFailed? =
+        when (this) {
+            is PurchaseOutcome.Cancelled ->
+                AnalyticsEvent.PurchaseFailed(productId.playSku, CANCELLED_REASON)
+            is PurchaseOutcome.Refused ->
+                AnalyticsEvent.PurchaseFailed(productId.playSku, code.name)
+            is PurchaseOutcome.Credited,
+            PurchaseOutcome.Pending,
+            -> null
+        }
+
+    private fun Throwable.failureReason(): String =
+        when (syncErrorOrNull()) {
+            SyncError.NoNetwork -> NO_NETWORK_REASON
+            else -> ERROR_REASON
+        }
 
     private fun PurchaseOutcome.shopMessage(): ShopMessage =
         when (this) {
@@ -508,6 +549,13 @@ class DefaultShopComponent(
             PurchaseOutcome.Cancelled -> ShopMessage.PurchaseCancelled
             is PurchaseOutcome.Refused -> ShopMessage.PurchaseRefused(code.name)
         }
+
+    private companion object {
+        /** Стабильные коды причин отказа в воронке: машинные, не фразы (AD-15). */
+        const val CANCELLED_REASON = "cancelled"
+        const val NO_NETWORK_REASON = "no_network"
+        const val ERROR_REASON = "error"
+    }
 
     /**
      * Что показать игроку.

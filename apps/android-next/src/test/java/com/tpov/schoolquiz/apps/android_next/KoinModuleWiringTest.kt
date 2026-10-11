@@ -789,6 +789,8 @@ class KoinModuleWiringTest : KoinTest {
         startKoin {
             modules(
                 testPurchaseStubsModule,
+                // Расчёт эмитит событие воронки, поэтому требует трекер так же, как приложение.
+                testAnalyticsStub,
                 economyDomainModule(currentUidFlow = {
                     flowOf("uid-test")
                 }, buyerTag = { "tag($it)" }),

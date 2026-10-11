@@ -9,6 +9,8 @@ android {
 dependencies {
     implementation(project(":shared:feature:economy:domain"))
     implementation(project(":shared:core:network"))
+    // Воронка магазина: компонент эмитит открытие, старт и отказ покупки (завершение — расчёт).
+    implementation(project(":shared:core:analytics"))
     implementation(project(":shared:feature:internet:profile:domain"))
     implementation(project(":android:core:designsystem"))
     implementation(platform(libs.compose.bom))

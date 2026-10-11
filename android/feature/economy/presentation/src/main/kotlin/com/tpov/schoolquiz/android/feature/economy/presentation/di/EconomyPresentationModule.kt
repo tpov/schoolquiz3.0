@@ -15,6 +15,7 @@ val economyPresentationModule =
                 loadStoreShelf = get(),
                 purchaseItem = get(),
                 buyGoldPack = get(),
+                analytics = get(),
                 getReferralProgram = get(),
                 nicknames = get(),
                 logos = get(),
