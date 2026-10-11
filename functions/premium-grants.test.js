@@ -34,6 +34,18 @@ test("all four catalogue durations grant exact milliseconds for PLAY, GOLD and B
   }
 });
 
+test("a trial-term lot (whole days outside the catalogue set) survives the persistence boundary", () => {
+  // История 2.1: триал продаёт срок до даты Play, и лот в три-четыре суток законен. Граница
+  // строгой валидации не должна превратить его в INVALID_STATE при первом же чтении аккаунта.
+  for (const source of [SOURCE.PLAY, SOURCE.GOLD, SOURCE.BOX]) {
+    const issued = issue(fresh(), "trial", source, 3);
+    assert.equal(issued.entitlement.remainingMs, 3 * DAY_MS);
+    const reread = advancePremium(roundTrip(issued.state), T0 + DAY_MS);
+    assert.equal(reread.entitlement.remainingMs, 2 * DAY_MS);
+    assert.equal(reread.entitlement.hasPremium, true);
+  }
+});
+
 test("expiry is inactive at its exact boundary, even if persistence has a stale true flag", () => {
   const state = issue(fresh(), "p").state;
   state.hasPremium = true;

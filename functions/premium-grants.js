@@ -108,7 +108,7 @@ function copyState(input) {
         lot.issuedAtMs < previousIssuedAtMs || lot.issuedAtMs > state.asOfMs ||
         lot.consumedMs > state.asOfMs - lot.issuedAtMs || (pendingEarlier && lot.consumedMs > 0) ||
         (lot.grantId === LEGACY_GRANT_ID && lot.source !== SOURCE.LEGACY) ||
-        (lot.source !== SOURCE.LEGACY && !PREMIUM_DAYS.some((days) => days * DAY_MS === lot.durationMs)) ||
+        (lot.source !== SOURCE.LEGACY && (lot.durationMs < DAY_MS || lot.durationMs % DAY_MS !== 0)) ||
         (lot.refundedAtMs === null && lot.revokedMs !== 0) ||
         (lot.refundedAtMs !== null && (lot.source !== SOURCE.PLAY || remaining(lot) !== 0 ||
           lot.refundedAtMs < lot.issuedAtMs || lot.refundedAtMs > state.asOfMs ||
