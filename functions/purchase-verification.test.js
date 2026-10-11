@@ -33,9 +33,11 @@ const {
   auditRecord,
   decideSettlement,
   goldAfterClawback,
+  PRODUCT_PREMIUM,
   purchaseFromLookup,
   readProductPurchase,
   readShortfall,
+  readSubscriptionPurchaseV2,
   receiptRecord,
   settlementGate,
   settlementId,
@@ -585,6 +587,138 @@ testTheSettlementIdIsTheSha256OfTheTokenAndTheRawTokenIsStoredNowhere();
 testTheRecordsNameWhatTheAuditNeeds();
 testThePlayAnswerIsNormalisedBeforeItIsJudged();
 testARequestWithoutATokenOrWithAnOddSkuIsRefusedBeforePlayIsAsked();
+
+// ---------------------------------------------------------------------------
+// История 2.1: подписка premium_30d — решение по ответу subscriptionsv2.
+// ---------------------------------------------------------------------------
+
+const PREMIUM_TABLE = readEconomyConstants({
+  version: 7,
+  premiumProducts: {premium_30d: {days: 30, salesEnabled: true}},
+});
+const SKU_PREMIUM = "premium_30d";
+
+/** Ответ Play на `purchases.subscriptionsv2.get`: состояние, срок, метка покупателя. */
+function playSubscription(overrides = {}) {
+  return readSubscriptionPurchaseV2({
+    kind: "androidpublisher#subscriptionPurchaseV2",
+    subscriptionState: 2,
+    startTime: "2026-10-11T10:00:00.000Z",
+    latestOrderId: "GPA.3333-4444-5555-66666",
+    regionCode: "UA",
+    externalAccountIdentifiers: {obfuscatedExternalAccountId: crypto.createHash("sha256").update(UID).digest("hex")},
+    lineItems: [{productId: SKU_PREMIUM, expiryTime: new Date(NOW + 30 * 86_400_000).toISOString()}],
+    ...overrides,
+  });
+}
+
+function decideSubscription(overrides = {}) {
+  const {purchase = playSubscription(), now = NOW, claimedSku = SKU_PREMIUM, ...rest} = overrides;
+  return decideSettlement({
+    existing: null,
+    purchase,
+    claimedSku,
+    uid: UID,
+    constants: PREMIUM_TABLE,
+    now,
+    ...rest,
+  });
+}
+
+function testAnActiveFullTermSubscriptionGrantsTheTableDays() {
+  const verdict = decideSubscription();
+  assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT, verdict.reason);
+  assert.strictEqual(verdict.credit.productKind, PRODUCT_PREMIUM);
+  assert.strictEqual(verdict.credit.premiumDays, 30, "полный срок — дни таблицы");
+  assert.strictEqual(verdict.credit.premiumGrantedMs, 30 * 86_400_000);
+  assert.strictEqual(verdict.credit.goldGranted, 0, "премиум — не золото");
+}
+
+function testATrialTermGrantsTheWholeDaysPlaySellsNotTheTableCeiling() {
+  // Триал: Play продал три дня (и два часа на проверку) — грант в три суток, не в месяц.
+  const purchase = playSubscription({
+    lineItems: [{productId: SKU_PREMIUM, expiryTime: new Date(NOW + 3 * 86_400_000 + 7_200_000).toISOString()}],
+  });
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT, verdict.reason);
+  assert.strictEqual(verdict.credit.premiumDays, 3, "целые сутки срока, потолок — таблица");
+  assert.strictEqual(verdict.credit.premiumGrantedMs, 3 * 86_400_000);
+}
+
+function testAGracePeriodSubscriptionStillCountsAsEntitled() {
+  const purchase = playSubscription({subscriptionState: 4});
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_CREDIT, verdict.reason);
+}
+
+function testAPendingSubscriptionGrantsNothingAndIsNotAnError() {
+  const purchase = playSubscription({subscriptionState: 1});
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_PENDING, verdict.reason);
+}
+
+function testAPausedOrExpiredSubscriptionIsRefusedByItsState() {
+  // Пауза, hold и истёкшая подписка сводятся к «покупка не в силе» — тому же отказу, что и у
+  // товара: права сейчас нет. SUBSCRIPTION_NOT_ACTIVE остаётся аномалии «ACTIVE, но срок прошёл».
+  for (const state of [3, 5, 6]) {
+    const verdict = decideSubscription({purchase: playSubscription({subscriptionState: state})});
+    assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE, `state ${state}`);
+    assert.strictEqual(verdict.reasonCode, "PURCHASE_CANCELED", `state ${state}`);
+  }
+}
+
+function testASubscriptionWithAnUnreadableTermIsRefusedRatherThanGuessed() {
+  const purchase = playSubscription({lineItems: [{productId: SKU_PREMIUM, expiryTime: "not-a-date"}]});
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, "PREMIUM_EXPIRY_UNREADABLE");
+}
+
+function testAPremiumSkuWithoutASubscriptionLookupIsRefusedBeforeAnyGrant() {
+  // Товарная форма ответа не владеет сроком: грант без него назначать нельзя, как бы ни просил SKU.
+  const verdict = decideSubscription({purchase: playPurchase({productId: SKU_PREMIUM}), claimedSku: SKU_PREMIUM});
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, "PREMIUM_EXPIRY_UNREADABLE");
+}
+
+function testASubscriptionTermThatAlreadyPassedGrantsNothing() {
+  const purchase = playSubscription({
+    lineItems: [{productId: SKU_PREMIUM, expiryTime: new Date(NOW - 86_400_000).toISOString()}],
+  });
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, "SUBSCRIPTION_NOT_ACTIVE");
+}
+
+function testASubscriptionMarkedForAnotherAccountIsRefused() {
+  const purchase = playSubscription({
+    externalAccountIdentifiers: {obfuscatedExternalAccountId: "aaaa"},
+  });
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, "TOKEN_OWNED_BY_ANOTHER_ACCOUNT");
+}
+
+function testASubscriptionLineItemForAnotherSkuIsRefusedAsAMismatch() {
+  const purchase = playSubscription({
+    lineItems: [{productId: "gold_pack_small", expiryTime: new Date(NOW + 86_400_000).toISOString()}],
+  });
+  const verdict = decideSubscription({purchase});
+  assert.strictEqual(verdict.decision, SETTLEMENT_REFUSE);
+  assert.strictEqual(verdict.reasonCode, "SKU_MISMATCH");
+}
+
 testTheCallableIsWiredTheWayTheSpecSays();
+
+testAnActiveFullTermSubscriptionGrantsTheTableDays();
+testATrialTermGrantsTheWholeDaysPlaySellsNotTheTableCeiling();
+testAGracePeriodSubscriptionStillCountsAsEntitled();
+testAPendingSubscriptionGrantsNothingAndIsNotAnError();
+testAPausedOrExpiredSubscriptionIsRefusedByItsState();
+testASubscriptionWithAnUnreadableTermIsRefusedRatherThanGuessed();
+testAPremiumSkuWithoutASubscriptionLookupIsRefusedBeforeAnyGrant();
+testASubscriptionTermThatAlreadyPassedGrantsNothing();
+testASubscriptionMarkedForAnotherAccountIsRefused();
+testASubscriptionLineItemForAnotherSkuIsRefusedAsAMismatch();
 
 console.log("purchase-verification.test.js OK");

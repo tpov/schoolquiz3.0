@@ -8,7 +8,7 @@ const {applyBoxOperation, readBoxOperation, planBoxOperation, writeBoxOperation,
   boxOperationId, BONUS_CLOCK_FIELD, BOX_OVERCLAIM_PATH} = require("./box-service");
 const {ECONOMY_CONSTANTS_DOC} = require("./economy-constants");
 const {LEDGER_PATH, CURRENCY} = require("./currency-ledger");
-const {SHORTFALL_FIELD, PLAY_OUTCOME_FOUND, settlementId} = require("./purchase-verification");
+const {SHORTFALL_FIELD, PLAY_OUTCOME_FOUND, settlementId, accountIdFor} = require("./purchase-verification");
 const {settlePurchase} = require("./purchase-settlement");
 const {clawBackPurchase} = require("./purchase-clawback");
 const {planGoldCredit} = require("./gold-credit");
@@ -43,6 +43,12 @@ function play(state = 0) {
   return {packageName: PACKAGE, async getProductPurchase(sku) {
     return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {productId: sku, purchaseState: state,
       consumptionState: state === 0 ? 0 : 1, quantity: 1, purchaseTimeMillis: String(T), orderId: "GPA.1111-2222-3333-44444"}};
+  }, async getSubscriptionPurchaseV2() {
+    return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
+      subscriptionState: state === 0 ? 2 : 6, startTime: new Date(T).toISOString(),
+      latestOrderId: "GPA.1111-2222-3333-44444", regionCode: "UA",
+      externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
+      lineItems: [{productId: SKU, expiryTime: new Date(T + 365 * 86_400_000).toISOString()}]}};
   }};
 }
 async function buyPremium(db, now = T, token = TOKEN) {

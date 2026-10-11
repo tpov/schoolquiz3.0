@@ -576,6 +576,8 @@ class KoinModuleWiringTest : KoinTest {
 
                     override suspend fun consume(purchaseToken: String): Result<Unit> = Result.success(Unit)
 
+                    override suspend fun acknowledge(purchaseToken: String): Result<Unit> = Result.success(Unit)
+
                     override suspend fun isAvailable(): Boolean = false
 
                     override suspend fun refreshUnsettledPurchases(): Result<Unit> = Result.success(Unit)

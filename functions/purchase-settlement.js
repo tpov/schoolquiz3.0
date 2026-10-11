@@ -35,8 +35,11 @@ const {
   SHORTFALL_FIELD,
   auditRecord,
   decideSettlement,
+  goldPackAmount,
+  premiumProduct,
   purchaseFromLookup,
   readShortfall,
+  subscriptionFromLookup,
   receiptRecord,
   settlementId,
   settlementRecord,
@@ -102,8 +105,21 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
   const gate = revocationSettlementGate({fence, existing: known.exists ? known.data() : null, uid});
   if (gate) return outcomeOf(gate, {id, sku, log});
 
-  const lookup = await playApi.getProductPurchase(sku, purchaseToken);
-  const {unavailable, purchase} = purchaseFromLookup(lookup);
+  // Класс товара решает, у какого endpoint'а Play спрашивать факт (история 2.1): подписки живут в
+  // subscriptionsv2 и отвечают другой формой, одноразовые товары — в purchases.products. Таблица
+  // читается дважды — здесь для выбора endpoint'а и в транзакции для решения, — но решение всегда
+  // принимает та версия, что внутри транзакции. SKU в обеих таблицах сразу — испорченный конфиг, и
+  // спрашивается старый товарный endpoint: у золотого токена он и есть дом правды, а решение всё
+  // равно откажет или потребует повтора — испорченная таблица не меняет этого.
+  const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
+  const routingConstants = readEconomyConstants((await constantsRef.get()).data() || null);
+  const isSubscriptionSku =
+    premiumProduct(routingConstants, sku) !== null && goldPackAmount(routingConstants, sku) === null;
+  const lookup = isSubscriptionSku ?
+    await playApi.getSubscriptionPurchaseV2(purchaseToken) :
+    await playApi.getProductPurchase(sku, purchaseToken);
+  const {unavailable, purchase} = isSubscriptionSku ?
+    subscriptionFromLookup(lookup) : purchaseFromLookup(lookup);
   if (unavailable) {
     // Не вердикт о токене. Клиент повторит позже тем же путём, покупка до тех пор остаётся
     // непогашенной — ожиданием ничего не теряется.
@@ -123,7 +139,6 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
     return {kind: SETTLEMENT_OUTCOME_UNAVAILABLE, reason: "Play could not be reached; retry later"};
   }
 
-  const constantsRef = db.doc(ECONOMY_CONSTANTS_DOC);
   // A new multi-quantity gold grant must additionally agree with ProductPurchaseV2.  We first
   // exclude pending/cancelled/unsold/premium paths with the same pure decision used in the
   // transaction, so Premium q>1 remains an explicit unsupported refusal rather than a V2 outage.
@@ -133,7 +148,7 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
     try {
       const constantsSnapshot = await constantsRef.get();
       preflight = decideSettlement({
-        existing: null, purchase, claimedSku: sku, uid,
+        existing: null, purchase, claimedSku: sku, uid, now,
         constants: readEconomyConstants(constantsSnapshot.exists ? constantsSnapshot.data() : null),
       });
     } catch (error) {
@@ -190,7 +205,7 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
       // Pure V1 rules (state, readable positive quantity, SKU and Premium q=1) must decide
       // before a grant-only adjustment.  Otherwise a cancelled/zero-quantity purchase would
       // become a retryable provenance error instead of its established terminal refusal.
-      let decision = decideSettlement({existing, purchase, claimedSku: sku, uid, constants});
+      let decision = decideSettlement({existing, purchase, claimedSku: sku, uid, constants, now});
       if (decision.decision !== SETTLEMENT_CREDIT) return decision;
       const multiGold = decision.credit.productKind !== PRODUCT_PREMIUM && purchase && purchase.quantity > 1;
       if (multiGold && (!multiQuantityProof || multiQuantityProof.confirmed !== true)) {
@@ -206,7 +221,7 @@ async function settlePurchase({db, playApi, now, uid, payload, readGold, log}) {
         throw new Error("Partial refund provenance disagrees with purchase; repair required");
       }
       decision = decideSettlement({
-        existing, purchase, claimedSku: sku, uid, constants, creditedQuantity: adjustment.quantity,
+        existing, purchase, claimedSku: sku, uid, constants, creditedQuantity: adjustment.quantity, now,
       });
       if (decision.decision !== SETTLEMENT_CREDIT) return decision;
 

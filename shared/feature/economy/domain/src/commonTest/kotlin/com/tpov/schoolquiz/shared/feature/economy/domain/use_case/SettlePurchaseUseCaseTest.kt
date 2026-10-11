@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakeBillingReposit
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.RecordingAnalyticsTracker
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakePurchaseVerifier
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.FakeServerBalanceRefresher
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
 import com.tpov.schoolquiz.shared.feature.economy.domain.fake.billingPurchase
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusalCode
@@ -49,7 +50,7 @@ class SettlePurchaseUseCaseTest {
 
             val result = settle(purchase)
 
-            assertEquals(PurchaseOutcome.Credited(60L), result.getOrNull())
+            assertEquals(PurchaseOutcome.Credited(StoreProductId.GOLD_PACK_SMALL, 60L), result.getOrNull())
             assertEquals(listOf("t-1" to StoreProductId.GOLD_PACK_SMALL), verifier.verifiedTokens)
             assertEquals(listOf("t-1"), billing.consumedTokens)
             assertEquals(1, refresher.calls)
@@ -104,6 +105,50 @@ class SettlePurchaseUseCaseTest {
             settle(billingPurchase(token = "t-failed"))
 
             assertTrue(analytics.events.isEmpty(), "не-начисления не являются завершением покупки")
+        }
+
+    // История 2.1: подписка гасится никогда — только подтверждается. Тот же путь расчёта, другой
+    // жест магазину, выбираемый товаром, а не вызывающим.
+    @Test
+    fun `a premium subscription is acknowledged and never consumed`() =
+        runTest {
+            val purchase =
+                BillingPurchase(
+                    productId = StoreProductId.PREMIUM_30D,
+                    purchaseToken = "sub-token-1",
+                    orderId = "GPA.sub",
+                    isAcknowledged = false,
+                    priceMicros = 0L,
+                    currency = "",
+                )
+            verifier.credits("sub-token-1", goldGranted = 0, productId = StoreProductId.PREMIUM_30D)
+
+            val result = settle(purchase)
+
+            assertEquals(PurchaseOutcome.Credited(StoreProductId.PREMIUM_30D, 0L), result.getOrNull())
+            assertEquals(listOf("sub-token-1"), billing.acknowledgedTokens)
+            assertTrue(billing.consumedTokens.isEmpty(), "подписка не гасится — погашенный токен не продлевается")
+        }
+
+    @Test
+    fun `a failed acknowledgment stays survivable like a failed consume`() =
+        runTest {
+            val purchase =
+                BillingPurchase(
+                    productId = StoreProductId.PREMIUM_30D,
+                    purchaseToken = "sub-token-2",
+                    orderId = "GPA.sub2",
+                    isAcknowledged = false,
+                    priceMicros = 0L,
+                    currency = "",
+                )
+            verifier.credits("sub-token-2", goldGranted = 0, productId = StoreProductId.PREMIUM_30D)
+            billing.acknowledgeFails = true
+
+            val result = settle(purchase)
+
+            assertEquals(PurchaseOutcome.Credited(StoreProductId.PREMIUM_30D, 0L), result.getOrNull())
+            assertEquals(1, refresher.calls, "баланс перечитан и при неудачном подтверждении")
         }
 
     @Test
@@ -178,7 +223,7 @@ class SettlePurchaseUseCaseTest {
 
             val result = settle(purchase)
 
-            assertEquals(PurchaseOutcome.Credited(150L), result.getOrNull())
+            assertEquals(PurchaseOutcome.Credited(StoreProductId.GOLD_PACK_SMALL, 150L), result.getOrNull())
             assertEquals(listOf("t-1"), billing.consumedTokens)
             assertEquals(1, refresher.calls)
             assertEquals(listOf("verify", "consume", "refresh"), journal)

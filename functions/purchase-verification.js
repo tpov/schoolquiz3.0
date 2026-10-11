@@ -93,6 +93,10 @@ const REASON_SETTLEMENT_NOT_CREDITED = "SETTLEMENT_NOT_CREDITED";
 const REASON_CONSUMPTION_STATE_UNKNOWN = "CONSUMPTION_STATE_UNKNOWN";
 const REASON_QUANTITY_UNREADABLE = "QUANTITY_UNREADABLE";
 const REASON_PREMIUM_QUANTITY_UNSUPPORTED = "PREMIUM_QUANTITY_UNSUPPORTED";
+/** Подписка есть, но права премиума сейчас нет: пауза, hold или истёкший срок. */
+const REASON_SUBSCRIPTION_NOT_ACTIVE = "SUBSCRIPTION_NOT_ACTIVE";
+/** Срок подписки Play не читается — грант без него назначать нельзя. */
+const REASON_PREMIUM_EXPIRY_UNREADABLE = "PREMIUM_EXPIRY_UNREADABLE";
 /** Запрос не той формы — отказ ещё до Play (purchase-settlement.js). */
 const REASON_REQUEST_INVALID = "REQUEST_INVALID";
 const REASON_CODES = Object.freeze([
@@ -107,8 +111,24 @@ const REASON_CODES = Object.freeze([
   REASON_CONSUMPTION_STATE_UNKNOWN,
   REASON_QUANTITY_UNREADABLE,
   REASON_PREMIUM_QUANTITY_UNSUPPORTED,
+  REASON_PREMIUM_EXPIRY_UNREADABLE,
   REASON_REQUEST_INVALID,
+  REASON_SUBSCRIPTION_NOT_ACTIVE,
 ]);
+
+/** Сутки в миллисекундах: грант премиума квантуется целыми сутками срока подписки. */
+const DAY_MS = 86_400_000;
+
+/**
+ * Состояния подписки у Play (`purchases.subscriptionsv2`, поле `subscriptionState`).
+ *
+ * Право на премиум держат ACTIVE и IN_GRACE_PERIOD: в grace Play ещё собирает продление и сам
+ * держит entitlement включённым. PENDING — платёж ещё не прошёл; PAUSED, ON_HOLD и EXPIRED —
+ * права сейчас нет, что бы ни было в сроке.
+ */
+const SUBSCRIPTION_STATE_PENDING = 1;
+const SUBSCRIPTION_STATE_ACTIVE = 2;
+const SUBSCRIPTION_STATE_IN_GRACE_PERIOD = 4;
 
 /** Вид квитанции и ключ её текста: текст собирает устройство по ключу и параметрам, не сервер. */
 const RECEIPT_KIND_PURCHASE_CREDITED = "PURCHASE_CREDITED";
@@ -212,6 +232,102 @@ function readProductPurchase(apiJson) {
 }
 
 /**
+ * Читает ответ Play `purchases.subscriptionsv2.get` в ту же рабочую форму, что и товар.
+ *
+ * Формы разные — подписка приходит `lineItems` со сроком и состоянием вместо плоской записи с
+ * `purchaseState`, — но решение внизу одно, поэтому приводятся поля к нему, а не наоборот:
+ * состояние сводится к трём вердиктам (куплено/ждёт/отказано), `consumptionState` у подписки не
+ * существует и не притворяется погашенным, срок — отдельным полем, без которого грант не
+ * назначается.
+ *
+ * Единственный lineItem с заявленным SKU несёт срок: несколько lineItems (апгрейд в процессе) —
+ * `null`, и решение откажет, не угадывая, какая строка живая.
+ *
+ * @returns {object|null} null, если ответ — не объект.
+ */
+function readSubscriptionPurchaseV2(apiJson) {
+  if (!apiJson || typeof apiJson !== "object" || Array.isArray(apiJson)) return null;
+  const state = intOrNull(apiJson.subscriptionState);
+  const lineItems = Array.isArray(apiJson.lineItems) ? apiJson.lineItems : [];
+  return {
+    // Единственный lineItem называет товар: проверка «SKU совпадает с заявленным» работает по
+    // той же форме, что у одноразовой покупки. Ноль или несколько lineItems — пустая строка,
+    // и решение откажет как по чужому SKU, не угадывая, какая строка живая.
+    productId: lineItems.length === 1 ? readSubscriptionLineItem(lineItems[0]).productId : "",
+    orderId: stringValue(apiJson.latestOrderId),
+    purchaseState: subscriptionStateToPurchaseState(state),
+    consumptionState: CONSUMPTION_STATE_UNCONSUMED,
+    purchaseType: null,
+    quantity: 1,
+    purchaseTimeMs: rfc3339ToMs(apiJson.startTime) ?? 0,
+    acknowledgementState: null,
+    regionCode: stringValue(apiJson.regionCode),
+    obfuscatedExternalAccountId:
+      stringValue(apiJson.externalAccountIdentifiers && apiJson.externalAccountIdentifiers.obfuscatedExternalAccountId),
+    isTest: false,
+    subscriptionState: state,
+    // Срок ставит только matchingSubscriptionLineItem — токен без него сроком не владеет.
+    subscriptionExpiryMs: null,
+    subscriptionLineItem:
+      lineItems.length === 1 ? readSubscriptionLineItem(lineItems[0]) : {productId: "", expiryMs: null},
+  };
+}
+
+function readSubscriptionLineItem(lineItem) {
+  if (!lineItem || typeof lineItem !== "object" || Array.isArray(lineItem)) {
+    return {productId: "", expiryMs: null};
+  }
+  return {
+    productId: stringValue(lineItem.productId),
+    expiryMs: rfc3339ToMs(lineItem.expiryTime),
+  };
+}
+
+/** RFC3339 срока подписки в миллисекунды; нечитаемое время — `null`, а не ноль. */
+function rfc3339ToMs(value) {
+  if (typeof value !== "string" || !value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function subscriptionStateToPurchaseState(state) {
+  if (state === SUBSCRIPTION_STATE_ACTIVE || state === SUBSCRIPTION_STATE_IN_GRACE_PERIOD) {
+    return PURCHASE_STATE_PURCHASED;
+  }
+  if (state === SUBSCRIPTION_STATE_PENDING) return PURCHASE_STATE_PENDING;
+  return PURCHASE_STATE_CANCELED;
+}
+
+/**
+ * Вердикт-подобный исход запроса о подписке: та же развилка, что у товара.
+ *
+ * «Найдено, но тело не читается» — недоступность, не подделка: токен настоящий, а форма ответа —
+ * наша беда.
+ *
+ * @returns {{unavailable: boolean, purchase: object|null}}
+ */
+function subscriptionFromLookup(lookup) {
+  const outcome = lookup && lookup.outcome;
+  if (outcome === PLAY_OUTCOME_FOUND) {
+    const purchase = readSubscriptionPurchaseV2(lookup.purchase);
+    return purchase ? {unavailable: false, purchase} : {unavailable: true, purchase: null};
+  }
+  if (outcome === PLAY_OUTCOME_NOT_FOUND) return {unavailable: false, purchase: null};
+  return {unavailable: true, purchase: null};
+}
+
+/**
+ * Срок подписки по заявленному SKU: единственный lineItem с этим продуктом.
+ *
+ * `null` — lineItem не тот, не один или срок не читается; грант без срока не назначается.
+ */
+function subscriptionExpiryForSku(purchase, sku) {
+  if (!purchase || !purchase.subscriptionLineItem) return null;
+  if (purchase.subscriptionLineItem.productId !== stringValue(sku)) return null;
+  return purchase.subscriptionLineItem.expiryMs;
+}
+
+/**
  * Что исход запроса к Play значит для решения.
  *
  * Найдено — покупка, прочитанная {@link readProductPurchase}. Не найдено — `null`, и решение
@@ -274,7 +390,7 @@ function settlementGate(existing, uid) {
  * @param {string} uid кому начислять.
  * @param {object} constants таблица, приведённая `readEconomyConstants`.
  */
-function decideSettlement({existing, purchase, claimedSku, uid, constants, creditedQuantity}) {
+function decideSettlement({existing, purchase, claimedSku, uid, constants, creditedQuantity, now}) {
   const gate = settlementGate(existing, uid);
   if (gate) return gate;
 
@@ -322,12 +438,25 @@ function decideSettlement({existing, purchase, claimedSku, uid, constants, credi
   if (premium && goldPerUnit !== null) return refuse("invalid-argument", "SKU has conflicting product classes", REASON_SKU_NOT_SOLD);
   if (premium) {
     if (purchase.quantity !== 1) return refuse("failed-precondition", "Premium supports one item per purchase", REASON_PREMIUM_QUANTITY_UNSUPPORTED);
+    // Подписка продаёт срок до конкретной даты Play, а не «товар на N дней»: грант квантуется
+    // целыми сутками этого срока и не длиннее товарной строки таблицы. Таблица решает, что
+    // продаётся; Play решает, до какого мгновения оно оплачено. Срок живёт в lineItem заявленного
+    // SKU; товарная форма ответа его не имеет вовсе — и оба случая отказывают, а не угадывают.
+    const expiry = subscriptionExpiryForSku(purchase, sku);
+    if (expiry === null) {
+      return refuse("invalid-argument", "premium requires a subscription lookup with a readable term",
+        REASON_PREMIUM_EXPIRY_UNREADABLE);
+    }
+    const days = subscriptionTermDays({expiryMs: expiry, tableDays: premium.days, now});
+    if (days === null) {
+      return refuse("failed-precondition", "subscription term has already passed", REASON_SUBSCRIPTION_NOT_ACTIVE);
+    }
     return {
       decision: SETTLEMENT_CREDIT,
       reason: "verified",
       credit: {
-        sku, productKind: PRODUCT_PREMIUM, premiumDays: premium.days,
-        premiumGrantedMs: durationMsForDays(premium.days), quantity: 1,
+        sku, productKind: PRODUCT_PREMIUM, premiumDays: days,
+        premiumGrantedMs: durationMsForDays(days), quantity: 1,
         goldGranted: 0, goldPerUnit: 0, isTest: purchase.isTest,
         constantsVersion: safeNumber(constants && constants.version, 0),
       },
@@ -364,6 +493,23 @@ function premiumProduct(constants, sku) {
   if (!products || !Object.prototype.hasOwnProperty.call(products, sku)) return null;
   const product = products[sku];
   return product && PREMIUM_DAYS.includes(product.days) ? product : null;
+}
+
+/**
+ * Целые сутки срока подписки в границах товарной строки.
+ *
+ * Пол суток теряются в квантовании нарочно: грант длиннее оплаченного срока — это кредит игроку
+ * за счёт кассы, а грант «потолка таблицы» при триале выдавал бы месяц за три бесплатных дня.
+ * Срок, который уже прошёл, прав не назначает.
+ *
+ * @returns {number|null} суток для гранта или `null`, если права уже нет.
+ */
+function subscriptionTermDays({expiryMs, tableDays, now}) {
+  if (!Number.isSafeInteger(expiryMs) || !Number.isSafeInteger(now)) return null;
+  if (!Number.isSafeInteger(tableDays) || tableDays < 1) return null;
+  const wholeDays = Math.floor((expiryMs - now) / DAY_MS);
+  if (wholeDays < 1) return null;
+  return Math.min(wholeDays, tableDays);
 }
 
 /**
@@ -636,6 +782,9 @@ module.exports = {
   RECEIPT_KIND_PURCHASE_CREDITED,
   RECEIPT_MESSAGE_GOLD_PACK_CREDITED,
   SETTLEMENT_CREDIT,
+  SUBSCRIPTION_STATE_PENDING,
+  SUBSCRIPTION_STATE_ACTIVE,
+  SUBSCRIPTION_STATE_IN_GRACE_PERIOD,
   SETTLEMENT_PENDING,
   SETTLEMENT_REFUSE,
   SETTLEMENT_REPLAY,
@@ -648,11 +797,16 @@ module.exports = {
   auditRecord,
   decideSettlement,
   goldAfterClawback,
+  goldPackAmount,
   pendingResponse,
   premiumProduct,
   purchaseFromLookup,
   readProductPurchase,
   readShortfall,
+  readSubscriptionPurchaseV2,
+  subscriptionFromLookup,
+  subscriptionExpiryForSku,
+  subscriptionTermDays,
   receiptRecord,
   settlementGate,
   settlementId,

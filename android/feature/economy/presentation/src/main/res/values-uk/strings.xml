@@ -7,6 +7,7 @@
     <string name="shop_item_gold_pack_small">Малий набір золота</string>
     <string name="shop_item_gold_pack_medium">Середній набір золота</string>
     <string name="shop_item_gold_pack_large">Великий набір золота</string>
+    <string name="shop_item_premium">Преміум</string>
     <string name="shop_item_quiz_slot">Слот квізу</string>
     <string name="shop_item_ad_reward_box">Бокс за перегляд 5 реклам</string>
     <string name="shop_item_donate_google_play">Підтримати проєкт</string>
@@ -60,6 +61,7 @@
     <string name="shop_msg_unavailable">Магазин поки недоступний</string>
     <string name="shop_msg_gold_credited">Зараховано %1$d золота</string>
     <string name="shop_msg_purchase_pending">Платіж обробляється — золото надійде автоматично</string>
+    <string name="shop_msg_premium_activated">Преміум активний</string>
     <string name="shop_msg_purchase_cancelled">Покупку скасовано</string>
     <string name="shop_msg_purchase_refused">Покупка не вдалася (%1$s)</string>
 

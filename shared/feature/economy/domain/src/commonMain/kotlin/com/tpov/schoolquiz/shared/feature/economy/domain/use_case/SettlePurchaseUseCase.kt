@@ -140,35 +140,36 @@ class SettlePurchaseUseCase(
                         ),
                     )
                 }
-                consume(purchase)
-                // Runs even when the consume failed: the money is on the account either way, and
+                handBack(purchase)
+                // Runs even when the hand-back failed: the money is on the account either way, and
                 // the player should see it there.
                 refreshBalance()
-                PurchaseOutcome.Credited(verification.goldGranted)
+                PurchaseOutcome.Credited(purchase.productId, verification.goldGranted)
             }
         }
 
     /**
-     * Hands the token back to Play, and treats failing to do so as survivable.
+     * Отдаёт токен магазину: пак гасится, подписка подтверждается.
      *
-     * A consume that fails after a credit is not an error the player needs to hear about: Play
-     * keeps re-delivering the purchase, and the server answers `CREDITED` again for the same token
-     * without moving anything, until one of the attempts finally consumes it. That loop *is* the
-     * durability of this feature, so turning a failed consume into a failed settlement — and
-     * telling the player their purchase did not work — would break the thing it is protecting.
-     *
-     * Both shapes of failure are caught, not just the returned one. The store adapter re-reads its
-     * queue inside its own success path, so a consume that actually worked can still throw on the
-     * way back; letting that escape would report a failure for money that has already moved.
+     * Обе неудачи переживаемы по одной причине: Play возвращает непогашенный пак и неподтверждённую
+     * подписку при каждом подключении, сервер на повтор отвечает сохранённым `CREDITED`, и цикл сам
+     * донесёт жест до магазина — эта петля и есть живучесть покупки. Поэтому ни одна из неудач не
+     * ошибка для игрока. Ловятся обе формы — и ответ с неудачей, и бросок: адаптер магазина
+     * перечитывает свою очередь внутри успеха, и работавший жест может бросить на обратном пути.
      */
-    private suspend fun consume(purchase: BillingPurchase) {
+    private suspend fun handBack(purchase: BillingPurchase) {
+        val outcome =
+            if (purchase.productId.isSubscription) {
+                billing.acknowledge(purchase.purchaseToken)
+            } else {
+                billing.consume(purchase.purchaseToken)
+            }
         try {
-            billing.consume(purchase.purchaseToken)
-                .onFailure { log(CONSUME_FAILED, it) }
+            outcome.onFailure { log(HAND_BACK_FAILED, it) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            log(CONSUME_FAILED, e)
+            log(HAND_BACK_FAILED, e)
         }
     }
 
@@ -185,7 +186,7 @@ class SettlePurchaseUseCase(
     }
 
     private companion object {
-        const val CONSUME_FAILED = "purchase credited but not consumed; Play will re-deliver it"
+        const val HAND_BACK_FAILED = "purchase credited but the store was not told; Play will re-deliver it"
         const val REFRESH_FAILED = "purchase settled but the balance could not be refreshed"
     }
 }

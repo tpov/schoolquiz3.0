@@ -63,6 +63,16 @@ interface BillingRepository {
     suspend fun refreshUnsettledPurchases(): Result<Unit>
 
     /**
+     * Tells the store a subscription purchase has been acknowledged.
+     *
+     * Подписка, в отличие от пака, не гасится никогда: гашение отнимает у Play сам токен, и
+     * продление той же подписки осталось бы без своего факта. Подтверждение — единственный жест
+     * «сервер всё подтвердил», который подписка понимает, и в очередь непредставленного токен
+     * возвращается ровно до него.
+     */
+    suspend fun acknowledge(purchaseToken: String): Result<Unit>
+
+    /**
      * Tells the store the purchase has been granted, so the user can buy it again.
      *
      * Called **only after the server confirms it credited the account.** Consuming first and

@@ -86,6 +86,19 @@ class FakeBillingRepository(
         return outcome
     }
 
+    /** When true, [acknowledge] fails — the "premium credited but not acknowledged" row. */
+    var acknowledgeFails: Boolean = false
+
+    val acknowledgedTokens = mutableListOf<String>()
+
+    override suspend fun acknowledge(purchaseToken: String): Result<Unit> {
+        acknowledgedTokens += purchaseToken
+        journal += "acknowledge"
+        if (acknowledgeFails) return Result.failure(IllegalStateException("acknowledge failed"))
+        unsettled.value = unsettled.value.filterNot { it.purchaseToken == purchaseToken }
+        return Result.success(Unit)
+    }
+
     override suspend fun consume(purchaseToken: String): Result<Unit> {
         consumedTokens += purchaseToken
         journal += "consume"

@@ -64,7 +64,13 @@ function remaining(lot) {
 }
 
 function durationMsForDays(days) {
-  if (!PREMIUM_DAYS.includes(days)) fail("INVALID_ARGUMENT", "Premium duration must be 1, 7, 30 or 365 days");
+  // Любые целые сутки, а не только товарные: подписка (история 2.1) продаёт срок до даты Play, и
+  // грант квантуется целыми сутками этого срока — триал даёт лот в три-четыре суток, а не «месяц».
+  // Закрытый набор остаётся у таблицы товаров (premiumProducts в economy-constants.js), где он и
+  // защищает от выдуманных длительностей.
+  if (!Number.isSafeInteger(days) || days < 1) {
+    fail("INVALID_ARGUMENT", "Premium duration must be a positive integer of days");
+  }
   return days * DAY_MS;
 }
 

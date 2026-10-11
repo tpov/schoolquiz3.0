@@ -39,7 +39,13 @@ function play(sku, state = 1) {
   return {packageName: PACKAGE, getProductPurchase: async () => purchase(sku, state),
     getProductPurchaseByToken: async () => ({outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
       orderId: "GPA.fixture-order", purchaseStateContext: {purchaseState: state === 1 ? "CANCELLED" : "PURCHASED"},
-      productLineItem: [{productId: sku}]}})};
+      productLineItem: [{productId: sku}]}}),
+    // Подписка приезжает из своего endpoint'а и в своей форме: активная — со сроком вперёд.
+    getSubscriptionPurchaseV2: async () => ({outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
+      subscriptionState: state === 0 ? 2 : 6,
+      startTime: new Date(T - 1000).toISOString(), latestOrderId: "GPA.fixture-order", regionCode: "UA",
+      externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
+      lineItems: [{productId: sku, expiryTime: new Date(T + 365 * 86_400_000).toISOString()}]}})};
 }
 function message(overrides = {}, messageId = "refund-order-notice") {
   return {messageId, publishTime: new Date(T).toISOString(), data: Buffer.from(JSON.stringify({
@@ -64,9 +70,20 @@ for (const kind of ["GOLD", "PREMIUM"]) {
     const {db, sku} = fixture(kind);
     const started = deferred(), release = deferred();
     const snapshot = purchase(sku);
-    const pending = buy(db, sku, {packageName: PACKAGE, async getProductPurchase() {
-      started.resolve(); await release.promise; return snapshot;
-    }});
+    // Подписка для премиума идёт к своему endpoint'у; задержка держится на нём же.
+    const pending = buy(db, sku, {packageName: PACKAGE,
+      async getProductPurchase() {
+        if (sku.startsWith("gold_")) { started.resolve(); await release.promise; }
+        return snapshot;
+      },
+      async getSubscriptionPurchaseV2() {
+        started.resolve(); await release.promise; // Задержка держится на том запросе, к которому уходит токен.
+        return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
+          subscriptionState: 2, startTime: new Date(T - 1000).toISOString(),
+          latestOrderId: "GPA.fixture-order", regionCode: "UA",
+          externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
+          lineItems: [{productId: sku, expiryTime: new Date(T + 365 * 86_400_000).toISOString()}]}};
+      }});
     await started.promise;
     try { await refund(db, sku); } finally { release.resolve(); }
     const outcome = await pending;

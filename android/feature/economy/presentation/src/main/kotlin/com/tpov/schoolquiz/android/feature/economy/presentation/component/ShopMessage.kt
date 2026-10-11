@@ -43,6 +43,9 @@ sealed interface ShopMessage {
      */
     data class GoldCredited(val gold: Long) : ShopMessage
 
+    /** Подписка премиума активна: сервер подтвердил и начислил срок. */
+    data object PremiumActivated : ShopMessage
+
     /** Деньги ещё не двинулись: платёж доедет, покупка останется в очереди Play. */
     data object PurchasePending : ShopMessage
 

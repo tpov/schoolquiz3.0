@@ -6,6 +6,9 @@ enum class ShopItemId(val wireName: String) {
     GOLD_PACK_SMALL("GOLD_PACK_SMALL"),
     GOLD_PACK_MEDIUM("GOLD_PACK_MEDIUM"),
     GOLD_PACK_LARGE("GOLD_PACK_LARGE"),
+
+    /** Единственная подписка (premium_30d в Play): одна строка полки, срок ведёт Play. */
+    PREMIUM("PREMIUM"),
     QUIZ_SLOT("QUIZ_SLOT"),
     AD_REWARD_BOX("AD_REWARD_BOX"),
     DONATE_GOOGLE_PLAY("DONATE_GOOGLE_PLAY"),

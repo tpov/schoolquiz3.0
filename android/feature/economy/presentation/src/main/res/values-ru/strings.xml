@@ -7,6 +7,7 @@
     <string name="shop_item_gold_pack_small">Малый пак золота</string>
     <string name="shop_item_gold_pack_medium">Средний пак золота</string>
     <string name="shop_item_gold_pack_large">Большой пак золота</string>
+    <string name="shop_item_premium">Премиум</string>
     <string name="shop_item_quiz_slot">Слот квиза</string>
     <string name="shop_item_ad_reward_box">Бокс за просмотр 5 реклам</string>
     <string name="shop_item_donate_google_play">Поддержать проект</string>
@@ -60,6 +61,7 @@
     <string name="shop_msg_unavailable">Магазин пока недоступен</string>
     <string name="shop_msg_gold_credited">Зачислено %1$d золота</string>
     <string name="shop_msg_purchase_pending">Платёж обрабатывается — золото придёт автоматически</string>
+    <string name="shop_msg_premium_activated">Премиум активен</string>
     <string name="shop_msg_purchase_cancelled">Покупка отменена</string>
     <string name="shop_msg_purchase_refused">Покупка не прошла (%1$s)</string>
 

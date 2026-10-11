@@ -54,8 +54,13 @@ development_status:
     # после CREDITED, один на токен; открытие/старт/отказ — компонент; найденный дабл-эмит на replay закрыт
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-четыре-длительности-за-деньги: backlog
+  epic-2: in-progress
+  2-1-четыре-длительности-за-деньги: review  # spec-m2-1-premium-is-one-subscription.md — по финальной
+    # модели владельца: ОДНА подписка premium_30d (base premium-30d-autorenew + оффер trial-3d);
+    # premium_1d/7d/365d деактивированы и не показываются. Сервер спрашивает subscriptionsv2, грант —
+    # целые сутки срока Play в потолке таблицы; клиент подтверждает (acknowledge), не гасит.
+    # functions 99/99; гейты Kotlin зелёные (it09e и ArenaKoin — известные, не из истории);
+    # detekt на Android-модулях сломан экологически (jvm-target 27 не поддержан CLI)
   2-2-премиум-за-золото-и-из-коробки: backlog
   2-3-продление-а-не-замена: backlog
   2-4-премиум-без-преимущества: backlog

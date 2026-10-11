@@ -171,9 +171,9 @@ class GetShopCatalogUseCaseTest {
             .filter { it.id.storeProductId() != null }
 
         assertEquals(
-            listOf(true, false, false),
+            listOf(true, false, false, false),
             packs.map { it.isAvailable },
-            "магазин назвал только тот пак, который продаёт",
+            "магазин назвал только тот товар, который продаёт",
         )
     }
 

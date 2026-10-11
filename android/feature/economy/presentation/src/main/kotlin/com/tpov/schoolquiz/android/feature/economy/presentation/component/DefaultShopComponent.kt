@@ -544,7 +544,14 @@ class DefaultShopComponent(
 
     private fun PurchaseOutcome.shopMessage(): ShopMessage =
         when (this) {
-            is PurchaseOutcome.Credited -> ShopMessage.GoldCredited(goldGranted)
+            // Подписка и пак — разные слова: премиум приходит сроком на профиле, пак — золотом
+            // на балансе, и «начислено N золота» за подписку было бы ложью.
+            is PurchaseOutcome.Credited ->
+                if (productId.isSubscription) {
+                    ShopMessage.PremiumActivated
+                } else {
+                    ShopMessage.GoldCredited(goldGranted)
+                }
             PurchaseOutcome.Pending -> ShopMessage.PurchasePending
             PurchaseOutcome.Cancelled -> ShopMessage.PurchaseCancelled
             is PurchaseOutcome.Refused -> ShopMessage.PurchaseRefused(code.name)

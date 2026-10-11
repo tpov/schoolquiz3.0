@@ -776,6 +776,7 @@ private fun ShopMessage.resolvedText(): String =
         is ShopMessage.LogoBoughtListed -> stringResource(R.string.nft_msg_logo_bought_listed, commission)
         ShopMessage.ShopUnavailable -> stringResource(R.string.shop_msg_unavailable)
         is ShopMessage.GoldCredited -> stringResource(R.string.shop_msg_gold_credited, gold)
+        ShopMessage.PremiumActivated -> stringResource(R.string.shop_msg_premium_activated)
         ShopMessage.PurchasePending -> stringResource(R.string.shop_msg_purchase_pending)
         ShopMessage.PurchaseCancelled -> stringResource(R.string.shop_msg_purchase_cancelled)
         is ShopMessage.PurchaseRefused -> stringResource(R.string.shop_msg_purchase_refused, code)

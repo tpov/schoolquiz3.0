@@ -61,7 +61,7 @@ class BuyGoldPackUseCaseTest {
 
             val result = buy(StoreProductId.GOLD_PACK_MEDIUM)
 
-            assertEquals(PurchaseOutcome.Credited(60L), result.getOrNull())
+            assertEquals(PurchaseOutcome.Credited(StoreProductId.GOLD_PACK_MEDIUM, 60L), result.getOrNull())
             // The tag, not the account id: handing Play the raw uid is what would make the server
             // refuse every real purchase as belonging to somebody else.
             assertEquals(listOf(StoreProductId.GOLD_PACK_MEDIUM to "tag(uid-A)"), billing.purchaseCalls)
@@ -146,7 +146,7 @@ class BuyGoldPackUseCaseTest {
 
             val result = buy(StoreProductId.GOLD_PACK_SMALL)
 
-            assertEquals(PurchaseOutcome.Credited(10L), result.getOrNull())
+            assertEquals(PurchaseOutcome.Credited(StoreProductId.GOLD_PACK_SMALL, 10L), result.getOrNull())
             assertEquals(listOf("t-old"), billing.consumedTokens)
         }
 

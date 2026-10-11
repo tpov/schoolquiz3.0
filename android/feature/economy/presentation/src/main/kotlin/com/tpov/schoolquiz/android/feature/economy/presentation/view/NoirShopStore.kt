@@ -234,6 +234,8 @@ private val ShopCatalogItem.icon: ImageVector
             ShopItemId.GOLD_PACK_MEDIUM,
             ShopItemId.GOLD_PACK_LARGE,
             -> NoirIcons.GoldStack
+            // Подписка — не валюта и не жизнь: звезда читается статусом, а не балансом.
+            ShopItemId.PREMIUM -> NoirIcons.Star
             ShopItemId.QUIZ_SLOT -> NoirIcons.Plus
             ShopItemId.AD_REWARD_BOX -> NoirIcons.Box
             ShopItemId.DONATE_GOOGLE_PLAY -> NoirIcons.Heart
@@ -263,6 +265,7 @@ private fun ShopCatalogItem.titleRes(): Int =
         ShopItemId.GOLD_PACK_SMALL -> R.string.shop_item_gold_pack_small
         ShopItemId.GOLD_PACK_MEDIUM -> R.string.shop_item_gold_pack_medium
         ShopItemId.GOLD_PACK_LARGE -> R.string.shop_item_gold_pack_large
+        ShopItemId.PREMIUM -> R.string.shop_item_premium
         ShopItemId.QUIZ_SLOT -> R.string.shop_item_quiz_slot
         ShopItemId.AD_REWARD_BOX -> R.string.shop_item_ad_reward_box
         ShopItemId.DONATE_GOOGLE_PLAY -> R.string.shop_item_donate_google_play
@@ -319,6 +322,7 @@ private fun ShopCatalogItem.stateLine(state: ShopViewState): String? =
         ShopItemId.GOLD_PACK_SMALL,
         ShopItemId.GOLD_PACK_MEDIUM,
         ShopItemId.GOLD_PACK_LARGE,
+        ShopItemId.PREMIUM,
         ->
             storeProduct?.description?.takeIf { it.isNotBlank() }
                 ?: when (state.storeShelf) {

@@ -15,10 +15,14 @@ sealed interface PurchaseOutcome {
     /**
      * The server credited the account and the purchase was settled.
      *
-     * [goldGranted] is what the server reported granting. It is for the receipt, not for arithmetic:
-     * the balance shown afterwards is the one re-read from the server.
+     * [productId] says what was bought: premium arrives with [goldGranted] at zero, and the screen
+     * words the two differently. [goldGranted] is for the receipt, not for arithmetic: the balance
+     * shown afterwards is the one re-read from the server.
      */
-    data class Credited(val goldGranted: Long) : PurchaseOutcome
+    data class Credited(
+        val productId: StoreProductId,
+        val goldGranted: Long,
+    ) : PurchaseOutcome
 
     /**
      * The payment has not settled yet — the store or the server says so.

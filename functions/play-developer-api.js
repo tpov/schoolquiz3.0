@@ -98,7 +98,40 @@ function createPlayDeveloperApi(options = {}) {
         return classifyFailure(error);
       }
     },
+
+    /**
+     * Состояние подписки по токену (`purchases.subscriptionsv2.get`).
+     *
+     * Подписки живут в другом endpoint'е, и ответ у него другой формы: `lineItems` с productId и
+     * сроком вместо плоской записи товара. Решение по ответу принимает purchase-verification.js;
+     * здесь — только запрос и тот же словарь исходов, что и у одноразовых покупок.
+     *
+     * @param {string} purchaseToken токен подписки; он один на всю жизнь подписки, продления
+     *   приходят тем же токеном с новым сроком.
+     * @returns {Promise<{outcome: string, status: number|null, code: string|null, reason: string|null, purchase?: object}>}
+     */
+    async getSubscriptionPurchaseV2(purchaseToken) {
+      const url = subscriptionPurchaseV2Url(packageName, purchaseToken);
+      try {
+        const client = await auth.getClient();
+        const response = await client.request({url, method: "GET", timeout: REQUEST_TIMEOUT_MS});
+        return {
+          outcome: PLAY_OUTCOME_FOUND,
+          status: response.status,
+          code: null,
+          reason: null,
+          purchase: response.data,
+        };
+      } catch (error) {
+        return classifyFailure(error);
+      }
+    },
   };
+}
+
+function subscriptionPurchaseV2Url(packageName, purchaseToken) {
+  return `${API_ROOT}/applications/${encodeURIComponent(packageName)}` +
+    `/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
 }
 
 function productPurchaseUrl(packageName, sku, purchaseToken) {

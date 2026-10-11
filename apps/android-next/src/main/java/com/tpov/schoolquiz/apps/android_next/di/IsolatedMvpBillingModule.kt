@@ -29,6 +29,8 @@ internal class IsolatedMvpBillingRepository : BillingRepository {
 
     override suspend fun consume(purchaseToken: String): Result<Unit> = unavailable()
 
+    override suspend fun acknowledge(purchaseToken: String): Result<Unit> = unavailable()
+
     override suspend fun isAvailable(): Boolean = false
 
     private fun <T> unavailable(): Result<T> = Result.failure(IllegalStateException(REASON))

@@ -283,6 +283,14 @@ private class SettlerFakeBillingRepository : BillingRepository {
         buyerId: String,
     ): BillingOutcome = BillingOutcome.Cancelled
 
+    override suspend fun acknowledge(purchaseToken: String): Result<Unit> {
+        consumedTokens += purchaseToken
+        // Same leaving-the-queue rule as a consume: an acknowledged subscription is out.
+        backlog.removeAll { it.purchaseToken == purchaseToken }
+        unsettled.value = unsettled.value.filterNot { it.purchaseToken == purchaseToken }
+        return Result.success(Unit)
+    }
+
     override suspend fun consume(purchaseToken: String): Result<Unit> {
         consumedTokens += purchaseToken
         // Out of the backlog too: the real store stops listing a purchase once it is consumed, and

@@ -190,6 +190,30 @@ class DefaultShopComponentGoldPackTest {
         )
     }
 
+    @Test
+    fun `given the subscription credited then the message says premium and the token is acknowledged`() =
+        runTest(scheduler) {
+            store.outcome =
+                BillingOutcome.Purchased(
+                    BillingPurchase(
+                        productId = StoreProductId.PREMIUM_30D,
+                        purchaseToken = "sub-1",
+                        orderId = "GPA.sub",
+                        isAcknowledged = false,
+                        priceMicros = 0L,
+                        currency = "UAH",
+                    ),
+                )
+            store.verifier.credited = PurchaseVerification.Credited(StoreProductId.PREMIUM_30D, 0, "s-sub")
+            val component = component()
+
+            component.obtainEvent(ShopViewEvent.Purchase(ShopItemId.PREMIUM))
+
+            assertEquals(ShopMessage.PremiumActivated, component.state.value.message)
+            assertEquals(listOf("sub-1"), store.acknowledgedTokens, "подписка подтверждается, не гасится")
+            assertTrue(store.consumedTokens.isEmpty())
+        }
+
     private fun component(): DefaultShopComponent {
         lifecycle = LifecycleRegistry()
         val economy = FakeEconomyRepository()
@@ -265,6 +289,7 @@ class DefaultShopComponentGoldPackTest {
         var productAnswer: Result<List<StoreProduct>> = Result.success(emptyList())
         val purchaseCalls = mutableListOf<Pair<StoreProductId, String>>()
         val consumedTokens = mutableListOf<String>()
+        val acknowledgedTokens = mutableListOf<String>()
         private val queue = MutableStateFlow<List<BillingPurchase>>(emptyList())
 
         override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> = productAnswer
@@ -283,6 +308,11 @@ class DefaultShopComponentGoldPackTest {
 
         override suspend fun consume(purchaseToken: String): Result<Unit> {
             consumedTokens += purchaseToken
+            return Result.success(Unit)
+        }
+
+        override suspend fun acknowledge(purchaseToken: String): Result<Unit> {
+            acknowledgedTokens += purchaseToken
             return Result.success(Unit)
         }
 

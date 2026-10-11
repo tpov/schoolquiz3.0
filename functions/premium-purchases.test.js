@@ -40,6 +40,16 @@ function fakePlay(overrides = {}) {
       purchaseTimeMillis: String(T - 1000), orderId: "GPA.1111-2222-3333-44444",
       acknowledgementState: 0, obfuscatedExternalAccountId: accountIdFor(UID), ...overrides,
     }};
+  }, async getSubscriptionPurchaseV2(token) {
+    calls.push({token});
+    // Срок на год вперёд: грант режется потолком товарной строки таблицы, так что сам срок в
+    // этих тестах задаёт конфиг, а не фейк Play.
+    return {outcome: PLAY_OUTCOME_FOUND, status: 200, purchase: {
+      subscriptionState: 2, startTime: new Date(T - 1000).toISOString(),
+      latestOrderId: "GPA.1111-2222-3333-44444", regionCode: "UA",
+      externalAccountIdentifiers: {obfuscatedExternalAccountId: accountIdFor(UID)},
+      lineItems: [{productId: SKU, expiryTime: new Date(T + 365 * DAY_MS).toISOString()}],
+    }};
   }};
 }
 function buy(db, now = T, opts = {}) {
@@ -142,11 +152,13 @@ test("unknown paid SKU is unconsumed with explicit config diagnostic, can retry 
   assert.equal((await buy(db)).response.status, "CREDITED");
 });
 
-test("premium quantity greater than one and conflicting class fail without zero-value settlement", async () => {
+test("premium subscription settles as itself and a conflicting class fails without zero-value settlement", async () => {
+  // Подписка приходит только из своего endpoint'а и всегда quantity=1 по форме API: товарная
+  // форма ответа о премиуме — отказ без срока (покрыт в purchase-verification.test.js), а не
+  // угадывание. Осталось честным: премиум-SKU, влезший и в goldPacks, не продаётся вовсе.
   const db = makeDb();
-  const quantity = await buy(db, T, {playApi: fakePlay({quantity: 2})});
-  assert.equal(quantity.reasonCode, "PREMIUM_QUANTITY_UNSUPPORTED");
-  assert.equal(db.store.has(SETTLEMENT), false);
+  const settled = await buy(db);
+  assert.equal(settled.response.status, "CREDITED");
   const ambiguous = makeDb(config(1, {goldPacks: {[SKU]: 50}}));
   assert.equal((await buy(ambiguous)).reasonCode, "SKU_NOT_SOLD");
   assert.equal(ambiguous.store.has(SETTLEMENT), false);

@@ -8,10 +8,21 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.model
  * the amount on the device would be exactly the duplicated source the economy table forbids.
  * The client says "this SKU was bought"; the server decides what that is worth.
  */
-enum class StoreProductId(val playSku: String) {
+enum class StoreProductId(
+    val playSku: String,
+    /**
+     * Подписка не гасится, а подтверждается: погашенный токен подписки Play не продлевает, и
+     * активная подписка после погашения исчезла бы из очереди вместе со своим продлением.
+     * Расчёт выбирает погашение/подтверждение по этому признаку.
+     */
+    val isSubscription: Boolean = false,
+) {
     GOLD_PACK_SMALL("gold_pack_small"),
     GOLD_PACK_MEDIUM("gold_pack_medium"),
     GOLD_PACK_LARGE("gold_pack_large"),
+
+    /** Единственная подписка финальной модели: месячное автопродление + триал (решение владельца). */
+    PREMIUM_30D("premium_30d", isSubscription = true),
     ;
 
     companion object {
@@ -25,6 +36,7 @@ fun StoreProductId.shopItem(): ShopItemId =
         StoreProductId.GOLD_PACK_SMALL -> ShopItemId.GOLD_PACK_SMALL
         StoreProductId.GOLD_PACK_MEDIUM -> ShopItemId.GOLD_PACK_MEDIUM
         StoreProductId.GOLD_PACK_LARGE -> ShopItemId.GOLD_PACK_LARGE
+        StoreProductId.PREMIUM_30D -> ShopItemId.PREMIUM
     }
 
 /**
@@ -39,6 +51,7 @@ fun ShopItemId.storeProductId(): StoreProductId? =
         ShopItemId.GOLD_PACK_SMALL -> StoreProductId.GOLD_PACK_SMALL
         ShopItemId.GOLD_PACK_MEDIUM -> StoreProductId.GOLD_PACK_MEDIUM
         ShopItemId.GOLD_PACK_LARGE -> StoreProductId.GOLD_PACK_LARGE
+        ShopItemId.PREMIUM -> StoreProductId.PREMIUM_30D
         else -> null
     }
 

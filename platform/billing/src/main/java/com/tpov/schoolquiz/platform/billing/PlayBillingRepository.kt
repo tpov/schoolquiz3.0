@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.platform.billing
 
 import android.content.Context
 import android.util.Log
+import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -13,6 +14,7 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import com.android.billingclient.api.acknowledgePurchase
 import com.android.billingclient.api.consumePurchase
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -68,6 +71,17 @@ class PlayBillingRepository(
      */
     private val pendingPurchase = AtomicReference<CompletableDeferred<BillingOutcome>?>(null)
     private val purchaseMutex = Mutex()
+
+    /**
+     * Токены, про которые магазин говорил как о подписках.
+     *
+     * Один и тот же жест «сервер подтвердил» для пака — погашение, для подписки — подтверждение,
+     * и выбирает его адаптер по токену: домен знает только `consume`, а поднимать вторую функцию
+     * в контракт ради одного бита значило бы научить все фейки и заглушки спорить о том, что
+     * решает магазин. Память — сессия: после рестарта очередь непредставленных покупок
+     * перечитывается раньше первого погашения.
+     */
+    private val subscriptionTokens: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     private val purchasesListener =
         PurchasesUpdatedListener { result, purchases ->
@@ -127,13 +141,25 @@ class PlayBillingRepository(
         if (!ensureConnected()) {
             return Result.failure(IllegalStateException("Billing service unavailable"))
         }
+        // Подписки живут в другом типе товаров Play, и смешать их в одном запросе нельзя: запрос
+        // по каждому типу свой, а полке всё равно, откуда приехала строка цены.
+        val products =
+            ids.groupBy { if (it.isSubscription) BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP }
+                .flatMap { (productType, groupIds) -> queryProducts(productType, groupIds.toSet()) }
+        return productsOrFailure(ids, products)
+    }
+
+    private suspend fun queryProducts(
+        productType: String,
+        ids: Set<StoreProductId>,
+    ): List<StoreProduct> {
         val params =
             QueryProductDetailsParams.newBuilder()
                 .setProductList(
                     ids.map { id ->
                         QueryProductDetailsParams.Product.newBuilder()
                             .setProductId(id.playSku)
-                            .setProductType(BillingClient.ProductType.INAPP)
+                            .setProductType(productType)
                             .build()
                     },
                 )
@@ -141,12 +167,9 @@ class PlayBillingRepository(
 
         val response = client.queryProductDetails(params)
         if (response.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            return Result.failure(
-                IllegalStateException("queryProductDetails: ${response.billingResult.debugMessage}"),
-            )
+            throw IllegalStateException("queryProductDetails: ${response.billingResult.debugMessage}")
         }
-        val products = response.productDetailsList.orEmpty().mapNotNull { it.toStoreProduct() }
-        return productsOrFailure(ids, products)
+        return response.productDetailsList.orEmpty().mapNotNull { it.toStoreProduct() }
     }
 
     override fun observeUnsettledPurchases(): Flow<List<BillingPurchase>> = unsettled.asStateFlow()
@@ -170,6 +193,15 @@ class PlayBillingRepository(
             loadProductDetails(productId)
                 ?: return BillingOutcome.Unavailable("Product ${productId.playSku} not found in the store")
 
+        // Подписка без оффера не открывается вовсе: Play требует offerToken, и выдумать его нельзя.
+        val offerToken =
+            if (productId.isSubscription) {
+                preferredSubscriptionOffer(details.toOfferShapes())?.offerToken
+                    ?: return BillingOutcome.Unavailable("Subscription ${productId.playSku} has no purchase offer")
+            } else {
+                null
+            }
+
         return purchaseMutex.withLock {
             val deferred = CompletableDeferred<BillingOutcome>()
             pendingPurchase.set(deferred)
@@ -180,6 +212,7 @@ class PlayBillingRepository(
                         listOf(
                             BillingFlowParams.ProductDetailsParams.newBuilder()
                                 .setProductDetails(details)
+                                .apply { offerToken?.let(::setOfferToken) }
                                 .build(),
                         ),
                     )
@@ -207,10 +240,15 @@ class PlayBillingRepository(
         }
     }
 
+    /**
+     * Отдаёт токен магазину тем жестом, которого токен требует: пак гасится, подписка
+     * подтверждается. Выбор — по памяти о токенах-подписках, не по догадке вызывающего.
+     */
     override suspend fun consume(purchaseToken: String): Result<Unit> {
         if (!ensureConnected()) {
             return Result.failure(IllegalStateException("Billing service unavailable"))
         }
+        if (purchaseToken in subscriptionTokens) return acknowledge(purchaseToken)
         val params = ConsumeParams.newBuilder().setPurchaseToken(purchaseToken).build()
         val result = client.consumePurchase(params)
         return if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
@@ -218,6 +256,21 @@ class PlayBillingRepository(
             Result.success(Unit)
         } else {
             Result.failure(IllegalStateException("consume: ${result.billingResult.debugMessage}"))
+        }
+    }
+
+    override suspend fun acknowledge(purchaseToken: String): Result<Unit> {
+        if (!ensureConnected()) {
+            return Result.failure(IllegalStateException("Billing service unavailable"))
+        }
+        val params = AcknowledgePurchaseParams.newBuilder().setPurchaseToken(purchaseToken).build()
+        // В отличие от погашения, подтверждение отвечает голым BillingResult — обёртки у него нет.
+        val result = client.acknowledgePurchase(params)
+        return if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+            refreshUnsettled()
+            Result.success(Unit)
+        } else {
+            Result.failure(IllegalStateException("acknowledge: ${result.debugMessage}"))
         }
     }
 
@@ -239,17 +292,35 @@ class PlayBillingRepository(
         if (!ensureConnected()) {
             return Result.failure(IllegalStateException("Billing service unavailable"))
         }
-        val params =
-            QueryPurchasesParams.newBuilder()
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build()
-        val result = client.queryPurchasesAsync(params)
-        if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            return Result.failure(
-                IllegalStateException("queryPurchases: ${result.billingResult.debugMessage}"),
-            )
-        }
-        val purchased = result.purchasesList.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+        val purchased =
+            buildList {
+                for (productType in listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS)) {
+                    val params =
+                        QueryPurchasesParams.newBuilder()
+                            .setProductType(productType)
+                            .build()
+                    val result = client.queryPurchasesAsync(params)
+                    if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        return Result.failure(
+                            IllegalStateException("queryPurchases: ${result.billingResult.debugMessage}"),
+                        )
+                    }
+                    // Подписка подтверждённая — не очередь: её факт у сервера есть, продление придёт
+                    // уведомлением Play, а активная подписка возвращалась бы из запроса вечно.
+                    subscriptionTokens.addAll(
+                        result.purchasesList
+                            .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                            .map { it.purchaseToken },
+                    )
+                    val settled =
+                        if (productType == BillingClient.ProductType.SUBS) {
+                            result.purchasesList.filter { !it.isAcknowledged }
+                        } else {
+                            result.purchasesList
+                        }
+                    addAll(settled.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED })
+                }
+            }
         // Sorted, because the queue is compared by equality to decide whether anything changed and
         // the store promises no order: the same set arriving shuffled would read as a change and
         // send the settler round again against Play for nothing.
@@ -267,13 +338,15 @@ class PlayBillingRepository(
     }
 
     private suspend fun loadProductDetails(productId: StoreProductId): ProductDetails? {
+        val productType =
+            if (productId.isSubscription) BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP
         val params =
             QueryProductDetailsParams.newBuilder()
                 .setProductList(
                     listOf(
                         QueryProductDetailsParams.Product.newBuilder()
                             .setProductId(productId.playSku)
-                            .setProductType(BillingClient.ProductType.INAPP)
+                            .setProductType(productType)
                             .build(),
                     ),
                 )
@@ -357,6 +430,19 @@ class PlayBillingRepository(
 
     private fun ProductDetails.toStoreProduct(): StoreProduct? {
         val id = StoreProductId.fromSku(productId) ?: return null
+        // Подписка показывает цену последней фазы выбранного оффера — той, что станет платёжем.
+        if (id.isSubscription) {
+            val offer = preferredSubscriptionOffer(toOfferShapes()) ?: return null
+            val phase = offer.phases.last()
+            return StoreProduct(
+                id = id,
+                title = title,
+                description = description,
+                formattedPrice = phase.formattedPrice,
+                priceMicros = phase.priceMicros,
+                currency = phase.currency,
+            )
+        }
         val offer = oneTimePurchaseOfferDetails ?: return null
         return StoreProduct(
             id = id,
@@ -367,6 +453,21 @@ class PlayBillingRepository(
             currency = offer.priceCurrencyCode,
         )
     }
+
+    private fun ProductDetails.toOfferShapes(): List<SubscriptionOfferShape> =
+        subscriptionOfferDetails.orEmpty().map { offer ->
+            SubscriptionOfferShape(
+                offerToken = offer.offerToken,
+                phases =
+                    offer.pricingPhases.pricingPhaseList.map { phase ->
+                        PricePhaseShape(
+                            priceMicros = phase.priceAmountMicros,
+                            formattedPrice = phase.formattedPrice,
+                            currency = phase.priceCurrencyCode,
+                        )
+                    },
+            )
+        }
 
     private companion object {
         const val TAG = "PlayBilling"

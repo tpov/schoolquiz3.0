@@ -214,7 +214,12 @@ test("invalid input, malformed persistence and overflow fail rather than coerce"
   for (const bad of [-1, 0.5, NaN, Infinity, "1", Number.MAX_SAFE_INTEGER + 1]) {
     fails("INVALID_ARGUMENT", () => createPremiumState(bad));
   }
-  for (const bad of [0, 2, 1.5, "7", 366]) fails("INVALID_ARGUMENT", () => durationMsForDays(bad));
+  // Целые сутки любого срока законны: подписка продаёт срок до даты Play (история 2.1), триал
+  // даёт лот не из товарного набора. Незаконны — нецелые, нулевые и отрицательные.
+  for (const bad of [0, 1.5, "7", -30]) fails("INVALID_ARGUMENT", () => durationMsForDays(bad));
+  for (const good of [1, 2, 3, 7, 30, 365]) {
+    if (durationMsForDays(good) !== good * 86_400_000) throw new Error(`days ${good} mis-multiplied`);
+  }
   fails("OVERFLOW", () => issue(fresh(Number.MAX_SAFE_INTEGER - 1), "p"));
   const state = issue(fresh(), "p").state;
   for (const mutate of [
