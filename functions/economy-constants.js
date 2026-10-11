@@ -221,9 +221,28 @@ function clientEconomyConstants(constants) {
     standard: source.standard,
     plasma: source.plasma,
     activityPrices: source.activityPrices,
+    premiumGoldOffers: premiumGoldOffers(source),
     clockSkewToleranceMs: source.clockSkewToleranceMs,
     auditEnabled: source.auditEnabled,
   };
+}
+
+/**
+ * Золотые предложения премиума — то, чем витрина может ценить строку (история 2.2).
+ *
+ * Решение «продаётся ли и почём» остаётся на сервере: сюда попадают только строки таблицы с
+ * включённой продажей и честной золотой ценой, уже проверенные `premiumSaleOffer` (включая конфликт
+ * с goldPacks). Устройство получает готовый прейскурант и не держит собственной таблицы цен.
+ *
+ * @param constants таблица, уже приведённая {@link readEconomyConstants}.
+ */
+function premiumGoldOffers(constants) {
+  const products = (constants && constants.premiumProducts) || {};
+  return Object.keys(products)
+    .sort()
+    .map((sku) => premiumSaleOffer(constants, sku, "GOLD"))
+    .filter((offer) => offer !== null)
+    .map((offer) => ({sku: offer.sku, days: offer.days, goldPrice: offer.goldPrice}));
 }
 
 /**
@@ -261,6 +280,7 @@ module.exports = {
   SKU_PATTERN,
   activityPrice,
   clientEconomyConstants,
+  premiumGoldOffers,
   readEconomyConstants,
   premiumSaleOffer,
   regenMsFor,

@@ -61,7 +61,12 @@ development_status:
     # целые сутки срока Play в потолке таблицы; клиент подтверждает (acknowledge), не гасит.
     # functions 99/99; гейты Kotlin зелёные (it09e и ArenaKoin — известные, не из истории);
     # detekt на Android-модулях сломан экологически (jvm-target 27 не поддержан CLI)
-  2-2-премиум-за-золото-и-из-коробки: backlog
+  2-2-премиум-за-золото-и-из-коробки: review  # spec-m2-2-premium-for-gold-and-from-a-box.md —
+    # золото: premium-shop.js (одно золотое предложение таблицы, списание+грант одной транзакцией,
+    # ключ premium_gold_{uid}_{now}), PREMIUM в applyShopPurchase, premiumGoldOffers в белом списке
+    # констант; коробка: datePremium через premium-economy (уже было, подтверждено тестами).
+    # Клиент: PremiumGoldOffer, парсинг, полка (строка Premium первой), роутинг по валюте строки.
+    # functions 100/100; гейты Kotlin зелёные (2 арена fixture-pin — известные, владельца)
   2-3-продление-а-не-замена: backlog
   2-4-премиум-без-преимущества: backlog
   epic-2-retrospective: optional

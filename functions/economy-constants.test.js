@@ -149,7 +149,7 @@ function testTheClientNeverSeesThePackSizes() {
   assert.strictEqual("goldPacks" in forClient, false);
   assert.deepStrictEqual(
     Object.keys(forClient).sort(),
-    ["activityPrices", "auditEnabled", "clockSkewToleranceMs", "plasma", "standard", "version"],
+    ["activityPrices", "auditEnabled", "clockSkewToleranceMs", "plasma", "premiumGoldOffers", "standard", "version"],
   );
   const {goldPacks, ...withoutPacks} = shared;
   assert.ok(goldPacks, "в общем файле раздел есть");

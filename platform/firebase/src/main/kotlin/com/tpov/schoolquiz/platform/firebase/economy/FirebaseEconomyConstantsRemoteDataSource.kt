@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyConstantsRe
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ActivityKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ChargeRules
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PremiumGoldOffer
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import kotlinx.coroutines.tasks.await
 
@@ -57,10 +58,33 @@ internal fun Map<*, *>.toEconomyConstants(): EconomyConstants {
         standard = (this["standard"] as? Map<*, *>).toRules(fallback.standard),
         plasma = (this["plasma"] as? Map<*, *>).toRules(fallback.plasma),
         activityPrices = (this["activityPrices"] as? Map<*, *>).toPrices(fallback.activityPrices),
+        premiumGoldOffers = (this["premiumGoldOffers"] as? List<*>).toGoldOffers(),
         clockSkewToleranceMs = longOr(this["clockSkewToleranceMs"], fallback.clockSkewToleranceMs),
         auditEnabled = this["auditEnabled"] as? Boolean ?: fallback.auditEnabled,
     )
 }
+
+/**
+ * Золотые предложения премиума: одна испорченная строка выпадает из списка целиком, а не портит
+ * витрину — сервер и так продаёт только по своей таблице, здесь слова для показа.
+ */
+private fun List<*>?.toGoldOffers(): List<PremiumGoldOffer> =
+    orEmpty()
+        .mapNotNull { entry ->
+            val offer = entry as? Map<*, *> ?: return@mapNotNull null
+            val sku = offer["sku"] as? String ?: return@mapNotNull null
+            val days = longOr(offer["days"], 0L)
+            val goldPrice = longOr(offer["goldPrice"], 0L)
+            try {
+                PremiumGoldOffer(
+                    sku = sku,
+                    days = days.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                    goldPrice = goldPrice,
+                )
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
 
 private fun Map<*, *>?.toRules(fallback: ChargeRules): ChargeRules {
     if (this == null) return fallback

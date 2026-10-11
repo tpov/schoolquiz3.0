@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
@@ -446,9 +447,12 @@ class DefaultShopComponent(
     private fun purchase(itemId: ShopItemId) {
         if (_state.value.processingItemId != null) return
         // Пак продаёт магазин, а не серверная полка: его покупка — путь истории 1.2, с проверкой
-        // чека и погашением после подтверждения, а не списание с баланса.
+        // чека и погашением после подтверждения, а не списание с баланса. Премиум решает своя
+        // строка: цена золотом от сервера — путь списания с баланса (история 2.2), цена магазина —
+        // подписка через расчёт (история 2.1).
         val productId = itemId.storeProductId()
-        if (productId != null) {
+        val row = _state.value.items.firstOrNull { it.id == itemId }
+        if (productId != null && row?.price?.currency != ShopCurrency.GOLD) {
             purchaseInStore(itemId, productId)
             return
         }
@@ -463,7 +467,12 @@ class DefaultShopComponent(
                             items = getCatalog.execute(purchase.balance, storeProducts),
                             processingItemId = null,
                             isLoading = false,
-                            message = ShopMessage.Notice(purchase.message),
+                            message =
+                                if (itemId == ShopItemId.PREMIUM) {
+                                    ShopMessage.PremiumActivated
+                                } else {
+                                    ShopMessage.Notice(purchase.message)
+                                },
                         )
                     },
                     onFailure = { error ->

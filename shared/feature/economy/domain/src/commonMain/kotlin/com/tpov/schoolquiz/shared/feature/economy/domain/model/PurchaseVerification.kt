@@ -54,6 +54,12 @@ enum class PurchaseRefusalCode {
     REQUEST_INVALID,
     PREMIUM_QUANTITY_UNSUPPORTED,
 
+    /** Подписка есть, но права премиума сейчас нет: пауза, hold или истёкший срок (история 2.1). */
+    SUBSCRIPTION_NOT_ACTIVE,
+
+    /** Срок подписки Play не читается — грант без него не назначается (история 2.1). */
+    PREMIUM_EXPIRY_UNREADABLE,
+
     /** The server named a reason this build does not know. Still a refusal. */
     UNKNOWN,
     ;

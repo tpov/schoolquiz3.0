@@ -9,12 +9,15 @@ import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PremiumGoldOffer
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusedException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseRefusalCode
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseVerification
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
@@ -69,6 +72,7 @@ class DefaultShopComponentGoldPackTest {
     private lateinit var lifecycle: LifecycleRegistry
 
     private val store = FakeStoreBilling()
+    private val economy = FakeEconomyRepository()
     private val analytics = RecordingTracker()
 
     @Before
@@ -214,13 +218,34 @@ class DefaultShopComponentGoldPackTest {
             assertTrue(store.consumedTokens.isEmpty())
         }
 
-    private fun component(): DefaultShopComponent {
+    @Test
+    fun `given the server quoted gold when the premium row is tapped then the balance path sells it`() =
+        runTest(scheduler) {
+            economy.purchaseAnswer = {
+                Result.success(ShopPurchaseResult(ShopItemId.PREMIUM, EconomyResourceBalance.guest(), "ok"))
+            }
+            val component =
+                component(
+                    EconomyConstants.BOOTSTRAP.copy(
+                        premiumGoldOffers = listOf(PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)),
+                    ),
+                )
+            assertEquals(ShopCurrency.GOLD, component.state.value.items.single { it.id == ShopItemId.PREMIUM }.price?.currency)
+
+            component.obtainEvent(ShopViewEvent.Purchase(ShopItemId.PREMIUM))
+
+            assertEquals(ShopMessage.PremiumActivated, component.state.value.message)
+            assertEquals(listOf(ShopItemId.PREMIUM), economy.purchaseCalls, "золото списывает сервер, а не магазин")
+            assertTrue(store.purchaseCalls.isEmpty(), "золотая строка не открывает Play")
+            assertTrue(store.acknowledgedTokens.isEmpty())
+        }
+
+    private fun component(constants: EconomyConstants = EconomyConstants.BOOTSTRAP): DefaultShopComponent {
         lifecycle = LifecycleRegistry()
-        val economy = FakeEconomyRepository()
         return DefaultShopComponent(
             componentContext = DefaultComponentContext(lifecycle),
             observeBalance = ObserveEconomyBalanceUseCase(economy),
-            getCatalog = GetShopCatalogUseCase(),
+            getCatalog = GetShopCatalogUseCase(constants = { constants }),
             loadStoreShelf = LoadStoreShelfUseCase(store),
             purchaseItem = PurchaseShopItemUseCase(economy),
             analytics = analytics,
@@ -397,8 +422,14 @@ class DefaultShopComponentGoldPackTest {
 
         override suspend fun currentBalance(): EconomyResourceBalance = EconomyResourceBalance.guest()
 
-        override suspend fun purchase(itemId: ShopItemId): Result<ShopPurchaseResult> =
-            Result.failure(IllegalStateException("unused"))
+        val purchaseCalls = mutableListOf<ShopItemId>()
+
+        var purchaseAnswer: (ShopItemId) -> Result<ShopPurchaseResult> = { Result.failure(IllegalStateException("unused")) }
+
+        override suspend fun purchase(itemId: ShopItemId): Result<ShopPurchaseResult> {
+            purchaseCalls += itemId
+            return purchaseAnswer(itemId)
+        }
 
         override suspend fun unlockLesson(
             lessonId: String,

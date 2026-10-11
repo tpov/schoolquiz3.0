@@ -22,6 +22,12 @@ data class EconomyConstants(
     /** Прейскурант: сколько очков стоит попытка каждого вида. */
     val activityPrices: Map<ActivityKind, Int> = BOOTSTRAP_PRICES,
     /**
+     * Золотые предложения премиума — готовый прейскурант с сервера (история 2.2).
+     *
+     * Пустой список — премиум золотом не продаётся; строка больше никогда не назначает цену сама.
+     */
+    val premiumGoldOffers: List<PremiumGoldOffer> = emptyList(),
+    /**
      * Запас на расхождение часов, прежде чем заявка считается перерасходом.
      *
      * Ноль: обвинять игрока в подделке из-за криво идущих часов нельзя, но и щедрость здесь
@@ -87,6 +93,28 @@ data class EconomyConstants(
 
         /** Загрузочная копия целиком. */
         val BOOTSTRAP: EconomyConstants = EconomyConstants()
+    }
+}
+
+/**
+ * Одно золотое предложение премиума.
+ *
+ * Цена живёт на сервере и меняется без выпуска приложения; устройство только показывает её и
+ * называет sku обратно, а решение «продаётся ли так» сервер принимает заново в момент покупки.
+ *
+ * @property sku Play-имя товара, к которому относится предложение.
+ * @property days срок в целых сутках.
+ * @property goldPrice цена в золоте.
+ */
+data class PremiumGoldOffer(
+    val sku: String,
+    val days: Int,
+    val goldPrice: Long,
+) {
+    init {
+        require(sku.isNotEmpty()) { "PremiumGoldOffer.sku must not be empty" }
+        require(days >= 1) { "PremiumGoldOffer.days must be positive, got $days" }
+        require(goldPrice > 0L) { "PremiumGoldOffer.goldPrice must be positive, got $goldPrice" }
     }
 }
 

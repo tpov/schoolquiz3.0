@@ -92,6 +92,8 @@ const REASON = {
   REVIEW_FEE: "review_fee",
   /** Вознаграждение проверяющему после полного цикла: целые нолики из десятых entitlement. */
   REVIEW_REWARD: "review_reward",
+  /** Покупка премиума за золото: цена из таблицы в момент покупки (история 2.2). */
+  PREMIUM_GOLD_PURCHASE: "premium_gold_purchase",
 };
 
 const REASONS = Object.values(REASON);

@@ -39,5 +39,6 @@
     "gold_pack_large": 150
   },
   "clockSkewToleranceMs": 0,
-  "auditEnabled": true
+  "auditEnabled": true,
+  "premiumGoldOffers": []
 }

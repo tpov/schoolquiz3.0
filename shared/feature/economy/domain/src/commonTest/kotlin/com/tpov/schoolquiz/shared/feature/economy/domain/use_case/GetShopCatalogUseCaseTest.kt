@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.use_case
 
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PremiumGoldOffer
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
@@ -170,12 +171,60 @@ class GetShopCatalogUseCaseTest {
         val packs = useCase.execute(EconomyResourceBalance.guest(), listOf(product(StoreProductId.GOLD_PACK_SMALL)))
             .filter { it.id.storeProductId() != null }
 
+        // Порядок полки: премиум (2.1) идёт первым, за ним паки. Магазин назвал только пак S.
         assertEquals(
-            listOf(true, false, false, false),
+            listOf(false, true, false, false),
             packs.map { it.isAvailable },
             "магазин назвал только тот товар, который продаёт",
         )
     }
+
+    @Test
+    fun theServerGoldOfferPricesThePremiumRowAndSellsIt() {
+        // История 2.2: цена живёт в таблице сервера и меняется без релиза; ровно одно предложение
+        // делает строку продаваемой за золото, каким бы ни ответил магазин.
+        val useCase =
+            GetShopCatalogUseCase(
+                constants = {
+                    EconomyConstants.BOOTSTRAP.copy(
+                        premiumGoldOffers =
+                            listOf(PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)),
+                    )
+                },
+            )
+
+        val item = useCase.execute(EconomyResourceBalance.guest(), listOf(product(StoreProductId.PREMIUM_30D)))
+            .single { it.id == ShopItemId.PREMIUM }
+
+        assertEquals(ShopCurrency.GOLD, item.price?.currency)
+        assertEquals(500L, item.price?.amount)
+        assertTrue(item.isAvailable, "сервер назвал цену — строка продаётся, даже если магазин молчит")
+        assertNotNull(item.storeProduct, "ответ магазина едет рядом, а не вместо золотой цены")
+    }
+
+    @Test
+    fun withoutASingleGoldOfferThePremiumRowBelongsToTheStoreAlone() {
+        // Ноль предложений — премиум золотом не продаётся; два — оператор не определился, и полка
+        // не выбирает за него. Оба случая оставляют правила истории 2.1: продаёт только магазин.
+        for (offers in listOf(emptyList(), listOf(one(), two()))) {
+            val useCase = GetShopCatalogUseCase(constants = { EconomyConstants.BOOTSTRAP.copy(premiumGoldOffers = offers) })
+
+            val item = useCase.execute(EconomyResourceBalance.guest(), listOf(product(StoreProductId.PREMIUM_30D)))
+                .single { it.id == ShopItemId.PREMIUM }
+
+            assertEquals(ShopCurrency.EXTERNAL, item.price?.currency, "offers: $offers")
+            assertTrue(item.isAvailable, "магазин ответил — строка открыта его путём")
+        }
+
+        val silent = GetShopCatalogUseCase(constants = { EconomyConstants.BOOTSTRAP })
+            .execute(EconomyResourceBalance.guest(), emptyList())
+            .single { it.id == ShopItemId.PREMIUM }
+        assertTrue(!silent.isAvailable, "никто не назвал цену — строка закрыта")
+    }
+
+    private fun one() = PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)
+
+    private fun two() = PremiumGoldOffer(sku = "premium_365d", days = 365, goldPrice = 5000L)
 
     private fun product(id: StoreProductId) =
         StoreProduct(

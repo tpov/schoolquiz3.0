@@ -70,6 +70,7 @@ const {
   readPremiumEconomy, planPremiumEconomy, writePremiumEconomy,
   PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES,
 } = require("./premium-economy");
+const {purchasePremiumWithGold} = require("./premium-shop");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {
   PUSH_EVENTS,
@@ -268,6 +269,7 @@ const AUTHOR_RATING_SCORE_FIELD = "authorRatingScore";
 const QUEST_RATING_QUALIFICATION_POINTS_PER_STAR = 10;
 const SHOP_ITEM_STANDARD_HEART_SLOT = "STANDARD_HEART_SLOT";
 const SHOP_ITEM_GOLD_HEART = "GOLD_HEART";
+const SHOP_ITEM_PREMIUM = "PREMIUM";
 const MAX_STANDARD_HEARTS = 5;
 const MAX_GOLD_HEARTS = 1;
 const MAX_TOURNAMENT_GROUPS_PER_RECALC = 1000;
@@ -3653,7 +3655,7 @@ exports.buyListedNickname = onCall(CALLABLE_OPTIONS, async (request) => {
 exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const itemId = stringValue(request.data && request.data.itemId);
-  if (![SHOP_ITEM_STANDARD_HEART_SLOT, SHOP_ITEM_GOLD_HEART].includes(itemId)) {
+  if (![SHOP_ITEM_STANDARD_HEART_SLOT, SHOP_ITEM_GOLD_HEART, SHOP_ITEM_PREMIUM].includes(itemId)) {
     throw new HttpsError("invalid-argument", `Unsupported shop item ${itemId}`);
   }
 
@@ -3666,25 +3668,37 @@ exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
   await runEconomyTransaction(async (transaction) => {
     const snapshot = await transaction.get(userRef);
     const storedUser = snapshot.exists ? snapshot.data() || {} : {};
-    const premiumPlan = await advancePremiumInTransaction(transaction, uid, storedUser, economy, now);
-    if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
-    const current = readEconomyBalance({...storedUser, ...premiumPlan.userPatch});
-    const balance = applyShopPurchaseToBalance(current, itemId, economy);
-    // Покупка слота — движение сразу двух валют: платы и того, что за неё дали. Идентификатор
-    // выводится из момента и предмета: та же покупка, переигранная транзакцией, — одна строка.
-    for (const entry of ledgerEntries({
-      uid,
-      reason: REASON.SLOT_PURCHASE,
-      sourceId: `${itemId}_${now}`,
-      atMs: now,
-      deltas: {
-        [CURRENCY.NOLICS]: balance.nolics - current.nolics,
-        [CURRENCY.GOLD]: balance.gold - current.gold,
-        [CURRENCY.PLASMA_CHARGE_POINTS]: balance.plasmaPoints - current.plasmaPoints,
-      },
-      details: {itemId, standardHearts: balance.standardHearts, goldHearts: balance.goldHearts},
-    })) {
-      transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+    let premiumPlan;
+    let balance;
+    if (itemId === SHOP_ITEM_PREMIUM) {
+      // Премиум за золото (история 2.2): цену и сам факт «продаётся» называет таблица, золото и
+      // срок идут одной транзакцией на общем движке премиума. Запись лота и проводки — внутри.
+      const purchased =
+        await purchasePremiumWithGold({db, transaction, uid, storedUser, economy, now, readBalance: readEconomyBalance});
+      if (!purchased.caughtUp) return writePremiumCheckpoint(transaction, uid, purchased.plan);
+      premiumPlan = purchased.plan;
+      balance = purchased.balance;
+    } else {
+      premiumPlan = await advancePremiumInTransaction(transaction, uid, storedUser, economy, now);
+      if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
+      const current = readEconomyBalance({...storedUser, ...premiumPlan.userPatch});
+      balance = applyShopPurchaseToBalance(current, itemId, economy);
+      // Покупка слота — движение сразу двух валют: платы и того, что за неё дали. Идентификатор
+      // выводится из момента и предмета: та же покупка, переигранная транзакцией, — одна строка.
+      for (const entry of ledgerEntries({
+        uid,
+        reason: REASON.SLOT_PURCHASE,
+        sourceId: `${itemId}_${now}`,
+        atMs: now,
+        deltas: {
+          [CURRENCY.NOLICS]: balance.nolics - current.nolics,
+          [CURRENCY.GOLD]: balance.gold - current.gold,
+          [CURRENCY.PLASMA_CHARGE_POINTS]: balance.plasmaPoints - current.plasmaPoints,
+        },
+        details: {itemId, standardHearts: balance.standardHearts, goldHearts: balance.goldHearts},
+      })) {
+        transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+      }
     }
     writePremiumEconomy({db, transaction, uid, plan: premiumPlan});
     transaction.set(

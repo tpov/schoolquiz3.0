@@ -38,6 +38,7 @@ class GetShopCatalogUseCase(
         listOf(
             standardHeartSlot(balance),
             goldHeart(balance),
+            premium(storeProducts),
             *goldPacks(storeProducts).toTypedArray(),
             quizSlot(),
             donateGooglePlay(),
@@ -47,25 +48,54 @@ class GetShopCatalogUseCase(
         )
 
     /**
+     * Премиум — одна строка полки с двумя путями цены.
+     *
+     * Золотой прейскурант называет сервер: ровно одно предложение таблицы делает строку продаваемой
+     * за золото, и цена та — без пересчёта на устройстве (NFR3/NFR4). Если магазин ответил своей
+     * записью, она едет рядом: из неё берутся описание и цена за деньги, но не вместо золотой.
+     * Без золотого предложения строка живёт правилами истории 2.1 — продаёт только магазин.
+     */
+    private fun premium(storeProducts: Collection<StoreProduct>): ShopCatalogItem {
+        val record = storeProducts.firstOrNull { it.id == StoreProductId.PREMIUM_30D }
+        val offer = constants().premiumGoldOffers.singleOrNull()
+        return ShopCatalogItem(
+            id = ShopItemId.PREMIUM,
+            title = "",
+            description = "",
+            category = ShopItemCategory.RESOURCES,
+            price =
+                if (offer != null) {
+                    ShopPrice(offer.goldPrice, ShopCurrency.GOLD)
+                } else {
+                    ShopPrice(0L, ShopCurrency.EXTERNAL)
+                },
+            isAvailable = offer != null || record != null,
+            storeProduct = record,
+        )
+    }
+
+    /**
      * Паки золота — записи той же полки, а не второй перечень: один `ShopItemId` на пак, цена —
      * строка из магазина. Пак продаётся, только когда магазин назвал свою цену; без ответа магазина
      * запись остаётся на полке закрытой — экран объяснит, почему.
      */
     private fun goldPacks(storeProducts: Collection<StoreProduct>): List<ShopCatalogItem> =
-        StoreProductId.entries.map { product ->
-            val record = storeProducts.firstOrNull { it.id == product }
-            ShopCatalogItem(
-                id = product.shopItem(),
-                title = "",
-                description = "",
-                category = ShopItemCategory.RESOURCES,
-                // Рендеримая цена живёт в storeProduct.formattedPrice; EXTERNAL-цена здесь — только
-                // разметка «за реальные деньги», не число для показа.
-                price = ShopPrice(0L, ShopCurrency.EXTERNAL),
-                isAvailable = record != null,
-                storeProduct = record,
-            )
-        }
+        StoreProductId.entries
+            .filter { it != StoreProductId.PREMIUM_30D }
+            .map { product ->
+                val record = storeProducts.firstOrNull { it.id == product }
+                ShopCatalogItem(
+                    id = product.shopItem(),
+                    title = "",
+                    description = "",
+                    category = ShopItemCategory.RESOURCES,
+                    // Рендеримая цена живёт в storeProduct.formattedPrice; EXTERNAL-цена здесь — только
+                    // разметка «за реальные деньги», не число для показа.
+                    price = ShopPrice(0L, ShopCurrency.EXTERNAL),
+                    isAvailable = record != null,
+                    storeProduct = record,
+                )
+            }
 
     private fun standardHeartSlot(balance: EconomyResourceBalance): ShopCatalogItem {
         val rules = constants().standard

@@ -86,11 +86,12 @@ class EconomyRepositoryImpl(
         when (this) {
             ShopItemId.STANDARD_HEART_SLOT -> "Жизнь куплена"
             ShopItemId.GOLD_HEART -> "Золотая жизнь куплена"
+            ShopItemId.PREMIUM -> "Премиум активирован"
             else -> "Покупка выполнена"
         }
 
     private companion object {
-        val supportedRemotePurchases = setOf(ShopItemId.STANDARD_HEART_SLOT, ShopItemId.GOLD_HEART)
+        val supportedRemotePurchases = setOf(ShopItemId.STANDARD_HEART_SLOT, ShopItemId.GOLD_HEART, ShopItemId.PREMIUM)
     }
 }
 

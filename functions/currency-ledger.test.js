@@ -69,6 +69,7 @@ function testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves() {
     "gold_pack",
     "lesson_unlock",
     "market",
+    "premium_gold_purchase",
     "premium_grant",
     "premium_legacy",
     "premium_refund",

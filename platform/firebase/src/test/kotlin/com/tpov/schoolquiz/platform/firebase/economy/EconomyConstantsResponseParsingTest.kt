@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.economy
 
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PremiumGoldOffer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -49,5 +50,24 @@ class EconomyConstantsResponseParsingTest {
         val parsed = mapOf("standard" to mapOf("maxOwned" to 4_294_967_301L)).toEconomyConstants()
 
         assertEquals(Int.MAX_VALUE, parsed.standard.maxOwned)
+    }
+
+    @Test
+    fun `gold premium offers survive the ride, a corrupt row drops out whole`() {
+        // История 2.2: прейскурант показывает то, что назвал сервер. Одна битая строка выпадает,
+        // а не превращается в нулевую цену на витрине.
+        val parsed =
+            mapOf(
+                "premiumGoldOffers" to
+                    listOf(
+                        mapOf("sku" to "premium_30d", "days" to 30, "goldPrice" to 500L),
+                        mapOf("sku" to "broken", "days" to 0, "goldPrice" to 500L),
+                        mapOf("sku" to "priceless", "days" to 7),
+                        "not-a-row",
+                    ),
+            ).toEconomyConstants()
+
+        assertEquals(listOf(PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)), parsed.premiumGoldOffers)
+        assertEquals(emptyList<PremiumGoldOffer>(), mapOf<String, Any>().toEconomyConstants().premiumGoldOffers)
     }
 }
