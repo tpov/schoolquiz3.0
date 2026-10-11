@@ -278,10 +278,17 @@ class DefaultRootComponent(
         profileFactory(
             childContext("ProfileContent"),
         )
-    val shopComponent: ShopComponent =
+
+    /**
+     * Ленивый не ради экономии: магазин считает воронку от своего создания (`shop_opened`), а
+     * создавать его при старте корня значило бы считать открытиями магазина все запуски приложения.
+     * Первое обращение — первая композиция вкладки магазина.
+     */
+    val shopComponent: ShopComponent by lazy {
         shopFactory(
             childContext("ShopContent"),
         )
+    }
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }

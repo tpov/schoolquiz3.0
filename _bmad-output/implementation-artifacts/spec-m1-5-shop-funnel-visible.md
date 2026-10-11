@@ -2,9 +2,9 @@
 title: 'M1.5 — The shop funnel is visible'
 type: 'feature'
 created: '2026-10-11'
-status: 'review'
+status: 'done'
 baseline_commit: '3f311586'
-review_loop_iteration: 0
+review_loop_iteration: 1
 story_key: '1-5-воронка-магазина-видна'
 sprint_status_file: '_bmad-output/implementation-artifacts/sprint-status-monetisation.yaml'
 context:
@@ -107,3 +107,61 @@ files.
 - `sgw ./gradlew :shared:feature:economy:domain:ktlintCheck :android:feature:economy:presentation:ktlintCheck --no-configuration-cache`
 - `sgw ./gradlew :apps:android-next:assembleDebug --no-configuration-cache` (боевой
   `google-services.json` подкладывается на время сборки — в worktree лежит demo-конфиг под MVP)
+
+### Review Findings
+
+Code review 2026-10-11, thorough (blind-hunter + edge-case-hunter + verification-gap + intent-alignment).
+
+- [x] [Review][Patch] `ShopOpened` fired at app start, not at shop open [DefaultRootComponent.kt] —
+  fixed: the shop component is built lazily, so its creation (and the event) is the first
+  composition of the shop tab; the funnel counts shop sessions, not app launches. A root-component
+  test pins factory-not-invoked-at-construction.
+- [x] [Review][Patch] Funnel events were tracked inside the `_state.update` lambda
+  [DefaultShopComponent.kt] — fixed: events are computed outside the update; a failed CAS retry can
+  no longer re-emit an outcome.
+- [x] [Review][Patch] `funnelCreditedTokens` was mutated outside the guard mutex
+  [SettlePurchaseUseCase.kt] — fixed: the add runs under `guard`, like the in-flight map.
+- [x] [Review][Patch] `no_account` reason was unreachable [BuyGoldPackUseCase.kt,
+  DefaultShopComponent.kt] — fixed: a typed `NoAccountException` (still an `IllegalStateException`,
+  so existing assertions hold) carries the signed-out ending, and `failureReason` names it
+  `no_account`; a component test pins the event.
+- [x] [Review][Patch] The offline failure path reached the funnel unasserted
+  [DefaultShopComponentGoldPackTest.kt] — fixed: the offline test asserts the exact three-event list
+  with `no_network`.
+- [x] [Review][Patch] The credited test pinned the store price with placeholder zeros
+  [SettlePurchaseUseCaseTest.kt, PurchaseFakes.kt] — fixed: the fake takes non-default
+  price/currency and the test proves the price is copied, not hardcoded.
+- [x] [Review][Patch] The waiting-caller test exercised the sequential replay
+  [SettlePurchaseUseCaseTest.kt] — fixed: renamed to what it pins (a replayed token emits once);
+  the in-flight-waiter property holds by construction.
+- [x] [Review][Patch] The recovered leg asserted no funnel anywhere
+  [UnsettledPurchaseSettlerTest.kt] — fixed: the recovery test records the settlement's completion
+  event.
+- [x] [Review][Defer] An offline failure during verification (money already taken) is funnelled as
+  failed and later completed — one purchase, two events — deferred: distinguishing pre-Play from
+  post-Play failure needs a domain signal the buy contract does not carry; owner call on funnel
+  semantics.
+- [x] [Review][Defer] A re-delivered different SKU mispairs `PurchaseStarted` and
+  `PurchaseCompleted` per SKU — deferred: reporting the requested SKU would lie about what was
+  credited, and token correlation is forbidden by the frozen boundary.
+- [x] [Review][Defer] Presentation DI (`analytics = get()`) is resolved by no test — deferred:
+  blocked by the known-red it09e harness (recorded under 1-4).
+
+**Rejected**
+- ktlint import-ordering fails the story's test files — false: the module gates are green on the
+  current tree.
+- Missing `AnalyticsTracker` binding crashes resolution — false: production binds the Firebase
+  tracker, and the wiring test binds an explicit NoOp stub whose comment states the contract.
+- Zero-price completion skews revenue sums — false: emitting the store's own report (zero for
+  subscriptions today) is the NFR4 behavior; dropping the event would hide premium conversions.
+- Post-restart re-emission double-counts purchases — false as a defect: the code documents it as
+  the honest trade («честнее потери»); uniqueness is per process by design.
+- `PayableTermsCodec` blank-line removal is drive-by churn — false: the same ktlint drift
+  documented in 1-4 (commit e606c9a4).
+- Recording tracker duplicated across source sets — rejected low: the presentation source set
+  cannot see domain `commonTest` fakes (the fixture gap already deferred under M1.2).
+- Unbounded growth of the credited-token set — rejected low: short strings, thousands per process
+  lifetime; an eviction policy would add complexity for nothing.
+- No sequential-replay test exists — false: the renamed test is exactly that coverage.
+- Non-pack store rows emitting the funnel — false by the intent's own principle: emit where the
+  step happens; this is the one path that opens Play.

@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.NoAccountException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
@@ -513,27 +514,21 @@ class DefaultShopComponent(
             _state.update { it.copy(processingItemId = itemId, message = null) }
             analytics.track(AnalyticsEvent.PurchaseStarted(productId.playSku))
             val result = buyGoldPack(productId)
-            _state.update { current ->
-                current.copy(
-                    processingItemId = null,
-                    message =
-                        result.fold(
-                            onSuccess = { outcome ->
-                                outcome.failureEvent(productId)?.let(analytics::track)
-                                outcome.shopMessage()
-                            },
-                            onFailure = { error ->
-                                analytics.track(
-                                    AnalyticsEvent.PurchaseFailed(
-                                        productId = productId.playSku,
-                                        reason = error.failureReason(),
-                                    ),
-                                )
-                                ShopMessage.Failure(error.errorDetail())
-                            },
-                        ),
+            // Событие воронки не живёт внутри update: лямбда состояния переисполняется при
+            // неудачном CAS, и заикнувшийся апдейт насчитал бы исход покупки дважды.
+            val (message, failure) =
+                result.fold(
+                    onSuccess = { outcome -> outcome.shopMessage() to outcome.failureEvent(productId) },
+                    onFailure = { error ->
+                        ShopMessage.Failure(error.errorDetail()) to
+                            AnalyticsEvent.PurchaseFailed(
+                                productId = productId.playSku,
+                                reason = error.failureReason(),
+                            )
+                    },
                 )
-            }
+            _state.update { it.copy(processingItemId = null, message = message) }
+            failure?.let(analytics::track)
         }
     }
 
@@ -555,8 +550,9 @@ class DefaultShopComponent(
         }
 
     private fun Throwable.failureReason(): String =
-        when (syncErrorOrNull()) {
-            SyncError.NoNetwork -> NO_NETWORK_REASON
+        when {
+            this is NoAccountException -> NO_ACCOUNT_REASON
+            syncErrorOrNull() == SyncError.NoNetwork -> NO_NETWORK_REASON
             else -> ERROR_REASON
         }
 
@@ -579,6 +575,7 @@ class DefaultShopComponent(
         /** Стабильные коды причин отказа в воронке: машинные, не фразы (AD-15). */
         const val CANCELLED_REASON = "cancelled"
         const val NO_NETWORK_REASON = "no_network"
+        const val NO_ACCOUNT_REASON = "no_account"
         const val ERROR_REASON = "error"
     }
 

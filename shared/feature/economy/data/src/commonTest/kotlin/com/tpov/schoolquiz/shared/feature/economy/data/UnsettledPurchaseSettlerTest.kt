@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.economy.data
 
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
@@ -42,7 +44,10 @@ class UnsettledPurchaseSettlerTest {
     private val verifier = SettlerFakePurchaseVerifier()
     private val refresher = SettlerFakeBalanceRefresher()
 
-    private fun settler(scope: CoroutineScope) =
+    private fun settler(
+        scope: CoroutineScope,
+        analytics: AnalyticsTracker = NoOpAnalyticsTracker,
+    ) =
         UnsettledPurchaseSettler(
             currentUidFlow = { uid },
             networkMonitor = network,
@@ -52,7 +57,7 @@ class UnsettledPurchaseSettlerTest {
                     billing = billing,
                     verifier = verifier,
                     balanceRefresher = refresher,
-                    analytics = NoOpAnalyticsTracker,
+                    analytics = analytics,
                 ),
             scope = scope,
         )
@@ -67,10 +72,22 @@ class UnsettledPurchaseSettlerTest {
             billing.deliver(purchase)
             verifier.credits("t-1", gold = 60L)
 
-            val job = settler(scope).start()
+            // Воронка видит и восстановленную покупку: расчёт тот же DI-одиночный, событие — его.
+            val tracker = SettlerRecordingTracker()
+            val job = settler(scope, analytics = tracker).start()
             uid.value = "uid-A"
             advanceUntilIdle()
 
+            assertEquals(
+                listOf<AnalyticsEvent>(
+                    AnalyticsEvent.PurchaseCompleted(
+                        productId = StoreProductId.GOLD_PACK_SMALL.playSku,
+                        priceMicros = 0L,
+                        currency = "",
+                    ),
+                ),
+                tracker.events,
+            )
             assertEquals(listOf("t-1"), verifier.verifiedTokens)
             assertEquals(listOf("t-1"), billing.consumedTokens)
             assertEquals(1, refresher.calls)
@@ -395,4 +412,20 @@ private class SettlerFakeBalanceRefresher : ServerBalanceRefresher {
         calls++
         return Result.success(Unit)
     }
+}
+
+/** Память воронки: что расчёт насчитал, закончив брошенную покупку. */
+private class SettlerRecordingTracker : AnalyticsTracker {
+    val events = mutableListOf<AnalyticsEvent>()
+
+    override fun track(event: AnalyticsEvent) {
+        events += event
+    }
+
+    override fun setUserProperty(
+        property: com.tpov.schoolquiz.shared.core.analytics.UserProperty,
+        value: String,
+    ) = Unit
+
+    override fun setUserId(userId: String?) = Unit
 }

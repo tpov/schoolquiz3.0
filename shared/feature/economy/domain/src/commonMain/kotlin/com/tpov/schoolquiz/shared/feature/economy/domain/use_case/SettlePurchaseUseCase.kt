@@ -131,7 +131,7 @@ class SettlePurchaseUseCase(
                 // Событие воронки — здесь и только здесь: факт «сервер начислил» уже случился,
                 // цена — та, что назвал магазин и которая списана с игрока, не наша выкладка.
                 // Один токен — одно завершение, сколько бы раз сервер ни ответил `CREDITED`.
-                if (funnelCreditedTokens.add(purchase.purchaseToken)) {
+                if (guard.withLock { funnelCreditedTokens.add(purchase.purchaseToken) }) {
                     analytics.track(
                         AnalyticsEvent.PurchaseCompleted(
                             productId = purchase.productId.playSku,

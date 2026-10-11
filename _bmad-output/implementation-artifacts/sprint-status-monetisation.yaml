@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 10-11-2026 14:57
+last_updated: 10-11-2026 15:40
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -58,8 +58,12 @@ development_status:
     # (queryProducts кидает на не-OK), storeProductId() исчерпывающий when, тесты офлайн-отказа и
     # пар по id; 5 defer в deferred-work (NotConfigured недостижим в проде, koin-wiring без теста и др.)
     # (тест-заглушки lesson-runner без LessonRunnerContentSyncCallbacks)
-  1-5-воронка-магазина-видна: review  # spec-m1-5-shop-funnel-visible.md — событие завершения эмитит расчёт
-    # после CREDITED, один на токен; открытие/старт/отказ — компонент; найденный дабл-эмит на replay закрыт
+  1-5-воронка-магазина-видна: done  # spec-m1-5-shop-funnel-visible.md — событие завершения эмитит расчёт
+    # после CREDITED, один на токен; открытие/старт/отказ — компонент; найденный дабл-эмит на replay закрыт.
+    # Code review 2026-10-11 (4 линзы): 8 патчей применены — shop_opened считается от первого открытия
+    # вкладки (by lazy в корне, был старт приложения), события воронки вне CAS-лямбды update,
+    # funnelCreditedTokens под мьютексом, no_account достижим (NoAccountException), тесты: офлайн-воронка,
+    # не-аккаунт, цена без нулей, восстановленная нога. 3 defer + 2 новых известных красных app-shell
   epic-1-retrospective: optional
 
   epic-2: in-progress

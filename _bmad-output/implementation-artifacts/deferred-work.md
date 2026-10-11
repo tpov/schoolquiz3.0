@@ -523,3 +523,15 @@ backfill.
 - source_spec: `_bmad-output/implementation-artifacts/spec-m1-4-gold-packs-on-one-shelf.md` (code review 2026-10-11)
   summary: it09e `KoinModuleWiringTest` known-red was documented in sprint status but not recorded in deferred-work.
   evidence: The test fails for an unrelated missing binding (lesson-runner test stubs without `LessonRunnerContentSyncCallbacks`); it predates story 1.4 and stays owner-deferred. Recorded here so the red is not mistaken for a story regression.
+- source_spec: `_bmad-output/implementation-artifacts/spec-m1-5-shop-funnel-visible.md` (code review 2026-10-11)
+  summary: An offline failure during verification — money already taken by Play — is funnelled as `purchase_failed` and later as `purchase_completed` for one and the same purchase.
+  evidence: Both the pre-Play refusal and the verification-time failure arrive at the component as `Result.failure(SyncFailure(NoNetwork))`; the buy contract carries no "money has moved" signal. The funnel therefore records a failure plus a conversion for one payment, and token correlation is forbidden by the frozen boundary. Needs an owner decision on funnel semantics (a distinct recoverable-attempt reason, or documented tolerance).
+- source_spec: `_bmad-output/implementation-artifacts/spec-m1-5-shop-funnel-visible.md` (code review 2026-10-11)
+  summary: A re-delivered different SKU (Play re-delivers an older unconsumed purchase) mispairs `PurchaseStarted` and `PurchaseCompleted` per SKU.
+  evidence: `BuyGoldPackUseCase.settleBought` reports the delivered product by design (claiming otherwise would tell the player they got what they did not), so the completion event carries the delivered SKU while the start carries the requested one. Rare path; fixing it needs a funnel-semantics decision, not a mechanical change.
+- source_spec: `android/feature/app-shell/presentation` (известный красный, найден гейтом 2026-10-11)
+  summary: ktlint `ktlintMainSourceSetCheck` падает на модуле app-shell presentation вне историй.
+  evidence: Нарушения import-ordering в `DefaultRootComponent.kt`, `AppShellPresentationModule.kt` (+ unused import) и `AppShellScreen.kt` — файлы, не тронутые монетизационными историями; тот же класс долга, что и задокументированный красный platform:firebase. Чинить темой, не по-файльно.
+- source_spec: `android/feature/app-shell/presentation` (известный красный, найден гейтом 2026-10-11)
+  summary: `DrawerFooterSyncStatusTest` падает на инициализации Robolectric (DefaultSdkPicker IllegalArgumentException).
+  evidence: Тест без `@Config`, Robolectric 4.11.1 не знает SDK, под которым компилируется модуль (35) — environmental, до тестового кода не доходит. Остальные 48 тестов модуля зелёные. Лечится подъёмом Robolectric или `@Config(sdk=[34])` — отдельно от историй.

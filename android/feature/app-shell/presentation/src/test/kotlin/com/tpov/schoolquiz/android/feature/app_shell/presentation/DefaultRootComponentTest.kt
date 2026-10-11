@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.android.feature.app_shell.presentation
 
+import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
@@ -9,6 +10,8 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncStatusRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
@@ -103,6 +106,7 @@ class DefaultRootComponentTest {
         fakeRepo: FakeUserStatsRepository = FakeUserStatsRepository(),
         syncScheduler: FakeSyncScheduler = FakeSyncScheduler(),
         fetchTournamentOverview: FetchTournamentOverviewUseCase = fakeTournamentOverviewUseCase(),
+        shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
@@ -116,6 +120,7 @@ class DefaultRootComponentTest {
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
+        shopFactory = shopFactory,
         // Keep the IO hop on the test scheduler. With the real Dispatchers.IO the scheduler goes
         // idle, runTest's virtual clock jumps ahead, and withTimeout fires before the background
         // thread answers — the tournament overview test then failed only on a loaded machine.
@@ -172,6 +177,24 @@ class DefaultRootComponentTest {
         val state = component.appShellState.first()
         assertEquals(Tab.LOCAL, state.activeTab)
         assertEquals(100, state.userStats.currentSkill)
+    }
+
+    @Test
+    fun `the shop component is built on first access, not at root creation`() {
+        // Воронка считает shop_opened от создания магазина: созданный при старте корня компонент
+        // насчитал бы открытиями магазина все запуски приложения подряд.
+        var shopBuilt = false
+        val component =
+            buildComponent(
+                shopFactory = { _ ->
+                    shopBuilt = true
+                    PlaceholderShopComponent()
+                },
+            )
+
+        assertFalse(shopBuilt, "создание корня не строит магазин — ни вкладка, ни событие не случились")
+        component.shopComponent
+        assertTrue(shopBuilt, "первое обращение (композиция вкладки) строит магазин и метит shop_opened")
     }
 
     @Test

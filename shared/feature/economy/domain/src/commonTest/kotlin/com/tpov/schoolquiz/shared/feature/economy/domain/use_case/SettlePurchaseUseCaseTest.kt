@@ -80,14 +80,16 @@ class SettlePurchaseUseCaseTest {
         runTest {
             verifier.credits("t-1", goldGranted = 60L)
 
-            settle(billingPurchase(token = "t-1"))
+            // Цена не дефолтная нарочно: нули не отличили бы «перенёс цену покупки» от
+            // «захардкодил ноль» — а это и есть NFR4, ради которого событие здесь.
+            settle(billingPurchase(token = "t-1", priceMicros = 1_990_000L, currency = "UAH"))
 
             assertEquals(
                 listOf<AnalyticsEvent>(
                     AnalyticsEvent.PurchaseCompleted(
                         productId = StoreProductId.GOLD_PACK_SMALL.playSku,
-                        priceMicros = 0L,
-                        currency = "",
+                        priceMicros = 1_990_000L,
+                        currency = "UAH",
                     ),
                 ),
                 analytics.events,
@@ -152,8 +154,10 @@ class SettlePurchaseUseCaseTest {
         }
 
     @Test
-    fun `a waiting caller does not emit a second completion for the same token`() =
+    fun `a replayed token emits the completion only once`() =
         runTest {
+            // Под runTest запуски исполняются по очереди: второй расчёт пере-проходит verify и
+            // доходит до CREDITED — держит его множество рассчитанных токенов, не ожидание в полёте.
             verifier.credits("t-1", goldGranted = 60L)
             val purchase = billingPurchase(token = "t-1")
 

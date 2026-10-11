@@ -20,14 +20,16 @@ import kotlinx.coroutines.flow.asStateFlow
 fun billingPurchase(
     token: String = "token-1",
     productId: StoreProductId = StoreProductId.GOLD_PACK_SMALL,
+    priceMicros: Long = 0L,
+    currency: String = "",
 ): BillingPurchase =
     BillingPurchase(
         productId = productId,
         purchaseToken = token,
         orderId = "order-$token",
         isAcknowledged = false,
-        priceMicros = 0L,
-        currency = "",
+        priceMicros = priceMicros,
+        currency = currency,
     )
 
 /**

@@ -81,3 +81,13 @@ class PurchaseRefusedException(
     val code: PurchaseRefusalCode,
     message: String,
 ) : Exception(message)
+
+/**
+ * The buy path refused to open Play because nobody is signed in.
+ *
+ * Its own type, not a bare [IllegalStateException], so the funnel can name the reason `no_account`
+ * instead of lumping a signed-out tap into `error`. Still an [IllegalStateException]: the buy
+ * contract calls it a failure, and existing callers already treat it as one.
+ */
+class NoAccountException :
+    IllegalStateException("No signed-in account to attribute the purchase to")

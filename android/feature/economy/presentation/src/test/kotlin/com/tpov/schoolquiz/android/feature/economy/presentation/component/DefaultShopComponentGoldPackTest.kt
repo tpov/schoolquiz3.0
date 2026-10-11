@@ -147,6 +147,34 @@ class DefaultShopComponentGoldPackTest {
             )
             assertEquals(null, component.state.value.processingItemId)
             assertTrue(store.purchaseCalls.isEmpty(), "офлайн-покупка до Play не доходит")
+            // Воронка считает и отказы: причины — машинный код, а не тишина и не фраза (AD-15).
+            assertEquals(
+                listOf(
+                    AnalyticsEvent.ShopOpened,
+                    AnalyticsEvent.PurchaseStarted("gold_pack_small"),
+                    AnalyticsEvent.PurchaseFailed("gold_pack_small", "no_network"),
+                ),
+                analytics.events,
+            )
+        }
+
+    @Test
+    fun `given nobody is signed in when the pack is tapped then the funnel names no account`() =
+        runTest(scheduler) {
+            val component = component(signedIn = false)
+
+            component.obtainEvent(ShopViewEvent.Purchase(ShopItemId.GOLD_PACK_SMALL))
+
+            assertTrue(component.state.value.message is ShopMessage.Failure)
+            assertTrue(store.purchaseCalls.isEmpty(), "без аккаунта Play не открывается")
+            assertEquals(
+                listOf(
+                    AnalyticsEvent.ShopOpened,
+                    AnalyticsEvent.PurchaseStarted("gold_pack_small"),
+                    AnalyticsEvent.PurchaseFailed("gold_pack_small", "no_account"),
+                ),
+                analytics.events,
+            )
         }
 
     @Test
@@ -276,6 +304,7 @@ class DefaultShopComponentGoldPackTest {
     private fun component(
         constants: EconomyConstants = EconomyConstants.BOOTSTRAP,
         online: Boolean = true,
+        signedIn: Boolean = true,
     ): DefaultShopComponent {
         lifecycle = LifecycleRegistry()
         return DefaultShopComponent(
@@ -297,7 +326,7 @@ class DefaultShopComponentGoldPackTest {
                             analytics = analytics,
                             log = { _, _ -> },
                         ),
-                    currentUidFlow = { flowOf("uid-1") },
+                    currentUidFlow = { flowOf(if (signedIn) "uid-1" else null) },
                     buyerTag = { "tag" },
                 ),
             logos = FakeLogoRepository(),

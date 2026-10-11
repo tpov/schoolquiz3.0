@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.NoAccountException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.BillingRepository
@@ -43,7 +44,7 @@ class BuyGoldPackUseCase(
         // stale uid would tag the purchase for somebody who is no longer signed in.
         val uid = currentUidFlow().first()
         if (uid.isNullOrBlank()) {
-            return Result.failure(IllegalStateException(NO_ACCOUNT))
+            return Result.failure(NoAccountException())
         }
         if (!networkMonitor.isOnline()) {
             return Result.failure(SyncFailure(SyncError.NoNetwork))
@@ -104,8 +105,6 @@ class BuyGoldPackUseCase(
     }
 
     private companion object {
-        const val NO_ACCOUNT = "No signed-in account to attribute the purchase to"
-
         /**
          * Named rather than silent: the purchase was settled, so nothing is lost, but the caller
          * must not show the amount as if it were the pack the player chose.
