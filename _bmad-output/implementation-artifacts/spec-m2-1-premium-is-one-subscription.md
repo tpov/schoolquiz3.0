@@ -122,8 +122,9 @@ other sessions' uncommitted files (`gradle.properties`, `local.properties`, `fun
 - [x] Presentation: premium row, messages, strings ×3 locales.
 - [x] Gates via `sgw ./gradlew` for the touched modules; functions `node run-tests.js`.
 - [x] `sprint-status-monetisation.yaml`: 2-1 → review.
-- [ ] Rig (HITL): build on the rig; a sandbox purchase needs Play Store + the license tester on the
-  device — report honestly what the rig could and could not verify.
+- [x] Rig (HITL): APK installed and the shop shows the premium row explaining the unreachable
+  store (`docs/agents/evidence/2026-10-11-premium-subscription/`); a sandbox purchase needs a
+  GMS/Play device — redroid cannot open a Play flow, that part stays with the owner's device.
 
 **Acceptance Criteria (as re-scoped by the owner's final model):**
 - Given `premium_30d` exists in Play Console with its base plan and trial offer, when the player
