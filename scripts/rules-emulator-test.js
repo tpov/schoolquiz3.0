@@ -665,6 +665,52 @@ async function testInboxPrivacy() {
   });
 }
 
+/**
+ * Приватность опросов (UX-O7, эпик 8, история 8.2).
+ *
+ * Авторство и голосование живут исключительно в приёмнике мутаций
+ * (`polls.PUBLISH_SERIES` / `polls.SUBMIT_VOTE`, AD-6/AD-7), чтение — в серверных вью
+ * (`listPollSeries` / `getPollQuestionState`), где держится сокрытие распределения до
+ * собственного принятого голоса (§5). Клиентские чтения коллекций отдали бы распределения
+ * до голоса, клиентские записи позволили бы подделать авторство и уникальность
+ * участник×вопрос (§3). Роли здесь доступа не дают.
+ */
+async function testPollsPrivacy() {
+  await deny("poll_series: игрок не читает", () =>
+    db("player").doc("poll_series/series-1").get());
+  await deny("poll_series: автор не читает свою серию", () =>
+    db("author").doc("poll_series/series-1").get());
+  await deny("poll_series: админ не читает", () =>
+    db("admin").doc("poll_series/series-1").get());
+  await deny("poll_series: игрок не публикует", () =>
+    db("player").doc("poll_series/series-2").set({title: "forged"}));
+  await deny("poll_series: админ не публикует", () =>
+    db("admin").doc("poll_series/series-3").set({title: "forged"}));
+
+  await deny("poll_votes: игрок не читает", () =>
+    db("player").doc("poll_votes/series-1-r1-q0-u1").get());
+  await deny("poll_votes: участник не читает свой голос", () =>
+    db("author").doc("poll_votes/series-1-r1-q0-u1").get());
+  await deny("poll_votes: админ не читает", () =>
+    db("admin").doc("poll_votes/series-1-r1-q0-u1").get());
+  await deny("poll_votes: игрок не голосует мимо приёмника", () =>
+    db("player").doc("poll_votes/series-1-r1-q0-u1").set({selectedOptionIds: ["opt-1"]}));
+  await deny("poll_votes: админ не голосует мимо приёмника", () =>
+    db("admin").doc("poll_votes/series-1-r1-q0-u2").set({selectedOptionIds: ["opt-1"]}));
+
+  // Текстовое закрепление явных блоков закрытия: deny-проверка слепа к удалению правила.
+  const rulesText = fs.readFileSync(RULES_PATH, "utf8");
+  for (const [name, path] of [["poll_series", "poll_series/{seriesId}"], ["poll_votes", "poll_votes/{voteId}"]]) {
+    const at = rulesText.indexOf(`match /${path}`);
+    const block = at < 0 ? "" : rulesText.slice(at, at + 800);
+    results.push({
+      label: `${name}: явный отказ присутствует в тексте правил`,
+      ok: at >= 0 && block.includes("allow read, write: if false;"),
+      error: `в firestore.rules нет явного блока закрытия ${name} (UX-O7: серии и голоса читают только серверные вью)`,
+    });
+  }
+}
+
 async function testPurchaseIntegrityPrivacy() {
   // Settlements: один документ на token; чтение выдало бы чужие покупки, запись позволила бы
   // объявить token погашенным (или вернуть к погашению) рукой.
@@ -791,6 +837,7 @@ async function main() {
   await testServerOnlyCollections();
   await testAuthoringViewsPrivacy();
   await testInboxPrivacy();
+  await testPollsPrivacy();
   await testPurchaseIntegrityPrivacy();
 
   await testEnv.cleanup();

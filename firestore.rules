@@ -278,6 +278,23 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /poll_series/{seriesId} {
+      // Poll series (UX-O7, epic-social-features 8.2): authoring and voting run exclusively
+      // through the mutation receiver (`polls.PUBLISH_SERIES` / `polls.SUBMIT_VOTE`, AD-6/AD-7),
+      // and clients read the permitted projections through `listPollSeries` /
+      // `getPollQuestionState`, where distribution hiding (§5) is enforced. Direct client reads
+      // would leak pre-vote distributions; direct writes would forge authorship and votes.
+      allow read, write: if false;
+    }
+
+    match /poll_votes/{voteId} {
+      // Poll votes (UX-O7 §3): the respondent-question uniqueness lives in the deterministic
+      // document id the receiver writes inside a transaction. Client writes would bypass the
+      // uniqueness and the frozen choice set; client reads would expose distributions before
+      // the reader's own confirmed vote (§5). Everything goes through the receiver and the views.
+      allow read, write: if false;
+    }
+
     match /lesson_error_reports/{reportId} {
       // Private lesson-error reports (AD-20, CAP-6): the report is addressed to the permitted
       // author of one lesson, and the only reader besides the reporter is that author. Both read
