@@ -39,9 +39,11 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.StoreShelfStatus
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.storeProductId
 
 /**
  * The store shelf.
@@ -96,7 +98,9 @@ private fun ShopOfferCard(
         NoirItemTile(icon = item.icon, tint = item.tint)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
-                text = stringResource(item.titleRes()),
+                // The store names its own products: the title from Play wins over our fallback
+                // whenever the store answered, so renaming in the console needs no release.
+                text = item.storeTitle(),
                 style = NoirType.rowTitle.copy(fontSize = 14.5.sp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -139,6 +143,18 @@ private fun ShopOfferCard(
 
 @Composable
 private fun PriceLabel(item: ShopCatalogItem) {
+    // Цена магазина — готовая строка, отформатированная им самим в валюте игрока: показывается
+    // как есть и никогда не пересчитывается из priceMicros (NFR4).
+    item.storeProduct?.let { product ->
+        Text(
+            text = product.formattedPrice,
+            style = NoirType.num.copy(fontSize = 16.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+        )
+        return
+    }
+    // Пак без ответа магазина цены не имеет — и не показывает вместо неё заглушку: строка под
+    // названием объясняет, чего именно ждём.
+    if (item.id.storeProductId() != null) return
     val price = item.price ?: return
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -181,12 +197,16 @@ private fun BetaRow(beta: BetaItem) {
 /**
  * The order the shelf is read in, which is not the order the catalogue is built in.
  *
- * Spending currency comes first, then earning it, then the two that leave the shop entirely.
+ * Spending currency comes first, then earning it — buying gold with money sits right after the
+ * gold-priced heart — then the two that leave the shop entirely.
  */
 private val DISPLAY_ORDER =
     listOf(
         ShopItemId.STANDARD_HEART_SLOT,
         ShopItemId.GOLD_HEART,
+        ShopItemId.GOLD_PACK_SMALL,
+        ShopItemId.GOLD_PACK_MEDIUM,
+        ShopItemId.GOLD_PACK_LARGE,
         ShopItemId.QUIZ_SLOT,
         ShopItemId.AD_REWARD_BOX,
         ShopItemId.DONATE_GOOGLE_PLAY,
@@ -208,8 +228,12 @@ private val ShopCatalogItem.icon: ImageVector
     get() =
         when (id) {
             ShopItemId.STANDARD_HEART_SLOT -> NoirIcons.Heart
-            // Золото — стопка монет. Ромб за валюту не отвечает.
-            ShopItemId.GOLD_HEART -> NoirIcons.GoldStack
+            // Золото — стопка монет. Ромб за валюту не отвечает: и сердце за золото, и паки.
+            ShopItemId.GOLD_HEART,
+            ShopItemId.GOLD_PACK_SMALL,
+            ShopItemId.GOLD_PACK_MEDIUM,
+            ShopItemId.GOLD_PACK_LARGE,
+            -> NoirIcons.GoldStack
             ShopItemId.QUIZ_SLOT -> NoirIcons.Plus
             ShopItemId.AD_REWARD_BOX -> NoirIcons.Box
             ShopItemId.DONATE_GOOGLE_PLAY -> NoirIcons.Heart
@@ -236,12 +260,26 @@ private fun ShopCatalogItem.titleRes(): Int =
     when (id) {
         ShopItemId.STANDARD_HEART_SLOT -> R.string.shop_item_standard_heart
         ShopItemId.GOLD_HEART -> R.string.shop_item_gold_heart
+        ShopItemId.GOLD_PACK_SMALL -> R.string.shop_item_gold_pack_small
+        ShopItemId.GOLD_PACK_MEDIUM -> R.string.shop_item_gold_pack_medium
+        ShopItemId.GOLD_PACK_LARGE -> R.string.shop_item_gold_pack_large
         ShopItemId.QUIZ_SLOT -> R.string.shop_item_quiz_slot
         ShopItemId.AD_REWARD_BOX -> R.string.shop_item_ad_reward_box
         ShopItemId.DONATE_GOOGLE_PLAY -> R.string.shop_item_donate_google_play
         ShopItemId.REFERRAL_PROGRAM -> R.string.shop_item_referral_program
         ShopItemId.NICKNAME_MARKET -> R.string.shop_item_nickname_market
     }
+
+/**
+ * The store's own name for its product, falling back to our wording while it has not answered.
+ *
+ * The fallback names the packs small, medium and large and never an amount: how much gold a SKU
+ * grants is the server's secret (NFR3), and a number in the fallback wording would be exactly the
+ * copy the economy table forbids.
+ */
+@Composable
+private fun ShopCatalogItem.storeTitle(): String =
+    storeProduct?.title?.takeIf { it.isNotBlank() } ?: stringResource(titleRes())
 
 private fun ShopCatalogItem.actionLabelRes(): Int =
     when (id) {
@@ -276,6 +314,18 @@ private fun ShopCatalogItem.stateLine(state: ShopViewState): String? =
             }
         }
         ShopItemId.GOLD_HEART -> stringResource(R.string.shop_state_gold_hearts, state.balance.goldHearts)
+        // Пак говорит словами, почему у него нет цены: магазин ещё отвечает, магазин недоступен
+        // или товары не выставлены. Замок без объяснения — то, чего полке показывать нельзя.
+        ShopItemId.GOLD_PACK_SMALL,
+        ShopItemId.GOLD_PACK_MEDIUM,
+        ShopItemId.GOLD_PACK_LARGE,
+        ->
+            storeProduct?.description?.takeIf { it.isNotBlank() }
+                ?: when (state.storeShelf) {
+                    StoreShelfStatus.LOADING -> stringResource(R.string.shop_state_store_loading)
+                    StoreShelfStatus.NOT_CONFIGURED -> stringResource(R.string.shop_state_store_not_configured)
+                    else -> stringResource(R.string.shop_state_store_unreachable)
+                }
         ShopItemId.QUIZ_SLOT -> stringResource(R.string.shop_lock_quiz_slot)
         ShopItemId.AD_REWARD_BOX -> stringResource(R.string.shop_lock_ad_box)
         ShopItemId.DONATE_GOOGLE_PLAY -> stringResource(R.string.shop_lock_donate)

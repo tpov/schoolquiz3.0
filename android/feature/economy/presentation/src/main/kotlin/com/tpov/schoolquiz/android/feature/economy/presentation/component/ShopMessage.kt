@@ -35,6 +35,23 @@ sealed interface ShopMessage {
     /** The shelf itself cannot be reached. */
     data object ShopUnavailable : ShopMessage
 
+    /**
+     * Магазин начислил золото за пак: [gold] — то, что назвал сервер.
+     *
+     * Сумма приходит из ответа сервера, а не из какой-то копии на устройстве, и баланс после неё
+     * перечитан с сервера, так что сообщение и пилюля баланса не могут разойтись.
+     */
+    data class GoldCredited(val gold: Long) : ShopMessage
+
+    /** Деньги ещё не двинулись: платёж доедет, покупка останется в очереди Play. */
+    data object PurchasePending : ShopMessage
+
+    /** Игрок закрыл платёжное окно. Ничего не случилось — и притворяться ошибкой нечего. */
+    data object PurchaseCancelled : ShopMessage
+
+    /** Сервер отказал и назвал машинную причину [code]; текст человек выбирает на экране. */
+    data class PurchaseRefused(val code: String) : ShopMessage
+
     data class Notice(val text: String) : ShopMessage
 
     data class Failure(val detail: String?) : ShopMessage

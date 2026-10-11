@@ -62,8 +62,16 @@ class FakeBillingRepository(
     var refreshUnsettledCalls: Int = 0
         private set
 
-    override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> =
-        Result.success(emptyList())
+    /** What [loadProducts] answers. Set per test; the default is a store with no products. */
+    var productAnswer: Result<List<StoreProduct>> = Result.success(emptyList())
+
+    /** The id sets [loadProducts] was asked about, in order. */
+    val productRequests = mutableListOf<Set<StoreProductId>>()
+
+    override suspend fun loadProducts(ids: Set<StoreProductId>): Result<List<StoreProduct>> {
+        productRequests += ids
+        return productAnswer
+    }
 
     override fun observeUnsettledPurchases(): Flow<List<BillingPurchase>> = unsettled.asStateFlow()
 

@@ -3,6 +3,9 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.model
 enum class ShopItemId(val wireName: String) {
     STANDARD_HEART_SLOT("STANDARD_HEART_SLOT"),
     GOLD_HEART("GOLD_HEART"),
+    GOLD_PACK_SMALL("GOLD_PACK_SMALL"),
+    GOLD_PACK_MEDIUM("GOLD_PACK_MEDIUM"),
+    GOLD_PACK_LARGE("GOLD_PACK_LARGE"),
     QUIZ_SLOT("QUIZ_SLOT"),
     AD_REWARD_BOX("AD_REWARD_BOX"),
     DONATE_GOOGLE_PLAY("DONATE_GOOGLE_PLAY"),

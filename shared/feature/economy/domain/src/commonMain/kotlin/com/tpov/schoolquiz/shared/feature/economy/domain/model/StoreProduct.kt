@@ -19,6 +19,29 @@ enum class StoreProductId(val playSku: String) {
     }
 }
 
+/** The shelf record this store product is sold through — the one «запись ↔ Play SKU» pair. */
+fun StoreProductId.shopItem(): ShopItemId =
+    when (this) {
+        StoreProductId.GOLD_PACK_SMALL -> ShopItemId.GOLD_PACK_SMALL
+        StoreProductId.GOLD_PACK_MEDIUM -> ShopItemId.GOLD_PACK_MEDIUM
+        StoreProductId.GOLD_PACK_LARGE -> ShopItemId.GOLD_PACK_LARGE
+    }
+
+/**
+ * The store product behind a shelf record, or null for everything the store does not sell.
+ *
+ * Both directions live in this one file so the next paid product (premium, epic 2) extends exactly
+ * two `when`s and nowhere else. The entries are spelled out qualified: both enums have identically
+ * named entries in one package, and an unqualified name here is a coin flip.
+ */
+fun ShopItemId.storeProductId(): StoreProductId? =
+    when (this) {
+        ShopItemId.GOLD_PACK_SMALL -> StoreProductId.GOLD_PACK_SMALL
+        ShopItemId.GOLD_PACK_MEDIUM -> StoreProductId.GOLD_PACK_MEDIUM
+        ShopItemId.GOLD_PACK_LARGE -> StoreProductId.GOLD_PACK_LARGE
+        else -> null
+    }
+
 /**
  * What the store reports for a product, at the price this particular user would actually pay.
  *

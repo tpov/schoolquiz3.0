@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyConst
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.BuyGoldPackUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralProgramUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
@@ -37,6 +38,7 @@ fun economyDomainModule(
     module {
         factory { ObserveEconomyBalanceUseCase(get()) }
         factory { GetShopCatalogUseCase(constants = get<EconomyConstantsRepository>()::current) }
+        factory { LoadStoreShelfUseCase(get()) }
         factory { PurchaseShopItemUseCase(get()) }
         factory { GetReferralProgramUseCase(get()) }
         factory { OpenGiftBoxUseCase(get()) }

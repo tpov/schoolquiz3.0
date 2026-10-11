@@ -47,7 +47,9 @@ development_status:
   1-3-обработчик-возвратов-и-отзывов: review  # написан и зелёный, НЕ закоммичен: четыре общих файла заняты
   # незакоммиченной работой соседних потоков (index.js, firestore.rules, package.json, currency-ledger.js).
   # Топик play-rtdn и подписка тоже ещё не заведены — триггер проверен чтением и тестами модулей.
-  1-4-паки-золота-на-одной-полке: backlog
+  1-4-паки-золота-на-одной-полке: review  # spec-m1-4-gold-packs-on-one-shelf.md — полка, цены из магазина,
+    # покупка путём 1.2; гейты домена и презентации зелёные; it09e KoinModuleWiringTest падал и до истории
+    # (тест-заглушки lesson-runner без LessonRunnerContentSyncCallbacks)
   1-5-воронка-магазина-видна: backlog
   epic-1-retrospective: optional
 

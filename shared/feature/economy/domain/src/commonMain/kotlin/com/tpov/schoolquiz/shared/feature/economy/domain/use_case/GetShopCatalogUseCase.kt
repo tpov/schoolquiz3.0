@@ -9,6 +9,9 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemCategory
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.shopItem
 
 /*
  * What the shelf holds, as pure data.
@@ -28,16 +31,41 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice
 class GetShopCatalogUseCase(
     private val constants: () -> EconomyConstants = { EconomyConstants.BOOTSTRAP },
 ) {
-    fun execute(balance: EconomyResourceBalance): List<ShopCatalogItem> =
+    fun execute(
+        balance: EconomyResourceBalance,
+        storeProducts: Collection<StoreProduct> = emptyList(),
+    ): List<ShopCatalogItem> =
         listOf(
             standardHeartSlot(balance),
             goldHeart(balance),
+            *goldPacks(storeProducts).toTypedArray(),
             quizSlot(),
             donateGooglePlay(),
             referralProgram(),
             nicknameMarket(),
             adRewardBox(),
         )
+
+    /**
+     * Паки золота — записи той же полки, а не второй перечень: один `ShopItemId` на пак, цена —
+     * строка из магазина. Пак продаётся, только когда магазин назвал свою цену; без ответа магазина
+     * запись остаётся на полке закрытой — экран объяснит, почему.
+     */
+    private fun goldPacks(storeProducts: Collection<StoreProduct>): List<ShopCatalogItem> =
+        StoreProductId.entries.map { product ->
+            val record = storeProducts.firstOrNull { it.id == product }
+            ShopCatalogItem(
+                id = product.shopItem(),
+                title = "",
+                description = "",
+                category = ShopItemCategory.RESOURCES,
+                // Рендеримая цена живёт в storeProduct.formattedPrice; EXTERNAL-цена здесь — только
+                // разметка «за реальные деньги», не число для показа.
+                price = ShopPrice(0L, ShopCurrency.EXTERNAL),
+                isAvailable = record != null,
+                storeProduct = record,
+            )
+        }
 
     private fun standardHeartSlot(balance: EconomyResourceBalance): ShopCatalogItem {
         val rules = constants().standard

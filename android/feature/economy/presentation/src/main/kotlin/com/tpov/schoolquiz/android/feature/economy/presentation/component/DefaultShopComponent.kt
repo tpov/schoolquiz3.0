@@ -4,9 +4,16 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.PurchaseOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreShelf
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.storeProductId
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.BuyGoldPackUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralProgramUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ListingCancelSync
@@ -33,7 +40,9 @@ class DefaultShopComponent(
     componentContext: ComponentContext,
     private val observeBalance: ObserveEconomyBalanceUseCase,
     private val getCatalog: GetShopCatalogUseCase,
+    private val loadStoreShelf: LoadStoreShelfUseCase,
     private val purchaseItem: PurchaseShopItemUseCase,
+    private val buyGoldPack: BuyGoldPackUseCase,
     private val logos: LogoRepository,
     private val profile: ProfileRepository,
     private val getReferralProgram: GetReferralProgramUseCase,
@@ -41,6 +50,15 @@ class DefaultShopComponent(
 ) : ShopComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + Dispatchers.Main.immediate)
+
+    /**
+     * Ответ магазина о ценах, переживший перерисовки.
+     *
+     * Полка пересобирается на каждое движение баланса, и без этой копии каждый её проход стирал бы
+     * цены паков до следующего вопроса магазину. Держится в памяти компонента, не в базе: магазин
+     * переспрашивают при каждом открытии магазина, вчерашняя цена — цена, которую уже не берут.
+     */
+    private var storeProducts: List<StoreProduct> = emptyList()
 
     private val _state =
         MutableStateFlow(
@@ -55,12 +73,13 @@ class DefaultShopComponent(
         scope.launch {
             _state.update { it.copy(referralProgram = getReferralProgram.execute()) }
         }
+        refreshStoreShelf()
         scope.launch {
             observeBalance.execute().collect { balance ->
                 _state.update {
                     it.copy(
                         balance = balance,
-                        items = getCatalog.execute(balance),
+                        items = getCatalog.execute(balance, storeProducts),
                         isLoading = false,
                     )
                 }
@@ -394,8 +413,40 @@ class DefaultShopComponent(
         }
     }
 
+    /**
+     * Спрашивает магазин о товарах за реальные деньги и перестилает полку с его ответом.
+     *
+     * Цены — слова магазина, а не наши (NFR4), поэтому вопрос задаётся при каждом создании экрана.
+     * Ответ складывается в [storeProducts] и в статус: закрытая строка пака обязана уметь сказать,
+     * магазин ли молчит или товары не выставлены, а не просто стоять под замком.
+     */
+    private fun refreshStoreShelf() {
+        scope.launch {
+            val shelf = loadStoreShelf()
+            storeProducts = (shelf as? StoreShelf.Ready)?.products ?: emptyList()
+            _state.update {
+                it.copy(
+                    storeShelf =
+                        when (shelf) {
+                            is StoreShelf.Ready -> StoreShelfStatus.READY
+                            StoreShelf.NotConfigured -> StoreShelfStatus.NOT_CONFIGURED
+                            StoreShelf.Unreachable -> StoreShelfStatus.UNAVAILABLE
+                        },
+                    items = getCatalog.execute(it.balance, storeProducts),
+                )
+            }
+        }
+    }
+
     private fun purchase(itemId: ShopItemId) {
         if (_state.value.processingItemId != null) return
+        // Пак продаёт магазин, а не серверная полка: его покупка — путь истории 1.2, с проверкой
+        // чека и погашением после подтверждения, а не списание с баланса.
+        val productId = itemId.storeProductId()
+        if (productId != null) {
+            purchaseInStore(itemId, productId)
+            return
+        }
         scope.launch {
             _state.update { it.copy(processingItemId = itemId, message = null) }
             val result = purchaseItem.execute(itemId)
@@ -404,7 +455,7 @@ class DefaultShopComponent(
                     onSuccess = { purchase ->
                         current.copy(
                             balance = purchase.balance,
-                            items = getCatalog.execute(purchase.balance),
+                            items = getCatalog.execute(purchase.balance, storeProducts),
                             processingItemId = null,
                             isLoading = false,
                             message = ShopMessage.Notice(purchase.message),
@@ -421,6 +472,42 @@ class DefaultShopComponent(
             }
         }
     }
+
+    /**
+     * Покупает пак через магазин и пересказывает итог словами сообщения.
+     *
+     * Все четыре исхода [PurchaseOutcome] — не ошибки, у каждого свои слова: «начислено» называет
+     * сумму, которую назвал сервер, «отменено» не делает из жеста игрока аварию. Баланс после
+     * начисления приходит сам — расчёт перечитывает его с сервера, и поток баланса перестилает
+     * полку.
+     */
+    private fun purchaseInStore(
+        itemId: ShopItemId,
+        productId: StoreProductId,
+    ) {
+        scope.launch {
+            _state.update { it.copy(processingItemId = itemId, message = null) }
+            val result = buyGoldPack(productId)
+            _state.update { current ->
+                current.copy(
+                    processingItemId = null,
+                    message =
+                        result.fold(
+                            onSuccess = { outcome -> outcome.shopMessage() },
+                            onFailure = { error -> ShopMessage.Failure(error.errorDetail()) },
+                        ),
+                )
+            }
+        }
+    }
+
+    private fun PurchaseOutcome.shopMessage(): ShopMessage =
+        when (this) {
+            is PurchaseOutcome.Credited -> ShopMessage.GoldCredited(goldGranted)
+            PurchaseOutcome.Pending -> ShopMessage.PurchasePending
+            PurchaseOutcome.Cancelled -> ShopMessage.PurchaseCancelled
+            is PurchaseOutcome.Refused -> ShopMessage.PurchaseRefused(code.name)
+        }
 
     /**
      * Что показать игроку.

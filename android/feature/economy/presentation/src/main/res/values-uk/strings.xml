@@ -4,6 +4,9 @@
     <!-- Store: item titles, resolved in the UI from ShopItemId -->
     <string name="shop_item_standard_heart">Заряд</string>
     <string name="shop_item_gold_heart">Золотий заряд</string>
+    <string name="shop_item_gold_pack_small">Малий набір золота</string>
+    <string name="shop_item_gold_pack_medium">Середній набір золота</string>
+    <string name="shop_item_gold_pack_large">Великий набір золота</string>
     <string name="shop_item_quiz_slot">Слот квізу</string>
     <string name="shop_item_ad_reward_box">Бокс за перегляд 5 реклам</string>
     <string name="shop_item_donate_google_play">Підтримати проєкт</string>
@@ -34,6 +37,9 @@
     <string name="shop_lock_quiz_slot">Чекає на модель лімітів вікторин</string>
     <string name="shop_lock_ad_box">Чекає на рекламного провайдера</string>
     <string name="shop_lock_donate">Чекає на billing-модуль</string>
+    <string name="shop_state_store_loading">Ціни завантажуються з Google Play…</string>
+    <string name="shop_state_store_unreachable">Google Play недоступний — ціни з’являться, коли він відповість</string>
+    <string name="shop_state_store_not_configured">Товари ще не виставлені в Google Play</string>
 
     <!-- Store: beta shelf -->
     <string name="shop_section_in_beta">У беті</string>
@@ -52,6 +58,10 @@
     <!-- Shop messages -->
     <string name="shop_msg_action_failed">Не вдалося виконати дію</string>
     <string name="shop_msg_unavailable">Магазин поки недоступний</string>
+    <string name="shop_msg_gold_credited">Зараховано %1$d золота</string>
+    <string name="shop_msg_purchase_pending">Платіж обробляється — золото надійде автоматично</string>
+    <string name="shop_msg_purchase_cancelled">Покупку скасовано</string>
+    <string name="shop_msg_purchase_refused">Покупка не вдалася (%1$s)</string>
 
     <!-- NFT market: tabs and counters -->
     <string name="nft_tab_names">Імена</string>

@@ -7,6 +7,9 @@
     <!-- Store: item titles, resolved in the UI from ShopItemId -->
     <string name="shop_item_standard_heart">Charge</string>
     <string name="shop_item_gold_heart">Golden charge</string>
+    <string name="shop_item_gold_pack_small">Small gold pack</string>
+    <string name="shop_item_gold_pack_medium">Medium gold pack</string>
+    <string name="shop_item_gold_pack_large">Large gold pack</string>
     <string name="shop_item_quiz_slot">Quiz slot</string>
     <string name="shop_item_ad_reward_box">Box for watching 5 ads</string>
     <string name="shop_item_donate_google_play">Support the project</string>
@@ -35,6 +38,9 @@
     <string name="shop_lock_quiz_slot">Waiting for quiz limit modelling</string>
     <string name="shop_lock_ad_box">Waiting for an ad provider</string>
     <string name="shop_lock_donate">Waiting for the billing module</string>
+    <string name="shop_state_store_loading">Prices are loading from Google Play…</string>
+    <string name="shop_state_store_unreachable">Google Play is unreachable — prices appear once it answers</string>
+    <string name="shop_state_store_not_configured">The products are not listed in Google Play yet</string>
 
     <!-- Store: beta shelf -->
     <string name="shop_section_in_beta">In beta</string>
@@ -53,6 +59,10 @@
     <!-- Shop messages -->
     <string name="shop_msg_action_failed">The action could not be completed</string>
     <string name="shop_msg_unavailable">The shop is not available yet</string>
+    <string name="shop_msg_gold_credited">%1$d gold credited</string>
+    <string name="shop_msg_purchase_pending">Payment is processing — gold arrives automatically</string>
+    <string name="shop_msg_purchase_cancelled">Purchase cancelled</string>
+    <string name="shop_msg_purchase_refused">The purchase was refused (%1$s)</string>
 
     <!-- NFT market: tabs and counters -->
     <string name="nft_tab_names">Names</string>

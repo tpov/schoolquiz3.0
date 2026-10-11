@@ -4,6 +4,9 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.storeProductId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -121,4 +124,66 @@ class GetShopCatalogUseCaseTest {
         assertEquals(500L, item.price?.amount)
         assertTrue(item.isAvailable, "десять из двенадцати — ещё можно")
     }
+
+    @Test
+    fun packsAreSoldWithTheStoreOwnWordsAndPrice() {
+        // Цена — строка, отформатированная магазином: полка показывает её как есть и не знает,
+        // сколько золота за ней стоит (NFR3, NFR4).
+        val store =
+            listOf(StoreProductId.GOLD_PACK_SMALL, StoreProductId.GOLD_PACK_MEDIUM, StoreProductId.GOLD_PACK_LARGE)
+                .map { product(it) }
+        val useCase = GetShopCatalogUseCase()
+
+        val packs =
+            useCase.execute(EconomyResourceBalance.guest(), store)
+                .filter { it.storeProduct != null }
+
+        assertEquals(
+            listOf(StoreProductId.GOLD_PACK_SMALL, StoreProductId.GOLD_PACK_MEDIUM, StoreProductId.GOLD_PACK_LARGE),
+            packs.map { it.storeProduct?.id },
+        )
+        assertTrue(packs.all { it.isAvailable }, "названный магазином пак продаётся")
+        assertTrue(
+            packs.zip(store).all { (row, record) -> row.storeProduct?.formattedPrice == record.formattedPrice },
+            "строка цены доезжает без изменений",
+        )
+        assertTrue(packs.all { it.price?.currency == ShopCurrency.EXTERNAL }, "EXTERNAL — разметка, не число")
+    }
+
+    @Test
+    fun packsStayOnTheShelfLockedWhileTheStoreHasNotAnswered() {
+        val useCase = GetShopCatalogUseCase()
+
+        val packs =
+            useCase.execute(EconomyResourceBalance.guest(), emptyList())
+                .filter { it.id.storeProductId() != null }
+
+        assertEquals(StoreProductId.entries.size, packs.size, "паки остаются записями полки")
+        assertTrue(packs.all { !it.isAvailable }, "без ответа магазина пак закрыт")
+        assertTrue(packs.all { it.storeProduct == null }, "и не притворяется названным")
+    }
+
+    @Test
+    fun aPartiallyAnsweringStoreLeavesTheUnquotedPacksLocked() {
+        val useCase = GetShopCatalogUseCase()
+
+        val packs = useCase.execute(EconomyResourceBalance.guest(), listOf(product(StoreProductId.GOLD_PACK_SMALL)))
+            .filter { it.id.storeProductId() != null }
+
+        assertEquals(
+            listOf(true, false, false),
+            packs.map { it.isAvailable },
+            "магазин назвал только тот пак, который продаёт",
+        )
+    }
+
+    private fun product(id: StoreProductId) =
+        StoreProduct(
+            id = id,
+            title = "Немного золота",
+            description = "Проверка",
+            formattedPrice = "1,99 ₴",
+            priceMicros = 1_990_000L,
+            currency = "UAH",
+        )
 }

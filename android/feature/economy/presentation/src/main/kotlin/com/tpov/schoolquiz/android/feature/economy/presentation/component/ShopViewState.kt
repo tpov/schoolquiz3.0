@@ -19,8 +19,24 @@ data class ShopViewState(
     val isLoading: Boolean = true,
     val processingItemId: ShopItemId? = null,
     val message: ShopMessage? = null,
+    /** Что магазин ответил о товарах за реальные деньги: строки паков объясняют свой замок сами. */
+    val storeShelf: StoreShelfStatus = StoreShelfStatus.LOADING,
     val nicknames: NicknameShopState = NicknameShopState(),
 )
+
+/**
+ * Чем закончился вопрос к магазину о ценах.
+ *
+ * Три ответа различаются словами на строке, поэтому все три доезжают до экрана: «магазин не
+ * отвечает» и «товары не выставлены» — разные неисправности с разными хозяевами, и молчать про
+ * любую из них значило бы показать запертую полку без объяснения.
+ */
+enum class StoreShelfStatus {
+    LOADING,
+    READY,
+    UNAVAILABLE,
+    NOT_CONFIGURED,
+}
 
 /**
  * The nickname tab.
