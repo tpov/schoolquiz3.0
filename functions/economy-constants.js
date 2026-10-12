@@ -193,6 +193,29 @@ function premiumSaleOffer(constants, sku, payment) {
 }
 
 /**
+ * Сезонные выплаты (история 5.2): полосы лидерборда в коробках.
+ *
+ * Раздел — серверное знание, как goldPacks: на устройство он не уезжает, выплата называется
+ * сервером. Полоса — тройка [с места, по место, коробок]; таблица обязана начинаться с первого
+ * места, кончаться сотым и не иметь ни дыр, ни перекрытий — «каждое место ровно в одной полосе»
+ * это свойство самой таблицы, и оно проверяется при чтении. Испорченная таблица откатывается к
+ * начальной, а не к нулю: нулевая полоса означала бы сезон, за который никто не получил ничего.
+ */
+function seasonPayouts(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const rows = Array.isArray(source.leaderboardBands) ? source.leaderboardBands : null;
+  const valid = Array.isArray(rows) && rows.length > 0 && rows.every((row, index) => {
+    if (!Array.isArray(row) || row.length !== 3) return false;
+    const [from, to, boxes] = row;
+    if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || !Number.isSafeInteger(boxes)) return false;
+    if (from < 1 || from > to || boxes < 0) return false;
+    const previous = index === 0 ? {to: 0} : rows[index - 1];
+    return from === (index === 0 ? 1 : previous[1] + 1);
+  }) && rows[rows.length - 1][1] === 100;
+  return {leaderboardBands: valid ? rows.map((row) => [...row]) : DEFAULTS.seasons.leaderboardBands};
+}
+
+/**
  * Приводит документ к рабочей таблице.
  *
  * Испорченный или отсутствующий документ вырождается в начальные значения, а не в нулевые потолки:
@@ -220,6 +243,7 @@ function readEconomyConstants(document, fallbackVersion) {
     activityPrices: activityPrices(source.activityPrices),
     goldPacks: goldPacks(source.goldPacks),
     boxPacks: boxPacks(source.boxPacks),
+    seasons: seasonPayouts(source.seasons),
     premiumProducts: premiumProducts(source.premiumProducts),
     clockSkewToleranceMs: nonNegativeInt(source.clockSkewToleranceMs, DEFAULTS.clockSkewToleranceMs),
     auditEnabled: typeof source.auditEnabled === "boolean" ?

@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 12-10-2026 10:20
+last_updated: 12-10-2026 12:05
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -241,7 +241,18 @@ development_status:
   # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч — границы маркера сверяются с календарём;
   # 5 опровергнуты (семантика skillPoints = fetchLeagueStanding; обвязка/правила — дом;
   # перезапуск обхода безопасен). Деплой — действие владельца.
-  5-2-лидерборд-платит-коробками: backlog
+  5-2-лидерборд-платит-коробками: done  # spec-m5-2-leaderboard-pays-boxes.md — payLeaderboard
+  # платит топ-100 снимка 5.1 по возрастанию места, порциями по 50 (транзакция на порцию):
+  # полоса из серверного раздела seasons.leaderboardBands в configs/economy (1:500, 2:250,
+  # 3:125, 4-5:70, 6-10:50, 11-30:25, 31-50:15, 51-100:5 — сеттл 2315 коробок, gold-flows),
+  # первому месту трофей season_champion; документ выплаты payouts/{uid} (create — ключ повтора),
+  # абсолют к boxCount, строка книги (BOXES, season_leaderboard), квитанция
+  # receipt.season_leaderboard {seasonId, rank, boxes, trophy}. Курсор leaderboardCursorRank
+  # только вперёд, оплаченные места — префикс; leaderboardPaid закрывает расчёт, повтор не пишет.
+  # Полосы проверяются при чтении (1..100 без дыр; испорченное — к начальной таблице), раздел
+  # на устройство не уезжает. functions 108/108, jvmTest паритета зелёный, lint/syntax чисто.
+  # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч — топ длиннее сотни отвергается чтением;
+  # 2 опровергнуты.
   5-3-рефералка-платит-за-шестерых-и-процент: backlog
   5-4-игрок-узнаёт-за-что-получил: backlog
   epic-5-retrospective: optional

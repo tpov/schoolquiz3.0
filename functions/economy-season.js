@@ -18,6 +18,9 @@
 
 const {createHash} = require("node:crypto");
 const {canonicalJson} = require("./canonical-json");
+const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
+const {TROPHY_SEASON_CHAMPION, trophyList} = require("./trophies");
+const {readEconomyConstants} = require("./economy-constants");
 
 /** Куда ложится сезон; коллекция закрыта правилами, читает её только сервер. */
 const ECONOMY_SEASONS_COLLECTION = "economy_seasons";
@@ -52,6 +55,16 @@ const INSTALL_MARKER_KIND = "install";
 
 /** Сколько порций счётчиков снимает один прогон: расписание догонит остальное следующим тиком. */
 const SEASON_SWEEP_PORTIONS = 10;
+
+/**
+ * Вместимость транзакции порции выплат (история 5.2): порция пишет документ выплаты, баланс,
+ * строку книги и квитанцию на каждое место — пятьдесят мест дают ~двести записей против пятисот
+ * допустимых. Граница модуля, не таблицы экономики.
+ */
+const SEASON_PAYOUT_BATCH = 50;
+
+/** Место, которому сезон платит трофей. Продуктовый факт спеки, не ручка таблицы. */
+const SEASON_CHAMPION_RANK = 1;
 
 const SEASON_ID_PATTERN = /^\d{4}-Q[1-4]$/;
 
@@ -128,6 +141,9 @@ function rankTopPlayers(docs) {
 
 function validateSeasonSnapshot(season) {
   if (!Array.isArray(season.snapshot?.top)) fail("INVALID_SOURCE", "season snapshot top is corrupted");
+  // Топ по определению сотня: самосогласованная подделка длиннее должна быть громким отказом,
+  // а не тихой выплатой нулевых мест за пределами таблицы.
+  if (season.snapshot.top.length > 100) fail("INVALID_SOURCE", "season snapshot top is longer than a hundred");
   for (const [index, row] of season.snapshot.top.entries()) {
     if (row.rank !== index + 1 || typeof row.uid !== "string" || !row.uid ||
         !Number.isSafeInteger(row.skillPoints) || row.skillPoints < 0) {
@@ -154,7 +170,27 @@ function validateSeason(raw, seasonId) {
       (typeof raw.referralWalkCursorUid !== "string" || !raw.referralWalkCursorUid)) {
     fail("INVALID_SOURCE", "season referral walk cursor is corrupted");
   }
+  if (raw.leaderboardCursorRank !== null && raw.leaderboardCursorRank !== undefined &&
+      !Number.isSafeInteger(raw.leaderboardCursorRank)) {
+    fail("INVALID_SOURCE", "season leaderboard payout cursor is corrupted");
+  }
   return raw;
+}
+
+/**
+ * Полоса места: сколько коробок платит таблица этому месту, ноль — вне таблицы.
+ *
+ * Таблица проверена читателем экономики (1..100 без дыр и перекрытий), так что каждое место
+ * попадает ровно в одну полосу; линейный проход честен — полос восемь.
+ */
+function boxesForRank(bands, rank) {
+  if (!Array.isArray(bands) || !Number.isSafeInteger(rank) || rank < 1) {
+    fail("INVALID_ARGUMENT", "leaderboard bands or rank are invalid");
+  }
+  for (const [from, to, boxes] of bands) {
+    if (rank >= from && rank <= to) return exactNonNegative(boxes, "band boxes");
+  }
+  return 0;
 }
 
 /**
@@ -266,6 +302,104 @@ async function snapshotReferralCounters({db, seasonId, now, batchSize = SEASON_R
 }
 
 /**
+ * Выплата лидерборда по снимку сезона (история 5.2): порциями, по возрастанию места.
+ *
+ * Порция читает сезон (тем же validateSeason: снимок под дайджестом), берёт первые неоплаченные
+ * места из снимка и платит каждое своей записью в той же транзакции: документ выплаты — create,
+ * и двойное начисление требует дважды создать один документ — невозможно; коробки приходят к
+ * балансу абсолютом, строка книги называет сезон и место, квитанция объясняет выплату ключом с
+ * параметрами. Курсор выплат на сезоне двигается только вперёд, поэтому прогон, упавший между
+ * порциями, продолжает с места, а оплаченные места — всегда префикс.
+ *
+ * @returns {{paid: number, boxes: number, done: boolean}} сколько мест оплачено и закончен ли расчёт.
+ */
+async function payLeaderboard({db, seasonId, now, constants, batchSize = SEASON_PAYOUT_BATCH}) {
+  exactNonNegative(now, "server time");
+  quarterFromId(seasonId);
+  const bands = constants && constants.seasons ? constants.seasons.leaderboardBands : null;
+  if (!Array.isArray(bands) || bands.length === 0) fail("INVALID_ARGUMENT", "leaderboard bands are required");
+  if (!Number.isSafeInteger(batchSize) || batchSize <= 0) fail("INVALID_ARGUMENT", "batch size must be a positive integer");
+  const seasonRef = db.collection(ECONOMY_SEASONS_COLLECTION).doc(seasonId);
+  const payoutsCollection = seasonRef.collection("payouts");
+  let paid = 0;
+  let boxes = 0;
+  for (let portion = 0; portion < SEASON_SWEEP_PORTIONS; portion++) {
+    const outcome = await db.runTransaction(async (transaction) => {
+      const seasonSnapshot = await transaction.get(seasonRef);
+      if (!seasonSnapshot.exists) return {paid: 0, done: true};
+      const season = validateSeason(seasonSnapshot.data(), seasonId);
+      if (season.leaderboardPaid === true) return {paid: 0, done: true};
+      const top = season.snapshot.top;
+      const cursor = season.leaderboardCursorRank || 0;
+      // Все чтения — до первой записи: порядок транзакции Firestore.
+      const slice = top.filter((row) => row.rank > cursor).slice(0, batchSize);
+      if (slice.length === 0) {
+        if (season.leaderboardPaid !== true) transaction.set(seasonRef, {leaderboardPaid: true}, {merge: true});
+        return {paid: 0, done: true};
+      }
+      const reads = {};
+      for (const row of slice) {
+        reads[row.uid] = {
+          payout: await transaction.get(payoutsCollection.doc(row.uid)),
+          user: await transaction.get(db.collection("users").doc(row.uid)),
+        };
+      }
+      let portionPaid = 0;
+      let portionBoxes = 0;
+      let lastRank = cursor;
+      for (const row of slice) {
+        const trophy = row.rank === SEASON_CHAMPION_RANK;
+        const boxes = boxesForRank(bands, row.rank);
+        if (reads[row.uid].payout.exists) continue;
+        const user = reads[row.uid].user.exists ? reads[row.uid].user.data() || {} : {};
+        const boxCount = exactNonNegative(user.boxCount || 0, "player boxCount");
+        transaction.create(payoutsCollection.doc(row.uid), {
+          uid: row.uid, seasonId, kind: "LEADERBOARD", rank: row.rank, boxes, trophy, paidAtMs: now,
+        });
+        transaction.set(db.collection("users").doc(row.uid), {
+          uid: row.uid,
+          boxCount: boxCount + boxes,
+          ...(trophy ? {trophies: trophyList([...trophyList(user.trophies), TROPHY_SEASON_CHAMPION])} : {}),
+          updatedAtMs: now,
+        }, {merge: true});
+        const ledger = ledgerEntry({
+          uid: row.uid,
+          currency: CURRENCY.BOXES,
+          delta: boxes,
+          reason: REASON.SEASON_LEADERBOARD,
+          sourceId: `${seasonId}_leaderboard`,
+          atMs: now,
+          details: {seasonId, rank: row.rank, trophy},
+        });
+        if (ledger) transaction.set(db.doc(`${LEDGER_PATH}/${ledger.id}`), ledger, {merge: true});
+        transaction.set(db.collection("users").doc(row.uid).collection("receipts")
+          .doc(`season_leaderboard_${seasonId}`), {
+          kind: "SEASON_LEADERBOARD",
+          messageKey: "receipt.season_leaderboard",
+          params: {seasonId, rank: row.rank, boxes, trophy},
+          amount: boxes,
+          currency: "BOXES",
+          createdAtMs: now,
+        });
+        portionPaid += 1;
+        portionBoxes += boxes;
+        lastRank = row.rank;
+      }
+      const done = slice.length < batchSize || lastRank >= top.at(-1).rank;
+      transaction.set(seasonRef, {
+        leaderboardCursorRank: lastRank,
+        ...(done ? {leaderboardPaid: true} : {}),
+      }, {merge: true});
+      return {paid: portionPaid, boxes: portionBoxes, done};
+    });
+    paid += outcome.paid;
+    boxes += outcome.boxes || 0;
+    if (outcome.done) return {paid, boxes, done: true};
+  }
+  return {paid, boxes, done: false};
+}
+
+/**
  * Граница установки: квартал первого прогона, с которого сезонная история и начинается.
  *
  * Ставится один раз, транзакцией — два параллельных прогона спорят о ней ровно до первого
@@ -304,11 +438,14 @@ async function ensureInstallMarker({db, now}) {
  * @param {number} deps.now серверное время.
  * @returns {Promise<{closed: string[], captured: number, skipped: number}>}
  */
-async function sweepEconomySeasons({db, now}) {
+async function sweepEconomySeasons({db, now, constants}) {
   exactNonNegative(now, "server time");
   const install = await ensureInstallMarker({db, now});
+  const bands = constants && constants.seasons ? constants : readEconomyConstants(null);
   const closed = [];
   let captured = 0;
+  let paid = 0;
+  let paidBoxes = 0;
   let skipped = 0;
   let cursor = quarterWindow(now);
   for (let back = 0; back < SEASON_CLOSE_LOOKBACK_QUARTERS; back++) {
@@ -323,11 +460,17 @@ async function sweepEconomySeasons({db, now}) {
     const seasonSnapshot = await seasonRef.get();
     if (!seasonSnapshot.exists) continue;
     const season = validateSeason(seasonSnapshot.data(), cursor.id);
-    if (season.referralWalkDone === true) continue;
-    const walk = await snapshotReferralCounters({db, seasonId: cursor.id, now});
-    captured += walk.captured;
+    if (season.referralWalkDone !== true) {
+      const walk = await snapshotReferralCounters({db, seasonId: cursor.id, now});
+      captured += walk.captured;
+    }
+    if (season.leaderboardPaid !== true) {
+      const payout = await payLeaderboard({db, seasonId: cursor.id, now, constants: bands});
+      paid += payout.paid;
+      paidBoxes += payout.boxes;
+    }
   }
-  return {closed, captured, skipped};
+  return {closed, captured, paid, paidBoxes, skipped};
 }
 
 module.exports = {
@@ -336,10 +479,14 @@ module.exports = {
   INSTALL_MARKER_ID,
   SCHEMA_VERSION,
   SEASON_REFERRAL_BATCH,
+  SEASON_PAYOUT_BATCH,
   SEASON_CLOSE_LOOKBACK_QUARTERS,
+  SEASON_CHAMPION_RANK,
+  boxesForRank,
   closeEconomySeason,
   digest,
   ensureInstallMarker,
+  payLeaderboard,
   previousQuarter,
   quarterFromId,
   quarterWindow,

@@ -7,15 +7,29 @@ const {
   ECONOMY_SEASON_CLOSED,
   INSTALL_MARKER_ID,
   SEASON_CLOSE_LOOKBACK_QUARTERS,
+  SEASON_PAYOUT_BATCH,
   SEASON_REFERRAL_BATCH,
+  boxesForRank,
   closeEconomySeason,
   digest,
+  payLeaderboard,
   previousQuarter,
   quarterWindow,
   rankTopPlayers,
   snapshotReferralCounters,
   sweepEconomySeasons,
 } = require("./economy-season");
+const {readEconomyConstants} = require("./economy-constants");
+const {CURRENCY, LEDGER_PATH, REASON} = require("./currency-ledger");
+const {TROPHY_SEASON_CHAMPION} = require("./trophies");
+
+const BANDS = readEconomyConstants(null).seasons.leaderboardBands;
+const payoutDoc = (db, uid, seasonId = SEASON) =>
+  db.collection(`${ECONOMY_SEASONS_COLLECTION}/${seasonId}/payouts`).doc(uid).get();
+const userDoc = async (db, uid) => (await db.collection("users").doc(uid).get()).data();
+const payoutDocs = async (db, seasonId = SEASON) =>
+  Object.fromEntries((await db.collection(`${ECONOMY_SEASONS_COLLECTION}/${seasonId}/payouts`).get()).docs
+    .map((doc) => [doc.id, doc.data()]));
 
 // 2026-04-10 UTC: второй квартал в разгаре, первый созрел 1 апреля.
 const T = Date.UTC(2026, 3, 10);
@@ -292,6 +306,152 @@ test("boundaries: quarter windows are calendar quarters, ids are quarter keys", 
   await assert.rejects(closeEconomySeason({db: makeDb({}), seasonId: "2026-Q5", now: T}), {code: "INVALID_ARGUMENT"});
   await assert.rejects(closeEconomySeason({db: makeDb({}), seasonId: "november", now: T}), {code: "INVALID_ARGUMENT"});
   await assert.rejects(snapshotReferralCounters({db: makeDb({}), seasonId: "2026/1", now: T}), {code: "INVALID_ARGUMENT"});
+});
+
+
+test("every paid rank takes its band, once, and the champion takes the trophy", async () => {
+  const users = {};
+  for (let rank = 1; rank <= 100; rank++) {
+    const uid = `rank-${String(rank).padStart(3, "0")}`;
+    users[uid] = {uid, skillPoints: 10_000 - rank};
+  }
+  const db = makeDb(users);
+  const result = await sweepEconomySeasons({db, now: T});
+  assert.deepEqual(result.closed, [SEASON]);
+  assert.equal(result.paid, 100, "каждое место снимка оплачено ровно один раз");
+  assert.equal(result.paidBoxes, 2315, "полный сеттл сезона стоит 2315 коробок — как в gold-flows");
+  const docs = await payoutDocs(db);
+  assert.equal(Object.keys(docs).length, 100);
+  const expected = {1: 500, 2: 250, 3: 125, 4: 70, 5: 70, 6: 50, 10: 50,
+    11: 25, 30: 25, 31: 15, 50: 15, 51: 5, 100: 5};
+  for (const [rank, boxes] of Object.entries(expected)) {
+    assert.equal(docs[`rank-${rank.padStart(3, "0")}`].boxes, boxes, `место ${rank} — своя полоса`);
+  }
+  assert.equal(docs["rank-001"].trophy, true, "первому месту — трофей");
+  assert.equal(docs["rank-002"].trophy, false);
+  assert.equal((await userDoc(db, "rank-001")).boxCount, 500);
+  assert.deepEqual((await userDoc(db, "rank-001")).trophies, [TROPHY_SEASON_CHAMPION], "трофей — именованный значок в списке");
+  assert.equal((await userDoc(db, "rank-100")).trophies, undefined, "трофей только у чемпиона");
+  const season = (await seasonDoc(db)).data();
+  assert.equal(season.leaderboardPaid, true);
+  assert.equal(season.leaderboardCursorRank, 100);
+  const ledger = (await db.collection(LEDGER_PATH).get()).docs
+    .filter((doc) => doc.data().reason === REASON.SEASON_LEADERBOARD);
+  assert.equal(ledger.length, 100, "каждая выплата — строка книги");
+  const row = ledger.find((doc) => doc.data().uid === "rank-001").data();
+  assert.equal(row.currency, CURRENCY.BOXES);
+  assert.equal(row.delta, 500);
+  assert.deepEqual(row.details, {seasonId: SEASON, rank: 1, trophy: true});
+  const receipt = (await db.collection("users/rank-001/receipts").doc(`season_leaderboard_${SEASON}`).get()).data();
+  assert.equal(receipt.messageKey, "receipt.season_leaderboard", "причина приезжает ключом, а не строкой");
+  assert.deepEqual(receipt.params, {seasonId: SEASON, rank: 1, boxes: 500, trophy: true});
+  assert.equal(receipt.amount, 500);
+  assert.equal(receipt.currency, "BOXES");
+});
+
+test("a repeat payout changes nothing: balances, docs and receipts stay put", async () => {
+  const db = makeDb({...player("gold", 900), ...player("silver", 800)});
+  await sweepEconomySeasons({db, now: T});
+  const before = structuredClone({
+    users: [await userDoc(db, "gold"), await userDoc(db, "silver")],
+    payouts: await payoutDocs(db),
+    season: (await seasonDoc(db)).data(),
+  });
+  const again = await sweepEconomySeasons({db, now: T + 60_000});
+  assert.equal(again.paid, 0);
+  assert.deepEqual([await userDoc(db, "gold"), await userDoc(db, "silver")], before.users, "повтор не платит второй раз");
+  assert.deepEqual(await payoutDocs(db), before.payouts);
+  assert.equal((await seasonDoc(db)).data().leaderboardPaid, true);
+});
+
+test("a payout portion that falls rolls back whole and the next run continues from the cursor", async () => {
+  const users = {};
+  for (let index = 0; index < SEASON_PAYOUT_BATCH + 3; index++) {
+    const uid = `rank-${String(index + 1).padStart(3, "0")}`;
+    users[uid] = {uid, skillPoints: 10_000 - index};
+  }
+  const {db, store} = makeRawDb({...INSTALLED_IN_Q1, ...Object.fromEntries(
+    Object.entries(users).map(([uid, data]) => [`users/${uid}`, data]))});
+  await sweepEconomySeasons({db, now: T});
+  let docs = await payoutDocs(db);
+  assert.equal(Object.keys(docs).length, SEASON_PAYOUT_BATCH + 3, "хвост за пределами порции доходит");
+  assert.equal((await seasonDoc(db)).data().leaderboardPaid, true);
+  // Порция с отказом: транзакция откатывается целиком, курсор остаётся на префиксе оплаченных.
+  const resumed = makeRawDb({...INSTALLED_IN_Q1, ...Object.fromEntries(
+    Object.entries(users).map(([uid, data]) => [`users/${uid}`, data]))},
+    {fail: {[`${ECONOMY_SEASONS_COLLECTION}/${SEASON}/payouts/rank-051`]: "injected commit failure"}});
+  await assert.rejects(sweepEconomySeasons({db: resumed.db, now: T}), /injected commit failure/);
+  resumed.store.fail = null;
+  const result = await sweepEconomySeasons({db: resumed.db, now: T + 60_000});
+  assert.ok(result.paid >= 3, "остаток доигрывается следующим прогоном");
+  docs = await payoutDocs(resumed.db);
+  assert.equal(Object.keys(docs).length, SEASON_PAYOUT_BATCH + 3);
+  assert.equal((await resumed.db.collection(ECONOMY_SEASONS_COLLECTION).doc(SEASON).get()).data().leaderboardPaid, true);
+  assert.equal((await userDoc(resumed.db, "rank-051")).boxCount, 5, "последнее место получает свою полосу");
+});
+
+test("an empty top is paid at once, and a rank outside the table is never paid", async () => {
+  const empty = makeDb({});
+  const result = await sweepEconomySeasons({db: empty, now: T});
+  assert.equal(result.paid, 0);
+  assert.equal((await seasonDoc(empty)).data().leaderboardPaid, true, "пустой топ закрывается выплатой в ноль");
+  assert.deepEqual(await payoutDocs(empty), {});
+  assert.equal(boxesForRank(BANDS, 100), 5, "сотое место — последняя полоса");
+  assert.equal(boxesForRank(BANDS, 101), 0, "ниже сотни таблица не платит");
+  assert.equal(boxesForRank(BANDS, 1), 500);
+  assert.equal(boxesForRank(BANDS, 4), 70, "границы полос полуоткрыты в пользу верхней");
+  assert.equal(boxesForRank(BANDS, 5), 70);
+  assert.equal(boxesForRank(BANDS, 6), 50);
+  assert.throws(() => boxesForRank(BANDS, 0), {code: "INVALID_ARGUMENT"});
+});
+
+test("a payout reads the player the way the box house does: no document materialises as zero", async () => {
+  // Снимок держит uid, документа игрока нет: выплата материалит документ нулевым состоянием,
+  // как box-service читает игроков.
+  const db = makeDb({});
+  const ref = db.collection(ECONOMY_SEASONS_COLLECTION).doc(SEASON);
+  const snapshot = {top: [{rank: 1, uid: "ghost", skillPoints: 900}]};
+  await ref.set({schemaVersion: 1, seasonId: SEASON, quarter: Q1, status: ECONOMY_SEASON_CLOSED,
+    snapshot, snapshotDigest: digest(snapshot), referralWalkCursorUid: null, createdAtMs: T}, {merge: false});
+  const result = await payLeaderboard({db, seasonId: SEASON, now: T + 60_000, constants: readEconomyConstants(null)});
+  assert.deepEqual(result, {paid: 1, boxes: 500, done: true});
+  assert.equal((await userDoc(db, "ghost")).boxCount, 500, "документ материален и ждёт игрока");
+  assert.deepEqual((await userDoc(db, "ghost")).trophies, [TROPHY_SEASON_CHAMPION]);
+});
+
+test("a payout refuses a corrupted season document before any credit", async () => {
+  const db = makeDb({...player("gold", 900)});
+  const ref = db.collection(ECONOMY_SEASONS_COLLECTION).doc(SEASON);
+  const snapshot = {top: [{rank: 1, uid: "gold", skillPoints: 900}]};
+  await ref.set({schemaVersion: 1, seasonId: SEASON, quarter: Q1, status: ECONOMY_SEASON_CLOSED,
+    snapshot, snapshotDigest: digest({top: []}), referralWalkCursorUid: null, createdAtMs: T}, {merge: false});
+  await assert.rejects(
+    payLeaderboard({db, seasonId: SEASON, now: T + 60_000, constants: readEconomyConstants(null)}),
+    {code: "INVALID_SOURCE"});
+  assert.equal((await userDoc(db, "gold")).boxCount, undefined, "испорченный сезон не платит");
+  assert.deepEqual(await payoutDocs(db), {});
+});
+
+test("a snapshot longer than a hundred is a loud break, not a quiet tail of zero payouts", async () => {
+  const db = makeDb({});
+  const ref = db.collection(ECONOMY_SEASONS_COLLECTION).doc(SEASON);
+  const top = [];
+  for (let rank = 1; rank <= 101; rank++) top.push({rank, uid: `rank-${rank}`, skillPoints: 1000 - rank});
+  const snapshot = {top};
+  await ref.set({schemaVersion: 1, seasonId: SEASON, quarter: Q1, status: ECONOMY_SEASON_CLOSED,
+    snapshot, snapshotDigest: digest(snapshot), referralWalkCursorUid: null, createdAtMs: T}, {merge: false});
+  await assert.rejects(
+    payLeaderboard({db, seasonId: SEASON, now: T + 60_000, constants: readEconomyConstants(null)}),
+    {code: "INVALID_SOURCE"});
+  assert.deepEqual(await payoutDocs(db), {});
+});
+
+test("payLeaderboard without a bands table refuses loudly", async () => {
+  const db = makeDb({...player("gold", 900)});
+  await sweepEconomySeasons({db, now: T});
+  await assert.rejects(
+    payLeaderboard({db, seasonId: SEASON, now: T, constants: {}}),
+    {code: "INVALID_ARGUMENT"});
 });
 
 (async () => {

@@ -81,6 +81,7 @@ function testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves() {
     "purchase_refund",
     "review_fee",
     "review_reward",
+    "season_leaderboard",
     "slot_purchase",
   ]);
   // Возврат — свой повод, а не отрицательное начисление: он приходит своим путём, в своё время и

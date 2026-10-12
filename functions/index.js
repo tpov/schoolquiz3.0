@@ -3813,7 +3813,7 @@ exports.reconcileEconomySeasons = onSchedule({...FUNCTION_OPTIONS,
   schedule: "every 10 minutes", timeZone: "UTC", timeoutSeconds: FUNCTION_TIMEOUT_MS / 1000,
   memory: "512MiB", maxInstances: 1, retryCount: 0,
 }, async () => {
-  const result = await sweepEconomySeasons({db, now: Date.now()});
+  const result = await sweepEconomySeasons({db, now: Date.now(), constants: await readEconomyConstantsDocument()});
   logger.info("Economy season sweep completed", result);
 });
 

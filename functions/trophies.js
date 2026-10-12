@@ -12,6 +12,14 @@
 /** Awarded only by a human check of who somebody is. Never dropped by a gift box. */
 const TROPHY_VERIFIED = "verified";
 
+/**
+ * Сезонный трофей: платит закрытие сезона первому месту (история 5.2).
+ *
+ * Не из дропа коробок — единственный писатель settlement сезона; имя нарочито говорящее,
+ * потому что значок игрок видит, а таблицу выплат — нет.
+ */
+const TROPHY_SEASON_CHAMPION = "season_champion";
+
 /** The pool a gift box may draw from. Deliberately excludes TROPHY_VERIFIED. */
 const GIFT_BOX_TROPHY_NAMES = [
   "first_steps",
@@ -57,6 +65,7 @@ function pickGiftBoxTrophy(owned, randomIndex) {
 
 module.exports = {
   TROPHY_VERIFIED,
+  TROPHY_SEASON_CHAMPION,
   GIFT_BOX_TROPHY_NAMES,
   trophyList,
   hasTrophy,

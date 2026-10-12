@@ -90,6 +90,7 @@ function testTheServerDefaultsAreTheSharedFileVerbatim() {
     activityPrices: shared.activityPrices,
     goldPacks: shared.goldPacks,
     boxPacks: shared.boxPacks,
+    seasons: shared.seasons,
     premiumProducts: {},
     clockSkewToleranceMs: shared.clockSkewToleranceMs,
     auditEnabled: shared.auditEnabled,
@@ -178,8 +179,11 @@ function testTheClientNeverSeesThePackSizes() {
     Object.keys(forClient).sort(),
     ["activityPrices", "auditEnabled", "clockSkewToleranceMs", "plasma", "premiumGoldOffers", "standard", "version"],
   );
-  const {goldPacks, boxPacks, ...withoutPacks} = shared;
+  const {goldPacks, boxPacks, seasons, ...withoutPacks} = shared;
   assert.ok(goldPacks, "в общем файле раздел есть");
+  assert.ok(seasons, "раздел сезона в общем файле есть");
+  assert.strictEqual("seasons" in clientEconomyConstants(readEconomyConstants(null)), false,
+    "полосы выплат — знание сервера: выплата называется им, а не клиентом");
   assert.deepStrictEqual(clientEconomyConstants(readEconomyConstants(null)), withoutPacks);
   assert.strictEqual(ECONOMY_CONSTANTS_DOC, "configs/economy");
 }
@@ -238,6 +242,38 @@ testGoldPacksAreReadStrictlyAndFallBackToTheInitialSizes();
 testTheSkuShapeIsOneDefinitionSharedWithTheVerifier();
 testAMissingGoldPacksSectionKeepsEveryKnownPackOnSale();
 testTheClientNeverSeesThePackSizes();
+
+function testSeasonBandsCoverEveryRankExactlyOnceOrFallBack() {
+  // Полосы сезона (история 5.2): свойство таблицы — каждое место 1..100 ровно в одной полосе.
+  // Испорченная таблица откатывается к начальной: нулевая полоса — сезон, за который никто не
+  // получил ничего.
+  const stock = readEconomyConstants(null);
+  const seen = new Set();
+  for (const [from, to, boxes] of stock.seasons.leaderboardBands) {
+    assert.strictEqual(boxes > 0, true);
+    for (let rank = from; rank <= to; rank++) {
+      assert.strictEqual(seen.has(rank), false, `место ${rank} в двух полосах`);
+      seen.add(rank);
+    }
+  }
+  assert.deepStrictEqual([...seen.keys()].sort((a, b) => a - b), Array.from({length: 100}, (_, i) => i + 1));
+  const dictated = stock.seasons.leaderboardBands.map((row) => row.join(":")).join(",");
+  assert.strictEqual(dictated, "1:1:500,2:2:250,3:3:125,4:5:70,6:10:50,11:30:25,31:50:15,51:100:5",
+    "лестница диктуется спекой, а не удобством правки");
+  const broken = readEconomyConstants({seasons: {leaderboardBands: [[1, 40, 500], [50, 100, 5]]}});
+  assert.deepStrictEqual(broken.seasons.leaderboardBands, stock.seasons.leaderboardBands,
+    "дыра между полосами возвращает начальную таблицу");
+  const overlapping = readEconomyConstants({seasons: {leaderboardBands: [[1, 60, 1], [50, 100, 5]]}});
+  assert.deepStrictEqual(overlapping.seasons.leaderboardBands, stock.seasons.leaderboardBands);
+  const shortTail = readEconomyConstants({seasons: {leaderboardBands: [[1, 1, 500], [2, 99, 5]]}});
+  assert.deepStrictEqual(shortTail.seasons.leaderboardBands, stock.seasons.leaderboardBands);
+  const zeroBand = readEconomyConstants({seasons: {leaderboardBands: [[1, 99, 500], [100, 100, -5]]}});
+  assert.deepStrictEqual(zeroBand.seasons.leaderboardBands, stock.seasons.leaderboardBands);
+  const empty = readEconomyConstants({seasons: {}});
+  assert.deepStrictEqual(empty.seasons.leaderboardBands, stock.seasons.leaderboardBands);
+}
+
 testBoxPacksAreReadLikeGoldPacksAndStayServerKnowledge();
+testSeasonBandsCoverEveryRankExactlyOnceOrFallBack();
 
 console.log("economy-constants.test.js OK");
