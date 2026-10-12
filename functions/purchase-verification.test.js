@@ -124,7 +124,7 @@ function testAVerifiedUnseenTokenIsCreditedFromTheServerTable() {
     quantity: 1,
     goldGranted: 10,
     isTest: false,
-    constantsVersion: 0,
+    constantsVersion: 1,
   });
 
   const {response} = settle(verdict, {goldBefore: 5});
@@ -347,13 +347,13 @@ function testAConsumedTokenWithoutASettlementIsNotOursToCredit() {
   );
 }
 
-function testAMissingConstantsDocumentCreditsBootstrapDefaultsAndAuditsVersionZero() {
+function testAMissingConstantsDocumentCreditsBootstrapDefaultsAndAuditsItsVersion() {
   const {audit, settlement} = settle(decide({constants: readEconomyConstants(null)}));
 
   assert.strictEqual(audit.goldGranted, 10, "начальный размер маленького пака");
-  assert.strictEqual(audit.constantsVersion, 0);
+  assert.strictEqual(audit.constantsVersion, 1);
   assert.strictEqual(audit.constantsDoc, "configs/economy");
-  assert.strictEqual(settlement.constantsVersion, 0);
+  assert.strictEqual(settlement.constantsVersion, 1);
 }
 
 function testATestPurchaseIsCreditedAndFlaggedInTheAudit() {
@@ -443,7 +443,7 @@ function testTheRecordsNameWhatTheAuditNeeds() {
     goldBefore: 7,
     goldAfter: 17,
     constantsDoc: "configs/economy",
-    constantsVersion: 0,
+    constantsVersion: 1,
     isTest: false,
     settledAtMs: NOW,
     response,
@@ -476,7 +476,7 @@ function testTheRecordsNameWhatTheAuditNeeds() {
     goldBefore: 7,
     goldAfter: 17,
     constantsDoc: "configs/economy",
-    constantsVersion: 0,
+    constantsVersion: 1,
     isTest: false,
     atMs: NOW,
   });
@@ -579,7 +579,7 @@ testAnUnsoldSkuIsRefusedRatherThanCreditedAtZero();
 testATokenSettledByAnotherAccountIsRefusedWithoutLeakingItsAnswer();
 testAPurchaseMarkedForAnotherAccountIsRefused();
 testAConsumedTokenWithoutASettlementIsNotOursToCredit();
-testAMissingConstantsDocumentCreditsBootstrapDefaultsAndAuditsVersionZero();
+testAMissingConstantsDocumentCreditsBootstrapDefaultsAndAuditsItsVersion();
 testATestPurchaseIsCreditedAndFlaggedInTheAudit();
 testAChangedTableAppliesToTheNextPurchaseAndEarlierAuditsKeepTheirVersion();
 testEveryRefusalCarriesAMachineReadableReasonCode();

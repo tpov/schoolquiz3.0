@@ -405,7 +405,7 @@ async function testADebtBiggerThanTheGrantSwallowsItWholeAndLeavesNoLedgerRow() 
   assert.strictEqual(byPath[LEDGER_ENTRY_PATH], undefined);
 }
 
-async function testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero() {
+async function testAMissingConstantsDocumentCreditsBootstrapAndAuditsItsVersion() {
   const db = fakeDb({docs: {[USER_PATH]: {gold: 0}}});
 
   const {outcome} = await settle({db, play: fakePlay(found())});
@@ -414,7 +414,7 @@ async function testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero
   assert.deepStrictEqual(outcome.response, expected.response);
   assert.strictEqual(outcome.response.goldGranted, 10, "начальный размер");
   const audit = db.writes.find((write) => write.path === AUDIT_PATH).data;
-  assert.strictEqual(audit.constantsVersion, 0);
+  assert.strictEqual(audit.constantsVersion, 1);
   assert.strictEqual(audit.constantsDoc, "configs/economy");
   const settlement = db.writes.find((write) => write.path === SETTLEMENT_PATH).data;
   assert.strictEqual(settlement.status, STATUS_CREDITED);
@@ -567,7 +567,7 @@ async function testABoughtBoxIgnoresTheGoldShortfall() {
   await testALostRaceOnCreateIsReportedAsUnavailableAndNothingIsWritten();
   await testAnOwedBalanceIsClearedBeforeAnythingReachesTheBalance();
   await testADebtBiggerThanTheGrantSwallowsItWholeAndLeavesNoLedgerRow();
-  await testAMissingConstantsDocumentCreditsBootstrapAndAuditsVersionZero();
+  await testAMissingConstantsDocumentCreditsBootstrapAndAuditsItsVersion();
   await testAnUnreadableConstantsTableNamesNoVerdictAndWritesNothing();
   await testABoughtBoxLandsInTheSameBoxCountWithItsOwnLedgerReason();
   await testABoughtBoxQuantityMultipliesAndStaysOnTheProductEndpoint();

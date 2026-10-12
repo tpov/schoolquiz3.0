@@ -1,5 +1,5 @@
 {
-  "version": 0,
+  "version": 1,
   "standard": {
     "maxOwned": 10,
     "regenMs": 3600000,
@@ -40,7 +40,48 @@
   },
   "boxPacks": {},
   "seasons": {
-    "leaderboardBands": [[1, 1, 500], [2, 2, 250], [3, 3, 125], [4, 5, 70], [6, 10, 50], [11, 30, 25], [31, 50, 15], [51, 100, 5]],
+    "leaderboardBands": [
+      [
+        1,
+        1,
+        500
+      ],
+      [
+        2,
+        2,
+        250
+      ],
+      [
+        3,
+        3,
+        125
+      ],
+      [
+        4,
+        5,
+        70
+      ],
+      [
+        6,
+        10,
+        50
+      ],
+      [
+        11,
+        30,
+        25
+      ],
+      [
+        31,
+        50,
+        15
+      ],
+      [
+        51,
+        100,
+        5
+      ]
+    ],
     "referralPercent": 1,
     "referralInviteTarget": 6,
     "referralInviteBoxes": 10,
@@ -48,5 +89,27 @@
   },
   "clockSkewToleranceMs": 0,
   "auditEnabled": true,
-  "premiumGoldOffers": []
+  "premiumGoldOffers": [],
+  "premiumProducts": {
+    "premium_1d": {
+      "days": 1,
+      "goldPrice": 1,
+      "salesEnabled": true
+    },
+    "premium_7d": {
+      "days": 7,
+      "goldPrice": 5,
+      "salesEnabled": true
+    },
+    "premium_30d": {
+      "days": 30,
+      "goldPrice": 18,
+      "salesEnabled": true
+    },
+    "premium_365d": {
+      "days": 365,
+      "goldPrice": 150,
+      "salesEnabled": true
+    }
+  }
 }

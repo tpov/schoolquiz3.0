@@ -70,8 +70,14 @@ data class EconomyConstants(
          */
         const val POINTS_PER_CHARGE: Int = 100
 
-        /** Версия загрузочной копии. Настоящая таблица начинается с единицы. */
-        const val BOOTSTRAP_VERSION: Long = 0L
+        /**
+         * Версия загрузочной копии.
+         *
+         * Единица — золотой прейскурант премиума (решение владельца 2026-10-12: 1 gold = 1 день,
+         * скидки за объём 5/18/150). Число обязано идти в ногу с `version` в
+         * `functions/config/economy-constants.json` — паритет проверяет EconomyConstantsParityTest.
+         */
+        const val BOOTSTRAP_VERSION: Long = 1L
 
         /**
          * Начальный прейскурант.

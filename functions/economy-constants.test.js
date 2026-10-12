@@ -179,11 +179,15 @@ function testTheClientNeverSeesThePackSizes() {
     Object.keys(forClient).sort(),
     ["activityPrices", "auditEnabled", "clockSkewToleranceMs", "plasma", "premiumGoldOffers", "standard", "version"],
   );
-  const {goldPacks, boxPacks, seasons, ...withoutPacks} = shared;
+  const {goldPacks, boxPacks, seasons, premiumProducts, ...withoutPacks} = shared;
   assert.ok(goldPacks, "в общем файле раздел есть");
   assert.ok(seasons, "раздел сезона в общем файле есть");
+  assert.ok(premiumProducts && Object.keys(premiumProducts).length > 0,
+    "золотой прейскурант в общем файле есть");
   assert.strictEqual("seasons" in clientEconomyConstants(readEconomyConstants(null)), false,
     "полосы выплат — знание сервера: выплата называется им, а не клиентом");
+  assert.strictEqual("premiumProducts" in clientEconomyConstants(readEconomyConstants(null)), false,
+    "сырая таблица премиума — знание сервера: уезжает готовый прейскурант premiumGoldOffers");
   assert.deepStrictEqual(clientEconomyConstants(readEconomyConstants(null)), withoutPacks);
   assert.strictEqual(ECONOMY_CONSTANTS_DOC, "configs/economy");
 }
@@ -206,7 +210,8 @@ function testAStoredTableAlwaysOutranksTheBootstrapCopy() {
   assert.strictEqual(readEconomyConstants({}, 1_700_000_000_000).version, 1_700_000_000_000);
   assert.strictEqual(readEconomyConstants({version: 7}, 1_700_000_000_000).version, 7, "своё число главнее");
   assert.strictEqual(readEconomyConstants({version: 7}).version, 7);
-  assert.strictEqual(readEconomyConstants(null).version, 0, "а отсутствующий документ — это и есть копия");
+  assert.strictEqual(readEconomyConstants(null).version, DEFAULTS.version,
+    "а отсутствующий документ — это и есть копия, с её версией");
 }
 
 function testAnEmptyRungIsNotAFreeSlot() {

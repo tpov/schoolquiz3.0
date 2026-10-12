@@ -75,9 +75,10 @@ class EconomyConstantsTest {
     }
 
     @Test
-    fun `given the bootstrap copy then it is version zero, so a real table always wins`() {
-        // Настоящая таблица начинается с единицы: сравнение версий обязано отличать «ещё ничего не
-        // приезжало» от «приехало и вот оно».
-        assertEquals(0L, EconomyConstants.BOOTSTRAP.version)
+    fun `given the bootstrap copy then it already is a real table`() {
+        // Золотой прейскурант (версия 1, решение владельца 2026-10-12) живёт в общем файле, и
+        // загрузочная копия — он сам: «ещё ничего не приезжало» больше не отдельный этап. Выигрывает
+        // документ строго новее; EconomyConstantsParityTest держит число в ногу с версией файла.
+        assertTrue(EconomyConstants.BOOTSTRAP.version >= 1L)
     }
 }
