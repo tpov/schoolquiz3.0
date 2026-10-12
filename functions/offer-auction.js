@@ -38,6 +38,12 @@ const OFFER_AUCTION_SETTLED = "SETTLED";
  */
 const OFFER_BID_STATUS = {BID: "BID", WON: "WON", REFUNDED: "REFUNDED"};
 
+/**
+ * Статус проверки объявления (4.3): непроверенное не показывается никогда. Живёт на ставке
+ * с рождения; решение — модераторский callable (offer-ad-review.js).
+ */
+const OFFER_BID_REVIEW = {PENDING: "PENDING", APPROVED: "APPROVED", REJECTED: "REJECTED"};
+
 /** Вместимость открытого стола: чтение ограничено, стол — верхушка, а не архив. */
 const OFFER_BID_TABLE_LIMIT = 200;
 
@@ -189,6 +195,7 @@ async function placeOfferBid({db, uid, amount, imageUrl, link, now}) {
           updatedAtMs: now,
           raiseCount: plan.raiseCount,
           status: OFFER_BID_STATUS.BID,
+          reviewStatus: OFFER_BID_REVIEW.PENDING,
         }, {merge: true});
         transaction.set(userRef, {gold: plan.goldAfter, updatedAtMs: now}, {merge: true});
         // Повышение — возврат прежней суммы и списание новой: две строки книги об одном движении
@@ -266,6 +273,7 @@ module.exports = {
   OFFER_AUCTION_SETTLED,
   OFFER_BIDS_COLLECTION,
   OFFER_BID_STATUS,
+  OFFER_BID_REVIEW,
   OFFER_BID_TABLE_LIMIT,
   offerAuctionRecord,
   offerAuctionView,

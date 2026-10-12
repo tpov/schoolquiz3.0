@@ -4,9 +4,10 @@
  * Переворот месяца аукциона предложений (история 4.2).
  *
  * Месяц закончился — плановая работа закрывает аукцион ровно один раз: верхняя ставка становится
- * победителем и занимает место (документ размещения `offers/current`), её золото сгорает — оно
- * списано ставкой в 4.1 и просто не возвращается; проигравшим золото возвращается полностью,
- * порциями ограниченного размера; в тот же момент открывается аукцион следующего месяца.
+ * победителем и занимает место — её объявление ложится кандидатом в `offers/pending`, ждущим
+ * проверки (4.3); её золото сгорает — оно списано ставкой в 4.1 и просто не возвращается;
+ * проигравшим золото возвращается полностью, порциями ограниченного размера; в тот же момент
+ * открывается аукцион следующего месяца.
  *
  * Ключи повтора — сами статусы: транзакция закрытия флипает аукцион только из OPEN (повтор
  * читает SETTLING/SETTLED и уходит), каждая порция возврата флипает статус конкретной ставки
@@ -28,11 +29,15 @@ const {
   OFFER_AUCTION_SETTLED,
   OFFER_BIDS_COLLECTION,
   OFFER_BID_STATUS,
+  OFFER_BID_REVIEW,
 } = require("./offer-auction");
 
 /** Куда ложится объявление победителя; читает его будущая витрина, правилам закрыто. */
 const OFFER_PLACEMENTS_COLLECTION = "offers";
-const OFFER_PLACEMENT_DOC = "current";
+/** Показанное место: только проверенные объявления (перезаписывает одобрение, 4.3). */
+const OFFER_PLACEMENT_CURRENT = "current";
+/** Кандидат: объявление победителя, ждущее проверки (4.3); на показ не едет. */
+const OFFER_PLACEMENT_PENDING = "pending";
 
 /**
  * Вместимость транзакции: порция возврата пишет флип, строку книги и баланс на каждую ставку —
@@ -79,12 +84,18 @@ function followingMonthSlot(auctionId, endsAtMs) {
   };
 }
 
-/** Победитель: верхняя сумма, при равенстве — пришедшая раньше. Пустой месяц — `null`. */
+/**
+ * Победитель: верхняя сумма, при равенстве — пришедшая раньше. Пустой месяц — `null`.
+ *
+ * Возвращённые и отклонённые ставки не выигрывают: их деньги уже ушли назад, а отклонённое
+ * объявление не показывается никогда (4.3).
+ */
 function pickWinner(docs) {
   let winner = null;
   for (const doc of docs) {
     const bid = doc.data() || {};
     if (typeof bid.uid !== "string" || bid.uid === "") continue;
+    if (bid.status === OFFER_BID_STATUS.REFUNDED || bid.reviewStatus === OFFER_BID_REVIEW.REJECTED) continue;
     const candidate = {
       id: doc.id,
       uid: bid.uid,
@@ -134,17 +145,64 @@ async function closeOfferAuction({db, auctionId, now}) {
     const next = followingMonthSlot(auctionId, auction.endsAtMs);
     const nextRef = db.collection(OFFER_AUCTIONS_COLLECTION).doc(next.auctionId);
     const nextSnapshot = await transaction.get(nextRef);
+    // Непросмотренный кандидат прошлого месяца не переживает это закрытие: его объявление так
+    // и не показалось, и по обещанию истории ставка возвращается (4.3), а не горчит молча.
+    const pendingRef = db.collection(OFFER_PLACEMENTS_COLLECTION).doc(OFFER_PLACEMENT_PENDING);
+    const pendingSnapshot = await transaction.get(pendingRef);
+    let stale = null;
+    if (pendingSnapshot.exists) {
+      const pending = pendingSnapshot.data() || {};
+      if (typeof pending.bidId !== "string" || !pending.bidId || pending.bidId.includes("/")) {
+        fail("INVALID_ARGUMENT", "pending candidate bidId is corrupted");
+      }
+      const staleSnapshot = await transaction.get(db.collection(OFFER_BIDS_COLLECTION).doc(pending.bidId));
+      if (!staleSnapshot.exists) fail("INVALID_ARGUMENT", "pending candidate bid is missing");
+      const staleBid = staleSnapshot.data() || {};
+      const staleUid = typeof staleBid.uid === "string" && staleBid.uid !== "" ? staleBid.uid :
+        fail("INVALID_ARGUMENT", "stale candidate bid uid is corrupted");
+      const staleAmount = exactNonNegative(staleBid.amount, "stale candidate bid amount");
+      if (typeof staleBid.auctionId !== "string" || staleBid.auctionId === "") {
+        fail("INVALID_ARGUMENT", "stale candidate bid auctionId is corrupted");
+      }
+      const staleUserSnapshot = await transaction.get(db.collection("users").doc(staleUid));
+      const staleGold = staleUserSnapshot.exists ?
+        Math.max(0, Math.floor(Number((staleUserSnapshot.data() || {}).gold) || 0)) : 0;
+      stale = {bidId: pending.bidId, uid: staleUid, amount: staleAmount, gold: staleGold,
+        auctionId: staleBid.auctionId, refunded: staleBid.status === OFFER_BID_STATUS.REFUNDED};
+    }
     if (winner) {
       transaction.set(db.collection(OFFER_BIDS_COLLECTION).doc(winner.id),
         {status: OFFER_BID_STATUS.WON, updatedAtMs: now}, {merge: true});
-      transaction.set(db.collection(OFFER_PLACEMENTS_COLLECTION).doc(OFFER_PLACEMENT_DOC), {
+      // Кандидат, ждущий проверки (4.3): на показ уходит только одобренное, current не тронут —
+      // экран показывает прошлую витрину, пока модератор не решил.
+      transaction.set(pendingRef, {
         auctionId,
         bidId: winner.id,
         uid: winner.uid,
         imageUrl: winner.imageUrl,
         link: winner.link,
+        reviewStatus: OFFER_BID_REVIEW.PENDING,
         settledAtMs: now,
       });
+    } else if (pendingSnapshot.exists) {
+      // Победителя нет — прежний кандидат всё равно уходит: место остаётся прошлой витрине.
+      transaction.delete(pendingRef);
+    }
+    if (stale && !stale.refunded) {
+      transaction.set(db.collection(OFFER_BIDS_COLLECTION).doc(stale.bidId),
+        {status: OFFER_BID_STATUS.REFUNDED, refundedAtMs: now, updatedAtMs: now}, {merge: true});
+      transaction.set(db.collection("users").doc(stale.uid),
+        {gold: stale.gold + stale.amount, updatedAtMs: now}, {merge: true});
+      const row = ledgerEntry({
+        uid: stale.uid,
+        currency: CURRENCY.GOLD,
+        delta: stale.amount,
+        reason: REASON.OFFER_BID_REFUND,
+        sourceId: stale.bidId,
+        atMs: now,
+        details: {auctionId: stale.auctionId, stale: true},
+      });
+      if (row) transaction.set(db.doc(`${LEDGER_PATH}/${row.id}`), row, {merge: true});
     }
     if (!nextSnapshot.exists) {
       transaction.create(nextRef, {
@@ -268,7 +326,8 @@ async function settleDueOfferAuctions({db, now, batchSize}) {
 
 module.exports = {
   OFFER_PLACEMENTS_COLLECTION,
-  OFFER_PLACEMENT_DOC,
+  OFFER_PLACEMENT_CURRENT,
+  OFFER_PLACEMENT_PENDING,
   OFFER_SETTLE_BATCH,
   closeOfferAuction,
   followingMonthSlot,

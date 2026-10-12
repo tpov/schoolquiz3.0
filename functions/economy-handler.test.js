@@ -107,3 +107,34 @@ test("the offers-auction pair keeps its named wire codes and the open table stay
     Date.now = originalNow;
   }
 });
+
+test("the offers review gate refuses the unqualified, and the screen serves only approved ads", async () => {
+  store.reset(world());
+  const now = Date.UTC(2027, 0, 2);
+  const originalNow = Date.now;
+  Date.now = () => now;
+  try {
+    await assert.rejects(functions.decideOfferAdReview.run({data: {bidId: "b", decision: "APPROVED"}}), {code: "unauthenticated"});
+    await assert.rejects(call("decideOfferAdReview", {bidId: "b", decision: "APPROVED"}), {code: "permission-denied"},
+      "без уровня модератора решения о детском экране не бывает");
+    assert.deepEqual(await call("fetchOffersScreen", {}), {placement: null},
+      "пустой экран без размещений — и никакого creative");
+    // Кандидат ждёт проверки: экран его не показывает даже модератору через читающую поверхность.
+    store.documents.set("offer_bids/2027-01_player", {auctionId: "2027-01", uid,
+      amount: 30, createdAtMs: now, raiseCount: 0, status: "WON", reviewStatus: "PENDING"});
+    store.documents.set("offers/pending", {auctionId: "2027-01", bidId: "2027-01_player",
+      uid, imageUrl: "secret-i", link: "secret-l", reviewStatus: "PENDING", settledAtMs: now});
+    assert.deepEqual(await call("fetchOffersScreen", {}), {placement: null}, "кандидат не на экране");
+    // Модератор одобряет: кандидат уходит на экран. Гейт читает профиль, а не кошелёк.
+    store.documents.set(`profiles/${uid}`, {...store.documents.get(`profiles/${uid}`), moderatorLevel: 100});
+    const decision = await call("decideOfferAdReview", {bidId: "2027-01_player", decision: "APPROVED"});
+    assert.equal(decision.promotedTo, "current");
+    const view = await call("fetchOffersScreen", {});
+    assert.equal(view.placement.imageUrl, "secret-i");
+    assert.equal(view.placement.link, "secret-l");
+    assert.equal(view.placement.uid, uid);
+    assert.equal(store.documents.has("offers/pending"), false, "кандидат очищен после решения");
+  } finally {
+    Date.now = originalNow;
+  }
+});

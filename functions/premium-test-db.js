@@ -17,6 +17,7 @@ function premiumTestDb(initial = {}) {
     const next = new Map(store);
     for (const write of writes) {
       if (write.op === "create" && next.has(write.path)) throw new Error("ALREADY_EXISTS");
+      if (write.op === "delete") { next.delete(write.path); continue; }
       next.set(write.path, write.merge ? {...next.get(write.path), ...clone(write.data)} : clone(write.data));
     }
     store.clear();
@@ -73,6 +74,7 @@ function premiumTestDb(initial = {}) {
         },
         set(ref, data, options) { pending.push({op: "set", path: ref.path, data: clone(data), merge: !!options?.merge}); },
         create(ref, data) { pending.push({op: "create", path: ref.path, data: clone(data), merge: false}); },
+        delete(ref) { pending.push({op: "delete", path: ref.path}); },
       };
       const result = await body(tx);
       apply(pending);

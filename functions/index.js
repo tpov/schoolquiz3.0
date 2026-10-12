@@ -78,6 +78,7 @@ const {
 const {purchasePremiumWithGold} = require("./premium-shop");
 const {placeOfferBid, offerAuctionView} = require("./offer-auction");
 const {settleDueOfferAuctions} = require("./offer-auction-settlement");
+const {decideOfferAdReview, offersScreenView} = require("./offer-ad-review");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {
   PUSH_EVENTS,
@@ -3796,6 +3797,51 @@ exports.rotateOfferAuctions = onSchedule({...FUNCTION_OPTIONS,
 }, async () => {
   const result = await settleDueOfferAuctions({db, now: Date.now()});
   logger.info("Offer auction rollover completed", result);
+});
+
+/**
+ * Решение по объявлению — проверка перед показом (история 4.3).
+ *
+ * Серверная половина операторской поверхности: очередь проверки в консоли — defer владельца.
+ * Гейт — уровень модератора или разработчика (образец isModerator): решение о том, что увидят
+ * дети, не принимает ни аккаунт без квалификации, ни сама витрина. Отказы приходят именованными
+ * кодами (NOT_FOUND — нет ставки, FAILED_PRECONDITION — решение уже принято, INVALID_ARGUMENT —
+ * испорченный запрос).
+ */
+exports.decideOfferAdReview = onCall(MONETARY_CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  if (profile.moderatorLevel < QUALIFIED_LEVEL && profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
+    throw new HttpsError("permission-denied", "Moderator level is required");
+  }
+  const payload = request.data || {};
+  try {
+    return await decideOfferAdReview({
+      db,
+      bidId: payload.bidId,
+      decision: payload.decision,
+      now: Date.now(),
+    });
+  } catch (error) {
+    const codes = {
+      INVALID_ARGUMENT: "invalid-argument",
+      FAILED_PRECONDITION: "failed-precondition",
+      NOT_FOUND: "not-found",
+    };
+    if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
+    throw error;
+  }
+});
+
+/**
+ * Экран предложений (история 4.3): только проверенное объявление, кандидатов здесь нет.
+ *
+ * Читающая половина показа: непроверенный creative не покидает сервер ни при каком состоянии
+ * документов — offer-ad-review.js отвечает пустотой на непроверенное и испорченное.
+ */
+exports.fetchOffersScreen = onCall(CALLABLE_OPTIONS, async (request) => {
+  requireAuthUid(request);
+  return offersScreenView({db});
 });
 
 /**

@@ -14,7 +14,7 @@ const {
 } = require("./offer-auction");
 const {
   OFFER_PLACEMENTS_COLLECTION,
-  OFFER_PLACEMENT_DOC,
+  OFFER_PLACEMENT_PENDING,
   closeOfferAuction,
   followingMonthSlot,
   pickWinner,
@@ -27,7 +27,8 @@ const AUCTION = "2026-12";             // месяц цели ноябрьско
 const AUCTION_PATH = `${OFFER_AUCTIONS_COLLECTION}/${AUCTION}`;
 const NEXT = "2027-01";
 const NEXT_PATH = `${OFFER_AUCTIONS_COLLECTION}/${NEXT}`;
-const PLACEMENT = `${OFFER_PLACEMENTS_COLLECTION}/${OFFER_PLACEMENT_DOC}`;
+const PENDING = `${OFFER_PLACEMENTS_COLLECTION}/${OFFER_PLACEMENT_PENDING}`;
+const CURRENT = `${OFFER_PLACEMENTS_COLLECTION}/current`;
 const LEDGER = LEDGER_PATH;
 
 const AUCTION_SEED = {
@@ -61,9 +62,14 @@ test("the month turn crowns the top bid, burns its gold and opens the next month
   const winnerBid = db.store.get(`${OFFER_BIDS_COLLECTION}/${offerBidId(AUCTION, "bob")}`);
   assert.equal(winnerBid.status, OFFER_BID_STATUS.WON, "золото победителя сгорает: возврата не будет");
   assert.equal(db.store.get(`users/bob`).gold, 0);
-  const placement = db.store.get(PLACEMENT);
-  assert.deepEqual(placement, {auctionId: AUCTION, bidId: offerBidId(AUCTION, "bob"), uid: "bob",
-    imageUrl: "i-bob", link: "l-bob", settledAtMs: T});
+  const candidate = db.store.get(PENDING);
+  assert.equal(candidate.reviewStatus, "PENDING", "объявление победителя ждёт проверки (4.3)");
+  assert.deepEqual(
+    {auctionId: candidate.auctionId, bidId: candidate.bidId, uid: candidate.uid,
+      imageUrl: candidate.imageUrl, link: candidate.link, settledAtMs: candidate.settledAtMs},
+    {auctionId: AUCTION, bidId: offerBidId(AUCTION, "bob"), uid: "bob",
+      imageUrl: "i-bob", link: "l-bob", settledAtMs: T});
+  assert.equal(db.store.has(CURRENT), false, "показ не тронут: непроверенное не на экране");
   assert.equal(db.store.get(NEXT_PATH).status, OFFER_AUCTION_OPEN, "следующий месяц открыт в тот же момент");
   assert.equal(db.store.get(NEXT_PATH).endsAtMs, Date.UTC(2027, 1, 1));
   for (const uid of ["alice", "carol"]) {
@@ -80,9 +86,22 @@ test("a tie on the top amount goes to the earlier bid", async () => {
   db.store.get(`${OFFER_BIDS_COLLECTION}/${offerBidId(AUCTION, "bob")}`).createdAtMs = Date.UTC(2026, 10, 19);
   await run(db);
   assert.equal(db.store.get(AUCTION_PATH).winnerBidId, offerBidId(AUCTION, "bob"));
-  assert.equal(db.store.get(PLACEMENT).uid, "bob");
+  assert.equal(db.store.get(PENDING).uid, "bob");
   assert.equal(db.store.get(`users/bob`).gold, 0);
   assert.equal(db.store.get(`users/alice`).gold, 50);
+});
+
+test("a rejected or refunded bid never wins the month", async () => {
+  const bids = {alice: 90, bob: 70, carol: 10};
+  const db = makeDb(bids);
+  const bobBid = db.store.get(`${OFFER_BIDS_COLLECTION}/${offerBidId(AUCTION, "bob")}`);
+  db.store.set(`${OFFER_BIDS_COLLECTION}/${offerBidId(AUCTION, "bob")}`, {...bobBid, reviewStatus: "REJECTED"});
+  const aliceBid = db.store.get(`${OFFER_BIDS_COLLECTION}/${offerBidId(AUCTION, "alice")}`);
+  db.store.set(`${OFFER_BIDS_COLLECTION}/${offerBidId(AUCTION, "alice")}`, {...aliceBid, status: "REFUNDED", refundedAtMs: 1});
+  await run(db);
+  assert.equal(db.store.get(AUCTION_PATH).winnerBidId, offerBidId(AUCTION, "carol"),
+    "отклонённая и возвращённая верхушка пропущена");
+  assert.equal(db.store.get(PENDING).uid, "carol");
 });
 
 test("an equal-top bid in another month never enters this ranking", async () => {
@@ -92,7 +111,7 @@ test("an equal-top bid in another month never enters this ranking", async () => 
   }});
   db.store.set(`users/zoe`, {uid: "zoe", gold: 5});
   await run(db);
-  assert.equal(db.store.get(PLACEMENT).uid, "alice", "чужие ставки в рейтинг закрытого месяца не попадают");
+  assert.equal(db.store.get(PENDING).uid, "alice", "чужие ставки в рейтинг закрытого месяца не попадают");
   assert.equal(db.store.get(`users/zoe`).gold, 5);
   assert.equal(db.store.get(`${OFFER_BIDS_COLLECTION}/${offerBidId(NEXT, "zoe")}`).status, OFFER_BID_STATUS.BID);
 });
@@ -141,13 +160,44 @@ test("a crash between batches resumes with the remaining BID bids only", async (
 });
 
 test("a month without bids settles quietly: the placement stays, the next month still opens", async () => {
-  const db = makeDb({}, {docs: {[PLACEMENT]: {auctionId: "2026-11", uid: "old-winner", imageUrl: "old", link: "old", settledAtMs: 1}}});
+  const db = makeDb({}, {docs: {[CURRENT]: {auctionId: "2026-11", uid: "old-winner", imageUrl: "old", link: "old", reviewStatus: "APPROVED", settledAtMs: 1}}});
   const result = await run(db);
   assert.deepEqual(result, {closed: 1, refunded: 0, skipped: 0});
   assert.equal(db.store.get(AUCTION_PATH).status, OFFER_AUCTION_SETTLED);
-  assert.deepEqual(db.store.get(PLACEMENT), {auctionId: "2026-11", uid: "old-winner", imageUrl: "old", link: "old", settledAtMs: 1},
-    "место не пустует: прошлая витрина на месте");
+  assert.deepEqual(db.store.get(CURRENT), {auctionId: "2026-11", uid: "old-winner", imageUrl: "old", link: "old", reviewStatus: "APPROVED", settledAtMs: 1},
+    "место не пустует: прошлая проверенная витрина на месте");
+  assert.equal(db.store.has(PENDING), false);
   assert.equal(db.store.get(NEXT_PATH).status, OFFER_AUCTION_OPEN);
+});
+
+test("an unreviewed candidate does not survive the next month: its bid returns, not burns", async () => {
+  const db = makeDb({alice: 50}, {docs: {[PENDING]: {
+    auctionId: "2026-11", bidId: `${"2026-11"}_old-winner`, uid: "old-winner",
+    imageUrl: "stale-i", link: "stale-l", reviewStatus: "PENDING", settledAtMs: 1,
+  }}});
+  db.store.set("users/old-winner", {uid: "old-winner", gold: 0});
+  db.store.set(`${OFFER_BIDS_COLLECTION}/2026-11_old-winner`, {
+    auctionId: "2026-11", uid: "old-winner", amount: 60, createdAtMs: 1, raiseCount: 0,
+    status: OFFER_BID_STATUS.WON, reviewStatus: "PENDING",
+  });
+  const result = await run(db);
+  assert.equal(result.closed, 1);
+  assert.equal(db.store.get("users/old-winner").gold, 60,
+    "непоказанное объявление не держит золото: кандидата сменили — ставка вернулась");
+  assert.equal(db.store.get(`${OFFER_BIDS_COLLECTION}/2026-11_old-winner`).status, OFFER_BID_STATUS.REFUNDED);
+  const row = db.store.get(`${LEDGER}/old-winner_${CURRENCY.GOLD}_${REASON.OFFER_BID_REFUND}_2026-11_old-winner`);
+  assert.equal(row.delta, 60);
+  assert.deepEqual(row.details, {auctionId: "2026-11", stale: true});
+  assert.equal(db.store.get(PENDING).uid, "alice", "новый кандидат на месте старого");
+});
+
+test("a corrupt stale candidate refuses the closure loudly and writes nothing", async () => {
+  const db = makeDb({alice: 50}, {docs: {[PENDING]: {
+    auctionId: "2026-12", bidId: "ghost-bid", reviewStatus: "PENDING", settledAtMs: 1,
+  }}});
+  await assert.rejects(run(db), {code: "INVALID_ARGUMENT"});
+  assert.equal(db.store.get(AUCTION_PATH).status, OFFER_AUCTION_OPEN);
+  assert.equal(db.store.get("users/alice").gold, 0);
 });
 
 test("a month still running is not touched", async () => {
@@ -155,7 +205,7 @@ test("a month still running is not touched", async () => {
   await run(db, Date.UTC(2026, 10, 15));
   assert.equal(db.store.get(AUCTION_PATH).status, OFFER_AUCTION_OPEN);
   assert.equal(db.store.has(NEXT_PATH), false);
-  assert.equal(db.store.has(PLACEMENT), false);
+  assert.equal(db.store.has(PENDING), false);
 });
 
 test("the next month's document created by bids is not overwritten", async () => {
