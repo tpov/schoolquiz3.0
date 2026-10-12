@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.economy.presentation.component
 
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
@@ -19,6 +20,8 @@ data class ShopViewState(
     val isLoading: Boolean = true,
     val processingItemId: ShopItemId? = null,
     val message: ShopMessage? = null,
+    /** За что начислено (история 5.4): свежие квитанции владельца, собранные его языком. */
+    val receipts: List<EconomyReceipt> = emptyList(),
     /** Что магазин ответил о товарах за реальные деньги: строки паков объясняют свой замок сами. */
     val storeShelf: StoreShelfStatus = StoreShelfStatus.LOADING,
     val nicknames: NicknameShopState = NicknameShopState(),

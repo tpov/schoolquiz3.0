@@ -32,6 +32,7 @@ fun economyDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): M
             EconomyRepositoryImpl(
                 local = get(),
                 remote = get(),
+                receipts = get(),
                 currentUidFlow = currentUidFlow,
             )
         }

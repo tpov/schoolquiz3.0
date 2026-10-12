@@ -158,4 +158,23 @@
     <string name="shop_share_message">Join me using my referral link: %1$s</string>
     <string name="shop_cd_copy">Copy</string>
     <string name="shop_cd_share">Share</string>
+    <!-- Receipts (story 5.4): the reason reads in the player's language, from key and params -->
+    <string name="receipts_section_title">Why you were credited</string>
+    <string name="receipt_box_opened">Box opened</string>
+    <string name="receipt_box_accrual">Box for a run of daily visits</string>
+    <string name="receipt_gold_pack_credited">Gold pack purchased: %1$s gold</string>
+    <string name="receipt_premium_credited">Premium granted for %1$s days</string>
+    <string name="receipt_box_pack_credited">Box pack purchased: %1$s boxes</string>
+    <string name="receipt_gold_pack_refunded">Purchase refunded: %1$s gold taken back</string>
+    <string name="receipt_premium_refunded">Refund: %1$s days of premium taken back</string>
+    <string name="receipt_tournament">Tournament reward: %1$s boxes</string>
+    <string name="receipt_season_leaderboard">Season leaderboard: place %1$s, %2$s boxes</string>
+    <string name="receipt_season_referral_percent">Referrals: %1$s boxes for %2$s openings of your invitees</string>
+    <string name="receipt_referral_bonus">Six invitees qualified: %3$s boxes for %1$s of them, %2$s boxes each</string>
+    <string name="receipt_generic">Credited %1$s (%2$s)</string>
+    <string name="receipt_amount_boxes">%1$d boxes</string>
+    <string name="receipt_amount_gold">%1$d gold</string>
+    <string name="receipt_amount_nolics">%1$d nolics</string>
+    <string name="receipt_amount_premium_days">%1$d days of premium</string>
+    <string name="receipt_amount_generic">%1$d %2$s</string>
 </resources>

@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaTicketRemoteData
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaWalletRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyReceiptsDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
@@ -37,6 +38,7 @@ import com.tpov.schoolquiz.shared.core.sync.CatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyReceiptsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.PurchaseVerifier
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
@@ -142,6 +144,12 @@ val firebaseModule =
         }
         single<GiftBoxRemoteDataSource> {
             FirebaseGiftBoxRemoteDataSource()
+        }
+        single<EconomyReceiptsRemoteDataSource> {
+            FirebaseEconomyReceiptsDataSource(
+                firestore = get(),
+                auth = FirebaseAuth.getInstance(),
+            )
         }
         // Денежный вызов: прямой и синхронный, не через приёмник отложенных мутаций (ADM-5).
         single<PurchaseVerifier> {

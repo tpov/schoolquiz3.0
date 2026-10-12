@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.BillingPurchase
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyConstants
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PremiumGoldOffer
@@ -31,6 +32,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralPro
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyReceiptsUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SettlePurchaseUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ListingCancelSync
@@ -310,6 +312,7 @@ class DefaultShopComponentGoldPackTest {
         return DefaultShopComponent(
             componentContext = DefaultComponentContext(lifecycle),
             observeBalance = ObserveEconomyBalanceUseCase(economy),
+            observeReceipts = ObserveEconomyReceiptsUseCase(economy),
             getCatalog = GetShopCatalogUseCase(constants = { constants }),
             loadStoreShelf = LoadStoreShelfUseCase(store),
             purchaseItem = PurchaseShopItemUseCase(economy),
@@ -510,5 +513,6 @@ class DefaultShopComponentGoldPackTest {
         ): Result<EconomyResourceBalance> = Result.failure(IllegalStateException("unused"))
 
         override suspend fun referralProgram(): ReferralProgram = ReferralProgram(link = "", invitedUsers = emptyList())
+        override fun observeReceipts(limit: Int) = flowOf(emptyList<EconomyReceipt>())
     }
 }

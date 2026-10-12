@@ -11,6 +11,7 @@ val economyPresentationModule =
             DefaultShopComponent(
                 componentContext = ctx,
                 observeBalance = get(),
+                observeReceipts = get(),
                 getCatalog = get(),
                 loadStoreShelf = get(),
                 purchaseItem = get(),

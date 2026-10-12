@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 12-10-2026 14:30
+last_updated: 12-10-2026 17:40
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -268,5 +268,21 @@ development_status:
   # functions 109/109 (+2 сьюта), lint/syntax чисто, пин не менялся.
   # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч (точка-имена в uid), 4 опровергнуты.
   # Клиентская проводка глубокой ссылки — отдельная клиентская история (серверная дверь готова).
-  5-4-игрок-узнаёт-за-что-получил: backlog
+  5-4-игрок-узнаёт-за-что-получил: done  # spec-m5-4-player-learns-why.md — клиентская половина
+  # поверх готовой серверной (квитанции с ключами/params пишут все начисляющие пути, правила
+  # дают владельцу чтение). FirebaseEconomyReceiptsDataSource слушает users/{uid}/receipts
+  # (свежие первыми, 30, живое пополнение, гость — пусто, кривой документ — громко);
+  # репозиторий плоско переключается по uid (смена аккаунта пересобирает подписку);
+  # EconomyReceipt → витрина магазина: раздел «За что начислено» — дата, текст из ключа с
+  # параметрами на языке устройства (en/ru/uk), сумма с валютой и знаком (премиум — днями);
+  # словарь замкнут, незнакомый ключ — общая строка с суммой; две квитанции — две строки,
+  # потерянное гашение показывается повторно баланс не двигает.
+  # Гейты: functions 109/109 (сервер не менялся); economy data/presentation тесты и platform
+  # firebase тесты зелёные (минус 2 арена-пина владельца); assembleMvp зелёный; ktlint моих
+  # модулей зелёный. Средовые красные владельца подтверждены на HEAD: test/assembleDebug
+  # (google-services.json только с mvp-клиентом), detekt Android-модулей (jvm-target 27),
+  # ktlint platform:firebase/app-shell/apps:android-next/designsystem/sync/lesson-runner/
+  # quest-authoring, it09e, compileTestKotlin profile:data.
+  # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч (гейт по uid + тест гостя),
+  # 4 опровергнуты.
   epic-5-retrospective: optional

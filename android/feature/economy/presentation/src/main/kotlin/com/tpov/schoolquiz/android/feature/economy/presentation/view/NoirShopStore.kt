@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,10 +41,13 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.StoreShelfStatus
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.storeProductId
+import java.text.DateFormat
+import java.util.Date
 
 /**
  * The store shelf.
@@ -74,6 +78,20 @@ internal fun NoirShopStore(
                 onAction = { onPurchase(item.id) },
             )
         }
+        // «За что начислено» (история 5.4): свежие квитанции владельца — причина каждым словом
+        // на языке устройства; незнакомый ключ деградирует до честного «начислено N».
+        if (state.receipts.isNotEmpty()) {
+            item {
+                NoirSectionRule(
+                    label = stringResource(R.string.receipts_section_title),
+                    trailing = state.receipts.size.toString(),
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            items(state.receipts, key = { it.id }) { receipt ->
+                ReceiptRow(receipt)
+            }
+        }
         if (BETA_ITEMS.isNotEmpty()) {
             item {
                 NoirSectionRule(
@@ -85,6 +103,56 @@ internal fun NoirShopStore(
             items(BETA_ITEMS, key = { it.titleRes }) { beta -> BetaRow(beta) }
         }
     }
+}
+
+@Composable
+private fun ReceiptRow(
+    receipt: EconomyReceipt,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text =
+                receiptText(receipt) { resId, args ->
+                    context.getString(resId, *args.toTypedArray())
+                },
+            style = NoirType.rowTitle.copy(fontSize = 13.5.sp),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = DateFormat.getDateTimeInstance().format(Date(receipt.createdAtMs)),
+                style = NoirType.kicker.copy(fontSize = 10.5.sp, color = NoirTOff),
+            )
+            Text(
+                text = signedAmount(context, receipt),
+                style = NoirType.price.copy(fontSize = 12.5.sp, color = NoirT2),
+            )
+        }
+    }
+}
+
+/** Сумма с валютой и знаком: премиум приезжает миллисекундами и уезжает днями. */
+private fun signedAmount(
+    context: android.content.Context,
+    receipt: EconomyReceipt,
+): String {
+    val body =
+        when (receipt.currency) {
+            "BOXES" -> context.getString(R.string.receipt_amount_boxes, receipt.amount)
+            "GOLD" -> context.getString(R.string.receipt_amount_gold, receipt.amount)
+            "NOLICS" -> context.getString(R.string.receipt_amount_nolics, receipt.amount)
+            "PREMIUM_MS" -> context.getString(R.string.receipt_amount_premium_days, receipt.amount / 86_400_000)
+            else -> context.getString(R.string.receipt_amount_generic, receipt.amount, receipt.currency)
+        }
+    return if (receipt.amount > 0) "+$body" else body
 }
 
 @Composable

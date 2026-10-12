@@ -19,6 +19,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralPro
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyReceiptsUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ListingCancelSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.LogoRepository
@@ -43,6 +44,7 @@ import kotlinx.coroutines.launch
 class DefaultShopComponent(
     componentContext: ComponentContext,
     private val observeBalance: ObserveEconomyBalanceUseCase,
+    private val observeReceipts: ObserveEconomyReceiptsUseCase,
     private val getCatalog: GetShopCatalogUseCase,
     private val loadStoreShelf: LoadStoreShelfUseCase,
     private val purchaseItem: PurchaseShopItemUseCase,
@@ -90,6 +92,12 @@ class DefaultShopComponent(
                         isLoading = false,
                     )
                 }
+            }
+        }
+        // «За что начислено» (история 5.4): живой поток квитанций владельца, свежие первыми.
+        scope.launch {
+            observeReceipts.execute().collect { receipts ->
+                _state.update { it.copy(receipts = receipts) }
             }
         }
         // Снятие лота уезжает очередью, и строка узнаёт о нём только отсюда: «в очереди» или

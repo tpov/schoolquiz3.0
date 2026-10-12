@@ -4,6 +4,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
@@ -15,6 +16,7 @@ import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyReceiptsUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ListingCancelSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
@@ -168,6 +170,7 @@ class DefaultShopComponentCancelListingTest {
         return DefaultShopComponent(
             componentContext = DefaultComponentContext(lifecycle),
             observeBalance = ObserveEconomyBalanceUseCase(economy),
+            observeReceipts = ObserveEconomyReceiptsUseCase(economy),
             getCatalog = GetShopCatalogUseCase(),
             loadStoreShelf = LoadStoreShelfUseCase(StubStoreBilling()),
             purchaseItem = PurchaseShopItemUseCase(economy),
@@ -280,5 +283,6 @@ class DefaultShopComponentCancelListingTest {
             Result.failure(IllegalStateException("unused"))
 
         override suspend fun referralProgram(): ReferralProgram = ReferralProgram(link = "", invitedUsers = emptyList())
+        override fun observeReceipts(limit: Int) = flowOf(emptyList<EconomyReceipt>())
     }
 }

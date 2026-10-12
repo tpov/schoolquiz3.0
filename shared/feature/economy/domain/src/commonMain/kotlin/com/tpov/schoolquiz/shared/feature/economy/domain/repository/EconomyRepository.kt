@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.economy.domain.repository
 
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
@@ -24,4 +25,15 @@ interface EconomyRepository {
     ): Result<EconomyResourceBalance>
 
     suspend fun referralProgram(): ReferralProgram
+
+    /**
+     * Квитанции владельца, свежие первыми (история 5.4): то, как «вам начислено N» доезжает до
+     * устройства. Гость получает пустой список — начислений без аккаунта не бывает.
+     */
+    fun observeReceipts(limit: Int = RECEIPTS_PAGE_LIMIT): Flow<List<EconomyReceipt>>
+
+    companion object {
+        /** Сколько свежих квитанций показывает витрина: история начислений не лента новостей. */
+        const val RECEIPTS_PAGE_LIMIT = 30
+    }
 }

@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralPro
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyReceiptsUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SettlePurchaseUseCase
@@ -37,6 +38,7 @@ fun economyDomainModule(
 ): Module =
     module {
         factory { ObserveEconomyBalanceUseCase(get()) }
+        factory { ObserveEconomyReceiptsUseCase(get()) }
         factory { GetShopCatalogUseCase(constants = get<EconomyConstantsRepository>()::current) }
         factory { LoadStoreShelfUseCase(get()) }
         factory { PurchaseShopItemUseCase(get()) }

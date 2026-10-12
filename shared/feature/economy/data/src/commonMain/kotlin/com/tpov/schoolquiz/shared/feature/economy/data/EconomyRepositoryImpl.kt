@@ -1,8 +1,10 @@
 package com.tpov.schoolquiz.shared.feature.economy.data
 
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyReceiptsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.LessonUnlockRequest
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.ShopPurchaseRequest
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
@@ -14,12 +16,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class EconomyRepositoryImpl(
     private val local: EconomyLocalDataSource,
     private val remote: EconomyRemoteDataSource,
+    private val receipts: EconomyReceiptsRemoteDataSource,
     private val currentUidFlow: () -> Flow<String?>,
 ) : EconomyRepository {
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -81,6 +85,13 @@ class EconomyRepositoryImpl(
             invitedUsers = emptyList(),
         )
     }
+
+    // Источник заперт на auth платформы, а смена аккаунта — сигнал пересобрать подписку: без
+    // плоского переключения магазин показывал бы ушедшему игроку квитанции его предшественника.
+    override fun observeReceipts(limit: Int): Flow<List<EconomyReceipt>> =
+        currentUidFlow().flatMapLatest { uid ->
+            if (uid.isNullOrBlank()) flowOf(emptyList()) else receipts.observeReceipts(limit)
+        }
 
     private fun ShopItemId.successMessage(): String =
         when (this) {
