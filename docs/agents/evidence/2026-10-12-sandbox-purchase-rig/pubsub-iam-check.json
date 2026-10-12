@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-12T17:20:00Z",
+  "key": "firebase-adminsdk-h5hhr@school-quiz-89336951.iam.gserviceaccount.com",
+  "project_roles": ["cloudfunctions.admin","cloudscheduler.admin","datastore.admin (with condition)","firebase.sdkAdminServiceAgent","firebaseappcheck.admin","firebaseauth.admin","firebasedatabase.admin","iam.serviceAccountTokenCreator","iam.serviceAccountUser","run.invoker","secretmanager.admin"],
+  "pubsub_roles": [],
+  "attempts": {
+    "topics/play-rtdn GET": "403 PERMISSION_DENIED (IAM_PERMISSION_DENIED)",
+    "topics list GET": "403 PERMISSION_DENIED",
+    "publish play-rtdn:publish": "403 PERMISSION_DENIED (User not authorized to perform this action)"
+  },
+  "conclusion": "RTDN test notification с VPS невозможен: у ключа нет roles/pubsub.publisher на топик. Команда для владельца (Cloud Shell) — в report.html, Шаг 5."
+}

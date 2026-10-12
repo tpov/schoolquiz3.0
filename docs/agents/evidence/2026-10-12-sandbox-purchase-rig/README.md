@@ -49,6 +49,24 @@ GMS-прокидка в redroid рецепта в репо не имеет; ст
 Play-сертификацию и для license-тестов не годятся. Вывод прежний (совпадает с
 `2026-10-11-premium-subscription`): **end-to-end sandbox — только на устройстве с Play**.
 
+## Серверный фрагмент с VPS (без устройства)
+
+Ключ `firebase-adminsdk-h5hhr` (`.local/history/broken-mac/zealous-pike-8e91a1/functions/…`)
+имеет `datastore.admin` — Firestore-срезы работают, но у него НЕТ `roles/pubsub.publisher`:
+
+- срез ДО покупок: `users/YMQZ…` не существует, `purchase_settlements`: 0, `receipts`: 0 —
+  приложение рига читало экономику, экономических записей не создавало;
+- публикация test notification в `play-rtdn` с VPS → 403 PERMISSION_DENIED (GET/list/publish).
+
+Канал проверяет владелец: кнопкой Send test notification в Play Console либо из Cloud Shell:
+
+```
+gcloud pubsub topics publish play-rtdn --project=school-quiz-89336951 \
+  --message="$(printf '{"version":"1.0","packageName":"com.tpov.schoolquiz","testNotification":{"version":"1.0"}}' | base64 -w0)"
+```
+
+Затем `purchase_notifications/<messageId>` должен получить запись с kind=test.
+
 ## Задача владельца (phone-HITL)
 
 Готово к запуску на телефоне (тестер `oleg12794@gmail.com`):
