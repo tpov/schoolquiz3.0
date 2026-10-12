@@ -20,6 +20,15 @@ const BOX_OPERATIONS_COLLECTION = "box_operations";
 const BOX_OVERCLAIM_PATH = "audit/box_overclaims/entries";
 const BOX_KIND = Object.freeze({OPEN: "OPEN", VISIT: "VISIT", OFFLINE_STREAK: "OFFLINE_STREAK", PREMIUM_DAILY: "PREMIUM_DAILY"});
 
+/**
+ * Накопленный счётчик открытий на документе игрока (история 5.1).
+ *
+ * Считает только открытия — сервер видит открытия, а не гранты (gold-flows); растёт монотонно и
+ * никогда не обнуляется: сезон закрывается снимком этого счётчика, и разность снимков считает
+ * реферальную выплату. Инкремент — в той же транзакции, что и само открытие.
+ */
+const OPENED_BOXES_TOTAL_FIELD = "openedBoxesTotal";
+
 function fail(code, message) { const error = new Error(message); error.code = code; throw error; }
 function exact(value, label) {
   if (!Number.isSafeInteger(value) || value < 0) fail("INVALID_ARGUMENT", `${label} must be an exact nonnegative integer`);
@@ -156,6 +165,8 @@ function planBoxOperation({snapshot, now}) {
       openedBoxes = 1;
       awardedReward = reward;
       status = "OPENED";
+      // Накопленный счётчик открытий растёт той же транзакцией (5.1): снимок сезона читает его.
+      rewardPatch[OPENED_BOXES_TOTAL_FIELD] = add(stored(userData[OPENED_BOXES_TOTAL_FIELD]), 1);
       pushLedger(CURRENCY.BOXES, -1, "opened", {reward});
       switch (reward.type) {
         case "addNolics": {
@@ -234,5 +245,5 @@ async function applyBoxOperation({db, uid, payload, now, entropy = createGiftBox
   fail("UNAVAILABLE", "Premium catch-up made durable progress; retry the same box operation id");
 }
 
-module.exports = {BOX_OPERATIONS_COLLECTION, BOX_OVERCLAIM_PATH, BONUS_CLOCK_FIELD, BOX_KIND,
+module.exports = {BOX_OPERATIONS_COLLECTION, BOX_OVERCLAIM_PATH, BONUS_CLOCK_FIELD, BOX_KIND, OPENED_BOXES_TOTAL_FIELD,
   normalizeBoxRequest, boxOperationId, readBoxOperation, planBoxOperation, writeBoxOperation, applyBoxOperation};

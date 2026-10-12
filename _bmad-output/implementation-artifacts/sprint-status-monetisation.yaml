@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 11-10-2026 23:48
+last_updated: 12-10-2026 10:20
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -227,8 +227,20 @@ development_status:
   # валидация creative кандидата; 3 опровергнуты.
   epic-4-retrospective: optional
 
-  epic-5: backlog
-  5-1-снимок-сезона: backlog
+  epic-5: in-progress  # 5.1–5.4 закрытие сезона и выплаты; build-auto полный маршрут
+  5-1-снимок-сезона: done  # spec-m5-1-season-snapshot.md — reconcileEconomySeasons (onSchedule,
+  # каждые 10 минут, maxInstances 1) закрывает созревший квартал одной транзакцией: документ
+  # сезона с топ-100 по skillPoints (метрика fetchLeagueStanding; равенство — меньший uid) и
+  # sha256-дайджестом канонического снимка; повторный прогон сверяет дайджест и не пишет ничего.
+  # Счётчики открытий приглашённых — порциями по 100 в подколлекцию referrals (существование
+  # документа — ключ повтора, курсор обхода на сезоне, движется только вперёд). Счётчик
+  # openedBoxesTotal на игроке: инкремент успешным OPEN той же транзакцией; гранты/повторы не
+  # считают. Догоняющий проход до 4 кварталов, но не старше маркера установки _installed —
+  # доустановочные кварталы не закрываются никогда. economy_seasons закрыт правилами.
+  # functions 108/108 (+1 сьют, 19 тестов), lint/syntax чисто.
+  # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч — границы маркера сверяются с календарём;
+  # 5 опровергнуты (семантика skillPoints = fetchLeagueStanding; обвязка/правила — дом;
+  # перезапуск обхода безопасен). Деплой — действие владельца.
   5-2-лидерборд-платит-коробками: backlog
   5-3-рефералка-платит-за-шестерых-и-процент: backlog
   5-4-игрок-узнаёт-за-что-получил: backlog

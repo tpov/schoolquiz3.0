@@ -82,8 +82,10 @@ const ENDPOINTS = Object.freeze([
 // covered by its own boundary suite offer-auction-settlement.test.js. Re-pinned 2026-10-12
 // (story 4.3): the review pair joins the surface — the moderator-gated decideOfferAdReview and
 // the read-only fetchOffersScreen, covered by offer-ad-review.test.js and the wiring suite
-// economy-handler.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "18a5a9440033dd953569c072e257ff7549022470afeea2b383dccc69b81c9b0a";
+// economy-handler.test.js. Re-pinned 2026-10-12 (story 5.1): reconcileEconomySeasons joins the
+// surface — a server-only onSchedule with no callable handle, covered by its own boundary suite
+// economy-season.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "5dd28359dd9595020e5926809111b97e1948840ef177806b51de994cea9389ef";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

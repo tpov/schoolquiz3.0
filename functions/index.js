@@ -78,6 +78,7 @@ const {
 const {purchasePremiumWithGold} = require("./premium-shop");
 const {placeOfferBid, offerAuctionView} = require("./offer-auction");
 const {settleDueOfferAuctions} = require("./offer-auction-settlement");
+const {sweepEconomySeasons} = require("./economy-season");
 const {decideOfferAdReview, offersScreenView} = require("./offer-ad-review");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {
@@ -3797,6 +3798,23 @@ exports.rotateOfferAuctions = onSchedule({...FUNCTION_OPTIONS,
 }, async () => {
   const result = await settleDueOfferAuctions({db, now: Date.now()});
   logger.info("Offer auction rollover completed", result);
+});
+
+/**
+ * Закрытие сезонов экономики (история 5.1).
+ *
+ * Только серверное расписание, никаких callable-ручек: работа сама находит созревший квартал,
+ * закрывает его одним снимком (топ-100 и дайджест) и порциями снимает накопленные счётчики
+ * открытий приглашённых; ключи повтора — существование документа сезона и курсор обхода
+ * (economy-season.js), поэтому повторный прогон ничего не меняет. maxInstances: 1 — два
+ * параллельных прогона не нужны ни одному из них.
+ */
+exports.reconcileEconomySeasons = onSchedule({...FUNCTION_OPTIONS,
+  schedule: "every 10 minutes", timeZone: "UTC", timeoutSeconds: FUNCTION_TIMEOUT_MS / 1000,
+  memory: "512MiB", maxInstances: 1, retryCount: 0,
+}, async () => {
+  const result = await sweepEconomySeasons({db, now: Date.now()});
+  logger.info("Economy season sweep completed", result);
 });
 
 /**

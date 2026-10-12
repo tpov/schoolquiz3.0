@@ -5,7 +5,7 @@ const {premiumTestDb} = require("./premium-test-db");
 const {DAY_MS, SOURCE} = require("./premium-grants");
 const {premiumGrantId} = require("./premium-economy");
 const {applyBoxOperation, readBoxOperation, planBoxOperation, writeBoxOperation,
-  boxOperationId, BONUS_CLOCK_FIELD, BOX_OVERCLAIM_PATH} = require("./box-service");
+  boxOperationId, BONUS_CLOCK_FIELD, BOX_OVERCLAIM_PATH, OPENED_BOXES_TOTAL_FIELD} = require("./box-service");
 const {ECONOMY_CONSTANTS_DOC} = require("./economy-constants");
 const {LEDGER_PATH, CURRENCY} = require("./currency-ledger");
 const {SHORTFALL_FIELD, PLAY_OUTCOME_FOUND, settlementId, accountIdFor} = require("./purchase-verification");
@@ -315,6 +315,34 @@ test("long premium catch-up cannot spend box or expose a reward before final ato
   assert.equal(result.premiumUntilMs, T + 301 * DAY_MS);
   assert.ok(db.queries.every((query) => query.maximum === 65));
   assert.ok(db.commits.every((commit) => commit.length < 80));
+});
+
+
+test("the season counter counts only openings, once each, in the same transaction", async () => {
+  const db = makeDb({[OPENED_BOXES_TOTAL_FIELD]: 7});
+  await run(db);
+  assert.equal(db.store.get(USER)[OPENED_BOXES_TOTAL_FIELD], 8, "успешное открытие растит счётчик той же транзакцией");
+  await run(db, open("second-opening-0000000001"));
+  assert.equal(db.store.get(USER)[OPENED_BOXES_TOTAL_FIELD], 9);
+  const stable = structuredClone([...db.store]);
+  const replay = await run(db);
+  assert.equal(replay.status, "OPENED");
+  assert.equal(db.store.get(USER)[OPENED_BOXES_TOTAL_FIELD], 9, "повтор открытия не считает второй раз");
+  assert.deepEqual([...db.store], stable, "повтор не двигает ни счётчик, ни остальное состояние");
+});
+
+test("earned boxes and empty pockets leave the season counter alone", async () => {
+  const db = makeDb({boxCount: 0, boxStreakDays: 12, nextBoxAtMs: T + DAY_MS});
+  const visit = await run(db, operation("VISIT", "visit-operation-000000001"), T + DAY_MS + DAY_MS / 2);
+  assert.equal(visit.earnedBoxes, 1, "серия из двенадцати, продлённая наутро, даёт коробку");
+  assert.equal(db.store.get(USER)[OPENED_BOXES_TOTAL_FIELD], undefined, "грант — не открытие");
+  const opened = await run(db, open());
+  assert.equal(opened.status, "OPENED");
+  assert.equal(db.store.get(USER)[OPENED_BOXES_TOTAL_FIELD], 1, "только само открытие считает");
+  const broke = makeDb({boxCount: 0});
+  const refused = await run(broke, open());
+  assert.equal(refused.status, "NO_BOXES");
+  assert.equal(broke.store.get(USER)[OPENED_BOXES_TOTAL_FIELD], undefined, "несостоявшееся открытие не считает");
 });
 
 async function main() {
