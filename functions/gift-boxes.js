@@ -37,6 +37,13 @@ const AD_BOXES_PER_DAY = 1;
 /** Часы рекламной коробки на документе игрока: выдача не раньше этого момента. */
 const AD_BOX_CLOCK_FIELD = "nextAdRewardBoxAtMs";
 
+/**
+ * Часы премиального бонуса на документе игрока. Решение владельца (12.10): премиального бонуса
+ * и рекламы — одна магазинная коробка в сутки; премиум просто забирает её кнопкой, не смотря
+ * 5 реклам. Оба поля — один слот: любой источник, занявший сутки, двигает оба.
+ */
+const BONUS_CLOCK_FIELD = "nextBonusBoxAtMs";
+
 function nonNegativeInt(value) {
   const number = Math.floor(Number(value));
   return Number.isFinite(number) && number > 0 ? number : 0;
@@ -172,6 +179,7 @@ module.exports = {
   AD_BOXES_PER_DAY,
   AD_BOX_CLOCK_FIELD,
   AD_VIEWS_PER_BOX,
+  BONUS_CLOCK_FIELD,
   BOXES_PER_DAY_CEILING,
   DAY_MS,
   STREAK_BOXES_PER_DAY,

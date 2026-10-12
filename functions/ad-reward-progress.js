@@ -16,6 +16,7 @@ const {
   AD_BOXES_PER_DAY,
   AD_BOX_CLOCK_FIELD,
   AD_VIEWS_PER_BOX,
+  BONUS_CLOCK_FIELD,
   DAY_MS,
 } = require("./gift-boxes");
 const {CURRENCY, LEDGER_PATH, REASON, ledgerEntry} = require("./currency-ledger");
@@ -136,6 +137,9 @@ async function confirmAdReward({db, callback, now}) {
           const boxCount = exactNonNegative(Math.floor(Number(stored.boxCount === undefined || stored.boxCount === null ? 0 : stored.boxCount)), "boxCount");
           userPatch.boxCount = boxCount + 1;
           userPatch[AD_BOX_CLOCK_FIELD] = plan.nextAdBoxAtMs;
+          // Магазинная коробка одна и на 5 реклам, и на премиальную кнопку (решение владельца
+          // 12.10): выдача за просмотры закрывает слот и кнопке — её часы двигаются тем же шагом.
+          userPatch[BONUS_CLOCK_FIELD] = plan.nextAdBoxAtMs;
         }
         transaction.create(guardRef, adRewardConfirmationRecord({callback, nowMs: now}));
         transaction.set(callbackRef, adRewardCallbackRecord({callback, verdict: AD_REWARD_CONFIRMED, nowMs: now}), {merge: true});

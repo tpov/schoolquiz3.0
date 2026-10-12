@@ -13,6 +13,8 @@ const {settlePurchase} = require("./purchase-settlement");
 const {clawBackPurchase} = require("./purchase-clawback");
 const {planGoldCredit} = require("./gold-credit");
 const {GIFT_BOX_TROPHY_NAMES, TROPHY_VERIFIED} = require("./trophies");
+const {AD_BOX_CLOCK_FIELD} = require("./gift-boxes");
+const {planAdRewardBox, AD_VIEWS_PER_BOX} = require("./ad-reward-progress");
 
 const T = 1_800_000_000_000;
 const UID = "box-player";
@@ -164,7 +166,7 @@ test("first offline word starts at server now, not Unix epoch, and cannot bank p
   assert.equal(again.boxStreakDays, 1);
 });
 
-test("premium daily bonus uses one separate rolling slot, independent of streak, without ads", async () => {
+test("the premium button and the ad share the one shop box; the streak stays independent", async () => {
   const db = makeDb({boxCount: 0, boxStreakDays: 9, nextBoxAtMs: T, premiumUntilMs: T + 3 * DAY_MS});
   const base = await run(db, operation("VISIT", "streak-tenth-day-operation"));
   assert.equal(base.earnedBoxes, 1);
@@ -172,7 +174,11 @@ test("premium daily bonus uses one separate rolling slot, independent of streak,
   assert.equal(bonus.boxCount, 2);
   assert.equal(bonus.nextBoxAtMs, T + DAY_MS);
   assert.equal(bonus.nextBonusBoxAtMs, T + DAY_MS);
+  assert.equal(db.store.get(USER)[AD_BOX_CLOCK_FIELD], T + DAY_MS,
+    "забрав магазинную коробку кнопкой, закрываем слот и рекламе");
   assert.equal((await run(db, operation("PREMIUM_DAILY", "second-premium-daily-box"), T + 1000)).status, "DAILY_LIMIT");
+  assert.equal(planAdRewardBox({views: AD_VIEWS_PER_BOX, nextAdBoxAtMs: db.store.get(USER)[AD_BOX_CLOCK_FIELD], nowMs: T + 1000}).issueBox, false,
+    "пять просмотров в занятые сутки ничего не выдают");
   assert.equal((await run(db, operation("PREMIUM_DAILY", "tomorrow-premium-daily-box"), T + DAY_MS)).earnedBoxes, 1);
   assert.equal(db.store.get(USER).boxCount, 3);
   assert.equal(db.store.get(USER).boxStreakDays, 10, "premium bonus does not advance streak");

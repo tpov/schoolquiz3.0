@@ -15,7 +15,7 @@ const {
 } = require("./ad-reward-verification");
 const {AD_REWARD_CALLBACKS_COLLECTION, AD_REWARD_CONFIRMATIONS_COLLECTION, AD_REWARD_VIEWS_FIELD,
   AD_REWARD_OUTCOME_ACKNOWLEDGED, AD_REWARD_OUTCOME_UNAVAILABLE, applyAdReward} = require("./ad-reward-progress");
-const {AD_BOX_CLOCK_FIELD, AD_VIEWS_PER_BOX, DAY_MS} = require("./gift-boxes");
+const {AD_BOX_CLOCK_FIELD, AD_VIEWS_PER_BOX, BONUS_CLOCK_FIELD, DAY_MS} = require("./gift-boxes");
 const {CURRENCY, LEDGER_PATH, REASON} = require("./currency-ledger");
 
 const T = 1_800_000_000_000;
@@ -216,6 +216,8 @@ test("the fifth confirmed view issues exactly one box, clock and ledger in the s
   assert.equal(user[AD_REWARD_VIEWS_FIELD], 5);
   assert.equal(user.boxCount, 3);
   assert.equal(user[AD_BOX_CLOCK_FIELD], T + DAY_MS);
+  assert.equal(user[BONUS_CLOCK_FIELD], T + DAY_MS,
+    "магазинная коробка, взятая за просмотры, закрыта и премиальной кнопке");
   const rows = [...db.store.entries()].filter(([path]) => path.startsWith(`${LEDGER_PATH}/`))
     .map(([, value]) => value).filter((entry) => entry.currency === CURRENCY.BOXES);
   assert.equal(rows.length, 1);

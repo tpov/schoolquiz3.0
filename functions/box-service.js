@@ -6,7 +6,7 @@
  * All monetary effects and both charge clocks share the premium transaction boundary.
  */
 const crypto = require("node:crypto");
-const {DAY_MS, readBoxState, advanceStreak, boxAccrualVerdict, boxOverclaimRecord} = require("./gift-boxes");
+const {AD_BOX_CLOCK_FIELD, BONUS_CLOCK_FIELD, DAY_MS, readBoxState, advanceStreak, boxAccrualVerdict, boxOverclaimRecord} = require("./gift-boxes");
 const {createGiftBoxEntropy, generateGiftBoxReward} = require("./gift-box-rewards");
 const {trophyList} = require("./trophies");
 const {SOURCE} = require("./premium-grants");
@@ -18,7 +18,6 @@ const {CURRENCY, REASON, LEDGER_PATH, ledgerEntry} = require("./currency-ledger"
 
 const BOX_OPERATIONS_COLLECTION = "box_operations";
 const BOX_OVERCLAIM_PATH = "audit/box_overclaims/entries";
-const BONUS_CLOCK_FIELD = "nextBonusBoxAtMs";
 const BOX_KIND = Object.freeze({OPEN: "OPEN", VISIT: "VISIT", OFFLINE_STREAK: "OFFLINE_STREAK", PREMIUM_DAILY: "PREMIUM_DAILY"});
 
 function fail(code, message) { const error = new Error(message); error.code = code; throw error; }
@@ -140,6 +139,9 @@ function planBoxOperation({snapshot, now}) {
     else {
       boxes = {...original, boxCount: add(original.boxCount, 1)};
       rewardPatch[BONUS_CLOCK_FIELD] = add(at, DAY_MS);
+      // Магазинная коробка одна и на кнопку, и на 5 реклам (решение владельца 12.10): забрав её
+      // кнопкой, закрываем слот и рекламе — её часы двигаются тем же шагом.
+      rewardPatch[AD_BOX_CLOCK_FIELD] = add(at, DAY_MS);
       earnedBoxes = 1;
       status = "CLAIMED";
     }
