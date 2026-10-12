@@ -222,6 +222,15 @@ gradle-гейты не требовались.
 поле + имя документа) — композитные индексы не нужны. Контракт полей `referred`/`referredBy`
 на 5.3 записан в Implementation Notes.
 
+**Deployment status (2026-10-12):** DEPLOYED с оговоркой. Владелец выдал ключу
+`firebase-adminsdk-h5hhr@…` роли/iam.serviceAccountUser, агент задеплоил функции в прод
+school-quiz-89336951 (standalone firebase-tools 15.33, код 7d45a9b5): `reconcileEconomySeasons`
+в проде, state=ACTIVE, updateTime 2026-10-12T14:37Z — код этого деплоя. НЕ привязано расписание:
+upsert джоба `firebase-schedule-reconcileEconomySeasons-us-central1` упал 403
+(cloudscheduler.jobs.update) — у ключа нет cloudscheduler доступов; без джоба закрывающий прогон
+не запускается сам. Снять остаток: выдать ключу roles/cloudscheduler.admin (или создать джоб
+вручную: «every 10 minutes», UTC → URL функции reconcileEconomySeasons) и повторить деплой.
+
 ## Design Notes
 
 - Метрика топ-100 — `skillPoints`: единственная глобальная таблица приложения — стояние среди

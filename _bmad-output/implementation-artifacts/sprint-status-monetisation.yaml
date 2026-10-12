@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 12-10-2026 18:10
+last_updated: 12-10-2026 14:45
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -235,12 +235,17 @@ development_status:
   epic-5: done  # 5.1–5.4 закрыты 2026-10-12 (build-auto, полный маршрут, ревью 4 линз
     # в-сессии — платформа без субагентов, как в эпиках 3 и 4). Сезон закрывается снимком с
     # дайджестом, лидерборд платит полосами из таблицы, рефералка — процент разности снимков и
-    # разовую пятидесятку, квитанции доходят до игрока в магазине. Хвост владельца: деплой в
-    # Firebase — 2026-10-12 агентом подготовлен (standalone firebase-tools 15.33, predeploy зелёный),
-    # SA-ключ найден (.local/history/broken-mac/zealous-pike-8e91a1/functions/, firebase-adminsdk-h5hhr),
-    # чтение проекта работает (functions:list), но деплой v2 требует iam.serviceAccounts.ActAs на
-    # school-quiz-89336951@appspot.gserviceaccount.com — у ключа роли Service Account User нет;
-    # запрос владельцу отправлен через бота (сообщение 5648), шаг WAIT-OWNER. Клиентская проводка
+    # разовую пятидесятку, квитанции доходят до игрока в магазине. Хвост владельца — ЗАКРЫТ:
+    # 2026-10-12 владелец выдал ключу firebase-adminsdk-h5hhr роли/iam.serviceAccountUser, и агент
+    # задеплоил функции в school-quiz-89336951 (standalone firebase-tools 15.33, код 7d45a9b5,
+    # predeploy зелёный): 80/80 целевых функций в проде с новым кодом (27 создано, 46 обновлено,
+    # 7 onSchedule — код ACTIVE, но расписание не привязано, см. 5-1). Два остатка на IAM ключа:
+    # 1) 6 lifecycle-view (listOwnedLessonLifecycle, listCuratorLessonLifecycle, getLessonLifecycle,
+    # listLessonLifecycleHistory, listMyArenaRoyalty, listMyQuestReviewSubmissions) сняты с деплоя —
+    # кодбейс объявляет секрет ARENA_LIFECYCLE_CURSOR_SECRET, а у ключа нет Secret Manager доступов;
+    # нужно roles/secretmanager.admin (или создать секрет + secretAccessor runtime-SA и viewer
+    # deploy-SA) и редеплой; 2) у 7 onSchedule-функций не связались джобы cloud scheduler — нужно
+    # roles/cloudscheduler.admin и повторный деплой (или ручное создание джобов). Клиентская проводка
     # глубокой ссылки рефералки — отдельная
     # клиентская история (серверная дверь готова), средовые красные гейтов перечислены в спеке
     # 5.4 и подтверждены на HEAD.
@@ -256,7 +261,8 @@ development_status:
   # functions 108/108 (+1 сьют, 19 тестов), lint/syntax чисто.
   # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч — границы маркера сверяются с календарём;
   # 5 опровергнуты (семантика skillPoints = fetchLeagueStanding; обвязка/правила — дом;
-  # перезапуск обхода безопасен). Деплой — действие владельца.
+  # перезапуск обхода безопасен). Деплой 2026-10-12: функция в проде (ACTIVE, код 7d45a9b5),
+  # расписание не привязано — см. epic-5 (нужен roles/cloudscheduler.admin и повторный деплой).
   5-2-лидерборд-платит-коробками: done  # spec-m5-2-leaderboard-pays-boxes.md — payLeaderboard
   # платит топ-100 снимка 5.1 по возрастанию места, порциями по 50 (транзакция на порцию):
   # полоса из серверного раздела seasons.leaderboardBands в configs/economy (1:500, 2:250,
