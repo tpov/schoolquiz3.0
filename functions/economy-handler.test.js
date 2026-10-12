@@ -80,3 +80,30 @@ test("profile refresh preserves offline anchor; daily premium is a separate once
   assert.equal(visit.earnedBoxes, 1);
   assert.equal(store.documents.get(`users/${uid}`).boxCount, 4);
 });
+
+test("the offers-auction pair keeps its named wire codes and the open table stays creative-free", async () => {
+  store.reset(world());
+  const now = Date.UTC(2026, 10, 15, 12);
+  const originalNow = Date.now;
+  Date.now = () => now;
+  try {
+    await assert.rejects(functions.placeOfferBid.run({data: {amount: 10}}), {code: "unauthenticated"});
+    await assert.rejects(call("placeOfferBid", {amount: 0, imageUrl: "i", link: "l"}), {code: "invalid-argument"});
+    await assert.rejects(call("placeOfferBid", {amount: 30, imageUrl: "i", link: "l"}), {code: "failed-precondition"},
+      "короткий кошелёк доезжает именованным, а не безымянной INTERNAL");
+    await assert.rejects(functions.fetchOfferAuction.run({data: {}}), {code: "unauthenticated"});
+    store.documents.set(`users/${uid}`, {...store.documents.get(`users/${uid}`), gold: 100});
+    const placed = await call("placeOfferBid", {amount: 30, imageUrl: "i", link: "l"});
+    assert.deepEqual(placed, {auctionId: "2026-12", amount: 30, raiseCount: 0, gold: 70});
+    assert.equal(store.documents.get(`users/${uid}`).gold, 70);
+    const view = await call("fetchOfferAuction", {});
+    assert.equal(view.open, true);
+    assert.deepEqual(view.bids, [{uid, amount: 30, atMs: now}]);
+    for (const row of view.bids) {
+      assert.equal(Object.prototype.hasOwnProperty.call(row, "imageUrl"), false);
+      assert.equal(Object.prototype.hasOwnProperty.call(row, "link"), false);
+    }
+  } finally {
+    Date.now = originalNow;
+  }
+});

@@ -75,8 +75,10 @@ const ENDPOINTS = Object.freeze([
 // by their own boundary suite poll-views.test.js. Re-pinned 2026-10-11 (story 3.1): the
 // AdMob SSV callback endpoint adMobRewardConfirmed joins the surface — an onRequest called by
 // Google, not a callable; covered by its own suites ad-reward-verification.test.js and
-// ad-reward-progress.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "d72a6dfbfbc02e41df5e3a833bd0e34f8fccb042171ab3a32fd6e884dc56851e";
+// ad-reward-progress.test.js. Re-pinned 2026-10-12 (story 4.1): the offers-auction pair joins
+// the surface — the monetary placeOfferBid and the read-only fetchOfferAuction (CAP-11),
+// covered by its own boundary suite offer-auction.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "7e51164f0dedf68b086a0d431b28b915ba78490972e5f5ace7181287c287fb42";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

@@ -117,6 +117,17 @@ service cloud.firestore {
       // evidence side of the confirmations above; as unforgeable as the guard it accompanies.
       allow read, write: if false;
     }
+    match /offer_auctions/{document=**} {
+      // One document per monthly offers-auction, keyed by the target month. The open table of bids
+      // reaches players only through the fetchOfferAuction callable: a direct read would also hand
+      // out unreviewed ad creatives, and a direct write could plant or move a bid without gold.
+      allow read, write: if false;
+    }
+    match /offer_bids/{document=**} {
+      // One live bid per player per auction; the gold it debited moved server-side in the same
+      // transaction. Client-writable, a bid would exist without its debit.
+      allow read, write: if false;
+    }
     match /arena_entry_tickets/{document=**} { allow read, write: if false; }
     match /arena_ticket_quotas/{document=**} { allow read, write: if false; }
     match /arena_ticket_cancellations/{document=**} { allow read, write: if false; }

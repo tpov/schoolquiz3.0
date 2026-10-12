@@ -76,6 +76,7 @@ const {
   PREMIUM_CATCHUP, PREMIUM_CATCHUP_PASSES,
 } = require("./premium-economy");
 const {purchasePremiumWithGold} = require("./premium-shop");
+const {placeOfferBid, offerAuctionView} = require("./offer-auction");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {
   PUSH_EVENTS,
@@ -3737,6 +3738,47 @@ exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
     throw error;
   }
   return response;
+});
+
+/**
+ * Ставка на аукционе предложений (история 4.1).
+ *
+ * Золото и запись ставки идут одной транзакцией внутри offer-auction.js; повышение — возврат
+ * прежней суммы и списание новой той же транзакцией. Отказы приходят именованными кодами
+ * (FAILED_PRECONDITION — короткий кошелёк или закрытый аукцион, INVALID_ARGUMENT — испорченная
+ * ставка), и до клиента они доезжают именованными, а не безымянной INTERNAL: подделка обязана
+ * получить отказ провода, по которому клиент ветвится.
+ *
+ * Открытый стол ставок — соседний read-only вызов: кто, сколько и когда; creative объявлений на
+ * столе нет — непроверенная картинка не публичная поверхность (показ после проверки — 4.3).
+ */
+exports.placeOfferBid = onCall(MONETARY_CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const payload = request.data || {};
+  try {
+    return await placeOfferBid({
+      db,
+      uid,
+      amount: payload.amount,
+      imageUrl: payload.imageUrl,
+      link: payload.link,
+      now: Date.now(),
+    });
+  } catch (error) {
+    const codes = {INVALID_ARGUMENT: "invalid-argument", FAILED_PRECONDITION: "failed-precondition", INTERNAL: "internal"};
+    if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
+    throw error;
+  }
+});
+
+exports.fetchOfferAuction = onCall(CALLABLE_OPTIONS, async (request) => {
+  requireAuthUid(request);
+  try {
+    return await offerAuctionView({db, now: Date.now()});
+  } catch (error) {
+    if (error.code === "INVALID_ARGUMENT") throw new HttpsError("invalid-argument", error.message);
+    throw error;
+  }
 });
 
 /**

@@ -52,6 +52,15 @@
         {"fieldPath": "processedAtMs", "order": "DESCENDING"},
         {"fieldPath": "__name__", "order": "DESCENDING"}
       ]
+    },
+    {
+      "collectionGroup": "offer_bids",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "auctionId", "order": "ASCENDING"},
+        {"fieldPath": "amount", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
     }
   ],
   "fieldOverrides": [

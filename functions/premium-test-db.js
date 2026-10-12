@@ -27,11 +27,34 @@ function premiumTestDb(initial = {}) {
     path, get: async () => snap(path), collection: (name) => collection(`${path}/${name}`),
     set: async (data, options) => apply([{op: "set", path, data, merge: !!options?.merge}]),
   });
+  // Query reads share one discipline with transaction query reads: explicitly bounded, recorded in
+  // `queries`, so a module cannot sneak an unbounded collection scan past the double.
+  const runQuery = (ref) => {
+    assert.ok(Number.isSafeInteger(ref.maximum), "query must be explicitly bounded");
+    queries.push({path: ref.path, maximum: ref.maximum});
+    const depth = ref.path.split("/").length + 1;
+    const selected = [...store.keys()].filter((path) => path.startsWith(`${ref.path}/`) && path.split("/").length === depth)
+      .filter((path) => ref.filters.every(({field, op, value}) => {
+        assert.equal(op, "=="); return store.get(path)[field] === value;
+      }));
+    if (ref.sort) {
+      // Ascending ordering stays the plain field name — the shape every existing consumer of the
+      // double inspects; only a descending query carries its direction alongside.
+      const [field, direction] = Array.isArray(ref.sort) ? ref.sort : [ref.sort, "asc"];
+      selected.sort((a, b) => store.get(a)[field] - store.get(b)[field]);
+      if (direction === "desc") selected.reverse();
+    } else selected.sort();
+    return {docs: selected.slice(0, ref.maximum).map(snap)};
+  };
   const collection = (path, filters = [], sort = null, maximum = null) => ({
     path, filters, sort, maximum, doc: (id) => doc(`${path}/${id}`),
     where: (field, op, value) => collection(path, [...filters, {field, op, value}], sort, maximum),
-    orderBy: (field) => collection(path, filters, field, maximum),
+    orderBy: (field, direction = "asc") => {
+      assert.ok(direction === "asc" || direction === "desc", "stub supports asc/desc ordering only");
+      return collection(path, filters, direction === "desc" ? [field, "desc"] : field, maximum);
+    },
     limit: (n) => collection(path, filters, sort, n),
+    get: async () => runQuery({path, filters, sort, maximum}),
   });
   return {
     store, commits, queries, doc, collection,
@@ -46,14 +69,7 @@ function premiumTestDb(initial = {}) {
         async get(ref) {
           read();
           if (!ref.filters) return snap(ref.path);
-          assert.ok(Number.isSafeInteger(ref.maximum), "query must be explicitly bounded");
-          queries.push({path: ref.path, maximum: ref.maximum});
-          const depth = ref.path.split("/").length + 1;
-          const selected = [...store.keys()].filter((path) => path.startsWith(`${ref.path}/`) && path.split("/").length === depth)
-            .filter((path) => ref.filters.every(({field, op, value}) => {
-              assert.equal(op, "=="); return store.get(path)[field] === value;
-            })).sort((a, b) => store.get(a)[ref.sort] - store.get(b)[ref.sort]);
-          return {docs: selected.slice(0, ref.maximum).map(snap)};
+          return runQuery(ref);
         },
         set(ref, data, options) { pending.push({op: "set", path: ref.path, data: clone(data), merge: !!options?.merge}); },
         create(ref, data) { pending.push({op: "create", path: ref.path, data: clone(data), merge: false}); },
