@@ -48,6 +48,7 @@ test("the first bid debits gold, writes the bid and the ledger row in one transa
   assert.equal(stored.raiseCount, 0);
   assert.equal(stored.uid, UID);
   assert.equal(stored.imageUrl, "https://cdn.example.test/ad.png");
+  assert.equal(stored.status, "BID", "статус ставки — ключ возврата settlement'а 4.2; без него возврат не найдёт ставку");
   const auction = db.store.get(AUCTION_PATH);
   assert.equal(auction.status, OFFER_AUCTION_OPEN);
   assert.equal(auction.endsAtMs, Date.UTC(2026, 11, 1));
@@ -85,6 +86,7 @@ test("raising the bid refunds the old amount and debits the new in the same tran
   assert.equal(db.store.get(USER).gold, 85);
   assert.equal(db.store.get(BID_PATH).amount, 15);
   assert.equal(db.store.get(BID_PATH).raiseCount, 1);
+  assert.equal(db.store.get(BID_PATH).status, "BID", "повышение не меняет статус ставки");
   const refund = db.store.get(REFUND_R0);
   assert.equal(refund.delta, 10);
   assert.equal(refund.reason, REASON.OFFER_BID_REFUND);

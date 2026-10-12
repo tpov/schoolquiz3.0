@@ -128,6 +128,12 @@ service cloud.firestore {
       // transaction. Client-writable, a bid would exist without its debit.
       allow read, write: if false;
     }
+    match /offers/{document=**} {
+      // The monthly winner's placement (offers/current). Served to the future offers screen by a
+      // server view after ad review (story 4.3); a direct read would bypass that review, a direct
+      // write would put an unreviewed ad on a schoolchildren's screen.
+      allow read, write: if false;
+    }
     match /arena_entry_tickets/{document=**} { allow read, write: if false; }
     match /arena_ticket_quotas/{document=**} { allow read, write: if false; }
     match /arena_ticket_cancellations/{document=**} { allow read, write: if false; }

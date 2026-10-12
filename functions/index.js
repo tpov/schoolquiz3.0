@@ -77,6 +77,7 @@ const {
 } = require("./premium-economy");
 const {purchasePremiumWithGold} = require("./premium-shop");
 const {placeOfferBid, offerAuctionView} = require("./offer-auction");
+const {settleDueOfferAuctions} = require("./offer-auction-settlement");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {
   PUSH_EVENTS,
@@ -3779,6 +3780,22 @@ exports.fetchOfferAuction = onCall(CALLABLE_OPTIONS, async (request) => {
     if (error.code === "INVALID_ARGUMENT") throw new HttpsError("invalid-argument", error.message);
     throw error;
   }
+});
+
+/**
+ * Переворот месяца аукциона предложений (история 4.2).
+ *
+ * Только серверное расписание, никаких callable-ручек: работа сама находит созревшие аукционы
+ * и недовозвращённые ставки, ключи повтора — статусы документов (offer-auction-settlement.js),
+ * поэтому повторный прогон ничего не меняет. maxInstances: 1 — два параллельных прогона не
+ * нужны ни одному из них.
+ */
+exports.rotateOfferAuctions = onSchedule({...FUNCTION_OPTIONS,
+  schedule: "every 10 minutes", timeZone: "UTC", timeoutSeconds: FUNCTION_TIMEOUT_MS / 1000,
+  memory: "512MiB", maxInstances: 1, retryCount: 0,
+}, async () => {
+  const result = await settleDueOfferAuctions({db, now: Date.now()});
+  logger.info("Offer auction rollover completed", result);
 });
 
 /**

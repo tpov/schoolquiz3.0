@@ -27,6 +27,16 @@ const OFFER_BIDS_COLLECTION = "offer_bids";
 
 /** Аукцион открыт: ставки принимаются до `endsAtMs` (закрывает его плановая работа 4.2). */
 const OFFER_AUCTION_OPEN = "OPEN";
+/** Месяц перевернулся: победитель записан, возвраты проигравшим идут порциями (4.2). */
+const OFFER_AUCTION_SETTLING = "SETTLING";
+/** Всё возвращено, аукцион закрыт: повторный прогон его не трогает (4.2). */
+const OFFER_AUCTION_SETTLED = "SETTLED";
+
+/**
+ * Статус ставки — ключ повтора для возвратов: порция флипает его в той же транзакции, что и
+ * начисляет золото, поэтому дважды возвращённая ставка требует дважды флипнуть один документ.
+ */
+const OFFER_BID_STATUS = {BID: "BID", WON: "WON", REFUNDED: "REFUNDED"};
 
 /** Вместимость открытого стола: чтение ограничено, стол — верхушка, а не архив. */
 const OFFER_BID_TABLE_LIMIT = 200;
@@ -178,6 +188,7 @@ async function placeOfferBid({db, uid, amount, imageUrl, link, now}) {
           createdAtMs: bid ? exactNonNegative(bid.createdAtMs, "stored bid createdAtMs") : now,
           updatedAtMs: now,
           raiseCount: plan.raiseCount,
+          status: OFFER_BID_STATUS.BID,
         }, {merge: true});
         transaction.set(userRef, {gold: plan.goldAfter, updatedAtMs: now}, {merge: true});
         // Повышение — возврат прежней суммы и списание новой: две строки книги об одном движении
@@ -251,7 +262,10 @@ async function offerAuctionView({db, now, limit = OFFER_BID_TABLE_LIMIT}) {
 module.exports = {
   OFFER_AUCTIONS_COLLECTION,
   OFFER_AUCTION_OPEN,
+  OFFER_AUCTION_SETTLING,
+  OFFER_AUCTION_SETTLED,
   OFFER_BIDS_COLLECTION,
+  OFFER_BID_STATUS,
   OFFER_BID_TABLE_LIMIT,
   offerAuctionRecord,
   offerAuctionView,

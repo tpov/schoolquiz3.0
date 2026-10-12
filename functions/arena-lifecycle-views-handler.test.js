@@ -77,8 +77,10 @@ const ENDPOINTS = Object.freeze([
 // Google, not a callable; covered by its own suites ad-reward-verification.test.js and
 // ad-reward-progress.test.js. Re-pinned 2026-10-12 (story 4.1): the offers-auction pair joins
 // the surface — the monetary placeOfferBid and the read-only fetchOfferAuction (CAP-11),
-// covered by its own boundary suite offer-auction.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "7e51164f0dedf68b086a0d431b28b915ba78490972e5f5ace7181287c287fb42";
+// covered by its own boundary suite offer-auction.test.js. Re-pinned 2026-10-12 (story 4.2):
+// rotateOfferAuctions joins the surface — a server-only onSchedule with no callable handle,
+// covered by its own boundary suite offer-auction-settlement.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "cac231affc2fa536626413e699fc9e7c274a434d06708362aa0cde6b19693cf3";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
