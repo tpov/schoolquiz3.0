@@ -1,0 +1,8 @@
+== redroid boot facts 2026-10-12T16:27:51Z ==
+12
+31
+x86_64
+== total packages ==
+96
+== GMS/Play search ==
+NO-GMS-NO-PLAY-STORE

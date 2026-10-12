@@ -1,0 +1,25 @@
+10-12 16:34:35.529 W/BillingClient( 2020): Reconnection failed with result: 3
+10-12 16:34:36.532 W/BillingClient( 2020): There was an exception while unbinding service!
+10-12 16:34:36.532 W/BillingClient( 2020): java.lang.IllegalArgumentException: Service not registered: com.android.billingclient.api.zzbz@bab9c14
+10-12 16:34:36.532 W/BillingClient( 2020): 	at android.app.LoadedApk.forgetServiceDispatcher(LoadedApk.java:1880)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at android.app.ContextImpl.unbindService(ContextImpl.java:2020)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at android.content.ContextWrapper.unbindService(ContextWrapper.java:846)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.BillingClientImpl.zzbv(com.android.billingclient:billing@@9.1.0:1)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.BillingClientImpl.zzbu(com.android.billingclient:billing@@9.1.0:10)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.BillingClientImpl.zzu(com.android.billingclient:billing@@9.1.0:1)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.zzab.zza(Unknown Source:4)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.google.android.gms.internal.play_billing.zzu.zza(com.android.billingclient:billing@@9.1.0:4)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.BillingClientImpl.zzaI(com.android.billingclient:billing@@9.1.0:2)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.BillingClientImpl.zzbx(com.android.billingclient:billing@@9.1.0:6)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.BillingClientImpl.zzay(Unknown Source:0)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at com.android.billingclient.api.zzbp.call(com.android.billingclient:billing@@9.1.0:2)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-12 16:34:36.532 W/BillingClient( 2020): 	at java.lang.Thread.run(Thread.java:920)
+10-12 16:34:36.534 W/BillingClient( 2020): Reconnection failed with result: 3
+10-12 16:34:38.536 W/BillingClient( 2020): There was an exception while unbinding service!
+10-12 16:34:38.536 W/BillingClient( 2020): java.lang.IllegalArgumentException: Service not registered: com.android.billingclient.api.zzbz@fb66e9c
+10-12 16:34:38.536 W/BillingClient( 2020): 	at android.app.LoadedApk.forgetServiceDispatcher(LoadedApk.java:1880)
+10-12 16:34:38.536 W/BillingClient( 2020): 	at android.app.ContextImpl.unbindService(ContextImpl.java:2020)
+10-12 16:34:38.536 W/BillingClient( 2020): 	at android.content.ContextWrapper.unbindService(ContextWrapper.java:846)
