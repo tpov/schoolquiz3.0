@@ -222,14 +222,19 @@ gradle-гейты не требовались.
 поле + имя документа) — композитные индексы не нужны. Контракт полей `referred`/`referredBy`
 на 5.3 записан в Implementation Notes.
 
-**Deployment status (2026-10-12):** DEPLOYED с оговоркой. Владелец выдал ключу
-`firebase-adminsdk-h5hhr@…` роли/iam.serviceAccountUser, агент задеплоил функции в прод
-school-quiz-89336951 (standalone firebase-tools 15.33, код 7d45a9b5): `reconcileEconomySeasons`
-в проде, state=ACTIVE, updateTime 2026-10-12T14:37Z — код этого деплоя. НЕ привязано расписание:
-upsert джоба `firebase-schedule-reconcileEconomySeasons-us-central1` упал 403
-(cloudscheduler.jobs.update) — у ключа нет cloudscheduler доступов; без джоба закрывающий прогон
-не запускается сам. Снять остаток: выдать ключу roles/cloudscheduler.admin (или создать джоб
-вручную: «every 10 minutes», UTC → URL функции reconcileEconomySeasons) и повторить деплой.
+**Deployment status (2026-10-12, финал):** DEPLOYED + SCHEDULE BOUND. Владелец выдал ключу
+`firebase-adminsdk-h5hhr@…` roles/iam.serviceAccountUser, затем (после перевыдачи на проект)
+roles/cloudscheduler.admin и roles/secretmanager.admin; агент завершил деплой в прод
+school-quiz-89336951 (standalone firebase-tools 15.33). `reconcileEconomySeasons` в проде,
+код 7d45a9b5; джоба `firebase-schedule-reconcileEconomySeasons-us-central1` создана/ENABLED
+(schedule «every 10 minutes», UTC) через filtered-deploy — firebase-tools 15.33 с
+запятой-списком `--only functions:a,b` фильтрует только первое имя, привязка делается
+по одному `--only functions:<имя>` за прогон. Все 86 функций кодбейса в проде (80 ранних +
+6 lifecycle-view, задеплоены после создания секрета ARENA_LIFECYCLE_CURSOR_SECRET в
+Secret Manager: версии 1 ENABLED, runtime-SA получил secretAccessor); 7/7 scheduled-функций
+имеют ENABLED-джобы Cloud Scheduler с расписаниями из кода (1 мин: арена-сезоны, турниры;
+10 мин: аукционы, сезоны; 03:00 ревью; 04:00 рейтинги, балансы). Монетизационный трек деплоя
+закрыт.
 
 ## Design Notes
 
