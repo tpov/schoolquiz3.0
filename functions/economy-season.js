@@ -25,8 +25,12 @@ const {readEconomyConstants} = require("./economy-constants");
 /** Куда ложится сезон; коллекция закрыта правилами, читает её только сервер. */
 const ECONOMY_SEASONS_COLLECTION = "economy_seasons";
 
-/** Статусы сезона. CLOSED — снимок записан; 5.2/5.3 дополнят выплатами и финальным статусом. */
+/** Статусы сезона. CLOSED — снимок записан; SETTLED — обе выплаты закрыты, сезон мёртв. */
 const ECONOMY_SEASON_CLOSED = "CLOSED";
+const ECONOMY_SEASON_SETTLED = "SETTLED";
+
+/** Куда ложится разовая награда «за шестерых»; коллекция закрыта правилами. */
+const REFERRAL_AWARDS_COLLECTION = "referral_awards";
 
 const SCHEMA_VERSION = 1;
 
@@ -65,6 +69,13 @@ const SEASON_PAYOUT_BATCH = 50;
 
 /** Место, которому сезон платит трофей. Продуктовый факт спеки, не ручка таблицы. */
 const SEASON_CHAMPION_RANK = 1;
+
+/**
+ * Граница чтения приглашённых одного пригласившего за одну транзакцию: процент считает всех
+ * прямых приглашённых одним floor'ом, поэтому чтение цельное, а за границей — громкий отказ
+ * оператору, не тихая потеря денег. Граница модуля, не таблицы экономики.
+ */
+const REFERRAL_INVITEE_READ_LIMIT = 200;
 
 const SEASON_ID_PATTERN = /^\d{4}-Q[1-4]$/;
 
@@ -157,7 +168,8 @@ function validateSeasonSnapshot(season) {
 
 function validateSeason(raw, seasonId) {
   if (!raw || raw.schemaVersion !== SCHEMA_VERSION || raw.seasonId !== seasonId ||
-      raw.status !== ECONOMY_SEASON_CLOSED || !raw.quarter || raw.quarter.id !== seasonId) {
+      ![ECONOMY_SEASON_CLOSED, ECONOMY_SEASON_SETTLED].includes(raw.status) ||
+      !raw.quarter || raw.quarter.id !== seasonId) {
     fail("INVALID_SOURCE", "economy season document is corrupted");
   }
   const quarter = quarterFromId(seasonId);
@@ -400,6 +412,189 @@ async function payLeaderboard({db, seasonId, now, constants, batchSize = SEASON_
 }
 
 /**
+ * Расчёт одного пригласившего: процент сезона и, если пора, разовая награда — одна транзакция.
+ *
+ * Процент — один floor от суммы разностей прямых приглашённых: счётчик игрока минус его самый
+ * свежий снимок прошлых сезонов (в глубину догоняющего прохода; ни разу не снятому — ноль).
+ * Кумулятивный счётчик делает пропавший снимок middle-сезона безболезненным: разность берётся
+ * от более старой базы — деньги не теряются и не платятся дважды. Документ выплаты — create,
+ * ключ повтора и самого процента, и засчитанного нуля. Награда «за шестерых» — отдельная
+ * коллекция и отдельный ключ: она не сезонная, «ровно один раз за всё время».
+ */
+async function settleReferral({db, seasonId, referrerUid, now, constants}) {
+  exactNonNegative(now, "server time");
+  quarterFromId(seasonId);
+  if (typeof referrerUid !== "string" || !referrerUid) fail("INVALID_ARGUMENT", "referrer uid is invalid");
+  const referral = constants && constants.seasons ? constants.seasons : null;
+  if (!referral) fail("INVALID_ARGUMENT", "referral constants are required");
+  const percent = exactNonNegative(referral.referralPercent, "referralPercent");
+  const target = exactNonNegative(referral.referralInviteTarget, "referralInviteTarget");
+  const each = exactNonNegative(referral.referralInviteBoxes, "referralInviteBoxes");
+  const bonus = exactNonNegative(referral.referralBonusBoxes, "referralBonusBoxes");
+  return db.runTransaction(async (transaction) => {
+    // Все чтения — до первой записи: порядок транзакции Firestore.
+    const payoutRef = db.collection(ECONOMY_SEASONS_COLLECTION).doc(seasonId).collection("payouts")
+      .doc(`referral_${referrerUid}`);
+    if ((await transaction.get(payoutRef)).exists) return {settled: false, boxes: 0, credited: 0, awarded: false};
+    const awardRef = db.collection(REFERRAL_AWARDS_COLLECTION).doc(referrerUid);
+    const awardSnapshot = await transaction.get(awardRef);
+    const invitees = await transaction.get(db.collection("users")
+      .where("referredBy", "==", referrerUid).orderBy("__name__").limit(REFERRAL_INVITEE_READ_LIMIT + 1));
+    if (invitees.docs.length > REFERRAL_INVITEE_READ_LIMIT) {
+      fail("INVALID_SOURCE", `referrer ${referrerUid} has more than ${REFERRAL_INVITEE_READ_LIMIT} invitees`);
+    }
+    const priorSeasons = [];
+    let cursor = quarterFromId(seasonId);
+    for (let back = 0; back < SEASON_CLOSE_LOOKBACK_QUARTERS; back++) {
+      cursor = previousQuarter(cursor);
+      priorSeasons.push(cursor.id);
+    }
+    let openings = 0;
+    let qualifying = 0;
+    for (const doc of invitees.docs) {
+      const user = doc.data() || {};
+      if (user.referredBy !== referrerUid) fail("INVALID_SOURCE", "referral link disagrees with its query");
+      const counter = exactNonNegative(user.openedBoxesTotal || 0, "invitee openedBoxesTotal");
+      let base = 0;
+      for (const sid of priorSeasons) {
+        const prior = await transaction.get(
+          db.collection(`${ECONOMY_SEASONS_COLLECTION}/${sid}/referrals`).doc(doc.id));
+        if (prior.exists) {
+          base = exactNonNegative((prior.data() || {}).openedBoxes || 0, "prior snapshot openedBoxes");
+          break;
+        }
+      }
+      openings += Math.max(0, counter - base);
+      if (counter >= each) qualifying += 1;
+    }
+    const userSnapshot = await transaction.get(db.collection("users").doc(referrerUid));
+    const user = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    const boxCount = exactNonNegative(user.boxCount || 0, "player boxCount");
+    const boxes = Math.floor((openings * percent) / 100);
+    const awardDue = !awardSnapshot.exists && qualifying >= target && bonus > 0;
+    const credited = boxes + (awardDue ? bonus : 0);
+    transaction.create(payoutRef, {
+      uid: referrerUid, seasonId, kind: "REFERRAL", boxes, openings,
+      invitees: invitees.docs.length, paidAtMs: now,
+    });
+    if (credited > 0) {
+      transaction.set(db.collection("users").doc(referrerUid), {
+        uid: referrerUid, boxCount: boxCount + credited, updatedAtMs: now,
+      }, {merge: true});
+    }
+    if (boxes > 0) {
+      const ledger = ledgerEntry({
+        uid: referrerUid, currency: CURRENCY.BOXES, delta: boxes,
+        reason: REASON.SEASON_REFERRAL, sourceId: `${seasonId}_referral`, atMs: now,
+        details: {seasonId, openings, percent, invitees: invitees.docs.length},
+      });
+      if (ledger) transaction.set(db.doc(`${LEDGER_PATH}/${ledger.id}`), ledger, {merge: true});
+      transaction.set(db.collection("users").doc(referrerUid).collection("receipts")
+        .doc(`season_referral_${seasonId}`), {
+        kind: "SEASON_REFERRAL", messageKey: "receipt.season_referral_percent",
+        params: {seasonId, openings, boxes, percent, invitees: invitees.docs.length},
+        amount: boxes, currency: "BOXES", createdAtMs: now,
+      });
+    }
+    if (awardDue) {
+      transaction.create(awardRef, {
+        uid: referrerUid, boxes: bonus, invitees: qualifying, each, awardedAtMs: now,
+      });
+      const ledger = ledgerEntry({
+        uid: referrerUid, currency: CURRENCY.BOXES, delta: bonus,
+        reason: REASON.REFERRAL_BONUS, sourceId: "referral_bonus", atMs: now,
+        details: {invitees: qualifying, each},
+      });
+      if (ledger) transaction.set(db.doc(`${LEDGER_PATH}/${ledger.id}`), ledger, {merge: true});
+      transaction.set(db.collection("users").doc(referrerUid).collection("receipts")
+        .doc("referral_bonus"), {
+        kind: "REFERRAL_BONUS", messageKey: "receipt.referral_bonus",
+        params: {boxes: bonus, invitees: qualifying, each},
+        amount: bonus, currency: "BOXES", createdAtMs: now,
+      });
+    }
+    return {settled: true, boxes, credited, awarded: awardDue};
+  });
+}
+
+/**
+ * Рефералка сезона (история 5.3): обход игроков с `referred == true` курсором на сезоне, для
+ * каждого встреченного непогашенного пригласившего — своя транзакция расчёта. Курсор двигается
+ * только после успешных транзакций расчёта: прогон, упавший между ними, перечитывает ту же
+ * страницу и пропускает погашенных по документам выплат. Обход закончен — сезон помечен
+ * `referralPaid`; обе выплаты закрыты — сезон SETTLED.
+ *
+ * @returns {{settled: number, boxes: number, awarded: number, done: boolean}}.
+ */
+async function payReferral({db, seasonId, now, constants, batchSize = SEASON_REFERRAL_BATCH}) {
+  exactNonNegative(now, "server time");
+  quarterFromId(seasonId);
+  if (!Number.isSafeInteger(batchSize) || batchSize <= 0) fail("INVALID_ARGUMENT", "batch size must be a positive integer");
+  const seasonRef = db.collection(ECONOMY_SEASONS_COLLECTION).doc(seasonId);
+  let settled = 0;
+  let boxes = 0;
+  let awarded = 0;
+  for (let portion = 0; portion < SEASON_SWEEP_PORTIONS; portion++) {
+    // Чтение страницы без записи: курсор подвинется отдельной транзакцией после расчётов.
+    const page = await db.runTransaction(async (transaction) => {
+      const seasonSnapshot = await transaction.get(seasonRef);
+      if (!seasonSnapshot.exists) return {referrers: [], lastId: null, done: true};
+      const season = validateSeason(seasonSnapshot.data(), seasonId);
+      if (season.referralPaid === true || season.status === ECONOMY_SEASON_SETTLED) {
+        return {referrers: [], lastId: null, done: true};
+      }
+      const cursor = season.referralPayoutCursor || null;
+      let query = db.collection("users").where("referred", "==", true).orderBy("__name__").limit(batchSize);
+      if (cursor !== null) query = query.startAfter(cursor);
+      const players = await transaction.get(query);
+      const referrers = [];
+      for (const doc of players.docs) {
+        const user = doc.data() || {};
+        if (typeof user.referredBy !== "string" || !user.referredBy) {
+          fail("INVALID_SOURCE", "referred player is missing its referrer");
+        }
+        if (user.referredBy === doc.id) fail("INVALID_SOURCE", "a player cannot be its own referrer");
+        if (!referrers.includes(user.referredBy)) {
+          const payout = await transaction.get(
+            seasonRef.collection("payouts").doc(`referral_${user.referredBy}`));
+          if (!payout.exists) referrers.push(user.referredBy);
+        }
+      }
+      return {
+        referrers,
+        lastId: players.docs.length ? players.docs.at(-1).id : null,
+        done: players.docs.length < batchSize,
+      };
+    });
+    for (const referrerUid of page.referrers) {
+      const outcome = await settleReferral({db, seasonId, referrerUid, now, constants});
+      if (outcome.settled) {
+        settled += 1;
+        boxes += outcome.credited;
+        if (outcome.awarded) awarded += 1;
+      }
+    }
+    // Курсор и флаги — после успешных расчётов: падение между ними перечитывает страницу.
+    const finished = await db.runTransaction(async (transaction) => {
+      const seasonSnapshot = await transaction.get(seasonRef);
+      if (!seasonSnapshot.exists) return {done: true};
+      const season = validateSeason(seasonSnapshot.data(), seasonId);
+      if (season.referralPaid === true || season.status === ECONOMY_SEASON_SETTLED) return {done: true};
+      const done = page.done && page.referrers.length === 0;
+      const bothPaid = done && season.leaderboardPaid === true;
+      transaction.set(seasonRef, {
+        ...(page.lastId ? {referralPayoutCursor: page.lastId} : {}),
+        ...(done ? {referralPaid: true} : {}),
+        ...(bothPaid ? {status: ECONOMY_SEASON_SETTLED} : {}),
+      }, {merge: true});
+      return {done};
+    });
+    if (finished.done) return {settled, boxes, awarded, done: true};
+  }
+  return {settled, boxes, awarded, done: false};
+}
+
+/**
  * Граница установки: квартал первого прогона, с которого сезонная история и начинается.
  *
  * Ставится один раз, транзакцией — два параллельных прогона спорят о ней ровно до первого
@@ -446,6 +641,9 @@ async function sweepEconomySeasons({db, now, constants}) {
   let captured = 0;
   let paid = 0;
   let paidBoxes = 0;
+  let referralSettled = 0;
+  let referralBoxes = 0;
+  let referralAwarded = 0;
   let skipped = 0;
   let cursor = quarterWindow(now);
   for (let back = 0; back < SEASON_CLOSE_LOOKBACK_QUARTERS; back++) {
@@ -469,24 +667,34 @@ async function sweepEconomySeasons({db, now, constants}) {
       paid += payout.paid;
       paidBoxes += payout.boxes;
     }
+    if (season.referralPaid !== true && season.status !== ECONOMY_SEASON_SETTLED) {
+      const referral = await payReferral({db, seasonId: cursor.id, now, constants: bands});
+      referralSettled += referral.settled;
+      referralBoxes += referral.boxes;
+      referralAwarded += referral.awarded;
+    }
   }
-  return {closed, captured, paid, paidBoxes, skipped};
+  return {closed, captured, paid, paidBoxes, referralSettled, referralBoxes, referralAwarded, skipped};
 }
 
 module.exports = {
   ECONOMY_SEASONS_COLLECTION,
   ECONOMY_SEASON_CLOSED,
+  ECONOMY_SEASON_SETTLED,
+  REFERRAL_AWARDS_COLLECTION,
   INSTALL_MARKER_ID,
   SCHEMA_VERSION,
   SEASON_REFERRAL_BATCH,
   SEASON_PAYOUT_BATCH,
   SEASON_CLOSE_LOOKBACK_QUARTERS,
   SEASON_CHAMPION_RANK,
+  REFERRAL_INVITEE_READ_LIMIT,
   boxesForRank,
   closeEconomySeason,
   digest,
   ensureInstallMarker,
   payLeaderboard,
+  payReferral,
   previousQuarter,
   quarterFromId,
   quarterWindow,

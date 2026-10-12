@@ -79,6 +79,7 @@ const {purchasePremiumWithGold} = require("./premium-shop");
 const {placeOfferBid, offerAuctionView} = require("./offer-auction");
 const {settleDueOfferAuctions} = require("./offer-auction-settlement");
 const {sweepEconomySeasons} = require("./economy-season");
+const {referralFields, referralRegistration} = require("./referral-registration");
 const {decideOfferAdReview, offersScreenView} = require("./offer-ad-review");
 const {createPlayDeveloperApi} = require("./play-developer-api");
 const {
@@ -2918,13 +2919,23 @@ exports.getEconomyConstants = onCall(CALLABLE_OPTIONS, async (request) => {
 
 exports.ensureUserProfile = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
-  const result = await upsertUserProfile(uid, {
-    nickname: generatedNickname(uid),
-    knownLanguages: normalizeLanguages(request.data && request.data.knownLanguages),
-    now: Date.now(),
-    authStatus: authProfileStatus(request),
-    allowNicknameUpgrade: false,
-  });
+  let result;
+  try {
+    result = await upsertUserProfile(uid, {
+      nickname: generatedNickname(uid),
+      knownLanguages: normalizeLanguages(request.data && request.data.knownLanguages),
+      now: Date.now(),
+      authStatus: authProfileStatus(request),
+      allowNicknameUpgrade: false,
+      // Регистрация по ссылке (история 5.3): поле читается только при создании аккаунта.
+      referredByUid: request.data && request.data.referredByUid,
+    });
+  } catch (error) {
+    if (error && error.code === "INVALID_ARGUMENT") {
+      throw new HttpsError("invalid-argument", error.message);
+    }
+    throw error;
+  }
   return profileResponse(result, await readEconomyConstantsDocument());
 });
 
@@ -7584,6 +7595,14 @@ async function upsertUserProfile(uid, options) {
   return runEconomyTransaction(async (transaction) => {
     const userSnapshot = await transaction.get(userRef);
     const profileSnapshot = await transaction.get(profileRef);
+    // Регистрация по ссылке (история 5.3): только при создании аккаунта, чтение пригласившего —
+    // до первой записи транзакции. Мёртвая ссылка даёт аккаунт без поля, испорченная — отказ.
+    const referralInput = userSnapshot.exists || options.referredByUid === undefined ? null :
+      referralRegistration({uid, referredByUid: options.referredByUid});
+    const inviterSnapshot = referralInput ?
+      await transaction.get(db.collection("users").doc(referralInput)) : null;
+    const referral = referralInput ? referralFields({uid, referredByUid: referralInput,
+      inviterExists: inviterSnapshot ? inviterSnapshot.exists : false, now: options.now}) : {};
     const existingUser = userSnapshot.exists ? userSnapshot.data() || {} : {};
     const premiumPlan = await advancePremiumInTransaction(transaction, uid, existingUser, economy, options.now);
     if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
@@ -7617,6 +7636,8 @@ async function upsertUserProfile(uid, options) {
     const boxState = readBoxState(existingUser);
     const publicProfile = {
       ...premiumPlan.userPatch,
+      // Прямая ссылка приглашающего — только у нового аккаунта; существующий не переписывается.
+      ...referral,
       reservedNolics: nonNegativeInteger(existingUser.reservedNolics, 0),
       reservedLifePoints: nonNegativeInteger(existingUser.reservedLifePoints, 0),
       reservedPlasmaPoints: nonNegativeInteger(existingUser.reservedPlasmaPoints, 0),

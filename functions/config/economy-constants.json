@@ -40,7 +40,11 @@
   },
   "boxPacks": {},
   "seasons": {
-    "leaderboardBands": [[1, 1, 500], [2, 2, 250], [3, 3, 125], [4, 5, 70], [6, 10, 50], [11, 30, 25], [31, 50, 15], [51, 100, 5]]
+    "leaderboardBands": [[1, 1, 500], [2, 2, 250], [3, 3, 125], [4, 5, 70], [6, 10, 50], [11, 30, 25], [31, 50, 15], [51, 100, 5]],
+    "referralPercent": 1,
+    "referralInviteTarget": 6,
+    "referralInviteBoxes": 10,
+    "referralBonusBoxes": 50
   },
   "clockSkewToleranceMs": 0,
   "auditEnabled": true,

@@ -5,6 +5,8 @@ const {createFirestoreStub} = require("./_firestore-stub");
 const {
   ECONOMY_SEASONS_COLLECTION,
   ECONOMY_SEASON_CLOSED,
+  ECONOMY_SEASON_SETTLED,
+  REFERRAL_AWARDS_COLLECTION,
   INSTALL_MARKER_ID,
   SEASON_CLOSE_LOOKBACK_QUARTERS,
   SEASON_PAYOUT_BATCH,
@@ -13,6 +15,7 @@ const {
   closeEconomySeason,
   digest,
   payLeaderboard,
+  payReferral,
   previousQuarter,
   quarterWindow,
   rankTopPlayers,
@@ -73,7 +76,8 @@ test("a matured quarter closes once: top-100 snapshot, digest, CLOSED", async ()
   const result = await sweepEconomySeasons({db, now: T});
   assert.deepEqual(result.closed, [SEASON], "закрыт созревший живой квартал — первый, не текущий");
   const season = (await seasonDoc(db)).data();
-  assert.equal(season.status, ECONOMY_SEASON_CLOSED);
+  assert.equal(season.status, ECONOMY_SEASON_SETTLED,
+    "снимок и обе выплаты уместились в один прогон — сезон сразу SETTLED");
   assert.equal(season.schemaVersion, 1);
   assert.equal(season.seasonId, SEASON);
   assert.deepEqual(season.quarter, Q1);
@@ -452,6 +456,168 @@ test("payLeaderboard without a bands table refuses loudly", async () => {
   await assert.rejects(
     payLeaderboard({db, seasonId: SEASON, now: T, constants: {}}),
     {code: "INVALID_ARGUMENT"});
+});
+
+test("the referral percent pays the season difference once, floored on the sum", async () => {
+  const db = makeDb({
+    ...player("boss", 1, {openedBoxesTotal: 0}),
+    ...player("inv-a", 2, {referred: true, referredBy: "boss", openedBoxesTotal: 149}),
+    ...player("inv-b", 3, {referred: true, referredBy: "boss", openedBoxesTotal: 51}),
+  });
+  await sweepEconomySeasons({db, now: T});
+  // Первый сезон: база ноль (ни разу не сняты) — 1% от (149 + 51) = 2 коробки.
+  const payout = (await db.collection(`${ECONOMY_SEASONS_COLLECTION}/${SEASON}/payouts`).doc("referral_boss").get()).data();
+  assert.equal(payout.kind, "REFERRAL");
+  assert.equal(payout.openings, 200);
+  assert.equal(payout.boxes, 2, "floor(200 × 1%) = 2");
+  assert.equal((await userDoc(db, "boss")).boxCount, 127,
+    "к проценту (2) добавляется полоса лидерборда: boss — третье место (125)");
+  const ledger = (await db.collection(LEDGER_PATH).get()).docs.find((doc) => doc.data().reason === REASON.SEASON_REFERRAL).data();
+  assert.deepEqual(ledger.details, {seasonId: SEASON, openings: 200, percent: 1, invitees: 2});
+  const receipt = (await db.collection("users/boss/receipts").doc(`season_referral_${SEASON}`).get()).data();
+  assert.equal(receipt.messageKey, "receipt.season_referral_percent");
+  assert.deepEqual(receipt.params, {seasonId: SEASON, openings: 200, boxes: 2, percent: 1, invitees: 2});
+  // Второй сезон: разность снимков — открывший ещё 100 у первого приглашённого платит 1 коробку.
+  await db.collection("users").doc("inv-a").set({openedBoxesTotal: 249}, {merge: true});
+  const later = Date.UTC(2026, 6, 2);
+  const result = await sweepEconomySeasons({db, now: later});
+  assert.equal(result.referralSettled, 1);
+  const next = (await db.collection(`${ECONOMY_SEASONS_COLLECTION}/2026-Q2/payouts`).doc("referral_boss").get()).data();
+  assert.equal(next.openings, 100, "база — снимок прошлого сезона, не ноль");
+  assert.equal(next.boxes, 1);
+  assert.equal((await userDoc(db, "boss")).boxCount, 253,
+    "127 + 1 за процент второго сезона + 125 за его полосу в лидерборде того же сезона");
+});
+
+test("a zero difference settles the season without crediting anything", async () => {
+  const db = makeDb({
+    ...player("boss", 1),
+    ...player("inv-a", 2, {referred: true, referredBy: "boss", openedBoxesTotal: 7}),
+  });
+  await sweepEconomySeasons({db, now: T});
+  const payout = (await db.collection(`${ECONOMY_SEASONS_COLLECTION}/${SEASON}/payouts`).doc("referral_boss").get()).data();
+  assert.equal(payout.boxes, 0, "floor(7 × 1%) = 0 — сезон засчитан с нулём");
+  assert.equal((await userDoc(db, "boss")).boxCount, 250,
+    "ноль процента ничего не начислил — на счету только полоса лидерборда (второе место)");
+  const repeat = await sweepEconomySeasons({db, now: T + 60_000});
+  assert.equal(repeat.referralSettled, 0, "повтор не пересчитывает погашенного");
+});
+
+test("a lost middle snapshot falls back to the older one: no double pay, no lost money", async () => {
+  const users = {
+    ...player("boss", 1),
+    ...player("inv-a", 2, {referred: true, referredBy: "boss", openedBoxesTotal: 100}),
+  };
+  const db = makeDb(users);
+  await sweepEconomySeasons({db, now: T}); // 2026-Q1: снимок inv-a = 100, процент 1 коробка
+  await db.collection("users").doc("inv-a").set({openedBoxesTotal: 160}, {merge: true});
+  await sweepEconomySeasons({db, now: Date.UTC(2026, 6, 2)}); // Q2: снимок 160, процент 0 (60×1%)
+  await db.runTransaction(async (transaction) => {
+    transaction.delete(db.collection(`${ECONOMY_SEASONS_COLLECTION}/2026-Q2/referrals`).doc("inv-a"));
+  });
+  await db.collection("users").doc("inv-a").set({openedBoxesTotal: 200}, {merge: true});
+  await sweepEconomySeasons({db, now: Date.UTC(2026, 9, 2)}); // Q3: снимка Q2 нет — база Q1 (100)
+  const payout = (await db.collection(`${ECONOMY_SEASONS_COLLECTION}/2026-Q3/payouts`).doc("referral_boss").get()).data();
+  assert.equal(payout.openings, 100, "разность от более старой базы: 200 − 100, не от нуля");
+  assert.equal(payout.boxes, 1);
+  const total = [...(await db.collection(LEDGER_PATH).get()).docs]
+    .filter((doc) => doc.data().reason === REASON.SEASON_REFERRAL)
+    .reduce((sum, doc) => sum + doc.data().delta, 0);
+  assert.equal(total, 2, "за три сезона заплачено 1 + 0 + 1 — ни дважды, ни меньше");
+});
+
+test("six invitees with ten boxes each pay the fifty once, five do not", async () => {
+  const six = {};
+  for (let index = 0; index < 6; index++) {
+    six[`inv-${index}`] = {uid: `inv-${index}`, skillPoints: 2, referred: true, referredBy: "boss",
+      openedBoxesTotal: 10 + index};
+  }
+  const db = makeDb({...player("boss", 1), ...six});
+  await sweepEconomySeasons({db, now: T});
+  const award = (await db.collection(REFERRAL_AWARDS_COLLECTION).doc("boss").get()).data();
+  assert.equal(award.boxes, 50);
+  assert.equal(award.invitees, 6);
+  assert.equal(award.each, 10);
+  assert.equal((await userDoc(db, "boss")).boxCount, 100,
+    "50 за шестерых плюс полоса лидерборда (седьмое место — 50); процент 75×1% = 0 коробок");
+  const receipt = (await db.collection("users/boss/receipts").doc("referral_bonus").get()).data();
+  assert.equal(receipt.messageKey, "receipt.referral_bonus");
+  assert.deepEqual(receipt.params, {boxes: 50, invitees: 6, each: 10});
+  const saved = {
+    award: structuredClone(award),
+    boss: structuredClone(await userDoc(db, "boss")),
+  };
+  const again = await sweepEconomySeasons({db, now: T + 60_000});
+  assert.equal(again.referralAwarded, 0, "повтор не награждает второй раз");
+  assert.deepEqual((await db.collection(REFERRAL_AWARDS_COLLECTION).doc("boss").get()).data(), award,
+    "документ награды не переписывается");
+  assert.deepEqual(await userDoc(db, "boss"), saved.boss);
+  // Пятеро — не шестеро: награды нет, процент не тронут.
+  const five = {};
+  for (let index = 0; index < 5; index++) {
+    five[`pal-${index}`] = {uid: `pal-${index}`, skillPoints: 2, referred: true, referredBy: "shy",
+      openedBoxesTotal: 50};
+  }
+  const shyDb = makeDb({...player("shy", 1), ...five});
+  await sweepEconomySeasons({db: shyDb, now: T});
+  assert.equal((await db.collection(REFERRAL_AWARDS_COLLECTION).doc("shy").get()).exists, false);
+  assert.equal((await userDoc(shyDb, "shy")).boxCount, 52,
+    "процент платится (250×1% = 2) и полоса шестого места (50), награды нет");
+});
+
+test("a chain pays one level: nobody earns from openings they did not cause", async () => {
+  const db = makeDb({
+    ...player("top", 1),
+    ...player("mid", 2, {referred: true, referredBy: "top", openedBoxesTotal: 300}),
+    ...player("leaf", 3, {referred: true, referredBy: "mid", openedBoxesTotal: 300}),
+  });
+  await sweepEconomySeasons({db, now: T});
+  const top = (await db.collection(`${ECONOMY_SEASONS_COLLECTION}/${SEASON}/payouts`).doc("referral_top").get()).data();
+  const mid = (await db.collection(`${ECONOMY_SEASONS_COLLECTION}/${SEASON}/payouts`).doc("referral_mid").get()).data();
+  assert.equal(top.openings, 300, "top платят только за mid");
+  assert.equal(mid.openings, 300, "mid платят только за leaf");
+  assert.equal(top.boxes, 3);
+  assert.equal(mid.boxes, 3);
+});
+
+test("both payouts finished, the season settles and the sweep leaves it alone", async () => {
+  const db = makeDb({
+    ...player("boss", 1),
+    ...player("inv-a", 2, {referred: true, referredBy: "boss", openedBoxesTotal: 200}),
+  });
+  const result = await sweepEconomySeasons({db, now: T});
+  assert.equal((await seasonDoc(db)).data().status, ECONOMY_SEASON_SETTLED, "выплачено всё — сезон SETTLED");
+  const before = structuredClone((await seasonDoc(db)).data());
+  assert.deepEqual(before.status, ECONOMY_SEASON_SETTLED);
+  const again = await sweepEconomySeasons({db, now: T + 60_000});
+  assert.deepEqual(again, {closed: [], captured: 0, paid: 0, paidBoxes: 0, referralSettled: 0, referralBoxes: 0, referralAwarded: 0, skipped: 1});
+  assert.deepEqual((await seasonDoc(db)).data(), before, "SETTLED не переписывается");
+  void result;
+});
+
+test("more invitees than the read limit is a loud break, not a silent cut", async () => {
+  const users = {...player("boss", 1)};
+  for (let index = 0; index < 201; index++) {
+    users[`crowd-${String(index).padStart(3, "0")}`] = {uid: `crowd-${String(index).padStart(3, "0")}`,
+      skillPoints: 2, referred: true, referredBy: "boss", openedBoxesTotal: 10};
+  }
+  const db = makeDb(users);
+  await assert.rejects(sweepEconomySeasons({db, now: T}), {code: "INVALID_SOURCE"},
+    "переполненный пригласивший роняет расчёт громко, а не режет его молча");
+  assert.equal((await db.collection(`${ECONOMY_SEASONS_COLLECTION}/${SEASON}/payouts`).doc("referral_boss").get()).exists,
+    false, "испорченное не платит");
+  assert.equal((await seasonDoc(db)).data().referralPaid, undefined, "ход не отмечен сделанным");
+});
+
+test("a corrupted season document refuses the referral payout too", async () => {
+  const db = makeDb({...player("boss", 1),
+    ...player("inv-a", 2, {referred: true, referredBy: "boss", openedBoxesTotal: 200})});
+  await sweepEconomySeasons({db, now: T});
+  const ref = db.collection(ECONOMY_SEASONS_COLLECTION).doc(SEASON);
+  const season = (await ref.get()).data();
+  await ref.set({...season, status: "MYSTERY"}, {merge: false});
+  await assert.rejects(payReferral({db, seasonId: SEASON, now: T + 60_000, constants: readEconomyConstants(null)}),
+    {code: "INVALID_SOURCE"});
 });
 
 (async () => {

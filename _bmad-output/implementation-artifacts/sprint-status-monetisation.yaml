@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 12-10-2026 12:05
+last_updated: 12-10-2026 14:30
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -253,6 +253,20 @@ development_status:
   # на устройство не уезжает. functions 108/108, jvmTest паритета зелёный, lint/syntax чисто.
   # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч — топ длиннее сотни отвергается чтением;
   # 2 опровергнуты.
-  5-3-рефералка-платит-за-шестерых-и-процент: backlog
+  5-3-рефералка-платит-за-шестерых-и-процент: done  # spec-m5-3-referral-pays-for-six-and-percent.md —
+  # регистрация по ссылке: ensureUserProfile читает referredByUid только при создании аккаунта
+  # (реферал-registration.js: мусор/само — named 400, мёртвая ссылка — тихо без поля, существующий
+  # аккаунт игнорирует); поля referred/referredBy/referredAtMs — прямой уровень без цепочки.
+  # payReferral в прогоне после лидерборда: обход referred==true курсором (страница без записи,
+  # курсор после расчётов), settleReferral одной транзакцией: прямые приглашённые (граница 200,
+  # громкий отказ за ней), разность openedBoxesTotal против свежего снимка прошлых сезонов (ни
+  # разу не снятому — ноль: потеря записи не платит дважды и не теряет деньги), один floor — 1%
+  # (seasons.referralPercent), документ выплаты payouts/referral_{uid} (create — ключ повтора,
+  # ноль засчитывает сезон); награда «за шестерых» там же — referral_awards/{uid}, 50 коробок
+  # ровно один раз за всё время (≥6 по ≥10). Строки книги SEASON_REFERRAL/REFERRAL_BONUS,
+  # квитанции receipt.season_referral_percent/receipt.referral_bonus. Обе выплаты — сезон SETTLED.
+  # functions 109/109 (+2 сьюта), lint/syntax чисто, пин не менялся.
+  # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч (точка-имена в uid), 4 опровергнуты.
+  # Клиентская проводка глубокой ссылки — отдельная клиентская история (серверная дверь готова).
   5-4-игрок-узнаёт-за-что-получил: backlog
   epic-5-retrospective: optional

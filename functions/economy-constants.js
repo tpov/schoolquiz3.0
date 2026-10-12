@@ -212,7 +212,17 @@ function seasonPayouts(value) {
     const previous = index === 0 ? {to: 0} : rows[index - 1];
     return from === (index === 0 ? 1 : previous[1] + 1);
   }) && rows[rows.length - 1][1] === 100;
-  return {leaderboardBands: valid ? rows.map((row) => [...row]) : DEFAULTS.seasons.leaderboardBands};
+  // Числа рефералки (история 5.3): каждое откатывается к своему начальному значению. Ноль
+  // процента — «программа выключена», а не испорченность; ноль награды — то же.
+  const referralPercent = (value) => Number.isSafeInteger(value) && value >= 0 && value <= 100 ?
+    value : DEFAULTS.seasons.referralPercent;
+  return {
+    leaderboardBands: valid ? rows.map((row) => [...row]) : DEFAULTS.seasons.leaderboardBands,
+    referralPercent: referralPercent(source.referralPercent),
+    referralInviteTarget: Math.max(1, nonNegativeInt(source.referralInviteTarget, DEFAULTS.seasons.referralInviteTarget)),
+    referralInviteBoxes: Math.max(1, nonNegativeInt(source.referralInviteBoxes, DEFAULTS.seasons.referralInviteBoxes)),
+    referralBonusBoxes: nonNegativeInt(source.referralBonusBoxes, DEFAULTS.seasons.referralBonusBoxes),
+  };
 }
 
 /**

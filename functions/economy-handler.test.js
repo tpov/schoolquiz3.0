@@ -81,6 +81,35 @@ test("profile refresh preserves offline anchor; daily premium is a separate once
   assert.equal(store.documents.get(`users/${uid}`).boxCount, 4);
 });
 
+test("referral registration lands only on a new account, one level deep", async () => {
+  // Новый аккаунт по живой ссылке: прямой уровень без цепочки.
+  store.reset({["users/inviter-alive"]: {uid: "inviter-alive"}});
+  await call("ensureUserProfile", {referredByUid: "inviter-alive"}, "newcomer-0000001");
+  const newcomer = store.documents.get("users/newcomer-0000001");
+  assert.equal(newcomer.referred, true);
+  assert.equal(newcomer.referredBy, "inviter-alive");
+  assert.equal(typeof newcomer.referredAtMs, "number");
+  // Существующий аккаунт: поле не переписывается — атрибуция честна только при установке.
+  store.documents.set("users/newcomer-0000001", {...store.documents.get("users/newcomer-0000001"), referredBy: "first-link"});
+  await call("ensureUserProfile", {referredByUid: "inviter-alive"}, "newcomer-0000001");
+  assert.equal(store.documents.get("users/newcomer-0000001").referredBy, "first-link");
+  store.reset({["users/old-player"]: {uid: "old-player", nickname: "Old"}});
+  await call("ensureUserProfile", {referredByUid: "inviter-alive"}, "old-player");
+  assert.equal("referredBy" in store.documents.get("users/old-player"), false,
+    "существующий игрок не переводит свою историю открытий пригласившему");
+  // Мёртвая ссылка: аккаунт создаётся без поля — застрявший код не запирает вход.
+  store.reset({});
+  await call("ensureUserProfile", {referredByUid: "vanished-inviter"}, "newcomer-0000002");
+  assert.equal("referredBy" in store.documents.get("users/newcomer-0000002"), false);
+  // Самоприглашение и мусор — громкий именованный отказ.
+  store.reset({});
+  await assert.rejects(call("ensureUserProfile", {referredByUid: "self-invite-0001"}, "self-invite-0001"),
+    {code: "invalid-argument"});
+  await assert.rejects(call("ensureUserProfile", {referredByUid: "bad/ref"}, "newcomer-0000003"),
+    {code: "invalid-argument"});
+  assert.equal(store.documents.has("users/self-invite-0001"), false, "испорченное ничего не создаёт");
+});
+
 test("the offers-auction pair keeps its named wire codes and the open table stays creative-free", async () => {
   store.reset(world());
   const now = Date.UTC(2026, 10, 15, 12);

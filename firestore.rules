@@ -104,6 +104,12 @@ service cloud.firestore {
     match /arena_season_votes/{document=**} { allow read, write: if false; }
     match /arena_season_worker_state/{document=**} { allow read, write: if false; }
     match /box_operations/{document=**} { allow read, write: if false; }
+    match /referral_awards/{document=**} {
+      // The once-per-lifetime "six qualifying invites" award (story 5.3), one document per
+      // referrer. Its existence IS the only-therefore guard: a client write could mint the 50
+      // boxes again, a client read would hand out who recruited whom — private graph data.
+      allow read, write: if false;
+    }
     match /economy_seasons/{document=**} {
       // One document per calendar quarter of the monetisation seasons (story 5.1): the frozen
       // top-100 snapshot and its digest, plus the walk cursor and the per-player referral counter
