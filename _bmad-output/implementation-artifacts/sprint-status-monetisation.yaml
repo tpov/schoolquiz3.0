@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 12-10-2026 17:40
+last_updated: 12-10-2026 18:10
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -227,7 +227,14 @@ development_status:
   # валидация creative кандидата; 3 опровергнуты.
   epic-4-retrospective: optional
 
-  epic-5: in-progress  # 5.1–5.4 закрытие сезона и выплаты; build-auto полный маршрут
+  epic-5: done  # 5.1–5.4 закрыты 2026-10-12 (build-auto, полный маршрут, ревью 4 линз
+    # в-сессии — платформа без субагентов, как в эпиках 3 и 4). Сезон закрывается снимком с
+    # дайджестом, лидерборд платит полосами из таблицы, рефералка — процент разности снимков и
+    # разовую пятидесятку, квитанции доходят до игрока в магазине. Хвосты владельца: деплой в
+    # Firebase (в среде нет auth), композитных индексов не потребовалось (запросы на
+    # автоматических индексах), клиентская проводка глубокой ссылки рефералки — отдельная
+    # клиентская история (серверная дверь готова), средовые красные гейтов перечислены в спеке
+    # 5.4 и подтверждены на HEAD.
   5-1-снимок-сезона: done  # spec-m5-1-season-snapshot.md — reconcileEconomySeasons (onSchedule,
   # каждые 10 минут, maxInstances 1) закрывает созревший квартал одной транзакцией: документ
   # сезона с топ-100 по skillPoints (метрика fetchLeagueStanding; равенство — меньший uid) и
