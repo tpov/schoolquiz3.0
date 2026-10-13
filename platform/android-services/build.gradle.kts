@@ -16,6 +16,8 @@ dependencies {
     // Таблица настроек экономики хранится рядом с выбором каденции — в тех же настройках.
     implementation(project(":shared:feature:economy:data"))
     implementation(project(":shared:feature:economy:domain"))
+    // Код приглашающего из deep-link дожидается первого входа рядом с install referrer.
+    implementation(project(":shared:feature:internet:profile:data"))
     // Install referrer is the free half of attribution: no vendor, no key, no account.
     implementation(project(":shared:core:analytics"))
     implementation(libs.play.install.referrer)

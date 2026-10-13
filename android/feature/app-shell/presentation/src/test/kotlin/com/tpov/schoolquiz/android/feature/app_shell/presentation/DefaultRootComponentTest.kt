@@ -17,6 +17,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQue
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.labelRes
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
@@ -34,6 +35,7 @@ import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.model.Tour
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.model.TournamentSummary
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.repository.TournamentLeaderboardRepository
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.use_case.FetchTournamentOverviewUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.InMemoryPendingReferralStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -102,6 +104,7 @@ class DefaultRootComponentTest {
         fakeRepo: FakeUserStatsRepository = FakeUserStatsRepository(),
         syncScheduler: FakeSyncScheduler = FakeSyncScheduler(),
         fetchTournamentOverview: FetchTournamentOverviewUseCase = fakeTournamentOverviewUseCase(),
+        pendingReferralStore: InMemoryPendingReferralStore = InMemoryPendingReferralStore(),
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
@@ -112,6 +115,7 @@ class DefaultRootComponentTest {
         userStatsRepository = fakeRepo,
         syncScheduler = syncScheduler,
         syncStatusRepository = FakeSyncStatusRepository(),
+        pendingReferralStore = pendingReferralStore,
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
@@ -198,6 +202,7 @@ class DefaultRootComponentTest {
             userStatsRepository = errorRepo,
             syncScheduler = FakeSyncScheduler(),
             syncStatusRepository = FakeSyncStatusRepository(),
+            pendingReferralStore = InMemoryPendingReferralStore(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
             homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },
@@ -441,6 +446,7 @@ class DefaultRootComponentTest {
             userStatsRepository = fakeRepo,
             syncScheduler = FakeSyncScheduler(),
             syncStatusRepository = FakeSyncStatusRepository(),
+            pendingReferralStore = InMemoryPendingReferralStore(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
             homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },
@@ -584,5 +590,22 @@ class DefaultRootComponentTest {
             component.localTabComponent.childStack.value.active.configuration,
         )
         assertEquals(0, component.localTabComponent.childStack.value.backStack.size)
+    }
+
+    // -----------------------------------------------------------------------
+    // Referral deep link (history 5.3)
+    // GIVEN DefaultRootComponent with an in-memory pending referral store
+    // WHEN onDeepLink receives the app's referral link and a foreign link
+    // THEN only the app's link lands in the store, code kept for the bootstrap
+    // -----------------------------------------------------------------------
+    @Test
+    fun `referral deep link captures referrer code and foreign link is ignored`() = runTest(testDispatcher) {
+        val pending = InMemoryPendingReferralStore()
+        val component = buildComponent(pendingReferralStore = pending)
+
+        component.onDeepLink(DeepLink("schoolquiz://referral?id=inviter-uid"))
+        component.onDeepLink(DeepLink("https://evil.example/schoolquiz/referral?id=other"))
+
+        assertEquals("inviter-uid", pending.read())
     }
 }

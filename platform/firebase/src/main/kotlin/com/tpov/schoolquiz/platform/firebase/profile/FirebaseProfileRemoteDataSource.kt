@@ -15,16 +15,19 @@ class FirebaseProfileRemoteDataSource(
     private val functions: FirebaseFunctions,
 ) : ProfileRemoteDataSource {
     override suspend fun ensureProfile(request: ProfileBootstrapRequest): UserProfile {
+        val payload =
+            buildMap<String, Any> {
+                put(NICKNAME, request.nickname)
+                put(KNOWN_LANGUAGES, request.knownLanguages)
+                // Регистрация по ссылке (история 5.3): отсутствующее поле сервер читает как
+                // «без пригласившего», поэтому пустоту не отправляем вовсе.
+                request.referredByUid?.takeIf { it.isNotBlank() }?.let { put(REFERRED_BY_UID, it) }
+            }
         val data =
             functions
                 .getHttpsCallable(ENSURE_USER_PROFILE)
                 .withAppTimeout()
-                .call(
-                    mapOf(
-                        NICKNAME to request.nickname,
-                        KNOWN_LANGUAGES to request.knownLanguages,
-                    ),
-                )
+                .call(payload)
                 .await()
                 .data
         return (data as? Map<*, *>).toUserProfile(request.uid)
@@ -138,6 +141,7 @@ class FirebaseProfileRemoteDataSource(
         const val UPDATE_USER_NICKNAME = "updateUserNickname"
         const val UID = "uid"
         const val NICKNAME = "nickname"
+        const val REFERRED_BY_UID = "referredByUid"
         const val STATUS = "status"
         const val AVATAR_URL = "avatarUrl"
         const val KNOWN_LANGUAGES = "knownLanguages"

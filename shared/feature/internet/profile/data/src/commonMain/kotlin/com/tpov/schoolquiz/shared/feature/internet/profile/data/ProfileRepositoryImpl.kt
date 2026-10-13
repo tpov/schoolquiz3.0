@@ -20,6 +20,7 @@ class ProfileRepositoryImpl(
     private val local: ProfileLocalDataSource,
     private val remote: ProfileRemoteDataSource,
     private val currentUidFlow: () -> Flow<String?>,
+    private val pendingReferral: PendingReferralStore,
     private val nowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
     private val defaultLanguages: () -> List<String> = { listOf("ru") },
 ) : ProfileRepository {
@@ -52,17 +53,37 @@ class ProfileRepositoryImpl(
             if (local.find(uid) == null) {
                 local.upsert(localProfile)
             }
+            val referral = consumeReferralForBootstrap(uid)
             val remoteProfile =
                 remote.ensureProfile(
                     ProfileBootstrapRequest(
                         uid = uid,
                         nickname = localProfile.nickname,
                         knownLanguages = localProfile.knownLanguages.ifEmpty { defaultLanguages() },
+                        referredByUid = referral,
                     ),
                 )
+            // Вызов дошёл — код потрачен: следующий bootstrap уже без пригласившего, каким бы
+            // ни был ответ сервера по существу (для существующего аккаунта поле игнорируется).
+            if (referral != null) pendingReferral.clear()
             local.upsert(remoteProfile)
             remoteProfile
         }
+    }
+
+    /**
+     * Регистрация по ссылке (история 5.3): код уходит только с первым успешным bootstrap и
+     * стирается лишь тогда — упавший по сети вызов код не тратит, попытка повторится при
+     * следующей синхронизации. Испорченный код и самоприглашение выбрасываются без отправки:
+     * сервер отвечает на них отказом всего вызова, а из-за ссылки нельзя блокировать вход.
+     */
+    private suspend fun consumeReferralForBootstrap(uid: String): String? {
+        val code = pendingReferral.read()?.trim() ?: return null
+        if (!code.isSendableReferrer(selfUid = uid)) {
+            pendingReferral.clear()
+            return null
+        }
+        return code
     }
 
     override suspend fun updateNickname(nickname: String): Result<UserProfile> {
@@ -112,6 +133,20 @@ private fun generatedNickname(uid: String): String {
     val suffix = uid.filter { it.isLetterOrDigit() }.takeLast(6).uppercase()
     return "User${suffix.ifBlank { "000000" }}"
 }
+
+/**
+ * Зеркало проверки сервера (referral-registration.js, documentUid): то, что сервер отверг бы
+ * отказом всего вызова, клиент не отправляет вовсе.
+ */
+private const val MAX_REFERRAL_CODE_LENGTH: Int = 128
+
+private fun String.isSendableReferrer(selfUid: String): Boolean =
+    isNotBlank() &&
+        this != selfUid &&
+        this != "." &&
+        this != ".." &&
+        !contains('/') &&
+        length <= MAX_REFERRAL_CODE_LENGTH
 
 private inline fun <T> runCatchingCancellable(block: () -> T): Result<T> =
     try {

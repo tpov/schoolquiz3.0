@@ -18,6 +18,7 @@ import com.tpov.schoolquiz.apps.android_next.di.authModule
 import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.attribution.InstallReferrerReader
+import com.tpov.schoolquiz.platform.android_services.attribution.SharedPreferencesPendingReferralStore
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.platform.billing.BuyerTag
 import com.tpov.schoolquiz.platform.billing.di.billingModule
@@ -148,7 +149,12 @@ class AppApplication : Application(), Configuration.Provider {
                 firebaseLessonCommentModule,
                 firebaseQuestionModule,
                 appShellDataModule { sharedAuthUidFlow },
-                profileDataModule { sharedAuthUidFlow },
+                profileDataModule(
+                    currentUidFlow = { sharedAuthUidFlow },
+                    // Ссылку могут открыть задолго до первого входа — код живёт в preferences,
+                    // а не в памяти процесса (история 5.3).
+                    pendingReferralStore = SharedPreferencesPendingReferralStore(this@AppApplication),
+                ),
                 leaderboardDataModule,
                 economyDataModule { sharedAuthUidFlow },
                 appShellPresentationModule,

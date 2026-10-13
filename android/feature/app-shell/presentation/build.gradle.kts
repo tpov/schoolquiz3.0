@@ -19,6 +19,8 @@ dependencies {
     implementation(project(":android:feature:internet:profile:presentation"))
     // The settings screen renders account details straight off UserProfile.
     implementation(project(":shared:feature:internet:profile:domain"))
+    // Deep-link ловит код приглашающего в shell, тратит его bootstrap профиля (история 5.3).
+    implementation(project(":shared:feature:internet:profile:data"))
     implementation(project(":android:feature:economy:presentation"))
     implementation(project(":android:feature:quest:presentation"))
     implementation(project(":android:feature:quest-authoring:presentation"))

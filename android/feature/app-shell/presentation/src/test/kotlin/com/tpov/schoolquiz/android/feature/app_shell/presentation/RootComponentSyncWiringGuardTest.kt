@@ -43,6 +43,23 @@ class RootComponentSyncWiringGuardTest {
     }
 
     @Test
+    fun `the pending referral store is required, not defaulted`() {
+        val declaration =
+            Regex(
+                """^\s*private\s+val\s+pendingReferralStore\s*:\s*PendingReferralStore\s*(=[^\n]*)?,\s*$""",
+                RegexOption.MULTILINE,
+            ).find(source)
+
+        assertTrue("Параметр pendingReferralStore исчез из конструктора корня", declaration != null)
+        assertTrue(
+            "У pendingReferralStore не должно быть значения по умолчанию: умолчание-память процесса " +
+                "теряет код приглашающего при смерти процесса, и ссылка молча не срабатывает. " +
+                "Найдено: " + declaration!!.value.trim(),
+            declaration.groupValues[1].isEmpty(),
+        )
+    }
+
+    @Test
     fun `no in-file stub of the contract survives`() {
         assertTrue(
             "Заглушка SyncStatusRepository внутри модуля презентации не нужна — привязка есть в графе",

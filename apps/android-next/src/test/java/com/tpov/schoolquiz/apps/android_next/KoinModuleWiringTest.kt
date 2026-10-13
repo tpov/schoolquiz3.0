@@ -62,6 +62,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.InMemoryPendingReferralStore
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.shared.feature.lesson.data.outbox.LessonUnlockQuarantineRollback
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
@@ -109,6 +110,7 @@ import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.di.leaderboa
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentOverviewDto
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentSummaryDto
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.PendingReferralStore
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDomainModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
@@ -269,6 +271,9 @@ class KoinModuleWiringTest : KoinTest {
     }
 
     private val testRepositoryStubsModule = module {
+        // Хранилище кода приглашающего в production живёт в profileDataModule; этот тест
+        // собирает граф без него (там Room), поэтому здесь — честная in-memory версия.
+        single<PendingReferralStore> { InMemoryPendingReferralStore() }
         single<EconomyRepository> {
             object : EconomyRepository {
                 override fun observeBalance(): Flow<EconomyResourceBalance> =
@@ -809,6 +814,7 @@ class KoinModuleWiringTest : KoinTest {
 
                 override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
             },
+            pendingReferralStore = InMemoryPendingReferralStore(),
             homeQuestsFactory = { _, _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
@@ -913,6 +919,7 @@ class KoinModuleWiringTest : KoinTest {
 
                 override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
             },
+            pendingReferralStore = InMemoryPendingReferralStore(),
             homeQuestsFactory = { _, _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())

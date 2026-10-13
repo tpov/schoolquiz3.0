@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ProfileRepositoryImplTest {
@@ -25,6 +26,7 @@ class ProfileRepositoryImplTest {
                 local = local,
                 remote = remote,
                 currentUidFlow = { flowOf("uid-123456") },
+                pendingReferral = InMemoryPendingReferralStore(),
                 nowMs = { 100L },
                 defaultLanguages = { listOf("ru") },
             )
@@ -47,6 +49,7 @@ class ProfileRepositoryImplTest {
                 local = local,
                 remote = remote,
                 currentUidFlow = { flowOf("uid-1") },
+                pendingReferral = InMemoryPendingReferralStore(),
                 nowMs = { 100L },
                 defaultLanguages = { listOf("en") },
             )
@@ -64,9 +67,101 @@ class ProfileRepositoryImplTest {
                 local = FakeProfileLocalDataSource(),
                 remote = FakeProfileRemoteDataSource(),
                 currentUidFlow = { flowOf(null) },
+                pendingReferral = InMemoryPendingReferralStore(),
             )
 
         assertTrue(repository.ensureCurrentProfile().isFailure)
+    }
+
+    @Test
+    fun ensureCurrentProfile_sendsPendingReferralAndSpendsIt() = runTest {
+        val remote = FakeProfileRemoteDataSource()
+        val pending = InMemoryPendingReferralStore()
+        pending.write("inviter-uid")
+        val repository =
+            ProfileRepositoryImpl(
+                local = FakeProfileLocalDataSource(),
+                remote = remote,
+                currentUidFlow = { flowOf("uid-123456") },
+                pendingReferral = pending,
+            )
+
+        repository.ensureCurrentProfile().getOrThrow()
+
+        assertEquals("inviter-uid", remote.lastRequest?.referredByUid)
+        assertNull(pending.read())
+    }
+
+    @Test
+    fun ensureCurrentProfile_keepsPendingReferralWhenRemoteFails() = runTest {
+        val remote = FakeProfileRemoteDataSource(failEnsure = true)
+        val pending = InMemoryPendingReferralStore()
+        pending.write("inviter-uid")
+        val repository =
+            ProfileRepositoryImpl(
+                local = FakeProfileLocalDataSource(),
+                remote = remote,
+                currentUidFlow = { flowOf("uid-123456") },
+                pendingReferral = pending,
+            )
+
+        assertTrue(repository.ensureCurrentProfile().isFailure)
+
+        assertEquals("inviter-uid", pending.read())
+    }
+
+    @Test
+    fun ensureCurrentProfile_dropsSelfInvitationWithoutSending() = runTest {
+        val remote = FakeProfileRemoteDataSource()
+        val pending = InMemoryPendingReferralStore()
+        pending.write("uid-123456")
+        val repository =
+            ProfileRepositoryImpl(
+                local = FakeProfileLocalDataSource(),
+                remote = remote,
+                currentUidFlow = { flowOf("uid-123456") },
+                pendingReferral = pending,
+            )
+
+        repository.ensureCurrentProfile().getOrThrow()
+
+        assertNull(remote.lastRequest?.referredByUid)
+        assertNull(pending.read())
+    }
+
+    @Test
+    fun ensureCurrentProfile_dropsMalformedReferralWithoutSending() = runTest {
+        val remote = FakeProfileRemoteDataSource()
+        val pending = InMemoryPendingReferralStore()
+        pending.write("a/broken/code")
+        val repository =
+            ProfileRepositoryImpl(
+                local = FakeProfileLocalDataSource(),
+                remote = remote,
+                currentUidFlow = { flowOf("uid-123456") },
+                pendingReferral = pending,
+            )
+
+        repository.ensureCurrentProfile().getOrThrow()
+
+        assertNull(remote.lastRequest?.referredByUid)
+        assertNull(pending.read())
+    }
+
+    @Test
+    fun ensureCurrentProfile_sendsNoReferrerWhenNoneWasCaptured() = runTest {
+        val remote = FakeProfileRemoteDataSource()
+        val repository =
+            ProfileRepositoryImpl(
+                local = FakeProfileLocalDataSource(),
+                remote = remote,
+                currentUidFlow = { flowOf("uid-123456") },
+                pendingReferral = InMemoryPendingReferralStore(),
+            )
+
+        repository.ensureCurrentProfile().getOrThrow()
+
+        assertNull(remote.lastRequest?.referredByUid)
     }
 }
 
@@ -83,16 +178,21 @@ private class FakeProfileLocalDataSource : ProfileLocalDataSource {
     }
 }
 
-private class FakeProfileRemoteDataSource : ProfileRemoteDataSource {
+private class FakeProfileRemoteDataSource(
+    private val failEnsure: Boolean = false,
+) : ProfileRemoteDataSource {
     /** Ranking is not what these tests are about; a fixed standing keeps them honest and quiet. */
     override suspend fun leagueStanding(): LeagueStanding = LeagueStanding(place = 1, total = 1, topPercent = 1)
 
     var ensureCalls: Int = 0
     var lastNickname: String? = null
+    var lastRequest: ProfileBootstrapRequest? = null
 
     override suspend fun ensureProfile(request: ProfileBootstrapRequest): UserProfile {
         ensureCalls += 1
+        lastRequest = request
         lastNickname = request.nickname
+        if (failEnsure) error("network is down")
         return profile(
             uid = request.uid,
             nickname = request.nickname,

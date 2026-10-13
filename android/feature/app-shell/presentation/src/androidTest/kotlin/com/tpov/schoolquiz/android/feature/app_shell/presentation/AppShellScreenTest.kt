@@ -65,6 +65,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.InMemoryPendingReferralStore
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -376,6 +377,7 @@ class AppShellScreenTest {
 
                 override suspend fun recordUnreadableChanges(journal: String, count: Int) = Unit
             },
+            pendingReferralStore = InMemoryPendingReferralStore(),
             myQuestsFactory = { _, _, _ ->
                 object : MyQuestsComponent {
                     override val state: StateFlow<MyQuestsUiState> = MutableStateFlow(MyQuestsUiState())

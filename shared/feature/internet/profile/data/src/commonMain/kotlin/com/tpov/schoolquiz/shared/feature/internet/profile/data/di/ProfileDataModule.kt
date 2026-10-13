@@ -1,8 +1,10 @@
 package com.tpov.schoolquiz.shared.feature.internet.profile.data.di
 
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.ActivityRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.InMemoryPendingReferralStore
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.LogoRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.NicknameRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.PendingReferralStore
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.ProfileLocalDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.ProfileRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.RoomProfileLocalDataSource
@@ -20,8 +22,13 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 @Suppress("unused")
-fun profileDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): Module =
+fun profileDataModule(
+    currentUidFlow: () -> Flow<String?> = { flowOf(null) },
+    pendingReferralStore: PendingReferralStore = InMemoryPendingReferralStore(),
+): Module =
     module {
+        // Один экземпляр на процесс: пишет ловец deep-link, читает bootstrap профиля.
+        single<PendingReferralStore> { pendingReferralStore }
         single<ProfileLocalDataSource> { RoomProfileLocalDataSource(get()) }
         // Снятие лота уезжает общей очередью (AD-3, AD-6); её движок и таблица — в composition
         // root, а операции `profile.CANCEL_*` описаны здесь, у владеющей фичи (NFR4, NFR5).
@@ -43,6 +50,7 @@ fun profileDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): M
                 local = get(),
                 remote = get(),
                 currentUidFlow = currentUidFlow,
+                pendingReferral = get(),
             )
         }
     }

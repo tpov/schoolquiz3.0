@@ -29,6 +29,7 @@ import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.ReferralDeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
@@ -53,6 +54,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUs
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.model.TournamentOverview
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.repository.TournamentLeaderboardRepository
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.use_case.FetchTournamentOverviewUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.PendingReferralStore
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapProgress
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapResult
@@ -131,6 +133,7 @@ class DefaultRootComponent(
     // стоявшая здесь, отдавала вечное «синхронизации ещё не было» — то самое молчание, ради
     // устранения которого состояние и выводится наружу (AD-14).
     syncStatusRepository: SyncStatusRepository,
+    private val pendingReferralStore: PendingReferralStore,
     myQuestsFactory: (ComponentContext, Navigator, (QuestDisplayItem) -> Unit) -> MyQuestsComponent,
     homeQuestsFactory: (ComponentContext, (CatalogId, String) -> Unit, (LessonId) -> Unit) -> HomeQuestsComponent,
     questCreateFactory: (ComponentContext, Navigator) -> QuestCreateComponent = { _, nav ->
@@ -339,8 +342,10 @@ class DefaultRootComponent(
     }
 
     override fun onDeepLink(deepLink: DeepLink) {
-        // MVP stub — no URL patterns registered yet.
-        // Future: validate DeepLink.scheme and origin before processing (reject unknown schemes).
+        // Регистрация по ссылке (история 5.3): shell только ловит код приглашающего и отдаёт
+        // его профильному слою — момент атрибуции один, у bootstrap; навигацию ссылка не двигает.
+        val code = ReferralDeepLink.referrerCode(deepLink) ?: return
+        scope.launch { pendingReferralStore.write(code) }
     }
 
     override fun onVersionTap(nowMillis: Long) {

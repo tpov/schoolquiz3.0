@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
 
         rootComponent = get { parametersOf(defaultComponentContext()) }
         askNotificationPermissionOnce()
+        handleDeepLink(intent)
 
         val syncScheduler = get<SyncScheduler>()
         // Живёт столько же, сколько процесс: см. AppApplication.appScopeModule.
@@ -120,7 +121,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val uri = intent.dataString ?: return
+        handleDeepLink(intent)
+    }
+
+    /** И холодный старт по ссылке, и тёплый (singleTop) идут через один root-хук onDeepLink. */
+    private fun handleDeepLink(intent: Intent?) {
+        val uri = intent?.dataString ?: return
         if (!uri.startsWith("schoolquiz://")) return
         rootComponent.onDeepLink(DeepLink(uri))
     }

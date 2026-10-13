@@ -22,6 +22,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Регистрация по ссылке приглашающего (история 5.3): формат ссылки задаёт
+                 ReferralDeepLink в app-shell domain. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="referral"
+                    android:scheme="schoolquiz" />
+            </intent-filter>
         </activity>
         <!-- Disable WorkManager eager auto-init so it initializes after Koin starts. -->
         <provider

@@ -39,6 +39,7 @@ val appShellPresentationModule =
                 userStatsRepository = get(),
                 syncScheduler = get(),
                 syncStatusRepository = get(),
+                pendingReferralStore = get(),
                 myQuestsFactory = { compCtx, nav, onQuestDrillDown ->
                     koin.get(MyQuestsComponent::class, parameters = { parametersOf(compCtx, nav, onQuestDrillDown) })
                 },

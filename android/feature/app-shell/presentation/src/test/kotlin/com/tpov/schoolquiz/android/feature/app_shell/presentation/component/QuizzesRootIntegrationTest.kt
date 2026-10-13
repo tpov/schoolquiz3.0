@@ -48,6 +48,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.InMemoryPendingReferralStore
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
@@ -240,6 +241,7 @@ class QuizzesRootIntegrationTest {
         userStatsRepository = fakeRepo,
         syncScheduler = FakeSyncScheduler(),
         syncStatusRepository = FakeSyncStatusRepository(),
+        pendingReferralStore = InMemoryPendingReferralStore(),
         homeQuestsFactory = { ctx, onCatalogDrillDown, _ ->
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
@@ -288,6 +290,7 @@ class QuizzesRootIntegrationTest {
         userStatsRepository = FakeUserStatsRepository(),
         syncScheduler = FakeSyncScheduler(),
         syncStatusRepository = FakeSyncStatusRepository(),
+        pendingReferralStore = InMemoryPendingReferralStore(),
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         quizzesFactory = { ctx ->
