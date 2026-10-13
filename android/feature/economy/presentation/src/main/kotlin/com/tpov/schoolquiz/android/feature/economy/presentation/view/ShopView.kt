@@ -9,12 +9,8 @@ package com.tpov.schoolquiz.android.feature.economy.presentation.view
 
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,38 +18,38 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAvatar
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBalancePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirItemTile
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirProgressBar
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirRow
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSectionRule
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashShop
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
@@ -70,22 +66,6 @@ import java.util.Locale
 private const val REFERRAL_TARGET_BOXES = 100
 private const val REFERRAL_MIN_SLOTS = 6
 private const val REFERRAL_REWARD_BOXES = 50
-private val ReferralCardShape = RoundedCornerShape(16.dp)
-private val ReferralItemShape = RoundedCornerShape(16.dp)
-private val LegacyShopCardColor = Color(0xFF242429)
-private val LegacyGoldCardColor = Color(0xFF3A2F0A)
-private val LegacyReferralCardColor = Color(0xFF242429)
-
-private val LegacyReferralBackground = Color.Black
-private val LegacyAccent = Color(0xFF4285F4)
-private val LegacyAccentBack = Color(0x1A0288D1)
-private val LegacyAppGold = Color(0xFFD4AF37)
-private val LegacyRewardBackground = Color(0xFF3A3000)
-private val LegacyHighlightText = Color(0xFFFFC107)
-private val LegacyWhite80 = Color(0xCCFFFFFF)
-private val LegacyTextSecondary = Color(0xFFB8B8B8)
-private val LegacyItemBackground = Color(0xFF181818)
-private val LegacyAvatarBackground = Color(0xFF333339)
 
 @Composable
 fun ShopView(
@@ -241,22 +221,19 @@ private fun ReferralProgramView(
             referralProgram.referralId(context.getString(R.string.shop_referral_guest)),
         )
 
-    Box(
+    Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(LegacyReferralBackground),
+                // Рефералы наследуют магазин: тот же wash-shop, тот же бар, те же строки.
+                .noirScreenWash(NoirWashShop),
     ) {
+        ReferralHeader(onBack = onBack)
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 10.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            item {
-                ReferralHeader(
-                    onBack = onBack,
-                    modifier = Modifier.padding(bottom = 24.dp),
-                )
-            }
             item {
                 ReferralLinkCard(
                     referralId = referralId,
@@ -272,53 +249,39 @@ private fun ReferralProgramView(
                             }
                         context.startActivity(Intent.createChooser(sendIntent, null))
                     },
-                    modifier = Modifier.padding(bottom = 20.dp),
                 )
             }
-            item {
-                ReferralRewardCard(
-                    referralProgram = referralProgram,
-                    modifier = Modifier.padding(bottom = 16.dp),
-                )
-            }
-            item {
-                ReferralSeasonCard(
-                    referralProgram = referralProgram,
-                    modifier = Modifier.padding(bottom = 20.dp),
-                )
-            }
-            item {
-                ReferralUsersCard(users = referralProgram.displayUsers())
-            }
+            item { ReferralRewardCard(referralProgram = referralProgram) }
+            item { ReferralSeasonCard(referralProgram = referralProgram) }
+            item { ReferralUsersCard(users = referralProgram.displayUsers()) }
         }
     }
 }
 
+/** Back and a title — the same bar the nickname market carries. */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun ReferralHeader(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, end = 16.dp, top = 13.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        LegacyCircleIconButton(
-            iconRes = R.drawable.ic_back_arrow,
+        NoirIconButton(
+            icon = NoirIcons.Back,
             contentDescription = stringResource(R.string.shop_cd_back),
-            tint = Color.White,
             onClick = onBack,
         )
-        Text(
-            text = stringResource(R.string.shop_referral_title),
-            modifier = Modifier.padding(start = 16.dp),
-            color = Color.White,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-        )
+        Text(stringResource(R.string.shop_referral_title).uppercase(), style = NoirType.appbar)
     }
 }
 
+/** The id leads, the two actions sit in the shop's right-hand action column. */
 @Composable
 private fun ReferralLinkCard(
     referralId: String,
@@ -326,43 +289,40 @@ private fun ReferralLinkCard(
     onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LegacyReferralCard(modifier = modifier) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    NoirGlassCard(modifier = modifier) {
+        NoirItemTile(icon = NoirIcons.Users)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
-                text = stringResource(R.string.shop_referral_link_label),
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                text = stringResource(R.string.shop_referral_link_label).uppercase(),
+                style = NoirType.kicker,
             )
             Text(
                 text = referralId,
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .padding(start = 8.dp, end = 12.dp),
-                color = LegacyWhite80,
-                fontSize = 16.sp,
+                style = NoirType.num.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            LegacyCircleIconButton(
-                iconRes = R.drawable.ic_copy,
-                contentDescription = stringResource(R.string.shop_cd_copy),
-                tint = LegacyAccent,
-                onClick = onCopy,
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            LegacyCircleIconButton(
-                iconRes = R.drawable.ic_share,
-                contentDescription = stringResource(R.string.shop_cd_share),
-                tint = LegacyAccent,
-                onClick = onShare,
-            )
+        }
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(7.dp),
+        ) {
+            ReferralTextAction(stringResource(R.string.shop_cd_copy), onCopy)
+            ReferralTextAction(stringResource(R.string.shop_cd_share), onShare)
         }
     }
+}
+
+@Composable
+private fun ReferralTextAction(
+    text: String,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = text.uppercase(),
+        style = NoirType.button.copy(fontSize = 11.sp, color = LocalNoirAccent.current),
+        modifier = Modifier.clickable(onClick = onClick),
+    )
 }
 
 @Composable
@@ -372,15 +332,9 @@ private fun ReferralRewardCard(
 ) {
     val activeUsers = referralProgram.invitedUsers.count { it.allOpenedBoxes >= REFERRAL_TARGET_BOXES }
     val rewardReceived = activeUsers >= REFERRAL_MIN_SLOTS
-    LegacyReferralCard(
-        modifier = modifier,
-        color = LegacyRewardBackground,
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    NoirGlassCard(modifier = modifier) {
+        NoirItemTile(icon = NoirIcons.Box, tint = NoirGold)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 text =
                     if (rewardReceived) {
@@ -388,18 +342,12 @@ private fun ReferralRewardCard(
                     } else {
                         stringResource(R.string.shop_referral_reward_invite)
                     },
-                modifier = Modifier.weight(1f),
-                color = LegacyHighlightText,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 20.sp,
-            )
-            ReferralBoxCountBadge(
-                count = REFERRAL_REWARD_BOXES.toString(),
-                gold = true,
-                iconRes = if (rewardReceived) R.drawable.ic_save else R.drawable.ic_box,
+                style = NoirType.rowTitle.copy(color = NoirGold),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
+        ReferralBoxCount(count = REFERRAL_REWARD_BOXES.toString(), color = NoirGold)
     }
 }
 
@@ -408,31 +356,44 @@ private fun ReferralSeasonCard(
     referralProgram: ReferralProgram,
     modifier: Modifier = Modifier,
 ) {
-    LegacyReferralCard(modifier = modifier) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.shop_referral_season_header),
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(R.string.shop_referral_season_note),
-                    color = LegacyTextSecondary,
-                    fontSize = 12.sp,
-                )
-            }
-            ReferralBoxCountBadge(
-                count = referralProgram.seasonBonusBoxes().toString(),
-                gold = false,
-                iconRes = R.drawable.ic_box,
+    NoirGlassCard(modifier = modifier) {
+        NoirItemTile(icon = NoirIcons.Calendar)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                text = stringResource(R.string.shop_referral_season_header),
+                style = NoirType.rowTitle,
+                color = NoirT1,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = stringResource(R.string.shop_referral_season_note),
+                style = NoirType.rowSub,
+                color = NoirT2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
+        ReferralBoxCount(count = referralProgram.seasonBonusBoxes().toString(), color = NoirT3)
+    }
+}
+
+/** A box payout: the number keeps its tabular mono, zeros read grey. */
+@Composable
+private fun ReferralBoxCount(
+    count: String,
+    color: Color,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            text = count,
+            style = NoirType.num.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+            color = color,
+        )
+        Icon(NoirIcons.Box, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -441,159 +402,64 @@ private fun ReferralUsersCard(
     users: List<ReferralUserDisplay>,
     modifier: Modifier = Modifier,
 ) {
-    LegacyReferralCard(modifier = modifier) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.shop_referral_users_title),
-                modifier = Modifier.padding(bottom = 12.dp),
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Column(
-                modifier = Modifier.padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                users.forEach { user ->
-                    ReferralUserItem(user = user)
-                }
-            }
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        NoirSectionRule(
+            label = stringResource(R.string.shop_referral_users_title),
+            trailing = users.count { !it.isPlaceholder }.toString(),
+        )
+        users.forEach { user ->
+            ReferralUserItem(user = user)
         }
     }
 }
 
 @Composable
 private fun ReferralUserItem(user: ReferralUserDisplay) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        if (!user.isPlaceholder) {
-            ReferralProgress(user = user)
-        }
-        Surface(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 72.dp),
-            shape = ReferralItemShape,
-            color = LegacyItemBackground,
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    modifier = Modifier.size(40.dp),
-                    shape = CircleShape,
-                    color = LegacyAvatarBackground,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_person),
-                            contentDescription = null,
-                            modifier =
-                                Modifier
-                                    .size(24.dp)
-                                    .alpha(if (user.isPlaceholder) 0.5f else 1f),
-                            tint = Color.White,
-                        )
-                    }
-                }
-                Text(
-                    text = if (user.isPlaceholder) stringResource(R.string.shop_referral_empty_slot) else user.nickname,
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .padding(start = 16.dp),
-                    color = if (user.isPlaceholder) Color.LightGray else Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Column(
-                    modifier = Modifier.padding(start = 16.dp),
-                    horizontalAlignment = Alignment.End,
-                ) {
+    val filled = !user.isPlaceholder
+    Column(modifier = Modifier.fillMaxWidth()) {
+        NoirRow(
+            leading = { NoirAvatar(avatarUrl = null, size = 40.dp) },
+            trailing = {
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     ReferralStatRow(
                         label = stringResource(R.string.shop_referral_stat_open_boxes),
-                        value = if (user.isPlaceholder) "-" else user.allOpenedBoxes.toString(),
-                        valueColor = if (user.isPlaceholder) Color.LightGray else Color.White,
-                        labelColor = if (user.isPlaceholder) Color.LightGray else Color.White,
+                        value = if (filled) user.allOpenedBoxes.toString() else "–",
+                        valueColor = if (filled) NoirT1 else NoirTOff,
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
                     ReferralStatRow(
                         label = stringResource(R.string.shop_referral_stat_bonus),
-                        value = if (user.isPlaceholder) "-" else user.bonusLabel,
-                        valueColor = if (user.isPlaceholder) Color.LightGray else LegacyAccent,
-                        labelColor = if (user.isPlaceholder) Color.LightGray else Color.White,
+                        value = if (filled) user.bonusLabel else "–",
+                        valueColor = if (filled) LocalNoirAccent.current else NoirTOff,
+                    )
+                }
+            },
+        ) {
+            Text(
+                text = if (filled) user.nickname else stringResource(R.string.shop_referral_empty_slot),
+                style = NoirType.rowTitle.copy(color = if (filled) NoirT1 else NoirTOff),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (filled) {
+                Spacer(Modifier.height(4.dp))
+                NoirProgressBar(fraction = user.progressPercent / REFERRAL_TARGET_BOXES.toFloat())
+                if (user.progressPercent >= REFERRAL_TARGET_BOXES) {
+                    Text(
+                        text = stringResource(R.string.shop_referral_activated),
+                        style = NoirType.kicker.copy(fontSize = 10.sp, color = LocalNoirAccent.current),
+                    )
+                } else {
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.shop_referral_boxes_left,
+                                REFERRAL_TARGET_BOXES - user.progressPercent,
+                            ),
+                        style = NoirType.rowSub.copy(fontSize = 11.sp),
+                        color = NoirT3,
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ReferralProgress(user: ReferralUserDisplay) {
-    val progress = user.progressPercent
-    val activated = progress >= REFERRAL_TARGET_BOXES
-    val progressFraction = progress / REFERRAL_TARGET_BOXES.toFloat()
-
-    Column(
-        modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp),
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (activated) {
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = stringResource(R.string.shop_referral_activated),
-                    color = LegacyAccent,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            } else {
-                Text(
-                    text = "$progress%",
-                    color = LegacyWhite80,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(R.string.shop_referral_boxes_left, REFERRAL_TARGET_BOXES - progress),
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .padding(start = 8.dp),
-                    color = LegacyTextSecondary,
-                    fontSize = 12.sp,
-                )
-            }
-        }
-        Box(
-            modifier =
-                Modifier
-                    .padding(top = 4.dp)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(LegacyShopCardColor),
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(progressFraction)
-                        .height(1.dp)
-                        .background(LegacyAccent),
-            )
         }
     }
 }
@@ -603,111 +469,17 @@ private fun ReferralStatRow(
     label: String,
     value: String,
     valueColor: Color,
-    labelColor: Color,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(end = 8.dp),
-            color = labelColor,
-            fontSize = 13.sp,
-            textAlign = TextAlign.End,
-        )
+        Text(text = label, style = NoirType.rowSub.copy(fontSize = 11.sp), color = NoirT3)
         Text(
             text = value,
-            modifier = Modifier.widthIn(min = 40.dp),
+            style = NoirType.num.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold),
             color = valueColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.End,
         )
-    }
-}
-
-@Composable
-private fun ReferralBoxCountBadge(
-    count: String,
-    gold: Boolean,
-    iconRes: Int,
-) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = if (gold) LegacyGoldCardColor else LegacyAccentBack,
-        border = BorderStroke(1.dp, if (gold) LegacyAppGold else LegacyAccent),
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = count,
-                color = if (gold) LegacyAppGold else LegacyAccent,
-                fontSize = 20.sp,
-            )
-            if (iconRes == R.drawable.ic_box) {
-                Image(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                )
-            } else {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = if (gold) LegacyAppGold else LegacyAccent,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun LegacyReferralCard(
-    modifier: Modifier = Modifier,
-    color: Color = LegacyReferralCardColor,
-    content: @Composable () -> Unit,
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = ReferralCardShape,
-        color = color,
-        contentColor = Color.White,
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun LegacyCircleIconButton(
-    iconRes: Int,
-    contentDescription: String,
-    tint: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier =
-            modifier
-                .size(40.dp)
-                .clickable(onClick = onClick),
-        shape = CircleShape,
-        color = LegacyAccentBack,
-        contentColor = tint,
-        border = BorderStroke(1.dp, LegacyAccent),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = contentDescription,
-                modifier = Modifier.size(24.dp),
-                tint = tint,
-            )
-        }
     }
 }
 
