@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -36,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -51,6 +49,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBgDeep
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirFab
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
@@ -291,25 +290,12 @@ private fun AddPublicQuestFab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier =
-            modifier
-                .size(56.dp)
-                // The manage FAB shares the gift FAB's graphite plate: a corner button on Home is
-                // furniture, and the one accent on this screen already belongs to the continue
-                // card's kicker.
-                .clip(CircleShape)
-                .background(NoirFabPlate)
-                .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = NoirIcons.Plus,
-            contentDescription = stringResource(R.string.quest_cd_add_quest),
-            tint = NoirT1,
-            modifier = Modifier.size(24.dp),
-        )
-    }
+    NoirFab(
+        icon = NoirIcons.Plus,
+        contentDescription = stringResource(R.string.quest_cd_add_quest),
+        onClick = onClick,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -319,26 +305,13 @@ private fun GiftBoxFab(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
-        Box(
-            modifier =
-                Modifier
-                    .size(56.dp)
-                    // GiftBoxModal: a 56dp round plate in the gift graphite (#383838), a 28dp
-                    // icon. The accent version read as a primary action; a box waiting to be
-                    // opened is not one.
-                    .shadow(elevation = 8.dp, shape = CircleShape)
-                    .clip(CircleShape)
-                    .background(NoirFabPlate)
-                    .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = NoirIcons.Box,
-                contentDescription = stringResource(R.string.quest_cd_open_box),
-                tint = NoirT1,
-                modifier = Modifier.size(28.dp),
-            )
-        }
+        NoirFab(
+            icon = NoirIcons.Box,
+            contentDescription = stringResource(R.string.quest_cd_open_box),
+            onClick = onClick,
+            // GiftBoxModal: the gift FAB carries a 28dp icon.
+            iconSize = 28.dp,
+        )
         Box(
             modifier =
                 Modifier
@@ -358,9 +331,6 @@ private fun GiftBoxFab(
         }
     }
 }
-
-/** The gift FAB's graphite plate from the accepted gift-box drawing. */
-private val NoirFabPlate = Color(0xFF383838)
 
 @Composable
 private fun GiftBoxOpeningOverlay(

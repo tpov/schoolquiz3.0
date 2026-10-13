@@ -140,6 +140,12 @@ val NoirTOff = NoirColorTokens.colorTextDisabled
 /** Text and icons drawn on top of a filled accent. */
 val NoirInk = NoirColorTokens.colorInkOnAccent
 
+/**
+ * {colors.gift-fab} — the graphite plate of corner FABs, taken from the gift-box drawing. A corner
+ * button is furniture; the screen's one accent belongs to its primary action, not to it.
+ */
+val NoirFabPlate = Color(0xFF383838)
+
 /** Role: Pro and premium. Fixed across skins. */
 val NoirGold = NoirColorTokens.statusGold
 

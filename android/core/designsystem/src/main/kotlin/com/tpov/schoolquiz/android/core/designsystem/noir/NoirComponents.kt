@@ -51,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -62,6 +63,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -529,6 +531,39 @@ fun NoirButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(text.uppercase(), style = NoirType.button, color = fgFinal)
+    }
+}
+
+// ─── FAB: the corner button ─────────────────────────────────────────────────
+
+/**
+ * The corner FAB, on [NoirFabPlate] — 56dp round, per the gift-box drawing (FAB 56, icon 28 there).
+ * One shape for every screen's corner button, so the gift box, "add quest" and whatever comes next
+ * read as the same piece of furniture.
+ */
+@Composable
+fun NoirFab(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 24.dp,
+) {
+    Box(
+        modifier
+            .size(56.dp)
+            .shadow(elevation = 8.dp, shape = CircleShape)
+            .clip(CircleShape)
+            .background(NoirFabPlate)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon,
+            contentDescription = contentDescription,
+            tint = NoirT1,
+            modifier = Modifier.size(iconSize),
+        )
     }
 }
 
