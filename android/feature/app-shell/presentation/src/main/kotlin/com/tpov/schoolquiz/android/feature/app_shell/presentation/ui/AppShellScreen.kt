@@ -34,7 +34,6 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.catalog.DesignCatalogScreen
-import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignBackground
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAppBar
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBalancePill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBottomNav
@@ -42,7 +41,6 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirNavItem
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSkin
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
@@ -304,14 +302,10 @@ fun AppShellScreen(
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 containerColor = MaterialTheme.colorScheme.background,
             ) { paddingValues ->
-                SchoolQuizDesignBackground(
-                    isHard = false,
-                    // One ground for every tab. The mode gradient belongs to the round being
-                    // played, not to which tab you are on — tinting per tab made the shop read as
-                    // a different app.
-                    accentColor = NoirAzure,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
+                // No shell-wide tint: the ground belongs to the screens — wash-home on Home,
+                // wash-shop on the shop, wash-arena on arena and tournament. The shell itself is
+                // black; chrome, not a gradient, is what the bars and the empty edges carry.
+                Box(modifier = Modifier.fillMaxSize()) {
                     AppShellContent(
                         rootComponent = rootComponent,
                         state = state,
@@ -897,6 +891,3 @@ private val Tab.noirIcon: androidx.compose.ui.graphics.vector.ImageVector
             Tab.EVENTS -> NoirIcons.Calendar
             Tab.SHOP -> NoirIcons.Bag
         }
-
-/** The default skin's accent, used for the ground on every tab but the shop. */
-private val NoirAzure = NoirSkin.Azure.accent

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SchoolQuizNext" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+    <!-- NOIR chrome: one ground for the status bar, the navigation bar and the window
+         (#08080A behind the content), light system icons on the dark chrome. -->
+    <style name="Theme.SchoolQuizNext" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#08080A</item>
+        <item name="android:navigationBarColor">#08080A</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 </resources>

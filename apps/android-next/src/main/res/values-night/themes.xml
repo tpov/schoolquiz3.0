@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SchoolQuizNext" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+    <!-- Same NOIR chrome in the night flavor: the app is dark-only, the values simply
+         mirror values/themes.xml so a night resource qualifier cannot reintroduce
+         the platform's default purple bars. -->
+    <style name="Theme.SchoolQuizNext" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#08080A</item>
+        <item name="android:navigationBarColor">#08080A</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 </resources>

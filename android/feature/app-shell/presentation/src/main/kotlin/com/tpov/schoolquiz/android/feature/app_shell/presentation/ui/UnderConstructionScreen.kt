@@ -24,7 +24,6 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
-import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 
 /**
@@ -40,7 +39,9 @@ fun UnderConstructionScreen(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier.fillMaxSize().noirScreenGround(),
+        // Plain black: a placeholder has no subject, so it takes the chrome ground rather than
+        // borrowing the wash of whichever section it happens to sit in.
+        modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         NoirGroup(
