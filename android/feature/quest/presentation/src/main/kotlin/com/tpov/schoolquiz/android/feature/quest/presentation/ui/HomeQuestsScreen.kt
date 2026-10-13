@@ -23,25 +23,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Diamond
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Tag
-import androidx.compose.material.icons.filled.WorkspacePremium
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -63,10 +48,19 @@ import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.components.CatalogGrid
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBgDeep
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashHome
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
@@ -268,7 +262,7 @@ private val NoirContinueSegmentOff = Color(0xFF2E2E36)
 @Composable
 private fun LoadingContent(modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(color = LocalNoirAccent.current)
     }
 }
 
@@ -297,15 +291,23 @@ private fun AddPublicQuestFab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FloatingActionButton(
-        onClick = onClick,
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    Box(
+        modifier =
+            modifier
+                .size(56.dp)
+                // The manage FAB shares the gift FAB's graphite plate: a corner button on Home is
+                // furniture, and the one accent on this screen already belongs to the continue
+                // card's kicker.
+                .clip(CircleShape)
+                .background(NoirFabPlate)
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Default.Add,
+            imageVector = NoirIcons.Plus,
             contentDescription = stringResource(R.string.quest_cd_add_quest),
+            tint = NoirT1,
+            modifier = Modifier.size(24.dp),
         )
     }
 }
@@ -316,51 +318,49 @@ private fun GiftBoxFab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = LocalNoirAccent.current
-    val fabShape = RoundedCornerShape(18.dp)
     Box(modifier = modifier) {
         Box(
             modifier =
                 Modifier
-                    .size(58.dp)
-                    // The canvas lights the button with an accent glow plus a drop shadow.
-                    .shadow(
-                        elevation = 14.dp,
-                        shape = fabShape,
-                        ambientColor = accent.copy(alpha = 0.42f),
-                        spotColor = accent.copy(alpha = 0.42f),
-                    )
-                    .clip(fabShape)
-                    .background(accent)
+                    .size(56.dp)
+                    // GiftBoxModal: a 56dp round plate in the gift graphite (#383838), a 28dp
+                    // icon. The accent version read as a primary action; a box waiting to be
+                    // opened is not one.
+                    .shadow(elevation = 8.dp, shape = CircleShape)
+                    .clip(CircleShape)
+                    .background(NoirFabPlate)
                     .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Default.CardGiftcard,
+                imageVector = NoirIcons.Box,
                 contentDescription = stringResource(R.string.quest_cd_open_box),
-                tint = NoirInk,
-                modifier = Modifier.size(26.dp),
+                tint = NoirT1,
+                modifier = Modifier.size(28.dp),
             )
         }
         Box(
             modifier =
                 Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 6.dp, y = (-6).dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 4.dp, y = 4.dp)
                     .clip(RoundedCornerShape(999.dp))
                     .background(NoirBgDeep)
-                    .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(999.dp))
-                    .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+                    .border(1.dp, NoirGlassStroke, RoundedCornerShape(999.dp))
+                    .defaultMinSize(minWidth = 20.dp, minHeight = 20.dp)
                     .padding(horizontal = 5.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = count.toString(),
-                style = NoirType.num.copy(color = accent, fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                style = NoirType.num.copy(color = NoirT1, fontSize = 11.sp, fontWeight = FontWeight.Bold),
             )
         }
     }
 }
+
+/** The gift FAB's graphite plate from the accepted gift-box drawing. */
+private val NoirFabPlate = Color(0xFF383838)
 
 @Composable
 private fun GiftBoxOpeningOverlay(
@@ -369,35 +369,38 @@ private fun GiftBoxOpeningOverlay(
     modifier: Modifier = Modifier,
 ) {
     Box(
+        // The drawer's scrim: black 66% over the accepted Home, per GiftBoxModal.
         modifier = modifier.background(Color.Black.copy(alpha = SCRIM_ALPHA)),
         contentAlignment = Alignment.Center,
     ) {
-        Card(
+        Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .padding(24.dp)
+                    .clip(NoirShapeGift)
+                    .background(NoirS1)
+                    .border(1.dp, NoirGlassStroke, NoirShapeGift)
                     .padding(24.dp),
-            shape = RoundedCornerShape(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                GiftBoxOverlayHeader(
-                    opening = opening,
-                    onDismiss = onDismiss,
-                )
-                GiftBoxAnimation(opening = opening)
-                GiftBoxOverlayBody(opening = opening)
-                GiftBoxOverlayActions(
-                    opening = opening,
-                    onDismiss = onDismiss,
-                )
-            }
+            GiftBoxOverlayHeader(
+                opening = opening,
+                onDismiss = onDismiss,
+            )
+            GiftBoxAnimation(opening = opening)
+            GiftBoxOverlayBody(opening = opening)
+            GiftBoxOverlayActions(
+                opening = opening,
+                onDismiss = onDismiss,
+            )
         }
     }
 }
+
+/** GiftBoxModal's own radius: 22, between the card's 16 and the dialog's 20. */
+private val NoirShapeGift = RoundedCornerShape(22.dp)
 
 @Composable
 private fun GiftBoxOverlayHeader(
@@ -412,19 +415,21 @@ private fun GiftBoxOverlayHeader(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(R.string.quest_gift_box_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
+                style = NoirType.groupTitle.copy(fontSize = 20.sp),
+                color = NoirT1,
             )
             Text(
                 text = stringResource(opening.subtitleRes()),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = NoirType.rowSub,
+                color = NoirT2,
             )
         }
         if (opening !is HomeGiftBoxOpeningState.Opening) {
-            IconButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.quest_close))
-            }
+            NoirIconButton(
+                icon = NoirIcons.Close,
+                contentDescription = stringResource(R.string.quest_close),
+                onClick = onDismiss,
+            )
         }
     }
 }
@@ -454,24 +459,25 @@ private fun GiftBoxAnimation(opening: HomeGiftBoxOpeningState) {
         label = "gift_box_scale",
     )
 
-    Surface(
-        modifier = Modifier.size(152.dp),
-        shape = RoundedCornerShape(32.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 6.dp,
+    Box(
+        modifier =
+            Modifier
+                .size(152.dp)
+                .clip(RoundedCornerShape(32.dp))
+                .background(NoirS2)
+                .border(1.dp, NoirGlassStroke, RoundedCornerShape(32.dp)),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = Icons.Default.CardGiftcard,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .size(112.dp)
-                        .rotate(if (isOpening) shake else 0f)
-                        .scale(boxScale),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
+        Icon(
+            imageVector = NoirIcons.Box,
+            contentDescription = null,
+            modifier =
+                Modifier
+                    .size(112.dp)
+                    .rotate(if (isOpening) shake else 0f)
+                    .scale(boxScale),
+            tint = NoirT1,
+        )
     }
 }
 
@@ -480,11 +486,16 @@ private fun GiftBoxOverlayBody(opening: HomeGiftBoxOpeningState) {
     when (opening) {
         is HomeGiftBoxOpeningState.Opening ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp),
+                    strokeWidth = 3.dp,
+                    color = LocalNoirAccent.current,
+                )
                 Text(
                     text = stringResource(R.string.quest_opening_in_progress),
                     modifier = Modifier.padding(top = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = NoirType.rowSub,
+                    color = NoirT2,
                 )
             }
         is HomeGiftBoxOpeningState.Opened ->
@@ -497,8 +508,8 @@ private fun GiftBoxOverlayBody(opening: HomeGiftBoxOpeningState) {
                         is HomeGiftBoxFailure.Unexpected ->
                             reason.detail ?: stringResource(R.string.quest_error_box_generic)
                     },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+                style = NoirType.rowSub,
+                color = NoirDanger,
                 textAlign = TextAlign.Center,
             )
     }
@@ -515,28 +526,28 @@ private fun RewardContent(opening: HomeGiftBoxOpeningState.Opened) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val (icon, tint) = opening.reward.icon()
             Icon(
-                imageVector = opening.reward.icon(),
+                imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.primary,
+                tint = tint,
             )
             Text(
                 text = rewardText(opening.reward),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = NoirType.num.copy(fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                color = NoirT1,
             )
         }
         Text(
             text = stringResource(R.string.quest_boxes_left, opening.remainingBoxCount),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = NoirType.rowSub,
+            color = NoirT2,
         )
         if (!opening.profileSynced) {
             Text(
                 text = stringResource(R.string.quest_profile_sync_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = NoirType.rowSub.copy(fontSize = 12.sp, color = NoirT3),
                 textAlign = TextAlign.Center,
             )
         }
@@ -552,17 +563,17 @@ private fun GiftBoxOverlayActions(
         is HomeGiftBoxOpeningState.Opening ->
             Text(
                 text = stringResource(R.string.quest_request_sent),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = NoirType.kicker,
+                color = NoirT3,
             )
         is HomeGiftBoxOpeningState.Opened ->
-            Button(onClick = onDismiss) {
-                Text(stringResource(R.string.quest_claim_reward))
-            }
+            NoirButton(text = stringResource(R.string.quest_claim_reward), onClick = onDismiss)
         is HomeGiftBoxOpeningState.Failed ->
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.quest_close))
-            }
+            NoirButton(
+                text = stringResource(R.string.quest_close),
+                onClick = onDismiss,
+                style = NoirButtonStyle.Ghost,
+            )
     }
 }
 
@@ -586,14 +597,20 @@ private fun rewardText(reward: GiftBoxReward): String =
 
 private fun GiftBoxReward.Premium.premiumDays(): Long = (amount / SECONDS_IN_DAY).coerceAtLeast(1L)
 
-private fun GiftBoxReward.icon(): ImageVector =
+/**
+ * The currency carries the icon and the tint: nolics grey, gold and premium gold, a worn logo
+ * neutral, a trophy gold. Material's default set said none of that.
+ */
+private fun GiftBoxReward.icon(): Pair<ImageVector, Color> =
     when (this) {
-        is GiftBoxReward.Nolics -> Icons.Default.Tag
-        is GiftBoxReward.Gold -> Icons.Default.Diamond
-        is GiftBoxReward.Premium -> Icons.Default.WorkspacePremium
-        is GiftBoxReward.Logo -> Icons.Default.Star
-        is GiftBoxReward.Trophy -> Icons.Default.EmojiEvents
+        is GiftBoxReward.Nolics -> NoirIcons.Nolic to NoirT3
+        is GiftBoxReward.Gold -> NoirIcons.GoldStack to NoirGold
+        is GiftBoxReward.Premium -> NoirIcons.Gem to NoirGold
+        is GiftBoxReward.Logo -> NoirIcons.Star to NoirT2
+        is GiftBoxReward.Trophy -> NoirIcons.Trophy to NoirGold
     }
 
 private const val SECONDS_IN_DAY = 86_400L
-private const val SCRIM_ALPHA = 0.54f
+
+/** GiftBoxModal: the Home scrim is black 66%. */
+private const val SCRIM_ALPHA = 0.66f
