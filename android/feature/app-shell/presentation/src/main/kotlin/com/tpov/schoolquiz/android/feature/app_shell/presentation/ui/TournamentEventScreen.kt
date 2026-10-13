@@ -39,6 +39,8 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashArena
+import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 
 internal data class TournamentEventUi(
@@ -62,7 +64,8 @@ internal fun TournamentEventScreen(
     actions: TournamentEventActions,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    // Competition is the violet family: the same wash-arena the arena and the world hub carry.
+    Box(modifier = modifier.fillMaxSize().noirScreenWash(NoirWashArena)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 18.dp, top = 18.dp, end = 18.dp, bottom = 96.dp),
