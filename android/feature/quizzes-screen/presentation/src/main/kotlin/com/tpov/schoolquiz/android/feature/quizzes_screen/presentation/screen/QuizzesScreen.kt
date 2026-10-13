@@ -5,15 +5,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
-import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
@@ -27,7 +24,6 @@ fun QuizzesScreen(
     val stack by component.childStack.subscribeAsState()
 
     val active = stack.active.instance
-    val iconSet by component.currentCatalogIcons.collectAsState()
     Box(
         modifier =
             Modifier
@@ -38,17 +34,8 @@ fun QuizzesScreen(
                     interactionSource = remember { MutableInteractionSource() },
                 ) {},
     ) {
-        if (active !is QuizzesChild.Idle && active !is QuizzesChild.LessonRunner) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .noirScreenGround(),
-            ) {}
-            FloatingIconsLayer(
-                modifier = Modifier.fillMaxSize(),
-                icons = iconSet,
-            )
-        }
+        // No layer of its own: every child paints its own NOIR wash, and the old floating-icon
+        // bed belonged to the retired discovery look.
         when (active) {
             is QuizzesChild.Idle -> Unit
             is QuizzesChild.PublicQuestCatalogPicker ->

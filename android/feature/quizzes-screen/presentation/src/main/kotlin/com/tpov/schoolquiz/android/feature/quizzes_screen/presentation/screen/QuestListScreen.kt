@@ -6,6 +6,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,17 +17,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -50,8 +51,11 @@ import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCar
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NOIR_WASH_MIDPOINT_LATE
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashArena
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashQuizzes
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
@@ -102,8 +106,10 @@ fun QuestListScreen(
 ) {
     val uiState by component.uiState.subscribeAsState()
 
+    // Arena keeps the violet wash (UX-9); every other shelf reads as the blue of the quest lists.
+    val wash = if (component.mode == QuestListMode.Arena) NoirWashArena else NoirWashQuizzes
     Column(
-        modifier = Modifier.fillMaxSize().noirScreenWash(NoirWashQuizzes, midpoint = NOIR_WASH_MIDPOINT_LATE),
+        modifier = Modifier.fillMaxSize().noirScreenWash(wash, midpoint = NOIR_WASH_MIDPOINT_LATE),
     ) {
         BreadcrumbBar(
             titles = breadcrumbTitles(component.breadcrumbs),
@@ -267,19 +273,25 @@ private fun QuestListItem(
 
 @Composable
 private fun BoxScope.ArenaRandomQuestFab(onClick: () -> Unit) {
-    FloatingActionButton(
-        onClick = onClick,
-        containerColor = MaterialTheme.colorScheme.secondary,
-        contentColor = MaterialTheme.colorScheme.onSecondary,
+    // The accepted arena drawing's search button: 56dp, radius 16, the accent fill, the magnifier
+    // — random search is a question the arena asks, not a gamepad icon.
+    Box(
         modifier =
             Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
+                .size(56.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(LocalNoirAccent.current)
+                .clickable(onClick = onClick)
                 .testTag("arena_random_quest_fab"),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Default.SportsEsports,
+            imageVector = NoirIcons.Search,
             contentDescription = stringResource(R.string.quizzes_cd_random_quest),
+            tint = NoirInk,
+            modifier = Modifier.size(24.dp),
         )
     }
 }
