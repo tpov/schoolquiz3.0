@@ -100,6 +100,9 @@ fun NoirAppBar(
     Row(
         modifier
             .fillMaxWidth()
+            // Chrome, not transparency: the app bar is one of the navigation surfaces that carry
+            // {colors.chrome} (#08080A) under DESIGN, and a screen's wash must stop short of it.
+            .background(NoirBgDeep)
             // Android 15 and up enforce edge-to-edge for apps targeting SDK 35, so a bar that does
             // not inset itself is drawn beneath the clock and the cutout. Material's TopAppBar did
             // this for us; this one has to do it for itself.
@@ -639,9 +642,10 @@ fun NoirBottomNav(
     Row(
         modifier
             .fillMaxWidth()
-            // Transparent, so the screen's wash runs to the bottom edge instead of stopping
-            // at a bar. The hairline is what separates them.
-            .background(Color.Transparent)
+            // Chrome (#08080A): the bar is a navigation surface, so the screen's wash stops above
+            // it — DESIGN's rule that gradients never run onto the panels. The hairline is what
+            // separates the bar from the content.
+            .background(NoirBgDeep)
             .drawBehind {
                 drawLine(
                     color = NoirHair,

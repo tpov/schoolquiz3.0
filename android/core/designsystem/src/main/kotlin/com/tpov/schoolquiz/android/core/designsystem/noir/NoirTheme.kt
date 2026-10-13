@@ -44,8 +44,10 @@ import androidx.compose.ui.unit.sp
 val NoirBg = NoirColorTokens.colorBg
 
 /**
- * A step off pure black — the drawer ground, badges sitting on art, anything that must read as
- * "a layer above" without becoming a surface.
+ * The contract's {colors.chrome}: status bar, top bar, bottom navigation, drawer. A step off pure
+ * black — a layer that reads as the frame around the screen, not as part of its content. (The
+ * older [NoirChrome] value below is NOT this: DESIGN explicitly says #17171B does not stand in
+ * for chrome.)
  */
 val NoirBgDeep = Color(0xFF08080A)
 
@@ -87,6 +89,12 @@ val NoirWashProfile = Color(0xFF0C1C28)
 val NoirWashHome = Color(0xFF122634)
 
 val NoirWashQuizzes = Color(0xFF142B3B)
+
+/**
+ * Арена and competition screens (wash-arena). Violet is the rating/Arena role, so it — not the
+ * blue of the lists — is what surfaces mid-screen behind arena and tournament content.
+ */
+val NoirWashArena = Color(0xFF1D1530)
 
 /** Where a wash peaks. Slightly past centre in the quizzes drawings, centred in the rest. */
 const val NOIR_WASH_MIDPOINT_LATE = 0.52f
