@@ -28,6 +28,9 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChipTone
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS4
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeXl
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
@@ -122,11 +125,31 @@ fun DrawerFooter(
     if (showAboutDialog.value) {
         AlertDialog(
             onDismissRequest = { showAboutDialog.value = false },
-            title = { Text(stringResource(R.string.footer_about)) },
-            text = { Text(stringResource(R.string.about_version, versionName)) },
+            // NOIR dialog: the top surface level, the system's 20dp corner — not Material's tinted
+            // default, whose button text otherwise comes out Google blue.
+            containerColor = NoirS4,
+            shape = NoirShapeXl,
+            title = {
+                Text(
+                    stringResource(R.string.footer_about),
+                    style = NoirType.groupTitle,
+                    color = NoirT1,
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.about_version, versionName),
+                    style = NoirType.rowSub,
+                    color = NoirT2,
+                )
+            },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog.value = false }) {
-                    Text(stringResource(R.string.dialog_ok))
+                    Text(
+                        stringResource(R.string.dialog_ok),
+                        style = NoirType.button,
+                        color = LocalNoirAccent.current,
+                    )
                 }
             },
         )

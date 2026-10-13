@@ -51,8 +51,11 @@ import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCar
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NOIR_WASH_MIDPOINT_LATE
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS4
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashArena
@@ -250,20 +253,21 @@ private fun QuestListItem(
             expanded = isMenuExpanded,
             onDismissRequest = actions.onDismissMenu,
             modifier = Modifier.testTag("quest_menu"),
+            containerColor = NoirS4,
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.quizzes_menu_share)) },
+                text = { Text(stringResource(R.string.quizzes_menu_share), color = NoirT2) },
                 onClick = actions.onShareClick,
             )
             if (canManagePublicShelves) {
                 publicShelfActions.forEach { action ->
                     DropdownMenuItem(
-                        text = { Text(stringResource(action.labelRes)) },
+                        text = { Text(stringResource(action.labelRes), color = NoirT2) },
                         onClick = { actions.onSetShelfClick(action.shelf) },
                     )
                 }
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.quizzes_shelf_retire)) },
+                    text = { Text(stringResource(R.string.quizzes_shelf_retire), color = NoirDanger) },
                     onClick = actions.onRetireClick,
                 )
             }
