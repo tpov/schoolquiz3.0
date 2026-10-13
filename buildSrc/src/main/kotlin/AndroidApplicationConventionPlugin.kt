@@ -17,11 +17,14 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jlleitschuh.gradle.ktlint")
 
             extensions.configure<ApplicationExtension> {
-                compileSdk = 35
+                // SDK 36 (Android 16): плановый подъём только приложения android-next — этот
+                // convention применяется одним им; KMP и legacy остаются на 34. Edge-to-edge
+                // обязателен с 35 и уже в силе (noir/shell-screens), здесь меняется уровень API.
+                compileSdk = 36
 
                 defaultConfig {
                     minSdk = 26
-                    targetSdk = 35
+                    targetSdk = 36
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 }
 
