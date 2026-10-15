@@ -4,9 +4,9 @@
 
 - **Project ID**: `school-quiz-89336951`
 - **Package**: `com.tpov.schoolquiz.next` (new KMP app), legacy `com.tpov.schoolquiz`
-- **Admin SDK service account key**: `/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json`
+- **Admin SDK service account key**: `/etc/tpov/schoolquiz/sa-firebase-adminsdk-h5hhr-d6fcf09c340e.json` (root-only, 0600)
   - `client_email`: `firebase-adminsdk-h5hhr@school-quiz-89336951.iam.gserviceaccount.com`
-  - Используется для backfill / admin-scope Firestore операций через Admin SDK (Node/Python).
+  - 2026-10-14: прежние ключи (`0d54a7e117…`, `db501e845…`) отозваны в IAM — приватники утекли в публичный git. Действующий: `d6fcf09c340e…`. Используется для backfill / admin-scope Firestore операций через Admin SDK (Node/Python).
   - Client-side `google-services.json` — `apps/android-next/google-services.json` (для public reads с rules).
 
 ## Build / Validation
