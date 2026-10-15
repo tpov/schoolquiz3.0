@@ -52,13 +52,23 @@ android {
         // published on Play. The former "com.tpov.schoolquiz.next" had no Firebase client, so
         // processGoogleServices could not resolve a configuration and the APK never built.
         applicationId = "com.tpov.schoolquiz"
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 40000
+        versionName = "4.0.0"
         buildConfigField("boolean", "MVP_EMULATORS", "false")
+    }
+
+    signingConfigs {
+        create("legacy") {
+            storeFile = file("/workspace/keys/Schoolquiz3.0.jks")
+            storePassword = System.getenv("LEGACY_STORE_PASS") ?: "" // пароль в /workspace/keys/README.txt (не коммитится)
+            keyAlias = "key0"
+            keyPassword = System.getenv("LEGACY_KEY_PASS") ?: "" // пароль в /workspace/keys/README.txt (не коммитится)
+        }
     }
 
     buildTypes {
         named("debug") {
+            signingConfig = signingConfigs.getByName("legacy")
             buildConfigField(
                 "String",
                 "FIREBASE_APP_CHECK_DEBUG_SECRET",
@@ -66,6 +76,7 @@ android {
             )
         }
         named("release") {
+            signingConfig = signingConfigs.getByName("legacy")
             buildConfigField("String", "FIREBASE_APP_CHECK_DEBUG_SECRET", "\"\"")
         }
         create("mvp") {
