@@ -1,0 +1,10 @@
+2026-10-14: Ключ сервис-аккаунта firebase-adminsdk-h5hhr (файл
+.local/history/broken-mac/zealous-pike-8e91a1/functions/school-quiz-89336951-b9972bf69baa.json)
+ОТЗЫВАЕТСЯ Google: обмен JWT на токен ->
+  {"error":"invalid_grant","error_description":"Invalid JWT Signature."}
+12.10 тем же ключом шли срезы rig-прогона и pubsub-iam-check (тогда рабочий).
+Значит, ключ удалён/ротирован в IAM между 12.10 и 14.10. Путь из
+.claude/PROJECT-CONTEXT.md (/home/tpov/Downloads/...) тоже не существует.
+Владельцу: перевыпустить ключ (Play Console/Google Cloud IAM -> service accounts ->
+firebase-adminsdk-h5hhr -> Keys -> Add key), либо сообщить, где лежит актуальный.
+Срезы сейчас идут через refresh-токен firebase-cli (sandbox-verify-rest.js).

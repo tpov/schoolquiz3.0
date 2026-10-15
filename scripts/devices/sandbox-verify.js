@@ -26,7 +26,7 @@ const path = require('path');
 const fs = require('fs');
 
 const PROJECT_ID = 'school-quiz-89336951';
-const DEFAULT_KEY = '/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json';
+const DEFAULT_KEY = '/etc/tpov/schoolquiz/sa-firebase-adminsdk-h5hhr-d6fcf09c340e.json';
 const KEY = process.env.ADMIN_SDK_JSON || DEFAULT_KEY;
 
 if (process.argv.length < 3) {
