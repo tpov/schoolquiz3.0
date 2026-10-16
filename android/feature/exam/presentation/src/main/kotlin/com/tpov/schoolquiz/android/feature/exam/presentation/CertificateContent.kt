@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 internal object CertificateText {
     fun pendingSigning(): String = "CERT_SIGNING_PENDING"
     fun none(): String = "CERT_NONE"
+    fun loadFailed(): String = "CERT_LOAD_FAILED"
+    fun verifyUnavailable(): String = "CERT_VERIFY_UNAVAILABLE"
     fun percent(percent: Int): String = "CERT_PERCENT_$percent"
     fun validity(from: Long, to: Long): String = "CERT_VALIDITY_${from}_$to"
     fun verifyHint(): String = "CERT_VERIFY_HINT"
@@ -42,6 +44,9 @@ internal fun CertificateListContent(view: CertificateView, onVerify: (String) ->
     ) {
         when (view) {
             CertificateView.Loading -> LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            // Сбой транспорта — отдельное состояние, не «нет сертификатов» и не NOT_FOUND.
+            CertificateView.LoadFailed -> Text(text = CertificateText.loadFailed())
+            is CertificateView.VerifyUnavailable -> Text(text = CertificateText.verifyUnavailable())
             CertificateView.None -> Text(text = CertificateText.none())
             is CertificateView.Earned -> {
                 Text(text = CertificateText.percent(view.percent), style = MaterialTheme.typography.headlineSmall)

@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 /** Поверхность сертификатов: последний заработанный показывается, ожидание подписи явно. */
 class CertificateListStateMachineTest {
@@ -68,6 +69,37 @@ class CertificateListStateMachineTest {
             signingState = signingState,
         ),
     )
+
+    @Test
+    fun `given a fetch failure then the surface shows LoadFailed, not None`() = runTest {
+        val machine = CertificateListStateMachine(FailingRemote(), this)
+        machine.loadMine()
+        testScheduler.advanceUntilIdle()
+        assertEquals(
+            "сбой транспорта не прячется за авторитетной пустотой",
+            CertificateView.LoadFailed,
+            machine.view.value,
+        )
+    }
+
+    @Test
+    fun `given a verify transport failure then it is VerifyUnavailable, not NOT_FOUND`() = runTest {
+        val machine = CertificateListStateMachine(FailingRemote(), this)
+        machine.verify("i1")
+        testScheduler.advanceUntilIdle()
+        assertEquals(
+            CertificateView.VerifyUnavailable("i1"),
+            machine.view.value,
+        )
+    }
+
+    private class FailingRemote : ExamCertificateRemoteDataSource {
+        override suspend fun fetchMyCertificates(): Result<ExamCertificateProfileView> =
+            Result.failure(IOException("network dropped"))
+
+        override suspend fun publicVerify(issuanceId: String): Result<ExamVerifyView> =
+            Result.failure(IOException("network dropped"))
+    }
 
     private class FakeRemote(
         private val mine: ExamCertificateProfileView = ExamCertificateProfileView(null),

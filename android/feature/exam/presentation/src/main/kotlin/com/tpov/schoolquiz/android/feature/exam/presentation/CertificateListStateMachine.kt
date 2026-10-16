@@ -20,8 +20,16 @@ sealed interface CertificateView {
     /** Список ещё не прочитан. */
     data object Loading : CertificateView
 
-    /** Сертификатов нет: тема тесты ничего не выпускают, финал не сдавался. */
+    /** Сертификатов нет — авторитетный пустой ответ сервера. */
     data object None : CertificateView
+
+    /** Чтение профиля не удалось (сеть/сервер): не прячется за «нет сертификатов». */
+    data object LoadFailed : CertificateView
+
+    /** Верификация не дошла до политики статуса (сеть/сервер): не прикидывается NOT_FOUND. */
+    data class VerifyUnavailable(
+        val issuanceId: String,
+    ) : CertificateView
 
     /** Последний заработанный выпуск и явное состояние подписи. */
     data class Earned(
@@ -52,7 +60,9 @@ class CertificateListStateMachine(
     fun loadMine() {
         scope.launch {
             val outcome = remote.fetchMyCertificates().getOrElse {
-                state.value = CertificateView.None
+                // Сбой транспорта показывается сбоем: «нет сертификатов» — только
+                // авторитетный пустой ответ.
+                state.value = CertificateView.LoadFailed
                 return@launch
             }
             state.value = outcome.toView()
@@ -63,11 +73,7 @@ class CertificateListStateMachine(
     fun verify(issuanceId: String) {
         scope.launch {
             val outcome = remote.publicVerify(issuanceId).getOrElse {
-                state.value = CertificateView.Verified(
-                    issuanceId = issuanceId,
-                    status = ExamVerifyStatus.NOT_FOUND,
-                    snapshotJson = null,
-                )
+                state.value = CertificateView.VerifyUnavailable(issuanceId)
                 return@launch
             }
             state.value = outcome.toView()
