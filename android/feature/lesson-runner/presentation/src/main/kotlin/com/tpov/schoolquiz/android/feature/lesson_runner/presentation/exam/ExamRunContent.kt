@@ -82,6 +82,7 @@ internal fun ExamEntryContent(
 @Composable
 internal fun ExamSittingContent(
     view: ExamRunView.Running,
+    onDraftChanged: (String) -> Unit,
     onSubmit: (String) -> Unit,
     onFinish: () -> Unit,
 ) {
@@ -102,9 +103,11 @@ internal fun ExamSittingContent(
             val remaining = question.ack?.answerDeadlineMs?.minus(question.serverNowMs) ?: 0L
             Text(text = ExamText.awaitingAck().let { "${question.answerSeconds}s" })
             Text(text = "$remaining")
+            // Keystrokes — локальный черновик; транспорт видит ответ только с кнопки:
+            // первый частичный ответ побеждал бы на сервере.
             androidx.compose.material3.OutlinedTextField(
                 value = view.answerDraft,
-                onValueChange = { onSubmit(it) },
+                onValueChange = onDraftChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = ExamText.answerHint()) },
             )

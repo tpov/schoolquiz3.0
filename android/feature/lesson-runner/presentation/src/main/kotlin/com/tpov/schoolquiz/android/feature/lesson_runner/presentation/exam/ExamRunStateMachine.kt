@@ -117,6 +117,15 @@ class ExamRunStateMachine(
         )
     }
 
+    /**
+     * Черновик ответа — ЛОКАЛЬНОЕ состояние ввода: каждый keystroke в транспорт не уходит
+     * (первый частичный ответ побеждал бы на сервере), отправка — только кнопкой.
+     */
+    fun setAnswerDraft(draft: String) {
+        val running = state.value as? ExamRunView.Running ?: return
+        state.value = running.copy(answerDraft = draft)
+    }
+
     /** Первый ACK или дубликат: дедлайн возвращает сервер, локально ничего не закрепляется. */
     suspend fun acknowledgeCurrent() {
         val running = state.value as? ExamRunView.Running ?: return

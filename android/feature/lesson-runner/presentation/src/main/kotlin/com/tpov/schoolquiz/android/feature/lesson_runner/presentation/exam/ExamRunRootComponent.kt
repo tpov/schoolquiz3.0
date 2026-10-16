@@ -31,6 +31,8 @@ interface ExamRunRootComponent {
 
     fun onAnswerSubmitted(answerJson: String)
 
+    fun onAnswerDraftChanged(draft: String)
+
     fun onQuestionRendered()
 
     fun onFinishRequested()
@@ -102,6 +104,10 @@ internal class DefaultExamRunRootComponent(
         instance.scope.launch {
             machine.submitAnswer(answerJson)
         }
+    }
+
+    override fun onAnswerDraftChanged(draft: String) {
+        machine.setAnswerDraft(draft)
     }
 
     override fun onQuestionRendered() {
