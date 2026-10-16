@@ -422,6 +422,46 @@ test("final start refuses while a passed theme lags the current generation", asy
   assert.equal(result.kind, "unavailable", "проход не из текущего поколения — барьер до списания");
 });
 
+test("start over a FINISH_REQUESTED sitting recovers it without a second debit", async () => {
+  const {fake, sittings, request} = world({
+    initialRows: {...fullCoverageRows(), ...coverageMaterialization()},
+  });
+  const first = await sittings.start({uid: "player", payload: request(), mode: "ThemeTest"});
+  await sittings.finishSitting({uid: "player", payload: {sittingId: first.sittingId}});
+  const before = fake.rows.get("users/player").lifePoints;
+  const again = await sittings.start({uid: "player", payload: request({operationId: "op-rec"}),
+    mode: "ThemeTest"});
+  assert.equal(again.recovered, true, "незакрытый сидинг — восстановление, не новая попытка");
+  assert.equal(again.sittingId, first.sittingId);
+  assert.equal(fake.rows.get("users/player").lifePoints, before, "второго списания нет");
+});
+
+test("a FINISH_REQUESTED sitting refuses fresh answers but replays existing receipts", async () => {
+  const {sittings, request} = world({
+    initialRows: {...fullCoverageRows(), ...coverageMaterialization()},
+  });
+  const start = await sittings.start({uid: "player", payload: request(), mode: "ThemeTest"});
+  const ack = await sittings.acknowledgeQuestion({uid: "player", payload: {
+    sittingId: start.sittingId, questionIndex: 0, operationId: "ack-1"}});
+  assert.equal(ack.acknowledged, true);
+  const answer = {type: "single-choice", selected: "a"};
+  const submitted = await sittings.submitAnswer({uid: "player", payload: {
+    sittingId: start.sittingId, questionIndex: 0, revision: 1, answer, operationId: "ans-1"}});
+  assert.equal(submitted.accepted, true);
+  await sittings.finishSitting({uid: "player", payload: {sittingId: start.sittingId}});
+  // Свежий ответ на запрошенном к закрытии сидинге — отказ без перезаписи.
+  const refused = await sittings.submitAnswer({uid: "player", payload: {
+    sittingId: start.sittingId, questionIndex: 1, revision: 1,
+    answer: {type: "single-choice", selected: "a"}, operationId: "ans-2"}});
+  assert.equal(refused.accepted, false);
+  assert.equal(refused.reason, "SITTING_CLOSED");
+  // Идемпотентный повтор того же ответа возвращает ту же квитанцию и после запроса закрытия.
+  const replay = await sittings.submitAnswer({uid: "player", payload: {
+    sittingId: start.sittingId, questionIndex: 0, revision: 1, answer, operationId: "ans-3"}});
+  assert.equal(replay.accepted, true);
+  assert.deepEqual(replay.receipt, submitted.receipt);
+});
+
 test("sitting document ids and pointers are deterministic", () => {
   assert.equal(sittingDocumentId("u", "r"), sittingDocumentId("u", "r"));
   assert.equal(openSittingDocumentId("u", "ThemeTest", "t"),
