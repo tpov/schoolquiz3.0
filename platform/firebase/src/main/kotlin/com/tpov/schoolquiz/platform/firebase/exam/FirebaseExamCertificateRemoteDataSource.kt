@@ -23,21 +23,26 @@ import kotlinx.serialization.json.longOrNull
  * Транспорт сертификатов: чтение профиля (вход обязателен) и публичная верификация (вход не
  * нужен — сервер не проверяет Auth на `publicVerifyCertificate`).
  */
-class FirebaseExamCertificateRemoteDataSource(
-    functions: FirebaseFunctions,
+class FirebaseExamCertificateRemoteDataSource internal constructor(
+    private val call: suspend (String, Map<String, Any?>) -> Any?,
     private val dispatcher: CoroutineDispatcher,
 ) : ExamCertificateRemoteDataSource {
-
-    private val call: suspend (String, Map<String, Any?>) -> Any? = { name, payload ->
-        try {
-            functions.getHttpsCallable(name).withAppTimeout().call(payload).await().data
-        } catch (
-            @Suppress("SwallowedException") e: FirebaseFunctionsException,
-        ) {
-            // Только структурные метаданные SDK: приватные message/cause наружу не выходят.
-            throw ExamCallable(e.code.name)
-        }
-    }
+    constructor(
+        functions: FirebaseFunctions,
+        dispatcher: CoroutineDispatcher,
+    ) : this(
+        call = { name, payload ->
+            try {
+                functions.getHttpsCallable(name).withAppTimeout().call(payload).await().data
+            } catch (
+                @Suppress("SwallowedException") e: FirebaseFunctionsException,
+            ) {
+                // Только структурные метаданные SDK: приватные message/cause наружу не выходят.
+                throw ExamCallable(e.code.name)
+            }
+        },
+        dispatcher = dispatcher,
+    )
 
     override suspend fun fetchMyCertificates(): Result<ExamCertificateProfileView> = runCatching {
         withContext(dispatcher) {
@@ -84,7 +89,8 @@ class FirebaseExamCertificateRemoteDataSource(
 
     private fun asObject(reply: Any?): JsonObject =
         try {
-            mutationResponseJson(reply) as? JsonObject ?: malformed()
+            // Канонизатор возвращает строку канонического JSON — разбирается здесь же.
+            Json.parseToJsonElement(mutationResponseJson(reply)) as? JsonObject ?: malformed()
         } catch (_: IllegalArgumentException) {
             malformed()
         } catch (_: IllegalStateException) {
