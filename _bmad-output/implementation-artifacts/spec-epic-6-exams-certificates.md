@@ -2,7 +2,7 @@
 title: 'Epic 6 — theme tests, final exams and certificates (exam vertical, mvp-candidate)'
 type: 'feature'
 created: '2026-10-16'
-status: 'in-review'
+status: 'done'
 baseline_revision: 'd3501fc3fb767900a5a03b743841b13d214c9f12'
 route: 'full'
 route_source: 'auto'
@@ -10,7 +10,7 @@ review: 'thorough'
 review_source: 'auto'
 lenses_ran: ['edge-case-hunter', 'verification-gap']
 review_loop_iteration: 1
-followup_review_recommended: false
+followup_review_recommended: true
 context: ['_bmad-output/specs/spec-theme-exams/exam-protocol.md', '_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/assessment-technical-contracts.md', '_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/assessment-contract-fixtures.json']
 warnings: ['multiple-goals', 'oversized']
 deferred: []
@@ -285,6 +285,18 @@ Every fix is the smallest change that does the job; nothing outside the findings
   - `[low]` `[reject]` renewStartIntent "never invoked by any flow; new attempt impossible" — the component exposes onRenewIntent (ExamRunRootComponent.kt:132); the app-nav wiring that would call it is explicitly deferred recorded work, so no shipped path hits the replay; auto-renewal would also break lost-response recovery semantics. Deferred wiring must call onRenewIntent on Finished→Entry transitions (recorded here for that session).
   - `[low]` `[reject]` corrected first-ever theme pass never receives the optional one-time award — the protocol grants it permissively ("may receive... only if no receipt exists"); implementing it adds a payout path (branches + money), more than a direct correction, and the everyday path never reaches it. Recorded as deferred-work candidate for the owner's next review.
   - `[low]` `[reject]` client ACCOUNT_EPOCH=0 leaves the body-level epoch defense unadopted (verification-gap pass 2 refiles pass 1's refuted harm as a testability gap) — the underlying harm was refuted in pass 1 (uid-keyed docs + loadOwnedSitting contain A→B→A; epoch mismatch already conflicts request reuse); threading the real session epoch reaches into session infrastructure beyond a direct correction. Recorded: either thread the session generation or drop the field at the next contract touch.
+- resolution: all 16 patch groups applied and committed (c41bdbc2, c22a4e46, 60555810, 82ac9e43); full verification re-run green (functions 121/121; Kotlin gates EXIT=0; platform:firebase only the two documented pre-existing arena fixture-pin failures, proven identical at baseline d3501fc3).
+
+## Auto Run Result
+
+Status: done
+
+- **Summary:** the whole exam vertical of mvp-candidate epic 6 (CAP-21/22/23) built server-first per the binding exam protocol and C1–C4 contracts: exam bank/draw with certification sets, C3 confirmed-coverage with materialization barrier, typed admission gates with rolling 24h/168h cooldowns, atomic idempotent start+debit sittings (six callables), sole-terminal-worker lifecycle with onSchedule export (NOT deployed), C1 rewards with accounted-progress maximum, certificate issuance with pluggable signing seam (Q-EX-5 activation untouched) and signed-out public verification, C2 corrections with wired materializeExamCorrection terminal step and generation barrier, Kotlin exam domain/wire/transport, Android exam run + certificate surfaces, EXAM-TECH-1 fixtures executable in Kotlin and JS, full fake-emulator round-trip. FINAL_EXAM entry reconciled 300→200 everywhere. October decisions authoritative (all-HARD timer, linear 0..3 theme stars, 60% captured pass mark).
+- **Files changed (61 files, +11675/−13; 20 commits from baseline d3501fc3):** functions/exam-{bank,coverage,admission,sitting,scoring,reward,terminal,certificates,corrections}.js + exam-{handler,contract-fixtures,round-trip}.test.js + per-module suites + index.js wiring + economy-constants (200) ; shared/core/scoring ExamAssessmentArithmetic + fixture parity + oracle-copy test ; shared/feature/economy EconomyConstants (200) ; shared/feature/lesson-runner domain (ExamSittingModels, ExamRunRules) + data (wire parser, sitting/certificate data sources) + tests ; platform/firebase exam data sources + DI + wiring/transport tests ; android/feature/lesson-runner/presentation exam components + state machine + tests ; android/feature/exam/presentation certificates surfaces + tests ; settings.gradle.kts ; evidence README docs/agents/evidence/2026-10-16-epic6-exams ; this spec.
+- **Review findings breakdown:** pass 1 — 25 findings: 8 high / 11 medium / 4 low / 2 false; one bad_spec group (corrections materialization unwired + generation advance without state restamp) → Spec Change Log change 1, task amended, code re-derived; 16 patch groups applied; 2 rejected (epoch harm refuted by ownership scoping; local.properties never committed). Pass 2 — 22 findings: 5 high / 9 medium / 8 low; 16 patch groups applied (submit wire shape both directions, failed-retake generation restamp, corrected-final persistence, poison drain, archived sections, validation, SITTING_MISMATCH, rotation survival, wrapper + DI tests, ACK gate, refusal surfacing, signing marker, debug/alias cleanup); 3 rejected low (renewStartIntent — nav wiring deferred by design; corrected first-pass award — permissive protocol "may", non-trivial money path, recorded as deferred-work candidate; client epoch — pass-1 refutation stands). Deferred list: empty.
+- **Follow-up review recommendation: true.** Unverified risk named: client↔server request/reply shape parity is pinned per side (Kotlin transport fixtures verified against the server file + server-side key-set pins) but no single executable Kotlin→JS exchange runs both real ends; a focused follow-up pass (or a recorded canonical request/response fixture consumed by both suites) would close it.
+- **Verification performed:** `cd functions && node run-tests.js` → 121/121 suites (incl. 12 exam suites, round-trip, handler); `sgw ./gradlew :shared:core:scoring:jvmTest :shared:feature:economy:domain:jvmTest :shared:feature:lesson-runner:domain:jvmTest :shared:feature:lesson-runner:data:jvmTest :android:feature:exam:presentation:testDebugUnitTest :android:feature:lesson-runner:presentation:testDebugUnitTest` → EXIT=0; `:platform:firebase:testDebugUnitTest` → only the two documented pre-existing arena fixture-pin failures (reproduced identically at baseline, owner-owned regeneration since 2026-10-08); `ciCheck` skipped by recorded choice (spec Verification allows; reason + per-failure attribution in evidence README and Implementation Notes). Matrix test audit: every I/O-matrix row covered by a ran-and-passed test.
+- **Residual risks / owner-gated remainders:** deployment, scheduler and signing activation (Q-EX-5) untouched by design; `materialize` composite query needs a Firestore composite index at deploy time; navigation wiring of the exam/certificate components into the app tree and screen-copy localization await the owner's screen-content confirmation (the deferred wiring must call onRenewIntent on Finished→Entry); corrected first-ever theme pass award intentionally not implemented (permissive protocol clause) — revisit with owner; client accountEpoch field currently inert (ownership scoping contains A→B→A).
 
 
 ## Design Notes
