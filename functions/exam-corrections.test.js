@@ -125,7 +125,6 @@ test("appendExclusion: authorized append CASes the head; unauthorized refuses", 
   const first = await corrections.appendExclusion({record: record()});
   assert.equal(first.applied, true);
   const head = fake.rows.get([...fake.rows.keys()].find((path) => path.startsWith("exam_correction_heads/")));
-  console.error("HEAD_KEYS", JSON.stringify(head));
   assert.deepEqual(head.cumulativeExclusions, [0]);
   assert.equal(head.headVersion, 1);
   await assert.rejects(() => corrections.appendExclusion({record: record({correctionId: "c2",
@@ -246,6 +245,61 @@ test("a new terminal theme pass racing a correction serializes on the generation
   assert.equal(published.generation, 5);
   assert.equal(fake.rows.get("exam_theme_generation/theme").generation, 5);
   assert.equal(fake.rows.get("exam_theme_generation/theme").pendingCorrection, false);
+});
+
+test("a corrected final applies its verdict to the course projection in-transaction", async () => {
+  // Исходный финал 55% (провал при captured 60); исключение двух неверных единиц поднимает до 61.
+  const failedFinal = sittingWithDigits([...new Array(11).fill(9), ...new Array(9).fill(1)],
+    {mode: "FinalExam"});
+  failedFinal.uid = "player";
+  failedFinal.terminal = {resultVersion: 1, projection: {percent: 55, passed: false}};
+  const {assessmentStateId} = require("./exam-coverage");
+  const stateKey = `exam_assessment_state/${assessmentStateId("player", "FinalExam", "course")}`;
+  const {fake, corrections} = correctionsWorld({
+    initialRows: {
+      "exam_sittings/s1": {...failedFinal, assessmentId: "course"},
+      [`exam_assessment_state/${assessmentStateId("player", "FinalExam", "course")}`]: {
+        uid: "player", mode: "FinalExam", assessmentId: "course", passed: false,
+        bestPercent: 55, cooldownUntilMs: 5, maxAccountedPercent: 55,
+      },
+    },
+  });
+  await corrections.appendExclusion({record: record({mode: "FinalExam", assessmentId: "course",
+    correctionId: "cf1", slotIndex: 11})});
+  await corrections.appendExclusion({record: record({mode: "FinalExam", assessmentId: "course",
+    correctionId: "cf2", slotIndex: 12})});
+  const published = await corrections.materialize({uid: "player", mode: "FinalExam",
+    assessmentId: "course"});
+  assert.equal(published.published, true);
+  assert.equal(published.outcome.passed, true, "исключение неверных единиц поднимает провал");
+  const state = fake.rows.get(stateKey);
+  assert.equal(state.passed, true, "исправленный исход в проекции курса");
+  assert.equal(state.bestPercent, 61, "монотонный лучший: максимум из прежнего и исправленного");
+  assert.equal(state.correctedResultVersion, 3);
+  // Исторический терминальный документ сидинга не переписывается: коррекция — версия, не стирание.
+  const stored = fake.rows.get("exam_sittings/s1");
+  assert.equal(stored.terminal.projection.percent, 55);
+  // Сертификат не создаётся коррекцией: только новый успешный сидинг зарабатывает выпуск.
+  assert.equal([...fake.rows.keys()].some((path) => path.startsWith("exam_certificates/")), false);
+});
+
+test("a correction head spanning two sittings is a typed refusal, not a wrong recompute", async () => {
+  const sitting = sittingWithDigits(DIGITS_60);
+  const {corrections} = correctionsWorld({
+    initialRows: {
+      "exam_sittings/s1": sitting,
+      "exam_theme_generation/theme": {generation: 1, pendingCorrection: true},
+    },
+  });
+  // Первое исключение против s1; второе — против ДРУГОГО сидинга той же темы: дописывается
+  // спокойно, а несогласованность обнаруживает материализатор до пересчёта.
+  await corrections.appendExclusion({record: record()});
+  await corrections.appendExclusion({record: record({correctionId: "c-x", slotIndex: 5,
+    sittingId: "s-other"})});
+  await assert.rejects(
+    () => corrections.materialize({uid: "player", mode: "ThemeTest", assessmentId: "theme"}),
+    (error) => error.code === "SITTING_MISMATCH",
+  );
 });
 
 test("corrected failed→passing projection creates no certificate entitlement marker", () => {

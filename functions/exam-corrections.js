@@ -300,6 +300,12 @@ function createExamCorrections({db, nowMs = () => Date.now(), authorizeExclusion
       const at = now();
       const head = (await tx.get(headRef)).data() || null;
       if (!head) return {published: false, reason: "NO_HEAD"};
+      // Голова обязана адресовать ОДИН сидинг: исключения против разных сидингов темы
+      // пересчитали бы чужие слоты — явная испорченность, а не тихий неверный пересчёт.
+      const sittingIds = new Set(head.corrections.map((row) => row && row.sittingId));
+      if (sittingIds.size !== 1) {
+        fail("SITTING_MISMATCH", `correction head spans sittings: ${[...sittingIds].join(", ")}`);
+      }
       const sittingRef = db.doc(`exam_sittings/${head.corrections[0].sittingId}`);
       const sitting = (await tx.get(sittingRef)).data() || null;
       if (!sitting) return {published: false, reason: "NO_SITTING"};
@@ -308,6 +314,24 @@ function createExamCorrections({db, nowMs = () => Date.now(), authorizeExclusion
       const resultVersion = (sitting.terminal ? sitting.terminal.resultVersion : 0) + head.headVersion;
       const projection = correctedProjection({sitting, resultVersion, outcome, correctedAtMs: at});
       if (mode !== "ThemeTest" || !generationRef) {
+        // Финал: исправленный исход ложится в проекцию курса той же транзакцией — иначе
+        // fetchSittingResult продолжал бы отдавать исходный провал под исправленной головой.
+        // Лучший результат и проход монотонны; сертификат это не создаёт (только новый
+        // успешный сидинг), деньги не трогаются.
+        const finalStateRef =
+          db.doc(`${ASSESSMENT_STATE_COLLECTION}/${assessmentStateId(uid, mode, assessmentId)}`);
+        const finalState = (await tx.get(finalStateRef)).data() || {};
+        tx.set(finalStateRef, {
+          uid, mode, assessmentId,
+          bestPercent: Math.max(
+            Math.max(0, Math.floor(Number(finalState.bestPercent) || 0)),
+            outcome.state === CORRECTION_STATE.SCORED ? outcome.percent : 0,
+          ),
+          passed: finalState.passed === true || outcome.passed === true,
+          correctedAtMs: at,
+          correctedResultVersion: resultVersion,
+          updatedAtMs: at,
+        }, {merge: true});
         return {published: true, outcome, projection};
       }
       const generationSnapshot = (await tx.get(generationRef)).data() || {generation: 0};
