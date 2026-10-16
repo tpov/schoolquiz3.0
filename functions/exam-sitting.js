@@ -703,12 +703,15 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
     return db.runTransaction(async (tx) => {
       const now = Math.floor(nowMs());
       const sitting = await loadOwnedSitting(tx, uid, sittingId);
-      if (sitting.state === SITTING_STATE.CLOSED) return {state: SITTING_STATE.CLOSED, sittingId};
+      if (sitting.state === SITTING_STATE.CLOSED) {
+        return {acknowledged: false, reason: "SITTING_CLOSED", ack: null};
+      }
       const slot = sitting.slots[index];
       const verdict = acknowledgeVerdict(slot, sitting, now);
       if (!verdict.ok) {
+        // Форма отказа одна: acknowledged, reason и (возможно null) закреплённое — без ветвей.
         return {acknowledged: false, reason: verdict.code,
-          ...(slot && slot.ack ? {ack: slot.ack} : {})};
+          ...(slot && slot.ack ? {ack: slot.ack} : {ack: null})};
       }
       if (verdict.duplicate) {
         return {acknowledged: true, duplicate: true, ack: verdict.ack,

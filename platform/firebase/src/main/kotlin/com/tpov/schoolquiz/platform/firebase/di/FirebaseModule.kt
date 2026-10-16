@@ -6,6 +6,7 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaLessonCatalogRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseQuestionWindowRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamSittingRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaWalletRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
@@ -47,6 +48,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.NicknameR
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.VerificationRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaLessonCatalogRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
@@ -101,6 +103,16 @@ val firebaseModule =
         single<ArenaLessonCatalogRemoteDataSource> { get<FirebaseArenaLessonCatalogRemoteDataSource>() }
         single<QuestionWindowRemoteDataSource> {
             FirebaseQuestionWindowRemoteDataSource(
+                functions = get(),
+                sessions = get(),
+                networkMonitor = get(),
+                dispatcher = Dispatchers.IO,
+            )
+        }
+        // Экзамен (CAP-21/22): шесть вызовов сидинга — списание делает сервер, повторы
+        // решает режимный адаптер по типу отказа.
+        single<ExamSittingRemoteDataSource> {
+            FirebaseExamSittingRemoteDataSource(
                 functions = get(),
                 sessions = get(),
                 networkMonitor = get(),
