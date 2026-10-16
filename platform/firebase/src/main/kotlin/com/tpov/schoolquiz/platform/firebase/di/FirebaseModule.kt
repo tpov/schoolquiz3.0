@@ -112,8 +112,9 @@ val firebaseModule =
             )
         }
         // Экзамен (CAP-21/22): шесть вызовов сидинга — списание делает сервер, повторы
-        // решает режимный адаптер по типу отказа.
-        single<ExamSittingRemoteDataSource> {
+        // решает режимный адаптер по типу отказа. Конкретный тип зарегистрирован рядом с
+        // интерфейсом — как у арены: проводные тесты ссылаются на бетон.
+        single {
             FirebaseExamSittingRemoteDataSource(
                 functions = get(),
                 sessions = get(),
@@ -121,13 +122,15 @@ val firebaseModule =
                 dispatcher = Dispatchers.IO,
             )
         }
+        single<ExamSittingRemoteDataSource> { get<FirebaseExamSittingRemoteDataSource>() }
         // Сертификаты (CAP-22): профиль читает свою проекцию; верификация работает вне входа.
-        single<ExamCertificateRemoteDataSource> {
+        single {
             FirebaseExamCertificateRemoteDataSource(
                 functions = get(),
                 dispatcher = Dispatchers.IO,
             )
         }
+        single<ExamCertificateRemoteDataSource> { get<FirebaseExamCertificateRemoteDataSource>() }
         // Единственный адрес очереди (AD-6): новая операция появляется обработчиком на сервере,
         // а не новым путём на клиенте. Захваченное согласие платных операций едет в конверте
         // (CAP-16): сервер сверяет его с текущей таблицей, и отказ по согласию паркует запись,

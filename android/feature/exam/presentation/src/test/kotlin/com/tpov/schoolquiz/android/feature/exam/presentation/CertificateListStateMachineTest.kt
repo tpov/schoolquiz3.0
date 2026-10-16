@@ -33,6 +33,19 @@ class CertificateListStateMachineTest {
     }
 
     @Test
+    fun `given a failed-recoverable signing state then the certificate still shows the marker`() = runTest {
+        val machine = CertificateListStateMachine(
+            FakeRemote(mine = earned(signingState = "FAILED_RECOVERABLE")), this)
+        machine.loadMine()
+        testScheduler.advanceUntilIdle()
+        val earned = machine.view.value as CertificateView.Earned
+        assertTrue(
+            "восстановимый сбой подписи не выглядит обычным сертификатом",
+            earned.signingPending,
+        )
+    }
+
+    @Test
     fun `given a signed-out verify call then the status policy renders as is`() = runTest {
         val machine =
             CertificateListStateMachine(FakeRemote(verify = ExamVerifyView(true, ExamVerifyStatus.VALID, "i1", "{}")), this)

@@ -701,6 +701,17 @@ exports.appendExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
   if (typeof body.ownerUid !== "string" || !body.ownerUid.trim()) {
     throw new HttpsError("invalid-argument", "ownerUid is required", {reason: "INVALID_ARGUMENT"});
   }
+  if (typeof body.assessmentId !== "string" || !body.assessmentId.trim()) {
+    throw new HttpsError("invalid-argument", "assessmentId is required", {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.sittingId !== "string" || !body.sittingId.trim()) {
+    throw new HttpsError("invalid-argument", "sittingId is required", {reason: "INVALID_ARGUMENT"});
+  }
+  if (body.expectedHeadVersion !== undefined && body.expectedHeadVersion !== null &&
+      (!Number.isSafeInteger(body.expectedHeadVersion) || body.expectedHeadVersion < 0)) {
+    throw new HttpsError("invalid-argument",
+      "expectedHeadVersion must be a non-negative integer when present", {reason: "INVALID_ARGUMENT"});
+  }
   try {
     return await examCorrections.appendExclusion({
       record: {

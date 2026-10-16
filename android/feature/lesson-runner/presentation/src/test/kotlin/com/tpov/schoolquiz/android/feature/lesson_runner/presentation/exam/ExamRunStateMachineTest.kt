@@ -48,8 +48,31 @@ class ExamRunStateMachineTest {
         var counter = 0
         val machine = ExamRunStateMachine(FakeRemote()) { "op-${++counter}" }
         assertEquals("op-1", machine.startOperationId)
+        assertTrue("до всякого старта машина первозданна", machine.isPristine)
         machine.renewStartIntent()
         assertEquals("op-2", machine.startOperationId)
+    }
+
+    @Test
+    fun `given a submit refusal then the reason surfaces in the view and clears on success`() = runTest {
+        val fake = FakeRemote()
+        fake.nextSubmitOutcome = ExamSubmitOutcome.Refused("ACK_REQUIRED")
+        val machine = ExamRunStateMachine(fake) { "op" }
+        machine.showEntry(ExamMode.THEME_TEST, "th0", 100, 1)
+        machine.acceptTerms(true, 1)
+        machine.start(ExamMode.THEME_TEST, "th0")
+        machine.submitAnswer("""{"type":"single-choice","selected":"ri-0"}""")
+        val refused = machine.view.value as ExamRunView.Running
+        assertEquals("причина отказа видна, не тихая петля", "ACK_REQUIRED", refused.refusal)
+        fake.nextSubmitOutcome = ExamSubmitOutcome.Submitted(
+            receipt = ExamAnswerReceipt("r", "s1", 0, 2, 1),
+            duplicate = false,
+            sitting = sittingProjection(index = 1, withAck = false),
+        )
+        machine.acknowledgeCurrent()
+        machine.submitAnswer("""{"type":"single-choice","selected":"ri-0"}""")
+        val running = machine.view.value as ExamRunView.Running
+        assertEquals("успех чистит причину", null, running.refusal)
     }
 
     @Test
@@ -128,6 +151,14 @@ class ExamRunStateMachineTest {
     }
 
     private class FakeRemote : ExamSittingRemoteDataSource {
+        @Suppress("PropertyName")
+        var nextSubmitOutcome: ExamSubmitOutcome =
+            ExamSubmitOutcome.Submitted(
+                receipt = ExamAnswerReceipt("r", "s1", 0, 2, 1),
+                duplicate = false,
+                sitting = sittingProjection(index = 1, withAck = false),
+            )
+
         var startCalls = 0
         var ackCalls = 0
         var lastStartOperationId: String? = null
@@ -179,13 +210,7 @@ class ExamRunStateMachineTest {
             revision: Long,
             answerPayload: String,
             operationId: String,
-        ): Result<ExamSubmitOutcome> = Result.success(
-            ExamSubmitOutcome.Submitted(
-                receipt = ExamAnswerReceipt("r", sittingId, questionIndex, revision, 1),
-                duplicate = false,
-                sitting = sittingProjection(index = questionIndex + 1, withAck = false),
-            ),
-        )
+        ): Result<ExamSubmitOutcome> = Result.success(nextSubmitOutcome)
 
         override suspend fun finishSitting(sittingId: String): Result<ExamFinishVerdict> =
             Result.success(ExamFinishVerdict("FINISH_REQUESTED", alreadyRequested = false, alreadyClosed = false))

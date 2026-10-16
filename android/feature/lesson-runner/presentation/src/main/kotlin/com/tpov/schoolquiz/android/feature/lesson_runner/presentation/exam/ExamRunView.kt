@@ -32,13 +32,15 @@ sealed interface ExamRunView {
         val canRequestStart: Boolean get() = !busy && termsShown && termsAccepted
     }
 
-    /** Сидинг идёт: текущий вопрос и его серверные дедлайны. */
+    /** Сидинг идёт: текущий вопрос, его серверные дедлайны и последний отказ транспорта. */
     data class Running(
         val sitting: ExamSittingProjection,
         val question: ExamQuestionProjection?,
         val awaitingAck: Boolean,
         val answerDraft: String,
         val busy: Boolean,
+        /** Причина последнего отказа ACK/ответа; чистится первым успешным действием. */
+        val refusal: String? = null,
     ) : ExamRunView {
 
         /** Остаток до закреплённого дедлайна — отображение серверного времени, не свой таймер. */

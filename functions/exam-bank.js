@@ -302,8 +302,11 @@ function createExamBank({db, loadLessonContext}) {
     const sectionsSnapshot = await tx.get(db.collection("sections").where("questId", "==", courseId)
       .limit(MAX_SECTIONS_PER_COURSE + 1));
     if (sectionsSnapshot.docs.length > MAX_SECTIONS_PER_COURSE) fail("BANK_TOO_LARGE", courseId);
-    const themesSnapshot = sectionsSnapshot.docs.length === 0 ? {docs: []} :
-      await readThemesBySections(tx, sectionsSnapshot.docs.map((doc) => doc.id));
+    // Отставленная секция уводит из набора все свои темы, как архивная тема свою.
+    const liveSectionIds = sectionsSnapshot.docs
+      .filter((doc) => (doc.data() || {}).archived !== true).map((doc) => doc.id);
+    const themesSnapshot = liveSectionIds.length === 0 ? {docs: []} :
+      await readThemesBySections(tx, liveSectionIds);
     if (themesSnapshot.docs.length > MAX_THEMES_PER_COURSE) fail("BANK_TOO_LARGE", courseId);
     const archivedThemes = new Set(themesSnapshot.docs
       .filter((doc) => (doc.data() || {}).archived === true).map((doc) => doc.id));

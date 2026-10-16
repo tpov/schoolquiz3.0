@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.platform.firebase.arena
 
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.di.firebaseModule
+import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamCertificateRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamSittingRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.network.SyncError
@@ -21,6 +23,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.ArenaOwnerGat
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.OutboxArenaOwnerGate
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.arenaDataModule
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaLessonCatalogRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamCertificateRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
@@ -51,6 +55,27 @@ import org.koin.dsl.module
 
 /** Exercise the real Firebase module with SDK objects supplied by the test, never Firebase startup. */
 class FirebaseArenaKoinWiringTest {
+    @Test
+    fun examRemoteDataSourcesResolveFromTheProductionFirebaseModule() {
+        val f = Fixture()
+        val app = f.graph()
+        try {
+            // Экзамен (CAP-21/22): оба привязки поднимаются лениво из боевого модуля и не
+            // трогают ни SDK, ни сессию, ни сеть при разрешении.
+            val sittings = app.koin.get<ExamSittingRemoteDataSource>()
+            assertTrue(sittings is FirebaseExamSittingRemoteDataSource)
+            assertSame(sittings, app.koin.get<FirebaseExamSittingRemoteDataSource>())
+            val certificates = app.koin.get<ExamCertificateRemoteDataSource>()
+            assertTrue(certificates is FirebaseExamCertificateRemoteDataSource)
+            assertSame(certificates, app.koin.get<FirebaseExamCertificateRemoteDataSource>())
+            assertEquals(0, f.sessionReads)
+            assertEquals(0, f.networkReads)
+            verify { f.functions wasNot Called }
+        } finally {
+            app.close()
+        }
+    }
+
     @Test
     fun resolvingProductionRemoteIsLazyAndDoesNotCallFunctionsNetworkOrSession() {
         val f = Fixture()

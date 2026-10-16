@@ -89,7 +89,9 @@ class CertificateListStateMachine(
                 passMark = cert.passMark,
                 issuedAtMs = cert.issuedAtMs,
                 expiresAtMs = cert.expiresAtMs,
-                signingPending = cert.signingState == "PENDING",
+                // Любое не-подписанное состояние — явный маркер: и ожидание, и восстановимый
+                // сбой подписи не должны выглядеть обычным сертификатом.
+                signingPending = cert.signingState != "SIGNED",
             )
         } ?: CertificateView.None
 

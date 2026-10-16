@@ -69,17 +69,22 @@ internal class DefaultExamRunRootComponent(
     private val machine get() = instance.machine
 
     init {
-        machine.showEntry(
-            mode = when (request.mode) {
-                ExamRunRequest.ExamStartMode.THEME_TEST ->
-                    com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamMode.THEME_TEST
-                ExamRunRequest.ExamStartMode.FINAL_EXAM ->
-                    com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamMode.FINAL_EXAM
-            },
-            assessmentId = request.assessmentId,
-            entryPrice = request.entryPrice,
-            requiredTermsRevision = request.requiredTermsRevision,
-        )
+        // Витрина выставляется только для ПЕРВОЗДАННОЙ машины: после ротации конфигурации
+        // InstanceKeeper возвращает машину в Running/Finished — сброс её в Entry посреди
+        // экзамена отбросил бы игрока к старту.
+        if (machine.isPristine) {
+            machine.showEntry(
+                mode = when (request.mode) {
+                    ExamRunRequest.ExamStartMode.THEME_TEST ->
+                        com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamMode.THEME_TEST
+                    ExamRunRequest.ExamStartMode.FINAL_EXAM ->
+                        com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamMode.FINAL_EXAM
+                },
+                assessmentId = request.assessmentId,
+                entryPrice = request.entryPrice,
+                requiredTermsRevision = request.requiredTermsRevision,
+            )
+        }
     }
 
     // Один источник истины: StateFlow машины проецируется в Decompose Value для UI.

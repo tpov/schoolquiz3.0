@@ -43,8 +43,15 @@ class ExamRunStateMachine(
     )
     val view: StateFlow<ExamRunView> = state
 
+    /** Ни один старт ещё не был предпринят: компонент вправе выставить витрину. */
+    val isPristine: Boolean
+        get() = sittingId == null && started.not()
+
     var sittingId: String? = null
         private set
+
+    /** Хоть одна попытка старта была (в том числе отказная): витрина больше не первозданна. */
+    private var started = false
 
     /** operationId текущего НАМЕРЕНИЯ старта: переживает потерю ответа, меняется на новый старт. */
     var startOperationId: String = newOperationId()
@@ -71,6 +78,7 @@ class ExamRunStateMachine(
     /** Старт или восстановление: тот же operationId, пока намерение не сменено. */
     suspend fun start(mode: ExamMode, assessmentId: String) {
         val entry = state.value as? ExamRunView.Entry ?: return
+        started = true
         state.value = entry.copy(busy = true)
         val terms = ExamTermsWire(
             shown = entry.termsShown,
@@ -105,6 +113,11 @@ class ExamRunStateMachine(
     fun renewStartIntent() {
         startOperationId = newOperationId()
     }
+
+    /** Типовой транспортный отказ — читаемая причина вместо немой петли повторов. */
+    private fun transportRefusal(error: Throwable): String? =
+        (error as? com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTransportFailure)
+            ?.kind?.name
 
     private fun runningOf(sitting: com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamSittingProjection): ExamRunView.Running {
         val question = sitting.nextQuestion
@@ -143,7 +156,8 @@ class ExamRunStateMachine(
         when (
             val outcome = remote.acknowledgeQuestion(id, question.index, newOperationId())
                 .getOrElse {
-                    state.value = running.copy(busy = false)
+                    state.value = running.copy(busy = false,
+                        refusal = transportRefusal(it) ?: "ACK_FAILED")
                     return
                 }
         ) {
@@ -151,9 +165,11 @@ class ExamRunStateMachine(
                 val refreshed = outcome.ack.let { ack ->
                     running.question?.copy(ack = ack, awaitingAck = null)
                 }
-                state.value = running.copy(busy = false, question = refreshed, awaitingAck = false)
+                state.value = running.copy(busy = false, refusal = null,
+                    question = refreshed, awaitingAck = false)
             }
-            is ExamAckOutcome.Refused -> state.value = running.copy(busy = false)
+            is ExamAckOutcome.Refused -> state.value = running.copy(busy = false,
+                refusal = outcome.reason)
         }
     }
 
@@ -166,12 +182,15 @@ class ExamRunStateMachine(
         when (
             val outcome = remote.submitAnswer(id, question.index, question.revision, answerJson, newOperationId())
                 .getOrElse {
-                    state.value = running.copy(busy = false)
+                    state.value = running.copy(busy = false,
+                        refusal = transportRefusal(it) ?: "SUBMIT_FAILED")
                     return
                 }
         ) {
+            // Успех чистит отказ: следующий вопрос приходит без старой причины.
             is ExamSubmitOutcome.Submitted -> state.value = runningOf(outcome.sitting)
-            is ExamSubmitOutcome.Refused -> state.value = running.copy(busy = false)
+            is ExamSubmitOutcome.Refused -> state.value = running.copy(busy = false,
+                refusal = outcome.reason)
         }
     }
 

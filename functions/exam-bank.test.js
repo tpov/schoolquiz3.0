@@ -202,6 +202,39 @@ test("themePool reads approved lessons below the theme and their questions", asy
   assert.equal(pool.pool.hard.length, 15);
 });
 
+test("themes under an archived section leave the course pool and certification", async () => {
+  const rows = {
+    "quests/course": {id: "course", questType: "REGULAR", catalogId: "catalog", version: 3,
+      authorUid: "author", archived: false},
+    "sections/live": {id: "live", questId: "course", archived: false},
+    "sections/dead": {id: "dead", questId: "course", archived: true},
+    "themes/tLive": {id: "tLive", sectionId: "live", archived: false},
+    "themes/tDead": {id: "tDead", sectionId: "dead", archived: false},
+    "lessons/lesLive": {id: "lesLive", themeId: "tLive", version: 1, reviewApprovedAtMs: 1,
+      reviewSubmissionId: "s", archived: false},
+    "lessons/lesDead": {id: "lesDead", themeId: "tDead", version: 1, reviewApprovedAtMs: 1,
+      reviewSubmissionId: "s", archived: false},
+  };
+  const payload = {type: "SingleChoice", text: "q".repeat(120),
+    options: [{id: "a", text: "opt"}, {id: "b", text: "opt"}], correctOptionId: "a"};
+  for (let at = 0; at < 100; at += 1) {
+    rows[`questions/live-e${at}`] = {lessonId: "lesLive", version: 1, difficulty: "EASY",
+      payload: JSON.stringify({...payload, id: `e${at}`})};
+    rows[`questions/live-h${at}`] = {lessonId: "lesLive", version: 1, difficulty: "HARD",
+      payload: JSON.stringify({...payload, id: `h${at}`})};
+    rows[`questions/dead-e${at}`] = {lessonId: "lesDead", version: 1, difficulty: "EASY",
+      payload: JSON.stringify({...payload, id: `e${at}`})};
+    rows[`questions/dead-h${at}`] = {lessonId: "lesDead", version: 1, difficulty: "HARD",
+      payload: JSON.stringify({...payload, id: `h${at}`})};
+  }
+  const {db} = makeFakeDb({initialRows: rows});
+  const bank = createExamBank({db, loadLessonContext: fakeLoader(db)});
+  const pool = await db.runTransaction(async (tx) => bank.coursePool(tx, "course"));
+  assert.deepEqual(pool.themeIds, ["tLive"], "темы отставленной секции не в наборе");
+  assert.deepEqual(pool.themeSummaries.map((row) => row.themeId), ["tLive"]);
+  assert.equal(pool.pool.hard.length, 100, "HARD мёртвой секции не в пуле курса");
+});
+
 test("a retired course is not found for paid finals", async () => {
   const {db} = makeFakeDb({initialRows: {
     "quests/course": {id: "course", questType: "REGULAR", catalogId: "catalog", version: 3,

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
  */
 internal object ExamText {
     fun refusal(kind: String): String = "EXAM_REFUSAL_$kind"
+    fun runRefusal(reason: String): String = "EXAM_RUN_REFUSAL_$reason"
     fun terms(requiredRevision: Long): String = "EXAM_TERMS_REQUIRED_$requiredRevision"
     fun start(): String = "EXAM_START"
     fun awaitingAck(): String = "EXAM_LOADING_QUESTION"
@@ -94,6 +95,9 @@ internal fun ExamSittingContent(
             text = "${view.sitting.currentIndex + 1} / ${view.sitting.totalQuestions}",
             style = MaterialTheme.typography.labelLarge,
         )
+        // Причина последнего отказа видна, пока не придёт первый успешный шаг: тихая петля
+        // повторов хуже честного сообщения.
+        view.refusal?.let { Text(text = ExamText.runRefusal(it)) }
         val question = view.question
         if (question == null || view.awaitingAck) {
             Text(text = ExamText.awaitingAck())
