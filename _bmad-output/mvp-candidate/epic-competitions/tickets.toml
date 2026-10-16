@@ -1,0 +1,201 @@
+# tickets.toml — epic-competitions: stories in build order.
+# Inception 2026-10-16 (branch night/e5-inception, created by the owner 2026-10-16 13:29 UTC).
+# Provenance: direct owner order «квиз 5 эпик весь делай» (2026-10-16, this session) — the epic's
+# recorded deferral ("unlocks last of the trio", night-2026-10-05 track D) is superseded by the
+# owner's explicit instruction and the dedicated branch. The epic `after` epics 3/4 still carry
+# hitl tails (3.9 two physical devices; 4.10 device disconnect/resume proof): per the epic-2/3
+# scope rule those are named in waits, do NOT gate dispatchable stories, and remain owner items
+# that block final acceptance, not the build.
+# Scope rule (fixed assumption, epic-2/3 precedent): a story is dispatchable "ready" when the
+# orchestrator can prove it from this tree — code + JVM/Node tests, including Node contract tests
+# against the restored demo backend (container schoolquiz-demo-firebase-20261004). Anything
+# needing a physical device (two devices), owner-only visual acceptance or a new owner decision
+# is "blocked"/hitl with the reason named; real-phone confirmation rides hitl stories and final
+# acceptance. Rig runs follow the owner's hitl-матрица-на-риге decision (night-2026-10-10).
+# Sources: USER-CONTINUATION-PLAN.md §3 (ТЗ07A done by earlier shifts; ТЗ07B/C, ТЗ08A–C open),
+# §4 contracts and tournament special cases; AD-17/AD-23/AD-31; contract-map gates ONLINE-O1,
+# UX-O2, UX-O3, UX-O4/access; online-o2-contract.md (adopted 2.9, blob e142341e…); SPEC CAP-11/12.
+# Brownfield baseline (inception inventory, 2026-10-16): the six course-tournament callables, the
+# QUALIFICATION→BRACKET→FINISHED/CANCELLED state machine, meeting PROPOSE/CONFIRM/READY storage,
+# sweep worker (lease/cursor), escrow funding, rules denial, the exact qualification calculation
+# (tournament-qualification-{compact,version,calculation}.js, phases VALIDATE→…→PUBLISHED,
+# 4096/4097-player cases green) and the scan/freeze/versioning fence already exist server-side.
+# The client has NO bindings for the six callables and only legacy shelf screens
+# (TournamentEventScreen placeholder; fetchTournamentOverview legacy shelf). The OLD fixed prize
+# DTO ({first,second,third}, maximumLiabilityBoxes=first+second+2*third) is still the only CREATE
+# shape — UX-O2 replaces it with a versioned dynamic ordered list, legacy events stay readable.
+# The final NOIR restyle of competition journeys belongs to epic-9; this epic builds functional
+# journeys in current conventions (Decompose/Compose, RU/UK/EN, AD-21 states).
+
+[[story]]
+id = "5.1"
+slug = "online-o1-timing-contract"
+title = "ONLINE-O1 reconciliation contract: the shared AD-31 60s next-question window versus the tournament's fixed endsAt=start+form.duration and the championship stage/match cutoffs (C=stage end−1h−form duration, READY in [slot, slot+1h), 3-day stages, 7-day qualification window) — explicit time budget and cutoff priority written as a versioned contract document (online-o1-timing-contract.md), no silent truncation of the 60s window and no silent stage/endsAt extension; owner adoption recorded before dependent adapters are enabled; evidence docs/agents/evidence/<date>-online-o1-contract/"
+covers = ["CAP-11", "CAP-12"]
+after = []
+waits = [
+  "AD-31 and the ONLINE-O1 gate row are the settled policy inputs; online-o2-contract.md (adopted) supplies the window mechanics the reconciliation must compose with",
+  "owner: adoption of the reconciliation edition (rides the same flow as 2.5/2.9; adoption is an input to dependent stories, not to drafting)",
+]
+status = "ready" # leading gate entry per epic Notes (OQ-6); drafting is dispatchable, dependent stories wait for the adopted edition
+
+[[story]]
+id = "5.2"
+slug = "prize-list-contract"
+title = "UX-O2 contract: one versioned dynamic ordered prize-list contract (CREATE/read/reserve/rank/payout over the same list version; frozen fund = sum of each row exactly once) plus the definitive rank/tie/technical-outcome→place mapping (absences, ties, byes, FORFEIT/DOUBLE_OUT, shared third place from the bracket matrix, 0/1/2/15/16/17-participant degenerate cases) with fund conservation reserved=paid+returned+remaining and terminal remaining=0; legacy {first,second,third} events stay readable and immutable; written as a versioned contract document with the compatibility table; evidence docs/agents/evidence/<date>-prize-list-contract/"
+covers = ["CAP-11", "CAP-12"]
+after = []
+waits = [
+  "AD-17 prize rules and the UX-O2 gate row are settled inputs; the plan §3 note «два третьих места» and plan §4 tournament special cases bind the mapping cases",
+  "owner: adoption of the contract edition (gates 5.4 server rework, not this drafting)",
+]
+status = "ready" # required before server CREATE/reserve on the new list (AD-17); drafting is dispatchable now
+
+[[story]]
+id = "5.3"
+slug = "admission-and-discovery"
+title = "Private-course admission adapter per UX-O4/access plus bounded event discovery: the server confirms exactly one admitted basis — downloaded corresponding course OR valid competition link — bound to account+courseId+tournamentId, only inside the server window [qualification.startsAtMs, qualification.endsAtMs); late request or retry creates no new admission, a returned receipt preserves history without reopening access; the link never bypasses stages or championship selection; earned championship rights survive link expiry; plus an authorized paginated event discovery read (safe server-side paging, bounded pageSize, redacted allowlisted fields) where no search callable exists; Node contract tests on the demo backend; evidence docs/agents/evidence/<date>-competition-admission/"
+covers = ["CAP-11"]
+after = []
+waits = [
+  "UX-O4/access gate row is a settled contract — this story implements it",
+  "epic-4 publication machinery for eligible material — DONE in build terms (4.1–4.9; 4.10 device-proof hitl does not gate the server adapter)",
+]
+status = "ready"
+
+[[story]]
+id = "5.4"
+slug = "server-dynamic-prize-list"
+title = "Server CREATE/reserve/read/payout over the versioned dynamic prize list per the adopted 5.2 contract: CREATE accepts the ordered row list, frozen fund equals the sum of each row once (no automatic second third place, old fixed first/second/third DTO not substituted under the new UX), bank sufficiency checked up to the full fund reserve before acceptance, escrow reconcile reserved=paid+returned+remaining, redacted event view carries the list version, legacy events keep their immutable shape; retries reuse the same event and create no second reserve; Node conservation tests incl. races/retries; evidence docs/agents/evidence/<date>-dynamic-prize-list/"
+covers = ["CAP-11", "CAP-12"]
+after = [{ story = "5.2", needs = "adopted prize-list and mapping contract" }]
+waits = [
+  "5.2: adopted contract edition (owner input; drafting alone does not unlock financial obligation per AD-17)",
+]
+status = "ready" # dispatchable once 5.2 lands adopted; sequencing recorded via after
+
+[[story]]
+id = "5.5"
+slug = "qualification-loop-close"
+title = "Close the qualification loop on the exact calculation: CLOSE_QUALIFICATION consumes loadQualificationRanking (already a transaction dependency) — select→scan→calculate→publish completion, bracket seeding of the immutable top16, CANCELLED/FEWER_THAN_TWO_QUALIFIERS below two qualifiers, phase state (cursor/revision/lease/fencing) preserved across interruptions, no permanent wait above 501 accepted attempts, legacy publisher stays fenced once a calculation version is selected and published rankings/brackets are never recomputed; plan §4 size matrix as tests (0/1/2/15/16/17 participants; 502 attempts; 502 distinct players; 1503 attempts; 4096/4097 as test sizes, not product caps) with reads/writes/time bounds recorded; evidence docs/agents/evidence/<date>-qualification-loop/"
+covers = ["CAP-11"]
+after = [{ story = "5.1", needs = "adopted ONLINE-O1 timing reconciliation (affects which late attempts are in cohort scope at cutoff)" }]
+waits = [
+  "TZ07A exact calculation path — DONE by earlier shifts (tournament-qualification-compact/calculation, 4096/4097 cases green; LS formula and tie-break order retained per owner decision)",
+  "5.1: adopted timing contract",
+]
+status = "ready"
+
+[[story]]
+id = "5.6"
+slug = "sessions-online-o2"
+title = "Tournament and championship match sessions adopt the shared ONLINE-O2 delivery/ready-ACK contract under AD-31 as reconciled by 5.1: question completion (timely accepted answer or original expiry) starts the captured 60s window, ready-ACK receipt keyed (session identity, questionIndex, windowId), retry returns the same question with server-remaining time, no second answer clock, no unbounded gap after a lost ACK, reconnect never stops clocks, no window after the last question; both championship opponents receive the same HARD form/fingerprint pair with authoritative timing; qualification EASY sessions follow the same transition contract; JVM/Node contract tests plus demo-backend proof; evidence docs/agents/evidence/<date>-competition-sessions-online-o2/"
+covers = ["CAP-11", "CAP-12"]
+after = [{ story = "5.1", needs = "adopted ONLINE-O1 timing reconciliation" }]
+waits = [
+  "ONLINE-O2 contract — DONE (2.5/2.6/2.9, adopted edition blob e142341e…); Arena client half (3.2) is the adopted adapter precedent",
+  "5.1: adopted timing contract",
+]
+status = "ready"
+
+[[story]]
+id = "5.7"
+slug = "meeting-restore-uxo3"
+title = "UX-O3 permitted meeting projections and restoration: read/ack DTOs for proposals, per-slot confirmations and each participant's READY — PROPOSE never implies CONFIRM, proposals and confirmations of individual slots persist independently (a radio choice cancels neither), an agreed slot is immutable, owner/epoch read/ack projection restores CONFIRM and both READY states on re-entry/reload, boundary server times enforced (proposal until C, slot between server now and C, confirmation until C and not later than the slot, READY inside [slot, slot+1h)), lost-answer and stale-page edges keep server authority, private forms never leak through the projections; Node contract tests incl. re-entry and race cases; evidence docs/agents/evidence/<date>-meeting-restore/"
+covers = ["CAP-12"]
+after = [{ story = "5.1", needs = "adopted ONLINE-O1 timing reconciliation (C and READY boundaries are part of it)" }]
+waits = [
+  "meeting offer/confirmation/READY storage and evaluateMeeting — DONE (tournament-service/tournament-policy); this story adds the permitted restore projections and proves them",
+  "5.1: adopted timing contract",
+]
+status = "ready"
+
+[[story]]
+id = "5.8"
+slug = "awards-conservation"
+title = "Awards, ranking and remainder conservation end-to-end: ranking→place mapping consumes the frozen prize-list version per the adopted 5.2 matrix (absences, ties, byes, technical outcomes FORFEIT/DOUBLE_OUT, shared third place), each row is reserved and paid exactly once, returned remainder closes with terminal remaining=0, marker/event/award effects are atomic or a durable chain, only the server starts a match when both participants are READY and no new turn-order concept is introduced; conservation proofs across the plan §4 cases and crash/retry races; evidence docs/agents/evidence/<date>-awards-conservation/"
+covers = ["CAP-12"]
+after = [
+  { story = "5.4", needs = "dynamic prize list CREATE/reserve/payout" },
+  { story = "5.6", needs = "sessions resolve under the online contract" },
+  { story = "5.7", needs = "meeting restore projections" },
+]
+waits = [
+  "bracket progress with placements and FORFEIT/DOUBLE_OUT — DONE (tournament-policy resolvePlayedMatch/progressBracket); this story proves money conservation over them",
+]
+status = "ready"
+
+[[story]]
+id = "5.9"
+slug = "client-data-layer"
+title = "Typed KMP client contracts and data layer for competitions: DTOs/mappers/data sources/DI for the six existing callables (prepare/operate/session/readEvent/readSession/readMeeting) plus discovery and meeting projections — typed errors mapped from the controller's HttpsError codes (CONFLICTING_REPLAY, SCORING_UNAVAILABLE, INCONSISTENT_ESCROW, …), session mutations ride the outbox with identity/retry per the adopted ONLINE-O2 §6 (mutationKey, permanent receipts for ready-ACK), owner+epoch account-switch guard, redaction preserved on every projection, no private forms/keys in DTOs or logs; JVM contract tests against the Node suites' fixtures; evidence docs/agents/evidence/<date>-competition-client-data/"
+covers = ["CAP-11", "CAP-12"]
+after = [
+  { story = "5.4", needs = "stable prize-list DTO shapes" },
+  { story = "5.6", needs = "stable session/ready-ACK shapes" },
+  { story = "5.7", needs = "stable meeting projection shapes" },
+]
+waits = [
+  "ONLINE-O2 client half — DONE (OutboxOperations/ReadyAckOutboxCodec/ArenaOnlineO2Adapter precedents to reuse, not fork)",
+]
+status = "ready"
+
+[[story]]
+id = "5.10"
+slug = "client-tournament-ux"
+title = "Tournament client journeys (functional, current conventions; final NOIR restyle stays epic-9): organizer creates a funded competition from an eligible published course (prize list entry per 5.2, consent, fund freeze shown), discovery/browse of events via the paginated read, admission surfaces for downloaded course and link with honest outside-window/refusal states, qualification participation — three distinct EASY attempts, progress and per-form status, leaderboard projection (averagePercent display-only, place/ratingPercent authoritative) — Decompose components + Compose screens, RU/UK/EN, AD-21 action states incl. pending/unknown/recovery; JVM tests + rig pass per the owner's hitl-матрица decision; evidence docs/agents/evidence/<date>-tournament-client/"
+covers = ["CAP-11"]
+after = [
+  { story = "5.3", needs = "admission and discovery surfaces" },
+  { story = "5.5", needs = "closed qualification loop to display" },
+  { story = "5.9", needs = "client data layer" },
+]
+waits = [
+  "rig runs allowed per owner decision (night-2026-10-10); FLAG_SECURE visual strings go to the owner list like epic-3",
+]
+status = "ready"
+
+[[story]]
+id = "5.11"
+slug = "client-championship-ux"
+title = "Championship client journeys (functional, current conventions; final NOIR restyle stays epic-9): meeting agreement surfaces — propose, confirm, READY with restore of CONFIRM/READY on re-entry and honest expiry states — match play on the runner under the session online contract, bracket view with immutable published state, results/awards with per-row receipts and returned remainder shown; Decompose + Compose, RU/UK/EN, AD-21 states; JVM tests + rig pass; evidence docs/agents/evidence/<date>-championship-client/"
+covers = ["CAP-12"]
+after = [
+  { story = "5.8", needs = "conserving awards to display" },
+  { story = "5.9", needs = "client data layer" },
+]
+waits = [
+  "rig runs allowed per owner decision (night-2026-10-10); FLAG_SECURE visual strings go to the owner list like epic-3",
+]
+status = "ready"
+
+[[story]]
+id = "5.12"
+slug = "demo-e2e-server"
+title = "Restricted server-only demo run of the full competition lifecycle on the demo backend with controlled ticks: create (dynamic prize list) → qualification window (admitted players, three EASY attempts, sessions under the online contract) → CLOSE_QUALIFICATION with the exact calculation → bracket → meetings/agreement → matches → awards with conservation and returned remainder; crash-recovery across every phase boundary (worker lease expiry, repeated sweeps, retries reuse the event); plan §4 special cases (0/1/2/15/16/17 participants; 502 attempts; 1503 attempts) with time/memory/reads/writes recorded; evidence docs/agents/evidence/<date>-competitions-demo-e2e/"
+covers = ["CAP-11", "CAP-12"]
+after = [
+  { story = "5.8", needs = "server lifecycle complete and conserving" },
+  { story = "5.10", needs = "client journeys exercisable end-to-end" },
+  { story = "5.11", needs = "championship journeys exercisable end-to-end" },
+]
+waits = [
+  "demo container schoolquiz-demo-firebase-20261004 and the functions emulator — standing environment (epic-3 precedent)",
+]
+status = "ready"
+
+[[story]]
+id = "5.13"
+slug = "device-proof-hitl"
+title = "HITL device proof of competition journeys on physical devices: tournament creation→qualification→qualification result and championship agreement→match→bracket/awards on real phones per plan §4 (real devices only, no emulator), upgrade-in-place with retained competition state, account A→B→A ownership of sessions/admissions, lost-response recovery on device, visual acceptance of competition screens (FLAG_SECURE strings to the owner like epic-3); evidence docs/agents/evidence/<date>-competitions-device/"
+covers = ["CAP-11", "CAP-12"]
+after = [
+  { story = "5.10", needs = "tournament client journeys" },
+  { story = "5.11", needs = "championship client journeys" },
+  { story = "5.12", needs = "demo e2e green" },
+]
+waits = [
+  "hitl: physical devices (two accounts; the shared-screen match case rides the same owner session as 3.9)",
+]
+hitl = true
+status = "blocked" # hitl (physical devices; owner visual acceptance)
