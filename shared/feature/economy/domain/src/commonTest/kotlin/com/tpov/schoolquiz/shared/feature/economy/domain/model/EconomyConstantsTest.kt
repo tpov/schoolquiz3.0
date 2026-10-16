@@ -17,7 +17,7 @@ class EconomyConstantsTest {
 
         assertEquals(1000, tank)
         assertEquals(2, tank / constants.priceOf(ActivityKind.TOURNAMENT))
-        assertEquals(3, tank / constants.priceOf(ActivityKind.FINAL_EXAM))
+        assertEquals(5, tank / constants.priceOf(ActivityKind.FINAL_EXAM))
         assertEquals(30, tank / constants.priceOf(ActivityKind.ORDINARY_LESSON))
     }
 

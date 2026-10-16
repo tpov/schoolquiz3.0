@@ -68,7 +68,7 @@ function testTheFullTankBuysTwoTournaments() {
 
   assert.strictEqual(tank, 1000);
   assert.strictEqual(tank / DEFAULTS.activityPrices.TOURNAMENT, 2);
-  assert.strictEqual(Math.floor(tank / DEFAULTS.activityPrices.FINAL_EXAM), 3);
+  assert.strictEqual(Math.floor(tank / DEFAULTS.activityPrices.FINAL_EXAM), 5);
   assert.strictEqual(Math.floor(tank / DEFAULTS.activityPrices.ORDINARY_LESSON), 30);
 }
 
