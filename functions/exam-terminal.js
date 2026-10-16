@@ -230,7 +230,10 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
       const config = await loadExamConfig(tx);
       const closedAtMs = at;
       const resultVersion = 1;
-      const outcome = terminalOutcome(sitting, {closedAtMs, closeReason: plan.closeReason, resultVersion});
+      // Последний вопрос, закрытый таймаутом цепочки, просит причину TIMEOUT: кандидат
+      // вычислен в плане шага и обязан доехать до свидетельства закрытия.
+      const closeReason = plan.closeReasonCandidate || plan.closeReason;
+      const outcome = terminalOutcome(sitting, {closedAtMs, closeReason, resultVersion});
       const stateId = assessmentStateId(sitting.uid, sitting.mode, sitting.assessmentId);
       const stateRef = db.doc(`${ASSESSMENT_STATE_COLLECTION}/${stateId}`);
       const state = data(await tx.get(stateRef)) || {};
@@ -253,13 +256,13 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
         receiptId: `exam-terminal:${sittingId}`,
         resultVersion,
         closedAtMs,
-        closeReason: plan.closeReason,
+        closeReason,
         projection: outcome.projection,
       };
       tx.set(sittingRef, {
         state: SITTING_STATE.CLOSED,
         closedAtMs,
-        closeReason: plan.closeReason,
+        closeReason,
         terminal,
         version: sitting.version + 1,
         nextDeadlineAtMs: null,
@@ -427,8 +430,10 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
         try {
           // Очередь не авторитет: шаг перечитывает сидинг и CAS-ит сам.
           const result = await advanceSitting({sittingId: doc.id});
-          if (result.status === "TERMINALIZED") {
-            terminalized += 1;
+          if (result.status === "TERMINALIZED" || result.status === "CLOSED") {
+            // CLOSED: сидинг закрыт (например, коммит прошёл, а снятие флага упало) — очередь
+            // обязана отпустить его, иначе ограниченная страница вечно занята.
+            if (result.status === "TERMINALIZED") terminalized += 1;
             await db.doc(`${SITTINGS_COLLECTION}/${doc.id}`).set({
               terminalQueryFlag: false,
             }, {merge: true});

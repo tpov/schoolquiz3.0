@@ -191,6 +191,8 @@ function publicSittingProjection(sitting, nowMs, extra = {}) {
       timerRule: "ALL_HARD_ORDINARY",
       timerRuleVersion: sitting.rules.examRulesVersion,
     },
+    // Корневое серверное «сейчас» — часть формы ответа: клиент сверяет по нему остаток.
+    serverNowMs: nowMs,
     ...(waiting ? {nextQuestion: publicQuestionProjection(sitting, current, nowMs)} : {}),
     ...extra,
   };
@@ -471,10 +473,17 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
     };
   }
 
+  /** Верх чтения свидетельства покрытия: переполнение — явная недоступность, не короткий союз. */
+  const MAX_COVERAGE_EVIDENCE_ROWS = 200;
+
   /** Свидетельство покрытия из сохранённых обычных событий результата пользователя. */
   async function readAttemptEvidence(tx, uid, lessonId) {
     const snapshot = await tx.get(db.collection(`result_events_public/${digest(uid).slice(0, 2)}/events`)
-      .where("lessonId", "==", lessonId).limit(200));
+      .where("lessonId", "==", lessonId).limit(MAX_COVERAGE_EVIDENCE_ROWS));
+    // Полная страница — урок крупнее чтения: тихо урезанный союз дал бы ложный Locked.
+    if (snapshot.docs.length >= MAX_COVERAGE_EVIDENCE_ROWS) {
+      fail("COVERAGE_EVIDENCE_UNAVAILABLE", `coverage evidence for ${lessonId} exceeds one bounded read`);
+    }
     return snapshot.docs.map((doc) => attemptEvidence(doc.data() || {}));
   }
 
@@ -506,7 +515,10 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
     const shownTerms = body.shownTerms === true;
     const requestPath = `${START_REQUESTS_COLLECTION}/${startRequestDocumentId(uid, requestId)}`;
     const expectedHash = requestHash(uid, {
-      mode, assessmentId, accountEpoch, shownTerms, operationId: requestId,
+      mode, assessmentId, accountEpoch, shownTerms,
+      // Согласие — часть тела: тот же ключ с изменившимся согласием — конфликт, не повтор.
+      acceptedTermsRevision: Number(body.acceptedTermsRevision) || 0,
+      operationId: requestId,
     });
     const entropy = randomBytes(32);
     const rank = (key) => createHash("sha256").update(`${entropy.toString("hex")}:${key}`).digest("hex");
@@ -738,23 +750,32 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
     const sittingId = typeof body.sittingId === "string" ? body.sittingId : fail("INVALID_ARGUMENT", "sittingId is required");
     const index = Math.floor(Number(body.questionIndex));
     if (!Number.isSafeInteger(index) || index < 0) fail("INVALID_ARGUMENT", "questionIndex is required");
-    const revision = body.revision === undefined ? undefined : Math.floor(Number(body.revision));
+    const revision = body.revision === undefined ? undefined : body.revision;
+    if (revision !== undefined &&
+        (!Number.isSafeInteger(revision) || revision < 0)) {
+      // Не-число проскочило бы сверку редакции и сериализовалось бы в отпечатке как null.
+      fail("INVALID_ARGUMENT", "revision must be a non-negative integer when present");
+    }
     if (!body.answer || typeof body.answer !== "object" || Array.isArray(body.answer)) {
       fail("INVALID_ARGUMENT", "answer payload is required");
     }
     return db.runTransaction(async (tx) => {
       const now = Math.floor(nowMs());
       const sitting = await loadOwnedSitting(tx, uid, sittingId);
-      if (sitting.state === SITTING_STATE.CLOSED) {
-        return {state: SITTING_STATE.CLOSED, sittingId, accepted: false, reason: "SITTING_CLOSED"};
-      }
       const slot = sitting.slots[index];
       const answer = {payload: body.answer};
       const fingerprint = digest({sittingId, index, revision: revision === undefined ? null : revision, answer});
       const verdict = submitVerdict(slot, {revision, fingerprint});
+      // Идемпотентный повтор читает существующую квитанцию ДО всякого затвора состояния:
+      // ретрай ответа на уже запрошенном к закрытии сидинге возвращает ту же квитанцию.
       if (verdict.kind === "replay") {
         return {accepted: true, duplicate: true, receipt: verdict.answer.receipt,
           ...sittingResponseAfter(sitting, now)};
+      }
+      // Свежий ответ принимает только открытый сидинг: FINISH_REQUESTED уже у терминального
+      // писателя, и гонка с ним не перезаписывает зафиксированный исход.
+      if (sitting.state !== SITTING_STATE.OPEN) {
+        return {accepted: false, reason: "SITTING_CLOSED", ...sittingResponseAfter(sitting, now)};
       }
       if (verdict.kind === "conflict") fail("ANSWER_CONFLICT", "answer identity is already used by another payload");
       if (verdict.kind === "closed") {

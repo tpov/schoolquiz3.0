@@ -263,8 +263,11 @@ function createCertificateSigning({db, nowMs = () => Date.now(), signer = null})
     const fact = factSnapshot.data() || null;
     if (!fact) return {fulfilled: false, reason: "NO_FACT"};
     if (fact.claimsDigest !== work.claimsDigest) return {fulfilled: false, reason: "CLAIMS_DRIFT"};
-    // Подписант отсутствует или ключ не выдан: восстановимое ожидание, не подпись-заглушка.
-    if (!signer || typeof signer.sign !== "function" || !signer.available(fact.keyId)) {
+    // Подписант отсутствует, не умеет подписывать или ключ не выдан: восстановимое ожидание,
+    // не подпись-заглушка и не TypeError посреди исполнения.
+    const keyUnavailable = !signer || typeof signer.sign !== "function" ||
+      (typeof signer.available === "function" && !signer.available(fact.keyId));
+    if (keyUnavailable) {
       await workRef.set({state: SIGNING_STATE.PENDING, lastError: "KEY_UNAVAILABLE",
         updatedAtMs: now()}, {merge: true});
       return {fulfilled: false, reason: "KEY_UNAVAILABLE"};

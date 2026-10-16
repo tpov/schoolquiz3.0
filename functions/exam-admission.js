@@ -101,8 +101,9 @@ function evaluateAdmission(params) {
     nowMs,
   } = params;
 
-  // 1. Восстановление: открытый сидинг сильнее всех остальных затворов.
-  if (openSitting && openSitting.state === "OPEN") {
+  // 1. Восстановление: ЛЮБОЙ незакрытый сидинг сильнее всех остальных затворов — старт при
+  // FINISH_REQUESTED тоже восстанавливает попытку без второго списания.
+  if (openSitting && openSitting.state !== "CLOSED") {
     return {kind: OUTCOME.RECOVER, sittingId: openSitting.sittingId, price: 0,
       reason: "open sitting recovered"};
   }

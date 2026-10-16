@@ -45,6 +45,9 @@ const THEME_POOL_MIN_EASY = 5;
 const THEME_POOL_MIN_HARD = 15;
 const FINAL_POOL_MIN_HARD = 20;
 
+/** Предел Firestore на значения одного `in`: крупнее — батчами, объединёнными в результат. */
+const MAX_VALUES_PER_IN = 30;
+
 /** Сертификационные пороги курса: тем, у каждой ≥100 EASY + ≥100 HARD. */
 const CERTIFICATION_MIN_THEMES = 12;
 const CERTIFICATION_MIN_EASY_PER_THEME = 100;
@@ -276,16 +279,31 @@ function createExamBank({db, loadLessonContext}) {
    * Пул курса: последний одобренный курс (у финала активный сидинг держит заморозку; новый
    * старт всегда читает текущее дерево), темы курса с их пулами и сертификационная сводка.
    */
+  /** Темы по списку секций: `in` батчами по ≤30 идентификаторов, результаты слиты. */
+  async function readThemesBySections(tx, sectionIds) {
+    const docs = [];
+    for (let start = 0; start < sectionIds.length; start += MAX_VALUES_PER_IN) {
+      const chunk = sectionIds.slice(start, start + MAX_VALUES_PER_IN);
+      const snapshot = await tx.get(db.collection("themes").where("sectionId", "in", chunk)
+        .limit(MAX_THEMES_PER_COURSE + 1 - docs.length));
+      docs.push(...snapshot.docs);
+      if (docs.length > MAX_THEMES_PER_COURSE) break;
+    }
+    // Дубликаты невозможны (секция не повторяется в списке), порядок — по батчам чтения.
+    return {docs};
+  }
+
   async function coursePool(tx, courseId) {
     const questSnapshot = await tx.get(db.doc(`quests/${courseId}`));
+    // Вышедший из архива курс: не найден для целей экзамена — платный финал не рисуется.
     if (!questSnapshot.exists) fail("COURSE_NOT_FOUND");
     const quest = questSnapshot.data() || {};
+    if (quest.archived === true) fail("COURSE_NOT_FOUND");
     const sectionsSnapshot = await tx.get(db.collection("sections").where("questId", "==", courseId)
       .limit(MAX_SECTIONS_PER_COURSE + 1));
     if (sectionsSnapshot.docs.length > MAX_SECTIONS_PER_COURSE) fail("BANK_TOO_LARGE", courseId);
     const themesSnapshot = sectionsSnapshot.docs.length === 0 ? {docs: []} :
-      await tx.get(db.collection("themes").where("sectionId", "in",
-        sectionsSnapshot.docs.map((doc) => doc.id)).limit(MAX_THEMES_PER_COURSE + 1));
+      await readThemesBySections(tx, sectionsSnapshot.docs.map((doc) => doc.id));
     if (themesSnapshot.docs.length > MAX_THEMES_PER_COURSE) fail("BANK_TOO_LARGE", courseId);
     const archivedThemes = new Set(themesSnapshot.docs
       .filter((doc) => (doc.data() || {}).archived === true).map((doc) => doc.id));
@@ -316,6 +334,7 @@ function createExamBank({db, loadLessonContext}) {
 
 module.exports = {
   CERTIFICATION_MIN_EASY_PER_THEME,
+  MAX_VALUES_PER_IN,
   CERTIFICATION_MIN_HARD_PER_THEME,
   CERTIFICATION_MIN_THEMES,
   CONTENT_TYPE_SURVEY,

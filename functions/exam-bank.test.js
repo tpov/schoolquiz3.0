@@ -202,6 +202,20 @@ test("themePool reads approved lessons below the theme and their questions", asy
   assert.equal(pool.pool.hard.length, 15);
 });
 
+test("a retired course is not found for paid finals", async () => {
+  const {db} = makeFakeDb({initialRows: {
+    "quests/course": {id: "course", questType: "REGULAR", catalogId: "catalog", version: 3,
+      authorUid: "author", archived: true},
+    "sections/section": {id: "section", questId: "course", archived: false},
+    "themes/theme": {id: "theme", sectionId: "section", archived: false},
+    "lessons/lesson": {id: "lesson", themeId: "theme", version: 1, reviewApprovedAtMs: 1,
+      reviewSubmissionId: "s", archived: false},
+  }});
+  const bank = createExamBank({db, loadLessonContext: fakeLoader(db)});
+  await assert.rejects(() => db.runTransaction(async (tx) => bank.coursePool(tx, "course")),
+    (error) => error.code === "COURSE_NOT_FOUND");
+});
+
 test("coursePool sums themes and certification for the final", async () => {
   const themeA = [
     ...Array.from({length: 100}, (_, at) => questionDoc(`ae${at}`, {lessonId: "lessonA"})),
