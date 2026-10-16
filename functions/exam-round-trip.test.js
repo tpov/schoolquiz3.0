@@ -258,6 +258,34 @@ test("case 3+8: pass twelve themes, take the final, earn the atomic certificate,
   assert.equal(JSON.stringify(snapshot).includes("corrected"), false);
 });
 
+test("pass theme, fail the retake, and final admission still succeeds (stamp restamped)", async () => {
+  const world = seededWorld();
+  for (let theme = 0; theme < THEMES; theme += 1) {
+    await confirmCoverage(world, theme);
+  }
+  const {fake, sittings, terminal} = world;
+  for (let theme = 0; theme < THEMES; theme += 1) {
+    await passTheme(world, theme, {operationId: `base-${theme}`, correct: 12});
+  }
+  // Ретема th0 после кулдауна: провал (5 из 20) — поколение темы продвигается и без прохода.
+  fake.clock.now += 24 * 3600 * 1000;
+  const retake = await passTheme(world, 0, {operationId: "retake-0", correct: 5});
+  const retakeStateId = assessmentStateId("player", "ThemeTest", "th0");
+  const stateAfterRetake = fake.rows.get(`exam_assessment_state/${retakeStateId}`);
+  assert.equal(stateAfterRetake.passed, true, "проход сохраняется монотонно");
+  assert.equal(stateAfterRetake.passedAtGeneration,
+    fake.rows.get("exam_theme_generation/th0").generation,
+    "метка прохода перемаркирована текущим поколением, иначе финал отказал бы напрасно");
+  void retake;
+  void terminal;
+  // Финал: допуск обязан пройти без CORRECTION_PENDING.
+  const final = await sittings.start({uid: "player", payload: {
+    operationId: "final-after-retake", accountEpoch: 1, courseId: "bigcourse",
+    shownTerms: true, acceptedTermsRevision: 1,
+  }, mode: "FinalExam"});
+  assert.equal(final.refused, undefined, JSON.stringify(final));
+});
+
 test("case 11: cooldown boundaries 24h/168h; midnight and week crossing change nothing", async () => {
   const world = seededWorld();
   await confirmCoverage(world, 0);

@@ -37,6 +37,9 @@ const THEME_GENERATION_COLLECTION = "exam_theme_generation";
 const COVERAGE_COLLECTION = "exam_coverage";
 
 const LEASE_MS = 660_000;
+
+/** Сколько ядовитых шагов терпит один сидинг в очереди, прежде чем страница освободится. */
+const POISON_ATTEMPT_LIMIT = 3;
 const FUNCTION_TIMEOUT_MS = 540_000;
 const MAX_SITTINGS_PER_SWEEP = 10;
 const MAX_ADVANCES_PER_SITTING = 24;
@@ -288,7 +291,10 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
           Math.max(0, Math.floor(Number(state.maxAccountedPercent) || 0)),
         lastResultVersion: resultVersion,
         lastSittingId: sitting.sittingId,
-        ...(sitting.mode === "ThemeTest" && outcome.passed ?
+        // Проход маркируется текущим поколением: и при новом проходе, и при провале ретейка,
+        // когда проход уже был — иначе метка отстанет и финал отказал бы CORRECTION_PENDING.
+        // Проход, которого не было, не возрождается никогда.
+        ...(sitting.mode === "ThemeTest" && (outcome.passed || state.passed === true) ?
           {passedAtGeneration: nextGeneration} : {}),
         updatedAtMs: closedAtMs,
       };
@@ -439,6 +445,14 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
             }, {merge: true});
           } else if (result.status === "POISON") {
             failed += 1;
+            // Яд копится по документу: после лимита флаг снимается с пометкой poisonAt —
+            // нулевые дедлайны не должны вечно занимать ограниченную страницу обхода.
+            const current = data(await db.doc(`${SITTINGS_COLLECTION}/${doc.id}`).get()) || {};
+            const attempts = Math.max(0, Math.floor(Number(current.poisonAttempts) || 0)) + 1;
+            const patch = attempts >= POISON_ATTEMPT_LIMIT ?
+              {poisonAttempts: attempts, poisonAt: now(), terminalQueryFlag: false} :
+              {poisonAttempts: attempts};
+            await db.doc(`${SITTINGS_COLLECTION}/${doc.id}`).set(patch, {merge: true});
           }
         } catch (error) {
           failed += 1;
@@ -471,6 +485,7 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
 
 module.exports = {
   ASSESSMENT_STATE_COLLECTION,
+  POISON_ATTEMPT_LIMIT,
   TERMINAL_QUERY_TRUE,
   CLOSE_REASON,
   COVERAGE_COLLECTION,

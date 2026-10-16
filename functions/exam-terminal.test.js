@@ -14,6 +14,7 @@ const {
   terminalOutcome,
 } = require("./exam-terminal");
 const {SITTING_STATE, SLOT_STATE} = require("./exam-sitting");
+const {POISON_ATTEMPT_LIMIT} = require("./exam-terminal");
 const {EXAM_RULES_VERSION} = require("./exam-sitting");
 
 const THEME_BASIS = {mode: "ThemeTest", TE: 180, TH: 360, Q: 1260, countEasy: 5, countHard: 15,
@@ -318,6 +319,18 @@ test("worker sweep: lease, bounded page, poison isolation, and convergence", asy
   assert.equal(second.attempted, 1, "только яд остался в очереди");
   // Терминированный сидинг снят с флага.
   assert.equal(fake.rows.get("exam_sittings/sw-pass").terminalQueryFlag, false);
+  // Яд копится по документу: после лимита флаг снимается — ограниченная страница освобождается.
+  assert.equal(fake.rows.get("exam_sittings/sw-poison").poisonAttempts, 2,
+    "яд считался по документу за два обхода");
+  assert.equal(second.attempted, 1, "только яд остался в очереди");
+  await terminal.sweep();
+  await terminal.sweep();
+  const drained = fake.rows.get("exam_sittings/sw-poison");
+  assert.equal(drained.poisonAttempts, POISON_ATTEMPT_LIMIT);
+  assert.ok(drained.poisonAt, "пометка яда оставлена оператору");
+  assert.equal(drained.terminalQueryFlag, false, "страница обхода освобождена");
+  const drainedSweep = await terminal.sweep();
+  assert.equal(drainedSweep.attempted, 0, "яд больше не занимает очередь");
 });
 
 test("overlapping sweeps serialize on the lease: one is BUSY", async () => {
