@@ -284,6 +284,14 @@ test("first committed answer wins; identical retry replays; conflicting reuse is
   assert.equal(submitted.accepted, true);
   assert.ok(submitted.receipt.receiptId);
   assert.ok(submitted.receipt.receivedAtMs);
+  // Форма ответа прибита к разбору: публичные пять полей; владелец и отпечаток — только
+  // в документе квитанции, не в ответе.
+  assert.deepEqual(Object.keys(submitted.receipt).sort(),
+    ["index", "receiptId", "receivedAtMs", "revision", "sittingId"]);
+  const persistedReceipt = fake.rows.get(`exam_answer_receipts/${submitted.receipt.receiptId}`);
+  assert.deepEqual(Object.keys(persistedReceipt).sort(),
+    ["fingerprint", "index", "receiptId", "receivedAtMs", "revision", "sittingId", "uid"],
+    "приватное свидетельство остаётся в документе");
   const slot0 = fake.rows.get(`exam_sittings/${start.sittingId}`).slots[0];
   assert.equal(slot0.state, SLOT_STATE.ANSWERED);
   assert.equal(slot0.answer.canonicalAnswer.selected, "a");

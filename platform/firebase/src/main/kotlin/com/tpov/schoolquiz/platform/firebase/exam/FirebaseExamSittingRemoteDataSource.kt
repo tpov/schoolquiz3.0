@@ -11,6 +11,8 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamFinishVerdict
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTransportFailure
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTransportFailureKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTermsWire
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamAckOutcome
@@ -21,6 +23,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
@@ -126,11 +134,46 @@ class FirebaseExamSittingRemoteDataSource internal constructor(
                 put("sittingId", sittingId)
                 put("questionIndex", questionIndex)
                 put("revision", revision)
-                put("answer", answerPayload)
+                // Сервер требует ОБЪЕКТ ответа (не массив, не строка): черновой JSON разбирается
+                // и уезжает декодированным — строка была бы отказом INVALID_ARGUMENT.
+                put("answer", decodedAnswerObject(answerPayload))
                 put("operationId", operationId)
             },
         )
         parser.parseSubmitOutcome(wire(reply))
+    }
+
+    /** Черновик ответа (JSON) → простые значения для транспорта вызова. */
+    private fun decodedAnswerObject(answerPayload: String): Map<String, Any?> {
+        val decoded = try {
+            Json.parseToJsonElement(answerPayload)
+        } catch (_: IllegalArgumentException) {
+            throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
+        } catch (_: Exception) {
+            // Любой испорченный черновик — типовой отказ запроса, не краш транспорта.
+            throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
+        }
+        val plain = jsonElementToPlain(decoded)
+        @Suppress("UNCHECKED_CAST")
+        return plain as? Map<String, Any?>
+            ?: throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
+    }
+
+    private fun jsonElementToPlain(element: JsonElement): Any? = when (element) {
+        is JsonNull -> null
+        is JsonPrimitive ->
+            if (element.isString) {
+                element.content
+            } else {
+                val raw = element.content
+                when {
+                    raw == "true" -> true
+                    raw == "false" -> false
+                    else -> raw.toLongOrNull() ?: raw.toDoubleOrNull() ?: raw
+                }
+            }
+        is JsonArray -> element.map { jsonElementToPlain(it) }
+        is JsonObject -> element.entries.associate { (key, value) -> key to jsonElementToPlain(value) }
     }
 
     override suspend fun finishSitting(sittingId: String): Result<ExamFinishVerdict> = exchange {
@@ -216,17 +259,7 @@ class FirebaseExamSittingRemoteDataSource internal constructor(
     private fun <T> failed(kind: ExamFailureKind): Result<T> =
         Result.failure(ExamFailure(kind))
 
-    /** Типовой отказ транспортной границы: режимный адаптер решает повтор по виду, не по тексту. */
-    enum class ExamFailureKind {
-        ACCOUNT_UNAVAILABLE,
-        ACCOUNT_CHANGED,
-        INVALID_REQUEST,
-        MALFORMED_RESPONSE,
-        SERVER_FAILURE,
-        NO_NETWORK,
-    }
-
-    class ExamFailure(val kind: ExamFailureKind) : Exception(kind.name)
+    // (таксономия отказов — в общем слое источника, см. ExamTransportFailure)
 
     internal class ExamCallableException(
         val code: String,
@@ -242,3 +275,7 @@ class FirebaseExamSittingRemoteDataSource internal constructor(
         const val FETCH_RESULT = "fetchSittingResult"
     }
 }
+
+/** Совместимость имён: таксономия отказов границы переехала в общий слой источника. */
+typealias ExamFailureKind = ExamTransportFailureKind
+typealias ExamFailure = ExamTransportFailure

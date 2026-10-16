@@ -198,6 +198,22 @@ function publicSittingProjection(sitting, nowMs, extra = {}) {
   };
 }
 
+/**
+ * Публичная половина квитанции ответа: ровно пять полей формы разбора.
+ *
+ * Владелец и отпечаток — приватное свидетельство документа квитанции; в ответе уезжают только
+ * идентичность, слот, редакция и серверное время прибытия.
+ */
+function publicReceipt(receipt) {
+  return {
+    receiptId: receipt.receiptId,
+    sittingId: receipt.sittingId,
+    index: receipt.index,
+    revision: receipt.revision,
+    receivedAtMs: receipt.receivedAtMs,
+  };
+}
+
 /** Восстановительный ответ: тот же сидинг, исходные дедлайны, ни следа второго списания. */
 function recoveryProjection(sitting, nowMs) {
   return {
@@ -715,10 +731,17 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
     return db.runTransaction(async (tx) => {
       const now = Math.floor(nowMs());
       const sitting = await loadOwnedSitting(tx, uid, sittingId);
-      if (sitting.state === SITTING_STATE.CLOSED) {
+      const slot = sitting.slots[index];
+      // Закреплённый ACK возвращается при любом состоянии: дубликат ничего не закрепляет заново.
+      if (slot && slot.ack) {
+        return {acknowledged: true, duplicate: true, ack: slot.ack,
+          ...publicQuestionProjection(sitting, slot, now)};
+      }
+      // Свежий ACK живёт только в открытом сидинге: FINISH_REQUESTED уже у писателя, и мутация
+      // дедлайна наперегонки с ним запрещена.
+      if (sitting.state !== SITTING_STATE.OPEN) {
         return {acknowledged: false, reason: "SITTING_CLOSED", ack: null};
       }
-      const slot = sitting.slots[index];
       const verdict = acknowledgeVerdict(slot, sitting, now);
       if (!verdict.ok) {
         // Форма отказа одна: acknowledged, reason и (возможно null) закреплённое — без ветвей.
@@ -769,7 +792,7 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
       // Идемпотентный повтор читает существующую квитанцию ДО всякого затвора состояния:
       // ретрай ответа на уже запрошенном к закрытии сидинге возвращает ту же квитанцию.
       if (verdict.kind === "replay") {
-        return {accepted: true, duplicate: true, receipt: verdict.answer.receipt,
+        return {accepted: true, duplicate: true, receipt: publicReceipt(verdict.answer.receipt),
           ...sittingResponseAfter(sitting, now)};
       }
       // Свежий ответ принимает только открытый сидинг: FINISH_REQUESTED уже у терминального
@@ -797,7 +820,7 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
         if (existingReceipt.fingerprint !== fingerprint) {
           fail("ANSWER_CONFLICT", "answer identity is already used by another payload");
         }
-        return {accepted: true, duplicate: true, receipt: existingReceipt,
+        return {accepted: true, duplicate: true, receipt: publicReceipt(existingReceipt),
           ...sittingResponseAfter(sitting, now)};
       }
       const canonicalAnswer = translateSubmittedAnswer(body.answer, slot.key);
@@ -821,7 +844,8 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
           now : sitting.finishRequestedAtMs || null,
         nextDeadlineAtMs: nextDeadlineAtMs(updatedSitting),
       }, {merge: true});
-      return {accepted: true, duplicate: false, receipt,
+      // Ответ приезда: публичные пять полей; владелец и отпечаток остаются в документе.
+      return {accepted: true, duplicate: false, receipt: publicReceipt(receipt),
         ...sittingResponseAfter(updatedSitting, now)};
     });
   }
@@ -931,7 +955,7 @@ module.exports = {
   openSittingDocumentId,
   publicQuestionProjection,
   publicSittingProjection,
-  publicQuestionProjectionSafe: publicQuestionProjection,
+  publicQuestionProjection,
   sittingDocumentId,
   slotClosureTransition,
   startRequestDocumentId,

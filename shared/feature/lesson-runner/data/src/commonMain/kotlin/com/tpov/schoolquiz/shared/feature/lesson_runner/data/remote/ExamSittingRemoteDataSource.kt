@@ -58,6 +58,22 @@ interface ExamSittingRemoteDataSource {
     suspend fun fetchSittingResult(sittingId: String): Result<ExamFetchOutcome>
 }
 
+/**
+ * Типовой отказ транспортной границы: режимный адаптер решает повтор по виду, не по тексту.
+ * Живёт в общем слое, чтобы состояние прогона читало причину без зависимости от платформы.
+ */
+enum class ExamTransportFailureKind {
+    ACCOUNT_UNAVAILABLE,
+    ACCOUNT_CHANGED,
+    INVALID_REQUEST,
+    MALFORMED_RESPONSE,
+    SERVER_FAILURE,
+    NO_NETWORK,
+}
+
+/** Отказ границы с его видом. */
+class ExamTransportFailure(val kind: ExamTransportFailureKind) : Exception(kind.name)
+
 /** Согласие на платные условия в теле запроса старта. */
 data class ExamTermsWire(
     val shown: Boolean,

@@ -8,6 +8,8 @@ import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTermsWire
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTransportFailure
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTransportFailureKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamAckOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamFetchOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamStartOutcome
@@ -134,12 +136,14 @@ class FirebaseExamSittingRemoteDataSourceTest {
         }
 
     @Test
-    fun submitSendsTheBoundAnswerAndParsesTheDurableReceipt() =
+    fun submitSendsTheBoundAnswerObjectAndParsesTheDurableReceipt() =
         runTest {
             val f = Fake(this)
             f.reply = submittedReply()
             val outcome = f.remote.submitAnswer(
                 "sitting-1", 0, 2,
+                // Черновик приезжает строкой JSON; транспорт обязан отправить ДЕКОДИРОВАННЫЙ
+                // объект: сервер требует объект и отвергает строку как INVALID_ARGUMENT.
                 "{\"type\":\"single-choice\",\"selected\":\"ri-0\"}",
                 "ans-1",
             ).getOrThrow()
@@ -153,7 +157,7 @@ class FirebaseExamSittingRemoteDataSourceTest {
                             "sittingId" to "sitting-1",
                             "questionIndex" to 0,
                             "revision" to 2L,
-                            "answer" to "{\"type\":\"single-choice\",\"selected\":\"ri-0\"}",
+                            "answer" to mapOf("type" to "single-choice", "selected" to "ri-0"),
                             "operationId" to "ans-1",
                         ),
                 ),
@@ -199,7 +203,7 @@ class FirebaseExamSittingRemoteDataSourceTest {
             f.session = null
             failed(
                 f.remote.startThemeTest("op", 1, "t", ExamTermsWire(true, 1)),
-                FirebaseExamSittingRemoteDataSource.ExamFailureKind.ACCOUNT_UNAVAILABLE,
+                ExamTransportFailureKind.ACCOUNT_UNAVAILABLE,
             )
             assertTrue(f.calls.isEmpty())
         }
@@ -231,7 +235,7 @@ class FirebaseExamSittingRemoteDataSourceTest {
             f.session = OutboxSession("player", 3)
             failed(
                 call.await(),
-                FirebaseExamSittingRemoteDataSource.ExamFailureKind.ACCOUNT_CHANGED,
+                ExamTransportFailureKind.ACCOUNT_CHANGED,
             )
             assertTrue(f.calls.isEmpty())
         }
@@ -243,7 +247,7 @@ class FirebaseExamSittingRemoteDataSourceTest {
             f.reply = mapOf("schemaVersion" to 1, "sittingId" to "s1")
             failed(
                 f.remote.fetchSittingResult("sitting-1"),
-                FirebaseExamSittingRemoteDataSource.ExamFailureKind.MALFORMED_RESPONSE,
+                ExamTransportFailureKind.MALFORMED_RESPONSE,
             )
         }
 
@@ -312,6 +316,8 @@ class FirebaseExamSittingRemoteDataSourceTest {
         mapOf(
             "accepted" to true,
             "duplicate" to false,
+            // Публичные пять полей — ровно то, что сервер кладёт в ответ; uid и отпечаток
+            // остаются в документе квитанции.
             "receipt" to
                 mapOf(
                     "receiptId" to "exam-answer-receipt",
@@ -340,9 +346,9 @@ class FirebaseExamSittingRemoteDataSourceTest {
 
     private fun failed(
         result: Result<*>,
-        kind: FirebaseExamSittingRemoteDataSource.ExamFailureKind? = null,
+        kind: ExamTransportFailureKind? = null,
     ) {
-        val failure = result.exceptionOrNull() as? FirebaseExamSittingRemoteDataSource.ExamFailure
+        val failure = result.exceptionOrNull() as? ExamTransportFailure
         assertEquals(
             "expected $kind, got $result",
             kind?.name,
