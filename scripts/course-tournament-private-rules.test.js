@@ -16,6 +16,8 @@ const PRIVATE = [
   "course_tournament_keys", "course_tournament_funding", "course_tournament_session_operations",
   "course_tournament_answer_ingress", "course_tournament_verified_runs", "course_tournament_rankings",
   "course_tournament_bank_preparations", "course_tournament_source_banks", "course_tournament_worker_state",
+  // Story 5.3 (UX-O4/access): competition link digests and server-attested download records.
+  "course_tournament_links", "course_tournament_downloads",
 ];
 const runId = `ct_rules_${randomUUID().replaceAll("-", "")}`;
 const probes = [
@@ -26,6 +28,8 @@ const probes = [
     path: `course_tournament_events/${runId}/qualification_calculations/${runId}/players/${runId}`},
   {label: "qualification-calculation-session-deduplication",
     path: `course_tournament_events/${runId}/qualification_calculations/${runId}/sessions/${runId}`},
+  // Story 5.3 (UX-O4/access): the per-event admission receipts live as an event subcollection.
+  {label: "admission-receipt", path: `course_tournament_events/${runId}/admissions/${runId}`},
 ];
 async function main() {
   const hub = await fetch(`http://${HOST}:4400/emulators`, {signal: AbortSignal.timeout(15_000)});

@@ -84,8 +84,11 @@ const ENDPOINTS = Object.freeze([
 // the read-only fetchOffersScreen, covered by offer-ad-review.test.js and the wiring suite
 // economy-handler.test.js. Re-pinned 2026-10-12 (story 5.1): reconcileEconomySeasons joins the
 // surface — a server-only onSchedule with no callable handle, covered by its own boundary suite
-// economy-season.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "5dd28359dd9595020e5926809111b97e1948840ef177806b51de994cea9389ef";
+// economy-season.test.js. Re-pinned 2026-10-16 (story 5.3): the UX-O4/access pair joins the
+// surface — the read-only fetchCourseTournamentEvents discovery and the create-only
+// recordCourseTournamentDownload attestation, both covered by course-tournament-controller.test.js
+// and course-tournament-handler.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "2d453d6d1cad2b50283ce019c2583e960d3033c10cdcddb7e906df62231a2778";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

@@ -4,18 +4,18 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
   READY_WINDOW_MS, QUALIFICATION_DURATION_MS, STAGE_DURATION_MS,
-  preflightPool, validatePrizeSchedule, createEventPlan, qualificationForms, planQualificationAttempt,
+  preflightPool, validatePrizeSchedule, createEventPlan, qualificationForms, planQualificationAttempt, planAdmission,
   selectQualifiers, buildBracket, planMeetingProposal, evaluateMeeting, resolvePlayedMatch,
   progressBracket, planPrizePayouts,
 } = require("./tournament-policy");
 
 const source = {kind: "COURSE", id: "course", snapshotId: "snapshot-1", reviewed: true, published: true};
 const prizes = {first: 100, second: 50, third: 25}; // Test fixture amounts, not policy defaults.
-function pool(easy = 60, hard = 20) {
+function pool(easy = 60, hard = 20, sourceId = "course") {
   return [
     ...Array.from({length: easy}, (_, i) => ({questionId: `e${i}`, difficulty: "EASY"})),
     ...Array.from({length: hard}, (_, i) => ({questionId: `h${i}`, difficulty: "HARD"})),
-  ].map((q) => ({...q, type: "SingleChoice", sourceId: "course", reviewed: true, published: true,
+  ].map((q) => ({...q, type: "SingleChoice", sourceId, reviewed: true, published: true,
     contentVersion: 1, contentHash: `hash-${q.questionId}`, maxDurationMs: 1000}));
 }
 function event(questions = pool()) {
@@ -89,6 +89,62 @@ test("qualification permits one attempt per round, including abort; retries are 
   assert.equal(planQualificationAttempt({...input, nowMs: e.qualification.endsAtMs - 1}).allowed, true);
   assert.throws(() => planQualificationAttempt({...input, roundNumber: 4}), /three rounds/);
   assert.throws(() => planQualificationAttempt({...input, uid: "other", existingAttempts: [aborted]}), /already bound/);
+});
+
+const arenaEvent = () => createEventPlan({eventId: "arena-event", questions: pool(60, 20, "lesson"),
+  source: {...source, kind: "ARENA_LESSON", id: "lesson", admitted: true}, startsAtMs: 1000, prizes, fundedBoxes: 200});
+function download(uid, courseId) {
+  return {schemaVersion: 1, uid, courseId, downloadedAtMs: 500};
+}
+const DIGEST = "a".repeat(64);
+
+test("admission confirms exactly one server-owned basis inside the qualification window", () => {
+  const e = event();
+  assert.deepEqual(planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: download("u", "course")}),
+    {allowed: true, basis: "COURSE_DOWNLOAD", reason: "ADMITTED"});
+  assert.deepEqual(planAdmission({event: e, uid: "u", nowMs: e.qualification.endsAtMs - 1, linkTokenDigest: DIGEST}),
+    {allowed: true, basis: "LINK", reason: "ADMITTED"});
+  // With both bases present the attested download takes precedence; either alone admits.
+  const both = planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: download("u", "course"), linkTokenDigest: DIGEST});
+  assert.deepEqual(both, {allowed: true, basis: "COURSE_DOWNLOAD", reason: "ADMITTED"});
+});
+
+test("admission refuses without a basis and never trusts foreign records or bare claims", () => {
+  const e = event();
+  assert.deepEqual(planAdmission({event: e, uid: "u", nowMs: 1000}),
+    {allowed: false, basis: null, reason: "NO_ADMISSION_BASIS"});
+  // Records for another account or another course fail closed as "no record".
+  for (const record of [download("other", "course"), download("u", "other-course")]) {
+    assert.equal(planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: record}).reason, "NO_ADMISSION_BASIS");
+  }
+  // A client-claimed record shape (not a server attestation) cannot widen the gate either:
+  // the pure policy judges only the attested (uid, courseId, schemaVersion) tuple.
+  assert.throws(() => planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: {schemaVersion: 2, uid: "u", courseId: "course"}}), /schemaVersion/);
+  assert.throws(() => planAdmission({event: e, uid: "u", nowMs: 1000, linkTokenDigest: "deadbeef"}), /sha-256/);
+  assert.throws(() => planAdmission({event: e, uid: "", nowMs: 1000, downloadRecord: download("u", "course")}), /nonblank/);
+  assert.throws(() => planAdmission({event: {...e, source: {kind: "MYSTERY", id: "course"}}, uid: "u", nowMs: 1000, linkTokenDigest: DIGEST}), /admission basis/);
+});
+
+test("arena-lesson events are link-only: download records do not apply (owner-visible reading)", () => {
+  const a = arenaEvent();
+  assert.deepEqual(planAdmission({event: a, uid: "u", nowMs: 1000, linkTokenDigest: DIGEST}),
+    {allowed: true, basis: "LINK", reason: "ADMITTED"});
+  // No course corresponds to an Arena lesson, so even the account's own attested download
+  // for the source id is not a basis; without the link the gate stays shut.
+  assert.equal(planAdmission({event: a, uid: "u", nowMs: 1000, downloadRecord: download("u", "lesson")}).reason, "NO_ADMISSION_BASIS");
+  assert.equal(planAdmission({event: a, uid: "u", nowMs: 1000}).reason, "NO_ADMISSION_BASIS");
+});
+
+test("the qualification window stays the sole admission time gate, half-open on endsAtMs", () => {
+  const e = event();
+  for (const nowMs of [999, e.qualification.endsAtMs]) {
+    for (const basis of [{downloadRecord: download("u", "course")}, {linkTokenDigest: DIGEST},
+      {downloadRecord: download("u", "course"), linkTokenDigest: DIGEST}]) {
+      assert.deepEqual(planAdmission({event: e, uid: "u", nowMs, ...basis}),
+        {allowed: false, basis: null, reason: "OUTSIDE_QUALIFICATION_WINDOW"});
+    }
+  }
+  assert.equal(planAdmission({event: e, uid: "u", nowMs: e.qualification.startsAtMs, downloadRecord: download("u", "course")}).allowed, true);
 });
 
 test("top16 uses authoritative LS places without recalculating ratings", () => {

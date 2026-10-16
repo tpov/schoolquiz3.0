@@ -5,6 +5,7 @@ const test = require("node:test");
 const Module = require("node:module");
 const {createFirestoreStub} = require("./_firestore-stub");
 const {SINGLE} = require("./_question-fixtures");
+const {tournamentDigest: digest} = require("./tournament-bank");
 const {admin, store} = createFirestoreStub({});
 const adminPath = require.resolve("firebase-admin");
 const stub = new Module(adminPath, null);
@@ -20,14 +21,18 @@ const functions = (() => {
 })();
 const EVENT = "event_handler_00000001";
 const endpoints = ["prepareCourseTournamentBank", "submitCourseTournamentOperation", "submitCourseTournamentSession",
-  "fetchCourseTournamentEvent", "fetchCourseTournamentSession", "fetchCourseTournamentMeeting"];
+  "fetchCourseTournamentEvent", "fetchCourseTournamentSession", "fetchCourseTournamentMeeting",
+  "fetchCourseTournamentEvents", "recordCourseTournamentDownload"];
 const call = (name, uid, data) => functions[name].run({auth: {uid}, data});
+const downloadKey = (uid, courseId) => `course_tournament_downloads/${digest([uid, courseId])}`;
 function world() {
   const wallet = {boxCount: 100, standardHearts: 5, goldHearts: 1, lifePoints: 0, plasmaPoints: 0,
     lifePointsUpdatedAtMs: NOW, plasmaPointsUpdatedAtMs: NOW};
   return {
-    "users/author": {...wallet, uid: "author"}, "users/player": {...wallet, uid: "player"},
-    "profiles/author": {uid: "author"}, "profiles/player": {uid: "player"},
+    "users/author": {...wallet, uid: "author"}, "users/player": {...wallet, uid: "player"}, "users/linky": {...wallet, uid: "linky"},
+    "profiles/author": {uid: "author"}, "profiles/player": {uid: "player"}, "profiles/linky": {uid: "linky"},
+    // Story 5.3: the player's attested download record is what admits the START below.
+    [downloadKey("player", "course")]: {schemaVersion: 1, uid: "player", courseId: "course", downloadedAtMs: NOW},
     "catalogs/catalog": {questType: "COURSE", version: 1},
     "quests/course": {catalogId: "catalog", authorUid: "author", version: 1, visibleOn: ["archive"], archived: true},
     "sections/section": {questId: "course", version: 1}, "themes/theme": {sectionId: "section", version: 1},
@@ -125,4 +130,47 @@ test("source preparation error is stable and contains no private content", () =>
     return true;
   });
   assert.equal(store.documents.get("users/author").boxCount, 100);
+}));
+
+test("download recording and event discovery run as real callables with redacted pages", () => fixed(async () => {
+  const recorded = await call("recordCourseTournamentDownload", "linky", {operationId: "record_handler_0001", courseId: "course"});
+  assert.deepEqual(recorded, {courseId: "course", downloadedAtMs: NOW});
+  assert.ok(store.documents.has(downloadKey("linky", "course")));
+  // Repeating — even under another operation id — returns the stored outcome and writes nothing.
+  const writes = store.writes.length;
+  assert.deepEqual(await call("recordCourseTournamentDownload", "linky", {operationId: "record_handler_0002", courseId: "course"}), {...recorded, replayed: true});
+  assert.equal(store.writes.length, writes);
+  await assert.rejects(call("recordCourseTournamentDownload", "linky", {operationId: "record_handler_0003", courseId: 7}), {code: "invalid-argument"});
+  const {response} = await create();
+  assert.ok(/^[a-f0-9]{48}$/.test(response.admissionLink.token));
+  const listed = await call("fetchCourseTournamentEvents", "player", {pageSize: 10});
+  assert.deepEqual(listed.events.map(row => row.eventId), [EVENT]);
+  assert.equal(listed.hasMore, false); assert.equal(listed.nextEventId, null); safe(listed);
+  assert.equal(Object.hasOwn(listed, "admissionLink"), false);
+  assert.ok(!JSON.stringify(listed).includes("serverSeed"));
+  await assert.rejects(call("fetchCourseTournamentEvents", "player", {pageSize: 101}), {code: "invalid-argument"});
+  await assert.rejects(call("fetchCourseTournamentEvents", "player", {afterEventId: "short"}), {code: "invalid-argument"});
+}));
+
+test("the organizer's link token admits a player with no download record and never leaks into reads", () => fixed(async () => {
+  const {request, response} = await create();
+  const token = response.admissionLink.token;
+  assert.ok(/^[a-f0-9]{48}$/.test(token));
+  const link = store.documents.get(`course_tournament_links/${EVENT}`);
+  assert.ok(/^[a-f0-9]{64}$/.test(link.digest));
+  await assert.rejects(call("submitCourseTournamentOperation", "linky", {kind: "START_QUALIFICATION", eventId: EVENT,
+    operationId: "start_linky_0000001", attemptId: "attempt_linky_000001", roundNumber: 1}), {code: "permission-denied"});
+  // Receipt replay with the same operation id is how the organizer recovers a lost token.
+  const replayed = await call("submitCourseTournamentOperation", "author", request);
+  assert.equal(replayed.admissionLink.token, token);
+  // The organizer distributed the token out of band; the player presents it at START.
+  const started = await call("submitCourseTournamentOperation", "linky", {kind: "START_QUALIFICATION", eventId: EVENT,
+    operationId: "start_linky_0000001", attemptId: "attempt_linky_000001", roundNumber: 1, linkToken: token});
+  assert.equal(started.session.startedAtMs, NOW); safe(started);
+  assert.equal(Object.hasOwn(started, "admissionLink"), false);
+  const view = await call("fetchCourseTournamentEvent", "linky", {eventId: EVENT});
+  assert.equal(Object.hasOwn(view, "admissionLink"), false); safe(view);
+  // The same operation id without the token is a different request and cannot replay.
+  await assert.rejects(call("submitCourseTournamentOperation", "linky", {kind: "START_QUALIFICATION", eventId: EVENT,
+    operationId: "start_linky_0000001", attemptId: "attempt_linky_000001", roundNumber: 1}), {code: "already-exists"});
 }));

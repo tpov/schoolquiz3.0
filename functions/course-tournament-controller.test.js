@@ -18,7 +18,7 @@ function pagedDb(initial) {
   function snapshot(ref) {
     assert.equal(ref.sort, "__name__"); assert.ok(Number.isInteger(ref.maximum) && ref.maximum >= 1 && ref.maximum <= 101);
     const rows = [...db.store].filter(([key, row]) => key.startsWith(`${ref.path}/`) && key.split("/").length === ref.path.split("/").length + 1 &&
-      ref.filters.every(({field, op, value}) => op === "==" && row[field] === value) && (ref.after === null || key.split("/").at(-1) > ref.after))
+      ref.filters.every(({field, op, value}) => op === "==" ? row[field] === value : op === "in" ? Array.isArray(value) && value.includes(row[field]) : false) && (ref.after === null || key.split("/").at(-1) > ref.after))
       .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).slice(0, ref.maximum);
     return {docs: rows.map(([key, row]) => ({id: key.split("/").at(-1), exists: true, data: () => clone(row)}))};
   }
@@ -40,11 +40,15 @@ function pagedDb(initial) {
 function fixture(players = ["alice", "bob"], options = {}) {
   const wallet = () => ({boxCount: 0, standardHearts: 5, goldHearts: 1, lifePoints: 0, plasmaPoints: 0,
     lifePointsUpdatedAtMs: T, plasmaPointsUpdatedAtMs: T});
+  // Story 5.3: every player holds a server-attested download record for the fixture course so
+  // qualification STARTs keep working; the admission tests below delete records explicitly.
+  const downloads = Object.fromEntries(players.map(uid =>
+    [`course_tournament_downloads/${digest([uid, "course"])}`, {schemaVersion: 1, uid, courseId: "course", downloadedAtMs: T}]));
   const db = pagedDb({"catalogs/catalog": {questType: "COURSE", version: 1},
     "quests/course": {catalogId: "catalog", authorUid: OWNER, version: 1, visibleOn: ["archive"], archived: true},
     "sections/section": {questId: "course", version: 1}, "themes/theme": {sectionId: "section", version: 1},
     "lessons/lesson": {themeId: "theme", version: 1, reviewSubmissionId: "submission", reviewApprovedAtMs: T - 1},
-    [`users/${OWNER}`]: {...wallet(), boxCount: 100}, ...Object.fromEntries(players.map(uid => [`users/${uid}`, wallet()]))});
+    [`users/${OWNER}`]: {...wallet(), boxCount: 100}, ...Object.fromEntries(players.map(uid => [`users/${uid}`, wallet()])), ...downloads});
   for (let i = 0; i < 80; i++) {
     const questionId = `q${String(i).padStart(3, "0")}`;
     db.store.set(`questions/${questionId}`, {lessonId: "lesson", version: 1, payload: JSON.stringify({id: questionId,
@@ -107,7 +111,8 @@ test("public runtime derives owner and returns safe create/event views", async (
 });
 test("all client methods require verified Auth", async () => {
   const f = fixture();
-  for (const [method, data] of [["prepare", {}], ["operate", {}], ["session", {}], ["readSession", {}], ["readEvent", {}], ["readMeeting", {}]]) await error(() => f.controller[method](null, data), "UNAUTHENTICATED");
+  for (const [method, data] of [["prepare", {}], ["operate", {}], ["session", {}], ["readSession", {}], ["readEvent", {}],
+    ["readMeeting", {}], ["listEvents", {}], ["recordDownload", {}]]) await error(() => f.controller[method](null, data), "UNAUTHENTICATED");
 });
 test("clients including organizer cannot dispatch worker capabilities or claim authority", async () => {
   const f = fixture(); await f.create();
@@ -239,6 +244,65 @@ test("readMeeting exposes paged later offers, not only first proposal, with part
   assert.equal(first.hasMore, true); assert.equal(second.hasMore, false);
   assert.deepEqual([...first.offers, ...second.offers].map(row => row.slotStartsAtMs).sort(), slots); assertSafe(first); assertSafe(second);
   await error(() => f.controller.readMeeting("viewer", request), "PERMISSION_DENIED");
+});
+test("discovery pages bounded ordered events with a working cursor and redacts every row", async () => {
+  const f = fixture();
+  for (const eventId of ["event_listing_00000001", "event_listing_00000002", "event_listing_00000003"]) {
+    f.db.store.set(`${P.events}/${eventId}`, {schemaVersion: 1, eventId, organizerUid: OWNER, status: "QUALIFICATION",
+      lastMutationAtMs: T, serverSeed: "must-not-leak", source: {kind: "COURSE", id: "course"},
+      qualification: {startsAtMs: T, endsAtMs: T + 7 * DAY}});
+  }
+  await f.create();
+  const first = await f.controller.listEvents("viewer", {pageSize: 2});
+  assert.equal(first.hasMore, true); assert.equal(first.nextEventId, "event_listing_00000001");
+  assert.deepEqual(first.events.map(row => row.eventId), [EVENT, "event_listing_00000001"]);
+  const second = await f.controller.listEvents("viewer", {pageSize: 2, afterEventId: first.nextEventId});
+  assert.equal(second.hasMore, false); assert.equal(second.nextEventId, null);
+  assert.deepEqual(second.events.map(row => row.eventId), ["event_listing_00000002", "event_listing_00000003"]);
+  assertSafe(first); assertSafe(second);
+  assert.ok(!JSON.stringify([first, second]).includes("must-not-leak"));
+  const rest = await f.controller.listEvents("viewer", {});
+  assert.deepEqual(rest.events.map(row => row.eventId).sort(), [EVENT, "event_listing_00000001", "event_listing_00000002", "event_listing_00000003"].sort());
+  assert.equal(rest.hasMore, false);
+  await error(() => f.controller.listEvents("viewer", {pageSize: 101}), "INVALID_ARGUMENT");
+  await error(() => f.controller.listEvents("viewer", {pageSize: 0}), "INVALID_ARGUMENT");
+  await error(() => f.controller.listEvents("viewer", {afterEventId: "short"}), "INVALID_ARGUMENT");
+  await error(() => f.controller.listEvents("viewer", {afterEventId: 5}), "INVALID_ARGUMENT");
+  await error(() => f.controller.listEvents("viewer", {pageSize: 2, unexpected: 1}), "INVALID_ARGUMENT");
+});
+test("download records are create-only server attestations, idempotent on repeat", async () => {
+  const f = fixture();
+  f.db.store.set("quests/other-course", {catalogId: "catalog", authorUid: OWNER, version: 1, visibleOn: ["archive"], archived: true});
+  const first = await f.controller.recordDownload("alice", {operationId: f.id(), courseId: "other-course"});
+  assert.deepEqual(first, {courseId: "other-course", downloadedAtMs: T});
+  const second = await f.controller.recordDownload("bob", {operationId: f.id(), courseId: "other-course"});
+  const repeat = await f.controller.recordDownload("alice", {operationId: f.id(), courseId: "other-course"});
+  assert.deepEqual(repeat, {...first, replayed: true}); assert.equal(second.courseId, "other-course"); assert.ok(second.downloadedAtMs === T);
+  await error(() => f.controller.recordDownload("alice", {operationId: f.id(), courseId: "no-such-course"}), "INVALID_ARGUMENT");
+  const records = [...f.db.store].filter(([key]) => key.startsWith("course_tournament_downloads/"));
+  assert.equal(records.length, 4); // two seeded player records + one per (alice, bob) x other-course
+  for (const courseId of ["", " ".repeat(1), "x".repeat(513), 5]) await error(() => f.controller.recordDownload("alice", {operationId: f.id(), courseId}), "INVALID_ARGUMENT");
+  await error(() => f.controller.recordDownload("alice", {operationId: "ctw_match_reserved0000", courseId: "course"}), "INVALID_ARGUMENT");
+  await error(() => f.controller.recordDownload("alice", {operationId: f.id(), courseId: "course", uid: "bob"}), "INVALID_ARGUMENT");
+  // The seeded attested record for the fixture course admits alice's first qualification round.
+  await f.create();
+  const started = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"});
+  assert.equal(started.session.roundNumber, 1); assertSafe(started);
+});
+test("the organizer's link token admits a player without any download record; reads never carry it", async () => {
+  const f = fixture();
+  f.db.store.delete(`course_tournament_downloads/${digest(["alice", "course"])}`);
+  const created = await f.create();
+  const token = created.admissionLink?.token;
+  assert.ok(/^[a-f0-9]{48}$/.test(token));
+  await error(() => f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"}), "PERMISSION_DENIED");
+  await error(() => f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001", linkToken: "f".repeat(48)}), "PERMISSION_DENIED");
+  const started = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001", linkToken: token});
+  assertSafe(started); assert.equal(Object.hasOwn(started, "admissionLink"), false);
+  const view = await f.controller.readEvent("viewer", {eventId: EVENT});
+  assert.equal(Object.hasOwn(view, "admissionLink"), false); assertSafe(view);
+  const list = await f.controller.listEvents("viewer", {});
+  assert.equal(Object.hasOwn(list, "admissionLink"), false); assertSafe(list);
 });
 test("read safe view suppresses even unexpected grading fields nested in stored redacted options", async () => {
   const f = fixture(); await f.create(); const start = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"});

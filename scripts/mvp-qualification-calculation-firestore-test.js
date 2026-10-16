@@ -219,6 +219,12 @@ async function execute() {
     const financialBefore = await financialSnapshot();
     assert.deepEqual(await controller().operate(names.author, createRequest), created); assert.equal(await financialSnapshot(), financialBefore);
     moveOwnClock(startsAtMs);
+    // Story 5.3 admission gate: server-attested download records before cohort STARTs pass planAdmission.
+    for (const a of admissions) {
+      const ref = db.collection(P.downloads).doc(digest([a.uid, names.course]));
+      const stored = (await ref.get()).exists ? (await ref.get()).data() : null;
+      if (!stored) await ref.set({schemaVersion: 1, uid: a.uid, courseId: names.course, downloadedAtMs: startsAtMs});
+    }
     let firstStarted;
     for (let i = 0; i < admissions.length; i++) {
       budget(); const a = admissions[i]; const result = await controller().operate(a.uid,

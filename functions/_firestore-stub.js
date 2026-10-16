@@ -191,15 +191,15 @@ function createFirestoreStub(seed, options) {
 
   function collectionRef(path, filters = [], ordering = [], after = null, maximum = Infinity) {
     if (isDocumentPath(path)) throw new Error(`not a collection path: ${path}`);
-    const described = path + (filters.length ? `?${filters.map(([field, value]) => `${field}==${value}`).join("&")}` : "");
+    const described = path + (filters.length ? `?${filters.map(([field, value, op]) => `${field}${op || "=="}${Array.isArray(value) ? `[${value.join("|")}]` : value}`).join("&")}` : "");
     const valueOf = (child, field) => field === "__name__" ?
       child.slice(child.lastIndexOf("/") + 1) : store.documents.get(child)[field];
     const compared = (left, right) => left < right ? -1 : left > right ? 1 : 0;
     const ref = {
       path,
       querySnapshot: () => {
-        let matches = childrenOf(path).filter((child) => filters.every(([field, value]) =>
-          valueOf(child, field) === value));
+        let matches = childrenOf(path).filter((child) => filters.every(([field, value, op]) =>
+          op === "in" ? Array.isArray(value) && value.includes(valueOf(child, field)) : valueOf(child, field) === value));
         if (ordering.length > 0) {
           matches = matches.filter((child) => ordering.every(([field]) => valueOf(child, field) !== undefined));
           matches.sort((a, b) => {
@@ -231,8 +231,9 @@ function createFirestoreStub(seed, options) {
         return ref.querySnapshot();
       },
       where: (field, operator, value) => {
-        if (operator !== "==") throw new Error(`stub supports only "==" queries, got ${operator}`);
-        return collectionRef(path, [...filters, [field, value]], ordering, after, maximum);
+        if (operator !== "==" && operator !== "in") throw new Error(`stub supports only "==" and "in" queries, got ${operator}`);
+        if (operator === "in" && !Array.isArray(value)) throw new Error("stub requires an array value for in queries");
+        return collectionRef(path, [...filters, [field, value, operator]], ordering, after, maximum);
       },
       orderBy: (field, direction = "asc") => {
         if (!["asc", "desc"].includes(direction) || ordering.some(([old]) => old === field)) throw new Error("Unsupported fake ordering");

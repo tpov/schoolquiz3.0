@@ -374,6 +374,12 @@ exports.fetchCourseTournamentSession = onCall(CALLABLE_OPTIONS, (request) =>
   callCourseTournament(request, (uid, payload) => courseTournaments.readSession(uid, payload)));
 exports.fetchCourseTournamentMeeting = onCall(CALLABLE_OPTIONS, (request) =>
   callCourseTournament(request, (uid, payload) => courseTournaments.readMeeting(uid, payload)));
+// Authorized discovery and the server-attested download record (story 5.3, UX-O4/access):
+// both are ordinary allowlisted capabilities on the same controller — no dispatch surface.
+exports.fetchCourseTournamentEvents = onCall(CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.listEvents(uid, payload)));
+exports.recordCourseTournamentDownload = onCall(CALLABLE_OPTIONS, (request) =>
+  callCourseTournament(request, (uid, payload) => courseTournaments.recordDownload(uid, payload)));
 
 async function callCourseTournament(request, action) {
   const uid = requireAuthUid(request);

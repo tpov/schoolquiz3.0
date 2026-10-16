@@ -24,7 +24,8 @@ const id = (name) => `${runId}_${name}`;
 const names = Object.fromEntries(["catalog", "course", "section", "theme", "lesson", "submission", "event"]
   .map((name) => [name, id(name)]));
 const endpoints = ["prepareCourseTournamentBank", "submitCourseTournamentOperation", "submitCourseTournamentSession",
-  "fetchCourseTournamentEvent", "fetchCourseTournamentSession", "fetchCourseTournamentMeeting"];
+  "fetchCourseTournamentEvent", "fetchCourseTournamentSession", "fetchCourseTournamentMeeting",
+  "recordCourseTournamentDownload", "fetchCourseTournamentEvents"];
 const checks = [];
 const evidence = {runId, projectId: PROJECT, fixtureNames: names, retainedSyntheticFixtures: true};
 let stage = "preflight";
@@ -65,7 +66,7 @@ async function post(url, body, token, retryTransport = true) {
   }
 }
 function call(actor, endpoint, data) {
-  assert.ok(endpoints.includes(endpoint), "Only the six scoped course tournament callables");
+  assert.ok(endpoints.includes(endpoint), "Only the scoped course tournament callables");
   return post(`http://${HOST}:5001/${PROJECT}/us-central1/${endpoint}`, {data}, actor?.token).then((json) => json.result);
 }
 async function account(role) {
@@ -217,6 +218,10 @@ async function main() {
     await delay(Math.min(2000, Math.max(100, createRequest.startsAtMs - view.serverNowMs)));
     view = await call(player, "fetchCourseTournamentEvent", {eventId: names.event});
   }
+  // Story 5.3 admission gate: the player attests the course download before START (UX-O4/access).
+  const download = await call(player, "recordCourseTournamentDownload",
+    {operationId: id("download"), courseId: names.course});
+  assert.equal(download.courseId, names.course);
   const startRequest = {kind: "START_QUALIFICATION", eventId: names.event, operationId: id("start"),
     attemptId: id("attempt"), roundNumber: 1};
   const started = await call(player, "submitCourseTournamentOperation", startRequest);

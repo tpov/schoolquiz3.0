@@ -12,7 +12,8 @@ const {CURRENCY, REASON, LEDGER_PATH, ledgerEntry} = require("./currency-ledger"
 // All these collections are server-only, including redacted forms BEFORE their session starts.
 // A callable returns an allowlisted session view, never an entire event/private snapshot.
 const TOURNAMENT_PATHS = Object.freeze({events: "course_tournament_events", operations: "course_tournament_operations",
-  sessions: "course_tournament_sessions", privateForms: "course_tournament_keys", funding: "course_tournament_funding"});
+  sessions: "course_tournament_sessions", privateForms: "course_tournament_keys", funding: "course_tournament_funding",
+  links: "course_tournament_links", downloads: "course_tournament_downloads"});
 const KINDS = Object.freeze(["CREATE", "START_QUALIFICATION", "CLOSE_QUALIFICATION", "PROPOSE", "CONFIRM", "READY", "ADVANCE_MATCH"]);
 const MAX_DOCUMENT_JSON_BYTES = 800_000;
 const MAX_TRANSACTION_JSON_BYTES = 6_000_000;
@@ -46,7 +47,10 @@ function normalizeTournamentRequest(uid, payload) {
   if (!payload || !KINDS.includes(payload.kind)) fail("INVALID_ARGUMENT", "Unknown tournament operation");
   if (payload.ownerUid !== uid) fail("PERMISSION_DENIED", "Operation belongs to another account");
   const common = ["kind", "ownerUid", "operationId", "eventId"];
-  const extras = {CREATE: ["source", "startsAtMs", "prizes", "fundedBoxes"], START_QUALIFICATION: ["roundNumber", "attemptId"],
+  const extras = {CREATE: ["source", "startsAtMs", "prizes", "fundedBoxes"],
+    // linkToken is the out-of-band organizer-distributed competition link (UX-O4/access);
+    // presented only at START, never stored, and never a substitute for the server's records.
+    START_QUALIFICATION: ["roundNumber", "attemptId", "linkToken"],
     CLOSE_QUALIFICATION: [], PROPOSE: ["matchId", "slotStartsAtMs"], CONFIRM: ["matchId", "slotStartsAtMs"],
     READY: ["matchId"], ADVANCE_MATCH: ["matchId"]}[payload.kind];
   only(payload, [...common, ...extras]);
@@ -63,6 +67,11 @@ function normalizeTournamentRequest(uid, payload) {
     request.roundNumber = exact(payload.roundNumber, "roundNumber", 1);
     if (request.roundNumber > 3) fail("INVALID_ARGUMENT", "Only three qualification forms");
     request.attemptId = idValue(payload.attemptId, "attemptId");
+    if (payload.linkToken !== undefined &&
+        (typeof payload.linkToken !== "string" || !/^[a-f0-9]{48}$/.test(payload.linkToken))) {
+      fail("INVALID_ARGUMENT", "Competition link token required");
+    }
+    if (payload.linkToken !== undefined) request.linkToken = payload.linkToken;
   }
   if (extras.includes("matchId")) request.matchId = nonblank(payload.matchId, "matchId");
   if (extras.includes("slotStartsAtMs")) request.slotStartsAtMs = exact(payload.slotStartsAtMs, "slotStartsAtMs");
@@ -193,7 +202,14 @@ async function readPlanTournamentOperation({db, transaction, uid, payload, now, 
     event.qualificationForms = policy.qualificationForms({event, serverSeed});
     event.qualificationForms.forEach((form) => stageBundle(stage, event.eventId, form, bank));
     effect(uid, -event.fundedBoxes, JSON.stringify(["tournament", event.eventId, "reserve"]), "RESERVE");
-    response = {status: "CREATED", event: eventView(event)};
+    // UX-O4/access: the competition link token is minted once, here. Only its digest is stored
+    // (on the event's link document); the token itself exists solely in this organizer's CREATE
+    // response — receipt replay recovers it for the organizer only, and there is no rotation,
+    // revocation or separate expiry: link validity IS the qualification window interval.
+    const admissionToken = randomBytes(24).toString("hex");
+    stage(`${TOURNAMENT_PATHS.links}/${event.eventId}`,
+      {schemaVersion: 1, eventId: event.eventId, digest: digest(admissionToken), createdAtMs: at}, true);
+    response = {status: "CREATED", event: eventView(event), admissionLink: {token: admissionToken}};
   } else {
     if (!event || event.schemaVersion !== 1) fail("NOT_FOUND", "Tournament event not found");
     assertEscrow(event);
@@ -214,6 +230,35 @@ async function readPlanTournamentOperation({db, transaction, uid, payload, now, 
       } else {
         if (event.status !== "QUALIFICATION") fail("FAILED_PRECONDITION", "Qualification is closed");
         if (existingSession) fail("INCONSISTENT_SESSION", "Session exists without its entry");
+        // UX-O4/access gate, evaluated inline in this same transaction (the only entry path):
+        // the durable admission document is the receipt of the check. Basis facts come from
+        // server-owned records only — the attested download record keyed by
+        // (uid, event.source.id) and the event's stored link digest matched against the
+        // presented token. Nothing here is readable by CLOSE_QUALIFICATION, ranking or the
+        // bracket, so a link can never bypass selection and earned championship rights survive
+        // any later link state.
+        const admissionPath = `${eventPath(event.eventId)}/admissions/${digest(uid)}`;
+        const admitted = await read(admissionPath);
+        if (admitted) {
+          if (admitted.schemaVersion !== 1 || admitted.eventId !== event.eventId || admitted.uid !== uid ||
+              !["COURSE_DOWNLOAD", "LINK"].includes(admitted.basis)) {
+            fail("INCONSISTENT_ADMISSION", "Stored admission requires repair");
+          }
+        } else {
+          const downloadRecord = event.source.kind === "COURSE"
+            ? await read(`${TOURNAMENT_PATHS.downloads}/${digest([uid, event.source.id])}`) : null;
+          let linkTokenDigest = null;
+          if (request.linkToken) {
+            const presented = digest(request.linkToken);
+            const link = await read(`${TOURNAMENT_PATHS.links}/${event.eventId}`);
+            if (link && link.schemaVersion === 1 && link.eventId === event.eventId && link.digest === presented) {
+              linkTokenDigest = presented;
+            }
+          }
+          const admission = policy.planAdmission({event, uid, nowMs: at, downloadRecord, linkTokenDigest});
+          if (!admission.allowed) fail("PERMISSION_DENIED", admission.reason);
+          stage(admissionPath, {schemaVersion: 1, eventId: event.eventId, uid, basis: admission.basis, admittedAtMs: at}, true);
+        }
         const form = event.qualificationForms[request.roundNumber - 1];
         // Qualification closes at its fixed cutoff, including a late-started timed-out session.
         const session = makeSession({sessionId: id, uid, event, form, kind: "QUALIFICATION", roundNumber: request.roundNumber,

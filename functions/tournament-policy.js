@@ -163,6 +163,56 @@ function planQualificationAttempt({event, uid, roundNumber, attemptId, nowMs, ex
   }};
 }
 
+/** UX-O4/access gate. Exactly one admitted basis per (event, account), confirmed from
+ * server-owned records only — a client-claimed download or a bare link string is never
+ * permission. COURSE events admit via the attested download record for event.source.id OR a
+ * verified competition-link digest; ARENA_LESSON events have no corresponding course to
+ * download (owner-visible reading of story 5.3), so the organizer-distributed link is their
+ * only basis and download records do not apply. linkTokenDigest must already have been matched
+ * by the adapter against the event's stored link digest — this pure policy never sees the
+ * token itself. The qualification window stays the sole time gate: outside it nothing is
+ * admitted, and the adapter must not write any admission document. Precedence when both bases
+ * exist is the attested download (COURSE_DOWNLOAD), then the link (LINK).
+ */
+function planAdmission({event, uid, nowMs, downloadRecord = null, linkTokenDigest = null}) {
+  obj(event, "event");
+  if (!event.source || typeof event.source !== "object") throw new TypeError("event.source must be an object");
+  if (!event.qualification || typeof event.qualification !== "object") throw new TypeError("event.qualification must be an object");
+  str(uid, "uid");
+  int(nowMs, "nowMs");
+  int(event.qualification.startsAtMs, "event.qualification.startsAtMs");
+  int(event.qualification.endsAtMs, "event.qualification.endsAtMs");
+  if (nowMs < event.qualification.startsAtMs || nowMs >= event.qualification.endsAtMs) {
+    return {allowed: false, basis: null, reason: "OUTSIDE_QUALIFICATION_WINDOW"};
+  }
+  let digest = null;
+  if (linkTokenDigest !== null && linkTokenDigest !== undefined) {
+    if (typeof linkTokenDigest !== "string" || !/^[a-f0-9]{64}$/.test(linkTokenDigest)) {
+      throw new RangeError("linkTokenDigest must be a sha-256 hex digest");
+    }
+    digest = linkTokenDigest;
+  }
+  if (event.source.kind === "COURSE") {
+    if (attestedDownload(downloadRecord, uid, str(event.source.id, "event.source.id"))) {
+      return {allowed: true, basis: "COURSE_DOWNLOAD", reason: "ADMITTED"};
+    }
+  } else if (event.source.kind !== "ARENA_LESSON") {
+    throw new RangeError("event source kind has no admission basis");
+  }
+  if (digest) return {allowed: true, basis: "LINK", reason: "ADMITTED"};
+  return {allowed: false, basis: null, reason: "NO_ADMISSION_BASIS"};
+}
+
+/** A download record admits only its own account for its own course; anything else in the
+ * shared collection fails closed as "no record" rather than widening the gate.
+ */
+function attestedDownload(record, uid, courseId) {
+  if (record === null || record === undefined) return false;
+  obj(record, "downloadRecord");
+  if (record.schemaVersion !== 1) throw new RangeError("downloadRecord schemaVersion must be 1");
+  return str(record.uid, "downloadRecord.uid") === uid && str(record.courseId, "downloadRecord.courseId") === courseId;
+}
+
 /** Uses the supplied authoritative LS places. It never recalculates or replaces LS. */
 function selectQualifiers(ranking) {
   const seenUid = new Set();
@@ -415,7 +465,7 @@ function planPrizePayouts({eventId, prizes, fundedBoxes, placements}) {
 
 module.exports = {
   READY_WINDOW_MS, QUALIFICATION_DURATION_MS, STAGE_DURATION_MS,
-  preflightPool, validatePrizeSchedule, createEventPlan, qualificationForms, planQualificationAttempt,
+  preflightPool, validatePrizeSchedule, createEventPlan, qualificationForms, planQualificationAttempt, planAdmission,
   selectQualifiers, buildBracket, planMeetingProposal, evaluateMeeting, resolvePlayedMatch,
   progressBracket, planPrizePayouts,
 };

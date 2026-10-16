@@ -39,7 +39,12 @@ function bankFixture() {
   return {authorizedUid: OWNER, immutable: true, timingVersion: "shared-timer-v1", source: {...SOURCE, reviewed: true, published: true}, questions};
 }
 function fixture(participants = ["alice", "bob"], extra = {}) {
-  const db = premiumTestDb({[`users/${OWNER}`]: user(100), ...Object.fromEntries(participants.map((uid) => [`users/${uid}`, user()])), ...extra});
+  // Story 5.3: every participant holds a server-attested download record for the fixture
+  // course, so qualification STARTs keep exercising the entry/session discipline; the
+  // admission-gate tests below delete or bypass these records explicitly.
+  const downloads = Object.fromEntries(participants.map((uid) =>
+    [`${P.downloads}/${digest([uid, SOURCE.id])}`, {schemaVersion: 1, uid, courseId: SOURCE.id, downloadedAtMs: T}]));
+  const db = premiumTestDb({[`users/${OWNER}`]: user(100), ...Object.fromEntries(participants.map((uid) => [`users/${uid}`, user()])), ...downloads, ...extra});
   let serial = 0;
   const state = {bank: bankFixture(), participants, results: new Map(), bankLoads: 0, rankingOverride: undefined, resultOverride: undefined};
   const dependencies = {
@@ -179,6 +184,95 @@ test("qualification consumes one entry per form; lost response and new-id reconn
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 1000, {roundNumber: 1, attemptId: "attempt_0000000000000002"}));
   await assert.rejects(f.call("START_QUALIFICATION", "bob", T + 1000, {roundNumber: 2, attemptId}), {code: "CONFLICTING_REPLAY"});
   assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${E}/entries/`)).length, 1);
+});
+
+const admissionRows = (f) => [...f.db.store].filter(([path]) => path.startsWith(`${E}/admissions/`));
+
+test("START without a server admission basis is refused as a typed gate error and stages nothing", async () => {
+  const f = fixture(); await f.create();
+  f.db.store.delete(`${P.downloads}/${digest(["alice", SOURCE.id])}`);
+  // A download record for another course of the same account is not a basis either.
+  f.db.store.set(`${P.downloads}/${digest(["alice", "other-course"])}`,
+    {schemaVersion: 1, uid: "alice", courseId: "other-course", downloadedAtMs: T});
+  const before = structuredClone([...f.db.store]);
+  await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001"}),
+  (error) => { assert.equal(error.code, "PERMISSION_DENIED"); assert.equal(error.message, "NO_ADMISSION_BASIS"); return true; });
+  assert.deepEqual([...f.db.store], before);
+  assert.equal(admissionRows(f).length, 0);
+  await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001"}), {code: "PERMISSION_DENIED"});
+  assert.deepEqual([...f.db.store], before);
+});
+
+test("the minted link token admits without any download record and never persists anywhere", async () => {
+  const f = fixture();
+  f.db.store.delete(`${P.downloads}/${digest(["alice", SOURCE.id])}`);
+  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: T, prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12});
+  const invoke = (uid, body, now = T) => apply({db: f.db, uid, payload: body, now, dependencies: f.dependencies, serverSeed: SEED});
+  const created = await invoke(OWNER, payload);
+  const token = created.admissionLink.token;
+  assert.ok(/^[a-f0-9]{48}$/.test(token));
+  assert.ok(!JSON.stringify(created.event).includes(token));
+  assert.equal(f.db.store.get(`${P.links}/${EVENT}`).digest, digest(token));
+  // Wrong token: refused, nothing staged. Right token: admitted via LINK, doc created once.
+  await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "f".repeat(48)}), {code: "PERMISSION_DENIED"});
+  // A malformed token is a request error before any record is read.
+  await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "zzz-not-hex"}), {code: "INVALID_ARGUMENT"});
+  assert.equal(admissionRows(f).length, 0);
+  const started = await f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: token});
+  assert.equal(started.status, "SESSION");
+  assert.deepEqual(admissionRows(f).map(([, row]) => row),
+    [{schemaVersion: 1, eventId: EVENT, uid: "alice", basis: "LINK", admittedAtMs: T + 100}]);
+  // The plaintext token is carried by exactly one stored document — the organizer's own
+  // operation receipt, the thing receipt replay reads back; the event, link doc and forms
+  // hold no token (the link doc holds only its digest).
+  assert.deepEqual([...f.db.store].filter(([, row]) => JSON.stringify(row).includes(token)).map(([path]) => path),
+    [`${P.operations}/${digest(payload.operationId)}`]);
+  // Receipt replay recovers the token for the organizer only; another account never can.
+  assert.equal((await invoke(OWNER, payload, T + DAY)).admissionLink.token, token);
+  await assert.rejects(invoke("alice", {...payload, ownerUid: "alice"}), {code: "PERMISSION_DENIED"});
+});
+
+test("admission is recorded once per (event, account) and reused; retries never re-admit", async () => {
+  const f = fixture(); await f.create();
+  const first = await f.call("START_QUALIFICATION", "alice", T + 100, {roundNumber: 1, attemptId: "attempt_0000000000000001"});
+  assert.deepEqual(admissionRows(f).map(([, row]) => row.basis), ["COURSE_DOWNLOAD"]);
+  await f.call("START_QUALIFICATION", "alice", T + 200, {roundNumber: 2, attemptId: "attempt_0000000000000002"});
+  assert.equal(admissionRows(f).length, 1);
+  // A lost response replayed after the window replays the attempt outcome: same session
+  // back, and no new admission, entry or session document.
+  const late = await f.call("START_QUALIFICATION", "alice", T + 7 * DAY + 5, {roundNumber: 1, attemptId: "attempt_0000000000000001"});
+  assert.deepEqual(late.session, first.session);
+  assert.equal(admissionRows(f).length, 1);
+  assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${E}/entries/`)).length, 2);
+  // A fresh attempt outside the window is refused by the window gate before any admission.
+  await assert.rejects(f.call("START_QUALIFICATION", "bob", T + 7 * DAY, {roundNumber: 1, attemptId: "attempt_bob_0000000000001"}),
+    {code: "FAILED_PRECONDITION"});
+  assert.equal(admissionRows(f).length, 1);
+});
+
+test("ARENA_LESSON events are link-only end to end: no course download basis exists", async () => {
+  const f = fixture();
+  f.state.bank.source = {kind: "ARENA_LESSON", id: "arena-lesson", snapshotId: "arena-v7", reviewed: true, published: true, admitted: true};
+  f.state.bank.questions.forEach((question) => { question.sourceId = "arena-lesson"; });
+  const created = await f.call("CREATE", OWNER, T, {source: {kind: "ARENA_LESSON", id: "arena-lesson", snapshotId: "arena-v7"},
+    startsAtMs: T, prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12});
+  const token = created.admissionLink.token;
+  await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "0".repeat(48)}), {code: "PERMISSION_DENIED"});
+  // Even an attested download record for the arena source id is no basis (owner-visible reading).
+  f.db.store.set(`${P.downloads}/${digest(["alice", "arena-lesson"])}`,
+    {schemaVersion: 1, uid: "alice", courseId: "arena-lesson", downloadedAtMs: T});
+  await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001"}), {code: "PERMISSION_DENIED"});
+  const started = await f.call("START_QUALIFICATION", "alice", T + 100,
+    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: token});
+  assert.equal(started.status, "SESSION");
+  assert.deepEqual(admissionRows(f).map(([, row]) => row.basis), ["LINK"]);
 });
 
 test("late qualification session is bounded by cutoff; reconnect exposes no private or future question", async () => {

@@ -167,6 +167,16 @@ service cloud.firestore {
     match /course_tournament_bank_preparations/{document=**} { allow read, write: if false; }
     match /course_tournament_source_banks/{document=**} { allow read, write: if false; }
     match /course_tournament_worker_state/{document=**} { allow read, write: if false; }
+    // Competition link digests (story 5.3, UX-O4/access): one document per event holding only
+    // the sha-256 of the organizer's link token. The token itself lives solely in the
+    // organizer's CREATE response; a client that could read the digest could brute-force
+    // tokens, one that could write it could mint admission links.
+    match /course_tournament_links/{document=**} { allow read, write: if false; }
+    // Server-attested download records per (account, course): the COURSE admission basis.
+    // A client write would self-grant admission without downloading; a client read would
+    // expose other accounts' download history. Admission is confirmed only inside the START
+    // transaction; there is no client read projection in this story.
+    match /course_tournament_downloads/{document=**} { allow read, write: if false; }
 
     match /purchase_notifications/{messageId} {
       // One document per Play notification message, written by playPurchaseNotifications. It is

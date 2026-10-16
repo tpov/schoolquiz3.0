@@ -28,7 +28,7 @@ if (!args.includes("--execute")) {
 async function execute() {
   const harnessSha256 = createHash("sha256").update(readFileSync(__filename)).digest("hex");
   const hashes = Object.fromEntries(Object.entries({
-    "course-tournament-controller.js": "a1e24ac1ac6ddac86de036a53ddff24df85234c55a6dc8995b6e7669c7936a67",
+    "course-tournament-controller.js": "60f1dff8e1d9f82be2c13f7c54570d99b4c207070b45bcb1d297701dfdddb042",
     "tournament-qualification-scan.js": "d151993640be6d2cea9c8d457c2eae99e4de42b286cf6c3894c9fdde09788020",
     "tournament-qualification.js": "778d3e67174f2a09fece7ce587694747772d9abc69287a97886819b7758b9adb",
     "tournament-ranking.js": "0ca1ad03006cadd95c0a6caa914a1f74a2ae762715d3cb2d04aec3f5243ace78",
@@ -213,6 +213,13 @@ async function execute() {
     const financialBefore = await financialSnapshot();
     assert.deepEqual(await controller().operate(names.author, createRequest), created); assert.equal(await financialSnapshot(), financialBefore);
     moveOwnClock(startsAtMs);
+    // Story 5.3 admission gate: every cohort member needs a server-attested download record
+    // for the event's course before its START can pass planAdmission (Admin writes, rules stay denied).
+    for (const a of admissions) {
+      const ref = db.collection(P.downloads).doc(digest([a.uid, names.course]));
+      const stored = (await ref.get()).exists ? (await ref.get()).data() : null;
+      if (!stored) await ref.set({schemaVersion: 1, uid: a.uid, courseId: names.course, downloadedAtMs: startsAtMs});
+    }
     let firstStarted;
     for (let i = 0; i < admissions.length; i++) {
       budget(); const a = admissions[i]; const result = await controller().operate(a.uid,

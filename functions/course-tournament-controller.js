@@ -101,6 +101,10 @@ function safeResponse(value) {
   if (value.currentQuestion !== undefined || value.question !== undefined) result.currentQuestion = safeQuestion(value.currentQuestion ?? value.question);
   if (value.lastClosed) result.lastClosed = pick(value.lastClosed, ["questionIndex", "questionId", "kind"]);
   if (value.result) result.result = pick(value.result, ["percentScore", "elapsedMs", "completedAtMs"]);
+  // UX-O4/access: the minted competition link token passes to the client ONLY inside the
+  // organizer's CREATE response (and that organizer's receipt replays of it). Every other
+  // response shape is untouched, so no read projection ever carries the token.
+  if (value.admissionLink) result.admissionLink = pick(value.admissionLink, ["token"]);
   return result;
 }
 function meetingContext(match, pending) { return {...match, participantUids: pending.entrants.map((row) => row.uid), formMaxDurationMs: match.sharedForm.maxDurationMs}; }
@@ -253,6 +257,52 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
     return {changed: false, gap: true};
   }
 
+  /** Authorized event discovery (story 5.3): one bounded, ordered page of redacted event
+   * views, mirroring readMeeting's cursor discipline and the worker's paging query shape
+   * (orderBy __name__ + startAfter + limit(n+1) for the hasMore probe). Any signed-in account
+   * may browse; rows carry the same allowlist as fetchCourseTournamentEvent — never the seed,
+   * fingerprints, forms, banks or the link token. Knowing an eventId is NOT admission.
+   */
+  async function listEvents(uid, payload) {
+    auth(uid); only(payload, ["afterEventId", "pageSize"]);
+    const pageSize = payload.pageSize ?? 25; exact(pageSize, 1); if (pageSize > 100) fail("INVALID_ARGUMENT");
+    const after = payload.afterEventId ?? null;
+    if (after !== null) identifier(after);
+    let query = db.collection(P.events).where("status", "in", ["QUALIFICATION", "BRACKET"]).orderBy("__name__");
+    if (after !== null) query = query.startAfter(after);
+    const docs = (await query.limit(pageSize + 1).get()).docs;
+    const rows = docs.slice(0, pageSize).map((doc) => safeEvent(eventRecord(doc.data(), doc.id)));
+    return {events: rows, hasMore: docs.length > pageSize,
+      nextEventId: docs.length > pageSize ? rows.at(-1).eventId : null, serverNowMs: now()};
+  }
+
+  /** Server-attested "this account downloaded this course" record (UX-O4/access, download
+   * basis). One create-only document per (uid, courseId): repeating the call — same or
+   * different operation id — returns the stored outcome and writes nothing, so the record can
+   * never be forged into existence twice or shifted in time. The client-side call wiring is
+   * story 5.10; this is the server half only.
+   */
+  async function recordDownload(uid, payload) {
+    auth(uid); only(payload, ["operationId", "courseId"]); clientId(payload.operationId);
+    if (typeof payload.courseId !== "string" || !payload.courseId.trim() || payload.courseId.length > 512) fail("INVALID_ARGUMENT");
+    const courseId = payload.courseId;
+    return db.runTransaction(async transaction => {
+      const ref = db.doc(`${P.downloads}/${digest([uid, courseId])}`);
+      const stored = data(await transaction.get(ref));
+      if (stored) {
+        if (stored.schemaVersion !== 1 || stored.uid !== uid || stored.courseId !== courseId) {
+          fail("UNAVAILABLE", "Stored download record requires repair");
+        }
+        return {courseId: stored.courseId, downloadedAtMs: stored.downloadedAtMs, replayed: true};
+      }
+      const course = data(await transaction.get(db.doc(`quests/${courseId}`)));
+      if (!course) fail("INVALID_ARGUMENT", "Unknown course");
+      const record = {schemaVersion: 1, uid, courseId, downloadedAtMs: now(), operationId: payload.operationId};
+      transaction.create(ref, record);
+      return {courseId, downloadedAtMs: record.downloadedAtMs};
+    });
+  }
+
   /** SERVER WORKER capability; no uid/data dispatch and no unauthenticated public endpoint. */
   async function reconcileEvent(eventId, execution = {}) {
     only(execution, ["deadlineAtMs"]);
@@ -343,7 +393,7 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
     return {eventId, done: false, status: gaps.length ? "PENDING_REPAIR" : "WAITING", transitions,
       pendingRepairMatches: [...new Set(gaps)].length, nextDueAtMs: due.length ? Math.max(at, Math.min(...due)) : at + bounds.repairRetryMs};
   }
-  return {prepare, operate, session, readSession, readEvent, readMeeting, reconcileEvent};
+  return {prepare, operate, session, readSession, readEvent, readMeeting, listEvents, recordDownload, reconcileEvent};
 }
 
 module.exports = {createCourseTournamentController, CLIENT_OPERATIONS, WORKER_PREFIX, MAX_MATCHES, DEFAULT_WORKER_BOUNDS, QUALIFICATION_EXECUTION};
