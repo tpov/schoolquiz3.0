@@ -61,7 +61,7 @@ waits = [
   "UX-O4/access gate row is a settled contract — this story implements it",
   "epic-4 publication machinery for eligible material — DONE in build terms (4.1–4.9; 4.10 device-proof hitl does not gate the server adapter)",
 ]
-status = "ready"
+status = "done" # 2026-10-16: серверная половина готова — planAdmission (окно → одна основа), link-токен при CREATE (дайджест в course_tournament_links, открытый текст только в квитанции организатора), recordCourseTournamentDownload с проверкой существования курса, fetchCourseTournamentEvents (активные события, курсор как у readMeeting), rules deny + проба расширена; rig-скрипты приведены к гейту; 109/109 сюит. Review pass 1: 23 находки — high (rig-флоу) и mediums запатчены, 1 defer (живая 403-проба правил ждёт риг). ARENA_LESSON = link-only (owner-visible, README риски). followup review рекомендован. Спека spec-5-3-admission-and-discovery.md; коммит 3cf665d2
 
 [[story]]
 id = "5.4"
