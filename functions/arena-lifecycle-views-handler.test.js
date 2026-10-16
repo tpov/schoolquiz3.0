@@ -84,8 +84,12 @@ const ENDPOINTS = Object.freeze([
 // the read-only fetchOffersScreen, covered by offer-ad-review.test.js and the wiring suite
 // economy-handler.test.js. Re-pinned 2026-10-12 (story 5.1): reconcileEconomySeasons joins the
 // surface — a server-only onSchedule with no callable handle, covered by its own boundary suite
-// economy-season.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "5dd28359dd9595020e5926809111b97e1948840ef177806b51de994cea9389ef";
+// economy-season.test.js. Re-pinned 2026-10-16 (exam vertical, epic 6): the exam callables join
+// the surface — startThemeTest/startFinalExam/acknowledgeQuestion/submitAnswer/finishSitting/
+// fetchSittingResult, the unauthenticated publicVerifyCertificate, the curator-only
+// fulfilCertificateSigning/appendExamCorrection, the read-only fetchMyCertificates and the
+// server-only onSchedule reconcileExamSittings, covered by the exam-* suites.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "b6284347d18d6c8da51174e268e7128467d9fa6e25adf22bcecec3c1c3dc288d";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
