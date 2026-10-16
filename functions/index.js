@@ -630,11 +630,12 @@ exports.publicVerifyCertificate = onCall(CALLABLE_OPTIONS, async (request) => {
   });
   if (!verdict.found) {
     // Нет снимка: либо выпуск ещё подписывается (явное ожидание), либо выпуска не существует.
+    // Форма одна у всех ветвей: found, status, issuanceId, snapshot (null без снимка).
     const pending = await db.doc(`exam_certificates/${issuanceId}`).get();
     if (pending.exists) {
-      return {found: true, status: VERIFY_STATUS.PENDING, issuanceId};
+      return {found: true, status: VERIFY_STATUS.PENDING, issuanceId, snapshot: null};
     }
-    return {found: false, status: VERIFY_STATUS.NOT_FOUND, issuanceId};
+    return {found: false, status: VERIFY_STATUS.NOT_FOUND, issuanceId, snapshot: null};
   }
   return {found: true, status: verdict.status, issuanceId, snapshot: verdict.snapshot};
 });
@@ -680,9 +681,10 @@ exports.fetchMyCertificates = onCall(CALLABLE_OPTIONS, async (request) => {
 });
 
 /**
- * Дописать авторизованное исключение коррекции (C2): кураторская операция. Пересчёт и
- * материализация проекции — отдельные шаги того же модуля; голова публикуется с ожидающим
- * поколением, и новый финал видит барьер до списания.
+ * Материализация коррекции (C2) — терминальный шаг за куратором: пересчёт из исходных слотов
+ * читается ВНУТРИ транзакции, поколение темы продвигается ровно один раз (устаревший пересчёт
+ * отклоняется проверкой поколения), и исправленная проекция в ТОЙ ЖЕ транзакции ложится в
+ * состояние допуска пользователя: passedAtGeneration = опубликованное поколение.
  */
 exports.appendExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
@@ -690,6 +692,15 @@ exports.appendExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
     throw new HttpsError("permission-denied", "Curator is required", {reason: "CURATOR_REQUIRED"});
   }
   const body = request.data || {};
+  // Валидация до записи: неизвестный режим публикует голову без барьера поколения, пустой
+  // владелец ломает идентичность состояния допуска.
+  if (!["ThemeTest", "FinalExam"].includes(body.mode)) {
+    throw new HttpsError("invalid-argument", "mode must be ThemeTest or FinalExam",
+      {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.ownerUid !== "string" || !body.ownerUid.trim()) {
+    throw new HttpsError("invalid-argument", "ownerUid is required", {reason: "INVALID_ARGUMENT"});
+  }
   try {
     return await examCorrections.appendExclusion({
       record: {
@@ -713,6 +724,42 @@ exports.appendExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
         ["CORRECTION_REUSE", "HEAD_CONFLICT"].includes(error.code) ? "already-exists" :
         error.code === "NOT_AUTHORIZED" ? "permission-denied" : "failed-precondition";
       throw new HttpsError(code, "Exam correction could not be applied", {reason: error.code});
+    }
+    throw error;
+  }
+});
+
+/**
+ * Терминальный шаг коррекции: довести опубликованную голову до проекции. Тот же кураторский
+ * затвор, что у дописывания исключения. Устаревший пересчёт (поколение ушло вперёд) отклоняется
+ * проверкой поколения и не трогает ни состояние, ни барьер.
+ */
+exports.materializeExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  if (!(await isCuratorOutsideTransaction(uid))) {
+    throw new HttpsError("permission-denied", "Curator is required", {reason: "CURATOR_REQUIRED"});
+  }
+  const body = request.data || {};
+  if (!["ThemeTest", "FinalExam"].includes(body.mode)) {
+    throw new HttpsError("invalid-argument", "mode must be ThemeTest or FinalExam",
+      {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.ownerUid !== "string" || !body.ownerUid.trim()) {
+    throw new HttpsError("invalid-argument", "ownerUid is required", {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.assessmentId !== "string" || !body.assessmentId.trim()) {
+    throw new HttpsError("invalid-argument", "assessmentId is required", {reason: "INVALID_ARGUMENT"});
+  }
+  try {
+    return await examCorrections.materialize({
+      uid: body.ownerUid,
+      mode: body.mode,
+      assessmentId: body.assessmentId,
+    });
+  } catch (error) {
+    if (error.name === "Error" && /^[A-Z][A-Z_]{2,63}$/.test(error.code || "")) {
+      throw new HttpsError("failed-precondition", "Exam correction could not be materialized",
+        {reason: error.code});
     }
     throw error;
   }

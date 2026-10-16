@@ -21,6 +21,7 @@ const DIGITS_60 = [...new Array(12).fill(9), ...new Array(8).fill(1)];
 function sittingWithDigits(digits, {mode = "ThemeTest", passMark} = {}) {
   return {
     sittingId: "s1",
+    uid: "player",
     mode,
     assessmentId: mode === "ThemeTest" ? "theme" : "course",
     state: "CLOSED",
@@ -159,12 +160,17 @@ test("expectedHeadVersion: CAS conflict when the head moved", async () => {
   assert.equal(ok.applied, true);
 });
 
-test("materialize reads inputs in-transaction and clears the pending generation once", async () => {
+test("materialize applies the corrected admission/best projection in the same transaction", async () => {
   const sitting = sittingWithDigits(DIGITS_60);
+  const {assessmentStateId} = require("./exam-coverage");
   const {fake, corrections} = correctionsWorld({
     initialRows: {
       "exam_sittings/s1": sitting,
       "exam_theme_generation/theme": {generation: 3, pendingCorrection: true},
+      [`exam_assessment_state/${assessmentStateId("player", "ThemeTest", "theme")}`]: {
+        uid: "player", mode: "ThemeTest", assessmentId: "theme", passed: true,
+        bestPercent: 60, passedAtGeneration: 3, maxAccountedPercent: 60,
+      },
     },
   });
   await corrections.appendExclusion({record: record()});
@@ -178,11 +184,47 @@ test("materialize reads inputs in-transaction and clears the pending generation 
   const generation = fake.rows.get("exam_theme_generation/theme");
   assert.equal(generation.pendingCorrection, false);
   assert.equal(generation.generation, 4);
+  // Согласованная проекция допуска: пересборка rоняет проход и снимает метку поколения.
+  const state = fake.rows.get(`exam_assessment_state/${assessmentStateId("player", "ThemeTest", "theme")}`);
+  assert.equal(state.passed, false, "коррекция может снять проход");
+  assert.equal(state.bestPercent, 57);
+  assert.equal(state.passedAtGeneration, null, "устаревшая метка снята, не оставлена ожиданием");
+  assert.equal(state.maxAccountedPercent, 60, "деньги и учтённый максимум не тронуты");
   // Повторная материализация без новой коррекции — устаревшая: публикаций не бывает дважды.
   const stale = await corrections.materialize({uid: "player", mode: "ThemeTest",
     assessmentId: "theme"});
   assert.deepEqual({published: stale.published, reason: stale.reason},
     {published: false, reason: "STALE_GENERATION"});
+});
+
+test("another independently valid pass survives the recompute with the new stamp", async () => {
+  const sitting = sittingWithDigits(DIGITS_60);
+  // Второй закрытый сидинг той же темы с самостоятельным проходом 80% (16 из 20 верных).
+  const other = sittingWithDigits([...new Array(16).fill(9), ...new Array(4).fill(1)], {});
+  other.sittingId = "s2";
+  other.uid = "player";
+  // Терминальный писатель всегда хранит проекцию — usable latest result второго сидинга.
+  other.terminal = {resultVersion: 1, projection: {percent: 80, passed: true}};
+  const {assessmentStateId} = require("./exam-coverage");
+  const {fake, corrections} = correctionsWorld({
+    initialRows: {
+      "exam_sittings/s1": sitting,
+      "exam_sittings/s2": other,
+      "exam_theme_generation/theme": {generation: 3, pendingCorrection: true},
+      [`exam_assessment_state/${assessmentStateId("player", "ThemeTest", "theme")}`]: {
+        uid: "player", mode: "ThemeTest", assessmentId: "theme", passed: true,
+        bestPercent: 80, passedAtGeneration: 3, maxAccountedPercent: 80,
+      },
+    },
+  });
+  await corrections.appendExclusion({record: record()});
+  const published = await corrections.materialize({uid: "player", mode: "ThemeTest",
+    assessmentId: "theme"});
+  assert.equal(published.published, true);
+  const state = fake.rows.get(`exam_assessment_state/${assessmentStateId("player", "ThemeTest", "theme")}`);
+  assert.equal(state.passed, true, "другой валидный проход остаётся достаточным");
+  assert.equal(state.bestPercent, 80);
+  assert.equal(state.passedAtGeneration, 4, "проход перемаркирован опубликованным поколением");
 });
 
 test("a new terminal theme pass racing a correction serializes on the generation", async () => {

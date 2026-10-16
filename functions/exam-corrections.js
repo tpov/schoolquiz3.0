@@ -2,6 +2,8 @@
 
 const {createHash, randomBytes} = require("node:crypto");
 const {correctedPercent, themeStarsTenths, passedAgainst, safeAdvice} = require("./exam-scoring");
+const {SITTINGS_COLLECTION, SITTING_STATE, ASSESSMENT_STATE_COLLECTION} = require("./exam-sitting");
+const {assessmentStateId} = require("./exam-coverage");
 
 /**
  * Коррекции C2 — подотчётный пересчёт подтверждённой ошибки содержимого.
@@ -270,16 +272,25 @@ function createExamCorrections({db, nowMs = () => Date.now(), authorizeExclusion
     });
   }
 
+  /** Верх чтения терминальных тем-результатов пользователя при пересборке лучшего: выше — яд. */
+  const MAX_THEME_SITTING_RESULTS = 50;
+
   /**
-   * Материализация головы: пересчёт из исходных слотов и публикация исправленной проекции.
+   * Материализация головы: пересчёт из исходных слотов, публикация исправленной проекции и
+   * СОГЛАСОВАННАЯ проекция допуска — всё в одной транзакции.
    *
    * Входы читаются ВНУТРИ транзакции — голова, поколение и само свидетельство сидинга: гонка с
    * новым терминальным проходом разрешается сериализацией на документе поколения (терминальный
    * писатель его тоже пишет), а не доверием к устаревшей копии сидинга у вызвавшего.
    *
-   * Возвращает {published: true, projection, generation} либо
-   * {published: false, reason: "STALE_GENERATION"|"NO_HEAD"}: устаревший пересчёт не публикуется
-   * никогда — повтор считывает свежие входы заново.
+   * Для темы состояние допуска пользователя пересобирается здесь же: usable latest results по
+   * закрытым сидингам (у исправленного сидинга — пересчитанный исход), лучший процент и проход
+   * поверх них, и `passedAtGeneration` = опубликованное поколение, когда проход есть. Ничья
+   * история денег эти записи не задевают: чеки, суммы и учтённый максимум не переписываются.
+   *
+   * Возвращает {published: true, projection, generation, state?} либо
+   * {published: false, reason: "STALE_GENERATION"|"NO_HEAD"|"NO_SITTING"}: устаревший пересчёт
+   * не публикуется никогда — повтор считывает свежие входы заново.
    */
   async function materialize({uid, mode, assessmentId}) {
     const headRef = db.doc(`${CORRECTION_HEADS_COLLECTION}/${headId(uid, mode, assessmentId)}`);
@@ -303,16 +314,56 @@ function createExamCorrections({db, nowMs = () => Date.now(), authorizeExclusion
       if (generationSnapshot.pendingCorrection !== true) {
         return {published: false, reason: "STALE_GENERATION"};
       }
-      // Барьер поколения: публикация продвигает поколение и снимает ожидание. Гонка с новым
-      // терминальным проходом сериализуется на этом же документе: чей коммит позже, тот и
-      // текущий, и ни один пересчёт не публикуется дважды.
+      const publishedGeneration = generationSnapshot.generation + 1;
+      // Согласованная проекция допуска: usable latest results по закрытым сидингам темы;
+      // исправленный сидинг входит пересчитанным исходом.
+      const resultsSnapshot = await tx.get(db.collection(SITTINGS_COLLECTION)
+        .where("uid", "==", uid)
+        .where("mode", "==", "ThemeTest")
+        .where("assessmentId", "==", assessmentId)
+        .where("state", "==", SITTING_STATE.CLOSED)
+        .limit(MAX_THEME_SITTING_RESULTS));
+      if (resultsSnapshot.docs.length >= MAX_THEME_SITTING_RESULTS) {
+        fail("CORRECTION_EVIDENCE_OVERFLOW",
+          `theme ${assessmentId} has more closed sittings than one bounded recompute reads`);
+      }
+      let bestPercent = 0;
+      let anyPassed = false;
+      for (const doc of resultsSnapshot.docs) {
+        const row = doc.data() || {};
+        const isCorrected = doc.id === sitting.sittingId;
+        const usable = isCorrected ? outcome :
+          (row.terminal && row.terminal.projection ?
+            {state: CORRECTION_STATE.SCORED, percent: row.terminal.projection.percent,
+              passed: row.terminal.projection.passed === true} :
+            {state: CORRECTION_STATE.CORRECTION_PENDING_EVIDENCE});
+        if (usable.state !== CORRECTION_STATE.SCORED) continue;
+        bestPercent = Math.max(bestPercent, usable.percent);
+        anyPassed = anyPassed || usable.passed === true;
+      }
+      const stateRef = db.doc(`${ASSESSMENT_STATE_COLLECTION}/${assessmentStateId(uid, mode, assessmentId)}`);
+      // Лучший процент пересобран по usable-исходам всех закрытых сидингов темы: исход,
+      // который коррекция сделала непригодным, в максимум больше не входит.
+      tx.set(stateRef, {
+        uid, mode, assessmentId,
+        bestPercent,
+        passed: anyPassed,
+        // Проход маркируется опубликованным поколением; без прохода метка снимается —
+        // устаревшая метка не должна выглядеть как ожидающая коррекция.
+        passedAtGeneration: anyPassed ? publishedGeneration : null,
+        correctedAtGeneration: publishedGeneration,
+        updatedAtMs: at,
+      }, {merge: true});
+      // Барьер поколения: публикация продвигает поколение и снимает ожидание ровно один раз.
+      // Гонка с новым терминальным проходом сериализуется на этом же документе.
       tx.set(generationRef, {
-        generation: generationSnapshot.generation + 1,
+        generation: publishedGeneration,
         pendingCorrection: false,
         updatedAtMs: at,
       });
-      return {published: true, outcome, projection,
-        generation: generationSnapshot.generation + 1};
+      return {published: true, outcome, projection, generation: publishedGeneration,
+        state: {bestPercent: bestPercent, passed: anyPassed,
+          passedAtGeneration: anyPassed ? publishedGeneration : null}};
     });
   }
 
