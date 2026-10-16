@@ -88,8 +88,10 @@ const ENDPOINTS = Object.freeze([
 // the surface — startThemeTest/startFinalExam/acknowledgeQuestion/submitAnswer/finishSitting/
 // fetchSittingResult, the unauthenticated publicVerifyCertificate, the curator-only
 // fulfilCertificateSigning/appendExamCorrection, the read-only fetchMyCertificates and the
-// server-only onSchedule reconcileExamSittings, covered by the exam-* suites.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "b6284347d18d6c8da51174e268e7128467d9fa6e25adf22bcecec3c1c3dc288d";
+// server-only onSchedule reconcileExamSittings, covered by the exam-* suites. Re-pinned
+// 2026-10-16 (review pass): materializeExamCorrection joins the surface — the curator-gated
+// C2 materialization callable covered by exam-corrections tests.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "5caaa14cee3f6055a71bb76d3327ac09060f89aab2de6dd4881ba58aa6a7f334";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
