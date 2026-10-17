@@ -167,7 +167,7 @@ after = [
 waits = [
   "rig runs allowed per owner decision (night-2026-10-10); FLAG_SECURE visual strings go to the owner list like epic-3",
 ]
-status = "ready"
+status = "done" # 2026-10-17: клиентский чемпионат жив — agreement (propose/confirm/READY с restore 5.7, границы честно, confirm retire), match play на извлечённой машине сессий (MATCH), bracket (immutable), results (placements + escrow). Shared-фикс: placement slot — имя-строка (FINISHED-чтение падало бы fail-closed) + parser contract tests. Review pass 1: 39 находок — high (FAILED_PRECONDITION глобальный ремап) и 11 medium закрыты фикс-раундом; followup=true (риг-визуал владельца). Спека spec-5-11-client-championship-ux.md; коммит см. git
 
 [[story]]
 id = "5.12"
