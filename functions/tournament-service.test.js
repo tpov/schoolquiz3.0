@@ -10,8 +10,9 @@ const {applyTournamentOperation: apply, readPlanTournamentOperation, writeTourna
   readTournamentSession, TOURNAMENT_PATHS: P, qualificationSessionId, matchSessionId} = require("./tournament-service");
 const {LEDGER_PATH, CURRENCY} = require("./currency-ledger");
 const {PREMIUM_LOT_BATCH} = require("./premium-economy");
-const {selectQualificationCalculation} = require("./tournament-qualification-freeze");
+const {selectQualificationCalculation, freezeQualification} = require("./tournament-qualification-freeze");
 const {VERSIONS} = require("./tournament-qualification-compact");
+const {applyTournamentSessionOperation, advanceTournamentSession, VERIFIED_RUNS} = require("./tournament-session");
 
 const T = 1_800_000_000_000;
 const DAY = 86_400_000;
@@ -628,6 +629,239 @@ test("old or incompatible ranking cannot close selected-version event or mutate 
     const f = await versionedFixture(); mutate(f.state.rankingOverride); const before = structuredClone([...f.db.store]);
     await assert.rejects(f.close(), {code: "INVALID_RANKING"}); assert.deepEqual([...f.db.store], before);
   }
+});
+
+// Story 5.5: the plan §4 size matrix proven through the service seam. The anchors above bracket
+// these: "all16 qualifiers can reach terminal bracket" and the "<2 qualifiers cancels" case are
+// symmetric with 15 and 17; the large cohort reuses the calculation layer's own snapshot builder
+// over 502 settled runs.
+test("15 qualifiers seed the 16-slot bracket with one bye and finish with full placements", async () => {
+  const people = Array.from({length: 15}, (_, i) => `player-${String(i).padStart(2, "0")}`);
+  const f = fixture(people); await f.create(); await f.close();
+  const bracket = event(f).bracket;
+  assert.equal(bracket.status, "ACTIVE"); assert.equal(bracket.size, 16); assert.equal(bracket.entrants.length, 15);
+  assert.deepEqual(bracket.rounds.map((round) => round.matches.length), [8, 4, 2, 1]);
+  assert.equal(bracket.rounds.flatMap((round) => round.matches).length, 15);
+  // Bye structure: seed 16 is absent, so the 1v16 node resolves as a bye for seed 1 at close.
+  assert.deepEqual([bracket.rounds[0].matches[0].leftSeed, bracket.rounds[0].matches[0].rightSeed], [1, 16]);
+  const bye = event(f).progress.resolved.find((row) => row.status === "BYE");
+  assert.equal(bye.winnerUid, "player-00");
+  assert.equal(event(f).progress.pending.some((row) => row.matchId === bracket.rounds[0].matches[0].matchId), false);
+  // Every real match is played; the better seed always wins.
+  while (event(f).progress.pending.length) {
+    const pending = event(f).progress.pending[0];
+    const match = bracket.rounds.flatMap((round) => round.matches).find((item) => item.matchId === pending.matchId);
+    await play(f, match, pending.entrants.reduce((a, b) => a.seed <= b.seed ? a : b).uid);
+  }
+  assert.equal(event(f).status, "FINISHED");
+  // Forms: 3 qualification + 15 bracket shared forms (the bye node still stages its form
+  // structurally) — but no sessions and no verified runs exist for the bye match.
+  assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${E}/forms/`)).length, 18);
+  const byeMatchId = bracket.rounds[0].matches[0].matchId;
+  assert.equal([...f.db.store.keys()].some((path) => path.includes(byeMatchId) && path.startsWith(`${P.sessions}/`)), false);
+  // Exactly four placements exist; every eliminated player holds zero boxes.
+  assert.equal(event(f).progress.placements.length, 4);
+  assert.deepEqual(event(f).progress.placements.map((row) => [row.uid, row.rank, row.slot, row.technicalForfeit]),
+    [["player-00", 1, "champion", false], ["player-01", 2, "runner-up", false],
+     ["player-03", 3, "third-upper", false], ["player-02", 3, "third-lower", false]]);
+  assert.deepEqual(["player-00", "player-01", "player-03", "player-02"].map((uid) => boxes(f, uid)), [5, 3, 1, 1]);
+  assert.equal(people.filter((uid) => !["player-00", "player-01", "player-02", "player-03"].includes(uid))
+    .every((uid) => boxes(f, uid) === 0), true);
+  assert.equal(boxes(f, OWNER), 90);
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 0, paidBoxes: 10, returnedBoxes: 2});
+  // Reserve + four v1 row-key prize payouts + unused-fund return.
+  assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${P.funding}/`)).length, 6);
+});
+
+test("a 17-row ranking at the freeze gate is refused typed with no partial effects", async () => {
+  const people = Array.from({length: 17}, (_, i) => `player-${String(i).padStart(2, "0")}`);
+  const f = fixture(people); await f.create();
+  const complete = await f.dependencies.loadQualificationRanking({eventId: EVENT, forms: event(f).qualificationForms, endsAtMs: T + 7 * DAY});
+  // The real builder truncates to 16; the >16 guard exists for an oversized publication.
+  assert.equal(complete.ranking.length, 16); assert.equal(complete.totalRanked, 17);
+  f.state.rankingOverride = {...complete, totalRanked: 17, ranking: [...complete.ranking, {uid: "player-16", place: 17}]};
+  const before = structuredClone([...f.db.store]);
+  await assert.rejects(f.close(), {code: "INVALID_RANKING"});
+  assert.deepEqual([...f.db.store], before);
+  assert.equal(event(f).status, "QUALIFICATION"); assert.equal(event(f).bracket, undefined);
+  assert.equal(boxes(f, OWNER), 88);
+  // Recovery: a corrected (≤16) ranking closes the same event to a normal bracket.
+  f.state.rankingOverride = complete;
+  const closed = await f.close();
+  assert.equal(closed.status, "BRACKET");
+  assert.equal(event(f).bracket.entrants.length, 16);
+});
+
+test("mid-CLOSE commit failure leaves no partial effects; the same operation id retries to a consistent bracket", async () => {
+  const f = fixture(); await f.create();
+  const payload = f.payload("CLOSE_QUALIFICATION", OWNER);
+  const invoke = () => apply({db: f.db, uid: OWNER, payload, now: T + 7 * DAY, dependencies: f.dependencies, serverSeed: SEED});
+  const before = structuredClone([...f.db.store]);
+  f.db.failNextCommit();
+  await assert.rejects(invoke(), /atomic commit failure/);
+  assert.deepEqual([...f.db.store], before);
+  assert.equal(event(f).status, "QUALIFICATION");
+  assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${E}/forms/`)).length, 3);
+  const closed = await invoke();
+  assert.equal(closed.status, "BRACKET");
+  assert.equal(event(f).bracket.entrants.length, 2);
+  const after = structuredClone([...f.db.store]);
+  assert.deepEqual(await invoke(), closed);
+  assert.deepEqual([...f.db.store], after);
+});
+
+test("repeat CLOSE replays the exact receipt; a fresh id restates the event without a second bracket", async () => {
+  const f = fixture(); await f.create();
+  const payload = f.payload("CLOSE_QUALIFICATION", OWNER);
+  const invoke = () => apply({db: f.db, uid: OWNER, payload, now: T + 7 * DAY, dependencies: f.dependencies, serverSeed: SEED});
+  const closed = await invoke();
+  const after = structuredClone([...f.db.store]);
+  assert.deepEqual(await invoke(), closed);
+  assert.deepEqual([...f.db.store], after);
+  const restated = await f.close();
+  assert.equal(restated.status, "BRACKET");
+  const added = [...f.db.store].filter(([path]) => !after.some(([existing]) => existing === path));
+  assert.equal(added.length, 1); assert.ok(added[0][0].startsWith(`${P.operations}/`));
+  for (const [path, value] of after) assert.deepEqual(f.db.store.get(path), value, path);
+  assert.equal(event(f).bracket.rounds.flatMap((round) => round.matches).length, 1);
+});
+
+test("cutoff cohort pins D2: clamp holds, cutoff-cut attempt settles into the cohort, the cutoff itself refuses", async () => {
+  const f = fixture(); await f.create();
+  const cutoff = T + 7 * DAY;
+  // Bob starts early: his envelope ends at its own duration edge, never reaching the cutoff.
+  const early = await f.call("START_QUALIFICATION", "bob", T + 1000, {roundNumber: 1, attemptId: "attempt_b0000000000000001"});
+  const late = await f.call("START_QUALIFICATION", "alice", cutoff - 600_000, {roundNumber: 1, attemptId: "attempt_a0000000000000001"});
+  // D2 creation clamp: alice's envelope would cross the cutoff, so it is cut at exactly the cutoff.
+  assert.equal(late.session.endsAtMs, cutoff);
+  assert.ok(late.session.endsAtMs - late.session.startedAtMs < event(f).qualificationForms[0].maxDurationMs);
+  assert.equal(early.session.endsAtMs, T + 1_201_000); // start + full form duration, far from the cutoff
+  const answered = await applyTournamentSessionOperation({db: f.db, uid: "alice", now: cutoff - 599_000,
+    payload: {kind: "ANSWER", ownerUid: "alice", operationId: "answer_a0000000000000001", sessionId: late.session.sessionId,
+      formFingerprint: late.session.formFingerprint, questionIndex: 0,
+      questionId: event(f).qualificationForms[0].questions[0].questionId,
+      answerPayload: {type: "single-choice", selected: "a"}}});
+  assert.equal(answered.status, "ANSWER_ACCEPTED");
+  // Nothing at the cutoff moves: a start AT the cutoff is outside the window and stages nothing.
+  const before = structuredClone([...f.db.store]);
+  await assert.rejects(f.call("START_QUALIFICATION", "carol", cutoff, {roundNumber: 1, attemptId: "attempt_c0000000000000001"}),
+    (error) => { assert.equal(error.code, "FAILED_PRECONDITION"); assert.equal(error.message, "OUTSIDE_QUALIFICATION_WINDOW"); return true; });
+  assert.deepEqual([...f.db.store], before);
+  assert.equal(admissionRows(f).length, 2);
+  // The existing sweep settles each attempt at its own edge: bob at his envelope, alice cut at
+  // the cohort cutoff with her answered prefix intact.
+  const earlySwept = await advanceTournamentSession({db: f.db, sessionId: early.session.sessionId,
+    operationId: "envelope_sweep_b00000000001", now: T + 1_202_000});
+  assert.equal(earlySwept.status, "COMPLETED");
+  const earlyRun = f.db.store.get(`${VERIFIED_RUNS}/${early.session.sessionId}`);
+  assert.equal(earlyRun.completedAtMs, T + 1_201_000); assert.ok(earlyRun.completedAtMs < cutoff);
+  const swept = await advanceTournamentSession({db: f.db, sessionId: late.session.sessionId,
+    operationId: "cutoff_sweep_a00000000001", now: cutoff + 1000});
+  // A late answer arriving after the cutoff but before the sweep is refused (timeliness bound).
+  await assert.rejects(applyTournamentSessionOperation({db: f.db, uid: "alice", now: cutoff + 500,
+    payload: {kind: "ANSWER", ownerUid: "alice", operationId: "answer_alice_late_0000001", sessionId: late.session.sessionId,
+      formFingerprint: late.session.formFingerprint, questionIndex: 1,
+      questionId: event(f).qualificationForms[0].questions[1].questionId,
+      answerPayload: {type: "single-choice", selected: "b"}}}));
+  assert.equal(swept.status, "COMPLETED");
+  // One answered question of twenty: the exact score, not a threshold.
+  assert.equal(swept.result.percentScore, 5);
+  const zeroRun = f.db.store.get(`${VERIFIED_RUNS}/${early.session.sessionId}`);
+  assert.equal(zeroRun.percentScore, 0);
+  const run = f.db.store.get(`${VERIFIED_RUNS}/${late.session.sessionId}`);
+  assert.equal(run.status, "SETTLED"); assert.equal(run.codeAnswer, `9${"1".repeat(19)}`);
+  assert.equal(run.completedAtMs, cutoff); assert.equal(run.elapsedMs, cutoff - late.session.startedAtMs);
+  assert.equal(f.db.store.get(`${P.sessions}/${late.session.sessionId}/answers/00`).kind, "ANSWER");
+  const forced = f.db.store.get(`${P.sessions}/${late.session.sessionId}/answers/19`);
+  assert.equal(forced.kind, "FORCED_CUTOFF"); assert.equal(forced.closedAtMs, cutoff);
+  // Both settled attempts enter the cohort and seed the bracket through the same CLOSE.
+  f.state.rankingOverride = buildQualificationRankingSnapshot({eventId: EVENT, forms: event(f).qualificationForms,
+    endsAtMs: cutoff, snapshotId: "cutoff-cohort-pin-v1", verifiedRuns: [earlyRun, run], completeThroughMs: cutoff,
+    pendingSessionCount: 0});
+  const closed = await f.close();
+  assert.equal(closed.status, "BRACKET");
+  assert.equal(event(f).qualificationRanking.totalRanked, 2);
+  assert.equal(event(f).qualificationRanking.verifiedRunCount, 2);
+  assert.deepEqual(event(f).bracket.entrants.map((row) => [row.uid, row.seed]), [["alice", 1], ["bob", 2]]);
+});
+
+test("502-attempt cohort closes through the versioned seam; top16 seeded within recorded budgets", async () => {
+  const started = performance.now();
+  const people = Array.from({length: 502}, (_, i) => `player-${String(i).padStart(3, "0")}`);
+  const f = fixture(people);
+  // Budgets bound invocations, never population: per-transaction read and commit-write maxima.
+  const metrics = {transactions: 0, reads: 0, maxTransactionReads: 0};
+  const baseRun = f.db.runTransaction.bind(f.db);
+  f.db.runTransaction = async (body) => { metrics.transactions++;
+    return baseRun(async (transaction) => {
+      let count = 0;
+      try {
+        const out = await body({...transaction,
+          get: async (ref) => { count++; return transaction.get(ref); },
+          getAll: async (...refs) => { count += refs.length; return transaction.getAll(...refs); }});
+        metrics.maxTransactionReads = Math.max(metrics.maxTransactionReads, count); metrics.reads += count;
+        return out;
+      } catch (error) {
+        metrics.maxTransactionReads = Math.max(metrics.maxTransactionReads, count); metrics.reads += count;
+        throw error;
+      }
+    });
+  };
+  await f.create();
+  const selected = await selectQualificationCalculation({db: f.db, eventId: EVENT, now: T + 7 * DAY});
+  const c = selected.contract;
+  const form = event(f).qualificationForms[0];
+  const runs = people.map((uid, index) => ({eventId: EVENT, uid, status: "SETTLED",
+    sessionId: qualificationSessionId(`attempt_${uid}_0000000001`), formId: form.formId, formFingerprint: form.fingerprint,
+    verificationVersion: "server-assessment-v1", percentScore: 100 - (index % 101), elapsedMs: 1 + (index % 19_999),
+    startedAtMs: T, completedAtMs: T + 1 + (index % 19_999)}));
+  // The calculation layer's own published schema (schemaVersion 2 provenance, real freeze id),
+  // built by its own snapshot builder: the seam consumes exactly what select→scan→calculate
+  // publishes (that pipeline at [502,1] is proven in tournament-qualification-calculation.test.js).
+  const ranking = {...buildQualificationRankingSnapshot({eventId: EVENT, forms: event(f).qualificationForms,
+    endsAtMs: T + 7 * DAY, snapshotId: c.freezeId, verifiedRuns: runs, completeThroughMs: T + 7 * DAY, pendingSessionCount: 0}),
+    schemaVersion: 2, freezeFenceId: c.freezeId, calculationVersions: {...VERSIONS}, calculationContractDigest: c.contractDigest,
+    inputFingerprintVersion: "player-stream-chain-v1"};
+  f.state.rankingOverride = ranking;
+  const closed = await f.close();
+  const ms = Math.round(performance.now() - started);
+  assert.equal(closed.status, "BRACKET");
+  const provenance = event(f).qualificationRanking;
+  assert.equal(provenance.totalRanked, 502); assert.equal(provenance.verifiedRunCount, 502);
+  assert.deepEqual(provenance.calculationVersions, VERSIONS);
+  assert.equal(provenance.snapshotId, c.freezeId);
+  assert.equal(provenance.calculationContractDigest, c.contractDigest);
+  assert.equal(provenance.inputFingerprintVersion, "player-stream-chain-v1");
+  assert.equal(provenance.verifiedRunsFingerprint, ranking.verifiedRunsFingerprint);
+  const bracket = event(f).bracket;
+  assert.equal(bracket.size, 16); assert.equal(bracket.entrants.length, 16);
+  // Independent expectation: score desc, elapsed asc — not the injected ranking's own order.
+  const expectedTop16 = [...runs].sort((a, b) => b.percentScore - a.percentScore || a.elapsedMs - b.elapsedMs)
+    .slice(0, 16).map((row) => row.uid);
+  assert.deepEqual(bracket.entrants.map((row) => row.uid), expectedTop16);
+  assert.deepEqual(bracket.entrants.map((row) => row.seed), Array.from({length: 16}, (_, i) => i + 1));
+  assert.deepEqual(bracket.rounds.map((round) => round.matches.length), [8, 4, 2, 1]);
+  assert.deepEqual(event(f).progress.pending[0].entrants.map((row) => row.seed), [1, 16]);
+  const commitWrites = f.db.commits.map((commit) => commit.length);
+  console.log(JSON.stringify({case: "qualification-loop-seam", players: 502, attempts: 502, ms,
+    transactions: metrics.transactions, reads: metrics.reads, maxTransactionReads: metrics.maxTransactionReads,
+    maxCommitWrites: Math.max(...commitWrites), commitCount: commitWrites.length,
+    rssBytes: process.memoryUsage().rss, rankingFingerprint: digest(ranking)}));
+  assert.ok(metrics.maxTransactionReads <= 40);
+  assert.ok(Math.max(...commitWrites) <= 80); // MAX_STAGED_WRITES
+  assert.ok(ms < 30_000, `502 seam wall-clock budget, got ${ms}ms`);
+});
+
+test("legacy publication stays fenced after selection while the versioned CLOSE seam completes", async () => {
+  const f = await versionedFixture();
+  const before = structuredClone([...f.db.store]);
+  await assert.rejects(freezeQualification({db: f.db, eventId: EVENT, now: T + 7 * DAY, pageSize: 50, maxPages: 10}),
+    (error) => { assert.equal(error.code, "UNAVAILABLE");
+      assert.equal(error.message, "Legacy publisher is fenced from the selected calculation"); return true; });
+  assert.deepEqual([...f.db.store], before);
+  const closed = await f.close();
+  assert.equal(closed.status, "BRACKET");
+  assert.equal(event(f).qualificationRanking.calculationContractDigest, f.state.rankingOverride.calculationContractDigest);
 });
 
 (async () => {
