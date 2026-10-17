@@ -153,7 +153,7 @@ after = [
 waits = [
   "rig runs allowed per owner decision (night-2026-10-10); FLAG_SECURE visual strings go to the owner list like epic-3",
 ]
-status = "ready"
+status = "done" # 2026-10-17: клиентские турнирные journeys живы — organizer create (frozen-terms consent, identity-safe retry, escrow), discovery/browse, допуск (download/link, честные отказы), квалификация (per-round старт, redacted вопрос-плей через outbox, окно по expiresAtMs, READY_ACK виден, честные timeout/settled), ranking-проекция на readEvent; Events-таб монтирует реальные компоненты (wiring observable). Fix round: гонки идентичности, async scoping, AD-31 UI wiring, ordering toggle. 30/30 presentation, app-shell 0 fail, Node 111/111. followup=true: рендер-поверхность ждёт риг-визуала владельца (FLAG_SECURE-строки). Спека spec-5-10-client-tournament-ux.md; коммит 6b72499a
 
 [[story]]
 id = "5.11"
