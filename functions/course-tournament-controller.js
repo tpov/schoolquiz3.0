@@ -195,31 +195,57 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
     }
     return {event: view, serverNowMs: now()};
   }
+  /** UX-O3/AD-17 permitted meeting projection (story 5.7): the paged offer page is extended with
+   * the paged confirmation page, each participant's READY signals, the participant identities and
+   * the stage/C boundaries a client needs to render honest refusal states. Everything is server
+   * facts keyed by their author (identity + slot time + server receipt time only) — never private
+   * forms, keys or fingerprints; the read is authorized for the caller and both participants get
+   * byte-identical facts, so re-entry/account switch restores from the server and never adopts a
+   * foreign account's drafts. A stale page cannot confirm: the operation receiver re-validates
+   * every CONFIRM against current facts regardless of what an older page showed.
+   */
   async function readMeeting(uid, payload) {
-    auth(uid); only(payload, ["eventId", "matchId", "afterOfferId", "pageSize"]); identifier(payload.eventId); matchId(payload.matchId);
+    auth(uid); only(payload, ["eventId", "matchId", "afterOfferId", "afterConfirmationId", "pageSize"]); identifier(payload.eventId); matchId(payload.matchId);
     const pageSize = payload.pageSize ?? 25; exact(pageSize, 1); if (pageSize > 100) fail("INVALID_ARGUMENT");
     const after = payload.afterOfferId ?? null;
-    if (after !== null && !/^[a-f0-9]{64}$/.test(after)) fail("INVALID_ARGUMENT");
+    const afterConfirmation = payload.afterConfirmationId ?? null;
+    for (const cursor of [after, afterConfirmation]) if (cursor !== null && !/^[a-f0-9]{64}$/.test(cursor)) fail("INVALID_ARGUMENT");
     const at = now();
     return db.runTransaction(async transaction => {
       const event = eventRecord(data(await transaction.get(db.doc(path(payload.eventId)))), payload.eventId);
       const state = bracketState(event); const match = state.matches.find((row) => row.matchId === payload.matchId);
       const pending = state.progress.pending.find((row) => row.matchId === payload.matchId);
       if (!match || !pending) fail("FAILED_PRECONDITION", "Read the terminal match via event view");
-      if (uid !== event.organizerUid && !pending.entrants.some((row) => row.uid === uid)) fail("PERMISSION_DENIED");
+      const entrants = pending.entrants.map((row) => pick(row, ["uid", "seed"]));
+      if (uid !== event.organizerUid && !entrants.some((row) => row.uid === uid)) fail("PERMISSION_DENIED");
       const ref = `${path(event.eventId)}/meetings/${digest(match.matchId)}`;
       const meeting = data(await transaction.get(db.doc(ref)));
-      let query = db.collection(`${ref}/offers`).orderBy("__name__");
-      if (after !== null) query = query.startAfter(after);
-      const docs = (await transaction.get(query.limit(pageSize + 1))).docs;
-      const rows = docs.slice(0, pageSize).map((doc) => {
+      const page = (collection, cursor) => {
+        let query = db.collection(`${ref}/${collection}`).orderBy("__name__");
+        if (cursor !== null) query = query.startAfter(cursor);
+        return transaction.get(query.limit(pageSize + 1));
+      };
+      const [offerPage, confirmationPage] = await Promise.all([page("offers", after), page("confirmations", afterConfirmation)]);
+      const slotRows = (docs, idField, kind) => docs.slice(0, pageSize).map((doc) => {
         const row = doc.data();
-        if (!pending.entrants.some((p) => p.uid === row.uid) || doc.id !== digest([row.slotStartsAtMs, row.uid])) fail("UNAVAILABLE", "Stored offer binding requires repair");
-        return {offerId: doc.id, ...pick(row, ["uid", "slotStartsAtMs", "acceptedAtMs"])};
+        if (!entrants.some((p) => p.uid === row.uid) || doc.id !== digest([row.slotStartsAtMs, row.uid])) fail("UNAVAILABLE", `Stored ${kind} binding requires repair`);
+        return {[idField]: doc.id, ...pick(row, ["uid", "slotStartsAtMs", "acceptedAtMs"])};
+      });
+      const offers = slotRows(offerPage.docs, "offerId", "offer");
+      const confirmations = slotRows(confirmationPage.docs, "confirmationId", "confirmation");
+      const ready = (meeting?.readySignals || []).map((row) => {
+        if (!entrants.some((p) => p.uid === row.uid) || !Number.isSafeInteger(row.acceptedAtMs)) {
+          fail("UNAVAILABLE", "Stored ready signal requires repair");
+        }
+        return pick(row, ["uid", "acceptedAtMs"]);
       });
       return {eventId: event.eventId, meeting: safeMeeting(evaluate(match, pending, meeting, Math.max(at, event.lastMutationAtMs))),
-        schedulingDeadlineMs: schedulingDeadline(match), offers: rows, hasMore: docs.length > pageSize,
-        nextOfferId: docs.length > pageSize ? rows.at(-1).offerId : null, serverNowMs: at};
+        schedulingDeadlineMs: schedulingDeadline(match), stageStartsAtMs: exact(match.stageStartsAtMs), stageEndsAtMs: exact(match.stageEndsAtMs),
+        participants: entrants, offers, hasMore: offerPage.docs.length > pageSize,
+        nextOfferId: offerPage.docs.length > pageSize ? offers.at(-1).offerId : null,
+        confirmations, hasMoreConfirmations: confirmationPage.docs.length > pageSize,
+        nextConfirmationId: confirmationPage.docs.length > pageSize ? confirmations.at(-1).confirmationId : null,
+        ready, serverNowMs: at};
     });
   }
 

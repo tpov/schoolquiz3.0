@@ -247,6 +247,164 @@ test("readMeeting exposes paged later offers, not only first proposal, with part
   assert.deepEqual([...first.offers, ...second.offers].map(row => row.slotStartsAtMs).sort(), slots); assertSafe(first); assertSafe(second);
   await error(() => f.controller.readMeeting("viewer", request), "PERMISSION_DENIED");
 });
+
+// Story 5.7 (UX-O3): the meeting read is the restore surface — per-participant proposals,
+// confirmations and READY states, the agreed slot and the C/slot/READY boundaries, identical
+// server facts for every authorized account.
+test("readMeeting restores confirmations, ready states, participants and stage boundaries identically for both accounts", async () => {
+  const f = fixture(); await f.qualify(); const m = f.match(); const pair = f.pending().entrants.map(row => row.uid);
+  f.state.now = m.stageStartsAtMs + 1000; const slot = f.state.now + 4000;
+  await f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: slot});
+  await f.operate("PROPOSE", pair[1], {matchId: m.matchId, slotStartsAtMs: slot});
+  await f.operate("CONFIRM", pair[0], {matchId: m.matchId, slotStartsAtMs: slot});
+  await f.operate("CONFIRM", pair[1], {matchId: m.matchId, slotStartsAtMs: slot});
+  const read = (uid) => f.controller.readMeeting(uid, {eventId: EVENT, matchId: m.matchId});
+  const asA = await read(pair[0]); const asB = await read(pair[1]); const asAagain = await read(pair[0]);
+  assert.deepEqual(asB, asA); // same server facts for both participants
+  assert.deepEqual(asAagain, asA); // a refetched read returns identical facts (A→B→A, no adoption)
+  assert.equal(asA.meeting.status, "WAITING_FOR_WINDOW");
+  assert.equal(asA.meeting.slotStartsAtMs, slot); assert.equal(asA.meeting.windowEndMs, slot + READY_WINDOW_MS);
+  assert.equal(asA.schedulingDeadlineMs, m.stageEndsAtMs - READY_WINDOW_MS - m.sharedForm.maxDurationMs);
+  assert.equal(asA.stageStartsAtMs, m.stageStartsAtMs); assert.equal(asA.stageEndsAtMs, m.stageEndsAtMs);
+  assert.deepEqual(asA.participants, f.pending().entrants.map(row => ({uid: row.uid, seed: row.seed})));
+  assert.deepEqual(asA.offers.map(row => row.slotStartsAtMs).sort(), [slot, slot]);
+  assert.deepEqual(asA.confirmations.map(row => [row.uid, row.slotStartsAtMs]).sort(),
+    [[pair[0], slot], [pair[1], slot]]); // each confirmation attributed to its author
+  assert.deepEqual(asA.ready, []);
+  assertSafe(asA); assertSafe(asB);
+  // The confirmations page pages with its own cursor, mirroring the offers discipline.
+  const single = await f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId, pageSize: 1});
+  assert.equal(single.hasMoreConfirmations, true); assert.equal(single.confirmations.length, 1);
+  const rest = await f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId, pageSize: 1,
+    afterConfirmationId: single.nextConfirmationId});
+  assert.equal(rest.hasMoreConfirmations, false);
+  assert.deepEqual([...single.confirmations, ...rest.confirmations].map(row => row.uid).sort(), [...pair].sort());
+  await error(() => f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId, afterConfirmationId: "zzz"}), "INVALID_ARGUMENT");
+});
+
+test("a radio selection cancels neither proposals nor confirmations and cannot imply a confirmation", async () => {
+  const f = fixture(); await f.qualify(); const m = f.match(); const pair = f.pending().entrants.map(row => row.uid);
+  f.state.now = m.stageStartsAtMs + 1000; const x = f.state.now + 4000; const y = x + 5000; const z = y + 5000;
+  await f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: x});
+  await f.operate("CONFIRM", pair[1], {matchId: m.matchId, slotStartsAtMs: x}); // partner's X confirmation stands
+  await f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: y}); // proposer's radio moves to Y only
+  const view = await f.controller.readMeeting(pair[1], {eventId: EVENT, matchId: m.matchId});
+  assert.deepEqual(view.offers.map(row => [row.uid, row.slotStartsAtMs]).sort(), [[pair[0], x], [pair[0], y]]);
+  assert.deepEqual(view.confirmations.map(row => [row.uid, row.slotStartsAtMs]), [[pair[1], x]]);
+  assert.deepEqual(view.ready, []); assert.equal(view.meeting.slotStartsAtMs, undefined);
+  assert.equal(view.meeting.status, "WAITING_FOR_AGREEMENT");
+  // Confirming a slot without an offer pair is a typed refusal staging nothing.
+  const before = clone([...f.db.store]);
+  await assert.rejects(() => f.operate("CONFIRM", pair[0], {matchId: m.matchId, slotStartsAtMs: z}),
+    e => { assert.equal(e.code, "FAILED_PRECONDITION"); assert.equal(e.message, "confirmation needs an existing timely proposal"); return true; });
+  assert.deepEqual([...f.db.store], before);
+  const after = await f.controller.readMeeting(pair[1], {eventId: EVENT, matchId: m.matchId});
+  assert.deepEqual(after.confirmations, view.confirmations); // no radio-implied cancellation or confirmation
+  assertSafe(view); assertSafe(after);
+});
+
+test("agreed slot is immutable against moved confirmations and a stale page, and re-confirming it stays idempotent", async () => {
+  const f = fixture(); await f.qualify(); const m = f.match(); const pair = f.pending().entrants.map(row => row.uid);
+  f.state.now = m.stageStartsAtMs + 1000; const x = f.state.now + 4000; const y = x + 5000;
+  await f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: x});
+  await f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: y});
+  const stale = await f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId}); // pre-agreement page
+  assert.equal(stale.meeting.slotStartsAtMs, undefined);
+  await f.operate("CONFIRM", pair[0], {matchId: m.matchId, slotStartsAtMs: x});
+  await f.operate("CONFIRM", pair[1], {matchId: m.matchId, slotStartsAtMs: x});
+  // Facts moved since the stale page: confirming its other slot is refused typed; so is a new proposal.
+  await error(() => f.operate("CONFIRM", pair[1], {matchId: m.matchId, slotStartsAtMs: y}), "FAILED_PRECONDITION");
+  await error(() => f.operate("PROPOSE", pair[1], {matchId: m.matchId, slotStartsAtMs: y + 5000}), "FAILED_PRECONDITION");
+  const again = await f.operate("CONFIRM", pair[1], {matchId: m.matchId, slotStartsAtMs: x}); // re-confirm of X is a no-op
+  assert.equal(again.meeting.slotStartsAtMs, x);
+  const view = await f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId});
+  assert.equal(view.meeting.slotStartsAtMs, x); // the agreed slot stands
+  assert.deepEqual(view.confirmations.map(row => row.slotStartsAtMs).sort(), [x, x]); // no third confirmation doc
+  assertSafe(view);
+});
+
+test("confirmation boundaries follow AD-17 exactly: ≤ C and ≤ slot; slots beyond C refuse typed", async () => {
+  const f = fixture(); await f.qualify(); const m = f.match(); const pair = f.pending().entrants.map(row => row.uid);
+  const c = m.stageEndsAtMs - READY_WINDOW_MS - m.sharedForm.maxDurationMs;
+  f.state.now = m.stageStartsAtMs + 1000;
+  let before = clone([...f.db.store]);
+  await error(() => f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: c + 1}), "FAILED_PRECONDITION");
+  assert.deepEqual([...f.db.store], before); // slot beyond C stages nothing
+  await f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: c}); // slot AT C is the last legal slot
+  before = clone([...f.db.store]);
+  f.state.now = c;
+  await error(() => f.operate("CONFIRM", pair[0], {matchId: m.matchId, slotStartsAtMs: c}), "FAILED_PRECONDITION"); // at C exactly
+  f.state.now = c + 1;
+  await error(() => f.operate("CONFIRM", pair[0], {matchId: m.matchId, slotStartsAtMs: c}), "FAILED_PRECONDITION"); // after C
+  assert.deepEqual([...f.db.store], before);
+  f.state.now = c - 1;
+  const confirmed = await f.operate("CONFIRM", pair[0], {matchId: m.matchId, slotStartsAtMs: c}); // one tick earlier is legal
+  assert.equal(confirmed.status, "WAITING_FOR_AGREEMENT");
+});
+
+test("READY window edges are typed refusals and the read restores each participant's ready state", async () => {
+  const f = fixture(); await f.qualify(); const a = await f.agree();
+  const message = "Ready is accepted only inside the agreed one-hour window";
+  f.state.now = a.slotStartsAtMs - 1;
+  await assert.rejects(() => f.operate("READY", a.pair[0], {matchId: a.match.matchId}),
+    e => { assert.equal(e.code, "FAILED_PRECONDITION"); assert.equal(e.message, message); return true; });
+  f.state.now = a.slotStartsAtMs; // at the slot the signal counts
+  await f.operate("READY", a.pair[0], {matchId: a.match.matchId});
+  let view = await f.controller.readMeeting(a.pair[0], {eventId: EVENT, matchId: a.match.matchId});
+  assert.equal(view.meeting.status, "WAITING_FOR_READY");
+  assert.deepEqual(view.ready, [{uid: a.pair[0], acceptedAtMs: a.slotStartsAtMs}]);
+  f.state.now = a.slotStartsAtMs + READY_WINDOW_MS; // the window is half-open: its end refuses
+  await assert.rejects(() => f.operate("READY", a.pair[1], {matchId: a.match.matchId}),
+    e => { assert.equal(e.code, "FAILED_PRECONDITION"); assert.equal(e.message, message); return true; });
+  f.state.now = a.slotStartsAtMs + READY_WINDOW_MS - 1; // last legal instant
+  await f.operate("READY", a.pair[1], {matchId: a.match.matchId});
+  view = await f.controller.readMeeting(a.pair[1], {eventId: EVENT, matchId: a.match.matchId});
+  assert.equal(view.meeting.status, "STARTED");
+  assert.deepEqual(view.ready.map(row => row.uid).sort(), [...a.pair].sort());
+  assertSafe(view);
+});
+test("organizer reads the same meeting projection; repair guards and empty shape are typed", async () => {
+  const f = fixture(); await f.qualify(); const m = f.match(); const pair = f.pending().entrants.map(row => row.uid);
+  f.state.now = m.stageStartsAtMs + 1000;
+  // Fresh coordination: the empty-meeting shape a client renders first on re-entry.
+  const fresh = await f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId});
+  assert.equal(fresh.ready.length, 0);
+  assert.equal(fresh.hasMoreConfirmations, false);
+  assert.equal(fresh.nextConfirmationId, null);
+  await f.operate("PROPOSE", pair[0], {matchId: m.matchId, slotStartsAtMs: m.stageStartsAtMs + 5000});
+  // The organizer rides the same participant-or-organizer branch and sees identical facts.
+  const organizerView = await f.controller.readMeeting(OWNER, {eventId: EVENT, matchId: m.matchId});
+  const playerView = await f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId});
+  assert.deepEqual(organizerView.offers, playerView.offers);
+  assertSafe(organizerView);
+  // Corrupted stored ready signal (foreign uid): typed repair refusal, not a bare RangeError.
+  const readyKey = Object.keys(f.db.store).find((key) => key.includes("/ready"));
+  if (readyKey) {
+    const doc = f.db.store.get(readyKey);
+    doc.readySignals = [...(doc.readySignals || []), {uid: "ghost", acceptedAtMs: T}];
+    await error(() => f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId}), "UNAVAILABLE");
+    doc.readySignals = (doc.readySignals || []).filter((row) => row.uid !== "ghost");
+  }
+  // Combined paging: both cursors in one request ride the shared pageSize.
+  const combined = await f.controller.readMeeting(pair[0], {eventId: EVENT, matchId: m.matchId, afterOfferId: null, afterConfirmationId: null, pageSize: 1});
+  assertSafe(combined);
+});
+
+
+test("only the server starts the match; clients cannot force it and the projection shows STARTED", async () => {
+  const f = fixture(); await f.qualify(); const a = await f.agree();
+  f.state.now = a.slotStartsAtMs;
+  await f.operate("READY", a.pair[0], {matchId: a.match.matchId});
+  for (const uid of [a.pair[0], a.pair[1], OWNER]) await error(() => f.operate("ADVANCE_MATCH", uid, {matchId: a.match.matchId}), "PERMISSION_DENIED");
+  const waiting = await f.controller.readMeeting(a.pair[0], {eventId: EVENT, matchId: a.match.matchId});
+  assert.equal(waiting.meeting.status, "WAITING_FOR_READY"); // no early start happened
+  const started = await f.operate("READY", a.pair[1], {matchId: a.match.matchId});
+  assert.equal(started.meeting.status, "STARTED"); assert.ok(started.meeting.startedAtMs <= f.state.now);
+  const view = await f.controller.readMeeting(a.pair[1], {eventId: EVENT, matchId: a.match.matchId});
+  assert.equal(view.meeting.status, "STARTED"); assert.equal(view.meeting.startedAtMs, started.meeting.startedAtMs);
+  assert.equal(view.meeting.endsAtMs, started.meeting.startedAtMs + a.match.sharedForm.maxDurationMs);
+  assertSafe(view); assertSafe(started);
+});
 test("discovery pages bounded ordered events with a working cursor and redacts every row", async () => {
   const f = fixture();
   for (const eventId of ["event_listing_00000001", "event_listing_00000002", "event_listing_00000003"]) {

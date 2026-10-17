@@ -405,6 +405,32 @@ test("old offers remain confirmable after later proposals; first mutual agreemen
   await assert.rejects(f.call("CONFIRM", "bob", slot - 1000, {matchId: m.matchId, slotStartsAtMs: slot + 1000}), {code: "FAILED_PRECONDITION"});
 });
 
+// Story 5.7 (UX-O3): every meeting boundary refusal is typed FAILED_PRECONDITION naming the
+// policy reason, and stages nothing — a stale page can never confirm through the receiver.
+test("meeting proposal/confirmation boundaries refuse typed and stage nothing", async () => {
+  const f = fixture(); await f.create(); await f.close(); const m = currentMatch(f);
+  const c = m.coordinationDeadlineMs; const slot = m.stageStartsAtMs + 10_000;
+  // CONFIRM of a slot without an offer pair (PROPOSE ≠ CONFIRM).
+  let before = structuredClone([...f.db.store]);
+  await assert.rejects(f.call("CONFIRM", "alice", m.stageStartsAtMs + 100, {matchId: m.matchId, slotStartsAtMs: slot}),
+    (error) => { assert.equal(error.code, "FAILED_PRECONDITION"); assert.equal(error.message, "confirmation needs an existing timely proposal"); return true; });
+  assert.deepEqual([...f.db.store], before);
+  // Proposal boundaries: slot beyond C, and slot before server now.
+  await assert.rejects(f.call("PROPOSE", "alice", m.stageStartsAtMs + 100, {matchId: m.matchId, slotStartsAtMs: c + 1}),
+    (error) => { assert.equal(error.code, "FAILED_PRECONDITION"); assert.equal(error.message, "proposal is outside the scheduling window"); return true; });
+  await assert.rejects(f.call("PROPOSE", "alice", slot + 1, {matchId: m.matchId, slotStartsAtMs: slot}), {code: "FAILED_PRECONDITION"});
+  assert.deepEqual([...f.db.store], before);
+  // Confirmation boundaries: at C exactly and after C refused; ≤ slot enforced.
+  await f.call("PROPOSE", "alice", c - 5000, {matchId: m.matchId, slotStartsAtMs: c});
+  before = structuredClone([...f.db.store]);
+  await assert.rejects(f.call("CONFIRM", "alice", c, {matchId: m.matchId, slotStartsAtMs: c}), {code: "FAILED_PRECONDITION"});
+  await assert.rejects(f.call("CONFIRM", "alice", c + 1, {matchId: m.matchId, slotStartsAtMs: c}), {code: "FAILED_PRECONDITION"});
+  assert.deepEqual([...f.db.store], before);
+  const confirmed = await f.call("CONFIRM", "alice", c - 1, {matchId: m.matchId, slotStartsAtMs: c}); // last legal instant
+  assert.equal(confirmed.status, "WAITING_FOR_AGREEMENT");
+  assert.ok([...f.db.store.keys()].some((path) => path.includes("/confirmations/")));
+});
+
 test("one ready player wins by no-show; technical loser gets no runner-up prize", async () => {
   const f = fixture(); await f.create(); await f.close(); const m = currentMatch(f);
   const slot = await agree(f, m, "alice", "bob");

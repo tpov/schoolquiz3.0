@@ -266,6 +266,34 @@ test("first mutually confirmed slot is fixed despite later alternative agreement
     confirmations: [{uid: "outsider", slotStartsAtMs: 1000, acceptedAtMs: 10}], nowMs: 100}), /participant/);
 });
 
+// Story 5.7 (UX-O3/D7): the boundaries a client is shown refuse exactly per AD-17 —
+// confirmation ≤ C and ≤ slot with a timely offer, READY discarded before the slot and from
+// the window end on, accepted inside [slot, slot+1h).
+test("confirmation and readiness boundaries are exact: ≤ C, ≤ slot, half-open [slot, slot+1h)", () => {
+  const m = match(); const cutoff = m.stageEndsAtMs - READY_WINDOW_MS - m.formMaxDurationMs;
+  const lastOffer = planMeetingProposal({match: m, uid: "a", slotStartsAtMs: cutoff, nowMs: 0});
+  // Confirmation at C exactly and after C is refused; one tick earlier is the last legal instant.
+  assert.throws(() => evaluateMeeting({match: m, proposals: [lastOffer],
+    confirmations: [{uid: "a", slotStartsAtMs: cutoff, acceptedAtMs: cutoff}], nowMs: cutoff}), /timely proposal/);
+  assert.throws(() => evaluateMeeting({match: m, proposals: [lastOffer],
+    confirmations: [{uid: "a", slotStartsAtMs: cutoff, acceptedAtMs: cutoff + 1}], nowMs: cutoff + 1}), /timely proposal/);
+  assert.equal(evaluateMeeting({match: m, proposals: [lastOffer],
+    confirmations: [{uid: "a", slotStartsAtMs: cutoff, acceptedAtMs: cutoff - 1}], nowMs: cutoff - 1}).status, "WAITING_FOR_AGREEMENT");
+  // Confirmation later than the slot is refused even well inside the coordination window.
+  const earlyOffer = planMeetingProposal({match: m, uid: "a", slotStartsAtMs: cutoff - 1000, nowMs: 0});
+  assert.throws(() => evaluateMeeting({match: m, proposals: [earlyOffer],
+    confirmations: [{uid: "a", slotStartsAtMs: cutoff - 1000, acceptedAtMs: cutoff - 999}], nowMs: cutoff - 999}), /timely proposal/);
+  assert.equal(evaluateMeeting({match: m, proposals: [earlyOffer],
+    confirmations: [{uid: "a", slotStartsAtMs: cutoff - 1000, acceptedAtMs: cutoff - 1000}], nowMs: cutoff - 1000}).status, "WAITING_FOR_AGREEMENT");
+  // READY before the slot is discarded (not an error), at the slot it counts, at the last
+  // legal second it counts; the half-open end is pinned by the one-hour window test above.
+  const agreed = agreement(m, 1000);
+  assert.equal(evaluateMeeting({match: m, ...agreed, readySignals: [{uid: "a", acceptedAtMs: 999}], nowMs: 999}).status, "WAITING_FOR_WINDOW");
+  assert.equal(evaluateMeeting({match: m, ...agreed, readySignals: [{uid: "a", acceptedAtMs: 1000}], nowMs: 1000}).status, "WAITING_FOR_READY");
+  assert.equal(evaluateMeeting({match: m, ...agreed,
+    readySignals: [{uid: "a", acceptedAtMs: 1000 + READY_WINDOW_MS - 1}], nowMs: 1000 + READY_WINDOW_MS - 1}).status, "WAITING_FOR_READY");
+});
+
 test("played result compares percent, then elapsed time, then qualification seed", () => {
   const entrants = [{uid: "a", seed: 1}, {uid: "b", seed: 16}];
   const decide = (a, b) => resolvePlayedMatch({matchId: "m", entrants, results: [{uid: "a", ...a}, {uid: "b", ...b}]});

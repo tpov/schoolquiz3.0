@@ -326,9 +326,20 @@ async function readPlanTournamentOperation({db, transaction, uid, payload, now, 
         const meetingPath = `${eventPath(event.eventId)}/meetings/${digest(match.matchId)}`;
         const meeting = await read(meetingPath) || {schemaVersion: 1, matchId: match.matchId, firstProposals: [], agreement: null, readySignals: []};
         if (meeting.matchId !== match.matchId || meeting.schemaVersion !== 1) fail("INCONSISTENT_SESSION", "Meeting identity mismatch");
+        // Only the meeting boundary refusals convert to client-facing precondition errors;
+        // any other RangeError is a server/repair gap and keeps its own course.
+        const failBoundary = (error) => {
+          if (error instanceof RangeError && /scheduling window|timely proposal/.test(error.message)) {
+            fail("FAILED_PRECONDITION", error.message);
+          }
+        };
         if (request.kind === "PROPOSE") {
           if (meeting.agreement) fail("FAILED_PRECONDITION", "Agreed slot is immutable");
-          const proposal = policy.planMeetingProposal({match: context, uid, slotStartsAtMs: request.slotStartsAtMs, nowMs: at});
+          // UX-O3/AD-17: proposal boundary refusals (proposal until C, slot in [now, C]) are typed
+          // FAILED_PRECONDITION carrying the policy's own reason — never a bare RangeError.
+          let proposal;
+          try { proposal = policy.planMeetingProposal({match: context, uid, slotStartsAtMs: request.slotStartsAtMs, nowMs: at}); }
+          catch (error) { failBoundary(error); throw error; }
           const path = `${meetingPath}/offers/${digest([request.slotStartsAtMs, uid])}`;
           const existing = await read(path);
           if (!existing) stage(path, proposal, true);
@@ -344,7 +355,11 @@ async function readPlanTournamentOperation({db, transaction, uid, payload, now, 
             const offers = (await Promise.all(participants.map((owner) => read(`${meetingPath}/offers/${digest([slot, owner])}`)))).filter(Boolean);
             const confirmations = (await Promise.all(participants.map((owner) => read(`${meetingPath}/confirmations/${digest([slot, owner])}`)))).filter(Boolean);
             if (!confirmations.some((row) => row.uid === uid)) confirmations.push({uid, slotStartsAtMs: slot, acceptedAtMs: at});
-            const evaluated = policy.evaluateMeeting({match: context, proposals: offers, confirmations, nowMs: at});
+            // UX-O3/AD-17: confirmation boundaries (confirmation ≤ C, ≤ slot, existing timely
+            // offer pair) refuse typed with the policy's own reason; nothing is staged on refusal.
+            let evaluated;
+            try { evaluated = policy.evaluateMeeting({match: context, proposals: offers, confirmations, nowMs: at}); }
+            catch (error) { failBoundary(error); throw error; }
             const ownPath = `${meetingPath}/confirmations/${digest([slot, uid])}`;
             if (!await read(ownPath)) stage(ownPath, confirmations.find((row) => row.uid === uid), true);
             if (evaluated.slotStartsAtMs !== undefined) meeting.agreement = {slotStartsAtMs: slot, proposals: offers, confirmations};
