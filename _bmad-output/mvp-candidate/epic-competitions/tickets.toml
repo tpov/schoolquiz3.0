@@ -138,7 +138,7 @@ after = [
 waits = [
   "ONLINE-O2 client half — DONE (OutboxOperations/ReadyAckOutboxCodec/ArenaOnlineO2Adapter precedents to reuse, not fork)",
 ]
-status = "ready"
+status = "done" # 2026-10-17: клиентский слой данных готов — shared/feature/tournament {domain,data}, строгие wire-парсеры над реальными серверными дампами (source-hash binding), outbox-транспорт сессий через sink tournament.SESSION_OP (READY_ACK permanent, статусы квитанций запинены), typed reason→SyncError с binding-тестом словаря, account-switch fence, repository identity guards, Koin. JVM 166 зелёных; Node 110/110; platform:firebase — только 2 предсуществующих arena-дрейфа. Review pass 1: 33 находки — fix-round закрыл WireJson fail-closed, repo guards, refusals, фикстуры; 1 defer (queue-refusals permanent-операций ретраятся вечно — core-семантика, владельцу). local.properties перепинен на VPS SDK. Спека spec-5-9-client-data-layer.md; коммит ee50a40c
 
 [[story]]
 id = "5.10"
