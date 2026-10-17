@@ -108,7 +108,7 @@ waits = [
   "meeting offer/confirmation/READY storage and evaluateMeeting — DONE (tournament-service/tournament-policy); this story adds the permitted restore projections and proves them",
   "5.1: adopted timing contract — DONE (решение 1, owner-decisions-2026-10-16.md, «принимаю»; sha256 fa9ca506…)",
 ]
-status = "ready"
+status = "done" # 2026-10-16: readMeeting несёт paged confirmations (свой курсор), ready-строки, participants+границы C/этапа; PROPOSE/CONFIRM границы типизированы (суженный конвертер не маскирует ремонтные RangeError); ready-сигналы валидированы; meeting-математика нетронута (D7). Организатор видит те же факты; restore = детерминизм чтения (owner+epoch от существующих охран). readEvent намеренно не обогащён (5.11 рендерит из readMeeting). Review pass 1: 20 находок — 3 medium (широкий catch, ready-guard, фронматтер) и 6 low запатчены; followup false. Спека spec-5-7-meeting-restore-uxo3.md
 
 [[story]]
 id = "5.8"
