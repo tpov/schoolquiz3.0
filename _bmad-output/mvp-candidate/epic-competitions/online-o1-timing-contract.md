@@ -1,9 +1,10 @@
 # ONLINE-O1 — договор сверки: общее окно AD-31 60 секунд против фиксированных cutoff турнира (полная редакция, издание 1)
 
 - **Статус:** полная редакция (история 5.1 эпика `epic-competitions`, 2026-10-16; baseline
-  `280593004e154f7ef333a512af6c77bb48352eca`). **Ожидает утверждения владельцем.** До записи
-  утверждения зависимые истории 5.5, 5.6, 5.7 остаются под гейтом (`tickets.toml`, `after` 5.1);
-  утверждение — акт владельца, этим документом не заявляется (та же схема, что 2.5/2.9).
+  `280593004e154f7ef333a512af6c77bb48352eca`). **ПРИНЯТО владельцем 2026-10-16** (решение 1,
+  `owner-decisions-2026-10-16.md`, формулировка «принимаю»; издание 1 без правок, sha256 редакции
+  `fa9ca50648c5d29745e6f283f5a1c8c23a4069a95665174ee6058823a388feef`). Гейты сняты: 5.5/5.6/5.7
+  разблокированы; §8.4 (переверка указателей на старте 5.6) действует.
 - **Гейт:** `contract-map.md` («Remaining gates») → ONLINE-O1, дословно: «Reconcile the full
   subsequent online window with existing qualification/session and championship match/stage
   cutoffs before enabling the affected competition adapter. Neither truncating the promised

@@ -1,10 +1,11 @@
 # PRIZE-LIST — версионный контракт динамического упорядоченного списка призов и отображения rank/tie/technical-outcome → место (издание 1)
 
 - **Статус:** полная редакция (история 5.2 эпика `epic-competitions`, 2026-10-16; baseline
-  `e7129ba6ba9197c9246825b210b195b79f0461b0`). **Ожидает утверждения владельцем.** До записи
-  утверждения зависимая история 5.4 (`server-dynamic-prize-list`) остаётся под гейтом
-  (`tickets.toml`, `after = 5.2`); утверждение — акт владельца, этим документом не заявляется
-  (та же схема, что 2.5/2.9 и 5.1).
+  `e7129ba6ba9197c9246825b210b195b79f0461b0`). **ПРИНЯТО владельцем 2026-10-16** (решение 2,
+  `owner-decisions-2026-10-16.md`, формулировка «принимаю»; издание 1 без правок, sha256 редакции
+  `366860dae56094e13d54b478b246e556922c695dd1a8e16222874a8d9785a766`). Гейт снят: 5.4
+  разблокирована. Правило «два третьих места» подтверждено без изменений (записи: план §3
+  ТЗ07B/C, PRD «бронзового матча нет, третьих мест два»).
 - **Гейт:** `contract-map.md` («Remaining gates») → UX-O2/O3, дословно: «One versioned
   prize-list/rank/tie/technical-outcome contract before CREATE/reserve/payout, plus permitted
   proposal/confirmation/READY projections and restoration before real championship actions.»

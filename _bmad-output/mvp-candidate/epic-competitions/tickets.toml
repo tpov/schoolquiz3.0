@@ -70,7 +70,7 @@ title = "Server CREATE/reserve/read/payout over the versioned dynamic prize list
 covers = ["CAP-11", "CAP-12"]
 after = [{ story = "5.2", needs = "adopted prize-list and mapping contract" }]
 waits = [
-  "5.2: adopted contract edition (owner input; drafting alone does not unlock financial obligation per AD-17)",
+  "5.2: adopted contract edition — DONE (решение 2, owner-decisions-2026-10-16.md, «принимаю»; sha256 366860da…)",
 ]
 status = "ready" # dispatchable once 5.2 lands adopted; sequencing recorded via after
 
@@ -82,7 +82,7 @@ covers = ["CAP-11"]
 after = [{ story = "5.1", needs = "adopted ONLINE-O1 timing reconciliation (affects which late attempts are in cohort scope at cutoff)" }]
 waits = [
   "TZ07A exact calculation path — DONE by earlier shifts (tournament-qualification-compact/calculation, 4096/4097 cases green; LS formula and tie-break order retained per owner decision)",
-  "5.1: adopted timing contract",
+  "5.1: adopted timing contract — DONE (решение 1, owner-decisions-2026-10-16.md, «принимаю»; sha256 fa9ca506…)",
 ]
 status = "ready"
 
@@ -94,7 +94,7 @@ covers = ["CAP-11", "CAP-12"]
 after = [{ story = "5.1", needs = "adopted ONLINE-O1 timing reconciliation" }]
 waits = [
   "ONLINE-O2 contract — DONE (2.5/2.6/2.9, adopted edition blob e142341e…); Arena client half (3.2) is the adopted adapter precedent",
-  "5.1: adopted timing contract",
+  "5.1: adopted timing contract — DONE (решение 1, owner-decisions-2026-10-16.md, «принимаю»; sha256 fa9ca506…)",
 ]
 status = "ready"
 
@@ -106,7 +106,7 @@ covers = ["CAP-12"]
 after = [{ story = "5.1", needs = "adopted ONLINE-O1 timing reconciliation (C and READY boundaries are part of it)" }]
 waits = [
   "meeting offer/confirmation/READY storage and evaluateMeeting — DONE (tournament-service/tournament-policy); this story adds the permitted restore projections and proves them",
-  "5.1: adopted timing contract",
+  "5.1: adopted timing contract — DONE (решение 1, owner-decisions-2026-10-16.md, «принимаю»; sha256 fa9ca506…)",
 ]
 status = "ready"
 

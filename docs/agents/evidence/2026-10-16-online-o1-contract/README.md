@@ -9,9 +9,11 @@ stage/endsAt extension; owner adoption recorded before dependent adapters are en
 Story-запись: `_bmad-output/mvp-candidate/epic-competitions/tickets.toml` (id 5.1); статуса в
 tickets оркестратор не касался — перевод статуса не входит в эту историю.
 
-## Статус: ожидает утверждения владельцем
+## Статус: ПРИНЯТО владельцем 2026-10-16 (издание 1 без правок)
 
-Договор написан, но НЕ утверждён: утверждение — акт владельца (схема 2.5/2.9 истории
+Решение 1 в `_bmad-output/mvp-candidate/owner-decisions-2026-10-16.md` («принимаю»), sha256
+принятой редакции `fa9ca506…`; разблокированы 5.5/5.6/5.7. Историческая запись: договор
+написан как draft — утверждение — акт владельца (схема 2.5/2.9). утверждение — акт владельца (схема 2.5/2.9 истории
 epic-ordinary-delivery). До записи утверждения зависимые истории гейтятся: 5.5 (`qualification-loop-close`,
 «affects which late attempts are in cohort scope at cutoff»), 5.6 (`sessions-online-o2`,
 исполнитель дельты Приложения A), 5.7 (`meeting-restore-uxo3`, C/READY границы) — все с
