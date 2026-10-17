@@ -123,7 +123,7 @@ after = [
 waits = [
   "bracket progress with placements and FORFEIT/DOUBLE_OUT — DONE (tournament-policy resolvePlayedMatch/progressBracket); this story proves money conservation over them",
 ]
-status = "ready"
+status = "done" # 2026-10-16: консервация доказана end-to-end на шве — 16-игроковая сетка с двумя строками места 3 (квитанция на строку), матрицы FORFEIT-финал/DOUBLE_OUT-полуфинал с исключениями отсутствующих на уровне квитанций, атомарность сбоя коммита с exactly-once retry до терминального состояния близнеца, zero/surplus строки с пинами placements, потребление замороженной версии. НОЛЬ продового диффа. Review pass 1: 17 находок — 7 патчей усиления, 8 reject (композиционные дубли/косметика). 109/109. Спека spec-5-8-awards-conservation.md
 
 [[story]]
 id = "5.9"
