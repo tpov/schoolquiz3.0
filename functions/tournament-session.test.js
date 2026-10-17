@@ -8,6 +8,7 @@ const {tournamentDigest: digest} = require("./tournament-bank");
 const {TOURNAMENT_PATHS: P} = require("./tournament-service");
 const {applyTournamentSessionOperation: apply, advanceTournamentSession, SESSION_OPERATIONS: OPS, SESSION_INGRESS: ING,
   VERIFIED_RUNS: RUNS, VERIFICATION_VERSION, readTournamentSessionOperation, planTournamentSessionOperation, writeTournamentSessionOperation} = require("./tournament-session");
+const {readTournamentSession} = require("./tournament-service");
 const {loadSettledMatchResults, verifiedTournamentRun} = require("./tournament-session-results");
 
 const T = 1_800_000_000_000;
@@ -315,6 +316,296 @@ test("oversized answer and nonexistent worker session are rejected without write
   await assert.rejects(f.answer("x".repeat(20_000)), {code: "INVALID_ARGUMENT"});
   await assert.rejects(advanceTournamentSession({db: f.db, sessionId: `q_${"f".repeat(64)}`, operationId: "worker_absent_00000001", now: T}), {code: "NOT_FOUND"});
   assert.deepEqual([...f.db.store], before);
+});
+
+// --- Story 5.6: ONLINE-O1/O2 next-question window (Appendix A1-A9; D3/D4/D5/D6) ---
+
+const win = f => f.current().window;
+const workerCloseShown = (f, now = T + 1000) =>
+  advanceTournamentSession({db: f.db, sessionId: f.id, operationId: `worker_close_${now}`, now});
+
+test("closing a question opens a captured 60s window and the response delivers the next question", async () => {
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  const result = await f.answer(undefined, T + 10);
+  assert.equal(result.status, "ANSWER_ACCEPTED");
+  assert.equal(result.currentQuestion.questionId, "q-1");
+  // The response itself carries the window facts (A1 delivery; the READY_ACK key source).
+  assert.deepEqual(result.session.window.windowId, win(f).windowId);
+  assert.equal(result.session.window.state, "DELIVERED"); // client-driven close delivers in-response
+  assert.equal(result.session.window.expiresAtMs, win(f).expiresAtMs);
+  const w = win(f);
+  assert.equal(w.schemaVersion, 1);
+  assert.match(w.windowId, /^win_[a-f0-9]{12}$/);
+  assert.equal(w.completedQuestionIndex, 0);
+  assert.equal(w.nextQuestionIndex, 1);
+  assert.equal(w.nextQuestionId, "q-1");
+  assert.equal(w.nextQuestionMaxDurationMs, 4000);
+  assert.equal(w.windowSeconds, 60); // ample envelope: the full shared constant, uncapped
+  assert.equal(w.formFingerprint, f.fingerprint);
+  assert.equal(w.endsAtMs, T + 80_000);
+  assert.equal(w.openedAtMs, T + 10);
+  assert.equal(w.expiresAtMs, T + 60_010);
+  assert.equal(w.state, "DELIVERED"); // the closing response IS the delivery (client-driven close)
+  assert.deepEqual(w.delivery, {questionIndex: 1, questionId: "q-1", deliveredAtMs: T + 10});
+  // clocks anchored at the delivery, same clamp formula
+  assert.equal(result.session.questionStartedAtMs, T + 10);
+  assert.equal(result.session.questionEndsAtMs, T + 4010);
+  assert.ok(!JSON.stringify(result).includes("correctOptionId"));
+  assert.ok(!JSON.stringify(result).includes('"q-19"'));
+});
+
+test("retry of the closing operation replays the identical outcome after the window opened", async () => {
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  const request = f.payload("ANSWER", {questionIndex: 0, questionId: "q-0", answerPayload: {type: "single-choice", selected: "a"}});
+  const first = await f.call(request);
+  const before = structuredClone([...f.db.store]);
+  assert.deepEqual(await f.call(request, T + 30_000), first);
+  assert.deepEqual([...f.db.store], before);
+});
+
+test("window near envelope edge captures the remainder and expires exactly at the envelope edge", async () => {
+  const f = fixture(); // overallMs 20_000
+  const result = await f.advance(T + 19_900);
+  const w = win(f);
+  assert.equal(w.windowSeconds, 1); // ceil of the 100ms remainder: a window exists, never negative
+  assert.equal(w.expiresAtMs, T + 20_000); // the envelope edge, not openedAt+1s beyond it
+  assert.equal(w.state, "DELIVERED");
+  assert.equal(result.session.questionEndsAtMs, T + 20_000);
+  assert.ok(w.expiresAtMs <= w.endsAtMs);
+});
+
+test("ready-ACK after the answer deadline refuses typed and never terminates the attempt", async () => {
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  // q1 answered in-response; its ACK rides the same operation window. q2 delivered with a
+  // 4s answer clock; the ACK arriving after that deadline is refused typed.
+  const first = await f.answer(undefined, T + 10);
+  await f.call(f.payload("READY_ACK", {questionIndex: 1, windowId: first.session.window.windowId}), T + 20);
+  const second = await f.answer(undefined, T + 30);
+  const secondWindowId = second.session.window.windowId;
+  const before = structuredClone([...f.db.store]);
+  await assert.rejects(f.call(f.payload("READY_ACK", {questionIndex: 2, windowId: secondWindowId}), T + 30 + 4_100),
+    (error) => { assert.equal(error.code, "FAILED_PRECONDITION");
+      assert.equal(error.message, "Ready-ACK after the answer deadline"); return true; });
+  // The refusal terminates nothing: termination drivers are answers/sweeps, not ACKs.
+  assert.equal(f.current().status, "STARTED");
+  assert.deepEqual([...f.db.store].filter(([path]) => path.startsWith(`${RUNS}/`)), []);
+});
+
+test("session document with a full ACK ladder stays inside the storage budget", async () => {
+  const {MAX_DOCUMENT_JSON_BYTES} = require("./tournament-service");
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  let result = await f.answer(undefined, T + 10);
+  for (let index = 1; index < 19; index++) {
+    await f.call(f.payload("READY_ACK", {questionIndex: index, windowId: result.session.window.windowId}), T + 8 + 2 * index);
+    result = await f.answer(undefined, T + 9 + 2 * index);
+  }
+  assert.equal(Object.keys(f.current().readyAcks ?? {}).length, 18); // indices 1..18; q20's window outlives the loop
+  const stored = f.db.store.get(f.S);
+  assert.ok(JSON.stringify(stored).length < MAX_DOCUMENT_JSON_BYTES, "fattened session doc exceeds budget");
+});
+
+test("zero envelope remainder opens no window and terminates immediately (D4)", async () => {
+  const f = fixture();
+  const result = await f.advance(T + 20_000);
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(win(f), undefined);
+  assert.equal(f.current().status, "SETTLED");
+  assert.equal(slot(f, 1).kind, "FORCED_CUTOFF");
+  assert.equal(slot(f, 1).closedAtMs, T + 20_000);
+});
+
+test("worker close leaves the window open undelivered with no active question", async () => {
+  const f = fixture();
+  const result = await workerCloseShown(f);
+  const w = win(f);
+  assert.equal(w.state, "OPEN");
+  assert.equal(w.delivery, null);
+  assert.equal(w.openedAtMs, T + 1000);
+  assert.equal(w.expiresAtMs, T + 20_000);
+  assert.equal(result.currentQuestion, null); // A4: before delivery there is no active question
+  assert.equal(result.session.questionIndex, 1);
+  assert.equal(result.session.questionStartedAtMs, T); // stale clocks of the closed question only
+});
+
+test("delivery inside the window anchors the clocks exactly once; repeats never re-anchor", async () => {
+  const f = fixture();
+  await workerCloseShown(f);
+  const first = await f.advance(T + 5000);
+  assert.equal(first.status, "CURRENT_QUESTION");
+  assert.equal(first.currentQuestion.questionId, "q-1");
+  assert.equal(first.session.questionStartedAtMs, T + 5000);
+  assert.equal(first.session.questionEndsAtMs, T + 6000);
+  assert.equal(win(f).state, "DELIVERED");
+  assert.deepEqual(win(f).delivery, {questionIndex: 1, questionId: "q-1", deliveredAtMs: T + 5000});
+  const second = await f.advance(T + 5500);
+  assert.equal(second.session.questionStartedAtMs, T + 5000);
+  assert.equal(second.session.questionEndsAtMs, T + 6000);
+  assert.equal(second.currentQuestion.questionId, "q-1");
+});
+
+test("expired undelivered window settles via the sweep at the captured edge, idempotently", async () => {
+  const f = fixture();
+  await workerCloseShown(f);
+  const result = await advanceTournamentSession({db: f.db, sessionId: f.id, operationId: "worker_edge_sweep_000001", now: T + 25_000});
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(slot(f, 1).kind, "FORCED_CUTOFF");
+  assert.equal(slot(f, 1).closedAtMs, T + 20_000); // captured edge, never the observation moment
+  assert.equal(slot(f, 1).wasShown, false); // the question was never delivered
+  assert.equal(slot(f, 19).closedAtMs, T + 20_000);
+  assert.equal(run(f).completedAtMs, T + 20_000);
+  assert.equal(run(f).elapsedMs, 20_000);
+  assert.equal(run(f).percentScore, 0);
+  assert.equal(win(f).state, "EXPIRED");
+  assert.equal(win(f).closedAtMs, T + 20_000);
+  const slotsBefore = structuredClone([...f.db.store].filter(([path]) => path.includes("/answers/")));
+  const storeBefore = structuredClone([...f.db.store]);
+  await advanceTournamentSession({db: f.db, sessionId: f.id, operationId: "worker_edge_sweep_000002", now: T + 30_000});
+  assert.deepEqual([...f.db.store].filter(([path]) => path.includes("/answers/")), slotsBefore);
+  assert.equal(run(f).completedAtMs, T + 20_000);
+  assert.deepEqual([...f.db.store].filter(([path]) => !path.startsWith(`${OPS}/`)), storeBefore.filter(([path]) => !path.startsWith(`${OPS}/`)));
+});
+
+test("a late delivery attempt after the edge settles to the same state as the sweep", async () => {
+  const g = fixture();
+  await workerCloseShown(g);
+  const result = await g.advance(T + 21_000);
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(result.currentQuestion, null);
+  const f = fixture();
+  await workerCloseShown(f);
+  await advanceTournamentSession({db: f.db, sessionId: f.id, operationId: "worker_edge_sweep_000001", now: T + 25_000});
+  for (let i = 1; i < 20; i++) {
+    assert.equal(slot(f, i).kind, slot(g, i).kind);
+    assert.equal(slot(f, i).closedAtMs, slot(g, i).closedAtMs);
+  }
+  assert.deepEqual(run(g).codeAnswer, run(f).codeAnswer);
+  assert.equal(run(g).completedAtMs, run(f).completedAtMs);
+});
+
+test("a late answer after the edge gets the settled response and is never attributed", async () => {
+  const f = fixture();
+  await workerCloseShown(f);
+  const result = await f.answer(undefined, T + 21_000);
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(slot(f, 1).kind, "FORCED_CUTOFF");
+  assert.equal(slot(f, 1).closedAtMs, T + 20_000);
+  assert.equal(slot(f, 1).receivedAtMs, null);
+  assert.equal(slot(f, 1).answerPayload, null);
+  assert.equal([...f.db.store.keys()].some(path => path.startsWith(`${ING}/`)), false);
+  assert.equal(run(f).completedAtMs, T + 20_000);
+});
+
+test("a client answer racing an undelivered window delivers and attributes in one operation", async () => {
+  const f = fixture();
+  await workerCloseShown(f);
+  const request = f.payload("ANSWER", {questionIndex: 1, questionId: "q-1", answerPayload: {type: "single-choice", selected: "a"}});
+  const result = await f.call(request, T + 2000);
+  assert.equal(result.status, "ANSWER_ACCEPTED");
+  assert.equal(result.session.questionStartedAtMs, T + 2000);
+  assert.equal(result.session.questionEndsAtMs, T + 3000);
+  assert.equal(slot(f, 1).receivedAtMs, T + 2000);
+  // the same operation closed q1 and opened+delivered the boundary-1 window at its `at`
+  assert.deepEqual(win(f).delivery, {questionIndex: 2, questionId: "q-2", deliveredAtMs: T + 2000});
+  assert.equal(win(f).completedQuestionIndex, 1);
+});
+
+test("ready-ACK acknowledges a delivered question idempotently and never touches deadlines", async () => {
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  await f.answer(undefined, T + 10);
+  const windowId = win(f).windowId;
+  const ackRequest = {kind: "READY_ACK", ownerUid: f.uid, operationId: "ready_ack_first_000000001",
+    sessionId: f.id, formFingerprint: f.fingerprint, questionIndex: 1, windowId};
+  const first = await f.call(ackRequest, T + 20);
+  assert.equal(first.status, "READY_ACK");
+  assert.deepEqual(first.readyAck, {schemaVersion: 1, questionIndex: 1, windowId, questionId: "q-1",
+    issuedAtMs: T + 10, answerDeadlineMs: T + 4010, ackedAtMs: T + 20});
+  assert.ok(!JSON.stringify(first).includes("correctOptionId"));
+  // ACK never anchors or restarts deadlines
+  assert.equal(f.current().questionStartedAtMs, T + 10);
+  assert.equal(f.current().questionEndsAtMs, T + 4010);
+  assert.deepEqual(f.current().readyAcks, {1: first.readyAck});
+  // same key same body under a fresh operation id: same receipt
+  const repeat = await f.call(f.payload("READY_ACK", {questionIndex: 1, windowId}), T + 50);
+  assert.deepEqual(repeat.readyAck, first.readyAck);
+  // the original operation id replays the whole stored response byte-for-byte
+  assert.deepEqual(await f.call(ackRequest, T + 60), first);
+});
+
+test("same ready-ACK key with a different body conflicts; question 0 has no ACK path", async () => {
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  await f.answer(undefined, T + 10);
+  const windowId = win(f).windowId;
+  const first = await f.call(f.payload("READY_ACK", {questionIndex: 1, windowId}), T + 20);
+  await assert.rejects(f.call(f.payload("READY_ACK", {questionIndex: 1, windowId: "win_" + "0".repeat(12)}), T + 30), {code: "CONFLICTING_REPLAY"});
+  await assert.rejects(f.call(f.payload("READY_ACK", {questionIndex: 0, windowId}), T + 30), {code: "INVALID_ARGUMENT"});
+  await assert.rejects(f.call(f.payload("READY_ACK", {questionIndex: 1, windowId: "win_Short"}), T + 30), {code: "INVALID_ARGUMENT"});
+  assert.deepEqual(f.current().readyAcks, {1: first.readyAck});
+  assert.deepEqual((await f.call(f.payload("READY_ACK", {questionIndex: 1, windowId}), T + 40)).readyAck, first.readyAck);
+});
+
+test("ready-ACK without a delivery is refused and stages nothing", async () => {
+  const f = fixture();
+  await workerCloseShown(f);
+  const before = structuredClone([...f.db.store]);
+  await assert.rejects(f.call(f.payload("READY_ACK", {questionIndex: 1, windowId: win(f).windowId}), T + 2000), {code: "FAILED_PRECONDITION"});
+  assert.deepEqual([...f.db.store], before);
+  const g = fixture({duration: 4000, overallMs: 80_000});
+  await g.answer(undefined, T + 10);
+  await assert.rejects(g.call(g.payload("READY_ACK", {questionIndex: 1, windowId: "win_" + "f".repeat(12)}), T + 20), {code: "FAILED_PRECONDITION"});
+});
+
+test("an ACK receipt survives its window being superseded; key discipline holds", async () => {
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  await f.answer(undefined, T + 10);
+  const firstWindowId = win(f).windowId;
+  await f.call(f.payload("READY_ACK", {questionIndex: 1, windowId: firstWindowId}), T + 20);
+  await f.answer(undefined, T + 30); // closes q1, opens the boundary-1 window
+  assert.notEqual(win(f).windowId, firstWindowId);
+  assert.equal(win(f).completedQuestionIndex, 1);
+  const replay = await f.call(f.payload("READY_ACK", {questionIndex: 1, windowId: firstWindowId}), T + 40);
+  assert.equal(replay.readyAck.windowId, firstWindowId);
+  await assert.rejects(f.call(f.payload("READY_ACK", {questionIndex: 1, windowId: win(f).windowId}), T + 40), {code: "CONFLICTING_REPLAY"});
+});
+
+test("question 0 lives by the start contract: no window and no ACK path", async () => {
+  const f = fixture();
+  assert.equal(win(f), undefined);
+  await f.advance(T + 100);
+  assert.equal(win(f), undefined);
+  assert.equal(f.current().questionStartedAtMs, T);
+  assert.equal(f.current().questionEndsAtMs, T + 1000);
+  await assert.rejects(f.call(f.payload("READY_ACK", {questionIndex: 0, windowId: "win_" + "0".repeat(12)})), {code: "INVALID_ARGUMENT"});
+});
+
+test("no window opens after the last question; settlement follows the existing scoring", async () => {
+  const f = fixture({duration: 4000, overallMs: 80_000});
+  await complete(f, 19);
+  assert.equal(win(f).completedQuestionIndex, 18);
+  const result = await f.answer(undefined, f.current().questionStartedAtMs + 10);
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(f.current().status, "SETTLED");
+  assert.equal(win(f).completedQuestionIndex, 18); // no boundary-19 window was opened
+  assert.equal(run(f).percentScore, 100);
+});
+
+test("MATCH sessions share the form but never the clocks or windows", async () => {
+  const f = fixture({kind: "MATCH", duration: 4000, overallMs: 80_000});
+  const g = fixture({uid: "bob", kind: "MATCH", duration: 4000, overallMs: 80_000});
+  assert.equal(f.fingerprint, g.fingerprint);
+  assert.equal(f.current().formFingerprint, g.current().formFingerprint);
+  for (const [path, value] of g.db.store) f.db.store.set(path, value);
+  await f.answer(undefined, T + 10); // alice delivered at T+10
+  await advanceTournamentSession({db: f.db, sessionId: g.id, operationId: "worker_bob_close_0000001", now: T + 4000}); // bob offline at his q0 deadline
+  const read = (uid, id, now) => f.db.runTransaction(transaction => readTournamentSession({db: f.db, transaction, uid, sessionId: id, now}));
+  const bob = await read("bob", g.id, T + 15_000); // bob reconnects mid-window
+  assert.equal(bob.window.state, "DELIVERED");
+  assert.equal(bob.session.questionStartedAtMs, T + 15_000);
+  assert.notEqual(bob.session.questionStartedAtMs, f.current().questionStartedAtMs);
+  assert.notEqual(win(f).windowId, bob.window.windowId);
+  const bobStored = f.db.store.get(`${P.sessions}/${g.id}`);
+  assert.equal(bobStored.window.state, "DELIVERED");
+  assert.deepEqual(bobStored.window.delivery, {questionIndex: 1, questionId: "q-1", deliveredAtMs: T + 15_000});
+  assert.deepEqual(win(f).delivery, {questionIndex: 1, questionId: "q-1", deliveredAtMs: T + 10});
 });
 
 (async () => { for (const {name, fn} of tests) { await fn(); console.log(`ok - ${name}`); } console.log(`tournament-session: ${tests.length} behavioral tests passed`); })()

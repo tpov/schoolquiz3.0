@@ -52,8 +52,11 @@ function bracketState(event) {
   return {matches, progress: progressBracket({bracket: event.bracket, outcomes: event.outcomes})};
 }
 function safeSession(value) {
-  return pick(value, ["sessionId", "eventId", "kind", "roundNumber", "matchId", "status", "questionIndex",
-    "startedAtMs", "endsAtMs", "questionStartedAtMs", "questionEndsAtMs"]);
+  return {...pick(value, ["sessionId", "eventId", "kind", "roundNumber", "matchId", "status", "questionIndex",
+    "startedAtMs", "endsAtMs", "questionStartedAtMs", "questionEndsAtMs"]),
+    // ONLINE-O1/O2 window projection: timing/identity facts only — never question or answer material.
+    ...(value.window ? {window: pick(value.window, ["windowId", "completedQuestionIndex", "nextQuestionIndex",
+      "windowSeconds", "openedAtMs", "expiresAtMs", "state"])} : {})};
 }
 function safeQuestion(question) {
   if (question == null) return null;
@@ -97,13 +100,20 @@ function safeEvent(value) {
   return result;
 }
 function safeResponse(value) {
-  const result = pick(value, ["schemaVersion", "operationId", "status", "serverNowMs", "deadlineReached", "questionDeadlineReached"]);
+  const result = pick(value, ["schemaVersion", "operationId", "status", "serverNowMs", "deadlineReached", "questionDeadlineReached",
+    "deliveredNowMs"]);
+  // ONLINE-O1/O2 window projection on reconnect reads: timing/identity facts only.
+  if (value.window) result.window = pick(value.window, ["windowId", "completedQuestionIndex", "nextQuestionIndex",
+    "windowSeconds", "openedAtMs", "expiresAtMs", "state"]);
   if (value.event) result.event = safeEvent(value.event);
   if (value.session) result.session = safeSession(value.session);
   if (value.sessions) result.sessions = value.sessions.map(safeSession);
   if (value.meeting) result.meeting = safeMeeting(value.meeting);
   if (value.currentQuestion !== undefined || value.question !== undefined) result.currentQuestion = safeQuestion(value.currentQuestion ?? value.question);
   if (value.lastClosed) result.lastClosed = pick(value.lastClosed, ["questionIndex", "questionId", "kind"]);
+  // ONLINE-O2 ready-ACK receipt: the server's per-question acknowledgement only.
+  if (value.readyAck) result.readyAck = pick(value.readyAck, ["schemaVersion", "questionIndex", "windowId", "questionId",
+    "issuedAtMs", "answerDeadlineMs", "ackedAtMs"]);
   if (value.result) result.result = pick(value.result, ["percentScore", "elapsedMs", "completedAtMs"]);
   // UX-O4/access: the minted competition link token passes to the client ONLY inside the
   // organizer's CREATE response (and that organizer's receipt replays of it). Every other
@@ -145,9 +155,10 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
   }
   async function session(uid, payload) {
     auth(uid); const at = now(); // First server arrival, BEFORE asynchronous binding/key reads.
-    if (!["ANSWER", "ADVANCE", "READ"].includes(payload?.kind)) fail("INVALID_ARGUMENT");
+    if (!["ANSWER", "ADVANCE", "READY_ACK", "READ"].includes(payload?.kind)) fail("INVALID_ARGUMENT");
     const allowed = ["kind", "sessionId", ...(payload.kind === "READ" ? [] : ["operationId"]),
-      ...(payload.kind === "ANSWER" ? ["questionIndex", "questionId", "answerPayload"] : [])];
+      ...(payload.kind === "ANSWER" ? ["questionIndex", "questionId", "answerPayload"] : []),
+      ...(payload.kind === "READY_ACK" ? ["questionIndex", "windowId"] : [])];
     only(payload, allowed); sessionIdentifier(payload.sessionId);
     if (payload.kind === "READ") return readSessionAt(uid, {sessionId: payload.sessionId}, at);
     clientId(payload.operationId);
@@ -226,14 +237,19 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
       const payload = {kind: "ADVANCE", ownerUid: stored.uid, operationId, sessionId: stored.sessionId, formFingerprint: stored.formFingerprint};
       const snapshot = await readTournamentSessionOperation({db, transaction, uid: stored.uid, payload});
       if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
-      const plan = planTournamentSessionOperation({snapshot, now: at});
+      const plan = planTournamentSessionOperation({snapshot, now: at, serverDriven: true});
       if (now() >= deadlineAtMs) return {changed: false, timedOut: true, gap: !!plan.pendingRepair};
       if (plan.pendingRepair) return {changed: false, gap: true, nextDueAtMs: at + bounds.repairRetryMs};
       // A waiting poll MUST NOT acquire this permanent transition ID or mutate clocks.
-      if (plan.response.status === "CURRENT_QUESTION") return {changed: false, nextDueAtMs: Math.min(stored.questionEndsAtMs, stored.endsAtMs)};
+      if (plan.response.status === "CURRENT_QUESTION") {
+        const edge = plan.response.session.window?.state === "OPEN" ? plan.response.session.window.expiresAtMs : null;
+        return {changed: false, nextDueAtMs: edge ?? Math.min(stored.questionEndsAtMs, stored.endsAtMs)};
+      }
       if (now() >= deadlineAtMs) return {changed: false, timedOut: true};
       writeTournamentSessionOperation({db, transaction, plan});
-      return {changed: !plan.replayed, nextDueAtMs: plan.response.session.status === "SETTLED" ? null : plan.response.session.questionEndsAtMs};
+      const view = plan.response.session;
+      return {changed: !plan.replayed, nextDueAtMs: view.status === "SETTLED" ? null
+        : view.window?.state === "OPEN" ? view.window.expiresAtMs : view.questionEndsAtMs};
     });
   }
   async function workerOperation(eventId, kind, requestedMatchId, at, deadlineAtMs = Number.MAX_SAFE_INTEGER) {

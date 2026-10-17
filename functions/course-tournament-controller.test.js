@@ -422,6 +422,72 @@ test("read-only reconnect cannot pause/restart expired question or expose its ne
   assert.deepEqual(f.db.store.get(`${P.sessions}/${sessionId}`), original); assertSafe(view);
 });
 
+// Story 5.6: ONLINE-O1/O2 window — worker never delivers, the read projection resolves a live
+// window, and the sweep settles an expired one at its captured edge.
+test("worker close leaves the window open; readSession delivers it with anchored clocks and redacted view", async () => {
+  const f = fixture(); await f.qualify(); const a = await f.readyBoth();
+  const id = a.sessions[0];
+  f.state.now = f.db.store.get(`${P.sessions}/${id}`).questionEndsAtMs;
+  const firstPass = await f.controller.reconcileEvent(EVENT); // worker closes q0, opens the window undelivered
+  const stored = f.db.store.get(`${P.sessions}/${id}`);
+  assert.equal(stored.window.state, "OPEN"); assert.equal(stored.window.delivery, null);
+  // The sweep reschedules at the window edge, never at the stale question clock (no hot loops).
+  assert.equal(firstPass.nextDueAtMs, stored.window.expiresAtMs);
+  assert.equal(stored.questionIndex, 1);
+  const receiptsAfterClose = workerReceipts(f).length;
+  const waitingPass = await f.controller.reconcileEvent(EVENT); // a waiting worker pass stages nothing new
+  assert.equal(workerReceipts(f).length, receiptsAfterClose);
+  assert.equal(waitingPass.nextDueAtMs, stored.window.expiresAtMs);
+  f.state.now += 5000;
+  const view = await f.controller.readSession(a.pair[0], {sessionId: id});
+  assert.equal(view.currentQuestion.questionId.length, 4);
+  assert.equal(view.session.questionStartedAtMs, f.state.now);
+  assert.equal(view.window.state, "DELIVERED");
+  assertSafe(view);
+  const anchored = f.state.now;
+  f.state.now += 1000;
+  const again = await f.controller.readSession(a.pair[0], {sessionId: id});
+  assert.equal(again.session.questionStartedAtMs, anchored); // never re-anchored
+  assertSafe(again);
+});
+
+test("the sweep settles a match session whose window expired undelivered, at the captured edge", async () => {
+  const f = fixture(); await f.qualify(); const a = await f.readyBoth();
+  const id = a.sessions[0];
+  f.state.now = f.db.store.get(`${P.sessions}/${id}`).questionEndsAtMs;
+  await f.controller.reconcileEvent(EVENT);
+  const edge = f.db.store.get(`${P.sessions}/${id}`).window.expiresAtMs;
+  f.state.now = edge + 1;
+  const result = await f.controller.reconcileEvent(EVENT);
+  assert.equal(result.done, true); // both sessions settle, the match resolves through the bracket
+  const run = f.db.store.get(`${VERIFIED_RUNS}/${id}`);
+  assert.equal(run.completedAtMs, edge); // the captured edge, never the sweep moment
+  const forced = f.db.store.get(`${P.sessions}/${id}/answers/01`);
+  assert.equal(forced.kind, "FORCED_CUTOFF");
+  assert.equal(forced.closedAtMs, edge);
+  assert.equal(forced.wasShown, false);
+});
+
+test("ready-ACK through the public session callable receipts idempotently and redacted", async () => {
+  const f = fixture(); await f.create();
+  const start = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"});
+  const sessionId = start.session.sessionId;
+  const view = await f.controller.readSession("alice", {sessionId});
+  await f.controller.session("alice", {kind: "ANSWER", operationId: f.id(), sessionId, questionIndex: 0,
+    questionId: view.currentQuestion.questionId, answerPayload: {type: "single-choice", selected: "a"}});
+  const windowId = f.db.store.get(`${P.sessions}/${sessionId}`).window.windowId;
+  const ack = {kind: "READY_ACK", operationId: f.id(), sessionId, questionIndex: 1, windowId};
+  const first = await f.controller.session("alice", ack);
+  assert.equal(first.status, "READY_ACK");
+  assert.equal(first.readyAck.windowId, windowId);
+  assert.equal(first.readyAck.questionIndex, 1);
+  assertSafe(first);
+  assert.deepEqual((await f.controller.session("alice", {...ack, operationId: f.id()})).readyAck, first.readyAck);
+  await error(() => f.controller.session("alice", {...ack, operationId: f.id(), questionIndex: 0}), "INVALID_ARGUMENT");
+  await error(() => f.controller.session("bob", {...ack, operationId: f.id()}), "PERMISSION_DENIED");
+  await error(() => f.controller.session("alice", {kind: "READY_ACK", operationId: f.id(), sessionId, questionIndex: 1, windowId: "win_000000000000", extra: 1}), "INVALID_ARGUMENT");
+});
+
 async function admitRounds(f, players, rounds) {
   await f.create();
   for (const uid of players) for (let roundNumber = 1; roundNumber <= rounds; roundNumber++) {

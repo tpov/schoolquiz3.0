@@ -5,6 +5,10 @@ const {DOCUMENT_VERSION} = require("./question-key-store");
 const {restoreContent, redact} = require("./question-redaction");
 const {TOURNAMENT_PATHS} = require("./tournament-service");
 const {tournamentDigest: digest, canonicalTournamentJson: canonical} = require("./tournament-bank");
+// ONLINE-O2 window mechanics, composed read-only (the adopted O2 module is never edited by this
+// adapter): the shared 60-second constant, the window states and the deterministic windowId mint.
+const {WINDOW_OPEN, WINDOW_DELIVERED, WINDOW_EXPIRED, NEXT_QUESTION_WINDOW_SECONDS, MS_PER_SECOND,
+  mintWindowId} = require("./lesson-question-window");
 
 const SESSION_OPERATIONS = "course_tournament_session_operations";
 const SESSION_INGRESS = "course_tournament_answer_ingress";
@@ -34,10 +38,11 @@ function sessionId(value) {
 }
 function normalizeSessionRequest(uid, raw) {
   owner(uid);
-  if (!raw || !["ANSWER", "ADVANCE"].includes(raw.kind)) fail("INVALID_ARGUMENT", "Unknown session operation");
+  if (!raw || !["ANSWER", "ADVANCE", "READY_ACK"].includes(raw.kind)) fail("INVALID_ARGUMENT", "Unknown session operation");
   if (raw.ownerUid !== uid) fail("PERMISSION_DENIED", "Operation belongs to another account");
   const allowed = ["kind", "ownerUid", "operationId", "sessionId", "formFingerprint",
-    ...(raw.kind === "ANSWER" ? ["questionIndex", "questionId", "answerPayload"] : [])];
+    ...(raw.kind === "ANSWER" ? ["questionIndex", "questionId", "answerPayload"] : []),
+    ...(raw.kind === "READY_ACK" ? ["questionIndex", "windowId"] : [])];
   if (Object.keys(raw).some(key => !allowed.includes(key))) fail("INVALID_ARGUMENT", "Client scores, clocks and unsupported fields are not accepted");
   if (!/^[a-f0-9]{64}$/.test(raw.formFingerprint || "")) fail("INVALID_ARGUMENT", "Immutable form fingerprint required");
   const request = {kind: raw.kind, ownerUid: uid, operationId: operationId(raw.operationId), sessionId: sessionId(raw.sessionId), formFingerprint: raw.formFingerprint};
@@ -48,6 +53,14 @@ function normalizeSessionRequest(uid, raw) {
     request.questionId = raw.questionId;
     request.answerPayload = structuredClone(raw.answerPayload);
     if (Buffer.byteLength(canonical(request.answerPayload)) > MAX_ANSWER_BYTES) fail("INVALID_ARGUMENT", "Answer exceeds storage budget");
+  }
+  if (request.kind === "READY_ACK") {
+    // A8/D6: the receipt key is (session identity, questionIndex, windowId) and exists only for
+    // window-delivered questions 1..19; question 0 has no ACK path (start contract).
+    request.questionIndex = exact(raw.questionIndex, "questionIndex");
+    if (request.questionIndex < 1 || request.questionIndex >= QUESTION_COUNT) fail("INVALID_ARGUMENT", "Ready-ACK exists only for window-delivered questions");
+    if (typeof raw.windowId !== "string" || !/^win_[a-f0-9]{12}$/.test(raw.windowId)) fail("INVALID_ARGUMENT", "Ready-ACK window identity required");
+    request.windowId = raw.windowId;
   }
   return request;
 }
@@ -134,12 +147,19 @@ function scoreForm(snapshot, slots) {
   return scored;
 }
 function responseFor(request, session, form, now, status, lastClosed = null, run = null) {
+  // A4/D5: before a delivery there is no active question. While the boundary window is OPEN the
+  // stored question clocks belong to the already-closed question, so the min-rule alone would be
+  // incidental; the delivery state is required explicitly.
+  const delivered = !session.window || session.window.state !== WINDOW_OPEN;
   return {schemaVersion: 1, ownerUid: session.uid, operationId: request.operationId, status,
     session: {sessionId: session.sessionId, eventId: session.eventId, formId: session.formId, formFingerprint: session.formFingerprint,
       kind: session.kind, status: session.status, questionIndex: session.questionIndex, startedAtMs: session.startedAtMs, endsAtMs: session.endsAtMs,
-      questionStartedAtMs: session.questionStartedAtMs, questionEndsAtMs: session.questionEndsAtMs},
+      questionStartedAtMs: session.questionStartedAtMs, questionEndsAtMs: session.questionEndsAtMs,
+      ...(session.window ? {window: {windowId: session.window.windowId, completedQuestionIndex: session.window.completedQuestionIndex,
+        nextQuestionIndex: session.window.nextQuestionIndex, windowSeconds: session.window.windowSeconds,
+        openedAtMs: session.window.openedAtMs, expiresAtMs: session.window.expiresAtMs, state: session.window.state}} : {})},
     serverNowMs: now,
-    currentQuestion: session.status === "STARTED" && now < Math.min(session.questionEndsAtMs, session.endsAtMs) ? form.questions[session.questionIndex] : null,
+    currentQuestion: session.status === "STARTED" && delivered && now < Math.min(session.questionEndsAtMs, session.endsAtMs) ? form.questions[session.questionIndex] : null,
     // Other contestants may still be answering the common form. Acknowledge the slot without
     // disclosing its grading, even after this player finishes; the full proof stays server-only.
     ...(lastClosed ? {lastClosed: {questionIndex: lastClosed.questionIndex, questionId: lastClosed.questionId, kind: lastClosed.kind}} : {}),
@@ -151,8 +171,77 @@ function responseReceipt(request, response, now) {
     fingerprint: digest(request), createdAtMs: now, response};
 }
 
-/** Pure bounded state machine. Missing keys yields a durable valid ingress, not an invented score. */
-function planTournamentSessionOperation({snapshot, now}) {
+// --- ONLINE-O1/O2 next-question window (Appendix A1-A4, A8; D3/D4/D5/D6) ---
+
+/** The captured per-boundary window state (D3): identity `(sessionId, completedQuestionIndex)`
+ * via the shared O2 mint, config captured once at open — the 60-second server constant capped by
+ * the envelope remainder (never silently: the captured windowSeconds and the clamped edge are the
+ * published facts) — and persisted openedAtMs/expiresAtMs so a crash-recovery sweep recomputes the
+ * same edge. Windows exist only at boundaries 1..19: question 0 arrives by the start contract and
+ * the last close settles without a window (D6, O2 §3).
+ */
+function openTournamentQuestionWindow({session, form, completedQuestionIndex, openedAtMs}) {
+  const nextQuestion = form.questions[completedQuestionIndex + 1];
+  const remainderMs = session.endsAtMs - openedAtMs; // Caller guarantees a positive remainder.
+  // Ceil keeps a window alive for any positive remainder; `expiresAtMs` (clamped exactly to the
+  // envelope edge) is the authoritative lifetime — windowSeconds is the coarse captured constant
+  // and may overstate by under a second. A non-positive remainder never reaches this function.
+  const windowSeconds = Math.min(NEXT_QUESTION_WINDOW_SECONDS, Math.ceil(remainderMs / MS_PER_SECOND));
+  return {schemaVersion: 1, windowId: mintWindowId(session.sessionId, completedQuestionIndex),
+    completedQuestionIndex, nextQuestionIndex: completedQuestionIndex + 1, nextQuestionId: nextQuestion.questionId,
+    nextQuestionMaxDurationMs: nextQuestion.maxDurationMs, windowSeconds, formFingerprint: session.formFingerprint,
+    endsAtMs: session.endsAtMs, openedAtMs, expiresAtMs: Math.min(openedAtMs + windowSeconds * MS_PER_SECOND, session.endsAtMs),
+    state: WINDOW_OPEN, delivery: null, closedAtMs: null, closedReason: null};
+}
+
+/** Delivery anchors the delivered question's clocks exactly once (D4, O2 §5): the existing clamp
+ * formula is kept, only `now` becomes the server delivery moment inside the window. A stored
+ * window that disagrees with the served question is a server gap, never a second anchor.
+ */
+function deliverTournamentQuestionWindow(session, form, deliveredAtMs) {
+  const window = session.window;
+  const question = form.questions[session.questionIndex];
+  if (!window || window.state !== WINDOW_OPEN || window.nextQuestionIndex !== session.questionIndex ||
+      window.nextQuestionId !== question.questionId || window.formFingerprint !== session.formFingerprint) {
+    gap("Session window state is malformed");
+  }
+  session.questionStartedAtMs = deliveredAtMs;
+  session.questionEndsAtMs = Math.min(add(deliveredAtMs, question.maxDurationMs), session.endsAtMs);
+  window.state = WINDOW_DELIVERED;
+  window.delivery = {questionIndex: session.questionIndex, questionId: question.questionId, deliveredAtMs};
+}
+
+/** Validation of the stored window at the session's current boundary. STARTED sessions can carry
+ * only the live boundary window (each close either replaces it or settles); anything else is a
+ * server gap. The captured envelope edge must equal the session's immutable endsAtMs (D1). */
+function checkedBoundaryWindow(session, form) {
+  const window = session.window;
+  if (!window || session.status !== "STARTED") return null; // A settled session's window is history.
+  const question = form.questions[session.questionIndex];
+  if (window.schemaVersion !== 1 || window.completedQuestionIndex !== session.questionIndex - 1 ||
+      window.nextQuestionIndex !== session.questionIndex || window.nextQuestionId !== question.questionId ||
+      window.formFingerprint !== session.formFingerprint || window.endsAtMs !== session.endsAtMs ||
+      !Number.isSafeInteger(window.openedAtMs) || !Number.isSafeInteger(window.expiresAtMs) ||
+      window.openedAtMs < session.startedAtMs || window.expiresAtMs <= window.openedAtMs || window.expiresAtMs > session.endsAtMs ||
+      !Number.isSafeInteger(window.windowSeconds) || window.windowSeconds < 1 || window.windowSeconds > NEXT_QUESTION_WINDOW_SECONDS ||
+      ![WINDOW_OPEN, WINDOW_DELIVERED].includes(window.state)) {
+    gap("Session window state is malformed");
+  }
+  if (window.state === WINDOW_DELIVERED &&
+      (!window.delivery || window.delivery.questionIndex !== session.questionIndex || window.delivery.questionId !== question.questionId ||
+       !Number.isSafeInteger(window.delivery.deliveredAtMs) || window.delivery.deliveredAtMs < window.openedAtMs ||
+       window.delivery.deliveredAtMs >= window.expiresAtMs || session.questionStartedAtMs !== window.delivery.deliveredAtMs)) {
+    gap("Session window delivery state is malformed");
+  }
+  return window;
+}
+
+/** Pure bounded state machine. Missing keys yields a durable valid ingress, not an invented score.
+ * `serverDriven` marks a worker/controlled-tick driver (AD-23): it closes and settles but never
+ * delivers — the window stays OPEN until a client-driven operation or the read path delivers, and
+ * an expired window terminates the attempt at its captured edge from either side (D4/A3/A4).
+ */
+function planTournamentSessionOperation({snapshot, now, serverDriven = false}) {
   exact(now, "server time");
   if (snapshot.replay) return {replayed: true, response: snapshot.replay, writes: []};
   const {request, session: saved} = snapshot;
@@ -181,8 +270,55 @@ function planTournamentSessionOperation({snapshot, now}) {
     fail("QUESTION_ALREADY_CLOSED", "An answer can target only the current uncommitted question; old answers never move to the next question");
   }
   if (request.kind === "ANSWER" && request.questionId !== form.questions[session.questionIndex].questionId) fail("CONFLICTING_REPLAY", "Answer is bound to a different question");
+  const boundary = checkedBoundaryWindow(session, form);
   const staged = new Map();
   function stage(path, data, create = false) { staged.set(path, {path, data, create: create || staged.get(path)?.create || false}); }
+  if (request.kind === "READY_ACK") {
+    // A8: the ACK is a per-question receipt over an already-delivered window. It never anchors,
+    // restarts or extends a deadline, and it changes no slot, clock or score (D5/O2 §4).
+    const stored = session.readyAcks?.[request.questionIndex] ?? null;
+    if (stored) {
+      if (stored.schemaVersion !== 1 || stored.questionIndex !== request.questionIndex || stored.windowId !== request.windowId) {
+        fail("CONFLICTING_REPLAY", "Ready-ACK key is already bound to another receipt");
+      }
+      const response = {...responseFor(request, session, form, at, "READY_ACK"), readyAck: stored};
+      stage(opPath(request.operationId), responseReceipt(request, response, at), true);
+      return {replayed: false, response, writes: [...staged.values()]};
+    }
+    if (session.status !== "STARTED" || !boundary || boundary.state !== WINDOW_DELIVERED || !boundary.delivery ||
+        boundary.windowId !== request.windowId || boundary.delivery.questionIndex !== request.questionIndex) {
+      fail("FAILED_PRECONDITION", "Ready-ACK does not match a delivered question");
+    }
+    if (at >= Math.min(session.questionEndsAtMs, session.endsAtMs)) {
+      fail("FAILED_PRECONDITION", "Ready-ACK after the answer deadline");
+    }
+    const receipt = {schemaVersion: 1, questionIndex: request.questionIndex, windowId: boundary.windowId,
+      questionId: boundary.delivery.questionId, issuedAtMs: boundary.delivery.deliveredAtMs,
+      answerDeadlineMs: session.questionEndsAtMs, ackedAtMs: at};
+    session.readyAcks = {...(session.readyAcks || {}), [request.questionIndex]: receipt};
+    const response = {...responseFor(request, session, form, at, "READY_ACK"), readyAck: receipt};
+    stage(sessionPath(session.sessionId), session);
+    stage(opPath(request.operationId), responseReceipt(request, response, at), true);
+    return {replayed: false, response, writes: [...staged.values()]};
+  }
+  const closed = [];
+  const initialIndex = session.questionIndex;
+  // Captured before any verdict mutates the window: the entry question was shown to the player
+  // unless it is still an undelivered window question at ENTRY. A client ANSWER racing an
+  // undelivered window delivers first in the same operation, so the question WAS shown; the
+  // delivery flag below is re-computed after that delivery.
+  let undeliveredAtEntry = !!(boundary && boundary.state === WINDOW_OPEN);
+  let answerRequest = request.kind === "ANSWER" ? request : null;
+  let ingress = snapshot.ownIngress;
+  let firstReceivedAt = at;
+  function close(kind, closedAtMs, answer = null) {
+    const index = session.questionIndex;
+    const row = {schemaVersion: 1, uid: session.uid, eventId: session.eventId, sessionId: session.sessionId,
+      formId: session.formId, formFingerprint: session.formFingerprint, questionIndex: index, questionId: form.questions[index].questionId,
+      kind, wasShown: index === initialIndex && !undeliveredAtEntry, closedAtMs, receivedAtMs: answer ? firstReceivedAt : null,
+      answerOperationId: answer ? answer.operationId : null, answerPayload: answer ? answer.answerPayload : null};
+    slots[index] = row; closed.push(row); session.questionIndex++;
+  }
   if (session.status === "SETTLED") {
     const run = snapshot.verifiedRun;
     if (!run || run.uid !== session.uid || run.sessionId !== session.sessionId || run.formFingerprint !== session.formFingerprint || run.codeAnswer !== priorDigits) gap("Settled session has no matching verified run");
@@ -193,9 +329,25 @@ function planTournamentSessionOperation({snapshot, now}) {
   if (!Number.isSafeInteger(session.questionStartedAtMs) || !Number.isSafeInteger(session.questionEndsAtMs) ||
       session.questionStartedAtMs < session.startedAtMs || session.questionEndsAtMs <= session.questionStartedAtMs || session.questionEndsAtMs > session.endsAtMs) gap("Current question clock is malformed");
 
-  let answerRequest = request.kind === "ANSWER" ? request : null;
-  let ingress = snapshot.ownIngress;
-  let firstReceivedAt = at;
+  // A3/A4/D4: resolve the boundary window before any answer/advance logic. The window edge is a
+  // terminal edge — the verdict closes from the delivery side exactly as the worker sweep closes
+  // from the other, both writing the same captured-edge state (closedAtMs = captured edge, never
+  // the observation moment). A worker pass never delivers: before a client-driven delivery (or
+  // the read path) there is no active question, and a waiting worker stages nothing.
+  if (boundary && boundary.state === WINDOW_OPEN) {
+    if (at >= boundary.expiresAtMs) {
+      boundary.state = WINDOW_EXPIRED; boundary.closedAtMs = boundary.expiresAtMs; boundary.closedReason = "WINDOW_EXPIRED";
+      while (session.questionIndex < QUESTION_COUNT) close("FORCED_CUTOFF", boundary.expiresAtMs);
+    } else if (serverDriven) {
+      const response = responseFor(request, session, form, at, "CURRENT_QUESTION");
+      return {replayed: false, response, writes: []};
+    } else {
+      deliverTournamentQuestionWindow(session, form, at);
+      // The entry question has now been shown by this very operation: a same-operation ANSWER
+      // on the delivered question must record wasShown true (client-race case).
+      undeliveredAtEntry = false;
+    }
+  }
   if (session.pendingAnswerOperationId) {
     const pending = snapshot.pendingIngress;
     if (!pending || snapshot.pendingReceipt || pending.schemaVersion !== 1 || pending.status !== "PENDING" ||
@@ -214,18 +366,10 @@ function planTournamentSessionOperation({snapshot, now}) {
   const timely = answerRequest && firstReceivedAt >= session.questionStartedAtMs && firstReceivedAt < Math.min(session.questionEndsAtMs, session.endsAtMs);
   const newIngress = timely && !ingress ? {schemaVersion: 1, uid: session.uid, operationId: answerRequest.operationId,
     sessionId: session.sessionId, fingerprint: digest(answerRequest), request: answerRequest, firstReceivedAtMs: firstReceivedAt, status: "PENDING"} : null;
-  const closed = [];
-  const initialIndex = session.questionIndex;
-  function close(kind, closedAtMs, answer = null) {
-    const index = session.questionIndex;
-    const row = {schemaVersion: 1, uid: session.uid, eventId: session.eventId, sessionId: session.sessionId,
-      formId: session.formId, formFingerprint: session.formFingerprint, questionIndex: index, questionId: form.questions[index].questionId,
-      kind, wasShown: index === initialIndex, closedAtMs, receivedAtMs: answer ? firstReceivedAt : null,
-      answerOperationId: answer ? answer.operationId : null, answerPayload: answer ? answer.answerPayload : null};
-    slots[index] = row; closed.push(row); session.questionIndex++;
-  }
   if (timely) close("ANSWER", firstReceivedAt, answerRequest);
-  else if (at >= session.questionEndsAtMs) close("TIMEOUT", session.questionEndsAtMs);
+  // A window-expiry termination above has already closed every position at the captured edge;
+  // no timeout close may then fire beyond the served prefix.
+  else if (session.questionIndex < QUESTION_COUNT && at >= session.questionEndsAtMs) close("TIMEOUT", session.questionEndsAtMs);
   if (at >= session.endsAtMs) while (session.questionIndex < QUESTION_COUNT) close("FORCED_CUTOFF", session.endsAtMs);
   let scored;
   try {
@@ -244,9 +388,27 @@ function planTournamentSessionOperation({snapshot, now}) {
   session.scoreDigits = scored.codeAnswer.slice(0, session.questionIndex);
   session.lastProgressAtMs = at;
   delete session.pendingAnswerOperationId;
-  if (closed.length && session.questionIndex < QUESTION_COUNT) {
-    session.questionStartedAtMs = at;
-    session.questionEndsAtMs = Math.min(add(at, form.questions[session.questionIndex].maxDurationMs), session.endsAtMs);
+  // A1/A2 (D3): a close inside the envelope opens the next question's window with the captured
+  // config instead of seeding its clocks. A client-driven closing operation's response IS the
+  // delivery, so the clocks anchor at `at` exactly as before; a worker close leaves the window
+  // OPEN for the client to claim (D4). At the envelope edge (remainder <= 0) no window opens —
+  // the envelope sweep above has already terminated the attempt (D3/D4, matrix "zero remainder").
+  if (closed.length && session.questionIndex < QUESTION_COUNT && session.endsAtMs > at) {
+    const opened = openTournamentQuestionWindow({session, form, completedQuestionIndex: session.questionIndex - 1, openedAtMs: at});
+    if (!opened) {
+      // Sub-second remainder: no waiting window exists. A client-driven close IS the delivery —
+      // clocks anchor at `at` with the envelope clamp (the shortened-last-question semantics);
+      // a worker close cannot be claimed, so the attempt terminates at the envelope edge (D4).
+      if (!serverDriven) {
+        session.questionStartedAtMs = at;
+        session.questionEndsAtMs = Math.min(add(at, form.questions[session.questionIndex].maxDurationMs), session.endsAtMs);
+      } else {
+        while (session.questionIndex < QUESTION_COUNT) close("FORCED_CUTOFF", session.endsAtMs);
+      }
+    } else {
+      session.window = opened;
+      if (!serverDriven) deliverTournamentQuestionWindow(session, form, at);
+    }
   }
   let run = null;
   if (session.questionIndex === QUESTION_COUNT) {
@@ -280,12 +442,14 @@ function writeTournamentSessionOperation({db, transaction, plan}) {
     else transaction.set(db.doc(write.path), write.data);
   }
 }
-async function applyTournamentSessionOperation({db, uid, payload, now}) {
+/** Client mutation entry. `serverDriven` is a trusted controller input like `now`; client callables
+ * never set it. */
+async function applyTournamentSessionOperation({db, uid, payload, now, serverDriven = false}) {
   let plan;
   try {
     plan = await db.runTransaction(async transaction => {
       const snapshot = await readTournamentSessionOperation({db, transaction, uid, payload});
-      const planned = planTournamentSessionOperation({snapshot, now});
+      const planned = planTournamentSessionOperation({snapshot, now, serverDriven});
       writeTournamentSessionOperation({db, transaction, plan: planned}); return planned;
     });
   } catch (error) {
@@ -296,16 +460,19 @@ async function applyTournamentSessionOperation({db, uid, payload, now}) {
   return plan.response;
 }
 
-/** SERVER WORKER ONLY. Never expose as an unauthenticated callable or accept a claimed uid. */
+/** SERVER WORKER ONLY. Never expose as an unauthenticated callable or accept a claimed uid.
+ * Server-driven (AD-23): closes, terminates expired windows and settles, but never delivers.
+ */
 async function advanceTournamentSession({db, sessionId: id, operationId: idempotencyId, now}) {
   sessionId(id); operationId(idempotencyId);
   const snapshot = await db.doc(sessionPath(id)).get();
   if (!snapshot.exists) fail("NOT_FOUND", "Tournament session not found");
   const session = snapshot.data();
-  return applyTournamentSessionOperation({db, uid: session.uid, now,
+  return applyTournamentSessionOperation({db, uid: session.uid, now, serverDriven: true,
     payload: {kind: "ADVANCE", ownerUid: session.uid, operationId: idempotencyId, sessionId: id, formFingerprint: session.formFingerprint}});
 }
 
 module.exports = {SESSION_OPERATIONS, SESSION_INGRESS, VERIFIED_RUNS, VERIFICATION_VERSION, QUESTION_COUNT, MAX_ANSWER_BYTES,
   normalizeSessionRequest, readTournamentSessionOperation, planTournamentSessionOperation, writeTournamentSessionOperation,
-  applyTournamentSessionOperation, advanceTournamentSession};
+  applyTournamentSessionOperation, advanceTournamentSession, openTournamentQuestionWindow, deliverTournamentQuestionWindow,
+  checkedBoundaryWindow};

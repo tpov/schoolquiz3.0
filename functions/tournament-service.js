@@ -8,6 +8,7 @@ const {canonicalTournamentJson: canonical, tournamentDigest: digest,
 const {readPremiumEconomy, planPremiumEconomy, writePremiumEconomy, PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
 const {ECONOMY_CONSTANTS_DOC, readEconomyConstants} = require("./economy-constants");
 const {CURRENCY, REASON, LEDGER_PATH, ledgerEntry} = require("./currency-ledger");
+const {WINDOW_OPEN} = require("./lesson-question-window");
 
 // All these collections are server-only, including redacted forms BEFORE their session starts.
 // A callable returns an allowlisted session view, never an entire event/private snapshot.
@@ -496,24 +497,48 @@ async function applyTournamentOperation({db, uid, payload, now, dependencies = {
   fail("UNAVAILABLE", "Premium catch-up made durable progress; retry the same tournament operation id");
 }
 
-/** Read-only reconnect. Returns the SAME server clocks and saved progress, never restarts them.
+/** Reconnect read. Returns the SAME server clocks and saved progress, never restarts them.
  * Root's subsequent answer-submit adapter owns progress/scoring and must share these deadlines.
+ * A4/D4: the read resolves a live (open, unexpired) boundary window — its response IS the
+ * delivery, so the delivered question's clocks anchor here exactly once. An expired window is a
+ * terminal edge owned by the mutation/sweep drivers (reads never close questions): the read only
+ * refuses to show an undelivered question and reports the window state.
  */
 async function readTournamentSession({db, transaction, uid, sessionId, now}) {
   uidValue(uid); nonblank(sessionId, "sessionId"); exact(now, "server time");
   if (!/^[qm]_[a-f0-9]{64}$/.test(sessionId)) fail("INVALID_ARGUMENT", "Invalid server session id");
   const saved = await transaction.get(db.doc(sessionPath(sessionId)));
   if (!saved.exists) fail("NOT_FOUND", "Tournament session not found");
-  const session = saved.data();
+  const session = structuredClone(saved.data());
   if (session.uid !== uid) fail("PERMISSION_DENIED", "Tournament session belongs to another account");
   if (session.sessionId !== sessionId || now < session.startedAtMs) fail("FAILED_PRECONDITION", "Session has not started");
   const storedForm = await transaction.get(db.doc(formPath(session.eventId, session.formId)));
   const form = storedForm.exists ? storedForm.data() : null;
   if (!form || form.fingerprint !== session.formFingerprint) fail("INCONSISTENT_SESSION", "Immutable form is unavailable");
+  const window = session.status === "STARTED" && session.window && session.window.schemaVersion === 1 &&
+    session.window.state === WINDOW_OPEN && session.window.completedQuestionIndex === session.questionIndex - 1 ? session.window : null;
+  let deliveredNow = false;
+  if (window) {
+    // Lazy require: tournament-session requires this module's TOURNAMENT_PATHS, so the only cycle
+    // edge back into it must not run at module-load time.
+    const {deliverTournamentQuestionWindow} = require("./tournament-session");
+    const at = Math.max(now, exact(session.lastProgressAtMs ?? session.startedAtMs, "progress clock"));
+    if (at < window.expiresAtMs) {
+      deliverTournamentQuestionWindow(session, form, at);
+      session.lastProgressAtMs = at;
+      transaction.set(db.doc(sessionPath(sessionId)), session);
+      deliveredNow = true;
+    }
+  }
+  const delivered = !session.window || session.window.state !== WINDOW_OPEN;
   return {session: sessionView(session), serverNowMs: now, deadlineReached: now >= session.endsAtMs,
     questionDeadlineReached: now >= session.questionEndsAtMs,
+    ...(session.window ? {window: {windowId: session.window.windowId, completedQuestionIndex: session.window.completedQuestionIndex,
+      nextQuestionIndex: session.window.nextQuestionIndex, windowSeconds: session.window.windowSeconds,
+      openedAtMs: session.window.openedAtMs, expiresAtMs: session.window.expiresAtMs, state: session.window.state}} : {}),
+    ...(deliveredNow ? {deliveredNowMs: session.questionStartedAtMs} : {}),
     // Returning only the current redacted question avoids fetching the future answer schedule.
-    question: session.status === "STARTED" && now < Math.min(session.endsAtMs, session.questionEndsAtMs) ? form.questions[session.questionIndex] || null : null};
+    question: session.status === "STARTED" && delivered && now < Math.min(session.endsAtMs, session.questionEndsAtMs) ? form.questions[session.questionIndex] || null : null};
 }
 
 module.exports = {TOURNAMENT_PATHS, KINDS, MAX_DOCUMENT_JSON_BYTES, MAX_TRANSACTION_JSON_BYTES,

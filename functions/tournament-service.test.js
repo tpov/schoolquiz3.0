@@ -864,6 +864,74 @@ test("legacy publication stays fenced after selection while the versioned CLOSE 
   assert.equal(event(f).qualificationRanking.calculationContractDigest, f.state.rankingOverride.calculationContractDigest);
 });
 
+// Story 5.6: ONLINE-O1/O2 next-question window — read-path resolution (A4) and the D2/D3 pins.
+const SESSION_NOW = T + 100;
+
+async function startedQualification(f, attemptId, start = SESSION_NOW) {
+  const started = await f.call("START_QUALIFICATION", "alice", start, {roundNumber: 1, attemptId});
+  return {id: started.session.sessionId, fingerprint: started.session.formFingerprint,
+    endsAtMs: started.session.endsAtMs, form: event(f).qualificationForms[0]};
+}
+
+test("mid-window reconnect delivers from the read path and never restarts the clocks", async () => {
+  const f = fixture(); await f.create();
+  const {id, form} = await startedQualification(f, "attempt_window_00000001");
+  // The worker closes q0 at its deadline; the window opens UNDELIVERED (server-driven, AD-23).
+  await advanceTournamentSession({db: f.db, sessionId: id, operationId: "worker_read_close_0000001", now: SESSION_NOW + 60_000});
+  const stored = f.db.store.get(`${P.sessions}/${id}`);
+  assert.equal(stored.window.state, "OPEN");
+  assert.equal(stored.window.expiresAtMs, SESSION_NOW + 120_000);
+  const read = now => f.db.runTransaction(transaction => readTournamentSession({db: f.db, transaction, uid: "alice", sessionId: id, now}));
+  const reconnected = await read(SESSION_NOW + 65_000);
+  assert.equal(reconnected.question.questionId, form.questions[1].questionId);
+  assert.equal(reconnected.session.questionStartedAtMs, SESSION_NOW + 65_000);
+  assert.equal(reconnected.session.questionEndsAtMs, SESSION_NOW + 125_000);
+  assert.equal(reconnected.window.state, "DELIVERED");
+  assert.equal(reconnected.deliveredNowMs, SESSION_NOW + 65_000);
+  assert.ok(!JSON.stringify(reconnected).includes("correctOption"));
+  const again = await read(SESSION_NOW + 66_000);
+  assert.equal(again.session.questionStartedAtMs, SESSION_NOW + 65_000); // never re-anchored
+  assert.equal(again.question.questionId, reconnected.question.questionId);
+  assert.equal(f.db.store.get(`${P.sessions}/${id}`).window.delivery.deliveredAtMs, SESSION_NOW + 65_000);
+});
+
+test("an expired window read shows no question and writes nothing; the sweep settles at the edge", async () => {
+  const f = fixture(); await f.create();
+  const {id} = await startedQualification(f, "attempt_window_00000002");
+  await advanceTournamentSession({db: f.db, sessionId: id, operationId: "worker_read_close_0000002", now: SESSION_NOW + 60_000});
+  const before = structuredClone([...f.db.store]);
+  const late = await f.db.runTransaction(transaction => readTournamentSession({db: f.db, transaction, uid: "alice", sessionId: id, now: SESSION_NOW + 200_000}));
+  assert.equal(late.question, null); // visibility requires delivery; the edge is not a read concern
+  assert.equal(late.window.state, "OPEN");
+  assert.deepEqual([...f.db.store], before); // reads never close questions
+  await advanceTournamentSession({db: f.db, sessionId: id, operationId: "worker_read_edge_00000001", now: SESSION_NOW + 201_000});
+  const run = f.db.store.get(`${VERIFIED_RUNS}/${id}`);
+  assert.equal(run.status, "SETTLED");
+  assert.equal(run.completedAtMs, SESSION_NOW + 120_000); // the captured edge, inside the envelope
+  assert.equal(run.percentScore, 0);
+  const forced = f.db.store.get(`${P.sessions}/${id}/answers/01`);
+  assert.equal(forced.kind, "FORCED_CUTOFF");
+  assert.equal(forced.closedAtMs, SESSION_NOW + 120_000);
+  assert.equal(forced.wasShown, false);
+});
+
+test("a window opened near the cohort cutoff is capped by the envelope and never crosses the cutoff (D2/D3)", async () => {
+  const f = fixture(); await f.create();
+  const cutoff = T + 7 * DAY;
+  const {id} = await startedQualification(f, "attempt_cutoff_0000001", cutoff - 61_000);
+  // The worker closes q0 one second before the cutoff; the captured window is that one second.
+  await advanceTournamentSession({db: f.db, sessionId: id, operationId: "worker_cutoff_close_000001", now: cutoff - 1_000});
+  const stored = f.db.store.get(`${P.sessions}/${id}`);
+  assert.equal(stored.window.windowSeconds, 1);
+  assert.equal(stored.window.expiresAtMs, cutoff);
+  assert.equal(stored.window.state, "OPEN");
+  const swept = await advanceTournamentSession({db: f.db, sessionId: id, operationId: "worker_cutoff_edge_000001", now: cutoff + 500});
+  assert.equal(swept.status, "COMPLETED");
+  const run = f.db.store.get(`${VERIFIED_RUNS}/${id}`);
+  assert.equal(run.completedAtMs, cutoff); // the cohort cutoff pins the terminal edge exactly
+  assert.equal(f.db.store.get(`${P.sessions}/${id}/answers/01`).closedAtMs, cutoff);
+});
+
 (async () => {
   for (const {name, body} of tests) { await body(); console.log(`ok - ${name}`); }
   console.log(`tournament-service: ${tests.length} behavioral tests passed`);
