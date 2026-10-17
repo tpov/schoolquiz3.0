@@ -448,6 +448,7 @@ test("neither ready means DOUBLE_OUT and all unused boxes returned", async () =>
   const result = await f.call("ADVANCE_MATCH", OWNER, slot + 3_600_000, {matchId: m.matchId});
   assert.equal(result.status, "DOUBLE_OUT"); assert.equal(boxes(f, OWNER), 100);
   assert.equal(event(f).progress.placements.length, 0);
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 0, paidBoxes: 0, returnedBoxes: 12});
 });
 
 test("one proposer versus neither/both: coordination deadline applies existing technical policy", async () => {
@@ -505,6 +506,7 @@ test("forged result binding/elapsed is rejected; verified played final pays firs
   assert.equal(final.status, "PLAYED"); assert.equal(boxes(f, "alice"), 5); assert.equal(boxes(f, "bob"), 3); assert.equal(boxes(f, OWNER), 92);
   assert.deepEqual(await invoke(), final); assert.deepEqual([...f.db.store], after);
   await f.call("ADVANCE_MATCH", OWNER, slot + 600, {matchId: m.matchId}); assert.equal(boxes(f, "alice"), 5);
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 0, paidBoxes: 8, returnedBoxes: 4});
   assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${P.funding}/`)).length, 4);
 });
 
@@ -553,6 +555,206 @@ test("payout commit failure cannot split escrow and winner/refund balances", asy
   await assert.rejects(invoke(), /atomic commit failure/); assert.deepEqual([...f.db.store], before);
   await invoke(); assert.equal(boxes(f, "alice"), 5); assert.equal(boxes(f, OWNER), 95);
   assert.equal(event(f).escrow.remainingBoxes, 0);
+});
+
+// Story 5.8: awards/ranking/remainder conservation end-to-end. Every case closes the escrow
+// equation with terminal remaining = 0 and pins per-row receipts at the settlement boundary.
+// The financial terminal state of an event, comparable across independent fixture runs (the
+// random CREATE admission token and its receipt stay out of the comparison on purpose).
+const money = (f) => ({status: event(f).status, escrow: event(f).escrow, settledAtMs: event(f).settledAtMs,
+  boxes: [OWNER, ...f.state.participants].map((uid) => boxes(f, uid)),
+  funding: [...f.db.store].filter(([path]) => path.startsWith(`${P.funding}/`))
+    .map(([path, row]) => [path, row.uid, row.delta, row.kind, row.atMs]),
+  ledger: boxLedger(f).map((row) => [row.id, row.uid, row.delta, row.atMs]),
+  placements: event(f).progress.placements.map((row) => [row.uid, row.rank, row.slot])});
+const prizeReceiptKeys = (f) => [...f.db.store].filter(([path, row]) => path.startsWith(`${P.funding}/`) && row.kind === "PRIZE")
+  .map(([path, row]) => [row.sourceId, row.uid, row.delta]);
+
+test("16 qualifiers play all 15 matches to FINISHED; every row pays exactly once with its own receipt", async () => {
+  const people = Array.from({length: 16}, (_, i) => `player-${String(i).padStart(2, "0")}`);
+  const f = fixture(people); await f.create(); await f.close();
+  const bracket = event(f).bracket;
+  assert.deepEqual(bracket.rounds.map((round) => round.matches.length), [8, 4, 2, 1]);
+  while (event(f).progress.pending.length) {
+    const pending = event(f).progress.pending[0];
+    const match = bracket.rounds.flatMap((round) => round.matches).find((item) => item.matchId === pending.matchId);
+    await play(f, match, pending.entrants.reduce((a, b) => a.seed <= b.seed ? a : b).uid);
+  }
+  assert.equal(event(f).status, "FINISHED");
+  // A full grid: no byes, no technical outcomes — all fifteen matches PLAYED.
+  assert.equal(event(f).progress.resolved.length, 15);
+  assert.ok(event(f).progress.resolved.every((row) => row.status === "PLAYED"));
+  assert.deepEqual(event(f).progress.placements.map((row) => [row.uid, row.rank, row.slot]),
+    [["player-00", 1, "champion"], ["player-01", 2, "runner-up"],
+     ["player-03", 3, "third-upper"], ["player-02", 3, "third-lower"]]);
+  assert.deepEqual(["player-00", "player-01", "player-03", "player-02"].map((uid) => boxes(f, uid)), [5, 3, 1, 1]);
+  assert.equal(people.filter((uid) => !["player-00", "player-01", "player-02", "player-03"].includes(uid))
+    .every((uid) => boxes(f, uid) === 0), true);
+  assert.equal(boxes(f, OWNER), 90);
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 0, paidBoxes: 10, returnedBoxes: 2});
+  // One receipt per row: exactly the four v1 row keys, plus reserve and unused-fund return.
+  const funding = [...f.db.store.keys()].filter((path) => path.startsWith(`${P.funding}/`));
+  assert.equal(funding.length, 6);
+  for (const [place, index] of [[1, 0], [2, 0], [3, 0], [3, 1]]) {
+    assert.ok(funding.includes(`${P.funding}/${digest(JSON.stringify(["tournament", EVENT, "prize", 1, place, index]))}`),
+      `row ${place}/${index}`);
+  }
+  // 3 qualification forms + one shared HARD form per bracket match.
+  assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${E}/forms/`)).length, 18);
+});
+
+test("a FORFEIT final pays the present champion and both played thirds; the absent runner-up's row returns", async () => {
+  const f = fixture(["alice", "bob", "carol", "dave"]); await f.create(); await f.close();
+  await play(f, currentMatch(f, 1, 0), "alice");
+  await play(f, currentMatch(f, 1, 1), "bob");
+  const finalMatch = currentMatch(f, 2, 0);
+  const pair = event(f).progress.pending.find((row) => row.matchId === finalMatch.matchId).entrants.map((row) => row.uid);
+  const slot = await agree(f, finalMatch, ...pair,
+    Math.max(finalMatch.stageStartsAtMs + 10_000, event(f).lastMutationAtMs + 4000));
+  await f.call("READY", pair[0], slot, {matchId: finalMatch.matchId});
+  const result = await f.call("ADVANCE_MATCH", OWNER, slot + 3_600_000, {matchId: finalMatch.matchId});
+  assert.equal(result.status, "FORFEIT");
+  assert.equal(event(f).status, "FINISHED");
+  // D6 row "final FORFEIT": champion plus both PLAYED-semifinal losers; the absent player holds
+  // no placement at all and the runner-up row joins the deposit surplus in the return.
+  assert.deepEqual(event(f).progress.placements.map((row) => [row.uid, row.rank, row.slot]),
+    [["alice", 1, "champion"], ["dave", 3, "third-upper"], ["carol", 3, "third-lower"]]);
+  assert.deepEqual(["alice", "bob", "carol", "dave"].map((uid) => boxes(f, uid)), [5, 0, 1, 1]);
+  assert.equal(boxes(f, OWNER), 93); // 100 funded − 12 reserve + 5 returned
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 0, paidBoxes: 7, returnedBoxes: 5});
+  // Receipt-level pin: one PRIZE receipt per paid row, none for the absent runner-up.
+  const forfeitPrizes = [...f.db.store.values()].filter((row) => row.kind === "PRIZE");
+  assert.equal(forfeitPrizes.length, 3);
+  assert.ok(forfeitPrizes.every((row) => row.uid !== "bob"));
+});
+
+test("a DOUBLE_OUT semifinal sends the survivor to a BYE final; the vanished slot's row returns", async () => {
+  const f = fixture(["alice", "bob", "carol", "dave"]); await f.create(); await f.close();
+  // The played semifinal first: after the technical ADVANCE the stage's scheduling deadline has
+  // passed, so the surviving semifinal must already be resolved when the DOUBLE_OUT lands.
+  await play(f, currentMatch(f, 1, 1), "bob");
+  assert.equal(event(f).status, "BRACKET");
+  const dead = currentMatch(f, 1, 0);
+  const result = await f.call("ADVANCE_MATCH", OWNER, dead.coordinationDeadlineMs, {matchId: dead.matchId});
+  assert.equal(result.status, "DOUBLE_OUT");
+  // Resolving the last feeder settles the event in the same operation: the final is a BYE for
+  // the survivor (D6 — no played final, no runner-up, the vanished slot's row returns).
+  assert.equal(event(f).status, "FINISHED");
+  assert.equal(event(f).progress.resolved.at(-1).status, "BYE");
+  assert.deepEqual(event(f).progress.placements.map((row) => [row.uid, row.rank, row.slot]),
+    [["bob", 1, "champion"], ["carol", 3, "third-lower"]]);
+  assert.deepEqual(["alice", "bob", "carol", "dave"].map((uid) => boxes(f, uid)), [0, 5, 1, 0]);
+  assert.equal(boxes(f, OWNER), 94); // 100 funded − 12 reserve + 6 returned
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 0, paidBoxes: 6, returnedBoxes: 6});
+  const doubleOutPrizes = [...f.db.store.values()].filter((row) => row.kind === "PRIZE");
+  assert.equal(doubleOutPrizes.length, 2);
+  assert.ok(doubleOutPrizes.every((row) => !["alice", "dave"].includes(row.uid)));
+});
+
+test("played-final settlement commit failure is atomic; the same id retries exactly once to the uninterrupted terminal state", async () => {
+  // Two independent runs of one identical bracket; the settling operation carries the same
+  // operation id, server seed and wall-clock times in both.
+  const drive = async () => {
+    const f = fixture(["alice", "bob", "carol", "dave"]); await f.create(); await f.close();
+    await play(f, currentMatch(f, 1, 0), "alice");
+    await play(f, currentMatch(f, 1, 1), "bob");
+    const m = currentMatch(f, 2, 0);
+    const pair = event(f).progress.pending.find((row) => row.matchId === m.matchId).entrants.map((row) => row.uid);
+    const slot = await agree(f, m, ...pair, Math.max(m.stageStartsAtMs + 10_000, event(f).lastMutationAtMs + 4000));
+    await f.call("READY", pair[0], slot, {matchId: m.matchId});
+    const ready = await f.call("READY", pair[1], slot + 20, {matchId: m.matchId});
+    assert.equal(ready.status, "STARTED");
+    const start = ready.meeting.startedAtMs;
+    f.state.results.set(m.matchId, pair.map((uid) => ({uid, status: "SETTLED", eventId: EVENT, matchId: m.matchId,
+      sessionId: matchSessionId(EVENT, m.matchId, uid), formFingerprint: m.sharedForm.fingerprint,
+      verificationVersion: "server-assessment-v1", percentScore: uid === "alice" ? 90 : 80,
+      elapsedMs: 1000, completedAtMs: start + 1000})));
+    const payload = f.payload("ADVANCE_MATCH", OWNER, {matchId: m.matchId});
+    const invoke = () => apply({db: f.db, uid: OWNER, payload, now: start + 1000, dependencies: f.dependencies, serverSeed: SEED});
+    return {f, invoke};
+  };
+  const twin = await drive(); await twin.invoke();
+  assert.equal(event(twin.f).status, "FINISHED");
+  const terminal = money(twin.f);
+  const {f, invoke} = await drive();
+  const before = structuredClone([...f.db.store]);
+  f.db.failNextCommit(); // the honest probe: the settlement transaction dies mid-commit
+  await assert.rejects(invoke(), /atomic commit failure/);
+  assert.deepEqual([...f.db.store], before); // no partial payout, escrow, receipt or ledger write
+  const settled = await invoke();
+  assert.equal(settled.status, "PLAYED");
+  assert.equal(event(f).status, "FINISHED");
+  assert.deepEqual(money(f), terminal); // the retried store reaches the uninterrupted terminal state
+  const after = structuredClone([...f.db.store]);
+  assert.deepEqual(await invoke(), settled); // the settlement receipt replays byte-identically
+  assert.deepEqual([...f.db.store], after);
+  // A fresh id after FINISHED restates the terminal event and double-spends nothing.
+  const restated = await f.call("ADVANCE_MATCH", OWNER, event(f).settledAtMs + 1000, {matchId: currentMatch(f, 2, 0).matchId});
+  assert.equal(restated.status, "FINISHED");
+  assert.deepEqual(money(f), terminal);
+  // The fresh id writes one new operation receipt and touches only the event's mutation stamp;
+  // all financial facts (escrow, funding, ledger, boxes) are byte-identical.
+  const restatedStore = structuredClone([...f.db.store]);
+  const added = restatedStore.filter(([path]) => !after.some(([existing]) => existing === path));
+  assert.equal(added.length, 1);
+  assert.ok(added[0][0].startsWith(`${P.operations}/`));
+  for (const [path, value] of after) {
+    if (path === E) continue;
+    assert.deepEqual(restatedStore.find(([p]) => p === path)?.[1], value, path);
+  }
+  assert.deepEqual(money(f), terminal);
+});
+
+test("a zero row at a played place pays nothing, consumes its position and the surplus returns at finish", async () => {
+  const f = fixture(["alice", "bob", "carol", "dave"]);
+  await f.create({prizes: {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 0},
+    {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 2}]}, fundedBoxes: 20});
+  await f.close();
+  await play(f, currentMatch(f, 1, 0), "alice");
+  await play(f, currentMatch(f, 1, 1), "bob");
+  await play(f, currentMatch(f, 2, 0), "alice");
+  assert.equal(event(f).status, "FINISHED");
+  // The zero row consumes bob's runner-up position with no effect; the third rows still map by
+  // frozen index: third-upper ← row 0 (1 box), third-lower ← row 1 (2 boxes).
+  assert.deepEqual(["alice", "bob", "carol", "dave"].map((uid) => boxes(f, uid)), [5, 0, 2, 1]);
+  assert.equal(boxes(f, OWNER), 92);
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 20, remainingBoxes: 0, paidBoxes: 8, returnedBoxes: 12});
+  // The zero row writes no receipt: reserve + three prize rows + unused-fund return.
+  const funding = [...f.db.store.keys()].filter((path) => path.startsWith(`${P.funding}/`));
+  assert.deepEqual(event(f).progress.placements.map((row) => [row.uid, row.rank, row.slot]),
+    [["alice", 1, "champion"], ["bob", 2, "runner-up"], ["dave", 3, "third-upper"], ["carol", 3, "third-lower"]]);
+    assert.equal(funding.length, 5);
+  assert.equal(funding.includes(`${P.funding}/${digest(JSON.stringify(["tournament", EVENT, "prize", 1, 2, 0]))}`), false);
+  assert.ok(funding.includes(`${P.funding}/${digest(JSON.stringify(["tournament", EVENT, "prize", 1, 3, 0]))}`));
+  assert.ok(funding.includes(`${P.funding}/${digest(JSON.stringify(["tournament", EVENT, "prize", 1, 3, 1]))}`));
+});
+
+test("payouts consume only the CREATE-frozen rows; the stored list and its per-row receipts never move", async () => {
+  const f = fixture(["alice", "bob", "carol", "dave"]);
+  const prizes = {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+    {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 2}]};
+  await f.create({prizes, fundedBoxes: 15});
+  const frozen = structuredClone(event(f).prizes);
+  assert.deepEqual(frozen, prizes);
+  await f.close();
+  await play(f, currentMatch(f, 1, 0), "alice");
+  await play(f, currentMatch(f, 1, 1), "bob");
+  const result = await play(f, currentMatch(f, 2, 0), "alice");
+  assert.equal(event(f).status, "FINISHED");
+  // Distinct third-row amounts prove the row-index mapping consumed the CREATE-frozen list:
+  // dave (third-upper) ← row 0, carol (third-lower) ← row 1.
+  assert.deepEqual(["alice", "bob", "carol", "dave"].map((uid) => boxes(f, uid)), [5, 3, 2, 1]);
+  assert.equal(boxes(f, OWNER), 89);
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 15, remainingBoxes: 0, paidBoxes: 11, returnedBoxes: 4});
+  // The frozen list survives settlement byte-stable and projects with its own liability.
+  assert.deepEqual(event(f).prizes, frozen);
+  assert.deepEqual(result.event.prizes, {...prizes, maximumLiabilityBoxes: 11});
+  // Each receipt carries exactly its frozen row amount under the canonical v1 row key.
+  assert.deepEqual(prizeReceiptKeys(f).sort((a, b) => a[0] < b[0] ? -1 : 1), [
+    [JSON.stringify(["tournament", EVENT, "prize", 1, 1, 0]), "alice", 5],
+    [JSON.stringify(["tournament", EVENT, "prize", 1, 2, 0]), "bob", 3],
+    [JSON.stringify(["tournament", EVENT, "prize", 1, 3, 0]), "dave", 1],
+    [JSON.stringify(["tournament", EVENT, "prize", 1, 3, 1]), "carol", 2]]);
 });
 
 test("organizer also winning combines prize and unused return without overwriting either credit", async () => {

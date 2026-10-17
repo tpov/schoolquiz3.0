@@ -508,6 +508,33 @@ test("place-3 rows pay fixed finisher order; lone rows and unreproducible places
   assert.equal(zero.paidBoxes, 5); assert.equal(zero.unusedReturnBoxes, 0);
 });
 
+// Story 5.8: the D6 technical-outcome matrix through planPrizePayouts — the exact placement
+// sets progressBracket produces for a FORFEIT final and a DOUBLE_OUT semifinal (the survivor's
+// final resolves BYE), paid against asymmetric rows so every row's destination is visible.
+test("technical-outcome matrices pay per D6: FORFEIT-final trio and DOUBLE_OUT-semifinal duo", () => {
+  const rows = {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+    {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 2}]};
+  const placements = (slots) => slots.map(([slot, uid]) => ({uid, rank: slot === "champion" ? 1 : 3,
+    slot, technicalForfeit: false}));
+  // FORFEIT final: the present winner takes place 1, the absent player takes no prize, both
+  // PLAYED-semifinal losers take their rows in the fixed slot order; the runner-up row returns.
+  const forfeitFinal = planPrizePayouts({eventId: "e_ff", prizes: rows, fundedBoxes: 15,
+    placements: placements([["champion", "w"], ["third-upper", "u"], ["third-lower", "l"]])});
+  assert.deepEqual(forfeitFinal.payouts.map((row) => [row.slot, row.uid, row.amount]),
+    [["champion", "w", 5], ["third-upper", "u", 1], ["third-lower", "l", 2]]);
+  assert.equal(forfeitFinal.paidBoxes, 8); assert.equal(forfeitFinal.unusedReturnBoxes, 7);
+  // DOUBLE_OUT semifinal: the survivor wins the BYE-resolved final; the vanished slot's row
+  // returns and the lone third takes row 0 regardless of which semifinal index survived.
+  const doubleOut = planPrizePayouts({eventId: "e_do", prizes: rows, fundedBoxes: 15,
+    placements: placements([["champion", "s"], ["third-lower", "l"]])});
+  assert.deepEqual(doubleOut.payouts.map((row) => [row.slot, row.uid, row.amount]),
+    [["champion", "s", 5], ["third-lower", "l", 1]]);
+  assert.equal(doubleOut.paidBoxes, 6); assert.equal(doubleOut.unusedReturnBoxes, 9);
+  for (const plan of [forfeitFinal, doubleOut]) {
+    assert.equal(plan.paidBoxes + plan.unusedReturnBoxes, plan.fundedBoxes);
+  }
+});
+
 test("outputs are JSON-serializable; helpers preserve inputs and reject unsafe arithmetic", () => {
   const e = event(); const before = JSON.stringify(e); const b = buildBracket({event: e, ranking: ranking(4), serverSeed: "s"});
   const output = {event: e, bracket: b, forms: qualificationForms({event: e, serverSeed: "s"}),
