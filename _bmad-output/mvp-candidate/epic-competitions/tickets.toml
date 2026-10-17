@@ -96,7 +96,7 @@ waits = [
   "ONLINE-O2 contract — DONE (2.5/2.6/2.9, adopted edition blob e142341e…); Arena client half (3.2) is the adopted adapter precedent",
   "5.1: adopted timing contract — DONE (решение 1, owner-decisions-2026-10-16.md, «принимаю»; sha256 fa9ca506…)",
 ]
-status = "ready"
+status = "done" # 2026-10-16: A1–A9 исполнены — окно на документе сессии (детерминированный windowId, captured config, expiresAtMs зажат в край конверта — авторитетный край), клиентское закрытие доставляет в ответе / worker-закрытие оставляет окно открытым (интерпретация исполнителя — владельцу), ready-ACK (sessionId, questionIndex, windowId), вопрос 0 без ACK, терминация края двумя путями в существующий FORCED_CUTOFF с closedAtMs = захваченный край, чтения требуют выдачи и не терминируют; lesson-question-window.js не тронут; сессии без window/readyAcks толерантны. Review pass 1: 24 находки — wasShown-гонка, ACK-после-дедлайна, покрытие отклика/sweep запатчены; followup рекомендован. Спека spec-5-6-sessions-online-o2.md
 
 [[story]]
 id = "5.7"
