@@ -156,8 +156,11 @@ class ExamRunStateMachine(
         when (
             val outcome = remote.acknowledgeQuestion(id, question.index, newOperationId())
                 .getOrElse {
-                    state.value = running.copy(busy = false,
-                        refusal = transportRefusal(it) ?: "ACK_FAILED")
+                    // Перечитываем состояние: черновик, правленный во время запроса, не откатывается.
+                    (state.value as? ExamRunView.Running)?.let { fresh ->
+                        state.value = fresh.copy(busy = false,
+                            refusal = transportRefusal(it) ?: "ACK_FAILED")
+                    }
                     return
                 }
         ) {
@@ -168,8 +171,9 @@ class ExamRunStateMachine(
                 state.value = running.copy(busy = false, refusal = null,
                     question = refreshed, awaitingAck = false)
             }
-            is ExamAckOutcome.Refused -> state.value = running.copy(busy = false,
-                refusal = outcome.reason)
+            is ExamAckOutcome.Refused -> (state.value as? ExamRunView.Running)?.let { fresh ->
+                state.value = fresh.copy(busy = false, refusal = outcome.reason)
+            }
         }
     }
 
@@ -182,15 +186,19 @@ class ExamRunStateMachine(
         when (
             val outcome = remote.submitAnswer(id, question.index, question.revision, answerJson, newOperationId())
                 .getOrElse {
-                    state.value = running.copy(busy = false,
-                        refusal = transportRefusal(it) ?: "SUBMIT_FAILED")
+                    // Перечитываем состояние: правка черновика во время запроса сохраняется.
+                    (state.value as? ExamRunView.Running)?.let { fresh ->
+                        state.value = fresh.copy(busy = false,
+                            refusal = transportRefusal(it) ?: "SUBMIT_FAILED")
+                    }
                     return
                 }
         ) {
             // Успех чистит отказ: следующий вопрос приходит без старой причины.
             is ExamSubmitOutcome.Submitted -> state.value = runningOf(outcome.sitting)
-            is ExamSubmitOutcome.Refused -> state.value = running.copy(busy = false,
-                refusal = outcome.reason)
+            is ExamSubmitOutcome.Refused -> (state.value as? ExamRunView.Running)?.let { fresh ->
+                state.value = fresh.copy(busy = false, refusal = outcome.reason)
+            }
         }
     }
 
@@ -198,7 +206,21 @@ class ExamRunStateMachine(
     suspend fun requestFinish() {
         val id = sittingId ?: return
         state.value = ExamRunView.AwaitingClosure(sittingId = id, busy = true)
-        remote.finishSitting(id)
+        remote.finishSitting(id).fold(
+            onSuccess = {
+                // Запрос принят (или уже был запрошен): ждём терминализации, крутить нечего.
+                (state.value as? ExamRunView.AwaitingClosure)?.let { fresh ->
+                    state.value = fresh.copy(busy = false)
+                }
+            },
+            onFailure = { failure ->
+                // Транспортная неудача запроса закрытия: не вечный спиннер, а видимый отказ.
+                (state.value as? ExamRunView.AwaitingClosure)?.let { fresh ->
+                    state.value = fresh.copy(busy = false,
+                        refusal = transportRefusal(failure) ?: "FINISH_FAILED")
+                }
+            },
+        )
     }
 
     /** Чтение результата: до закрытия worker'ом — явное ожидание, не выдуманный итог. */

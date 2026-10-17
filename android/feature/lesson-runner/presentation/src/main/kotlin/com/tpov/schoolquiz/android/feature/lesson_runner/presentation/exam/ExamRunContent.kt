@@ -86,7 +86,13 @@ internal fun ExamSittingContent(
     onDraftChanged: (String) -> Unit,
     onSubmit: (String) -> Unit,
     onFinish: () -> Unit,
+    onQuestionRendered: () -> Unit = {},
 ) {
+    // Первый ограниченный ACK — подтверждение того, что текст вопроса отрисован: без этого
+    // триггера проводка экрана повисла бы в ожидании до ACK_REQUIRED-отказа.
+    androidx.compose.runtime.LaunchedEffect(view.awaitingAck, view.question?.index) {
+        if (view.awaitingAck) onQuestionRendered()
+    }
     Column(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -130,6 +136,8 @@ internal fun ExamSittingContent(
 internal fun ExamAwaitingClosureContent(view: ExamRunView.AwaitingClosure) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Text(text = ExamText.awaitingClosure())
+        // Неудача запроса закрытия видима: не вечный спиннер, а честный отказ.
+        view.refusal?.let { Text(text = ExamText.runRefusal(it)) }
         if (view.busy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
     }
 }

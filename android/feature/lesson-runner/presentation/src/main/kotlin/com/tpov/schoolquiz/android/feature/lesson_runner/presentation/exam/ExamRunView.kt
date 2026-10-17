@@ -51,6 +51,7 @@ sealed interface ExamRunView {
     data class AwaitingClosure(
         val sittingId: String,
         val busy: Boolean,
+        val refusal: String? = null,
     ) : ExamRunView
 
     /** Терминальный результат: серверные значения, отрисованные дословно. */

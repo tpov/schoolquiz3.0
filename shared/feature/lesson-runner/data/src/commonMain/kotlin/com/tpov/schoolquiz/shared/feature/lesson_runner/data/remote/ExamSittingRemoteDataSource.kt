@@ -69,6 +69,15 @@ enum class ExamTransportFailureKind {
     MALFORMED_RESPONSE,
     SERVER_FAILURE,
     NO_NETWORK,
+
+    /** Сервер отверг ответ: под этим вопросом уже стоит другой — повторять бессмысленно. */
+    ANSWER_CONFLICT,
+
+    /** Тот же ключ операции с другим телом: сервер сохранил прежний исход, намерение сменено. */
+    REQUEST_REUSE,
+
+    /** Вопрос уже не открыт (ACK_REQUIRED/SITTING_CLOSED/SLOT_EXPIRED): чтение результата. */
+    STALE_QUESTION,
 }
 
 /** Отказ границы с его видом. */

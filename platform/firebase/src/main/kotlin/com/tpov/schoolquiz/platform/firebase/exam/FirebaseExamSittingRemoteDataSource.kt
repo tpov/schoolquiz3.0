@@ -153,27 +153,49 @@ class FirebaseExamSittingRemoteDataSource internal constructor(
             // Любой испорченный черновик — типовой отказ запроса, не краш транспорта.
             throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
         }
-        val plain = jsonElementToPlain(decoded)
+        val plain = try {
+            jsonElementToPlain(decoded)
+        } catch (_: StackOverflowError) {
+            // Глубокая вложенность черновика — испорченный ввод, не падение транспорта.
+            throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
+        }
         @Suppress("UNCHECKED_CAST")
         return plain as? Map<String, Any?>
             ?: throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
     }
 
-    private fun jsonElementToPlain(element: JsonElement): Any? = when (element) {
-        is JsonNull -> null
-        is JsonPrimitive ->
-            if (element.isString) {
-                element.content
-            } else {
-                val raw = element.content
-                when {
-                    raw == "true" -> true
-                    raw == "false" -> false
-                    else -> raw.toLongOrNull() ?: raw.toDoubleOrNull() ?: raw
+    private fun jsonElementToPlain(element: JsonElement, depth: Int = 0): Any? {
+        if (depth > MAX_ANSWER_JSON_DEPTH) throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
+        return when (element) {
+            is JsonNull -> null
+            is JsonPrimitive ->
+                if (element.isString) {
+                    element.content
+                } else {
+                    val raw = element.content
+                    when {
+                        raw == "true" -> true
+                        raw == "false" -> false
+                        else -> {
+                            val asLong = raw.toLongOrNull()
+                            val asDouble = if (asLong == null) raw.toDoubleOrNull() else null
+                            when {
+                                asLong != null -> asLong
+                                asDouble == null -> raw
+                                // Не-конечное число (1e999) сериализацию не переживёт — это
+                                // испорченный ввод, а не краш транспорта.
+                                !asDouble.isFinite() ->
+                                    throw ExamFailure(ExamFailureKind.INVALID_REQUEST)
+                                else -> asDouble
+                            }
+                        }
+                    }
                 }
+            is JsonArray -> element.map { jsonElementToPlain(it, depth + 1) }
+            is JsonObject -> element.entries.associate { (key, value) ->
+                key to jsonElementToPlain(value, depth + 1)
             }
-        is JsonArray -> element.map { jsonElementToPlain(it) }
-        is JsonObject -> element.entries.associate { (key, value) -> key to jsonElementToPlain(value) }
+        }
     }
 
     override suspend fun finishSitting(sittingId: String): Result<ExamFinishVerdict> = exchange {
@@ -249,12 +271,28 @@ class FirebaseExamSittingRemoteDataSource internal constructor(
         else -> failed(ExamFailureKind.SERVER_FAILURE)
     }
 
+    /**
+     * Отказ вызова: код HttpsError плюс типовая причина из details. Сервер кладёт честную
+     * причину (ANSWER_CONFLICT, REQUEST_REUSE, ACK_REQUIRED…) в details.reason — без её чтения
+     * любой конкурентный конфликт доезжал бы до экрана безликим SERVER_FAILURE.
+     */
     private fun callableFailure(error: ExamCallableException): ExamFailureKind =
-        when (error.code) {
-            "UNAUTHENTICATED", "PERMISSION_DENIED" -> ExamFailureKind.ACCOUNT_UNAVAILABLE
-            "INVALID_ARGUMENT" -> ExamFailureKind.INVALID_REQUEST
-            else -> ExamFailureKind.SERVER_FAILURE
+        when {
+            error.code == "UNAUTHENTICATED" || error.code == "PERMISSION_DENIED" ->
+                ExamFailureKind.ACCOUNT_UNAVAILABLE
+            error.code == "INVALID_ARGUMENT" -> ExamFailureKind.INVALID_REQUEST
+            else -> typedReason(error.details) ?: ExamFailureKind.SERVER_FAILURE
         }
+
+    private fun typedReason(details: Any?): ExamTransportFailureKind? {
+        val reason = (details as? Map<*, *>)?.get("reason") as? String ?: return null
+        return when (reason) {
+            "ANSWER_CONFLICT" -> ExamTransportFailureKind.ANSWER_CONFLICT
+            "REQUEST_REUSE" -> ExamTransportFailureKind.REQUEST_REUSE
+            "ACK_REQUIRED", "SITTING_CLOSED", "SLOT_EXPIRED" -> ExamTransportFailureKind.STALE_QUESTION
+            else -> null
+        }
+    }
 
     private fun <T> failed(kind: ExamFailureKind): Result<T> =
         Result.failure(ExamFailure(kind))
@@ -273,6 +311,9 @@ class FirebaseExamSittingRemoteDataSource internal constructor(
         const val SUBMIT = "submitAnswer"
         const val FINISH = "finishSitting"
         const val FETCH_RESULT = "fetchSittingResult"
+
+        /** Глубина вложенности черновика ответа: глубже — испорченный ввод, не Crash. */
+        const val MAX_ANSWER_JSON_DEPTH = 16
     }
 }
 

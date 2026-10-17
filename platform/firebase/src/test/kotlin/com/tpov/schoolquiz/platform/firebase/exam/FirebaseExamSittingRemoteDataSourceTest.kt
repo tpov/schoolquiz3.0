@@ -340,7 +340,18 @@ class FirebaseExamSittingRemoteDataSourceTest {
                     "timerRule" to "ALL_HARD_ORDINARY",
                     "timerRuleVersion" to 1,
                 ),
-            "nextQuestion" to null,
+            "nextQuestion" to
+                mapOf(
+                    "index" to 1,
+                    "questionId" to "h0",
+                    "revision" to 2L,
+                    "shownDifficulty" to "HARD",
+                    "answerSeconds" to 24,
+                    "publicPayload" to "{\"type\":\"SingleChoiceRedacted\"}",
+                    "ack" to
+                        mapOf("awaitingAck" to true, "windowDeadlineMs" to 1_760_000_080_000L),
+                    "serverNowMs" to 1_760_000_020_000,
+                ),
             "serverNowMs" to 1_760_000_020_000,
         )
 
@@ -357,6 +368,77 @@ class FirebaseExamSittingRemoteDataSourceTest {
     }
 
     private fun <T> assertIs(value: Any?): T = value as T
+
+    @Test
+    fun submitReplyCarriesTheNextQuestionAndOmissionParsesEqually() =
+        runTest {
+            val f = Fake(this)
+            f.reply = submittedReply()
+            val carried = assertIs<ExamSubmitOutcome.Submitted>(
+                f.remote.submitAnswer("sitting-1", 0, 2, "{\"type\":\"single-choice\",\"selected\":\"ri-0\"}", "ans-1")
+                    .getOrThrow(),
+            )
+            assertEquals(1, carried.sitting.nextQuestion?.index)
+            assertEquals(null, carried.sitting.nextQuestion?.ack?.answerDeadlineMs)
+            // Сервер опускает ключ, когда текущий слот не ждёт игрока: отсутствие парсится так же.
+            val stripped = submittedReply().toMutableMap().apply { remove("nextQuestion") }
+            f.calls.clear()
+            f.reply = stripped
+            val omitted = assertIs<ExamSubmitOutcome.Submitted>(
+                f.remote.submitAnswer("sitting-1", 1, 2, "{\"type\":\"single-choice\",\"selected\":\"ri-0\"}", "ans-2")
+                    .getOrThrow(),
+            )
+            assertEquals(null, omitted.sitting.nextQuestion)
+        }
+
+    @Test
+    fun corruptAnswerDraftsRefuseAsInvalidRequestInsteadOfServerFailure() =
+        runTest {
+            val f = Fake(this)
+            listOf(
+                "{\"type\":", // malformed JSON
+                "[1,2,3]", // не объект наверху
+                "{\"n\": 1e999}", // не-конечное число
+                "{\"d\":" + "[1,".repeat(30) + "0" + "]".repeat(30) + "}", // глубже предела
+            ).forEach { draft ->
+                val outcome = f.remote.submitAnswer("sitting-1", 0, 2, draft, "ans-bad")
+                val failure = assertIs<ExamTransportFailure>(outcome.exceptionOrNull())
+                assertEquals("draft: $draft", ExamTransportFailureKind.INVALID_REQUEST, failure.kind)
+            }
+        }
+
+    @Test
+    fun callableDetailsReasonSurfacesAsTheTypedTransportKind() =
+        runTest {
+            val f = Fake(this)
+            f.beforeReply = {
+                throw FirebaseExamSittingRemoteDataSource.ExamCallableException(
+                    "already-exists",
+                    mapOf("reason" to "ANSWER_CONFLICT"),
+                )
+            }
+            val conflict = f.remote.submitAnswer(
+                "sitting-1", 0, 2, "{\"type\":\"single-choice\",\"selected\":\"ri-0\"}", "ans-x",
+            )
+            assertEquals(
+                ExamTransportFailureKind.ANSWER_CONFLICT,
+                (conflict.exceptionOrNull() as ExamTransportFailure).kind,
+            )
+            f.calls.clear()
+            f.beforeReply = {
+                throw FirebaseExamSittingRemoteDataSource.ExamCallableException(
+                    "failed-precondition",
+                    mapOf("reason" to "REQUEST_REUSE"),
+                )
+            }
+            val reuse = f.remote.startThemeTest(
+                "op-x", 1, "th0", ExamTermsWire(shown = true, acceptedRevision = 1),
+            )
+            assertEquals(
+                ExamTransportFailureKind.REQUEST_REUSE,
+                (reuse.exceptionOrNull() as ExamTransportFailure).kind,
+            )
+        }
 
     private inner class Fake(scope: TestScope) {
         var session: OutboxSession? = OutboxSession("player", 1)
