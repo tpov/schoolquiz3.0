@@ -84,7 +84,7 @@ waits = [
   "TZ07A exact calculation path — DONE by earlier shifts (tournament-qualification-compact/calculation, 4096/4097 cases green; LS formula and tie-break order retained per owner decision)",
   "5.1: adopted timing contract — DONE (решение 1, owner-decisions-2026-10-16.md, «принимаю»; sha256 fa9ca506…)",
 ]
-status = "ready"
+status = "done" # 2026-10-16: цикл доказан на service-шве — 7 новых кейсов (15 byes → FINISHED с экономикой; 17 отказ + recovery; сбой коммита mid-CLOSE без частичных эффектов + same-id retry; repeat/restate CLOSE; D2 cutoff-пины с точными скорами и отказом позднего ответа; 502-когорта через версионируемый шов с бюджетами 3 tx/8 reads/32 writes/2.2-2.5s и независимым top16; legacy-фенсинг на реальных пейджинг-границах). НОЛЬ продового диффа. Review pass 1: 16 low — 14 патчей усиления, 1 reject. 109/109. Спека spec-5-5-qualification-loop-close.md; коммит 3b6f7570
 
 [[story]]
 id = "5.6"
