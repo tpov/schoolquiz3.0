@@ -20,6 +20,10 @@ const OWNER = "organizer";
 const E = `${P.events}/${EVENT}`;
 const SOURCE = {kind: "COURSE", id: "existing-course", snapshotId: "reviewed-v7"};
 const SEED = "private-server-random-seed-00000000000000000000";
+// Story 5.4: CREATE carries the adopted v1 prize list. {first:5, second:3, third:1} maps to two
+// place-3 rows; liability 10 leaves a 2-box deposit surplus that returns at finish.
+const PRIZES = {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+  {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]};
 const tests = [];
 function test(name, body) { tests.push({name, body}); }
 function user(boxCount = 0, extra = {}) { return {boxCount, standardHearts: 5, goldHearts: 1, lifePoints: 0,
@@ -62,7 +66,7 @@ function fixture(participants = ["alice", "bob"], extra = {}) {
   };
   const payload = (kind, ownerUid, fields = {}) => ({kind, ownerUid, operationId: `operation_${String(++serial).padStart(20, "0")}`, eventId: EVENT, ...fields});
   const call = (kind, uid, now = T, fields = {}) => apply({db, uid, now, dependencies, serverSeed: SEED, payload: payload(kind, uid, fields)});
-  const create = (fields = {}) => call("CREATE", OWNER, T, {source: SOURCE, startsAtMs: T, prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12, ...fields});
+  const create = (fields = {}) => call("CREATE", OWNER, T, {source: SOURCE, startsAtMs: T, prizes: PRIZES, fundedBoxes: 12, ...fields});
   const close = () => call("CLOSE_QUALIFICATION", OWNER, T + 7 * DAY);
   return {db, state, dependencies, payload, call, create, close};
 }
@@ -106,7 +110,7 @@ test("create reserves exact boxes with ledger, immutable 3x20 forms and private 
 
 test("lost create response replays original receipt; mutated replay and account switch cannot reserve", async () => {
   const f = fixture();
-  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: T, prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12});
+  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: T, prizes: PRIZES, fundedBoxes: 12});
   const invoke = (uid, body, now = T) => apply({db: f.db, uid, payload: body, now, dependencies: f.dependencies, serverSeed: SEED});
   const first = await invoke(OWNER, payload);
   const after = structuredClone([...f.db.store]);
@@ -125,15 +129,65 @@ test("atomic commit failure creates no partial escrow, forms or receipt; same co
   await f.create(); assert.equal(boxes(f, OWNER), 88);
 });
 
-test("missing prices, insufficient boxes, untrusted authorization and absent timer fail before writes", async () => {
+test("missing prices, legacy DTO, underfunded v1, untrusted authorization and absent timer fail before writes", async () => {
   for (const mutate of [f => { f.db.store.set(`users/${OWNER}`, user(1)); }, f => { f.state.bank.authorizedUid = "other"; },
     f => { delete f.state.bank.questions[0].maxDurationMs; }, f => { delete f.state.bank.timingVersion; }]) {
     const f = fixture(); mutate(f); const before = structuredClone([...f.db.store]);
     await assert.rejects(f.create()); assert.deepEqual([...f.db.store], before);
   }
-  const f = fixture(); await assert.rejects(f.create({prizes: {first: 5, second: 3}}));
-  await assert.rejects(f.create({prizes: {first: 5, second: 3, third: 2}, fundedBoxes: 11}));
+  const f = fixture();
+  // L4: the fixed {first, second, third} DTO is refused by the v1 validator, naming the v1 shape.
+  await assert.rejects(f.create({prizes: {first: 5, second: 3}}), /listVersion: 1, rows/);
+  await assert.rejects(f.create({prizes: {first: 5, second: 3, third: 2}, fundedBoxes: 11}), /listVersion: 1, rows/);
+  // Underfunded v1 list keeps the existing "insufficient prize fund" refusal with no reserve.
+  await assert.rejects(f.create({fundedBoxes: 9}), /insufficient prize fund/);
   assert.equal(boxes(f, OWNER), 100); assert.equal(f.db.store.has(E), false);
+});
+
+test("CREATE freezes the canonically sorted v1 list; reordered equivalent rows replay, new ids refuse", async () => {
+  const f = fixture();
+  const unsorted = {listVersion: 1, rows: [{place: 3, amountBoxes: 1}, {place: 1, amountBoxes: 5},
+    {place: 3, amountBoxes: 1}, {place: 2, amountBoxes: 3}]};
+  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: T, prizes: unsorted, fundedBoxes: 12});
+  const invoke = (body) => apply({db: f.db, uid: OWNER, payload: body, now: T, dependencies: f.dependencies, serverSeed: SEED});
+  const created = await invoke(payload);
+  // The event stores the canonically sorted frozen list; escrow reserves the whole deposit.
+  assert.deepEqual(event(f).prizes, PRIZES);
+  assert.equal(event(f).maximumLiabilityBoxes, 10);
+  assert.deepEqual(created.event.prizes, {...PRIZES, maximumLiabilityBoxes: 10});
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 12, paidBoxes: 0, returnedBoxes: 0});
+  // The fingerprint covers the canonical form, so a reordered replay of the same operation id
+  // returns the original receipt instead of CONFLICTING_REPLAY.
+  assert.deepEqual(await invoke({...payload, prizes: {listVersion: 1, rows: [...unsorted.rows].reverse()}}), created);
+  // A new operation id on the permanent event id refuses before any staging or second reserve.
+  await assert.rejects(invoke({...payload, operationId: "operation_new_0000000001"}), {code: "ALREADY_EXISTS"});
+  assert.equal(boxes(f, OWNER), 88);
+  assert.equal([...f.db.store.keys()].filter((path) => path.startsWith(`${P.funding}/`)).length, 1);
+});
+
+test("stored legacy prizes settle with identical amounts, slot receipt keys and the projected read", async () => {
+  const f = fixture(["alice", "bob", "carol", "dave"]); await f.create();
+  // Simulate a stored pre-adoption event: the immutable legacy DTO with equivalent numbers.
+  const frozenBefore = structuredClone(event(f).prizes);
+  const stored = event(f); stored.prizes = {first: 5, second: 3, third: 1}; stored.maximumLiabilityBoxes = 10;
+  await f.close();
+  await play(f, currentMatch(f, 1, 0), "alice");
+  await play(f, currentMatch(f, 1, 1), "bob");
+  const result = await play(f, currentMatch(f, 2, 0), "alice");
+  assert.equal(event(f).status, "FINISHED");
+  assert.deepEqual(["alice", "bob", "carol", "dave"].map((uid) => boxes(f, uid)), [5, 3, 1, 1]);
+  assert.equal(boxes(f, OWNER), 90);
+  assert.deepEqual(event(f).escrow, {reservedBoxes: 12, remainingBoxes: 0, paidBoxes: 10, returnedBoxes: 2});
+  // Legacy payouts keep yesterday's slot-keyed funding receipts (never v1 row keys).
+  for (const slot of ["champion", "runner-up", "third-upper", "third-lower"]) {
+    assert.ok(f.db.store.has(`${P.funding}/${digest(JSON.stringify(["tournament", EVENT, "prize", slot]))}`), slot);
+  }
+  // The read projection is the unified shape: listVersion 0 rows, no DTO field leaks.
+  assert.deepEqual(result.event.prizes, {listVersion: 0, maximumLiabilityBoxes: 10,
+    rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3}, {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]});
+  assert.ok(!["first", "second", "third"].some((name) => Object.hasOwn(result.event.prizes, name)));
+  // No code path writes prizes after CREATE: the pre-adoption legacy DTO is byte-identical after settlement.
+  assert.deepEqual(event(f).prizes, stored.prizes);
 });
 
 test("bank excludes Survey and refuses <60 EASY, <20 HARD, stale keys and public answers", async () => {
@@ -208,7 +262,7 @@ test("START without a server admission basis is refused as a typed gate error an
 test("the minted link token admits without any download record and never persists anywhere", async () => {
   const f = fixture();
   f.db.store.delete(`${P.downloads}/${digest(["alice", SOURCE.id])}`);
-  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: T, prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12});
+  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: T, prizes: PRIZES, fundedBoxes: 12});
   const invoke = (uid, body, now = T) => apply({db: f.db, uid, payload: body, now, dependencies: f.dependencies, serverSeed: SEED});
   const created = await invoke(OWNER, payload);
   const token = created.admissionLink.token;
@@ -260,7 +314,7 @@ test("ARENA_LESSON events are link-only end to end: no course download basis exi
   f.state.bank.source = {kind: "ARENA_LESSON", id: "arena-lesson", snapshotId: "arena-v7", reviewed: true, published: true, admitted: true};
   f.state.bank.questions.forEach((question) => { question.sourceId = "arena-lesson"; });
   const created = await f.call("CREATE", OWNER, T, {source: {kind: "ARENA_LESSON", id: "arena-lesson", snapshotId: "arena-v7"},
-    startsAtMs: T, prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12});
+    startsAtMs: T, prizes: PRIZES, fundedBoxes: 12});
   const token = created.admissionLink.token;
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
     {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "0".repeat(48)}), {code: "PERMISSION_DENIED"});
@@ -526,7 +580,7 @@ test("premium catch-up commits checkpoint only: no event, debit, form or receipt
     });
   }
   const now = T + total * DAY;
-  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: now, prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12});
+  const payload = f.payload("CREATE", OWNER, {source: SOURCE, startsAtMs: now, prizes: PRIZES, fundedBoxes: 12});
   const planned = await f.db.runTransaction(async transaction => {
     const plan = await readPlanTournamentOperation({db: f.db, transaction, uid: OWNER, payload, now, dependencies: f.dependencies, serverSeed: SEED});
     writeTournamentOperation({db: f.db, transaction, plan}); return plan;

@@ -2,7 +2,7 @@
 
 const {createTournamentSourceBank} = require("./tournament-source-bank");
 const {TOURNAMENT_PATHS: P, normalizeTournamentRequest, applyTournamentOperation, readPlanTournamentOperation,
-  writeTournamentOperation, readTournamentSession, matchSessionId} = require("./tournament-service");
+  writeTournamentOperation, readTournamentSession, matchSessionId, prizeView} = require("./tournament-service");
 const {applyTournamentSessionOperation, readTournamentSessionOperation, planTournamentSessionOperation,
   writeTournamentSessionOperation, VERIFIED_RUNS} = require("./tournament-session");
 const {verifiedTournamentRun, loadSettledMatchResults} = require("./tournament-session-results");
@@ -87,7 +87,11 @@ function safeEvent(value) {
   const result = {...pick(value, ["eventId", "organizerUid", "status", "cancelReason"]),
     source: pick(value.source, ["kind", "id"]),
     qualification: pick(value.qualification, ["startsAtMs", "endsAtMs", "roundCount", "questionsPerRound", "attemptsPerRound"]),
-    prizes: pick(value.prizes, ["first", "second", "third"]),
+    // Unified prize-list projection (L2): both stored forms read as {listVersion, rows,
+    // maximumLiabilityBoxes}; legacy DTO fields and frozen-list mismatches never leak.
+    prizes: value.prizes && typeof value.prizes === "object" && !Array.isArray(value.prizes)
+      ? (() => { try { return prizeView(value); } catch (error) { fail("UNAVAILABLE", "Event prizes require repair"); } })()
+      : {},
     escrow: pick(value.escrow, ["reservedBoxes", "remainingBoxes", "paidBoxes", "returnedBoxes"])};
   if (value.progress) result.progress = safeProgress(value.progress);
   return result;

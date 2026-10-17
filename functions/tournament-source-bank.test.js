@@ -301,7 +301,8 @@ test("actual lifecycle CREATE revalidation failure cannot reserve organizer boxe
   const prior = structuredClone([...f.db.store]);
   await error(() => applyTournamentOperation({db: f.db, uid, now: T, serverSeed: "server-only-seed-0000000000000000000",
     dependencies: {loadBank: f.service.loadBank}, payload: {kind: "CREATE", ownerUid: uid, operationId: "create_operation_0001", eventId: "event_000000000000001",
-      source: {...f.source, snapshotId: response.snapshotId}, startsAtMs: T, fundedBoxes: 12, prizes: {first: 5, second: 3, third: 1}}}), "STALE_PREPARATION");
+      source: {...f.source, snapshotId: response.snapshotId}, startsAtMs: T, fundedBoxes: 12, prizes: {listVersion: 1,
+      rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3}, {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]}}}), "STALE_PREPARATION");
   assert.deepEqual([...f.db.store], prior);
 });
 
@@ -316,7 +317,8 @@ test("actual lifecycle passes CREATE/CLOSE purpose and uses immutable original b
   const common = {db: f.db, uid, serverSeed: "server-only-seed-0000000000000000000", dependencies};
   const eventId = "event_000000000000001";
   await applyTournamentOperation({...common, now: T, payload: {kind: "CREATE", ownerUid: uid, operationId: "create_operation_0001", eventId,
-    source: {...f.source, snapshotId: response.snapshotId}, startsAtMs: T, fundedBoxes: 12, prizes: {first: 5, second: 3, third: 1}}});
+    source: {...f.source, snapshotId: response.snapshotId}, startsAtMs: T, fundedBoxes: 12, prizes: {listVersion: 1,
+    rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3}, {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]}}});
   assert.equal(f.db.store.get("users/author").boxCount, 88);
   change(f, "quests/course", {visibleOn: []}); f.state.reviewApproved = false;
   await applyTournamentOperation({...common, now: T + 7 * 86400000, payload: {kind: "CLOSE_QUALIFICATION", ownerUid: uid, operationId: "close_operation_00001", eventId}});

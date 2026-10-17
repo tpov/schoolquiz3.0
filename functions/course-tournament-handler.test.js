@@ -66,7 +66,8 @@ async function create() {
   assert.deepEqual(prepared.counts, {easy: 60, hard: 20, total: 80});
   const request = {kind: "CREATE", operationId: "create_handler_000001", eventId: EVENT,
     source: {...source, snapshotId: prepared.snapshotId}, startsAtMs: NOW,
-    prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12};
+    prizes: {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+      {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]}, fundedBoxes: 12};
   return {request, response: await call("submitCourseTournamentOperation", "author", request)};
 }
 

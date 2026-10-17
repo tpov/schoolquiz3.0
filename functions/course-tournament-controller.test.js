@@ -68,8 +68,10 @@ function fixture(players = ["alice", "bob"], options = {}) {
   const prepare = () => controller.prepare(OWNER, {requestId: "preparation_request_00001", source: {kind: "COURSE", id: "course"}});
   async function create() {
     const p = await prepare();
+    // Story 5.4: CREATE carries the adopted v1 prize list ({5,3,1} → two place-3 rows, liability 10).
     return operate("CREATE", OWNER, {source: {kind: "COURSE", id: "course", snapshotId: p.snapshotId}, startsAtMs: state.now,
-      fundedBoxes: 12, prizes: {first: 5, second: 3, third: 1}});
+      fundedBoxes: 12, prizes: {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+        {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]}});
   }
   async function qualify() {
     await create();
@@ -303,6 +305,25 @@ test("the organizer's link token admits a player without any download record; re
   assert.equal(Object.hasOwn(view, "admissionLink"), false); assertSafe(view);
   const list = await f.controller.listEvents("viewer", {});
   assert.equal(Object.hasOwn(list, "admissionLink"), false); assertSafe(list);
+});
+test("event reads project both prize forms through one shape and never leak the legacy DTO", async () => {
+  const f = fixture(); await f.create();
+  const view = await f.controller.readEvent("viewer", {eventId: EVENT});
+  assert.deepEqual(view.event.prizes, {listVersion: 1, maximumLiabilityBoxes: 10,
+    rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3}, {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]});
+  // A stored pre-adoption event reads through the same unified projection, DTO fields suppressed.
+  const listedV1 = await f.controller.listEvents("viewer", {pageSize: 10});
+  assert.equal(listedV1.events[0].prizes.listVersion, 1);
+  assert.ok(!JSON.stringify(listedV1).includes("serverSeed"));
+  const stored = f.db.store.get(E); stored.prizes = {first: 5, second: 3, third: 1}; stored.maximumLiabilityBoxes = 10;
+  const legacy = await f.controller.readEvent("viewer", {eventId: EVENT});
+  assert.deepEqual(legacy.event.prizes, {listVersion: 0, maximumLiabilityBoxes: 10,
+    rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3}, {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]});
+  assert.ok(!["first", "second", "third"].some((name) => Object.hasOwn(legacy.event.prizes, name)));
+  assertSafe(legacy);
+  // Discovery rows flow through the same projection.
+  const list = await f.controller.listEvents("viewer", {});
+  assert.equal(list.events.find((row) => row.eventId === EVENT).prizes.listVersion, 0);
 });
 test("read safe view suppresses even unexpected grading fields nested in stored redacted options", async () => {
   const f = fixture(); await f.create(); const start = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"});

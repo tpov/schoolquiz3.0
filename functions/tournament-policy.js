@@ -81,20 +81,105 @@ function preflightPool({source, questions}) {
   return {source: normalizedSource, easyQuestions, hardQuestions, poolFingerprint: hash(eligible)};
 }
 
-function validatePrizeSchedule(prizes, fundedBoxes) {
-  obj(prizes, "prizes");
+/** The adopted versioned prize-list contract (edition 1, adopted 2026-10-16) defines two stored
+ * forms: v1 `{listVersion: 1, rows}` for new CREATE and the legacy `{first, second, third}` DTO
+ * that survives immutably inside stored events (L1). The discriminator between accepted forms is
+ * the presence of `listVersion`. A v1 row is exactly `{place, amountBoxes}`; places may repeat
+ * (two place-3 rows are the only way to pay both third places — no auto-duplication, D5) and
+ * places outside the reproducible {1,2,3} set are legal and simply return (D7).
+ */
+function canonicalPrizeRows(prizes) {
+  if (prizes.listVersion !== 1) throw new RangeError("prizes.listVersion must be 1");
+  if (Object.keys(prizes).some((name) => !["listVersion", "rows"].includes(name))) {
+    throw new RangeError("prizes support exactly listVersion and rows");
+  }
+  const list = arr(prizes.rows, "prizes.rows");
+  if (list.length > MAX_QUALIFIERS) throw new RangeError(`prizes support at most ${MAX_QUALIFIERS} rows`);
+  return list.map((raw, order) => {
+    const row = obj(raw, "prizes row");
+    if (Object.keys(row).some((name) => !["place", "amountBoxes"].includes(name))) {
+      throw new RangeError("prize rows support exactly place and amountBoxes");
+    }
+    const place = int(row.place, "prizes.place", 1);
+    if (place > MAX_QUALIFIERS) throw new RangeError(`prizes.place must be <= ${MAX_QUALIFIERS}`);
+    return {place, amountBoxes: int(row.amountBoxes, "prizes.amountBoxes"), order};
+  }).sort((a, b) => cmp(a.place, b.place) || cmp(a.order, b.order)) // stable: (place, submission order)
+    .map(({place, amountBoxes}) => ({place, amountBoxes}));
+}
+
+/** The legacy DTO as its listVersion-0 projection rows (L2): liability of these rows equals
+ * first+second+2*third, which is what keeps legacy settlement payout-equivalent (L3). */
+function legacyPrizeRows(prizes) {
   if (Object.keys(prizes).some((name) => !["first", "second", "third"].includes(name))) {
     throw new RangeError("prizes support first, second and two thirds; no fourth place");
   }
-  const normalized = {
-    first: int(prizes.first, "prizes.first"), second: int(prizes.second, "prizes.second"),
-    third: int(prizes.third, "prizes.third"),
-  };
-  const maximumLiabilityBoxes = safe(BigInt(normalized.first) + BigInt(normalized.second) +
-    2n * BigInt(normalized.third), "prize liability");
+  const first = int(prizes.first, "prizes.first");
+  const second = int(prizes.second, "prizes.second");
+  const third = int(prizes.third, "prizes.third");
+  return [{place: 1, amountBoxes: first}, {place: 2, amountBoxes: second},
+    {place: 3, amountBoxes: third}, {place: 3, amountBoxes: third}];
+}
+
+/** Validates one frozen prize form and prices it: liability is the sum of every row exactly once
+ * in BigInt with safe-range rejection (D2); the deposit must cover it, surplus returns at finish.
+ */
+function prizeFunding(prizes, fundedBoxes) {
+  const legacy = !Object.hasOwn(prizes, "listVersion");
+  const rows = legacy ? legacyPrizeRows(prizes) : canonicalPrizeRows(prizes);
+  const maximumLiabilityBoxes = safe(rows.reduce((sum, row) => sum + BigInt(row.amountBoxes), 0n), "prize liability");
   int(fundedBoxes, "fundedBoxes");
   if (fundedBoxes < maximumLiabilityBoxes) throw new RangeError("insufficient prize fund");
-  return {prizes: normalized, fundedBoxes, maximumLiabilityBoxes};
+  return {legacy, rows, maximumLiabilityBoxes,
+    prizes: legacy ? {first: rows[0].amountBoxes, second: rows[1].amountBoxes, third: rows[2].amountBoxes}
+      : {listVersion: 1, rows}};
+}
+
+/** CREATE-side validation: v1 only (L4/AD-17). The fixed {first, second, third} DTO is refused
+ * with a typed error naming the v1 shape; empty rows are legal (liability 0). */
+function validatePrizeSchedule(prizes, fundedBoxes) {
+  obj(prizes, "prizes");
+  if (!Object.hasOwn(prizes, "listVersion")) {
+    const legacyShaped = Object.hasOwn(prizes, "first") && Object.hasOwn(prizes, "second") && Object.hasOwn(prizes, "third");
+    throw new RangeError(legacyShaped
+      ? "prizes must be {listVersion: 1, rows}; the fixed {first, second, third} form is not accepted for new events"
+      : "prizes must be {listVersion: 1, rows}");
+  }
+  const frozen = prizeFunding(prizes, fundedBoxes);
+  return {prizes: frozen.prizes, fundedBoxes, maximumLiabilityBoxes: frozen.maximumLiabilityBoxes};
+}
+
+/** Settlement-side revalidation is dual-form (A12): the frozen v1 list or the stored legacy DTO
+ * (whose projection keeps liability = first+second+2*third, L3). The stored form is preserved. */
+function validateStoredPrizeSchedule(prizes, fundedBoxes) {
+  const frozen = prizeFunding(obj(prizes, "prizes"), fundedBoxes);
+  return {prizes: frozen.prizes, fundedBoxes, maximumLiabilityBoxes: frozen.maximumLiabilityBoxes};
+}
+
+/** Unified read projection (L2/A8): `{listVersion, rows}` for either stored form; the legacy DTO
+ * fields never leave the server. Idempotent: an already-projected `{listVersion, rows,
+ * maximumLiabilityBoxes}` view (eventView output redacted again by the controller) passes back
+ * through unchanged apart from re-checking v1 rows. Callers add the event's stored
+ * maximumLiabilityBoxes. */
+function prizeListProjection(prizes) {
+  obj(prizes, "prizes");
+  if (Object.hasOwn(prizes, "listVersion")) {
+    if (prizes.listVersion !== 0 && prizes.listVersion !== 1) {
+      throw new RangeError("prizes.listVersion must be 0 or 1");
+    }
+    if (Object.hasOwn(prizes, "rows") && Object.hasOwn(prizes, "maximumLiabilityBoxes") &&
+        Object.keys(prizes).length === 3) {
+      return prizes.listVersion === 1
+        ? {listVersion: 1, rows: canonicalPrizeRows({listVersion: 1, rows: prizes.rows}),
+          maximumLiabilityBoxes: int(prizes.maximumLiabilityBoxes, "prizes.maximumLiabilityBoxes")}
+        : {listVersion: 0, rows: prizes.rows, maximumLiabilityBoxes: int(prizes.maximumLiabilityBoxes, "prizes.maximumLiabilityBoxes")};
+    }
+    if (prizes.listVersion === 0 && Object.hasOwn(prizes, "rows") && Object.keys(prizes).length === 2) {
+      return {listVersion: 0, rows: prizes.rows};
+    }
+    if (prizes.listVersion === 1) return {listVersion: 1, rows: canonicalPrizeRows({listVersion: 1, rows: prizes.rows})};
+  }
+  const legacy = !Object.hasOwn(prizes, "listVersion");
+  return {listVersion: legacy ? 0 : 1, rows: legacy ? legacyPrizeRows(prizes) : canonicalPrizeRows(prizes)};
 }
 
 function createEventPlan({eventId, source, questions, startsAtMs, prizes, fundedBoxes}) {
@@ -438,34 +523,64 @@ function progressBracket({bracket, outcomes = []}) {
   return {status: final ? "FINISHED" : "ACTIVE", resolved: [...resolved.values()], pending, placements};
 }
 
-/** Funding was escrowed elsewhere. Fixed placement-slot IDs prevent a rerun minting new payouts. */
+/** Fixed finisher-slot order per place: the order progressBracket pushes placements in
+ * (place 3: third-upper then third-lower, by semifinal index). Slots are the finisher order (A4). */
+const PRIZE_PLACE_SLOTS = Object.freeze({1: ["champion"], 2: ["runner-up"], 3: ["third-upper", "third-lower"]});
+const PRIZE_SLOT_PLACES = Object.freeze({champion: 1, "runner-up": 2, "third-upper": 3, "third-lower": 3});
+
+/** Funding was escrowed elsewhere. Frozen rows are assigned by (place, row-index) over the fixed
+ * finisher-slot order (D5): the j-th paying finisher of a place receives the j-th frozen row of
+ * that place; a finisher without a row and a row without a finisher stay in the unused return.
+ * Stored v1 rows pay through the canonical rowKey `(listVersion, place, row-index)`; stored
+ * legacy events settle through the listVersion-0 projection with yesterday's slot payout IDs and
+ * identical amounts (L3/A9). Slot/rank identity, duplicate guards, the technicalForfeit skip and
+ * zero-amount suppression are unchanged (A6); technical placements pay and consume nothing.
+ */
 function planPrizePayouts({eventId, prizes, fundedBoxes, placements}) {
   str(eventId, "eventId");
-  const funding = validatePrizeSchedule(prizes, fundedBoxes);
-  const slots = new Set(); const uids = new Set(); const payouts = [];
-  const expectedRanks = {champion: 1, "runner-up": 2, "third-upper": 3, "third-lower": 3};
+  const frozen = prizeFunding(obj(prizes, "prizes"), fundedBoxes);
+  const rowsByPlace = new Map();
+  for (const row of frozen.rows) {
+    if (!rowsByPlace.has(row.place)) rowsByPlace.set(row.place, []);
+    rowsByPlace.get(row.place).push(row.amountBoxes); // Frozen canonical order == row-index order.
+  }
+  const slots = new Set(); const uids = new Set(); const finishersByPlace = new Map();
   for (const raw of arr(placements, "placements")) {
     const row = obj(raw, "placement"); const uid = str(row.uid, "placement.uid");
-    if (!Object.hasOwn(expectedRanks, row.slot) || expectedRanks[row.slot] !== row.rank) {
+    if (!Object.hasOwn(PRIZE_SLOT_PLACES, row.slot) || PRIZE_SLOT_PLACES[row.slot] !== row.rank) {
       throw new RangeError("only first, second and two third-place slots are allowed");
     }
     if (slots.has(row.slot) || uids.has(uid)) throw new RangeError("duplicate placement slot/player");
     slots.add(row.slot); uids.add(uid);
     if (typeof row.technicalForfeit !== "boolean") throw new TypeError("technicalForfeit must be explicit");
     if (row.technicalForfeit) continue;
-    const amount = row.rank === 1 ? prizes.first : row.rank === 2 ? prizes.second : prizes.third;
-    if (amount > 0) payouts.push({payoutId: key(eventId, "prize", row.slot), uid, rank: row.rank,
-      slot: row.slot, currency: "BOXES", amount});
+    if (!finishersByPlace.has(row.rank)) finishersByPlace.set(row.rank, []);
+    finishersByPlace.get(row.rank).push({uid, slot: row.slot});
   }
-  payouts.sort((a, b) => cmp(a.rank, b.rank) || cmp(a.slot, b.slot));
+  for (const [place, finishers] of finishersByPlace) {
+    const order = PRIZE_PLACE_SLOTS[place];
+    finishers.sort((a, b) => cmp(order.indexOf(a.slot), order.indexOf(b.slot)));
+  }
+  const payouts = [];
+  for (const [place, amounts] of rowsByPlace) {
+    const finishers = finishersByPlace.get(place) || [];
+    amounts.forEach((amountBoxes, index) => {
+      const finisher = finishers[index]; // The j-th finisher of the place takes the j-th row.
+      if (!finisher || amountBoxes <= 0) return;
+      payouts.push({payoutId: frozen.legacy ? key(eventId, "prize", finisher.slot)
+          : key(eventId, "prize", 1, place, index),
+        uid: finisher.uid, rank: place, slot: finisher.slot, currency: "BOXES", amount: amountBoxes});
+    });
+  }
   const paidBoxes = safe(payouts.reduce((sum, row) => sum + BigInt(row.amount), 0n), "paidBoxes");
-  return {...funding, payouts, paidBoxes, unusedReturnBoxes: fundedBoxes - paidBoxes,
-    returnId: key(eventId, "unused-fund-return")};
+  return {prizes: frozen.prizes, fundedBoxes, maximumLiabilityBoxes: frozen.maximumLiabilityBoxes,
+    payouts, paidBoxes, unusedReturnBoxes: fundedBoxes - paidBoxes, returnId: key(eventId, "unused-fund-return")};
 }
 
 module.exports = {
   READY_WINDOW_MS, QUALIFICATION_DURATION_MS, STAGE_DURATION_MS,
-  preflightPool, validatePrizeSchedule, createEventPlan, qualificationForms, planQualificationAttempt, planAdmission,
+  preflightPool, validatePrizeSchedule, validateStoredPrizeSchedule, prizeListProjection, createEventPlan,
+  qualificationForms, planQualificationAttempt, planAdmission,
   selectQualifiers, buildBracket, planMeetingProposal, evaluateMeeting, resolvePlayedMatch,
   progressBracket, planPrizePayouts,
 };

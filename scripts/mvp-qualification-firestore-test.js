@@ -28,8 +28,8 @@ if (!args.includes("--execute")) {
 async function execute() {
   const harnessSha256 = createHash("sha256").update(readFileSync(__filename)).digest("hex");
   const hashes = Object.fromEntries(Object.entries({
-    "course-tournament-controller.js": "60f1dff8e1d9f82be2c13f7c54570d99b4c207070b45bcb1d297701dfdddb042",
-    "tournament-qualification-scan.js": "d151993640be6d2cea9c8d457c2eae99e4de42b286cf6c3894c9fdde09788020",
+    "course-tournament-controller.js": "f1ce23d0e9fdea3d3c7ea72765bd7c593e7a3fbcd92c2711b96b061813561c9f",
+    "tournament-qualification-scan.js": "683b1c007a3426f2e346ef839c77738dd53f40ef61dcced6095e47ed6ce89cb8",
     "tournament-qualification.js": "778d3e67174f2a09fece7ce587694747772d9abc69287a97886819b7758b9adb",
     "tournament-ranking.js": "0ca1ad03006cadd95c0a6caa914a1f74a2ae762715d3cb2d04aec3f5243ace78",
   }).map(([file, expected]) => {
@@ -207,7 +207,8 @@ async function execute() {
     const prepared = await controller().prepare(names.author, prepareRequest); assert.deepEqual(prepared.counts, {easy: 60, hard: 20, total: 80});
     const startsAtMs = now() + 60_000;
     const createRequest = {kind: "CREATE", operationId: names.create, eventId: names.event, source: {...source, snapshotId: prepared.snapshotId},
-      startsAtMs, fundedBoxes: 12, prizes: {first: 5, second: 3, third: 1}};
+      startsAtMs, fundedBoxes: 12, prizes: {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+        {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]}};
     const created = await controller().operate(names.author, createRequest); assert.equal(created.status, "CREATED");
     assert.equal((await read(`users/${names.author}`)).boxCount, 88);
     const financialBefore = await financialSnapshot();

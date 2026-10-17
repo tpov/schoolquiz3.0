@@ -213,7 +213,8 @@ async function execute() {
     const prepared = await controller().prepare(names.author, prepareRequest); assert.deepEqual(prepared.counts, {easy: 60, hard: 20, total: 80});
     const startsAtMs = now() + 60_000;
     const createRequest = {kind: "CREATE", operationId: names.create, eventId: names.event, source: {...source, snapshotId: prepared.snapshotId},
-      startsAtMs, fundedBoxes: 12, prizes: {first: 5, second: 3, third: 1}};
+      startsAtMs, fundedBoxes: 12, prizes: {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+        {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]}};
     const created = await controller().operate(names.author, createRequest); assert.equal(created.status, "CREATED");
     assert.equal((await read(`users/${names.author}`)).boxCount, 88);
     const financialBefore = await financialSnapshot();

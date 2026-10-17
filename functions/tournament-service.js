@@ -88,10 +88,27 @@ function sessionView(session) {
     "startedAtMs", "endsAtMs", "status", "questionIndex", "questionStartedAtMs", "questionEndsAtMs"]
     .filter((key) => session[key] !== undefined).map((key) => [key, session[key]]));
 }
+/** Unified redacted prize projection (L2/A8): {listVersion, rows, maximumLiabilityBoxes} for both
+ * stored forms. The legacy {first, second, third} DTO never leaves the server as a DTO. */
+function prizeView(event) {
+  const prizes = event.prizes;
+  if (!prizes || typeof prizes !== "object" || Array.isArray(prizes)) return undefined;
+  let projected;
+  try {
+    projected = policy.prizeListProjection(prizes);
+  } catch (error) {
+    fail("UNAVAILABLE", "Event prizes require repair");
+  }
+  const liability = event.maximumLiabilityBoxes ?? prizes.maximumLiabilityBoxes;
+  if (!Number.isSafeInteger(liability) || liability < 0) {
+    fail("UNAVAILABLE", "Event prizes require repair");
+  }
+  return {...projected, maximumLiabilityBoxes: liability};
+}
 function eventView(event) {
   return {schemaVersion: 1, eventId: event.eventId, organizerUid: event.organizerUid, status: event.status,
     source: {kind: event.source.kind, id: event.source.id, snapshotId: event.source.snapshotId},
-    qualification: event.qualification, prizes: event.prizes, escrow: event.escrow,
+    qualification: event.qualification, prizes: prizeView(event), escrow: event.escrow,
     ...(event.progress ? {progress: event.progress} : {}), ...(event.cancelReason ? {cancelReason: event.cancelReason} : {})};
 }
 function makeSession({sessionId, uid, event, form, kind, startedAtMs, endsAtMs, roundNumber, matchId}) {
@@ -500,5 +517,5 @@ async function readTournamentSession({db, transaction, uid, sessionId, now}) {
 }
 
 module.exports = {TOURNAMENT_PATHS, KINDS, MAX_DOCUMENT_JSON_BYTES, MAX_TRANSACTION_JSON_BYTES,
-  normalizeTournamentRequest, qualificationSessionId, matchSessionId, readPlanTournamentOperation,
+  normalizeTournamentRequest, qualificationSessionId, matchSessionId, prizeView, readPlanTournamentOperation,
   writeTournamentOperation, applyTournamentOperation, readTournamentSession};

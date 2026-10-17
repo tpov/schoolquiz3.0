@@ -163,7 +163,8 @@ async function main() {
 
   const createRequest = {kind: "CREATE", operationId: id("create"), eventId: names.event,
     source: {...source, snapshotId: prepared.snapshotId}, startsAtMs: Date.now() + 60_000,
-    prizes: {first: 5, second: 3, third: 1}, fundedBoxes: 12};
+    prizes: {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3},
+      {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]}, fundedBoxes: 12};
   const created = await call(author, "submitCourseTournamentOperation", createRequest);
   assert.equal(created.status, "CREATED"); safe(created);
   assert.equal(created.event.organizerUid, author.uid);

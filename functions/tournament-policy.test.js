@@ -4,13 +4,18 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
   READY_WINDOW_MS, QUALIFICATION_DURATION_MS, STAGE_DURATION_MS,
-  preflightPool, validatePrizeSchedule, createEventPlan, qualificationForms, planQualificationAttempt, planAdmission,
+  preflightPool, validatePrizeSchedule, validateStoredPrizeSchedule, prizeListProjection, createEventPlan,
+  qualificationForms, planQualificationAttempt, planAdmission,
   selectQualifiers, buildBracket, planMeetingProposal, evaluateMeeting, resolvePlayedMatch,
   progressBracket, planPrizePayouts,
 } = require("./tournament-policy");
 
 const source = {kind: "COURSE", id: "course", snapshotId: "snapshot-1", reviewed: true, published: true};
-const prizes = {first: 100, second: 50, third: 25}; // Test fixture amounts, not policy defaults.
+// Story 5.4: the adopted v1 prize list replaces the fixed DTO. {first:100, second:50, third:25}
+// maps mechanically to two place-3 rows; the liability stays 200. Test fixture, not a default.
+const prizes = {listVersion: 1, rows: [{place: 1, amountBoxes: 100}, {place: 2, amountBoxes: 50},
+  {place: 3, amountBoxes: 25}, {place: 3, amountBoxes: 25}]};
+const legacyPrizes = {first: 100, second: 50, third: 25}; // Stored-event form (L1), never a CREATE input.
 function pool(easy = 60, hard = 20, sourceId = "course") {
   return [
     ...Array.from({length: easy}, (_, i) => ({questionId: `e${i}`, difficulty: "EASY"})),
@@ -314,10 +319,78 @@ test("double-out feeds a bye without inventing another played match or a losing 
   assert.equal(progress.placements[1].uid, real.loserUid);
 });
 
-test("fund validates two thirds, rejects fourth place, conserves paid plus unused and keeps payout IDs stable", () => {
+test("v1 CREATE validates rows, canonicalizes by (place, submission order) and sums liability once", () => {
+  const unsorted = {listVersion: 1, rows: [{place: 3, amountBoxes: 25}, {place: 1, amountBoxes: 100},
+    {place: 3, amountBoxes: 25}, {place: 2, amountBoxes: 50}]};
+  assert.deepEqual(validatePrizeSchedule(unsorted, 200).prizes,
+    {listVersion: 1, rows: [{place: 1, amountBoxes: 100}, {place: 2, amountBoxes: 50},
+      {place: 3, amountBoxes: 25}, {place: 3, amountBoxes: 25}]});
   assert.equal(validatePrizeSchedule(prizes, 200).maximumLiabilityBoxes, 200);
+  // A replay that merely reorders rows digests identically through the canonical form.
+  assert.deepEqual(validatePrizeSchedule(unsorted, 200), validatePrizeSchedule(prizes, 200));
+  // Empty list is a legal prizeless event: liability 0 with any deposit.
+  assert.equal(validatePrizeSchedule({listVersion: 1, rows: []}, 7).maximumLiabilityBoxes, 0);
+  assert.equal(validatePrizeSchedule({listVersion: 1, rows: []}, 0).fundedBoxes, 0);
+});
+
+test("v1 CREATE rejects the legacy DTO and out-of-envelope rows with typed errors", () => {
+  // L4: the fixed {first, second, third} DTO is never accepted for new events.
+  assert.throws(() => validatePrizeSchedule(legacyPrizes, 200), /listVersion: 1, rows/);
+  assert.throws(() => validatePrizeSchedule({...legacyPrizes, fourth: 1}, 201), /listVersion: 1, rows/);
+  assert.throws(() => validatePrizeSchedule({listVersion: 0, rows: []}, 0), /listVersion must be 1/);
+  assert.throws(() => validatePrizeSchedule({listVersion: 2, rows: []}, 0), /listVersion must be 1/);
+  assert.throws(() => validatePrizeSchedule({listVersion: 1}, 0), /rows must be an array/);
+  assert.throws(() => validatePrizeSchedule({listVersion: 1, rows: [], extra: 1}, 0), /exactly listVersion and rows/);
+  const row = (overrides) => ({listVersion: 1, rows: [{place: 1, amountBoxes: 1, ...overrides}]});
+  assert.throws(() => validatePrizeSchedule({listVersion: 1, rows: Array.from({length: 17}, (_, i) => ({place: 1, amountBoxes: 0}))}, 0), /at most 16 rows/);
+  assert.throws(() => validatePrizeSchedule(row({place: 0}), 0), />= 1/);
+  assert.throws(() => validatePrizeSchedule(row({place: 17}), 0), /<= 16/);
+  assert.throws(() => validatePrizeSchedule(row({place: 1.5}), 0), /safe integer/);
+  assert.throws(() => validatePrizeSchedule(row({amountBoxes: -1}), 0), />= 0/);
+  assert.throws(() => validatePrizeSchedule({listVersion: 1, rows: ["prize"]}, 0), /must be an object/);
+  assert.throws(() => validatePrizeSchedule({listVersion: 1, rows: [{place: 1, amountBoxes: 1, label: "Gold"}]}, 0), /exactly place and amountBoxes/);
   assert.throws(() => validatePrizeSchedule(prizes, 199), /insufficient/);
-  assert.throws(() => validatePrizeSchedule({...prizes, fourth: 1}, 201), /fourth/);
+  // BigInt-guarded liability: the sum of sixteen rows cannot overflow into the escrow.
+  assert.throws(() => validatePrizeSchedule({listVersion: 1,
+    rows: [{place: 1, amountBoxes: Number.MAX_SAFE_INTEGER}, {place: 2, amountBoxes: 1}]}, Number.MAX_SAFE_INTEGER),
+    /safe integer/);
+});
+
+test("stored-event revalidation is dual-form and keeps the legacy liability formula", () => {
+  assert.deepEqual(validateStoredPrizeSchedule(prizes, 200),
+    {prizes, fundedBoxes: 200, maximumLiabilityBoxes: 200});
+  const legacy = validateStoredPrizeSchedule(legacyPrizes, 200);
+  assert.equal(legacy.maximumLiabilityBoxes, 200, "first+second+2*third via the projection sum");
+  assert.deepEqual(legacy.prizes, {first: 100, second: 50, third: 25});
+  assert.throws(() => validateStoredPrizeSchedule({...legacyPrizes, fourth: 1}, 201), /fourth/);
+  assert.throws(() => validateStoredPrizeSchedule({first: 1, second: 1}, 0), /third/);
+  assert.throws(() => validateStoredPrizeSchedule({listVersion: 2, rows: []}, 0), /listVersion must be 1/);
+});
+
+test("the read projection is one shape for both stored forms and never leaks the legacy DTO", () => {
+  assert.deepEqual(prizeListProjection(prizes),
+    {listVersion: 1, rows: [{place: 1, amountBoxes: 100}, {place: 2, amountBoxes: 50},
+      {place: 3, amountBoxes: 25}, {place: 3, amountBoxes: 25}]});
+  const projected = prizeListProjection(legacyPrizes);
+  assert.deepEqual(projected, {listVersion: 0, rows: [{place: 1, amountBoxes: 100}, {place: 2, amountBoxes: 50},
+    {place: 3, amountBoxes: 25}, {place: 3, amountBoxes: 25}]});
+  assert.ok(!Object.keys(projected).some((name) => ["first", "second", "third"].includes(name)));
+  assert.ok(!JSON.stringify(projected).includes('"first"'));
+});
+
+test("zero-amount rows consume their finisher position; mixed rows stay positional", () => {
+  const rows = [{place: 1, amountBoxes: 50}, {place: 2, amountBoxes: 20}, {place: 3, amountBoxes: 0}, {place: 3, amountBoxes: 12}];
+  const plan = planPrizePayouts({eventId: "e_zero", prizes: {listVersion: 1, rows}, fundedBoxes: 82,
+    placements: [{uid: "champ", rank: 1, slot: "champion", technicalForfeit: false},
+      {uid: "up", rank: 3, slot: "third-upper", technicalForfeit: false},
+      {uid: "down", rank: 3, slot: "third-lower", technicalForfeit: false}]});
+  const paid = Object.fromEntries(plan.payouts.map((row) => [row.uid, row.amount]));
+  // A zero row consumes its position and pays nothing: no payout record for that finisher at all.
+  assert.deepEqual(paid, {champ: 50, down: 12});
+  assert.equal(plan.payouts.some((row) => row.uid === "up"), false);
+});
+test("fund validates the v1 list, conserves paid plus unused and keeps canonical row payout IDs stable", () => {
+  assert.throws(() => validatePrizeSchedule(prizes, 199), /insufficient/);
   const placements = [
     {uid: "a", rank: 1, slot: "champion", technicalForfeit: false},
     {uid: "b", rank: 2, slot: "runner-up", technicalForfeit: false},
@@ -326,6 +399,11 @@ test("fund validates two thirds, rejects fourth place, conserves paid plus unuse
   ];
   const full = planPrizePayouts({eventId: "e", prizes, fundedBoxes: 200, placements});
   assert.equal(full.paidBoxes, 200); assert.equal(full.unusedReturnBoxes, 0);
+  assert.deepEqual(full.payouts.map((row) => [row.slot, row.amount]), [["champion", 100], ["runner-up", 50],
+    ["third-upper", 25], ["third-lower", 25]]);
+  assert.deepEqual(full.payouts.map((row) => row.payoutId), [
+    JSON.stringify(["tournament", "e", "prize", 1, 1, 0]), JSON.stringify(["tournament", "e", "prize", 1, 2, 0]),
+    JSON.stringify(["tournament", "e", "prize", 1, 3, 0]), JSON.stringify(["tournament", "e", "prize", 1, 3, 1])]);
   assert.deepEqual(full, planPrizePayouts({eventId: "e", prizes, fundedBoxes: 200, placements: [...placements].reverse()}));
   const partial = planPrizePayouts({eventId: "e", prizes, fundedBoxes: 230,
     placements: placements.map((p) => ({...p, technicalForfeit: p.rank === 2 || p.slot === "third-lower"}))});
@@ -335,9 +413,71 @@ test("fund validates two thirds, rejects fourth place, conserves paid plus unuse
   assert.equal(cancelled.unusedReturnBoxes, 200);
   const differentWinner = planPrizePayouts({eventId: "e", prizes, fundedBoxes: 200,
     placements: [{...placements[0], uid: "replacement"}]});
-  assert.equal(differentWinner.payouts[0].payoutId, full.payouts[0].payoutId, "slot ID cannot mint a new award on recalculation");
+  assert.equal(differentWinner.payouts[0].payoutId, full.payouts[0].payoutId, "row ID cannot mint a new award on recalculation");
   assert.throws(() => planPrizePayouts({eventId: "e", prizes, fundedBoxes: 200,
     placements: [{uid: "a", rank: 4, slot: "fourth", technicalForfeit: false}]}), /third/);
+});
+
+test("legacy stored events settle through the projection with yesterday's slot IDs and amounts", () => {
+  // Executed-equivalence case from the contract §4/L3: 100/50/30 → paid 210, both thirds paid.
+  const stored = {first: 100, second: 50, third: 30};
+  const placements = [
+    {uid: "a", rank: 1, slot: "champion", technicalForfeit: false},
+    {uid: "b", rank: 2, slot: "runner-up", technicalForfeit: false},
+    {uid: "c", rank: 3, slot: "third-upper", technicalForfeit: false},
+    {uid: "d", rank: 3, slot: "third-lower", technicalForfeit: false},
+  ];
+  const settled = planPrizePayouts({eventId: "e", prizes: stored, fundedBoxes: 210, placements});
+  assert.equal(settled.maximumLiabilityBoxes, 210);
+  assert.equal(settled.paidBoxes, 210); assert.equal(settled.unusedReturnBoxes, 0);
+  assert.deepEqual(settled.payouts.map((row) => [row.payoutId, row.uid, row.amount]), [
+    [JSON.stringify(["tournament", "e", "prize", "champion"]), "a", 100],
+    [JSON.stringify(["tournament", "e", "prize", "runner-up"]), "b", 50],
+    [JSON.stringify(["tournament", "e", "prize", "third-upper"]), "c", 30],
+    [JSON.stringify(["tournament", "e", "prize", "third-lower"]), "d", 30]]);
+  // A technical third placement still pays the remaining one exactly prizes.third.
+  const technical = planPrizePayouts({eventId: "e", prizes: stored, fundedBoxes: 210,
+    placements: placements.map((p) => ({...p, technicalForfeit: p.slot === "third-upper"}))});
+  assert.deepEqual(technical.payouts.map((row) => [row.slot, row.amount]),
+    [["champion", 100], ["runner-up", 50], ["third-lower", 30]]);
+  assert.equal(technical.paidBoxes + technical.unusedReturnBoxes, 210);
+  const cancelled = planPrizePayouts({eventId: "e", prizes: stored, fundedBoxes: 210, placements: []});
+  assert.equal(cancelled.unusedReturnBoxes, 210);
+});
+
+test("place-3 rows pay fixed finisher order; lone rows and unreproducible places return", () => {
+  const finishers = (uids) => uids.map((uid, index) => ({uid, rank: 3,
+    slot: index === 0 ? "third-upper" : "third-lower", technicalForfeit: false}));
+  // Matrix: two third rows, both losers finish → third-upper row 0, third-lower row 1.
+  const both = planPrizePayouts({eventId: "e", fundedBoxes: 30,
+    prizes: {listVersion: 1, rows: [{place: 3, amountBoxes: 12}, {place: 3, amountBoxes: 18}]},
+    placements: finishers(["c", "d"])});
+  assert.deepEqual(both.payouts.map((row) => [row.slot, row.amount, row.payoutId]),
+    [["third-upper", 12, JSON.stringify(["tournament", "e", "prize", 1, 3, 0])],
+      ["third-lower", 18, JSON.stringify(["tournament", "e", "prize", 1, 3, 1])]]);
+  assert.equal(both.unusedReturnBoxes, 0);
+  // One third row, both finish → third-upper paid, second third gets nothing, nothing unreturned.
+  const single = planPrizePayouts({eventId: "e", fundedBoxes: 12,
+    prizes: {listVersion: 1, rows: [{place: 3, amountBoxes: 12}]}, placements: finishers(["c", "d"])});
+  assert.deepEqual(single.payouts.map((row) => row.slot), ["third-upper"]);
+  assert.equal(single.paidBoxes, 12); assert.equal(single.unusedReturnBoxes, 0);
+  // A row without a finisher (absent/technical slot) returns; the survivor takes row 0 (§4).
+  const absent = planPrizePayouts({eventId: "e", fundedBoxes: 30,
+    prizes: {listVersion: 1, rows: [{place: 3, amountBoxes: 12}, {place: 3, amountBoxes: 18}]},
+    placements: [{uid: "d", rank: 3, slot: "third-lower", technicalForfeit: false}]});
+  assert.deepEqual(absent.payouts.map((row) => [row.slot, row.amount]), [["third-lower", 12]]);
+  assert.equal(absent.unusedReturnBoxes, 18);
+  // Places outside the reproducible {1,2,3} set are legal at CREATE and always return (D7).
+  const exotic = planPrizePayouts({eventId: "e", fundedBoxes: 9,
+    prizes: {listVersion: 1, rows: [{place: 5, amountBoxes: 9}, {place: 16, amountBoxes: 0}]}, placements: []});
+  assert.deepEqual(exotic.payouts, []); assert.equal(exotic.unusedReturnBoxes, 9);
+  // Zero-amount rows pay nothing and never write effects.
+  const zero = planPrizePayouts({eventId: "e", fundedBoxes: 5,
+    prizes: {listVersion: 1, rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 0}]},
+    placements: [{uid: "a", rank: 1, slot: "champion", technicalForfeit: false},
+      {uid: "b", rank: 2, slot: "runner-up", technicalForfeit: false}]});
+  assert.deepEqual(zero.payouts.map((row) => row.slot), ["champion"]);
+  assert.equal(zero.paidBoxes, 5); assert.equal(zero.unusedReturnBoxes, 0);
 });
 
 test("outputs are JSON-serializable; helpers preserve inputs and reject unsafe arithmetic", () => {
@@ -347,7 +487,8 @@ test("outputs are JSON-serializable; helpers preserve inputs and reject unsafe a
   assert.deepEqual(JSON.parse(JSON.stringify(output)), output); assert.equal(JSON.stringify(e), before);
   assert.throws(() => createEventPlan({eventId: "e", source, questions: pool(), startsAtMs: Number.MAX_SAFE_INTEGER,
     prizes, fundedBoxes: 200}), /safe integer/);
-  assert.throws(() => validatePrizeSchedule({first: Number.MAX_SAFE_INTEGER, second: 1, third: 0}, Number.MAX_SAFE_INTEGER),
+  assert.throws(() => validatePrizeSchedule({listVersion: 1,
+    rows: [{place: 1, amountBoxes: Number.MAX_SAFE_INTEGER}, {place: 2, amountBoxes: 1}]}, Number.MAX_SAFE_INTEGER),
     /safe integer/);
   const long = pool(); long.filter((q) => q.difficulty === "HARD").forEach((q) => { q.maxDurationMs = STAGE_DURATION_MS; });
   assert.throws(() => buildBracket({event: event(long), ranking: ranking(2), serverSeed: "s"}), /does not fit/);
