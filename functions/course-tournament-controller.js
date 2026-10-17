@@ -6,7 +6,7 @@ const {TOURNAMENT_PATHS: P, normalizeTournamentRequest, applyTournamentOperation
 const {applyTournamentSessionOperation, readTournamentSessionOperation, planTournamentSessionOperation,
   writeTournamentSessionOperation, VERIFIED_RUNS} = require("./tournament-session");
 const {verifiedTournamentRun, loadSettledMatchResults} = require("./tournament-session-results");
-const {loadQualificationRanking, selectQualificationCalculation} = require("./tournament-qualification-freeze");
+const {loadQualificationRanking, selectQualificationCalculation, QUALIFICATION_RANKINGS, frozenGate} = require("./tournament-qualification-freeze");
 const {advanceQualificationScan} = require("./tournament-qualification-scan");
 const {advanceQualificationCalculation} = require("./tournament-qualification-calculation");
 const {tournamentDigest: digest} = require("./tournament-bank");
@@ -98,6 +98,15 @@ function safeEvent(value) {
     escrow: pick(value.escrow, ["reservedBoxes", "remainingBoxes", "paidBoxes", "returnedBoxes"])};
   if (value.progress) result.progress = safeProgress(value.progress);
   return result;
+}
+/** Story 5.10 client projection: the rows the server already froze, redacted to the allowlist.
+ * place is authoritative (it ordered the bracket); ratingPercent/averagePercent ride along
+ * display-only when a freeze carries them — never recomputed here. Private run material
+ * (sessionId, fingerprints, scores, clocks) has no path into the row.
+ */
+function safeRanking(value) {
+  return {...pick(value, ["totalRanked"]),
+    rows: value.ranking.map((row) => pick(row, ["uid", "place", "ratingPercent", "averagePercent"]))};
 }
 function safeResponse(value) {
   const result = pick(value, ["schemaVersion", "operationId", "status", "serverNowMs", "deadlineReached", "questionDeadlineReached",
@@ -192,6 +201,14 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
       const state = bracketState(event); view.progress = safeProgress(state.progress);
       view.matches = state.matches.map((match) => ({...pick(match, ["matchId", "stage", "stageStartsAtMs", "stageEndsAtMs"]),
         maxDurationMs: match.sharedForm.maxDurationMs, schedulingDeadlineMs: schedulingDeadline(match)}));
+    }
+    // Story 5.10: a published ranking rides with the event read. The event retains ranking
+    // metadata only after a complete fenced freeze, so the frozen document must be present and
+    // pass the same gate CLOSE_QUALIFICATION published it through — fail-closed, like bracket
+    // state, never a silent empty leaderboard.
+    if (event.qualificationRanking) {
+      const ranking = data(await db.doc(`${QUALIFICATION_RANKINGS}/${event.eventId}`).get());
+      view.qualificationRanking = safeRanking(frozenGate(event, ranking));
     }
     return {event: view, serverNowMs: now()};
   }

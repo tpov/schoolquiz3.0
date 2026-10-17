@@ -12,6 +12,8 @@ import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentPriz
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentPrizeView
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentProgressView
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentQualificationView
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentRankingRow
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentRankingView
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentResolvedMatchRow
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentSourceRef
 import kotlinx.serialization.SerializationException
@@ -19,13 +21,16 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 
 /**
- * Строгий разбор событий соревнования — зеркала `safeEvent`/`safeProgress`/матчей контроллера
- * (`functions/course-tournament-controller.js`).
+ * Строгий разбор событий соревнования — зеркала `safeEvent`/`safeProgress`/матчей/рейтинга
+ * контроллера (`functions/course-tournament-controller.js`).
  *
  * Разрешён только allowlist ключей: дрейф проекции (лишний ключ), отсутствующее обязательное
  * поле и неверный тип — одно и то же [MalformedWire]. Призы читаются в обеих хранимых формах
  * (L2): версия 0 — проекция legacy, версия 1 — канонический список; строки обеих — {place,
  * amountBoxes}; никакая приватная форма (first/second/third, сид, отпечаток) клиентом не читается.
+ * Рейтинг (история 5.10) приезжает только чтением события: строки замороженного документа в
+ * redacted-allowlist {uid, place, ratingPercent, averagePercent} — проценты необязательны,
+ * их отсутствие честно, а у страниц просмотра ключа быть не может.
  */
 class TournamentEventWireParser {
     /** Ответ `fetchCourseTournamentEvent`: {event, serverNowMs}; матчи только в BRACKET/FINISHED. */
@@ -58,7 +63,8 @@ class TournamentEventWireParser {
             )
         }
 
-    /** Вид события: allowlist `safeEvent`; [withMatches] разрешает серверные матчи чтения сетки. */
+    /** Вид события: allowlist `safeEvent`; [withMatches] разрешает серверные матчи чтения сетки
+     * и опубликованный рейтинг — оба члена добавляет только чтение события. */
     fun event(
         raw: JsonObject,
         withMatches: Boolean,
@@ -67,7 +73,7 @@ class TournamentEventWireParser {
             if (withMatches) {
                 raw.within(
                     "eventId", "organizerUid", "status", "cancelReason", "source", "qualification",
-                    "prizes", "escrow", "progress", "matches",
+                    "prizes", "escrow", "progress", "matches", "qualificationRanking",
                 )
             } else {
                 raw.within(
@@ -91,6 +97,13 @@ class TournamentEventWireParser {
                     } else {
                         if (raw.element("matches") != null) malformedWire()
                         emptyList()
+                    },
+                ranking =
+                    if (withMatches) {
+                        raw.obj("qualificationRanking")?.let(::ranking)
+                    } else {
+                        if (raw.element("qualificationRanking") != null) malformedWire()
+                        null
                     },
             )
         }
@@ -201,6 +214,32 @@ class TournamentEventWireParser {
         )
     }
 
+    /**
+     * Опубликованный рейтинг: объём когорты и строки замороженного документа. [totalRanked] и
+     * `rows` сервер выводит всегда; ключи строки — подмножество allowlist'а (проценты приезжают,
+     * только если замороженный документ их хранит), лишний ключ — дрейф, не витрина.
+     */
+    private fun ranking(raw: JsonObject): TournamentRankingView {
+        raw.exact("totalRanked", "rows")
+        val rows =
+            raw.requiredRows("rows").map { row ->
+                row.jsonObject.within("uid", "place", "ratingPercent", "averagePercent")
+                TournamentRankingRow(
+                    uid = row.jsonObject.nonBlank("uid"),
+                    place = row.jsonObject.requiredInt("place"),
+                    ratingPercent = row.jsonObject.fraction("ratingPercent"),
+                    averagePercent = row.jsonObject.fraction("averagePercent"),
+                )
+            }
+        if (rows.size > MAX_RANKING_ROWS) malformedWire()
+        rows.forEach { if (it.place < 1) malformedWire() }
+        val totalRanked = raw.requiredWhole("totalRanked")
+        // Объём когорты покрывает строки: меньше оценённых игроков, чем строк, не бывает —
+        // это не проекция сервера, а витрина.
+        if (totalRanked < rows.size) malformedWire()
+        return TournamentRankingView(totalRanked = totalRanked, rows = rows)
+    }
+
     private inline fun <T> fail(block: () -> T): T =
         runCatching { block() }.getOrElse { failure ->
             if (failure is MalformedWire || failure is SerializationException || failure is IllegalArgumentException) {
@@ -211,5 +250,8 @@ class TournamentEventWireParser {
 
     private companion object {
         const val MAX_PRIZE_ROWS = 15
+
+        /** Верх сетки — серверная константа qualification top16; больше строк заморозка не несёт. */
+        const val MAX_RANKING_ROWS = 16
     }
 }

@@ -12,16 +12,23 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponen
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultInboxComponent
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentOrganizerComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentOrganizerComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentQualificationComponent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
@@ -111,6 +118,34 @@ val appShellPresentationModule =
                         koin.get(ShopComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderShopComponent()
+                    }
+                },
+                tournamentOrganizerFactory = { compCtx ->
+                    runCatching<TournamentOrganizerComponent> {
+                        koin.get(TournamentOrganizerComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentOrganizerComponent()
+                    }
+                },
+                tournamentBrowserFactory = { compCtx ->
+                    runCatching<TournamentBrowserComponent> {
+                        koin.get(TournamentBrowserComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentBrowserComponent()
+                    }
+                },
+                tournamentAdmissionFactory = { compCtx ->
+                    runCatching<TournamentAdmissionComponent> {
+                        koin.get(TournamentAdmissionComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentAdmissionComponent()
+                    }
+                },
+                tournamentQualificationFactory = { compCtx ->
+                    runCatching<TournamentQualificationComponent> {
+                        koin.get(TournamentQualificationComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentQualificationComponent()
                     }
                 },
                 quizzesFactory = { compCtx ->

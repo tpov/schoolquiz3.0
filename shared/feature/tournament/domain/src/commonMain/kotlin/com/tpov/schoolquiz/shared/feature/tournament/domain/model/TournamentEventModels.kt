@@ -88,6 +88,28 @@ data class TournamentProgressView(
     val placements: List<TournamentPlacementRow>,
 )
 
+/**
+ * Одна строка опубликованного квалификационного рейтинга (история 5.10): серверное место
+ * авторитетно, им заморожена сетка; проценты — витринные приложением, сервер их не пересчитывает
+ * и замороженный документ сегодня может их вовсе не нести — пустота честная, а не ноль.
+ */
+data class TournamentRankingRow(
+    val uid: String,
+    val place: Int,
+    val ratingPercent: Double?,
+    val averagePercent: Double?,
+)
+
+/**
+ * Опубликованный квалификационный рейтинг события: строки замороженного документа и объём
+ * оценённой когорты. Приезжает только чтением события и только у события, хранящего метаданные
+ * своего рейтинга; страницы просмотра и операции его не переносят.
+ */
+data class TournamentRankingView(
+    val totalRanked: Long,
+    val rows: List<TournamentRankingRow>,
+)
+
 /** Один матч сетки в чтении события: стадия, часы и авторитетный край планирования. */
 data class TournamentMatchRow(
     val matchId: String,
@@ -101,7 +123,9 @@ data class TournamentMatchRow(
 /**
  * Вид события — зеркало `safeEvent`: идентификаторы, статус, источник, квалификация, призы
  * (единая проекция), эскроу; прогресс и матчи добавляются чтением события в BRACKET/FINISHED.
- * [cancelReason] — только у отменённых событий, пусто в остальных статусах.
+ * [ranking] — опубликованный квалификационный рейтинг, тоже только чтением события и только у
+ * события, хранящего метаданные рейтинга. [cancelReason] — только у отменённых событий, пусто
+ * в остальных статусах.
  */
 data class TournamentEventView(
     val eventId: String,
@@ -114,6 +138,7 @@ data class TournamentEventView(
     val escrow: TournamentEscrowView,
     val progress: TournamentProgressView?,
     val matches: List<TournamentMatchRow>,
+    val ranking: TournamentRankingView? = null,
 )
 
 /** Ответ `fetchCourseTournamentEvent`: вид события плюс серверное «сейчас». */

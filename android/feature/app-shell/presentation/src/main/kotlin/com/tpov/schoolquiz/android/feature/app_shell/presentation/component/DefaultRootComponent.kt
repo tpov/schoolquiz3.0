@@ -14,17 +14,17 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultShopTabComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
-import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PlaceholderPollsComponent
-import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.PlaceholderProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PlaceholderPollsComponent
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
@@ -32,6 +32,14 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentOrganizerComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentOrganizerComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentQualificationComponent
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
@@ -152,6 +160,18 @@ class DefaultRootComponent(
     profileFactory: (ComponentContext) -> ProfileComponent = { PlaceholderProfileComponent() },
     shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
+    tournamentOrganizerFactory: (
+        ComponentContext,
+    ) -> TournamentOrganizerComponent = { PlaceholderTournamentOrganizerComponent() },
+    tournamentBrowserFactory: (
+        ComponentContext,
+    ) -> TournamentBrowserComponent = { PlaceholderTournamentBrowserComponent() },
+    tournamentAdmissionFactory: (
+        ComponentContext,
+    ) -> TournamentAdmissionComponent = { PlaceholderTournamentAdmissionComponent() },
+    tournamentQualificationFactory: (
+        ComponentContext,
+    ) -> TournamentQualificationComponent = { PlaceholderTournamentQualificationComponent() },
     // Injectable so tests stay on the test scheduler. A hardcoded Dispatchers.IO escapes
     // runTest's virtual clock: the scheduler goes idle, virtual time jumps ahead, and a
     // withTimeout expires before the real IO thread answers — which made the tournament
@@ -207,7 +227,21 @@ class DefaultRootComponent(
 
     internal val localTabComponent = DefaultLocalTabComponent(childContext("LocalTab"), localNavigation)
     internal val internetTabComponent = DefaultInternetTabComponent(childContext("InternetTab"), internetNavigation)
-    internal val eventsTabComponent = DefaultEventsTabComponent(childContext("EventsTab"), eventsNavigation)
+
+    /**
+     * Стек событий открыт сборке приложения: end-to-end проводка маршрутов соревнования
+     * (история 5.10) проверяется тестом сборки — смонтированные дети должны быть живыми
+     * маршрутами, а не заглушками.
+     */
+    val eventsTabComponent =
+        DefaultEventsTabComponent(
+            componentContext = childContext("EventsTab"),
+            navigation = eventsNavigation,
+            organizerFactory = tournamentOrganizerFactory,
+            browserFactory = tournamentBrowserFactory,
+            admissionFactory = tournamentAdmissionFactory,
+            qualificationFactory = tournamentQualificationFactory,
+        )
     internal val shopTabComponent = DefaultShopTabComponent(childContext("ShopTab"), shopNavigation)
 
     /**

@@ -10,11 +10,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
 import com.tpov.schoolquiz.android.feature.economy.presentation.di.economyPresentationModule
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.di.profilePresentationModule
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.di.socialPresentationModule
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
-import com.tpov.schoolquiz.android.feature.internet.social.presentation.di.socialPresentationModule
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di.questAuthoringPresentationModule
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
+import com.tpov.schoolquiz.android.feature.tournament.presentation.di.tournamentPresentationModule
 import com.tpov.schoolquiz.apps.android_next.di.authModule
 import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
 import com.tpov.schoolquiz.apps.android_next.di.isolatedMvpBillingModule
@@ -50,14 +51,14 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.di.leaderboardDataModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.di.profileDataModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDomainModule
+import com.tpov.schoolquiz.shared.feature.internet.social.data.di.socialDataModule
+import com.tpov.schoolquiz.shared.feature.internet.social.domain.di.socialDomainModule
 import com.tpov.schoolquiz.shared.feature.lesson.data.di.lessonDataModule
 import com.tpov.schoolquiz.shared.feature.lesson.domain.di.lessonDomainModule
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDataModule
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDomainKoinAdapter
 import com.tpov.schoolquiz.shared.feature.quest.data.di.questDataModule
 import com.tpov.schoolquiz.shared.feature.quest.domain.di.questDomainModule
-import com.tpov.schoolquiz.shared.feature.internet.social.data.di.socialDataModule
-import com.tpov.schoolquiz.shared.feature.internet.social.domain.di.socialDomainModule
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.di.questAuthoringDataModule
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di.questAuthoringDomainModule
 import com.tpov.schoolquiz.shared.feature.question.data.di.questionDataModule
@@ -198,6 +199,7 @@ class AppApplication : Application(), Configuration.Provider {
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,
                 tournamentDataModule,
+                tournamentPresentationModule,
                 syncModule,
                 // Время — то же, что у очереди и состояния синхронизации выше: один источник на
                 // весь sync (AD-9), адаптеры своих часов не держат.

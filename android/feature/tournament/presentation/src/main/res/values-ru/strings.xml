@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Маршруты клиента соревнования (история 5.10), русский. -->
+<resources>
+    <!-- Общие честные состояния (AD-21) -->
+    <string name="tournament_state_not_loaded">Пока ничего не загружено</string>
+    <string name="tournament_state_ready">Готово</string>
+    <string name="tournament_state_account_unavailable">Войдите, чтобы участвовать в турнирах</string>
+    <string name="tournament_state_account_changed">Аккаунт сменился, пока запрос летел</string>
+    <string name="tournament_state_offline">Нет сети. Верните связь и повторите</string>
+    <string name="tournament_state_pending">Ждём завершения предыдущей операции</string>
+    <string name="tournament_state_retry">Что-то не прошло. Тот же запрос можно повторить</string>
+    <string name="tournament_retry">Повторить</string>
+    <string name="tournament_info">Подробнее</string>
+    <string name="tournament_back">Назад</string>
+    <string name="tournament_close">Закрыть</string>
+    <string name="tournament_refresh">Обновить</string>
+    <string name="tournament_load_more">Ещё</string>
+    <string name="tournament_empty">Здесь пока пусто</string>
+    <string name="tournament_accessibility_back">Назад</string>
+    <string name="tournament_accessibility_info">Подробнее</string>
+    <string name="tournament_accessibility_continue">Продолжить</string>
+
+    <!-- Отказы -->
+    <string name="tournament_refusal_outside_window">Квалификационное окно события закрыто или ещё не открыто</string>
+    <string name="tournament_refusal_no_basis">Основания допуска нет: ни подтверждённого скачивания курса, ни верного токена ссылки</string>
+    <string name="tournament_refusal_insufficient">Призовой фонд не покрыт депозитом</string>
+    <string name="tournament_refusal_source">Этот источник не годится для турнира</string>
+    <string name="tournament_refusal_conflicting_replay">Эта операция уже была отправлена с другими условиями</string>
+    <string name="tournament_refusal_other">Сервер отказал этой операции: %1$s</string>
+
+    <!-- Создание организатором -->
+    <string name="tournament_organizer_title">Организовать турнир</string>
+    <string name="tournament_organizer_source_hint">Идентификатор курса</string>
+    <string name="tournament_organizer_prepare">Подготовить банк курса</string>
+    <string name="tournament_organizer_prepare_done">Банк готов: лёгких %1$d, сложных %2$d</string>
+    <string name="tournament_organizer_show_consent">Проверить призы и депозит</string>
+    <string name="tournament_organizer_consent_title">Создать турнир</string>
+    <string name="tournament_organizer_consent_terms">Замороженные условия этого создания</string>
+    <string name="tournament_organizer_consent_fund">Депозит: %1$d коробок</string>
+    <string name="tournament_organizer_consent_prize_row">Место %1$d: %2$d коробок</string>
+    <string name="tournament_organizer_consent_warning">Депозит резервируется в эскроу при подтверждении</string>
+    <string name="tournament_organizer_confirm_create">Создать с этим депозитом</string>
+    <string name="tournament_organizer_created">Турнир создан</string>
+    <string name="tournament_organizer_new_create">Создать новое</string>
+    <string name="tournament_organizer_consent_starts">Открывается: %1$s</string>
+    <string name="tournament_organizer_escrow_title">Эскроу</string>
+    <string name="tournament_organizer_escrow_reserved">Зарезервировано: %1$d коробок</string>
+    <string name="tournament_organizer_escrow_remaining">Осталось: %1$d коробок</string>
+    <string name="tournament_organizer_escrow_paid">Выплачено: %1$d коробок</string>
+    <string name="tournament_organizer_escrow_returned">Возвращено: %1$d коробок</string>
+
+    <!-- Просмотр -->
+    <string name="tournament_browser_title">Активные турниры</string>
+    <string name="tournament_browser_status_open">Квалификация открыта</string>
+    <string name="tournament_browser_status_bracket">Идёт сетка</string>
+    <string name="tournament_browser_status_finished">Завершён</string>
+    <string name="tournament_browser_status_cancelled">Отменён: %1$s</string>
+    <string name="tournament_browser_detail_title">Событие</string>
+    <string name="tournament_browser_rounds">Раундов: %1$d</string>
+    <string name="tournament_browser_prizes_title">Призы</string>
+    <string name="tournament_browser_prize_row">Место %1$d: %2$d коробок</string>
+    <string name="tournament_browser_enter">Войти</string>
+
+    <!-- Рейтинг -->
+    <string name="tournament_ranking_title">Квалификационный рейтинг</string>
+    <string name="tournament_ranking_total">Оценено игроков: %1$d</string>
+    <string name="tournament_ranking_place">Место %1$d</string>
+    <string name="tournament_rating_authoritative">Рейтинг (официальный): %1$s</string>
+    <string name="tournament_average_display_only">Средний (только для сведения): %1$s</string>
+    <string name="tournament_percent_absent">—</string>
+    <string name="tournament_ranking_empty">Для этого события рейтинг не публиковался</string>
+
+    <!-- Допуск -->
+    <string name="tournament_admission_title">Допуск</string>
+    <string name="tournament_admission_download">Я скачал этот курс</string>
+    <string name="tournament_admission_download_first">Скачивание подтверждено сервером</string>
+    <string name="tournament_admission_download_replayed">Уже подтверждено ранее</string>
+    <string name="tournament_admission_outside_window">Это событие вне своего квалификационного окна</string>
+    <string name="tournament_admission_link_note">Токен ссылки предъявляется на старте квалификации</string>
+    <string name="tournament_admission_to_participation">Перейти к квалификации</string>
+
+    <!-- Участие -->
+    <string name="tournament_qualification_title">Квалификация</string>
+    <string name="tournament_qualification_pick_title">Выберите событие</string>
+    <string name="tournament_qualification_round">Раунд %1$d</string>
+    <string name="tournament_qualification_round_not_started">Не начат</string>
+    <string name="tournament_qualification_start">Начать раунд</string>
+    <string name="tournament_qualification_link_hint">Токен ссылки (если есть)</string>
+    <string name="tournament_qualification_question_of">Вопрос %1$d</string>
+    <string name="tournament_qualification_answer_submit">Отправить ответ</string>
+    <string name="tournament_qualification_answer_delivered">Ответ доставлен</string>
+    <string name="tournament_qualification_answer_pending">Ответ доставляется…</string>
+    <string name="tournament_qualification_window_next">Следующий вопрос через %1$d с</string>
+    <string name="tournament_qualification_ready_acked">Готовность подтверждена</string>
+    <string name="tournament_qualification_timed_out">Время этого вопроса вышло</string>
+    <string name="tournament_qualification_settled">Раунд завершён: %1$s%%</string>
+    <string name="tournament_qualification_recheck">Переспросить сессию</string>
+    <string name="tournament_qualification_blank_hint">Пропуск %1$d</string>
+    <string name="tournament_qualification_order_position">Порядок %1$d: %2$s</string>
+
+    <!-- Статусы раундов: серверные слова короткими местными метками -->
+    <string name="tournament_round_started">Идёт</string>
+    <string name="tournament_round_settled">Завершён</string>
+    <string name="tournament_round_completed">Пройден</string>
+    <string name="tournament_round_timed_out">Время вышло</string>
+</resources>

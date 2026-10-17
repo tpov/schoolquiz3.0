@@ -93,6 +93,7 @@ include(":android:feature:internet:profile:presentation")
 include(":android:feature:internet:social:presentation")
 include(":android:feature:internet:leaderboard:presentation")
 include(":android:feature:qualification:presentation")
+include(":android:feature:tournament:presentation")
 include(":android:feature:economy:presentation")
 include(":android:feature:minigame:presentation")
 

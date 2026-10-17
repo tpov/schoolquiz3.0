@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tournament client journeys (story 5.10), English base. -->
+<resources>
+    <!-- Shared honest states (AD-21) -->
+    <string name="tournament_state_not_loaded">Nothing loaded yet</string>
+    <string name="tournament_state_ready">Ready</string>
+    <string name="tournament_state_account_unavailable">Sign in to take part in tournaments</string>
+    <string name="tournament_state_account_changed">The account changed while the request was in flight</string>
+    <string name="tournament_state_offline">You are offline. Reconnect and retry</string>
+    <string name="tournament_state_pending">Waiting for an earlier operation to finish</string>
+    <string name="tournament_state_retry">Something went wrong. You can retry the same request</string>
+    <string name="tournament_retry">Retry</string>
+    <string name="tournament_info">Info</string>
+    <string name="tournament_back">Back</string>
+    <string name="tournament_close">Close</string>
+    <string name="tournament_refresh">Refresh</string>
+    <string name="tournament_load_more">Load more</string>
+    <string name="tournament_empty">Nothing here yet</string>
+    <string name="tournament_accessibility_back">Go back</string>
+    <string name="tournament_accessibility_info">More information</string>
+    <string name="tournament_accessibility_continue">Continue</string>
+
+    <!-- Refusals -->
+    <string name="tournament_refusal_outside_window">The qualification window of this event is closed or has not opened yet</string>
+    <string name="tournament_refusal_no_basis">No admission basis: neither an attested course download nor a valid link token</string>
+    <string name="tournament_refusal_insufficient">The prize fund is not covered by the deposit</string>
+    <string name="tournament_refusal_source">This source is not eligible for a tournament</string>
+    <string name="tournament_refusal_conflicting_replay">This operation was already sent with different terms</string>
+    <string name="tournament_refusal_other">The server refused this operation: %1$s</string>
+
+    <!-- Organizer create -->
+    <string name="tournament_organizer_title">Organize a tournament</string>
+    <string name="tournament_organizer_source_hint">Course identifier</string>
+    <string name="tournament_organizer_prepare">Prepare the course bank</string>
+    <string name="tournament_organizer_prepare_done">Bank ready: %1$d easy, %2$d hard questions</string>
+    <string name="tournament_organizer_show_consent">Review prize list and deposit</string>
+    <string name="tournament_organizer_consent_title">Create the tournament</string>
+    <string name="tournament_organizer_consent_terms">Frozen terms of this creation</string>
+    <string name="tournament_organizer_consent_fund">Deposit: %1$d boxes</string>
+    <string name="tournament_organizer_consent_prize_row">Place %1$d: %2$d boxes</string>
+    <string name="tournament_organizer_consent_warning">The deposit is reserved in escrow on confirmation</string>
+    <string name="tournament_organizer_confirm_create">Create with this deposit</string>
+    <string name="tournament_organizer_created">Tournament created</string>
+    <string name="tournament_organizer_new_create">Start a new competition</string>
+    <string name="tournament_organizer_consent_starts">Opens at: %1$s</string>
+    <string name="tournament_organizer_escrow_title">Escrow</string>
+    <string name="tournament_organizer_escrow_reserved">Reserved: %1$d boxes</string>
+    <string name="tournament_organizer_escrow_remaining">Remaining: %1$d boxes</string>
+    <string name="tournament_organizer_escrow_paid">Paid out: %1$d boxes</string>
+    <string name="tournament_organizer_escrow_returned">Returned: %1$d boxes</string>
+
+    <!-- Browser -->
+    <string name="tournament_browser_title">Active tournaments</string>
+    <string name="tournament_browser_status_open">Qualification open</string>
+    <string name="tournament_browser_status_bracket">Bracket running</string>
+    <string name="tournament_browser_status_finished">Finished</string>
+    <string name="tournament_browser_status_cancelled">Cancelled: %1$s</string>
+    <string name="tournament_browser_detail_title">Event</string>
+    <string name="tournament_browser_rounds">Rounds: %1$d</string>
+    <string name="tournament_browser_prizes_title">Prizes</string>
+    <string name="tournament_browser_prize_row">Place %1$d: %2$d boxes</string>
+    <string name="tournament_browser_enter">Enter</string>
+
+    <!-- Ranking leaderboard -->
+    <string name="tournament_ranking_title">Qualification ranking</string>
+    <string name="tournament_ranking_total">Ranked players: %1$d</string>
+    <string name="tournament_ranking_place">Place %1$d</string>
+    <string name="tournament_rating_authoritative">Rating (official): %1$s</string>
+    <string name="tournament_average_display_only">Average (reference only): %1$s</string>
+    <string name="tournament_percent_absent">—</string>
+    <string name="tournament_ranking_empty">No ranking has been published for this event</string>
+
+    <!-- Admission -->
+    <string name="tournament_admission_title">Admission</string>
+    <string name="tournament_admission_download">I downloaded the course</string>
+    <string name="tournament_admission_download_first">Download attested by the server</string>
+    <string name="tournament_admission_download_replayed">Already attested earlier</string>
+    <string name="tournament_admission_outside_window">This event is outside its qualification window</string>
+    <string name="tournament_admission_link_note">A link token is presented at the qualification start</string>
+    <string name="tournament_admission_to_participation">Continue to qualification</string>
+
+    <!-- Qualification participation -->
+    <string name="tournament_qualification_title">Qualification</string>
+    <string name="tournament_qualification_pick_title">Pick an event</string>
+    <string name="tournament_qualification_round">Round %1$d</string>
+    <string name="tournament_qualification_round_not_started">Not started</string>
+    <string name="tournament_qualification_start">Start round</string>
+    <string name="tournament_qualification_link_hint">Link token (if you have one)</string>
+    <string name="tournament_qualification_question_of">Question %1$d</string>
+    <string name="tournament_qualification_answer_submit">Submit answer</string>
+    <string name="tournament_qualification_answer_delivered">Answer delivered</string>
+    <string name="tournament_qualification_answer_pending">Answer is being delivered…</string>
+    <string name="tournament_qualification_window_next">Next question in %1$d s</string>
+    <string name="tournament_qualification_ready_acked">Readiness confirmed</string>
+    <string name="tournament_qualification_timed_out">Time is up for this question</string>
+    <string name="tournament_qualification_settled">Round settled: %1$s%%</string>
+    <string name="tournament_qualification_recheck">Recheck the session</string>
+    <string name="tournament_qualification_blank_hint">Blank %1$d</string>
+    <string name="tournament_qualification_order_position">Order %1$d: %2$s</string>
+
+    <!-- Round statuses, server words in short local labels -->
+    <string name="tournament_round_started">In progress</string>
+    <string name="tournament_round_settled">Settled</string>
+    <string name="tournament_round_completed">Completed</string>
+    <string name="tournament_round_timed_out">Time is up</string>
+</resources>

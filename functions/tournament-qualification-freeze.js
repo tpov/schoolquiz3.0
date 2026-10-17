@@ -198,4 +198,4 @@ async function loadQualificationRanking({db, transaction, eventId, forms, endsAt
 }
 
 module.exports = {QUALIFICATION_RANKINGS, fenceQualification, selectQualificationCalculation,
-  readQualificationEntryPage, freezeQualification, loadQualificationRanking};
+  readQualificationEntryPage, freezeQualification, loadQualificationRanking, frozenGate};

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Маршрути клієнта змагання (історія 5.10), українська. -->
+<resources>
+    <!-- Спільні чесні стани (AD-21) -->
+    <string name="tournament_state_not_loaded">Поки нічого не завантажено</string>
+    <string name="tournament_state_ready">Готово</string>
+    <string name="tournament_state_account_unavailable">Увійдіть, щоб брати участь у турнірах</string>
+    <string name="tournament_state_account_changed">Акаунт змінився, поки запит летів</string>
+    <string name="tournament_state_offline">Немає мережі. Поверніть зв\'язок і повторіть</string>
+    <string name="tournament_state_pending">Чекаємо завершення попередньої операції</string>
+    <string name="tournament_state_retry">Щось не пройшло. Той самий запит можна повторити</string>
+    <string name="tournament_retry">Повторити</string>
+    <string name="tournament_info">Докладніше</string>
+    <string name="tournament_back">Назад</string>
+    <string name="tournament_close">Закрити</string>
+    <string name="tournament_refresh">Оновити</string>
+    <string name="tournament_load_more">Ще</string>
+    <string name="tournament_empty">Тут поки порожньо</string>
+    <string name="tournament_accessibility_back">Назад</string>
+    <string name="tournament_accessibility_info">Докладніше</string>
+    <string name="tournament_accessibility_continue">Продовжити</string>
+
+    <!-- Відмови -->
+    <string name="tournament_refusal_outside_window">Кваліфікаційне вікно події закрите або ще не відкрилося</string>
+    <string name="tournament_refusal_no_basis">Підстави допуску немає: ані підтвердженого завантаження курсу, ані вірного токена посилання</string>
+    <string name="tournament_refusal_insufficient">Призовий фонд не покритий депозитом</string>
+    <string name="tournament_refusal_source">Це джерело не годиться для турніру</string>
+    <string name="tournament_refusal_conflicting_replay">Цю операцію вже надіслали з іншими умовами</string>
+    <string name="tournament_refusal_other">Сервер відмовив цій операції: %1$s</string>
+
+    <!-- Створення організатором -->
+    <string name="tournament_organizer_title">Організувати турнір</string>
+    <string name="tournament_organizer_source_hint">Ідентифікатор курсу</string>
+    <string name="tournament_organizer_prepare">Підготувати банк курсу</string>
+    <string name="tournament_organizer_prepare_done">Банк готовий: легких %1$d, складних %2$d</string>
+    <string name="tournament_organizer_show_consent">Перевірити призи та депозит</string>
+    <string name="tournament_organizer_consent_title">Створити турнір</string>
+    <string name="tournament_organizer_consent_terms">Заморожені умови цього створення</string>
+    <string name="tournament_organizer_consent_fund">Депозит: %1$d коробок</string>
+    <string name="tournament_organizer_consent_prize_row">Місце %1$d: %2$d коробок</string>
+    <string name="tournament_organizer_consent_warning">Депозит резервується в ескроу при підтвердженні</string>
+    <string name="tournament_organizer_confirm_create">Створити з цим депозитом</string>
+    <string name="tournament_organizer_created">Турнір створено</string>
+    <string name="tournament_organizer_new_create">Створити нове</string>
+    <string name="tournament_organizer_consent_starts">Відкривається: %1$s</string>
+    <string name="tournament_organizer_escrow_title">Ескроу</string>
+    <string name="tournament_organizer_escrow_reserved">Зарезервовано: %1$d коробок</string>
+    <string name="tournament_organizer_escrow_remaining">Залишилось: %1$d коробок</string>
+    <string name="tournament_organizer_escrow_paid">Виплачено: %1$d коробок</string>
+    <string name="tournament_organizer_escrow_returned">Повернено: %1$d коробок</string>
+
+    <!-- Перегляд -->
+    <string name="tournament_browser_title">Активні турніри</string>
+    <string name="tournament_browser_status_open">Кваліфікація відкрита</string>
+    <string name="tournament_browser_status_bracket">Триває сітка</string>
+    <string name="tournament_browser_status_finished">Завершено</string>
+    <string name="tournament_browser_status_cancelled">Скасовано: %1$s</string>
+    <string name="tournament_browser_detail_title">Подія</string>
+    <string name="tournament_browser_rounds">Раундів: %1$d</string>
+    <string name="tournament_browser_prizes_title">Призи</string>
+    <string name="tournament_browser_prize_row">Місце %1$d: %2$d коробок</string>
+    <string name="tournament_browser_enter">Увійти</string>
+
+    <!-- Рейтинг -->
+    <string name="tournament_ranking_title">Кваліфікаційний рейтинг</string>
+    <string name="tournament_ranking_total">Оцінено гравців: %1$d</string>
+    <string name="tournament_ranking_place">Місце %1$d</string>
+    <string name="tournament_rating_authoritative">Рейтинг (офіційний): %1$s</string>
+    <string name="tournament_average_display_only">Середній (лише для відомості): %1$s</string>
+    <string name="tournament_percent_absent">—</string>
+    <string name="tournament_ranking_empty">Для цієї події рейтинг не публікувався</string>
+
+    <!-- Допуск -->
+    <string name="tournament_admission_title">Допуск</string>
+    <string name="tournament_admission_download">Я завантажив цей курс</string>
+    <string name="tournament_admission_download_first">Завантаження підтверджено сервером</string>
+    <string name="tournament_admission_download_replayed">Вже підтверджено раніше</string>
+    <string name="tournament_admission_outside_window">Ця подія поза своїм кваліфікаційним вікном</string>
+    <string name="tournament_admission_link_note">Токен посилання пред\'являється на старті кваліфікації</string>
+    <string name="tournament_admission_to_participation">Перейти до кваліфікації</string>
+
+    <!-- Участь -->
+    <string name="tournament_qualification_title">Кваліфікація</string>
+    <string name="tournament_qualification_pick_title">Виберіть подію</string>
+    <string name="tournament_qualification_round">Раунд %1$d</string>
+    <string name="tournament_qualification_round_not_started">Не початий</string>
+    <string name="tournament_qualification_start">Почати раунд</string>
+    <string name="tournament_qualification_link_hint">Токен посилання (якщо є)</string>
+    <string name="tournament_qualification_question_of">Питання %1$d</string>
+    <string name="tournament_qualification_answer_submit">Надіслати відповідь</string>
+    <string name="tournament_qualification_answer_delivered">Відповідь доставлено</string>
+    <string name="tournament_qualification_answer_pending">Відповідь доставляється…</string>
+    <string name="tournament_qualification_window_next">Наступне питання через %1$d с</string>
+    <string name="tournament_qualification_ready_acked">Готовність підтверджено</string>
+    <string name="tournament_qualification_timed_out">Час цього питання вийшов</string>
+    <string name="tournament_qualification_settled">Раунд завершено: %1$s%%</string>
+    <string name="tournament_qualification_recheck">Перепитати сесію</string>
+    <string name="tournament_qualification_blank_hint">Пропуск %1$d</string>
+    <string name="tournament_qualification_order_position">Порядок %1$d: %2$s</string>
+
+    <!-- Статуси раундів: серверні слова короткими місцевими мітками -->
+    <string name="tournament_round_started">Триває</string>
+    <string name="tournament_round_settled">Завершено</string>
+    <string name="tournament_round_completed">Пройдено</string>
+    <string name="tournament_round_timed_out">Час вийшов</string>
+</resources>

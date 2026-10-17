@@ -18,10 +18,22 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserS
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentOrganizerComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentOrganizerComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.labelRes
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
+import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Qualification
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RetapOutcome
@@ -107,6 +119,10 @@ class DefaultRootComponentTest {
         syncScheduler: FakeSyncScheduler = FakeSyncScheduler(),
         fetchTournamentOverview: FetchTournamentOverviewUseCase = fakeTournamentOverviewUseCase(),
         shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
+        tournamentOrganizerFactory: (ComponentContext) -> TournamentOrganizerComponent = { PlaceholderTournamentOrganizerComponent() },
+        tournamentBrowserFactory: (ComponentContext) -> TournamentBrowserComponent = { PlaceholderTournamentBrowserComponent() },
+        tournamentAdmissionFactory: (ComponentContext) -> TournamentAdmissionComponent = { PlaceholderTournamentAdmissionComponent() },
+        tournamentQualificationFactory: (ComponentContext) -> TournamentQualificationComponent = { PlaceholderTournamentQualificationComponent() },
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
@@ -121,6 +137,10 @@ class DefaultRootComponentTest {
         homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
         shopFactory = shopFactory,
+        tournamentOrganizerFactory = tournamentOrganizerFactory,
+        tournamentBrowserFactory = tournamentBrowserFactory,
+        tournamentAdmissionFactory = tournamentAdmissionFactory,
+        tournamentQualificationFactory = tournamentQualificationFactory,
         // Keep the IO hop on the test scheduler. With the real Dispatchers.IO the scheduler goes
         // idle, runTest's virtual clock jumps ahead, and withTimeout fires before the background
         // thread answers — the tournament overview test then failed only on a loaded machine.
@@ -579,6 +599,65 @@ class DefaultRootComponentTest {
             }
         assertEquals(listOf("tournament"), requestedTournamentIds)
         assertTrue(overviewState["tournament"] is TournamentOverviewLoadState.Content)
+    }
+
+    // -----------------------------------------------------------------------
+    // Events stack mounting (story 5.10)
+    // GIVEN DefaultRootComponent with injected tournament factories
+    // WHEN the events stack resolves its configurations
+    // THEN each tournament journey mounts the injected component, and the configs
+    // without a journey keep the placeholder child.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `events stack mounts injected tournament components per config`() = runTest(testDispatcher) {
+        val organizer = PlaceholderTournamentOrganizerComponent()
+        // Активные события и минимгры закрыты ролями: разработчик видит все разделы (ADR-HLA-02).
+        val developer = FakeUserStatsRepository(UserStats.guest().copy(qualification = Qualification.zero().copy(developer = QualificationLevel.LEVEL_1.points)))
+        val component =
+            buildComponent(
+                fakeRepo = developer,
+                tournamentOrganizerFactory = { organizer },
+                tournamentBrowserFactory = { PlaceholderTournamentBrowserComponent() },
+                tournamentAdmissionFactory = { PlaceholderTournamentAdmissionComponent() },
+                tournamentQualificationFactory = { PlaceholderTournamentQualificationComponent() },
+            )
+
+        val qualifierChild = component.eventsTabComponent.childStack.value.active.instance
+        assertTrue(qualifierChild is EventsScreenComponent.OrganizerCreate)
+        assertTrue((qualifierChild as EventsScreenComponent.OrganizerCreate).component === organizer)
+
+        component.onDestination(Destination.SelectSection(DrawerSection.EventsSection.ActiveEvents))
+        val browserChild = component.eventsTabComponent.childStack.value.active.instance
+        assertTrue(browserChild is EventsScreenComponent.Browser)
+
+        component.onDestination(Destination.OpenTournamentParticipants(DrawerSection.EventsSection.QualifierTournament))
+        val participationChild = component.eventsTabComponent.childStack.value.active.instance
+        assertTrue(participationChild is EventsScreenComponent.Qualification)
+    }
+
+    @Test
+    fun `events stack keeps the placeholder child for configs without a journey`() = runTest(testDispatcher) {
+        // Минигеймы закрыты ролью USER >= PLAYER.first: разработчик видит все разделы.
+        val developer = FakeUserStatsRepository(UserStats.guest().copy(qualification = Qualification.zero().copy(developer = QualificationLevel.LEVEL_1.points)))
+        val component = buildComponent(fakeRepo = developer)
+
+        component.onDestination(Destination.SelectSection(DrawerSection.EventsSection.Minigames))
+        val child = component.eventsTabComponent.childStack.value.active.instance
+        assertTrue(child is EventsScreenComponent.Placeholder)
+        assertEquals(
+            EventsConfig.MinigamesRoot,
+            (child as EventsScreenComponent.Placeholder).config,
+        )
+    }
+
+    @Test
+    fun `events stack qualifier root falls back to the placeholder organizer without a binding`() = runTest(testDispatcher) {
+        val component = buildComponent()
+
+        val child = component.eventsTabComponent.childStack.value.active.instance
+        assertTrue(child is EventsScreenComponent.OrganizerCreate)
+        assertTrue((child as EventsScreenComponent.OrganizerCreate).component is PlaceholderTournamentOrganizerComponent)
     }
 
     // -----------------------------------------------------------------------

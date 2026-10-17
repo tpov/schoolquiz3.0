@@ -152,6 +152,89 @@ class TournamentEventWireParserTest {
     }
 
     @Test
+    fun `published ranking rides only with the event read`() {
+        val read = parser.parseEventRead(fixture.wire("eventReadRanking"))
+        val ranking = requireNotNull(read.event.ranking)
+        assertEquals(2L, ranking.totalRanked)
+        assertEquals(listOf("alice", "bob"), ranking.rows.map { it.uid })
+        assertEquals(listOf(1, 2), ranking.rows.map { it.place })
+        // Замороженный документ сегодня проценты не хранит: пустота честная, а не ноль.
+        assertTrue(ranking.rows.all { it.ratingPercent == null && it.averagePercent == null })
+        // У страницы просмотра ключа быть не может: дрейф, а не витрина.
+        val rankedEvent = Json.parseToJsonElement(fixture.wire("eventReadRanking")).jsonObject.getValue("event")
+        val page = Json.parseToJsonElement(fixture.wire("listEventsFirst")).jsonObject
+        val pageCopy = TournamentWireTestMutable.deepCopy(page)
+        (pageCopy["events"] as MutableList<Any?>).add(TournamentWireTestMutable.deepCopy(rankedEvent))
+        assertFailsWith<MalformedWire> {
+            parser.parseEventPage(
+                Json.encodeToString(
+                    kotlinx.serialization.json.JsonElement.serializer(),
+                    TournamentWireTestMutable.build(pageCopy),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `ranking drift and broken ranking rows fail closed`() {
+        fun mutatedEventRead(block: (MutableMap<String, Any?>) -> Unit): String {
+            val root = Json.parseToJsonElement(fixture.wire("eventReadRanking")).jsonObject
+            val copy = TournamentWireTestMutable.deepCopy(root)
+            block(copy)
+            return Json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), TournamentWireTestMutable.build(copy))
+        }
+        // Лишний ключ строки рейтинга — дрейф замороженного документа, а не витрина.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutatedEventRead {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    val ranking = event["qualificationRanking"] as MutableMap<String, Any?>
+                    (ranking["rows"] as MutableList<Any?>).add(mapOf("uid" to "eve", "place" to 3, "percentScore" to 99))
+                },
+            )
+        }
+        // Отсутствующий объём когорты — не «ноль», а отказ.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutatedEventRead {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    (event["qualificationRanking"] as MutableMap<String, Any?>).remove("totalRanked")
+                },
+            )
+        }
+        // Место меньше единицы — не строка рейтинга.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutatedEventRead {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    val ranking = event["qualificationRanking"] as MutableMap<String, Any?>
+                    ranking["rows"] = listOf(mapOf("uid" to "alice", "place" to 0))
+                },
+            )
+        }
+        // Объём когорты меньше, чем строк, — не проекция: сервер не публикует такую витрину.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutatedEventRead {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    val ranking = event["qualificationRanking"] as MutableMap<String, Any?>
+                    ranking["totalRanked"] = 1
+                },
+            )
+        }
+        // Отрицательный объём вне целого диапазона сервера — отказ разбора, а не ноль.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutatedEventRead {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    val ranking = event["qualificationRanking"] as MutableMap<String, Any?>
+                    ranking["totalRanked"] = -1
+                },
+            )
+        }
+    }
+
+    @Test
     fun `fixture shapes stay bound to the actual server sources`() {
         val sources = fixture.getValue("sourceSha256").jsonObject
         for (name in listOf("course-tournament-controller.js", "tournament-session.js")) {

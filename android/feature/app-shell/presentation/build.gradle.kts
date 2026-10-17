@@ -24,6 +24,9 @@ dependencies {
     implementation(project(":android:feature:quest-authoring:presentation"))
     implementation(project(":android:feature:internet:social:presentation"))
     implementation(project(":android:feature:quizzes-screen:presentation"))
+    implementation(project(":android:feature:tournament:presentation"))
+    // События соревнования приезжают в шторку типов из домена турнира (маршруты 5.10).
+    implementation(project(":shared:feature:tournament:domain"))
     implementation(project(":shared:feature:quest:domain"))
     implementation(project(":shared:feature:internet:leaderboard:domain"))
     implementation(project(":shared:core:foundation"))
@@ -35,6 +38,8 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)
+    // Системный «назад» закрывает оверлей допуска, не выталкивая корневой стек событий.
+    implementation(libs.androidx.activity.compose)
     implementation(libs.bundles.decompose)
     implementation(libs.bundles.koin.android)
     implementation(libs.bundles.androidx.lifecycle)

@@ -60,7 +60,9 @@ android {
     signingConfigs {
         create("legacy") {
             storeFile = file("/workspace/keys/Schoolquiz3.0.jks")
-            storePassword = System.getenv("LEGACY_STORE_PASS") ?: "" // пароль в /workspace/keys/README.txt (не коммитится)
+            storePassword = System.getenv(
+                "LEGACY_STORE_PASS",
+            ) ?: "" // пароль в /workspace/keys/README.txt (не коммитится)
             keyAlias = "key0"
             keyPassword = System.getenv("LEGACY_KEY_PASS") ?: "" // пароль в /workspace/keys/README.txt (не коммитится)
         }
@@ -136,6 +138,7 @@ dependencies {
     implementation(project(":shared:core:question-schema"))
     implementation(project(":shared:feature:lesson-runner:data"))
     implementation(project(":shared:feature:tournament:data"))
+    implementation(project(":android:feature:tournament:presentation"))
     implementation(project(":android:feature:lesson-runner:presentation"))
     implementation(project(":platform:android-services"))
     implementation(project(":platform:billing"))
@@ -180,6 +183,11 @@ dependencies {
     add("mvpImplementation", libs.firebase.appcheck.debug)
     testImplementation(project(":shared:core:question-schema"))
     testImplementation(project(":shared:feature:lesson-runner:domain"))
+    // Типы домена соревнования для end-to-end проверки проводки 5.10 (KoinModuleWiringTest):
+    // data-слой отдаёт их implementation'ом, а тест сборки читает подписи репозитория напрямую.
+    testImplementation(project(":shared:feature:tournament:domain"))
+    // Уровень разработчика для видимости разделов событий в том же тесте.
+    testImplementation(project(":shared:core:foundation"))
     testImplementation(project(":android:feature:lesson-runner:presentation"))
     androidTestImplementation(libs.bundles.testing.instrumented)
     androidTestImplementation(libs.kotlinx.coroutines.test)

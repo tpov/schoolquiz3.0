@@ -50,6 +50,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
@@ -361,6 +362,10 @@ class QuizzesRootIntegrationTest {
 
                     override suspend fun referralProgram(): ReferralProgram =
                         ReferralProgram("", emptyList())
+
+                    // observeReceipts (5.4) added to the interface after this fixture was written;
+                    // the navigation-focused fixture never reads receipts, so an empty list is honest.
+                    override fun observeReceipts(limit: Int): Flow<List<EconomyReceipt>> = flowOf(emptyList())
                 },
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 retirePublicQuest = RetirePublicQuestUseCase(questRepository),

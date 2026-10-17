@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui
 
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
@@ -24,9 +25,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -63,17 +67,21 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.Loca
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.economy.presentation.screen.ShopScreen
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.screen.ProfileScreen
+import com.tpov.schoolquiz.android.feature.internet.social.presentation.screen.PollsScreen
 import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.NoirSettingsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.AuthorLifecycleScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.CuratorScreen
-import com.tpov.schoolquiz.android.feature.internet.social.presentation.screen.PollsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.InboxScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.QuestCreateScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.ReviewQueueScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentAdmissionScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentBrowserScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentOrganizerScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentQualificationScreen
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
@@ -89,6 +97,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventView
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R as QuizzesR
@@ -631,18 +640,27 @@ private fun EventsTabContent(
 ) {
     val loadErrorMessage = stringResource(R.string.tournament_error_load)
     when (screen) {
+        is EventsScreenComponent.Browser ->
+            TournamentBrowserContent(
+                rootComponent = rootComponent,
+                child = screen,
+                paddingValues = paddingValues,
+            )
+        is EventsScreenComponent.OrganizerCreate ->
+            TournamentOrganizerScreen(
+                component = screen.component,
+                modifier = Modifier.padding(paddingValues),
+            )
+        is EventsScreenComponent.Qualification ->
+            TournamentQualificationScreen(
+                component = screen.component,
+                modifier = Modifier.padding(paddingValues),
+            )
         is EventsScreenComponent.Placeholder ->
             when (screen.config) {
-                EventsConfig.QualifierTournamentRoot ->
-                    TournamentEventContent(
-                        rootComponent = rootComponent,
-                        paddingValues = paddingValues,
-                        canManagePublicShelves = canManagePublicShelves,
-                        targetShelf = QUALIFIER_TOURNAMENT_SHELF,
-                        title = stringResource(R.string.section_qualifier_tournament),
-                        stageLabel = stringResource(R.string.stage_easy_questions),
-                        forcedHardMode = false,
-                    )
+                // Маршруты соревнования живут реальными компонентами выше; статические экраны
+                // квалификатора и участников заменены (история 5.10). Легас-полка рейтинга и
+                // чемпионат остаются прежними: рейка легасы не раздваивается, чемпионат — 5.11.
                 EventsConfig.QualifierTournamentLeaderboardRoot ->
                     TournamentLeaderboardScreen(
                         model =
@@ -650,20 +668,6 @@ private fun EventsTabContent(
                                 title = stringResource(R.string.section_qualifier_tournament),
                                 stageLabel = stringResource(R.string.stage_easy_questions),
                                 qualificationRule = stringResource(R.string.rule_top32),
-                                userStats = userStats,
-                                loadState = tournamentOverviewState[QUALIFIER_TOURNAMENT_SHELF],
-                                loadErrorMessage = loadErrorMessage,
-                            ),
-                        modifier = Modifier.padding(paddingValues),
-                    )
-                EventsConfig.QualifierTournamentParticipantsRoot ->
-                    TournamentParticipantsScreen(
-                        model =
-                            qualifierParticipantsModel(
-                                title = stringResource(R.string.section_qualifier_tournament),
-                                stageLabel = stringResource(R.string.stage_easy_questions),
-                                fallbackStatus = stringResource(R.string.participant_access_open),
-                                activeStatus = stringResource(R.string.participant_status_active),
                                 userStats = userStats,
                                 loadState = tournamentOverviewState[QUALIFIER_TOURNAMENT_SHELF],
                                 loadErrorMessage = loadErrorMessage,
@@ -711,6 +715,60 @@ private fun EventsTabContent(
                     UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
             }
     }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun TournamentBrowserContent(
+    rootComponent: DefaultRootComponent,
+    child: EventsScreenComponent.Browser,
+    paddingValues: PaddingValues,
+) {
+    // Оверлей допуска переживает поворот: сохранён сам факт открытого допуска, а состояние
+    // события живёт компонентом допуска (его retain'ит Decompose), не этой переменной.
+    var admissionOpen by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = admissionOpen) { admissionOpen = false }
+    if (!admissionOpen) {
+        TournamentBrowserScreen(
+            component = child.component,
+            onEnterEvent = { event, serverNowMs ->
+                child.admission.onOpenEvent(event, serverNowMs)
+                admissionOpen = true
+            },
+            modifier = Modifier.padding(paddingValues),
+        )
+    } else {
+        TournamentAdmissionScreen(
+            component = child.admission,
+            onContinue = {
+                admissionOpen = false
+                rootComponent.navigator.goTo(
+                    admissionContinueDestination(child.admission.state.value.event),
+                )
+            },
+            onBack = { admissionOpen = false },
+            modifier = Modifier.padding(paddingValues),
+        )
+    }
+}
+
+/**
+ * Продолжение после допуска ведёт к участию события, которое реально вошли: событие читается из
+ * состояния допуска, а не берётся константой по месту вызова. Классификация события в раздел —
+ * одна точка: проекция события полки не несёт, а события браузера 5.10 сегодня — события
+ * квалификатора; чемпионат различит свои события в этой же ветке (5.11).
+ */
+private fun admissionContinueDestination(event: TournamentEventView?): Destination {
+    val section =
+        if (event == null) {
+            // Событие ещё не дошло из состояния допуска — ведём к участию квалификатора:
+            // выбор события делает сам маршрут участия.
+            DrawerSection.EventsSection.QualifierTournament
+        } else {
+            // Вошедшее событие; когда появятся события чемпионата, они классифицируются здесь.
+            DrawerSection.EventsSection.QualifierTournament
+        }
+    return Destination.OpenTournamentParticipants(section)
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
@@ -828,25 +886,6 @@ private fun tournamentLeaderboardModel(
         errorMessage = error?.message ?: loadErrorMessage.takeIf { error != null },
     )
 }
-
-private fun qualifierParticipantsModel(
-    title: String,
-    stageLabel: String,
-    fallbackStatus: String,
-    activeStatus: String,
-    userStats: UserStats,
-    loadState: TournamentOverviewLoadState?,
-    loadErrorMessage: String,
-): TournamentParticipantsUi =
-    tournamentParticipantsModel(
-        title = title,
-        stageLabel = stageLabel,
-        userStats = userStats,
-        fallbackStatus = fallbackStatus,
-        activeStatus = activeStatus,
-        loadState = loadState,
-        loadErrorMessage = loadErrorMessage,
-    )
 
 private fun worldParticipantsModel(
     title: String,

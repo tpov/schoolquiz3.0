@@ -12,7 +12,9 @@ import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerContentSyncCallbacks
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
@@ -27,12 +29,18 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.DefaultTournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.DefaultTournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.DefaultTournamentOrganizerComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.DefaultTournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.di.tournamentPresentationModule
 import com.tpov.schoolquiz.apps.android_next.di.economyGlueModule
 import com.tpov.schoolquiz.apps.android_next.di.syncStatusModule
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
+import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
@@ -43,6 +51,8 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
+import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
@@ -75,6 +85,8 @@ import com.tpov.schoolquiz.shared.feature.app_shell.data.UserStatsRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Qualification
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
@@ -151,6 +163,26 @@ import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepos
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
+import com.tpov.schoolquiz.shared.feature.tournament.data.outbox.TournamentSessionOutboxRepository
+import com.tpov.schoolquiz.shared.feature.tournament.data.outbox.TournamentSessionReceiptParser
+import com.tpov.schoolquiz.shared.feature.tournament.data.remote.TournamentEventWireParser
+import com.tpov.schoolquiz.shared.feature.tournament.data.remote.TournamentMeetingWireParser
+import com.tpov.schoolquiz.shared.feature.tournament.data.remote.TournamentSessionWireParser
+import com.tpov.schoolquiz.shared.feature.tournament.data.repository.TournamentCompetitionRepository
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentDownloadRecord
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentDownloadRequest
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventListRequest
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventPage
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventRead
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventReadRequest
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentMeetingPage
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentMeetingReadRequest
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentOperationView
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentOperateRequest
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentPrepareReply
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentPrepareRequest
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentSessionRead
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentSessionReadRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -281,6 +313,69 @@ class KoinModuleWiringTest : KoinTest {
             }
         }
 
+    /**
+     * Порты 5.9-слоя соревнования для полной сборки (история 5.10). Очередь собирается настоящей
+     * — над заглушками хранилищ, как её поднимает Koin-тест самой фичи: пропавшая привязка
+     * `tournamentPresentationModule` в приложении падает здесь, на сборке корневого компонента.
+     */
+    private val testTournamentPortsModule =
+        module {
+            single<TournamentCompetitionRepository> {
+                object : TournamentCompetitionRepository {
+                    override suspend fun readEvent(request: TournamentEventReadRequest): Result<TournamentEventRead> =
+                        notWired()
+
+                    override suspend fun listEvents(request: TournamentEventListRequest): Result<TournamentEventPage> =
+                        notWired()
+
+                    override suspend fun readMeeting(request: TournamentMeetingReadRequest): Result<TournamentMeetingPage> =
+                        notWired()
+
+                    override suspend fun readSession(request: TournamentSessionReadRequest): Result<TournamentSessionRead> =
+                        notWired()
+
+                    override suspend fun prepare(request: TournamentPrepareRequest): Result<TournamentPrepareReply> =
+                        notWired()
+
+                    override suspend fun operate(request: TournamentOperateRequest): Result<TournamentOperationView> =
+                        notWired()
+
+                    override suspend fun recordDownload(request: TournamentDownloadRequest): Result<TournamentDownloadRecord> =
+                        notWired()
+
+                    private fun notWired(): Nothing = error("Tournament boundary is not wired in KoinModuleWiringTest")
+                }
+            }
+            single<MutationReceiptStore> {
+                object : MutationReceiptStore {
+                    override suspend fun persist(receipt: MutationReceipt) = Unit
+
+                    override suspend fun find(
+                        ownerUid: String,
+                        mutationId: String,
+                    ): MutationReceipt? = null
+
+                    override fun observeEntity(
+                        ownerUid: String,
+                        entityRef: String,
+                    ): Flow<List<MutationReceipt>> = flowOf(emptyList())
+                }
+            }
+            single {
+                TournamentSessionOutboxRepository(
+                    outbox = get(),
+                    receipts = get(),
+                    sessions = get(),
+                    parser =
+                        TournamentSessionReceiptParser(
+                            TournamentSessionWireParser(TournamentEventWireParser(), TournamentMeetingWireParser()),
+                        ),
+                    clock = { 1L },
+                )
+            }
+            single<OutboxSessionProvider> { OutboxSessionProvider { OutboxSession("owner-1", 1) } }
+        }
+
     private val testRepositoryStubsModule =
         module {
             single<EconomyRepository> {
@@ -288,6 +383,11 @@ class KoinModuleWiringTest : KoinTest {
                     override fun observeBalance(): Flow<EconomyResourceBalance> = flowOf(EconomyResourceBalance())
 
                     override suspend fun currentBalance(): EconomyResourceBalance = EconomyResourceBalance()
+
+                    // Правка 656948c0 добавила интерфейсу читалку квитанций; fixture проводки
+                    // серверных квитанций не тестирует — честная пустота, как в app-shell тесте.
+                    override fun observeReceipts(limit: Int): Flow<List<com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt>> =
+                        flowOf(emptyList())
 
                     override suspend fun purchase(itemId: ShopItemId): Result<ShopPurchaseResult> =
                         Result.failure(UnsupportedOperationException("not expected"))
@@ -598,6 +698,30 @@ class KoinModuleWiringTest : KoinTest {
             }
         }
 
+    /**
+     * Снимок разработчика (ADR-HLA-02) вместо репозитория над Room: разделы событий видимы, и
+     * стек соревнования монтируется end-to-end, а не гасится видимостью гостя. Перекрывает
+     * привязку [appShellDataModule] — в JVM-тесте базы нет.
+     */
+    private val developerUserStatsModule =
+        module {
+            single<UserStatsRepository> {
+                val stats =
+                    UserStats.guest().copy(
+                        qualification = Qualification.zero().copy(developer = QualificationLevel.LEVEL_1.points),
+                    )
+                object : UserStatsRepository {
+                    override fun observeStats(): Flow<UserStats> = flowOf(stats)
+
+                    override suspend fun currentStats(): UserStats = stats
+
+                    override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+
+                    override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
+                }
+            }
+        }
+
     @Before
     fun setUp() {
         kotlinx.coroutines.Dispatchers.setMain(testDispatcher)
@@ -749,7 +873,11 @@ class KoinModuleWiringTest : KoinTest {
                 testRepositoryStubsModule,
                 testPurchaseStubsModule,
                 testSyncPortsStubModule,
+                // Слой соревнования 5.10: настоящие маршруты над портовыми заглушками 5.9.
+                testTournamentPortsModule,
                 appShellDataModule(),
+                // Разработчик: события видимы, стек соревнования монтируется (см. модуль).
+                developerUserStatsModule,
                 leaderboardDataModule,
                 questDomainModule,
                 questAuthoringDomainModule,
@@ -762,6 +890,7 @@ class KoinModuleWiringTest : KoinTest {
                 questionSchemaModule,
                 questPresentationModule,
                 quizzesPresentationModule,
+                tournamentPresentationModule,
                 // Состояние синхронизации корень требует без умолчания — привязка идёт
                 // production-модулем, а не заглушкой теста.
                 syncStatusModule,
@@ -772,6 +901,36 @@ class KoinModuleWiringTest : KoinTest {
         try {
             val component = getKoin().get<DefaultRootComponent> { parametersOf(testCtx) }
             assertNotNull(component)
+
+            // Стек событий монтирует живые маршруты соревнования, а не заглушки: пропавшая
+            // привязка презентации соревнования здесь валится честным MissingDefinition.
+            val qualifierChild = component.eventsTabComponent.childStack.value.active.instance
+            assertTrue(qualifierChild is EventsScreenComponent.OrganizerCreate)
+            assertTrue(
+                (qualifierChild as EventsScreenComponent.OrganizerCreate).component
+                    is DefaultTournamentOrganizerComponent,
+            )
+
+            component.onDestination(Destination.SelectSection(DrawerSection.EventsSection.ActiveEvents))
+            val browserChild = component.eventsTabComponent.childStack.value.active.instance
+            assertTrue(browserChild is EventsScreenComponent.Browser, "ActiveEvents did not mount the browser: $browserChild")
+            assertTrue(
+                (browserChild as EventsScreenComponent.Browser).component is DefaultTournamentBrowserComponent,
+            )
+            assertTrue(
+                (browserChild as EventsScreenComponent.Browser).admission is DefaultTournamentAdmissionComponent,
+            )
+
+            component.onDestination(Destination.OpenTournamentParticipants(DrawerSection.EventsSection.QualifierTournament))
+            val participationChild = component.eventsTabComponent.childStack.value.active.instance
+            assertTrue(
+                participationChild is EventsScreenComponent.Qualification,
+                "QualifierTournamentParticipants did not mount the qualification: $participationChild",
+            )
+            assertTrue(
+                (participationChild as EventsScreenComponent.Qualification).component
+                    is DefaultTournamentQualificationComponent,
+            )
         } finally {
             lifecycle.stop()
             lifecycle.destroy()
@@ -1336,7 +1495,15 @@ class KoinModuleWiringTest : KoinTest {
         try {
             val component =
                 getKoin().get<LessonRunnerRootComponent> {
-                    parametersOf(ctx, LessonId("l1"), Difficulty.EASY, SessionMode.LEARNING)
+                    // Презентация урока ждёт и колбэки контент-синхронизации (5-й параметр
+                    // фабрики); fixture проводки синхронизации контента не тестирует.
+                    parametersOf(
+                        ctx,
+                        LessonId("l1"),
+                        Difficulty.EASY,
+                        SessionMode.LEARNING,
+                        LessonRunnerContentSyncCallbacks(),
+                    )
                 }
             assertNotNull(component)
             assertTrue(component is DefaultLessonRunnerRootComponent)
