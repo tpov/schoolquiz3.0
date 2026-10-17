@@ -72,7 +72,7 @@ after = [{ story = "5.2", needs = "adopted prize-list and mapping contract" }]
 waits = [
   "5.2: adopted contract edition — DONE (решение 2, owner-decisions-2026-10-16.md, «принимаю»; sha256 366860da…)",
 ]
-status = "ready" # dispatchable once 5.2 lands adopted; sequencing recorded via after
+status = "done" # 2026-10-16: v1-only CREATE (каноническая заморозка, BigInt-liability), dual-form ревалидация settlement (listVersion-дискриминатор), выплаты по (place, row-index) с плоскими каноническими ключами (legacy — slot-ключи, суммы байт-в-байт), единая проекция чтения (listVersion 0, DTO не покидает сервер), терпимость чтения + типовой UNAVAILABLE; фикстуры мигрированы в v1, риги перепинены; 109/109. Review pass 1: 26 находок, medium/low запатчены (read-path hardening, перепин предсуществующего scan-пина), followup рекомендован. Rig live run + QS_SOURCE_MANIFEST — до следующего риг-прогона. Спека spec-5-4-server-dynamic-prize-list.md; коммит fdaf1b31
 
 [[story]]
 id = "5.5"
