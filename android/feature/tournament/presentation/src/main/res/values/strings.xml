@@ -26,6 +26,7 @@
     <string name="tournament_refusal_insufficient">The prize fund is not covered by the deposit</string>
     <string name="tournament_refusal_source">This source is not eligible for a tournament</string>
     <string name="tournament_refusal_conflicting_replay">This operation was already sent with different terms</string>
+    <string name="tournament_refusal_meeting_boundary">Outside the meeting boundary: the slot or readiness falls outside the window the server keeps</string>
     <string name="tournament_refusal_other">The server refused this operation: %1$s</string>
 
     <!-- Organizer create -->
@@ -103,4 +104,68 @@
     <string name="tournament_round_settled">Settled</string>
     <string name="tournament_round_completed">Completed</string>
     <string name="tournament_round_timed_out">Time is up</string>
+
+    <!-- Championship bracket (story 5.11) -->
+    <string name="tournament_bracket_title">Championship bracket</string>
+    <string name="tournament_bracket_round">Round %1$d</string>
+    <string name="tournament_bracket_match_pending">%1$s vs %2$s</string>
+    <string name="tournament_bracket_match_solo">%1$s waits for an opponent</string>
+    <string name="tournament_bracket_match_resolved">%1$s · winner %2$s</string>
+    <string name="tournament_bracket_match_technical">%1$s · decided technically</string>
+    <string name="tournament_bracket_agree">Agree on the slot</string>
+    <string name="tournament_bracket_placements">Final placements</string>
+    <string name="tournament_bracket_placement">Place %1$d: %2$s (slot %3$s)</string>
+    <string name="tournament_bracket_results">Open results</string>
+
+    <!-- Match results and escrow truth (story 5.11) -->
+    <string name="tournament_results_title">Event results</string>
+    <string name="tournament_results_placements">Final placements</string>
+    <string name="tournament_results_placement">Place %1$d: %2$s (slot %3$s)</string>
+    <string name="tournament_results_placement_technical">Place %1$d: %2$s (slot %3$s, technical)</string>
+    <string name="tournament_results_escrow_title">Escrow</string>
+    <string name="tournament_results_escrow_reserved">Reserved: %1$d boxes</string>
+    <string name="tournament_results_escrow_remaining">Remaining: %1$d boxes</string>
+    <string name="tournament_results_escrow_paid">Paid out: %1$d boxes</string>
+    <string name="tournament_results_escrow_returned">Returned: %1$d boxes</string>
+
+    <!-- Match agreement (story 5.11) -->
+    <string name="tournament_agreement_title">Match agreement</string>
+    <string name="tournament_meeting_waiting_agreement">Waiting for agreement</string>
+    <string name="tournament_meeting_waiting_window">Waiting for the agreed slot</string>
+    <string name="tournament_meeting_waiting_ready">Waiting for readiness</string>
+    <string name="tournament_meeting_started">Match started</string>
+    <string name="tournament_meeting_forfeit">Technical forfeit</string>
+    <string name="tournament_meeting_double_out">Both missed the slot</string>
+    <string name="tournament_agreement_deadline">Coordination deadline (C): %1$s</string>
+    <string name="tournament_agreement_stage">Stage window: %1$s–%2$s</string>
+    <string name="tournament_agreement_agreed_slot">Agreed slot: %1$s</string>
+    <string name="tournament_agreement_window">Readiness window: %1$s–%2$s</string>
+    <string name="tournament_agreement_participants">Participants</string>
+    <string name="tournament_agreement_participant">%1$s (seed %2$s)</string>
+    <string name="tournament_agreement_offers">Slot proposals</string>
+    <string name="tournament_agreement_offer">%1$s proposes %2$s (at %3$s)</string>
+    <string name="tournament_agreement_confirmations">Slot confirmations</string>
+    <string name="tournament_agreement_confirmation">%1$s confirms %2$s (at %3$s)</string>
+    <string name="tournament_agreement_ready_title">Readiness</string>
+    <string name="tournament_agreement_ready_row">%1$s ready (at %2$s)</string>
+    <string name="tournament_agreement_slot_hint">Slot start, epoch ms</string>
+    <string name="tournament_agreement_propose">Propose slot</string>
+    <string name="tournament_agreement_confirm">Confirm slot</string>
+    <string name="tournament_agreement_ready">I am ready</string>
+    <string name="tournament_agreement_play">Enter the match</string>
+    <string name="tournament_agreement_empty">No match is open</string>
+
+    <!-- Match play (story 5.11): the session machine on the MATCH kind -->
+    <string name="tournament_match_play_title">Match play</string>
+    <string name="tournament_match_play_question_of">Question %1$d</string>
+    <string name="tournament_match_play_answer_submit">Submit answer</string>
+    <string name="tournament_match_play_answer_delivered">Answer delivered</string>
+    <string name="tournament_match_play_answer_pending">Answer is being delivered…</string>
+    <string name="tournament_match_play_window_next">Next question in %1$d s</string>
+    <string name="tournament_match_play_ready_acked">Readiness confirmed</string>
+    <string name="tournament_match_play_timed_out">Time is up for this question</string>
+    <string name="tournament_match_play_settled">Match played: %1$s%%</string>
+    <string name="tournament_match_play_recheck">Recheck the session</string>
+    <string name="tournament_match_play_blank_hint">Blank %1$d</string>
+    <string name="tournament_match_play_order_position">Order %1$d: %2$s</string>
 </resources>

@@ -5,9 +5,13 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAgreementComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBracketComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentMatchPlayComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentOrganizerComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentResultsComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.fake.FakeOutboxStore
 import com.tpov.schoolquiz.android.feature.tournament.presentation.fake.FakeReceiptStore
 import com.tpov.schoolquiz.android.feature.tournament.presentation.fake.FakeTournamentRepository
@@ -32,8 +36,9 @@ import org.koin.core.parameter.parametersOf
 import kotlin.test.assertNotNull
 
 /**
- * Проводка Koin (история 5.10): четыре маршрута разрешаются из [tournamentPresentationModule]
- * над готовым 5.9-слоем — репозиторий, очередь и провайдер сессии приходят снаружи.
+ * Проводка Koin (истории 5.10 и 5.11): восемь маршрутов разрешаются из
+ * [tournamentPresentationModule] над готовым 5.9-слоем — репозиторий, очередь и провайдер
+ * сессии приходят снаружи.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TournamentPresentationKoinWiringTest {
@@ -45,7 +50,7 @@ class TournamentPresentationKoinWiringTest {
     }
 
     @Test
-    fun `all four journeys resolve over the shared 5_9 layer`() {
+    fun `all eight journeys resolve over the shared 5_9 layer`() {
         Dispatchers.setMain(dispatcher)
         val app =
             KoinApplication.init().modules(
@@ -74,6 +79,10 @@ class TournamentPresentationKoinWiringTest {
             assertNotNull(app.koin.get<TournamentBrowserComponent> { parametersOf(context) })
             assertNotNull(app.koin.get<TournamentAdmissionComponent> { parametersOf(context) })
             assertNotNull(app.koin.get<TournamentQualificationComponent> { parametersOf(context) })
+            assertNotNull(app.koin.get<TournamentAgreementComponent> { parametersOf(context) })
+            assertNotNull(app.koin.get<TournamentMatchPlayComponent> { parametersOf(context) })
+            assertNotNull(app.koin.get<TournamentBracketComponent> { parametersOf(context) })
+            assertNotNull(app.koin.get<TournamentResultsComponent> { parametersOf(context) })
         } finally {
             lifecycle.destroy()
             app.close()

@@ -26,6 +26,7 @@
     <string name="tournament_refusal_insufficient">Призовий фонд не покритий депозитом</string>
     <string name="tournament_refusal_source">Це джерело не годиться для турніру</string>
     <string name="tournament_refusal_conflicting_replay">Цю операцію вже надіслали з іншими умовами</string>
+    <string name="tournament_refusal_meeting_boundary">Поза межею погодження: слот чи готовість поза вікном, яке веде сервер</string>
     <string name="tournament_refusal_other">Сервер відмовив цій операції: %1$s</string>
 
     <!-- Створення організатором -->
@@ -103,4 +104,68 @@
     <string name="tournament_round_settled">Завершено</string>
     <string name="tournament_round_completed">Пройдено</string>
     <string name="tournament_round_timed_out">Час вийшов</string>
+
+    <!-- Сітка чемпіонату (історія 5.11) -->
+    <string name="tournament_bracket_title">Сітка чемпіонату</string>
+    <string name="tournament_bracket_round">Раунд %1$d</string>
+    <string name="tournament_bracket_match_pending">%1$s проти %2$s</string>
+    <string name="tournament_bracket_match_solo">%1$s чекає на суперника</string>
+    <string name="tournament_bracket_match_resolved">%1$s · переможець %2$s</string>
+    <string name="tournament_bracket_match_technical">%1$s · вирішено технічно</string>
+    <string name="tournament_bracket_agree">Погодити слот</string>
+    <string name="tournament_bracket_placements">Підсумкові місця</string>
+    <string name="tournament_bracket_placement">Місце %1$d: %2$s (слот %3$s)</string>
+    <string name="tournament_bracket_results">Відкрити підсумки</string>
+
+    <!-- Підсумки матчу та правда ескроу (історія 5.11) -->
+    <string name="tournament_results_title">Підсумки події</string>
+    <string name="tournament_results_placements">Підсумкові місця</string>
+    <string name="tournament_results_placement">Місце %1$d: %2$s (слот %3$s)</string>
+    <string name="tournament_results_placement_technical">Місце %1$d: %2$s (слот %3$s, технічно)</string>
+    <string name="tournament_results_escrow_title">Ескроу</string>
+    <string name="tournament_results_escrow_reserved">Зарезервовано: %1$d коробок</string>
+    <string name="tournament_results_escrow_remaining">Залишилось: %1$d коробок</string>
+    <string name="tournament_results_escrow_paid">Виплачено: %1$d коробок</string>
+    <string name="tournament_results_escrow_returned">Повернено: %1$d коробок</string>
+
+    <!-- Погодження матчу (історія 5.11) -->
+    <string name="tournament_agreement_title">Погодження матчу</string>
+    <string name="tournament_meeting_waiting_agreement">Чекаємо згоди за слотом</string>
+    <string name="tournament_meeting_waiting_window">Чекаємо погоджений слот</string>
+    <string name="tournament_meeting_waiting_ready">Чекаємо готовності</string>
+    <string name="tournament_meeting_started">Матч розпочався</string>
+    <string name="tournament_meeting_forfeit">Технічна поразка</string>
+    <string name="tournament_meeting_double_out">Обидва пропустили слот</string>
+    <string name="tournament_agreement_deadline">Межа погодження (C): %1$s</string>
+    <string name="tournament_agreement_stage">Вікно стадії: %1$s–%2$s</string>
+    <string name="tournament_agreement_agreed_slot">Погоджений слот: %1$s</string>
+    <string name="tournament_agreement_window">Вікно готовності: %1$s–%2$s</string>
+    <string name="tournament_agreement_participants">Учасники</string>
+    <string name="tournament_agreement_participant">%1$s (сівба %2$s)</string>
+    <string name="tournament_agreement_offers">Пропозиції слоту</string>
+    <string name="tournament_agreement_offer">%1$s пропонує %2$s (о %3$s)</string>
+    <string name="tournament_agreement_confirmations">Підтвердження слоту</string>
+    <string name="tournament_agreement_confirmation">%1$s підтверджує %2$s (о %3$s)</string>
+    <string name="tournament_agreement_ready_title">Готовність</string>
+    <string name="tournament_agreement_ready_row">%1$s готовий (о %2$s)</string>
+    <string name="tournament_agreement_slot_hint">Початок слоту, епоха в мс</string>
+    <string name="tournament_agreement_propose">Запропонувати слот</string>
+    <string name="tournament_agreement_confirm">Підтвердити слот</string>
+    <string name="tournament_agreement_ready">Я готовий</string>
+    <string name="tournament_agreement_play">Увійти в матч</string>
+    <string name="tournament_agreement_empty">Матч не відкрито</string>
+
+    <!-- Гра матчу (історія 5.11): машина сесії на виді MATCH -->
+    <string name="tournament_match_play_title">Гра матчу</string>
+    <string name="tournament_match_play_question_of">Питання %1$d</string>
+    <string name="tournament_match_play_answer_submit">Надіслати відповідь</string>
+    <string name="tournament_match_play_answer_delivered">Відповідь доставлено</string>
+    <string name="tournament_match_play_answer_pending">Відповідь у дорозі…</string>
+    <string name="tournament_match_play_window_next">Наступне питання за %1$d с</string>
+    <string name="tournament_match_play_ready_acked">Готовність підтверджено</string>
+    <string name="tournament_match_play_timed_out">Час цього питання вийшов</string>
+    <string name="tournament_match_play_settled">Матч зіграно: %1$s%%</string>
+    <string name="tournament_match_play_recheck">Перепитати сесію</string>
+    <string name="tournament_match_play_blank_hint">Пропуск %1$d</string>
+    <string name="tournament_match_play_order_position">Порядок %1$d: %2$s</string>
 </resources>

@@ -72,11 +72,11 @@ data class TournamentPendingMatchRow(
     val entrants: List<TournamentEntrantRef>,
 )
 
-/** Итоговое место участника. */
+/** Итоговое место участника; [slot] — имя призового слота сервера («champion», «runner-up», …). */
 data class TournamentPlacementRow(
     val uid: String,
     val rank: Long,
-    val slot: Long,
+    val slot: String,
     val technicalForfeit: Boolean?,
 )
 

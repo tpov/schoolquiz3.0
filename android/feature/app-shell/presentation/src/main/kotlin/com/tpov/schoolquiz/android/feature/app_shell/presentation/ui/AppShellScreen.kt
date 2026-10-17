@@ -79,9 +79,13 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
 import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentAdmissionScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentAgreementScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentBracketScreen
 import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentBrowserScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentMatchPlayScreen
 import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentOrganizerScreen
 import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentQualificationScreen
+import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentResultsScreen
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
@@ -427,7 +431,6 @@ private fun AppShellContent(
                         rootComponent = rootComponent,
                         screen = child.instance,
                         paddingValues = paddingValues,
-                        canManagePublicShelves = uiAccess.canManagePublicShelves,
                         userStats = state.userStats,
                         tournamentOverviewState = tournamentOverviewState,
                     )
@@ -634,7 +637,6 @@ private fun EventsTabContent(
     rootComponent: DefaultRootComponent,
     screen: EventsScreenComponent,
     paddingValues: PaddingValues,
-    canManagePublicShelves: Boolean,
     userStats: UserStats,
     tournamentOverviewState: Map<String, TournamentOverviewLoadState>,
 ) {
@@ -656,11 +658,13 @@ private fun EventsTabContent(
                 component = screen.component,
                 modifier = Modifier.padding(paddingValues),
             )
+        is EventsScreenComponent.Championship ->
+            TournamentChampionshipContent(child = screen, paddingValues = paddingValues)
         is EventsScreenComponent.Placeholder ->
             when (screen.config) {
                 // Маршруты соревнования живут реальными компонентами выше; статические экраны
-                // квалификатора и участников заменены (история 5.10). Легас-полка рейтинга и
-                // чемпионат остаются прежними: рейка легасы не раздваивается, чемпионат — 5.11.
+                // квалификатора, участников и чемпионата заменены (истории 5.10 и 5.11).
+                // Легас-полка рейтинга остаётся прежней: рейка легасы не раздваивается.
                 EventsConfig.QualifierTournamentLeaderboardRoot ->
                     TournamentLeaderboardScreen(
                         model =
@@ -673,16 +677,6 @@ private fun EventsTabContent(
                                 loadErrorMessage = loadErrorMessage,
                             ),
                         modifier = Modifier.padding(paddingValues),
-                    )
-                EventsConfig.WorldChampionshipRoot ->
-                    TournamentEventContent(
-                        rootComponent = rootComponent,
-                        paddingValues = paddingValues,
-                        canManagePublicShelves = canManagePublicShelves,
-                        targetShelf = WORLD_CHAMPIONSHIP_SHELF,
-                        title = stringResource(R.string.section_world_championship),
-                        stageLabel = stringResource(R.string.stage_hard_questions),
-                        forcedHardMode = true,
                     )
                 EventsConfig.WorldChampionshipLeaderboardRoot ->
                     TournamentLeaderboardScreen(
@@ -771,54 +765,88 @@ private fun admissionContinueDestination(event: TournamentEventView?): Destinati
     return Destination.OpenTournamentParticipants(section)
 }
 
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+/**
+ * Чемпионат (история 5.11): оверлеи согласования, игры и итогов переживают поворот — сохранён
+ * сам факт открытого слоя, а состояние живёт своими компонентами (их retain'ит Decompose),
+ * не этими флагами. Сетка — корень; матч открывается из ждущей пары, игра — из согласования,
+ * когда сервер уже создал свою сессию, итоги — у завершённого события.
+ */
 @Composable
-private fun TournamentEventContent(
-    rootComponent: DefaultRootComponent,
+private fun TournamentChampionshipContent(
+    child: EventsScreenComponent.Championship,
     paddingValues: PaddingValues,
-    canManagePublicShelves: Boolean,
-    targetShelf: String,
-    title: String,
-    stageLabel: String,
-    forcedHardMode: Boolean,
 ) {
-    val eventSection =
-        if (targetShelf == QUALIFIER_TOURNAMENT_SHELF) {
-            DrawerSection.EventsSection.QualifierTournament
-        } else {
-            DrawerSection.EventsSection.WorldChampionship
-        }
-    val openTournamentLessons = {
-        rootComponent.quizzesComponent.openPublicQuestShelfCatalog(
-            targetShelf = targetShelf,
-            forcedHardMode = forcedHardMode,
-        )
+    var agreementOpen by rememberSaveable { mutableStateOf(false) }
+    var playOpen by rememberSaveable { mutableStateOf(false) }
+    var resultsOpen by rememberSaveable { mutableStateOf(false) }
+    // Закрытие слоя — одна операция компонента для кнопки «назад» и для системного back:
+    // наблюдение сессии и прочитанные итоги не переживают закрытый слой.
+    val closePlay = {
+        child.matchPlay.onCloseMatchSession()
+        playOpen = false
     }
-    TournamentEventScreen(
-        model =
-            TournamentEventUi(
-                title = title,
-                stageLabel = stageLabel,
-            ),
-        actions =
-            TournamentEventActions(
-                canManagePublicShelves = canManagePublicShelves,
-                onStartClick = openTournamentLessons,
-                onLeaderboardClick = {
-                    rootComponent.navigator.goTo(Destination.OpenTournamentLeaderboard(eventSection))
+    val closeAgreement = {
+        child.agreement.onCloseMatch()
+        agreementOpen = false
+    }
+    val closeResults = {
+        child.results.onClose()
+        resultsOpen = false
+    }
+    BackHandler(enabled = playOpen || agreementOpen || resultsOpen) {
+        when {
+            playOpen -> closePlay()
+            agreementOpen -> closeAgreement()
+            resultsOpen -> closeResults()
+        }
+    }
+    when {
+        playOpen ->
+            TournamentMatchPlayScreen(
+                component = child.matchPlay,
+                onBack = closePlay,
+                modifier = Modifier.padding(paddingValues),
+            )
+        agreementOpen ->
+            TournamentAgreementScreen(
+                component = child.agreement,
+                onPlay = { sessionId ->
+                    val agreement = child.agreement.state.value
+                    val eventId = agreement.eventId
+                    val matchId = agreement.matchId
+                    if (eventId != null && matchId != null) {
+                        // Оверлей игры поднимается только принятым открытием: занятость или
+                        // пропавшая сессия оставляют игрока на согласовании с честным состоянием.
+                        if (child.matchPlay.onOpenMatchSession(eventId, matchId, sessionId)) {
+                            playOpen = true
+                        }
+                    }
                 },
-                onLessonsClick = openTournamentLessons,
-                onParticipantsClick = {
-                    rootComponent.navigator.goTo(Destination.OpenTournamentParticipants(eventSection))
+                onBack = closeAgreement,
+                modifier = Modifier.padding(paddingValues),
+            )
+        resultsOpen ->
+            TournamentResultsScreen(
+                component = child.results,
+                onBack = closeResults,
+                modifier = Modifier.padding(paddingValues),
+            )
+        else ->
+            TournamentBracketScreen(
+                component = child.bracket,
+                onOpenMatch = { eventId, matchId ->
+                    if (child.agreement.onOpenMatch(eventId, matchId)) {
+                        agreementOpen = true
+                    }
                 },
-                onAddLessonsClick = {
-                    rootComponent.quizzesComponent.openPublicQuestCatalogPicker(
-                        targetShelf = targetShelf,
-                    )
+                onOpenResults = { eventId ->
+                    if (child.results.onOpenEvent(eventId)) {
+                        resultsOpen = true
+                    }
                 },
-            ),
-        modifier = Modifier.padding(paddingValues),
-    )
+                modifier = Modifier.padding(paddingValues),
+            )
+    }
 }
 
 private fun qualifierLeaderboardModel(

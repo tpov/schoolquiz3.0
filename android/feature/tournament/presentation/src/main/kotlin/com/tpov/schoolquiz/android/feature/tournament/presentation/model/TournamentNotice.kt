@@ -63,13 +63,28 @@ enum class TournamentRefusal {
 
     /** Прочий именованный отказ: повтор бессмыслен, причина показывается как есть. */
     OTHER,
+
+    /**
+     * Граница согласования матча: слот или готовность вне окна, которое ведёт сервер
+     * (предложение до C, подтверждение до C и не позже слота, готовность в своём часу).
+     */
+    MEETING_BOUNDARY,
 }
 
 /**
  * Исход неудачи -> honest notice. Ветвление — только структурное: род отказа и имя причины из
  * закрытой таблицы; тексты сервера здесь не разбираются и не ветвят.
+ *
+ * [agreementSurface] различает операции, для которых сервер называет `FAILED_PRECONDITION`:
+ * на поверхности согласования матча (PROPOSE/CONFIRM/READY/READ встречи) это граница встречи
+ * (5.7), всюду остальное — старт квалификации, чтения сетки и сессии — тот же род отказа
+ * честнее показывать как OTHER с именем сервера: «Qualification is closed» и окно квалификации
+ * приезжают тем же именем и к границе встречи отношения не имеют.
  */
-fun failureNotice(failure: Throwable): TournamentNotice =
+fun failureNotice(
+    failure: Throwable,
+    agreementSurface: Boolean = false,
+): TournamentNotice =
     when (failure) {
         is TournamentRemoteFailure ->
             when (failure.kind) {
@@ -82,7 +97,10 @@ fun failureNotice(failure: Throwable): TournamentNotice =
                 SyncError.NoNetwork -> TournamentNotice.Offline
                 SyncError.PreconditionNotMet -> TournamentNotice.Pending
                 is SyncError.Refused ->
-                    TournamentNotice.Refused(reason = refusalOf(sync.reason), serverReason = sync.reason)
+                    TournamentNotice.Refused(
+                        reason = refusalOf(sync.reason, agreementSurface),
+                        serverReason = sync.reason,
+                    )
                 SyncError.TermsConsentRequired,
                 is SyncError.VersionConflict,
                 is SyncError.Unknown,
@@ -92,12 +110,18 @@ fun failureNotice(failure: Throwable): TournamentNotice =
     }
 
 /** Имя причины -> ветвь клиента; неизвестное имя — OTHER, никогда краш. */
-internal fun refusalOf(reason: String): TournamentRefusal =
+internal fun refusalOf(
+    reason: String,
+    agreementSurface: Boolean = false,
+): TournamentRefusal =
     when (reason) {
         "OUTSIDE_QUALIFICATION_WINDOW" -> TournamentRefusal.OUTSIDE_QUALIFICATION_WINDOW
         "NO_ADMISSION_BASIS" -> TournamentRefusal.NO_ADMISSION_BASIS
         "INSUFFICIENT_BOXES" -> TournamentRefusal.INSUFFICIENT_BOXES
         "SOURCE_NOT_ELIGIBLE" -> TournamentRefusal.SOURCE_NOT_ELIGIBLE
         "CONFLICTING_REPLAY" -> TournamentRefusal.CONFLICTING_REPLAY
+        // Граница согласования называется FAILED_PRECONDITION только на поверхности согласования
+        // (5.7); тот же род отказа в других операциях — OTHER, а не встречная ветвь.
+        "FAILED_PRECONDITION" -> if (agreementSurface) TournamentRefusal.MEETING_BOUNDARY else TournamentRefusal.OTHER
         else -> TournamentRefusal.OTHER
     }

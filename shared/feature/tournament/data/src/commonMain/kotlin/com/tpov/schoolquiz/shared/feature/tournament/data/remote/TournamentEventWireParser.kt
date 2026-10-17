@@ -196,7 +196,9 @@ class TournamentEventWireParser {
         return TournamentPlacementRow(
             uid = raw.nonBlank("uid"),
             rank = raw.requiredWhole("rank"),
-            slot = raw.requiredWhole("slot"),
+            // Слот — имя призового слота сервера («champion», «runner-up», …), как его заморозила
+            // публикация; число здесь сервер не выводит (planPrizePayouts/progressBracket).
+            slot = raw.nonBlank("slot"),
             technicalForfeit = raw.bit("technicalForfeit"),
         )
     }

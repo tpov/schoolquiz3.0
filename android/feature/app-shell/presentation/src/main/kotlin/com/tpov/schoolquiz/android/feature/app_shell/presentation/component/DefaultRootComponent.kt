@@ -33,13 +33,21 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAgreementComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBracketComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentMatchPlayComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentOrganizerComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentResultsComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAgreementComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBracketComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentMatchPlayComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentOrganizerComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentResultsComponent
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
@@ -172,6 +180,18 @@ class DefaultRootComponent(
     tournamentQualificationFactory: (
         ComponentContext,
     ) -> TournamentQualificationComponent = { PlaceholderTournamentQualificationComponent() },
+    tournamentBracketFactory: (
+        ComponentContext,
+    ) -> TournamentBracketComponent = { PlaceholderTournamentBracketComponent() },
+    tournamentAgreementFactory: (
+        ComponentContext,
+    ) -> TournamentAgreementComponent = { PlaceholderTournamentAgreementComponent() },
+    tournamentMatchPlayFactory: (
+        ComponentContext,
+    ) -> TournamentMatchPlayComponent = { PlaceholderTournamentMatchPlayComponent() },
+    tournamentResultsFactory: (
+        ComponentContext,
+    ) -> TournamentResultsComponent = { PlaceholderTournamentResultsComponent() },
     // Injectable so tests stay on the test scheduler. A hardcoded Dispatchers.IO escapes
     // runTest's virtual clock: the scheduler goes idle, virtual time jumps ahead, and a
     // withTimeout expires before the real IO thread answers — which made the tournament
@@ -241,6 +261,10 @@ class DefaultRootComponent(
             browserFactory = tournamentBrowserFactory,
             admissionFactory = tournamentAdmissionFactory,
             qualificationFactory = tournamentQualificationFactory,
+            bracketFactory = tournamentBracketFactory,
+            agreementFactory = tournamentAgreementFactory,
+            matchPlayFactory = tournamentMatchPlayFactory,
+            resultsFactory = tournamentResultsFactory,
         )
     internal val shopTabComponent = DefaultShopTabComponent(childContext("ShopTab"), shopNavigation)
 

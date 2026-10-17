@@ -18,3 +18,18 @@ const val SESSION_QUESTION_TIMED_OUT = "QUESTION_TIMED_OUT"
 
 /** Окно следующего вопроса открыто; его край — [com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentWindowView.expiresAtMs]. */
 const val WINDOW_OPEN = "OPEN"
+
+/** Статусы встречи матча (история 5.11) тем же словарём: стадия согласования и её концы. */
+const val MEETING_WAITING_FOR_AGREEMENT = "WAITING_FOR_AGREEMENT"
+
+/** Слот согласован, ждём его начала. */
+const val MEETING_WAITING_FOR_WINDOW = "WAITING_FOR_WINDOW"
+
+/** Слот наступил, ждём готовности участников. */
+const val MEETING_WAITING_FOR_READY = "WAITING_FOR_READY"
+
+/** Техническое поражение: участник не подтвердил готовность. */
+const val MEETING_FORFEIT = "FORFEIT"
+
+/** Оба пропустили слот. */
+const val MEETING_DOUBLE_OUT = "DOUBLE_OUT"

@@ -287,7 +287,7 @@ private fun WindowNextLine(
     window: TournamentWindowView?,
     serverNowMs: Long?,
 ) {
-    if (window == null || window.state != WINDOW_OPEN) return
+    if (window == null || window.state != WINDOW_OPEN || serverNowMs == null) return
     val seconds = ((window.expiresAtMs - (serverNowMs ?: 0L)).coerceAtLeast(0L) / 1000L).toInt()
     Text(
         stringResource(R.string.tournament_qualification_window_next, seconds),

@@ -19,13 +19,21 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQ
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAgreementComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBracketComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentMatchPlayComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentOrganizerComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentResultsComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAgreementComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBracketComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentMatchPlayComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentOrganizerComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentResultsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.labelRes
@@ -123,6 +131,10 @@ class DefaultRootComponentTest {
         tournamentBrowserFactory: (ComponentContext) -> TournamentBrowserComponent = { PlaceholderTournamentBrowserComponent() },
         tournamentAdmissionFactory: (ComponentContext) -> TournamentAdmissionComponent = { PlaceholderTournamentAdmissionComponent() },
         tournamentQualificationFactory: (ComponentContext) -> TournamentQualificationComponent = { PlaceholderTournamentQualificationComponent() },
+        tournamentBracketFactory: (ComponentContext) -> TournamentBracketComponent = { PlaceholderTournamentBracketComponent() },
+        tournamentAgreementFactory: (ComponentContext) -> TournamentAgreementComponent = { PlaceholderTournamentAgreementComponent() },
+        tournamentMatchPlayFactory: (ComponentContext) -> TournamentMatchPlayComponent = { PlaceholderTournamentMatchPlayComponent() },
+        tournamentResultsFactory: (ComponentContext) -> TournamentResultsComponent = { PlaceholderTournamentResultsComponent() },
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
@@ -141,6 +153,10 @@ class DefaultRootComponentTest {
         tournamentBrowserFactory = tournamentBrowserFactory,
         tournamentAdmissionFactory = tournamentAdmissionFactory,
         tournamentQualificationFactory = tournamentQualificationFactory,
+        tournamentBracketFactory = tournamentBracketFactory,
+        tournamentAgreementFactory = tournamentAgreementFactory,
+        tournamentMatchPlayFactory = tournamentMatchPlayFactory,
+        tournamentResultsFactory = tournamentResultsFactory,
         // Keep the IO hop on the test scheduler. With the real Dispatchers.IO the scheduler goes
         // idle, runTest's virtual clock jumps ahead, and withTimeout fires before the background
         // thread answers — the tournament overview test then failed only on a loaded machine.
@@ -634,6 +650,49 @@ class DefaultRootComponentTest {
         component.onDestination(Destination.OpenTournamentParticipants(DrawerSection.EventsSection.QualifierTournament))
         val participationChild = component.eventsTabComponent.childStack.value.active.instance
         assertTrue(participationChild is EventsScreenComponent.Qualification)
+    }
+
+    @Test
+    fun `events stack mounts the championship layers on the world destination`() = runTest(testDispatcher) {
+        // Чемпионат (история 5.11): сетка, согласование, игра и итоги монтируются живыми
+        // слоями на WorldChampionshipRoot — как просмотр с допуском в 5.10.
+        val bracket = PlaceholderTournamentBracketComponent()
+        val agreement = PlaceholderTournamentAgreementComponent()
+        val matchPlay = PlaceholderTournamentMatchPlayComponent()
+        val results = PlaceholderTournamentResultsComponent()
+        val developer = FakeUserStatsRepository(UserStats.guest().copy(qualification = Qualification.zero().copy(developer = QualificationLevel.LEVEL_1.points)))
+        val component =
+            buildComponent(
+                fakeRepo = developer,
+                tournamentBracketFactory = { bracket },
+                tournamentAgreementFactory = { agreement },
+                tournamentMatchPlayFactory = { matchPlay },
+                tournamentResultsFactory = { results },
+            )
+
+        component.onDestination(Destination.SelectSection(DrawerSection.EventsSection.WorldChampionship))
+        val child = component.eventsTabComponent.childStack.value.active.instance
+        assertTrue(child is EventsScreenComponent.Championship)
+        child as EventsScreenComponent.Championship
+        assertTrue(child.bracket === bracket)
+        assertTrue(child.agreement === agreement)
+        assertTrue(child.matchPlay === matchPlay)
+        assertTrue(child.results === results)
+    }
+
+    @Test
+    fun `events stack world destination falls back to placeholders without a binding`() = runTest(testDispatcher) {
+        val developer = FakeUserStatsRepository(UserStats.guest().copy(qualification = Qualification.zero().copy(developer = QualificationLevel.LEVEL_1.points)))
+        val component = buildComponent(fakeRepo = developer)
+
+        component.onDestination(Destination.SelectSection(DrawerSection.EventsSection.WorldChampionship))
+        val child = component.eventsTabComponent.childStack.value.active.instance
+        assertTrue(child is EventsScreenComponent.Championship)
+        child as EventsScreenComponent.Championship
+        assertTrue(child.bracket is PlaceholderTournamentBracketComponent)
+        assertTrue(child.agreement is PlaceholderTournamentAgreementComponent)
+        assertTrue(child.matchPlay is PlaceholderTournamentMatchPlayComponent)
+        assertTrue(child.results is PlaceholderTournamentResultsComponent)
     }
 
     @Test

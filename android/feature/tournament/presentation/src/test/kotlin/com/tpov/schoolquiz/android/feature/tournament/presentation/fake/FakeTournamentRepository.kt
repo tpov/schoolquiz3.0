@@ -18,13 +18,14 @@ import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentSess
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentSessionReadRequest
 import com.tpov.schoolquiz.shared.feature.tournament.data.repository.TournamentCompetitionRepository
 
-/** Прямой фейк 5.9-репозитория: готовые ответы и журнал вызовов для маршрутов 5.10. */
+/** Прямой фейк 5.9-репозитория: готовые ответы и журнал вызовов для маршрутов 5.10 и 5.11. */
 class FakeTournamentRepository : TournamentCompetitionRepository {
     val prepareCalls = mutableListOf<TournamentPrepareRequest>()
     val operateCalls = mutableListOf<TournamentOperateRequest>()
     val readEventCalls = mutableListOf<TournamentEventReadRequest>()
     val listEventsCalls = mutableListOf<TournamentEventListRequest>()
     val readSessionCalls = mutableListOf<TournamentSessionReadRequest>()
+    val readMeetingCalls = mutableListOf<TournamentMeetingReadRequest>()
     val recordDownloadCalls = mutableListOf<TournamentDownloadRequest>()
 
     var prepareResult: Result<TournamentPrepareReply> =
@@ -37,6 +38,8 @@ class FakeTournamentRepository : TournamentCompetitionRepository {
         Result.failure(IllegalStateException("listEvents is not configured"))
     var readSessionResult: Result<TournamentSessionRead> =
         Result.failure(IllegalStateException("readSession is not configured"))
+    var readMeetingResult: Result<TournamentMeetingPage> =
+        Result.failure(IllegalStateException("readMeeting is not configured"))
     var recordDownloadResult: Result<TournamentDownloadRecord> =
         Result.failure(IllegalStateException("recordDownload is not configured"))
 
@@ -50,8 +53,10 @@ class FakeTournamentRepository : TournamentCompetitionRepository {
         return listEventsResult
     }
 
-    override suspend fun readMeeting(request: TournamentMeetingReadRequest): Result<TournamentMeetingPage> =
-        Result.failure(IllegalStateException("readMeeting is not part of the 5.10 journeys"))
+    override suspend fun readMeeting(request: TournamentMeetingReadRequest): Result<TournamentMeetingPage> {
+        readMeetingCalls += request
+        return readMeetingResult
+    }
 
     override suspend fun readSession(request: TournamentSessionReadRequest): Result<TournamentSessionRead> {
         readSessionCalls += request

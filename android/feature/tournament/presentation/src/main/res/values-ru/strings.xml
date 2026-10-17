@@ -26,6 +26,7 @@
     <string name="tournament_refusal_insufficient">Призовой фонд не покрыт депозитом</string>
     <string name="tournament_refusal_source">Этот источник не годится для турнира</string>
     <string name="tournament_refusal_conflicting_replay">Эта операция уже была отправлена с другими условиями</string>
+    <string name="tournament_refusal_meeting_boundary">Вне границы согласования: слот или готовность вне окна, которое ведёт сервер</string>
     <string name="tournament_refusal_other">Сервер отказал этой операции: %1$s</string>
 
     <!-- Создание организатором -->
@@ -103,4 +104,68 @@
     <string name="tournament_round_settled">Завершён</string>
     <string name="tournament_round_completed">Пройден</string>
     <string name="tournament_round_timed_out">Время вышло</string>
+
+    <!-- Сетка чемпионата (история 5.11) -->
+    <string name="tournament_bracket_title">Сетка чемпионата</string>
+    <string name="tournament_bracket_round">Раунд %1$d</string>
+    <string name="tournament_bracket_match_pending">%1$s против %2$s</string>
+    <string name="tournament_bracket_match_solo">%1$s ждёт соперника</string>
+    <string name="tournament_bracket_match_resolved">%1$s · победитель %2$s</string>
+    <string name="tournament_bracket_match_technical">%1$s · решено технически</string>
+    <string name="tournament_bracket_agree">Согласовать слот</string>
+    <string name="tournament_bracket_placements">Итоговые места</string>
+    <string name="tournament_bracket_placement">Место %1$d: %2$s (слот %3$s)</string>
+    <string name="tournament_bracket_results">Открыть итоги</string>
+
+    <!-- Итоги матча и правда эскроу (история 5.11) -->
+    <string name="tournament_results_title">Итоги события</string>
+    <string name="tournament_results_placements">Итоговые места</string>
+    <string name="tournament_results_placement">Место %1$d: %2$s (слот %3$s)</string>
+    <string name="tournament_results_placement_technical">Место %1$d: %2$s (слот %3$s, технически)</string>
+    <string name="tournament_results_escrow_title">Эскроу</string>
+    <string name="tournament_results_escrow_reserved">Зарезервировано: %1$d коробок</string>
+    <string name="tournament_results_escrow_remaining">Осталось: %1$d коробок</string>
+    <string name="tournament_results_escrow_paid">Выплачено: %1$d коробок</string>
+    <string name="tournament_results_escrow_returned">Возвращено: %1$d коробок</string>
+
+    <!-- Согласование матча (история 5.11) -->
+    <string name="tournament_agreement_title">Согласование матча</string>
+    <string name="tournament_meeting_waiting_agreement">Ждём согласия по слоту</string>
+    <string name="tournament_meeting_waiting_window">Ждём согласованный слот</string>
+    <string name="tournament_meeting_waiting_ready">Ждём готовности</string>
+    <string name="tournament_meeting_started">Матч начался</string>
+    <string name="tournament_meeting_forfeit">Техническое поражение</string>
+    <string name="tournament_meeting_double_out">Оба пропустили слот</string>
+    <string name="tournament_agreement_deadline">Край согласования (C): %1$s</string>
+    <string name="tournament_agreement_stage">Окно стадии: %1$s–%2$s</string>
+    <string name="tournament_agreement_agreed_slot">Согласованный слот: %1$s</string>
+    <string name="tournament_agreement_window">Окно готовности: %1$s–%2$s</string>
+    <string name="tournament_agreement_participants">Участники</string>
+    <string name="tournament_agreement_participant">%1$s (посев %2$s)</string>
+    <string name="tournament_agreement_offers">Предложения слота</string>
+    <string name="tournament_agreement_offer">%1$s предлагает %2$s (в %3$s)</string>
+    <string name="tournament_agreement_confirmations">Подтверждения слота</string>
+    <string name="tournament_agreement_confirmation">%1$s подтверждает %2$s (в %3$s)</string>
+    <string name="tournament_agreement_ready_title">Готовность</string>
+    <string name="tournament_agreement_ready_row">%1$s готов (в %2$s)</string>
+    <string name="tournament_agreement_slot_hint">Начало слота, эпоха в мс</string>
+    <string name="tournament_agreement_propose">Предложить слот</string>
+    <string name="tournament_agreement_confirm">Подтвердить слот</string>
+    <string name="tournament_agreement_ready">Я готов</string>
+    <string name="tournament_agreement_play">Войти в матч</string>
+    <string name="tournament_agreement_empty">Матч не открыт</string>
+
+    <!-- Игра матча (история 5.11): машина сессии на виде MATCH -->
+    <string name="tournament_match_play_title">Игра матча</string>
+    <string name="tournament_match_play_question_of">Вопрос %1$d</string>
+    <string name="tournament_match_play_answer_submit">Отправить ответ</string>
+    <string name="tournament_match_play_answer_delivered">Ответ доставлен</string>
+    <string name="tournament_match_play_answer_pending">Ответ уезжает…</string>
+    <string name="tournament_match_play_window_next">Следующий вопрос через %1$d с</string>
+    <string name="tournament_match_play_ready_acked">Готовность подтверждена</string>
+    <string name="tournament_match_play_timed_out">Время этого вопроса вышло</string>
+    <string name="tournament_match_play_settled">Матч сыгран: %1$s%%</string>
+    <string name="tournament_match_play_recheck">Переспросить сессию</string>
+    <string name="tournament_match_play_blank_hint">Пропуск %1$d</string>
+    <string name="tournament_match_play_order_position">Порядок %1$d: %2$s</string>
 </resources>

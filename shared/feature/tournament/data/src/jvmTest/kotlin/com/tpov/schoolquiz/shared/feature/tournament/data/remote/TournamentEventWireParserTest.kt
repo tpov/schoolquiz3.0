@@ -70,6 +70,43 @@ class TournamentEventWireParserTest {
     }
 
     @Test
+    fun `finished event read decodes the frozen prize-slot names`() {
+        val read = parser.parseEventRead(fixture.wire("eventReadFinished"))
+        val event = read.event
+        assertEquals("FINISHED", event.status)
+        val progress = requireNotNull(event.progress)
+        // Слот — имя призового слота сервера («champion», «runner-up»), а не число.
+        assertEquals(listOf("champion", "runner-up"), progress.placements.map { it.slot })
+        assertEquals(listOf(1L, 2L), progress.placements.map { it.rank })
+        assertEquals(listOf("alice", "bob"), progress.placements.map { it.uid })
+        assertEquals("PLAYED", progress.resolved.single().status)
+        // Терминальный эскроу замороженной публикации читается тем же чтением.
+        assertEquals(0L, event.escrow.remainingBoxes)
+        assertEquals(8L, event.escrow.paidBoxes)
+    }
+
+    @Test
+    fun `numeric prize slot fails closed`() {
+        fun mutated(block: (MutableMap<String, Any?>) -> Unit): String {
+            val root = Json.parseToJsonElement(fixture.wire("eventReadFinished")).jsonObject
+            val copy = TournamentWireTestMutable.deepCopy(root)
+            block(copy)
+            return Json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), TournamentWireTestMutable.build(copy))
+        }
+        // Числового слота сервер не публикует: имя, замороженное planPrizePayouts, — не число.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutated {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    val progress = event["progress"] as MutableMap<String, Any?>
+                    val placements = progress["placements"] as MutableList<Any?>
+                    (placements[0] as MutableMap<String, Any?>)["slot"] = 1
+                },
+            )
+        }
+    }
+
+    @Test
     fun `embedded event of an operation view never accepts match rows`() {
         val bracket = Json.parseToJsonElement(fixture.wire("eventReadBracket")).jsonObject
         val event = bracket.getValue("event").jsonObject

@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.android.feature.tournament.presentation.fake.FakeTour
 import com.tpov.schoolquiz.android.feature.tournament.presentation.fake.operationView
 import com.tpov.schoolquiz.android.feature.tournament.presentation.fake.refused
 import com.tpov.schoolquiz.android.feature.tournament.presentation.model.TournamentNotice
+import com.tpov.schoolquiz.android.feature.tournament.presentation.model.TournamentRefusal
 import com.tpov.schoolquiz.shared.core.outbox.MutationReceipt
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
@@ -474,6 +475,23 @@ class DefaultTournamentQualificationComponentTest {
         assertTrue(f.outboxStore.rows.isEmpty())
         // Повтор попытки остаётся возможен: личность попытки не сгорела отказом.
         assertEquals(1, f.repository.operateCalls.size)
+    }
+
+    @Test
+    fun `failed precondition outside the agreement surface stays out of the meeting branch`() = runTest(dispatcher) {
+        val f = fixture()
+        f.component.onPickEvent("event_play_0000000001")
+        advanceUntilIdle()
+        // Старт квалификации за окном (и «Qualification is closed») приезжает тем же родом
+        // отказа FAILED_PRECONDITION — это не граница встречи, и ветвь честно другая.
+        f.repository.operateResult = Result.failure(refused("FAILED_PRECONDITION"))
+
+        f.component.onStartRoundClick(1)
+        advanceUntilIdle()
+
+        val notice = assertIs<TournamentNotice.Refused>(f.component.state.value.notice)
+        assertEquals(TournamentRefusal.OTHER, notice.reason)
+        assertEquals("FAILED_PRECONDITION", notice.serverReason)
     }
 
     @Test

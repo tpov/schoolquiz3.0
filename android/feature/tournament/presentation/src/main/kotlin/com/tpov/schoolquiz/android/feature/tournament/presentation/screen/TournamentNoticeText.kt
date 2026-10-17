@@ -33,6 +33,8 @@ internal fun noticeText(notice: TournamentNotice): String =
                     stringResource(R.string.tournament_refusal_source)
                 TournamentRefusal.CONFLICTING_REPLAY ->
                     stringResource(R.string.tournament_refusal_conflicting_replay)
+                TournamentRefusal.MEETING_BOUNDARY ->
+                    stringResource(R.string.tournament_refusal_meeting_boundary)
                 TournamentRefusal.OTHER ->
                     stringResource(R.string.tournament_refusal_other, notice.serverReason)
             }

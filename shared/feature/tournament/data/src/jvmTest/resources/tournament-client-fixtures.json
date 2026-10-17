@@ -144,6 +144,98 @@
   },
   "serverNowMs": 1789344000000
  },
+ "eventReadFinished": {
+  "event": {
+   "escrow": {
+    "paidBoxes": 8,
+    "remainingBoxes": 0,
+    "reservedBoxes": 12,
+    "returnedBoxes": 4
+   },
+   "eventId": "event_fixture_00000001",
+   "matches": [
+    {
+     "matchId": "[\"tournament\",\"event_fixture_00000001\",\"match\",0,0]",
+     "maxDurationMs": 280000,
+     "schedulingDeadlineMs": 1789599320000,
+     "stage": 0,
+     "stageEndsAtMs": 1789603200000,
+     "stageStartsAtMs": 1789344000000
+    },
+    {
+     "matchId": "[\"tournament\",\"event_fixture_00000001\",\"match\",1,0]",
+     "maxDurationMs": 280000,
+     "schedulingDeadlineMs": 1789599320000,
+     "stage": 1,
+     "stageEndsAtMs": 1789603200000,
+     "stageStartsAtMs": 1789344000000
+    }
+   ],
+   "organizerUid": "author",
+   "prizes": {
+    "listVersion": 1,
+    "maximumLiabilityBoxes": 10,
+    "rows": [
+     {
+      "amountBoxes": 5,
+      "place": 1
+     },
+     {
+      "amountBoxes": 3,
+      "place": 2
+     },
+     {
+      "amountBoxes": 1,
+      "place": 3
+     },
+     {
+      "amountBoxes": 1,
+      "place": 3
+     }
+    ]
+   },
+   "progress": {
+    "resolved": [
+     {
+      "matchId": "[\"tournament\",\"event_fixture_00000001\",\"match\",0,0]",
+      "status": "PLAYED",
+      "winnerUid": "alice",
+      "loserUid": "bob",
+      "technicalForfeit": false
+     }
+    ],
+    "pending": [],
+    "placements": [
+     {
+      "uid": "alice",
+      "rank": 1,
+      "slot": "champion",
+      "technicalForfeit": false
+     },
+     {
+      "uid": "bob",
+      "rank": 2,
+      "slot": "runner-up",
+      "technicalForfeit": false
+     }
+    ],
+    "status": "FINISHED"
+   },
+   "qualification": {
+    "attemptsPerRound": 1,
+    "endsAtMs": 1789344000000,
+    "questionsPerRound": 20,
+    "roundCount": 3,
+    "startsAtMs": 1788739200000
+   },
+   "source": {
+    "id": "course",
+    "kind": "COURSE"
+   },
+   "status": "FINISHED"
+  },
+  "serverNowMs": 1789603200000
+ },
  "eventReadQualification": {
   "event": {
    "escrow": {

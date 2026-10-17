@@ -22,13 +22,21 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAgreementComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBracketComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentMatchPlayComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentOrganizerComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentResultsComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAdmissionComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAgreementComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBracketComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentBrowserComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentMatchPlayComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentOrganizerComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentQualificationComponent
+import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentResultsComponent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
@@ -146,6 +154,34 @@ val appShellPresentationModule =
                         koin.get(TournamentQualificationComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderTournamentQualificationComponent()
+                    }
+                },
+                tournamentBracketFactory = { compCtx ->
+                    runCatching<TournamentBracketComponent> {
+                        koin.get(TournamentBracketComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentBracketComponent()
+                    }
+                },
+                tournamentAgreementFactory = { compCtx ->
+                    runCatching<TournamentAgreementComponent> {
+                        koin.get(TournamentAgreementComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentAgreementComponent()
+                    }
+                },
+                tournamentMatchPlayFactory = { compCtx ->
+                    runCatching<TournamentMatchPlayComponent> {
+                        koin.get(TournamentMatchPlayComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentMatchPlayComponent()
+                    }
+                },
+                tournamentResultsFactory = { compCtx ->
+                    runCatching<TournamentResultsComponent> {
+                        koin.get(TournamentResultsComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderTournamentResultsComponent()
                     }
                 },
                 quizzesFactory = { compCtx ->
