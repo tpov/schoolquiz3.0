@@ -260,12 +260,15 @@ function createExamCorrections({db, nowMs = () => Date.now(), authorizeExclusion
         cumulativeExclusions: exclusions,
         updatedAtMs: at,
       };
+      // Чтение поколения ДО первых записей: транзакция Firestore запрещает чтение после
+      // записи, и порядок «голова → чтение поколения» отверг бы каждую коррекцию темы.
+      const generation = generationRef ?
+        ((await tx.get(generationRef)).data() || {generation: 0}) : null;
       tx.create(correctionRef, body);
       tx.set(headRef, nextHead);
       if (generationRef) {
         // Поколение помечается ожидающим: новый финал увидит барьер ДО списания, а
         // материализатор знает, что проекцию надо доводить.
-        const generation = (await tx.get(generationRef)).data() || {generation: 0};
         tx.set(generationRef, {...generation, pendingCorrection: true, updatedAtMs: at}, {merge: true});
       }
       return {applied: true, replay: false, head: nextHead};
@@ -318,18 +321,33 @@ function createExamCorrections({db, nowMs = () => Date.now(), authorizeExclusion
         // fetchSittingResult продолжал бы отдавать исходный провал под исправленной головой.
         // Лучший результат и проход монотонны; сертификат это не создаёт (только новый
         // успешный сидинг), деньги не трогаются.
+        //
+        // Не-SCORED исход (CORRECTION_PENDING_EVIDENCE / UNSCORABLE_ALL_EXCLUDED) не имеет
+        // числового вердикта: штамповать «исправлено» на пустоте нельзя — состояние остаётся
+        // как было, с явной пометкой ожидающей коррекции, которую материализуют повторно.
         const finalStateRef =
           db.doc(`${ASSESSMENT_STATE_COLLECTION}/${assessmentStateId(uid, mode, assessmentId)}`);
         const finalState = (await tx.get(finalStateRef)).data() || {};
+        if (outcome.state !== CORRECTION_STATE.SCORED) {
+          tx.set(finalStateRef, {
+            uid, mode, assessmentId,
+            correctionPendingState: outcome.state,
+            correctionPendingResultVersion: resultVersion,
+            updatedAtMs: at,
+          }, {merge: true});
+          return {published: true, outcome, projection, pending: true};
+        }
         tx.set(finalStateRef, {
           uid, mode, assessmentId,
           bestPercent: Math.max(
             Math.max(0, Math.floor(Number(finalState.bestPercent) || 0)),
-            outcome.state === CORRECTION_STATE.SCORED ? outcome.percent : 0,
+            outcome.percent,
           ),
           passed: finalState.passed === true || outcome.passed === true,
           correctedAtMs: at,
           correctedResultVersion: resultVersion,
+          correctionPendingState: null,
+          correctionPendingResultVersion: null,
           updatedAtMs: at,
         }, {merge: true});
         return {published: true, outcome, projection};

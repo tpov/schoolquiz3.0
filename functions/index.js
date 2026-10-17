@@ -238,6 +238,9 @@ const MONETARY_FUNCTION_OPTIONS = {...FUNCTION_OPTIONS, maxInstances: 2};
  * настоящей дырой. Они остаются на [FUNCTION_OPTIONS].
  */
 const CALLABLE_OPTIONS = {...FUNCTION_OPTIONS, invoker: "public"};
+// Профиль сертификатов: последние выпуски по порядку заработка. Отбор «последнего
+// заработанного» и список на экране укладываются в этот предел; история остаётся в базе.
+const CERTIFICATE_PROFILE_READ_LIMIT = 25;
 const MONETARY_CALLABLE_OPTIONS = {...MONETARY_FUNCTION_OPTIONS, invoker: "public"};
 // Pagination anchors reference closed receipts. The token key is bound only to lifecycle readers.
 const ARENA_LIFECYCLE_CURSOR_SECRET = defineSecret("ARENA_LIFECYCLE_CURSOR_SECRET");
@@ -676,7 +679,10 @@ exports.fulfilCertificateSigning = onCall(CALLABLE_OPTIONS, async (request) => {
 /** Список сертификатов профиля: последний заработанный — по порядку заработка. */
 exports.fetchMyCertificates = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
-  const snapshot = await db.collection("exam_certificates").where("uid", "==", uid).get();
+  // Профиль читает последние выпуски по порядку заработка, а не всю историю аккаунта:
+  // чтение ограничено, отбор «последнего заработанного» от него не меняется.
+  const snapshot = await db.collection("exam_certificates").where("uid", "==", uid)
+    .orderBy("issuedAtMs", "desc").limit(CERTIFICATE_PROFILE_READ_LIMIT).get();
   return profileProjection(latestEarnedIssuance(snapshot.docs.map((doc) => doc.data())));
 });
 
@@ -693,7 +699,13 @@ exports.appendExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
   }
   const body = request.data || {};
   // Валидация до записи: неизвестный режим публикует голову без барьера поколения, пустой
-  // владелец ломает идентичность состояния допуска.
+  // владелец ломает идентичность состояния допуска. correctionId становится путём документа
+  // головы: document-safe или типизированный отказ, а не Firestore-ошибка посреди вызова.
+  if (typeof body.correctionId !== "string" || !body.correctionId.trim() ||
+      body.correctionId.includes("/") || body.correctionId.length > 128) {
+    throw new HttpsError("invalid-argument",
+      "correctionId must be a nonempty document-safe string", {reason: "INVALID_ARGUMENT"});
+  }
   if (!["ThemeTest", "FinalExam"].includes(body.mode)) {
     throw new HttpsError("invalid-argument", "mode must be ThemeTest or FinalExam",
       {reason: "INVALID_ARGUMENT"});

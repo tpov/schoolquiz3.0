@@ -94,7 +94,9 @@ function sittingDigits(sitting) {
 function advancePlan(sitting, nowMs) {
   if (sitting.state === SITTING_STATE.CLOSED) return {kind: "IDLE"};
   if (sitting.state === SITTING_STATE.FINISH_REQUESTED) {
-    return {kind: "TERMINALIZE", closeReason: CLOSE_REASON.COMPLETED};
+    // Причина, вычисленная шагом ADVANCE при закрытии последнего слота, доехала в документе:
+    // терминализация следующим заходом sweeper'а обязана её сохранить, а не записать COMPLETED.
+    return {kind: "TERMINALIZE", closeReason: sitting.closeReasonCandidate || CLOSE_REASON.COMPLETED};
   }
   const current = sitting.slots[sitting.currentIndex];
   if (current && current.state === SLOT_STATE.DELIVERED) {
@@ -185,7 +187,18 @@ function terminalOutcome(sitting, {closedAtMs, closeReason, resultVersion}) {
  */
 function planReward({sitting, percent, passed, assessmentState, hasFirstPassAward}) {
   const state = assessmentState || {};
-  const b = Math.max(0, Math.floor(Number(state.maxAccountedPercent) || 0));
+  // Протокол: испорченные финансовые входы — явная неудача, никогда не правдоподобный ноль:
+  // b=0 превратил бы повтор в «первый прогресс» и переоплатил бы его. Отсутствие записи —
+  // легитимная свежая пара пользователь/оценка (b=0); БИТОЕ значение — бросок, который
+  // перехватывает терминальная транзакция: POISON, без фальшивого результата.
+  const rawB = state.maxAccountedPercent;
+  const parsedB = rawB === undefined || rawB === null ? 0 :
+    typeof rawB === "number" ? rawB :
+      typeof rawB === "string" && /^[0-9]+$/.test(rawB) ? Number(rawB) : NaN;
+  if (!Number.isSafeInteger(parsedB) || parsedB < 0 || parsedB > 100) {
+    fail("CORRUPT_ACCOUNTED_PROGRESS", `maxAccountedPercent is not a 0..100 integer: ${String(rawB)}`);
+  }
+  const b = parsedB;
   if (sitting.mode === "ThemeTest") {
     if (passed !== true || hasFirstPassAward === true) {
       return {pays: false, bNext: b, reason: passed ? "FIRST_PASS_ALREADY_AWARDED" : "THEME_NOT_PASSED"};
@@ -249,9 +262,11 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
           assessmentState: state, hasFirstPassAward: hasFirstPass});
       } catch (error) {
         // Испорченная или отсутствующая финансовая база — явная незакрытая работа: сидинг не
-        // получает фальшивого результата, оператор получает запись, сидинг остаётся в очереди.
-        report(sittingId, "INVALID_REWARD_BASIS");
-        tx.set(sittingRef, {terminalError: "INVALID_REWARD_BASIS", version: sitting.version + 1}, {merge: true});
+        // получает фальшивого результата, оператор получает запись с кодом причины, сидинг
+        // остаётся в очереди.
+        report(sittingId, error.code || "INVALID_REWARD_BASIS");
+        tx.set(sittingRef, {terminalError: error.code || "INVALID_REWARD_BASIS",
+          version: sitting.version + 1}, {merge: true});
         return {sittingId, status: "POISON"};
       }
 
@@ -457,6 +472,18 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
         } catch (error) {
           failed += 1;
           report(doc.id, SAFE_ERROR_CODES.has(error.code) ? error.code : "ADVANCE_FAILED");
+          // Сидинг, падающий на каждом заходе, копит те же попытки, что и POISON-результат:
+          // иначе бросок никогда не осушается и вечно занимает голову ограниченной страницы.
+          try {
+            const current = data(await db.doc(`${SITTINGS_COLLECTION}/${doc.id}`).get()) || {};
+            const attempts = Math.max(0, Math.floor(Number(current.poisonAttempts) || 0)) + 1;
+            const patch = attempts >= POISON_ATTEMPT_LIMIT ?
+              {poisonAttempts: attempts, poisonAt: now(), terminalQueryFlag: false} :
+              {poisonAttempts: attempts};
+            await db.doc(`${SITTINGS_COLLECTION}/${doc.id}`).set(patch, {merge: true});
+          } catch (counterError) {
+            report(doc.id, "POISON_COUNT_FAILED");
+          }
         }
       }
     } finally {

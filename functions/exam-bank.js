@@ -39,6 +39,9 @@ const MAX_SECTIONS_PER_COURSE = 64;
 const MAX_THEMES_PER_COURSE = 64;
 const MAX_LESSONS_PER_THEME = 64;
 const MAX_QUESTIONS_PER_LESSON = 200;
+/** Агрегат строк вопросов на одну стартовую транзакцию финала: 12 сертифицированных тем с
+ * минимальными банками (12×200×2=4800) помещаются с запасом, курс-монстр — типизированный отказ. */
+const MAX_COURSE_POOL_ROWS = 12000;
 
 /** Границы набора протокола. */
 const THEME_POOL_MIN_EASY = 5;
@@ -321,6 +324,11 @@ function createExamBank({db, loadLessonContext}) {
         hardDistinct: pool.pool.hard.length,
       });
       rawRows.push(...pool.rawRows);
+      // По-коллекционные лимиты не ограничивают СУММУ чтений стартовой транзакции: курс на
+      // грани каждого лимита взорвал бы транзакцию нечитаемой типизированной ошибкой.
+      if (rawRows.length > MAX_COURSE_POOL_ROWS) {
+        fail("BANK_TOO_LARGE", `course ${courseId} pool exceeds ${MAX_COURSE_POOL_ROWS} rows`);
+      }
     }
     return {
       courseId,

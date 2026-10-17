@@ -876,6 +876,9 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
         finishRequestedAtMs: now,
         version: sitting.version + 1,
         nextDeadlineAtMs: null,
+        // Осушённый (3-strike) сидинг выпал из очереди sweeper'а: пользовательский запрос
+        // закрытия возвращает его в обход, иначе он зависает открытым навсегда.
+        terminalQueryFlag: TERMINAL_QUERY_TRUE,
       }, {merge: true});
       return {sittingId, state: SITTING_STATE.FINISH_REQUESTED, alreadyRequested: false};
     });

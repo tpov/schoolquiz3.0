@@ -233,9 +233,13 @@ function createCertificateSigning({db, nowMs = () => Date.now(), signer = null})
     return db.runTransaction(async (tx) => {
       const ref = db.doc(`${SIGNING_WORK_COLLECTION}/${issuanceId}`);
       const work = (await tx.get(ref)).data() || null;
-      if (!work || work.state !== SIGNING_STATE.PENDING) return null;
+      const recoverable = work && work.state === SIGNING_STATE.FAILED_RECOVERABLE;
+      if (!work || (work.state !== SIGNING_STATE.PENDING && !recoverable)) return null;
       if (work.fence && Number(work.fenceExpiresAtMs) > now()) return null;
-      tx.set(ref, {fence, fenceExpiresAtMs: now() + FENCE_MS, attempts: (work.attempts || 0) + 1,
+      // Восстановимая неудача с освободившимся замком снова становится очередью: тот же факт,
+      // те же требования, ни rebound-ключа, ни второй идентичности.
+      tx.set(ref, {state: SIGNING_STATE.PENDING, lastError: null,
+        fence, fenceExpiresAtMs: now() + FENCE_MS, attempts: (work.attempts || 0) + 1,
         updatedAtMs: now()}, {merge: true});
       return fence;
     });
@@ -255,7 +259,10 @@ function createCertificateSigning({db, nowMs = () => Date.now(), signer = null})
     const workRef = db.doc(`${SIGNING_WORK_COLLECTION}/${issuanceId}`);
     const work = (await workRef.get()).data() || null;
     if (!work) return {fulfilled: false, reason: "NO_WORK"};
-    if (work.state !== SIGNING_STATE.PENDING) return {fulfilled: true, alreadyDone: true};
+    // Подписанный факт завершён; восстановимая неудача — не «уже сделано», а ждущая работы
+    // (драйвер обязан сначала переклеймить замок: claimFence сбрасывает её в PENDING).
+    if (work.state === SIGNING_STATE.SIGNED) return {fulfilled: true, alreadyDone: true};
+    if (work.state !== SIGNING_STATE.PENDING) return {fulfilled: false, reason: "NOT_CLAIMED"};
     if (work.fence !== fence || Number(work.fenceExpiresAtMs) <= now()) {
       return {fulfilled: false, reason: "FENCE_LOST"};
     }
@@ -285,7 +292,14 @@ function createCertificateSigning({db, nowMs = () => Date.now(), signer = null})
     }
     // Верификация перед публикацией — тот же подписант обязан уметь проверять свой артефакт.
     if (typeof signer.verify === "function") {
-      const ok = signer.verify(publicSnapshot(fact, artifact), fact.keyId) === true;
+      let ok = false;
+      try {
+        ok = signer.verify(publicSnapshot(fact, artifact), fact.keyId) === true;
+      } catch (error) {
+        await workRef.set({state: SIGNING_STATE.FAILED_RECOVERABLE,
+          lastError: "VERIFY_FAILED", updatedAtMs: now()}, {merge: true});
+        return {fulfilled: false, reason: "VERIFY_FAILED"};
+      }
       if (!ok) {
         await workRef.set({state: SIGNING_STATE.FAILED_RECOVERABLE,
           lastError: "VERIFY_FAILED", updatedAtMs: now()}, {merge: true});
