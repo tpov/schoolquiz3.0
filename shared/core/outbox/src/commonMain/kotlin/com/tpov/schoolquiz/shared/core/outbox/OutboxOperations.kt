@@ -52,8 +52,15 @@ object OutboxOperations {
      * возрастного карантина и лимита попыток — перезревание убило бы вопрос раньше его
      * собственного deadline, прямое нарушение §7. Решение о включении и имя операции — истории 2.6.
      * SUBMIT_POLL_VOTE — по правилу §4 контракта UX-O7 (история 8.2): тот же мотив.
+     *
+     * TOURNAMENT_SESSION_OP — по тому же правилу §6.1 для квитанций ready-ACK сессий соревнования
+     * (история 5.9): имя операции целиком, без разделения по kind тела — ядро в тело не смотрит
+     * (AD-5), а ответ на вопрос и квитанция готовности едут под одним именем операции; карантин
+     * по возрасту убил бы и её. Повтор ключа возвращает сохранённую квитанцию, второй эффект
+     * исключён серверной идемпотентностью по operationId.
      */
-    val permanentReceiptOperations: Set<String> = setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX, READY_ACK, SUBMIT_POLL_VOTE)
+    val permanentReceiptOperations: Set<String> =
+        setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX, READY_ACK, SUBMIT_POLL_VOTE, TOURNAMENT_SESSION_OP)
 
     /**
      * Операции, чья мутация ведётся по согласию игрока с платными условиями (CAP-16, AD-5).
@@ -128,6 +135,24 @@ object OutboxOperations {
      * переиздание того же содержания сервер отвечает no-op без новой revision.
      */
     const val PUBLISH_POLL_SERIES: String = "polls.PUBLISH_SERIES"
+
+    /**
+     * Мутации сессии соревнования — ANSWER/ADVANCE/READY_ACK (история 5.9, эпик
+     * `epic-course-competition`).
+     *
+     * Ответ, закрытие вопроса и квитанция готовности едут из очереди тем же единственным
+     * приёмником (AD-6): серверная идемпотентность у операции уже есть — по operationId,
+     * выведенному кодеком (`TournamentSessionOutboxCodec`) из идентичности слота сессии, — а
+     * повтор ключа возвращает сохранённую квитанцию без второго эффекта. Тело — ровно allowlist
+     * приёмника очереди, то есть `courseTournaments.session` в `functions/index.js` (прямой
+     * вызываемый `submitCourseTournamentSession` клиентом не зовётся); отпечаток формы и владельца
+     * сервер дописывает сам из хранимой сессии.
+     *
+     * Имя в пространстве владеющей фичи `tournament`; серверная половина — реестр
+     * `MUTATION_HANDLERS` (`functions/index.js`), совпадение сторожит
+     * `OutboxOperationsRegistryTest`.
+     */
+    const val TOURNAMENT_SESSION_OP: String = "tournament.SESSION_OP"
 
     /**
      * Ключ идемпотентности, выведенный из идентификатора самого действия.

@@ -59,6 +59,7 @@ class OutboxOperationsRegistryTest {
             OutboxOperations.PUBLISH_POLL_SERIES,
             OutboxOperations.CANCEL_NICKNAME_LISTING,
             OutboxOperations.CANCEL_LOGO_LISTING,
+            OutboxOperations.TOURNAMENT_SESSION_OP,
         )
 
     @Test

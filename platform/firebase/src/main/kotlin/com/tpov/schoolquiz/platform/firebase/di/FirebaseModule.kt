@@ -30,6 +30,7 @@ import com.tpov.schoolquiz.platform.firebase.social.FirebasePollsRemoteDataSourc
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseCatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseLessonContentSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.tournament.FirebaseTournamentLeaderboardRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.tournament.FirebaseTournamentRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.verification.FirebaseVerificationRemoteDataSource
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
@@ -59,6 +60,10 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLife
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentEventRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentMeetingRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentOperationRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentSessionReadRemoteDataSource
 import kotlinx.coroutines.Dispatchers
 import org.koin.dsl.module
 
@@ -107,6 +112,24 @@ val firebaseModule =
                 dispatcher = Dispatchers.IO,
             )
         }
+        // Соревнование (история 5.9): прямые вызовы через аренный транспортный образец; мутации
+        // сессии едут из очереди, поэтому здесь только чтения, подготовка, операции и запись
+        // скачивания. Строгие разборы и фасад привязывает tournamentDataModule.
+        single {
+            FirebaseTournamentRemoteDataSource(
+                functions = get(),
+                sessions = get(),
+                networkMonitor = get(),
+                dispatcher = Dispatchers.IO,
+                eventParser = get(),
+                meetingParser = get(),
+                sessionParser = get(),
+            )
+        }
+        single<TournamentEventRemoteDataSource> { get<FirebaseTournamentRemoteDataSource>() }
+        single<TournamentMeetingRemoteDataSource> { get<FirebaseTournamentRemoteDataSource>() }
+        single<TournamentSessionReadRemoteDataSource> { get<FirebaseTournamentRemoteDataSource>() }
+        single<TournamentOperationRemoteDataSource> { get<FirebaseTournamentRemoteDataSource>() }
         // Единственный адрес очереди (AD-6): новая операция появляется обработчиком на сервере,
         // а не новым путём на клиенте. Захваченное согласие платных операций едет в конверте
         // (CAP-16): сервер сверяет его с текущей таблицей, и отказ по согласию паркует запись,

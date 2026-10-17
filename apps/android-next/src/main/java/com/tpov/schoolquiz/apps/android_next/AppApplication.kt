@@ -66,6 +66,7 @@ import com.tpov.schoolquiz.shared.feature.section.data.di.sectionDataModule
 import com.tpov.schoolquiz.shared.feature.section.domain.di.sectionDomainModule
 import com.tpov.schoolquiz.shared.feature.theme.data.di.themeDataModule
 import com.tpov.schoolquiz.shared.feature.theme.domain.di.themeDomainModule
+import com.tpov.schoolquiz.shared.feature.tournament.data.di.tournamentDataModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -196,6 +197,7 @@ class AppApplication : Application(), Configuration.Provider {
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,
+                tournamentDataModule,
                 syncModule,
                 // Время — то же, что у очереди и состояния синхронизации выше: один источник на
                 // весь sync (AD-9), адаптеры своих часов не держат.

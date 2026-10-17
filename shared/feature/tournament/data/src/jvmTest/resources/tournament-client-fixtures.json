@@ -1,0 +1,633 @@
+{
+ "answerView": {
+  "currentQuestion": {
+   "contentVersion": 1,
+   "difficulty": "EASY",
+   "maxDurationMs": 21000,
+   "publicPayload": {
+    "difficulty": "EASY",
+    "id": "q032",
+    "imageUrl": null,
+    "options": [
+     {
+      "id": "a",
+      "text": "var"
+     },
+     {
+      "id": "b",
+      "text": "val"
+     },
+     {
+      "id": "c",
+      "text": "lateinit"
+     }
+    ],
+    "text": "Which keyword declares a read-only binding?",
+    "type": "SingleChoiceRedacted"
+   },
+   "questionId": "q032",
+   "type": "SingleChoice"
+  },
+  "lastClosed": {
+   "kind": "ANSWER",
+   "questionId": "q012",
+   "questionIndex": 0
+  },
+  "operationId": "fixture_answer_op_000001",
+  "schemaVersion": 1,
+  "serverNowMs": 1788739200000,
+  "session": {
+   "endsAtMs": 1788739620000,
+   "eventId": "event_fixture_00000001",
+   "kind": "QUALIFICATION",
+   "questionEndsAtMs": 1788739221000,
+   "questionIndex": 1,
+   "questionStartedAtMs": 1788739200000,
+   "sessionId": "q_1aac6a2caf58939d75a2296a426e8cc44dc55702da12cb330d554b025a086ae5",
+   "startedAtMs": 1788739200000,
+   "status": "STARTED",
+   "window": {
+    "completedQuestionIndex": 0,
+    "expiresAtMs": 1788739260000,
+    "nextQuestionIndex": 1,
+    "openedAtMs": 1788739200000,
+    "state": "DELIVERED",
+    "windowId": "win_aedbecedab4b",
+    "windowSeconds": 60
+   }
+  },
+  "status": "ANSWER_ACCEPTED"
+ },
+ "downloadFirst": {
+  "courseId": "course",
+  "downloadedAtMs": 1788739200000
+ },
+ "downloadReplay": {
+  "courseId": "course",
+  "downloadedAtMs": 1788739200000,
+  "replayed": true
+ },
+ "eventReadBracket": {
+  "event": {
+   "escrow": {
+    "paidBoxes": 0,
+    "remainingBoxes": 12,
+    "reservedBoxes": 12,
+    "returnedBoxes": 0
+   },
+   "eventId": "event_fixture_00000001",
+   "matches": [
+    {
+     "matchId": "[\"tournament\",\"event_fixture_00000001\",\"match\",1,0]",
+     "maxDurationMs": 280000,
+     "schedulingDeadlineMs": 1789599320000,
+     "stage": 1,
+     "stageEndsAtMs": 1789603200000,
+     "stageStartsAtMs": 1789344000000
+    }
+   ],
+   "organizerUid": "author",
+   "prizes": {
+    "listVersion": 1,
+    "maximumLiabilityBoxes": 10,
+    "rows": [
+     {
+      "amountBoxes": 5,
+      "place": 1
+     },
+     {
+      "amountBoxes": 3,
+      "place": 2
+     },
+     {
+      "amountBoxes": 1,
+      "place": 3
+     },
+     {
+      "amountBoxes": 1,
+      "place": 3
+     }
+    ]
+   },
+   "progress": {
+    "pending": [
+     {
+      "entrants": [
+       {
+        "seed": 1,
+        "uid": "alice"
+       },
+       {
+        "seed": 2,
+        "uid": "bob"
+       }
+      ],
+      "matchId": "[\"tournament\",\"event_fixture_00000001\",\"match\",1,0]"
+     }
+    ],
+    "placements": [],
+    "resolved": [],
+    "status": "ACTIVE"
+   },
+   "qualification": {
+    "attemptsPerRound": 1,
+    "endsAtMs": 1789344000000,
+    "questionsPerRound": 20,
+    "roundCount": 3,
+    "startsAtMs": 1788739200000
+   },
+   "source": {
+    "id": "course",
+    "kind": "COURSE"
+   },
+   "status": "BRACKET"
+  },
+  "serverNowMs": 1789344000000
+ },
+ "eventReadQualification": {
+  "event": {
+   "escrow": {
+    "paidBoxes": 0,
+    "remainingBoxes": 12,
+    "reservedBoxes": 12,
+    "returnedBoxes": 0
+   },
+   "eventId": "event_fixture_00000001",
+   "organizerUid": "author",
+   "prizes": {
+    "listVersion": 1,
+    "maximumLiabilityBoxes": 10,
+    "rows": [
+     {
+      "amountBoxes": 5,
+      "place": 1
+     },
+     {
+      "amountBoxes": 3,
+      "place": 2
+     },
+     {
+      "amountBoxes": 1,
+      "place": 3
+     },
+     {
+      "amountBoxes": 1,
+      "place": 3
+     }
+    ]
+   },
+   "qualification": {
+    "attemptsPerRound": 1,
+    "endsAtMs": 1789344000000,
+    "questionsPerRound": 20,
+    "roundCount": 3,
+    "startsAtMs": 1788739200000
+   },
+   "source": {
+    "id": "course",
+    "kind": "COURSE"
+   },
+   "status": "QUALIFICATION"
+  },
+  "serverNowMs": 1788739200000
+ },
+ "listEventsFirst": {
+  "events": [
+   {
+    "escrow": {
+     "paidBoxes": 0,
+     "remainingBoxes": 12,
+     "reservedBoxes": 12,
+     "returnedBoxes": 0
+    },
+    "eventId": "event_fixture_00000001",
+    "organizerUid": "author",
+    "prizes": {
+     "listVersion": 1,
+     "maximumLiabilityBoxes": 10,
+     "rows": [
+      {
+       "amountBoxes": 5,
+       "place": 1
+      },
+      {
+       "amountBoxes": 3,
+       "place": 2
+      },
+      {
+       "amountBoxes": 1,
+       "place": 3
+      },
+      {
+       "amountBoxes": 1,
+       "place": 3
+      }
+     ]
+    },
+    "qualification": {
+     "attemptsPerRound": 1,
+     "endsAtMs": 1789344000000,
+     "questionsPerRound": 20,
+     "roundCount": 3,
+     "startsAtMs": 1788739200000
+    },
+    "source": {
+     "id": "course",
+     "kind": "COURSE"
+    },
+    "status": "QUALIFICATION"
+   }
+  ],
+  "hasMore": true,
+  "nextEventId": "event_fixture_00000001",
+  "serverNowMs": 1788739200000
+ },
+ "listEventsLast": {
+  "events": [
+   {
+    "escrow": {
+     "paidBoxes": 0,
+     "remainingBoxes": 12,
+     "reservedBoxes": 12,
+     "returnedBoxes": 0
+    },
+    "eventId": "event_fixture_00000001",
+    "organizerUid": "author",
+    "prizes": {
+     "listVersion": 1,
+     "maximumLiabilityBoxes": 10,
+     "rows": [
+      {
+       "amountBoxes": 5,
+       "place": 1
+      },
+      {
+       "amountBoxes": 3,
+       "place": 2
+      },
+      {
+       "amountBoxes": 1,
+       "place": 3
+      },
+      {
+       "amountBoxes": 1,
+       "place": 3
+      }
+     ]
+    },
+    "qualification": {
+     "attemptsPerRound": 1,
+     "endsAtMs": 1789344000000,
+     "questionsPerRound": 20,
+     "roundCount": 3,
+     "startsAtMs": 1788739200000
+    },
+    "source": {
+     "id": "course",
+     "kind": "COURSE"
+    },
+    "status": "QUALIFICATION"
+   }
+  ],
+  "hasMore": false,
+  "nextEventId": null,
+  "serverNowMs": 1788739200000
+ },
+ "listEventsLegacyPrizes": {
+  "events": [
+   {
+    "escrow": {
+     "paidBoxes": 0,
+     "remainingBoxes": 12,
+     "reservedBoxes": 12,
+     "returnedBoxes": 0
+    },
+    "eventId": "event_fixture_00000001",
+    "organizerUid": "author",
+    "prizes": {
+     "listVersion": 0,
+     "maximumLiabilityBoxes": 10,
+     "rows": [
+      {
+       "amountBoxes": 5,
+       "place": 1
+      },
+      {
+       "amountBoxes": 3,
+       "place": 2
+      },
+      {
+       "amountBoxes": 1,
+       "place": 3
+      },
+      {
+       "amountBoxes": 1,
+       "place": 3
+      }
+     ]
+    },
+    "qualification": {
+     "attemptsPerRound": 1,
+     "endsAtMs": 1789344000000,
+     "questionsPerRound": 20,
+     "roundCount": 3,
+     "startsAtMs": 1788739200000
+    },
+    "source": {
+     "id": "course",
+     "kind": "COURSE"
+    },
+    "status": "QUALIFICATION"
+   }
+  ],
+  "hasMore": false,
+  "nextEventId": null,
+  "serverNowMs": 1788739200000
+ },
+ "meetingPage": {
+  "confirmations": [
+   {
+    "acceptedAtMs": 1789344001000,
+    "confirmationId": "0350ba9635bdd3291cc04d76788729785b4668c0d01686d22f6f9716d20322ff",
+    "slotStartsAtMs": 1789344004000,
+    "uid": "bob"
+   },
+   {
+    "acceptedAtMs": 1789344001000,
+    "confirmationId": "c34bc50eddcb42bb22836668a50c6eabea86c0386dd3178ac710b406e63847bd",
+    "slotStartsAtMs": 1789344004000,
+    "uid": "alice"
+   }
+  ],
+  "eventId": "event_fixture_00000001",
+  "hasMore": true,
+  "hasMoreConfirmations": false,
+  "meeting": {
+   "agreedAtMs": 1789344001000,
+   "matchId": "[\"tournament\",\"event_fixture_00000001\",\"match\",1,0]",
+   "slotStartsAtMs": 1789344004000,
+   "status": "WAITING_FOR_READY",
+   "windowEndMs": 1789347604000
+  },
+  "nextConfirmationId": null,
+  "nextOfferId": "e883d19ba97c777c09944c29982e1492ff30a00750fb15d2c75a039d36e33dd7",
+  "offers": [
+   {
+    "acceptedAtMs": 1789344001000,
+    "offerId": "c34bc50eddcb42bb22836668a50c6eabea86c0386dd3178ac710b406e63847bd",
+    "slotStartsAtMs": 1789344004000,
+    "uid": "alice"
+   },
+   {
+    "acceptedAtMs": 1789344001000,
+    "offerId": "e883d19ba97c777c09944c29982e1492ff30a00750fb15d2c75a039d36e33dd7",
+    "slotStartsAtMs": 1789344005000,
+    "uid": "alice"
+   }
+  ],
+  "participants": [
+   {
+    "seed": 1,
+    "uid": "alice"
+   },
+   {
+    "seed": 2,
+    "uid": "bob"
+   }
+  ],
+  "ready": [
+   {
+    "acceptedAtMs": 1789344004000,
+    "uid": "alice"
+   }
+  ],
+  "schedulingDeadlineMs": 1789599320000,
+  "serverNowMs": 1789344004000,
+  "stageEndsAtMs": 1789603200000,
+  "stageStartsAtMs": 1789344000000
+ },
+ "prepare": {
+  "counts": {
+   "easy": 60,
+   "hard": 20,
+   "total": 80
+  },
+  "snapshotId": "bank_51c951b731585b5e6b916729e3bd8b17e1f2297c3edc979daa59ec765e5708e6",
+  "timingVersion": "lesson-reward-questionAllocatedSeconds-v1"
+ },
+ "readSessionAfterAck": {
+  "currentQuestion": {
+   "contentVersion": 1,
+   "difficulty": "EASY",
+   "maxDurationMs": 21000,
+   "publicPayload": {
+    "difficulty": "EASY",
+    "id": "q032",
+    "imageUrl": null,
+    "options": [
+     {
+      "id": "a",
+      "text": "var"
+     },
+     {
+      "id": "b",
+      "text": "val"
+     },
+     {
+      "id": "c",
+      "text": "lateinit"
+     }
+    ],
+    "text": "Which keyword declares a read-only binding?",
+    "type": "SingleChoiceRedacted"
+   },
+   "questionId": "q032",
+   "type": "SingleChoice"
+  },
+  "deadlineReached": false,
+  "questionDeadlineReached": false,
+  "serverNowMs": 1788739200000,
+  "session": {
+   "endsAtMs": 1788739620000,
+   "eventId": "event_fixture_00000001",
+   "kind": "QUALIFICATION",
+   "questionEndsAtMs": 1788739221000,
+   "questionIndex": 1,
+   "questionStartedAtMs": 1788739200000,
+   "roundNumber": 1,
+   "sessionId": "q_1aac6a2caf58939d75a2296a426e8cc44dc55702da12cb330d554b025a086ae5",
+   "startedAtMs": 1788739200000,
+   "status": "STARTED"
+  },
+  "window": {
+   "completedQuestionIndex": 0,
+   "expiresAtMs": 1788739260000,
+   "nextQuestionIndex": 1,
+   "openedAtMs": 1788739200000,
+   "state": "DELIVERED",
+   "windowId": "win_aedbecedab4b",
+   "windowSeconds": 60
+  }
+ },
+ "readSessionSettled": {
+  "currentQuestion": null,
+  "deadlineReached": false,
+  "questionDeadlineReached": false,
+  "result": {
+   "completedAtMs": 1788739200000,
+   "elapsedMs": 0,
+   "percentScore": 100
+  },
+  "serverNowMs": 1788739200000,
+  "session": {
+   "endsAtMs": 1788739620000,
+   "eventId": "event_fixture_00000001",
+   "kind": "QUALIFICATION",
+   "questionEndsAtMs": 1788739221000,
+   "questionIndex": 20,
+   "questionStartedAtMs": 1788739200000,
+   "roundNumber": 1,
+   "sessionId": "q_1aac6a2caf58939d75a2296a426e8cc44dc55702da12cb330d554b025a086ae5",
+   "startedAtMs": 1788739200000,
+   "status": "SETTLED"
+  },
+  "window": {
+   "completedQuestionIndex": 18,
+   "expiresAtMs": 1788739260000,
+   "nextQuestionIndex": 19,
+   "openedAtMs": 1788739200000,
+   "state": "DELIVERED",
+   "windowId": "win_9249d8a1996a",
+   "windowSeconds": 60
+  }
+ },
+ "readSessionStarted": {
+  "currentQuestion": {
+   "contentVersion": 1,
+   "difficulty": "EASY",
+   "maxDurationMs": 21000,
+   "publicPayload": {
+    "difficulty": "EASY",
+    "id": "q012",
+    "imageUrl": null,
+    "options": [
+     {
+      "id": "a",
+      "text": "var"
+     },
+     {
+      "id": "b",
+      "text": "val"
+     },
+     {
+      "id": "c",
+      "text": "lateinit"
+     }
+    ],
+    "text": "Which keyword declares a read-only binding?",
+    "type": "SingleChoiceRedacted"
+   },
+   "questionId": "q012",
+   "type": "SingleChoice"
+  },
+  "deadlineReached": false,
+  "questionDeadlineReached": false,
+  "serverNowMs": 1788739200000,
+  "session": {
+   "endsAtMs": 1788739620000,
+   "eventId": "event_fixture_00000001",
+   "kind": "QUALIFICATION",
+   "questionEndsAtMs": 1788739221000,
+   "questionIndex": 0,
+   "questionStartedAtMs": 1788739200000,
+   "roundNumber": 1,
+   "sessionId": "q_1aac6a2caf58939d75a2296a426e8cc44dc55702da12cb330d554b025a086ae5",
+   "startedAtMs": 1788739200000,
+   "status": "STARTED"
+  }
+ },
+ "readyAckView": {
+  "currentQuestion": {
+   "contentVersion": 1,
+   "difficulty": "EASY",
+   "maxDurationMs": 21000,
+   "publicPayload": {
+    "difficulty": "EASY",
+    "id": "q032",
+    "imageUrl": null,
+    "options": [
+     {
+      "id": "a",
+      "text": "var"
+     },
+     {
+      "id": "b",
+      "text": "val"
+     },
+     {
+      "id": "c",
+      "text": "lateinit"
+     }
+    ],
+    "text": "Which keyword declares a read-only binding?",
+    "type": "SingleChoiceRedacted"
+   },
+   "questionId": "q032",
+   "type": "SingleChoice"
+  },
+  "operationId": "fixture_ack_op_0000001",
+  "readyAck": {
+   "ackedAtMs": 1788739200000,
+   "answerDeadlineMs": 1788739221000,
+   "issuedAtMs": 1788739200000,
+   "questionId": "q032",
+   "questionIndex": 1,
+   "schemaVersion": 1,
+   "windowId": "win_aedbecedab4b"
+  },
+  "schemaVersion": 1,
+  "serverNowMs": 1788739200000,
+  "session": {
+   "endsAtMs": 1788739620000,
+   "eventId": "event_fixture_00000001",
+   "kind": "QUALIFICATION",
+   "questionEndsAtMs": 1788739221000,
+   "questionIndex": 1,
+   "questionStartedAtMs": 1788739200000,
+   "sessionId": "q_1aac6a2caf58939d75a2296a426e8cc44dc55702da12cb330d554b025a086ae5",
+   "startedAtMs": 1788739200000,
+   "status": "STARTED",
+   "window": {
+    "completedQuestionIndex": 0,
+    "expiresAtMs": 1788739260000,
+    "nextQuestionIndex": 1,
+    "openedAtMs": 1788739200000,
+    "state": "DELIVERED",
+    "windowId": "win_aedbecedab4b",
+    "windowSeconds": 60
+   }
+  },
+  "status": "READY_ACK"
+ },
+ "sourceSha256": {
+  "course-tournament-controller.js": "cec422cf24cb620bd086c8bd70c95b4e5d50a1605187c0c6da2b7931a120a2af",
+  "tournament-session.js": "a4b36169e0440258aaa094aa994f4b19cb37bf9643b4912981658d7a7791f309"
+ },
+ "startView": {
+  "operationId": "fixture_start_0000001",
+  "schemaVersion": 1,
+  "session": {
+   "endsAtMs": 1788739620000,
+   "eventId": "event_fixture_00000001",
+   "kind": "QUALIFICATION",
+   "questionEndsAtMs": 1788739221000,
+   "questionIndex": 0,
+   "questionStartedAtMs": 1788739200000,
+   "roundNumber": 1,
+   "sessionId": "q_1aac6a2caf58939d75a2296a426e8cc44dc55702da12cb330d554b025a086ae5",
+   "startedAtMs": 1788739200000,
+   "status": "STARTED"
+  },
+  "status": "SESSION"
+ }
+}

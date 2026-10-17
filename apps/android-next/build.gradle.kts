@@ -135,6 +135,7 @@ dependencies {
     implementation(project(":shared:feature:question:domain"))
     implementation(project(":shared:core:question-schema"))
     implementation(project(":shared:feature:lesson-runner:data"))
+    implementation(project(":shared:feature:tournament:data"))
     implementation(project(":android:feature:lesson-runner:presentation"))
     implementation(project(":platform:android-services"))
     implementation(project(":platform:billing"))

@@ -386,18 +386,26 @@ async function callCourseTournament(request, action) {
   try {
     return await action(uid, request.data);
   } catch (error) {
-    // Do not expose server documents, grading material or SDK internals through callable errors.
-    const reason = typeof error.code === "string" && /^[A-Z][A-Z_]{0,63}$/.test(error.code) ? error.code : "SERVER_FAILURE";
-    const code = reason === "INVALID_ARGUMENT" ? "invalid-argument" :
-      reason === "UNAUTHENTICATED" ? "unauthenticated" : reason === "PERMISSION_DENIED" ? "permission-denied" :
-      reason === "NOT_FOUND" ? "not-found" :
-      ["ALREADY_EXISTS", "CONFLICTING_REPLAY", "PREPARATION_REUSE"].includes(reason) ? "already-exists" :
-      reason === "SOURCE_TOO_LARGE" ? "resource-exhausted" :
-      ["UNAVAILABLE", "SCORING_UNAVAILABLE"].includes(reason) || reason.startsWith("INCONSISTENT_") ? "unavailable" :
-      reason === "SERVER_FAILURE" ? "internal" : "failed-precondition";
-    if (code === "internal" || code === "unavailable") logger.warn("Course tournament operation needs retry or repair", {reason});
-    throw new HttpsError(code, "Tournament operation could not be completed", {reason});
+    throw courseTournamentFailure(error);
   }
+}
+
+/** Отказ контроллера соревнования -> HttpsError со структурной причиной в деталях.
+ * Клиент читает из деталей только `reason` (никогда текст сообщения), поэтому таблица
+ * причина->код обязана оставаться одной: и прямой callable, и приёмник очереди отвечают ею.
+ */
+function courseTournamentFailure(error) {
+  // Do not expose server documents, grading material or SDK internals through callable errors.
+  const reason = typeof error.code === "string" && /^[A-Z][A-Z_]{0,63}$/.test(error.code) ? error.code : "SERVER_FAILURE";
+  const code = reason === "INVALID_ARGUMENT" ? "invalid-argument" :
+    reason === "UNAUTHENTICATED" ? "unauthenticated" : reason === "PERMISSION_DENIED" ? "permission-denied" :
+    reason === "NOT_FOUND" ? "not-found" :
+    ["ALREADY_EXISTS", "CONFLICTING_REPLAY", "PREPARATION_REUSE"].includes(reason) ? "already-exists" :
+    reason === "SOURCE_TOO_LARGE" ? "resource-exhausted" :
+    ["UNAVAILABLE", "SCORING_UNAVAILABLE"].includes(reason) || reason.startsWith("INCONSISTENT_") ? "unavailable" :
+    reason === "SERVER_FAILURE" ? "internal" : "failed-precondition";
+  if (code === "internal" || code === "unavailable") logger.warn("Course tournament operation needs retry or repair", {reason});
+  return new HttpsError(code, "Tournament operation could not be completed", {reason});
 }
 
 const arenaEntries = createArenaEntryRuntime({db, loadLessonContext: loadArenaLessonContext});
@@ -1631,6 +1639,15 @@ const MUTATION_HANDLERS = {
   // детерминированным id: голос под новым ключом (переустановка, второе устройство) упирается
   // в ту же уникальность и не создаёт второй голос (§3).
   "polls.SUBMIT_VOTE": (uid, payload) => applyPollVote(uid, payload),
+  // Мутации сессии соревнования — ANSWER/ADVANCE/READY_ACK (история 5.9). Владелец берётся из
+  // авторизации, а не из тела; uid + payload проходят в контроллер без изменений — форму тела
+  // и владение сессией сторожит сам контроллер, идемпотентность по operationId уже серверная.
+  // Отказ контроллера уходит в очередь HttpsError со структурной причиной (`details.reason`),
+  // поэтому и из очереди клиент читает те же причины, что и из прямого вызова.
+  "tournament.SESSION_OP": (uid, payload) =>
+    courseTournaments.session(uid, payload || {}).catch((error) => {
+      throw courseTournamentFailure(error);
+    }),
 };
 
 /**
