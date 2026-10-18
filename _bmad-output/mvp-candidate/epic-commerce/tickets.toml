@@ -59,7 +59,7 @@ waits = [
   "hitl: device proof of both gift sources (separate claims)",
 ]
 hitl = true
-status = "blocked" # hitl
+status = "blocked" # 2026-10-18: device-пруф невозможен — в клиенте НЕТ проводки заявки подарков: outbox знает только OPEN_GIFT_BOX, OFFLINE_STREAK/PREMIUM_DAILY никто не шлёт, visited() из GiftBoxStreak не вызывается на входе, UI «Получить подарок» отсутствует; сервер оба вида принимает (проверено), фикстура boxStreakDays=9 стоит и ждёт проводки — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/gift-sources-finding/; до этого — hitl
 
 [[story]]
 id = "7.5"
