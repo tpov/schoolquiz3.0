@@ -1,8 +1,8 @@
 # Poll series run (8.4) — device proof on TWO phones — 2026-10-18 late evening
 
 Devices: Pixel 10 Pro (UserG9FY6E, uid VLqW…) + Samsung A14 SM-A145F (fresh install of the
-same 4.0.0-isolated build d0c59bfc…, new anonymous account UserOVDSRF), both over the live
-device→VPS transport. Evidence shots 01–08 in this directory.
+same 4.0.0-isolated build, new anonymous account UserOVDSRF), both over the live
+device→VPS transport. Evidence shots 01–09 in this directory.
 
 ## What PASSED
 
@@ -21,30 +21,31 @@ device→VPS transport. Evidence shots 01–08 in this directory.
 - **Second participant, second account, second device** (08): the Samsung (fresh anonymous
   uid) saw the same series, selected blue, voted.
 
-## What FAILED — real defect (blocks 8.4 completion)
+## What FAILED first — real defect (was blocking 8.4 completion)
 
-The Samsung's vote never lands: the outbox attempt returns «Unknown», and the server's
-idempotency gate denies it with **"mutationId belongs to another account"**
+The Samsung's vote never landed: the outbox attempt returned «Unknown», and the server's
+idempotency gate denied it with **"mutationId belongs to another account"**
 (functions/mutation-queue.js gateVerdict → belongsTo → DECISION_DENIED).
 
-Root cause: the vote idempotency key has no respondent dimension.
+Root cause: the vote idempotency key had no respondent dimension.
 - Client: `PollOutboxWriters.voteSourceId` = `series-<id>-r<rev>-q<index>` and
   `OutboxOperations.mutationKey = operation + "-" + sourceId` — so EVERY participant voting on
-  the same question derives the SAME mutationId (`polls-SUBMIT_VOTE-series-poll-kv3iqzrra7yd-r1-q0`).
-- Server: the first delivery reserves that key under the first participant's uid; every other
-  participant is then denied as a foreign replay (which also means they can never vote, while
-  the first participant's retry stays correctly deduplicated).
-- Consequence: «percentages over distinct respondents per question» (AD-28/UX-O7 §3) can never
-  exceed one respondent through the app. On ONE device everything passes; the second
-  participant is exactly what breaks.
+  the same question derived the SAME mutationId.
+- Server: the first delivery reserved that key under the first participant's uid; every other
+  participant was then denied as a foreign replay.
+- Consequence: «percentages over distinct respondents per question» (AD-28/UX-O7 §3) could
+  never exceed one respondent through the app.
 
-Fix direction (owner decision on the key contract, UX-O7 §2): include the respondent in the
-vote sourceId (e.g. `series-<id>-r<rev>-q<idx>-<uid>`) — per-participant retry dedup is kept,
-and the per-participant uniqueness of the vote document itself stays with the deterministic
-vote doc id the receiver writes. Server retry ceilings/receipts unchanged.
+## RESOLUTION (same night) — fix applied and verified on two devices
 
-## Status
+The vote sourceId now carries the respondent:
+`series-<id>-r<rev>-q<idx>-u<uid>` (PollOutboxWriters.voteSourceId; UX-O7 §2 amended in the
+contract with a pending-owner note; contract test UxO7PollVoteIdentityContractTest gained a
+per-participant regression, PollOutboxWritersTest updated). Rebuilt APK sha256 9d0908c0…,
+installed fresh on the Samsung (pm clear → new uid dJgxj3m64t…, UserOVDSRF).
 
-8.4 stays blocked with a PRECISE defect: not a test failure — a key-contract gap that one
-device cannot expose and two devices catch immediately. The one-device journey (author →
-publish → hidden distribution → vote → confirmed → revealed) is fully proven and recorded.
+Result (09-two-participants-50-50.png): the Samsung voted blue with its OWN key —
+`mutation_keys` shows TWO completed SUBMIT_VOTE entries with different uids — and the question
+screen reads «Ваш голос принят: red 50% / blue 50%, Ответило: 2». Retry dedup stays per
+participant by the same key formula (§6.1). 8.4 → done, pending the owner's nod on the §2
+wording.

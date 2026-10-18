@@ -34,7 +34,7 @@ waits = [
   "hitl: device proof of vote/retry/distribution flow",
 ]
 hitl = true
-status = "blocked" # 2026-10-18: one-device путь доказан (авторинг→публикация→скрытое распределение→голос→подтверждение→раскрытие, mutation key completed); на втором устройстве голос второго участника ОТВЕРГАЕТСЯ идемпотентностью: voteSourceId без uid → чужой релей → «mutationId belongs to another account» (mutation-queue gateVerdict) — нужен uid в ключе голоса (UX-O7 §2); evidence docs/agents/evidence/2026-10-18-pixel-social/polls/
+status = "done" # 2026-10-18 ночь: полным циклом на двух устройствах. Pixel (UserG9FY6E): авторинг→публикация→скрытое распределение→голос red→ключ completed→раскрытие 100%. Samsung A14 (UserOVDSRF, свежий uid): голос blue — с ПОПРАВКОЙ §2 (uid в sourceId) ключ свой, доставка completed, распределение 50/50, «Ответило: 2». Ретрай-дедуп держится формулой ключа (§6.1), контрактная правка в ux-o7-poll-contract.md ждёт подтверждения владельца. Evidence docs/agents/evidence/2026-10-18-pixel-social/polls/ (09 — 50/50)
 
 [[story]]
 id = "8.3"
