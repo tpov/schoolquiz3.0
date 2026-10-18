@@ -312,6 +312,13 @@ function createExamCorrections({db, nowMs = () => Date.now(), authorizeExclusion
       const sittingRef = db.doc(`exam_sittings/${head.corrections[0].sittingId}`);
       const sitting = (await tx.get(sittingRef)).data() || null;
       if (!sitting) return {published: false, reason: "NO_SITTING"};
+      // Сидинг головы обязан принадлежать той же паре пользователь/оценка: опечатка в
+      // sittingId при аппенде иначе пересчитала бы состояние из чужих слотов молча.
+      if (sitting.uid !== uid || sitting.mode !== mode ||
+          sitting.assessmentId !== assessmentId) {
+        fail("SITTING_MISMATCH",
+          `correction head names a sitting of another owner/assessment: ${head.corrections[0].sittingId}`);
+      }
       const exclusions = cumulativeExclusions(head.corrections);
       const outcome = recomputeResult({sitting, exclusions});
       const resultVersion = (sitting.terminal ? sitting.terminal.resultVersion : 0) + head.headVersion;

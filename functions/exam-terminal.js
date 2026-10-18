@@ -211,6 +211,20 @@ function planReward({sitting, percent, passed, assessmentState, hasFirstPassAwar
 }
 
 /**
+ * Строгое чтение сохранённого числа: отсутствие — легитимный ноль, битое значение — явная
+ * ошибка, никогда не правдоподобный ноль (та же линия протокола, что и maxAccountedPercent).
+ */
+function strictStoredNumber(value, code, field) {
+  const parsed = value === undefined || value === null ? 0 :
+    typeof value === "number" ? value :
+      typeof value === "string" && /^[0-9]+$/.test(value) ? Number(value) : NaN;
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    fail(code, `${field} is not a non-negative integer: ${String(value)}`);
+  }
+  return parsed;
+}
+
+/**
  * Фабрика терминального писателя. `loadExamConfig(tx)` — тот же конфиг, что у старта
  * (проходной балл, окна, ключ подписи сертификатов — идентичность, не секрет).
  */
@@ -257,9 +271,20 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
       const hasFirstPass = sitting.mode === "ThemeTest" ? !!(data(await tx.get(firstPassRef))) : false;
 
       let rewardPlan;
+      let storedBest;
+      let balance;
       try {
         rewardPlan = planReward({sitting, percent: outcome.percent, passed: outcome.passed,
           assessmentState: state, hasFirstPassAward: hasFirstPass});
+        // Все битые сохранённые числа — один контракт с планом награды: явный отказ до всяких
+        // записей, с записью причины. Кошелёк читается здесь же — до первой записи транзакции.
+        storedBest = strictStoredNumber(state.bestPercent, "CORRUPT_BEST_PERCENT", "bestPercent");
+        const user = data(await tx.get(db.doc(`users/${sitting.uid}`))) || {};
+        balance = {
+          nolics: strictStoredNumber(user.nolics, "CORRUPT_USER_BALANCE", "nolics"),
+          skill: strictStoredNumber(user.pointsSkill ?? user.skillPoints,
+            "CORRUPT_USER_BALANCE", "pointsSkill"),
+        };
       } catch (error) {
         // Испорченная или отсутствующая финансовая база — явная незакрытая работа: сидинг не
         // получает фальшивого результата, оператор получает запись с кодом причины, сидинг
@@ -300,7 +325,7 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
         assessmentId: sitting.assessmentId,
         closedAtMs,
         cooldownUntilMs,
-        bestPercent: Math.max(Math.floor(Number(state.bestPercent) || 0), outcome.percent),
+        bestPercent: Math.max(storedBest, outcome.percent),
         passed: state.passed === true || outcome.passed === true,
         maxAccountedPercent: rewardPlan.pays ? rewardPlan.bNext :
           Math.max(0, Math.floor(Number(state.maxAccountedPercent) || 0)),
@@ -345,11 +370,12 @@ function createExamTerminal({db, nowMs = () => Date.now(), loadExamConfig, log =
             percent: outcome.percent, b: rewardPlan.bNext,
           });
         }
-        const userRef = db.doc(`users/${sitting.uid}`);
-        const user = data(await tx.get(userRef)) || {};
-        const nolics = Math.max(0, (Number(user.nolics) || 0) + rewardPlan.nolics);
-        const skill = Math.max(0, (Number(user.pointsSkill ?? user.skillPoints) || 0) + rewardPlan.skillPoints);
-        tx.set(userRef, {nolics, pointsNolics: nolics, pointsSkill: skill, skillPoints: skill,
+        // Кошелёк читается строго (см. блок валидации выше): битый баланс — typed-отказ
+        // коммита, а не тихий ноль, которым merge-запись перезаписала бы весь кошелёк.
+        const nolics = balance.nolics + rewardPlan.nolics;
+        const skill = balance.skill + rewardPlan.skillPoints;
+        tx.set(db.doc(`users/${sitting.uid}`), {nolics, pointsNolics: nolics,
+          pointsSkill: skill, skillPoints: skill,
           updatedAtMs: closedAtMs}, {merge: true});
         for (const entry of ledgerEntries({
           uid: sitting.uid, reason: REASON.ATTEMPT_REWARD, sourceId: sitting.sittingId, atMs: closedAtMs,

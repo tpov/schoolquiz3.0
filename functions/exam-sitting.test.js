@@ -470,6 +470,23 @@ test("a FINISH_REQUESTED sitting refuses fresh answers but replays existing rece
   assert.deepEqual(replay.receipt, submitted.receipt);
 });
 
+test("a FINISH_REQUESTED sitting refuses a fresh ACK — no deadline mutation racing the writer", async () => {
+  const {sittings, request} = world({
+    initialRows: {...fullCoverageRows(), ...coverageMaterialization()},
+  });
+  const start = await sittings.start({uid: "player", payload: request(), mode: "ThemeTest"});
+  const ack = await sittings.acknowledgeQuestion({uid: "player", payload: {
+    sittingId: start.sittingId, questionIndex: 0, operationId: "ack-1"}});
+  assert.equal(ack.acknowledged, true);
+  await sittings.finishSitting({uid: "player", payload: {sittingId: start.sittingId}});
+  // Свежий ACK на запрошенном к закрытии сидинге — отказ: мутация дедлайнов слота
+  // наперегонки с очередным терминальным писателем запрещена, как и свежий ответ.
+  const refused = await sittings.acknowledgeQuestion({uid: "player", payload: {
+    sittingId: start.sittingId, questionIndex: 1, operationId: "ack-2"}});
+  assert.equal(refused.acknowledged, false);
+  assert.equal(refused.reason, "SITTING_CLOSED");
+});
+
 test("sitting document ids and pointers are deterministic", () => {
   assert.equal(sittingDocumentId("u", "r"), sittingDocumentId("u", "r"));
   assert.equal(openSittingDocumentId("u", "ThemeTest", "t"),

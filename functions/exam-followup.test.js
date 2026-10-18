@@ -204,6 +204,138 @@ test("a corrupt accounted maximum fails the terminal commit instead of paying a 
   assert.equal(poisoned.state, SITTING_STATE.FINISH_REQUESTED, "сидинг не получает фальшивого результата");
 });
 
+test("finishSitting re-queues a drained FINISH_REQUESTED sitting too", async () => {
+  const {fake, sittings, terminal} = seededWorld();
+  const sitting = queuedSitting({});
+  fake.rows.set("exam_sittings/sit-3", {...sitting,
+    state: SITTING_STATE.FINISH_REQUESTED, finishRequestedAtMs: NOW,
+    terminalQueryFlag: false, poisonAttempts: 3, poisonAt: NOW});
+  fake.rows.set("exam_open_sittings/open-3", {sittingId: "sit-3",
+    state: SITTING_STATE.FINISH_REQUESTED});
+  const verdict = await sittings.finishSitting({uid: "player",
+    payload: {sittingId: "sit-3"}});
+  assert.equal(verdict.alreadyRequested, true, "нового запроса нет — закрытие уже запрошено");
+  assert.equal(fake.rows.get("exam_sittings/sit-3").terminalQueryFlag, TERMINAL_QUERY_TRUE,
+    "осушённый запрос закрытия возвращается в очередь, как и осушённый открытый");
+  // Стаб Firestore выбрасывает документы без поля из orderBy; боевой ставит null первым.
+  fake.rows.set("exam_sittings/sit-3", {...fake.rows.get("exam_sittings/sit-3"),
+    nextDeadlineAtMs: NOW});
+  await terminal.sweep();
+  assert.equal(fake.rows.get("exam_sittings/sit-3").state, SITTING_STATE.CLOSED,
+    "возвращённый в очередь сидинг доезжает до закрытия");
+});
+
+test("a corrupt user balance fails the terminal commit instead of zeroing the wallet", async () => {
+  const {fake, terminal} = seededWorld();
+  fake.rows.set("exam_sittings/sit-final", queuedSitting({mode: "FinalExam",
+    assessmentId: "course", state: SITTING_STATE.FINISH_REQUESTED}));
+  fake.rows.set("users/player", {uid: "player", nolics: "junk", pointsSkill: 0});
+  await terminal.sweep();
+  const poisoned = fake.rows.get("exam_sittings/sit-final");
+  assert.equal(poisoned.terminalError, "CORRUPT_USER_BALANCE",
+    "битый кошелёк — явная незакрытая работа, а не ноль и перезапись кошелька");
+  assert.equal(fake.rows.get("users/player").nolics, "junk",
+    "кошелёк своей же merge-записью не перезаписан");
+});
+
+test("a corrupt best percent fails the terminal commit instead of silently regressing the best", async () => {
+  const {fake, terminal} = seededWorld();
+  fake.rows.set("exam_sittings/sit-final", queuedSitting({mode: "FinalExam",
+    assessmentId: "course", state: SITTING_STATE.FINISH_REQUESTED}));
+  fake.rows.set("exam_assessment_state/" + assessmentStateId("player", "FinalExam", "course"),
+    {uid: "player", mode: "FinalExam", assessmentId: "course", bestPercent: "junk"});
+  await terminal.sweep();
+  const poisoned = fake.rows.get("exam_sittings/sit-final");
+  assert.equal(poisoned.terminalError, "CORRUPT_BEST_PERCENT",
+    "битый лучший процент — явный отказ, а не тихая регрессия к нулю");
+});
+
+test("materialize refuses a correction head whose sitting belongs to another owner or assessment", async () => {
+  const fake = makeFakeDb({initialRows: {}, nowMs: NOW});
+  const sitting = queuedSitting({mode: "FinalExam", assessmentId: "course",
+    state: SITTING_STATE.CLOSED});
+  sitting.sittingId = "sit-corr";
+  // Сидинг чужой пары пользователь/оценка: аппенд головы его не читает — материализатор обязан.
+  fake.rows.set("exam_sittings/sit-corr", {...sitting, uid: "other-player",
+    assessmentId: "other-course",
+    terminal: {resultVersion: 2, closedAtMs: NOW, closeReason: CLOSE_REASON.COMPLETED,
+      projection: {percent: 55, passed: false, starsTenths: null}}});
+  const corrections = createExamCorrections({
+    db: fake.db, nowMs: () => fake.clock.now,
+    // Настоящий предикат index.js: авторство куратора в записи.
+    authorizeExclusion: (record) => Boolean(record && record.authorizedByCuratorUid),
+  });
+  const applied = await corrections.appendExclusion({
+    record: {correctionId: "corr-foreign", uid: "player", mode: "FinalExam",
+      assessmentId: "course", sittingId: "sit-corr", slotIndex: 0,
+      actorUid: "curator", reason: "confirmed fault", reviewedAtMs: NOW,
+      originalDigest: null, authorizedByCuratorUid: "curator"},
+  });
+  assert.equal(applied.applied, true, "аппенд головы не читает сидинг и проходит");
+  await assert.rejects(
+    () => corrections.materialize({uid: "player", mode: "FinalExam", assessmentId: "course"}),
+    (error) => error.code === "SITTING_MISMATCH",
+    "пересчёт из чужого сидинга — типизированный отказ, а не тихая публикация");
+});
+
+test("fulfilCertificateSigning refuses a non-document-safe issuanceId with invalid-argument", async () => {
+  store.reset({"profiles/curator": {adminLevel: 100}});
+  await assert.rejects(
+    () => functions.fulfilCertificateSigning.run({auth: {uid: "curator"},
+      data: {issuanceId: "a/b", fence: "f"}}),
+    (error) => error.code === "invalid-argument",
+    "issuanceId становится путём документа: отказ до Firestore, а не посреди вызова");
+});
+
+test("a theme over the aggregate pool budget refuses typed before any charge", async () => {
+  const rows = {};
+  rows["quests/bigcourse"] = {id: "bigcourse", questType: "REGULAR", catalogId: "catalog",
+    version: 7, authorUid: "author", archived: false};
+  rows["sections/sec0"] = {id: "sec0", questId: "bigcourse", archived: false};
+  rows["themes/th0"] = {id: "th0", sectionId: "sec0", archived: false};
+  const questionText = "v".repeat(120);
+  const payload = JSON.stringify({id: "q", type: "SingleChoice", text: questionText,
+    options: [{id: "a", text: "opt"}, {id: "b", text: "opt"}], correctOptionId: "a"});
+  // 64 урока по 200 вопросов: по-коллекционные лимиты соблюдены, сумма (12 800 > 12 000) — нет.
+  for (let lesson = 0; lesson < 64; lesson += 1) {
+    rows[`lessons/les-${lesson}`] = {id: `les-${lesson}`, themeId: "th0", version: 4,
+      reviewApprovedAtMs: 1, reviewSubmissionId: "sub", archived: false};
+    for (let question = 0; question < 200; question += 1) {
+      rows[`questions/les-${lesson}-q${question}`] = {lessonId: `les-${lesson}`, version: 2,
+        difficulty: "HARD", payload};
+    }
+  }
+  rows["users/player"] = {uid: "player", lifePoints: 10000, lifePointsUpdatedAtMs: 0,
+    standardHearts: 10, nolics: 0, pointsSkill: 0, accountEpoch: 1, plasmaPoints: 0, goldHearts: 0};
+  rows["configs/exam"] = {examEnabled: true, passMarkPercent: 60, nextQuestionWindowSeconds: 60,
+    abandonmentGraceMs: 300000, paidTermsRevision: 1, certificateSigningKeyId: "k1"};
+  const fake = makeFakeDb({initialRows: rows, nowMs: NOW});
+  const loadLessonContext = async (tx, lessonId) => {
+    const snapshot = await tx.get(fake.db.doc(`lessons/${lessonId}`));
+    if (!snapshot.exists) return null;
+    const lesson = snapshot.data() || {};
+    return {lessonId, authorUid: "author", catalogId: "catalog", questId: "bigcourse",
+      sectionId: "sec0", themeId: lesson.themeId, contentVersion: lesson.version,
+      published: lesson.archived !== true, reviewApproved: true, questType: "REGULAR"};
+  };
+  const loadExamConfig = async () => ({examEnabled: true, passMarkPercent: 60,
+    nextQuestionWindowSeconds: 60, abandonmentGraceMs: 300000, paidTermsRevision: 1,
+    certificateSigningKeyId: "k1"});
+  const sittings = createExamSittings({db: fake.db, nowMs: () => fake.clock.now,
+    loadLessonContext, loadExamConfig,
+    readRegeneration: async (tx, {user}) => ({caughtUp: true,
+      userPatch: {lifePoints: user.lifePoints, lifePointsUpdatedAtMs: user.lifePointsUpdatedAtMs,
+        hasPremium: false}}),
+    writeRegeneration: () => {}});
+  await assert.rejects(
+    () => sittings.start({uid: "player", payload: {operationId: "op-big",
+      accountEpoch: 1, themeId: "th0", shownTerms: true, acceptedTermsRevision: 1},
+      mode: "ThemeTest"}),
+    (error) => error.code === "BANK_TOO_LARGE",
+    "переполненный пул темы — типизированный отказ, а не нечитаемая ошибка транзакции");
+  assert.equal(fake.rows.get("users/player").nolics, 0, "отказ до списания: кошелёк не тронут");
+});
+
 function signingWorld({signer}) {
   const fake = makeFakeDb({initialRows: {}, nowMs: NOW});
   const signing = createCertificateSigning({db: fake.db, nowMs: () => fake.clock.now, signer});

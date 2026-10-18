@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.exam
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamFinishVerdict
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTermsWire
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTransportFailure
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamTransportFailureKind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamAckOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamFetchOutcome
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ExamMode
@@ -135,6 +137,52 @@ class ExamRunStateMachineTest {
         assertEquals("результат отрисовывается как есть", SERVER_RESULT, finished.result)
     }
 
+    @Test
+    fun `given a transport failure on submit then the draft edited during the request survives`() = runTest {
+        val fake = FakeRemote()
+        fake.nextSubmitFailure = ExamTransportFailure(ExamTransportFailureKind.NO_NETWORK)
+        val machine = ExamRunStateMachine(fake) { "op" }
+        machine.showEntry(ExamMode.THEME_TEST, "th0", 100, 1)
+        machine.acceptTerms(true, 1)
+        machine.start(ExamMode.THEME_TEST, "th0")
+        machine.acknowledgeCurrent()
+        // Правка во время запроса: отказ читает свежее состояние, а не снимок до запроса.
+        fake.onSubmit = { machine.setAnswerDraft("""{"edited":true}""") }
+        machine.submitAnswer("""{"type":"single-choice","selected":"ri-0"}""")
+        val running = machine.view.value as ExamRunView.Running
+        assertEquals("черновик не откатывается отказом", """{"edited":true}""", running.answerDraft)
+        assertEquals("вид транспорта виден вместо тихой петли", "NO_NETWORK", running.refusal)
+    }
+
+    @Test
+    fun `given a transport failure on finish then the spinner stops and the kind surfaces`() = runTest {
+        val fake = FakeRemote()
+        fake.nextFinishFailure = ExamTransportFailure(ExamTransportFailureKind.NO_NETWORK)
+        val machine = ExamRunStateMachine(fake) { "op" }
+        machine.showEntry(ExamMode.THEME_TEST, "th0", 100, 1)
+        machine.acceptTerms(true, 1)
+        machine.start(ExamMode.THEME_TEST, "th0")
+        machine.requestFinish()
+        val awaiting = machine.view.value as ExamRunView.AwaitingClosure
+        assertEquals("вечного спиннера нет", false, awaiting.busy)
+        assertEquals("причина транспортной неудачи видна", "NO_NETWORK", awaiting.refusal)
+    }
+
+    @Test
+    fun `given a transport failure on start then the terms toggled during the request survive`() = runTest {
+        val fake = FakeRemote()
+        fake.nextStartFailure = ExamTransportFailure(ExamTransportFailureKind.NO_NETWORK)
+        val machine = ExamRunStateMachine(fake) { "op" }
+        machine.showEntry(ExamMode.THEME_TEST, "th0", 100, 1)
+        machine.acceptTerms(true, 1)
+        // Пользователь снимает согласие, пока запрос ещё в полёте: отказ не откатывает его.
+        fake.onStart = { machine.acceptTerms(shown = true, acceptedRevision = 0) }
+        machine.start(ExamMode.THEME_TEST, "th0")
+        val entry = machine.view.value as ExamRunView.Entry
+        assertTrue("переключение условий во время запроса не откатывается", !entry.termsAccepted)
+        assertEquals(false, entry.busy)
+    }
+
     private companion object {
         val SERVER_RESULT = ExamResultProjection(
             sittingId = "s1",
@@ -159,6 +207,13 @@ class ExamRunStateMachineTest {
                 sitting = sittingProjection(index = 1, withAck = false),
             )
 
+        // Крючки «правка во время запроса» и типизированные транспортные отказы.
+        var onStart: (() -> Unit)? = null
+        var onSubmit: (() -> Unit)? = null
+        var nextStartFailure: ExamTransportFailure? = null
+        var nextSubmitFailure: ExamTransportFailure? = null
+        var nextFinishFailure: ExamTransportFailure? = null
+
         var startCalls = 0
         var ackCalls = 0
         var lastStartOperationId: String? = null
@@ -173,6 +228,8 @@ class ExamRunStateMachineTest {
         ): Result<ExamStartOutcome> {
             startCalls += 1
             lastStartOperationId = operationId
+            onStart?.invoke()
+            nextStartFailure?.let { return Result.failure(it) }
             return Result.success(nextStartOutcome)
         }
 
@@ -184,6 +241,8 @@ class ExamRunStateMachineTest {
         ): Result<ExamStartOutcome> {
             startCalls += 1
             lastStartOperationId = operationId
+            onStart?.invoke()
+            nextStartFailure?.let { return Result.failure(it) }
             return Result.success(nextStartOutcome)
         }
 
@@ -210,10 +269,16 @@ class ExamRunStateMachineTest {
             revision: Long,
             answerPayload: String,
             operationId: String,
-        ): Result<ExamSubmitOutcome> = Result.success(nextSubmitOutcome)
+        ): Result<ExamSubmitOutcome> {
+            onSubmit?.invoke()
+            nextSubmitFailure?.let { return Result.failure(it) }
+            return Result.success(nextSubmitOutcome)
+        }
 
-        override suspend fun finishSitting(sittingId: String): Result<ExamFinishVerdict> =
-            Result.success(ExamFinishVerdict("FINISH_REQUESTED", alreadyRequested = false, alreadyClosed = false))
+        override suspend fun finishSitting(sittingId: String): Result<ExamFinishVerdict> {
+            nextFinishFailure?.let { return Result.failure(it) }
+            return Result.success(ExamFinishVerdict("FINISH_REQUESTED", alreadyRequested = false, alreadyClosed = false))
+        }
 
         override suspend fun fetchSittingResult(sittingId: String): Result<ExamFetchOutcome> =
             Result.success(nextFetchOutcome)

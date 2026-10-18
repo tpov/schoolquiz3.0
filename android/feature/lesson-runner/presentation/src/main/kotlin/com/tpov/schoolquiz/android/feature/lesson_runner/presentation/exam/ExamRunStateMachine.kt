@@ -90,10 +90,13 @@ class ExamRunStateMachine(
             ExamMode.FINAL_EXAM ->
                 remote.startFinalExam(startOperationId, ACCOUNT_EPOCH, assessmentId, terms)
         }.getOrElse { failure ->
-            state.value = entry.copy(
-                busy = false,
-                refusal = ExamRefusal.Unavailable(failure.javaClass.simpleName.uppercase()),
-            )
+            // Перечитываем состояние: переключение условий во время запроса не откатывается.
+            (state.value as? ExamRunView.Entry)?.let { fresh ->
+                state.value = fresh.copy(
+                    busy = false,
+                    refusal = ExamRefusal.Unavailable(failure.javaClass.simpleName.uppercase()),
+                )
+            }
             return
         }
         when (outcome) {
@@ -105,7 +108,9 @@ class ExamRunStateMachine(
                 sittingId = outcome.sitting.sittingId
                 state.value = runningOf(outcome.sitting)
             }
-            is ExamStartOutcome.Refused -> state.value = entry.copy(busy = false, refusal = outcome.refusal)
+            is ExamStartOutcome.Refused -> (state.value as? ExamRunView.Entry)?.let { fresh ->
+                state.value = fresh.copy(busy = false, refusal = outcome.refusal)
+            }
         }
     }
 

@@ -117,6 +117,9 @@ test("invalid arguments refuse with invalid-argument before the module is called
     {sittingId: ""},
     {expectedHeadVersion: -1},
     {expectedHeadVersion: "3"},
+    {correctionId: ""},
+    {correctionId: "a/b"},
+    {correctionId: "x".repeat(129)},
   ]) {
     const error = await callError("appendExamCorrection", "curator", {...base, ...patch});
     assert.equal(error.code, "invalid-argument",
@@ -134,4 +137,16 @@ test("invalid arguments refuse with invalid-argument before the module is called
   }
   // Ни один невалидный вызов не дошёл до модуля.
   assert.equal(appendCalls.length, 1, "после валидного вызова выше новых вызовов нет");
+});
+
+test("materializeExamCorrection validates ownerUid and assessmentId beyond the mode check", async () => {
+  store.reset({"profiles/curator": {adminLevel: 100}});
+  const emptyOwner = await callError("materializeExamCorrection", "curator",
+    {ownerUid: "", mode: "ThemeTest", assessmentId: "theme"});
+  assert.equal(emptyOwner.code, "invalid-argument",
+    `пустой владелец: ${JSON.stringify(emptyOwner)}`);
+  const emptyAssessment = await callError("materializeExamCorrection", "curator",
+    {ownerUid: "player", mode: "ThemeTest", assessmentId: ""});
+  assert.equal(emptyAssessment.code, "invalid-argument",
+    `пустая оценка: ${JSON.stringify(emptyAssessment)}`);
 });

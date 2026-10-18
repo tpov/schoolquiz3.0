@@ -869,6 +869,12 @@ function createExamSittings({db, nowMs = () => Date.now(), loadLessonContext, lo
         return {sittingId, state: SITTING_STATE.CLOSED, alreadyClosed: true};
       }
       if (sitting.state === SITTING_STATE.FINISH_REQUESTED) {
+        // Осушённый (3-strike) запрос закрытия тоже возвращается в очередь sweeper'а:
+        // ранний выход без флага оставил бы сидинг висеть навсегда, как и открытый.
+        if (sitting.terminalQueryFlag !== TERMINAL_QUERY_TRUE) {
+          tx.set(db.doc(`${SITTINGS_COLLECTION}/${sittingId}`),
+            {terminalQueryFlag: TERMINAL_QUERY_TRUE}, {merge: true});
+        }
         return {sittingId, state: SITTING_STATE.FINISH_REQUESTED, alreadyRequested: true};
       }
       tx.set(db.doc(`${SITTINGS_COLLECTION}/${sittingId}`), {

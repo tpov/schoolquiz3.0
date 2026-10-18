@@ -687,6 +687,12 @@ exports.fulfilCertificateSigning = onCall(CALLABLE_OPTIONS, async (request) => {
   if (typeof issuanceId !== "string" || !issuanceId || typeof fence !== "string" || !fence) {
     throw new HttpsError("invalid-argument", "issuanceId and fence are required");
   }
+  // issuanceId становится путём документа выпуска: document-safe или типизированный отказ,
+  // а не Firestore-ошибка посреди вызова (тот же класс, что correctionId у коррекций).
+  if (issuanceId.includes("/") || issuanceId.length > 128) {
+    throw new HttpsError("invalid-argument", "issuanceId must be a document-safe string",
+      {reason: "INVALID_ARGUMENT"});
+  }
   return certificateSigning.fulfil({issuanceId, fence});
 });
 

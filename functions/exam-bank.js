@@ -275,6 +275,11 @@ function createExamBank({db, loadLessonContext}) {
   async function themePool(tx, themeId) {
     const contexts = await readThemeLessons(tx, themeId);
     const rawRows = await readQuestions(tx, contexts.map((context) => context.lessonId));
+    // По-коллекционные лимиты не ограничивают сумму: тема на грани лимитов (64×200) взорвала
+    // бы стартовую транзакцию нечитаемой ошибкой — тот же бюджет, что у пула курса.
+    if (rawRows.length > MAX_COURSE_POOL_ROWS) {
+      fail("BANK_TOO_LARGE", `theme ${themeId} pool exceeds ${MAX_COURSE_POOL_ROWS} rows`);
+    }
     return {themeId, lessons: contexts, pool: collectPool(rawRows), rawRows};
   }
 

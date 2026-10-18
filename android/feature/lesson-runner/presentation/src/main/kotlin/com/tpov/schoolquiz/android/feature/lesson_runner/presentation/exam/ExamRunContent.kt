@@ -89,8 +89,9 @@ internal fun ExamSittingContent(
     onQuestionRendered: () -> Unit = {},
 ) {
     // Первый ограниченный ACK — подтверждение того, что текст вопроса отрисован: без этого
-    // триггера проводка экрана повисла бы в ожидании до ACK_REQUIRED-отказа.
-    androidx.compose.runtime.LaunchedEffect(view.awaitingAck, view.question?.index) {
+    // триггера проводка экрана повисла бы в ожидании до ACK_REQUIRED-отказа. Отказ входит
+    // в ключи: после отказавшего ACK эффект перезапускается — иначе повторить некому.
+    androidx.compose.runtime.LaunchedEffect(view.awaitingAck, view.question?.index, view.refusal) {
         if (view.awaitingAck) onQuestionRendered()
     }
     Column(
