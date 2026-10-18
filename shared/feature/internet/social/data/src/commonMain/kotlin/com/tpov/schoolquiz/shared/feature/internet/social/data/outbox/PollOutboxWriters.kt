@@ -29,12 +29,17 @@ object PollOutboxWriters {
 
     fun seriesRef(seriesId: String): String = SERIES_REF_PREFIX + seriesId
 
-    /** §2: `sourceId = "series-<seriesId>-r<revisionId>-q<questionIndex>"`. */
+    /** §2 (поправка 2026-10-18, two-device прогон 8.4): `sourceId =
+     *  "series-<seriesId>-r<revisionId>-q<questionIndex>-u<uid>"`. Участник — часть намерения:
+     *  два голосующих за один вопрос — две разные мутации, иначе идемпотентность отказывает
+     *  второму («mutationId belongs to another account»); ретрай того же участника держит тот
+     *  же ключ (§6.1). */
     fun voteSourceId(
         seriesId: String,
         revisionId: Long,
         questionIndex: Int,
-    ): String = "series-$seriesId-r$revisionId-q$questionIndex"
+        uid: String,
+    ): String = "series-$seriesId-r$revisionId-q$questionIndex-u-$uid"
 
     /** Ожидаемая следующая revision в ключе публикации: то же намерение — тот же ключ. */
     fun publishSourceId(
@@ -52,6 +57,7 @@ object PollOutboxWriters {
                         submission.command.seriesId,
                         submission.command.revisionId,
                         submission.command.questionIndex,
+                        submission.ownerUid,
                     ),
                 ),
             ownerUid = submission.ownerUid,

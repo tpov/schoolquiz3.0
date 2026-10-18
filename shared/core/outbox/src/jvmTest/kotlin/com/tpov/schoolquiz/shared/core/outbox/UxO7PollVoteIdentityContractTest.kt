@@ -28,10 +28,23 @@ class UxO7PollVoteIdentityContractTest {
 
     /** Идентичность голоса §2: тройка серия/revision/вопрос в sourceId, серия в entity_ref. */
     private val voteOperation = "polls.SUBMIT_VOTE"
-    private val voteSourceId = "series-poll-77-r2-q1"
+    private val voteSourceId = "series-poll-77-r2-q1-u-participant-1"
     private val voteEntityRef = "polls.SERIES:poll-77"
     private val voteBody = """{"seriesId":"poll-77","revisionId":2,"questionIndex":1,""" +
         """"selectedOptionIds":["opt-a","opt-c"]}"""
+
+
+    /** Поправка §2 (2026-10-18, two-device прогон 8.4): участник — часть намерения. Два
+     *  голосующих за один вопрос выводят РАЗНЫЕ ключи (иначе идемпотентность отказывает второму
+     *  аккаунту), а ретрай того же участника — тот же ключ. */
+    @Test
+    fun voteKeyIsPerParticipant() {
+        val otherSourceId = "series-poll-77-r2-q1-u-participant-2"
+        val mine = OutboxOperations.mutationKey(voteOperation, voteSourceId)
+        val theirs = OutboxOperations.mutationKey(voteOperation, otherSourceId)
+        assertTrue(mine != theirs, "different participants must not share a mutation key")
+        assertEquals(mine, OutboxOperations.mutationKey(voteOperation, voteSourceId))
+    }
 
     private fun voteRecord(id: Long = 1L) = OutboxRecord(
         id = id,

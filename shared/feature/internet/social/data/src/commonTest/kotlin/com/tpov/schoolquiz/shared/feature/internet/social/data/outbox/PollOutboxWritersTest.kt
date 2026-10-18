@@ -40,13 +40,16 @@ class PollOutboxWritersTest {
         )
 
     @Test
-    fun `vote key is the identity triple and never varies`() {
+    fun `vote key is the identity triple plus the respondent and never varies`() {
         val first = PollOutboxWriters.voteRecord(vote)
         val again = PollOutboxWriters.voteRecord(vote)
 
         assertEquals(OutboxOperations.SUBMIT_POLL_VOTE, first.operation)
         assertEquals(
-            OutboxOperations.mutationKey(OutboxOperations.SUBMIT_POLL_VOTE, "series-poll-77-r2-q1"),
+            OutboxOperations.mutationKey(
+                OutboxOperations.SUBMIT_POLL_VOTE,
+                "series-poll-77-r2-q1-u-participant-1",
+            ),
             first.mutationId,
         )
         assertEquals(first.mutationId, again.mutationId, "§6.1: retry — не второй голос, ключ тот же")

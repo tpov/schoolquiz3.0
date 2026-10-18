@@ -54,7 +54,7 @@
 - **Имя операции и кодирование** (фиксируется контрактом, константа и реестр — с 8.2, вместе с
   серверной половиной и гейтом `OutboxOperationsRegistryTest`):
   - операция `polls.SUBMIT_VOTE` (пространство имён polls, NFR4);
-  - `sourceId = "series-<seriesId>-r<revisionId>-q<questionIndex>"` — кодирование тройки
+  - ПОПРАВКА 2026-10-18 (two-device прогон 8.4, ожидает подтверждения владельца): `sourceId = "series-<seriesId>-r<revisionId>-q<questionIndex>-u<uid>"` — участник часть намерения; прежняя формула отказывала второму аккаунту («mutationId belongs to another account»). Первичная редакция: `sourceId = "series-<seriesId>-r<revisionId>-q<questionIndex>"` — кодирование тройки
     идентичности; `mutationKey = OutboxOperations.mutationKey(operation, sourceId)` (AD-6:
     ключ рождается с намерением, charset сервера `[A-Za-z0-9_-]`);
   - `entityRef = "polls.SERIES:<seriesId>"` — пометка «голос не отправлен» встаёт на карточку
