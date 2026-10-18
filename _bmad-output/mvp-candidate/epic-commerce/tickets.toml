@@ -72,7 +72,7 @@ waits = [
   "hitl: device restart/loss run",
 ]
 hitl = true
-status = "blocked" # hitl + after 7.4 (hitl)
+status = "done" # 2026-10-18: loss/restart пройден на Pixel (request in flight → force-stop → relaunch → ТОТ ЖЕ результат 1159 nolics, один box_operation + один receipt, boxCount 1→0, nolics начислены один раз; баланс бокса выдан админ-фикстурой users.boxCount=1, сами источники подарков остаются в 7.4) — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/box-opening/
 
 [[story]]
 id = "7.6"
