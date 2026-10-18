@@ -44,7 +44,7 @@ title = "Device inventory (serial, Android, app, signature, DB schema, role, GMS
 covers = ["CAP-20"]
 after = []
 hitl = true # requires the physical devices; 2026-10-08/09 снято на redroid-риге по решению владельца 21:55
-status = "done" # 2026-10-09: inventory-15.txt — redroid12_x86_64, Android 12 (SDK 31), com.tpov.schoolquiz.mvp 0.1.0-isolated vc1, debug-сертификат 00:33:E7:FA…, Room v15 (30 таблиц), роль = устройство C (обычный игрок), GMS/Play отсутствуют — Play-зависимые пути записаны как внешняя зависимость, не блокирует (по формулировке истории); evidence docs/agents/evidence/2026-10-08-redroid-hitl/
+status = "done" # 2026-10-09: inventory-15.txt — redroid12_x86_64, Android 12 (SDK 31), com.tpov.schoolquiz.mvp 0.1.0-isolated vc1, debug-сертификат 00:33:E7:FA…, Room v15 (30 таблиц), роль = устройство C (обычный игрок), GMS/Play отсутствуют — Play-зависимые пути записаны как внешняя зависимость, не блокирует (по формулировке истории); evidence docs/agents/evidence/2026-10-08-redroid-hitl/; 2026-10-18: GMS/Play-колонки дополнены физическим Pixel 10 Pro (Android 17, GMS 26.39.33 + Play Store 53.5.48, тот же debug-сертификат кандидата 00:33:E7:FA…, APK 79859f5d… vc40000; Play-пути физически доступны, SKUs/цены остаются внешним входом владельца) — evidence docs/agents/evidence/2026-10-18-pixel-gms-inventory/
 
 [[story]]
 id = "1.6"

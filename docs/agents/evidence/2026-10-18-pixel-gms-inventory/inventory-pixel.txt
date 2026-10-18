@@ -1,0 +1,38 @@
+# Pixel physical device inventory — GMS/Play supplement to story 1.5 — 2026-10-18 16:38 UTC
+
+## device
+adb serial: 56271FDCH00C5S
+ro.product.model=Pixel 10 Pro
+ro.product.device=blazer
+ro.build.version.release=17
+ro.build.version.sdk=37
+ro.build.fingerprint=google/blazer/blazer:17/CP3A.260905.009/16091614:user/release-keys
+ro.serialno=56271FDCH00C5S
+Physical size: 1280x2856
+Physical density: 480
+
+## installed app (com.tpov.schoolquiz.mvp)
+        versionCode=40000 minSdk=26 targetSdk=36
+        versionName=4.0.0-isolated
+        lastUpdateTime=2026-10-18 17:37:58
+          firstInstallTime=2026-10-18 14:23:33
+apk sha256 (base.apk, hashed on the VPS, no Mac copy): 79859f5d665f73046810731f1d237b32e69a28411d06934bc164bf9286e83cda
+
+## GMS / Play
+com.google.android.gms     versionName=26.39.33 (260400-995470952)
+com.android.vending (Play Store)     versionName=53.5.48-34 [0] [PR] 995634172
+com.google.android.gsf     versionName=17
+
+## play account on device
+google accounts registered: 9
+  account: oleg12794@gmail.com
+  account: tpovdevelopers@gmail.com
+
+## room schema
+schema version of the build: see shared/core/persistence AppDatabase.kt of HEAD bf4b32a7 (previously v15 at candidate 1.2)
+
+## role
+physical device C (ordinary player) of the multi-device runbook; demo backend only via adb reverse (9099/8080/5001) over the SSH tunnel to the VPS; no production accounts
+
+## GMS / Play consequence
+PRESENT: full GMS (26.39.33) + Play Store (53.5.48) installed — unlike the redroid rig, Play Integrity App Check and Play Billing paths are now physically reachable; concrete SKUs/prices/license-tester remain owner external input (story 7.1 stays blocked on Play Console data, not on the device)
