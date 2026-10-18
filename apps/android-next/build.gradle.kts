@@ -87,6 +87,8 @@ android {
             applicationIdSuffix = ".mvp"
             versionNameSuffix = "-isolated"
             buildConfigField("boolean", "MVP_EMULATORS", "true")
+            buildConfigField("String", "MVP_EMULATOR_HOST", "\"${(project.findProperty("mvpEmulatorHost") ?: "127.0.0.1") as String}\"")
+            buildConfigField("int", "MVP_EMULATOR_FUNCTIONS_PORT", "${project.findProperty("mvpEmulatorFunctionsPort") ?: 5001}")
             buildConfigField("String", "FIREBASE_APP_CHECK_DEBUG_SECRET", "\"\"")
         }
     }

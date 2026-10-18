@@ -16,6 +16,8 @@ fun initializeFirebaseSecurity(
     useDebugAppCheckProvider: Boolean = false,
     appCheckDebugSecret: String? = null,
     useEmulators: Boolean = false,
+    emulatorHost: String = "127.0.0.1",
+    emulatorFunctionsPort: Int = MvpEmulatorPorts.FUNCTIONS,
 ) {
     val firebaseApp = FirebaseApp.initializeApp(app) ?: FirebaseApp.getInstance()
     if (useEmulators) {
@@ -23,10 +25,13 @@ fun initializeFirebaseSecurity(
         require(firebaseApp.options.projectId == "demo-schoolquiz-mvp") {
             "The isolated MVP build requires the demo Firebase configuration"
         }
-        val host = "127.0.0.1"
+        // Host/ports are build-time configurable so a physical device can ride the VPS
+        // socat relays (adb reverse data plane was unreliable) — defaults keep the
+        // 127.0.0.1 loopback contract for the redroid rig unchanged.
+        val host = emulatorHost
         FirebaseAuth.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.AUTH)
         FirebaseFirestore.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FIRESTORE)
-        FirebaseFunctions.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FUNCTIONS)
+        FirebaseFunctions.getInstance(firebaseApp).useEmulator(host, emulatorFunctionsPort)
         FirebaseDatabase.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.DATABASE)
         FirebaseStorage.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.STORAGE)
         // App Check/Integrity has no local emulator, and the demo never contacts its live

@@ -1,48 +1,55 @@
-# Store surface device proof — Pixel 10 Pro, partial — 2026-10-18 evening
+# Store surface device proof — Pixel 10 Pro — 2026-10-18 evening (UPDATED: insufficient-funds PASS)
 
 Story: epic-commerce 7.2 `store-gold-prices-and-unavailable-products` (device-proof half).
-Device: Pixel 10 Pro (56271FDCH00C5S), com.tpov.schoolquiz.mvp 4.0.0-isolated
-(base.apk sha256 79859f5d…, candidate debug cert 00:33:E7:FA…), demo backend via
-adb reverse 9099/8080/5001 over an SSH tunnel to the VPS emulators.
+Device: Pixel 10 Pro (56271FDCH00C5S), Wi-Fi adb; fresh anonymous account UserG9FY6E
+(uid VLqWYMHXqyI8pPWQdNXdkQg9FY6E, created 20:45 local after `pm clear`).
 
-## What the run SHOWS (screenshots in this directory)
+## Transport (what made this run possible)
 
-- 01-shop-tab.png — the store surface renders server-owned gold prices, no invented money
-  prices: Charge 20 000 ◎ («You have 5 · next 20 000»), Golden charge 2 gold («hard mode
-  only»), Quiz slot 1 000 ◎; wallet chips in the header (1000 ◎ / 0 gold).
-- Unconfigured / Play-dependent products are VISIBLY unavailable, never silently purchasable:
-  Premium and Small/Medium/Large gold packs are locked with the explicit reason
-  «Google Play is unreachable — prices …»; Quiz slot — «Waiting for quiz limit modelling…»;
-  Box for watching 5 ads — «Waiting for an ad provider». (On this device GMS/Play ARE present —
-  see 2026-10-18-pixel-gms-inventory — the lock reflects the store data/billing state, which is
-  exactly the state the story asks to see.)
-- 02/03/04/05/06 — Buy attempts on Charge. Observed repeatedly: the app surfaces
-  «1 out of 2 underlying tasks failed» (the callable's AppCheck+auth whenAll error string) and
-  the balance never changed — no charge was made, no partial state. NOTE: the insufficient-funds
-  refusal path was NOT reached; see the environment section.
+`adb reverse` proved unusable for data on this setup (SYN accepted, payload dropped — verified
+with an independent Mac-side listener; both USB and Wi-Fi transports; `adb kill-server` and an
+adbd restart did not help). The working path instead routes the app DIRECTLY to the VPS:
 
-## Environment caveats (honest record)
+- build-time change: `MVP_EMULATOR_HOST` / `MVP_EMULATOR_FUNCTIONS_PORT` BuildConfig fields
+  (apps/android-next build.gradle.kts mvp block) consumed by `initializeFirebaseSecurity`;
+  defaults keep the 127.0.0.1 loopback contract for the redroid rig untouched.
+- VPS socat relays (nohup, logs /tmp/socat-*.log): 0.0.0.0:9099→19090 (auth),
+  0.0.0.0:8080→18090 (firestore), 0.0.0.0:5002→5001 (functions; node's own 5001 accepts
+  external connections but never answers them — pre-existing quirk, worked around).
+- cleartext fix: 204.44.66.27 added to apps/android-next/src/mvp/res/xml/
+  mvp_network_security_config.xml (mvp variant only — without it Android blocked the HTTP
+  emulators: `CLEARTEXT communication to 204.44.66.27 not permitted`).
 
-- The functions backend itself was verified healthy through the same tunnel from the Mac:
-  anonymous signUp on the auth emulator (9099) returned a real idToken, and applyShopPurchase
-  answered 400 INVALID_ARGUMENT «Unsupported shop item » for a valid Bearer token — the
-  callable receiver executes server logic end-to-end when the transport works.
-- During this run the phone's USB link bounced (device re-enumerated ~19:45 local); after that
-  adb reverse accepted TCP connections but stopped delivering DATA (verified with an
-  independent Mac-side HTTP listener; adb kill-server + re-registration did not restore it).
-  The app's long-lived Firestore/Auth sockets from 19:36 kept working (catalog/balance
-  rendered), which is why the surface looks live while new callables failed. The Buy taps hit
-  this broken window; the «1 out of 2 underlying tasks failed» toast is consistent with the
-  callable transport being dead, NOT with a product defect — on the redroid rig this path was
-  proven earlier (evidence 2026-10-09-hitl-rig-matrix and commerce server stories).
-- A CrypticoBot accessibility service on the phone intermittently held the accessibility tree,
-  breaking uiautomator dumps (driving fell back to screenshot-verified coordinates; every tap
-  was verified to land on schoolquiz — the drawer/menu reacted as expected).
+Build: `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :apps:android-next:assembleMvp
+-PmvpEmulatorHost=204.44.66.27 -PmvpEmulatorFunctionsPort=5002 -I /tmp/signfix.gradle`
+(the init script overrides the legacy signing store with /root/.android/debug.keystore for
+this build only — the LEGACY_* keystore password is owner-only per /workspace/keys/README.txt;
+the resulting certificate 00:33:E7:FA… is byte-identical to the candidate debug cert, so
+`install -r` keeps app data). Final APK sha256
+d0c59bfcebf30709126a14b3aa8e0336deccc0a8150b3820e78e17935e7d2d77, installed 20:48 local.
+NOTE: this build is newer than the identified candidate (post epic-5/6 merge + the two
+transport accommodations); the candidate identification re-run remains a rig story.
+
+## What the run SHOWS
+
+- 07-live-shop-fresh.png — live store on the fresh account: header 0 ◎ / 0 gold, server
+  catalog with gold prices (Charge 20 000 ◎, Quiz slot 1 000 ◎, Golden charge 1 gold), and
+  the visibly-unavailable states: Premium + Small/Medium/Large gold packs locked with
+  «Google Play is unreachable — prices …», Quiz slot «Waiting for quiz limit modelling…»,
+  ad box «Waiting for an ad provider». No invented money prices anywhere.
+- 08-buy-insufficient-live.png — **the insufficient-funds refusal, server-authoritative**:
+  Buy on Charge (20 000 ◎ against a 0 balance) → the functions emulator executed
+  `applyShopPurchase` (docker log: Beginning/Finished in 1323 ms) → the app surfaced
+  **«Not enough nolics»**, balance unchanged, nothing purchased. This is the CAP-16
+  server-authority check the story asks to see on a device.
+- 01..06 (earlier evening) — the same surface on the pre-wipe account (1000 ◎) during the
+  broken-transport window: the «1 out of 2 underlying tasks failed» toasts documented there
+  were the dead adb-reverse bridge, not a product defect; superseded by this run.
 
 ## Status
 
-7.2 stays blocked. Proven here: the store surface states (server prices, visibly unavailable
-products). Still needed for 7.2: the interactive insufficient-funds refusal on a healthy
-transport, premium duration-normalization view (the Premium card is behind the Play lock in
-this build), and fresh-consent-on-changed-terms — all ride on restoring a working
-device↔backend path (adb reverse or another relay).
+7.2: the insufficient-funds refusal and the unavailable/locked product states are PROVEN on a
+physical device. Remaining open in 7.2: the premium duration-normalization view (the Premium
+card renders its Play-unreachable lock here; the normalized comparison sheet is reachable only
+once Play pricing/SKUs exist — couples to the owner's 7.1 input) and the
+fresh-consent-on-changed-terms case (needs configurable server terms to flip).

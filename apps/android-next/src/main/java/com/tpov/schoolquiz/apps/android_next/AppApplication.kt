@@ -115,6 +115,8 @@ class AppApplication : Application(), Configuration.Provider {
             useDebugAppCheckProvider = BuildConfig.DEBUG,
             appCheckDebugSecret = BuildConfig.FIREBASE_APP_CHECK_DEBUG_SECRET,
             useEmulators = BuildConfig.MVP_EMULATORS,
+            emulatorHost = BuildConfig.MVP_EMULATOR_HOST,
+            emulatorFunctionsPort = BuildConfig.MVP_EMULATOR_FUNCTIONS_PORT,
         )
         val auth = FirebaseAuth.getInstance()
         // Ensure every user has a Firebase identity (anonymous) before any feature

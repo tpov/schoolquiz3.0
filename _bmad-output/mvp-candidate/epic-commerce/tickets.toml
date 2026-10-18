@@ -33,7 +33,7 @@ waits = [
   "hitl: device proof of the store screen states (unavailable, insufficient funds)",
 ]
 hitl = true
-status = "blocked" # gold-цены — сервер (план §3 TZ09A); денежные цены Play в этой истории НЕ используются; device proof — hitl; 2026-10-18: частичный device-пруф поверхности магазина на Pixel (серверные цены, visibly-unavailable с замком и причинами; insufficient-funds не дошёл — транспорт adb reverse лёг после USB-боры, callable умирал с «1 out of 2 underlying tasks failed»; бэкенд проверен здоровым сквозь туннель) — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/store-surface/
+status = "blocked" # gold-цены — сервер (план §3 TZ09A); денежные цены Play в этой истории НЕ используются; device proof — hitl; 2026-10-18 вечер: insufficient-funds ДОКАЗАН на Pixel (свежий аккаунт 0◎ против Charge 20 000◎ → серверный отказ «Not enough nolics», applyShopPurchase исполнен на эмуляторе за 1323 ms, баланс не изменился) + visibly-unavailable состояния; путь телефон→VPS прямым интернетом (BuildConfig MVP_EMULATOR_HOST/PORT + socat-релеи 9099/8080/5002 + cleartext-домен в mvp NSC); открытыми остаются premium-нормализация (за Play-локом, ждёт 7.1) и fresh-consent — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/store-surface/
 
 [[story]]
 id = "7.3"

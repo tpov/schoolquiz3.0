@@ -4,5 +4,9 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">localhost</domain>
+        <!-- VPS socat relays for physical-device hitl runs (adb reverse data plane
+             proved unreliable); the IP carries only the demo emulators, no production
+             backend lives behind it. -->
+        <domain includeSubdomains="false">204.44.66.27</domain>
     </domain-config>
 </network-security-config>
