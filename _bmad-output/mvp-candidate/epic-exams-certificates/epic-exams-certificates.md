@@ -4,6 +4,7 @@ title: "Theme tests, final exams and certificates"
 parent: mvp-candidate
 covers: [CAP-21, CAP-22, CAP-23]
 after: ["epic-ordinary-delivery", "epic-authoring-review"]
+status: merged
 assignee: ""
 risk: high
 estimate: ""
@@ -42,6 +43,12 @@ Assessment lifecycle, certificates, corrections. Not ordinary lesson learning (e
 
 ## Notes
 
+- Built to completion on `night/e6-exams` (spec done, retro accepted-with-open-items 2026-10-17)
+  and merged into `night/e5-inception` on 2026-10-18; merge evidence:
+  docs/agents/evidence/2026-10-18-epic6-merge/. Gates at merge: functions 124/124;
+  android-next compileDebugKotlin green; platform:firebase tests 311/313 — the 2 failures are
+  pre-existing arena fixture-pin drift (since 34fe664b, present on both parents and the base),
+  unrelated to the merge.
 - Open question: OQ-4/Q-EX-5 concrete signing provider/environment — hitl with the owner at this epic's gate.
 - Unknown: current implementation state of the exam line (August spec) vs the October decisions (24h/168h, 100/200 entry, timer) — an inception entry reconciles drift before building.
 - Waits on epic 2 because: admission needs ordinary EASY coverage evidence and the shared online window.

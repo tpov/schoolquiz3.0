@@ -86,6 +86,8 @@ include(":android:feature:quest:presentation")
 include(":android:feature:quest-authoring:presentation")
 include(":android:feature:quest:test-fixtures")
 include(":android:feature:quizzes-screen:presentation")
+// Экзамен (CAP-22): сертификаты — список профиля и публичная верификация.
+include(":android:feature:exam:presentation")
 include(":android:feature:lesson-runner:presentation")
 include(":android:feature:local:settings:presentation")
 include(":android:feature:internet:auth:presentation")

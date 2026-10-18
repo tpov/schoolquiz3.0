@@ -30,7 +30,7 @@
     "ORDINARY_LESSON": 33,
     "ARENA": 50,
     "THEME_TEST": 100,
-    "FINAL_EXAM": 300,
+    "FINAL_EXAM": 200,
     "TOURNAMENT": 500
   },
   "goldPacks": {

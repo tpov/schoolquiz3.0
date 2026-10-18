@@ -238,6 +238,9 @@ const MONETARY_FUNCTION_OPTIONS = {...FUNCTION_OPTIONS, maxInstances: 2};
  * настоящей дырой. Они остаются на [FUNCTION_OPTIONS].
  */
 const CALLABLE_OPTIONS = {...FUNCTION_OPTIONS, invoker: "public"};
+// Профиль сертификатов: последние выпуски по порядку заработка. Отбор «последнего
+// заработанного» и список на экране укладываются в этот предел; история остаётся в базе.
+const CERTIFICATE_PROFILE_READ_LIMIT = 25;
 const MONETARY_CALLABLE_OPTIONS = {...MONETARY_FUNCTION_OPTIONS, invoker: "public"};
 // Pagination anchors reference closed receipts. The token key is bound only to lifecycle readers.
 const ARENA_LIFECYCLE_CURSOR_SECRET = defineSecret("ARENA_LIFECYCLE_CURSOR_SECRET");
@@ -523,6 +526,282 @@ async function callArenaTicketRecovery(method, request) {
 }
 exports.prepareArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("issue", request));
 exports.cancelArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("cancel", request));
+
+/*
+ * Экзамен (CAP-21/22/23): сидинги, терминальный писатель, сертификаты, коррекции.
+ *
+ * Экзамен — собственный жизненный цикл, не обычная попытка и не билет арены; здесь только
+ * обвязка вызовов, вся логика — в модулях `exam-*`. Ничего из этого не активировано и не
+ * развёрнуто: расписание ниже — только экспорт-заготовка, конкретный подписант сертификатов,
+ * секреты и окружение остаются решением владельца (Q-EX-5).
+ */
+const {
+  createExamSittings,
+  SITTING_STATE,
+} = require("./exam-sitting");
+const {createExamTerminal} = require("./exam-terminal");
+const {createCertificateSigning, verifyVerdict, VERIFY_STATUS,
+  CERTIFICATE_PUBLIC_COLLECTION, KEY_MATERIAL_COLLECTION} = require("./exam-certificates");
+const {createExamCorrections} = require("./exam-corrections");
+
+const EXAM_CONFIG_DOC = "configs/exam";
+
+/** Серверные правила экзамена: ручки владельца с безопасными значениями по умолчанию. */
+function readExamConfig(document) {
+  const source = document && typeof document === "object" ? document : {};
+  const intOr = (value, fallback, min, max) => {
+    const parsed = Math.floor(Number(value));
+    return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
+  };
+  return {
+    // Явная недоступность сервера: экзамен открывается решением, а не деплоем.
+    examEnabled: source.examEnabled === true,
+    passMarkPercent: intOr(source.passMarkPercent, 60, 0, 100),
+    // Общее серверное окно следующего вопроса (AD-31): тот же источник, что у обычного стека.
+    nextQuestionWindowSeconds: intOr(source.nextQuestionWindowSeconds, 60, 5, 600),
+    abandonmentGraceMs: intOr(source.abandonmentGraceMs, 5 * 60 * 1000, 0, 24 * 60 * 60 * 1000),
+    paidTermsRevision: intOr(source.paidTermsRevision, 1, 0, 1_000_000),
+    // Идентичность ключа подписи сертификатов — не секрет; сам материал — Q-EX-5.
+    certificateSigningKeyId: typeof source.certificateSigningKeyId === "string" ?
+      source.certificateSigningKeyId : null,
+  };
+}
+
+async function loadExamConfig(tx) {
+  const snapshot = await tx.get(db.doc(EXAM_CONFIG_DOC));
+  return readExamConfig(snapshot.exists ? snapshot.data() : null);
+}
+
+const examSittings = createExamSittings({db, nowMs: () => Date.now(),
+  loadLessonContext: loadArenaLessonContext, loadExamConfig});
+const examTerminal = createExamTerminal({db, nowMs: () => Date.now(), loadExamConfig,
+  log: (record) => logger.warn("Exam terminal step", record)});
+// Подписант не связан (Q-EX-5): фабрика существует, ключей нет — выпуски остаются в явном
+// ожидании подписи, неподписанная публикация невозможна.
+const certificateSigning = createCertificateSigning({db, nowMs: () => Date.now(), signer: null});
+const {latestEarnedIssuance, profileProjection} = require("./exam-certificates");
+const examCorrections = createExamCorrections({
+  db, nowMs: () => Date.now(),
+  authorizeExclusion: (record) => Boolean(record && record.authorizedByCuratorUid),
+});
+
+/** Кураторская проверка вне транзакции — тот же порог, что и у арены. */
+async function isCuratorOutsideTransaction(uid) {
+  const snapshot = await db.doc(`profiles/${uid}`).get();
+  const profile = snapshot.exists ? snapshot.data() || {} : {};
+  return numberValue(profile.adminLevel, 0) >= QUALIFIED_LEVEL ||
+    numberValue(profile.developerLevel, 0) > DEVELOPER_ALL_ACCESS_LEVEL;
+}
+
+exports.startThemeTest = onCall(MONETARY_CALLABLE_OPTIONS, (request) => callExamSitting("startThemeTest", request));
+exports.startFinalExam = onCall(MONETARY_CALLABLE_OPTIONS, (request) => callExamSitting("startFinalExam", request));
+exports.acknowledgeQuestion = onCall(CALLABLE_OPTIONS, (request) => callExamSitting("acknowledgeQuestion", request));
+exports.submitAnswer = onCall(CALLABLE_OPTIONS, (request) => callExamSitting("submitAnswer", request));
+exports.finishSitting = onCall(CALLABLE_OPTIONS, (request) => callExamSitting("finishSitting", request));
+exports.fetchSittingResult = onCall(CALLABLE_OPTIONS, (request) => callExamSitting("fetchSittingResult", request));
+
+async function callExamSitting(name, request) {
+  const uid = requireAuthUid(request);
+  const mode = name === "startFinalExam" ? "FinalExam" : "ThemeTest";
+  try {
+    if (name === "startThemeTest" || name === "startFinalExam") {
+      return await examSittings.start({uid, payload: request.data, mode});
+    }
+    return await examSittings[name]({uid, payload: request.data});
+  } catch (error) {
+    if (error.name !== "Error" || !/^[A-Z][A-Z_]{2,63}$/.test(error.code || "")) throw error;
+    const code = error.code === "INVALID_ARGUMENT" ? "invalid-argument" :
+      error.code === "PERMISSION_DENIED" ? "permission-denied" :
+      error.code === "NOT_FOUND" ? "not-found" :
+      error.code === "USER_NOT_FOUND" ? "failed-precondition" :
+      ["REQUEST_REUSE", "ANSWER_CONFLICT", "CORRECTION_REUSE"].includes(error.code) ? "already-exists" :
+      ["REGEN_RETRY"].includes(error.code) ? "unavailable" : "failed-precondition";
+    if (code === "unavailable") logger.warn("Exam operation needs retry", {reason: error.code});
+    throw new HttpsError(code, "Exam operation could not be completed", {reason: error.code});
+  }
+}
+
+/**
+ * Публичная верификация сертификата — чтение БЕЗ входа.
+ *
+ * Отдельный вызов, не ветвь сидинговых: immutable публичный снимок и статус по собственным
+ * датам и ключам факта. Изменяемые поля профиля, курса и скорректированный счёт не читаются.
+ */
+exports.publicVerifyCertificate = onCall(CALLABLE_OPTIONS, async (request) => {
+  const issuanceId = typeof request.data === "object" && request.data !== null &&
+    typeof request.data.issuanceId === "string" && request.data.issuanceId.trim() &&
+    !request.data.issuanceId.includes("/") ?
+    request.data.issuanceId.trim() : (() => {
+      throw new HttpsError("invalid-argument", "issuanceId is required");
+    })();
+  const [publicSnapshotSnapshot, keysSnapshot] = await Promise.all([
+    db.doc(`${CERTIFICATE_PUBLIC_COLLECTION}/${issuanceId}`).get(),
+    db.collection(KEY_MATERIAL_COLLECTION).get(),
+  ]);
+  const keyMaterial = {};
+  for (const doc of keysSnapshot.docs) keyMaterial[doc.id] = true;
+  const verdict = verifyVerdict({
+    publicSnapshot: publicSnapshotSnapshot.exists ? publicSnapshotSnapshot.data() : null,
+    keyMaterial,
+    nowMs: Date.now(),
+  });
+  if (!verdict.found) {
+    // Нет снимка: либо выпуск ещё подписывается (явное ожидание), либо выпуска не существует.
+    // Форма одна у всех ветвей: found, status, issuanceId, snapshot (null без снимка).
+    const pending = await db.doc(`exam_certificates/${issuanceId}`).get();
+    if (pending.exists) {
+      return {found: true, status: VERIFY_STATUS.PENDING, issuanceId, snapshot: null};
+    }
+    return {found: false, status: VERIFY_STATUS.NOT_FOUND, issuanceId, snapshot: null};
+  }
+  return {found: true, status: verdict.status, issuanceId, snapshot: verdict.snapshot};
+});
+
+/**
+ * Терминальный писатель экзамена: адаптер расписания СУЩЕСТВУЕТ, но НИЧЕГО не активирует и не
+ * разворачивает. Деплой, расписание и окружение — решение владельца (Q-EX-5); этот экспорт —
+ * только готовность кода, подтверждаемая тестами с подставными часами.
+ */
+exports.reconcileExamSittings = onSchedule({
+  schedule: "every 1 minutes", timeZone: "UTC",
+  timeoutSeconds: 540, memory: "512MiB", maxInstances: 1, retryCount: 0,
+  region: REGION,
+}, async () => {
+  const result = await examTerminal.sweep();
+  logger.info("Exam sitting sweep completed", {
+    status: result.status, attempted: result.attempted, terminalized: result.terminalized,
+    failed: result.failed,
+  });
+});
+
+/** Исполнение работы подписывания владеет оператор (Q-EX-5); клиентского пути к ней нет. */
+exports.fulfilCertificateSigning = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  if (!(await isCuratorOutsideTransaction(uid))) {
+    throw new HttpsError("permission-denied", "Curator is required", {reason: "CURATOR_REQUIRED"});
+  }
+  const issuanceId = typeof request.data === "object" && request.data !== null ?
+    request.data.issuanceId : null;
+  const fence = typeof request.data === "object" && request.data !== null ?
+    request.data.fence : null;
+  if (typeof issuanceId !== "string" || !issuanceId || typeof fence !== "string" || !fence) {
+    throw new HttpsError("invalid-argument", "issuanceId and fence are required");
+  }
+  return certificateSigning.fulfil({issuanceId, fence});
+});
+
+/** Список сертификатов профиля: последний заработанный — по порядку заработка. */
+exports.fetchMyCertificates = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  // Профиль читает последние выпуски по порядку заработка, а не всю историю аккаунта:
+  // чтение ограничено, отбор «последнего заработанного» от него не меняется.
+  const snapshot = await db.collection("exam_certificates").where("uid", "==", uid)
+    .orderBy("issuedAtMs", "desc").limit(CERTIFICATE_PROFILE_READ_LIMIT).get();
+  return profileProjection(latestEarnedIssuance(snapshot.docs.map((doc) => doc.data())));
+});
+
+/**
+ * Материализация коррекции (C2) — терминальный шаг за куратором: пересчёт из исходных слотов
+ * читается ВНУТРИ транзакции, поколение темы продвигается ровно один раз (устаревший пересчёт
+ * отклоняется проверкой поколения), и исправленная проекция в ТОЙ ЖЕ транзакции ложится в
+ * состояние допуска пользователя: passedAtGeneration = опубликованное поколение.
+ */
+exports.appendExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  if (!(await isCuratorOutsideTransaction(uid))) {
+    throw new HttpsError("permission-denied", "Curator is required", {reason: "CURATOR_REQUIRED"});
+  }
+  const body = request.data || {};
+  // Валидация до записи: неизвестный режим публикует голову без барьера поколения, пустой
+  // владелец ломает идентичность состояния допуска. correctionId становится путём документа
+  // головы: document-safe или типизированный отказ, а не Firestore-ошибка посреди вызова.
+  if (typeof body.correctionId !== "string" || !body.correctionId.trim() ||
+      body.correctionId.includes("/") || body.correctionId.length > 128) {
+    throw new HttpsError("invalid-argument",
+      "correctionId must be a nonempty document-safe string", {reason: "INVALID_ARGUMENT"});
+  }
+  if (!["ThemeTest", "FinalExam"].includes(body.mode)) {
+    throw new HttpsError("invalid-argument", "mode must be ThemeTest or FinalExam",
+      {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.ownerUid !== "string" || !body.ownerUid.trim()) {
+    throw new HttpsError("invalid-argument", "ownerUid is required", {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.assessmentId !== "string" || !body.assessmentId.trim()) {
+    throw new HttpsError("invalid-argument", "assessmentId is required", {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.sittingId !== "string" || !body.sittingId.trim()) {
+    throw new HttpsError("invalid-argument", "sittingId is required", {reason: "INVALID_ARGUMENT"});
+  }
+  if (body.expectedHeadVersion !== undefined && body.expectedHeadVersion !== null &&
+      (!Number.isSafeInteger(body.expectedHeadVersion) || body.expectedHeadVersion < 0)) {
+    throw new HttpsError("invalid-argument",
+      "expectedHeadVersion must be a non-negative integer when present", {reason: "INVALID_ARGUMENT"});
+  }
+  try {
+    return await examCorrections.appendExclusion({
+      record: {
+        correctionId: body.correctionId,
+        uid: body.ownerUid,
+        mode: body.mode,
+        assessmentId: body.assessmentId,
+        sittingId: body.sittingId,
+        slotIndex: body.slotIndex,
+        actorUid: uid,
+        reason: body.reason,
+        reviewedAtMs: Date.now(),
+        originalDigest: body.originalDigest || null,
+        authorizedByCuratorUid: uid,
+      },
+      expectedHeadVersion: body.expectedHeadVersion,
+    });
+  } catch (error) {
+    if (error.name === "Error" && /^[A-Z][A-Z_]{2,63}$/.test(error.code || "")) {
+      const code = error.code === "INVALID_ARGUMENT" ? "invalid-argument" :
+        ["CORRECTION_REUSE", "HEAD_CONFLICT"].includes(error.code) ? "already-exists" :
+        error.code === "NOT_AUTHORIZED" ? "permission-denied" : "failed-precondition";
+      throw new HttpsError(code, "Exam correction could not be applied", {reason: error.code});
+    }
+    throw error;
+  }
+});
+
+/**
+ * Терминальный шаг коррекции: довести опубликованную голову до проекции. Тот же кураторский
+ * затвор, что у дописывания исключения. Устаревший пересчёт (поколение ушло вперёд) отклоняется
+ * проверкой поколения и не трогает ни состояние, ни барьер.
+ */
+exports.materializeExamCorrection = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  if (!(await isCuratorOutsideTransaction(uid))) {
+    throw new HttpsError("permission-denied", "Curator is required", {reason: "CURATOR_REQUIRED"});
+  }
+  const body = request.data || {};
+  if (!["ThemeTest", "FinalExam"].includes(body.mode)) {
+    throw new HttpsError("invalid-argument", "mode must be ThemeTest or FinalExam",
+      {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.ownerUid !== "string" || !body.ownerUid.trim()) {
+    throw new HttpsError("invalid-argument", "ownerUid is required", {reason: "INVALID_ARGUMENT"});
+  }
+  if (typeof body.assessmentId !== "string" || !body.assessmentId.trim()) {
+    throw new HttpsError("invalid-argument", "assessmentId is required", {reason: "INVALID_ARGUMENT"});
+  }
+  try {
+    return await examCorrections.materialize({
+      uid: body.ownerUid,
+      mode: body.mode,
+      assessmentId: body.assessmentId,
+    });
+  } catch (error) {
+    if (error.name === "Error" && /^[A-Z][A-Z_]{2,63}$/.test(error.code || "")) {
+      throw new HttpsError("failed-precondition", "Exam correction could not be materialized",
+        {reason: error.code});
+    }
+    throw error;
+  }
+});
+
 async function callArenaEntry(method, request) {
   const uid = requireAuthUid(request);
   // A direct SDK call may acquire its Auth token after the user has switched accounts. Bind new

@@ -73,4 +73,10 @@ val lessonRunnerPresentationModule =
                 get { parametersOf(ctx, lessonId, mode, sessionMode, contentSyncCallbacks) }
             }
         }
+
+        // Экзамен (CAP-21/22): компонент прогона получает транспорт сидинга напрямую.
+        single<com.tpov.schoolquiz.android.feature.lesson_runner.presentation.exam.ExamRunComponentFactory> {
+            com.tpov.schoolquiz.android.feature.lesson_runner.presentation.exam.ExamRunComponentFactory
+                .default(remote = get())
+        }
     }

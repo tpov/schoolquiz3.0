@@ -87,8 +87,15 @@ const ENDPOINTS = Object.freeze([
 // economy-season.test.js. Re-pinned 2026-10-16 (story 5.3): the UX-O4/access pair joins the
 // surface — the read-only fetchCourseTournamentEvents discovery and the create-only
 // recordCourseTournamentDownload attestation, both covered by course-tournament-controller.test.js
-// and course-tournament-handler.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "2d453d6d1cad2b50283ce019c2583e960d3033c10cdcddb7e906df62231a2778";
+// and course-tournament-handler.test.js. Re-pinned 2026-10-16 (exam vertical, epic 6): the exam
+// callables join the surface — startThemeTest/startFinalExam/acknowledgeQuestion/submitAnswer/
+// finishSitting/fetchSittingResult, the unauthenticated publicVerifyCertificate, the curator-only
+// fulfilCertificateSigning/appendExamCorrection, the read-only fetchMyCertificates and the
+// server-only onSchedule reconcileExamSittings, covered by the exam-* suites. Re-pinned
+// 2026-10-16 (review pass): materializeExamCorrection joins the surface — the curator-gated
+// C2 materialization callable covered by exam-corrections tests. Re-pinned 2026-10-18 (epic 6
+// merge into e5-inception): one pin over the union surface of both epics.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "c432ab6484d60f07c75ddad05c761f936afbb25727eb39d6e65088bb16c3dece";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
