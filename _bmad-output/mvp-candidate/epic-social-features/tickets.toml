@@ -34,7 +34,7 @@ waits = [
   "hitl: device proof of vote/retry/distribution flow",
 ]
 hitl = true
-status = "blocked" # hitl + after 8.1
+status = "blocked" # 2026-10-18: one-device путь доказан (авторинг→публикация→скрытое распределение→голос→подтверждение→раскрытие, mutation key completed); на втором устройстве голос второго участника ОТВЕРГАЕТСЯ идемпотентностью: voteSourceId без uid → чужой релей → «mutationId belongs to another account» (mutation-queue gateVerdict) — нужен uid в ключе голоса (UX-O7 §2); evidence docs/agents/evidence/2026-10-18-pixel-social/polls/
 
 [[story]]
 id = "8.3"
