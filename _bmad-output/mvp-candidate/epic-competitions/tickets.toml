@@ -182,7 +182,7 @@ after = [
 waits = [
   "demo container schoolquiz-demo-firebase-20261004 and the functions emulator — standing environment (epic-3 precedent)",
 ]
-status = "ready"
+status = "done" # 2026-10-17: полный lifecycle прогнан на живом риге — rules probe 18/18 (закрыт defer 5.3), HTTP journey 7/7, bulk 7/7 + 11/11 с НАСТОЯЩИМ пином отпечатка (независимый rebuild player-stream-цепочки = published), композитный lifecycle 9/9 ×2 (create→qualify→CLOSE c abort-пробой→bracket→agreements→matches c abort-пробой→FINISHED, escrow remaining=0; вырожденные 0/1/2), Node 111/111. Ноль продовых дефектов (все отказы — harness-side, диагностированы). Large bulk cases (167/502) — по отдельному одобрению владельца; rig wiring (hosts, forwarder :5001) задокументирован. Спека spec-5-12-demo-e2e-server.md; коммит 10ce005c
 
 [[story]]
 id = "5.13"
