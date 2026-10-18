@@ -83,8 +83,8 @@ epic-5-arena change inside an epic-6 merge). Filed as an open item for an arena 
 ## Notes
 
 - Node binary: `/root/.zcode/server/node` (v22.16.0); system `node` is absent on this VPS.
-- The merge commit's parents are the two hashes above; the commit itself is the only merge commit
-  of `night/e6-exams` into `night/e5-inception` dated 2026-10-18.
+- Merge commit: **`bf4b32a7`** (parents `7f84599f` + `4cb73eae`), pushed to
+  `origin/night/e5-inception` on 2026-10-18.
 - Open item for the arena line: regenerate `arena-catalog-client-fixtures.json` /
   `arena-ticket-client-fixtures.json` `sourceSha256` pins (drift since `34fe664b`) so the two
   arena guard tests go green again on every branch, not just on this merge.
