@@ -4,5 +4,9 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">localhost</domain>
+        <!-- Story 5.13 device-proof session: adb reverse cannot carry data on this
+             phone (platform-tools 36 vs Android 17 adbd), so the rig is reached through
+             the workstation LAN forwarder passed to -PdeviceEmulatorHost. -->
+        <domain includeSubdomains="false">192.168.31.218</domain>
     </domain-config>
 </network-security-config>

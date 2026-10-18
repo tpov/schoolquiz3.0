@@ -115,6 +115,7 @@ class AppApplication : Application(), Configuration.Provider {
             useDebugAppCheckProvider = BuildConfig.DEBUG,
             appCheckDebugSecret = BuildConfig.FIREBASE_APP_CHECK_DEBUG_SECRET,
             useEmulators = BuildConfig.MVP_EMULATORS,
+            emulatorHost = BuildConfig.EMULATOR_HOST,
         )
         val auth = FirebaseAuth.getInstance()
         // Ensure every user has a Firebase identity (anonymous) before any feature
@@ -123,6 +124,10 @@ class AppApplication : Application(), Configuration.Provider {
         // authenticated user; no explicit login screen exists in this app version).
         if (auth.currentUser == null) {
             auth.signInAnonymously()
+                .addOnSuccessListener { android.util.Log.i("MvpAuth", "anonymous sign-in ok uid=" + it.user?.uid) }
+                .addOnFailureListener { android.util.Log.e("MvpAuth", "anonymous sign-in failed", it) }
+        } else {
+            android.util.Log.i("MvpAuth", "restored uid=" + auth.currentUser?.uid)
         }
         // Cold callbackFlow: each collect would register a new AuthStateListener.
         val coldAuthUidFlow =

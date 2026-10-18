@@ -16,6 +16,7 @@ fun initializeFirebaseSecurity(
     useDebugAppCheckProvider: Boolean = false,
     appCheckDebugSecret: String? = null,
     useEmulators: Boolean = false,
+    emulatorHost: String = "127.0.0.1",
 ) {
     val firebaseApp = FirebaseApp.initializeApp(app) ?: FirebaseApp.getInstance()
     if (useEmulators) {
@@ -23,7 +24,10 @@ fun initializeFirebaseSecurity(
         require(firebaseApp.options.projectId == "demo-schoolquiz-mvp") {
             "The isolated MVP build requires the demo Firebase configuration"
         }
-        val host = "127.0.0.1"
+        // Device-proof escape hatch (story 5.13): adb reverse data forwarding proved broken on
+        // the physical device (platform-tools 36 ↔ Android 17 adbd — TCP accepts, no bytes flow),
+        // so a rig run points the same ports at a LAN forwarder. Default stays loopback.
+        val host = emulatorHost.ifBlank { "127.0.0.1" }
         FirebaseAuth.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.AUTH)
         FirebaseFirestore.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FIRESTORE)
         FirebaseFunctions.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FUNCTIONS)

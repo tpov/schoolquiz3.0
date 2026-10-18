@@ -83,6 +83,16 @@ android {
         }
         create("mvp") {
             initWith(getByName("debug"))
+            // The isolated .mvp applicationId never upgrades the published app, and the legacy
+            // store password is an owner secret unavailable on rig builds — sign with debug key.
+            signingConfig = signingConfigs.getByName("debug")
+            // Device-proof host override: -PdeviceEmulatorHost=<lan-ip> points the emulator
+            // ports at a LAN forwarder when adb reverse cannot carry data. Blank = loopback.
+            buildConfigField(
+                "String",
+                "EMULATOR_HOST",
+                providers.gradleProperty("deviceEmulatorHost").orElse("").map { "\"$it\"" }.get(),
+            )
             matchingFallbacks += listOf("debug")
             applicationIdSuffix = ".mvp"
             versionNameSuffix = "-isolated"
