@@ -33,7 +33,7 @@ waits = [
   "hitl: device proof of the store screen states (unavailable, insufficient funds)",
 ]
 hitl = true
-status = "blocked" # gold-цены — сервер (план §3 TZ09A); денежные цены Play в этой истории НЕ используются; device proof — hitl
+status = "blocked" # gold-цены — сервер (план §3 TZ09A); денежные цены Play в этой истории НЕ используются; device proof — hitl; 2026-10-18: частичный device-пруф поверхности магазина на Pixel (серверные цены, visibly-unavailable с замком и причинами; insufficient-funds не дошёл — транспорт adb reverse лёг после USB-боры, callable умирал с «1 out of 2 underlying tasks failed»; бэкенд проверен здоровым сквозь туннель) — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/store-surface/
 
 [[story]]
 id = "7.3"
