@@ -1,0 +1,301 @@
+{"stage":"target-verified-private-demo","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{"stage":"all-six-HTTP-callables-deny-missing-auth-before-fixture-writes","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{"stage":"fresh-accounts-and-uniquely-prefixed-verified-80-question-course-created-with-create-only","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{"stage":"actual-preparation-and-replay-freeze-exactly60EASY-plus20HARD-from-the-verified-course","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{"stage":"real-CREATE-reserves12BOXES-once-with-immutable-funding-ledger-and-identical-replay","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{"stage":"safe-event-view-worker-capability-owner-spoof-denials-and-real-meeting-precondition","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{"stage":"actual-Firestore-rules-deny-both-clients-direct-event-bank-preparation-and-escrow-reads","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{"stage":"waiting-for-real-qualification-start","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4","startsAtMs":1792317141736}
+{"stage":"HTTP-qualification-owner-binding-raw-answer-replay-and-single-answer-write-without-grading-leaks","runId":"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4"}
+{
+  "status": "PASS",
+  "checks": [
+    "all-six-HTTP-callables-deny-missing-auth-before-fixture-writes",
+    "fresh-accounts-and-uniquely-prefixed-verified-80-question-course-created-with-create-only",
+    "actual-preparation-and-replay-freeze-exactly60EASY-plus20HARD-from-the-verified-course",
+    "real-CREATE-reserves12BOXES-once-with-immutable-funding-ledger-and-identical-replay",
+    "safe-event-view-worker-capability-owner-spoof-denials-and-real-meeting-precondition",
+    "actual-Firestore-rules-deny-both-clients-direct-event-bank-preparation-and-escrow-reads",
+    "HTTP-qualification-owner-binding-raw-answer-replay-and-single-answer-write-without-grading-leaks"
+  ],
+  "evidence": {
+    "runId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4",
+    "projectId": "demo-schoolquiz-mvp",
+    "fixtureNames": {
+      "catalog": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_catalog",
+      "course": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_course",
+      "section": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_section",
+      "theme": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_theme",
+      "lesson": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_lesson",
+      "submission": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_submission",
+      "event": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event"
+    },
+    "retainedSyntheticFixtures": true,
+    "mountedSourceShas": {
+      "index.js": "d2194fdece0181dfebfce7ff02ad15f8e79b29d45ca5362cdef8b53537ffae3c",
+      "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
+      "tournament-service.js": "a69ddb4575ff28c6ff30d6dee43fae7e0a6cf18f56c020f49db4963877d2206b",
+      "tournament-source-bank.js": "e6c98dbbc4ce8238093d00b7ab5caca8ed96fa81e250edb16793dd8b49cfeb81"
+    },
+    "syntheticAccounts": {
+      "authorUid": "Xic56nptcdCEDB3vxE3oRuCtdu42",
+      "playerUid": "BIp1bitvVX1Df6oEFxMtgvWH2wx9"
+    },
+    "createdFixtureDocuments": 92,
+    "prepared": {
+      "snapshotId": "bank_9024a76c58415a412295e91611b7146e007ddca0f8bc74647337beae4341ba14",
+      "counts": {
+        "easy": 60,
+        "hard": 20,
+        "total": 80
+      },
+      "timingVersion": "lesson-reward-questionAllocatedSeconds-v1"
+    },
+    "creation": {
+      "schemaVersion": 1,
+      "operationId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_create",
+      "status": "CREATED",
+      "event": {
+        "eventId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event",
+        "organizerUid": "Xic56nptcdCEDB3vxE3oRuCtdu42",
+        "status": "QUALIFICATION",
+        "source": {
+          "kind": "COURSE",
+          "id": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_course"
+        },
+        "qualification": {
+          "startsAtMs": 1792317141736,
+          "endsAtMs": 1792921941736,
+          "roundCount": 3,
+          "questionsPerRound": 20,
+          "attemptsPerRound": 1
+        },
+        "prizes": {
+          "listVersion": 1,
+          "rows": [
+            {
+              "place": 1,
+              "amountBoxes": 5
+            },
+            {
+              "place": 2,
+              "amountBoxes": 3
+            },
+            {
+              "place": 3,
+              "amountBoxes": 1
+            },
+            {
+              "place": 3,
+              "amountBoxes": 1
+            }
+          ],
+          "maximumLiabilityBoxes": 10
+        },
+        "escrow": {
+          "reservedBoxes": 12,
+          "remainingBoxes": 12,
+          "paidBoxes": 0,
+          "returnedBoxes": 0
+        }
+      },
+      "admissionLink": {
+        "token": "327ebca313054783d8c5ead709eca6e37aff8c4a10cdccf9"
+      }
+    },
+    "reserveFunding": {
+      "schemaVersion": 1,
+      "eventId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event",
+      "uid": "Xic56nptcdCEDB3vxE3oRuCtdu42",
+      "delta": -12,
+      "sourceId": "[\"tournament\",\"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event\",\"reserve\"]",
+      "kind": "RESERVE",
+      "atMs": 1792317081745
+    },
+    "reserveLedger": {
+      "id": "Xic56nptcdCEDB3vxE3oRuCtdu42_boxes_gift_box_tournament_32e112166bab74193cd2266a415a579a26585591b98cf1536f09d1da067af9fa",
+      "uid": "Xic56nptcdCEDB3vxE3oRuCtdu42",
+      "currency": "boxes",
+      "delta": -12,
+      "reason": "gift_box",
+      "sourceId": "tournament_32e112166bab74193cd2266a415a579a26585591b98cf1536f09d1da067af9fa",
+      "atMs": 1792317081745,
+      "details": {
+        "source": "COURSE_TOURNAMENT",
+        "eventId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event",
+        "kind": "RESERVE",
+        "fundingId": "[\"tournament\",\"ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event\",\"reserve\"]"
+      }
+    },
+    "eventView": {
+      "event": {
+        "eventId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event",
+        "organizerUid": "Xic56nptcdCEDB3vxE3oRuCtdu42",
+        "status": "QUALIFICATION",
+        "source": {
+          "kind": "COURSE",
+          "id": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_course"
+        },
+        "qualification": {
+          "startsAtMs": 1792317141736,
+          "endsAtMs": 1792921941736,
+          "roundCount": 3,
+          "questionsPerRound": 20,
+          "attemptsPerRound": 1
+        },
+        "prizes": {
+          "listVersion": 1,
+          "rows": [
+            {
+              "place": 1,
+              "amountBoxes": 5
+            },
+            {
+              "place": 2,
+              "amountBoxes": 3
+            },
+            {
+              "place": 3,
+              "amountBoxes": 1
+            },
+            {
+              "place": 3,
+              "amountBoxes": 1
+            }
+          ],
+          "maximumLiabilityBoxes": 10
+        },
+        "escrow": {
+          "reservedBoxes": 12,
+          "remainingBoxes": 12,
+          "paidBoxes": 0,
+          "returnedBoxes": 0
+        }
+      },
+      "serverNowMs": 1792317082811
+    },
+    "meetingCoverage": "Actual authenticated qualification-state refusal; no positive bracket meeting or clock override",
+    "sessionStart": {
+      "schemaVersion": 1,
+      "operationId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_start",
+      "status": "SESSION",
+      "session": {
+        "sessionId": "q_0d4e10a3fac07189dcd931d34a087b9f57eb18742a05dc2585f06720e43f644f",
+        "eventId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event",
+        "kind": "QUALIFICATION",
+        "roundNumber": 1,
+        "status": "STARTED",
+        "questionIndex": 0,
+        "startedAtMs": 1792317141884,
+        "endsAtMs": 1792320241884,
+        "questionStartedAtMs": 1792317141884,
+        "questionEndsAtMs": 1792317296884
+      }
+    },
+    "firstQuestionView": {
+      "serverNowMs": 1792317142036,
+      "deadlineReached": false,
+      "questionDeadlineReached": false,
+      "session": {
+        "sessionId": "q_0d4e10a3fac07189dcd931d34a087b9f57eb18742a05dc2585f06720e43f644f",
+        "eventId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event",
+        "kind": "QUALIFICATION",
+        "roundNumber": 1,
+        "status": "STARTED",
+        "questionIndex": 0,
+        "startedAtMs": 1792317141884,
+        "endsAtMs": 1792320241884,
+        "questionStartedAtMs": 1792317141884,
+        "questionEndsAtMs": 1792317296884
+      },
+      "currentQuestion": {
+        "questionId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_q059",
+        "type": "SingleChoice",
+        "difficulty": "EASY",
+        "contentVersion": 1,
+        "maxDurationMs": 155000,
+        "publicPayload": {
+          "type": "SingleChoiceRedacted",
+          "id": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_q059",
+          "difficulty": "EASY",
+          "text": "Which keyword declares a read-only binding? Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. ",
+          "imageUrl": null,
+          "options": [
+            {
+              "id": "a",
+              "text": "var"
+            },
+            {
+              "id": "b",
+              "text": "val"
+            },
+            {
+              "id": "c",
+              "text": "lateinit"
+            }
+          ]
+        }
+      }
+    },
+    "answerReply": {
+      "schemaVersion": 1,
+      "operationId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_answer",
+      "status": "ANSWER_ACCEPTED",
+      "serverNowMs": 1792317142187,
+      "session": {
+        "sessionId": "q_0d4e10a3fac07189dcd931d34a087b9f57eb18742a05dc2585f06720e43f644f",
+        "eventId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_event",
+        "kind": "QUALIFICATION",
+        "status": "STARTED",
+        "questionIndex": 1,
+        "startedAtMs": 1792317141884,
+        "endsAtMs": 1792320241884,
+        "questionStartedAtMs": 1792317142187,
+        "questionEndsAtMs": 1792317297187,
+        "window": {
+          "windowId": "win_8c000cfacc89",
+          "completedQuestionIndex": 0,
+          "nextQuestionIndex": 1,
+          "windowSeconds": 60,
+          "openedAtMs": 1792317142187,
+          "expiresAtMs": 1792317202187,
+          "state": "DELIVERED"
+        }
+      },
+      "currentQuestion": {
+        "questionId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_q023",
+        "type": "SingleChoice",
+        "difficulty": "EASY",
+        "contentVersion": 1,
+        "maxDurationMs": 155000,
+        "publicPayload": {
+          "type": "SingleChoiceRedacted",
+          "id": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_q023",
+          "difficulty": "EASY",
+          "text": "Which keyword declares a read-only binding? Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. Synthetic integration fixture. ",
+          "imageUrl": null,
+          "options": [
+            {
+              "id": "a",
+              "text": "var"
+            },
+            {
+              "id": "b",
+              "text": "val"
+            },
+            {
+              "id": "c",
+              "text": "lateinit"
+            }
+          ]
+        }
+      },
+      "lastClosed": {
+        "questionIndex": 0,
+        "questionId": "ct_41c506b5ff7c4d66bcaf08c7c1b8d6f4_q059",
+        "kind": "ANSWER"
+      }
+    },
+    "sessionId": "q_0d4e10a3fac07189dcd931d34a087b9f57eb18742a05dc2585f06720e43f644f"
+  }
+}

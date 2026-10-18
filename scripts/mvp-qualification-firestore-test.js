@@ -28,7 +28,11 @@ if (!args.includes("--execute")) {
 async function execute() {
   const harnessSha256 = createHash("sha256").update(readFileSync(__filename)).digest("hex");
   const hashes = Object.fromEntries(Object.entries({
-    "course-tournament-controller.js": "f1ce23d0e9fdea3d3c7ea72765bd7c593e7a3fbcd92c2711b96b061813561c9f",
+    // Re-pin 2026-10-18 (story 5.12 rig run): course-tournament-controller.js changed after the
+    // 5.4 pin (stories 5.5-5.8 landed worker CLOSE/ADVANCE_MATCH + settlement in the controller);
+    // HEAD at re-pin = the epic baseline d9cd05b0, worktree clean. The pin guards that the
+    // mounted rig sources are the reviewed ones.
+    "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
     "tournament-qualification-scan.js": "683b1c007a3426f2e346ef839c77738dd53f40ef61dcced6095e47ed6ce89cb8",
     "tournament-qualification.js": "778d3e67174f2a09fece7ce587694747772d9abc69287a97886819b7758b9adb",
     "tournament-ranking.js": "0ca1ad03006cadd95c0a6caa914a1f74a2ae762715d3cb2d04aec3f5243ace78",
@@ -82,7 +86,9 @@ async function execute() {
     const ownSession = [P.sessions, VERIFIED_RUNS].includes(parts[0]) && sessions.has(parts[1]);
     const ownAccount = ["users", "premium_accounts"].includes(parts[0]) && owners.has(parts[1]);
     const ownLedger = path.startsWith(`${LEDGER_PATH}/`) && owners.has(value?.uid) && path === `${LEDGER_PATH}/${value.id}` && value.id.startsWith(`${value.uid}_`);
-    const exact = [rankPath, preparationPath, sourceBankPath, fundingPath].includes(path) || operationPaths.has(path) || sessionOperationPaths.has(path);
+    // Story 5.3 CREATE mints the competition-link digest document (course_tournament_links/{eventId});
+    // this scope allowlist predates that story — the event's own link document is fixture-owned.
+    const exact = [rankPath, preparationPath, sourceBankPath, fundingPath, `${P.links}/${names.event}`].includes(path) || operationPaths.has(path) || sessionOperationPaths.has(path);
     assert.ok(ownEvent || ownSession || ownAccount || ownLedger || exact, `Out-of-fixture write refused: ${path}`);
     if ([P.operations, SESSION_OPERATIONS].includes(parts[0])) assert.ok(owners.has(value.uid), "Operation owner must be synthetic");
     if (value?.eventId !== undefined) assert.equal(value.eventId, names.event, "Cross-event record refused");
@@ -275,7 +281,16 @@ async function execute() {
     const expected = buildQualificationRankingSnapshot({eventId: names.event, forms: event.qualificationForms, endsAtMs: cutoff,
       snapshotId: freezeId, verifiedRuns: verified.docs.map(doc => doc.data()), completeThroughMs: cutoff, pendingSessionCount: 0});
     const published = await read(rankPath);
-    for (const key of ["ranking", "verifiedRunsFingerprint", "formsFingerprint", "verifiedRunCount", "totalRanked", "algorithmVersion"]) assert.deepEqual(published[key], expected[key]);
+    // Since story 5.5 CLOSE publishes the frozen versioned calculation (schemaVersion 2). The LS
+    // contract surfaces stay deep-equal to the rebuilt legacy snapshot (rows, counts, algorithm);
+    // the input fingerprints belong to the versioned player-stream-chain basis — format-checked
+    // here ONLY (regex). This rig does not pin their exact values: each rig's cohort is namespaced
+    // to its own run, so no cross-rig pin is possible. The calculation rig pins its OWN event's
+    // fingerprints — contract-digest and formsFingerprint equality plus an independent rebuild of
+    // the player-stream chain over that run's frozen verified inputs.
+    for (const key of ["ranking", "verifiedRunCount", "totalRanked", "algorithmVersion"]) assert.deepEqual(published[key], expected[key]);
+    assert.equal(published.schemaVersion, 2);
+    assert.match(published.verifiedRunsFingerprint, /^[a-f0-9]{64}$/); assert.match(published.formsFingerprint, /^[a-f0-9]{64}$/);
     assert.equal(expected.totalRanked, count); assert.equal(await financialSnapshot(), financialBefore);
     passed("all-admissions-retained-and-published-ranking-matches-unchanged-full-cohort-LS", {verifiedRuns: expected.verifiedRunCount, rankedPlayers: expected.totalRanked});
     assert.deepEqual(await controller().prepare(names.author, prepareRequest), prepared);

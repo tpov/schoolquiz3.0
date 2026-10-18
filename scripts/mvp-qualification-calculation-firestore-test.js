@@ -44,7 +44,8 @@ async function execute() {
   const {QUALIFICATION_RANKINGS, selectQualificationCalculation} = require("/repo/functions/tournament-qualification-freeze");
   const {advanceQualificationScan, readCompleteQualificationManifest, scanPath} = require("/repo/functions/tournament-qualification-scan");
   const {advanceQualificationCalculation} = require("/repo/functions/tournament-qualification-calculation");
-  const {VERSIONS} = require("/repo/functions/tournament-qualification-compact");
+  const compact = require("/repo/functions/tournament-qualification-compact");
+  const {VERSIONS} = compact;
   const {tournamentDigest: digest} = require("/repo/functions/tournament-bank");
   const {LEDGER_PATH} = require("/repo/functions/currency-ledger");
   const app = admin.initializeApp({projectId: plan.privateProject}, `qualification-harness-${randomUUID()}`);
@@ -85,7 +86,9 @@ async function execute() {
     const ownSession = [P.sessions, VERIFIED_RUNS].includes(parts[0]) && sessions.has(parts[1]);
     const ownAccount = ["users", "premium_accounts"].includes(parts[0]) && owners.has(parts[1]);
     const ownLedger = path.startsWith(`${LEDGER_PATH}/`) && owners.has(value?.uid) && path === `${LEDGER_PATH}/${value.id}` && value.id.startsWith(`${value.uid}_`);
-    const exact = [rankPath, preparationPath, sourceBankPath, fundingPath].includes(path) || operationPaths.has(path) || sessionOperationPaths.has(path);
+    // Story 5.3 CREATE mints the competition-link digest document (course_tournament_links/{eventId});
+    // this scope allowlist predates that story — the event's own link document is fixture-owned.
+    const exact = [rankPath, preparationPath, sourceBankPath, fundingPath, `${P.links}/${names.event}`].includes(path) || operationPaths.has(path) || sessionOperationPaths.has(path);
     assert.ok(ownEvent || ownSession || ownAccount || ownLedger || exact, `Out-of-fixture write refused: ${path}`);
     if ([P.operations, SESSION_OPERATIONS].includes(parts[0])) assert.ok(owners.has(value.uid), "Operation owner must be synthetic");
     if (value?.eventId !== undefined) assert.equal(value.eventId, names.event, "Cross-event record refused");
@@ -293,6 +296,37 @@ async function execute() {
     assert.equal(published.totalRanked, count); assert.equal(published.schemaVersion, 2);
     assert.deepEqual(published.calculationVersions, VERSIONS); assert.equal(published.freezeFenceId, freezeId);
     assert.equal(published.calculationContractDigest, chosen.contract.contractDigest);
+    // Fix-round pin of the versioned publication to its own frozen input. The player-stream-chain
+    // fingerprint is REBUILT from this run's own frozen verified inputs — the frozen VERIFIED_RUNS
+    // documents, the frozen event forms and the scan manifest digest — by replaying the same pure
+    // compact pipeline production ran (the schema-2 analogue of the buildQualificationRankingSnapshot
+    // rebuild idiom in functions/tournament-qualification-scan.test.js). Stability across the run's
+    // own two executions is proven below: the replayed calculate() must return replayed=true and the
+    // stored ranking document must stay deep-equal to this publication.
+    assert.equal(published.formsFingerprint, chosen.contract.formsFingerprint, "Published forms fingerprint must equal the selected contract's");
+    const frozenRuns = verified.docs.map(doc => doc.data()); const frozenForms = chosen.event.qualificationForms;
+    // Raw projection rows carry exactly the four verified keys; validatePlayer re-derives the
+    // form index from the frozen forms itself, so the rebuild input mirrors production's.
+    const frozenPlayers = [...verified.docs.reduce((acc, doc) => {
+      const run = doc.data(); const formIndex = frozenForms.findIndex(form => form.formId === run.formId);
+      assert.ok(formIndex >= 0, `Verified run form ${run.formId} is not a frozen event form`);
+      if (!acc.has(run.uid)) acc.set(run.uid, {userId: run.uid, results: []});
+      acc.get(run.uid).results.push({row: {formId: run.formId, percent: run.percentScore,
+        elapsedMs: run.elapsedMs, completedAtMs: run.completedAtMs}, formIndex});
+      return acc;
+    }, new Map()).values()].map(player => ({userId: player.userId,
+      results: player.results.sort((a, b) => a.formIndex - b.formIndex).map(row => row.row)}))
+      .sort((a, b) => (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0));
+    const scanHead = await read(scanRoot); assert.equal(scanHead.manifestDigest, published.scanManifestDigest);
+    let reduction = compact.createReduction({formIds: frozenForms.map(form => form.formId),
+      cohortFingerprint: scanHead.manifestDigest, expectedPlayers: frozenPlayers.length, expectedRuns: frozenRuns.length});
+    for (let i = 0; i < frozenPlayers.length; i += 50) reduction = compact.reducePage(reduction, frozenPlayers.slice(i, i + 50));
+    const solution = compact.solve(reduction);
+    let projection = compact.createTop16(solution);
+    for (let i = 0; i < frozenPlayers.length; i += 50) projection = compact.mergeTop16(projection, solution, frozenPlayers.slice(i, i + 50));
+    const rebuilt = compact.finishTop16(projection);
+    assert.equal(published.verifiedRunsFingerprint, rebuilt.inputFingerprint, "Published player-stream-chain fingerprint must rebuild from the frozen verified inputs");
+    assert.deepEqual(published.ranking, rebuilt.ranking);
     assert.match(published.verifiedRunsFingerprint, /^[a-f0-9]{64}$/); assert.equal(await financialSnapshot(), financialBefore);
     passed("full-versioned-cohort-published-with-independent-equal-score-tie-oracle", {verifiedRuns: published.verifiedRunCount, rankedPlayers: published.totalRanked});
     assert.deepEqual(await controller().prepare(names.author, prepareRequest), prepared);

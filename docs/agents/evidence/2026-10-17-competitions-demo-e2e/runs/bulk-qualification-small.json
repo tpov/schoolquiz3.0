@@ -1,0 +1,66 @@
+{"stage":"verified-private-demo-before-writes","runId":"qs_022a082c186f43f5a93ebdb7eac8a636","case":"small","plan":{"kind":"TRUSTED_FIRESTORE_SDK_NOT_HTTP","case":"small","playerCount":2,"rounds":3,"attempts":6,"createOnlySeedDocuments":91,"approximateAttemptDerivedDocuments":156,"maxWrittenPaths":400,"authAccounts":0,"cleanup":false,"privateProject":"demo-schoolquiz-mvp","privateHost":"schoolquiz-mvp-firebase:8080","note":"Large requires separate approval after small PASS. No execution without --execute and exact QS_APPROVED_CASE."},"harnessSha256":"081c11f7ada5cc5ebac0202931da149aacdf2f16f6f70ec405c72b1f68bf7ea2","mountedSourceSha256":{"course-tournament-controller.js":"ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b","tournament-qualification-scan.js":"683b1c007a3426f2e346ef839c77738dd53f40ef61dcced6095e47ed6ce89cb8","tournament-qualification.js":"778d3e67174f2a09fece7ce587694747772d9abc69287a97886819b7758b9adb","tournament-ranking.js":"0ca1ad03006cadd95c0a6caa914a1f74a2ae762715d3cb2d04aec3f5243ace78"}}
+{"stage":"create-only-owned-seed","runId":"qs_022a082c186f43f5a93ebdb7eac8a636","documents":91}
+{"stage":"all-own-admissions-created-before-own-cutoff","runId":"qs_022a082c186f43f5a93ebdb7eac8a636","admissions":6}
+{"stage":"actual-sdk-chunk-abort-is-atomic","runId":"qs_022a082c186f43f5a93ebdb7eac8a636"}
+{"stage":"actual-sdk-proof-abort-preserves-settled-session-and-pending-query-cursor","runId":"qs_022a082c186f43f5a93ebdb7eac8a636"}
+{"stage":"actual-sdk-publication-abort-leaves-no-partial-ranking-or-bracket","runId":"qs_022a082c186f43f5a93ebdb7eac8a636"}
+{"stage":"own-controller-continuation","runId":"qs_022a082c186f43f5a93ebdb7eac8a636","call":4,"status":"WAITING","admitted":6,"verified":6,"rankingPublished":true,"bracket":true}
+{"stage":"all-admissions-retained-and-published-ranking-matches-unchanged-full-cohort-LS","runId":"qs_022a082c186f43f5a93ebdb7eac8a636","verifiedRuns":6,"rankedPlayers":2}
+{"stage":"same-operations-and-controller-replay-preserve-ranking-and-all-financial-documents","runId":"qs_022a082c186f43f5a93ebdb7eac8a636"}
+{
+  "status": "PASS",
+  "kind": "TRUSTED_FIRESTORE_SDK_NOT_HTTP",
+  "runId": "qs_022a082c186f43f5a93ebdb7eac8a636",
+  "names": {
+    "catalog": "qs_022a082c186f43f5a93ebdb7eac8a636_catalog",
+    "course": "qs_022a082c186f43f5a93ebdb7eac8a636_course",
+    "section": "qs_022a082c186f43f5a93ebdb7eac8a636_section",
+    "theme": "qs_022a082c186f43f5a93ebdb7eac8a636_theme",
+    "lesson": "qs_022a082c186f43f5a93ebdb7eac8a636_lesson",
+    "submission": "qs_022a082c186f43f5a93ebdb7eac8a636_submission",
+    "event": "qs_022a082c186f43f5a93ebdb7eac8a636_event",
+    "author": "qs_022a082c186f43f5a93ebdb7eac8a636_author",
+    "prepare": "qs_022a082c186f43f5a93ebdb7eac8a636_prepare",
+    "create": "qs_022a082c186f43f5a93ebdb7eac8a636_create"
+  },
+  "case": "small",
+  "checks": [
+    "create-only-owned-seed",
+    "all-own-admissions-created-before-own-cutoff",
+    "actual-sdk-chunk-abort-is-atomic",
+    "actual-sdk-proof-abort-preserves-settled-session-and-pending-query-cursor",
+    "actual-sdk-publication-abort-leaves-no-partial-ranking-or-bracket",
+    "all-admissions-retained-and-published-ranking-matches-unchanged-full-cohort-LS",
+    "same-operations-and-controller-replay-preserve-ranking-and-all-financial-documents"
+  ],
+  "trace": {
+    "transactions": 104,
+    "queryReads": 23,
+    "pendingQueries": 7,
+    "pendingCursorQueries": 3,
+    "injectedAborts": [
+      "CHUNK",
+      "PROOF",
+      "PUBLISH"
+    ],
+    "scanCalls": 4
+  },
+  "resource": {
+    "elapsedMs": 8925,
+    "heapUsedBytes": 49707136,
+    "rssBytes": 145207296,
+    "peakRssKiB": 142024
+  },
+  "createdSeedDocuments": 91,
+  "distinctCommittedPaths": 289,
+  "retainedFixture": true,
+  "financialDigest": "3f9a13bde5613ac0ba72b7b767f5a1fddd186d962f6228470f214ac7c5b362b1",
+  "rankingInputFingerprint": "f2294812c9247284af42349b695357dcd5f295c23d9263164f879eb4495adec1",
+  "harnessSha256": "081c11f7ada5cc5ebac0202931da149aacdf2f16f6f70ec405c72b1f68bf7ea2",
+  "mountedSourceSha256": {
+    "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
+    "tournament-qualification-scan.js": "683b1c007a3426f2e346ef839c77738dd53f40ef61dcced6095e47ed6ce89cb8",
+    "tournament-qualification.js": "778d3e67174f2a09fece7ce587694747772d9abc69287a97886819b7758b9adb",
+    "tournament-ranking.js": "0ca1ad03006cadd95c0a6caa914a1f74a2ae762715d3cb2d04aec3f5243ace78"
+  }
+}

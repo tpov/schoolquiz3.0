@@ -106,7 +106,19 @@ async function main() {
   const hub = await fetch(`http://${HOST}:4400/emulators`, {signal: AbortSignal.timeout(15_000)});
   assert.equal(hub.status, 200);
   const running = await hub.json();
-  assert.equal(running.auth.port, 9099); assert.equal(running.firestore.port, 8080); assert.equal(running.functions.port, 5001);
+  // Rig topology (2026-10-18): auth+firestore run as one emulator process — the hub above is
+  // theirs; functions runs as a second process with its own hub. Functions identity, not merely
+  // "some server 404s on :5001": the emulator's unknown-function probe enumerates exactly the
+  // deployed callables; the mounted code itself is then proven by its own UNAUTHENTICATED
+  // denials on every scoped callable (next line). Residual: a foreign server imitating both the
+  // 404 listing and the denial shape would pass — accepted, nothing secret is at stake pre-auth.
+  assert.equal(running.auth.port, 9099); assert.equal(running.firestore.port, 8080);
+  const unknown = await fetch(`http://${HOST}:5001/${PROJECT}/us-central1/noSuchCallable`, {signal: AbortSignal.timeout(15_000)});
+  assert.equal(unknown.status, 404);
+  const listed = await unknown.text();
+  for (const endpoint of endpoints) {
+    assert.ok(listed.includes(`us-central1-${endpoint}`), `Scoped callable not deployed on the rig: ${endpoint}`);
+  }
   evidence.mountedSourceShas = Object.fromEntries(["index.js", "course-tournament-controller.js", "tournament-service.js", "tournament-source-bank.js"]
     .map((file) => [file, createHash("sha256").update(readFileSync(`/repo/functions/${file}`)).digest("hex")]));
   progress("target-verified-private-demo");
