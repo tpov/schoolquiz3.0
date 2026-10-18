@@ -138,4 +138,4 @@ waits = [
   "hitl: device proof of disconnect/resume",
 ]
 hitl = true
-status = "blocked" # hitl + after 4.6 (hitl)
+status = "blocked" # 2026-10-18 ночь: риг готов — тестер-роль на Samsung доказана (admin write qualifications.tester=1, очередь «Перевірка» рендерится), авторинг-форма работает; остался авторский квест с подачей на проверку (если у автора нет перехода «На перевірку» — тот же класс пробела проводки, что 7.4) — evidence docs/agents/evidence/2026-10-18-samsung-social/review-rig/; до этого — hitl + after 4.6 (hitl)
