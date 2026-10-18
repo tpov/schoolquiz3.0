@@ -1,0 +1,18 @@
+
+================= aovqcJfVuVNeGlbuPbwNXxY2R9n1 =================
+
+-- users/{uid} (экономика) --
+  ДОКУМЕНТА НЕТ — пользователь ещё не читал экономику
+
+-- purchase_settlements (расчёты покупок) --
+  пусто
+
+-- users/{uid}/receipts (чеки в приложении, story 5.4) --
+  пусто
+
+-- purchase_notifications (RTDN-поток) --
+  для этого uid пусто (testNotification uid не несёт — см. полный дамп ниже)
+
+-- audit/currency_ledger/entries (золотой журнал) --
+  пусто
+
