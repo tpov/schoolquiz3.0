@@ -4,6 +4,7 @@ title: "Store, premium, boxes, purchases and refunds"
 parent: mvp-candidate
 covers: [CAP-13, CAP-14, CAP-15]
 after: ["epic-candidate-rig", "epic-ordinary-delivery"]
+status: merged
 assignee: ""
 risk: high
 estimate: ""
@@ -42,6 +43,11 @@ Commerce surfaces and purchase integrity. Not wallet projections/history (epic-s
 
 ## Notes
 
+- Built on night/e7-commerce and fast-forward merged into night/e5-inception on
+  2026-10-19 (merge point f57bec47, zero conflicts — e5 unmoved since the branch point);
+  evidence: docs/agents/evidence/2026-10-19-epic7-merge/. Functions gate at merge: 124/124.
+  7.1 Play inventory resolved by the owner during the run; 7.6 sandbox matrix device cases
+  remain declared-open per the spec success signal (BillingClient blocker documented by the run).
 - Open question: OQ-5 device/Play inventory gates real sandbox cases; unavailable Play checks stay explicitly unfinished per the spec's success signal.
 - Waits on epic 1 because: purchases need the identified candidate and device inventory.
 - Waits on epic 2 because: CAP-16 config consistency and receipt foundations are prerequisites.
