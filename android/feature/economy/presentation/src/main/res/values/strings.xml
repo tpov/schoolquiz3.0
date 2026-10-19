@@ -45,6 +45,11 @@
 
     <!-- Store: beta shelf -->
     <string name="shop_section_in_beta">In beta</string>
+    <string name="shop_premium_section">Premium</string>
+    <string name="shop_premium_active_until">Active until %1$s</string>
+    <string name="shop_premium_inactive">Not active</string>
+    <string name="shop_premium_gift_available">Daily gift is ready — claim it on the home screen</string>
+    <string name="shop_premium_gift_tomorrow">Daily gift claimed — a new one tomorrow</string>
     <string name="shop_chip_beta">Beta</string>
     <string name="shop_beta_tournaments">Tournaments</string>
     <string name="shop_beta_minigames">Mini-games</string>

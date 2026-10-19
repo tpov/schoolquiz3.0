@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
@@ -74,6 +76,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.quest.presentation.ContinueLessonUi
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeGiftBoxFailure
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeGiftBoxOpeningState
+import com.tpov.schoolquiz.android.feature.quest.presentation.HomePremiumGiftState
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.LessonSegmentUi
@@ -104,6 +107,7 @@ fun HomeQuestsScreen(
         onContinueClick = component::onContinueClick,
         onGiftBoxFabClick = component::onGiftBoxFabClick,
         onGiftBoxDismiss = component::onGiftBoxDismiss,
+        onPremiumGiftClaim = component::onPremiumGiftClaim,
         canManagePublicShelves = canManagePublicShelves,
         onAddPublicQuestClick = onAddPublicQuestClick,
         modifier = modifier,
@@ -117,6 +121,7 @@ private fun HomeQuestsContent(
     onContinueClick: () -> Unit,
     onGiftBoxFabClick: () -> Unit,
     onGiftBoxDismiss: () -> Unit,
+    onPremiumGiftClaim: () -> Unit,
     canManagePublicShelves: Boolean,
     onAddPublicQuestClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -146,18 +151,32 @@ private fun HomeQuestsContent(
                 )
         }
 
-        if ((state.giftBoxCount > 0 || state.hasPendingGiftBoxOpening) &&
-            state.giftBoxOpening !is HomeGiftBoxOpeningState.Opening
+        Column(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            GiftBoxFab(
-                count = state.giftBoxCount,
-                pending = state.hasPendingGiftBoxOpening,
-                onClick = onGiftBoxFabClick,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(24.dp),
-            )
+            if (state.premiumGift != HomePremiumGiftState.Hidden) {
+                PremiumGiftButton(
+                    state = state.premiumGift,
+                    onClick = onPremiumGiftClaim,
+                )
+            }
+            if ((state.giftBoxCount > 0 || state.hasPendingGiftBoxOpening) &&
+                state.giftBoxOpening !is HomeGiftBoxOpeningState.Opening
+            ) {
+                GiftBoxFab(
+                    count = state.giftBoxCount,
+                    pending = state.hasPendingGiftBoxOpening,
+                    onClick = onGiftBoxFabClick,
+                )
+            }
+            if (state.giftBoxStreakDays > 0) {
+                StreakBadge(days = state.giftBoxStreakDays)
+            }
         }
         if (canManagePublicShelves) {
             AddPublicQuestFab(
@@ -310,6 +329,76 @@ private fun AddPublicQuestFab(
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = stringResource(R.string.quest_cd_add_quest),
+        )
+    }
+}
+
+/**
+ * «Получить подарок» — явная заявка суточного премиального бонуса, без рекламы.
+ *
+ * Вход в приложение этот подарок не забирает; три состояния кнопки — слова сервера о сроке и
+ * суточном слоте, а окончательное слово за заявкой: сервер отвечает DAILY_LIMIT или
+ * PREMIUM_REQUIRED, и состояние пересчитается со свежим словом профиля.
+ */
+@Composable
+private fun PremiumGiftButton(
+    state: HomePremiumGiftState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalNoirAccent.current
+    val enabled = state is HomePremiumGiftState.Available
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = accent,
+                contentColor = NoirInk,
+                disabledContainerColor = NoirBgDeep,
+                disabledContentColor = NoirT2,
+            ),
+    ) {
+        Icon(
+            imageVector = Icons.Default.WorkspacePremium,
+            contentDescription = stringResource(R.string.quest_cd_premium_gift),
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text =
+                stringResource(
+                    when (state) {
+                        HomePremiumGiftState.InFlight -> R.string.quest_premium_gift_in_flight
+                        HomePremiumGiftState.ClaimedToday -> R.string.quest_premium_gift_claimed
+                        else -> R.string.quest_premium_gift_claim
+                    },
+                ),
+            style = NoirType.button.copy(fontSize = 13.sp),
+        )
+    }
+}
+
+/** Серия визитов рядом с коробками — то самое число, что растёт по суткам от слова сервера. */
+@Composable
+private fun StreakBadge(
+    days: Int,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalNoirAccent.current
+    Box(
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(999.dp))
+                .background(NoirBgDeep)
+                .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(999.dp))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.quest_gift_streak_label, days),
+            style = NoirType.num.copy(color = accent, fontSize = 11.sp, fontWeight = FontWeight.Bold),
         )
     }
 }

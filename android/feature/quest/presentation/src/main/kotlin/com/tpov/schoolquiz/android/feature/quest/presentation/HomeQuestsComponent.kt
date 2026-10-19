@@ -26,6 +26,9 @@ interface HomeQuestsComponent {
     fun onGiftBoxFabClick() = Unit
 
     fun onGiftBoxDismiss() = Unit
+
+    /** Явная заявка суточного премиального подарка; вход в приложение её не зовёт. */
+    fun onPremiumGiftClaim() = Unit
 }
 
 /**
@@ -40,6 +43,8 @@ data class HomeQuestsUiState(
     val giftBoxStreakDays: Int = 0,
     val giftBoxOpening: HomeGiftBoxOpeningState? = null,
     val hasPendingGiftBoxOpening: Boolean = false,
+    /** Серверное слово о суточном подарке премиума, названное типом кнопки. */
+    val premiumGift: HomePremiumGiftState = HomePremiumGiftState.Hidden,
     /** The lesson the player was last mid-way through, or null when there is nothing to resume. */
     val continueLesson: ContinueLessonUi? = null,
 )
@@ -79,6 +84,23 @@ sealed interface HomeGiftBoxOpeningState {
         val remainingBoxCount: Int,
         val openingId: String? = null,
     ) : HomeGiftBoxOpeningState
+}
+
+/**
+ * Кнопка «Получить подарок» — типы поверх серверных слов, не решение за сервер.
+ *
+ * Hidden — премиума нет вовсе; Available — срок активен и суточный слот свободен по слову
+ * сервера; ClaimedToday — слот занят до конца суток; InFlight — намерение лежит на устройстве и
+ * повтор не создаёт второй операции. Всё перепроверяется сервером в момент самой заявки.
+ */
+sealed interface HomePremiumGiftState {
+    data object Hidden : HomePremiumGiftState
+
+    data object Available : HomePremiumGiftState
+
+    data object InFlight : HomePremiumGiftState
+
+    data object ClaimedToday : HomePremiumGiftState
 }
 
 /**

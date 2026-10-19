@@ -44,6 +44,11 @@
 
     <!-- Store: beta shelf -->
     <string name="shop_section_in_beta">В бете</string>
+    <string name="shop_premium_section">Премиум</string>
+    <string name="shop_premium_active_until">Активен до %1$s</string>
+    <string name="shop_premium_inactive">Не активен</string>
+    <string name="shop_premium_gift_available">Суточный подарок готов — заберите его на главном экране</string>
+    <string name="shop_premium_gift_tomorrow">Суточный подарок забран — новый завтра</string>
     <string name="shop_chip_beta">Beta</string>
     <string name="shop_beta_tournaments">Турниры</string>
     <string name="shop_beta_minigames">Мини-игры</string>

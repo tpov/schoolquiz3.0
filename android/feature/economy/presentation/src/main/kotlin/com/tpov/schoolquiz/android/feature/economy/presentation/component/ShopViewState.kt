@@ -24,8 +24,31 @@ data class ShopViewState(
     val receipts: List<EconomyReceipt> = emptyList(),
     /** Что магазин ответил о товарах за реальные деньги: строки паков объясняют свой замок сами. */
     val storeShelf: StoreShelfStatus = StoreShelfStatus.LOADING,
+    /** Серверное слово о премиуме (7.3, клиентская половина): сроки и доступность подарка. */
+    val premium: PremiumSurfaceState = PremiumSurfaceState(),
     val nicknames: NicknameShopState = NicknameShopState(),
 )
+
+/**
+ * Премиальная поверхность — типы поверх серверных полей, не решение за сервер.
+ *
+ * `activeUntilMs` и `dailyGiftAvailableAtMs` приходят словом сервера (`premiumUntilMs`,
+ * `nextBonusBoxAtMs`); экран называет ими состояния — активен/истёк и «подарок доступен/завтра» —
+ * и ничего не решает о выдаче: суточный подарок перепроверяется сервером в момент заявки, а
+ * доступность здесь — презентация. Ожидание покупки/возврата остаётся на полке и в квитанциях,
+ * где оно уже различимо словами (7.2 device-proven).
+ */
+data class PremiumSurfaceState(
+    val activeUntilMs: Long = 0L,
+    val dailyGiftAvailableAtMs: Long = 0L,
+) {
+    /** Ноль означает, что слова ещё не было: счёт вёлся на сервере, клиент его не придумывает. */
+    fun activeAt(nowMs: Long): Boolean = activeUntilMs > nowMs
+
+    /** Подарок доступен только активному премиуму и только когда суточный слот свободен. */
+    fun dailyGiftAvailableAt(nowMs: Long): Boolean =
+        activeAt(nowMs) && (dailyGiftAvailableAtMs == 0L || nowMs >= dailyGiftAvailableAtMs)
+}
 
 /**
  * Чем закончился вопрос к магазину о ценах.

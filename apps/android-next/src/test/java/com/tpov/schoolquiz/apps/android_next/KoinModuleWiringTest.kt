@@ -107,9 +107,15 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimKind
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.BillingRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxLocalStreakStore
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftClaimRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftClaimRequest
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.LocalBoxStreak
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.PurchaseVerifier
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.ServerBalanceRefresher
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.BuyGoldPackUseCase
@@ -572,6 +578,27 @@ class KoinModuleWiringTest : KoinTest {
                 object : GiftBoxRepository {
                     override suspend fun openGiftBox(): Result<GiftBoxOpening> =
                         Result.failure(IllegalStateException("No gift boxes available"))
+                }
+            }
+            // Заявки подарков 7.4: экономика их домен строит над портом; граф корня обязан уметь
+            // собрать входную синхронизацию серии и кнопку суточного подарка.
+            single<GiftClaimRepository> {
+                object : GiftClaimRepository {
+                    override suspend fun submit(request: GiftClaimRequest): Result<GiftClaimOutcome> =
+                        Result.failure(IllegalStateException("not expected"))
+
+                    override suspend fun resumePending(kind: GiftClaimKind): Result<GiftClaimOutcome>? = null
+
+                    override fun observePending(kind: GiftClaimKind) = flowOf(false)
+                }
+            }
+            single<GiftBoxLocalStreakStore> {
+                object : GiftBoxLocalStreakStore {
+                    override suspend fun find(ownerUid: String): LocalBoxStreak? = null
+
+                    override suspend fun save(ownerUid: String, value: LocalBoxStreak) = Unit
+
+                    override suspend fun forget(ownerUid: String) = Unit
                 }
             }
             single<LessonRunnerComponentFactory> {

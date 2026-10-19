@@ -66,6 +66,17 @@ data class UserProfile(
      */
     val isVerified: Boolean get() = TROPHY_VERIFIED in trophies
 
+    /** Срок премиума активен в момент [nowMs] — презентация; сервер перепроверяет при выдаче. */
+    fun premiumActiveAt(nowMs: Long): Boolean = premiumUntilMs > nowMs
+
+    /**
+     * Суточный слот подарка свободен: слово сервера ещё не приходило или окно уже истекло.
+     *
+     * Сутки считаются от [nextBonusBoxAtMs] по серверному времени; локальная полночь и календарь
+     * в решении не участвуют. Итог за сервером: заявка отвечает DAILY_LIMIT, если слот занят.
+     */
+    fun dailyGiftFreeAt(nowMs: Long): Boolean = nextBonusBoxAtMs == 0L || nowMs >= nextBonusBoxAtMs
+
     /** Ceiling: every owned heart slot holds [LIFE_POINTS_PER_HEART] points. */
     val maxLifePoints: Int get() = standardHearts * LIFE_POINTS_PER_HEART
 

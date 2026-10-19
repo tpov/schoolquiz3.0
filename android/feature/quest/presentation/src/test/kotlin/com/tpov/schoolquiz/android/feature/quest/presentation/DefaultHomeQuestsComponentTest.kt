@@ -22,9 +22,19 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxFailureRea
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpeningException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimKind
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimOutcome
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimStatus
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PendingGiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxLocalStreakStore
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftClaimRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftClaimRequest
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.LocalBoxStreak
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ClaimPremiumDailyGiftUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SyncBoxStreakUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
@@ -33,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -79,28 +90,98 @@ class DefaultHomeQuestsComponentTest {
         return DefaultComponentContext(lifecycle)
     }
 
+    private val day = 24L * 60 * 60 * 1000
+    private val now = MutableStateFlow(10_000L * day)
+
     private fun buildComponent(
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
         profileRepo: FakeProfileRepository = FakeProfileRepository(),
         giftBoxRepo: FakeGiftBoxRepository = FakeGiftBoxRepository(),
         authRepo: FakeAuthRepository = FakeAuthRepository(),
+        claimRepo: FakeGiftClaimRepository = FakeGiftClaimRepository(),
         onCatalogDrillDown: (CatalogId, String) -> Unit = { _, _ -> },
         onResumeLesson: (LessonId) -> Unit = {},
-    ) = DefaultHomeQuestsComponent(
-        componentContext = testCtx(),
-        observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
-        observeProfile = ObserveCurrentProfileUseCase(profileRepo),
-        openGiftBoxUseCase = OpenGiftBoxUseCase(giftBoxRepo),
-        onCatalogDrillDown = onCatalogDrillDown,
-        onResumeLesson = onResumeLesson,
-        attemptRepository = FakeLessonAttemptRepository(),
-        lessonRepository = FakeLessonRepository(),
-        themeRepository = FakeThemeRepository(),
-        sectionRepository = FakeSectionRepository(),
-        questRepository = FakeQuestRepository(),
-        authRepository = authRepo,
-        mainContext = testDispatcher,
-    )
+    ): DefaultHomeQuestsComponent {
+        val claims = GiftClaimPort(claimRepo, profileRepo)
+        return DefaultHomeQuestsComponent(
+            componentContext = testCtx(),
+            observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+            observeProfile = ObserveCurrentProfileUseCase(profileRepo),
+            openGiftBoxUseCase = OpenGiftBoxUseCase(giftBoxRepo),
+            syncBoxStreak =
+                SyncBoxStreakUseCase(
+                    claims = claims,
+                    profileRepository = profileRepo,
+                    localStreak = FakeLocalStreakStore(),
+                    network = onlineMonitor(),
+                    currentUidFlow = { flowOf("A") },
+                    clock = { now.value },
+                ),
+            claimPremiumDailyGift = ClaimPremiumDailyGiftUseCase(claims),
+            onCatalogDrillDown = onCatalogDrillDown,
+            onResumeLesson = onResumeLesson,
+            attemptRepository = FakeLessonAttemptRepository(),
+            lessonRepository = FakeLessonRepository(),
+            themeRepository = FakeThemeRepository(),
+            sectionRepository = FakeSectionRepository(),
+            questRepository = FakeQuestRepository(),
+            authRepository = authRepo,
+            mainContext = testDispatcher,
+            nowMs = { now.value },
+        )
+    }
+
+    private fun onlineMonitor() =
+        object : NetworkMonitor {
+            override fun observeOnline(): Flow<Boolean> = flowOf(true)
+
+            override suspend fun isOnline() = true
+        }
+
+    /** Общий порт заявок: и репозиторий в use-cases, и счётчик того, что нажал экран. */
+    private class GiftClaimPort(
+        private val fake: FakeGiftClaimRepository,
+        private val profileRepo: FakeProfileRepository,
+    ) : GiftClaimRepository by fake {
+        override suspend fun submit(request: GiftClaimRequest): Result<GiftClaimOutcome> {
+            fake.submits += request.kind
+            return Result.success(outcome(request.kind))
+        }
+
+        private fun outcome(kind: GiftClaimKind) =
+            GiftClaimOutcome(
+                kind,
+                if (kind == GiftClaimKind.PREMIUM_DAILY) GiftClaimStatus.CLAIMED else GiftClaimStatus.NO_CHANGE,
+                replayed = false,
+                boxCount = profileRepo.state.value.boxCount + 1,
+                boxStreakDays = profileRepo.state.value.boxStreakDays,
+                nextBoxAtMs = profileRepo.state.value.nextBoxAtMs,
+                nextBonusBoxAtMs = profileRepo.state.value.nextBonusBoxAtMs,
+                earnedBoxes = 1,
+                premiumUntilMs = profileRepo.state.value.premiumUntilMs,
+            )
+    }
+
+    private class FakeGiftClaimRepository : GiftClaimRepository {
+        val submits = mutableListOf<GiftClaimKind>()
+        val pending = MutableStateFlow(false)
+
+        override suspend fun submit(request: GiftClaimRequest) = Result.success(
+            GiftClaimOutcome(request.kind, GiftClaimStatus.CLAIMED, false, 1, 2, 3, 4, 1, 5),
+        )
+
+        override suspend fun resumePending(kind: GiftClaimKind): Result<GiftClaimOutcome>? = null
+
+        override fun observePending(kind: GiftClaimKind): Flow<Boolean> = pending
+    }
+
+    private class FakeLocalStreakStore : GiftBoxLocalStreakStore {
+        override suspend fun find(ownerUid: String): LocalBoxStreak? = null
+
+        override suspend fun save(ownerUid: String, value: LocalBoxStreak) = Unit
+
+        override suspend fun forget(ownerUid: String) = Unit
+    }
 
     // ── AC#21 — catalogs from repository appear in state ─────────────────────
 
@@ -333,6 +414,121 @@ class DefaultHomeQuestsComponentTest {
             assertEquals(0, repo.opens)
         }
 
+    // ── 7.4: кнопка «Получить подарок» — типы поверх серверных слов ──────────
+
+    private fun premiumProfile(
+        untilMs: Long,
+        nextBonusAtMs: Long,
+    ) = UserProfile.offline().copy(premiumUntilMs = untilMs, nextBonusBoxAtMs = nextBonusAtMs)
+
+    @Test
+    fun `premium gift is available when the term is active and the daily slot is free`() =
+        runTest {
+            val profileRepo =
+                FakeProfileRepository(premiumProfile(untilMs = now.value + day, nextBonusAtMs = 0L))
+            val component = buildComponent(profileRepo = profileRepo)
+
+            assertEquals(HomePremiumGiftState.Available, component.state.value.premiumGift)
+        }
+
+    @Test
+    fun `claimed slot reads as claimed today and expired term hides the button`() =
+        runTest {
+            val claimed =
+                buildComponent(
+                    profileRepo =
+                        FakeProfileRepository(premiumProfile(untilMs = now.value + day, nextBonusAtMs = now.value + 1)),
+                )
+            assertEquals(HomePremiumGiftState.ClaimedToday, claimed.state.value.premiumGift)
+
+            val hidden =
+                buildComponent(
+                    profileRepo = FakeProfileRepository(premiumProfile(untilMs = now.value - 1, nextBonusAtMs = 0L)),
+                )
+            assertEquals(HomePremiumGiftState.Hidden, hidden.state.value.premiumGift)
+        }
+
+    @Test
+    fun `pending intent reads as in flight and the second tap sends nothing new`() =
+        runTest {
+            val claimRepo = FakeGiftClaimRepository()
+            claimRepo.pending.value = true
+            val component =
+                buildComponent(
+                    profileRepo = FakeProfileRepository(premiumProfile(untilMs = now.value + day, nextBonusAtMs = 0L)),
+                    claimRepo = claimRepo,
+                )
+
+            assertEquals(HomePremiumGiftState.InFlight, component.state.value.premiumGift)
+
+            val premium = { claimRepo.submits.count { it == GiftClaimKind.PREMIUM_DAILY } }
+            component.onPremiumGiftClaim()
+            assertEquals(0, premium(), "пока намерение не решено, новый тап не заявляет")
+        }
+
+    @Test
+    fun `tap from available state sends exactly one premium claim`() =
+        runTest {
+            val claimRepo = FakeGiftClaimRepository()
+            val component =
+                buildComponent(
+                    profileRepo = FakeProfileRepository(premiumProfile(untilMs = now.value + day, nextBonusAtMs = 0L)),
+                    claimRepo = claimRepo,
+                )
+            testScheduler.advanceUntilIdle()
+
+            component.onPremiumGiftClaim()
+            testScheduler.advanceUntilIdle()
+            val premium = { claimRepo.submits.count { it == GiftClaimKind.PREMIUM_DAILY } }
+            assertEquals(1, premium(), "входная синхронизации серии здесь не в счёт — только явная заявка")
+
+            // После CLAIMED профиль перечитан репозиторием; здесь слово ещё прежнее, поэтому
+            // повторный тап из доступного состояния уезжает тем же намерением — второй операции
+            // не создаёт ни клиент (одно активное намерение), ни сервер (забор по operationId).
+            component.onPremiumGiftClaim()
+            testScheduler.advanceUntilIdle()
+            assertEquals(2, premium())
+        }
+
+    @Test
+    fun `hidden button never claims even on a stale tap`() =
+        runTest {
+            val claimRepo = FakeGiftClaimRepository()
+            val component =
+                buildComponent(
+                    profileRepo = FakeProfileRepository(premiumProfile(untilMs = now.value - 1, nextBonusAtMs = 0L)),
+                    claimRepo = claimRepo,
+                )
+            testScheduler.advanceUntilIdle()
+
+            component.onPremiumGiftClaim()
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(
+                0,
+                claimRepo.submits.count { it == GiftClaimKind.PREMIUM_DAILY },
+                "нет премиума — нет и заявки, даже если входная синхронизация серии отработала",
+            )
+        }
+
+    @Test
+    fun `returning to the screen re-runs the entry streak sync`() =
+        runTest {
+            val claimRepo = FakeGiftClaimRepository()
+            val component = buildComponent(claimRepo = claimRepo)
+            testScheduler.advanceUntilIdle()
+            val afterFirstEntry = claimRepo.submits.size
+
+            lifecycle.stop()
+            lifecycle.resume()
+            testScheduler.advanceUntilIdle()
+
+            assertTrue(
+                claimRepo.submits.size > afterFirstEntry,
+                "каждый вход на главный экран начинается с синхронизации серии",
+            )
+        }
+
     @Test
     fun `component destruction never acknowledges an undisplayed or shown result`() =
         runTest {
@@ -354,7 +550,7 @@ class DefaultHomeQuestsComponentTest {
 private class FakeProfileRepository(
     initialProfile: UserProfile = UserProfile.offline(),
 ) : ProfileRepository {
-    private val state = MutableStateFlow(initialProfile)
+    val state = MutableStateFlow(initialProfile)
 
     override fun observeCurrentProfile(): Flow<UserProfile> = state
 

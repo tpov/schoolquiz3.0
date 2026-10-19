@@ -11,6 +11,11 @@
         <string name="quest_continue">Продовжити</string>
     <string name="quest_continue_progress">%1$d / %2$d</string>
 <string name="quest_cd_open_box">Відкрити коробку</string>
+    <string name="quest_premium_gift_claim">Отримати подарунок</string>
+    <string name="quest_premium_gift_claimed">Подарунок забрано — новий завтра</string>
+    <string name="quest_premium_gift_in_flight">Забираємо подарунок…</string>
+    <string name="quest_cd_premium_gift">Забрати добовий подарунок преміума</string>
+    <string name="quest_gift_streak_label">Серія: %1$d</string>
     <string name="quest_gift_box_title">Коробка</string>
     <string name="quest_close">Закрити</string>
     <string name="quest_opening_in_progress">Відкриваємо…</string>

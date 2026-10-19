@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.quest.presentation
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.arkivanov.essenty.lifecycle.doOnResume
 import com.tpov.schoolquiz.android.core.designsystem.model.toDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
@@ -11,7 +12,10 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxFailureRea
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpeningException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.PendingGiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ClaimPremiumDailyGiftUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SyncBoxStreakUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
@@ -58,6 +62,8 @@ class DefaultHomeQuestsComponent(
     private val observeCatalogs: ObserveCatalogsUseCase,
     private val observeProfile: ObserveCurrentProfileUseCase,
     private val openGiftBoxUseCase: OpenGiftBoxUseCase,
+    private val syncBoxStreak: SyncBoxStreakUseCase,
+    private val claimPremiumDailyGift: ClaimPremiumDailyGiftUseCase,
     private val onCatalogDrillDown: (CatalogId, String) -> Unit,
     private val onResumeLesson: (LessonId) -> Unit,
     private val attemptRepository: LessonAttemptRepository,
@@ -67,12 +73,14 @@ class DefaultHomeQuestsComponent(
     private val questRepository: QuestRepository,
     private val authRepository: AuthRepository,
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
+    private val nowMs: () -> Long = System::currentTimeMillis,
 ) : HomeQuestsComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + mainContext)
     private val giftBoxOpening = MutableStateFlow<HomeGiftBoxOpeningState?>(null)
     private val pendingGiftBox = MutableStateFlow<PendingGiftBoxOpening?>(null)
     private var giftBoxRequest: Job? = null
+    private var streakSync: Job? = null
 
     private val continueLesson = MutableStateFlow<ContinueLessonUi?>(null)
 
@@ -147,11 +155,23 @@ class DefaultHomeQuestsComponent(
                 }
             }
 
+    private val premiumGift =
+        combine(
+            observeProfile(),
+            claimPremiumDailyGift.observePending(),
+        ) { profile, pending ->
+            premiumGiftState(profile, pending)
+        }
+
     override val state =
         combine(
             observeCatalogs(),
             observeProfile(),
-            combine(giftBoxOpening, pendingGiftBox) { opening, pending -> opening to pending },
+            // combine ходит парами до пяти потоков: подарочные состояния свёрнуты заранее.
+            combine(
+                combine(giftBoxOpening, pendingGiftBox) { opening, pending -> opening to pending },
+                premiumGift,
+            ) { opening, gift -> opening to gift },
             continueLesson,
             questCounts,
         ) { catalogs, profile, opening, resume, counts ->
@@ -167,8 +187,9 @@ class DefaultHomeQuestsComponent(
                         },
                 giftBoxCount = profile.boxCount,
                 giftBoxStreakDays = profile.boxStreakDays,
-                giftBoxOpening = opening.first,
-                hasPendingGiftBoxOpening = opening.second != null,
+                giftBoxOpening = opening.first.first,
+                hasPendingGiftBoxOpening = opening.first.second != null,
+                premiumGift = opening.second,
                 continueLesson = resume,
             )
         }
@@ -177,6 +198,22 @@ class DefaultHomeQuestsComponent(
                 started = SharingStarted.Eagerly,
                 initialValue = HomeQuestsUiState(),
             )
+
+    init {
+        lifecycle.doOnDestroy { componentJob.cancel() }
+        // Входная синхронизация серии (7.4): на каждом возврате на главный экран проход
+        // офлайн-заявка → визит → перечитывание начинается заново, пока предыдущий не кончился.
+        lifecycle.doOnResume {
+            if (streakSync?.isActive != true) {
+                streakSync =
+                    scope.launch {
+                        // Смерть процесса между отправкой и ответом закрывает сам репозиторий:
+                        // повтор уезжает тем же operationId раньше любого нового визита.
+                        syncBoxStreak()
+                    }
+            }
+        }
+    }
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
@@ -272,6 +309,24 @@ class DefaultHomeQuestsComponent(
             // An uncertain/invalid receipt stays marked, but must not trap navigation behind an overlay.
         }
     }
+
+    override fun onPremiumGiftClaim() {
+        // Заявка идёт только из доступного состояния; повтор тапа уезжает тем же operationId.
+        if (state.value.premiumGift !is HomePremiumGiftState.Available) return
+        scope.launch { claimPremiumDailyGift() }
+    }
+
+    /** Кнопка из серверных слов: активен ли срок и свободен ли суточный слот. */
+    private fun premiumGiftState(
+        profile: UserProfile,
+        pending: Boolean,
+    ): HomePremiumGiftState =
+        when {
+            pending -> HomePremiumGiftState.InFlight
+            !profile.premiumActiveAt(nowMs()) -> HomePremiumGiftState.Hidden
+            profile.dailyGiftFreeAt(nowMs()) -> HomePremiumGiftState.Available
+            else -> HomePremiumGiftState.ClaimedToday
+        }
 
     override fun onCatalogClick(
         id: CatalogId,

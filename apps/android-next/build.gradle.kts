@@ -55,6 +55,11 @@ android {
         versionCode = 40000
         versionName = "4.0.0"
         buildConfigField("boolean", "MVP_EMULATORS", "false")
+        // Ссылки в AppApplication безусловны (a2298084), поэтому поля обязаны существовать во
+        // всех типах сборки: debug/release получают безопасные значения, mvp — переопределяет их
+        // свойствами прогонa. Без этого assembleDebug и unit-тесты корня не компилировались.
+        buildConfigField("String", "MVP_EMULATOR_HOST", "\"${(project.findProperty("mvpEmulatorHost") ?: "127.0.0.1") as String}\"")
+        buildConfigField("int", "MVP_EMULATOR_FUNCTIONS_PORT", "${project.findProperty("mvpEmulatorFunctionsPort") ?: 5001}")
     }
 
     signingConfigs {

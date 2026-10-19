@@ -83,6 +83,18 @@ class DefaultShopComponent(
             _state.update { it.copy(referralProgram = getReferralProgram.execute()) }
         }
         refreshStoreShelf()
+        // Премиальная поверхность (7.3): только серверные слова — срок и часы суточного подарка.
+        // Решения о выдаче здесь нет: сервер перепроверяет их в момент самой заявки.
+        scope.launch {
+            profile.observeCurrentProfile().collect { p ->
+                val premium =
+                    PremiumSurfaceState(
+                        activeUntilMs = p.premiumUntilMs,
+                        dailyGiftAvailableAtMs = p.nextBonusBoxAtMs,
+                    )
+                _state.update { it.copy(premium = premium) }
+            }
+        }
         scope.launch {
             observeBalance.execute().collect { balance ->
                 _state.update {
