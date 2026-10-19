@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -36,4 +37,6 @@ data class UserProfileEntity(
     val city: String? = null,
     val telegram: String? = null,
     val verifiedAtMs: Long = 0,
+    /** Часы премиального суточного подарка (слово сервера). Добавлена миграцией 15 → 16. */
+    @ColumnInfo(defaultValue = "0") val nextBonusBoxAtMs: Long = 0,
 )

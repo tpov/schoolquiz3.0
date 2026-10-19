@@ -35,7 +35,7 @@ import androidx.room.TypeConverters
         ArenaFrozenRatingIntentEntity::class,
     ],
     // Every version has an explicit non-destructive migration and a generated Room schema.
-    version = 15,
+    version = 16,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)

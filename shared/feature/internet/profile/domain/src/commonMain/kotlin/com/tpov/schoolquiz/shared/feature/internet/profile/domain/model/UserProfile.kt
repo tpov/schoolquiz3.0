@@ -18,6 +18,14 @@ data class UserProfile(
     val boxCount: Int = 0,
     val boxStreakDays: Int = 0,
     val nextBoxAtMs: Long = 0L,
+    /**
+     * Часы премиального суточного подарка — слово сервера, не локальный календарь.
+     *
+     * Ровно то поле, которое сервер кладёт при выдаче бонуса: сутки считаются от него, ноль —
+     * слово ещё не приходило. Показ доступности «Получить подарок» — презентация; сервер
+     * перепроверяет своё слово при самой заявке (DAILY_LIMIT — исход, не ошибка).
+     */
+    val nextBonusBoxAtMs: Long = 0L,
     val premiumUntilMs: Long = 0L,
     /** Named badges the player holds; see TROPHY_VERIFIED in functions/trophies.js. */
     val trophies: Set<String> = emptySet(),
@@ -90,6 +98,7 @@ data class UserProfile(
         require(boxCount >= 0) { "boxCount must be non-negative" }
         require(boxStreakDays >= 0) { "boxStreakDays must be non-negative" }
         require(nextBoxAtMs >= 0) { "nextBoxAtMs must be non-negative" }
+        require(nextBonusBoxAtMs >= 0) { "nextBonusBoxAtMs must be non-negative" }
         require(premiumUntilMs >= 0) { "premiumUntilMs must be non-negative" }
         require(lifePoints >= 0) { "lifePoints must be non-negative" }
         require(plasmaPoints >= 0) { "plasmaPoints must be non-negative" }

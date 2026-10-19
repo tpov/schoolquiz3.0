@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration11to12
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration15to16
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -712,6 +713,40 @@ class AppDatabaseMigrationsTest {
     }
 
     @Test
+    fun migrate_15_to_16_preserves_profiles_and_adds_an_empty_bonus_clock() {
+        helper.createDatabase(DB_NAME, version = 15).use { db ->
+            db.execSQL(
+                "INSERT INTO user_profiles(uid, nickname, status, avatarUrl, knownLanguages, createdAtMs, " +
+                    "updatedAtMs, skillPoints, gold, nolics, standardHearts, goldHearts, sponsorLevel, " +
+                    "testerLevel, translatorLevel, moderatorLevel, adminLevel, developerLevel, boxCount, " +
+                    "boxStreakDays, nextBoxAtMs, premiumUntilMs, trophies, ownedLogos, lifePoints, " +
+                    "lifePointsUpdatedAtMs, realName, birthday, city, telegram, verifiedAtMs) VALUES " +
+                    "('uid-15', 'Player15', 'ANONYMOUS', NULL, '[]', 15, 16, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, " +
+                    "2, 9, 1700864000000, 1700950400000, '[]', '[]', 300, 15, NULL, NULL, NULL, NULL, 0)",
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 16, true, Migration15to16).use { db ->
+            db.query(
+                "SELECT boxCount, boxStreakDays, nextBoxAtMs, premiumUntilMs, nextBonusBoxAtMs " +
+                    "FROM user_profiles WHERE uid = 'uid-15'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(2, c.getInt(0))
+                assertEquals(9, c.getInt(1))
+                assertEquals(1700864000000L, c.getLong(2))
+                assertEquals(1700950400000L, c.getLong(3))
+                assertEquals("у аккаунта без выдачи бонуса часы пусты", 0L, c.getLong(4))
+            }
+            // Колонка пишется, а не только существует: слово сервера отличимо от пустоты.
+            db.execSQL("UPDATE user_profiles SET nextBonusBoxAtMs = 1701036800000 WHERE uid = 'uid-15'")
+            db.query("SELECT nextBonusBoxAtMs FROM user_profiles WHERE uid = 'uid-15'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(1701036800000L, c.getLong(0))
+            }
+        }
+    }
+
+    @Test
     fun migrate_all_the_way_from_1_validates_against_the_current_schema() {
         helper.createDatabase(DB_NAME, version = 1).close()
 
@@ -734,6 +769,7 @@ class AppDatabaseMigrationsTest {
             Migration12to13,
             Migration13to14,
             Migration14to15,
+            Migration15to16,
         ).close()
     }
 
@@ -741,7 +777,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 15
+        const val CURRENT_VERSION = 16
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES =

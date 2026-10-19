@@ -102,6 +102,7 @@ class FirebaseProfileRemoteDataSource(
             boxCount = long(BOX_COUNT).toInt().coerceAtLeast(0),
             boxStreakDays = long(BOX_STREAK_DAYS).toInt().coerceAtLeast(0),
             nextBoxAtMs = long(NEXT_BOX_AT_MS).coerceAtLeast(0L),
+            nextBonusBoxAtMs = long(NEXT_BONUS_BOX_AT_MS).coerceAtLeast(0L),
             premiumUntilMs = long(PREMIUM_UNTIL_MS).coerceAtLeast(0L),
             trophies = stringList(TROPHIES).toSet(),
             realName = string(REAL_NAME),
@@ -155,6 +156,7 @@ class FirebaseProfileRemoteDataSource(
         const val BOX_COUNT = "boxCount"
         const val BOX_STREAK_DAYS = "boxStreakDays"
         const val NEXT_BOX_AT_MS = "nextBoxAtMs"
+        const val NEXT_BONUS_BOX_AT_MS = "nextBonusBoxAtMs"
         const val PREMIUM_UNTIL_MS = "premiumUntilMs"
         const val TROPHIES = "trophies"
         const val FETCH_LEAGUE_STANDING = "fetchLeagueStanding"
