@@ -2,18 +2,49 @@
 title: 'Epic 7 — store, premium, boxes and gift claims (commerce vertical, mvp-candidate)'
 type: 'feature'
 created: '2026-10-19'
-status: 'in-progress'
+status: 'done'
 baseline_revision: 'bdbe448a636d26b245104a31c5483818689b7aef' # diff baseline; branch point is 89092843 (context-cache housekeeping), branch HEAD at dispatch 2dd95a7f
 route: 'full'
 route_source: 'auto'
-review: ''
-review_source: ''
-lenses_ran: []
+review: 'thorough'
+review_source: 'auto'
+lenses_ran: ['edge-case-hunter', 'verification-gap']
 review_loop_iteration: 0
-followup_review_recommended: false
+followup_review_recommended: true
 context: ['_bmad-output/implementation-artifacts/epic-7-context.md', 'config/gift-box-fixtures.json']
 warnings: ['multiple-goals', 'oversized']
-deferred: []
+deferred:
+  - summary: >-
+      The ciCheck-runnable migration protection covers only CREATE TABLE steps, so the 15→16
+      ALTER (nextBonusBoxAtMs) is verified by instrumented tests that ciCheck never runs; the
+      hole is a pre-existing pattern shared by five earlier ALTER migrations, and this run's
+      ALTER statement is review-verified correct against the exported 16.json.
+    evidence: |-
+      MigrationCoverageTest extracts only CREATE TABLE statements for its schema comparison and
+      greps only for the existence of a runMigrationsAndValidate call (which lives in
+      androidInstrumentedTest, never run by ciCheck); a corrupted ALTER (dropped NOT NULL or
+      DEFAULT 1) would crash every upgrading install while ciCheck stays green. Verified for
+      fairness: 14→15, 2→3, 4→5, 6→7, 7→8 share the same hole. Closing it properly means
+      teaching MigrationCoverageTest to compare ALTER TABLE … ADD COLUMN against the exported
+      schema — an infra-wide change beyond this story.
+    location: >-
+      shared/core/persistence/src/androidMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/migrations/Migration15to16.kt:15
+    severity: low
+  - summary: >-
+      The device finding recorded 2026-10-19 — a fixture-set premiumUntilMs (now+30d, read back
+      verified) was silently wiped to 0 server-side across the app's entry pass — remains open
+      and blocks the premium-gift half of 7.4's device proof; the new client code only reads the
+      profile, so the suspect set is a server write path or a pre-existing client upsert.
+    evidence: |-
+      docs/agents/evidence/2026-10-19-gift-claims/README.md records the wipe with the fixture
+      recipe and names the suspects (ensureUserProfile/upsertUserProfile vs box-op userPatch).
+      What would settle it: a focused session that stages premiumUntilMs on the demo fixture,
+      walks the entry pass one step at a time (profile read → sync → box op), and diffs
+      users/{uid} + premium_accounts after each step; until then the premium claim is proven by
+      JVM/Node tests only and stays device-NOT_RUN.
+    location: >-
+      docs/agents/evidence/2026-10-19-gift-claims/README.md
+    severity: high (unverified)
 ---
 
 <intent-contract>
@@ -145,6 +176,22 @@ Baseline `bdbe448a` on `night/e5-inception`; work lands on a fresh `night/e7-com
 
 ## Review Triage Log
 
+### 2026-10-19 — Review pass (thorough: edge-case-hunter, verification-gap)
+- verdicts: 13 findings — high 2, medium 2, low 7, false 1, maybe-false 1
+- findings:
+  - `[high]` `[patch]` Offline claim computed after `visited(now)` — a late reconnect (>48h after the last offline visit) let the local model's 48h reset destroy the honestly counted offline days before the claim, so owed=false and the days were lost while VISIT reset the server streak (contradicted the spec's AC "a 5-day gap does NOT reset the streak") — patched in 3870ca6c: the claim is computed from the count including today's visit unless the visit's reset cut the streak (then the pre-visit count stands; the server decides the reset on the VISIT itself); regression case `aLateReconnectStillClaimsTheHonestlyCountedOfflineDays` added, economy domain suites green.
+  - `[high]` `[patch]` (claims-check, same root cause) Spec AC ordering row contradicted by the pre-patch code — resolved by the same 3870ca6c reorder; row kept separate per the claims finding, same fix.
+  - `[medium]` `[patch]` (edge E1 + verification-gap V1, one root cause) `giftClaimFailureFrom` matched the wire literal "already-exists" while its only call site passes `FirebaseFunctionsException.Code.ALREADY_EXISTS.name` — the CONFLICTING_REPLAY branch was dead, a real fence refusal looped as TRANSPORT with verbatim retries forever, and the mapping test pinned the literal production never supplies — patched in 3870ca6c: arm matches "ALREADY_EXISTS", test feeds the real value with the SDK provenance comment.
+  - `[low]` `[patch]` OFFLINE_STREAK stored payload missing base/claimed halves passed requestFrom and failed later in toWireMap as a bare IllegalStateException → wrapped as TRANSPORT → intent unresolvable, blocked VISIT every entry — patched in 3870ca6c: parse-time named refusal + malformed-body test case (writer is the sole producer; belt for a corrupted row).
+  - `[low]` `[patch]` `number()` truncated fractional SDK Doubles (1.5→1), contradicting the exactness its own test asserts via the JsonFacade path — patched in 3870ca6c: non-integral Double refused; `fractionalSdkDoublesAreRefusedNotTruncated` case added with a hand-built SDK-shaped map.
+  - `[low]` `[patch]` (verification-gap) Shop premium-surface wiring (profile collect → `state.premium`) unobserved by any test — deleting the collect block or transposing the two words shipped green — patched in 3870ca6c: `given the profile carries the premium words…` component test asserts both fields by name (transposition fails it).
+  - `[low]` `[patch]` (verification-gap) ProfileMapper `nextBonusBoxAtMs` round trip untested anywhere; dropping the mapper line would zero the bonus clock at the persistence boundary and make ClaimedToday unreachable across sessions with every gate green — patched in 3870ca6c: `ProfileMapperTest` round-trips an entity carrying every server word and asserts the field both directions.
+  - `[low]` `[defer]` Migration 15→16 ALTER has no ciCheck-runnable protection (instrumented-only; MigrationCoverageTest compares CREATE TABLE shapes only) — deferred: the hole is a pre-existing pattern shared by five earlier ALTER migrations, the new statement is review-verified correct against 16.json, and the proper fix is an infra-wide MigrationCoverageTest extension (see deferred list).
+  - `[low]` `[reject]` Premium-gift button state not driven by a wall-clock tick — stale Available after expiry while the screen stays open — rejected: users rarely meet it, the harm is a stale presentation the server safely refuses (PREMIUM_REQUIRED outcome), and the fix (ticker flow) adds real complexity for no money-safety gain.
+  - `[low]` `[reject]` NoirShopStore `remember { System.currentTimeMillis() }` freezes the premium card's dates for the composable's lifetime — rejected: display-only staleness (no action is gated by the card), same rare-meeting and complexity reasoning as the button tick.
+  - `[false]` `elapsedDays` toInt() overflow for a far-future device clock — refuted: wrapping requires elapsed > 2^31 days (~5.9 billion years); no reachable clock state produces it.
+  - `[maybe-false]` `[defer]` premiumUntilMs wiped to 0 by the entry sync on device (recorded finding blocking 7.4's premium device proof) — if true a high money-adjacent defect; the new code only reads the profile, so the suspect set is a server write path or a pre-existing client upsert — deferred unverified with the settling protocol in the deferred list.
+
 ## Design Notes
 
 **Why direct callables, not outbox ops:** the server deliberately exposes exactly one queueable gift op (`economy.OPEN_GIFT_BOX`); VISIT/OFFLINE_STREAK/PREMIUM_DAILY exist only as `submitGiftBoxOperation` kinds with their own receipt fence (`box_operations/{sha256(operationId)}`: replay returns the stored response, altered body/uid → `already-exists`). Adding MUTATION_HANDLERS keys would change the audited 7.7 surface for zero benefit; instead the client reproduces the outbox's discipline locally: persist intent (operationId+body) BEFORE the request, resolve on terminal outcome, re-send identical body after process death. Server-side idempotency does the rest.
@@ -172,3 +219,20 @@ Baseline `bdbe448a` on `night/e5-inception`; work lands on a fresh `night/e7-com
 
 **Manual checks (no CLI):**
 - Evidence README lists every story 7.1–7.8 with PASS / NOT_RUN and the exact reason for each NOT_RUN; no simulated device/Play results.
+
+## Auto Run Result
+
+Status: done
+Blocking condition: none
+
+**Summary.** Epic 7 (epic-commerce) closed from this tree: the client learned to claim gifts against the server's direct-callable contract — VISIT / OFFLINE_STREAK / PREMIUM_DAILY via `submitGiftBoxOperation` with a locally persisted operationId intent (outbox discipline without outbox ops), entry streak sync ordering the offline claim before the visit so the 48h reset cannot eat honest offline days, the explicit «Получить подарок» button with typed states (Available/InFlight/ClaimedToday/Hidden), `nextBonusBoxAtMs` synced end-to-end (additive migration 15→16), gift-claim persistence (16→17) joined to the owner-rows registry, a minimal shop premium surface naming the server's words, and the offline-claim math parity-tested against the shared fixtures' server verdicts. Server untouched (0 changes in functions/, firestore.rules, purchase pipeline); stories 7.1/7.6 recorded NOT_RUN/external (7.1 was resolved by the owner mid-run and recorded by the implementing session), 7.2/7.5/7.7/7.8 previously closed.
+
+**Files changed (baseline bdbe448a → 3870ca6c, 19 commits + docs):** profile model/Room/Firebase mapping (+`nextBonusBoxAtMs`); `GiftBoxStreak.kt` (+`GiftBoxAccrual` ceiling mirror); new domain `GiftClaim.kt`/ports/`SyncBoxStreakUseCase`/`ClaimPremiumDailyGiftUseCase`; new data `GiftClaimIntentStore`/`GiftClaimRepositoryImpl`/`RoomGiftBoxLocalStreakStore`/remote port + `FirebaseGiftClaimRemoteDataSource` (strict envelope reader); persistence migrations 15→16, 16→17 + entities/DAOs/owner-registry; home entry sync + premium gift button + streak badge (strings ×3); shop premium card + `PremiumSurfaceState`; Koin modules + graph gates; baseline compile repairs (FakeAttemptDao stubs, MVP_EMULATOR buildConfig fields for all build types, Byte Buddy test flag); Node mvp-isolation stale-pin catch-up (test-only); evidence `2026-10-19-epic7-commerce-client` + `2026-10-19-gift-claims`; tickets.toml statuses restated.
+
+**Review findings breakdown:** thorough pass (edge-case-hunter + verification-gap), 13 findings — 6 patch entries applied in 3870ca6c (late-reconnect offline-claim loss [high]; dead ALREADY_EXISTS fence branch with false test coverage [medium]; payload-shape parse refusal; fractional-Double refusal; premium-surface wiring test; profile-mapper round-trip test), 2 defers (migration ALTER ciCheck hole [low, pre-existing pattern]; premiumUntilMs device wipe [maybe-false, if-true high, settling protocol recorded]), 2 rejected lows (presentation clock staleness, server safely fences the outcome), 1 false (toInt overflow unreachable). Rejected findings' reasons are in the triage log rows.
+
+**Follow-up review recommendation: true** — one patched entry was high. The named unverified risk: the offline-claim path across a real multi-day gap is proven by JVM tests and fixture parity only (no device walk), and 7.4's premium-gift device proof stays blocked by the recorded premiumUntilMs-wipe finding; a follow-up pass should run after the device session settles both.
+
+**Verification performed:** functions no-env 124/124 and demo-backend 124/124 (in-container re-run); `:platform:firebase:testDebugUnitTest` 323 tests with failures exactly the 2 documented foreign arena pins; economy domain + economy presentation + profile data module suites green after the review patches; rules gate 212/212 per the implementing session's run at 10a463a1+ (not re-runnable in current containers — module absent; no commit touched firestore.rules); MVP APK rebuilt twice with the fixes via `-I /tmp/signfix.gradle` (final 13:03 UTC); full ciCheck remains environmentally red on this VPS beyond this run's control (detekt vs JDK 27 tree-wide, pre-existing ktlint findings, 2 arena pins — recorded in the evidence README).
+
+**Residual risks:** device proof of the whole gift-claim UX (streak crossing, offline gap, premium gift) awaits the owner's hitl session with the re-staged fixture (`nextBoxAtMs = now − 2h` re-seed required); the premiumUntilMs-wipe investigation may surface a server-side defect; the migration-test hole is shared with five pre-existing ALTER migrations.
