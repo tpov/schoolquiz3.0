@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration15to16
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration16to17
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -747,6 +748,55 @@ class AppDatabaseMigrationsTest {
     }
 
     @Test
+    fun migrate_16_to_17_adds_empty_claim_wiring_and_keeps_the_profile_word() {
+        helper.createDatabase(DB_NAME, version = 16).use { db ->
+            db.execSQL(
+                "INSERT INTO user_profiles(uid, nickname, status, avatarUrl, knownLanguages, createdAtMs, " +
+                    "updatedAtMs, skillPoints, gold, nolics, standardHearts, goldHearts, sponsorLevel, " +
+                    "testerLevel, translatorLevel, moderatorLevel, adminLevel, developerLevel, boxCount, " +
+                    "boxStreakDays, nextBoxAtMs, nextBonusBoxAtMs, premiumUntilMs, trophies, ownedLogos, " +
+                    "lifePoints, lifePointsUpdatedAtMs, realName, birthday, city, telegram, verifiedAtMs) VALUES " +
+                    "('uid-16', 'Player16', 'ANONYMOUS', NULL, '[]', 16, 17, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, " +
+                    "1, 9, 1700864000000, 0, 0, '[]', '[]', 300, 16, NULL, NULL, NULL, NULL, 0)",
+            )
+            db.execSQL("INSERT INTO sync_state(collectionId, cursor, doc_id) VALUES ('migration-16-proof', 716, 'doc-16')")
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 17, true, Migration16to17).use { db ->
+            // Серверное слово профиля пережило миграцию нетронутым.
+            db.query(
+                "SELECT boxCount, boxStreakDays, nextBoxAtMs, nextBonusBoxAtMs FROM user_profiles WHERE uid = 'uid-16'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(1, c.getInt(0))
+                assertEquals(9, c.getInt(1))
+                assertEquals(1700864000000L, c.getLong(2))
+                assertEquals(0L, c.getLong(3))
+            }
+            // Обе таблицы заявок заводятся пустыми: до этой версии клиент заявок не отправлял.
+            listOf("gift_claim_intents", "gift_box_local_streak").forEach { table ->
+                db.query("SELECT COUNT(*) FROM $table").use { c ->
+                    assertTrue(c.moveToFirst())
+                    assertEquals(0L, c.getLong(0))
+                }
+            }
+            // Таблицы пишутся, а не только существуют: намерение ключуется парой владелец+вид.
+            db.execSQL(
+                "INSERT INTO gift_claim_intents(owner_uid, kind, operation_id, payload, created_at_ms) VALUES " +
+                    "('uid-16', 'PREMIUM_DAILY', 'daily-id-0000000001', '{\"kind\":\"PREMIUM_DAILY\"}', 17)",
+            )
+            db.query("SELECT operation_id FROM gift_claim_intents WHERE owner_uid = 'uid-16' AND kind = 'PREMIUM_DAILY'")
+                .use { c ->
+                    assertTrue(c.moveToFirst())
+                    assertEquals("daily-id-0000000001", c.getString(0))
+                }
+            db.query("SELECT cursor FROM sync_state WHERE collectionId = 'migration-16-proof'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(716L, c.getLong(0))
+            }
+        }
+    }
+
+    @Test
     fun migrate_all_the_way_from_1_validates_against_the_current_schema() {
         helper.createDatabase(DB_NAME, version = 1).close()
 
@@ -770,6 +820,7 @@ class AppDatabaseMigrationsTest {
             Migration13to14,
             Migration14to15,
             Migration15to16,
+            Migration16to17,
         ).close()
     }
 
@@ -777,7 +828,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 16
+        const val CURRENT_VERSION = 17
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES =

@@ -93,6 +93,12 @@ interface OwnerRowsDao {
     @Query("DELETE FROM lesson_attempt_intents WHERE owner_uid = :uid")
     suspend fun deleteLessonAttemptIntents(uid: String)
 
+    @Query("DELETE FROM gift_claim_intents WHERE owner_uid = :uid")
+    suspend fun deleteGiftClaimIntents(uid: String)
+
+    @Query("DELETE FROM gift_box_local_streak WHERE owner_uid = :uid")
+    suspend fun deleteGiftBoxLocalStreaks(uid: String)
+
     /**
      * Снимает названные курсоры — удалением строки, а не записью нуля.
      *
@@ -129,6 +135,8 @@ interface OwnerRowsDao {
         UNION SELECT owner_uid FROM sync_run_trace
         UNION SELECT owner_uid FROM mutation_receipts
         UNION SELECT owner_uid FROM lesson_attempt_intents
+        UNION SELECT owner_uid FROM gift_claim_intents
+        UNION SELECT owner_uid FROM gift_box_local_streak
         """,
     )
     suspend fun ownersWithTraces(): List<String>
@@ -174,6 +182,8 @@ interface OwnerRowsDao {
         deleteSyncRunTrace(uid)
         deleteMutationReceipts(uid)
         deleteLessonAttemptIntents(uid)
+        deleteGiftClaimIntents(uid)
+        deleteGiftBoxLocalStreaks(uid)
         if (reason == OwnerForgetReason.ERASE_LOCAL_DATA || reason == OwnerForgetReason.DELETE_ACCOUNT) {
             deleteArenaCommands(uid)
             deleteArenaTickets(uid)
@@ -329,6 +339,24 @@ object OwnerScopedTables {
             // спрашивать согласие на потерю чужой даты значило бы спрашивать не о данных.
             OwnerScopedTable(
                 "sync_run_trace",
+                "owner_uid",
+                OwnerCleanup.TRACES,
+                hasServerTwin = false,
+                namedToPlayer = null,
+            ),
+            // Проводка заявок подарков (epic-commerce 7.4): незавершённое намерение и местный
+            // счётчик серии. У обоих серверный двойник — само слово сервера; намерение чужого
+            // аккаунта после переключения не отправляется никогда, счётчик пересеивается свежим
+            // словом, поэтому называть игроку при смене нечего.
+            OwnerScopedTable(
+                "gift_claim_intents",
+                "owner_uid",
+                OwnerCleanup.TRACES,
+                hasServerTwin = false,
+                namedToPlayer = null,
+            ),
+            OwnerScopedTable(
+                "gift_box_local_streak",
                 "owner_uid",
                 OwnerCleanup.TRACES,
                 hasServerTwin = false,

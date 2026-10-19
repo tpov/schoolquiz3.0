@@ -387,6 +387,17 @@ class OwnerTracesPersistenceTest {
                 null,
             ),
         )
+        // Проводка заявок подарков — такие же личные строки владельца (epic-commerce 7.4).
+        db.giftClaimIntentDao().insert(
+            GiftClaimIntentEntity(owner, "PREMIUM_DAILY", "daily-$owner", "{}", 1_000L),
+        )
+        db.giftBoxLocalStreakDao().upsert(
+            GiftBoxLocalStreakEntity(
+                ownerUid = owner,
+                baseBoxCount = 1, baseStreakDays = 10, baseNextBoxAtMs = 100L,
+                boxCount = 3, streakDays = 12, nextBoxAtMs = 300L, updatedAtMs = 400L,
+            ),
+        )
         if (withQueueRow) store.enqueue(record("m-seed-$owner", owner))
     }
 

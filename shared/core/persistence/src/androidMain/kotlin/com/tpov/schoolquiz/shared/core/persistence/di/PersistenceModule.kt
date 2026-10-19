@@ -5,6 +5,8 @@ import com.tpov.schoolquiz.shared.core.persistence.AppDatabase
 import com.tpov.schoolquiz.shared.core.persistence.ArenaFrozenRatingDao
 import com.tpov.schoolquiz.shared.core.persistence.ArenaTicketDao
 import com.tpov.schoolquiz.shared.core.persistence.CatalogDao
+import com.tpov.schoolquiz.shared.core.persistence.GiftBoxLocalStreakDao
+import com.tpov.schoolquiz.shared.core.persistence.GiftClaimIntentDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
@@ -31,6 +33,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration12to13
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration15to16
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration16to17
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -69,6 +72,7 @@ val persistenceModule =
                     Migration13to14,
                     Migration14to15,
                     Migration15to16,
+                    Migration16to17,
                 )
                 .build()
         }
@@ -88,6 +92,8 @@ val persistenceModule =
         single<QuestAuthoringDao> { get<AppDatabase>().questAuthoringDao() }
         single<ReviewAssignmentDao> { get<AppDatabase>().reviewAssignmentDao() }
         single<UserProfileDao> { get<AppDatabase>().userProfileDao() }
+        single<GiftClaimIntentDao> { get<AppDatabase>().giftClaimIntentDao() }
+        single<GiftBoxLocalStreakDao> { get<AppDatabase>().giftBoxLocalStreakDao() }
         single<QuestionAnswerDao> { get<AppDatabase>().questionAnswerDao() }
         single<QuestionRepetitionDao> { get<AppDatabase>().questionRepetitionDao() }
         single<OutboxDao> { get<AppDatabase>().outboxDao() }

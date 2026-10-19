@@ -33,9 +33,11 @@ import androidx.room.TypeConverters
         ArenaTicketRecordEntity::class,
         ArenaCommandEntity::class,
         ArenaFrozenRatingIntentEntity::class,
+        GiftClaimIntentEntity::class,
+        GiftBoxLocalStreakEntity::class,
     ],
     // Every version has an explicit non-destructive migration and a generated Room schema.
-    version = 16,
+    version = 17,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
@@ -71,6 +73,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun reviewAssignmentDao(): ReviewAssignmentDao
 
     abstract fun userProfileDao(): UserProfileDao
+
+    abstract fun giftClaimIntentDao(): GiftClaimIntentDao
+
+    abstract fun giftBoxLocalStreakDao(): GiftBoxLocalStreakDao
 
     abstract fun questionAnswerDao(): QuestionAnswerDao
 
