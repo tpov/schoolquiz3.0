@@ -117,6 +117,28 @@ class SyncBoxStreakUseCaseTest {
             assertEquals(GiftBoxStreak(0, 9, now.value - 1), claim.base, "base не переставляется ни на бит")
         }
 
+    @Test fun aLateReconnectStillClaimsTheHonestlyCountedOfflineDays() =
+        runTest {
+            // Возвращение позже чем через 48ч после последнего офлайн-визита: модель счёта
+            // обрывает серию за пропуск, но заявка считается от счёта ДО сегодняшнего визита —
+            // честно насчитанные дни серверу по-прежнему не слышны, и они уезжают заявкой.
+            val lastOfflineVisit = now.value - 5 * DAY
+            profile.value = UserProfile.offline().copy(uid = "A", boxCount = 0, boxStreakDays = 9, nextBoxAtMs = now.value - 9 * DAY)
+            localStreak.saved["A"] =
+                LocalBoxStreak(
+                    GiftBoxStreak(0, 9, now.value - 9 * DAY),
+                    GiftBoxStreak(1, 10, lastOfflineVisit + DAY),
+                    lastOfflineVisit,
+                )
+
+            useCase().invoke().getOrThrow()
+
+            val claim = claims.submits.first()
+            assertEquals(GiftClaimKind.OFFLINE_STREAK, claim.kind, "поздний реконнект не отменяет офлайн-заявку")
+            assertEquals(OfflineAccrualClaim(10, 1), claim.claim, "десятый день с коробкой — от счёта до визита")
+            assertEquals(GiftBoxStreak(0, 9, now.value - 9 * DAY), claim.base)
+        }
+
     @Test fun anUndecidedOfflineClaimBlocksTheVisitSoTheResetCannotEatTheDays() =
         runTest {
             profile.value = UserProfile.offline().copy(uid = "A", boxCount = 0, boxStreakDays = 9, nextBoxAtMs = now.value - 1)

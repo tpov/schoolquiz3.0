@@ -179,13 +179,40 @@ class GiftClaimEnvelopeMappingTest {
                 """{"kind":"VISIT","ownerUid":"owner","operationId":"visit-id-0000000001","base":{"boxStreakDays":1}}""",
             )
         }
+        // Неполное офлайн-тело отказывает здесь, по имени, — не позже голым IllegalStateException
+        // из toWireMap, который превращает намерение в вечный повтор.
+        assertThrows(RuntimeException::class.java) {
+            giftClaimRequestFrom(
+                """{"kind":"OFFLINE_STREAK","ownerUid":"owner","operationId":"offline-id-000000001"}""",
+            )
+        }
     }
 
     @Test fun fenceRefusalIsNamedNotSwallowedIntoTransport() {
-        val failure = giftClaimFailureFrom("already-exists", IllegalStateException("boom"))
+        // Ровно то значение, которое production передаёт: FirebaseFunctionsException.Code
+        // .ALREADY_EXISTS.name (SDK представляет серверный "already-exists" gRPC-именем).
+        val failure = giftClaimFailureFrom("ALREADY_EXISTS", IllegalStateException("boom"))
         assertEquals(GiftClaimFailureReason.CONFLICTING_REPLAY, (failure as GiftClaimException).reason)
         val transport = giftClaimFailureFrom("unavailable", IllegalStateException("boom"))
         assertTrue(transport !is GiftClaimException)
+    }
+
+    @Test fun fractionalSdkDoublesAreRefusedNotTruncated() {
+        // SDK отдаёт нецелые JSON-числа Double'ом; усечение 1.5 → 1 выглядело бы как принятие
+        // неточного слова сервера.
+        val fractional =
+            mapOf(
+                "replayed" to false,
+                "result" to
+                    mapOf(
+                        "schemaVersion" to 1L, "ownerUid" to "owner",
+                        "operationId" to "daily-id-0000000001", "kind" to "PREMIUM_DAILY",
+                        "status" to "CLAIMED", "boxCount" to 2.5, "boxStreakDays" to 10L,
+                        "nextBoxAtMs" to 3L, "nextBonusBoxAtMs" to 25L, "earnedBoxes" to 1L,
+                        "premiumUntilMs" to 26L,
+                    ),
+            )
+        assertThrows(RuntimeException::class.java) { parseMap(fractional) }
     }
 
     private fun jsonToMap(json: String): Map<*, *> = JsonFacade.parse(json)

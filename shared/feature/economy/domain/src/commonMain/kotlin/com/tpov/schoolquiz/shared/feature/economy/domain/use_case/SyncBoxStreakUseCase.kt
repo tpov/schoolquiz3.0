@@ -72,22 +72,29 @@ class SyncBoxStreakUseCase(
         val resumedVisit = claims.resumePending(GiftClaimKind.VISIT)?.getOrNull()
 
         val now = clock()
-        // Читается после возобновления: исходы выше могли перечитать профиль сами.
+        // Читается после возобновления: исходы выше могли перечитывать профиль сами.
         val profile = profileRepository.currentProfile()
         val base = GiftBoxStreak(profile.boxCount, profile.boxStreakDays, profile.nextBoxAtMs)
         // Чужая база — сервер уже сказал новое слово (второе устройство, своя заявка): местный
         // счёт пересеивается, а не складывается с чужим.
         val local = localStreak.find(uid)?.takeIf { it.base == base } ?: LocalBoxStreak(base, base, now)
-        val counted = local.copy(counted = local.counted.visited(now))
-        localStreak.save(uid, counted)
+        val afterVisit = local.counted.visited(now)
+        // Заявка считается от счёта с сегодняшним визитом — кроме случая, когда визит из-за
+        // пропуска суток ОБОРВАЛ местную серию: тогда до заявки живёт прежний счёт. Поздний
+        // реконнект (возвращение позже чем через 48ч после последнего офлайн-визита) стёр бы
+        // честно насчитанные дни прямо перед заявкой; обрыв серии решает сервер по своим часам
+        // на самом VISIT, а не местная модель до отправки.
+        val claimCounted = if (afterVisit.streakDays < local.counted.streakDays) local.counted else afterVisit
+        val claim = GiftBoxAccrual.claim(base, claimCounted, now)
+        val owed = claim.boxStreakDays > base.streakDays || claim.boxesEarned > 0
 
         if (!network.isOnline()) {
             // Офлайн визит посчитан локально и ляжет в заявку при возвращении связи.
+            localStreak.save(uid, local.copy(counted = afterVisit))
             return GiftStreakSyncReport(resumedOffline, resumedVisit, offline = true, profileRefreshed = false)
         }
 
-        val claim = GiftBoxAccrual.claim(base, counted.counted, now)
-        val owed = claim.boxStreakDays > base.streakDays || claim.boxesEarned > 0
+        localStreak.save(uid, local.copy(counted = afterVisit))
         var offlineClaim: GiftClaimOutcome? = null
         var claimUndecided = false
         if (owed) {

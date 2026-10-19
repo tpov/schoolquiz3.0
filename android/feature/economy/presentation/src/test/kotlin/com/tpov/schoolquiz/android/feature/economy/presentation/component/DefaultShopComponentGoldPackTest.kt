@@ -303,10 +303,27 @@ class DefaultShopComponentGoldPackTest {
             assertTrue(store.acknowledgedTokens.isEmpty())
         }
 
+    @Test
+    fun `given the profile carries the premium words when they sync then the surface names them exactly`() =
+        runTest(scheduler) {
+            val component =
+                component(
+                    profileRepository =
+                        FakeProfileRepository(
+                            UserProfile.offline().copy(premiumUntilMs = 7_000L, nextBonusBoxAtMs = 9_000L),
+                        ),
+                )
+
+            // Оба слова поимённо: перестановка полей местами здесь не проходит.
+            assertEquals(7_000L, component.state.value.premium.activeUntilMs)
+            assertEquals(9_000L, component.state.value.premium.dailyGiftAvailableAtMs)
+        }
+
     private fun component(
         constants: EconomyConstants = EconomyConstants.BOOTSTRAP,
         online: Boolean = true,
         signedIn: Boolean = true,
+        profileRepository: ProfileRepository = FakeProfileRepository(),
     ): DefaultShopComponent {
         lifecycle = LifecycleRegistry()
         return DefaultShopComponent(
@@ -333,7 +350,7 @@ class DefaultShopComponentGoldPackTest {
                     buyerTag = { "tag" },
                 ),
             logos = FakeLogoRepository(),
-            profile = FakeProfileRepository(),
+            profile = profileRepository,
             getReferralProgram = GetReferralProgramUseCase(economy),
             nicknames = FakeNicknameRepository(),
         ).also { lifecycle.resume() }
@@ -481,10 +498,14 @@ class DefaultShopComponentGoldPackTest {
         override suspend fun buyListed(logo: String): Long = error("unused")
     }
 
-    private class FakeProfileRepository : ProfileRepository {
-        override fun observeCurrentProfile(): Flow<UserProfile> = emptyFlow()
+    private class FakeProfileRepository(
+        initial: UserProfile = UserProfile.offline(),
+    ) : ProfileRepository {
+        private val state = MutableStateFlow(initial)
 
-        override suspend fun currentProfile(): UserProfile = error("unused")
+        override fun observeCurrentProfile(): Flow<UserProfile> = state
+
+        override suspend fun currentProfile(): UserProfile = state.value
 
         override suspend fun ensureCurrentProfile(): Result<UserProfile> =
             Result.failure(IllegalStateException("unused"))

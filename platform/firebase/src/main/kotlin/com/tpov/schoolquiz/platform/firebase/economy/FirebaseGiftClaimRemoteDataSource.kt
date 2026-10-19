@@ -97,6 +97,12 @@ internal fun giftClaimRequestFrom(payloadJson: String): GiftClaimWireRequest {
     check(kind == GiftClaimKind.OFFLINE_STREAK || request.baseBoxStreakDays == null) {
         "Only OFFLINE_STREAK carries a base"
     }
+    // Половины офлайн-тела обязательны: тело пишет только GiftClaimRepositoryImpl и всегда с
+    // базой и заявкой; неполное — испорченная строка, и отказать ей нужно здесь, по имени, а не
+    // позже в toWireMap голым IllegalStateException, который превращает намерение в вечный повтор.
+    check(kind != GiftClaimKind.OFFLINE_STREAK || (request.baseBoxStreakDays != null && request.claimedBoxesEarned != null)) {
+        "OFFLINE_STREAK requires both its base and claimed halves"
+    }
     check(operationIdShape.matches(request.operationId)) { "Gift claim operation id is off-contract" }
     return request
 }
@@ -159,7 +165,10 @@ internal fun giftClaimFailureFrom(
     cause: Exception,
 ): Exception =
     when (code) {
-        "already-exists" -> GiftClaimException(GiftClaimFailureReason.CONFLICTING_REPLAY, cause = cause)
+        // FirebaseFunctionsException.Code.ALREADY_EXISTS.name — ровно то значение, которым SDK
+        // представляет серверный wire-код "already-exists" (fence: operationId скреплён с другим
+        // телом или владельцем). Повтор такого отказа вслепую не помогает никогда.
+        "ALREADY_EXISTS" -> GiftClaimException(GiftClaimFailureReason.CONFLICTING_REPLAY, cause = cause)
         else -> SyncFailure(syncErrorForCode(code, cause.message, null, causedByIo = false), cause)
     }
 
@@ -235,6 +244,11 @@ private fun Map<*, *>.number(key: String): Long {
         when (value) {
             is Long -> value
             is Int -> value.toLong()
+            // SDK отдаёт нецелые JSON-числа Double'ом; молчаливое усечение 1.5 → 1 выглядело бы
+            // как принятие неточного слова — нечитаемый ответ вместо этого.
+            is Double ->
+                if (value % 1.0 != 0.0) throw unreadable("$key is not an exact number")
+                else value.toLong()
             is Number -> value.toLong()
             else -> throw unreadable("$key is not a number")
         }
