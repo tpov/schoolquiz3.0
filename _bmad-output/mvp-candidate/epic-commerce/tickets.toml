@@ -44,7 +44,7 @@ waits = [
   "hitl: device proof of the store screen states (unavailable, insufficient funds)",
 ]
 hitl = true
-status = "blocked" # gold-цены — сервер (план §3 TZ09A); денежные цены Play в этой истории НЕ используются; device proof — hitl; 2026-10-18 вечер: insufficient-funds ДОКАЗАН на Pixel (свежий аккаунт 0◎ против Charge 20 000◎ → серверный отказ «Not enough nolics», applyShopPurchase исполнен на эмуляторе за 1323 ms, баланс не изменился) + visibly-unavailable состояния; путь телефон→VPS прямым интернетом (BuildConfig MVP_EMULATOR_HOST/PORT + socat-релеи 9099/8080/5002 + cleartext-домен в mvp NSC); открытыми остаются premium-нормализация (за Play-локом, ждёт 7.1) и fresh-consent — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/store-surface/
+status = "blocked" # gold-цены — сервер (план §3 TZ09A); денежные цены Play в этой истории НЕ используются; device proof — hitl; 2026-10-18 вечер: insufficient-funds ДОКАЗАН на Pixel (свежий аккаунт 0◎ против Charge 20 000◎ → серверный отказ «Not enough nolics», applyShopPurchase исполнен на эмуляторе за 1323 ms, баланс не изменился) + visibly-unavailable состояния; путь телефон→VPS прямым интернетом (BuildConfig MVP_EMULATOR_HOST/PORT + socat-релеи 9099/8080/5002 + cleartext-домен в mvp NSC); открытыми остаются premium-нормализация (за Play-локом, ждёт 7.1) и fresh-consent — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/store-surface/; 2026-10-19 (прогон e7-commerce): fresh-consent для коммерческих операций ЗАФИКСИРОВАН как отложенный — MUTATION_TERMS_OPERATIONS покрывает только lesson_runner.SUBMIT_ATTEMPT, закупочные и подарочные операции согласием не гейтятся (сервер заморожен, решение владельца), никакого fresh-consent-кода не написано
 
 [[story]]
 id = "7.3"
@@ -57,7 +57,7 @@ waits = [
   "hitl: device proof of regeneration UI",
 ]
 hitl = true
-status = "blocked" # hitl
+status = "blocked" # hitl; 2026-10-19 (прогон e7-commerce): серверная половина 7.3 доказуема из дерева — аудит premium-economy.test.js (15) + premium-grants.test.js (29): оба удвоенных восстановления (оба баланса до истечения), holds (резерв офлайн-билетов), пересечения (FIFO, грант поверх активного — max(now,end)+duration, грант в середине начинается строго после), независимый остаток каждого лота (частичный возврат Play сохраняет потреблённое и параллельные подарки), сохранённые остатки работ при смене ставки — все документированные поведения покрыты кейсами, новых Node-кейсов не требуется; клиентская половина сделана: премиальная поверхность магазина названа серверными словами (premiumUntilMs + nextBonusBoxAtMs → активен/истёк, подарок доступен/завтра, клиент ничего не решает); device proof регенерации остаётся hitl — evidence docs/agents/evidence/2026-10-19-epic7-commerce-client/
 
 [[story]]
 id = "7.4"
@@ -70,7 +70,7 @@ waits = [
   "hitl: device proof of both gift sources (separate claims)",
 ]
 hitl = true
-status = "blocked" # 2026-10-18: device-пруф невозможен — в клиенте НЕТ проводки заявки подарков: outbox знает только OPEN_GIFT_BOX, OFFLINE_STREAK/PREMIUM_DAILY никто не шлёт, visited() из GiftBoxStreak не вызывается на входе, UI «Получить подарок» отсутствует; сервер оба вида принимает (проверено), фикстура boxStreakDays=9 стоит и ждёт проводки — evidence docs/agents/evidence/2026-10-18-pixel-commerce-hitl/gift-sources-finding/; до этого — hitl
+status = "blocked" # 2026-10-19 (прогон e7-commerce): клиентская проводка заявок СДЕЛАНА — три вида (VISIT/OFFLINE_STREAK/PREMIUM_DAILY) уезжают прямым вызываемым submitGiftBoxOperation с локальным operationId-интентом в Room (миграция 16→17; намерение лежит до запроса и переезжает тем же телом после смерти процесса; статусы — исходы), входная синхронизация серии идёт офлайн-заявка → визит → перечитывание (48h-сброс не съедает офлайн-дни), кнопка «Получить подарок» с состояниями доступен/забираем/забрано-сегодня/скрыта, nextBonusBoxAtMs доезжает до клиента (миграция 15→16); консервативный клейм зажат потолками boxAccrualVerdict (паритет с общими фикстурами); JVM-контракт: payload-формы писателя + разбор конверта покрыты тестами; осталось — device proof на подключённом телефоне (фикстура boxStreakDays=9 НЕ тронута, ждёт сессию), evidence docs/agents/evidence/2026-10-19-epic7-commerce-client/; ПРОГОН 2026-10-19 (device proof, Samsung, сборка 340be3da с этой проводкой, свежий uid qopc1z…): фикстура применена (9 дней/премиум +30d/1 бокс), входной проход зажёг грант — OFFLINE_STREAK→VISIT CLAIMED, день 10, +1 бокс (чек BOX_ACCRUAL +1), FAB «2», чип «Серія: 10»; открытие бокса PASS (1278 ноликов, чек BOX_OPENED). НАЙДЕН ДЕФЕКТ: premiumUntilMs обнулился при entry-синке (фикстура +30d подтверждена 12:40, к 13:00 на сервере 0 → премиум-кнопка Hidden) — money-adjacent, разбор синк-путей в следующую смену; премиум-гифт не доказан до фикса — evidence docs/agents/evidence/2026-10-19-gift-claims/
 
 [[story]]
 id = "7.5"
