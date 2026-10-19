@@ -81,3 +81,30 @@
   GiftClaimEnvelopeMappingTest (9), DefaultHomeQuestsComponentTest (+6 кейсов 7.4),
   PremiumSurfaceStateTest (5), GiftClaimPersistenceTest в страже владельцев — плюс все прежние
   наборы затронутых модулей зелёные.
+
+## Verify build-auto (дозапуск поверх фиксации 10a463a1+, коммиты c51120be + 253b0a90)
+
+1. **c51120be — достейджены 4 доменных источника проводки** (GiftClaim.kt, GiftClaimRepository.kt,
+   GiftBoxLocalStreakStore.kt, SyncBoxStreakUseCase.kt): data/persistence/firebase-слои и их тесты
+   были закоммичены в 9f4440ed, а их доменные зависимости остались незатреканными — HEAD ветки не
+   компилировался в свежем чекауте. Рабочее дерево при прогонах гейтов содержало те же файлы, поэтому
+   результаты гейтов выше остаются в силе.
+2. **253b0a90 — конверт офлайн-заявки принимает одну коробку за каждый заявленный день серии.**
+   `boxAccrualVerdict` начисляет `min(дней серии сверх базы, прошедших суток)` коробок ОДНИМ ответом
+   (честная неделя = CLAIMED, earnedBoxes 7 — ровно это требует от клиента GiftBoxAccrualTest), а
+   читатель конверта требовал для CLAIMED ровно 1 → легальный ответ отбрасывался как ENVELOPE_INVALID,
+   намерение оставалось лежать и повтор зацикливался. VISIT и суточный бонус — по-прежнему строго 1.
+   +3 кейса в GiftClaimEnvelopeMappingTest (7 коробок у OFFLINE_STREAK; CLAIMED без коробок
+   невозможен; 7 коробок за VISIT отказаны).
+3. **Перепрогоны verify:** `:platform:firebase:testDebugUnitTest` — 323 теста, 2 известных чужих
+   арена-пина (владельцу, вне прогона); functions no-env **124/124** и demo-backend **124/124**
+   (в контейнере `schoolquiz-functions-emu`); `GiftClaimEnvelopeMappingTest` зелёный точечно.
+4. **Rules-гейт НЕ перепрогонялся** в verify: `@firebase/rules-unit-testing` в текущих контейнерах
+   не установлен (212/212 — результат прогона имплементера на фиксации 10a463a1+); с той фиксации
+   `firestore.rules` не менялся ни одним коммитом этого прогона (сервер заморожен).
+5. **APK пересобран с фиксом 253b0a90** (12:27 UTC): `JAVA_HOME=/opt/jdks/jdk-27 sgw
+   ./gradlew :apps:android-next:assembleMvp -PmvpEmulatorHost=204.44.66.27
+   -PmvpEmulatorFunctionsPort=5002 -I /tmp/signfix.gradle` — подпись mvp берётся из init-скрипта
+   `/tmp/signfix.gradle` (без него packageMvp падает «keystore password was incorrect»);
+   артефакт `apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk`.
+
