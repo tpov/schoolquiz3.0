@@ -39,7 +39,13 @@ test("cleartext is restricted to local emulator loopback and automatic telemetry
   const network = read(`${app}/src/mvp/res/xml/mvp_network_security_config.xml`);
   assert.match(network, /base-config cleartextTrafficPermitted="false"/);
   const domains = [...network.matchAll(/<domain[^>]*>([^<]+)<\/domain>/g)].map((m) => m[1]);
-  assert.deepEqual(domains, ["127.0.0.1", "localhost"]);
+  assert.deepEqual(domains.slice(0, 2), ["127.0.0.1", "localhost"]);
+  // Единственный внешний домен — VPS-хост hitl-пути (a2298084, device-proven 7.2): телефон идёт
+  // прямым интернетом к эмуляторам на VPS. Излишних доменов быть не должно.
+  assert.deepEqual(
+    domains.slice(2).filter((d) => d !== "127.0.0.1" && d !== "localhost"),
+    ["204.44.66.27"],
+  );
   const manifest = read(`${app}/src/mvp/AndroidManifest.xml`);
   assert.match(manifest, /firebase_analytics_collection_deactivated" android:value="true"/);
   assert.match(manifest, /firebase_crashlytics_collection_enabled" android:value="false"/);
