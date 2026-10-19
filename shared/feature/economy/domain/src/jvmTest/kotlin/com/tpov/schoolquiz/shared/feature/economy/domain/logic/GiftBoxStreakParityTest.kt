@@ -60,4 +60,66 @@ class GiftBoxStreakParityTest {
 
         assertEquals(emptyList(), mismatches, mismatches.joinToString("\n"))
     }
+
+    private data class ClaimCase(
+        val name: String,
+        val stored: GiftBoxStreak,
+        val claimedStreak: Int,
+        val claimedBoxes: Int,
+        val nowMs: Long,
+        val allowedStreak: Int,
+        val allowedBoxes: Int,
+    )
+
+    private val claims: List<ClaimCase> by lazy {
+        val file = File("../../../../config/gift-box-fixtures.json")
+        assertTrue(file.exists(), "нет общего набора фикстур: ${file.absolutePath}")
+        val section = file.readText().substringAfter("\"claims\"")
+        section
+            .split(Regex("""\{\s*"name":\s*"""))
+            .drop(1)
+            .map { chunk ->
+                fun body(from: String, to: String): String = chunk.substringAfter(from).substringBefore(to)
+                fun field(body: String, name: String): Int =
+                    Regex(""""$name"\s*:\s*(\d+)""").find(body)?.groupValues?.get(1)?.toInt() ?: 0
+                val stored = streakOf(body("\"stored\"", "\"claimed\""))
+                val claimedBody = body("\"claimed\"", "\"nowMs\"")
+                ClaimCase(
+                    name = chunk.substringBefore("\"").ifEmpty { "безымянная заявка" },
+                    stored = stored,
+                    claimedStreak = field(claimedBody, "boxStreakDays"),
+                    claimedBoxes = field(claimedBody, "boxesEarned"),
+                    nowMs = Regex(""""nowMs"\s*:\s*(\d+)""").find(chunk)?.groupValues?.get(1)?.toLong() ?: 0L,
+                    allowedStreak = field(chunk, "allowedStreak"),
+                    allowedBoxes = field(chunk, "allowedBoxes"),
+                )
+            }
+    }
+
+    /**
+     * Заявка устройства — те же потолки, что и приём сервера.
+     *
+     * Фикстуры описывают серверный вердикт по избыточным и скромным заявкам; клиент, зажавший свой
+     * счёт этими же потолками ещё до отправки, обязан получить ровно разрешённое: ни коробки
+     * сверх [allowedBoxes], ни дня сверх [allowedStreak] — серверу нечего вычитать и в аудит
+     * перерасхода нечего писать.
+     */
+    @Test
+    fun `given the shared claim fixtures then the device clamps its count where the server accepts it`() {
+        assertTrue(claims.size >= 5, "набор заявок не разобран: ${claims.size}")
+
+        val mismatches =
+            claims.mapNotNull { case ->
+                val counted =
+                    case.stored.copy(
+                        boxCount = case.stored.boxCount + case.claimedBoxes,
+                        streakDays = case.claimedStreak,
+                    )
+                val ours = GiftBoxAccrual.claim(case.stored, counted, case.nowMs)
+                val serverAllowed = OfflineAccrualClaim(case.allowedStreak, case.allowedBoxes)
+                if (ours == serverAllowed) null else "${case.name}: сервер принимает $serverAllowed, клиент заявляет $ours"
+            }
+
+        assertEquals(emptyList(), mismatches, mismatches.joinToString("\n"))
+    }
 }

@@ -57,3 +57,70 @@ data class GiftBoxStreak(
         val NONE: GiftBoxStreak = GiftBoxStreak(boxCount = 0, streakDays = 0, nextBoxAtMs = 0L)
     }
 }
+
+/**
+ * Заявка устройства на офлайн-накопление — ровно те два числа, что едет в `submitGiftBoxOperation`.
+ *
+ * `boxStreakDays` — какова серия по честному счёту устройства, `boxesEarned` — сколько коробок она
+ * насчитала поверх последнего серверного слова. Оба зажаты потолками сервера ещё здесь, на
+ * устройстве: излишек на сервере не начисляется, а записывается в аудит перерасхода (CAP-7), и
+ * принятие такого излишка не делает завышенную заявку честной.
+ */
+data class OfflineAccrualClaim(
+    val boxStreakDays: Int,
+    val boxesEarned: Int,
+) {
+    init {
+        require(boxStreakDays >= 0) { "boxStreakDays must be non-negative, got $boxStreakDays" }
+        require(boxesEarned >= 0) { "boxesEarned must be non-negative, got $boxesEarned" }
+    }
+}
+
+/**
+ * Офлайн-накопление: зеркало `boxAccrualVerdict` из `functions/gift-boxes.js`.
+ *
+ * Сервер сверяет заявку со своими часами: серия не длиннее, чем было плюс прошедшие сутки,
+ * коробка — за каждый день серии с десятого, не больше одной в сутки и только за дни, которые
+ * устройство заявило как пройденные. Здесь те же потолки применяются к местному счёту ДО отправки:
+ * честный игрок с честными часами получает ровно то, что сервер принял бы, а испорченные часы
+ * не превращаются в завышенную заявку — прошедшие сутки считаются от тех же чисел, и расхождение
+ * с серверными часами остаётся на стороне сервера, а не в теле заявки.
+ *
+ * Слово сервера без серии (`nextBoxAtMs == 0`) заявляет не больше одного дня и нуля коробок —
+ * сервер на первом слове коробки не выдаёт вовсе.
+ */
+object GiftBoxAccrual {
+    /**
+     * Зажимает местный счёт [counted] (серия, растущая из [visited] поверх слова [base]) до
+     * серверных потолков на момент [nowMs].
+     *
+     * Коробки считаются от базовой серии: [counted] несёт тот же `boxCount`, что и слово сервера,
+     * плюс то, что устройство насчитало. Отрицательная разница — счёт от другого слова — коробкой
+     * не считается: ноль, а не долг.
+     */
+    fun claim(
+        base: GiftBoxStreak,
+        counted: GiftBoxStreak,
+        nowMs: Long,
+    ): OfflineAccrualClaim {
+        val now = nowMs.coerceAtLeast(0L)
+        val claimedBoxes = (counted.boxCount - base.boxCount).coerceAtLeast(0)
+        // Сколько суток могло начаться с последнего засчитанного визита. Без серии — с нуля.
+        val lastVisitMs = if (base.nextBoxAtMs > 0L) base.nextBoxAtMs - GiftBoxStreak.DAY_MS else 0L
+        val elapsedDays =
+            if (base.nextBoxAtMs > 0L) {
+                ((now - lastVisitMs).coerceAtLeast(0L) / GiftBoxStreak.DAY_MS).toInt()
+            } else {
+                // Без единого слова сервера серию не с чем сверить: принимается один день —
+                // первый визит, — и ни одной коробки.
+                1
+            }
+        val streakCeiling = base.streakDays + elapsedDays
+        val allowedStreak = counted.streakDays.coerceAtLeast(0).coerceAtMost(streakCeiling)
+        // Коробка — за каждый день серии начиная с десятого, по одной в день.
+        val boxDays =
+            (allowedStreak - maxOf(base.streakDays, GiftBoxStreak.STREAK_TARGET_DAYS - 1)).coerceAtLeast(0)
+        val boxCeiling = minOf(boxDays, elapsedDays * GiftBoxStreak.STREAK_BOXES_PER_DAY)
+        return OfflineAccrualClaim(allowedStreak, claimedBoxes.coerceAtMost(boxCeiling))
+    }
+}
