@@ -99,6 +99,32 @@ class GiftClaimEnvelopeMappingTest {
         assertThrows(RuntimeException::class.java) { parse(wire(status = "DAILY_LIMIT", earned = 1)) }
     }
 
+    @Test fun offlineStreakClaimCarriesOneBoxPerStreakDayBeyondTheBase() {
+        // Честная офлайн-неделя: `boxAccrualVerdict` принимает 7 коробок разом, и это обычный
+        // ответ, а не нечитаемый конверт (см. GiftBoxAccrualTest `…seven days and seven boxes`).
+        val week =
+            parseMap(
+                jsonToMap(wire(status = "CLAIMED", earned = 7, kind = "OFFLINE_STREAK")),
+                GiftClaimWireRequest(
+                    GiftClaimKind.OFFLINE_STREAK, "owner", "daily-id-0000000001", 10L, 1000L, 17L, 7L,
+                ),
+            )
+        assertEquals(GiftClaimStatus.CLAIMED, week.status)
+        assertEquals(7, week.earnedBoxes)
+
+        // CLAIMED без коробок невозможен и у офлайн-заявки.
+        assertThrows(RuntimeException::class.java) {
+            parseMap(
+                jsonToMap(wire(status = "CLAIMED", earned = 0, kind = "OFFLINE_STREAK")),
+                GiftClaimWireRequest(
+                    GiftClaimKind.OFFLINE_STREAK, "owner", "daily-id-0000000001", 10L, 1000L, 11L, 0L,
+                ),
+            )
+        }
+        // Семь коробок невозможны за визитом или суточным бонусом — там строго одна.
+        assertThrows(RuntimeException::class.java) { parse(wire(status = "CLAIMED", earned = 7, kind = "VISIT")) }
+    }
+
     @Test fun everyNumberMustBeAnExactNonNegativeSafeInteger() {
         for (bad in listOf("-1", "1.5", "null", "9007199254740992")) {
             assertThrows(RuntimeException::class.java) { parse(wire().replace("\"boxCount\":2", "\"boxCount\":$bad")) }

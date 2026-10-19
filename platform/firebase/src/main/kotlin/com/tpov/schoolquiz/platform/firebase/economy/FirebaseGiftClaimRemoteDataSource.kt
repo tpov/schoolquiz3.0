@@ -124,7 +124,16 @@ internal fun giftClaimOutcomeFrom(
         allowedStatuses.getValue(request.kind).firstOrNull { it.name == result.textOrNull("status") }
             ?: throw unreadable("Status ${result.textOrNull("status")} cannot follow a ${request.kind} claim")
     val earnedBoxes = result.number("earnedBoxes")
-    if (earnedBoxes != if (status == GiftClaimStatus.CLAIMED) 1L else 0L) {
+    // Офлайн-заявка честно насчитанных дней несёт по коробке за каждый день серии с десятого
+    // (`boxAccrualVerdict`: allowedBoxes = min(дней серии сверх базы, прошедших суток)) — CLAIMED
+    // с earnedBoxes > 1 для неё обычный ответ, а не нечитаемый конверт. Визит и суточный бонус
+    // выдают строго одну.
+    if (status == GiftClaimStatus.CLAIMED) {
+        if (earnedBoxes < 1L) throw unreadable("earnedBoxes $earnedBoxes does not match status $status")
+        if (request.kind != GiftClaimKind.OFFLINE_STREAK && earnedBoxes != 1L) {
+            throw unreadable("earnedBoxes $earnedBoxes does not match status $status")
+        }
+    } else if (earnedBoxes != 0L) {
         throw unreadable("earnedBoxes $earnedBoxes does not match status $status")
     }
     return GiftClaimOutcome(
