@@ -220,6 +220,11 @@ class FirebaseArenaLessonCatalogRemoteDataSourceTest {
         val sources = fixture.getValue("sourceSha256").jsonObject
         // Pure protocol changes require actual regeneration. Additive unrelated index changes
         // do not invalidate payload fixtures; its generation-time SHA remains recorded.
+        // Re-pinned 2026-10-20: pins lagged behind arena epic work committed after the
+        // 2026-09-07 fixture generation (c5895b65, 51fb2614, bc4b8627, 8dc782ea, 34fe664b —
+        // eligible-universe extraction and settlement fixes). Wire payloads unchanged: every
+        // fixture-payload test stayed green, so only the recorded SHAs were re-pinned,
+        // mirroring the 2.13 functions-contract-drift precedent. Test-only.
         for (name in listOf("arena-lesson-catalog.js", "arena-policy.js")) {
             val bytes = MessageDigest.getInstance("SHA-256").digest(File(repo, "functions/$name").readBytes())
             val actual = bytes.joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }

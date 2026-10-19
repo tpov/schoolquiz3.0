@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "producer": "actual issuer/recovery with production normalizer; unchanged actual runtime world missing-id source regression",
   "sourceSha256": {
-    "arena-tickets.js": "9aec302a4335801fd0e5705ee58fd8ff62c0edb8df6835e36e9cbe5d92f24229",
+    "arena-tickets.js": "0d76d7f551a40c278b24014ab42834d94e9d03ba3ca7a005bd712396f200331f",
     "arena-ticket-recovery.js": "fff151e782e62454773d7ae76627609267d1809febfa05357098739170d2a893",
     "arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
     "question-redaction.js": "df1606e9a29f931c3cab8c3d34167ad0cf357d1099df49105ca530c39ccdf0e1",
     "_question-fixtures.js": "9e6bfb9ebdf6e5ebc81ccee7b4b654444e919695ede5d67a578d7e82a11f114b",
     "arena-ticket-recovery.test.js": "4eaeadc11d1ba6040d571a061cd7d209e0c102b5b6a6390ea0356a535bfdff49",
     "index.js": "7cad5bd6cb8b1d648112b063c67c418b8ff2464ada89a733fbfcf562882416ec",
-    "arena-entry-runtime.js": "34292d26b8a89691605f3cf31fb742e99c37ef5c189c298aa98a02719b0fceb7",
+    "arena-entry-runtime.js": "2b755cb990a68d8e66fdd183736aa9b1b261fa7e4c99371e686bd42740fe1053",
     "arena-entry-runtime.test.js": "7523a97c4b7ecb0a45b3560d0b5ea11d588672403b046eeb98196a7f4f256eaa",
     "arena-public-question.js": "e83398a1ec5b69378d0d05abbb70ed9e41fb29223527d9043a8048f0f0148820"
   },

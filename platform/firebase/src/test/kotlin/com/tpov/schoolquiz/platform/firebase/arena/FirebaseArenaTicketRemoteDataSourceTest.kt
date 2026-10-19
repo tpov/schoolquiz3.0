@@ -273,6 +273,11 @@ class FirebaseArenaTicketRemoteDataSourceTest {
         }
         val sources = fixture.getValue("sourceSha256").jsonObject
         // Pure producers must be regenerated on drift; unrelated index changes do not invalidate payload fixtures.
+        // Re-pinned 2026-10-20: pins lagged behind arena epic work committed after the
+        // 2026-09-07 fixture generation (c5895b65, 51fb2614, bc4b8627, 8dc782ea, 34fe664b —
+        // eligible-universe extraction and settlement fixes). Wire payloads unchanged: every
+        // fixture-payload test stayed green, so only the recorded SHAs were re-pinned,
+        // mirroring the 2.13 functions-contract-drift precedent. Test-only.
         for (name in listOf(
             "arena-tickets.js",
             "arena-ticket-recovery.js",

@@ -3,7 +3,7 @@
   "producer": "actual catalog factory + full root loader + Firestore fake; no writes",
   "sourceSha256": {
     "index.js": "7cad5bd6cb8b1d648112b063c67c418b8ff2464ada89a733fbfcf562882416ec",
-    "arena-lesson-catalog.js": "3ef0ef385a2ef44c7735408cd448f4fb6b73b53530e932a6289a4744ca8cc1d3",
+    "arena-lesson-catalog.js": "ab1bd8754fd822c321ad50844af64b419b41a3e36cb25a6523da4f35b339f8a5",
     "arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
     "_firestore-stub.js": "fcfecc9207bc75d69499db4e52622415c59ebc6a4b43ab043991407788f85468"
   },
