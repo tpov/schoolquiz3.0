@@ -1,0 +1,12 @@
+---
+status: blocked
+---
+
+# BMad Build Auto Result
+
+Status: blocked
+Blocking condition: dirty working tree on night/e5-inception held by an ACTIVE sibling session walking the SAME epic-7 (epic-commerce) dispatch. Evidence at 06:55 UTC 2026-10-19: sibling commit 2dd95a7f at 06:48:21 («docs(build-auto): epic-7 commerce spec — whole-epic run…») introduced `spec-epic-7-commerce.md`; that file was modified in-tree at 06:49:04 (status already `in-progress`, Implementation Notes populated — they are implementing); fresh device evidence `docs/agents/evidence/2026-10-19-review-resume/01-sent-to-arena.png` written 06:49:24; functions-emulator runtimes spawned 06:47; epic-competitions RETROSPECTIVE.md written 06:40. This run's own work stopped at planning investigation (no tree writes besides housekeeping commit 89092843 at 06:34:06, the epic-7 context cache, same class as e8dab358).
+
+Intent was re-resolved identically to the 2026-10-18 result: «весь эпик 7» = epic-commerce, implementable-from-tree remainder (7.4 client gift-claim wiring as the core, 7.2 fresh-consent shop slice; 7.1/7.6 external hitl, 7.3 hitl proof, 7.5/7.7/7.8 done). Clean-tree gate (step-01 item 3) fails on the sibling's in-flight files; per the e8dab358 precedent (same-class epic-8 halt) this run does not touch, commit or resume the sibling's files.
+
+**Load-bearing design divergence for the re-dispatch / owner:** the sibling's committed spec (spec-epic-7-commerce.md, status in-progress) routes gift claims through three DIRECT callables (`submitGiftBoxOperation` kinds VISIT / OFFLINE_STREAK / PREMIUM_DAILY) and forbids server-side changes ("do not add MUTATION_HANDLERS keys"). This run's independent investigation concluded the opposite on the same evidence: route the two new kinds through the single outbox (add `economy.OFFLINE_STREAK` + `economy.PREMIUM_DAILY` to `MUTATION_HANDLERS` + `OutboxOperations` + producers, keeping registry/producer parity tests green), because epic-7-context.md Technical Decisions say "Feature intents go through the single outbox; no direct queue/Firestore writes" and the OPEN_GIFT_BOX precedent already rides the queue path. Both designs satisfy stable-operationId + server replay-gate idempotency; the choice (adopt the sibling's in-progress spec as-is, or resolve the outbox-vs-direct-callable divergence) is a decision the next dispatch or the owner should make explicitly, not re-derive silently.
