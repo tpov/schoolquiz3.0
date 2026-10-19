@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.feature.internet.profile.data
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEarning
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEntity
+import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptIntentEntity
 import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionEntity
@@ -214,4 +215,17 @@ private class FakeAttemptDao : LessonAttemptDao {
                 .sortedBy { it.completedAt }
                 .map { LessonAttemptEarning(it.completedAt, it.percentScore, it.isHard) }
         }
+
+    // Хранители-заглушки членов, появившихся у DAO с журналом арен (5d006688): активности этот
+    // репозиторий их не вызывает, и заглушка обязана была догнать интерфейс — иначе весь набор
+    // общих тестов фичи не компилируется целиком.
+    override suspend fun findAttempt(attemptId: String): LessonAttemptEntity? = null
+
+    override suspend fun findAttemptAnswers(attemptId: String): List<QuestionAnswerEntity> = emptyList()
+
+    override suspend fun findAttemptIntent(attemptId: String): LessonAttemptIntentEntity? = null
+
+    override suspend fun findQueuedAttemptIntent(mutationId: String): OutboxEntity? = null
+
+    override suspend fun insertAttemptIntent(entity: LessonAttemptIntentEntity): Long = 0L
 }
