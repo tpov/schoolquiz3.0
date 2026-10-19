@@ -67,3 +67,19 @@ Tap Buy on Gold Pack Small WITH YOUR FINGER: if the Play sheet opens for you, th
 my injected adb taps being swallowed; if nothing happens for you either — the app billing
 client state is the problem and the phone needs a deeper reset (Play Store data clear /
 account re-login / device re-registration).
+
+
+## Run 5 (16:30-16:40) — fresh auth, same silent Buy — app-side question
+
+pm clear com.tpov.schoolquiz (fresh prod install state) -> a NEW anonymous user
+F1nXziw5... was created in the prod Auth (verified in the console Users list) — the
+production anonymous sign-in WORKS. The notification dialog allowed, SHOP opened without the
+auth banner, gold packs with real prices. Buy tap at the exact pixel position — still NO
+sheet, NO reaction, NO logs.
+
+Consolidated conclusion: on the production build the BillingClient connection fails on this
+device (the app's own premium card says «Google Play is unreachable»), so Buy clicks are
+silently ignored. This is an app/billing-integration question for the code owner
+(platform/billing module + the BillingClient connect path in the release build), not a
+testing blocker. Everything around it is verified working: opt-in, license tester, SKUs,
+prices, the store recognizing the internal install, anonymous auth, the callable receiver.
