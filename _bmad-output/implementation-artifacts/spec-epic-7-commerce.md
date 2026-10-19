@@ -1,0 +1,164 @@
+---
+title: 'Epic 7 — store, premium, boxes and gift claims (commerce vertical, mvp-candidate)'
+type: 'feature'
+created: '2026-10-19'
+status: 'ready-for-dev'
+baseline_revision: 'bdbe448a636d26b245104a31c5483818689b7aef'
+route: 'full'
+route_source: 'auto'
+review: ''
+review_source: ''
+lenses_ran: []
+review_loop_iteration: 0
+followup_review_recommended: false
+context: ['_bmad-output/implementation-artifacts/epic-7-context.md', 'config/gift-box-fixtures.json']
+warnings: ['multiple-goals', 'oversized']
+deferred: []
+---
+
+<intent-contract>
+
+## Intent
+
+**Problem:** Epic 7 (epic-commerce) is mostly closed server-side (7.7 provenance, 7.5 box-opening resilience, 7.8 dependency audit — all done), but the client never learned to claim gifts: OFFLINE_STREAK and PREMIUM_DAILY are sent by nobody, `GiftBoxStreak.visited()` has zero production callers, there is no «Получить подарок» UI, `nextBonusBoxAtMs` is not even mapped client-side, and the premium surface shows only a raw `premiumUntilMs` badge. Stories 7.1/7.6 are external (owner Play Console, devices) and stay blocked; 7.2 is device-proven except Play-locked premium normalization; 7.3's server engine exists but its client surface and test proof are thin.
+
+**Approach:** Build the missing client gift-claim wiring against the server's actual contract — three direct callables (`submitGiftBoxOperation` kinds VISIT / OFFLINE_STREAK / PREMIUM_DAILY) with locally persisted operationId intents, strict receipt mapping, and typed statuses-as-outcomes — plus an entry-time streak sync that claims offline accrual before the server can reset it, a minimal server-owned premium surface, honest NOT_RUN records for everything external, and status/evidence updates in the epic folder. No server contract changes.
+
+## Boundaries & Constraints
+
+**Always:**
+- Server is the source of truth for box/premium state: read `boxCount / boxStreakDays / nextBoxAtMs / nextBonusBoxAtMs / premiumUntilMs` from the profile callable (`ensureUserProfile`); field name is `boxCount`, never `boxes`.
+- Every claim carries an `operationId` in `[A-Za-z0-9_-]{16,128}`, persisted locally BEFORE the request and kept until the response arrives; retry after process death reuses the SAME operationId and body; a new claim intent gets a NEW operationId.
+- Treat server statuses as typed outcomes, not errors: `CLAIMED`, `NO_CHANGE`, `DAILY_LIMIT`, `PREMIUM_REQUIRED`, `STALE_BASE`, `NO_BOXES` are normal UI states; `replayed:true` envelope results render identically to fresh ones.
+- Client claims are conservative: `claimed` values come from the parity-tested local model (`GiftBoxStreak`) and never exceed what the device honestly counted — surpluses are audited server-side (CAP-7), so overclaiming is a defect even when accepted.
+- `base` in OFFLINE_STREAK is copied verbatim from the last server word; on `STALE_BASE` re-sync the profile and drop the local claim (server state wins), never retry the stale base.
+- All gradle through `sgw` with `JAVA_HOME=/opt/jdks/jdk-27`; keep green gates: functions 92/92 (no-env) and 92/92 (demo-backend), rules 193/193, JVM `ciCheck`.
+- Update `_bmad-output/mvp-candidate/epic-commerce/tickets.toml` statuses and add evidence directories under `docs/agents/evidence/<date>-*/` for whatever is proven from this tree; unavailable Play/device checks are recorded NOT_RUN, never simulated.
+- Migration/additivity rules hold for any new local persistence: new tables only, no destructive resets; pending intents survive restarts.
+
+**Never:**
+- No server-side changes: do not add MUTATION_HANDLERS keys, do not touch `MUTATION_TERMS_OPERATIONS`, do not modify box/premium handlers, rules, or the purchase pipeline (7.7 audited; box ops are deliberately NOT terms-gated — "open a box is a credit, not a debit").
+- No dropped rules may reappear: no ad-gated premium gift, no box-for-five-ads, no general 2-box cap, no client-commanded credits.
+- No invented SKUs, money prices, or Play behavior; premium per-30-days normalization waits on story 7.1 money prices — do not fake it from gold prices.
+- No local midnight/timezone/calendar-day math gating claims — the day model is a rolling 24h window from `nextBoxAtMs` on server time; local clocks only feed the offline visit counter, conservatively (clock backwards/forwards never inflates claimed days).
+- No premium purchase eligibility decided client-side from `premiumUntilMs` for server effects — it is presentation state; the server re-verifies premium for PREMIUM_DAILY.
+- No work on quest content pipeline, wallet history (epic 8), or Arena pricing (epic 3).
+
+## I/O & Edge-Case Matrix
+
+| Scenario | Input / State | Expected Output / Behavior | Error Handling |
+|----------|--------------|---------------------------|----------------|
+| Entry, streak crosses day 10 | Profile read returns `boxStreakDays 9→10` (fixture: boxStreakDays=9, nextBoxAtMs=now−2h) | Box count +1 on the home surface without any user action; streak display updates | None — server auto-grants on profile read |
+| Entry visit, same-day repeat | VISIT sent twice within one 24h window | Second VISIT returns `NO_CHANGE`; UI stays consistent; anchor untouched | Normal outcome, no error surfaced |
+| Entry after ≥48h gap, no offline claim | Server state stale, device was NOT used offline | VISIT resets streak to 1 (`подряд значит подряд`); UI shows restart | Normal outcome |
+| Reconnect after offline use | Local model counted N offline visit-days against base B | OFFLINE_STREAK `{base: B verbatim, claimed: local count}` sent BEFORE profile refresh/visit; anchor extends by claimed days; earned boxes appear | `STALE_BASE` → re-sync profile, drop local claim silently |
+| First-ever word, no server anchor | `nextBoxAtMs == 0` | OFFLINE_STREAK may claim at most 1 day and 0 boxes (server refuses box claims on first word) | Claim clamped locally to match server rule |
+| Premium daily gift, eligible | `premiumUntilMs > now`, tap «Получить подарок» | PREMIUM_DAILY → `CLAIMED`, box +1, button becomes unavailable until next 24h window | Double-tap guarded by persisted in-flight intent |
+| Premium daily gift, limit hit | Claim within 24h of last bonus | `DAILY_LIMIT` shown as a neutral state (already claimed today) | Not an error |
+| Premium daily gift, premium expired mid-session | `totalRemainingMs <= 0` server-side | `PREMIUM_REQUIRED`; button hides on next profile sync | Not an error |
+| Process death before claim response | Intent persisted, response lost | On restart the SAME operationId+body is re-sent; `replayed:true` returns stored result; no second grant | Quarantine/local-effect mapping mirrors OPEN_GIFT_BOX (`NoLocalEffect`) |
+| Unconfigured store product | Play SKU absent/unconfigured | Existing visibly-unavailable states keep working (7.2 device-proven) | No regression |
+
+</intent-contract>
+
+## Code Map
+
+Baseline `bdbe448a` on `night/e5-inception`; work lands on a fresh `night/e7-commerce` branch.
+
+**Client — gift/box core (economy feature):**
+- `shared/feature/economy/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/economy/data/GiftBoxIntentStore.kt` — the writer pattern to mirror: `reserve()` builds payload JSON, `mutationKey(OPERATION, id)`, one active intent, delivery row + presentation marker via `OutboxDao.reserveSynchronousIntent`; `entityRef "economy.BOX_OPENING:<openingId>"`; `active()/observeActive()` resume hook.
+- `shared/feature/economy/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/economy/domain/logic/GiftBoxStreak.kt` — `visited(nowMs)` rolling-24h model, `STREAK_TARGET_DAYS=10`, `STREAK_BOXES_PER_DAY=1`; tests-only callers today; extend here (or sibling) with the offline-claim computation mirroring `boxAccrualVerdict` ceilings.
+- `shared/feature/economy/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/economy/data/GiftBoxRepositoryImpl.kt` — `openGiftBox/resumePendingOpening/acknowledgeOpening`; receipt resolution via `GiftBoxDelivery.drain` (40s foreground wait).
+- `shared/core/outbox/src/commonMain/kotlin/com/tpov/schoolquiz/shared/core/outbox/OutboxOperations.kt` — op constants, `mutationKey` charset `[A-Za-z0-9_-]`, `permanentReceiptOperations` (includes OPEN_GIFT_BOX), `termsConsentOperations` (SUBMIT_ATTEMPT only). Gift claims do NOT add queueable ops — direct callables instead.
+- `shared/core/outbox/src/jvmTest/kotlin/com/tpov/schoolquiz/shared/core/outbox/OutboxOperationsRegistryTest.kt` — parses `functions/index.js` `MUTATION_HANDLERS`/`MUTATION_TERMS_OPERATIONS`; will fail if anyone adds an op one-sided. Do not touch unless registry truth changes (it must not).
+- `apps/android-next/src/main/java/com/tpov/schoolquiz/di/SyncModule.kt` — `QuarantineListener` map l.139-180 (`OPEN_GIFT_BOX → NoLocalEffect`); new claim intents need analogous no-local-effect entries if routed via delivery rows.
+- `shared/feature/internet/profile/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/internet/profile/domain/model/UserProfile.kt` — `boxCount/boxStreakDays/nextBoxAtMs/premiumUntilMs`; `nextBonusBoxAtMs` MISSING — add to model, Room entity (`shared/core/persistence/.../UserProfileEntity.kt`), Firebase mapping (`platform/firebase/.../profile/FirebaseProfileRemoteDataSource.kt` consts l.102-105, `ProfileMapper.kt`).
+- Direct-callable client precedent: the purchase-verification call path (`BuyGoldPackUseCase` → economy repository → platform/firebase data source; responses parsed strictly by `platform/firebase/src/test/kotlin/com/tpov/schoolquiz/platform/firebase/economy/GiftBoxReceiptMappingTest.kt` — mirror this strictness for gift-claim envelopes `{replayed, result}`).
+
+**Client — presentation:**
+- `android/feature/quest/presentation/src/main/kotlin/.../DefaultHomeQuestsComponent.kt` — owns gift state (`giftBoxOpening`, `pendingGiftBox`, `giftBoxCount/giftBoxStreakDays` l.168-169), init l.181-198 collects `observePending` + auto-resume; add per-entry streak sync (Essenty `lifecycle.doOnResume`, precedent `DefaultArenaEntryComponent.kt` l.58) and the gift-claim actions.
+- `android/feature/quest/presentation/.../ui/HomeQuestsScreen.kt` — `GiftBoxFab` l.318, `GiftBoxOpeningOverlay` l.374; add «Получить подарок» action + streak state display.
+- `android/feature/economy/presentation/component/DefaultShopComponent.kt` — store shelf statuses l.438-463 (UNAVAILABLE/NOT_CONFIGURED proven on device), premium-for-gold messages l.567-582; premium surface states live here (7.3 minimal scope).
+- `shared/feature/economy/domain/.../EconomyConstants.kt` — `premiumGoldOffers` l.29/l.121 (server-owned gold prices), `regenMsFor(hasPremium)` l.181 (no production caller — leave as-is).
+- DI: `shared/feature/economy/data/src/commonMain/.../di/EconomyDataModule.kt` (l.49-78), `EconomyDomainModule.kt` (l.46), `QuestPresentationModule.kt` (l.41), composition root `apps/android-next/.../AppApplication.kt` (`economyDataModule { sharedAuthUidFlow }`), graph gate `apps/android-next/src/test/.../KoinModuleWiringTest.kt`.
+- Local persistence for claims: Room via `shared/core/persistence` (new tables only; additivity rule).
+
+**Server contract — reference only, DO NOT MODIFY:**
+- `functions/index.js:3228` `ensureUserProfile` → profile response l.8156+ (box/premium fields; auto-grants the day-10 box on read while preserving `nextBoxAtMs` — pinned by `functions/economy-handler.test.js` "profile refresh preserves offline anchor…").
+- `functions/index.js:4404-4412` `openGiftBox` / `submitGiftBoxOperation` callables + wire-code mapping (`already-exists` = CONFLICTING_REPLAY, `permission-denied` = uid mismatch).
+- `functions/box-service.js` — `applyBoxOperation` l.232 (receipt fence `box_operations/{sha256(id)}`, statuses `OPENED/CLAIMED/NO_CHANGE/STALE_BASE/NO_BOXES/PREMIUM_REQUIRED/DAILY_LIMIT`), OFFLINE_STREAK branch l.128, PREMIUM_DAILY branch l.144 (shares one 24h slot with ad boxes: sets `nextBonusBoxAtMs` AND `nextAdRewardBoxAtMs`).
+- `functions/gift-boxes.js` — `readBoxState` l.59, `advanceStreak` l.79 (anchor moves ONLY on VISIT; ≥48h late → streak reset to 1; max one box per visit), `boxAccrualVerdict` l.114 (offline ceilings: elapsed days, streak ceiling, box days beyond max(base,9), one box/day; surplus → overclaim audit record, under-claim accepted).
+- `functions/mutation-terms.js` + `MUTATION_TERMS_OPERATIONS` (`index.js:1976`) — gate set covers ONLY `lesson_runner.SUBMIT_ATTEMPT`; box ops intentionally excluded; purchase ops not gated either (fresh-consent for commerce = deferred, see Deferred context).
+- Rules (`firestore.rules`): `box_operations` closed :106, `premium_accounts` closed :85-87, receipts owner-read :33-40 — client sees money facts only through callables.
+- Server tests to mirror/extend NOTHING in (server is frozen), but they pin the contract: `functions/economy-handler.test.js` (queued-vs-direct equality, PREMIUM_DAILY DAILY_LIMIT, VISIT, profile-preserves-anchor), `functions/box-service.test.js` (OFFLINE_STREAK base/claimed, ceilings, stale base).
+- `config/gift-box-fixtures.json` — parity fixtures incl. boxStreakDays 9→10 case; consumed by `GiftBoxStreakParityTest`.
+
+**Fixtures & rig (for evidence runs from this tree):**
+- Demo backend container `schoolquiz-demo-firebase-20261004` (projectId `demo-schoolquiz-mvp`, firestore 127.0.0.1:18090, auth 127.0.0.1:19090); staged fixture: `users/VLqWYMHXqyI8pPWQdNXdkQg9FY6E` with `boxStreakDays=9, nextBoxAtMs=now−2h` (evidence `docs/agents/evidence/2026-10-18-pixel-commerce-hitl/gift-sources-finding/`).
+- Node contract gates: `cd functions && npm test` (no-env) and `FIRESTORE_EMULATOR_HOST=127.0.0.1:18090 GCLOUD_PROJECT=demo-schoolquiz-mvp npm --prefix functions test` (demo-backend).
+
+## Tasks & Acceptance
+
+**Execution:**
+- [ ] `_bmad-output/mvp-candidate/epic-commerce/tickets.toml` -- restate 7.4's finding as the run's scope; statuses updated at the end for every touched story -- the epic folder is the initiative's source of truth.
+- [ ] `shared/feature/internet/profile/...` (UserProfile.kt, UserProfileEntity.kt + DAO/migration, FirebaseProfileRemoteDataSource.kt, ProfileMapper.kt) -- add `nextBonusBoxAtMs` end-to-end (model, Room column via additive migration, Firebase const+parse, mapper) -- the daily-gift availability field is not synced today.
+- [ ] `shared/feature/economy/domain/.../logic/GiftBoxStreak.kt` (+ `config/gift-box-fixtures.json`, `GiftBoxStreakParityTest`) -- add offline-claim computation: given base (server word) + locally counted visit days, produce `claimed {boxStreakDays, boxesEarned}` clamped to the server's ceilings (elapsed days, box days beyond max(base,9), one box/day, first-word limit) -- conservatism keeps overclaim audits at zero.
+- [ ] `shared/feature/economy/data/...` new `GiftClaimIntentStore` (+ Room tables via additive migration) -- persist one in-flight intent per claim kind (kind, operationId, payload JSON, createdAtMs, state), reserve/resolve/active-observe mirroring `GiftBoxIntentStore` -- process death must never lose or duplicate a claim.
+- [ ] `shared/feature/economy/data/...` new `GiftClaimRepository` (+ DI in EconomyDataModule) -- direct-callable transport for `submitGiftBoxOperation` (mirror the purchase-verification client path), strict envelope parsing (`replayed` + typed statuses), `STALE_BASE` re-sync handling, resolve intent on any terminal outcome -- statuses are outcomes, not exceptions.
+- [ ] `shared/feature/economy/domain/.../use_case/` new `SyncBoxStreakUseCase` and `ClaimPremiumDailyGiftUseCase` (+ EconomyDomainModule DI) -- entry orchestration: offline claim FIRST (base = last server word from Room), then VISIT (idempotent per window), then profile refresh; premium gift gated by persisted intent + `nextBonusBoxAtMs`/`premiumUntilMs` presentation state -- ordering prevents the 48h reset from eating honest offline days.
+- [ ] `android/feature/quest/presentation/.../DefaultHomeQuestsComponent.kt` + `HomeQuestsScreen.kt` (+ strings) -- per-entry `doOnResume` streak sync; «Получить подарок» action with in-flight/disabled/claimed-today states; streak + box display wired to synced fields -- the surfaces the device proofs will exercise.
+- [ ] `android/feature/economy/presentation/.../DefaultShopComponent.kt` (+ views/state) -- minimal premium surface typing from server-owned fields: active-until, daily-gift availability, pending-purchase/pending-refund states already proven -- keeps 7.3's client half honest without a full premium screen.
+- [ ] `apps/android-next/.../di/SyncModule.kt`, `AppApplication.kt`, `KoinModuleWiringTest.kt` -- register new stores/use-cases; quarantine/local-effect entries for claim intents -- graph gate stays green.
+- [ ] Tests per layer -- commonTest for GiftBoxStreak claim math + fixtures parity; data commonTest for GiftClaimIntentStore/GiftClaimRepository (mirroring `GiftBoxRepositoryTest` structure: replay, process-death retry, STALE_BASE, typed statuses); component JVM tests for entry sync and gift button states (mirroring `DefaultHomeQuestsComponentTest`); mapping tests for the gift envelope (mirroring `GiftBoxReceiptMappingTest`); Node: `functions/economy-handler.test.js` needs NO changes (server frozen) -- prove client payload conformance by feeding the exact payload shapes of the new Kotlin writers into a fixture-based Kotlin contract test instead -- every AC needs a test that can run on the VPS.
+- [ ] Premium engine proof (7.3 server half) -- audit `functions/premium-economy.js` test coverage for both doubled regeneration effects, holds/overlaps, independent remaining time; add Node cases ONLY where a documented behavior lacks any case, without touching production code -- 7.3's "server computes with real intervals and saved remainders" must be provable from this tree.
+- [ ] `docs/agents/evidence/2026-10-19-epic7-commerce-client/README.md` -- record what was proven (gates, contract tests, fixture-driven demo-backend checks via Node harness) and mark explicitly NOT_RUN: 7.1 inventory, 7.6 sandbox matrix, 7.2 premium normalization (Play-locked), regeneration UI device proof (7.3), two-device gift claims on hardware (7.4) -- statuses PASS/FAIL/NOT_RUN preserved per epic rule.
+- [ ] Assemble the MVP APK for the next hitl device session: `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :apps:android-next:assembleMvp -PmvpEmulatorHost=204.44.66.27 -PmvpEmulatorFunctionsPort=5002` -- 7.4's device proof becomes runnable the moment the owner attaches a phone.
+- [ ] `_bmad-output/mvp-candidate/epic-commerce/tickets.toml` -- final statuses: 7.2 note fresh-consent deferral, 7.3 note client-surface + server-test proof done / regeneration UI hitl, 7.4 note client wiring done / device proof pending, 7.1/7.6 unchanged blocked-external -- the next session reads truth, not hopes.
+
+**Acceptance Criteria:**
+- Given the demo fixture (`boxStreakDays=9, nextBoxAtMs=now−2h`) and a fresh client sync, when the entry streak sync runs against the demo backend, then the profile shows `boxStreakDays=10` and `boxCount` incremented by exactly 1, with no user action.
+- Given the same-day second entry, when the sync runs again, then VISIT yields `NO_CHANGE`, box count is unchanged, and no duplicate intent row remains active.
+- Given a premium user with `nextBonusBoxAtMs` in the past, when they tap «Получить подарок», then exactly one PREMIUM_DAILY intent is persisted, the server responds `CLAIMED`, box count +1, and the button shows claimed-today; a second tap cannot send a second intent.
+- Given a non-premium user, when the home surface renders, then the gift button is absent, and if claimed anyway (stale state) the `PREMIUM_REQUIRED` outcome hides it without an error dialog.
+- Given N honestly counted offline days with base B, when connectivity returns, then OFFLINE_STREAK sends `{base: B, claimed: ≤ceilings}` before any profile refresh, the server accepts the claim, and a 5-day gap does NOT reset the streak.
+- Given a stale server word (another device advanced the streak), when the offline claim gets `STALE_BASE`, then the client re-syncs the profile, drops the local claim, and renders the server state without user-visible errors.
+- Given process death between sending a claim and its response, when the app restarts, then the same `operationId` is re-sent, the `replayed:true` stored result is applied once, and box count changes exactly once.
+- Given any new Room persistence, when an old database opens, then the additive migration preserves all rows and pending intents survive restart.
+- Given the full gate set, when the run finishes, then `cd functions && npm test` = 92/92 both modes, rules 193/193, JVM `ciCheck` green except the two known stale arena-pin reds in `platform:firebase` (owner follow-up, unrelated), and no new Kotlin/Node suite is skipped.
+
+## Implementation Notes
+
+- Branch: `night/e7-commerce` from `bdbe448a636d26b245104a31c5483818689b7aef`; spec committed as first docs commit.
+- (appended during implementation)
+
+## Spec Change Log
+
+## Review Triage Log
+
+## Design Notes
+
+**Why direct callables, not outbox ops:** the server deliberately exposes exactly one queueable gift op (`economy.OPEN_GIFT_BOX`); VISIT/OFFLINE_STREAK/PREMIUM_DAILY exist only as `submitGiftBoxOperation` kinds with their own receipt fence (`box_operations/{sha256(operationId)}`: replay returns the stored response, altered body/uid → `already-exists`). Adding MUTATION_HANDLERS keys would change the audited 7.7 surface for zero benefit; instead the client reproduces the outbox's discipline locally: persist intent (operationId+body) BEFORE the request, resolve on terminal outcome, re-send identical body after process death. Server-side idempotency does the rest.
+
+**Anchor semantics (load-bearing, pinned by `economy-handler.test.js`):**
+- `nextBoxAtMs` = last counted visit + 24h; moves ONLY on VISIT (and OPEN), never on profile reads or offline claims' grant path.
+- Profile read auto-grants the day-10 crossing box while preserving the anchor (test: `boxCount 1→2`, anchor unchanged) — "automatic on entry" is already server behavior; the client's job is to not lose data before it.
+- VISIT with `now ≥ nextBoxAtMs + 24h` resets streak to 1 — so on reconnect the OFFLINE claim must go FIRST, extending the anchor by claimed days (`boxAccrualVerdict.next`), or the profile refresh + visit would eat the offline days as a "missed" gap.
+- PREMIUM_DAILY shares ONE 24h slot with ad boxes (`nextBonusBoxAtMs` AND `nextAdRewardBoxAtMs` both set) — owner decision 12.10; the UI must treat DAILY_LIMIT as "already claimed today", not as an ad-box conflict.
+
+**Payload contracts (client must satisfy exactly):**
+- OFFLINE_STREAK: `{kind, ownerUid, operationId, base: {boxStreakDays, nextBoxAtMs}, claimed: {boxStreakDays, boxesEarned}}` — all exact non-negative safe ints; `base` verbatim from the last server word; first-ever word (`nextBoxAtMs=0`) may claim ≤1 day and 0 boxes.
+- PREMIUM_DAILY / VISIT: `{kind, ownerUid, operationId}`.
+- Response envelope `{replayed, result}` with `result.schemaVersion=1`, typed `status`; strict mapping per `GiftBoxReceiptMappingTest`.
+
+## Verification
+
+**Commands:**
+- `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew ciCheck --no-configuration-cache` -- expected: green except the two known stale arena-pin reds in `platform:firebase` (documented owner follow-up).
+- `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew test --no-configuration-cache` -- expected: all new suites green.
+- `cd functions && npm test` -- expected: 92 of 92 suites passed (no-env).
+- `FIRESTORE_EMULATOR_HOST=127.0.0.1:18090 GCLOUD_PROJECT=demo-schoolquiz-mvp npm --prefix functions test` -- expected: 92 of 92 against the live demo backend.
+- `firebase emulators:exec --only auth,firestore "node scripts/rules-emulator-test.js"` (isolated ports per 7.7 practice) -- expected: 193/193.
+- `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :apps:android-next:assembleMvp -PmvpEmulatorHost=204.44.66.27 -PmvpEmulatorFunctionsPort=5002` -- expected: APK artifact for the hitl device session.
+
+**Manual checks (no CLI):**
+- Evidence README lists every story 7.1–7.8 with PASS / NOT_RUN and the exact reason for each NOT_RUN; no simulated device/Play results.
