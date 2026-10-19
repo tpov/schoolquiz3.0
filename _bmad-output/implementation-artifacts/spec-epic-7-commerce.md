@@ -2,8 +2,8 @@
 title: 'Epic 7 — store, premium, boxes and gift claims (commerce vertical, mvp-candidate)'
 type: 'feature'
 created: '2026-10-19'
-status: 'ready-for-dev'
-baseline_revision: 'bdbe448a636d26b245104a31c5483818689b7aef'
+status: 'in-progress'
+baseline_revision: 'bdbe448a636d26b245104a31c5483818689b7aef' # diff baseline; branch point is 89092843 (context-cache housekeeping), branch HEAD at dispatch 2dd95a7f
 route: 'full'
 route_source: 'auto'
 review: ''
@@ -130,6 +130,7 @@ Baseline `bdbe448a` on `night/e5-inception`; work lands on a fresh `night/e7-com
 
 - Branch: `night/e7-commerce` from `bdbe448a636d26b245104a31c5483818689b7aef`; spec committed as first docs commit.
 - (appended during implementation)
+- 2026-10-19 run start: tickets.toml scope restated from 7.4's finding (client cannot claim gifts; this run builds the claim wiring + MVP APK). Plan of record: nextBonusBoxAtMs lands as additive migration 15→16 (column with DEFAULT 0, `@ColumnInfo(defaultValue="0")` like `SyncStateEntity.docId`); gift-claim persistence (gift_claim_intents + local offline streak counter) as 16→17; schema JSONs are re-exported by KSP and committed; instrumented migration cases added textually per existing practice (MigrationCoverageTest guards them from JVM).
 
 ## Spec Change Log
 
