@@ -47,3 +47,23 @@ personal device): reboot the phone, or Play Store -> Apps -> Google Play Store -
 Clear cache (and force stop), then relaunch School Quiz and tap Buy. After that the purchase
 sheet should appear (test purchase under the license tester — no real charge), and the 7.6
 journey continues: credit check -> console refund -> clawback check.
+
+
+## Run 4 (15:30-15:56) — after the owner reboot: unchanged
+
+The owner rebooted the Pixel and freed the device. Fresh launch, SHOP, Buy taps at the
+pixel-verified position (1120,1428 measured from the PNG; long-press variant too) — the
+purchase sheet still never opens, no billing logs. The Premium card still reads «Google Play
+is unreachable...». Play Store force-stopped + system caches trimmed via adb — unchanged.
+
+Notable: the SKU PRICES render on the cards (11,99/119,99/299,99 UAH), so a BillingClient
+query succeeded at some point — but launchBillingFlow does not bring up the sheet. Remaining
+hypotheses need hands-on debugging: unfiltered GMS-side logcat during a tap; App Check /
+license-tester eligibility; Play Store app version on the device.
+
+## The 30-second split test (for the owner)
+
+Tap Buy on Gold Pack Small WITH YOUR FINGER: if the Play sheet opens for you, the problem was
+my injected adb taps being swallowed; if nothing happens for you either — the app billing
+client state is the problem and the phone needs a deeper reset (Play Store data clear /
+account re-login / device re-registration).
