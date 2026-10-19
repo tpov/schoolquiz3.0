@@ -28,3 +28,22 @@ The user was actively using the Pixel during this run (a crypto wallet was foreg
 reset its tab). Next session: a clean retest with the device untouched for 15 minutes, and if
 «Требуется авторизация» persists, pull the UNFILTERED logcat around the Buy tap — billing and
 auth logs live in the GMS process, not the app's pid.
+
+
+## Run 3 (14:15-14:25) — the precise blocker isolated
+
+The user freed the Pixel. Fresh launches, the SHOP tab, multiple Buy taps on gold_pack_small
+(fixed coords 1128,1477 verified against the 1280x2856 screenshots; long-press variant too) —
+the purchase sheet NEVER opens, and there are NO billing logs anywhere (the app's pid shows
+nothing; nothing in GMS either).
+
+The app itself names the state: the Premium card reads **«Google Play is unreachable...»** —
+the BillingClient connection fails on this device right now. Everything else works: the
+catalog prices rendered, the internal-track install is recognized by the Play Store
+(Play/Uninstall buttons), the license tester (oleg12794) is on the device, opt-in passed.
+
+Standard device-side medicine for a stuck BillingClient (needs the owner's hands on the
+personal device): reboot the phone, or Play Store -> Apps -> Google Play Store -> Storage ->
+Clear cache (and force stop), then relaunch School Quiz and tap Buy. After that the purchase
+sheet should appear (test purchase under the license tester — no real charge), and the 7.6
+journey continues: credit check -> console refund -> clawback check.
