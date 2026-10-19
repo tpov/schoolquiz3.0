@@ -37,7 +37,8 @@ const user = (extra = {}) => ({gold: 8, [SHORTFALL_FIELD]: 0, nolics: 11, points
 const makeDb = (extra = {}) => premiumTestDb({[USER]: user(extra), [ECONOMY_CONSTANTS_DOC]: config});
 const open = (id = OPENING, ownerUid = UID) => ({kind: "OPEN", openingId: id, ownerUid});
 const operation = (kind, id, extra = {}) => ({kind, operationId: id, ownerUid: UID, ...extra});
-const run = (db, payload = open(), now = T, entropy = COMMON, uid = UID) => applyBoxOperation({db, uid, payload, now, entropy});
+const run = async (db, payload = open(), now = T, entropy = COMMON, uid = UID) =>
+  (await applyBoxOperation({db, uid, payload, now, entropy})).response;
 const rows = (db, currency) => [...db.store].filter(([path, value]) => path.startsWith(`${LEDGER_PATH}/`) && value.currency === currency).map(([, value]) => value);
 const recordPath = (id) => `box_operations/${boxOperationId(id)}`;
 const log = {warn() {}, error() {}};

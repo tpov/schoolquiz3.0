@@ -1895,7 +1895,8 @@ const MUTATION_HANDLERS = {
   // сохранённой квитанцией силами самого приёмника, до обработчика не доходя.
   "lesson_runner.READY_ACK": (uid, payload, now) => applyLessonReadyAck(uid, payload || {}, now),
   // The opening itself owns a permanent receipt; queue leases may expire without rerolling it.
-  "economy.OPEN_GIFT_BOX": (uid, payload) => callBoxOperation({auth: {uid}, data: payload}, BOX_KIND.OPEN),
+  "economy.OPEN_GIFT_BOX": async (uid, payload) =>
+    (await callBoxOperation({auth: {uid}, data: payload}, BOX_KIND.OPEN)).response,
   // Заявка черновика на арену. Раньше она писалась в Firestore напрямую и проверку ключа
   // обходила в принципе — теперь идёт тем же путём, что и всё остальное (AD-6).
   "quest_authoring.SUBMIT_ARENA": (uid, payload) => applyArenaSubmission(uid, payload),
@@ -4402,10 +4403,16 @@ async function applyLessonUnlock(uid, payload) {
 }
 
 exports.openGiftBox = onCall(CALLABLE_OPTIONS, async (request) => {
-  return callBoxOperation(request, BOX_KIND.OPEN);
+  return (await callBoxOperation(request, BOX_KIND.OPEN)).response;
 });
 
-exports.submitGiftBoxOperation = onCall(CALLABLE_OPTIONS, async (request) => callBoxOperation(request));
+// Заявки подарков читают стандартный конверт мутаций `{replayed, result}` (спек 7: «gift-claim
+// envelopes {replayed, result}», ретрай тем же operationId обязан вернуть сохранённый исход как
+// исход, а не отказ). Плоское тело ответа здесь — форма планировщика, а не провода.
+exports.submitGiftBoxOperation = onCall(CALLABLE_OPTIONS, async (request) => {
+  const plan = await callBoxOperation(request);
+  return {replayed: plan.replayed, result: plan.response};
+});
 
 async function callBoxOperation(request, forcedKind = null) {
   const uid = requireAuthUid(request);

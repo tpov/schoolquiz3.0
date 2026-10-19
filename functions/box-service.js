@@ -240,7 +240,7 @@ async function applyBoxOperation({db, uid, payload, now, entropy = createGiftBox
       if (!planned.replayed) transaction.set(db.collection("users").doc(uid), {uid, ...planned.userPatch}, {merge: true});
       return planned;
     });
-    if (plan.caughtUp) return plan.response;
+    if (plan.caughtUp) return plan;
   }
   fail("UNAVAILABLE", "Premium catch-up made durable progress; retry the same box operation id");
 }

@@ -1,0 +1,15 @@
+Raw HTTP probe of the SERVED callable after the envelope fix (inside schoolquiz-functions-emu,
+custom token for uid qopc1zUv4U2QSrpYKGgdXeXYbdi8 minted against the auth emulator):
+
+POST /demo-schoolquiz-mvp/us-central1/submitGiftBoxOperation  {data:{kind:"VISIT",...}} →
+
+HTTP 200
+{"result":{"replayed":false,"result":{"schemaVersion":1,"ownerUid":"qopc1zUv4U2QSrpYKGgdXeXYbdi8",
+ "operationId":"httpprobe-visit-0000000001","kind":"VISIT","status":"NO_CHANGE","boxCount":2,
+ "boxStreakDays":10,"nextBoxAtMs":1792489728586,"nextBonusBoxAtMs":1792529972249,
+ "earnedBoxes":0,"openedBoxes":0,"premiumUntilMs":1795035417005}}}
+
+The outer "result" is the firebase callable HTTP wrapper the SDK unwraps; the inner
+{replayed, result} is the mutation envelope the gift-claim client reader demands.
+Before the fix the callable returned the flat planner body directly, so EVERY gift-claim
+answer failed envelope parsing ("Missing replay marker") and the client retried forever.
