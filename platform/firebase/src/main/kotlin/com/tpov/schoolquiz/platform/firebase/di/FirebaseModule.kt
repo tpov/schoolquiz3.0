@@ -5,16 +5,17 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.FirebaseUserStatsDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaLessonCatalogRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.arena.FirebaseQuestionWindowRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamCertificateRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamSittingRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.arena.FirebaseArenaWalletRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.arena.FirebaseQuestionWindowRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyReceiptsDataSource
+import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftClaimRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
+import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamCertificateRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamSittingRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.network.EconomyCapturedTermsJson
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
@@ -40,25 +41,26 @@ import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyConstantsRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyReceiptsRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftClaimRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.PurchaseVerifier
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.LogoRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.NicknameRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.VerificationRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.internet.social.data.remote.PollsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaLessonCatalogRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamCertificateRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaWalletRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamCertificateRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
-import com.tpov.schoolquiz.shared.feature.internet.social.data.remote.PollsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
@@ -191,6 +193,11 @@ val firebaseModule =
         }
         single<GiftBoxRemoteDataSource> {
             FirebaseGiftBoxRemoteDataSource()
+        }
+        // Заявки подарков (7.4): прямой вызываемый с тем же разбором конверта, что у квитанций
+        // открытия; тело едет ровно то, что лежало в намерении.
+        single<GiftClaimRemoteDataSource> {
+            FirebaseGiftClaimRemoteDataSource(functions = get(), networkMonitor = get())
         }
         single<EconomyReceiptsRemoteDataSource> {
             FirebaseEconomyReceiptsDataSource(

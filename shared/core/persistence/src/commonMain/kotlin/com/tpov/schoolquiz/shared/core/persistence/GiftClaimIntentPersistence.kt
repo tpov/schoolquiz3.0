@@ -30,10 +30,16 @@ data class GiftClaimIntentEntity(
 @Dao
 interface GiftClaimIntentDao {
     @Query("SELECT * FROM gift_claim_intents WHERE owner_uid = :ownerUid AND kind = :kind")
-    suspend fun find(ownerUid: String, kind: String): GiftClaimIntentEntity?
+    suspend fun find(
+        ownerUid: String,
+        kind: String,
+    ): GiftClaimIntentEntity?
 
     @Query("SELECT * FROM gift_claim_intents WHERE owner_uid = :ownerUid AND kind = :kind")
-    fun observe(ownerUid: String, kind: String): Flow<GiftClaimIntentEntity?>
+    fun observe(
+        ownerUid: String,
+        kind: String,
+    ): Flow<GiftClaimIntentEntity?>
 
     /** Вторая заявка того же вида не создаёт вторую строку: возвращает -1, если место занято. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -44,5 +50,9 @@ interface GiftClaimIntentDao {
         "DELETE FROM gift_claim_intents WHERE owner_uid = :ownerUid AND kind = :kind " +
             "AND operation_id = :operationId",
     )
-    suspend fun resolve(ownerUid: String, kind: String, operationId: String): Int
+    suspend fun resolve(
+        ownerUid: String,
+        kind: String,
+        operationId: String,
+    ): Int
 }

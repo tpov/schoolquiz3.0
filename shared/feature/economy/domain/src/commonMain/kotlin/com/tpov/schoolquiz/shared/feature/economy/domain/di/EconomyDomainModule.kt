@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.di
 
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyConstantsRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.BuyGoldPackUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ClaimPremiumDailyGiftUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralProgramUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
@@ -10,6 +11,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomy
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SettlePurchaseUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SyncBoxStreakUseCase
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -44,6 +46,19 @@ fun economyDomainModule(
         factory { PurchaseShopItemUseCase(get()) }
         factory { GetReferralProgramUseCase(get()) }
         factory { OpenGiftBoxUseCase(get()) }
+        // Заявки подарков (7.4): входная синхронизация серии и явный суточный бонус. Оба лёгкие,
+        // всё состояние живёт в репозитории заявок и в профиле.
+        factory {
+            SyncBoxStreakUseCase(
+                claims = get(),
+                profileRepository = get(),
+                localStreak = get(),
+                network = get(),
+                currentUidFlow = currentUidFlow,
+                clock = { System.currentTimeMillis() },
+            )
+        }
+        factory { ClaimPremiumDailyGiftUseCase(claims = get()) }
         // Single, not factory: it owns the one-settlement-per-token guard, and a guard handed out
         // fresh to each caller guards nothing.
         single {
