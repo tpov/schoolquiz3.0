@@ -57,7 +57,16 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimKind
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxLocalStreakStore
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftClaimRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftClaimRequest
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.LocalBoxStreak
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ClaimPremiumDailyGiftUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SyncBoxStreakUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
@@ -249,6 +258,8 @@ class QuizzesRootIntegrationTest {
                 observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
                 observeProfile = ObserveCurrentProfileUseCase(OfflineProfileRepository()),
                 openGiftBoxUseCase = OpenGiftBoxUseCase(NoGiftBoxRepository),
+                syncBoxStreak = noSyncBoxStreak(),
+                claimPremiumDailyGift = noClaimPremiumGift(),
                 onCatalogDrillDown = onCatalogDrillDown,
                 onResumeLesson = {},
                 attemptRepository = FakeLessonAttemptRepository(),
@@ -607,6 +618,41 @@ private class OfflineProfileRepository : ProfileRepository {
     override suspend fun updateNickname(nickname: String): Result<UserProfile> =
         Result.success(UserProfile.offline().copy(nickname = nickname))
 }
+
+// Заявки подарков в этих сценариях не участвуют: нейтральные use-cases над портом-заглушкой.
+private fun noClaimRepository() =
+    object : GiftClaimRepository {
+        override suspend fun submit(request: GiftClaimRequest): Result<GiftClaimOutcome> =
+            Result.failure(IllegalStateException("not expected"))
+
+        override suspend fun resumePending(kind: GiftClaimKind): Result<GiftClaimOutcome>? = null
+
+        override fun observePending(kind: GiftClaimKind) = flowOf(false)
+    }
+
+private fun noSyncBoxStreak() =
+    SyncBoxStreakUseCase(
+        claims = noClaimRepository(),
+        profileRepository = OfflineProfileRepository(),
+        localStreak =
+            object : GiftBoxLocalStreakStore {
+                override suspend fun find(ownerUid: String): LocalBoxStreak? = null
+
+                override suspend fun save(ownerUid: String, value: LocalBoxStreak) = Unit
+
+                override suspend fun forget(ownerUid: String) = Unit
+            },
+        network =
+            object : NetworkMonitor {
+                override fun observeOnline() = flowOf(true)
+
+                override suspend fun isOnline() = true
+            },
+        currentUidFlow = { flowOf("user1") },
+        clock = { 0L },
+    )
+
+private fun noClaimPremiumGift() = ClaimPremiumDailyGiftUseCase(noClaimRepository())
 
 private object NoGiftBoxRepository : GiftBoxRepository {
     override suspend fun openGiftBox(): Result<GiftBoxOpening> =

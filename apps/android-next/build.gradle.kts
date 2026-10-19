@@ -103,6 +103,13 @@ android {
     }
 }
 
+// JDK 27 на этой VPS новее, чем официально поддерживаемая Byte Buddy (через Mockito), и
+// инструментирование конкретных классов падает с "Java 27 (71) is not supported". Флаг —
+// рекомендованный самой ошибкой выход для тестовой JVM; на прод-код не влияет.
+tasks.withType<Test>().configureEach {
+    jvmArgs("-Dnet.bytebuddy.experimental=true")
+}
+
 dependencies {
     // Feature modules
     implementation(project(":shared:feature:app-shell:domain"))

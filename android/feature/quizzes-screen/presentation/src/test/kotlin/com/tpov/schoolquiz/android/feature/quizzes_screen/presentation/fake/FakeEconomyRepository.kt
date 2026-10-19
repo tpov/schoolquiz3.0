@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake
 
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
@@ -9,6 +10,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepos
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 
 /** In-memory economy: unlocks are whatever the test put in, and buying adds one. */
 class FakeEconomyRepository(
@@ -50,4 +52,7 @@ class FakeEconomyRepository(
     }
 
     override suspend fun referralProgram(): ReferralProgram = ReferralProgram("", emptyList())
+
+    // Читалка квитанций (656948c0): эти тесты fixture проводки не тестируют — честная пустота.
+    override fun observeReceipts(limit: Int): Flow<List<EconomyReceipt>> = flowOf(emptyList())
 }
