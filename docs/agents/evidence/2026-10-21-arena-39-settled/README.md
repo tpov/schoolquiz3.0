@@ -43,3 +43,16 @@ consent and every paid mutation (all of Arena) silently dies in CONFLICT.
 Fix scope (next client session): consent UI flow — on TermsConsentRequired show the terms
 dialog, acceptCurrentTerms(), re-enqueue manual sync; plus JVM tests and gates. This is the
 7.4-style wiring fix, half a session.
+
+## Session 7 addendum (2026-10-21, later) — requeue tail diagnosis, honest stop
+
+- The requeue SQL criterion is CORRECT: UPDATE outbox SET state=WAITING WHERE
+  state=CONFLICT AND operation IN (lesson_runner.SUBMIT_ATTEMPT) — the device row matches.
+- Fresh Room pull after the accept tap: the row is STILL CONFLICT and no consent store
+  file appeared in the app dir → acceptCurrentTerms did NOT complete on-device. Most
+  likely the suspend accept-lambda threw silently (the host scope has no exception
+  handler) or the finger/injection tap missed the dialog button — the two are not yet
+  separated.
+- Next: debug (mvp) logging around the consent store write, or a tiny coroutine exception
+  handler in ArenaRunHost.acceptTerms, then re-run the dialog accept with exact
+  uiautomator bounds. The JVM test already proves the wiring contract.
