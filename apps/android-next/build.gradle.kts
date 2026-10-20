@@ -52,8 +52,12 @@ android {
         // published on Play. The former "com.tpov.schoolquiz.next" had no Firebase client, so
         // processGoogleServices could not resolve a configuration and the APK never built.
         applicationId = "com.tpov.schoolquiz"
-        versionCode = 40000
-        versionName = "4.0.0"
+        // 40001/4.0.1 — the first Play build with the startup-auth wait and the gift-claim
+        // auto-resume: Play rejects an equal versionCode, and the shipped 40000 refuses every
+        // purchase with a no-account error whenever its fire-and-forget anonymous sign-in
+        // loses the startup race.
+        versionCode = 40001
+        versionName = "4.0.1"
         buildConfigField("boolean", "MVP_EMULATORS", "false")
         // Ссылки в AppApplication безусловны (a2298084), поэтому поля обязаны существовать во
         // всех типах сборки: debug/release получают безопасные значения, mvp — переопределяет их
