@@ -30,3 +30,16 @@ Payload sent is attached (settle-att.json).
   owner-mismatch checks.
 - The rig ticket 84174aaa stays RESERVED (holds 50) - cancel via cancelArenaEntry when
   the account returns to play, or leave as fixture residue.
+
+## ROOT CAUSE of the settle delivery defect (found 2026-10-21)
+
+Device outbox row: lesson_runner.SUBMIT_ATTEMPT, state=CONFLICT, last_error=TermsConsentRequired.
+The server gates SUBMIT_ATTEMPT behind fresh payable-terms consent (MUTATION_TERMS_OPERATIONS);
+the client HAS the full consent machinery (EconomyTermsConsentGate: capturedTerms/verdict/
+acceptCurrentTerms — acceptCurrentTerms returns waiting outbox rows to sending), but
+**acceptCurrentTerms is not wired to any UI**: no screen calls it, so the player can never
+consent and every paid mutation (all of Arena) silently dies in CONFLICT.
+
+Fix scope (next client session): consent UI flow — on TermsConsentRequired show the terms
+dialog, acceptCurrentTerms(), re-enqueue manual sync; plus JVM tests and gates. This is the
+7.4-style wiring fix, half a session.
