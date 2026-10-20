@@ -100,6 +100,14 @@ android {
             buildConfigField("int", "MVP_EMULATOR_FUNCTIONS_PORT", "${project.findProperty("mvpEmulatorFunctionsPort") ?: 5001}")
             buildConfigField("String", "FIREBASE_APP_CHECK_DEBUG_SECRET", "\"\"")
         }
+        // Второй изолированный клиент рига (3.9 A→B→A и общий тикет на двух клиентах):
+        // тот же demo-бэкенд, отдельный applicationId и Room — аккаунты не пересекаются.
+        create("mvpb") {
+            initWith(getByName("mvp"))
+            matchingFallbacks += listOf("debug")
+            applicationIdSuffix = ".mvpb"
+            versionNameSuffix = "-isolated-b"
+        }
     }
 
     buildFeatures {
