@@ -63,6 +63,9 @@ internal class ArenaRunHost(
     private var receiptKey: ArenaReceiptKey? = null
     private var receiptFrame: ArenaRunnerView.Result? = null
 
+    /** Поднятый флаг требует решения игрока по платным условиям (см. sync()). */
+    val needsTermsConsent = MutableStateFlow(false)
+
     init {
         val controller = coordinator
         if (controller == null) {
@@ -180,10 +183,24 @@ internal class ArenaRunHost(
         if (!destroyed && controller.checkSession() && !state.busy) {
             when {
                 pending?.decision == ArenaRunDecision.CANCEL -> dispatchCancel()
+                services.result.consent?.let { !it.satisfied() } == true -> {
+                    // Отказ terms-consent запарковал SETTLE в CONFLICT: без решения игрока
+                    // повтор бессмыслен — поднимаем диалог согласия (CAP-16, AD-5).
+                    needsTermsConsent.value = true
+                }
                 state.canRetryReceiptSync(
                     receiptFrame?.settlement ?: pendingSettlement(),
                 ) -> services.result.sync.enqueueManualSync()
             }
+        }
+    }
+
+    /** Решение игрока за условиями: согласие возвращает запаркованный SETTLE в отправку. */
+    fun acceptTerms() {
+        scope.launch {
+            services.result.consent?.accept()
+            needsTermsConsent.value = false
+            sync()
         }
     }
 
@@ -458,6 +475,19 @@ internal data class ArenaRunResultServices(
     val settlements: ServerAttemptSettlementRepository,
     val ratings: ArenaFrozenRatingRepository,
     val sync: SyncScheduler,
+    /**
+     * Платное согласие (CAP-16): SETTLE гейтится согласием с условиями, и откaz
+     * terms-consent-required парковает строку очереди в CONFLICT. `satisfied` сверяет
+     * захваченные условия с таблицей, `accept` фиксирует решение игрока и возвращает ждущие
+     * записи в отправку. Null — хост без гейта (тесты, простые сборки).
+     */
+    val consent: ArenaConsentHandles? = null,
+)
+
+/** Ручки согласия хоста; живут лямбдами, чтобы runner не зависел от economy-модуля. */
+internal data class ArenaConsentHandles(
+    val satisfied: () -> Boolean,
+    val accept: suspend () -> Unit,
 )
 
 private fun ArenaRunnerView.Result.toVerifiedResult(): ArenaVerifiedResult? =

@@ -5,12 +5,16 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunne
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerContentSyncCallbacks
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaConsentHandles
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunResultServices
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunServices
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultArenaRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.feature.economy.domain.logic.TermsConsentVerdict
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyTermsConsentGate
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonConsentHandles
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
@@ -34,7 +38,15 @@ val lessonRunnerPresentationModule =
                     sessions = get(),
                     sessionEvents = get(),
                     wallet = get(),
-                    result = ArenaRunResultServices(settlements = get(), ratings = get(), sync = get()),
+                    result = ArenaRunResultServices(
+                    settlements = get(),
+                    ratings = get(),
+                    sync = get(),
+                    consent = ArenaConsentHandles(
+                        satisfied = { get<EconomyTermsConsentGate>().verdict() == TermsConsentVerdict.Sufficient },
+                        accept = { get<EconomyTermsConsentGate>().acceptCurrentTerms() },
+                    ),
+                ),
                 )
             val clock = get<kotlinx.datetime.Clock>()
             ArenaRunnerComponentFactory { context, request ->
@@ -65,6 +77,10 @@ val lessonRunnerPresentationModule =
                 getResultAdvice = GetResultAdviceUseCase(lessonRepository = get()),
                 clock = get(),
                 analytics = get<AnalyticsTracker>(),
+                consent = LessonConsentHandles(
+                    satisfied = { get<EconomyTermsConsentGate>().verdict() == TermsConsentVerdict.Sufficient },
+                    accept = { get<EconomyTermsConsentGate>().acceptCurrentTerms() },
+                ),
             ) as LessonRunnerRootComponent
         }
 

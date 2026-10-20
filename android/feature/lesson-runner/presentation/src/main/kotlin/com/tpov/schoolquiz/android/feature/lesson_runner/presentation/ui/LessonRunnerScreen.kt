@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -96,6 +97,26 @@ fun LessonRunnerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val saveResultError = stringResource(R.string.runner_error_save_result)
     val saveRatingError = stringResource(R.string.runner_error_save_rating)
+    val needsTermsConsent by component.needsTermsConsent.collectAsState()
+    val consentTitle = stringResource(R.string.runner_terms_consent_title)
+    val consentMessage = stringResource(R.string.runner_terms_consent_message)
+    val consentAccept = stringResource(R.string.runner_terms_consent_accept)
+    val consentDismiss = stringResource(R.string.runner_terms_consent_dismiss)
+
+    // Платная мутация запаркована отказом terms-consent (CAP-16): решение игрока возвращает её в отправку.
+    if (needsTermsConsent) {
+        AlertDialog(
+            onDismissRequest = component::onBack,
+            title = { Text(consentTitle) },
+            text = { Text(consentMessage) },
+            confirmButton = {
+                TextButton(onClick = component::acceptTerms) { Text(consentAccept) }
+            },
+            dismissButton = {
+                TextButton(onClick = component::onBack) { Text(consentDismiss) }
+            },
+        )
+    }
 
     // Arena observes its durable frame directly below; do not wait for the compatibility uiState mapping.
     if (component !is ArenaRunnerRootComponent) rememberFlagSecure(enabled = component.isHardMode)
@@ -548,6 +569,8 @@ private fun LessonRunnerScreenInitFailedPreview() {
 }
 
 private class PreviewLessonRunnerComponent(initialState: RunnerUiState) : LessonRunnerRootComponent {
+    override val needsTermsConsent = kotlinx.coroutines.flow.MutableStateFlow(false)
+    override fun acceptTerms() = Unit
     override val isHardMode: Boolean = false
     override val uiState: StateFlow<RunnerUiState> = MutableStateFlow(initialState)
     override val events: Flow<RunnerEvent> = emptyFlow()

@@ -18,6 +18,15 @@ interface LessonRunnerRootComponent {
     /** True when this runner session is in HARD mode — used for FLAG_SECURE (AC-28). */
     val isHardMode: Boolean
 
+    /**
+     * Платная мутация застряла в отказе terms-consent (CAP-16): нужно решение игрока. True
+     * поднимает диалог согласия на экране результата; после [acceptTerms] возвращается в false.
+     */
+    val needsTermsConsent: StateFlow<Boolean>
+
+    /** Решение игрока за условиями: фиксирует согласие и возвращает запись в отправку. */
+    fun acceptTerms()
+
     fun onAnswer(answer: UserAnswerDraft)
 
     /** Called while user edits the current question — persists draft across rotation. */
@@ -59,3 +68,13 @@ interface LessonRunnerRootComponent {
 
     fun onBack()
 }
+
+/**
+ * Ручки платного согласия хоста (CAP-16): [satisfied] сверяет захваченные условия с таблицей,
+ * [accept] фиксирует решение игрока (acceptCurrentTerms) и возвращает ждущие записи в отправку.
+ * null в конструкторах ранееров — хост без гейта: синхронизация идёт как раньше.
+ */
+data class LessonConsentHandles(
+    val satisfied: () -> Boolean,
+    val accept: suspend () -> Unit,
+)

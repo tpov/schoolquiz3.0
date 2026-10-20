@@ -31,4 +31,8 @@
     <string name="arena_run_rating_unavailable">Оценка для этой квитанции недоступна.</string>
     <string name="arena_run_rating_submit_failed">Оценка не сохранена. Повторите попытку.</string>
     <string name="arena_run_rating_sync">Отправить оценку</string>
+    <string name="runner_terms_consent_title">Условия оплаты изменились</string>
+    <string name="runner_terms_consent_message">Прогресс попытки сохранён, но сервер ждёт вашего согласия с действующими ценами и правилами. Примите условия — и результат будет отправлен без потери попытки.</string>
+    <string name="runner_terms_consent_accept">Принять и отправить</string>
+    <string name="runner_terms_consent_dismiss">Позже</string>
 </resources>

@@ -128,6 +128,7 @@ class DefaultLessonRunnerRootComponentTest {
         profileRepository: FakeProfileRepository? = null,
         attemptSyncMarks: FakeAttemptSyncMarkRepository = fakeSyncMarks,
         contentSyncCallbacks: LessonRunnerContentSyncCallbacks = LessonRunnerContentSyncCallbacks(),
+        consent: LessonConsentHandles? = null,
     ): DefaultLessonRunnerRootComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -152,6 +153,7 @@ class DefaultLessonRunnerRootComponentTest {
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
             contentSyncCallbacks = contentSyncCallbacks,
+        consent = consent,
             mainContext = Dispatchers.Unconfined,
         )
     }
@@ -1676,4 +1678,39 @@ class DefaultLessonRunnerRootComponentTest {
         val result = assertIs<RunnerUiState.Result>(component.uiState.value)
         assertEquals(AttemptSyncMark.NOT_SENT, result.syncMark)
     }
+
+    // GIVEN платная мутация запаркована отказом terms-consent WHEN ручной sync THEN диалог, не ретрай;
+    // THEN решение игрока фиксирует согласие и возвращает запись в отправку (CAP-16, AD-5).
+    @Test
+    fun `terms-consent refusal parks the result and the player decision delivers it`() =
+        runTest {
+            var satisfied = false
+            var accepted = 0
+            val consent = LessonConsentHandles(
+                satisfied = { satisfied },
+                accept = { accepted += 1; satisfied = true },
+            )
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+            val component =
+                buildComponent(
+                    profileRepository = FakeProfileRepository(),
+                    consent = consent,
+                )
+            testScheduler.advanceUntilIdle()
+            component.onAnswer(singleChoiceDraft())
+            assertIs<RunnerUiState.Result>(component.uiState.value)
+            val syncsBefore = fakeSyncScheduler.manualRequests
+
+            component.onSyncResult()
+            testScheduler.advanceUntilIdle()
+            assertTrue(component.needsTermsConsent.value, "игрок должен увидеть запрос согласия")
+            assertEquals(syncsBefore, fakeSyncScheduler.manualRequests, "без согласия ретрай бессмыслен")
+
+            component.acceptTerms()
+            testScheduler.advanceUntilIdle()
+            assertEquals(1, accepted, "согласие фиксируется один раз")
+            assertEquals(false, component.needsTermsConsent.value, "диалог закрывается решением")
+            assertEquals(syncsBefore + 1, fakeSyncScheduler.manualRequests, "согласие дренирует запись")
+        }
 }

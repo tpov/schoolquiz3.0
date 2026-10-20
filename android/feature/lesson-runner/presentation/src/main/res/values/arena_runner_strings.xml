@@ -31,4 +31,8 @@
     <string name="arena_run_rating_unavailable">Rating is unavailable for this receipt.</string>
     <string name="arena_run_rating_submit_failed">Rating was not saved. Try again.</string>
     <string name="arena_run_rating_sync">Send queued rating</string>
+    <string name="runner_terms_consent_title">Payment terms have changed</string>
+    <string name="runner_terms_consent_message">Your attempt progress is saved, but the server awaits your consent to the current prices and rules. Accept the terms and the result will be sent without losing the attempt.</string>
+    <string name="runner_terms_consent_accept">Accept and send</string>
+    <string name="runner_terms_consent_dismiss">Later</string>
 </resources>

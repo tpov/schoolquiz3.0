@@ -96,6 +96,10 @@ internal class ArenaRunnerInstance(
 
     override fun onSyncResult() = host.sync()
 
+    override val needsTermsConsent = host.needsTermsConsent
+
+    override fun acceptTerms() = host.acceptTerms()
+
     override fun onBack() {
         val frame = host.view.value
         if (frame is ArenaRunnerView.Question) {

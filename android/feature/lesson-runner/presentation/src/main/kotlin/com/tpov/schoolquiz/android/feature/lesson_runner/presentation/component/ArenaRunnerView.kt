@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 
 /** Internal extension consumed by the shared screen; navigation still uses LessonRunnerRootComponent. */
 internal interface ArenaRunnerRootComponent : LessonRunnerRootComponent {
+
+    override val needsTermsConsent: kotlinx.coroutines.flow.StateFlow<Boolean>
+
+    override fun acceptTerms()
     val arenaView: StateFlow<ArenaRunnerView>
 
     fun onArenaAction(

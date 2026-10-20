@@ -10,6 +10,8 @@ dependencies {
     implementation(project(":shared:feature:lesson-runner:domain"))
     // Экзамен (CAP-21/22): транспорт сидинга — источник данных шести вызовов.
     implementation(project(":shared:feature:lesson-runner:data"))
+    // Платное согласие (CAP-16): экран результата ведёт игрока через TermsConsent-гейт.
+    implementation(project(":shared:feature:economy:domain"))
     implementation(project(":shared:feature:lesson:domain"))
     implementation(project(":shared:feature:internet:profile:domain"))
     // Next-lesson resolution reads lesson.themeId (design decision F3).

@@ -5,6 +5,7 @@ import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnStop
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerContentSyncCallbacks
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonConsentHandles
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toEventSaveError
@@ -48,6 +49,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResul
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,6 +94,12 @@ class DefaultLessonRunnerRootComponent(
      */
     private val analytics: AnalyticsTracker = NoOpAnalyticsTracker,
     private val contentSyncCallbacks: LessonRunnerContentSyncCallbacks = LessonRunnerContentSyncCallbacks(),
+    /**
+     * Платное согласие (CAP-16): `satisfied` — сверка захваченных условий с таблицей, `accept` —
+     * решение игрока (acceptCurrentTerms, возвращает ждущие записи в отправку). Null — хост без
+     * гейта (тесты): тогда синхронизация уходит как раньше, а согласие никто не спрашивает.
+     */
+    private val consent: LessonConsentHandles? = null,
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonRunnerRootComponent {
     private val stateHolder =
@@ -155,7 +163,26 @@ class DefaultLessonRunnerRootComponent(
 
     override fun onSyncResult() {
         val result = stateHolder.uiState.value as? RunnerUiState.Result ?: return
-        if (result.canRequestSync) syncScheduler.enqueueManualSync()
+        if (!result.canRequestSync) return
+        val handles = consent
+        if (handles != null && !handles.satisfied()) {
+            needsTermsConsentFlow.value = true
+            return
+        }
+        syncScheduler.enqueueManualSync()
+    }
+
+    private val needsTermsConsentFlow = MutableStateFlow(false)
+
+    override val needsTermsConsent: StateFlow<Boolean> = needsTermsConsentFlow.asStateFlow()
+
+    override fun acceptTerms() {
+        scope.launch {
+            consent?.accept()
+            needsTermsConsentFlow.value = false
+            // Согласие вернуло ждущую запись в отправку (AD-5): сразу дренируем её.
+            syncScheduler.enqueueManualSync()
+        }
     }
 
     override fun onAnswer(answer: UserAnswerDraft) {

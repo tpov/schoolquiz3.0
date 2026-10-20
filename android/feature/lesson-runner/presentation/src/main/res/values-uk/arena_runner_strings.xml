@@ -31,4 +31,8 @@
     <string name="arena_run_rating_unavailable">Оцінка для цієї квитанції недоступна.</string>
     <string name="arena_run_rating_submit_failed">Оцінку не збережено. Спробуйте ще раз.</string>
     <string name="arena_run_rating_sync">Надіслати оцінку</string>
+    <string name="runner_terms_consent_title">Умови оплати змінилися</string>
+    <string name="runner_terms_consent_message">Прогрес спроби збережено, але сервер чекає вашої згоди з чинними цінами й правилами. Прийміть умови — і результат буде надіслано без втрати спроби.</string>
+    <string name="runner_terms_consent_accept">Прийняти та надіслати</string>
+    <string name="runner_terms_consent_dismiss">Пізніше</string>
 </resources>
