@@ -75,6 +75,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
@@ -124,7 +127,21 @@ class AppApplication : Application(), Configuration.Provider {
         // user would see "Требуется авторизация" on lesson tap (AC spec assumes
         // authenticated user; no explicit login screen exists in this app version).
         if (auth.currentUser == null) {
-            auth.signInAnonymously()
+            // The sign-in has to FINISH before the first authed tap, not race it: fire-and-forget
+            // left a window where «Требуется авторизация» (lesson) and a dead Buy tap were the
+            // first thing a fresh install saw. Bounded wait, first launch only — a returning user
+            // has currentUser cached and skips this branch entirely. On timeout (offline first
+            // run) features keep their explicit auth-required paths; the sign-in itself keeps
+            // running and lands in the flow below whenever it completes.
+            runBlocking {
+                withTimeoutOrNull(AUTH_SIGNIN_WAIT_MS) {
+                    suspendCancellableCoroutine { cont ->
+                        auth.signInAnonymously()
+                            .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) {} }
+                            .addOnFailureListener { if (cont.isActive) cont.resume(Unit) {} }
+                    }
+                }
+            }
         }
         // Cold callbackFlow: each collect would register a new AuthStateListener.
         val coldAuthUidFlow =
@@ -319,5 +336,8 @@ class AppApplication : Application(), Configuration.Provider {
 
         const val LOCALE_PREFS = "locale_state"
         const val KEY_FORCED_RU_RELEASED = "forced_ru_released"
+
+        /** Первая установка: сколько ждём аноним-входа, прежде чем отдать экран (offline-запас). */
+        const val AUTH_SIGNIN_WAIT_MS = 2_000L
     }
 }

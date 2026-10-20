@@ -43,7 +43,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -164,15 +166,28 @@ class DefaultHomeQuestsComponentTest {
 
     private class FakeGiftClaimRepository : GiftClaimRepository {
         val submits = mutableListOf<GiftClaimKind>()
-        val pending = MutableStateFlow(false)
+        val resumes = mutableListOf<GiftClaimKind>()
+
+        // Лежащие намерения отдельны по виду — как строки (owner_uid, kind) в магазине.
+        val pendingKinds = MutableStateFlow<Set<GiftClaimKind>>(emptySet())
 
         override suspend fun submit(request: GiftClaimRequest) = Result.success(
             GiftClaimOutcome(request.kind, GiftClaimStatus.CLAIMED, false, 1, 2, 3, 4, 1, 5),
         )
 
-        override suspend fun resumePending(kind: GiftClaimKind): Result<GiftClaimOutcome>? = null
+        // Лежащее намерение возобновляется по-настоящему: исход разрешает его и снимает pending —
+        // null только при отсутствии намерения, как в репозитории.
+        override suspend fun resumePending(kind: GiftClaimKind): Result<GiftClaimOutcome>? {
+            if (kind !in pendingKinds.value) return null
+            resumes += kind
+            pendingKinds.value = pendingKinds.value - kind
+            return Result.success(
+                GiftClaimOutcome(kind, GiftClaimStatus.CLAIMED, replayed = true, 1, 2, 3, 4, 1, 5),
+            )
+        }
 
-        override fun observePending(kind: GiftClaimKind): Flow<Boolean> = pending
+        override fun observePending(kind: GiftClaimKind): Flow<Boolean> =
+            pendingKinds.map { kind in it }.distinctUntilChanged()
     }
 
     private class FakeLocalStreakStore : GiftBoxLocalStreakStore {
@@ -449,21 +464,24 @@ class DefaultHomeQuestsComponentTest {
         }
 
     @Test
-    fun `pending intent reads as in flight and the second tap sends nothing new`() =
+    fun `a pending premium intent left by process death resumes itself on entry`() =
         runTest {
             val claimRepo = FakeGiftClaimRepository()
-            claimRepo.pending.value = true
+            claimRepo.pendingKinds.value = setOf(GiftClaimKind.PREMIUM_DAILY)
             val component =
                 buildComponent(
                     profileRepo = FakeProfileRepository(premiumProfile(untilMs = now.value + day, nextBonusAtMs = 0L)),
                     claimRepo = claimRepo,
                 )
+            testScheduler.advanceUntilIdle()
 
-            assertEquals(HomePremiumGiftState.InFlight, component.state.value.premiumGift)
-
-            val premium = { claimRepo.submits.count { it == GiftClaimKind.PREMIUM_DAILY } }
-            component.onPremiumGiftClaim()
-            assertEquals(0, premium(), "пока намерение не решено, новый тап не заявляет")
+            assertEquals(
+                listOf(GiftClaimKind.PREMIUM_DAILY),
+                claimRepo.resumes,
+                "перезапуск доигрывает лежащую заявку тем же operationId без всякого тапа",
+            )
+            assertTrue(!claimRepo.pendingKinds.value.contains(GiftClaimKind.PREMIUM_DAILY), "разрешённое намерение больше не числится лежащим")
+            assertTrue(component.state.value.premiumGift !is HomePremiumGiftState.InFlight)
         }
 
     @Test

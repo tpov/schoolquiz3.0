@@ -80,6 +80,7 @@ class DefaultHomeQuestsComponent(
     private val giftBoxOpening = MutableStateFlow<HomeGiftBoxOpeningState?>(null)
     private val pendingGiftBox = MutableStateFlow<PendingGiftBoxOpening?>(null)
     private var giftBoxRequest: Job? = null
+    private var premiumGiftRequest: Job? = null
     private var streakSync: Job? = null
 
     private val continueLesson = MutableStateFlow<ContinueLessonUi?>(null)
@@ -234,6 +235,21 @@ class DefaultHomeQuestsComponent(
         }
     }
 
+    init {
+        lifecycle.doOnDestroy { componentJob.cancel() }
+        // Лежащее намерение премь-подарка возобновляется само: процесс мог умереть между
+        // отправкой и ответом (AC процесса-смерти 7.4), а кнопка в состоянии InFlight тапа не
+        // принимает — без этого прохода «забираем…» застревало навсегда. Новая заявка этим путём
+        // не создаётся: invoke сперва resumePending и только при отсутствии намерения — submit.
+        scope.launch {
+            claimPremiumDailyGift.observePending().collectLatest { pending ->
+                if (pending && premiumGiftRequest?.isActive != true) {
+                    premiumGiftRequest = scope.launch { claimPremiumDailyGift() }
+                }
+            }
+        }
+    }
+
     override fun onContinueClick() {
         val lessonId = state.value.continueLesson?.lessonId ?: return
         onResumeLesson(lessonId)
@@ -313,7 +329,8 @@ class DefaultHomeQuestsComponent(
     override fun onPremiumGiftClaim() {
         // Заявка идёт только из доступного состояния; повтор тапа уезжает тем же operationId.
         if (state.value.premiumGift !is HomePremiumGiftState.Available) return
-        scope.launch { claimPremiumDailyGift() }
+        if (premiumGiftRequest?.isActive == true) return
+        premiumGiftRequest = scope.launch { claimPremiumDailyGift() }
     }
 
     /** Кнопка из серверных слов: активен ли срок и свободен ли суточный слот. */
