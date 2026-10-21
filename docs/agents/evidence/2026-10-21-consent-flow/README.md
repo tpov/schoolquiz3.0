@@ -38,3 +38,14 @@ the fresh build) and ACKed by the new mapping. mutation_receipts carries the mar
 Server: ticket 8c206849 SETTLED (exactly once, from the rig fallback earlier). The
 consent chain is closed end-to-end INCLUDING on-device delivery: park → dialog →
 accept → requeue → drain → replay-ack → marker receipt. Nothing left in the outbox.
+
+## UI-prep pass (2026-10-21, night) — the consent-fixed build plays the prep journey
+
+On the fresh build (consent flow + mapping + NEEDS_RECOVERY sync): INTERNET →
+«Випадковий урок» → Складно → Підтвердити → «Заявку записано» (request 95915030) →
+server ISSUED ticket f26936e0 (RESERVED, HARD, 0 nolics). The UI prep journey works
+end-to-end on the consent-fixed build.
+
+Honest limit: driving the full play (open ticket → runner → answers → settle) from adb
+is blocked by scroll-navigation flakiness under injection (long permissions list); the
+journey needs Maestro flows or a finger. Everything server-side around it is proven.
