@@ -134,6 +134,16 @@ internal fun mutationErrorForCode(
     details: Any?,
     causedByIo: Boolean = false,
 ): SyncError {
+    // Реплей арена-settle: сервер ответил already-exists с reason SETTLEMENT_REUSE —
+    // результат попытки уже зафиксирован сохранённым settlement'ом (тот же attemptId,
+    // другой отпечаток тела — например, ручная доставка поверх осевшего результата).
+    // Эффект уже на сервере: запись очереди ACK-ается движком, а не крутится как «неизвестная».
+    val reuseReason = (details as? Map<*, *>)?.get("reason") as? String
+    if (code == "ALREADY_EXISTS" && operation == OutboxOperations.SUBMIT_ATTEMPT &&
+        reuseReason == "SETTLEMENT_REUSE"
+    ) {
+        return SyncError.SettlementAlreadyRecorded()
+    }
     val mapped = syncErrorForCode(code, message, details, causedByIo)
     val protectedRefusal = operation in OutboxOperations.permanentReceiptOperations && mapped is SyncError.Refused
     val malformedPayload = code == "INVALID_ARGUMENT" || code == "OUT_OF_RANGE"

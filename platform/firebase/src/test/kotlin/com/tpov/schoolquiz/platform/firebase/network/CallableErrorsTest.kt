@@ -26,6 +26,45 @@ class CallableErrorsTest {
         causedByIo: Boolean = false,
     ): SyncError = syncErrorForCode(code, message, details, causedByIo)
 
+    // ── Реплей арена-settle: уже-зафиксированный результат ─────────────────────
+
+    private fun forOperation(
+        operation: String,
+        code: String,
+        details: Any? = null,
+    ): SyncError = mutationErrorForCode(operation, code, message = null, details = details)
+
+    @Test
+    fun `settlement reuse replay maps to already-recorded and the engine can ack it`() {
+        val mapped = forOperation(
+            "lesson_runner.SUBMIT_ATTEMPT",
+            "ALREADY_EXISTS",
+            details = mapOf("reason" to "SETTLEMENT_REUSE"),
+        )
+        assertEquals(SyncError.SettlementAlreadyRecorded::class, mapped::class)
+    }
+
+    @Test
+    fun `foreign conflicting replay is not silently acked`() {
+        val mapped = forOperation(
+            "lesson_runner.SUBMIT_ATTEMPT",
+            "ALREADY_EXISTS",
+            details = mapOf("reason" to "CONFLICTING_REPLAY"),
+        )
+        assertEquals(false, mapped is SyncError.SettlementAlreadyRecorded)
+    }
+
+    @Test
+    fun `other permanent operations never get the settlement-reuse ack`() {
+        val mapped = forOperation(
+            "lesson_runner.OPEN_GIFT_BOX",
+            "ALREADY_EXISTS",
+            details = mapOf("reason" to "SETTLEMENT_REUSE"),
+        )
+        // SETTLEMENT_REUSE — слово арена-settle: чужая already-exists не ACK-ается по нему.
+        assertEquals(false, mapped is SyncError.SettlementAlreadyRecorded)
+    }
+
     // ── Нет связи ─────────────────────────────────────────────────────────────
 
     @Test

@@ -63,4 +63,5 @@
     <string name="settings_resync_confirm">Everything will be downloaded from the server again. Actions waiting to be sent are not affected.</string>
     <string name="settings_resync_confirm_action">Re-read</string>
     <string name="settings_resync_cancel">Cancel</string>
+    <string name="settings_sync_error_settlement_recorded">The attempt result is already recorded on the server</string>
 </resources>

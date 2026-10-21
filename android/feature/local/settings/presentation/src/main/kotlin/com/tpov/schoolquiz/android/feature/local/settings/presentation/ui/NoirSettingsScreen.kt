@@ -515,5 +515,7 @@ private fun SyncError.label(): String =
         is SyncError.Refused -> stringResource(R.string.settings_sync_error_refused)
         is SyncError.VersionConflict -> stringResource(R.string.settings_sync_error_version_conflict)
         SyncError.TermsConsentRequired -> stringResource(R.string.settings_sync_error_terms_consent)
+        is SyncError.SettlementAlreadyRecorded ->
+            stringResource(R.string.settings_sync_error_settlement_recorded)
         is SyncError.Unknown -> stringResource(R.string.settings_sync_error_unknown)
     }

@@ -223,6 +223,23 @@ class OutboxEngine
         ): StepOutcome {
             if (failure is CancellationException) throw failure
             val error = failure.syncErrorOrNull() ?: SyncError.Unknown(failure)
+            if (error is SyncError.SettlementAlreadyRecorded) {
+                // Сервер уже зафиксировал результат этой попытки: строка ACK-ается маркером,
+                // а не повторяется и не карантинится (эффект уже на сервере).
+                return acknowledge(
+                    record,
+                    MutationReceipt(
+                        record.ownerUid,
+                        record.mutationId,
+                        record.operation,
+                        record.entityRef,
+                        "{\"settlementAlreadyRecorded\":true}",
+                        clock(),
+                    ),
+                    session,
+                    persist = true,
+                )
+            }
             val decision = policy.onFailure(record, error, clock())
             return if (decision.state == OutboxState.QUARANTINED) {
                 quarantine(record, decision, error, session)

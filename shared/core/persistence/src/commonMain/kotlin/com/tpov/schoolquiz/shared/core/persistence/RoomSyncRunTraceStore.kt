@@ -101,6 +101,7 @@ internal object SyncErrorBranch {
     const val REFUSED = "REFUSED"
     const val VERSION_CONFLICT = "VERSION_CONFLICT"
     const val TERMS_CONSENT_REQUIRED = "TERMS_CONSENT_REQUIRED"
+    const val SETTLEMENT_ALREADY_RECORDED = "SETTLEMENT_ALREADY_RECORDED"
     const val UNKNOWN = "UNKNOWN"
 }
 
@@ -115,6 +116,7 @@ internal fun SyncError.branchName(): String =
         is SyncError.Refused -> SyncErrorBranch.REFUSED
         is SyncError.VersionConflict -> SyncErrorBranch.VERSION_CONFLICT
         SyncError.TermsConsentRequired -> SyncErrorBranch.TERMS_CONSENT_REQUIRED
+        is SyncError.SettlementAlreadyRecorded -> SyncErrorBranch.SETTLEMENT_ALREADY_RECORDED
         is SyncError.Unknown -> SyncErrorBranch.UNKNOWN
     }
 

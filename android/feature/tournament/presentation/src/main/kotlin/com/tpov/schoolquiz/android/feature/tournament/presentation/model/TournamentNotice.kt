@@ -102,6 +102,7 @@ fun failureNotice(
                         serverReason = sync.reason,
                     )
                 SyncError.TermsConsentRequired,
+                is SyncError.SettlementAlreadyRecorded,
                 is SyncError.VersionConflict,
                 is SyncError.Unknown,
                 null,
