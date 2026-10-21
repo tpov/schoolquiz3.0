@@ -95,7 +95,7 @@ const ENDPOINTS = Object.freeze([
 // 2026-10-16 (review pass): materializeExamCorrection joins the surface — the curator-gated
 // C2 materialization callable covered by exam-corrections tests. Re-pinned 2026-10-18 (epic 6
 // merge into e5-inception): one pin over the union surface of both epics.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "c432ab6484d60f07c75ddad05c761f936afbb25727eb39d6e65088bb16c3dece";
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "8d667e8e6ce2161afcb29a29358695587c51a1772d2543327f45ddddea7ce4f0";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

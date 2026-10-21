@@ -151,6 +151,7 @@ const {buildScoringPool} = require("./scoring-pool");
 const {FAULT, scoreAttempt} = require("./attempt-scoring");
 const {STATUS: ATTEMPT_STATUS, attemptFingerprint, attemptReceipt, replayFault} = require("./attempt-receipt");
 const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
+const {startPrivateQuizAttempt} = require("./private-quiz-gate");
 // Онлайн-переход next-question по ONLINE-O2 (история 2.6): чистые вердикты окна; Firestore и часы
 // подводят обёртки ниже.
 const {
@@ -526,6 +527,27 @@ async function callArenaTicketRecovery(method, request) {
 }
 exports.prepareArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("issue", request));
 exports.cancelArenaEntry = onCall(CALLABLE_OPTIONS, (request) => callArenaEntry("cancel", request));
+
+// Старт попытки приватного квиза (AD-29): атомарная дверь ссылки. Отказы модуля — исходы двери
+// (ссылка выключена/истекла/лимит) — участнику failed-precondition'ом, не «неизвестной».
+exports.startPrivateQuizAttempt = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const codes = {
+    INVALID_ARGUMENT: "invalid-argument",
+    NOT_FOUND: "not-found",
+    LINK_DISABLED: "failed-precondition",
+    LINK_EXPIRED: "failed-precondition",
+    ATTEMPT_LIMIT_REACHED: "failed-precondition",
+    INVALID_SETTINGS: "internal",
+  };
+  try {
+    return await startPrivateQuizAttempt({db, uid, data: request.data || {}, now: Date.now()});
+  } catch (error) {
+    if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
+    throw error;
+  }
+});
 
 /*
  * Экзамен (CAP-21/22/23): сидинги, терминальный писатель, сертификаты, коррекции.
