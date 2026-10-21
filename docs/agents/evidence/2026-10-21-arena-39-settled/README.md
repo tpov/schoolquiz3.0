@@ -56,3 +56,14 @@ dialog, acceptCurrentTerms(), re-enqueue manual sync; plus JVM tests and gates. 
 - Next: debug (mvp) logging around the consent store write, or a tiny coroutine exception
   handler in ArenaRunHost.acceptTerms, then re-run the dialog accept with exact
   uiautomator bounds. The JVM test already proves the wiring contract.
+
+## 5.13 prep note (2026-10-21, night) — honest stop
+
+Samsung .mvp updated to the consent-fixed build (with mapping + NEEDS_RECOVERY sync).
+The EVENTS tab on this build renders the tournament ORGANIZER panel («Організувати
+турнір», «Поки нічого не завантажено»); the PARTICIPANT qualifier view seen earlier on
+the previous build (START TOURNAMENT / Гость / access open, screenshot 12:18 20.10) does
+not render in the fresh build UI dump — needs a look at what changed in the events tab
+between the builds (organizer/participant entry) before the 5.13 participant session.
+Not investigated further in this context budget — recorded as the 5.13 session-2
+precondition. The drain scene is meanwhile fully closed (outbox empty, marker receipt).
