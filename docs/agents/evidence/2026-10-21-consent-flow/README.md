@@ -26,3 +26,15 @@ ACKs the row (REMOVED from outbox; mutation_receipts carries the marker
 The whole chain now lives in the shipped build: park (terms-consent) → consent dialog →
 acceptCurrentTerms (requeue) → drain → replay-ack. The JVM engine test covers the ack
 mapping; the device run covers the flow.
+
+## DRAIN PROVEN FROM DEVICE ROOM (2026-10-21, late) — the tail is fully closed
+
+Fresh Room pull from the Samsung (.mvp, the mapping build): outbox table EMPTY — the
+re-armed WAITING SUBMIT_ATTEMPT row was drained by the app itself (background drain on
+the fresh build) and ACKed by the new mapping. mutation_receipts carries the marker:
+
+  lesson_runner-SUBMIT_ATTEMPT-2e4b91c8… -> {"settlementAlreadyRecorded":true}
+
+Server: ticket 8c206849 SETTLED (exactly once, from the rig fallback earlier). The
+consent chain is closed end-to-end INCLUDING on-device delivery: park → dialog →
+accept → requeue → drain → replay-ack → marker receipt. Nothing left in the outbox.
