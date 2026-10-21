@@ -22,6 +22,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaS
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaWalletRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -37,6 +39,7 @@ import kotlin.coroutines.CoroutineContext
 
 /** Retained owner, scope and presentation intent. Never retain an Activity or ComponentContext here. */
 internal class ArenaRunHost(
+
     request: ArenaRunnerRequest,
     private val services: ArenaRunServices,
     private val clock: Clock,
@@ -197,8 +200,16 @@ internal class ArenaRunHost(
 
     /** Решение игрока за условиями: согласие возвращает запаркованный SETTLE в отправку. */
     fun acceptTerms() {
+        Log.d(TAG, "terms consent: accept requested")
         scope.launch {
-            services.result.consent?.accept()
+            try {
+                services.result.consent?.accept()
+                Log.d(TAG, "terms consent: accepted, requeue done")
+            } catch (error: Throwable) {
+                if (error is CancellationException) throw error
+                Log.e(TAG, "terms consent: accept failed", error)
+                return@launch
+            }
             needsTermsConsent.value = false
             sync()
         }
@@ -499,3 +510,5 @@ private fun ArenaRunnerView.Result.toVerifiedResult(): ArenaVerifiedResult? =
             settlement,
         )
     }
+
+private const val TAG = "ArenaConsent"
