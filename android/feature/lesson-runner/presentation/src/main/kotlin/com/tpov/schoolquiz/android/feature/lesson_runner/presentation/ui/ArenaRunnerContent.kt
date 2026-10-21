@@ -306,4 +306,7 @@ private val SYNC_STATUSES =
         ArenaRunnerStatus.PENDING_COMPLETION,
         ArenaRunnerStatus.PENDING_CANCEL,
         ArenaRunnerStatus.SETTLED_AWAITING_RECEIPT,
+        // Recovery тоже синхронизируется: запаркованная заявка (terms-consent/реплей) едет
+        // дословно тем же телом — fence идемпотентен, замена попытки не создаётся.
+        ArenaRunnerStatus.NEEDS_RECOVERY,
     )
