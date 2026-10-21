@@ -37,6 +37,42 @@ class OutboxEngineBoundaryTest {
     )
 
     @Test
+    fun `settlement already recorded acks the row with the marker receipt`() =
+        runTest {
+            val row = OutboxRecord(
+                id = 7L,
+                mutationId = "lesson_runner-SUBMIT_ATTEMPT-2e4b91c8",
+                ownerUid = uid,
+                operation = "lesson_runner.SUBMIT_ATTEMPT",
+                payload = "{}",
+                state = OutboxState.WAITING,
+                createdAtMs = now,
+            )
+            val store = FakeOutboxStore().also { it.seed(row) }
+            val receipts = FakeMutationReceiptStore()
+            val summary =
+                engine(
+                    store,
+                    receipts,
+                    transport = {
+                        Result.failure(
+                            SyncFailure(SyncError.SettlementAlreadyRecorded()),
+                        )
+                    },
+                ).drain(uid)
+
+            assertEquals(1, summary.sent, "реплей settle — не отказ: эффект уже на сервере")
+            assertEquals(0, summary.quarantined)
+            assertTrue(store.all.isEmpty(), "строка ACK-ается удалением, не крутится")
+            val receipt = receipts.find(uid, row.mutationId)
+            assertEquals(
+                "{\"settlementAlreadyRecorded\":true}",
+                receipt?.payloadJson,
+                "маркер объясняет, почему квитанции сервера нет",
+            )
+        }
+
+    @Test
     fun `receipt lookup failure does not expire or quarantine an old pending row`() =
         runTest {
             val row = record(1, createdAtMs = 0).copy(attemptCount = 9)
