@@ -67,3 +67,19 @@ not render in the fresh build UI dump — needs a look at what changed in the ev
 between the builds (organizer/participant entry) before the 5.13 participant session.
 Not investigated further in this context budget — recorded as the 5.13 session-2
 precondition. The drain scene is meanwhile fully closed (outbox empty, marker receipt).
+
+## 5.13 session 2 start (2026-10-21, night) — organizer CREATE refused INVALID_ARGUMENT
+
+Rig prep for the Samsung uid: course dp_897207902b674d65895abbf311619bc2_course (80 q:
+60 EASY/20 HARD) created, opponent ysHg6DoGjREvOPVS6tKS6GPXeq1c with token ready.
+
+UI organizer journey on the Samsung (fresh consent-fixed build): course id typed →
+«Підготувати банк курсу» → «Банк готовий: легких 60, складних 20» → «Перевірити призи та
+депозит» → frozen-terms dialog (opens 21.10 21:13, 5/3/1 boxes, deposit 10) → «Створити з
+цим депозитом» → «Сервер відмовив цій операції: INVALID_ARGUMENT» (retried once, same).
+The server callable submitCourseTournamentOperation finished 689ms without a logged error —
+the invalid-argument is thrown deliberately inside the CREATE handler.
+
+Next-session scope: capture the CREATE payload (the frozen-terms consent object) and match
+against the createCourseTournament validations on the current functions — one focused diff.
+Everything else (prep, bank, consent dialog, discovery card) works on this build.
