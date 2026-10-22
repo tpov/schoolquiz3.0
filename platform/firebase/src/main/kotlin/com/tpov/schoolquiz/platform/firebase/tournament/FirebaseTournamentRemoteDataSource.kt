@@ -171,9 +171,9 @@ class FirebaseTournamentRemoteDataSource internal constructor(
                         "source",
                         mapOf("kind" to request.source.kind, "id" to request.source.id, "snapshotId" to request.snapshotId),
                     )
-                    put("startsAtMs", request.startsAtMs)
+                    put("startsAtMs", wireLong(request.startsAtMs))
                     put("prizes", prizeList(request.prizeRows))
-                    put("fundedBoxes", request.fundedBoxes)
+                    put("fundedBoxes", wireLong(request.fundedBoxes))
                 }
                 is TournamentOperateRequest.StartQualification -> {
                     put("kind", "START_QUALIFICATION")
@@ -184,12 +184,12 @@ class FirebaseTournamentRemoteDataSource internal constructor(
                 is TournamentOperateRequest.Propose -> {
                     put("kind", "PROPOSE")
                     put("matchId", request.matchId)
-                    put("slotStartsAtMs", request.slotStartsAtMs)
+                    put("slotStartsAtMs", wireLong(request.slotStartsAtMs))
                 }
                 is TournamentOperateRequest.Confirm -> {
                     put("kind", "CONFIRM")
                     put("matchId", request.matchId)
-                    put("slotStartsAtMs", request.slotStartsAtMs)
+                    put("slotStartsAtMs", wireLong(request.slotStartsAtMs))
                 }
                 is TournamentOperateRequest.Ready -> {
                     put("kind", "READY")
@@ -198,11 +198,17 @@ class FirebaseTournamentRemoteDataSource internal constructor(
             }
         }
 
+    /** Wire-encoding of 64-bit integers: the GMS callable transport wraps Kotlin Longs into
+     * protobuf Int64Value JSON objects ({at-type,value}), which the server exact-integer
+     * contract refuses (found by the story 5.13 physical-device proof — the only environment
+     * where this transport runs). Doubles stay plain JSON numbers and are exact to 2^53. */
+    private fun wireLong(value: Long): Any = value.toDouble()
+
     /** Новые события несут только канонический список v1; legacy-форма клиентом не создаётся. */
     private fun prizeList(rows: List<TournamentPrizeRow>): Map<String, Any?> =
         mapOf(
             "listVersion" to 1,
-            "rows" to rows.map { mapOf("place" to it.place, "amountBoxes" to it.amountBoxes) },
+            "rows" to rows.map { mapOf("place" to it.place, "amountBoxes" to wireLong(it.amountBoxes)) },
         )
 
     /** Plain API captures before its first dispatcher suspension, not when execution resumes. */

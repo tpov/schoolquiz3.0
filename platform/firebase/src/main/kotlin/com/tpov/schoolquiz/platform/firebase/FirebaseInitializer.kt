@@ -26,9 +26,10 @@ fun initializeFirebaseSecurity(
             "The isolated MVP build requires the demo Firebase configuration"
         }
         // Host/ports are build-time configurable so a physical device can ride the VPS
-        // socat relays (adb reverse data plane was unreliable) — defaults keep the
-        // 127.0.0.1 loopback contract for the redroid rig unchanged.
-        val host = emulatorHost
+        // socat relays or a workstation LAN forwarder (adb reverse data plane was
+        // unreliable on both paths) — defaults keep the 127.0.0.1 loopback contract
+        // for the redroid rig unchanged.
+        val host = emulatorHost.ifBlank { "127.0.0.1" }
         FirebaseAuth.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.AUTH)
         FirebaseFirestore.getInstance(firebaseApp).useEmulator(host, MvpEmulatorPorts.FIRESTORE)
         FirebaseFunctions.getInstance(firebaseApp).useEmulator(host, emulatorFunctionsPort)

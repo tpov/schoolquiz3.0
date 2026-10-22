@@ -29,6 +29,7 @@ class FirebaseMutationTransport(
     private val capturedTerms: CapturedTermsJson,
 ) : MutationTransport {
     override suspend fun send(record: OutboxRecord): Result<MutationResponse> {
+        android.util.Log.w("MvpOutbox", "send guard isOnline=" + networkMonitor.isOnline())
         if (!networkMonitor.isOnline()) return Result.failure(SyncFailure(SyncError.NoNetwork))
         return try {
             val response =
@@ -43,6 +44,7 @@ class FirebaseMutationTransport(
             // остановку. Единственное, что отсюда бросается.
             throw e
         } catch (e: FirebaseFunctionsException) {
+            android.util.Log.w("MvpOutbox", "mutation send functions code=" + e.code.name + " msg=" + e.message + " cause=" + e.cause)
             Result.failure(
                 SyncFailure(
                     mutationErrorForCode(
@@ -56,10 +58,12 @@ class FirebaseMutationTransport(
                 ),
             )
         } catch (e: IOException) {
+            android.util.Log.w("MvpOutbox", "mutation send IOException", e)
             Result.failure(SyncFailure(SyncError.NoNetwork, e))
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
+            android.util.Log.w("MvpOutbox", "mutation send generic", e)
             // Ловим широко намеренно. Контракт транспорта — «неудача возвращается, а не
             // бросается», потому что решение о повторе принимает цикл, а не вызывающий (AD-22).
             // Ловя два конкретных типа, транспорт нарушал собственный контракт: любое третье

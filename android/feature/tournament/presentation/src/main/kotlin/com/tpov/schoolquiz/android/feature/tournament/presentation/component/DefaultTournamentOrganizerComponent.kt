@@ -24,6 +24,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+/** Старт события назначается на минуту вперёд от согласия: подтверждение пользователя и
+ * доставка callable всегда занимают ненулевое время, а прошедший startsAtMs сервер отказывает. */
+private const val CREATE_START_SLACK_MS = 60_000L
+
 /**
  * Состояние организатора живёт компонентом (история 5.10): подготовка и CREATE — прямые вызовы
  * 5.9-слоя; согласие замораживает условия в диалоге; CREATE при повторе едет тем же
@@ -88,8 +92,10 @@ class DefaultTournamentOrganizerComponent(
                 dialogId = ids(),
                 sourceId = state.sourceId.trim(),
                 snapshotId = prepare.snapshotId,
-                // Событие открывается сразу: окно квалификации ведут серверные часы, а не эти.
-                startsAtMs = nowMs(),
+                // Старт с запасом поверх момента согласия: сервер отвергает прошедший startsAtMs
+                // (нашёл device-proof 5.13 — диалог живут дольше секунды), окно дальше ведут
+                // серверные часы, а не эти.
+                startsAtMs = nowMs() + CREATE_START_SLACK_MS,
                 prizeRows = state.prizeRows,
                 fundBoxes = state.fundBoxes,
             )
