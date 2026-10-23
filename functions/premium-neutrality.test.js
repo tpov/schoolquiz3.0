@@ -83,24 +83,40 @@ test("two players with identical play take identical places, premium or not", ()
       {userId: "free-player", percent: 87, elapsedMs: 45_000, completedAtMs: at},
     ],
   }];
-  const ranking = calculateTournamentLeaderboard(group());
+  // Продакшн зовёт с опциями (index.js передаёт minGroupsForStableRank) — пин обязан гонять тот
+  // же вход: опция, выведенная из премиума под нейтральным именем, входит именно отсюда.
+  const productionOptions = {minGroupsForStableRank: 7};
+  const ranking = calculateTournamentLeaderboard(group(), productionOptions);
   // Равная игра — равные очки рейтинга; места разъехались только по имени (детерминированный тайбрейк).
   assert.equal(ranking.leaderboard[0].ratingPoints, ranking.leaderboard[1].ratingPoints);
   assert.deepEqual(ranking.leaderboard.map((row) => row.place), [1, 2]);
-  const premiumRanking = calculateTournamentLeaderboard(group().map((entry) => ({
-    ...entry, ...premiumFields,
-    results: entry.results.map((row) => ({...row, ...premiumFields})),
-  })));
-  assert.deepStrictEqual(premiumRanking.leaderboard, ranking.leaderboard, "позиция не читала премиума");
+  const premiumRanking = calculateTournamentLeaderboard(
+    group().map((entry) => ({
+      ...entry, ...premiumFields,
+      results: entry.results.map((row) => ({...row, ...premiumFields})),
+    })),
+    {...productionOptions, ...premiumFields},
+  );
+  // Ответ целиком: метаданные (компоненты, уверенность, связность) — та же поверхность
+  // сравнения, что и места, и премиум им не вход.
+  assert.deepStrictEqual(premiumRanking, ranking, "позиция не читала премиума");
 });
 
 test("a box opens the same for a sponsor and for a payer: entropy is the only channel", () => {
-  const entropy = [0.03, 0.9, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8];
-  const reward = generateGiftBoxReward([], entropy);
-  assert.deepEqual(generateGiftBoxReward([], [...entropy]), reward);
+  // Два яруса: обычный (addNolics) и редкий — тот, что доходит до трофейной ветки (первый
+  // бросок <= 0.05, второй > 0.95, третий выбирает редкий случай, четвёртый — сам трофей).
+  // Самая владная ветка не должна читать премиум тоже.
+  const common = [0.03, 0.9, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8];
+  const trophyTier = [0.01, 0.96, 0.3, 0.6, 0.5, 0.6, 0.7, 0.8];
+  assert.equal(generateGiftBoxReward([], trophyTier).type, "trophy", "редкая ветка обязана дойти до трофея");
+  assert.deepEqual(generateGiftBoxReward([], [...common]), generateGiftBoxReward([], common));
+  assert.deepEqual(generateGiftBoxReward([], [...trophyTier]), generateGiftBoxReward([], trophyTier));
+  assert.deepEqual(
+    generateGiftBoxReward(["old-trophy"], trophyTier),
+    generateGiftBoxReward(["old-trophy"], [...trophyTier]),
+  );
   // Подпись принимает только трофеи и восемь честных бросков: премиуму некуда войти — пока входа
   // нет, забор ниже держит.
-  assert.deepEqual(generateGiftBoxReward(["old-trophy"], entropy), generateGiftBoxReward(["old-trophy"], [...entropy]));
 });
 
 test("the scoring, ranking, qualification and drop modules never mention premium", () => {
@@ -122,22 +138,36 @@ test("the scoring, ranking, qualification and drop modules never mention premium
   }
 });
 
-test("firestore rules grant nothing by sponsor level", () => {
+test("firestore rules grant nothing by sponsor level or premium", () => {
   const rules = fs.readFileSync(path.join(__dirname, "..", "firestore.rules"), "utf8");
   assert.doesNotMatch(rules, /sponsor/i, "правила выдали привилегию за спонсорство");
+  // Премиум живёт в правилах только именем своего хранилища: ветка прав, читающая премиум-признак
+  // игрока, — это привилегия за деньги и обязана упасть громко.
+  for (const line of rules.split("\n").filter((line) => /premium/i.test(line))) {
+    assert.match(line, /match\s+\/premium_accounts\b/,
+      `подозрительное употребление премиума в правилах: ${line.trim()}`);
+  }
 });
 
 test("sponsor points are carried, shown and never asked for anything else", () => {
-  // Каждое упоминание спонсорского уровня в сервере — перенос между документами (профиль ↔
+  // Каждое упоминание спонсорского уровня на всём сервере — перенос между документами (профиль ↔
   // пользователь ↔ доверенный профиль) или его чтение для отображения. Ни одной проверки «достаточно
-  // ли он велик, чтобы…».
-  const index = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
-  const lines = index.split("\n").filter((line) => /sponsor/i.test(line));
-  assert.ok(lines.length > 0, "спонсорские очки должны хотя бы переноситься");
-  for (const line of lines) {
-    assert.match(line, /^\s*(sponsor:|sponsorLevel:|"sponsor"|\.\.\.)|sponsorLevel[,)]|qualifications|readQualification|\$\{/,
-      `подозрительное употребление спонсорского уровня: ${line.trim()}`);
+  // ли он велик, чтобы…». Сканируется каждый серверный модуль: спонсорская ветка в любом другом
+  // файле падает так же громко, как упала бы в index.js.
+  const serverFiles = fs.readdirSync(__dirname).filter((file) => file.endsWith(".js") && !file.endsWith(".test.js"));
+  let mentions = 0;
+  for (const file of serverFiles) {
+    const source = fs.readFileSync(path.join(__dirname, file), "utf8");
+    const lines = source.split("\n").filter((line) => /sponsor/i.test(line));
+    mentions += lines.length;
+    for (const line of lines) {
+      // Только форма переноса: ключ, которым значение пишется в другой документ, или строковая
+      // метка. Передача уровня аргументом или сравнение — не перенос и не показ.
+      assert.match(line, /^\s*(sponsor:|sponsorLevel:|"sponsor"|\.\.\.)/,
+        `подозрительное употребление спонсорского уровня в ${file}: ${line.trim()}`);
+    }
   }
+  assert.ok(mentions > 0, "спонсорские очки должны хотя бы переноситься — иначе этот забор не о чем");
 });
 
 async function main() {

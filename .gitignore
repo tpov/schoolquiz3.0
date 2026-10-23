@@ -1,5 +1,8 @@
 # SchoolQuiz 3.0 .gitignore
 
+# macOS SMB junk: resource-fork files created by Mac sessions over the network mount
+._*
+
 # Gradle files
 .gradle/
 /build/
