@@ -258,6 +258,21 @@ class DefaultShopComponentGoldPackTest {
     }
 
     @Test
+    fun `given a pending subscription then the message does not promise gold`() = runTest(scheduler) {
+        // Ожидающая подписка — не «золото придёт»: премиум активируется, когда подтвердит Play.
+        store.outcome = BillingOutcome.Pending(StoreProductId.PREMIUM_30D)
+        val component = component()
+
+        component.obtainEvent(ShopViewEvent.Purchase(ShopItemId.PREMIUM))
+
+        assertEquals(ShopMessage.PremiumPending, component.state.value.message)
+        assertEquals(
+            listOf(AnalyticsEvent.ShopOpened, AnalyticsEvent.PurchaseStarted("premium_30d")),
+            analytics.events,
+        )
+    }
+
+    @Test
     fun `given the subscription credited then the message says premium and the token is acknowledged`() =
         runTest(scheduler) {
             store.outcome =

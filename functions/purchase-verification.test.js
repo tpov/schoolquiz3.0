@@ -659,6 +659,17 @@ function testAPendingSubscriptionGrantsNothingAndIsNotAnError() {
   assert.strictEqual(verdict.decision, SETTLEMENT_PENDING, verdict.reason);
 }
 
+function testANumericSubscriptionStateIsReadLikeItsName() {
+  // REST отдаёт имена, но форма ответа менялась между версиями API — числовая обязана читаться
+  // тем же решением: ACTIVE (2) и IN_GRACE_PERIOD (4) — право есть, PENDING (1) — ожидание.
+  const active = decideSubscription({purchase: playSubscription({subscriptionState: 2})});
+  assert.strictEqual(active.decision, SETTLEMENT_CREDIT, "numeric ACTIVE");
+  const grace = decideSubscription({purchase: playSubscription({subscriptionState: 4})});
+  assert.strictEqual(grace.decision, SETTLEMENT_CREDIT, "numeric IN_GRACE_PERIOD");
+  const pending = decideSubscription({purchase: playSubscription({subscriptionState: 1})});
+  assert.strictEqual(pending.decision, SETTLEMENT_PENDING, "numeric PENDING");
+}
+
 function testAPausedOrExpiredSubscriptionIsRefusedByItsState() {
   // Пауза, hold и истёкшая подписка сводятся к «покупка не в силе» — тому же отказу, что и у
   // товара: права сейчас нет. SUBSCRIPTION_NOT_ACTIVE остаётся аномалии «ACTIVE, но срок прошёл».
@@ -892,6 +903,7 @@ testAnActiveFullTermSubscriptionGrantsTheTableDays();
 testATrialTermGrantsTheWholeDaysPlaySellsNotTheTableCeiling();
 testAGracePeriodSubscriptionStillCountsAsEntitled();
 testAPendingSubscriptionGrantsNothingAndIsNotAnError();
+testANumericSubscriptionStateIsReadLikeItsName();
 testAPausedOrExpiredSubscriptionIsRefusedByItsState();
 testASubscriptionWithAnUnreadableTermIsRefusedRatherThanGuessed();
 testAPremiumSkuWithoutASubscriptionLookupIsRefusedBeforeAnyGrant();

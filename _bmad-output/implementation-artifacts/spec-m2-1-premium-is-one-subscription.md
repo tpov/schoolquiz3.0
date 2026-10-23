@@ -2,9 +2,42 @@
 title: 'M2.1 — Premium is one subscription'
 type: 'feature'
 created: '2026-10-11'
-status: 'review'
+status: 'in-progress'
 baseline_commit: '764221db'
-review_loop_iteration: 0
+review: 'thorough'
+review_source: 'pinned'
+review_loop_iteration: 1
+lenses_ran: [blind-hunter, edge-case-hunter, verification-gap, intent-alignment]
+followup_review_recommended: true
+deferred:
+  - summary: >-
+      Revenue analytics carry no product-type dimension, so the subscription funnel this story
+      created is not measurable apart from gold packs.
+    evidence: |-
+      PurchaseCompleted/Failed events already name the sku string; the gap is a deliberate
+      product-type dimension — a product decision to make, not a defect this change introduced.
+    location: >-
+      android/feature/economy/presentation/.../DefaultShopComponent.kt (analytics funnel)
+    severity: low
+  - summary: >-
+      The real subscriptionsv2 wire answer (state names, purchaseType numbering) stays pinned by
+      fixtures only.
+    evidence: |-
+      Confirming it needs a GMS device with a sandbox subscription; redroid has no GMS. Carried
+      from the 2026-10-11 pass; this pass added the numeric-state reading test on both arms.
+    location: >-
+      functions/purchase-verification.js (readSubscriptionPurchaseV2)
+    severity: low (unverified)
+  - summary: >-
+      purchase-refund-order.test.js premium leg answers the products endpoints for a subscription
+      token — fixtures a real Play answer would never produce.
+    evidence: |-
+      The behavioral hole itself is closed (08660b67 admits SUBSCRIPTION_VOID and parks the signal
+      durably); the masking fixtures remain worth replacing when story 2.3 wires real premium
+      refund corroboration.
+    location: >-
+      functions/purchase-refund-order.test.js (premium fixtures)
+    severity: low
 story_key: '2-1-четыре-длительности-за-деньги'
 sprint_status_file: '_bmad-output/implementation-artifacts/sprint-status-monetisation.yaml'
 context:
@@ -200,3 +233,60 @@ other sessions' uncommitted files (`gradle.properties`, `local.properties`, `fun
 - APK gate: `assembleDebug` has no client in `google-services.json` (mvp-only json, applicationId
   `com.tpov.schoolquiz.mvp`) — environmental, not a story defect; the gate that runs in this tree is
   `assembleMvp` (green). `:apps:android-next:testDebugUnitTest` is blocked by the same json.
+
+## Review Triage Log
+
+### 2026-10-23 — Review pass (acceptance, fresh four-lens pass over the committed change set at HEAD; 2026-10-11 rows used as prior context)
+
+- verdicts: 25 findings — high 0, medium 4, low 11, false 10, maybe-false 0
+- findings:
+  - `[false]` `[reject]` [blind] Operator dependency (configs/economy premiumProducts row) undocumented — the same change set's sprint-status-monetisation note carries it («до игрока доедет с документом configs/economy — см. epic-2»), and the spec's Ask First names it.
+  - `[false]` `[reject]` [blind] Renewal interim gap not in deferred-work — M2.3 landed (d3591c6a) before any release; the interim state never reached a player; the wire-form defer row exists.
+  - `[low]` `[reject]` [blind] Spec I/O matrix drifted behind review patches (min-1-day tail, PURCHASE_STATE_UNKNOWN) — real drift, but the fix edits the frozen human-owned intent block; the divergence is documented in the 2026-10-11 review section.
+  - `[low]` `[reject]` [blind] `durationMsForDays` has no upper bound (days × DAY_MS past MAX_SAFE_INTEGER) — days is server-owned (operator table, term capped by the table); needs a >273,000-year value; fix adds a guard.
+  - `[false]` `[reject]` [blind] Token-gesture insurance hole (cold `subscriptionTokens` set) — unreachable: the domain routes handBack by `isSubscription` unconditionally; adapter `consume()` only ever receives non-subscription tokens.
+  - `[false]` `[reject]` [blind] `queryProducts` throws past the Result transport — DefaultShopComponent.kt:453-461 catches IllegalStateException by design (comment names queryProductDetails); the claimed unguarded scope.launch does not exist.
+  - `[false]` `[reject]` [blind] `PurchaseOutcome.Credited.productId` ignored by the message — decideSettlement refuses a purchased SKU that mismatches the claimed one; credited product equals tapped product on every credited path.
+  - `[low]` `[patch]` [blind] Numeric subscription states (ACTIVE/IN_GRACE_PERIOD) have no test — fixed: `testANumericSubscriptionStateIsReadLikeItsName` pins 2/4/1 alongside the names.
+  - `[low]` `[bad_spec]` [blind] Empty-phases offer selected by the first() fallback while the price drops the row — grouped with the shelf-wide failure below (same root cause: the unpriceable subscription row).
+  - `[false]` `[reject]` [blind] New server refusal codes need client parsing — reasonCode parsing exists only in quest-authoring's wire; settlement refusals reach the client as gRPC codes it already branches on.
+  - `[low]` `[defer]` [blind] No product-type dimension in revenue analytics — real product-level gap; a product decision, not a defect of this change.
+  - `[low]` `[reject]` [blind] Rig evidence noise and a stale suite count — cosmetic, committed artifacts, no everyday impact; fix rewrites historical artifacts.
+  - `[false]` `[reject]` [blind] Story bookkeeping never closed — this pass performs the closing.
+  - `[false]` `[reject]` [blind] `subscriptionExpiryMs: null` a dead field — it is the unified decision form's expiry slot; the products arm's null is intentional and the subscription arm fills the real term (premium-purchases.test.js:127).
+  - `[medium]` `[patch]` [edge] handBack gestures outside the try their KDoc promises — a throwing binder call after the credit failed a settled purchase and skipped the balance refresh; fixed: the gesture moved inside the try, the fake gained `acknowledgeThrows`, and a test pins the throwing shape.
+  - `[low]` `[reject]` [edge] Missing premium row routes to TOKEN_UNKNOWN, not SKU_NOT_SOLD — the designed Ask-First interim; refusal naming only, player outcome identical (refused; Play auto-refunds an unsettled token); fix adds a branch.
+  - `[medium]` `[bad_spec]` [edge] One unpriceable subscription (no offers, or empty pricing phases) blanks the whole shelf — `toStoreProduct` drops the row and `productsOrFailure` (PlayBillingRepository.kt:499-510) fails the entire query on the missing id, contradicting the spec's own claim «an unpriceable offer is a row without a price, not a fallen shelf» and the matrix row «row says the subscription cannot be bought; flow never opens». Routed to the external implementer: row-level degradation + the cannot-buy row + strings ×3 + tests.
+  - `[false]` `[reject]` [edge] Subscription token reaches consume() before the set is warmed — same refutation as the cold-set finding above; the domain's routing makes the path unreachable.
+  - `[low]` `[defer]` [edge] `purchaseType` read with intOrNull may miss a name-form wire value — carried from the 2026-10-11 pass's deferred wire-form item; if true, tester buys settle unmarked (audit label only).
+  - `[low]` `[bad_spec]` [edge] Only-offer-with-empty-phases opens the purchase flow — grouped with the shelf-wide failure below (one fix: the row without a price that cannot open).
+  - `[false]` `[reject]` [edge] Result transport removed from queryProducts (deletion) — same refutation as the throw finding: the component catches the throw by design, comment-documented.
+  - `[low]` `[reject]` [edge] Claim «grants whole days between now and expiry» vs max(1, …) — deliberate, review-patched and test-pinned (5f592ffa: a live tail of hours refused a paying player); the «fix» would edit the frozen matrix text.
+  - `[low]` `[defer]` [vg] Refund-path fixtures answer products endpoints for a subscription token — the behavioral hole was already contained by 08660b67 (SUBSCRIPTION_VOID admission + durable parking), as the lens itself verified; the masking fixtures stay deferred until 2.3 wires real corroboration.
+  - `[medium]` `[patch]` [vg] No test pins the PremiumPending branch — fixed: a component test pins a pending subscription to `PremiumPending`, closing the silent regression path to the «gold arrives» lie.
+  - `[medium]` `[patch]` [vg→other] handBack throw shape uncovered (the fake returned failure, never threw) — same fix as the handBack row above; the throwing survivability is now pinned.
+  - [intent-alignment] Descriptive divergences, mapped onto the rows above: D2 (wire answer pinned by fixtures) → carried defer; D3/D7 (operator table decides routing and deactivation) → false (Ask-First by design); D4 (matrix floor() vs max(1,…)) → reject (frozen text); D5 (tokens learned at refresh, not buy) → false (unreachable); D6 (NFR4 price extraction untested in SDK-bound code) → grouped with the empty-phases bad_spec entry; D8 (shared-code edits vs «path unchanged») → the intended reading (a trial's 3-day lot must survive both boundaries).
+
+## Auto Run Result
+
+Status: in-progress — acceptance pass complete; one bad_spec item routed back to the external implementer; patch-class fixes applied and verified here.
+
+Blocking condition: bad_spec — a subscription whose only offer has no pricing phases (or no offers at all) drops out of the shelf query, and `productsOrFailure` (PlayBillingRepository.kt:499-510) fails the whole shelf on the missing id, contradicting the spec's own patch claim «an unpriceable offer is a row without a price, not a fallen shelf» and the matrix row «row says the subscription cannot be bought; flow never opens». Re-derivation belongs to the implementer: row-level degradation of an unpriceable subscription, the cannot-buy row, strings ×3 locales, tests.
+
+### Summary of this pass
+- Fresh four-lens thorough review (blind-hunter, edge-case-hunter, verification-gap, intent-alignment) over the story's committed change set — e86e4e6f + 72dec423 + 3c93ad5f + 5f592ffa — verified at HEAD aaf82ac7; the 2026-10-11 pass served as prior triage context.
+- 25 findings: 0 high, 4 medium, 11 low, 10 false → 3 patched entries (handBack throw survivability; PremiumPending pin; numeric-state fixtures), 1 bad_spec entry sent back, 3 deferred, 10 rejected with recorded refutations.
+- Review-fix changes landed with this acceptance: SettlePurchaseUseCase.handBack (gesture inside the try the KDoc promises) + `acknowledgeThrows` fake arm + throwing-survivability test; the PremiumPending component test; the numeric subscription-state test.
+
+### Verification performed
+- `cd functions && node purchase-verification.test.js` — OK (with the new numeric-state test).
+- `cd functions && node run-tests.js` at HEAD — 128/129; the one failure is `mvp-isolation.test.js` objecting to a LAN address (`192.168.31.218`) present in `mvp_network_security_config.xml` — added by HITL device work after these stories; pre-existing, unrelated to this change set.
+- `sgw ./gradlew -Dorg.gradle.java.installations.paths=/opt/jdks/jdk-27 … :shared:feature:economy:domain:allTests :shared:feature:economy:data:allTests :platform:billing:testDebugUnitTest :android:feature:economy:presentation:testDebugUnitTest :apps:android-next:assembleMvp --no-configuration-cache` — BUILD SUCCESSFUL at HEAD (7m 11s); domain + presentation re-run green after the patches (1m 50s).
+- Environment note: buildSrc demands `jvmToolchain(27)`; JDK 27 lives at `/opt/jdks/jdk-27`, which Gradle does not scan — the installations-path flag is required on this machine.
+
+### Follow-up review recommendation
+- true — two medium entries were patched this pass. Unverified risk: survivability of a throwing hand-back is pinned only by fake-based tests; a real binder throw on a GMS device stays unexercised (the rig has no GMS — the story's own rig note).
+
+### Residual risks
+- The bad_spec shelf item: until the implementer re-derives it, a Play-side catalogue anomaly for premium can blank the whole shop shelf (all rows Unreachable) until Play's answer normalizes.
+- The operator dependency stands: without the `premium_30d` row in `configs/economy`, premium buys refuse (documented, epic-2 owner task).

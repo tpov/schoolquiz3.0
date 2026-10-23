@@ -158,13 +158,13 @@ class SettlePurchaseUseCase(
      * перечитывает свою очередь внутри успеха, и работавший жест может бросить на обратном пути.
      */
     private suspend fun handBack(purchase: BillingPurchase) {
-        val outcome =
-            if (purchase.productId.isSubscription) {
-                billing.acknowledge(purchase.purchaseToken)
-            } else {
-                billing.consume(purchase.purchaseToken)
-            }
         try {
+            val outcome =
+                if (purchase.productId.isSubscription) {
+                    billing.acknowledge(purchase.purchaseToken)
+                } else {
+                    billing.consume(purchase.purchaseToken)
+                }
             outcome.onFailure { log(HAND_BACK_FAILED, it) }
         } catch (e: CancellationException) {
             throw e

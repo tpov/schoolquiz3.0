@@ -156,6 +156,30 @@ class SettlePurchaseUseCaseTest {
         }
 
     @Test
+    fun `a throwing acknowledgment stays survivable like a failed one`() =
+        runTest {
+            // Бросок — вторая форма из KDoc handBack: адаптер перечитывает очередь внутри успеха,
+            // и работавший жест может упасть на обратном пути (умерший биндер). Расчёт уже был —
+            // игроку отказом это быть не должно.
+            val purchase =
+                BillingPurchase(
+                    productId = StoreProductId.PREMIUM_30D,
+                    purchaseToken = "sub-token-2x",
+                    orderId = "GPA.sub2x",
+                    isAcknowledged = false,
+                    priceMicros = 0L,
+                    currency = "",
+                )
+            verifier.credits("sub-token-2x", goldGranted = 0, productId = StoreProductId.PREMIUM_30D)
+            billing.acknowledgeThrows = true
+
+            val result = settle(purchase)
+
+            assertEquals(PurchaseOutcome.Credited(StoreProductId.PREMIUM_30D, 0L), result.getOrNull())
+            assertEquals(1, refresher.calls, "баланс перечитан и при брошенном подтверждении")
+        }
+
+    @Test
     fun `a replayed token emits the completion only once`() =
         runTest {
             // Под runTest запуски исполняются по очереди: второй расчёт пере-проходит verify и
