@@ -56,5 +56,10 @@ object StubQuizzesComponent : QuizzesComponent {
     override fun dismissQuizzes() = Unit
     override fun popToLevel(uiLevel: Int) = Unit
     override fun popCurrentChild() = Unit
+    override fun openLessonEarnings(
+        lessonId: String,
+        title: String,
+    ) = Unit
+
     override fun openLessonRunner(lessonId: String) = Unit
 }

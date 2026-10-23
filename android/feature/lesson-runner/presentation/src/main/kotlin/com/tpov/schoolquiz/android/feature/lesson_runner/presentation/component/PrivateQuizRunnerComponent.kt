@@ -31,6 +31,9 @@ interface PrivateQuizRunnerComponent {
     /** Навигационные события машины: «назад» после выхода из захода. */
     val events: Flow<RunnerEvent>
 
+    /** Часы машины — тем же основанием рисуется таймер вопроса (AD-31: часы не дублируются). */
+    fun nowMs(): Long
+
     fun onDraftChanged(draft: UserAnswerDraft)
 
     fun onAnswer()
@@ -47,9 +50,10 @@ interface PrivateQuizRunnerComponent {
  * Экран прогона приватного квиза (AD-29, история 8.4): дверь → один заход → подача очередью →
  * результат по текущей настройке showResult.
  *
- * Машина живёт в InstanceKeeper: поворот и фон её не убивают (техническое восстановление в
- * пределах исходных дедлайнов); смерть процесса закрывает попытку серверным тайм-аутом —
- * продолжения не существует, и это слово сервера, а не UI (AD-31).
+ * Машина живёт в InstanceKeeper и владеет ключом попытки и своим скоупом: поворот и фон её не
+ * убивают (техническое восстановление в исходных дедлайнах), повторное создание компонента
+ * дверь не перевпускает; смерть процесса закрывает попытку серверным тайм-аутом — продолжения
+ * не существует, и это слово сервера, а не UI (AD-31).
  *
  * Вход только под подписанным аккаунтом: гостевого/парольного пути не существует (AD-29), и
  * без сессии дверь отвечает именованным отказом AUTH_REQUIRED.
@@ -63,11 +67,9 @@ class DefaultPrivateQuizRunnerComponent(
     parser: QuestionContentParser,
     mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : PrivateQuizRunnerComponent, ComponentContext by componentContext {
+    /** Скоуп только под события навигации; машина владеет своим собственным (InstanceKeeper). */
     private val componentScope = CoroutineScope(SupervisorJob() + mainContext)
     private val channel = Channel<RunnerEvent>(Channel.BUFFERED)
-
-    /** Ключ намерения этой сессии; повтор входа на том же экране едет с ним же (AD-6). */
-    private var currentStartId: String = ""
 
     private val machine =
         instanceKeeper.getOrCreate(MACHINE_KEY) {
@@ -85,29 +87,31 @@ class DefaultPrivateQuizRunnerComponent(
                                 existingStartId = existingStartId,
                             )
                         }
-                    if (entry is PrivateQuizEntry.Ready) currentStartId = entry.run.startId
-                    entry
+                    // Машина получает и ключ, и исход: ключ живёт в ней с первой двери, повтор
+                    // (UNAVAILABLE, обрыв) едет с тем же ключом и не тратит вторую попытку (AD-6).
+                    val startId = (entry as? PrivateQuizEntry.Ready)?.run?.startId ?: existingStartId
+                    startId to entry
                 },
-                submit = { submission ->
+                submit = { startId, submission ->
                     repository.submitAttempt(
                         ownerUid = currentUid().orEmpty(),
                         catalogId = request.catalogId,
                         questId = request.questId,
-                        startId = currentStartId,
+                        startId = startId,
                         submission = submission,
                     )
                 },
-                readResult = {
+                readResult = { startId ->
                     repository.readOwnResult(
                         ownerUid = currentUid().orEmpty(),
                         catalogId = request.catalogId,
                         questId = request.questId,
-                        startId = currentStartId,
+                        startId = startId,
                     )
                 },
                 parser = parser,
                 clock = Clock.System,
-                scope = componentScope,
+                mainContext = mainContext,
             )
         }
 
@@ -116,7 +120,8 @@ class DefaultPrivateQuizRunnerComponent(
             componentScope.cancel()
             channel.close()
         }
-        machine.openDoor(existingStartId = currentStartId.ifBlank { null })
+        // Повторный вызов (поворот) — no-op внутри машины: дверь не перевпускается (AD-6).
+        machine.openDoor()
     }
 
     override val state: StateFlow<PrivateQuizRunUiState> = machine.state
@@ -124,6 +129,8 @@ class DefaultPrivateQuizRunnerComponent(
     override val events: Flow<RunnerEvent> = channel.receiveAsFlow()
 
     override val title: String = request.title
+
+    override fun nowMs(): Long = machine.nowMs()
 
     override fun onDraftChanged(draft: UserAnswerDraft) = machine.onDraftChanged(draft)
 

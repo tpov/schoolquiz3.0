@@ -318,6 +318,28 @@ test("the recovery window ending terminates the attempt with a timeout scored ov
     assert.equal(late.result.reason, ATTEMPT_REASON.TIMEOUT, "поздняя подача — терминал timeout");
     assert.equal(late.result.questionCount, 2, "знаменатель — весь замороженный квиз, включая невыданное");
     assert.equal(late.result.percentScore, 0, "принятых вовремя ответов не было");
+    // Опоздавшая подача с ВЕРНЫМИ ответами не получает их зачтёнными: поздний ответ — не
+    // принятый вовремя (AD-29), терминал считается по пустой подаче.
+    const lateCorrect = await call("submitMutation", PARTICIPANT, {
+      mutationId: "submit-late-correct",
+      operation: "private_quiz.SUBMIT_ATTEMPT",
+      payload: {
+        ownerUid: AUTHOR, catalogId: CATALOG, questId: QUEST, startId: START_ID,
+        served: [
+          {questionId: "q-1", codeAnswerIndex: 0},
+          {questionId: "q-2", codeAnswerIndex: 1},
+        ],
+        answers: [
+          {questionId: "q-1", codeAnswerIndex: 0,
+            answerPayload: JSON.stringify({type: "single-choice", selected: "b"}), answeredAtMs: deadline - 1},
+          {questionId: "q-2", codeAnswerIndex: 1,
+            answerPayload: JSON.stringify({type: "single-choice", selected: "a"}), answeredAtMs: deadline - 1},
+        ],
+      },
+    });
+    assert.equal(lateCorrect.result.reason, ATTEMPT_REASON.TIMEOUT);
+    assert.equal(lateCorrect.result.percentScore, 0, "поздние верные ответы не засчитываются тайм-аутом");
+    assert.deepEqual(store.documents.get(`${QUEST_PATH}/starts/${START_ID}`).attempt.questionScores, [1, 1]);
 
     const stored = store.documents.get(`${QUEST_PATH}/starts/${START_ID}`).attempt;
     assert.deepEqual(stored.questionScores, [1, 1], "все позиции «показан, без ответа»");

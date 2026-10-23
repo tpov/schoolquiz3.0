@@ -81,21 +81,28 @@ fun isVisible(
 fun visibleSections(
     tab: Tab,
     stats: UserStats,
+    /**
+     * Есть ли живая сессия (AD-30/UX-20, история 8.6). Гостю «История операций» недоступна:
+     * use-case может только отказать, и первый запуск получал бы карточку ошибки с повтором,
+     * который не может удаться. Роли при этом не тронуты — пустой requiredRoles у секции
+     * означает «порога роли нет», а не «нет границы сессии».
+     */
+    isSignedIn: Boolean = true,
 ): List<DrawerSection> =
     when (tab) {
         Tab.LOCAL ->
-            listOf(
-                DrawerSection.LocalSection.HomeQuests,
-                DrawerSection.LocalSection.Archive,
-                DrawerSection.LocalSection.ReviewQueue,
-                DrawerSection.LocalSection.AuthorLifecycle,
-                DrawerSection.LocalSection.Curation,
-                DrawerSection.LocalSection.Inbox,
-                DrawerSection.LocalSection.Polls,
-                DrawerSection.LocalSection.OperationHistory,
-                DrawerSection.LocalSection.MyQuests,
-                DrawerSection.LocalSection.Settings,
-            ).filter { isVisible(it, stats) }
+            buildList {
+                add(DrawerSection.LocalSection.HomeQuests)
+                add(DrawerSection.LocalSection.Archive)
+                add(DrawerSection.LocalSection.ReviewQueue)
+                add(DrawerSection.LocalSection.AuthorLifecycle)
+                add(DrawerSection.LocalSection.Curation)
+                add(DrawerSection.LocalSection.Inbox)
+                add(DrawerSection.LocalSection.Polls)
+                if (isSignedIn) add(DrawerSection.LocalSection.OperationHistory)
+                add(DrawerSection.LocalSection.MyQuests)
+                add(DrawerSection.LocalSection.Settings)
+            }.filter { isVisible(it, stats) }
 
         Tab.INTERNET ->
             listOf(

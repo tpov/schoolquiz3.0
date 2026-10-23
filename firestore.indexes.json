@@ -4,78 +4,207 @@
       "collectionGroup": "arena_entry_tickets",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "uid", "order": "ASCENDING"},
-        {"fieldPath": "status", "order": "ASCENDING"},
-        {"fieldPath": "__name__", "order": "ASCENDING"}
+        {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "lesson_placements",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "authorUid", "order": "ASCENDING"},
-        {"fieldPath": "__name__", "order": "ASCENDING"}
+        {
+          "fieldPath": "authorUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "history",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "decidedAtMs", "order": "ASCENDING"},
-        {"fieldPath": "__name__", "order": "ASCENDING"}
+        {
+          "fieldPath": "decidedAtMs",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "entries",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "uid", "order": "ASCENDING"},
-        {"fieldPath": "reason", "order": "ASCENDING"},
-        {"fieldPath": "atMs", "order": "DESCENDING"},
-        {"fieldPath": "__name__", "order": "DESCENDING"}
+        {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reason",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "atMs",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "lots",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "active", "order": "ASCENDING"},
-        {"fieldPath": "sequence", "order": "ASCENDING"}
+        {
+          "fieldPath": "active",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sequence",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "quest_review_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "ownerUid", "order": "ASCENDING"},
-        {"fieldPath": "draftId", "order": "ASCENDING"},
-        {"fieldPath": "processedAtMs", "order": "DESCENDING"},
-        {"fieldPath": "__name__", "order": "DESCENDING"}
+        {
+          "fieldPath": "ownerUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "draftId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "processedAtMs",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "offer_bids",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "auctionId", "order": "ASCENDING"},
-        {"fieldPath": "amount", "order": "DESCENDING"},
-        {"fieldPath": "__name__", "order": "DESCENDING"}
+        {
+          "fieldPath": "auctionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "amount",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "offer_bids",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "auctionId", "order": "ASCENDING"},
-        {"fieldPath": "status", "order": "ASCENDING"},
-        {"fieldPath": "__name__", "order": "ASCENDING"}
+        {
+          "fieldPath": "auctionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "audit/currency_ledger/entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "atMs",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "audit/currency_ledger/entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reason",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "details.lessonId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "atMs",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],
   "fieldOverrides": [
-    {"collectionGroup": "course_tournament_source_banks", "fieldPath": "bankJson", "indexes": []},
-    {"collectionGroup": "course_tournament_source_banks", "fieldPath": "proofJson", "indexes": []},
-    {"collectionGroup": "selection_tree", "fieldPath": "childrenJson", "indexes": []},
-    {"collectionGroup": "aggregate_tree", "fieldPath": "childrenJson", "indexes": []}
+    {
+      "collectionGroup": "course_tournament_source_banks",
+      "fieldPath": "bankJson",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "course_tournament_source_banks",
+      "fieldPath": "proofJson",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "selection_tree",
+      "fieldPath": "childrenJson",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "aggregate_tree",
+      "fieldPath": "childrenJson",
+      "indexes": []
+    }
   ]
 }

@@ -906,18 +906,18 @@ async function applyPrivateQuizAttemptSubmission(uid, payload) {
     if (record.participantUid !== uid) {
       throw new HttpsError("not-found", "Attempt start does not exist");
     }
-    // Повтор подачи того же старта — сохранённый терминал: результат не пересчитывается,
-    // ответы не дописываются (AD-6: повтор намерения — то же намерение).
-    if (record.attempt && record.attempt.status === PRIVATE_RUN_STATUS.TERMINAL) {
-      // Сохранённый терминал отдаётся той же формой, что свежий результат: повтор — то же.
-      return projectOwnResult({attempt: record.attempt, showResult: true});
-    }
     const questSnap = await transaction.get(
       db.doc(privateQuestPath(submission.ownerUid, submission.catalogId, submission.questId)),
     );
     if (!questSnap.exists) throw new HttpsError("not-found", "Private quiz does not exist");
     const questData = questSnap.data() || {};
     const settings = normalizeSettings(questData.privateQuizSettings);
+    // Повтор подачи того же старта — сохранённый терминал: результат не пересчитывается,
+    // ответы не дописываются (AD-6: повтор намерения — то же намерение). Видимость — ТЕКУЩАЯ
+    // настройка, при каждом чтении и повторе тоже (AD-29), а не «показать всё повтором».
+    if (record.attempt && record.attempt.status === PRIVATE_RUN_STATUS.TERMINAL) {
+      return projectOwnResult({attempt: record.attempt, showResult: settings.showResult});
+    }
     // Закрытая или истёкшая ссылка рвёт только НОВЫЕ старты: начатая попытка право закончить
     // по исходным срокам сохранила (AD-29) — enabled/expiry здесь намеренно не читаются.
     const frozen = await collectFrozenQuestionsInTransaction(
@@ -5771,12 +5771,6 @@ async function processArenaRequest(request) {
   await requireProfile(request.ownerUid);
 
   const now = Date.now();
-  // Рантайм приватной ссылки читается до транзакции: перезаявке нечего терять от гонки с
-  // изменением лимита — сверку версии (MUTATION_VERSION_SOURCES) это не заменяет и не дублирует,
-  // а сохранение startedCount/enabled (AD-29) требует именно предыдущего документа.
-  const previousPrivateQuizSettings = request.draft.privateQuiz ?
-    await readPrivateQuizSettings(request.ownerUid, request.draft.catalogId, request.draft.id) :
-    null;
   const adminTasks = toAdminLessonTasks(request, now);
   // Плата и принятие заявки — одна транзакция (CAP-4): подача без денег не принимается, принятая
   // подача без платы не существует. Записи прежнего батча здесь не теряют ни поля.
@@ -5787,6 +5781,12 @@ async function processArenaRequest(request) {
   // меняет: цикл платы приватной заявке просто не открывается.
   const isPrivateSubmission = request.draft.privateQuiz !== null;
   return db.runTransaction(async (transaction) => {
+    // Рантайм приватной ссылки читается ВНУТРИ транзакции: старт попытки, влетевший между
+    // чтением и записью, поднял бы startedCount — и перезаявка его затёрла бы (AD-29). Гейт
+    // пишет счётчик merge-ом без версии квеста, сверку это не ловит, ловит только порядок.
+    const previousPrivateQuizSettings = request.draft.privateQuiz ?
+      await readPrivateQuizSettings(request.ownerUid, request.draft.catalogId, request.draft.id) :
+      null;
     const charge = isPrivateSubmission ? null : await planReviewFeeCharge(transaction, request);
     writePrivateHierarchyToBatch(transaction, request, now, previousPrivateQuizSettings);
     writeAdminReviewLessonTasksToBatch(transaction, adminTasks);

@@ -15,9 +15,10 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuiz
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizSubmission
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,8 +53,13 @@ sealed interface PrivateQuizRunUiState {
     /** Терминал прочитан: показывает либо подтверждение, либо собственный результат (AD-29). */
     data class Finished(val result: PrivateQuizOwnResult) : PrivateQuizRunUiState
 
-    /** Транспортная/техническая неудача чтения результата — повторяемо вручную. */
-    data class ReadFailed(val retryable: Boolean = true) : PrivateQuizRunUiState
+    /**
+     * Техническая неудача с ясным источником: копия экрана и повтор зависят от того, ЧТО не
+     * получилось — поставить попытку в очередь или прочитать результат.
+     */
+    data class ReadFailed(val source: FailureSource) : PrivateQuizRunUiState {
+        enum class FailureSource { ENQUEUE, READ }
+    }
 }
 
 /**
@@ -63,28 +69,41 @@ sealed interface PrivateQuizRunUiState {
  * замороженному набору → подача в общую очередь (`private_quiz.SUBMIT_ATTEMPT`, ключ — startId) →
  * чтение собственного результата по ТЕКУЩЕЙ настройке showResult.
  *
+ * Чей ключ. startId живёт ЗДЕСЬ и назначается первой дверью: любая повторная дверь
+ * (UNAVAILABLE, повтор после обрыва) едет с тем же ключом и не тратит вторую попытку лимита
+ * (AD-6). Смена ключа означала бы двойной расход — поэтому повтор двери возможен только с тем
+ * же startId.
+ *
+ * Чей охват. Машина сама владеет своим скоупом и живёт в InstanceKeeper экрана: поворот и фон
+ * её не убивают (техническое восстановление в исходных дедлайнах); смерть процесса закрывает
+ * попытку серверным тайм-аутом — продолжения не существует (AD-31).
+ *
  * Время. Часы вопроса — исходные: срок вопроса i выводится из расписания от `startedAtMs`
  * (HARD-время вопроса + окно AD-31 между вопросами), срезается серверным `deadlineMs` попытки.
  * Ни ответ, ни reconnect, ни повтор не перезапускают часы (AD-31); просроченный вопрос
  * закрывается как показанный-без-ответа, и попытка продолжается следующим вопросом в общем
- * бюджете. Никаких чекпоинтов и отложенного продолжения: один заход (AD-29), техническое
- * восстановление живёт в InstanceKeeper экрана и за его пределами попытка честно закрывается
- * серверным тайм-аутом.
+ * бюджете.
  *
  * Бесплатность (8.5): машина не зовёт ни одной платной формы — ни зарядов, ни подсказок, ни
  * согласия с условиями; терминал пишет только подачу попытки, книгу движений не трогает.
  */
 class PrivateQuizRunMachine(
     private val request: com.tpov.schoolquiz.android.feature.lesson_runner.presentation.PrivateQuizRunnerRequest,
-    private val startDoor: suspend (String?) -> PrivateQuizEntry,
-    private val submit: suspend (PrivateQuizSubmission) -> Result<Unit>,
-    private val readResult: suspend () -> Result<PrivateQuizOwnResult>,
+    private val startDoor: suspend (String?) -> Pair<String?, PrivateQuizEntry>,
+    private val submit: suspend (startId: String, submission: PrivateQuizSubmission) -> Result<Unit>,
+    private val readResult: suspend (startId: String) -> Result<PrivateQuizOwnResult>,
     private val parser: QuestionContentParser,
     private val clock: Clock,
-    private val scope: CoroutineScope,
+    mainContext: CoroutineDispatcher,
 ) : InstanceKeeper.Instance {
+    private val scope = CoroutineScope(SupervisorJob() + mainContext)
+
     private val _state = MutableStateFlow<PrivateQuizRunUiState>(PrivateQuizRunUiState.DoorChecking)
     val state: StateFlow<PrivateQuizRunUiState> = _state.asStateFlow()
+
+    /** Ключ намерения; назначается первой дверью и больше не меняется (AD-6). */
+    var startId: String? = null
+        private set
 
     private var run: PrivateQuizRun? = null
     private var schedule: List<QuestionSlot> = emptyList()
@@ -93,13 +112,25 @@ class PrivateQuizRunMachine(
     private var reachedIndex = -1
     private var doorJob: Job? = null
 
-    /** Открыть дверь; [existingStartId] — повтор того же намерения (AD-6), не новый вход. */
-    fun openDoor(existingStartId: String? = null) {
+    /** Замороженная подача: переживает неудачную постановку в очередь и переедет тем же ключом. */
+    private var pendingSubmission: PrivateQuizSubmission? = null
+
+    /**
+     * Открыть дверь. Повтор — только тем же [startId]: смена ключа тратила бы вторую попытку
+     * лимита (AD-6). За пределами «дверь ещё не решена / отказ двери» — no-op: повторный вызов
+     * с выжившей машиной (поворот экрана) дверь не перевпускает.
+     */
+    fun openDoor() {
         if (doorJob?.isActive == true) return
-        _state.value = PrivateQuizRunUiState.DoorChecking
+        when (_state.value) {
+            is PrivateQuizRunUiState.DoorChecking, is PrivateQuizRunUiState.Refused -> Unit
+            else -> return
+        }
         doorJob =
             scope.launch {
-                when (val entry = startDoor(existingStartId)) {
+                val (usedId, entry) = startDoor(startId)
+                usedId?.let { startId = it }
+                when (entry) {
                     is PrivateQuizEntry.Ready -> beginRun(entry.run)
                     is PrivateQuizEntry.Refused -> _state.value = PrivateQuizRunUiState.Refused(entry.reason)
                 }
@@ -124,7 +155,7 @@ class PrivateQuizRunMachine(
     /** Истёк срок вопроса: закрывается показанным-без-ответа, попытка идёт дальше (AD-31). */
     fun onTimeout() {
         val index = reachedIndex
-        if (index >= 0) answers[index] = drafts[index]?.takeIf { false }
+        if (index >= 0) answers[index] = null
         advance()
     }
 
@@ -165,7 +196,7 @@ class PrivateQuizRunMachine(
         if (display == null) {
             // Нечитаемый вопрос выданного набора — наша дыра на клиенте: попытка не показывается
             // и не «показанной без ответа», а честно отказывает чтением (повтор за дверью).
-            _state.value = PrivateQuizRunUiState.ReadFailed(retryable = false)
+            _state.value = PrivateQuizRunUiState.ReadFailed(PrivateQuizRunUiState.ReadFailed.FailureSource.READ)
             return null
         }
         val seconds =
@@ -194,7 +225,7 @@ class PrivateQuizRunMachine(
             val deadline = minOf(slot.startMs + slot.durationMs, run.deadlineMs)
             if (now >= deadline && next < schedule.size - 1) {
                 // Просрочен и НЕ последний: закрывается показанным-без-ответа (черновик ввода
-                // ответом не становится —expiry закрывает вопрос без ответа, AD-31), попытка
+                // ответом не становится — expiry закрывает вопрос без ответа, AD-31), попытка
                 // идёт дальше по тому же расписанию.
                 answers[next] = null
                 reachedIndex = next
@@ -217,40 +248,49 @@ class PrivateQuizRunMachine(
 
     private fun finish() {
         _state.value = PrivateQuizRunUiState.Submitting
-        scope.launch {
-            val served =
-                schedule.take(reachedIndex + 1).map { slot ->
-                    PrivateQuizSubmission.Served(questionId = slot.questionId, codeAnswerIndex = slot.codeAnswerIndex)
-                }
-            val submitted =
-                answers.entries
-                    .sortedBy { it.key }
-                    .map { (index, draft) ->
-                        val slot = schedule[index]
-                        PrivateQuizSubmission.Answer(
-                            questionId = slot.questionId,
-                            codeAnswerIndex = slot.codeAnswerIndex,
-                            answerPayload = draft?.let(PrivateQuizAnswerCodec::answerPayload),
-                            answeredAtMs = clock.now().toEpochMilliseconds(),
-                        )
-                    }
-            submit(
-                PrivateQuizSubmission(served = served, answers = submitted),
-            ).onFailure { error ->
-                // Очередь не приняла намерение (нет хранилища) — повтор вручную; тело не потеряно.
-                _state.value = PrivateQuizRunUiState.ReadFailed(retryable = error.message?.contains("OutboxStore") != true)
-                return@launch
+        scope.launch { doSubmit() }
+    }
+
+    private suspend fun doSubmit() {
+        val startId = this.startId ?: return
+        val served =
+            schedule.take(reachedIndex + 1).map { slot ->
+                PrivateQuizSubmission.Served(questionId = slot.questionId, codeAnswerIndex = slot.codeAnswerIndex)
             }
-            awaitResult(tries = RESULT_READ_TRIES)
-        }
+        val submission =
+            pendingSubmission ?: run {
+                val submitted =
+                    answers.entries
+                        .sortedBy { it.key }
+                        .map { (index, draft) ->
+                            val slot = schedule[index]
+                            PrivateQuizSubmission.Answer(
+                                questionId = slot.questionId,
+                                codeAnswerIndex = slot.codeAnswerIndex,
+                                answerPayload = draft?.let(PrivateQuizAnswerCodec::answerPayload),
+                                answeredAtMs = clock.now().toEpochMilliseconds(),
+                            )
+                        }
+                PrivateQuizSubmission(served = served, answers = submitted).also { pendingSubmission = it }
+            }
+        submit(startId, submission)
+            .onFailure {
+                // Очередь не приняла намерение: тело заморожено и переедет тем же ключом
+                // по кнопке обновления; результат без подачи не читается.
+                _state.value = PrivateQuizRunUiState.ReadFailed(PrivateQuizRunUiState.ReadFailed.FailureSource.ENQUEUE)
+                return
+            }
+        awaitResult(tries = RESULT_READ_TRIES)
     }
 
     /** Терминал появляется, когда очередь доставила подачу; чтение повторяется ограниченно. */
     private suspend fun awaitResult(tries: Int) {
+        val startId = this.startId ?: return
         repeat(tries) { attempt ->
-            val result = readResult()
+            val result = readResult(startId)
             val own = result.getOrNull()
             if (own != null && own.attemptStatus == com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizAttemptStatus.TERMINAL) {
+                pendingSubmission = null
                 _state.value = PrivateQuizRunUiState.Finished(own)
                 return
             }
@@ -262,12 +302,35 @@ class PrivateQuizRunMachine(
         }
     }
 
-    /** Ручное обновление из [PrivateQuizRunUiState.ResultPending]. */
+    /**
+     * Ручное обновление из [PrivateQuizRunUiState.ResultPending] / [PrivateQuizRunUiState.ReadFailed]:
+     * неудавшаяся постановка переезжает той же замороженной подачей и тем же ключом; неудавшееся
+     * чтение — просто повтор чтения.
+     */
     fun onRefreshResult() {
-        if (_state.value !is PrivateQuizRunUiState.ResultPending && _state.value !is PrivateQuizRunUiState.ReadFailed) return
-        _state.value = PrivateQuizRunUiState.Submitting
-        scope.launch { awaitResult(tries = RESULT_READ_TRIES) }
+        if (doorJob?.isActive == true) return
+        when (_state.value) {
+            is PrivateQuizRunUiState.ReadFailed -> {
+                _state.value = PrivateQuizRunUiState.Submitting
+                doorJob =
+                    scope.launch {
+                        if (pendingSubmission != null) {
+                            doSubmit()
+                        } else {
+                            awaitResult(tries = RESULT_READ_TRIES)
+                        }
+                    }
+            }
+            is PrivateQuizRunUiState.ResultPending -> {
+                _state.value = PrivateQuizRunUiState.Submitting
+                doorJob =
+                    scope.launch { awaitResult(tries = RESULT_READ_TRIES) }
+            }
+            else -> Unit
+        }
     }
+
+    fun nowMs(): Long = clock.now().toEpochMilliseconds()
 
     private data class QuestionSlot(
         val questionId: String,

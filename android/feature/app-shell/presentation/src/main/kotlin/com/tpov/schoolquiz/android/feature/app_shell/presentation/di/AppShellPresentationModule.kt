@@ -1,9 +1,9 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultOwnHistoryComponent
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.OwnHistoryComponent
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.PlaceholderOwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultOwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
@@ -72,6 +72,7 @@ val appShellPresentationModule =
                 retapUseCase = get(),
                 fetchTournamentOverview = get(),
                 userStatsRepository = get(),
+                authRepository = get(),
                 syncScheduler = get(),
                 syncStatusRepository = get(),
                 myQuestsFactory = { compCtx, nav, onQuestDrillDown ->

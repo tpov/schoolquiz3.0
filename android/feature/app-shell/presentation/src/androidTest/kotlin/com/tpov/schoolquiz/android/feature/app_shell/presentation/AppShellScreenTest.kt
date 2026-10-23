@@ -449,7 +449,12 @@ class AppShellScreenTest {
                         backStack = emptyList(),
                     )
                     override val childStack = MutableValue(idleStack)
-                    override fun openLessonRunner(lessonId: String) {
+                    override fun openLessonEarnings(
+        lessonId: String,
+        title: String,
+    ) = Unit
+
+    override fun openLessonRunner(lessonId: String) {
                         arena.runnerStarts++
                         error("Read-only Arena cannot start a runner")
                     }

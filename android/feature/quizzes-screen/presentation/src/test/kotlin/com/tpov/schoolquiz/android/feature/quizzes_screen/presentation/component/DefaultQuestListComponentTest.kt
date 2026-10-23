@@ -69,6 +69,8 @@ class DefaultQuestListComponentTest {
     private val fakeAuth = FakeAuthRepository(initialUid = DEV_UID)
     private var syncedQuestIds = emptyList<QuestId>()
     private var nextShelfChangeId = 0
+    private var observePrivateQuests: (String) -> kotlinx.coroutines.flow.Flow<List<com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem>> =
+        { kotlinx.coroutines.flow.flowOf(emptyList()) }
 
     @After
     fun tearDown() {
@@ -112,6 +114,7 @@ class DefaultQuestListComponentTest {
                 syncedQuestIds = syncedQuestIds + questId
                 Result.success(Unit)
             },
+            observePrivateQuests = observePrivateQuests,
             config =
                 QuizzesConfig.QuestList(
                     catalogId = catalogId,
@@ -731,5 +734,40 @@ class DefaultQuestListComponentTest {
         val pushed = fakeNavigation.pushedConfigs.last()
         assertIs<QuizzesConfig.SectionList>(pushed)
         assertEquals("arena-quest", pushed.questId)
+    }
+
+    @Test
+    fun privateCatalog_listsOwnerQuizzes_andTapOpensThePrivateRunner() = runTest(dispatcher) {
+        // Категория «Приватные квизы» (AD-29, история 8.4): строки — сохранённые квизы
+        // владельца; тап открывает дверь прогона, а не иерархию публичного квеста.
+        val items =
+            listOf(
+                com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem(
+                    questId = "pq-1",
+                    title = "Мой приватный квиз",
+                    questionCount = 3,
+                ),
+            )
+        observePrivateQuests = { uid ->
+            assertEquals(DEV_UID, uid, "строки читаются по владельцу сессии")
+            kotlinx.coroutines.flow.flowOf(items)
+        }
+        val component =
+            buildComponent(
+                catalogId = com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.PrivateQuizSettings.PRIVATE_QUIZ_CATALOG_ID,
+            )
+        testScheduler.advanceUntilIdle()
+
+        val state = assertIs<QuestListUiState.PrivateQuests>(component.uiState.value)
+        assertEquals(listOf("pq-1"), state.items.map { it.questId })
+
+        component.onPrivateQuestClick(state.items.single())
+        testScheduler.advanceUntilIdle()
+
+        val pushed = fakeNavigation.pushedConfigs.last()
+        val runner = assertIs<QuizzesConfig.PrivateQuizRunner>(pushed)
+        assertEquals("pq-1", runner.questId)
+        assertEquals(DEV_UID, runner.ownerUid)
+        assertEquals("Мой приватный квиз", runner.title)
     }
 }

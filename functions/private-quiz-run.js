@@ -150,6 +150,8 @@ function finishAttempt({settings, questions, submission, now, deadlineMs}) {
   if (list.length === 0) fail("RUN_EMPTY", "The frozen quiz carries no questions");
   if (now > deadlineMs) {
     // Весь квиз как порция: каждая позиция в знаменателе, невыданные — без ответа.
+    // Ответы подачи здесь НЕ читаются вовсе: доставка за сроком опаздывает целиком, и поздние
+    // ответы не становятся принятыми вовремя (AD-29 — «принятые вовремя ответы сохраняются»).
     const wholeQuizServed = list.map((question, index) => ({codeAnswerIndex: index, questionId: question.id}));
     return terminal({
       reason: ATTEMPT_REASON.TIMEOUT,
@@ -157,7 +159,7 @@ function finishAttempt({settings, questions, submission, now, deadlineMs}) {
         questions: list,
         served: wholeQuizServed,
         keyDocument: null,
-        answers: submission.answers,
+        answers: [],
       }),
       finishedAtMs: deadlineMs,
     });

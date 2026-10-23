@@ -74,6 +74,7 @@ class DefaultQuizzesComponent(
     private val retirePublicQuest: RetirePublicQuestUseCase,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
     private val privateQuizRunnerFactory: PrivateQuizRunnerComponentFactory,
+    private val lessonEarningsFactory: LessonEarningsComponentFactory,
     /** Приватная категория (AD-29): сохранённые приватные квизы владельца — строки списка. */
     private val observePrivateQuests: (String) -> Flow<List<com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem>> = { flowOf(emptyList()) },
     private val arenaCatalogFactory: ArenaLessonCatalogComponentFactory,
@@ -106,7 +107,7 @@ class DefaultQuizzesComponent(
                 }.getOrNull()
                     ?.let(::restoreArenaReadOnlyRoute)
                     // AC 36: process kill = attempt lost. Pop runner back to LessonList on restart.
-                    ?.filterNot { it is QuizzesConfig.LessonRunner }
+                    ?.filterNot { it is QuizzesConfig.LessonRunner || it is QuizzesConfig.PrivateQuizRunner }
                     ?.takeIf { it.isNotEmpty() }
             },
             handleBackButton = false,
@@ -178,6 +179,7 @@ class DefaultQuizzesComponent(
             is QuizzesConfig.LessonList,
             is QuizzesConfig.LessonRunner,
             is QuizzesConfig.PrivateQuizRunner,
+            is QuizzesConfig.LessonEarnings,
             -> Unit
         }
     }
@@ -188,6 +190,7 @@ class DefaultQuizzesComponent(
             QuizzesConfig.ArenaLessons -> null
             is QuizzesConfig.ArenaRunner -> null
             is QuizzesConfig.PrivateQuizRunner -> config.breadcrumbs.firstDynamicTitle()
+            is QuizzesConfig.LessonEarnings -> config.breadcrumbs.firstDynamicTitle()
             is QuizzesConfig.PublicQuestCatalogPicker -> null
             is QuizzesConfig.QuestList -> config.breadcrumbs.firstDynamicTitle()
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstDynamicTitle()
@@ -282,6 +285,7 @@ class DefaultQuizzesComponent(
                 QuizzesConfig.ArenaLessons -> 1
                 is QuizzesConfig.ArenaRunner -> 1
                 is QuizzesConfig.PrivateQuizRunner -> cfg.breadcrumbs.size
+                is QuizzesConfig.LessonEarnings -> cfg.breadcrumbs.size
                 is QuizzesConfig.PublicQuestCatalogPicker -> cfg.breadcrumbs.size
                 is QuizzesConfig.QuestList -> cfg.breadcrumbs.size
                 is QuizzesConfig.SectionList -> cfg.breadcrumbs.size
@@ -333,6 +337,27 @@ class DefaultQuizzesComponent(
                 ),
             )
         }
+    }
+
+    /** «Начисления» авторского урока (AD-30/UX-20): read-only маршрут в стек квизов. */
+    override fun openLessonEarnings(
+        lessonId: String,
+        title: String,
+    ) {
+        val breadcrumbs =
+            childStack.value.active.configuration.let { config ->
+                when (config) {
+                    is QuizzesConfig.LessonList -> config.breadcrumbs + BreadcrumbRoot.Dynamic(title)
+                    else -> listOf(BreadcrumbRoot.Dynamic(title))
+                }
+            }
+        navigation.pushNew(
+            QuizzesConfig.LessonEarnings(
+                lessonId = lessonId,
+                title = title,
+                breadcrumbs = breadcrumbs,
+            ),
+        )
     }
 
     override fun openLessonRunner(lessonId: String) {
@@ -444,6 +469,15 @@ class DefaultQuizzesComponent(
                     ),
                 )
 
+            is QuizzesConfig.LessonEarnings ->
+                QuizzesChild.LessonEarnings(
+                    lessonEarningsFactory.create(
+                        componentContext = ctx,
+                        lessonId = config.lessonId,
+                        title = config.title,
+                    ),
+                )
+
             is QuizzesConfig.PrivateQuizRunner ->
                 QuizzesChild.PrivateQuizRunner(
                     privateQuizRunnerFactory.create(
@@ -464,6 +498,7 @@ class DefaultQuizzesComponent(
             QuizzesConfig.ArenaLessons -> false
             is QuizzesConfig.ArenaRunner -> false
             is QuizzesConfig.PrivateQuizRunner -> false
+            is QuizzesConfig.LessonEarnings -> false
             is QuizzesConfig.PublicQuestCatalogPicker -> false
             is QuizzesConfig.QuestList -> config.mode == QuestListMode.Archive
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive

@@ -20,6 +20,12 @@ interface LessonListComponent {
 
     fun onLessonClick(lesson: LessonItemUi)
 
+    /**
+     * «Начисления» урока (AD-30/UX-20, история 8.6) — только на авторской поверхности
+     * (my-quests drill-down: все крошки динамические). Чтение разрешает сервер.
+     */
+    fun onLessonEarningsClick(lesson: LessonItemUi) = Unit
+
     fun onHardCheckToggled(lessonId: String)
 
     /** Asked for when a shut lesson is tapped. Opening it costs nolics and goes through the server. */

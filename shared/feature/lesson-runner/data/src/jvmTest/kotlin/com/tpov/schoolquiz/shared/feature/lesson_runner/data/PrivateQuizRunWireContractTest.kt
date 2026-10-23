@@ -88,15 +88,16 @@ class PrivateQuizRunWireContractTest {
     }
 
     @Test
-    fun ownResult_running_hasNoReason() {
-        val error =
-            assertFailsWith<IllegalArgumentException> {
-                PrivateQuizRunWireParser.ownResult(
-                    mapOf("status" to "running", "reason" to "finished"),
-                    "start-000000001",
-                )
-            }
-        assertTrue(error.message!!.contains("carries no reason"))
+    fun ownResult_running_parsesTheRealShape_withoutReason() {
+        // Реальная форма сервера: {status:"running"} — без reason и без счёта.
+        val result =
+            PrivateQuizRunWireParser.ownResult(
+                mapOf("status" to "running"),
+                "start-000000001",
+            )
+        assertEquals(PrivateQuizAttemptStatus.RUNNING, result.attemptStatus)
+        assertEquals(null, result.reason)
+        assertEquals(false, result.showsScore)
     }
 
     @Test

@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.android.feature.app_shell.presentation.uistate
+package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate
 
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.OperationHistoryRecord
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.OwnHistoryPage
@@ -52,8 +52,12 @@ data class OwnHistoryUiState(
             }
             .toList()
 
+    /**
+     * Продолжение возможно, когда есть курсор и ничего не летит; поднятыый флаг ошибки ему не
+     * мешает — повтор догрузки и есть способ снять ошибку (AD-21: неудача не завершение).
+     */
     val canLoadMore: Boolean
-        get() = !isLoading && !isLoadingMore && !isEndReached && !errorMessage && nextCursor != null
+        get() = !isLoading && !isLoadingMore && !isEndReached && nextCursor != null
 
     companion object {
         fun loading(): OwnHistoryUiState = OwnHistoryUiState()

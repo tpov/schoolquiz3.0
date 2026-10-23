@@ -83,7 +83,15 @@ data class QuestCreateUiState(
     val privateShowResult: Boolean = PrivateQuizSettings.DEFAULT_SHOW_RESULT,
     /** Срок ссылки задан. Дефолт AD-29: «без срока». */
     val privateLinkHasExpiry: Boolean = false,
-    /** Момент, до которого старт разрешён; значим только при [privateLinkHasExpiry]. */
+    /**
+     * СОХРАНЁННЫЙ момент срока — из загруженного квиза. Перезаявка едет с ним же, пока автор
+     * не тронул управление сроком (AD-29: загрузка хранит настройки; пересчёт в дни молча
+     * продлевал бы авторский дедлайн).
+     */
+    val savedLinkExpiresAtMs: Long? = null,
+    /** Автор тронул управление сроком после загрузки — дни едут вместо сохранённого момента. */
+    val expiryEdited: Boolean = false,
+    /** Выбранный пресет срока, дней. Информационно при сохранённом моменте. */
     val privateLinkExpiresInDays: Int = DEFAULT_LINK_EXPIRY_DAYS,
     /** Ручное закрытие ссылки поставлено в очередь; ссылка закрывается навсегда (re-enable не назначен). */
     val isLinkCloseQueued: Boolean = false,

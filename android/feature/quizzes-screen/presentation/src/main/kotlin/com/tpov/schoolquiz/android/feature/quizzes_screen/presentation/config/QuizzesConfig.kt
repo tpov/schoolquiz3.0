@@ -91,6 +91,17 @@ sealed class QuizzesConfig {
         val breadcrumbs: List<BreadcrumbRoot>,
     ) : QuizzesConfig()
 
+    /**
+     * «Начисления» авторского урока (AD-30/UX-20, история 8.6) — read-only маршрут поверх
+     * разрешённой проекции economy; право читает сервер (не-автор получает не-отличимый отказ).
+     */
+    @Serializable
+    data class LessonEarnings(
+        val lessonId: String,
+        val title: String,
+        val breadcrumbs: List<BreadcrumbRoot>,
+    ) : QuizzesConfig()
+
     @Serializable
     data class LessonRunner(
         val lessonId: String,

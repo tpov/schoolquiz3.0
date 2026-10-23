@@ -157,6 +157,8 @@ fun AppShellScreen(
     )
     // Снимок синхронизации приезжает из компонента и дальше идёт параметром — ни шторка, ни
     // настройки к репозиторию не ходят и Koin не резолвят (di-patterns.md, use-cases.md).
+    // Сессия — граница секции «История операций» (AD-30, история 8.6).
+    val isSignedIn by rootComponent.isSignedIn.collectAsStateWithLifecycle(initialValue = false)
     val syncStatus by rootComponent.syncStatus.collectAsStateWithLifecycle(
         initialValue = SyncStatus(),
     )
@@ -251,6 +253,7 @@ fun AppShellScreen(
             scrimColor = Color.Black.copy(alpha = 0.66f),
             drawerContent = {
                 DrawerContent(
+                    isSignedIn = isSignedIn,
                     userStats = state.userStats,
                     activeTab = state.activeTab,
                     activeSection = state.activeSection,

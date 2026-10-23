@@ -79,13 +79,6 @@ sealed interface RunnerUiState {
         val ratingSubmissionState: RatingSubmissionState = RatingSubmissionState.Idle,
         val attemptId: AttemptId? = null,
         val serverSettlement: ServerAttemptSettlement = ServerAttemptSettlement(ServerAttemptSettlementState.PENDING),
-        /**
-         * Приватный прогон с выключенным показом результата (AD-29/UX-16): сервер прислал
-         * только подтверждение завершения — без счёта, процента и по-вопросных цифр. Карточка
-         * результата показывает завершение и НЕ рисует прочерки вместо скрытых чисел: процент,
-         * звёзды и разбор вопросов у приватного прогона скрытого результата не существуют.
-         */
-        val privateCompletionOnly: Boolean = false,
     ) : RunnerUiState {
         val displayedPercentScore: PercentScore?
             get() = serverSettlement.takeIf { it.hasAccountingProof }?.percentScore

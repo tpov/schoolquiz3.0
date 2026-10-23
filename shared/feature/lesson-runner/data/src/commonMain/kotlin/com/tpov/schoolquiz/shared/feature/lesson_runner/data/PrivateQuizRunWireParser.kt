@@ -56,15 +56,15 @@ object PrivateQuizRunWireParser {
                 else -> throw IllegalArgumentException("PrivateQuizRunWireParser: unknown attempt status ${map["status"]}")
             }
         val reason =
-            when (map.string("reason")) {
+            when (val raw = (map["reason"] as? String)?.takeIf { it.isNotBlank() }) {
                 null -> null
                 "finished" -> PrivateQuizAttemptReason.FINISHED
                 "timeout" -> PrivateQuizAttemptReason.TIMEOUT
-                else -> throw IllegalArgumentException("PrivateQuizRunWireParser: unknown attempt reason ${map["reason"]}")
+                else -> throw IllegalArgumentException("PrivateQuizRunWireParser: unknown attempt reason $raw")
             }
-        require(status == PrivateQuizAttemptStatus.TERMINAL || reason == null) {
-            "PrivateQuizRunWireParser: a running attempt carries no reason"
-        }
+        // Реальная форма «ещё бежит» — {status:"running"} без причины; reason читается
+        // снисходительно (nullable) и осмыслен только у терминала.
+
         val percent = (map.long("percentScore"))?.toInt()
         val correctCount = map.long("correctCount")?.toInt()
         val questionCount = map.long("questionCount")?.toInt()

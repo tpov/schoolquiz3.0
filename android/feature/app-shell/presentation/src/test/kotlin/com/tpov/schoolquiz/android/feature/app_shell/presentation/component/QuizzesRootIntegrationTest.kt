@@ -218,7 +218,12 @@ class QuizzesRootIntegrationTest {
 
         override fun popToLevel(uiLevel: Int) = Unit
         override fun popCurrentChild() = Unit
-        override fun openLessonRunner(lessonId: String) = Unit
+        override fun openLessonEarnings(
+        lessonId: String,
+        title: String,
+    ) = Unit
+
+    override fun openLessonRunner(lessonId: String) = Unit
 
         private fun idleStack() = ChildStack(
             active = Child.Created(configuration = QuizzesConfig.Idle, instance = QuizzesChild.Idle),
@@ -245,6 +250,7 @@ class QuizzesRootIntegrationTest {
         capturedQuizzes: CapturedQuizzesComponent = CapturedQuizzesComponent(),
         backHandler: BackHandler? = null,
     ) = DefaultRootComponent(
+        authRepository = FakeAuthRepository(),
         componentContext = testCtx(backHandler),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
         navigateUseCase = NavigateUseCase(),
@@ -295,6 +301,7 @@ class QuizzesRootIntegrationTest {
     private fun buildWithRealQuizzes(
         backHandler: BackHandler? = null,
     ) = DefaultRootComponent(
+        authRepository = FakeAuthRepository(),
         componentContext = testCtx(backHandler),
         initUseCase = InitializeAppShellUseCase(FakeUserStatsRepository()),
         navigateUseCase = NavigateUseCase(),
@@ -383,6 +390,8 @@ class QuizzesRootIntegrationTest {
                 retirePublicQuest = RetirePublicQuestUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not expected") },
                 privateQuizRunnerFactory = PrivateQuizRunnerComponentFactory { _, _ -> error("Private quiz run not expected") },
+
+                lessonEarningsFactory = { _, _, _ -> error("Not expected") },
                 arenaRunnerFactory = ArenaRunnerComponentFactory { _, _ -> error("Arena run not expected") },
                 arenaCatalogFactory = ArenaLessonCatalogComponentFactory {
                     error("Arena not expected in this fixture")

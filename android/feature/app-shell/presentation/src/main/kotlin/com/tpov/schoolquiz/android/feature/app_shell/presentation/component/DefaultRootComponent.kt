@@ -18,8 +18,8 @@ import com.tpov.schoolquiz.android.feature.internet.profile.presentation.compone
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PlaceholderPollsComponent
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.OwnHistoryComponent
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.PlaceholderOwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
@@ -91,6 +91,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -152,6 +153,8 @@ class DefaultRootComponent(
     private val retapUseCase: OnTabRetapUseCase,
     private val fetchTournamentOverview: FetchTournamentOverviewUseCase = noOpFetchTournamentOverviewUseCase,
     private val userStatsRepository: UserStatsRepository,
+    // Сессия — граница секции «История операций» в шторке (AD-30/UX-20, история 8.6).
+    authRepository: com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository,
     private val syncScheduler: SyncScheduler,
     // Без значения по умолчанию намеренно: забытая проводка обязана не собираться. Заглушка,
     // стоявшая здесь, отдавала вечное «синхронизации ещё не было» — то самое молчание, ради
@@ -202,6 +205,10 @@ class DefaultRootComponent(
     private val ioContext: CoroutineContext = Dispatchers.IO,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
+
+    /** Есть ли живая сессия: гейт секции «История операций» (AD-30, история 8.6). */
+    private val _isSignedIn = MutableStateFlow(false)
+    val isSignedIn: StateFlow<Boolean> = _isSignedIn.asStateFlow()
     private val _tournamentOverviewState =
         MutableStateFlow<Map<String, TournamentOverviewLoadState>>(emptyMap())
     private val tapProgressState = MutableStateFlow(TapProgress.initial)
@@ -356,6 +363,9 @@ class DefaultRootComponent(
     }
 
     init {
+        scope.launch {
+            authRepository.observeUid().collect { uid -> _isSignedIn.value = uid != null }
+        }
         lifecycle.doOnDestroy { componentJob.cancel() }
 
         // Essenty BackCallback — not Jetpack BackHandler.

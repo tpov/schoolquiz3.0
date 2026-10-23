@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -99,11 +100,22 @@ fun LessonListScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         items(state.items, key = { it.id }) { item ->
-                            LessonItemCard(
-                                item = item,
-                                onClick = { component.onLessonClick(item) },
-                                onHardCheckChanged = { component.onHardCheckToggled(item.id) },
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                LessonItemCard(
+                                    item = item,
+                                    onClick = { component.onLessonClick(item) },
+                                    onHardCheckChanged = { component.onHardCheckToggled(item.id) },
+                                )
+                                // «Начисления» — только на авторской поверхности: my-quests
+                                // drill-down отличается тем, что все крошки динамические
+                                // (каталог/квест/секция/тема приехали текстом). Право читает
+                                // сервер: не-автор получит не-отличимый отказ (AD-30).
+                                if (component.breadcrumbs.all { it is BreadcrumbRoot.Dynamic }) {
+                                    TextButton(onClick = { component.onLessonEarningsClick(item) }) {
+                                        Text(stringResource(R.string.quizzes_lesson_earnings_entry))
+                                    }
+                                }
+                            }
                         }
                     }
             }

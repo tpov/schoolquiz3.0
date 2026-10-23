@@ -28,9 +28,11 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.OwnHistoryComponent
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.uistate.HistoryFilter
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.uistate.OwnHistoryDayGroup
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.HistoryRecordCard
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HistoryFilter
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.OwnHistoryDayGroup
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.OwnHistoryUiState
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.OperationHistoryRecord
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -147,7 +149,7 @@ fun OperationHistoryScreen(
                     filteredGroups(state).forEach { group ->
                         item(key = group.dayStartMs) {
                             Text(
-                                text = formatDay(group),
+                                text = formatDay(group, timeZone = component.timeZone),
                                 style = NoirType.rowSub,
                                 color = NoirT2,
                                 modifier = Modifier.padding(top = 6.dp),
@@ -179,7 +181,7 @@ fun OperationHistoryScreen(
 }
 
 /** Фильтр применяется над готовыми группами, группировка и порядок сохраняются (UX-20). */
-private fun filteredGroups(state: com.tpov.schoolquiz.android.feature.app_shell.presentation.uistate.OwnHistoryUiState): List<OwnHistoryDayGroup> =
+private fun filteredGroups(state: OwnHistoryUiState): List<OwnHistoryDayGroup> =
     state.groups
         .map { group ->
             OwnHistoryDayGroup(
@@ -196,51 +198,13 @@ private fun filteredGroups(state: com.tpov.schoolquiz.android.feature.app_shell.
         }
         .filter { it.entries.isNotEmpty() }
 
-@Composable
-private fun HistoryRecordCard(record: OperationHistoryRecord) {
-    BrandCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = record.reason,
-                    style = NoirType.rowSub,
-                    color = NoirT1,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = signedAmount(record),
-                    style = NoirType.rowSub,
-                    color = if (record.isIncome) LocalNoirAccent.current else NoirT1,
-                )
-            }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = record.currency,
-                    style = NoirType.rowSub,
-                    color = NoirT2,
-                )
-                Text(
-                    text = record.status,
-                    style = NoirType.rowSub,
-                    color = NoirT2,
-                )
-            }
-        }
-    }
-}
-
-private fun signedAmount(record: OperationHistoryRecord): String =
-    if (record.isIncome) "+${record.delta}" else record.delta.toString()
 
 @Composable
-private fun formatDay(group: OwnHistoryDayGroup): String {
-    val date = Instant.fromEpochMilliseconds(group.dayStartMs).toLocalDateTime(TimeZone.currentSystemDefault()).date
+private fun formatDay(
+    group: OwnHistoryDayGroup,
+    timeZone: () -> TimeZone,
+): String {
+    // Группа и заголовок дня читают один и тот же пояс, что и группировка компонента (UX-20).
+    val date = Instant.fromEpochMilliseconds(group.dayStartMs).toLocalDateTime(timeZone()).date
     return stringResource(R.string.history_day, date.dayOfMonth, date.monthNumber, date.year)
 }

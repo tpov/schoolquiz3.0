@@ -44,6 +44,7 @@ class DrawerSectionListTest {
         composeTestRule.setContent {
             SchoolQuizTheme {
                 DrawerSectionList(
+                    isSignedIn = true,
                     tab = Tab.INTERNET,
                     userStats = UserStats.guest(),
                     activeSection = null,
@@ -63,6 +64,7 @@ class DrawerSectionListTest {
         composeTestRule.setContent {
             SchoolQuizTheme {
                 DrawerSectionList(
+                    isSignedIn = true,
                     tab = Tab.INTERNET,
                     userStats = UserStats.guest().copy(currentSkill = 3_000),
                     activeSection = null,

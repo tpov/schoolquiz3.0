@@ -9,6 +9,8 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultArenaEntryComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultArenaLessonCatalogComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultLessonEarningsComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonEarningsComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
@@ -64,6 +66,15 @@ val quizzesPresentationModule =
                 retirePublicQuest = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
                 privateQuizRunnerFactory = get(),
+                lessonEarningsFactory =
+                    LessonEarningsComponentFactory { ctx, lessonId, title ->
+                        DefaultLessonEarningsComponent(
+                            componentContext = ctx,
+                            lessonId = lessonId,
+                            title = title,
+                            observeOwnHistory = get(),
+                        )
+                    },
                 observePrivateQuests = { uid ->
                     // Приватная категория (AD-29, история 8.4): сохранённые приватные квизы
                     // владельца; статусы, у которых уже есть замороженный набор на сервере.

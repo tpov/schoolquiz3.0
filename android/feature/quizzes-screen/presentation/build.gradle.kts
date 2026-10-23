@@ -18,6 +18,9 @@ dependencies {
     // Приватная категория (AD-29, история 8.4): список приватных квизов читает сохранённые
     // снимки автора; ключ категории живёт в домене quest-authoring.
     implementation(project(":shared:feature:quest-authoring:domain"))
+    // «Начисления» урока (AD-30/UX-20, история 8.6): чтение разрешённой проекции economy.
+    implementation(project(":shared:feature:economy:domain"))
+    implementation(libs.kotlinx.datetime)
     implementation(project(":shared:feature:question:domain"))
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(project(":shared:feature:economy:domain"))

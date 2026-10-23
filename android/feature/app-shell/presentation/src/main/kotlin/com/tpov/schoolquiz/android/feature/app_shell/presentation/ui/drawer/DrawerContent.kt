@@ -29,6 +29,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 @Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 fun DrawerContent(
+    isSignedIn: Boolean,
     userStats: UserStats,
     activeTab: Tab,
     activeSection: DrawerSection?,
@@ -69,6 +70,7 @@ fun DrawerContent(
         if (activeTab != Tab.SHOP) {
             DrawerSectionList(
                 tab = activeTab,
+                isSignedIn = isSignedIn,
                 userStats = userStats,
                 activeSection = activeSection,
                 navigator = navigator,

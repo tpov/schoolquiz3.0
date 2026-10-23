@@ -1,9 +1,9 @@
-package com.tpov.schoolquiz.android.feature.app_shell.presentation.component
+package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.uistate.HistoryFilter
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.uistate.OwnHistoryUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HistoryFilter
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.OwnHistoryUiState
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.OwnHistoryRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveOwnHistoryUseCase
 import kotlinx.coroutines.CancellationException
@@ -27,6 +27,12 @@ import kotlinx.datetime.toLocalDateTime
 interface OwnHistoryComponent {
     val state: StateFlow<OwnHistoryUiState>
 
+    /** Часовой пояс группировки — один и тот же в группах и в заголовках дня (UX-20). */
+    val timeZone: () -> TimeZone
+
+    /** «Начисления» конкретного авторского урока; null — общая история (UX-20/AD-30). */
+    val lessonId: String?
+
     fun onFilterChanged(filter: HistoryFilter)
 
     fun onLoadMoreClick()
@@ -45,8 +51,10 @@ interface OwnHistoryComponent {
 class DefaultOwnHistoryComponent(
     componentContext: ComponentContext,
     private val observeOwnHistory: ObserveOwnHistoryUseCase,
+    /** «Начисления» урока (AD-30/UX-20, история 8.6): тот же компонент, lesson-scoped чтение. */
+    override val lessonId: String? = null,
     private val mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
-    private val timeZone: () -> TimeZone = { TimeZone.currentSystemDefault() },
+    override val timeZone: () -> TimeZone = { TimeZone.currentSystemDefault() },
 ) : OwnHistoryComponent, ComponentContext by componentContext {
     private val scope = CoroutineScope(SupervisorJob() + mainContext)
     private val _state = MutableStateFlow(OwnHistoryUiState.loading())
@@ -91,20 +99,23 @@ class DefaultOwnHistoryComponent(
                     } else {
                         OwnHistoryUiState.loading()
                     }
-                try {
-                    observeOwnHistory(cursor = cursor)
-                        .onSuccess { page ->
-                            _state.value = OwnHistoryUiState.fromPage(previous(), page, ::dayStartOf)
-                        }
-                        .onFailure { error ->
-                            if (error is CancellationException) throw error
-                            _state.value = OwnHistoryUiState.error()
-                        }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    _state.value = OwnHistoryUiState.error()
-                }
+                val read =
+                    if (lessonId == null) {
+                        observeOwnHistory(cursor = cursor)
+                    } else {
+                        observeOwnHistory.lessonEarnings(lessonId = lessonId, cursor = cursor)
+                    }
+                read
+                    .onSuccess { page ->
+                        _state.value = OwnHistoryUiState.fromPage(previous(), page, ::dayStartOf)
+                    }
+                    .onFailure { error ->
+                        if (error is CancellationException) throw error
+                        // Неудача НЕ стирает прочитанное: группы и курсор остаются, ошибка
+                        // поднимается флагом на месте, продолжение остаётся возможным (AD-21).
+                        _state.value =
+                            _state.value.copy(errorMessage = true, isLoading = false, isLoadingMore = false)
+                    }
             }
     }
 
@@ -123,6 +134,10 @@ class DefaultOwnHistoryComponent(
 class PlaceholderOwnHistoryComponent : OwnHistoryComponent {
     override val state: StateFlow<OwnHistoryUiState> =
         MutableStateFlow(OwnHistoryUiState(isLoading = false, isEndReached = true))
+
+    override val timeZone: () -> TimeZone = { TimeZone.currentSystemDefault() }
+
+    override val lessonId: String? = null
 
     override fun onFilterChanged(filter: HistoryFilter) = Unit
 

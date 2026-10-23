@@ -85,6 +85,24 @@ class OwnHistoryRepositoryTest {
     }
 
     @Test
+    fun sessionChange_duringTheCall_cutsOffBeforeParsing() = runTest {
+        // Сессия меняется, ПОКА транспорт отвечал: ответ A разобран не будет — ограда
+        // отрабатывает и после вызова (AD-30/AD-8), до OwnHistoryWireParser.
+        var calls = 0
+        val repository =
+            OwnHistoryRepositoryImpl(
+                remote = FakeRemote(reply),
+                currentUid = {
+                    calls += 1
+                    if (calls <= 1) "uid-1" else "uid-2"
+                },
+            )
+        val result = repository.historyPage("uid-1", cursor = null)
+        assertTrue(result.isFailure, "ответ, приехавший под чужой сессией, не рендерится")
+        assertTrue(result.exceptionOrNull()!!.message!!.contains("session changed"))
+    }
+
+    @Test
     fun blankOwner_refuses_withoutCallingTheTransport() = runTest {
         val remote = FakeRemote(reply)
         val repository = OwnHistoryRepositoryImpl(remote) { "uid-1" }

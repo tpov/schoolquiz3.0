@@ -21,4 +21,6 @@ sealed interface QuizzesChild {
     data class LessonRunner(val component: LessonRunnerRootComponent) : QuizzesChild
 
     data class PrivateQuizRunner(val component: PrivateQuizRunnerComponent) : QuizzesChild
+
+    data class LessonEarnings(val component: LessonEarningsComponent) : QuizzesChild
 }

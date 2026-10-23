@@ -211,6 +211,8 @@ class ArenaRunnerNavigationComponentTest {
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = ordinaryRunnerFactory,
             privateQuizRunnerFactory = { _, _ -> error("Not expected") },
+            lessonEarningsFactory =
+                { _, _, _ -> throw UnsupportedOperationException("not under test") },
             arenaCatalogFactory = ArenaLessonCatalogComponentFactory { CatalogStub(entry) },
             arenaRunnerFactory = runnerFactory,
             mainContext = Dispatchers.Unconfined,

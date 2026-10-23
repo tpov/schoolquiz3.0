@@ -89,6 +89,11 @@ class FakeQuizzesComponent : QuizzesComponent {
 
     var openLessonRunnerCalled: String? = null
 
+    override fun openLessonEarnings(
+        lessonId: String,
+        title: String,
+    ) = Unit
+
     override fun openLessonRunner(lessonId: String) {
         openLessonRunnerCalled = lessonId
     }

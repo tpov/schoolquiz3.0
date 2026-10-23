@@ -225,6 +225,8 @@ class QuizzesStateKeeperRestoreTest {
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not expected") },
             privateQuizRunnerFactory = { _, _ -> error("Not expected") },
+            lessonEarningsFactory =
+                { _, _, _ -> throw UnsupportedOperationException("not under test") },
             arenaRunnerFactory = arenaRunnerFactory,
             arenaCatalogFactory =
                 ArenaLessonCatalogComponentFactory { child ->

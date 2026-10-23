@@ -22,13 +22,14 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 @Composable
 fun DrawerSectionList(
     tab: Tab,
+    isSignedIn: Boolean,
     userStats: UserStats,
     activeSection: DrawerSection?,
     navigator: Navigator,
     onDismissQuizzes: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val sections = visibleSections(tab, userStats)
+    val sections = visibleSections(tab, userStats, isSignedIn)
 
     // Секций стало больше, чем влезает между шапкой и футером на низких экранах: без прокрутки
     // хвост списка обрезается футером и оказывается недостижим вовсе (TZ06C: кураторская

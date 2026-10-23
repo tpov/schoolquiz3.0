@@ -40,7 +40,7 @@ Done bar: code + JVM/Node tests + evidence + device-proof recipe (two devices + 
 
 ## Gates run (from this tree)
 
-- `node private-quiz-run.test.js` — **8/8 pass** against real handlers: start consumes once,
+- `node private-quiz-run.test.js` — **9/9 pass** against real handlers: start consumes once,
   retry does not; run serves only redacted halves + deadline from the original start; finished
   attempt scores server-side (50%) and replays the stored terminal; showResult=false gives
   completion only on every read, true reveals past attempts, author statistics always; closing
@@ -57,18 +57,30 @@ Done bar: code + JVM/Node tests + evidence + device-proof recipe (two devices + 
   `PrivateQuizRunWireContractTest`), `:android:feature:lesson-runner:presentation:testDebugUnitTest`
   (new `PrivateCompletionPresentationTest`) — green.
 
-## Device-proof recipe (owner, two devices + timeout case)
+## Device-proof recipe (owner, SAME signed-in account on two devices + timeout case)
 
-1. Install the MVP APK on two devices (author A, participant B).
-2. A creates a private quiz (limit 1, show-result hidden) and submits it; B opens the quiz
-   through the private category entry and starts: B sees redacted questions, no keys anywhere
-   (verify: no "correctOptionId" in any payload the app received — logcat network or proxy).
-3. Second start on device B (or A after B) → typed limit-reached state; no attempt session.
-4. Close the link from A mid-run on B → B finishes normally; a new start refuses.
-5. Timeout case: start on B, put the app in background past the deadline shown by the run,
-   reopen → the result screen shows completion confirmation only; author statistics on A still
-   show the timeout attempt (percent 0, reason timeout). A fresh start refuses (limit spent).
-6. Flip show-result on A (resubmit settings): B's past result read now shows the percent.
+> Открытый вопрос владельцу: у приватных квизов НЕТ механизма обнаружения/шаринга для другого
+> участника — клиентский список показывает только собственные черновики автора, и механизм
+> «ссылки/доступа участнику» решением не назначен (UX-16). Пока он не назначен, прогон чужого
+> квиза с другого аккаунта недостижим из UI — рецепт ниже использует ОДИН подписанный аккаунт
+> на двух устройствах (AD-29 это разрешает: startedCount считает каждый старт, лимит общий).
+
+1. Install the MVP APK on two devices; sign in with the SAME SchoolQuiz account (author).
+2. Device 1: create a private quiz (limit 1, show-result hidden), submit, wait for sync
+   (status SYNCED). Device 2: sync, open «Приватные квизы» category, tap the quiz, start:
+   redacted questions only (no "correctOptionId" in any received payload — proxy/logcat).
+3. Device 2: a second start attempt on the same quiz → typed limit-reached state; the first
+   attempt (device 1) is untouched.
+4. Close the link from device 1 mid-run on device 2 → the started attempt finishes normally;
+   a NEW start refuses (LINK_DISABLED).
+5. Timeout case: start on device 2, background the app past the run deadline, reopen →
+   completion-only result (showResult=false). A fresh start refuses (limit spent). Note: a
+   submission delivered PAST the deadline scores 0 — late answers are never credited (AD-29).
+6. Flip show-result on device 1 (resubmit settings): device 2's past-result read now shows
+   the percent.
+7. Author statistics: no statistics UI exists — the AC is callable-level and node-covered
+   (private-quiz-run.test.js: "showResult=false gives completion only ... the author always
+   sees statistics").
 
 ## Second pass, same day — the run is reachable from the UI
 

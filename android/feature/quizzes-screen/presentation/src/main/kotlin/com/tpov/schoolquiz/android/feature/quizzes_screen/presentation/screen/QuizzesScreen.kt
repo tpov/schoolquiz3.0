@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLay
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.PrivateQuizRunnerScreen
+
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaRunNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
@@ -98,6 +99,11 @@ fun QuizzesScreen(
                 )
             is QuizzesChild.PrivateQuizRunner ->
                 PrivateQuizRunnerScreen(
+                    component = active.component,
+                    modifier = Modifier,
+                )
+            is QuizzesChild.LessonEarnings ->
+                LessonEarningsScreen(
                     component = active.component,
                     modifier = Modifier,
                 )

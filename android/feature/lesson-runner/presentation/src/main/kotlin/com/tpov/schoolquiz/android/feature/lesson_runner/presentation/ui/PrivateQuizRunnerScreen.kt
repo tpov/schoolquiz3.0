@@ -71,7 +71,7 @@ fun PrivateQuizRunnerScreen(
             is PrivateQuizRunUiState.Refused -> RefusedCard(current.reason)
 
             is PrivateQuizRunUiState.Question -> {
-                QuestionTimer(current.deadlineMs, onTimeout = component::onTimeout)
+                QuestionTimer(current.deadlineMs, nowMs = component::nowMs, onTimeout = component::onTimeout)
                 PrivateQuestionBody(
                     state = current,
                     onDraftChanged = component::onDraftChanged,
@@ -109,14 +109,27 @@ fun PrivateQuizRunnerScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.private_run_read_failed),
+                    text =
+                        stringResource(
+                            when (current.source) {
+                                PrivateQuizRunUiState.ReadFailed.FailureSource.ENQUEUE -> R.string.private_run_submit_failed
+                                PrivateQuizRunUiState.ReadFailed.FailureSource.READ -> R.string.private_run_read_failed
+                            },
+                        ),
                     color = NoirDanger,
                     style = NoirType.rowSub,
                 )
-                if (current.retryable) {
-                    TextButton(onClick = component::onRefreshResult) {
-                        Text(stringResource(R.string.private_run_refresh))
-                    }
+                TextButton(onClick = component::onRefreshResult) {
+                    Text(
+                        text =
+                            stringResource(
+                                when (current.source) {
+                                    // Неудавшаяся постановка переезжает той же подачей и тем же ключом.
+                                    PrivateQuizRunUiState.ReadFailed.FailureSource.ENQUEUE -> R.string.private_run_resubmit
+                                    PrivateQuizRunUiState.ReadFailed.FailureSource.READ -> R.string.private_run_refresh
+                                },
+                            ),
+                    )
                 }
             }
 
@@ -156,12 +169,14 @@ private fun RefusedCard(reason: PrivateQuizEntryRefusal) {
 @Composable
 private fun QuestionTimer(
     deadlineMs: Long,
+    nowMs: () -> Long,
     onTimeout: () -> Unit,
 ) {
-    // Часы вопроса тикают до исходного срока; ни одна кнопка их не двигает (AD-31).
+    // Часы вопроса — часы машины (один источник с расписанием, AD-31); ни одна кнопка их
+    // не двигает и не дублирует.
     var expired by remember(deadlineMs) { mutableStateOf(false) }
     LaunchedEffect(deadlineMs) {
-        val wait = deadlineMs - System.currentTimeMillis()
+        val wait = deadlineMs - nowMs()
         if (wait > 0) {
             kotlinx.coroutines.delay(wait)
         }

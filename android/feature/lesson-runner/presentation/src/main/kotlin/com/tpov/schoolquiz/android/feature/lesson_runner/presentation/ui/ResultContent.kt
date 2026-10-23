@@ -328,22 +328,6 @@ private fun ResultScoreCard(state: RunnerUiState.Result) {
                 )
             },
     ) {
-        if (state.privateCompletionOnly) {
-            // Приватный прогон, showResult=false (AD-29): подтверждение завершения без чисел.
-            // Прочерк на месте процента рисовался бы «неизвестным нулём» — скрытого числа
-            // не существует, и никакого места для него здесь не оставлено (AD-21).
-            Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 16.dp)) {
-                Text(
-                    text = stringResource(com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R.string.runner_private_completion_title),
-                    style = NoirType.groupTitle.copy(color = NoirT1),
-                )
-                Text(
-                    text = stringResource(com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R.string.runner_private_completion_hint),
-                    style = NoirType.rowSub.copy(color = tone),
-                )
-            }
-            return
-        }
         Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 16.dp)) {
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                 Text(

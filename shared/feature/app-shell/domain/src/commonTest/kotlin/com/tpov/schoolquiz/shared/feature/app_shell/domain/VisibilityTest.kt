@@ -399,6 +399,22 @@ class VisibilityTest {
     }
 
     @Test
+    fun `visibility rules LOCAL signed out hides operation history only`() {
+        // AD-30/8.6: граница секции — сессия, а не роль. Гостю история недоступна (use-case
+        // может только отказать), остальные секции не двигаются.
+        val guest = visibleSections(Tab.LOCAL, UserStats.guest(), isSignedIn = false)
+        assertTrue(
+            guest.none { it == DrawerSection.LocalSection.OperationHistory },
+            "«История операций» скрыта без сессии",
+        )
+        assertTrue(guest.contains(DrawerSection.LocalSection.Polls))
+        assertTrue(guest.contains(DrawerSection.LocalSection.MyQuests))
+
+        val signedIn = visibleSections(Tab.LOCAL, UserStats.guest(), isSignedIn = true)
+        assertTrue(signedIn.contains(DrawerSection.LocalSection.OperationHistory))
+    }
+
+    @Test
     fun `visibility rules row 5 INTERNET Arena has empty requiredRoles`() {
         assertTrue(DrawerSection.InternetSection.Arena.requiredRoles.isEmpty())
     }

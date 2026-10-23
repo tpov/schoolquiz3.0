@@ -41,4 +41,10 @@ interface QuizzesComponent : QuizzesNavigator {
      * active runner config; a no-op when the runner is not on top.
      */
     fun openLessonRunner(lessonId: String)
+
+    /** «Начисления» авторского урока (AD-30/UX-20, история 8.6). */
+    fun openLessonEarnings(
+        lessonId: String,
+        title: String,
+    )
 }

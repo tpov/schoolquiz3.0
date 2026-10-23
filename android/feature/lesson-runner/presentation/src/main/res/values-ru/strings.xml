@@ -98,8 +98,6 @@
     <string name="runner_settlement_charges">Обычный заряд: −%1$d очк. · Плазма: −%2$d очк.</string>
     <string name="runner_settlement_skill_points">Очки навыка</string>
     <string name="runner_settlement_nolics">Нолики</string>
-    <string name="runner_private_completion_title">Квиз завершён</string>
-    <string name="runner_private_completion_hint">Автор скрыл результаты — завершение подтверждено, без счёта.</string>
     <string name="private_run_submitting">Отправляем попытку…</string>
     <string name="private_run_result_pending">Попытка в очереди — результат появится после доставки.</string>
     <string name="private_run_refresh">Обновить</string>
@@ -121,4 +119,6 @@
     <string name="private_run_completion_only">Завершение подтверждено. Автор скрыл результаты — счёт не показывается.</string>
     <string name="private_run_reason_timeout">Закрыто по тайм-ауту: вопросы без ответа учтены как показанные без ответа.</string>
     <string name="private_run_reason_finished">Отправлено вовремя.</string>
+    <string name="private_run_submit_failed">Попытку не удалось поставить в очередь</string>
+    <string name="private_run_resubmit">Отправить снова</string>
 </resources>

@@ -176,6 +176,17 @@ class DefaultLessonListComponent(
         }
     }
 
+    override fun onLessonEarningsClick(lesson: LessonItemUi) {
+        // «Начисления» урока (AD-30/UX-20, история 8.6): read-only проекция в стеке квизов.
+        navigation.pushNew(
+            QuizzesConfig.LessonEarnings(
+                lessonId = lesson.id,
+                title = lesson.title,
+                breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(lesson.title),
+            ),
+        )
+    }
+
     override fun onLessonClick(lesson: LessonItemUi) {
         // A shut lesson does not open by being tapped; the tap is a request to buy it.
         if (lesson.access == LessonAccess.LOCKED) {

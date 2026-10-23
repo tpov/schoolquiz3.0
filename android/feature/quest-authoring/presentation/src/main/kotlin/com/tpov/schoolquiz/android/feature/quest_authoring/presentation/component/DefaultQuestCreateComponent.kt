@@ -202,13 +202,24 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onPrivateLinkExpiryToggled(hasExpiry: Boolean) {
-        _state.update { it.copy(privateLinkHasExpiry = hasExpiry, errorMessage = null) }
+        _state.update {
+            it.copy(
+                privateLinkHasExpiry = hasExpiry,
+                // Трогая управление сроком, автор переезжает на пресет дней вместо
+                // сохранённого момента — только тогда перезаявка несёт новый момент.
+                expiryEdited = true,
+                savedLinkExpiresAtMs = if (hasExpiry) it.savedLinkExpiresAtMs else null,
+                errorMessage = null,
+            )
+        }
     }
 
     override fun onPrivateLinkExpiryDaysChanged(days: Int) {
         _state.update {
             it.copy(
                 privateLinkHasExpiry = true,
+                expiryEdited = true,
+                savedLinkExpiresAtMs = null,
                 privateLinkExpiresInDays = days.coerceAtLeast(1),
                 errorMessage = null,
             )
@@ -528,10 +539,13 @@ class DefaultQuestCreateComponent(
                                     attemptLimit = snapshot.privateAttemptLimit,
                                     showResult = snapshot.privateShowResult,
                                     linkExpiresAtMs =
-                                        if (snapshot.privateLinkHasExpiry) {
-                                            timestampProvider.nowMs() + snapshot.privateLinkExpiresInDays * MILLIS_PER_DAY
-                                        } else {
-                                            null
+                                        when {
+                                            !snapshot.privateLinkHasExpiry -> null
+                                            // Нетронутый сохранённый срок перезаявке едет как был:
+                                            // пересчёт в дни продлевал бы авторский дедлайн (AD-29).
+                                            !snapshot.expiryEdited -> snapshot.savedLinkExpiresAtMs
+                                            else ->
+                                                timestampProvider.nowMs() + snapshot.privateLinkExpiresInDays * MILLIS_PER_DAY
                                         },
                                 )
                             // Срок на сохранении только в будущем: часы ушли вперёд настроенного
@@ -1276,6 +1290,10 @@ class DefaultQuestCreateComponent(
             privateAttemptLimit = draft.privateQuiz?.attemptLimit ?: current.privateAttemptLimit,
             privateShowResult = draft.privateQuiz?.showResult ?: current.privateShowResult,
             privateLinkHasExpiry = draft.privateQuiz?.linkExpiresAtMs != null,
+            // Сохранённый момент хранится как есть: дни на экране — информация, а не источник
+            // перезаявки (иначе суб-суточный срок молча продлевался бы до 1 дня).
+            savedLinkExpiresAtMs = draft.privateQuiz?.linkExpiresAtMs,
+            expiryEdited = false,
             privateLinkExpiresInDays =
                 draft.privateQuiz?.linkExpiresAtMs
                     ?.let { expiry ->

@@ -86,6 +86,7 @@ class DevModeActivationIntegrationTest {
         observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
+        authRepository = com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository(),
         syncScheduler = FakeSyncScheduler(),
         syncStatusRepository = FakeSyncStatusRepository(),
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },

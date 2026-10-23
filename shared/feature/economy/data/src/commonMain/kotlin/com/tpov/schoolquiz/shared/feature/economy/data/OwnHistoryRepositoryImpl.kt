@@ -38,12 +38,17 @@ class OwnHistoryRepositoryImpl(
     ): Result<OwnHistoryPage> =
         try {
             require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
-            val session = currentUid()
-            if (session != ownerUid) {
-                // Смена владельца между запросом и ответом: страница того не рендерится.
+            // Ограда аккаунта — ДО вызова и ПОСЛЕ ответа: страница, запрошенная под A и
+            // отвеченная после переключения на B, не разбирается и не рендерится (AD-30/AD-8).
+            if (currentUid() != ownerUid) {
                 Result.failure(IllegalStateException("own history session changed"))
             } else {
-                Result.success(OwnHistoryWireParser.page(call()))
+                val reply = call()
+                if (currentUid() != ownerUid) {
+                    Result.failure(IllegalStateException("own history session changed"))
+                } else {
+                    Result.success(OwnHistoryWireParser.page(reply))
+                }
             }
         } catch (e: CancellationException) {
             throw e

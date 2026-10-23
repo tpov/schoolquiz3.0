@@ -98,8 +98,6 @@
     <string name="runner_settlement_charges">Звичайний заряд: −%1$d балів · Плазма: −%2$d балів</string>
     <string name="runner_settlement_skill_points">Бали навички</string>
     <string name="runner_settlement_nolics">Ноліки</string>
-    <string name="runner_private_completion_title">Квіз завершено</string>
-    <string name="runner_private_completion_hint">Автор приховав результати — завершення підтверджено, без рахунку.</string>
     <string name="private_run_submitting">Надсилаємо спробу…</string>
     <string name="private_run_result_pending">Спроба в черзі — результат з’явиться після доставки.</string>
     <string name="private_run_refresh">Оновити</string>
@@ -121,4 +119,6 @@
     <string name="private_run_completion_only">Завершення підтверджено. Автор приховав результати — рахунок не показується.</string>
     <string name="private_run_reason_timeout">Закрито за тайм-аутом: питання без відповіді зараховано як показані без відповіді.</string>
     <string name="private_run_reason_finished">Надіслано вчасно.</string>
+    <string name="private_run_submit_failed">Спробу не вдалося поставити в чергу</string>
+    <string name="private_run_resubmit">Надіслати знову</string>
 </resources>

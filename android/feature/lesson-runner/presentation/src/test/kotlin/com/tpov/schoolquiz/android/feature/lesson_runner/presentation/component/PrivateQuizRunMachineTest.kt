@@ -69,18 +69,28 @@ class PrivateQuizRunMachineTest {
         var ownResult: PrivateQuizOwnResult? = null,
         var readFails: Int = 0,
         val nowMs: Long = 1_000L,
+        var enqueueFails: Boolean = false,
     ) {
         var submitted = 0
+        val startIds = mutableListOf<String?>()
         val machine =
             PrivateQuizRunMachine(
                 request = PrivateQuizRunnerRequest("owner-1", "cat-1", "quest-1", "Приватный"),
-                startDoor = { entry },
-                submit = { submission ->
-                    submitted += 1
-                    submissions += submission
-                    Result.success(Unit)
+                startDoor = { existing ->
+                    startIds += existing
+                    "start-000000001" to entry
                 },
-                readResult = {
+                submit = { startId, submission ->
+                    startIds += startId
+                    if (enqueueFails) {
+                        Result.failure(IllegalStateException("queue refused"))
+                    } else {
+                        submitted += 1
+                        submissions += submission
+                        Result.success(Unit)
+                    }
+                },
+                readResult = { _ ->
                     if (readFails > 0) {
                         readFails -= 1
                         Result.failure(IllegalStateException("not delivered yet"))
@@ -93,14 +103,14 @@ class PrivateQuizRunMachineTest {
                 clock = object : Clock {
                     override fun now(): Instant = Instant.fromEpochMilliseconds(nowMs)
                 },
-                scope = kotlinx.coroutines.CoroutineScope(dispatcher + kotlinx.coroutines.SupervisorJob()),
+                mainContext = dispatcher,
             )
     }
 
     @Test
     fun refusedDoor_landsAsTypedState_andNoAttemptBegins() = runTest(dispatcher) {
         val harness = Harness(PrivateQuizEntry.Refused(PrivateQuizEntryRefusal.ATTEMPT_LIMIT_REACHED))
-        harness.machine.openDoor(null)
+        harness.machine.openDoor()
         dispatcher.scheduler.advanceUntilIdle()
         assertEquals(
             PrivateQuizRunUiState.Refused(PrivateQuizEntryRefusal.ATTEMPT_LIMIT_REACHED),
@@ -112,7 +122,7 @@ class PrivateQuizRunMachineTest {
     @Test
     fun answeredQuestions_areSubmittedOnce_withServedPositionsAndPayloads() = runTest(dispatcher) {
         val harness = Harness(PrivateQuizEntry.Ready(run(single, single)))
-        harness.machine.openDoor(null)
+        harness.machine.openDoor()
         dispatcher.scheduler.advanceUntilIdle()
 
         val question = assertIs<PrivateQuizRunUiState.Question>(harness.machine.state.value)
@@ -137,11 +147,74 @@ class PrivateQuizRunMachineTest {
     }
 
     @Test
+    fun survivingMachine_ignoresReopen_afterTheRunResolved() = runTest(dispatcher) {
+        // Поворот пересоздаёт компонент, но машина выживает в InstanceKeeper: повторный
+        // openDoor по решённой двери — no-op, ключ и попытка не трогаются (AD-6).
+        val harness = Harness(PrivateQuizEntry.Ready(run(single, single)))
+        harness.machine.openDoor()
+        dispatcher.scheduler.advanceUntilIdle()
+        val before = harness.machine.startId
+
+        harness.machine.openDoor()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(before, harness.machine.startId, "ключ не меняется повторным openDoor")
+        assertEquals(1, harness.startIds.size, "дверь вызвана один раз")
+    }
+
+    @Test
+    fun enqueueFailure_keepsTheFrozenSubmission_andRefreshReEnqueuesSameStartId() = runTest(dispatcher) {
+        val completionOnly = PrivateQuizOwnResult(
+            startId = "start-000000001",
+            attemptStatus = PrivateQuizAttemptStatus.TERMINAL,
+            reason = PrivateQuizAttemptReason.FINISHED,
+            finishedAtMs = 9_000,
+            percentScore = 50,
+            correctCount = 1,
+            questionCount = 2,
+            questionScores = listOf(9, 1),
+        )
+        val harness = Harness(
+            PrivateQuizEntry.Ready(run(single, single)),
+            ownResult = completionOnly,
+            enqueueFails = true,
+        )
+        harness.machine.openDoor()
+        dispatcher.scheduler.advanceUntilIdle()
+        harness.machine.onAnswer()
+        harness.machine.onAnswer()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val failed = assertIs<PrivateQuizRunUiState.ReadFailed>(harness.machine.state.value)
+        assertEquals(
+            PrivateQuizRunUiState.ReadFailed.FailureSource.ENQUEUE,
+            failed.source,
+            "неудача — постановка, не чтение",
+        )
+        assertEquals(0, harness.submitted)
+
+        // Сеть вернулась: очередь принимает — обновление переедет замороженной подачей.
+        harness.enqueueFails = false
+        harness.machine.onRefreshResult()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, harness.submitted, "обновление переедет замороженной подачей")
+        // startIds: дверь (сначала null — ключ mint'ится внутри), подача, переотправка —
+        // один и тот же ключ после первой двери (AD-6).
+        assertTrue(
+            harness.startIds == listOf(null, "start-000000001", "start-000000001"),
+            "переотправка тем же ключом (AD-6): door + submit + resubmit",
+        )
+        val finished = assertIs<PrivateQuizRunUiState.Finished>(harness.machine.state.value)
+        assertEquals(50, finished.result.percentScore)
+    }
+
+    @Test
     fun expiredQuestion_closesShownWithoutAnswer_andTheRunContinues() = runTest(dispatcher) {
         // Срок попытки истёк до первого вопроса: каждый вопрос закрывается показанным-без-ответа
         // и машина доходит до подачи по всему набору (AD-29: знаменатель весь квиз).
         val harness = Harness(PrivateQuizEntry.Ready(run(single, single)), nowMs = 600_000)
-        harness.machine.openDoor(null)
+        harness.machine.openDoor()
         dispatcher.scheduler.advanceUntilIdle()
         // Последний (просроченный) вопрос показывается frame'ом: его закрывает onTimeout.
         harness.machine.onTimeout()
@@ -175,7 +248,7 @@ class PrivateQuizRunMachineTest {
             ownResult = completionOnly,
             readFails = 1,
         )
-        harness.machine.openDoor(null)
+        harness.machine.openDoor()
         dispatcher.scheduler.advanceUntilIdle()
         harness.machine.onDraftChanged(UserAnswerDraft.SingleChoiceDraft(com.tpov.schoolquiz.shared.core.question_schema.OptionId("b")))
         harness.machine.onAnswer()

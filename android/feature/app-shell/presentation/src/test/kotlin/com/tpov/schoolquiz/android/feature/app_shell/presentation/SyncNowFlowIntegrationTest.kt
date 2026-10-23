@@ -83,6 +83,7 @@ class SyncNowFlowIntegrationTest {
         observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
+        authRepository = com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository(),
         syncScheduler = fakeSyncScheduler,
         syncStatusRepository = fakeSyncStatusRepository,
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },

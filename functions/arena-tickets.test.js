@@ -446,6 +446,17 @@ test("five one-nolic payments conserve real reserve: author four, sink one, carr
   assert.equal(f.db.read("arena_royalty_accounts/author").totalSinkNolics, 1);
   const ledger = f.db.paths(`${LEDGER_PATH}/`).map((path) => f.db.read(path)).filter((row) => row.currency === "nolics");
   assert.equal(ledger.reduce((sum, row) => sum + row.delta, 0), 0, "payer debits equal author/sink/escrow ledger credits");
+  // «Начисления» урока (8.6) отбирают строки книги по details.lessonId: если продюсер
+  // перестанет писать привязку, проекция опустеет со всеми гейтами зелёными — зажато здесь.
+  const royaltyRows = ledger.filter((row) => row.reason === "arena_author_royalty");
+  assert.ok(royaltyRows.length > 0, "авторские строки в книге есть");
+  for (const row of royaltyRows) {
+    // sourceId строки — ticketId; билету известен его урок. Строка книги обязана называть
+    // тот же урок — «Начисления» отбирают по этому полю (own-history-views).
+    const ticket = f.db.read(`arena_entry_tickets/${row.sourceId}`);
+    assert.equal(ticket.lessonId, "lesson");
+    assert.equal(row.details.lessonId, "lesson", "привязка к уроку в строке книги");
+  }
 });
 
 test("concurrent separate tickets serialize shared author carry; self-author merges root rewards without overwriting", async () => {
