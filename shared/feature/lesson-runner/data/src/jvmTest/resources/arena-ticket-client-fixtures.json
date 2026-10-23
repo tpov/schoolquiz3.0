@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "producer": "actual issuer/recovery with production normalizer; unchanged actual runtime world missing-id source regression",
   "sourceSha256": {
-    "arena-tickets.js": "0d76d7f551a40c278b24014ab42834d94e9d03ba3ca7a005bd712396f200331f",
+    "arena-tickets.js": "5118368dd67e5d0fe9b339c50a94cbad44e9f98307a13304f4705b75a5bc13ce",
     "arena-ticket-recovery.js": "fff151e782e62454773d7ae76627609267d1809febfa05357098739170d2a893",
     "arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
     "question-redaction.js": "df1606e9a29f931c3cab8c3d34167ad0cf357d1099df49105ca530c39ccdf0e1",

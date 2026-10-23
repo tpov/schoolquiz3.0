@@ -2,8 +2,45 @@
 title: 'M2.2 — Premium for gold and from a box'
 type: 'feature'
 created: '2026-10-11'
-status: 'review'
+status: 'done'
 baseline_commit: '3c93ad5f'
+review: 'thorough'
+review_source: 'pinned'
+lenses_ran: [blind-hunter, edge-case-hunter, verification-gap, intent-alignment]
+followup_review_recommended: true
+deferred:
+  - summary: >-
+      A gold-quoted premium row shows no term: `days` is parsed and carried but rendered nowhere,
+      so the player cannot see what the gold buys before tapping.
+    evidence: |-
+      The row's title comes from the string resource and its description from the store record
+      (spec's own rules); a gold-only row has no store record and the matrix never promised a
+      term display. Adding the copy is a product wording decision (what the row should say),
+      not a correction this change owes.
+    location: >-
+      GetShopCatalogUseCase.premium / the shop row rendering
+    severity: low
+  - summary: >-
+      The gold path's catch-up seam (stale premium history forcing the checkpoint-and-retry
+      through a gold buy) is not exercised end to end.
+    evidence: |-
+      The two-phase checkpoint flow is pinned by premium-shop.test.js's buy() helper shape and
+      the engine's advance by its own suites; the composite (stale history + gold buy) needs a
+      stale-history fixture worth adding when the renewal work next touches this harness.
+    location: >-
+      functions/premium-shop.test.js (buy harness)
+    severity: low
+  - summary: >-
+      The balance purchase path emits no funnel events, so gold premium purchases never enter
+      the purchase analytics.
+    evidence: |-
+      Pre-existing: the balance path was analytics-less before this story (heart slots ride it
+      unpinned too); this story routed a revenue item through it. Instrumenting it properly
+      decides where "completed" lives for a synchronous balance purchase — an analytics design
+      decision, not a regression of this change.
+    location: >-
+      DefaultShopComponent.purchase (balance path)
+    severity: medium
 review_loop_iteration: 0
 story_key: '2-2-премиум-за-золото-и-из-коробки'
 sprint_status_file: '_bmad-output/implementation-artifacts/sprint-status-monetisation.yaml'
@@ -136,3 +173,53 @@ second-guess the store record on the device; touch owner files (`gradle.properti
   the caught-up balance, and the debit is applied only after the grant plan agrees (`GRANTED`).
 - A corrupt `premiumGoldOffers` row renders a broken price — false: parsing drops the row whole
   (`mapNotNull` plus the model's `require`), and the shelf falls back to the store record.
+
+## Review Triage Log
+
+### 2026-10-23 — Review pass (acceptance, fresh four-lens pass over the committed change set at HEAD; 2026-10-11 rows used as prior context)
+
+- verdicts: 21 findings — high 0, medium 3, low 12, false 6, maybe-false 0
+- findings:
+  - `[low]` `[reject]` [blind] Shelf position contradicts «to the shelf's front» — the premium row sits third (after the currencies, before the packs) by design; the drift is in the spec's Code Map wording, and the fix would edit this build's spec.
+  - `[false]` `[reject]` [blind] `ShopMessage.PremiumActivated` referenced but never defined — it is defined and rendered by M2.1's change (ShopMessage.kt:47, ShopView.kt:779), in tree at this story's baseline; the lens saw only this diff.
+  - `[low]` `[patch]` [blind] The repository's «Премиум активирован» is a dead copy source — the component unconditionally replaces `purchase.message` with `PremiumActivated`; fixed: the misleading branch removed (falls to the generic else), one copy source remains.
+  - `[low]` `[defer]` [blind] A gold-only premium row shows no term (`days` parsed, never rendered) — real, but the matrix never promised a term display and the wording is a product decision; deferred.
+  - `[low]` `[patch]` [blind] `PremiumGoldOffer` KDoc claims the device «называет sku обратно» — the purchase carries only `itemId=PREMIUM`; fixed: the KDoc now states the real contract (the server re-resolves the single sellable offer at purchase time).
+  - `[false]` `[reject]` [blind] Duplicated offer derivation invites drift — both wrappers sit on the shared `premiumSaleOffer(…, "GOLD")` kernel; they answer different questions (enumerate vs resolve-exactly-one), the invariant lives in the shared helper.
+  - `[false]` `[reject]` [blind] The millisecond idempotency window invites a double charge — carried from the prior pass's rejected row: by the model every callable invocation is a purchase; NFR2 covers one invocation's replay, and the same-millisecond double call answers the settled state (pinned by test).
+  - `[low]` `[defer]` [blind] The catch-up checkpoint branch never fires in tests (no stale-history fixture) — the flow shape is pinned by the harness and the engine by its own suites; the composite fixture deferred.
+  - `[low]` `[reject]` [blind] `premiumGoldOffers: []` in the default JSON is inert — the file is the documented duplication of initial values (read as DEFAULTS); the served list is always derived, and the real knob is `premiumProducts` (Ask First names it).
+  - `[low]` `[patch]` [blind] Huge `days` survives parsing clipped to Int.MAX, contradicting the drop-whole rule — fixed: a term outside 1..Int.MAX drops the row whole; a parsing test pins it.
+  - `[false]` `[reject]` [blind] No already-premium scenario in the matrix — the grant goes through the premium-economy engine whose lot-stacking semantics are the defined behavior (and M2.3's renewal work pins it); nothing is undefined here.
+  - `[low]` `[reject]` [blind] Spec task list still says «functions 100 suites» — the fix edits this build's spec; cosmetic.
+  - `[false]` `[reject]` [blind] New `PurchaseRefusalCode` entries have no producer — they round-trip on both ends (server emits them in purchase-verification tests; PurchaseVerificationMappingTest asserts every entry maps from the wire) — verified by the verification-gap lens.
+  - `[low]` `[reject]` [blind] The default JSON lost its trailing newline — cosmetic.
+  - `[false]` `[reject]` [edge] A single sellable gold offer for a non-30d sku pairs the wrong copy — unreachable within the owner's frozen model: premium_1d/7d/365d are decreed never recreated; the operator's table is the instrument and the decree keeps other skus out.
+  - `[low]` `[patch]` [edge] Same row as the huge-days parsing fix above (the edge lens's guard sketch) — grouped with it; one fix.
+  - `[low]` `[patch]` [edge] A same-millisecond replay against a changed table escapes as anonymous INTERNAL — `CONFLICTING_REPLAY`/`SOURCE_ALREADY_GRANTED` from premium-grants were outside the callable's translation map; fixed: both map to `failed-precondition` (reachable only in a perfect storm, but the named-refusal contract should not depend on that).
+  - `[medium]` `[defer]` [edge] The balance path emits no funnel events — gold premium purchases never enter the analytics; pre-existing hole (the path was analytics-less before this story), instrumentation design deferred; severity honest-graded medium because a revenue path now rides it.
+  - `[medium]` `[patch]` [vg] The `applyShopPurchase` callable was never executed by any test (the suite that appears to cover it runs a drifted hand-copy) — fixed: a handler-level test pins the gold buy (debit, response shape, document write) and both named wire refusals (short wallet → `failed-precondition`, non-selling table → `invalid-argument`).
+  - `[medium]` `[patch]` [vg] `EconomyRepositoryImpl`'s PREMIUM allowlist adoption is unobserved — reverting it turned every gate green while bricking the gold row client-side; fixed: a data-module test pins `purchase(PREMIUM)` riding the gate to the remote data source (and a non-listed item refused before any call).
+  - `[low]` `[patch]` [vg→other] The buy() copy has drifted from the callable body it mirrors — the callable-level test above removes the copy's monopoly on this surface; the copy itself stays as the module harness (its drift noted here).
+
+## Auto Run Result
+
+Status: done — acceptance pass complete; six patch entries applied and verified; three items deferred with recorded evidence; nothing routed back.
+
+### Summary of this pass
+- Fresh four-lens thorough review over the story's committed change set — d59a0299 + 4aa0cb30 — verified at HEAD; the 2026-10-11 pass served as prior triage context.
+- 21 findings: 0 high, 3 medium, 12 low, 6 false → 6 patched entries, 3 deferred, 10 rejected with recorded refutations.
+- Review-fix changes landed with this acceptance: the callable-level test for `applyShopPurchase` (gold buy end to end + both named wire refusals — the surface the module tests only mirrored); the translation map learned `CONFLICTING_REPLAY`/`SOURCE_ALREADY_GRANTED`; impossible `days` now drop a gold-offer row whole instead of surviving clipped; the repository's dead premium copy removed; the `PremiumGoldOffer` KDoc states the real wire contract; the data-module test pins PREMIUM's adoption through the remote-purchase gate.
+
+### Verification performed
+- `cd functions && node economy-handler.test.js` — OK (with the new callable test); `node premium-shop.test.js` — 7/7.
+- `cd functions && node run-tests.js` at HEAD — 128/129; the one failure is the pre-existing `mvp-isolation` LAN-address objection (unrelated, documented under spec-m2-1's pass).
+- `sgw ./gradlew -Dorg.gradle.java.installations.paths=/opt/jdks/jdk-27 :shared:feature:economy:data:allTests :platform:firebase:testDebugUnitTest --no-configuration-cache` — green with the new data-module and parsing tests (first run exposed a pre-existing failure: the epic-8 session's `45f7e9c8` drifted `arena-tickets.js` without re-pinning the fixture SHA — this session's gate did not include `:platform:firebase`; re-pinned test-only per the 2026-10-20 precedent, all 333 payload tests green).
+- Full Kotlin gate at HEAD (before patches): BUILD SUCCESSFUL — economy domain/data, billing, presentation, assembleMvp (see spec-m2-1's pass for the same-run record).
+
+### Follow-up review recommendation
+- true — two medium entries were patched this pass. Unverified risk: the new callable test pins the response and the gold/hasPremium writes; the full persisted-field set (streakDays, stars, hearts, plasma) is still pinned only by the drifted buy() copy in premium-shop.test.js.
+
+### Residual risks
+- Gold premium purchases remain invisible to the purchase funnel until the balance path gets its analytics design (deferred, medium).
+- The operator dependency stands: without a single sellable `goldPrice` row in `configs/economy`, the shelf sells premium through Play only (tracked owner task, unchanged).

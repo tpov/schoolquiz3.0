@@ -4572,9 +4572,17 @@ exports.applyShopPurchase = onCall(CALLABLE_OPTIONS, async (request) => {
   } catch (error) {
     // Отказы покупки идут именованными кодами: премиум за золото называет FAILED_PRECONDITION
     // (кошелёк короток) и INVALID_ARGUMENT (таблица не продаёт) из premium-shop.js, слот —
-    // HttpsError напрямую. Клиент ветвится по коду провода, поэтому подделка обязана доехать
-    // именованной, а не безымянной INTERNAL; немые ошибки уходят как были.
-    const codes = {INVALID_ARGUMENT: "invalid-argument", FAILED_PRECONDITION: "failed-precondition", INTERNAL: "internal"};
+    // HttpsError напрямую. Конфликт повторного выдачи (CONFLICTING_REPLAY, SOURCE_ALREADY_GRANTED
+    // из premium-grants.js) — тоже отказ по состоянию, не авария. Клиент ветвится по коду
+    // провода, поэтому подделка обязана доехать именованной, а не безымянной INTERNAL; немые
+    // ошибки уходят как были.
+    const codes = {
+      INVALID_ARGUMENT: "invalid-argument",
+      FAILED_PRECONDITION: "failed-precondition",
+      CONFLICTING_REPLAY: "failed-precondition",
+      SOURCE_ALREADY_GRANTED: "failed-precondition",
+      INTERNAL: "internal",
+    };
     if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
     throw error;
   }

@@ -278,6 +278,9 @@ class FirebaseArenaTicketRemoteDataSourceTest {
         // eligible-universe extraction and settlement fixes). Wire payloads unchanged: every
         // fixture-payload test stayed green, so only the recorded SHAs were re-pinned,
         // mirroring the 2.13 functions-contract-drift precedent. Test-only.
+        // Re-pinned 2026-10-23: arena-tickets.js drifted in the epic-8 session (45f7e9c8, private
+        // quizzes) without a re-pin — that session's gate did not include :platform:firebase.
+        // Wire payloads unchanged again: 333 tests, only the SHA assertion failed. Test-only.
         for (name in listOf(
             "arena-tickets.js",
             "arena-ticket-recovery.js",

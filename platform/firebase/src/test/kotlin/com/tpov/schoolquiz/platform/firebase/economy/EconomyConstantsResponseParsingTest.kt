@@ -70,4 +70,21 @@ class EconomyConstantsResponseParsingTest {
         assertEquals(listOf(PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)), parsed.premiumGoldOffers)
         assertEquals(emptyList<PremiumGoldOffer>(), mapOf<String, Any>().toEconomyConstants().premiumGoldOffers)
     }
+
+    @Test
+    fun `an impossible term drops the row whole instead of being clipped into a fake one`() {
+        // Испорченная строка не должна выживать подменой срока: 10^12 суток, зажатые в Int.MAX,
+        // выглядели бы предложением сервера, которого он не делал.
+        val parsed =
+            mapOf(
+                "premiumGoldOffers" to
+                    listOf(
+                        mapOf("sku" to "premium_30d", "days" to 30, "goldPrice" to 500L),
+                        mapOf("sku" to "eternal", "days" to 1_000_000_000_000L, "goldPrice" to 500L),
+                        mapOf("sku" to "negative", "days" to -5L, "goldPrice" to 500L),
+                    ),
+            ).toEconomyConstants()
+
+        assertEquals(listOf(PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)), parsed.premiumGoldOffers)
+    }
 }

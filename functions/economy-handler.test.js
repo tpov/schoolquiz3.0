@@ -10,6 +10,7 @@ const stub = new Module(adminPath, null);
 stub.filename = adminPath; stub.loaded = true; stub.exports = admin;
 require.cache[adminPath] = stub;
 const functions = require("./index");
+const {ECONOMY_CONSTANTS_DOC} = require("./economy-constants");
 const uid = "box-player";
 function world() {
   const now = Date.now();
@@ -17,6 +18,14 @@ function world() {
     nextBoxAtMs: now + 86_400_000, gold: 0, nolics: 0, pointsNolics: 0}, [`profiles/${uid}`]: {uid}};
 }
 function call(name, data, owner = uid) { return functions[name].run({auth: {uid: owner}, data}); }
+function goldSaleWorld(gold) {
+  return {
+    ...world(),
+    [`users/${uid}`]: {...world()[`users/${uid}`], gold},
+    [ECONOMY_CONSTANTS_DOC]: {version: 7,
+      premiumProducts: {premium_30d: {days: 30, goldPrice: 500, salesEnabled: true}}},
+  };
+}
 
 test("real opening requires persistent owner-bound id and never trusts client reward", async () => {
   store.reset(world());
@@ -173,4 +182,25 @@ test("the offers review gate refuses the unqualified, and the screen serves only
   } finally {
     Date.now = originalNow;
   }
+});
+
+test("the shop callable sells premium for gold and names its refusals on the wire", async () => {
+  // Золотая покупка — callable-поверхность (история 2.2): списание, лот и ответ здесь, и
+  // именно здесь именованные отказы доезжают до клиента. Модульные тесты premium-shop гоняют
+  // копию тела; этот — сам callable, его белый список и перевод кодов.
+  store.reset(goldSaleWorld(600));
+  const bought = await call("applyShopPurchase", {itemId: "PREMIUM"});
+  assert.equal(bought.itemId, "PREMIUM");
+  assert.equal(bought.balance.gold, 100, "цена таблицы списана");
+  assert.equal(bought.balance.hasPremium, true);
+  assert.equal(store.documents.get(`users/${uid}`).gold, 100, "списание осело в документе");
+
+  // Короткий кошелёк — failed-precondition, не безымянная INTERNAL.
+  store.reset(goldSaleWorld(100));
+  await assert.rejects(call("applyShopPurchase", {itemId: "PREMIUM"}), {code: "failed-precondition"});
+
+  // Таблица, которая не продаёт за золото (дефолт: четыре строки — ровно одной нет), —
+  // invalid-argument до всякого чтения кошелька.
+  store.reset({...world(), [`users/${uid}`]: {...world()[`users/${uid}`], gold: 600}});
+  await assert.rejects(call("applyShopPurchase", {itemId: "PREMIUM"}), {code: "invalid-argument"});
 });

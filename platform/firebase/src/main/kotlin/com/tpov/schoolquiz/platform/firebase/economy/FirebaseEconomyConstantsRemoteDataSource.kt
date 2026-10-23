@@ -75,10 +75,13 @@ private fun List<*>?.toGoldOffers(): List<PremiumGoldOffer> =
             val sku = offer["sku"] as? String ?: return@mapNotNull null
             val days = longOr(offer["days"], 0L)
             val goldPrice = longOr(offer["goldPrice"], 0L)
+            // Невозможный срок выпадает строкой целиком, как и всякая испорченная строка:
+            // подгонять его к Int.MAX — выдумывать срок, которого сервер не называл.
+            if (days !in 1L..Int.MAX_VALUE.toLong()) return@mapNotNull null
             try {
                 PremiumGoldOffer(
                     sku = sku,
-                    days = days.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                    days = days.toInt(),
                     goldPrice = goldPrice,
                 )
             } catch (e: IllegalArgumentException) {

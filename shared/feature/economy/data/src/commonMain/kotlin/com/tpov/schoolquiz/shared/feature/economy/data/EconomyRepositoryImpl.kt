@@ -96,7 +96,8 @@ class EconomyRepositoryImpl(
         when (this) {
             ShopItemId.STANDARD_HEART_SLOT -> "Жизнь куплена"
             ShopItemId.GOLD_HEART -> "Золотая жизнь куплена"
-            ShopItemId.PREMIUM -> "Премиум активирован"
+            // Премиум говорит своими словами на экране (PremiumActivated): дублировать копию здесь —
+            // второй источник одних слов, который всегда перезаписывается.
             else -> "Покупка выполнена"
         }
 
