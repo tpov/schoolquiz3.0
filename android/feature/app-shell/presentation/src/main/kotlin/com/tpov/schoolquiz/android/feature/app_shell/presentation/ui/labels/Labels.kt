@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -73,6 +74,7 @@ val DrawerSection.labelRes: Int
             DrawerSection.LocalSection.Curation -> R.string.section_curation
             DrawerSection.LocalSection.Inbox -> R.string.section_inbox
             DrawerSection.LocalSection.Polls -> R.string.section_polls
+            DrawerSection.LocalSection.OperationHistory -> R.string.section_operation_history
             DrawerSection.LocalSection.Settings -> R.string.section_settings
             DrawerSection.InternetSection.Arena -> R.string.section_arena
             DrawerSection.InternetSection.Catalog -> R.string.section_catalog
@@ -100,6 +102,7 @@ val DrawerSection.icon: ImageVector
             DrawerSection.LocalSection.Curation -> Icons.Default.FactCheck
             DrawerSection.LocalSection.Inbox -> Icons.Default.Info
             DrawerSection.LocalSection.Polls -> Icons.Default.Poll
+            DrawerSection.LocalSection.OperationHistory -> Icons.Default.History
             DrawerSection.LocalSection.Settings -> Icons.Default.Settings
             DrawerSection.InternetSection.Arena -> Icons.Default.Stadium
             DrawerSection.InternetSection.Catalog -> Icons.Default.Book
@@ -128,6 +131,7 @@ val TabConfig.labelRes: Int
                     LocalConfig.CuratorRoot -> R.string.section_curation
                     LocalConfig.InboxRoot -> R.string.section_inbox
                     LocalConfig.PollsRoot -> R.string.section_polls
+                    LocalConfig.OperationHistoryRoot -> R.string.section_operation_history
                     LocalConfig.SettingsRoot -> R.string.section_settings
                     LocalConfig.DesignCatalogRoot -> R.string.config_design_catalog
                     LocalConfig.EmptyRoot -> R.string.tab_local

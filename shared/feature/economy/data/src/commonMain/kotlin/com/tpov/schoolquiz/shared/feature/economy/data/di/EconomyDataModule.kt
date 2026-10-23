@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.shared.feature.economy.data.RoomEconomyLocalDataSourc
 import com.tpov.schoolquiz.shared.feature.economy.data.RoomGiftBoxIntentStore
 import com.tpov.schoolquiz.shared.feature.economy.data.RoomGiftBoxLocalStreakStore
 import com.tpov.schoolquiz.shared.feature.economy.data.RoomGiftClaimIntentStore
+import com.tpov.schoolquiz.shared.feature.economy.data.OwnHistoryRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.economy.data.UnsettledPurchaseSettler
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyConstantsRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
@@ -22,7 +23,9 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxLocal
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftClaimRepository
 import kotlinx.coroutines.CoroutineScope
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.OwnHistoryRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Clock
 import org.koin.core.module.Module
@@ -61,6 +64,11 @@ fun economyDataModule(currentUidFlow: () -> Flow<String?> = { flowOf(null) }): M
         // operationId, и второй эффект исключён забором box_operations на сервере.
         single<GiftClaimIntentStore> { RoomGiftClaimIntentStore(get()) }
         single<GiftBoxLocalStreakStore> { RoomGiftBoxLocalStreakStore(get()) }
+        // Собственная история операций (AD-30/UX-20, история 8.6): read-only проекция, владелец
+        // перепроверяется при ответе — смена аккаунта отсекает позднюю страницу.
+        single<OwnHistoryRepository> {
+            OwnHistoryRepositoryImpl(remote = get(), currentUid = { currentUidFlow().firstOrNull() })
+        }
         single<GiftClaimRepository> {
             GiftClaimRepositoryImpl(
                 remote = get(),

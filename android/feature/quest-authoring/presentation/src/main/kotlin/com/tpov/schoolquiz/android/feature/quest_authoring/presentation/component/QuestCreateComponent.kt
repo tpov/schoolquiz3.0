@@ -40,6 +40,17 @@ interface QuestCreateComponent {
 
     fun onLessonTitleChanged(value: String)
 
+    // ─── Приватная категория (AD-29): настройки ссылки и ручное закрытие ────────────────────────
+    fun onPrivateAttemptLimitChanged(value: Int)
+
+    fun onPrivateShowResultChanged(value: Boolean)
+
+    fun onPrivateLinkExpiryToggled(hasExpiry: Boolean)
+
+    fun onPrivateLinkExpiryDaysChanged(days: Int)
+
+    fun onClosePrivateQuizLinkClick()
+
     fun onStructureCheckClick()
 
     fun onCreateClick()

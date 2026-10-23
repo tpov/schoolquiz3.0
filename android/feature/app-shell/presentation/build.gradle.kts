@@ -15,6 +15,9 @@ android {
 dependencies {
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(project(":shared:feature:lesson:domain"))
+    // «История операций» (AD-30/UX-20, история 8.6): экран читает разрешённую проекцию economy.
+    implementation(project(":shared:feature:economy:domain"))
+    implementation(libs.kotlinx.datetime)
     implementation(project(":android:feature:local:settings:presentation"))
     implementation(project(":android:feature:internet:profile:presentation"))
     // The settings screen renders account details straight off UserProfile.

@@ -45,6 +45,18 @@ interface QuestAuthoringRepository {
         Result.failure(UnsupportedOperationException("Arena submission queue is not implemented"))
 
     /**
+     * Ручное закрытие приватной ссылки (AD-29/UX-16) — намерение в общую очередь.
+     *
+     * Re-enable решением не назначен: закрытие окончательно, и повтор того же намерения сервер
+     * отвечает тем же результатом.
+     */
+    suspend fun queueClosePrivateQuizLink(
+        ownerUid: String,
+        catalogId: String,
+        questId: String,
+    ): Result<Unit> = Result.failure(UnsupportedOperationException("Private quiz link close is not implemented"))
+
+    /**
      * Расходится ли черновик с сервером прямо сейчас (AD-24).
      *
      * Ответ собирается по очереди, а не по локальному статусу черновика: число, поверх которого

@@ -192,8 +192,16 @@ function createFirestoreStub(seed, options) {
   function collectionRef(path, filters = [], ordering = [], after = null, maximum = Infinity) {
     if (isDocumentPath(path)) throw new Error(`not a collection path: ${path}`);
     const described = path + (filters.length ? `?${filters.map(([field, value, op]) => `${field}${op || "=="}${Array.isArray(value) ? `[${value.join("|")}]` : value}`).join("&")}` : "");
-    const valueOf = (child, field) => field === "__name__" ?
-      child.slice(child.lastIndexOf("/") + 1) : store.documents.get(child)[field];
+    const valueOf = (child, field) => {
+      if (field === "__name__") return child.slice(child.lastIndexOf("/") + 1);
+      const doc = store.documents.get(child);
+      // Один уровень вложенности (`details.lessonId`) — ровно столько, сколько запросы проекта
+      // делают по карте details; глубже заглушка не умеет и честно не притворяется.
+      if (field.includes(".")) {
+        return field.split(".").reduce((value, part) => (value && typeof value === "object" ? value[part] : undefined), doc);
+      }
+      return doc[field];
+    };
     const compared = (left, right) => left < right ? -1 : left > right ? 1 : 0;
     const ref = {
       path,

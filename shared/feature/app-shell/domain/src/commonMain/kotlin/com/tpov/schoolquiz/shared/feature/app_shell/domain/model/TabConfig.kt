@@ -40,6 +40,9 @@ sealed interface LocalConfig : TabConfig {
     /** Polls surface (UX-O7, история 8.2): series list, voting, authoring. */
     data object PollsRoot : LocalConfig
 
+    /** «История операций» (AD-30/UX-20, история 8.6). */
+    data object OperationHistoryRoot : LocalConfig
+
     data object SettingsRoot : LocalConfig
 
     /** Always exists as type; rendered as UnderConstructionScreen("Недоступно") in release. */

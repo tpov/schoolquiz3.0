@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di
 
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ClosePrivateQuizLinkUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetArenaReadinessUseCase
@@ -23,6 +24,7 @@ import org.koin.dsl.module
 
 val questAuthoringDomainModule =
     module {
+        factory { ClosePrivateQuizLinkUseCase(get()) }
         factory { CreateQuestDraftUseCase(get(), get(), get()) }
         factory { GetActiveQuestDraftUseCase(get()) }
         factory { GetArenaReadinessUseCase(get()) }

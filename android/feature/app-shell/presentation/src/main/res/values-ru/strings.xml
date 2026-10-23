@@ -81,4 +81,17 @@
     <string name="tournament_attempts_count">Попыток: %1$d</string>
     <string name="drawer_sync_last_success">Последняя синхронизация: %1$s</string>
     <string name="drawer_sync_never">Ещё ни разу не синхронизировались</string>
+    <string name="section_operation_history">История операций</string>
+    <string name="history_title">История операций</string>
+    <string name="history_filter_all">Все</string>
+    <string name="history_filter_income">Начисления</string>
+    <string name="history_filter_expense">Расходы</string>
+    <string name="history_pending_title">В процессе</string>
+    <string name="history_pending_row">Удержано %1$d %2$s</string>
+    <string name="history_pending_hint">Не считается доходом, пока не разрешится.</string>
+    <string name="history_empty">Операций пока нет</string>
+    <string name="history_error">Историю не удалось загрузить</string>
+    <string name="history_retry">Повторить</string>
+    <string name="history_load_more">Загрузить ещё</string>
+    <string name="history_day">%1$d.%2$d.%3$d</string>
 </resources>

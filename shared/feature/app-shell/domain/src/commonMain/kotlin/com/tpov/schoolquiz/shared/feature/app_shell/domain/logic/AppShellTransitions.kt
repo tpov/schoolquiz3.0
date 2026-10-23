@@ -36,6 +36,7 @@ fun rootLocalStackForSection(section: DrawerSection.LocalSection): NavStack<Loca
         DrawerSection.LocalSection.Curation -> NavStack(LocalConfig.CuratorRoot)
         DrawerSection.LocalSection.Inbox -> NavStack(LocalConfig.InboxRoot)
         DrawerSection.LocalSection.Polls -> NavStack(LocalConfig.PollsRoot)
+        DrawerSection.LocalSection.OperationHistory -> NavStack(LocalConfig.OperationHistoryRoot)
         DrawerSection.LocalSection.Settings -> NavStack(LocalConfig.SettingsRoot)
     }
 

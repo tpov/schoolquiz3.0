@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalog
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.LoadStoreShelfUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyReceiptsUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveOwnHistoryUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SettlePurchaseUseCase
@@ -15,6 +16,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SyncBoxStreakU
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * Экономика, доменный слой.
@@ -41,6 +43,7 @@ fun economyDomainModule(
     module {
         factory { ObserveEconomyBalanceUseCase(get()) }
         factory { ObserveEconomyReceiptsUseCase(get()) }
+        factory { ObserveOwnHistoryUseCase(repository = get(), currentUid = { currentUidFlow().firstOrNull() }) }
         factory { GetShopCatalogUseCase(constants = get<EconomyConstantsRepository>()::current) }
         factory { LoadStoreShelfUseCase(get()) }
         factory { PurchaseShopItemUseCase(get()) }

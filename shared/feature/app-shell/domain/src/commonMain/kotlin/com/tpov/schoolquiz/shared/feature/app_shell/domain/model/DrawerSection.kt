@@ -73,6 +73,12 @@ sealed interface DrawerSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
+        // emptyMap — «История операций» (AD-30/UX-20, история 8.6): настоящая граница —
+        // серверная, строки чужой книги не читаются ни при каком теле; не-владелец видит пусто.
+        data object OperationHistory : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
         // emptyMap (always visible)
         data object Settings : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()

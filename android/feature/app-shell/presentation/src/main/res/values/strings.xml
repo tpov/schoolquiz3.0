@@ -82,4 +82,17 @@
     <string name="tournament_attempts_count">Attempts: %1$d</string>
     <string name="drawer_sync_last_success">Last sync: %1$s</string>
     <string name="drawer_sync_never">Not synced yet</string>
+    <string name="section_operation_history">Operation history</string>
+    <string name="history_title">Operation history</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_income">Income</string>
+    <string name="history_filter_expense">Expense</string>
+    <string name="history_pending_title">In progress</string>
+    <string name="history_pending_row">%1$d %2$s held</string>
+    <string name="history_pending_hint">Not counted as income until resolved.</string>
+    <string name="history_empty">No operations yet</string>
+    <string name="history_error">History could not be loaded</string>
+    <string name="history_retry">Retry</string>
+    <string name="history_load_more">Load more</string>
+    <string name="history_day">%1$d.%2$d.%3$d</string>
 </resources>

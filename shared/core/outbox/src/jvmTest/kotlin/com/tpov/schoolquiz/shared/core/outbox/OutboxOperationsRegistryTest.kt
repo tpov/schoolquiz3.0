@@ -60,6 +60,8 @@ class OutboxOperationsRegistryTest {
             OutboxOperations.CANCEL_NICKNAME_LISTING,
             OutboxOperations.CANCEL_LOGO_LISTING,
             OutboxOperations.TOURNAMENT_SESSION_OP,
+            OutboxOperations.CLOSE_PRIVATE_QUIZ_LINK,
+            OutboxOperations.SUBMIT_PRIVATE_QUIZ_ATTEMPT,
         )
 
     @Test
@@ -130,6 +132,31 @@ class OutboxOperationsRegistryTest {
             emptySet(),
             unattached,
             "приёмник сверяет согласие, которого клиент не прикладывает: $unattached",
+        )
+    }
+
+    @Test
+    fun `given the private quiz operations then none of them asks for payable terms consent`() {
+        // AD-29/8.5: приватный квиз бесплатен целиком — вход, подача попытки, закрытие ссылки.
+        // Согласие с платными условиями у приватных операций появилось бы ровно в одном случае:
+        // если кто-то начал брать за приватное деньги — и это должно упасть здесь, по имени.
+        val privateOperations =
+            setOf(
+                OutboxOperations.CLOSE_PRIVATE_QUIZ_LINK,
+                OutboxOperations.SUBMIT_PRIVATE_QUIZ_ATTEMPT,
+            )
+        val askingForConsent = privateOperations intersect OutboxOperations.termsConsentOperations
+        assertEquals(
+            emptySet(),
+            askingForConsent,
+            "приватная операция попала в реестр согласий с платными условиями: $askingForConsent",
+        )
+        // И двусторонне: сервер не сверяет с приватными — клиент не прикладывает.
+        val serverAsking = privateOperations intersect serverTermsOperations
+        assertEquals(
+            emptySet(),
+            serverAsking,
+            "приёмник требует согласия за приватную операцию: $serverAsking",
         )
     }
 }

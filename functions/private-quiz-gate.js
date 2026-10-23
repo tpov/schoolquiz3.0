@@ -98,12 +98,22 @@ function startPrivateQuizAttempt({db, uid, data, now}) {
       fail("ATTEMPT_LIMIT_REACHED", "All attempts of this private quiz are used");
     }
 
+    const questData = questSnap.data() || {};
     const startRecord = {
       startId,
       participantUid: uid,
       startedAtMs: now,
       attemptLimit: settings.attemptLimit,
       showResult: settings.showResult,
+      // Замороженная идентичность квеста (AD-6): попытка бежит по тому содержимому, под
+      // которое открыта дверь, и по срокам, посчитанным от исходного старта. Текущая
+      // showResult при этом НЕ замораживается (AD-29) — поле в записи историческое, право
+      // чтения результата решает настройка документа на момент чтения.
+      quizSubmissionId: typeof questData.submissionId === "string" ? questData.submissionId : null,
+      quizVersion: Number.isSafeInteger(questData.version) ? questData.version : null,
+      // Какая по счёту попытка из лимита: повышение лимита допускает разницу, понижение
+      // не обрывает начатое (AD-29) — счётчик в документе после этой транзакции равен ей.
+      participantAttemptIndex: settings.startedCount + 1,
     };
     transaction.create(startRef, startRecord);
     transaction.set(

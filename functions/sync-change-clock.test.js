@@ -150,7 +150,7 @@ function testThePrivateJournalGetsTheServerClockOfItsOwnBatch() {
   // Именно тот вызов, который был неправ: приватное дерево автора и его журнал.
   const body = bodyOf("writePrivateHierarchyToBatch");
   assert.ok(
-    /function writePrivateHierarchyToBatch\(batch, request, now\)/.test(CODE),
+    /function writePrivateHierarchyToBatch\(batch, request, now\b/.test(CODE),
     "серверное время обязано приходить аргументом: внутри его взять неоткуда, а брать из заявки нельзя",
   );
   assert.ok(
@@ -164,8 +164,9 @@ function testThePrivateJournalGetsTheServerClockOfItsOwnBatch() {
     "серверное время обработчика заявки считается им самим",
   );
   // Принятие заявки — транзакция платы (4.7): писатель тот же, имя переменной сменилось.
+  // История 8.3: четвёртый аргумент — прежние настройки приватной ссылки; часы едут третьим.
   assert.ok(
-    /writePrivateHierarchyToBatch\((batch|transaction), request, now\)/.test(caller),
+    /writePrivateHierarchyToBatch\((batch|transaction), request, now[^)]*\)/.test(caller),
     "посчитанное серверное время обязано доехать до приватного дерева, а не остаться в соседней строке",
   );
 }
@@ -173,7 +174,7 @@ function testThePrivateJournalGetsTheServerClockOfItsOwnBatch() {
 function testThePrivateDocumentsCarryTheSameClockAsTheirJournalEntry() {
   const body = bodyOf("privateDocuments");
   assert.ok(
-    /function privateDocuments\(request, now\)/.test(CODE),
+    /function privateDocuments\(request, now\b/.test(CODE),
     "приватные документы датируются тем же серверным временем, что и запись журнала о них",
   );
   const stamps = body.match(/changedAtMs:\s*([^,\n]+)/g) || [];

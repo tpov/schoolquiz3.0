@@ -18,6 +18,8 @@ import com.tpov.schoolquiz.android.feature.internet.profile.presentation.compone
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PlaceholderPollsComponent
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.OwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
@@ -165,6 +167,7 @@ class DefaultRootComponent(
     authorLifecycleFactory: (ComponentContext) -> AuthorLifecycleComponent = { PlaceholderAuthorLifecycleComponent() },
     inboxFactory: (ComponentContext) -> InboxComponent = { PlaceholderInboxComponent() },
     pollsFactory: (ComponentContext) -> PollsComponent = { PlaceholderPollsComponent() },
+    ownHistoryFactory: (ComponentContext) -> OwnHistoryComponent = { PlaceholderOwnHistoryComponent() },
     profileFactory: (ComponentContext) -> ProfileComponent = { PlaceholderProfileComponent() },
     shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
@@ -331,6 +334,10 @@ class DefaultRootComponent(
     val pollsComponent: PollsComponent =
         pollsFactory(
             childContext("PollsContent"),
+        )
+    val ownHistoryComponent: OwnHistoryComponent =
+        ownHistoryFactory(
+            childContext("OwnHistoryContent"),
         )
     val profileComponent: ProfileComponent =
         profileFactory(

@@ -151,7 +151,16 @@ const {buildScoringPool} = require("./scoring-pool");
 const {FAULT, scoreAttempt} = require("./attempt-scoring");
 const {STATUS: ATTEMPT_STATUS, attemptFingerprint, attemptReceipt, replayFault} = require("./attempt-receipt");
 const {lessonAllocatedSeconds, lessonPoolSize, attemptReward} = require("./lesson-reward");
-const {startPrivateQuizAttempt} = require("./private-quiz-gate");
+const {normalizeSettings, startPrivateQuizAttempt} = require("./private-quiz-gate");
+const {
+  ATTEMPT_STATUS: PRIVATE_RUN_STATUS,
+  attemptDeadlineMs,
+  finishAttempt,
+  projectAuthorStatistics,
+  projectOwnResult,
+  readSubmission,
+} = require("./private-quiz-run");
+const {redact} = require("./question-redaction");
 // Онлайн-переход next-question по ONLINE-O2 (история 2.6): чистые вердикты окна; Firestore и часы
 // подводят обёртки ниже.
 const {
@@ -477,6 +486,13 @@ exports.listLessonLifecycleHistory = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request
   callArenaLifecycleView("listHistory", request));
 exports.listMyArenaRoyalty = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
   callArenaLifecycleView("listMyRoyalty", request));
+// Собственная история операций и «Начисления» авторского урока (AD-30/UX-20, история 8.6):
+// та же авторизованная view-семья TZ06B, тот же шифрованный курсор. Чтение не создаёт
+// финансовых эффектов и не пишет в книгу (контракт ux-o10-own-ledger-projection-contract.md).
+exports.listMyOperationHistory = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("listMyHistory", request));
+exports.listMyLessonEarnings = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
+  callArenaLifecycleView("listMyLessonEarnings", request));
 exports.listMyQuestReviewSubmissions = onCall(LIFECYCLE_CALLABLE_OPTIONS, (request) =>
   callArenaLifecycleView("listMyQuestReviewSubmissions", request));
 async function callArenaLifecycleView(method, request) {
@@ -544,8 +560,311 @@ exports.startPrivateQuizAttempt = onCall(CALLABLE_OPTIONS, async (request) => {
   try {
     return await startPrivateQuizAttempt({db, uid, data: request.data || {}, now: Date.now()});
   } catch (error) {
-    if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
+    if (codes[error.code]) {
+      // Машиночитаемый код двери едет в деталях: текст участнику, код — типизированному
+      // состоянию входа на клиенте (AD-21). Разбор человеческого текста не контракт.
+      throw new HttpsError(codes[error.code], error.message, {reason: error.code});
+    }
     throw error;
+  }
+});
+
+/*
+ * Приватный квиз после двери (AD-29/AD-31, история 8.4).
+ *
+ * Одна дверь (`startPrivateQuizAttempt` выше), один прогон (ONLINE-O2 на клиенте), один
+ * приём подачи (`private_quiz.SUBMIT_ATTEMPT` в реестре мутаций) и три чтения: замороженный
+ * набор, собственный результат — по ТЕКУЩЕЙ настройке showResult, авторская статистика —
+ * всегда. Никаких списаний и согласий: приватный проход бесплатен (8.5), и тайм-аут здесь —
+ * терминальный результат, а не отложенное продолжение.
+ */
+
+/** Адрес попытки в теле читаемого вызова — только named-поля, владелец из авторизации не виден. */
+function readRunAddress(body) {
+  const ownerUid = stringValue(body.ownerUid);
+  const catalogId = stringValue(body.catalogId);
+  const questId = stringValue(body.questId);
+  const startId = stringValue(body.startId);
+  if (!ownerUid || !catalogId || !questId || !startId) {
+    throw new HttpsError("invalid-argument", "ownerUid, catalogId, questId and startId are required");
+  }
+  return {ownerUid, catalogId, questId, startId};
+}
+
+/** Читает запись старта и проверяет, что читает её тот, кто стартовал. */
+async function readOwnStart(uid, address) {
+  const snapshot = await db.doc(startPath(address)).get();
+  if (!snapshot.exists) throw new HttpsError("not-found", "Attempt start does not exist");
+  const record = snapshot.data() || {};
+  if (record.participantUid !== uid) {
+    // Чужая попытка не отличима от несуществующей: подменённый в теле адресат чужой uid
+    // не открывает (AD-20: серверная авторизация, а не прятанье в UI).
+    throw new HttpsError("not-found", "Attempt start does not exist");
+  }
+  return record;
+}
+
+function startPath({ownerUid, catalogId, questId, startId}) {
+  return privateQuestPath(ownerUid, catalogId, questId) + "/starts/" + startId;
+}
+
+/** Совпадает ли живой квест с тем, под которым открыт старт (замороженная идентичность, AD-6). */
+function quizIdentityMatches(record, questData) {
+  const version = Number.isSafeInteger(questData.version) ? questData.version : null;
+  const submissionId = typeof questData.submissionId === "string" ? questData.submissionId : null;
+  return record.quizVersion === version && record.quizSubmissionId === submissionId;
+}
+
+/** Порядок порции — (order, id), как его собирает клиентский прогон. */
+function frozenOrder(left, right) {
+  return numberValue(left.order, 0) - numberValue(right.order, 0) ||
+    String(left.id).localeCompare(String(right.id));
+}
+
+/**
+ * Вопрос замороженного набора в форме для прогона: ТОЛЬКО публичная половина payload'а.
+ *
+ * Вопросы приватного дерева несут свои ключи — участнику они не едут ни при каком флаге
+ * (AD-29: ни UI hiding, ни «участник свой» не заменяют серверную фильтрацию). Ключ вынимает
+ * редактор `question-redaction.js` — тот же, что красактирует публичные уроки.
+ */
+function redactPrivateRunQuestion(question) {
+  const verdict = redact(
+    typeof question.payload === "string" ? question.payload : JSON.stringify(question.payload === undefined ? null : question.payload),
+    "HARD",
+  );
+  if (verdict.status === "redacted") {
+    return {id: question.id, order: numberValue(question.order, 0), difficulty: "HARD", payload: verdict.publicPayload};
+  }
+  if (verdict.status === "already-redacted" || verdict.status === "not-applicable") {
+    return {id: question.id, order: numberValue(question.order, 0), difficulty: "HARD", payload: question.payload};
+  }
+  // Нечитаемый вопрос замороженного набора — наша дыра: молча отдать его с ключом хуже
+  // громкого отказа прогона.
+  throw new HttpsError("internal", "RUN_QUESTION_UNREADABLE: a frozen question could not be redacted");
+}
+
+/** Вопросы замороженного набора, обычным чтением — для выдачи прогона. */
+async function collectFrozenQuestions(ownerUid, catalogId, questId) {
+  const frozen = [];
+  const sections = await db.collection(privateQuestPath(ownerUid, catalogId, questId) + "/sections").get();
+  for (const section of sections.docs || []) {
+    const themes = await section.ref.collection("themes").get();
+    for (const theme of themes.docs || []) {
+      const lessons = await theme.ref.collection("lessons").get();
+      for (const lesson of lessons.docs || []) {
+        const questionSnaps = await lesson.ref.collection("questions").get();
+        for (const question of questionSnaps.docs || []) {
+          frozen.push({id: question.id, ...question.data()});
+        }
+      }
+    }
+  }
+  return frozen.sort(frozenOrder);
+}
+
+/** То же внутри транзакции — для решений, которые пишут (ленивый терминал, приём подачи). */
+async function collectFrozenQuestionsInTransaction(transaction, ownerUid, catalogId, questId) {
+  const frozen = [];
+  const sections = await transaction.get(
+    db.collection(privateQuestPath(ownerUid, catalogId, questId) + "/sections"),
+  );
+  for (const section of sections.docs || []) {
+    const themes = await transaction.get(section.ref.collection("themes"));
+    for (const theme of themes.docs || []) {
+      const lessons = await transaction.get(theme.ref.collection("lessons"));
+      for (const lesson of lessons.docs || []) {
+        const questionSnaps = await transaction.get(lesson.ref.collection("questions"));
+        for (const question of questionSnaps.docs || []) {
+          frozen.push({id: question.id, ...question.data()});
+        }
+      }
+    }
+  }
+  return frozen.sort(frozenOrder);
+}
+
+/**
+ * Граница читаемых вызовов прогона: наружу едет одно фиксированное сообщение и машиночитаемый
+ * reason в деталях — тот же забор, что у всей семьи TZ06B (AD-20/AD-15: внутренние тексты и
+ * формы через границу вызываемых не путешествуют).
+ */
+function runBoundaryFailure(error) {
+  if (error instanceof HttpsError) {
+    const reason =
+      (error.details && typeof error.details === "object" && error.details.reason) ||
+      String(error.code || "unavailable").toUpperCase().replaceAll("-", "_");
+    throw new HttpsError(error.code, PRIVATE_RUN_BOUNDARY_MESSAGE, {reason});
+  }
+  runFailure(error);
+}
+
+const PRIVATE_RUN_BOUNDARY_MESSAGE = "Private quiz run could not be loaded";
+
+function runFailure(error) {
+  const codes = {
+    INVALID_ARGUMENT: "invalid-argument",
+    NOT_FOUND: "not-found",
+    RUN_EMPTY: "failed-precondition",
+    RUN_UNSCORABLE: "internal",
+    RUN_QUESTION_UNREADABLE: "internal",
+  };
+  if (codes[error.code]) throw new HttpsError(codes[error.code], error.message);
+  throw error;
+}
+
+/**
+ * Замороженный набор прогона — за дверью: старт существует, принадлежит читателю и не
+ * завершён; содержимое совпадает с тем, под которым дверь открывалась (AD-6). showResult
+ * сознательно не едет: видимость результата решается на чтении результата текущим значением
+ * (AD-29), а не копией со старта.
+ */
+exports.fetchPrivateQuizRun = onCall(CALLABLE_OPTIONS, async (request) => {
+  try {
+    const uid = requireAuthUid(request);
+    await requireProfile(uid);
+    const address = readRunAddress(request.data || {});
+    const record = await readOwnStart(uid, address);
+    if (record.attempt && record.attempt.status === PRIVATE_RUN_STATUS.TERMINAL) {
+      throw new HttpsError("failed-precondition", "PRIVATE_ATTEMPT_TERMINAL: this attempt is already finished", {reason: "PRIVATE_ATTEMPT_TERMINAL"});
+    }
+    const questRef = db.doc(privateQuestPath(address.ownerUid, address.catalogId, address.questId));
+    const questSnap = await questRef.get();
+    if (!questSnap.exists) throw new HttpsError("not-found", "Private quiz does not exist");
+    const questData = questSnap.data() || {};
+    if (!quizIdentityMatches(record, questData)) {
+      // Квест уехал с момента старта: попытка обязана бежать по замороженному набору (AD-6),
+      // а другого у неё нет. Отказ именованный — участник стартует заново, если дверь пустит.
+      throw new HttpsError("failed-precondition", "RUN_CONTENT_CHANGED: the quiz changed after this attempt started", {reason: "RUN_CONTENT_CHANGED"});
+    }
+    const questions = await collectFrozenQuestions(address.ownerUid, address.catalogId, address.questId);
+    return {
+      startId: address.startId,
+      startedAtMs: record.startedAtMs,
+      deadlineMs: attemptDeadlineMs({startedAtMs: record.startedAtMs, questions}),
+      questions: questions.map(redactPrivateRunQuestion),
+    };
+  } catch (error) {
+    runBoundaryFailure(error);
+  }
+});
+
+/** Собственный результат попытки — по ТЕКУЩЕЙ настройке showResult, при каждом чтении (AD-29). */
+exports.readPrivateQuizResult = onCall(CALLABLE_OPTIONS, async (request) => {
+  try {
+    const uid = requireAuthUid(request);
+    await requireProfile(uid);
+    const address = readRunAddress(request.data || {});
+    // Чтение тоже может закрывать попытку: окно восстановления кончилось, подачи не было —
+    // ленивый терминал с причиной timeout (exam-terminal CLOSE_REASON.TIMEOUT прецедент).
+    return await db.runTransaction(async (transaction) => {
+      const startRef = db.doc(startPath(address));
+      const startSnap = await transaction.get(startRef);
+      if (!startSnap.exists) throw new HttpsError("not-found", "Attempt start does not exist");
+      const record = startSnap.data() || {};
+      if (record.participantUid !== uid) {
+        throw new HttpsError("not-found", "Attempt start does not exist");
+      }
+      const questSnap = await transaction.get(db.doc(privateQuestPath(address.ownerUid, address.catalogId, address.questId)));
+      if (!questSnap.exists) throw new HttpsError("not-found", "Private quiz does not exist");
+      const questData = questSnap.data() || {};
+      const settings = normalizeSettings(questData.privateQuizSettings);
+      if (record.attempt && record.attempt.status === PRIVATE_RUN_STATUS.TERMINAL) {
+        // Текущая настройка применяется заново при каждом чтении и повторе (AD-29).
+        return projectOwnResult({attempt: record.attempt, showResult: settings.showResult});
+      }
+      if (!quizIdentityMatches(record, questData)) {
+        throw new HttpsError("failed-precondition", "RUN_CONTENT_CHANGED: the quiz changed after this attempt started", {reason: "RUN_CONTENT_CHANGED"});
+      }
+      const frozen = await collectFrozenQuestionsInTransaction(
+        transaction,
+        address.ownerUid,
+        address.catalogId,
+        address.questId,
+      );
+      const deadlineMs = attemptDeadlineMs({startedAtMs: record.startedAtMs, questions: frozen});
+      if (Date.now() > deadlineMs) {
+        // Пустая подача: всё, что сервер принял вовремя, — ничего. Весь квиз без ответа.
+        const attempt = finishAttempt({
+          settings,
+          questions: frozen,
+          submission: {...address, served: [], answers: []},
+          now: Date.now(),
+          deadlineMs,
+        });
+        transaction.set(startRef, {attempt}, {merge: true});
+        return projectOwnResult({attempt, showResult: settings.showResult});
+      }
+      return projectOwnResult({attempt: null, showResult: settings.showResult});
+    });
+  } catch (error) {
+    runBoundaryFailure(error);
+  }
+});
+
+/** Приём подачи попытки: повтор ключа отвечает сохранённым терминалом, лимит не тратится дважды. */
+async function applyPrivateQuizAttemptSubmission(uid, payload) {
+  const submission = readSubmission(payload);
+  const now = Date.now();
+  return db.runTransaction(async (transaction) => {
+    const startRef = db.doc(startPath(submission));
+    const startSnap = await transaction.get(startRef);
+    if (!startSnap.exists) throw new HttpsError("not-found", "Attempt start does not exist");
+    const record = startSnap.data() || {};
+    if (record.participantUid !== uid) {
+      throw new HttpsError("not-found", "Attempt start does not exist");
+    }
+    // Повтор подачи того же старта — сохранённый терминал: результат не пересчитывается,
+    // ответы не дописываются (AD-6: повтор намерения — то же намерение).
+    if (record.attempt && record.attempt.status === PRIVATE_RUN_STATUS.TERMINAL) {
+      // Сохранённый терминал отдаётся той же формой, что свежий результат: повтор — то же.
+      return projectOwnResult({attempt: record.attempt, showResult: true});
+    }
+    const questSnap = await transaction.get(
+      db.doc(privateQuestPath(submission.ownerUid, submission.catalogId, submission.questId)),
+    );
+    if (!questSnap.exists) throw new HttpsError("not-found", "Private quiz does not exist");
+    const questData = questSnap.data() || {};
+    const settings = normalizeSettings(questData.privateQuizSettings);
+    // Закрытая или истёкшая ссылка рвёт только НОВЫЕ старты: начатая попытка право закончить
+    // по исходным срокам сохранила (AD-29) — enabled/expiry здесь намеренно не читаются.
+    const frozen = await collectFrozenQuestionsInTransaction(
+      transaction,
+      submission.ownerUid,
+      submission.catalogId,
+      submission.questId,
+    );
+    const deadlineMs = attemptDeadlineMs({startedAtMs: record.startedAtMs, questions: frozen});
+    const attempt = finishAttempt({settings, questions: frozen, submission, now, deadlineMs});
+    transaction.set(startRef, {attempt}, {merge: true});
+    // Результат подающего отдаётся по текущей настройке; повтор чтения применит её заново.
+    return projectOwnResult({attempt, showResult: settings.showResult});
+  });
+}
+
+/** Авторская статистика — отдельный authorized scope, читается при любом showResult (AD-29). */
+exports.readPrivateQuizStatistics = onCall(CALLABLE_OPTIONS, async (request) => {
+  try {
+    const uid = requireAuthUid(request);
+    await requireProfile(uid);
+    const body = request.data || {};
+    const catalogId = stringValue(body.catalogId);
+    const questId = stringValue(body.questId);
+    if (!catalogId || !questId) {
+      throw new HttpsError("invalid-argument", "catalogId and questId are required", {reason: "INVALID_ARGUMENT"});
+    }
+    const questSnap = await db.doc(privateQuestPath(uid, catalogId, questId)).get();
+    if (!questSnap.exists) {
+      throw new HttpsError("not-found", "Private quiz does not exist", {reason: "NOT_FOUND"});
+    }
+    const starts = await db.collection(privateQuestPath(uid, catalogId, questId) + "/starts").get();
+    const attempts = (starts.docs || []).map((doc) => (doc.data() || {}).attempt).filter(Boolean);
+    return {
+      settings: normalizeSettings(questSnap.data() && questSnap.data().privateQuizSettings),
+      ...projectAuthorStatistics({attempts}),
+    };
+  } catch (error) {
+    runBoundaryFailure(error);
   }
 });
 
@@ -1922,6 +2241,11 @@ const MUTATION_HANDLERS = {
   // Заявка черновика на арену. Раньше она писалась в Firestore напрямую и проверку ключа
   // обходила в принципе — теперь идёт тем же путём, что и всё остальное (AD-6).
   "quest_authoring.SUBMIT_ARENA": (uid, payload) => applyArenaSubmission(uid, payload),
+  // Ручное закрытие приватной ссылки (AD-29/UX-16, история 8.3). Откладывается по AD-3: эффект —
+  // одно поле документа, тело не ведёт денег и не читает платных таблиц; повтор по ключу возвращает
+  // тот же результат, а закрытие идемпотентно и по сути. Re-enable решением не назначен: ссылка
+  // закрывается навсегда, и перезаявка её не открывает — рантайм настроек перезаявкой не пишется.
+  "quest_authoring.CLOSE_PRIVATE_QUIZ_LINK": (uid, payload) => applyClosePrivateQuizLink(uid, payload),
   // Решение ревьюера по заданию. Начисление репутации в теле идёт вне транзакции, и защищает его
   // от повтора только ключ: вторая доставка получает сохранённый ответ и до обработчика не доходит.
   "quest_authoring.SUBMIT_REVIEW": (uid, payload, _now, mutationId) =>
@@ -1947,6 +2271,11 @@ const MUTATION_HANDLERS = {
   // детерминированным id: голос под новым ключом (переустановка, второе устройство) упирается
   // в ту же уникальность и не создаёт второй голос (§3).
   "polls.SUBMIT_VOTE": (uid, payload) => applyPollVote(uid, payload),
+  // Подача попытки приватного квиза (AD-29/AD-31, история 8.4). Единственная дверь — гейт
+  // старта: попытка бежит по замороженной им записи `starts/{startId}`, и ключ идемпотентности
+  // подачи — сам startId: повтор возвращает сохранённый терминал, лимит второй раз не тратится.
+  // Бесплатно и без согласия с платными условиями (8.5): ни одной строки в книге движений.
+  "private_quiz.SUBMIT_ATTEMPT": (uid, payload) => applyPrivateQuizAttemptSubmission(uid, payload),
   // Мутации сессии соревнования — ANSWER/ADVANCE/READY_ACK (история 5.9). Владелец берётся из
   // авторизации, а не из тела; uid + payload проходят в контроллер без изменений — форму тела
   // и владение сессией сторожит сам контроллер, идемпотентность по operationId уже серверная.
@@ -2016,6 +2345,19 @@ async function readPrivateQuestVersion(uid, catalogId, questId) {
   }
   const snapshot = await db.doc(privateQuestPath(uid, catalog, id)).get();
   return currentEntityVersion(snapshot);
+}
+
+/**
+ * Настройки приватной ссылки из документа квеста, нормированные гейтом; null — квеста нет.
+ *
+ * Нормирование здесь не украшение: документ мог написать и старый клиент, и отсутствующие или
+ * испорченные поля гейт уже обслуживает дефолтами AD-29 и громким отказом соответственно —
+ * писатель настроек обязан видеть ровно ту форму, которую потом читает дверь.
+ */
+async function readPrivateQuizSettings(ownerUid, catalogId, questId) {
+  const snapshot = await db.doc(privateQuestPath(ownerUid, stringValue(catalogId), stringValue(questId))).get();
+  if (!snapshot.exists) return null;
+  return normalizeSettings(snapshot.data() && snapshot.data().privateQuizSettings);
 }
 
 /**
@@ -2355,8 +2697,61 @@ async function applyArenaSubmission(uid, payload) {
     // фича по карантину (AD-28), вернув черновик автору в редактируемое состояние.
     throw new HttpsError("invalid-argument", "Submission carries no questions");
   }
+  // Срок приватной ссылки на сохранении может быть только в будущем или отсутствовать (AD-29).
+  // Истёкший к моменту сохранения — отказ до всякой записи: ссылка, рождающаяся уже закрытой,
+  // была бы дверью, которую нельзя открыть. Отказ окончательный — время назад не идёт.
+  if (request.draft.privateQuiz && request.draft.privateQuiz.linkExpiresAtMs !== null &&
+      request.draft.privateQuiz.linkExpiresAtMs <= Date.now()) {
+    throw new HttpsError("failed-precondition", "PRIVATE_QUIZ_EXPIRY_IN_PAST: link expiry must be in the future");
+  }
   await assertLessonTitlesUnchanged(request);
   return processArenaRequest(request);
+}
+
+/**
+ * Ручное закрытие приватной ссылки — решение автора (AD-29), единственное назначенное изменение
+ * рантайма настроек.
+ *
+ * Закрытие не рвёт начатую попытку (AD-29): отказывают только НОВЫЕ старты, и потому решение
+ * обязано быть упорядочено со стартом — транзакция. Тело — только адрес; владелец берётся из
+ * авторизации, как во всей приватной половине. Запись журнала (`writeSyncChanges`) приносит
+ * закрытие и на другие устройства автора: иначе выключенная на одном ссылка оставалась бы
+ * включённой на экране другого до первого снимка.
+ *
+ * Re-enable (как и автопродление/перевыпуск) решением не назначен (UX-16): закрытое остаётся
+ * закрытым, и повтор этой же мутации честно возвращает тот же результат.
+ */
+async function applyClosePrivateQuizLink(uid, payload) {
+  const data = payload || {};
+  const unknown = Object.keys(data).filter((key) => !["catalogId", "questId"].includes(key));
+  if (unknown.length > 0) {
+    throw new HttpsError("invalid-argument", `Unsupported close-link fields: ${unknown.sort().join(", ")}`);
+  }
+  const catalogId = stringValue(data.catalogId);
+  const questId = stringValue(data.questId);
+  if (!catalogId || !questId) {
+    throw new HttpsError("invalid-argument", "catalogId and questId are required");
+  }
+  const questRef = db.doc(privateQuestPath(uid, catalogId, questId));
+  // Часы журнала — серверные, как во всех четырёх журналах (AD-11): время берётся один раз
+  // здесь и тем же числом датирует запись, которую прочитает курсор автора.
+  const now = Date.now();
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(questRef);
+    if (!snapshot.exists) {
+      throw new HttpsError("not-found", "Private quiz does not exist");
+    }
+    // Форма настроек — гейтова: закрытие не выдумывает поля, которых дверь не читает.
+    const settings = normalizeSettings(snapshot.data() && snapshot.data().privateQuizSettings);
+    transaction.set(questRef, {privateQuizSettings: {...settings, enabled: false}}, {merge: true});
+    writeSyncChanges(
+      transaction,
+      db,
+      {kind: "private_quest", id: questId, catalogId, ownerUid: uid},
+      now,
+    );
+    return {closed: true};
+  });
 }
 
 /**
@@ -5275,12 +5670,24 @@ async function processArenaRequest(request) {
   await requireProfile(request.ownerUid);
 
   const now = Date.now();
+  // Рантайм приватной ссылки читается до транзакции: перезаявке нечего терять от гонки с
+  // изменением лимита — сверку версии (MUTATION_VERSION_SOURCES) это не заменяет и не дублирует,
+  // а сохранение startedCount/enabled (AD-29) требует именно предыдущего документа.
+  const previousPrivateQuizSettings = request.draft.privateQuiz ?
+    await readPrivateQuizSettings(request.ownerUid, request.draft.catalogId, request.draft.id) :
+    null;
   const adminTasks = toAdminLessonTasks(request, now);
   // Плата и принятие заявки — одна транзакция (CAP-4): подача без денег не принимается, принятая
   // подача без платы не существует. Записи прежнего батча здесь не теряют ни поля.
+  //
+  // Исключение — приватный квиз (AD-29/UX-16): он не входит в публичный цикл проверки
+  // (AD-26: приватный не проходит публичную доработку), плата проверки с него не берётся, и в
+  // книге движений от приватной подачи не появляется ни строки (8.5). Тарифы и циклы это не
+  // меняет: цикл платы приватной заявке просто не открывается.
+  const isPrivateSubmission = request.draft.privateQuiz !== null;
   return db.runTransaction(async (transaction) => {
-    const charge = await planReviewFeeCharge(transaction, request);
-    writePrivateHierarchyToBatch(transaction, request, now);
+    const charge = isPrivateSubmission ? null : await planReviewFeeCharge(transaction, request);
+    writePrivateHierarchyToBatch(transaction, request, now, previousPrivateQuizSettings);
     writeAdminReviewLessonTasksToBatch(transaction, adminTasks);
     transaction.set(
       db.collection("quest_review_requests").doc(request.submissionId),
@@ -5625,8 +6032,8 @@ function requestToDocument(request) {
  * (`updatedAtMs`, `createdAtMs`, `requestedAtMs` в теле заявки), где оно и означает «когда автор
  * это сделал». Стережёт `sync-change-clock.test.js`.
  */
-function writePrivateHierarchyToBatch(batch, request, now) {
-  for (const [path, data] of Object.entries(privateDocuments(request, now))) {
+function writePrivateHierarchyToBatch(batch, request, now, previousPrivateQuizSettings = null) {
+  for (const [path, data] of Object.entries(privateDocuments(request, now, previousPrivateQuizSettings))) {
     batch.set(db.doc(path), clean(data), {merge: true});
   }
   // Заявка трогает только приватную копию квеста: публичного узла у черновика ещё нет.
@@ -6378,8 +6785,15 @@ function requestWithPublishedQuestions(request, targetTasks) {
  * `changedAtMs`, и документ, датированный часами устройства, разошёлся бы со своей же записью в
  * журнале. Поля про содержание (`createdAtMs`, `updatedAtMs`) остаются авторскими — они говорят,
  * когда автор правил черновик, а не когда сервер это записал.
+ *
+ * `previousSettings` — настройки приватной ссылки из документа квеста ДО этой заявки (null, когда
+ * квест ещё не писалесь или настроек не носит). Правило AD-29: перезаявка обновляет три
+ * авторских поля (лимит, видимость результата, срок) и НЕ трогает рантайм — `enabled` и
+ * `startedCount` остаются серверными. Повышение лимита допускает новые старты в пределах
+ * разницы, понижение не обрывает начатую попытку; закрытая вручную ссылка перезаявкой не
+ * открывается заново — reopen решением не назначен (UX-16).
  */
-function privateDocuments(request, now) {
+function privateDocuments(request, now, previousSettings = null) {
   const documents = {};
   const ownerUid = request.ownerUid;
   const catalogId = request.draft.catalogId;
@@ -6394,6 +6808,10 @@ function privateDocuments(request, now) {
     updatedAtMs: request.draft.updatedAtMs,
     changedAtMs: now,
   };
+  const previous =
+    previousSettings && typeof previousSettings === "object" && !Array.isArray(previousSettings) ?
+      previousSettings :
+      null;
   documents[privateQuestPath(ownerUid, catalogId, questId)] = {
     id: questId,
     draftId: request.draftId,
@@ -6412,6 +6830,23 @@ function privateDocuments(request, now) {
     updatedAtMs: request.draft.updatedAtMs,
     changedAtMs: now,
     review: checksToCallableMap(request.review),
+    // Настройки пишет только заявка, чьё тело их несёт (draft.privateQuiz — разбор отрезал
+    // рантайм-поля). Перезаявка обычного (неприватного) квеста настроек не пишет вовсе, и
+    // merge не трогает то, что в документе уже лежит.
+    ...(request.draft.privateQuiz ?
+      {
+        privateQuizSettings: {
+          attemptLimit: request.draft.privateQuiz.attemptLimit,
+          showResult: request.draft.privateQuiz.showResult,
+          linkExpiresAtMs: request.draft.privateQuiz.linkExpiresAtMs,
+          // Рантайм переезжает из документа, а не из тела: новая ссылка рождается включённой
+          // с нулём стартов, существующая сохраняет и счётчик, и состояние (включая ручное
+          // закрытие) — перезаявкой оно не меняется (AD-29).
+          enabled: previous ? previous.enabled !== false : true,
+          startedCount: previous ? numberValue(previous.startedCount, 0) : 0,
+        },
+      } :
+      {}),
   };
 
   for (const section of request.sections) {
@@ -7450,6 +7885,10 @@ function normalizeRequest(data, fallbackSubmissionId) {
       publicQuestId: nullableString(data.draft && data.draft.publicQuestId),
       createdAtMs: numberValue(data.draft && data.draft.createdAtMs, 0),
       updatedAtMs: numberValue(data.draft && data.draft.updatedAtMs, 0),
+      // Настройки приватной ссылки (AD-29, история 8.3). Едут в теле заявки тем же конвейером
+      // SUBMIT_ARENA — параллельного механизма подачи нет. Пусто у всякого неприватного квеста:
+      // поле читает только писатель приватного документа (privateDocuments).
+      privateQuiz: normalizePrivateQuizSettings(data.draft && data.draft.privateQuiz),
     },
     sections: listMaps(data.sections).map((item) => ({
       id: stringValue(item.id),
@@ -7473,6 +7912,31 @@ function normalizeRequest(data, fallbackSubmissionId) {
     })),
     questions: listMaps(data.questions).map((item) => normalizeQuestion(item)),
     review: reviewToChecks(data.review || {}),
+  };
+}
+
+/**
+ * Настройки приватной ссылки из тела заявки — три авторских поля, нормированные гейтом.
+ *
+ * Гейт (`normalizeSettings`) — единственный владелец формы и дефолтов AD-29: лимит целый ≥1,
+ * срок — момент ДО которого старт разрешён, либо `null` («без срока»). Рантайм-поля
+ * (`enabled`, `startedCount`) из тела не читаются никогда: их место — документ квеста, и
+ * подставленное в тело значение не имеет силы закрыть или приоткрыть ссылку мимо сервера.
+ * Пусто — не ошибка: неприватный квест настроек не носит, а приватный без настроек (старое
+ * тело) гейт уже сегодня обслуживает дефолтами AD-29.
+ */
+function normalizePrivateQuizSettings(raw) {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw !== "object" || Array.isArray(raw)) {
+    throw new HttpsError("invalid-argument", "draft.privateQuiz must be an object");
+  }
+  // Рантайм-поля отрезаны разбором: normalizeSettings их нормирует, но писатель документа
+  // берёт отсюда только три авторских поля. startedCount здесь всегда 0 и никогда не пишется.
+  const settings = normalizeSettings(raw);
+  return {
+    attemptLimit: settings.attemptLimit,
+    showResult: settings.showResult,
+    linkExpiresAtMs: settings.linkExpiresAtMs,
   };
 }
 

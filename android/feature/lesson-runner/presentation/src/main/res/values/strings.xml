@@ -94,4 +94,6 @@
     <string name="runner_settlement_charges">Regular charge: −%1$d points · Plasma: −%2$d points</string>
     <string name="runner_settlement_skill_points">Skill points</string>
     <string name="runner_settlement_nolics">Nolics</string>
+    <string name="runner_private_completion_title">Quiz completed</string>
+    <string name="runner_private_completion_hint">The author has hidden results — this completion is confirmed without a score.</string>
 </resources>

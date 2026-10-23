@@ -37,7 +37,7 @@ import androidx.room.TypeConverters
         GiftBoxLocalStreakEntity::class,
     ],
     // Every version has an explicit non-destructive migration and a generated Room schema.
-    version = 17,
+    version = 18,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)

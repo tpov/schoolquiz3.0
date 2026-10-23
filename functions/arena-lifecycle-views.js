@@ -1,9 +1,12 @@
 "use strict";
 
 const {createCipheriv, createDecipheriv, randomBytes} = require("node:crypto");
-const {LEDGER_PATH, CURRENCY, REASON} = require("./currency-ledger");
+const {CURRENCIES, LEDGER_PATH, CURRENCY, REASON} = require("./currency-ledger");
 
 const VIEW_VERSION = "arena-lifecycle-views-v1";
+// Собственная история операций и «Начисления» урока (AD-30/UX-20, история 8.6) — та же семья
+// авторизованных view, тот же курсор; контракт полей — ux-o10-own-ledger-projection-contract.md.
+const OWN_HISTORY_VIEW_VERSION = "own-history-v1";
 const REVIEW_SUBMISSION_VIEW_VERSION = "quest-review-submissions-v1";
 const LIMITS = Object.freeze({defaultPageSize: 20, maxPageSize: 20, cursorBytes: 4096, responseBytes: 100_000});
 const SHELVES = new Set(["review", "arena", "tournament", "home", "retired", "rejected"]);
@@ -437,10 +440,119 @@ function createArenaLifecycleViews({db, loadLessonContext, isCurator, readCursor
     }));
   }
 
-  return Object.freeze({listOwned, listCurator, get, listHistory, listMyRoyalty, listMyQuestReviewSubmissions});
+  // ─── Собственная история операций и «Начисления» урока (AD-30/UX-20, история 8.6) ───────────
+
+  /**
+   * Строка книги в разрешённой форме: ровно поля контракта O10, и ничего сверх. details,
+   * sourceId и технические поля книги через проекцию не едут — только привязка к уроку.
+   */
+  function historyEntryRow(snapshot, uid) {
+    const id = documentId(snapshot);
+    const raw = snapshot.data();
+    unavailable(plain(raw) && raw.uid === uid && CURRENCIES.includes(raw.currency) &&
+      Number.isInteger(raw.delta) && unsigned(raw.atMs) &&
+      typeof raw.reason === "string" && identifier(raw.reason));
+    const details = plain(raw.details) ? raw.details : null;
+    return {id, entry: {id, atMs: raw.atMs, reason: raw.reason, currency: raw.currency,
+      delta: raw.delta, status: "CONFIRMED",
+      lessonId: details && identifier(details.lessonId) ? details.lessonId : null}};
+  }
+
+  /** Неразрешённый билет — pending: удержание, ещё не ставшее ни расходом, ни возвратом. */
+  function pendingTicketRows(snapshot) {
+    const id = documentId(snapshot);
+    const raw = snapshot.data();
+    unavailable(plain(raw) && identifier(raw.uid) && unsigned(raw.issuedAtMs) &&
+      unsigned(raw.priceNolics) && unsigned(raw.lifeCost));
+    const rows = [];
+    if (raw.priceNolics > 0) {
+      rows.push({ticketId: id, atMs: raw.issuedAtMs, currency: CURRENCY.NOLICS,
+        heldAmount: raw.priceNolics, status: "PENDING"});
+    }
+    if (raw.lifeCost > 0) {
+      rows.push({ticketId: id, atMs: raw.issuedAtMs, currency: CURRENCY.STANDARD_CHARGE_POINTS,
+        heldAmount: raw.lifeCost, status: "PENDING"});
+    }
+    return rows;
+  }
+
+  function pendingQuery(uid) {
+    return db.collection("arena_entry_tickets").where("uid", "==", uid).where("status", "==", "RESERVED");
+  }
+
+  /**
+   * Общая собственная история: строки книги текущего аккаунта, новые выше, ограниченная
+   * страница с продолжением. Порядок и курсор — §4 контракта; pending едет отдельным списком
+   * и никогда не внутри entries (§5).
+   */
+  async function listMyHistory(input) {
+    const {uid, payload} = readRequest(input, ["cursor", "pageSize"]);
+    const size = pageSize(payload);
+    const cursor = decodeCursor(payload.cursor, "own-history", uid, null, readCursorKey);
+    return protectedRead(() => db.runTransaction(async tx => {
+      let query = db.collection(LEDGER_PATH).where("uid", "==", uid)
+        .orderBy("atMs", "desc").orderBy("__name__", "desc");
+      if (cursor) query = query.startAfter(cursor.atMs, cursor.id);
+      const docs = documentRows(await tx.get(query.limit(size + 1)), size);
+      const rows = docs.slice(0, size).map(doc => historyEntryRow(doc, uid));
+      const pendingDocs = await tx.get(pendingQuery(uid));
+      const pending = (pendingDocs.docs || []).slice(0, LIMITS.maxPageSize).flatMap(pendingTicketRows);
+      let previous = cursor ? [cursor.atMs, cursor.id] : null;
+      for (const row of rows) {
+        if (previous) unavailable(row.entry.atMs < previous[0] ||
+          row.entry.atMs === previous[0] && row.id < previous[1]);
+        previous = [row.entry.atMs, row.id];
+      }
+      const tail = rows.at(-1);
+      return checkResponse({viewVersion: OWN_HISTORY_VIEW_VERSION,
+        entries: rows.map(row => row.entry), pending,
+        nextCursor: docs.length > size ?
+          encodeCursor("own-history", uid, null, tail.entry.atMs, tail.id, readCursorKey) : null});
+    }));
+  }
+
+  /**
+   * «Начисления» одного авторского урока: та же проекция, отбор по авторскому поводу и
+   * привязке к уроку из самой строки. Право читает сервер: размещение урока называет автора,
+   * и чужой uid получает не-отличимый от отсутствия отказ.
+   */
+  async function listMyLessonEarnings(input) {
+    const {uid, payload} = readRequest(input, ["lessonId", "cursor", "pageSize"]);
+    if (!identifier(payload.lessonId)) fail("INVALID_ARGUMENT");
+    const size = pageSize(payload);
+    const cursor = decodeCursor(payload.cursor, "lesson-earnings", uid, payload.lessonId, readCursorKey);
+    return protectedRead(() => db.runTransaction(async tx => {
+      const placement = snapshotData(await tx.get(db.doc("lesson_placements/" + payload.lessonId)));
+      if (!placement || placement.authorUid !== uid) fail("NOT_FOUND");
+      unavailable(identifier(placement.authorUid));
+      let query = db.collection(LEDGER_PATH).where("uid", "==", uid)
+        .where("reason", "==", REASON.ARENA_AUTHOR_ROYALTY)
+        .where("details.lessonId", "==", payload.lessonId)
+        .orderBy("atMs", "desc").orderBy("__name__", "desc");
+      if (cursor) query = query.startAfter(cursor.atMs, cursor.id);
+      const docs = documentRows(await tx.get(query.limit(size + 1)), size);
+      const rows = docs.slice(0, size).map(doc => historyEntryRow(doc, uid));
+      let previous = cursor ? [cursor.atMs, cursor.id] : null;
+      for (const row of rows) {
+        if (previous) unavailable(row.entry.atMs < previous[0] ||
+          row.entry.atMs === previous[0] && row.id < previous[1]);
+        previous = [row.entry.atMs, row.id];
+      }
+      const tail = rows.at(-1);
+      return checkResponse({viewVersion: OWN_HISTORY_VIEW_VERSION,
+        entries: rows.map(row => row.entry),
+        pending: [],
+        nextCursor: docs.length > size ?
+          encodeCursor("lesson-earnings", uid, payload.lessonId, tail.entry.atMs, tail.id, readCursorKey) : null});
+    }));
+  }
+
+  return Object.freeze({listOwned, listCurator, get, listHistory, listMyRoyalty, listMyQuestReviewSubmissions,
+    listMyHistory, listMyLessonEarnings});
 }
 
 module.exports = {
   ArenaLifecycleViewError, LIMITS, VIEW_VERSION, REVIEW_SUBMISSION_VIEW_VERSION,
+  OWN_HISTORY_VIEW_VERSION,
   MAX_AUTHOR_REJECTION_REASON_BYTES, createArenaLifecycleViews,
 };

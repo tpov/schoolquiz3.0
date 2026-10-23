@@ -295,7 +295,15 @@ private fun TypeRail(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        DraftQuestionType.entries.forEach { type ->
+        // Приватная категория (AD-29): SURVEY полке типов не показывается — приватный квиз
+        // оцениваемый, опросов в нём нет.
+        val shelf =
+            if (state.isPrivateQuiz) {
+                DraftQuestionType.entries.filterNot { it == DraftQuestionType.SURVEY }
+            } else {
+                DraftQuestionType.entries.toList()
+            }
+        shelf.forEach { type ->
             FilterChip(
                 selected = state.type == type,
                 onClick = { onQuestionTypeSelected(type) },

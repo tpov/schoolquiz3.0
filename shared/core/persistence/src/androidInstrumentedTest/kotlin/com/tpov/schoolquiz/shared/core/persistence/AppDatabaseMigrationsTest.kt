@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration13to14
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration15to16
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration16to17
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration17to18
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -797,6 +798,52 @@ class AppDatabaseMigrationsTest {
     }
 
     @Test
+    fun migrate_17_to_18_adds_nullable_private_quiz_columns_and_keeps_ordinary_drafts_blank() {
+        helper.createDatabase(DB_NAME, version = 17).use { db ->
+            db.execSQL(
+                "INSERT INTO quest_drafts(id, ownerUid, catalogId, title, description, defaultLanguage, " +
+                    "defaultDifficulty, status, localRevision, serverRevision, publicQuestId, createdAtMs, " +
+                    "updatedAtMs, isActive, rejectionReason) VALUES " +
+                    "('draft-17', 'owner-17', 'catalog-17', 'Draft 17', NULL, 'ru', 'HARD', " +
+                    "'SYNCED', 3, 2, NULL, 16, 17, 0, NULL)",
+            )
+            db.execSQL("INSERT INTO sync_state(collectionId, cursor, doc_id) VALUES ('migration-17-proof', 717, 'doc-17')")
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 18, true, Migration17to18).use { db ->
+            // Обычный черновик пережил миграцию нетронутым, приватных настроек у него нет:
+            // все три столбца пусты — «неприватный» выражается пустотой, а не нулями.
+            db.query(
+                "SELECT title, privateQuizAttemptLimit, privateQuizShowResult, privateQuizLinkExpiresAtMs " +
+                    "FROM quest_drafts WHERE id = 'draft-17'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Draft 17", c.getString(0))
+                assertTrue(c.isNull(1))
+                assertTrue(c.isNull(2))
+                assertTrue(c.isNull(3))
+            }
+            // Колонки пишутся, а не только существуют: настройки приватной ссылки ложатся по полям.
+            db.execSQL(
+                "INSERT INTO quest_drafts(id, ownerUid, catalogId, title, description, defaultLanguage, " +
+                    "defaultDifficulty, status, localRevision, serverRevision, publicQuestId, createdAtMs, " +
+                    "updatedAtMs, isActive, rejectionReason, privateQuizAttemptLimit, privateQuizShowResult, " +
+                    "privateQuizLinkExpiresAtMs) VALUES " +
+                    "('draft-17-private', 'owner-17', 'catalog-17', 'Private 17', NULL, 'ru', 'HARD', " +
+                    "'SAVED', 1, NULL, NULL, 17, 17, 1, NULL, 3, 1, 1790864000000)",
+            )
+            db.query(
+                "SELECT privateQuizAttemptLimit, privateQuizShowResult, privateQuizLinkExpiresAtMs " +
+                    "FROM quest_drafts WHERE id = 'draft-17-private'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(3, c.getInt(0))
+                assertEquals(1, c.getInt(1))
+                assertEquals(1790864000000L, c.getLong(2))
+            }
+        }
+    }
+
+    @Test
     fun migrate_all_the_way_from_1_validates_against_the_current_schema() {
         helper.createDatabase(DB_NAME, version = 1).close()
 
@@ -821,6 +868,7 @@ class AppDatabaseMigrationsTest {
             Migration14to15,
             Migration15to16,
             Migration16to17,
+            Migration17to18,
         ).close()
     }
 
@@ -828,7 +876,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 17
+        const val CURRENT_VERSION = 18
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES =

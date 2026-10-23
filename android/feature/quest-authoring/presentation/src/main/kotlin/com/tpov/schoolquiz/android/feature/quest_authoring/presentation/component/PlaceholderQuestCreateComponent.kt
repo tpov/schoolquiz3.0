@@ -53,6 +53,17 @@ class PlaceholderQuestCreateComponent(
 
     override fun onLessonTitleChanged(value: String) = Unit
 
+    // ─── Приватная категория (AD-29): заглушка ничего не делает, экран остаётся читаемым ────────
+    override fun onPrivateAttemptLimitChanged(value: Int) = Unit
+
+    override fun onPrivateShowResultChanged(value: Boolean) = Unit
+
+    override fun onPrivateLinkExpiryToggled(hasExpiry: Boolean) = Unit
+
+    override fun onPrivateLinkExpiryDaysChanged(days: Int) = Unit
+
+    override fun onClosePrivateQuizLinkClick() = Unit
+
     override fun onStructureCheckClick() = Unit
 
     override fun onCreateClick() = Unit

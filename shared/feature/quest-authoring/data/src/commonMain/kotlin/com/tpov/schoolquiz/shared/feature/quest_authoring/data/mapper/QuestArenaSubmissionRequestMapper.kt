@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftTreeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaPrivateQuizSettingsDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaSectionDto
@@ -41,6 +42,16 @@ object QuestArenaSubmissionRequestMapper {
                     publicQuestId = bundle.draft.publicQuestId?.value,
                     createdAtMs = bundle.draft.createdAtMs,
                     updatedAtMs = bundle.draft.updatedAtMs,
+                    // Едут СОХРАНЁННЫЕ настройки черновика: автор выбрал их в форме (или загрузил
+                    // квиз — и они приехали с сервера). Пересоздавать дефолты здесь нельзя.
+                    privateQuiz =
+                        bundle.draft.privateQuiz?.let {
+                            ArenaPrivateQuizSettingsDto(
+                                attemptLimit = it.attemptLimit,
+                                showResult = it.showResult,
+                                linkExpiresAtMs = it.linkExpiresAtMs,
+                            )
+                        },
                 ),
             sections =
                 targetSections.map {

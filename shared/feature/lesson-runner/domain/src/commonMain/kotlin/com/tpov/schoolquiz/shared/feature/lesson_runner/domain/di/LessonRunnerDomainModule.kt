@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.di
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.StartLessonAttemptUseCase
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.AttemptIdProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.StartPrivateQuizAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.SubmitLessonRatingUseCase
 import org.koin.dsl.module
 
@@ -25,6 +27,13 @@ val lessonRunnerDomainModule =
                 clock = get(),
                 randomSeedProvider = get(),
                 attemptIdProvider = get(),
+            )
+        }
+        factory {
+            StartPrivateQuizAttemptUseCase(
+                repository = get(),
+                authRepository = get(),
+                startIdProvider = { get<AttemptIdProvider>().next().value },
             )
         }
         factory {

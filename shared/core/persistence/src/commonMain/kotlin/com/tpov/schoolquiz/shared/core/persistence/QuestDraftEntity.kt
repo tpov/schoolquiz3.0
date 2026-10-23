@@ -42,4 +42,40 @@ data class QuestDraftEntity(
      * with the same draft ID.
      */
     val activeSubmissionId: String? = null,
+    /**
+     * Настройки приватной ссылки (AD-29) — три авторских поля, по столбцу на каждое.
+     *
+     * Все три `null` одновременно: квест неприватный, настроек у него нет. Загрузка
+     * существующего приватного квиза восстанавливает сохранённое, а не дефолты заново.
+     * Рантайм (`enabled`/`startedCount`) здесь не живёт: это серверные слова.
+     */
+    val privateQuizAttemptLimit: Int? = null,
+    val privateQuizShowResult: Boolean? = null,
+    val privateQuizLinkExpiresAtMs: Long? = null,
+) {
+    /** Настройки приватной ссылки целиком; `null` — квест неприватный. */
+    val privateQuiz: PrivateQuizSettingsColumns?
+        get() =
+            if (privateQuizAttemptLimit == null && privateQuizShowResult == null && privateQuizLinkExpiresAtMs == null) {
+                null
+            } else {
+                PrivateQuizSettingsColumns(
+                    attemptLimit = privateQuizAttemptLimit,
+                    showResult = privateQuizShowResult,
+                    linkExpiresAtMs = privateQuizLinkExpiresAtMs,
+                )
+            }
+}
+
+/**
+ * Срез настроек приватной ссылки над тремя nullable-колонками.
+ *
+ * Частично заполненная строка (один столбец задан, других нет) читается как есть: округлять её
+ * до дефолтов значило бы выдумывать факт. Домен отвергнет такой набор своим init'ом — громко,
+ * а не подстановкой.
+ */
+data class PrivateQuizSettingsColumns(
+    val attemptLimit: Int?,
+    val showResult: Boolean?,
+    val linkExpiresAtMs: Long?,
 )

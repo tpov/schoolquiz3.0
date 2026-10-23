@@ -8,7 +8,9 @@
 # Эпик after = epic-2 (durable delivery, projection fencing, ledger identity) — DONE.
 # Допущение прогона (из черновика, остаётся в силе): авторские «Начисления» (8.6) дополнительно
 # потребляют серверные views выплат TZ06B из эпика 4 — контракт в after истории 8.6;
-# вынесено в «Вопросы владельцу» отчёта ночи. TZ06B (4.2) — ready в эпике 4.
+# вынесено в «Вопросы владельцу» отчёта ночи. ПОПРАВКА 2026-10-22: пометка «TZ06B (4.2) —
+# ready (не выполнен)» устарела — 4.2 выполнен 2026-10-09 (сервер 3dca0ef1, клиент 1db295c4),
+# зависимость 8.6 от эпика 4 закрыта.
 
 [[story]]
 id = "8.1"
@@ -47,7 +49,7 @@ waits = [
   "hitl: device proof of the authoring screen",
 ]
 hitl = true
-status = "blocked" # 2026-10-18 ночь: device-пруф недостижим — категории «Приватные квизы» нет ни в одном каталоге demo-бэкенда (0/49 доков), дровер категорий её не показывает; авторинг-форма жива и управляется, следующий шаг — сид категории на сервере (или доставка) — evidence docs/agents/evidence/2026-10-18-samsung-social/private-quiz-authoring/; до этого — hitl; UX-O4 продуктовые решения закрыты; автопродление/перевыпуск ссылки не назначены; НОЧЬ 2026-10-20: блокер СНЯТ — категория засеяна на демо-бэкенде (catalogs/private-quizzes-v1-catalog, имя «Приватные квизы», REGULAR по AD-29 «технические IDs названием не меняются», сид идемпотентный с отказом при расхождении — evidence 2026-10-20-private-quiz-category-seed/); на Samsung дровер «Мої квести» и пикер формы «Створення квесту» показывают категорию после синка; форма пока НЕ адаптирована в плоский HARD-набор и не показывает поля attempt-limit/show-result — это и есть оставшийся device-пруф 8.3, теперь выполнимый
+status = "done" # 2026-10-22: код+тесты (Done bar tickets.toml scope rule); device-пруф — рецепт для владельца (evidence 2026-10-22-private-quiz-authoring/). Домен: PrivateQuizSettings (дефолты AD-29 в модели, validateForSave для срока); провод: ArenaDraftDto.privateQuiz + draft{}.privateQuiz в QuestArenaOutboxWriter (один конвейер SUBMIT_ARENA); сервер: privateDocuments пишет privateQuizSettings через normalizeSettings гейта, перезаявка сохраняет startedCount/enabled, срок в прошлом отказывает; ручное закрытие — новая мутация quest_authoring.CLOSE_PRIVATE_QUIZ_LINK (AD-3 outbox, реестр+сторож); приватная подача не платит проверки (cycle не открывается, 0 строк в книге); форма: приватная категория прячет Розділ/Тема/Урок, карточка настроек (лимит/показ результата/срок с пресетами, «без срока» дефолт), один HARD-вход вопросов, SURVEY исключён, hasValidStructureTitles ослаблен; round-trip: снимок восстанавливает сохранённые настройки (reader+mapper+Room v18 Migration17to18). Тесты: private-quiz-settings.test.js 8/8 (node, через настоящие обработчики), PrivateQuizSettingsTest, PrivateQuizSettingsWireTest, QuestCreateUiStatePrivateCategoryTest, Migration17to18 инструментальный. Осталось владельцу: device-пруф на Samsung (рецепт в evidence).
 
 [[story]]
 id = "8.4"
@@ -58,11 +60,11 @@ after = [{ story = "8.3", needs = "quiz authoring" }, { epic = 2, needs = "deliv
 waits = [
   "epic-2/ONLINE-O2 — DONE (2.5/2.6/2.9)",
   "epic-2: delivery/projection foundations — DONE",
-  "8.3: quiz authoring (hitl)",
+  "8.3: quiz authoring — DONE 2026-10-22 (код+тесты)",
   "hitl: device proof incl. two-device and timeout cases",
 ]
 hitl = true
-status = "blocked" # hitl + after 8.3 (hitl)
+status = "done" # 2026-10-22: код+тесты (Done bar scope rule); device-пруф (два устройства+тайм-аут) — рецепт владельцу (evidence 2026-10-22-private-quiz-run/). Гейт расширен в run-контракт: старт несёт замороженную идентичность (quizVersion/submissionId/participantAttemptIndex), отказы — машиночитаемые коды в details. Сервер: private-quiz-run.js (чистый модуль: attemptDeadlineMs от исходного старта = Σ HARD-времён + окна AD-31; finishAttempt — терминал FINISHED по присланной порции / TIMEOUT по всему замороженному набору, невыданные — «без ответа», скорер существующий scoreAttempt); private_quiz.SUBMIT_ATTEMPT в реестре мутаций (повтор по startId — сохранённый терминал); callables fetchPrivateQuizRun (только публичные половины через question-redaction, showResult сознательно не едет), readPrivateQuizResult (ТЕКУЩАЯ showResult при каждом чтении; ленивый тайм-аут), readPrivateQuizStatistics (автор, любой флаг). Клиент: lesson-runner domain PrivateQuizRun/PrivateQuizEntry/Refusal + StartPrivateQuizAttemptUseCase (повтор — тот же startId, AD-6), data parser+repo (коды двери → типизированные отказы), firebase transport + сторож имён; RunnerUiState.Result.privateCompletionOnly + ResultContent (подтверждение без чисел, никаких нулей). Тесты: private-quiz-run.test.js 8/8, PrivateQuizRunWireContractTest, PrivateQuizEntryContractTest, PrivateCompletionPresentationTest.
 
 [[story]]
 id = "8.5"
@@ -72,9 +74,9 @@ covers = ["CAP-25"]
 after = [{ story = "8.4", needs = "running quiz flow" }]
 waits = [
   "epic-2: ledger foundations to prove no charges were used — DONE",
-  "8.4: running quiz flow (hitl)",
+  "8.4: running quiz flow — DONE 2026-10-22 (код+тесты)",
 ]
-status = "blocked" # server/node + типовые тесты, устройство не обязательно, но after 8.4 (hitl); негативные тесты пишутся против реального flow из 8.4
+status = "done" # 2026-10-22: негативные тесты против реального flow. Поведенчески (private-quiz-negative.test.js, 5/5): полный цикл (подача/старт/прогон/чтение/закрытие) оставляет audit/currency_ledger/entries пустым, кошельки нетронуты; подача приватного квеста не открывает цикл платы проверки; chargeClaims в теле — несовпадение контракта; без capturedTerms подача проходит (консент не запрашивается). Статически: серверные модули приватного квиза и обработчики index.js не содержат платной лексики (забор по коду без комментариев, premium-neutrality стиль); ATTEMPT_REASON/ATTEMPT_STATUS — ровно два исхода, resumable-состояния не существует; OutboxOperationsRegistryTest — приватные операции (CLOSE_PRIVATE_QUIZ_LINK, private_quiz.SUBMIT_ATTEMPT) двусторонне вне termsConsentOperations.
 
 [[story]]
 id = "8.6"
@@ -84,9 +86,9 @@ covers = ["CAP-26"]
 after = [{ epic = 2, needs = "projection fencing and ledger identity foundations" }, { epic = 4, needs = "TZ06B author-payout views (contract between epics)" }]
 waits = [
   "epic-2: durable delivery, projection fencing and ledger identity — DONE",
-  "OQ-7/UX-O10/O12: own-ledger projection contract — bounded order/cursors and allowed fields fixed before the adapter (contract-map Remaining gates); контракт ещё не написан",
-  "epic-4: TZ06B author-payout views — 4.2 ready (не выполнен на момент инцепции)",
+  "OQ-7/UX-O10/O12: own-ledger projection contract — НАПИСАН 2026-10-22 (ux-o10-own-ledger-projection-contract.md, до адаптера — гейт закрыт)",
+  "epic-4: TZ06B author-payout views — 4.2 DONE 2026-10-09 (3dca0ef1 + 1db295c4)",
   "hitl: device proof incl. account A→B→A",
 ]
 hitl = true
-status = "blocked" # hitl + контракт UX-O10/O12 + TZ06B (4.2); device-половина не стартует без обоих контрактов
+status = "done" # 2026-10-22: контракт ПЕРВЫМ (ux-o10-own-ledger-projection-contract.md: поля §3, порядок/курсор §4, pending §5, ресурсы §6, «Начисления» §7, границы §8, лимиты §9 — формат ux-o7), затем адаптеры. Сервер: family TZ06B расширена listMyHistory + listMyLessonEarnings (uid-scoped, startAfter(atMs,id), шифрованный курсор со scope, permitted fields only, pending отдельным списком, чужое — пусто/NOT_FOUND); royalty-строке книги добавлен details.lessonId (аддитивно, id не меняет). Клиент: economy domain OperationHistoryRecord/PendingOperation/OwnHistoryPage + порт + ObserveOwnHistoryUseCase; data OwnHistoryWireParser + OwnHistoryRepositoryImpl (ограда аккаунта: смена сессии отсекает ответ); firebase транспорт + сторож имён; экран «История операций»: секция drawer OperationHistory → OperationHistoryRoot, экран с группами по датам, фильтры Все/Начисления/Расходы, раскрытие записи, loading/empty/error различимы, RU/UK/EN. Тесты: own-history-views.test.js 5/5 (поля/порядок/пагинация/чужое/чтение ничего не пишет), OwnHistoryRepositoryTest (pending не доход, ресурсы не суммируются, смена сессии), OwnHistoryCallableNamesTest. Осталось владельцу: device-пруф A→B→A (рецепт в evidence).

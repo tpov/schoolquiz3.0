@@ -196,4 +196,14 @@
     <string name="qa_review_report_hint">What is wrong with the whole lesson? Only its author will read this.</string>
     <string name="qa_review_report_blank">Describe the problem first</string>
     <string name="qa_review_report_done">Report queued for the lesson\'s author</string>
+    <string name="qa_private_link_settings">Private quiz link</string>
+    <string name="qa_private_attempt_limit">Attempt limit</string>
+    <string name="qa_private_show_result">Show result to participants</string>
+    <string name="qa_private_link_expiry">Limit the link with an end date</string>
+    <string name="qa_private_expiry_days">%1$d days</string>
+    <string name="qa_private_close_link">Close link</string>
+    <string name="qa_private_close_link_hint">The link closes for new starts permanently; attempts already begun finish as started.</string>
+    <string name="qa_private_link_closing">Link close queued — it will be sent when online</string>
+    <string name="qa_private_link_close_failed">The link could not be queued for closing</string>
+    <string name="qa_private_expiry_in_past">The link end date must be in the future</string>
 </resources>

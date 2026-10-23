@@ -201,7 +201,8 @@ class VisibilityTest {
         // AuthorLifecycle/Curation (TZ06C) are always visible like ReviewQueue: the real
         // permission gate is server-side, the screen shows the refusal. Inbox (4.9, AD-20) and
         // Polls (8.2, UX-O7) join the same rule — the list drifted red at 4.9 and is re-pinned
-        // here with the two server-gated sections.
+        // here with the two server-gated sections. OperationHistory (8.6, AD-30) joins it:
+        // чужая книга не читается, граница — серверная.
         assertEquals(
             listOf(
                 DrawerSection.LocalSection.HomeQuests,
@@ -211,6 +212,7 @@ class VisibilityTest {
                 DrawerSection.LocalSection.Curation,
                 DrawerSection.LocalSection.Inbox,
                 DrawerSection.LocalSection.Polls,
+                DrawerSection.LocalSection.OperationHistory,
                 DrawerSection.LocalSection.MyQuests,
                 DrawerSection.LocalSection.Settings,
             ),
@@ -377,12 +379,13 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules LOCAL has exactly nine always-visible sections`() {
+    fun `visibility rules LOCAL has exactly ten always-visible sections`() {
         // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction);
         // AuthorLifecycle/Curation join ReviewQueue with no client-side role gate (TZ06C);
-        // Inbox (4.9) and Polls (8.2) follow the same server-gated rule.
+        // Inbox (4.9) and Polls (8.2) follow the same server-gated rule;
+        // OperationHistory (8.6) — тот же принцип: настоящая граница серверная (AD-30).
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
-        assertEquals(9, sections.size)
+        assertEquals(10, sections.size)
         assertTrue(sections.contains(DrawerSection.LocalSection.HomeQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Archive))
         assertTrue(sections.contains(DrawerSection.LocalSection.ReviewQueue))
@@ -390,6 +393,7 @@ class VisibilityTest {
         assertTrue(sections.contains(DrawerSection.LocalSection.Curation))
         assertTrue(sections.contains(DrawerSection.LocalSection.Inbox))
         assertTrue(sections.contains(DrawerSection.LocalSection.Polls))
+        assertTrue(sections.contains(DrawerSection.LocalSection.OperationHistory))
         assertTrue(sections.contains(DrawerSection.LocalSection.MyQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Settings))
     }

@@ -14,6 +14,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.arena.RoomArenaJour
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketWireParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaEntryRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.PrivateQuizRunRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.PrivateQuizRunRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaFrozenRatingDependencies
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaFrozenRatingRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaRunRepositoryImpl
@@ -115,6 +117,8 @@ val arenaDataModule =
                 dispatcher = Dispatchers.IO,
             )
         }
+        // Приватный квиз (AD-29, история 8.4): дверь + замороженный прогон + свой результат.
+        single<PrivateQuizRunRepository> { PrivateQuizRunRepositoryImpl(remote = get()) }
     }
 
 @Suppress("MagicNumber") // Unsigned-byte mask and hexadecimal radix, not economy constants.

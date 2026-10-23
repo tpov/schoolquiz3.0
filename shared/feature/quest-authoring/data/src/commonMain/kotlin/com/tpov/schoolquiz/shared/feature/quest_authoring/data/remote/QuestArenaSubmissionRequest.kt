@@ -81,7 +81,32 @@ data class ArenaDraftDto(
     val publicQuestId: String?,
     val createdAtMs: Long,
     val updatedAtMs: Long,
+    /**
+     * Настройки приватной ссылки (AD-29) — три авторских поля. `null` у всякого неприватного
+     * квеста: поле на проводе отсутствует, и сервер настроек за него не пишет. Форма и дефолты
+     * — `PrivateQuizSettings` домена; здесь только провод.
+     */
+    val privateQuiz: ArenaPrivateQuizSettingsDto? = null,
 )
+
+/**
+ * Настройки приватной ссылки на проводе.
+ *
+ * Рантайм ссылки (`enabled`, `startedCount`) сюда не входит принципиально: их место — документ
+ * на сервере, и присланные с устройства значения не имеют силы закрыть или приоткрыть ссылку.
+ */
+data class ArenaPrivateQuizSettingsDto(
+    val attemptLimit: Int,
+    val showResult: Boolean,
+    val linkExpiresAtMs: Long?,
+) {
+    init {
+        require(attemptLimit >= 1) { "ArenaPrivateQuizSettingsDto.attemptLimit must be >= 1, got $attemptLimit" }
+        require(linkExpiresAtMs == null || linkExpiresAtMs >= 0) {
+            "ArenaPrivateQuizSettingsDto.linkExpiresAtMs must be null or >= 0, got $linkExpiresAtMs"
+        }
+    }
+}
 
 data class ArenaSectionDto(
     val id: String,

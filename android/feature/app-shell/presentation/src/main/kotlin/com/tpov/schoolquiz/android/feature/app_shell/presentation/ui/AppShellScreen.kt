@@ -60,6 +60,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsS
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.InternetScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.LocalScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.ShopScreenComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.OperationHistoryScreen
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.drawer.DrawerContent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.icon
@@ -514,6 +515,11 @@ private fun LocalTabContent(
                 is LocalConfig.PollsRoot ->
                     PollsScreen(
                         component = rootComponent.pollsComponent,
+                        modifier = Modifier.padding(paddingValues),
+                    )
+                is LocalConfig.OperationHistoryRoot ->
+                    OperationHistoryScreen(
+                        component = rootComponent.ownHistoryComponent,
                         modifier = Modifier.padding(paddingValues),
                     )
                 is LocalConfig.SettingsRoot -> {

@@ -13,6 +13,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.re
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.restoreFillBlankAuthorText
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.upsertFillBlankAnswerMarker
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.mapper.toAuthoringDisplayItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.MILLIS_PER_DAY
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DraftConflictUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DraftQuestionListItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankAnswerItem
@@ -53,9 +54,12 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQues
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARCHIVE_TARGET_SHELF
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARENA_TARGET_SHELF
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.PrivateQuizSettings
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmissionRejection
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ClosePrivateQuizLinkUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftConflictUseCase
@@ -93,6 +97,9 @@ private const val MAX_FILL_BLANK_CANDIDATES = 10
 private const val MIN_FILL_BLANK_CANDIDATES = 5
 private val STRUCTURE_SHELVES = listOf("home", "archive", "arena")
 
+/** Техническое имя узла иерархии, которого у приватного квиза автор не видит (плоский набор, AD-29). */
+private const val PRIVATE_FLAT_NODE_TITLE = "Вопросы"
+
 @Suppress("LargeClass", "LongParameterList", "TooManyFunctions")
 class DefaultQuestCreateComponent(
     componentContext: ComponentContext,
@@ -102,6 +109,8 @@ class DefaultQuestCreateComponent(
     private val getActiveQuestDraft: GetActiveQuestDraftUseCase,
     private val saveDraftQuestion: SaveDraftQuestionUseCase,
     private val submitQuestDraftToArena: SubmitQuestDraftToArenaUseCase,
+    private val closePrivateQuizLink: ClosePrivateQuizLinkUseCase,
+    private val timestampProvider: QuestAuthoringTimestampProvider,
     private val observeQuestDraftConflict: ObserveQuestDraftConflictUseCase,
     private val resolveQuestDraftConflict: ResolveQuestDraftConflictUseCase,
     private val questionContentParser: QuestionContentParser,
@@ -173,6 +182,67 @@ class DefaultQuestCreateComponent(
 
     override fun onDifficultySelected(value: Difficulty) {
         _state.update { it.copy(defaultDifficulty = value, errorMessage = null) }
+    }
+
+    // ─── Приватная категория (AD-29): настройки ссылки ──────────────────────────────────────────
+    // Дефолты живут в домене (PrivateQuizSettings); форма только показывает их и передаёт
+    // выбранное. Лимит — целый ≥ 1: ноль и отрицательное до домена не доходят.
+
+    override fun onPrivateAttemptLimitChanged(value: Int) {
+        _state.update {
+            it.copy(
+                privateAttemptLimit = value.coerceAtLeast(PrivateQuizSettings.MIN_ATTEMPT_LIMIT),
+                errorMessage = null,
+            )
+        }
+    }
+
+    override fun onPrivateShowResultChanged(value: Boolean) {
+        _state.update { it.copy(privateShowResult = value, errorMessage = null) }
+    }
+
+    override fun onPrivateLinkExpiryToggled(hasExpiry: Boolean) {
+        _state.update { it.copy(privateLinkHasExpiry = hasExpiry, errorMessage = null) }
+    }
+
+    override fun onPrivateLinkExpiryDaysChanged(days: Int) {
+        _state.update {
+            it.copy(
+                privateLinkHasExpiry = true,
+                privateLinkExpiresInDays = days.coerceAtLeast(1),
+                errorMessage = null,
+            )
+        }
+    }
+
+    override fun onClosePrivateQuizLinkClick() {
+        val uid = ownerUid
+        val bundle = activeBundle
+        if (uid == null || bundle == null) {
+            _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready)) }
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(isLinkCloseQueued = true, errorMessage = null) }
+            val result = closePrivateQuizLink(
+                ownerUid = uid,
+                catalogId = bundle.draft.catalogId.value,
+                questId = bundle.draft.id.value,
+            )
+            _state.update {
+                if (result.isSuccess) {
+                    it.copy(
+                        isLinkCloseQueued = true,
+                        arenaMessage = UiMessage.Res(R.string.qa_private_link_closing),
+                    )
+                } else {
+                    it.copy(
+                        isLinkCloseQueued = false,
+                        errorMessage = UiMessage.Res(R.string.qa_private_link_close_failed),
+                    )
+                }
+            }
+        }
     }
 
     override fun onSectionTitleChanged(value: String) {
@@ -344,15 +414,18 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onQuestionsClick(difficulty: Difficulty) {
-        val snapshot = _state.value.copy(defaultDifficulty = difficulty)
-        _state.update { it.copy(defaultDifficulty = difficulty, errorMessage = null) }
+        // Приватная категория — плоский HARD-набор (AD-29): кнопки лёгких у неё нет, и любая
+        // дорога к вопросам ведёт на HARD.
+        val effective = if (_state.value.isPrivateCategory) Difficulty.HARD else difficulty
+        val snapshot = _state.value.copy(defaultDifficulty = effective)
+        _state.update { it.copy(defaultDifficulty = effective, errorMessage = null) }
         if (snapshot.hasActiveDraft) {
-            openQuestions(difficulty)
+            openQuestions(effective)
         } else {
             createDraft(
                 snapshot = snapshot,
                 showEditor = true,
-                editorDifficulty = difficulty,
+                editorDifficulty = effective,
                 requireStructureTitles = false,
             )
         }
@@ -436,10 +509,44 @@ class DefaultQuestCreateComponent(
                     title = snapshot.selectedQuestTitle(),
                     description = null,
                     defaultLanguage = snapshot.defaultLanguage.ifBlank { "ru" },
-                    defaultDifficulty = snapshot.defaultDifficulty,
-                    sectionTitle = snapshot.selectedSectionTitle(),
-                    themeTitle = snapshot.selectedThemeTitle(),
-                    lessonTitle = snapshot.selectedLessonTitle(),
+                    // Приватный формат — плоский HARD-набор (AD-29): сложность формы не спрашивает.
+                    defaultDifficulty =
+                        if (snapshot.isPrivateCategory) {
+                            Difficulty.HARD
+                        } else {
+                            snapshot.defaultDifficulty
+                        },
+                    // Иерархии у приватного квиза нет — раздел/тема/урок создаются конвейером
+                    // под капот. Названия технические: автору они не показываются.
+                    sectionTitle = snapshot.selectedSectionTitle().ifBlank { PRIVATE_FLAT_NODE_TITLE },
+                    themeTitle = snapshot.selectedThemeTitle().ifBlank { PRIVATE_FLAT_NODE_TITLE },
+                    lessonTitle = snapshot.selectedLessonTitle().ifBlank { PRIVATE_FLAT_NODE_TITLE },
+                    privateQuiz =
+                        if (snapshot.isPrivateCategory) {
+                            val settings =
+                                PrivateQuizSettings(
+                                    attemptLimit = snapshot.privateAttemptLimit,
+                                    showResult = snapshot.privateShowResult,
+                                    linkExpiresAtMs =
+                                        if (snapshot.privateLinkHasExpiry) {
+                                            timestampProvider.nowMs() + snapshot.privateLinkExpiresInDays * MILLIS_PER_DAY
+                                        } else {
+                                            null
+                                        },
+                                )
+                            // Срок на сохранении только в будущем: часы ушли вперёд настроенного
+                            // момента — отказ, а не ссылка, рождающаяся уже закрытой (AD-29).
+                            if (settings.validateForSave(timestampProvider.nowMs())) {
+                                settings
+                            } else {
+                                _state.update {
+                                    it.copy(errorMessage = UiMessage.Res(R.string.qa_private_expiry_in_past))
+                                }
+                                return null
+                            }
+                        } else {
+                            null
+                        },
                 )
         }
     }
@@ -818,15 +925,21 @@ class DefaultQuestCreateComponent(
         }
 
         val payload = questionJson.encodeToString<QuestionContent>(content)
+        // Приватная категория: SURVEY исключён и сложность ровно одна — HARD (AD-29).
+        val activeBundleDraft = activeBundle?.draft
+        val isPrivate = activeBundleDraft?.privateQuiz != null
+        val effectiveType = if (isPrivate && editor.type == DraftQuestionType.SURVEY) DraftQuestionType.SINGLE_CHOICE else editor.type
+        val effectiveDifficulty =
+            if (isPrivate) Difficulty.HARD else editor.difficulty
         val result =
             saveDraftQuestion(
                 SaveDraftQuestionCommand(
                     draftId = editor.draftId,
                     lessonId = editor.lessonId,
                     questionId = editor.selectedQuestionId,
-                    type = editor.type,
+                    type = effectiveType,
                     language = editor.language.ifBlank { "ru" },
-                    difficulty = editor.difficulty,
+                    difficulty = effectiveDifficulty,
                     order = editor.selectedQuestionId?.existingQuestionOrder() ?: nextQuestionOrder(editor.lessonId),
                     imagePath = editor.imagePath.cleanNullable(),
                     payload = payload,
@@ -1155,8 +1268,21 @@ class DefaultQuestCreateComponent(
             defaultLanguage = draft.defaultLanguage,
             defaultDifficulty = draft.defaultDifficulty,
             activeDraftTitle = draft.title,
-            editor = editor,
+            editor = editor?.copy(isPrivateQuiz = draft.privateQuiz != null),
             errorMessage = null,
+            // Загрузка существующего приватного квиза восстанавливает СОХРАНЁННЫЕ настройки,
+            // а не дефолты заново (AD-29); у обычного квиза настроек нет — поля остаются
+            // дефолтными и не показываются.
+            privateAttemptLimit = draft.privateQuiz?.attemptLimit ?: current.privateAttemptLimit,
+            privateShowResult = draft.privateQuiz?.showResult ?: current.privateShowResult,
+            privateLinkHasExpiry = draft.privateQuiz?.linkExpiresAtMs != null,
+            privateLinkExpiresInDays =
+                draft.privateQuiz?.linkExpiresAtMs
+                    ?.let { expiry ->
+                        val days = kotlin.math.ceil((expiry - timestampProvider.nowMs()).toDouble() / MILLIS_PER_DAY).toInt()
+                        days.coerceAtLeast(1)
+                    }
+                    ?: current.privateLinkExpiresInDays,
         )
     }
 

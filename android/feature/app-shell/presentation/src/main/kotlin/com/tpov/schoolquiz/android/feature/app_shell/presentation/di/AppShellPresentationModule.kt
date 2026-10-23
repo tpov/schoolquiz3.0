@@ -1,6 +1,9 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultOwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.OwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
@@ -51,6 +54,14 @@ import org.koin.dsl.module
  */
 val appShellPresentationModule =
     module {
+        // «История операций» (AD-30/UX-20, история 8.6): экран читает разрешённую проекцию
+        // economy; владелец и границы — в use-case и порте, компонент только показывает.
+        factory<OwnHistoryComponent> { (ctx: ComponentContext) ->
+            DefaultOwnHistoryComponent(
+                componentContext = ctx,
+                observeOwnHistory = get(),
+            )
+        }
         factory { (ctx: ComponentContext) ->
             val koin = getKoin()
             DefaultRootComponent(
@@ -112,6 +123,13 @@ val appShellPresentationModule =
                         koin.get(PollsComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderPollsComponent()
+                    }
+                },
+                ownHistoryFactory = { compCtx ->
+                    runCatching<OwnHistoryComponent> {
+                        koin.get(OwnHistoryComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderOwnHistoryComponent()
                     }
                 },
                 profileFactory = { compCtx ->

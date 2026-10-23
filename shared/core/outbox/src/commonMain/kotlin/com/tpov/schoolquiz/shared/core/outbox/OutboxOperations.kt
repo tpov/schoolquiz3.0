@@ -85,6 +85,30 @@ object OutboxOperations {
     const val SUBMIT_ARENA: String = "quest_authoring.SUBMIT_ARENA"
 
     /**
+     * Ручное закрытие приватной ссылки (AD-29/UX-16, история 8.3 эпика `epic-social-features`).
+     *
+     * Откладывается по AD-3: эффект — одно поле документа квеста, денег и платных таблиц тело
+     * не читает. Ключ выводится из адреса квеста — закрытие идемпотентно и по сути, повтор
+     * возвращает тот же результат. Re-enable решением не назначен: закрывается навсегда.
+     * Имя в пространстве владеющей фичи `quest_authoring`; серверная половина — реестр
+     * `MUTATION_HANDLERS` (`functions/index.js`), совпадение сторожит
+     * `OutboxOperationsRegistryTest`. В [termsConsentOperations] не входит: приватный квиз
+     * бесплатен (AD-29).
+     */
+    const val CLOSE_PRIVATE_QUIZ_LINK: String = "quest_authoring.CLOSE_PRIVATE_QUIZ_LINK"
+
+    /**
+     * Подача попытки приватного квиза (AD-29/AD-31, история 8.4 эпика `epic-social-features`).
+     *
+     * Единственная дверь — гейт старта; ключ подачи — сам `startId`: повтор возвращает
+     * сохранённый терминал и лимит второй раз не тратит. Бесплатно и без согласия с платными
+     * условиями (8.5): в [termsConsentOperations] не входит. Имя в пространстве владеющей
+     * фичи `private_quiz`; серверная половина — реестр `MUTATION_HANDLERS`
+     * (`functions/index.js`), совпадение сторожит `OutboxOperationsRegistryTest`.
+     */
+    const val SUBMIT_PRIVATE_QUIZ_ATTEMPT: String = "private_quiz.SUBMIT_ATTEMPT"
+
+    /**
      * Снятие своего лота с продажи — имени и логотипа.
      *
      * Откладывается по AD-3: результат выводится из ключа лота, и только из него; покупка того

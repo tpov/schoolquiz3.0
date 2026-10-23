@@ -112,6 +112,23 @@ object QuestArenaOutboxWriter {
                     putNullable("publicQuestId", draft.publicQuestId)
                     put("createdAtMs", draft.createdAtMs)
                     put("updatedAtMs", draft.updatedAtMs)
+                    // Настройки приватной ссылки (AD-29) — тем же конвейером SUBMIT_ARENA, без
+                    // параллельного механизма подачи. Ключ отсутствует у неприватного квеста:
+                    // молчание здесь значимое — «настроек нет», а не «дефолт». Срок без конечной
+                    // даты пишется явным null: отсутствие и «нет срока» на сервере различают.
+                    draft.privateQuiz?.let { settings ->
+                        put(
+                            "privateQuiz",
+                            buildJsonObject {
+                                put("attemptLimit", settings.attemptLimit)
+                                put("showResult", settings.showResult)
+                                put(
+                                    "linkExpiresAtMs",
+                                    settings.linkExpiresAtMs?.let(::JsonPrimitive) ?: JsonNull,
+                                )
+                            },
+                        )
+                    }
                 },
             )
             put(

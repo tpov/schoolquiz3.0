@@ -98,4 +98,6 @@
     <string name="runner_settlement_charges">Обычный заряд: −%1$d очк. · Плазма: −%2$d очк.</string>
     <string name="runner_settlement_skill_points">Очки навыка</string>
     <string name="runner_settlement_nolics">Нолики</string>
+    <string name="runner_private_completion_title">Квиз завершён</string>
+    <string name="runner_private_completion_hint">Автор скрыл результаты — завершение подтверждено, без счёта.</string>
 </resources>

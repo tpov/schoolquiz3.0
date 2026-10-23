@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSect
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftTheme
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftThemeId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.PrivateQuizSettings
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraft
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
@@ -68,6 +69,9 @@ object QuestAuthoringMapper {
             updatedAtMs = updatedAtMs,
             rejectionReason = rejectionReason,
             isActive = isActive,
+            privateQuizAttemptLimit = privateQuiz?.attemptLimit,
+            privateQuizShowResult = privateQuiz?.showResult,
+            privateQuizLinkExpiresAtMs = privateQuiz?.linkExpiresAtMs,
         )
 
     fun QuestDraftEntity.toDomain(): QuestDraft =
@@ -87,6 +91,20 @@ object QuestAuthoringMapper {
             updatedAtMs = updatedAtMs,
             isActive = isActive,
             rejectionReason = rejectionReason,
+            // Загрузка существующего квиза сохраняет его настройки, а не подставляет дефолты
+            // заново (AD-29). Частичная строка здесь же отвергается init'ом модели — громко.
+            privateQuiz =
+                privateQuiz?.let { columns ->
+                    PrivateQuizSettings(
+                        attemptLimit = requireNotNull(columns.attemptLimit) {
+                            "QuestDraftEntity.privateQuizAttemptLimit is required when settings are present"
+                        },
+                        showResult = requireNotNull(columns.showResult) {
+                            "QuestDraftEntity.privateQuizShowResult is required when settings are present"
+                        },
+                        linkExpiresAtMs = columns.linkExpiresAtMs,
+                    )
+                },
         )
 
     fun DraftSection.toEntity(): DraftSectionEntity =
@@ -208,6 +226,12 @@ object QuestAuthoringMapper {
                     createdAtMs = request.draft.createdAtMs,
                     updatedAtMs = snapshotUpdatedAt(),
                     isActive = false,
+                    // Снимок сервера — источник сохранённых настроек: то, что автор выбрал в
+                    // последней заявке. Отсутствие — обычный квест; серверные рантайм-поля
+                    // (enabled/startedCount) в черновик не едут — они не авторские.
+                    privateQuizAttemptLimit = request.draft.privateQuiz?.attemptLimit,
+                    privateQuizShowResult = request.draft.privateQuiz?.showResult,
+                    privateQuizLinkExpiresAtMs = request.draft.privateQuiz?.linkExpiresAtMs,
                 ),
             sections =
                 request.sections.map {

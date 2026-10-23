@@ -343,7 +343,16 @@ function createArenaTickets({db, policy = require("./arena-policy"), nowMs = Dat
       if (ticket.authorUid !== ticket.uid && plan.split.authorCreditNolics) {
         tx.set(authorRef, {nolics: plan.authorBalance, pointsNolics: plan.authorBalance}, {merge: true});
       }
-      const details = {attemptId: ticket.attemptId, payerUid: ticket.uid, authorUid: ticket.authorUid};
+      // lessonId — провенанс выплаты: книга должна читать «за какой урок», не заглядывая в
+      // документ билета (8.6: «Начисления» авторского урока отбираются по полю строки).
+      // Поле аддитивное: идентификатор строки выводится из (ticketId, uid, currency, reason)
+      // и от него не зависит; settlement логика не меняется.
+      const details = {
+        attemptId: ticket.attemptId,
+        payerUid: ticket.uid,
+        authorUid: ticket.authorUid,
+        lessonId: ticket.lessonId || null,
+      };
       ledger(tx, {uid: ticket.authorUid, currency: "nolics", delta: plan.split.authorCreditNolics,
         reason: REASONS.ROYALTY, ticketId: ticket.ticketId, atMs: now, details});
       ledger(tx, {uid: `arena-sink:${ticket.authorUid}`, currency: "nolics", delta: plan.split.sinkNolics,

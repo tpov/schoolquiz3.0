@@ -198,4 +198,14 @@
     <string name="qa_review_report_hint">Что не так с уроком целиком? Это прочитает только его автор.</string>
     <string name="qa_review_report_blank">Сначала опишите проблему</string>
     <string name="qa_review_report_done">Отчёт поставлен в очередь автору урока</string>
+    <string name="qa_private_link_settings">Ссылка приватного квиза</string>
+    <string name="qa_private_attempt_limit">Лимит попыток</string>
+    <string name="qa_private_show_result">Показывать результат участникам</string>
+    <string name="qa_private_link_expiry">Ограничить ссылку сроком</string>
+    <string name="qa_private_expiry_days">%1$d дн.</string>
+    <string name="qa_private_close_link">Закрыть ссылку</string>
+    <string name="qa_private_close_link_hint">Ссылка закрывается для новых стартов навсегда; начатые попытки заканчивают как начатые.</string>
+    <string name="qa_private_link_closing">Закрытие ссылки поставлено в очередь — уйдёт при связи</string>
+    <string name="qa_private_link_close_failed">Не удалось поставить закрытие ссылки в очередь</string>
+    <string name="qa_private_expiry_in_past">Срок ссылки должен быть в будущем</string>
 </resources>

@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraf
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ClosePrivateQuizLinkUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftConflictUseCase
@@ -209,6 +210,8 @@ class DefaultQuestCreateComponentConflictTest {
                 lessonRepository = FakeLessonRepository(),
                 navigator = FakeNavigator(),
                 mainContext = testDispatcher,
+                closePrivateQuizLink = ClosePrivateQuizLinkUseCase(FakeQuestAuthoringRepository()),
+                timestampProvider = QuestAuthoringTimestampProvider { 1_000L },
             )
         lifecycle.resume()
         testScheduler.advanceUntilIdle()

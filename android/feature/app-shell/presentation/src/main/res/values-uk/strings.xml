@@ -81,4 +81,17 @@
     <string name="tournament_attempts_count">Спроб: %1$d</string>
     <string name="drawer_sync_last_success">Остання синхронізація: %1$s</string>
     <string name="drawer_sync_never">Ще жодного разу не синхронізувалися</string>
+    <string name="section_operation_history">Історія операцій</string>
+    <string name="history_title">Історія операцій</string>
+    <string name="history_filter_all">Усі</string>
+    <string name="history_filter_income">Нарахування</string>
+    <string name="history_filter_expense">Витрати</string>
+    <string name="history_pending_title">У процесі</string>
+    <string name="history_pending_row">Утримано %1$d %2$s</string>
+    <string name="history_pending_hint">Не зараховується як дохід, поки не вирішиться.</string>
+    <string name="history_empty">Операцій поки немає</string>
+    <string name="history_error">Історію не вдалося завантажити</string>
+    <string name="history_retry">Повторити</string>
+    <string name="history_load_more">Завантажити ще</string>
+    <string name="history_day">%1$d.%2$d.%3$d</string>
 </resources>

@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.core.sync.JournalReadPolicy
 import com.tpov.schoolquiz.shared.core.sync.SyncChangePage
 import com.tpov.schoolquiz.shared.core.sync.SyncCursor
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaPrivateQuizSettingsDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
@@ -161,6 +162,18 @@ class FirebaseQuestPrivateRemoteDataSource(
             publicQuestId = getString(PUBLIC_QUEST_ID),
             createdAtMs = long(CREATED_AT_MS),
             updatedAtMs = long(UPDATED_AT_MS),
+            // Сохранённые настройки приватной ссылки (AD-29) едут снимком: их отсутствие —
+            // обычный квест. Рантайм (enabled/startedCount) снимком не возится — он не авторский.
+            privateQuiz =
+                (get(PRIVATE_QUIZ_SETTINGS) as? Map<*, *>)?.let { raw ->
+                    val limit = (raw["attemptLimit"] as? Long ?: (raw["attemptLimit"] as? Int)?.toLong())
+                    val expires = raw["linkExpiresAtMs"] as? Long
+                    if (limit == null) null else ArenaPrivateQuizSettingsDto(
+                        attemptLimit = limit.toInt(),
+                        showResult = raw["showResult"] == true,
+                        linkExpiresAtMs = expires,
+                    )
+                },
         )
 
     private fun DocumentSnapshot.toSectionDto(draftId: String): ArenaSectionDto =
@@ -287,6 +300,7 @@ class FirebaseQuestPrivateRemoteDataSource(
         const val PUBLIC_QUEST_ID = "publicQuestId"
         const val CATALOG_ID = "catalogId"
         const val QUEST_ID = "questId"
+        const val PRIVATE_QUIZ_SETTINGS = "privateQuizSettings"
         const val CREATED_AT_MS = "createdAtMs"
         const val UPDATED_AT_MS = "updatedAtMs"
         const val CHANGED_AT_MS = "changedAtMs"

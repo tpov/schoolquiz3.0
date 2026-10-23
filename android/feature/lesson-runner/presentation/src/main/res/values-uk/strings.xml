@@ -98,4 +98,6 @@
     <string name="runner_settlement_charges">Звичайний заряд: −%1$d балів · Плазма: −%2$d балів</string>
     <string name="runner_settlement_skill_points">Бали навички</string>
     <string name="runner_settlement_nolics">Ноліки</string>
+    <string name="runner_private_completion_title">Квіз завершено</string>
+    <string name="runner_private_completion_hint">Автор приховав результати — завершення підтверджено, без рахунку.</string>
 </resources>

@@ -46,6 +46,11 @@ data class QuestQuestionEditorUiState(
     val fillBlankAnswers: List<FillBlankAnswerItem> = listOf(FillBlankAnswerItem()),
     val fillBlankDistractors: List<String> = listOf("", "", "", ""),
     val isSaving: Boolean = false,
+    /**
+     * Черновик принадлежит приватной категории (AD-29): SURVEY исключён из полки типов, а
+     * сложность ровно одна — HARD. Форме это слово нужно, чтобы не показывать лишнего.
+     */
+    val isPrivateQuiz: Boolean = false,
     val isPreviewVisible: Boolean = false,
     val errorMessage: UiMessage? = null,
     val lastSavedMessage: UiMessage? = null,

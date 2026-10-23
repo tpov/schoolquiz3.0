@@ -33,6 +33,8 @@ val questAuthoringPresentationModule =
                 themeRepository = get(),
                 lessonRepository = get(),
                 navigator = navigator,
+                closePrivateQuizLink = get(),
+                timestampProvider = get(),
             )
         }
 

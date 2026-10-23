@@ -21,6 +21,14 @@ data class QuestDraft(
     /** Why a reviewer sent this back, if the last submission was refused. */
     val rejectionReason: String? = null,
     val isActive: Boolean,
+    /**
+     * Настройки приватной ссылки (AD-29) — только у квиза категории «Приватные квизы».
+     *
+     * `null` — обычный квест: настроек у него нет, и заявка за него их не выдаёт. Загрузка
+     * существующего приватного квиза восстанавливает СОХРАНЁННЫЕ настройки, а не дефолты
+     * заново (AD-29: загрузка хранит настройки квиза).
+     */
+    val privateQuiz: PrivateQuizSettings? = null,
 ) {
     init {
         require(ownerUid.isNotBlank()) { "QuestDraft.ownerUid must not be blank" }

@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestArena
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toDomain
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toEntity
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toEntityBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.PrivateQuizLinkOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
@@ -79,6 +80,23 @@ class QuestAuthoringRepositoryImpl(
                 submissionId = submission.id.value,
                 requestedAtMs = submission.requestedAtMs,
             )
+        }
+
+    override suspend fun queueClosePrivateQuizLink(
+        ownerUid: String,
+        catalogId: String,
+        questId: String,
+    ): Result<Unit> =
+        runCancellable {
+            outbox.enqueue(
+                PrivateQuizLinkOutboxWriter.record(
+                    ownerUid = ownerUid,
+                    catalogId = catalogId,
+                    questId = questId,
+                    requestedAtMs = timestampProvider.nowMs(),
+                ),
+            )
+            Unit
         }
 
     /**

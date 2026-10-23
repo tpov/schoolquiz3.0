@@ -44,6 +44,7 @@ class CreateQuestDraftUseCase(
                     createdAtMs = now,
                     updatedAtMs = now,
                     isActive = true,
+                    privateQuiz = command.privateQuiz,
                 )
             val bundle =
                 QuestAuthoringBundle(

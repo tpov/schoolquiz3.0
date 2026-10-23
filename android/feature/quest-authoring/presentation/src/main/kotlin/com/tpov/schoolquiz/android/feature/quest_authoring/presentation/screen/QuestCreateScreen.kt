@@ -58,6 +58,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LINK_EXPIRY_DAY_PRESETS
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.SectionPathItem
@@ -137,6 +138,11 @@ fun QuestCreateScreen(
             onThemeTitleChanged = component::onThemeTitleChanged,
             onLessonTitleChanged = component::onLessonTitleChanged,
             onLanguageChanged = component::onLanguageChanged,
+            onPrivateAttemptLimitChanged = component::onPrivateAttemptLimitChanged,
+            onPrivateShowResultChanged = component::onPrivateShowResultChanged,
+            onPrivateLinkExpiryToggled = component::onPrivateLinkExpiryToggled,
+            onPrivateLinkExpiryDaysChanged = component::onPrivateLinkExpiryDaysChanged,
+            onClosePrivateQuizLinkClick = component::onClosePrivateQuizLinkClick,
             onStructureCheckClick = component::onStructureCheckClick,
             onContinueDraftClick = component::onContinueDraftClick,
             onSubmitToArenaClick = component::onSubmitToArenaClick,
@@ -163,6 +169,11 @@ private fun QuestCreateContent(
     onThemeTitleChanged: (String) -> Unit,
     onLessonTitleChanged: (String) -> Unit,
     onLanguageChanged: (String) -> Unit,
+    onPrivateAttemptLimitChanged: (Int) -> Unit,
+    onPrivateShowResultChanged: (Boolean) -> Unit,
+    onPrivateLinkExpiryToggled: (Boolean) -> Unit,
+    onPrivateLinkExpiryDaysChanged: (Int) -> Unit,
+    onClosePrivateQuizLinkClick: () -> Unit,
     onStructureCheckClick: () -> Unit,
     onContinueDraftClick: () -> Unit,
     onSubmitToArenaClick: () -> Unit,
@@ -260,34 +271,51 @@ private fun QuestCreateContent(
                     onLongClick = submitQuestLongClick,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                SectionPathSpinner(
-                    items = state.sectionItems,
-                    selectedId = state.selectedSectionId,
-                    createTitle = state.newSectionTitle,
-                    onSelectionChanged = onSectionSelected,
-                    onCreateTitleChanged = onSectionTitleChanged,
-                    onLongClick = submitSectionLongClick,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                ThemePathSpinner(
-                    items = state.themeItems,
-                    selectedId = state.selectedThemeId,
-                    createTitle = state.newThemeTitle,
-                    onSelectionChanged = onThemeSelected,
-                    onCreateTitleChanged = onThemeTitleChanged,
-                    onLongClick = submitThemeLongClick,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                LessonPathSpinner(
-                    items = state.lessonItems,
-                    selectedId = state.selectedLessonId,
-                    createTitle = state.newLessonTitle,
-                    onSelectionChanged = onLessonSelected,
-                    onCreateTitleChanged = onLessonTitleChanged,
-                    onLongClick = submitLessonLongClick,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                // Приватная категория (AD-29) — плоский HARD-набор: Розділ/Тема/Урок автору не
+                // показываются, вместо них — настройки ссылки. Иерархия остаётся у всех
+                // остальных категорий без изменений.
+                if (!state.isPrivateCategory) {
+                    SectionPathSpinner(
+                        items = state.sectionItems,
+                        selectedId = state.selectedSectionId,
+                        createTitle = state.newSectionTitle,
+                        onSelectionChanged = onSectionSelected,
+                        onCreateTitleChanged = onSectionTitleChanged,
+                        onLongClick = submitSectionLongClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    ThemePathSpinner(
+                        items = state.themeItems,
+                        selectedId = state.selectedThemeId,
+                        createTitle = state.newThemeTitle,
+                        onSelectionChanged = onThemeSelected,
+                        onCreateTitleChanged = onThemeTitleChanged,
+                        onLongClick = submitThemeLongClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    LessonPathSpinner(
+                        items = state.lessonItems,
+                        selectedId = state.selectedLessonId,
+                        createTitle = state.newLessonTitle,
+                        onSelectionChanged = onLessonSelected,
+                        onCreateTitleChanged = onLessonTitleChanged,
+                        onLongClick = submitLessonLongClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
+        }
+
+        if (state.isPrivateCategory) {
+            PrivateLinkSettingsCard(
+                state = state,
+                onAttemptLimitChanged = onPrivateAttemptLimitChanged,
+                onShowResultChanged = onPrivateShowResultChanged,
+                onExpiryToggled = onPrivateLinkExpiryToggled,
+                onExpiryDaysChanged = onPrivateLinkExpiryDaysChanged,
+                onCloseLinkClick = onClosePrivateQuizLinkClick,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
 
         BrandCard(modifier = Modifier.fillMaxWidth()) {
@@ -319,21 +347,8 @@ private fun QuestCreateContent(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            BrandPrimaryButton(
-                text =
-                    if (state.isCreating) {
-                        stringResource(R.string.qa_status_saving)
-                    } else {
-                        stringResource(R.string.qa_easy_questions)
-                    },
-                onClick = { onQuestionsClick(Difficulty.EASY) },
-                enabled = isQuestionActionEnabled,
-                modifier = Modifier.weight(1f),
-            )
+        if (state.isPrivateCategory) {
+            // Плоский HARD-набор (AD-29): один вопросный вход, сложность ровно одна.
             BrandPrimaryButton(
                 text =
                     if (state.isCreating) {
@@ -343,8 +358,36 @@ private fun QuestCreateContent(
                     },
                 onClick = { onQuestionsClick(Difficulty.HARD) },
                 enabled = isQuestionActionEnabled,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                BrandPrimaryButton(
+                    text =
+                        if (state.isCreating) {
+                            stringResource(R.string.qa_status_saving)
+                        } else {
+                            stringResource(R.string.qa_easy_questions)
+                        },
+                    onClick = { onQuestionsClick(Difficulty.EASY) },
+                    enabled = isQuestionActionEnabled,
+                    modifier = Modifier.weight(1f),
+                )
+                BrandPrimaryButton(
+                    text =
+                        if (state.isCreating) {
+                            stringResource(R.string.qa_status_saving)
+                        } else {
+                            stringResource(R.string.qa_hard_questions)
+                        },
+                    onClick = { onQuestionsClick(Difficulty.HARD) },
+                    enabled = isQuestionActionEnabled,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
         if (state.hasActiveDraft) {
             BrandPrimaryButton(
@@ -615,6 +658,117 @@ private fun LanguageChipRow(
     }
 }
 
+/**
+ * Настройки приватной ссылки (AD-29): целый лимит попыток, видимость результата и срок.
+ *
+ * Дефолты — доменные (1 попытка, результат скрыт, «без срока»); карточка показывает их, когда
+ * квиз новый, и СОХРАНЁННЫЕ значения, когда загружен существующий. Ручное закрытие ссылки —
+ * отдельное решение автора: закрывается навсегда, повторному включению не подлежит (UX-16).
+ */
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
+@Composable
+private fun PrivateLinkSettingsCard(
+    state: QuestCreateUiState,
+    onAttemptLimitChanged: (Int) -> Unit,
+    onShowResultChanged: (Boolean) -> Unit,
+    onExpiryToggled: (Boolean) -> Unit,
+    onExpiryDaysChanged: (Int) -> Unit,
+    onCloseLinkClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BrandCard(modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.qa_private_link_settings),
+                style = NoirType.groupTitle,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.qa_private_attempt_limit),
+                    style = NoirType.rowSub,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = { onAttemptLimitChanged(state.privateAttemptLimit - 1) }) {
+                    Text("−", style = NoirType.rowSub)
+                }
+                Text(
+                    text = state.privateAttemptLimit.toString(),
+                    style = NoirType.rowSub,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+                IconButton(onClick = { onAttemptLimitChanged(state.privateAttemptLimit + 1) }) {
+                    Text("+", style = NoirType.rowSub)
+                }
+            }
+            SettingSwitchRow(
+                label = stringResource(R.string.qa_private_show_result),
+                checked = state.privateShowResult,
+                onCheckedChange = onShowResultChanged,
+            )
+            SettingSwitchRow(
+                label = stringResource(R.string.qa_private_link_expiry),
+                checked = state.privateLinkHasExpiry,
+                onCheckedChange = onExpiryToggled,
+            )
+            if (state.privateLinkHasExpiry) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    LINK_EXPIRY_DAY_PRESETS.forEach { days ->
+                        FilterChip(
+                            selected = state.privateLinkExpiresInDays == days,
+                            onClick = { onExpiryDaysChanged(days) },
+                            label = { Text(stringResource(R.string.qa_private_expiry_days, days)) },
+                        )
+                    }
+                }
+            }
+            if (state.hasActiveDraft) {
+                BrandPrimaryButton(
+                    text = stringResource(R.string.qa_private_close_link),
+                    onClick = onCloseLinkClick,
+                    enabled = state.canClosePrivateLink,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(R.string.qa_private_close_link_hint),
+                    style = NoirType.rowSub,
+                )
+            }
+        }
+    }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun SettingSwitchRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = NoirType.rowSub,
+            modifier = Modifier.weight(1f),
+        )
+        androidx.compose.material3.Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
 private data class StructureOption<T>(
     val id: T,
     val title: String,
@@ -650,6 +804,11 @@ private fun questCreateScreenPreview() {
             onThemeTitleChanged = {},
             onLessonTitleChanged = {},
             onLanguageChanged = {},
+            onPrivateAttemptLimitChanged = {},
+            onPrivateShowResultChanged = {},
+            onPrivateLinkExpiryToggled = {},
+            onPrivateLinkExpiryDaysChanged = {},
+            onClosePrivateQuizLinkClick = {},
             onStructureCheckClick = {},
             onContinueDraftClick = {},
             onSubmitToArenaClick = {},

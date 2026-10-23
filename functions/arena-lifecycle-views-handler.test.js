@@ -60,6 +60,18 @@ const ENDPOINTS = Object.freeze([
   "listLessonLifecycleHistory",
   "listMyArenaRoyalty",
   "listMyQuestReviewSubmissions",
+  // Собственная история операций и «Начисления» урока (AD-30/UX-20, история 8.6): та же
+  // семья TZ06B — те же опции вызываемых, тот же курсор, и потому та же ограда этой сваи:
+  // auth до чтения, тело не расширяет права, сырое поле не проезжает.
+  "listMyOperationHistory",
+  "listMyLessonEarnings",
+  // Приватный квиз после двери (AD-29, история 8.4): замороженный прогон, свой результат и
+  // авторская статистика — вызываемые с auth-оградой и телом-адресом; отказы двери едут в
+  // details.reason. (Дверь startPrivateQuizAttempt старше этой сваи и остаётся в хешируемом
+  // множестве: двигать её сюда значило бы менять накрытое множество, а не расширять его.)
+  "fetchPrivateQuizRun",
+  "readPrivateQuizResult",
+  "readPrivateQuizStatistics",
 ]);
 // SHA-256 of JSON.stringify(sorted accepted non-lifecycle index.js export names).  The snapshot
 // includes the explicitly reviewed Arena season finalization callables and its scheduler. Keeping
@@ -104,10 +116,13 @@ function call(name, uid, data) {
   return functions[name].run({auth: uid === undefined ? undefined : {uid}, data});
 }
 
-function safeError(error, code, reason) {
+/** Граница вызываемого прогона приватного квиза: своё фиксированное сообщение, тот же забор. */
+const PRIVATE_RUN_BOUNDARY_MESSAGE = "Private quiz run could not be loaded";
+
+function safeError(error, code, reason, message = "Lesson lifecycle could not be loaded") {
   assert.equal(error.code, code);
   assert.deepEqual(error.details, {reason});
-  assert.equal(error.message, "Lesson lifecycle could not be loaded");
+  assert.equal(error.message, message);
   const publicError = JSON.stringify({message: error.message, details: error.details});
   for (const privateText of ["PRIVATE", "secret", "credentials", "/private/"]) {
     assert.equal(publicError.includes(privateText), false, privateText);
@@ -259,10 +274,15 @@ test("TZ06B lifecycle readers preserve the accepted callable surface", () => {
 test("every lifecycle callable rejects missing Auth before a source read or effect", async () => {
   store.reset(world()); const state = before();
   for (const endpoint of ENDPOINTS) {
+    const message =
+      endpoint === "fetchPrivateQuizRun" || endpoint === "readPrivateQuizResult" ||
+        endpoint === "readPrivateQuizStatistics" ?
+        PRIVATE_RUN_BOUNDARY_MESSAGE :
+        "Lesson lifecycle could not be loaded";
     await assert.rejects(functions[endpoint].run({data: {lessonId: "lesson-owned-a"}}),
-      error => safeError(error, "unauthenticated", "UNAUTHENTICATED"));
+      error => safeError(error, "unauthenticated", "UNAUTHENTICATED", message));
     await assert.rejects(functions[endpoint].run({auth: {uid: ""}, data: {lessonId: "lesson-owned-a"}}),
-      error => safeError(error, "unauthenticated", "UNAUTHENTICATED"));
+      error => safeError(error, "unauthenticated", "UNAUTHENTICATED", message));
   }
   assert.deepEqual(store.operations, []); unchanged(state);
 });

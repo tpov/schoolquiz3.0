@@ -200,4 +200,14 @@
     <string name="qa_review_report_hint">Що не так з уроком загалом? Це прочитає лише його автор.</string>
     <string name="qa_review_report_blank">Спочатку опишіть проблему</string>
     <string name="qa_review_report_done">Звіт поставлено в чергу автору уроку</string>
+    <string name="qa_private_link_settings">Посилання приватного квізу</string>
+    <string name="qa_private_attempt_limit">Ліміт спроб</string>
+    <string name="qa_private_show_result">Показувати результат учасникам</string>
+    <string name="qa_private_link_expiry">Обмежити посилання терміном</string>
+    <string name="qa_private_expiry_days">%1$d дн.</string>
+    <string name="qa_private_close_link">Закрити посилання</string>
+    <string name="qa_private_close_link_hint">Посилання закривається для нових стартів назавжди; початі спроби завершують як початі.</string>
+    <string name="qa_private_link_closing">Закриття посилання поставлено в чергу — піде за зв\'язку</string>
+    <string name="qa_private_link_close_failed">Не вдалося поставити закриття посилання в чергу</string>
+    <string name="qa_private_expiry_in_past">Термін посилання має бути в майбутньому</string>
 </resources>
