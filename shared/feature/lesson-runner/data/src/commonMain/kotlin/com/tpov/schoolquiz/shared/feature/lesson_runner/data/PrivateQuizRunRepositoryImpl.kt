@@ -1,7 +1,10 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data
 
+import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.PrivateQuizSubmitOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.PrivateQuizDoorRefusal
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.PrivateQuizRunRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizSubmission
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizAttemptReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizAttemptStatus
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizEntry
@@ -20,6 +23,8 @@ import kotlinx.coroutines.CancellationException
  */
 class PrivateQuizRunRepositoryImpl(
     private val remote: PrivateQuizRunRemoteDataSource,
+    private val outbox: OutboxStore? = null,
+    private val nowMs: () -> Long = { System.currentTimeMillis() },
 ) : PrivateQuizRunRepository {
 
     override suspend fun start(
@@ -62,6 +67,36 @@ class PrivateQuizRunRepositoryImpl(
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
+            Result.failure(e)
+        }
+
+    override suspend fun submitAttempt(
+        ownerUid: String,
+        catalogId: String,
+        questId: String,
+        startId: String,
+        submission: PrivateQuizSubmission,
+    ): Result<Unit> =
+        try {
+            require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
+            val store =
+                checkNotNull(outbox) { "OutboxStore is required to queue a private attempt submission" }
+            store.enqueue(
+                PrivateQuizSubmitOutboxWriter.record(
+                    ownerUid = ownerUid,
+                    catalogId = catalogId,
+                    questId = questId,
+                    startId = startId,
+                    submission = submission,
+                    createdAtMs = nowMs(),
+                ),
+            )
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IllegalArgumentException) {
+            Result.failure(e)
+        } catch (e: IllegalStateException) {
             Result.failure(e)
         }
 

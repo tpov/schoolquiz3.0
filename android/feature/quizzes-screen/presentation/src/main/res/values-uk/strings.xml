@@ -115,4 +115,5 @@
     <string name="arena_entry_retry_cancel">Повторити початкове скасування</string>
     <string name="arena_entry_reconcile_cancelled">Узгодити скасований результат</string>
     <string name="arena_entry_restore_settlement">Відновити збережений результат для надсилання</string>
+    <string name="quizzes_private_quest_row">Приватний квіз · %1$d питань · один захід</string>
 </resources>

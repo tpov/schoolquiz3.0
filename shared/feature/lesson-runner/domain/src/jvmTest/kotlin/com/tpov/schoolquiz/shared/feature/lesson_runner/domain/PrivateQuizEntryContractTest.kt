@@ -48,6 +48,14 @@ class PrivateQuizEntryContractTest {
             questId: String,
             startId: String,
         ) = throw IllegalStateException("not reached")
+
+        override suspend fun submitAttempt(
+            ownerUid: String,
+            catalogId: String,
+            questId: String,
+            startId: String,
+            submission: com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizSubmission,
+        ) = throw IllegalStateException("not reached")
     }
 
     private class FixedAuth(

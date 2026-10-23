@@ -134,6 +134,7 @@ class DefaultQuizzesComponentTest {
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = lessonRunnerFactory,
+            privateQuizRunnerFactory = { _, _ -> throw UnsupportedOperationException("not under test") },
             arenaCatalogFactory = arenaFactory,
             arenaRunnerFactory = arenaRunnerFactory,
             lessonContentSync = lessonContentSync,

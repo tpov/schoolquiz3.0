@@ -160,7 +160,7 @@ const {
   projectOwnResult,
   readSubmission,
 } = require("./private-quiz-run");
-const {redact} = require("./question-redaction");
+const {redact, translateSubmittedAnswer} = require("./question-redaction");
 // Онлайн-переход next-question по ONLINE-O2 (история 2.6): чистые вердикты окна; Firestore и часы
 // подводят обёртки ниже.
 const {
@@ -724,30 +724,88 @@ exports.fetchPrivateQuizRun = onCall(CALLABLE_OPTIONS, async (request) => {
     const uid = requireAuthUid(request);
     await requireProfile(uid);
     const address = readRunAddress(request.data || {});
-    const record = await readOwnStart(uid, address);
-    if (record.attempt && record.attempt.status === PRIVATE_RUN_STATUS.TERMINAL) {
-      throw new HttpsError("failed-precondition", "PRIVATE_ATTEMPT_TERMINAL: this attempt is already finished", {reason: "PRIVATE_ATTEMPT_TERMINAL"});
-    }
-    const questRef = db.doc(privateQuestPath(address.ownerUid, address.catalogId, address.questId));
-    const questSnap = await questRef.get();
-    if (!questSnap.exists) throw new HttpsError("not-found", "Private quiz does not exist");
-    const questData = questSnap.data() || {};
-    if (!quizIdentityMatches(record, questData)) {
-      // Квест уехал с момента старта: попытка обязана бежать по замороженному набору (AD-6),
-      // а другого у неё нет. Отказ именованный — участник стартует заново, если дверь пустит.
-      throw new HttpsError("failed-precondition", "RUN_CONTENT_CHANGED: the quiz changed after this attempt started", {reason: "RUN_CONTENT_CHANGED"});
-    }
-    const questions = await collectFrozenQuestions(address.ownerUid, address.catalogId, address.questId);
-    return {
-      startId: address.startId,
-      startedAtMs: record.startedAtMs,
-      deadlineMs: attemptDeadlineMs({startedAtMs: record.startedAtMs, questions}),
-      questions: questions.map(redactPrivateRunQuestion),
-    };
+    // Выдача — транзакция: первый же сервис замораживает прогон (публичные половины И ключи
+    // перевода) под стартом. Второе устройство и повтор после обрыва читают ТО ЖЕ, что увидел
+    // первый: ключи перевода описывают свою перестановку, и прогон, пересобранный заново,
+    // ответы бы не перевёл (AD-6: исходное намерение зафиксировано до разноса).
+    return await db.runTransaction(async (transaction) => {
+      const startRef = db.doc(startPath(address));
+      const startSnap = await transaction.get(startRef);
+      if (!startSnap.exists) throw new HttpsError("not-found", "Attempt start does not exist");
+      const record = startSnap.data() || {};
+      if (record.participantUid !== uid) {
+        throw new HttpsError("not-found", "Attempt start does not exist");
+      }
+      if (record.attempt && record.attempt.status === PRIVATE_RUN_STATUS.TERMINAL) {
+        throw new HttpsError("failed-precondition", "PRIVATE_ATTEMPT_TERMINAL: this attempt is already finished", {reason: "PRIVATE_ATTEMPT_TERMINAL"});
+      }
+      const questSnap = await transaction.get(
+        db.doc(privateQuestPath(address.ownerUid, address.catalogId, address.questId)),
+      );
+      if (!questSnap.exists) throw new HttpsError("not-found", "Private quiz does not exist");
+      const questData = questSnap.data() || {};
+      if (!quizIdentityMatches(record, questData)) {
+        // Квест уехал с момента старта: попытка обязана бежать по замороженному набору (AD-6),
+        // а другого у неё нет. Отказ именованный — участник стартует заново, если дверь пустит.
+        throw new HttpsError("failed-precondition", "RUN_CONTENT_CHANGED: the quiz changed after this attempt started", {reason: "RUN_CONTENT_CHANGED"});
+      }
+      let run = record.run && typeof record.run === "object" ? record.run : null;
+      if (!run || !Array.isArray(run.questions) || run.questions.length === 0) {
+        const questions = await collectFrozenQuestionsInTransaction(
+          transaction,
+          address.ownerUid,
+          address.catalogId,
+          address.questId,
+        );
+        run = freezeRun(questions);
+        transaction.set(startRef, {run}, {merge: true});
+      }
+      return {
+        startId: address.startId,
+        startedAtMs: record.startedAtMs,
+        // Бюджет попытки считается из ЗАМОРОЖЕННЫХ публичных половин: ровно их видел и
+        // засекал участник, и приём подачи считает по тому же основанию (AD-6).
+        deadlineMs: attemptDeadlineMs({startedAtMs: record.startedAtMs, questions: run.questions}),
+        questions: run.questions,
+      };
+    });
   } catch (error) {
     runBoundaryFailure(error);
   }
 });
+
+/**
+ * Заморозка прогона: публичные половины для участника и ключи перевода для приёмника.
+ *
+ * Ключи (`run.keys`) на клиент не едут никогда — они серверное слово приёмника подачи, без
+ * которого ответ в перемешанных id Ordering/FillBlank не читается (choices ключа не требуют:
+ * их id красакция не переписывает).
+ */
+function freezeRun(questions) {
+  const frozen = [];
+  const keys = {};
+  for (const question of questions) {
+    const verdict = redact(
+      typeof question.payload === "string" ? question.payload : JSON.stringify(question.payload === undefined ? null : question.payload),
+      "HARD",
+    );
+    if (verdict.status === "redacted") {
+      frozen.push({id: question.id, order: numberValue(question.order, 0), difficulty: "HARD", payload: verdict.publicPayload});
+      if (verdict.key) keys[question.id] = verdict.key;
+    } else if (verdict.status === "already-redacted" || verdict.status === "not-applicable") {
+      frozen.push({id: question.id, order: numberValue(question.order, 0), difficulty: "HARD", payload: question.payload});
+    } else {
+      // Нечитаемый вопрос замороженного набора — наша дыра: молча отдать его с ключом хуже
+      // громкого отказа прогона.
+      const unreadable = new Error("RUN_QUESTION_UNREADABLE: a frozen question could not be redacted");
+      unreadable.code = "RUN_QUESTION_UNREADABLE";
+      throw unreadable;
+    }
+  }
+  return {questions: frozen, keys};
+}
+
+
 
 /** Собственный результат попытки — по ТЕКУЩЕЙ настройке showResult, при каждом чтении (AD-29). */
 exports.readPrivateQuizResult = onCall(CALLABLE_OPTIONS, async (request) => {
@@ -782,7 +840,11 @@ exports.readPrivateQuizResult = onCall(CALLABLE_OPTIONS, async (request) => {
         address.catalogId,
         address.questId,
       );
-      const deadlineMs = attemptDeadlineMs({startedAtMs: record.startedAtMs, questions: frozen});
+      const deadlineBasis =
+        record.run && Array.isArray(record.run.questions) && record.run.questions.length > 0 ?
+          record.run.questions :
+          frozen;
+      const deadlineMs = attemptDeadlineMs({startedAtMs: record.startedAtMs, questions: deadlineBasis});
       if (Date.now() > deadlineMs) {
         // Пустая подача: всё, что сервер принял вовремя, — ничего. Весь квиз без ответа.
         const attempt = finishAttempt({
@@ -801,6 +863,36 @@ exports.readPrivateQuizResult = onCall(CALLABLE_OPTIONS, async (request) => {
     runBoundaryFailure(error);
   }
 });
+
+/**
+ * Перевод ответов подачи из выданных (перемешанных) id в исходные — ключами заморозки прогона.
+ *
+ * Ответ без ключа доезжает как есть: у choices ключа и нет. Непереводимый ответ не выбрасывается
+ * и не чинится — скоринг честно положит его на пол (evaluateAnswer floor), как и мусорный ответ.
+ */
+function translateSubmissionAnswers(submission, run) {
+  const keys = run && typeof run === "object" && run.keys && typeof run.keys === "object" ? run.keys : null;
+  if (!keys) return submission;
+  const translate = (answer) => {
+    if (!answer || typeof answer !== "object") return answer;
+    const key = keys[answer.questionId];
+    if (!key) return answer;
+    const payload = typeof answer.answerPayload === "string" ? safeParse(answer.answerPayload) : answer.answerPayload;
+    if (!payload || typeof payload !== "object") return answer;
+    const translated = translateSubmittedAnswer(payload, key);
+    if (!translated) return answer;
+    return {...answer, answerPayload: JSON.stringify(translated)};
+  };
+  return {...submission, answers: (submission.answers || []).map(translate)};
+}
+
+function safeParse(text) {
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    return null;
+  }
+}
 
 /** Приём подачи попытки: повтор ключа отвечает сохранённым терминалом, лимит не тратится дважды. */
 async function applyPrivateQuizAttemptSubmission(uid, payload) {
@@ -834,8 +926,17 @@ async function applyPrivateQuizAttemptSubmission(uid, payload) {
       submission.catalogId,
       submission.questId,
     );
-    const deadlineMs = attemptDeadlineMs({startedAtMs: record.startedAtMs, questions: frozen});
-    const attempt = finishAttempt({settings, questions: frozen, submission, now, deadlineMs});
+    // Основание срока — замороженный прогон, когда он выдавался (участник засекал его),
+    // иначе исходные вопросы дерева: основа та, по которой шёл вопрос (AD-6).
+    const deadlineBasis =
+      record.run && Array.isArray(record.run.questions) && record.run.questions.length > 0 ?
+        record.run.questions :
+        frozen;
+    const deadlineMs = attemptDeadlineMs({startedAtMs: record.startedAtMs, questions: deadlineBasis});
+    // Ответы в перемешанных id Ordering/FillBlank переводятся ключами заморозки; choices ключа
+    // не требуют. Ключ делает ровно одно: возвращает ответ к исходному набору — и ничего больше.
+    const translatedSubmission = translateSubmissionAnswers(submission, record.run);
+    const attempt = finishAttempt({settings, questions: frozen, submission: translatedSubmission, now, deadlineMs});
     transaction.set(startRef, {attempt}, {merge: true});
     // Результат подающего отдаётся по текущей настройке; повтор чтения применит её заново.
     return projectOwnResult({attempt, showResult: settings.showResult});

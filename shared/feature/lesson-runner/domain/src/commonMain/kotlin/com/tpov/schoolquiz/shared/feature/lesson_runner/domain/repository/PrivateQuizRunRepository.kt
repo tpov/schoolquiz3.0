@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository
 
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizEntry
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizOwnResult
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PrivateQuizSubmission
 
 /**
  * Порт прогона приватного квиза (AD-29): дверь, замороженный набор, собственный результат.
@@ -30,4 +31,18 @@ interface PrivateQuizRunRepository {
         questId: String,
         startId: String,
     ): Result<PrivateQuizOwnResult>
+
+    /**
+     * Подача попытки — намерение в общую очередь (AD-6/AD-7), а не вызов: тело замораживается
+     * в момент финиша, повтор ключа (он — сам [startId]) сервер отвечает сохранённым
+     * терминалом. Ответа здесь нет: результат читается [readOwnResult] — текущая настройка
+     * showResult применяется при чтении (AD-29).
+     */
+    suspend fun submitAttempt(
+        ownerUid: String,
+        catalogId: String,
+        questId: String,
+        startId: String,
+        submission: PrivateQuizSubmission,
+    ): Result<Unit>
 }

@@ -19,6 +19,8 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunne
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerContentSyncCallbacks
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.PrivateQuizRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.PrivateQuizRunnerRequest
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
@@ -71,6 +73,9 @@ class DefaultQuizzesComponent(
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
     private val retirePublicQuest: RetirePublicQuestUseCase,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
+    private val privateQuizRunnerFactory: PrivateQuizRunnerComponentFactory,
+    /** Приватная категория (AD-29): сохранённые приватные квизы владельца — строки списка. */
+    private val observePrivateQuests: (String) -> Flow<List<com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem>> = { flowOf(emptyList()) },
     private val arenaCatalogFactory: ArenaLessonCatalogComponentFactory,
     private val arenaRunnerFactory: ArenaRunnerComponentFactory,
     private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
@@ -172,6 +177,7 @@ class DefaultQuizzesComponent(
             is QuizzesConfig.ThemeList,
             is QuizzesConfig.LessonList,
             is QuizzesConfig.LessonRunner,
+            is QuizzesConfig.PrivateQuizRunner,
             -> Unit
         }
     }
@@ -181,6 +187,7 @@ class DefaultQuizzesComponent(
             QuizzesConfig.Idle -> null
             QuizzesConfig.ArenaLessons -> null
             is QuizzesConfig.ArenaRunner -> null
+            is QuizzesConfig.PrivateQuizRunner -> config.breadcrumbs.firstDynamicTitle()
             is QuizzesConfig.PublicQuestCatalogPicker -> null
             is QuizzesConfig.QuestList -> config.breadcrumbs.firstDynamicTitle()
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstDynamicTitle()
@@ -274,6 +281,7 @@ class DefaultQuizzesComponent(
                 is QuizzesConfig.Idle -> 0
                 QuizzesConfig.ArenaLessons -> 1
                 is QuizzesConfig.ArenaRunner -> 1
+                is QuizzesConfig.PrivateQuizRunner -> cfg.breadcrumbs.size
                 is QuizzesConfig.PublicQuestCatalogPicker -> cfg.breadcrumbs.size
                 is QuizzesConfig.QuestList -> cfg.breadcrumbs.size
                 is QuizzesConfig.SectionList -> cfg.breadcrumbs.size
@@ -375,6 +383,7 @@ class DefaultQuizzesComponent(
                         setPublicQuestShelf = setPublicQuestShelf,
                         retirePublicQuest = retirePublicQuest,
                         questContentSync = questContentSync,
+                        observePrivateQuests = observePrivateQuests,
                         navigation = navigation,
                         coroutineContext = mainContext,
                     ),
@@ -434,6 +443,19 @@ class DefaultQuizzesComponent(
                         ),
                     ),
                 )
+
+            is QuizzesConfig.PrivateQuizRunner ->
+                QuizzesChild.PrivateQuizRunner(
+                    privateQuizRunnerFactory.create(
+                        ctx,
+                        PrivateQuizRunnerRequest(
+                            ownerUid = config.ownerUid,
+                            catalogId = config.catalogId,
+                            questId = config.questId,
+                            title = config.title,
+                        ),
+                    ),
+                )
         }
 
     private fun isArchiveNavigationPath(config: QuizzesConfig): Boolean =
@@ -441,6 +463,7 @@ class DefaultQuizzesComponent(
             QuizzesConfig.Idle -> false
             QuizzesConfig.ArenaLessons -> false
             is QuizzesConfig.ArenaRunner -> false
+            is QuizzesConfig.PrivateQuizRunner -> false
             is QuizzesConfig.PublicQuestCatalogPicker -> false
             is QuizzesConfig.QuestList -> config.mode == QuestListMode.Archive
             is QuizzesConfig.SectionList -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive

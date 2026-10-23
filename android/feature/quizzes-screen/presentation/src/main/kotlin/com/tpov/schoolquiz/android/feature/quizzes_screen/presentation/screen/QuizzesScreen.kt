@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.PrivateQuizRunnerScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaRunNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
@@ -39,7 +40,10 @@ fun QuizzesScreen(
                     interactionSource = remember { MutableInteractionSource() },
                 ) {},
     ) {
-        if (active !is QuizzesChild.Idle && active !is QuizzesChild.LessonRunner) {
+        if (active !is QuizzesChild.Idle && active !is QuizzesChild.LessonRunner &&
+            active !is QuizzesChild.PrivateQuizRunner
+        ) {
+            // PrivateQuizRunner — ранер: фон экранов не кладётся под него (как у LessonRunner).
             Box(
                 Modifier
                     .fillMaxSize()
@@ -91,6 +95,11 @@ fun QuizzesScreen(
                     component = active.component,
                     onNavigateBack = { component.popCurrentChild() },
                     onOpenLesson = component::openLessonRunner,
+                )
+            is QuizzesChild.PrivateQuizRunner ->
+                PrivateQuizRunnerScreen(
+                    component = active.component,
+                    modifier = Modifier,
                 )
         }
     }

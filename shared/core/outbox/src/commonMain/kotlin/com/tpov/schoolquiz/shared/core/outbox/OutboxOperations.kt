@@ -60,7 +60,16 @@ object OutboxOperations {
      * исключён серверной идемпотентностью по operationId.
      */
     val permanentReceiptOperations: Set<String> =
-        setOf(SUBMIT_ATTEMPT, OPEN_GIFT_BOX, READY_ACK, SUBMIT_POLL_VOTE, TOURNAMENT_SESSION_OP)
+        setOf(
+            SUBMIT_ATTEMPT,
+            OPEN_GIFT_BOX,
+            READY_ACK,
+            SUBMIT_POLL_VOTE,
+            TOURNAMENT_SESSION_OP,
+            // Подача попытки приватного квиза (AD-29, 8.4): терминал хранится под startId,
+            // повтор возвращает его же — состаривание в карантин убило бы честный результат.
+            SUBMIT_PRIVATE_QUIZ_ATTEMPT,
+        )
 
     /**
      * Операции, чья мутация ведётся по согласию игрока с платными условиями (CAP-16, AD-5).

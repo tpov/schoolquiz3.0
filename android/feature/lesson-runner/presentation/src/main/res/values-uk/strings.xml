@@ -100,4 +100,25 @@
     <string name="runner_settlement_nolics">Ноліки</string>
     <string name="runner_private_completion_title">Квіз завершено</string>
     <string name="runner_private_completion_hint">Автор приховав результати — завершення підтверджено, без рахунку.</string>
+    <string name="private_run_submitting">Надсилаємо спробу…</string>
+    <string name="private_run_result_pending">Спроба в черзі — результат з’явиться після доставки.</string>
+    <string name="private_run_refresh">Оновити</string>
+    <string name="private_run_read_failed">Спробу не вдалося надіслати</string>
+    <string name="private_run_refused_title">Вхід закрито</string>
+    <string name="private_run_link_disabled">Посилання на квіз вимкнено автором.</string>
+    <string name="private_run_link_expired">Строк посилання минув.</string>
+    <string name="private_run_limit_reached">Усі спроби цього квізу використано.</string>
+    <string name="private_run_not_found">Такого квізу немає.</string>
+    <string name="private_run_content_changed">Квіз змінився після старту спроби — почніть заново, якщо двері пустять.</string>
+    <string name="private_run_terminal">Ця спроба вже завершена.</string>
+    <string name="private_run_auth_required">Увійдіть в акаунт SchoolQuiz, щоб почати.</string>
+    <string name="private_run_unavailable">Квіз недоступний — спробуйте ще раз.</string>
+    <string name="private_run_question_expired">Час на питання вийшов</string>
+    <string name="private_run_progress">Питання %1$d з %2$d</string>
+    <string name="private_run_answer">Відповісти</string>
+    <string name="private_run_finished">Спробу завершено</string>
+    <string name="private_run_score">%1$d з %2$d вірно — %3$d%%</string>
+    <string name="private_run_completion_only">Завершення підтверджено. Автор приховав результати — рахунок не показується.</string>
+    <string name="private_run_reason_timeout">Закрито за тайм-аутом: питання без відповіді зараховано як показані без відповіді.</string>
+    <string name="private_run_reason_finished">Надіслано вчасно.</string>
 </resources>

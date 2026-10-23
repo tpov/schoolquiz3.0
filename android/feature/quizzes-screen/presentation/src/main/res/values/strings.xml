@@ -118,4 +118,5 @@
     <string name="arena_entry_retry_cancel">Retry original cancellation</string>
     <string name="arena_entry_reconcile_cancelled">Reconcile cancelled result</string>
     <string name="arena_entry_restore_settlement">Restore saved result for delivery</string>
+    <string name="quizzes_private_quest_row">Private quiz · %1$d questions · one sitting</string>
 </resources>

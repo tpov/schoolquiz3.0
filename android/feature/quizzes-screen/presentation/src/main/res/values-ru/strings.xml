@@ -115,4 +115,5 @@
     <string name="arena_entry_retry_cancel">Повторить исходную отмену</string>
     <string name="arena_entry_reconcile_cancelled">Согласовать отменённый результат</string>
     <string name="arena_entry_restore_settlement">Восстановить сохранённый результат для отправки</string>
+    <string name="quizzes_private_quest_row">Приватный квиз · %1$d вопросов · один заход</string>
 </resources>

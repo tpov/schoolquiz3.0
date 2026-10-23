@@ -118,7 +118,15 @@ val arenaDataModule =
             )
         }
         // Приватный квиз (AD-29, история 8.4): дверь + замороженный прогон + свой результат.
-        single<PrivateQuizRunRepository> { PrivateQuizRunRepositoryImpl(remote = get()) }
+        // Подача едет общей очередью (AD-6/AD-7), поэтому репозиторию нужен OutboxStore.
+        single<PrivateQuizRunRepository> {
+            val clock = get<Clock>()
+            PrivateQuizRunRepositoryImpl(
+                remote = get(),
+                outbox = get(),
+                nowMs = { clock.now().toEpochMilliseconds() },
+            )
+        }
     }
 
 @Suppress("MagicNumber") // Unsigned-byte mask and hexadecimal radix, not economy constants.

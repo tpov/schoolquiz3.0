@@ -13,12 +13,14 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Br
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper.toQuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestShelfSyncMark
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.toShelfSyncMark
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.PrivateQuizSettings
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -58,6 +60,8 @@ class DefaultQuestListComponent(
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
     private val retirePublicQuest: RetirePublicQuestUseCase,
     private val questContentSync: suspend (QuestId) -> Result<Unit>,
+    /** Приватная категория (AD-29): сохранённые приватные квизы владельца, тап — дверь прогона. */
+    private val observePrivateQuests: (String) -> Flow<List<PrivateQuestItem>> = { flowOf(emptyList()) },
     private val navigation: StackNavigation<QuizzesConfig>,
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, QuestListComponent {
@@ -71,6 +75,10 @@ class DefaultQuestListComponent(
     private val forcedLessonMode = config.forcedLessonMode
     private val questType = config.questType
     private val isCoursesCatalog = questType == QuestType.COURSE
+
+    /** Приватная категория одна и засеяна техническим id (AD-29); questType у неё REGULAR. */
+    private val isPrivateCatalog = config.catalogId == PrivateQuizSettings.PRIVATE_QUIZ_CATALOG_ID
+    private val privateCatalogId = config.catalogId
     private val sourceShelf =
         when {
             mode == QuestListMode.Archive -> ARCHIVE_SHELF
@@ -86,6 +94,45 @@ class DefaultQuestListComponent(
     private var currentQuestItems: List<QuestDisplayItem> = emptyList()
 
     init {
+        if (isPrivateCatalog) {
+            observePrivateQuestsFlow()
+        } else {
+            observePublicQuests()
+        }
+        lifecycle.doOnDestroy { componentJob.cancel() }
+    }
+
+    /** Тап по приватному квизу — дверь прогона; без аккаунта входа не существует (AD-29). */
+    override fun onPrivateQuestClick(quest: PrivateQuestItem) {
+        scope.launch {
+            val ownerUid = authRepository.currentUid() ?: return@launch
+            navigation.pushNew(
+                QuizzesConfig.PrivateQuizRunner(
+                    ownerUid = ownerUid,
+                    catalogId = privateCatalogId,
+                    questId = quest.questId,
+                    title = quest.title,
+                    breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(quest.title),
+                ),
+            )
+        }
+    }
+
+    /** Приватная категория читает СОХРАНЁННЫЕ приватные квизы владельца, а не публичные полки. */
+    private fun observePrivateQuestsFlow() {
+        scope.launch {
+            authRepository.observeUid().flatMapLatest { uid ->
+                if (uid == null) flowOf(emptyList()) else observePrivateQuests(uid)
+            }
+                .catch { /* экран пустоты честнее выдуманного списка */ }
+                .collect { items ->
+                    _uiState.value =
+                        if (items.isEmpty()) QuestListUiState.Empty else QuestListUiState.PrivateQuests(items)
+                }
+        }
+    }
+
+    private fun observePublicQuests() {
         scope.launch {
             observeSourceQuests().flatMapLatest { quests ->
                 if (quests.isEmpty()) {
@@ -110,10 +157,11 @@ class DefaultQuestListComponent(
                 .catch { /* log */ }
                 .collect { _uiState.value = it }
         }
-        lifecycle.doOnDestroy { componentJob.cancel() }
     }
 
     override fun onQuestClick(quest: QuestDisplayItem) {
+        // В приватной категории публичных строк нет: тап по приватному квизу — отдельный вход.
+        if (isPrivateCatalog) return
         val targetShelf = selectionTargetShelf
         if (targetShelf != null) {
             setQuestShelf(quest, targetShelf, dismissOnSuccess = true)

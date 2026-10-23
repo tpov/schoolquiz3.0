@@ -17,6 +17,9 @@ dependencies {
     // Next-lesson resolution reads lesson.themeId (design decision F3).
     implementation(project(":shared:feature:theme:domain"))
     implementation(project(":shared:core:question-schema"))
+    // Приватный прогон (AD-29, 8.4): дверь читает сессию через AuthRepository (app-shell domain).
+    implementation(project(":shared:feature:app-shell:domain"))
+    implementation(libs.kotlinx.datetime)
     implementation(project(":shared:core:leaderboard"))
     implementation(project(":shared:core:analytics"))
     implementation(project(":shared:core:sync"))

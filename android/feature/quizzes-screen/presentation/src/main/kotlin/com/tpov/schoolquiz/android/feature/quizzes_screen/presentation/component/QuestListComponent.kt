@@ -4,6 +4,7 @@ import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 
 interface QuestListComponent {
@@ -15,6 +16,9 @@ interface QuestListComponent {
         get() = null
 
     fun onQuestClick(quest: QuestDisplayItem)
+
+    /** Тап по приватному квизу (AD-29): дверь прогона, не иерархия публичного квеста. */
+    fun onPrivateQuestClick(quest: PrivateQuestItem) = Unit
 
     fun onQuestDownloadClick(quest: QuestDisplayItem)
 

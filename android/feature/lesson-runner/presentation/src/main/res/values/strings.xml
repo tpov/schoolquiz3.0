@@ -96,4 +96,25 @@
     <string name="runner_settlement_nolics">Nolics</string>
     <string name="runner_private_completion_title">Quiz completed</string>
     <string name="runner_private_completion_hint">The author has hidden results — this completion is confirmed without a score.</string>
+    <string name="private_run_submitting">Submitting the attempt…</string>
+    <string name="private_run_result_pending">The attempt is queued — the result appears once it is delivered.</string>
+    <string name="private_run_refresh">Refresh</string>
+    <string name="private_run_read_failed">The attempt could not be submitted</string>
+    <string name="private_run_refused_title">Entry refused</string>
+    <string name="private_run_link_disabled">The quiz link is disabled by its author.</string>
+    <string name="private_run_link_expired">The quiz link has expired.</string>
+    <string name="private_run_limit_reached">All attempts of this quiz are used.</string>
+    <string name="private_run_not_found">This quiz does not exist.</string>
+    <string name="private_run_content_changed">The quiz changed after this attempt started — start again if the door allows.</string>
+    <string name="private_run_terminal">This attempt is already finished.</string>
+    <string name="private_run_auth_required">Sign in with your SchoolQuiz account to start.</string>
+    <string name="private_run_unavailable">The quiz could not be reached — try again.</string>
+    <string name="private_run_question_expired">Time for this question is up</string>
+    <string name="private_run_progress">Question %1$d of %2$d</string>
+    <string name="private_run_answer">Answer</string>
+    <string name="private_run_finished">Attempt finished</string>
+    <string name="private_run_score">%1$d of %2$d correct — %3$d%%</string>
+    <string name="private_run_completion_only">Completion confirmed. The author has hidden results — no score is shown.</string>
+    <string name="private_run_reason_timeout">Closed by timeout: unanswered questions count as shown without an answer.</string>
+    <string name="private_run_reason_finished">Submitted in time.</string>
 </resources>

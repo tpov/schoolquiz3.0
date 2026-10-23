@@ -90,6 +90,20 @@ val lessonRunnerPresentationModule =
             }
         }
 
+        // Приватный квиз (AD-29, история 8.4): дверь → один заход → подача очередью → результат.
+        single<com.tpov.schoolquiz.android.feature.lesson_runner.presentation.PrivateQuizRunnerComponentFactory> {
+            com.tpov.schoolquiz.android.feature.lesson_runner.presentation.PrivateQuizRunnerComponentFactory { ctx, request ->
+                com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultPrivateQuizRunnerComponent(
+                    componentContext = ctx,
+                    request = request,
+                    startPrivateQuizAttempt = get(),
+                    repository = get(),
+                    currentUid = { get<com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository>().currentUid().orEmpty() },
+                    parser = get(),
+                )
+            }
+        }
+
         // Экзамен (CAP-21/22): компонент прогона получает транспорт сидинга напрямую.
         single<com.tpov.schoolquiz.android.feature.lesson_runner.presentation.exam.ExamRunComponentFactory> {
             com.tpov.schoolquiz.android.feature.lesson_runner.presentation.exam.ExamRunComponentFactory

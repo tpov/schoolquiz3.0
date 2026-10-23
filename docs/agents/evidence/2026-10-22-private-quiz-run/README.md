@@ -70,6 +70,29 @@ Done bar: code + JVM/Node tests + evidence + device-proof recipe (two devices + 
    show the timeout attempt (percent 0, reason timeout). A fresh start refuses (limit spent).
 6. Flip show-result on A (resubmit settings): B's past result read now shows the percent.
 
+## Second pass, same day — the run is reachable from the UI
+
+- `fetchPrivateQuizRun` now FREEZES the run at the first serve, in a transaction: the redacted
+  halves AND the translation keys (`run.keys`) are stored under the start record; every later
+  fetch (second device, retry) serves the identical set. Keys never travel to the client.
+- `private_quiz.SUBMIT_ATTEMPT` translates Ordering/FillBlank answers back through those keys
+  before scoring (choices are not id-rewritten and need no key); the deadline basis is the frozen
+  run the participant actually saw. Round-trip proven: `an ordering answer in scrambled ids is
+  translated back by the frozen keys` (private-quiz-run.test.js 9/9).
+- UI path: quizzes screen → category «Приватные квизы» → quest rows (saved owner quizzes) →
+  `QuizzesConfig.PrivateQuizRunner` (a pointer only; dropped on process restore — the server
+  times the attempt out) → `PrivateQuizRunnerScreen`: door-checking → typed refusal card
+  (LINK_DISABLED / LINK_EXPIRED / ATTEMPT_LIMIT_REACHED / …) → questions on their original
+  schedule (AD-31 clock, expiry closes shown-without-answer) → submit enqueued via
+  `PrivateQuizSubmitOutboxWriter` (key = startId, permanent receipt, no consent) → result read
+  via `readPrivateQuizResult`, completion-only when showResult=false. Signed-in accounts only
+  (AUTH_REQUIRED otherwise); no guest/password path.
+- New tests: `PrivateQuizRunMachineTest` (door refusal, served/answers payload, expiry closes
+  without answer, completion-only read), `PrivateQuizSubmitOutboxContractTest` (key by startId,
+  receiver fields, explicit null for no-answer, permanent receipt without terms consent).
+- Gates: node 128/129 (inherited mvp-isolation pin), gradle lesson-runner domain/data,
+  outbox, lesson-runner + quizzes-screen presentation — green.
+
 ## Left to the owner
 
 - The physical two-device + timeout pass above (HITL).

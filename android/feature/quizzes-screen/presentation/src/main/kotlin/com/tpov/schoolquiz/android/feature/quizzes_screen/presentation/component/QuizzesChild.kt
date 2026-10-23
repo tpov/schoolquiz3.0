@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.PrivateQuizRunnerComponent
 
 sealed interface QuizzesChild {
     data object Idle : QuizzesChild
@@ -18,4 +19,6 @@ sealed interface QuizzesChild {
     data class LessonList(val component: LessonListComponent) : QuizzesChild
 
     data class LessonRunner(val component: LessonRunnerRootComponent) : QuizzesChild
+
+    data class PrivateQuizRunner(val component: PrivateQuizRunnerComponent) : QuizzesChild
 }

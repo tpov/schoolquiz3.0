@@ -15,6 +15,9 @@ dependencies {
     implementation(project(":shared:feature:theme:domain"))
     implementation(project(":shared:feature:lesson:domain"))
     implementation(project(":shared:feature:lesson-runner:domain"))
+    // Приватная категория (AD-29, история 8.4): список приватных квизов читает сохранённые
+    // снимки автора; ключ категории живёт в домене quest-authoring.
+    implementation(project(":shared:feature:quest-authoring:domain"))
     implementation(project(":shared:feature:question:domain"))
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(project(":shared:feature:economy:domain"))

@@ -46,10 +46,14 @@ import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyDownloadStatus
+import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import androidx.compose.foundation.clickable
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NOIR_WASH_MIDPOINT_LATE
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashQuizzes
@@ -58,6 +62,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestShelfSyncMark
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -134,6 +139,11 @@ fun QuestListScreen(
                     component = component,
                     state = state,
                     canManagePublicShelves = canManagePublicShelves,
+                )
+            is QuestListUiState.PrivateQuests ->
+                PrivateQuestsContent(
+                    component = component,
+                    state = state,
                 )
         }
     }
@@ -301,6 +311,40 @@ private fun shareQuest(
         context.startActivity(Intent.createChooser(intent, null))
     } catch (e: ActivityNotFoundException) {
         Log.w(TAG, "Share unavailable", e)
+    }
+}
+
+/**
+ * Строки категории «Приватные квизы» (AD-29, история 8.4): тап открывает дверь прогона.
+ * Никаких полок, скачиваний и меню публичного квеста здесь не существует.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun PrivateQuestsContent(
+    component: QuestListComponent,
+    state: QuestListUiState.PrivateQuests,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        state.items.forEach { item ->
+            BrandCard(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { component.onPrivateQuestClick(item) },
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = item.title, style = NoirType.groupTitle, color = NoirT1)
+                    Text(
+                        text = stringResource(R.string.quizzes_private_quest_row, item.questionCount),
+                        style = NoirType.rowSub,
+                        color = NoirT2,
+                    )
+                }
+            }
+        }
     }
 }
 

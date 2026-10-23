@@ -224,6 +224,7 @@ class QuizzesStateKeeperRestoreTest {
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             retirePublicQuest = RetirePublicQuestUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not expected") },
+            privateQuizRunnerFactory = { _, _ -> error("Not expected") },
             arenaRunnerFactory = arenaRunnerFactory,
             arenaCatalogFactory =
                 ArenaLessonCatalogComponentFactory { child ->

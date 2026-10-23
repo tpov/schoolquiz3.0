@@ -345,6 +345,56 @@ test("the recovery window ending terminates the attempt with a timeout scored ov
   }
 });
 
+test("an ordering answer in scrambled ids is translated back by the frozen keys", async () => {
+  // Ordering красакция перемешивает id айтемов (ri-*): ответ участника живёт в выданных id, и
+  // приём подачи переводит его ключами заморозки — иначе честный порядок считался бы как мусор.
+  const ordering = {
+    id: "q-order",
+    lessonId: "lesson-1",
+    order: 0,
+    payload: JSON.stringify({
+      type: "Ordering",
+      text: "Поставь по порядку",
+      imageUrl: null,
+      items: [{id: "item-b", text: "второй"}, {id: "item-a", text: "первый"}],
+    }),
+  };
+  const base = world({quest: {privateQuizSettings: {attemptLimit: 1, showResult: true, startedCount: 0}}});
+  // Порядковый вопрос один: обычные q-1/q-2 из мира не сеются.
+  for (const path of Object.keys(base)) {
+    if (path.endsWith("/questions/q-1") || path.endsWith("/questions/q-2")) delete base[path];
+  }
+  base[`${QUEST_PATH}/sections/section-1/themes/theme-1/lessons/lesson-1/questions/q-order`] = ordering;
+  store.reset(base);
+  await start({startId: "start-order-0001"});
+  const run = await call("fetchPrivateQuizRun", PARTICIPANT, {
+    ownerUid: AUTHOR, catalogId: CATALOG, questId: QUEST, startId: "start-order-0001",
+  });
+  assert.equal(run.questions.length, 1);
+  const publicPayload = JSON.parse(run.questions[0].payload);
+  assert.equal(publicPayload.type, "OrderingRedacted");
+  // Ответ участника — в выданных (перемешанных) id, ровно как их показал экран. Правильный
+  // порядок — порядок айтемов ИСХОДНИКА: [второй, первый].
+  const presented = publicPayload.items.map((item) => item.id);
+  const correctFirst = presented.find((id) => publicPayload.items.find((i) => i.id === id).text === "второй");
+  const correctSecond = presented.find((id) => publicPayload.items.find((i) => i.id === id).text === "первый");
+  const submitted = await call("submitMutation", PARTICIPANT, {
+    mutationId: "submit-order",
+    operation: "private_quiz.SUBMIT_ATTEMPT",
+    payload: {
+      ownerUid: AUTHOR, catalogId: CATALOG, questId: QUEST, startId: "start-order-0001",
+      served: [{questionId: "q-order", codeAnswerIndex: 0}],
+      answers: [{
+        questionId: "q-order", codeAnswerIndex: 0,
+        answerPayload: JSON.stringify({type: "ordering", order: [correctFirst, correctSecond]}),
+        answeredAtMs: NOW + 500,
+      }],
+    },
+  });
+  assert.equal(submitted.result.reason, ATTEMPT_REASON.FINISHED);
+  assert.equal(submitted.result.percentScore, 100, "правильный порядок в выданных id засчитан");
+});
+
 test("no ledger row and no consent exists anywhere in the private cycle", async () => {
   store.reset(world({quest: {privateQuizSettings: {attemptLimit: 1, showResult: true, startedCount: 0}}}));
   await start();

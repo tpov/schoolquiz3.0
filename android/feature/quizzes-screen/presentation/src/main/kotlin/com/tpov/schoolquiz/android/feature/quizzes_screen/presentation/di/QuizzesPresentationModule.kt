@@ -10,8 +10,14 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultArenaLessonCatalogComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PrivateQuestItem
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.PrivateQuizSettings
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.use_case.ObserveLessonUnlockPricesUseCase
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
 
 val quizzesPresentationModule =
@@ -57,6 +63,25 @@ val quizzesPresentationModule =
                 setPublicQuestShelf = get(),
                 retirePublicQuest = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
+                privateQuizRunnerFactory = get(),
+                observePrivateQuests = { uid ->
+                    // Приватная категория (AD-29, история 8.4): сохранённые приватные квизы
+                    // владельца; статусы, у которых уже есть замороженный набор на сервере.
+                    get<ObserveQuestDraftSummariesUseCase>()(uid)
+                        .map { summaries ->
+                            summaries
+                                .filter { it.catalogId.value == PrivateQuizSettings.PRIVATE_QUIZ_CATALOG_ID }
+                                .filter { it.status == QuestDraftStatus.SYNCED || it.status == QuestDraftStatus.REVIEW_QUEUED }
+                                .sortedByDescending { it.updatedAtMs }
+                                .map { summary ->
+                                    PrivateQuestItem(
+                                        questId = summary.id.value,
+                                        title = summary.title,
+                                        questionCount = summary.questionCount,
+                                    )
+                                }
+                        }
+                },
                 arenaCatalogFactory = get<ArenaLessonCatalogComponentFactory>(),
                 // Keep catalogue construction independent of runner resolution; no fallback on explicit launch.
                 arenaRunnerFactory =

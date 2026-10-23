@@ -100,4 +100,25 @@
     <string name="runner_settlement_nolics">Нолики</string>
     <string name="runner_private_completion_title">Квиз завершён</string>
     <string name="runner_private_completion_hint">Автор скрыл результаты — завершение подтверждено, без счёта.</string>
+    <string name="private_run_submitting">Отправляем попытку…</string>
+    <string name="private_run_result_pending">Попытка в очереди — результат появится после доставки.</string>
+    <string name="private_run_refresh">Обновить</string>
+    <string name="private_run_read_failed">Попытку не удалось отправить</string>
+    <string name="private_run_refused_title">Вход закрыт</string>
+    <string name="private_run_link_disabled">Ссылка на квиз отключена автором.</string>
+    <string name="private_run_link_expired">Срок ссылки истёк.</string>
+    <string name="private_run_limit_reached">Все попытки этого квиза использованы.</string>
+    <string name="private_run_not_found">Такого квиза нет.</string>
+    <string name="private_run_content_changed">Квиз изменился после старта попытки — начните заново, если дверь пустит.</string>
+    <string name="private_run_terminal">Эта попытка уже завершена.</string>
+    <string name="private_run_auth_required">Войдите в аккаунт SchoolQuiz, чтобы начать.</string>
+    <string name="private_run_unavailable">Квиз недоступен — попробуйте ещё раз.</string>
+    <string name="private_run_question_expired">Время вопроса вышло</string>
+    <string name="private_run_progress">Вопрос %1$d из %2$d</string>
+    <string name="private_run_answer">Ответить</string>
+    <string name="private_run_finished">Попытка завершена</string>
+    <string name="private_run_score">%1$d из %2$d верно — %3$d%%</string>
+    <string name="private_run_completion_only">Завершение подтверждено. Автор скрыл результаты — счёт не показывается.</string>
+    <string name="private_run_reason_timeout">Закрыто по тайм-ауту: вопросы без ответа учтены как показанные без ответа.</string>
+    <string name="private_run_reason_finished">Отправлено вовремя.</string>
 </resources>

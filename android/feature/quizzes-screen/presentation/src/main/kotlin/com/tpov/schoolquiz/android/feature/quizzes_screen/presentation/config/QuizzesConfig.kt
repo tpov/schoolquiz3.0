@@ -77,6 +77,20 @@ sealed class QuizzesConfig {
         val questType: QuestType = QuestType.REGULAR,
     ) : QuizzesConfig()
 
+    /**
+     * Прогон приватного квиза (AD-29, история 8.4) — только указатель. Право решает дверь:
+     * ни владелец, ни «разрешение на прогон» не сериализуются, и попытка переживает лишь
+     * живой процесс (смерть процесса = попытка закрыта серверным тайм-аутом, AD-31).
+     */
+    @Serializable
+    data class PrivateQuizRunner(
+        val ownerUid: String,
+        val catalogId: String,
+        val questId: String,
+        val title: String,
+        val breadcrumbs: List<BreadcrumbRoot>,
+    ) : QuizzesConfig()
+
     @Serializable
     data class LessonRunner(
         val lessonId: String,
