@@ -22,6 +22,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserS
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.PrivateQuizRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
@@ -381,6 +382,7 @@ class QuizzesRootIntegrationTest {
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 retirePublicQuest = RetirePublicQuestUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _, _ -> error("Not expected") },
+                privateQuizRunnerFactory = PrivateQuizRunnerComponentFactory { _, _ -> error("Private quiz run not expected") },
                 arenaRunnerFactory = ArenaRunnerComponentFactory { _, _ -> error("Arena run not expected") },
                 arenaCatalogFactory = ArenaLessonCatalogComponentFactory {
                     error("Arena not expected in this fixture")
