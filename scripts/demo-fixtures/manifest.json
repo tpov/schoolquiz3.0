@@ -96,7 +96,7 @@
     "ratingSum": 4,
     "ratingCount": 2,
     "ratingVersion": 2,
-    "seeded": false
+    "seeded": true
    },
    "expectedPriceNolics": 1,
    "expectedWeightedScore": "44/22 (rating 4/2 + Bayesian prior 40/20) — the universe minimum; export-era 2/1 plus the app's own RATE_LESSON 2★ of hitl 3.1 (receipt lesson_runner-SUBMIT_RATING-1cdc7ca6…, evidence 2026-10-09-hitl-rig-matrix/31-arena-first-pass): fraction 2.0 unchanged, price stays 1",
@@ -264,7 +264,7 @@
  "pinnedPreconditionsExtra": [
   {
    "doc": "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
-   "verified": "ratingSum 4, ratingCount 2, ratingVersion 2, authorUid D0h0rHZGJVoU22cADZV8yb2lz1KT (export-era 2/1 advanced to 4/2 by the app's own RATE_LESSON 2★ of hitl 3.1; fraction 2.0 = the universe minimum)"
+   "verified": "ratingSum 4, ratingCount 2, ratingVersion 2 (provenance: export-era 2/1 advanced to 4/2 by the app's own RATE_LESSON 2★ of hitl 3.1; fraction 2.0 = the universe minimum). Since the seeded:true flip the doc is fixture-owned: the live-run preamble and repair-pin.js repair drift to the pin (three fields, merge) instead of refusing it — authorUid and any extra fields are never rewritten"
   }
  ],
  "chainFacts": {

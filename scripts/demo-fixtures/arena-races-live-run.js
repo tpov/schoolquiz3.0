@@ -58,6 +58,7 @@ const {payableTermsProjection} = require(path.join(repoRoot, "functions", "mutat
 const {restoreContent} = require(path.join(repoRoot, "functions", "question-redaction"));
 const {attemptReward, questionAllocatedSeconds} = require(path.join(repoRoot, "functions", "lesson-reward"));
 const {computePercentScore} = require(path.join(repoRoot, "functions", "assessment-scoring"));
+const {assertOrRepairRatingPins} = require(path.join(__dirname, "rating-pins.js"));
 admin.initializeApp({projectId: PROJECT});
 const db = admin.firestore();
 
@@ -211,6 +212,11 @@ async function main() {
   const output = {story: "3.8 arena-price-immutability-and-races", startedAt: new Date().toISOString(),
     requestTag: TAG, rigPlayer: RIG_PLAYER, parts: {}, notes: []};
 
+  // Ретро item 4b (L8): рейтинговые пины обоих банков сверяются с манифестом до старта, дрейф
+  // чинится громким логом (merge трёх пиновых полей) — иначе baseline ниже и finally-восстановление
+  // законсервировали бы протухший документ вместо пина.
+  output.ratingPinRepairs = await assertOrRepairRatingPins(manifest, db);
+
   // ── Подготовка: живая таблица экономики -> capturedTerms (та же проекция, что сверяет сервер)
   const constantsSnapshot = await db.doc(ECONOMY_CONSTANTS_DOC).get();
   const writtenAtMs = constantsSnapshot.exists && constantsSnapshot.updateTime ? constantsSnapshot.updateTime.toMillis() : 0;
@@ -256,6 +262,8 @@ async function main() {
   // ── A. Заморозка цены сквозь settle (quote не переоценивается) ──────────────────────────────
   // Окно мутации ловит любой сбой: finally восстанавливает документ рейтинга до выхода.
   let ticketA = null;
+  // Ретро item 4c: точное число роялти-строк осевшей попытки — эталон «ровно один раз» для гонки B3.
+  let royaltyRowsExpected = null;
   try {
     const issued = await prepare(token, {requestId: `${TAG}-a1`, mode: "SELECTED",
       lessonId: LESSON_ID, difficulty: "HARD"});
@@ -296,6 +304,7 @@ async function main() {
     const royaltyA = await ledgerBySource(ticketA.ticketId);
     const royaltySum = sumLedger(royaltyA, "arena_author_royalty", "arena_royalty_sink", "arena_royalty_carry");
     assert.equal(royaltySum, 1, `the royalty split conserves exactly the frozen nolic: ${royaltySum}`);
+    royaltyRowsExpected = royaltyA.length;
     const userAfterA = await userDoc(RIG_PLAYER);
     // Цена ушла с кошелька ещё на prepare (резерв); settle добавляет только награду.
     const expectedNolicsA = (userAfterPrepare.pointsNolics ?? userAfterPrepare.nolics) + mirror.reward.nolics;
@@ -454,7 +463,12 @@ async function main() {
       assert.equal(raceDoc.terminal.percentScore, 100);
       assert.equal(raceDoc.terminal.consumedNolics, 1);
       assert.equal(cancelReasons.length, 0, "no release rows on the settle-winner path");
-      assert.ok(royaltyReasons.length > 0, "royalty rows exist exactly once");
+      // Ретро item 4c: «ровно один раз» — это точное число строк эталонной попытки части A и
+      // консервация ровно одной нолики, а не голое существование хоть одной записи.
+      assert.equal(royaltyReasons.length, royaltyRowsExpected,
+        "the race winner carries exactly the reference attempt's royalty row count");
+      assert.equal(sumLedger(royaltyReasons, "arena_author_royalty", "arena_royalty_sink", "arena_royalty_carry"), 1,
+        "the race winner's royalty conserves exactly the frozen nolic");
       // userBeforeRace читается ПОСЛЕ prepare — цена уже в резерве; награда единственный дельта.
       const mirror = expectedReward(userBeforeRace, frozenDoc, 100);
       const nolicsDelta = (userAfterRace.pointsNolics ?? userAfterRace.nolics) -

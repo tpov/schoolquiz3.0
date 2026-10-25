@@ -52,6 +52,7 @@ const PLAYER_A = "demoarena_player_a";
 const TAG = process.env.AQ_TAG || "aq37";
 const RUN_REUSED_QUOTA = process.env.AQ_SKIP_LOOP === "1";
 const manifest = JSON.parse(readFileSync(path.join(__dirname, "manifest.json"), "utf8"));
+const {assertOrRepairRatingPins} = require(path.join(__dirname, "rating-pins.js"));
 const BANK_LOW = manifest.banks.find((entry) => entry.id === "arena-bank-low");
 const EASY_BANK = manifest.easyBank;
 assert.ok(BANK_LOW && EASY_BANK, "manifest must carry bank-low and the easy bank");
@@ -118,6 +119,11 @@ const WALLET_NEUTRAL = {pointsNolics: PLAYER_A_ECONOMY.pointsNolics, lifePoints:
 async function main() {
   const output = {story: "3.7 arena-quotas-concurrency", startedAt: new Date().toISOString(),
     utcDay: dayId(Date.now()), requestTag: TAG, players: {}, notes: []};
+
+  // Ретро item 4b (L8): у этого драйвера то же хрупкое окно мутации рейтинга, что у races —
+  // пины сверяются с манифестом до старта, дрейф чинится громким логом (merge трёх полей),
+  // иначе baseline окна и finally-восстановление законсервируют протухший документ.
+  output.ratingPinRepairs = await assertOrRepairRatingPins(manifest, db);
 
   // ── Подготовка акторов ─────────────────────────────────────────────────────────────────────
   // player_a: документ экономики дозаписывается merge-ом ТОЛЬКО когда экономических полей ещё
