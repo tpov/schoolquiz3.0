@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 08:46
-last_updated: 09-01-2026 08:46
+last_updated: 10-25-2026 15:16
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -97,7 +97,7 @@ development_status:
   7-4-выборка-изменений-ограничена-страницей-и-продолжаема: backlog
   7-5-полный-ресинк-существует-как-операция-и-лечит-только-сторону: backlog
   7-6-семантика-удаления-зафиксирована-тремя-способами-защитный-fa: in-progress
-  epic-7-retrospective: optional
+  epic-7-retrospective: done
 
   epic-8: backlog
   8-1-сервер-назначает-version-одной-функцией-вместо-четырёх-мест: backlog
@@ -122,3 +122,88 @@ development_status:
   10-4-push-поднимает-обычную-синхронизацию-а-не-применяет-данные-и: backlog
   10-5-токен-снимается-при-смене-аккаунта-чужое-уведомление-не-пока: backlog
   epic-10-retrospective: optional
+action_items:
+  - id: "epic-7-retro-item-1-пиннуть-полный-набор-полей-конверта-repl"
+    epic: 7
+    action: "Пиннуть полный набор полей конверта {replayed,result} в economy-handler.test.js
+      + SHA-пин functions/box-service.js в platform/firebase (арена-прецедент)"
+    owner: "dev"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-2-re-arm-премь-подарка-возобновлять-лежаще"
+    epic: 7
+    action: "Re-arm премь-подарка: возобновлять лежащее намерение при reconnect/повторном
+      входе (кнопка застревает в Claiming после офлайн-неудачи)"
+    owner: "dev"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-3-сравнивать-базу-местного-счёта-серии-по"
+    epic: 7
+    action: "Сравнивать базу местного счёта серии по streakDays+nextBoxAtMs без boxCount
+      — автогрант дня 10 не должен стирать офлайн-счёт"
+    owner: "dev"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-4-conflicting_replay-офлайн-заявки-сделать"
+    epic: 7
+    action: "CONFLICTING_REPLAY офлайн-заявки сделать терминальным: сброс отравленного
+      намерения, VISIT продолжается"
+    owner: "dev"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-5-перечитывать-профиль-на-daily_limit-prem"
+    epic: 7
+    action: "Перечитывать профиль на DAILY_LIMIT/PREMIUM_REQUIRED и карантинить испорченные
+      тела интентов вместо TRANSPORT-ретрая"
+    owner: "dev"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-6-dual-shape-read-или-свип-старых-completi"
+    epic: 7
+    action: "Dual-shape read или свип старых completion-записей economy.OPEN_GIFT_BOX
+      до следующего деплоя functions"
+    owner: "dev"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-7-согласовать-mvp-nsc-и-пин-mvp-isolation"
+    epic: 7
+    action: "Согласовать mvp NSC и пин mvp-isolation: ed16fc81 добавил LAN-домен 192.168.31.218,
+      functions-гейт красный на HEAD (128/129)"
+    owner: "dev"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-8-пакет-возобновления-7-6-aab-40001-в-play"
+    epic: 7
+    action: "Пакет возобновления 7.6: AAB 40001 в Play internal testing, Pixel finger-test
+      Buy small; заранее решить UX silent-Buy"
+    owner: "owner"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-9-версионированное-решение-по-premiumregen"
+    epic: 7
+    action: "Версионированное решение по premiumRegenDivisor: включить x2 таблицей
+      или записать x1 как поставляемую"
+    owner: "owner"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-10-внести-принятые-формулировки-принимаю-с"
+    epic: 7
+    action: "Внести принятые формулировки принимаю с открытыми хвостами в статусы
+      7.1/7.2/7.3/7.6 в tickets.toml"
+    owner: "owner"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-11-реконсиляция-spec-epic-7-commerce-md-сер"
+    epic: 7
+    action: "Реконсиляция spec-epic-7-commerce.md: серверный конверт c2c1a414, resolved
+      premiumUntilMs-wipe, direct-callables-vs-outbox в context/ADR"
+    owner: "process"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
+  - id: "epic-7-retro-item-12-архивировать-сентябрьский-sprint-status"
+    epic: 7
+    action: "Архивировать сентябрьский sprint-status.yaml или завести секцию mvp-candidate
+      (detect-epic снова вернул фантомный эпик 7)"
+    owner: "owner"
+    status: open
+    ref: "/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md"
