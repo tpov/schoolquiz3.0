@@ -2,20 +2,33 @@
 title: 'Epic 1 candidate-rig retro fix package F1–F3: quiescence gate collision hole, oracle landing + wiring, ciCheck RED tracking'
 type: 'bugfix'
 created: '2026-10-25'
-status: 'in-progress'
+status: 'done'
 baseline_revision: '4e2ca56c0963289baf7ea67116b02a1cd914eebf'
 route: 'full'
 route_source: 'pinned'
-review: ''
-review_source: ''
-lenses_ran: []
+review: 'thorough'
+review_source: 'pinned'
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
-followup_review_recommended: false
-context:
+followup_review_recommended: falsecontext:
   - '_bmad-output/mvp-candidate/epic-candidate-rig/RETROSPECTIVE.md'
   - '_bmad-output/implementation-artifacts/spec-1-candidate-rig.md'
 warnings: ['oversized']
-deferred: []
+deferred:
+  - summary: >-
+      A concurrent session in the shared VPS checkout repeatedly empties the git index (twice this run: ~8422 and ~8427 staged whole-tree deletions, `git rm -r --cached .` signature), and lands foreign commits and modified files on the same wave branch mid-run.
+    evidence: |-
+      First seen after commit 0c356339, repaired by index-only `git reset` (worktree untouched); recurred during the review pass. This run committed exclusively with explicit pathspecs, so the foreign index state is neither committed nor discarded by it; the hazard (a bare `git commit` by any session would produce a whole-tree deletion commit) is recorded in result.md. Sibling commits 455f19ee..ba915081 landed on top of this run's chain mid-review; ba915081 also edits scripts/package.json (its tails coexist with this run's wiring, re-verified green). Needs an owner-level rule for parallel shifts in one checkout.
+    location: >-
+      VPS checkout /workspace/projects/schoolquiz3.0 (.git/index, wave branch night/e7-commerce)
+    severity: medium
+  - summary: >-
+      Push of night/e7-commerce was not performed mid-run: workflow Finalize forbids pushing; the standing workspace rule («результат закоммичен и запушен») is satisfied by the closure push performed immediately after this finalize.
+    evidence: |-
+      The closure push publishes the sibling commits stacked on top of this run's chain as well (shared wave branch, fast-forward from origin 4e2ca56c); sibling commits appear complete (retro item series + retrospective doc). Recorded with hashes in Auto Run Result.
+    location: >-
+      origin/night/e7-commerce
+    severity: low
 ---
 
 <intent-contract>
@@ -90,6 +103,35 @@ deferred: []
 
 ## Review Triage Log
 
+### 2026-10-25 — Review pass
+- verdicts: 25 findings — high 0, medium 2, low 15, false 8, maybe-false 0
+- findings:
+  - `[low]` `[reject]` BH: spec Verification keeps `git merge-base --is-ancestor d6e89fae HEAD → true` — unsatisfiable under the mandated cherry-pick — fix would edit this build's spec (rejected per rule); substitution (identical patch-ids `30ff3982…`) durably recorded in result.md F2a and Auto Run Result below.
+  - `[false]` `[reject]` BH: spec frontmatter shipped mid-flight (in-progress, no lenses) contradicting the completed-run record — refuted: transient mid-flow state by design; step-04 sets in-review then done in the finalization commit of this same run (04.10 triage precedent).
+  - `[low]` `[patch]` BH: env hook `FAKE_PREFLIGHT_QUIESCENCE_JSON` valid-passthrough branch has no positive control — patched in `015251bc`: `testFakePreflightQuiescenceHookPassesCanonicalObject(quiescent)` drives the sealed run with the hook set to the canonical zeroed object; asserts exit 0, verbatim capture in `preparation-preflight.json`, produced prepared-ticket; 18-case invalid loop untouched.
+  - `[false]` `[reject]` BH: "`lint` covers it" overstates — node --check sees only the test file, not the gate heredoc — refuted: the antecedent of "it" in spec and result.md is the contract test (exactly what node --check covers); the gate is covered at runtime by the sealed contract test per the same records; a .sh-embedded heredoc is not node --check-able.
+  - `[low]` `[reject]` BH: transplanted memo pinned to the dead e1f tree ("сегодня" = 05.10), no transplant preamble — the memo is a dated record (capturedAtUtc 2026-10-05) whose header self-identifies the origin tree; verbatim transfer was the spec's Always and the retro's order; the transfer event is recorded in result.md F3.
+  - `[low]` `[patch]` BH: pre-fix RED proof not reproducible from committed history (fix and detecting case share one commit by design) — patched in `015251bc`: result.md F1 carries the reproduction recipe (test from `fc71bfc1` + leaf from `024675ea`, docker run, expect exit 1 `unsafe quiescence passed` naming the collision object).
+  - `[low]` `[patch]` BH: inlined npm tail misattributes the `ℹ tests 16 / 250ms` node:test summary to the contract test — patched in `015251bc`: attribution note added (summary belongs to the preceding legacy-recovery node; the contract test speaks through its own PASS line + chain exit code).
+  - `[low]` `[defer]` BH: no push evidenced while the workspace rule requires «закоммичен и запушен» — workflow Finalize forbids pushing mid-run; push performed at session closure immediately after finalize (recorded in Auto Run Result).
+  - `[medium]` `[defer]` BH: concurrent-session hazard (index emptied → ~8422 staged whole-tree deletions, 9+ foreign modified files) flagged without a follow-up surface — external to this change; mitigated this run (index repaired via index-only `git reset` twice — the wipe recurred mid-review, pathspec-scoped commits throughout, hazard recorded in result.md + Auto Run Result); the recurring wipe pattern needs an owner-level rule (deferred).
+  - `[low]` `[patch]` BH: misspelled `quiescenceIsQuiscent` propagated; result.md "verbatim" quote not byte-verbatim — result.md part patched in `015251bc` (byte-verbatim `quiescenceIsQuiescent`, grep-verified single occurrence); the spec-prose part would edit this build's spec (rejected per rule); correction noted in Auto Run Result.
+  - `[low]` `[reject]` BH: no negative-counter and no empty-env-hook case — negative counters re-exercise the exact `!== 0` branch pinned by the `=1` cases (no distinct hole); empty-env crash path is fail-closed (fake reader crash → stop before prepare) and pinning it needs new assertion machinery, not a direct correction; the hook is test-internal.
+  - `[low]` `[patch]` BH: garbled sentence in result.md F2b ("was applied to those") — patched in `015251bc`: rewritten to state the tails were appended to the current full test/lint strings.
+  - `[false]` `[reject]` BH: ~2.5-min unconditional final node with no standalone target — refuted: proposal §6 explicitly evaluated and rejected the standalone variant (it would drop out of the canonical gate, repeating the pre-04.10 fate); the cost is the retro-mandated design.
+  - `[low]` `[reject]` ECH: empty/non-JSON env hook crashes the fake preflight — same root as the empty-hook half above: fail-closed in the designed direction, test-internal hook, pinning is not a direct correction.
+  - `[low]` `[patch]` ECH: docs name `quiescenceIsQuiscent`, shipped code defines `quiescenceIsQuiescent` (grep-verified) — result.md part patched in `015251bc`; spec-prose part rejected per spec-edit rule (noted in Auto Run Result).
+  - `[low]` `[reject]` ECH: spec Task 1's merge-base claim measured FALSE — same finding as the merge-base row above; patch-id substitution recorded; fix would edit this build's spec.
+  - `[medium]` `[defer]` ECH: AC "only dirty-to-clean delta is this run's files" not met (foreign modified files + staged deletions; branch gained sibling commits mid-run) — external cause (live sibling session), not this change; this run's own paths all committed; grouped with the concurrent-session defer above.
+  - `[low]` `[patch]` VG: result.md's "inlined verbatim" predicate quote spells a nonexistent identifier — patched in `015251bc` (byte-verbatim quote); same root cause as the misspelling row (grouped with it for routing).
+  - `[false]` `[reject]` IA: the normative retro is not part of the patch, so F1–F3 correspondence is unverifiable from the diff — refuted: the retro was ingested at planning, the spec's Intent paraphrases its action items 1–3, and code-side correspondence was verified against the actual retro before implementation; a retrospective is a source document, not a change surface.
+  - `[false]` `[reject]` IA: F1 exercised only on the fixture surface, not real producer payloads — refuted: recorded design boundary (spec Code Map + epic context): the producer is untouched and covered by its own test (`arena-e2e-preparation-preflight-reader.test.js`, cited by the verification-gap lens); the gate's contract is validating untrusted JSON, which fixture payloads are.
+  - `[false]` `[reject]` IA: wiring inert until ciCheck RED lifts; nothing executes the wiring in the root gate — refuted: disclosed in result.md and precisely what story 1.7 (this change's own deliverable) tracks; the chain itself ran green (npm test) — the same surface scriptsTest calls.
+  - `[low]` `[patch]` IA: RED-proof lives only in result.md — grouped with the reproduction-recipe row (same root cause); patched in `015251bc`.
+  - `[false]` `[reject]` IA: commit-history expectations invisible in the diff — refuted: git history is the native surface for those expectations; a unified diff cannot show them by construction, and result.md attests each.
+  - `[low]` `[reject]` IA: memo's identity pointers reference the original wave — same finding as the dead-tree row above: dated record self-identifies origin; verbatim transfer mandated.
+  - `[false]` `[reject]` IA: wiring applied semantically vs "exactly as proposed" — refuted: the proposal's literal hunks no longer exist in the current strings; appending tails to current strings is the only faithful reading, and the deviation is recorded in result.md F2b.
+
 ## Design Notes
 
 - Why count + hasOwnProperty instead of a literal sorted string: any single-key object whose key happens to be the joined string defeats string comparison; count equality plus per-name ownership pins the exact set without relying on sort order at all.
@@ -109,3 +151,49 @@ deferred: []
 **Manual checks (if no CLI):**
 - tickets.toml 1.7 block matches the e1f draft verbatim (id, slug, title, covers, after, hitl, both comment lines) and carries no status.
 - Memo files match `night/e1-followups` blobs (`git diff night/e1-followups -- docs/agents/evidence/2026-10-05-cicheck-baseline/` is empty).
+
+## Auto Run Result
+
+Status: done (2026-10-25). Retro fix package F1–F3 of epic 1 (`epic-candidate-rig`, RETROSPECTIVE 2026-10-22) landed on the wave branch `night/e7-commerce` of the VPS checkout. The retrospective re-verdict itself stays out of scope (owner's call).
+
+### Summary of implemented change
+
+- **F2a — oracle landed (`024675ea`)** — `git cherry-pick -x d6e89fae` from `continuation/mvp-candidate-20260926`; the 459-line 17-case malformed-payload matrix + `FAKE_PREFLIGHT_QUIESCENCE_JSON` env hook now in the wave. Patch-id of the pick identical to the source (`30ff39829224f700d9446b175223f58fffe6f2b6`); the spec's `merge-base --is-ancestor` check is unsatisfiable under a cherry-pick (DAG semantics) — the patch-id equality is the recorded proof.
+- **F1 — gate fix + detecting case in one commit (`fc71bfc1`)** — `quiescenceIsQuiescent` (correct spelling in shipped code) now demands `Object.keys(candidate).length === quiescenceCounters.length` + `hasOwnProperty` per name + the unchanged zero-values check; join-comparison removed; exit-2 call site untouched. The 18th collision case `{[Object.keys(quiescent).sort().join(',')]: 0}` rides the same commit. RED pre-fix (docker: exit 1, `unsafe quiescence passed: {"orphanedRatingIntents,…":0}`, `0 !== 2`) → GREEN post-fix (exit 0, `offline settlement composition tests: PASS`).
+- **F2b — wiring (`fa72bd73`)** — `scripts/package.json` `test` ends with `&& node ../.maestro/mvp/arena-matrix/offline-settlement-contract.test.js`, `lint` with `&& node --check …`; nothing else changed. `npm test` (node24 on PATH): exit 0, contract test is the final node; `npm run lint`: exit 0.
+- **F3 — tracking (`0c356339`)** — draft story 1.7 `rerun-cicheck-record` registered in the wave `tickets.toml` (status-free, verbatim from the e1f draft) + `docs/agents/evidence/2026-10-05-cicheck-baseline/` (README + JSON, byte-identical to `night/e1-followups`) carrying the RED-lifting condition.
+- **Patch round (`015251bc`)** — review fixes: positive control for the env hook's valid branch (19th driver case: hooked canonical object → happy outcome, verbatim capture, prepared ticket), npm-tail attribution note, garbled wiring sentence rewritten, byte-verbatim predicate quote in result.md, RED reproduction recipe (test from `fc71bfc1` + leaf from `024675ea` → expected exit 1).
+
+### Files changed
+
+Commits in order on `night/e7-commerce`: `024675ea` → `fc71bfc1` → `fa72bd73` → `0c356339` → `cf2d8cb9` (evidence + spec) → `015251bc` (patch round).
+- `.maestro/mvp/arena-matrix/run-arena-offline-settlement-leaf.sh` — F1 gate fix (one line).
+- `.maestro/mvp/arena-matrix/offline-settlement-contract.test.js` — F2a oracle matrix (459 lines) + F1 collision case + patch-round positive control (472 lines at HEAD).
+- `scripts/package.json` — F2b wiring tails. Note: sibling commit `ba915081` later added its own demo-fixtures nodes to the same strings; both changes coexist, re-verified green at HEAD.
+- `_bmad-output/mvp-candidate/epic-candidate-rig/tickets.toml` — F3: 1.7 header comment + status-free draft block.
+- `docs/agents/evidence/2026-10-05-cicheck-baseline/{README.md,cicheck-baseline.json}` — F3 memo transfer (verbatim).
+- `docs/agents/evidence/2026-10-25-f1-f3-retro-fix-package/result.md` — run record with inlined RED/GREEN/npm outputs, per-fix outcomes, concurrent-activity flag; corrected in the patch round.
+- `_bmad-output/implementation-artifacts/spec-f1-f3-candidate-rig-retro-fixes.md` — this spec.
+
+### Review findings breakdown
+
+Four lenses (blind-hunter 13, edge-case-hunter 4, verification-gap 1, intent-alignment 7): 25 findings — high 0, medium 2, low 15, false 8, maybe-false 0. Patched: 8 rows in 4 entries, all low (env-hook positive control; RED reproduction recipe; npm-tail attribution + garbled sentence; byte-verbatim quote) — applied in `015251bc`, contract test re-verified green. Deferred: 3 rows in 2 entries (concurrent-session index wiping, medium; closure push, low). Rejected: 14 rows with refutations/reasons in the Review Triage Log (incl. 2 rows whose only fix would edit this build's spec — the merge-base criterion and the spec-prose misspelling; both corrections are recorded here: the code defines `quiescenceIsQuiescent`, and patch-id equality replaces the impossible merge-base check).
+
+### Follow-up review recommendation
+
+`false` — no high or medium entries patched; the patch round was four low-precision fixes, all re-verified. No named unverified risk.
+
+### Verification performed
+
+- Docker contract test (node:22-bookworm-slim, `--network none`, repo `:ro`) — re-run independently at `cf2d8cb9` and again at HEAD `ba915081` after the patch round: exit 0, `offline settlement composition tests: PASS`.
+- `npm test` in `scripts/` (node24 PATH) — re-run independently post-patch at HEAD: exit 0, chain ends with the contract test PASS; `npm run lint` exit 0 with the new `--check` tail.
+- patch-id equality of pick vs `d6e89fae` — re-verified (`30ff3982…` both).
+- Memo transfer — `git diff night/e1-followups HEAD -- docs/agents/evidence/2026-10-05-cicheck-baseline/` empty (re-verified).
+- tickets.toml 1.7 block — verbatim vs the e1f draft hunks, no status key (manual check).
+- Full run diff (baseline `4e2ca56c` → HEAD, pathspec-limited to this run's files) staged and read; patch commit `015251bc` diff read.
+
+### Residual risks
+
+- Root ciCheck stays RED until the owner places the debug `google-services.json` (condition recorded in the transferred memo); only then does `scriptsTest` — now carrying the contract test — execute inside the canonical gate. Story 1.7 tracks the re-run.
+- A concurrent session remains active in the shared checkout: it wiped the git index twice during this run (repaired index-only each time) and stacked five+ commits on the same branch; a bare `git commit` by any session while the index is wiped would produce a whole-tree deletion commit. Owner-level rule needed (deferred).
+- The closure push publishes the sibling commits stacked on this run's chain along with it (shared wave branch, fast-forward).
