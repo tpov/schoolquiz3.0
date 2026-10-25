@@ -142,6 +142,14 @@ class FirebaseQuestionWindowRemoteDataSource internal constructor(
         else -> failed(QuestionWindowFailureKind.SERVER_FAILURE)
     }
 
+    /**
+     * A3 (решение разработки, записано для владельца): окна вопросов читают SDK-отказы в свой
+     * типизированный [QuestionWindowFailureKind], а не в домен очереди [SyncError] — это второе,
+     * нарочито отдельное соглашение о маппинге (первое — `syncErrorForCode` в `network/`).
+     * Очередь решает «повторять ли мутацию» и потому различает повтор/парковку/карантин; окна —
+     * «что назвать переходом», и их ветви (аккаунт, чужой запрос, кривой ответ, сервер) решению
+     * об очереди не помогают. Общая таблица сделала бы каждую из ветвей чужой.
+     */
     private fun callableFailure(error: QuestionWindowCallableException): QuestionWindowFailureKind =
         when (error.code) {
             // Приёмник 2.6 отказывает поимённо: unauthenticated и invalid-argument; детали без reason.

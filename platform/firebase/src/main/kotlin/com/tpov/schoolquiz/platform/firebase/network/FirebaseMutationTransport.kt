@@ -144,7 +144,7 @@ internal fun mutationErrorForCode(
     // Эффект уже на сервере: запись очереди ACK-ается движком, а не крутится как «неизвестная».
     val reuseReason = (details as? Map<*, *>)?.get("reason") as? String
     if (code == "ALREADY_EXISTS" && operation == OutboxOperations.SUBMIT_ATTEMPT &&
-        reuseReason == "SETTLEMENT_REUSE"
+        reuseReason == SETTLEMENT_REUSE_REASON
     ) {
         return SyncError.SettlementAlreadyRecorded()
     }

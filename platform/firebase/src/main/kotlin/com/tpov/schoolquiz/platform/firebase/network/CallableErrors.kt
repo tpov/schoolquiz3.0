@@ -52,6 +52,22 @@ const val VERSION_CONFLICT_DETAIL: String = "version-conflict"
  * и форма обязаны совпадать с `TERMS_CONSENT_DETAIL` в `functions/mutation-terms.js`.
  */
 const val TERMS_CONSENT_DETAIL: String = "terms-consent-required"
+
+/**
+ * Причина, которой сервер именует повторный арена-settle с расходящимся телом.
+ *
+ * Сервер отвечает already-exists, когда попытка с этим attemptId уже зафиксирована сохранённым
+ * settlement'ом, а тело повтора не совпадает с зафиксированным (другой отпечаток, другой
+ * владелец): отказ терминален — эффект уже на сервере, повторять нечего. Значение обязано
+ * совпадать с литералом в `functions/arena-entry-runtime.js` (реплей settle) и в
+ * `functions/arena-tickets.js` (повторный settle тикета).
+ *
+ * A3 (решение разработки, записано для владельца): этот код — ветвь домена очереди [SyncError]
+ * (читается в `mutationErrorForCode`), и у домена чтения окон вопросов своё типизированное
+ * соглашение об ошибках. Два SDK-соглашения о маппинге существуют нарочно — синхронизировать
+ * их между собой не следует.
+ */
+const val SETTLEMENT_REUSE_REASON: String = "SETTLEMENT_REUSE"
 private const val DETAIL_CODE = "code"
 private const val DETAIL_SERVER_VERSION = "serverVersion"
 

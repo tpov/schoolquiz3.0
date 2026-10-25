@@ -8,6 +8,7 @@
     <string name="tournament_state_account_changed">Аккаунт сменился, пока запрос летел</string>
     <string name="tournament_state_offline">Нет сети. Верните связь и повторите</string>
     <string name="tournament_state_pending">Ждём завершения предыдущей операции</string>
+    <string name="tournament_state_already_recorded">Результат уже зафиксирован — повтор не нужен</string>
     <string name="tournament_state_retry">Что-то не прошло. Тот же запрос можно повторить</string>
     <string name="tournament_retry">Повторить</string>
     <string name="tournament_info">Подробнее</string>

@@ -20,6 +20,7 @@ internal fun noticeText(notice: TournamentNotice): String =
         TournamentNotice.AccountChanged -> stringResource(R.string.tournament_state_account_changed)
         TournamentNotice.Offline -> stringResource(R.string.tournament_state_offline)
         TournamentNotice.Pending -> stringResource(R.string.tournament_state_pending)
+        TournamentNotice.AlreadyRecorded -> stringResource(R.string.tournament_state_already_recorded)
         TournamentNotice.Retry -> stringResource(R.string.tournament_state_retry)
         is TournamentNotice.Refused ->
             when (notice.reason) {

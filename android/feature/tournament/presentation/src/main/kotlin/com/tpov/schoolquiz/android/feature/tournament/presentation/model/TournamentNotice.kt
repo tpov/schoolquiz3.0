@@ -40,6 +40,14 @@ sealed interface TournamentNotice {
         val serverReason: String,
     ) : TournamentNotice
 
+    /**
+     * Эффект уже на сервере: реплей арена-settle с расходящимся телом отвергнут
+     * (`SETTLEMENT_REUSE`), попытка зафиксирована сохранённым settlement'ом. Это не «скорее
+     * временно» (повтор бессмыслен — отказ терминален) и не отказ: исход уже случился, осталось
+     * только назвать его.
+     */
+    data object AlreadyRecorded : TournamentNotice
+
     /** Неизвестно: скорее временно, повтор того же запроса предписан. */
     data object Retry : TournamentNotice
 }
@@ -101,8 +109,8 @@ fun failureNotice(
                         reason = refusalOf(sync.reason, agreementSurface),
                         serverReason = sync.reason,
                     )
-                SyncError.TermsConsentRequired,
-                is SyncError.SettlementAlreadyRecorded,
+                SyncError.TermsConsentRequired -> TournamentNotice.Retry
+                is SyncError.SettlementAlreadyRecorded -> TournamentNotice.AlreadyRecorded
                 is SyncError.VersionConflict,
                 is SyncError.Unknown,
                 null,

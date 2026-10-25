@@ -8,6 +8,7 @@
     <string name="tournament_state_account_changed">The account changed while the request was in flight</string>
     <string name="tournament_state_offline">You are offline. Reconnect and retry</string>
     <string name="tournament_state_pending">Waiting for an earlier operation to finish</string>
+    <string name="tournament_state_already_recorded">This result is already recorded — no retry needed</string>
     <string name="tournament_state_retry">Something went wrong. You can retry the same request</string>
     <string name="tournament_retry">Retry</string>
     <string name="tournament_info">Info</string>
