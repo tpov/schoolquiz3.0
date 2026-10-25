@@ -14,9 +14,9 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopIt
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SettlePurchaseUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.SyncBoxStreakUseCase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import org.koin.core.module.Module
 import org.koin.dsl.module
-import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * Экономика, доменный слой.

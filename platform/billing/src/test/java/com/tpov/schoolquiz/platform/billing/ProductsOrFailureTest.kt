@@ -67,4 +67,25 @@ class ProductsOrFailureTest {
     fun `an empty request succeeds`() {
         assertEquals(emptyList<StoreProduct>(), productsOrFailure(emptySet(), emptyList()).getOrNull())
     }
+
+    /** A row the store knows but does not price came back — it is present, not missing. */
+    @Test
+    fun `a returned row without a price is present, not missing`() {
+        val asked = setOf(StoreProductId.PREMIUM_30D, StoreProductId.GOLD_PACK_SMALL)
+        val unpriced =
+            StoreProduct(
+                id = StoreProductId.PREMIUM_30D,
+                title = "Premium",
+                description = "",
+                formattedPrice = null,
+                priceMicros = 0L,
+                currency = "",
+            )
+        val returned = listOf(unpriced, product(StoreProductId.GOLD_PACK_SMALL))
+
+        val result = productsOrFailure(asked, returned)
+
+        // Failing here would blank every unrelated row — the packs with their live prices too.
+        assertEquals(returned, result.getOrNull())
+    }
 }

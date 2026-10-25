@@ -226,6 +226,39 @@ class GetShopCatalogUseCaseTest {
         assertTrue(!silent.isAvailable, "никто не назвал цену — строка закрыта")
     }
 
+    @Test
+    fun aStoreRecordWithoutAPriceDoesNotSellThePremiumRow() {
+        // Магазин, знающий подписку без покупаемого оффера, — строка без цены: запись едет рядом
+        // (строка объясняет замок её словами), но продаваемой она полку не делает.
+        val record = unpriced(StoreProductId.PREMIUM_30D)
+
+        val item = GetShopCatalogUseCase().execute(EconomyResourceBalance.guest(), listOf(record))
+            .single { it.id == ShopItemId.PREMIUM }
+
+        assertTrue(!item.isAvailable, "строка без цены магазином не продаётся")
+        assertEquals(record, item.storeProduct, "запись магазина при строке — ей строка объясняет замок")
+    }
+
+    @Test
+    fun aServerGoldOfferKeepsSellingTheRowTheStoreCannotPrice() {
+        // Золотой путь от ответа магазина не зависит: безценная запись магазина не запирает строку,
+        // которую сервер продаёт за золото.
+        val useCase =
+            GetShopCatalogUseCase(
+                constants = {
+                    EconomyConstants.BOOTSTRAP.copy(
+                        premiumGoldOffers = listOf(PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)),
+                    )
+                },
+            )
+
+        val item = useCase.execute(EconomyResourceBalance.guest(), listOf(unpriced(StoreProductId.PREMIUM_30D)))
+            .single { it.id == ShopItemId.PREMIUM }
+
+        assertTrue(item.isAvailable, "золотая цена продаёт строку сама")
+        assertEquals(ShopCurrency.GOLD, item.price?.currency)
+    }
+
     private fun one() = PremiumGoldOffer(sku = "premium_30d", days = 30, goldPrice = 500L)
 
     private fun two() = PremiumGoldOffer(sku = "premium_365d", days = 365, goldPrice = 5000L)
@@ -238,5 +271,16 @@ class GetShopCatalogUseCaseTest {
             formattedPrice = "1,99 ₴",
             priceMicros = 1_990_000L,
             currency = "UAH",
+        )
+
+    /** Ответ магазина о товаре без цены: подписка есть, покупать её магазин не предлагает. */
+    private fun unpriced(id: StoreProductId) =
+        StoreProduct(
+            id = id,
+            title = "Premium",
+            description = "Подписка",
+            formattedPrice = null,
+            priceMicros = 0L,
+            currency = "",
         )
 }

@@ -60,6 +60,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -134,6 +135,27 @@ class DefaultShopComponentGoldPackTest {
                 component.state.value.items.any { it.id == ShopItemId.GOLD_PACK_LARGE },
                 "полка не пустеет",
             )
+        }
+
+    @Test
+    fun `given the store knows the subscription without a price when the shop opens then the row explains and the packs keep their prices`() =
+        runTest(scheduler) {
+            // Подписка без покупаемого оффера — строка без цены, а не недостающий SKU: полка
+            // остаётся готовой, премиум объясняет замок, паки не теряют своих цен.
+            store.productAnswer =
+                Result.success(
+                    listOf(unpricedPremium(), product(StoreProductId.GOLD_PACK_SMALL)),
+                )
+
+            val component = component()
+
+            assertEquals(StoreShelfStatus.READY, component.state.value.storeShelf, "магазин ответил — полка готова")
+            val premium = component.state.value.items.single { it.id == ShopItemId.PREMIUM }
+            assertTrue(!premium.isAvailable, "подписка без цены не продаётся")
+            assertNotNull(premium.storeProduct, "запись магазина при строке — ей строка объясняет замок")
+            val pack = component.state.value.items.single { it.id == ShopItemId.GOLD_PACK_SMALL }
+            assertTrue(pack.isAvailable, "паки не теряют цены из-за безценной подписки")
+            assertEquals("1,99 ₴", pack.storeProduct?.formattedPrice, "цена пака — строка магазина без изменений")
         }
 
     @Test
@@ -389,6 +411,17 @@ class DefaultShopComponentGoldPackTest {
             formattedPrice = "1,99 ₴",
             priceMicros = 1_990_000L,
             currency = "UAH",
+        )
+
+    /** Ответ магазина о подписке без цены: Play знает товар, но купить его не предлагает. */
+    private fun unpricedPremium() =
+        StoreProduct(
+            id = StoreProductId.PREMIUM_30D,
+            title = "Premium",
+            description = "Подписка",
+            formattedPrice = null,
+            priceMicros = 0L,
+            currency = "",
         )
 
     /** Память воронки этого теста: порядок событий важнее их числа. */

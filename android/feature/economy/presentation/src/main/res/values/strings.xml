@@ -42,6 +42,7 @@
     <string name="shop_state_store_loading">Prices are loading from Google Play…</string>
     <string name="shop_state_store_unreachable">Google Play is unreachable — prices appear once it answers</string>
     <string name="shop_state_store_not_configured">The products are not listed in Google Play yet</string>
+    <string name="shop_state_not_sold">This item cannot be bought through Google Play right now</string>
 
     <!-- Store: beta shelf -->
     <string name="shop_section_in_beta">In beta</string>

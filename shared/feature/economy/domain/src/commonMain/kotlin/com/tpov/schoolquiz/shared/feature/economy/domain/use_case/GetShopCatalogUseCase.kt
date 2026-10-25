@@ -53,7 +53,9 @@ class GetShopCatalogUseCase(
      * Золотой прейскурант называет сервер: ровно одно предложение таблицы делает строку продаваемой
      * за золото, и цена та — без пересчёта на устройстве (NFR3/NFR4). Если магазин ответил своей
      * записью, она едет рядом: из неё берутся описание и цена за деньги, но не вместо золотой.
-     * Без золотого предложения строка живёт правилами истории 2.1 — продаёт только магазин.
+     * Запись без цены — магазин знает товар, но купить его не предлагает: строка остаётся и
+     * объясняет замок, но продаваемой её не делает. Без золотого предложения строка живёт
+     * правилами истории 2.1 — продаёт только магазин.
      */
     private fun premium(storeProducts: Collection<StoreProduct>): ShopCatalogItem {
         val record = storeProducts.firstOrNull { it.id == StoreProductId.PREMIUM_30D }
@@ -69,7 +71,7 @@ class GetShopCatalogUseCase(
                 } else {
                     ShopPrice(0L, ShopCurrency.EXTERNAL)
                 },
-            isAvailable = offer != null || record != null,
+            isAvailable = offer != null || record?.formattedPrice != null,
             storeProduct = record,
         )
     }

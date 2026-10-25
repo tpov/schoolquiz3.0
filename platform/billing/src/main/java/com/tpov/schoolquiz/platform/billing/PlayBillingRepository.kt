@@ -193,7 +193,9 @@ class PlayBillingRepository(
             loadProductDetails(productId)
                 ?: return BillingOutcome.Unavailable("Product ${productId.playSku} not found in the store")
 
-        // Подписка без оффера не открывается вовсе: Play требует offerToken, и выдумать его нельзя.
+        // Подписка без покупаемого оффера не открывается вовсе: Play требует offerToken, и выдумать
+        // его нельзя, как нельзя и покупать из оффера без фаз цены — выбор оффера отвечает `null`
+        // на оба случая, и полка уже показала этой строке её честный замок.
         val offerToken =
             if (productId.isSubscription) {
                 preferredSubscriptionOffer(details.toOfferShapes())?.offerToken
@@ -436,20 +438,11 @@ class PlayBillingRepository(
 
     private fun ProductDetails.toStoreProduct(): StoreProduct? {
         val id = StoreProductId.fromSku(productId) ?: return null
-        // Подписка показывает цену последней фазы выбранного оффера — той, что станет платёжем.
+        // Подписка показывает цену последней фазы выбранного оффера — той, что станет платёжем;
+        // без покупаемого оффера строка остаётся на полке без цены, а поток покупки из неё
+        // не открывается (`purchase` отвечает `Unavailable`).
         if (id.isSubscription) {
-            val offer = preferredSubscriptionOffer(toOfferShapes()) ?: return null
-            // Пустой список фаз у живого оффера Play не обещает, но и `.last()` на нём не нужен:
-            // упавшая цена — строка без товара, а не рухнувшая полка.
-            val phase = offer.phases.lastOrNull() ?: return null
-            return StoreProduct(
-                id = id,
-                title = title,
-                description = description,
-                formattedPrice = phase.formattedPrice,
-                priceMicros = phase.priceMicros,
-                currency = phase.currency,
-            )
+            return subscriptionStoreProduct(id, title, description, toOfferShapes())
         }
         val offer = oneTimePurchaseOfferDetails ?: return null
         return StoreProduct(
@@ -488,6 +481,10 @@ class PlayBillingRepository(
  * A SKU asked for and not returned is not an empty shelf — it is a product that exists in the code
  * and not in Play Console, and the shelf cannot show a price for it. Failing names the mistake;
  * succeeding with a short list hides it behind a shelf that is quietly missing an item.
+ *
+ * A row that *was* returned without a price is a different thing and stays on the shelf: the store
+ * knows the product but quotes no buyable offer for it — a row without a price, not a missing SKU.
+ * Dropping it here would read as exactly the failure above and blank every unrelated row.
  *
  * The check is per SKU rather than "did anything at all come back". Three packs with two of them
  * unconfigured is the ordinary way this goes wrong — a half-finished console — and a rule that only

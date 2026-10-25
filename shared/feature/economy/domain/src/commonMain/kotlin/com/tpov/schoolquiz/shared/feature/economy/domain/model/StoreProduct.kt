@@ -71,12 +71,18 @@ fun ShopItemId.storeProductId(): StoreProductId? =
  * the UI shows. Never format a price from [priceMicros] on the device — regional pricing means a
  * hardcoded hryvnia figure is wrong for most of the world and wrong in Ukraine the moment the
  * price tier changes.
+ *
+ * A `null` [formattedPrice] is a row the store knows but does not sell: the subscription is there,
+ * but no offer with pricing phases answers for it. The row stays on the shelf — dropped, it would
+ * fail the whole query as a missing SKU — and the UI says it cannot be bought. [priceMicros] and
+ * [currency] mean something only next to a price; without one they are placeholders, like on
+ * [BillingPurchase], which Play sends without a price at all.
  */
 data class StoreProduct(
     val id: StoreProductId,
     val title: String,
     val description: String,
-    val formattedPrice: String,
+    val formattedPrice: String?,
     val priceMicros: Long,
     val currency: String,
 )

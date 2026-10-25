@@ -49,6 +49,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyReceipt
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.storeProductId
 import java.text.DateFormat
 import java.util.Date
@@ -264,10 +265,13 @@ private fun ShopOfferCard(
 @Composable
 private fun PriceLabel(item: ShopCatalogItem) {
     // Цена магазина — готовая строка, отформатированная им самим в валюте игрока: показывается
-    // как есть и никогда не пересчитывается из priceMicros (NFR4).
-    item.storeProduct?.let { product ->
+    // как есть и никогда не пересчитывается из priceMicros (NFR4). Строка магазина без цены —
+    // товар, который магазин знает, но не продаёт: вместо цены-заглушки её место пустует, слова
+    // — под названием.
+    val storePrice = item.storeProduct?.formattedPrice
+    if (storePrice != null) {
         Text(
-            text = product.formattedPrice,
+            text = storePrice,
             style = NoirType.num.copy(fontSize = 16.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
         )
         return
@@ -343,6 +347,42 @@ private val BETA_ITEMS =
         BetaItem(R.string.shop_beta_minigames, NoirIcons.Play),
         BetaItem(R.string.shop_beta_quest_builder, NoirIcons.Plus),
     )
+
+/** Чем строка магазина отвечает: словами записи магазина или строкой ресурса модуля. */
+internal sealed interface StoreRowExplanation {
+    /** Запись магазина говорит своим описанием. */
+    data class Words(val text: String) : StoreRowExplanation
+
+    /** Честное «нельзя купить» или статус полки — строка из ресурсов. */
+    data class Resource(val resId: Int) : StoreRowExplanation
+}
+
+/**
+ * Чем строка магазина объясняет себя под названием: словами записи магазина, честным «нельзя
+ * купить» — товар есть, цены Play не называет, и ряд не продаётся, — или статусом полки. Ряд,
+ * который продаётся (за золото от сервера), говорит словами записи: «нельзя купить» на открытой
+ * карте — ложь. Решение чистое; экран доставляет строку ресурса сам, в компоузе.
+ */
+internal fun storeRowExplanation(
+    record: StoreProduct?,
+    available: Boolean,
+    shelf: StoreShelfStatus,
+): StoreRowExplanation {
+    val description = record?.description?.takeIf { it.isNotBlank() }
+    return when {
+        record != null && record.formattedPrice == null && !available ->
+            StoreRowExplanation.Resource(R.string.shop_state_not_sold)
+        description != null -> StoreRowExplanation.Words(description)
+        else ->
+            StoreRowExplanation.Resource(
+                when (shelf) {
+                    StoreShelfStatus.LOADING -> R.string.shop_state_store_loading
+                    StoreShelfStatus.NOT_CONFIGURED -> R.string.shop_state_store_not_configured
+                    else -> R.string.shop_state_store_unreachable
+                },
+            )
+    }
+}
 
 private val ShopCatalogItem.icon: ImageVector
     get() =
@@ -438,18 +478,18 @@ private fun ShopCatalogItem.stateLine(state: ShopViewState): String? =
         }
         ShopItemId.GOLD_HEART -> stringResource(R.string.shop_state_gold_hearts, state.balance.goldHearts)
         // Пак говорит словами, почему у него нет цены: магазин ещё отвечает, магазин недоступен
-        // или товары не выставлены. Замок без объяснения — то, чего полке показывать нельзя.
+        // или товары не выставлены. Магазин, знающий товар без цены, — отдельное слово: товар
+        // есть, а купить его нельзя. Замок без объяснения — то, чего полке показывать нельзя.
         ShopItemId.GOLD_PACK_SMALL,
         ShopItemId.GOLD_PACK_MEDIUM,
         ShopItemId.GOLD_PACK_LARGE,
         ShopItemId.PREMIUM,
-        ->
-            storeProduct?.description?.takeIf { it.isNotBlank() }
-                ?: when (state.storeShelf) {
-                    StoreShelfStatus.LOADING -> stringResource(R.string.shop_state_store_loading)
-                    StoreShelfStatus.NOT_CONFIGURED -> stringResource(R.string.shop_state_store_not_configured)
-                    else -> stringResource(R.string.shop_state_store_unreachable)
-                }
+        -> {
+            when (val explanation = storeRowExplanation(storeProduct, isAvailable, state.storeShelf)) {
+                is StoreRowExplanation.Words -> explanation.text
+                is StoreRowExplanation.Resource -> stringResource(explanation.resId)
+            }
+        }
         ShopItemId.QUIZ_SLOT -> stringResource(R.string.shop_lock_quiz_slot)
         ShopItemId.AD_REWARD_BOX -> stringResource(R.string.shop_lock_ad_box)
         ShopItemId.DONATE_GOOGLE_PLAY -> stringResource(R.string.shop_lock_donate)

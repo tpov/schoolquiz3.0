@@ -41,6 +41,7 @@
     <string name="shop_state_store_loading">Цены загружаются из Google Play…</string>
     <string name="shop_state_store_unreachable">Google Play недоступен — цены появятся, когда он ответит</string>
     <string name="shop_state_store_not_configured">Товары ещё не выставлены в Google Play</string>
+    <string name="shop_state_not_sold">Этот товар нельзя купить через Google Play прямо сейчас</string>
 
     <!-- Store: beta shelf -->
     <string name="shop_section_in_beta">В бете</string>

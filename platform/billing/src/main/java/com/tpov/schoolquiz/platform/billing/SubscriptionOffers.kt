@@ -1,5 +1,8 @@
 package com.tpov.schoolquiz.platform.billing
 
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProduct
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.StoreProductId
+
 /**
  * Оффер подписки, сведённый к простым значениям.
  *
@@ -29,10 +32,36 @@ data class PricePhaseShape(
  * первый отвечает и за случай «триал этому игроку недоступен», и за отсутствие триала как такового.
  * Цена на полке — последняя фаза выбранного оффера: та, что станет рекуррентным платежом.
  *
- * `null` — подписка без офферов вовсе: Play отдал пустой список, и ни открыть покупку (нужен
- * offerToken), ни показать цену из неё нельзя.
+ * Оффер без фаз цены не открывается и не ценится: offerToken у него есть, а покупать из него
+ * нечего, поэтому такой оффер пропускается, как будто его не было. `null` — покупать нечем:
+ * Play отдал пустой список офферов, либо у каждого из них пустой список фаз, и ни открыть покупку
+ * (нужен offerToken живого оффера), ни показать цену из неё нельзя.
  */
 internal fun preferredSubscriptionOffer(offers: List<SubscriptionOfferShape>): SubscriptionOfferShape? {
-    if (offers.isEmpty()) return null
-    return offers.firstOrNull { offer -> offer.phases.firstOrNull()?.isFree == true } ?: offers.first()
+    val openable = offers.filter { offer -> offer.phases.isNotEmpty() }
+    if (openable.isEmpty()) return null
+    return openable.firstOrNull { offer -> offer.phases.firstOrNull()?.isFree == true } ?: openable.first()
+}
+
+/**
+ * Строка подписки на полке: цена — последняя фаза выбранного оффера, той, что станет рекуррентным
+ * платежом. Без покупаемого оффера (список пуст или у офферов нет фаз цены) строка остаётся на
+ * полке без цены: Play товар знает, купить его не предлагает, — выпавшая строка читалась бы полкой
+ * как недостающий SKU и роняла бы весь запрос (см. productsOrFailure).
+ */
+internal fun subscriptionStoreProduct(
+    id: StoreProductId,
+    title: String,
+    description: String,
+    offers: List<SubscriptionOfferShape>,
+): StoreProduct {
+    val phase = preferredSubscriptionOffer(offers)?.phases?.lastOrNull()
+    return StoreProduct(
+        id = id,
+        title = title,
+        description = description,
+        formattedPrice = phase?.formattedPrice,
+        priceMicros = phase?.priceMicros ?: 0L,
+        currency = phase?.currency ?: "",
+    )
 }

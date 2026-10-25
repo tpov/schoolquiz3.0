@@ -2,7 +2,7 @@
 title: 'M2.1 — Premium is one subscription'
 type: 'feature'
 created: '2026-10-11'
-status: 'in-progress'
+status: 'done'
 baseline_commit: '764221db'
 review: 'thorough'
 review_source: 'pinned'
@@ -10,6 +10,19 @@ review_loop_iteration: 1
 lenses_ran: [blind-hunter, edge-case-hunter, verification-gap, intent-alignment]
 followup_review_recommended: true
 deferred:
+  - summary: >-
+      A store-backed row (premium, packs) never renders its gold price: PriceLabel returns at the
+      storeProductId guard before the gold-price rendering, so in the new gold-offer + unpriced-record
+      scenario the row is open for purchase with no price anywhere on the card.
+    evidence: |-
+      The guard `if (item.id.storeProductId() != null) return` (NoirShopStore.kt PriceLabel) predates
+      this diff; story 2.1's row-level survival newly exposes it. Rendering item.price there for GOLD
+      rows (packs carry the inert EXTERNAL markup and must stay price-less) belongs to the 2.2
+      gold-shelf surface; what would settle the everyday impact: whether the purchase confirmation
+      shows the gold cost at tap time.
+    location: >-
+      android/feature/economy/presentation/.../view/NoirShopStore.kt (PriceLabel guard)
+    severity: low
   - summary: >-
       Revenue analytics carry no product-type dimension, so the subscription funnel this story
       created is not measurable apart from gold packs.
@@ -267,26 +280,63 @@ other sessions' uncommitted files (`gradle.properties`, `local.properties`, `fun
   - `[medium]` `[patch]` [vg→other] handBack throw shape uncovered (the fake returned failure, never threw) — same fix as the handBack row above; the throwing survivability is now pinned.
   - [intent-alignment] Descriptive divergences, mapped onto the rows above: D2 (wire answer pinned by fixtures) → carried defer; D3/D7 (operator table decides routing and deactivation) → false (Ask-First by design); D4 (matrix floor() vs max(1,…)) → reject (frozen text); D5 (tokens learned at refresh, not buy) → false (unreachable); D6 (NFR4 price extraction untested in SDK-bound code) → grouped with the empty-phases bad_spec entry; D8 (shared-code edits vs «path unchanged») → the intended reading (a trial's 3-day lot must survive both boundaries).
 
+### 2026-10-25 — Review pass (the bad_spec re-derivation: an unpriceable subscription keeps the shelf; four fresh lenses over the uncommitted change set)
+
+- verdicts: 20 findings — high 0, medium 5, low 9, false 6, maybe-false 0
+- findings:
+  - `[false]` `[reject]` [blind] purchase()'s `Unavailable` for a phase-less subscription asserted only in a comment — the SDK-bound wiring cannot run in a JVM test (the module's own doctrine: the SDK does not initialise), the decision is pinned at `preferredSubscriptionOffer`'s boundary (`an offer without pricing phases cannot open the flow`), and the `?: Unavailable` branch predates this diff.
+  - `[low]` `[reject]` [blind] «Present, not missing» implemented for subscriptions only; one-time products still drop the row into the whole-query failure, and the not-sold branch is dead for packs — the products-arm failure is the deliberate `productsOrFailure` doctrine (a half-finished console must be named, not hidden), extending row survival to packs is new behavior beyond this story's intent, and the pack arm of the shared branch is defensive dead code with no user-reachable path (a pack record always carries a price or does not come back).
+  - `[medium]` `[patch]` [blind] The not-sold wording and the empty price slot are asserted nowhere — deleting or inverting the branch keeps every suite green; fixed together with the vg row below: the store-row explanation decision is extracted into a pure function returning the string resource (the receiptText/EconomyReceiptTextTest pattern) and pinned by tests.
+  - `[false]` `[reject]` [blind] Nullable `formattedPrice` leaks "null" into un-audited consumers — the verification-gap sweep found every production consumer inside this diff (NoirShopStore ×2, GetShopCatalogUseCase ×1); any further typed non-null use fails compilation.
+  - `[low]` `[reject]` [blind] Unpriced+no-gold row keeps `ShopPrice(0L, EXTERNAL)` — the inert EXTERNAL markup is the established placeholder convention (goldPacks: «только разметка, не число для показа»), never rendered for store-backed rows and never charged; the shape predates the diff.
+  - `[low]` `[reject]` [blind] EconomyDomainModule.kt import reorder smuggled in — ktlint import-order compliance in a touched module, zero behavior.
+  - `[low]` `[reject]` [blind] The unpriced fixture is copy-pasted three times — per-file fixture helpers are the module's existing idiom (each file already carries its own `product(...)`); centralizing adds shared test surface for three lines.
+  - `[low]` `[reject]` [blind] «Прямо сейчас» implies transience — editorial copy choice; the condition genuinely can lift when Play re-lists the offer, and the wording is committed across ×3 locales.
+  - `[false]` `[reject]` [blind] Mixed test-naming conventions introduced — GetShopCatalogUseCaseTest names are camelCase throughout (`everyShopItemIdAppearsInTheCatalog`…); the new tests follow each file's own convention.
+  - `[low]` `[reject]` [blind] Test name «cannot open the flow» overstates the selection-null assertion — naming taste on a real boundary test; the flow-opening wiring is SDK-bound (row 1).
+  - `[false]` `[reject]` [blind] No spec/story documentation of the amended contract — the spec's own matrix already named the cannot-buy row («row says the subscription cannot be bought; flow never opens»), and this workflow records the amendment in this triage log and the Auto Run Result.
+  - `[medium]` `[patch]` [edge] stateLine shows «cannot be bought» for a gold-sellable premium row — the new branch consults only the record's price, not the row's availability, so the open Buy card lies in its subtitle; fixed: not_sold fires only for a row that is not available (landed with the row-3 extraction).
+  - `[low]` `[defer]` [edge] The gold price is rendered nowhere on a store-backed row — pre-existing guard (`if (item.id.storeProductId() != null) return` in PriceLabel) predates the diff; 2.1's row survival newly exposes it in the gold+unpriced scenario; belongs to the 2.2 gold-shelf surface → deferred to the frontmatter list.
+  - `[false]` `[reject]` [edge] An empty-string formattedPrice would render an empty Text and stay sellable — the adapter builds a price only from a real pricing phase's `formattedPrice`; Play does not return empty price strings for a phase, and no program path shown reaches a blank-priced row.
+  - `[false]` `[reject]` [edge] goldPacks mirror missing: an unpriced pack record stays buyable — unreachable through the only production adapter: one-time products without offer details drop the row (the productsOrFailure doctrine) and never come back price-less.
+  - `[low]` `[reject]` [edge] A priced record with a blank description on a READY shelf falls through to «unreachable» — pre-existing catch-all predating the diff; a priced Play record with an empty description is a console-data edge, the row stays priced and buyable, and the fix adds a branch for negligible everyday impact.
+  - `[medium]` `[patch]` [vg] The Play-side priced-vs-unpriced mapping is executed by no test — reverting `toStoreProduct`'s branch to the row-dropping form restores the blanked shelf with every suite green (demonstrated by the lens); fixed: the subscription phase choice lifted into an internal function over plain shapes (the productsOrFailure pattern) with no-offer / phase-less-only / priced tests.
+  - `[medium]` `[patch]` [vg] The not-sold wording and the empty price slot are asserted nowhere — fixed with row 3: the explanation decision extracted and pinned (unpriced+unavailable → not_sold; unpriced+available → description/fallback; priced → unchanged fallbacks).
+  - `[medium]` `[patch]` [vg] The not-sold wording contradicts the gold sales path — same defect as the edge row above; fixed there.
+  - `[low]` `[defer]` [vg] The gold price is invisible while the row is open for purchase — same defect as the deferred edge row; deferred there.
+  - [intent-alignment] Descriptive divergences, mapped onto the rows above: the R2-with-R3 reading confirmed (the shelf survives one broken row; no invented price); D2 (a phase-less trial is skipped, the base plan answers — a sale the final model does not name) → false: the spec's own matrix row «Trial not entitled → the first offer answers; the flow still opens» pins exactly this fallback; D3 (cannot-open guaranteed upstream of the tested surface) → row 1; D4 (rendered surface vs state surface) → rows 3/18; D5 (no operator-naming surface beyond the player row) → rejected: the player-facing state names the condition distinctly from unreachable/not-configured, and telemetry is new surface beyond the intent.
+
 ## Auto Run Result
 
-Status: in-progress — acceptance pass complete; one bad_spec item routed back to the external implementer; patch-class fixes applied and verified here.
-
-Blocking condition: bad_spec — a subscription whose only offer has no pricing phases (or no offers at all) drops out of the shelf query, and `productsOrFailure` (PlayBillingRepository.kt:499-510) fails the whole shelf on the missing id, contradicting the spec's own patch claim «an unpriceable offer is a row without a price, not a fallen shelf» and the matrix row «row says the subscription cannot be bought; flow never opens». Re-derivation belongs to the implementer: row-level degradation of an unpriceable subscription, the cannot-buy row, strings ×3 locales, tests.
+Status: done — the 2026-10-23 bad_spec item closed: an unpriceable subscription now keeps its row (price-less) instead of blanking the shelf; the follow-up review pass patched five medium findings and deferred one low.
 
 ### Summary of this pass
-- Fresh four-lens thorough review (blind-hunter, edge-case-hunter, verification-gap, intent-alignment) over the story's committed change set — e86e4e6f + 72dec423 + 3c93ad5f + 5f592ffa — verified at HEAD aaf82ac7; the 2026-10-11 pass served as prior triage context.
-- 25 findings: 0 high, 4 medium, 11 low, 10 false → 3 patched entries (handBack throw survivability; PremiumPending pin; numeric-state fixtures), 1 bad_spec entry sent back, 3 deferred, 10 rejected with recorded refutations.
-- Review-fix changes landed with this acceptance: SettlePurchaseUseCase.handBack (gesture inside the try the KDoc promises) + `acknowledgeThrows` fake arm + throwing-survivability test; the PremiumPending component test; the numeric subscription-state test.
+- Implemented the routed-back bad_spec: `toStoreProduct` keeps a subscription Play knows but quotes no buyable offer for as a row with `formattedPrice = null` (was: dropped row → `productsOrFailure` failed the whole query); `preferredSubscriptionOffer` skips offers without pricing phases (`null` = nothing openable, so the flow never opens — closes the two grouped empty-phases entries too); `StoreProduct.formattedPrice` became `String?`; the premium row sells only via a server gold offer or a priced store record; `NoirShopStore` renders no price placeholder and explains the lock with the new `shop_state_not_sold` string ×3 locales; 7 tests across 5 files.
+- Fresh four-lens thorough review (blind-hunter, edge-case-hunter, verification-gap, intent-alignment) over the uncommitted change set: 20 findings — 0 high, 5 medium, 9 low, 6 false → 5 medium patched (two groups), 1 low group deferred, 8 low rejected, 6 false rejected with recorded refutations (see the 2026-10-25 triage pass).
+- Review fixes: the not-sold line now fires only on a locked row (a gold-sellable premium row over an unpriced record says the record's words, not «cannot be bought»); the store-row explanation decision extracted into the pure `storeRowExplanation`/`StoreRowExplanation` (the receiptText pattern) and pinned by 5 tests; the priced-vs-unpriced subscription mapping extracted into the pure `subscriptionStoreProduct` (the productsOrFailure pattern) and pinned by 3 tests — reverting the fix's mapping no longer passes green.
+
+### Files changed
+- `platform/billing/.../SubscriptionOffers.kt` — phase-less offers skipped in offer selection; `subscriptionStoreProduct`: the subscription row built over plain shapes, price-less when nothing is openable.
+- `platform/billing/.../PlayBillingRepository.kt` — `toStoreProduct` delegates the subscription arm to `subscriptionStoreProduct`; `productsOrFailure` KDoc states the returned-price-less-row rule.
+- `shared/feature/economy/domain/.../model/StoreProduct.kt` — `formattedPrice: String?` with the price-less-row contract in KDoc.
+- `shared/feature/economy/domain/.../use_case/GetShopCatalogUseCase.kt` — premium row available only with a gold offer or a priced record.
+- `android/feature/economy/presentation/.../view/NoirShopStore.kt` — price-less rows render no price text; `storeRowExplanation` decides the subtitle (not-sold only on locked rows).
+- `strings.xml` ×3 locales — `shop_state_not_sold`.
+- `shared/.../di/EconomyDomainModule.kt` — import order only (ktlint).
+- Tests: `SubscriptionOffersTest` (+2), `ProductsOrFailureTest` (+1), `SubscriptionStoreProductTest` (new, 3), `GetShopCatalogUseCaseTest` (+2), `LoadStoreShelfUseCaseTest` (+1), `DefaultShopComponentGoldPackTest` (+1), `NoirShopStoreStateLineTest` (new, 5).
 
 ### Verification performed
-- `cd functions && node purchase-verification.test.js` — OK (with the new numeric-state test).
-- `cd functions && node run-tests.js` at HEAD — 128/129; the one failure is `mvp-isolation.test.js` objecting to a LAN address (`192.168.31.218`) present in `mvp_network_security_config.xml` — added by HITL device work after these stories; pre-existing, unrelated to this change set.
-- `sgw ./gradlew -Dorg.gradle.java.installations.paths=/opt/jdks/jdk-27 … :shared:feature:economy:domain:allTests :shared:feature:economy:data:allTests :platform:billing:testDebugUnitTest :android:feature:economy:presentation:testDebugUnitTest :apps:android-next:assembleMvp --no-configuration-cache` — BUILD SUCCESSFUL at HEAD (7m 11s); domain + presentation re-run green after the patches (1m 50s).
-- Environment note: buildSrc demands `jvmToolchain(27)`; JDK 27 lives at `/opt/jdks/jdk-27`, which Gradle does not scan — the installations-path flag is required on this machine.
+- `cd functions && node run-tests.js` — 128/129; the one failure is `mvp-isolation.test.js` objecting to a LAN address in `mvp_network_security_config.xml` — pre-existing, unrelated (functions untouched by this change set).
+- `sgw ./gradlew -Dorg.gradle.java.installations.paths=/opt/jdks/jdk-27 :platform:billing:testDebugUnitTest :android:feature:economy:presentation:testDebugUnitTest :shared:feature:economy:domain:allTests --no-configuration-cache` — BUILD SUCCESSFUL; result XMLs confirm the new suites ran and passed (SubscriptionStoreProductTest 3/3, NoirShopStoreStateLineTest 5/5, plus the +7 from the implementation).
+- `sgw ./gradlew … :platform:billing:ktlintCheck :android:feature:economy:presentation:ktlintCheck :shared:feature:economy:domain:ktlintCheck --no-configuration-cache` — BUILD SUCCESSFUL.
+- `sgw ./gradlew … :apps:android-next:assembleMvp --no-configuration-cache` — BUILD SUCCESSFUL (assembleDebug/`:apps:android-next:testDebugUnitTest` stay blocked by the mvp-only google-services.json, as recorded in earlier passes).
+- detekt: red on `--jvm-target 25` before any sources are read — the pre-existing environmental/plugin failure recorded owner-owned in e25af346 and d9672918; not caused by this change set.
+- Matrix test audit: every I/O-matrix row covered by at least one passing test — offer rows by `SubscriptionOffersTest`/`SubscriptionStoreProductTest`, settlement/state/term rows by the functions suites (purchase-verification, premium-purchases), replay/acknowledge survivability by `SettlePurchaseUseCaseTest`, the cannot-buy row by `NoirShopStoreStateLineTest`/`LoadStoreShelfUseCaseTest`/`DefaultShopComponentGoldPackTest`.
 
 ### Follow-up review recommendation
-- true — two medium entries were patched this pass. Unverified risk: survivability of a throwing hand-back is pinned only by fake-based tests; a real binder throw on a GMS device stays unexercised (the rig has no GMS — the story's own rig note).
+- true — five medium entries were patched this pass (first-pass rule: two or more mediums). Unverified risk: the extracted decisions are pinned as pure functions; the SDK-bound purchase wiring (offer-token → `Unavailable`) and the actual Compose rendering of the price-less row stay unexercised without a GMS device (the rig has none — the story's own rig note), and the real `subscriptionsv2` wire answer remains fixture-pinned only.
 
 ### Residual risks
-- The bad_spec shelf item: until the implementer re-derives it, a Play-side catalogue anomaly for premium can blank the whole shop shelf (all rows Unreachable) until Play's answer normalizes.
-- The operator dependency stands: without the `premium_30d` row in `configs/economy`, premium buys refuse (documented, epic-2 owner task).
+- A concurrent session (arena retro workstream) was live in this tree during the pass; its uncommitted files (tournament presentation, platform/firebase, `_bmad-output` retro artifacts) are not part of this change set and were left untouched.
+- The deferred gold-price gap: a store-backed row never renders its gold price (pre-existing `PriceLabel` guard), newly visible in the gold+unpriced scenario — belongs to the 2.2 gold-shelf surface (frontmatter `deferred`).
+- detekt's environmental red and the mvp-isolation suite failure remain owner-owned environment items.

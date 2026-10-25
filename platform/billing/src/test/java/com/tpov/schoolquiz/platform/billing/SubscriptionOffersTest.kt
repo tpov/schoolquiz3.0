@@ -17,6 +17,12 @@ class SubscriptionOffersTest {
         phases = listOf(PricePhaseShape(200_000_000L, "200 ₴", "UAH")),
     )
 
+    /** Оффер без фаз цены: offerToken есть, покупать из него нечего. */
+    private val emptyPhases = SubscriptionOfferShape(
+        offerToken = "token-empty",
+        phases = emptyList(),
+    )
+
     @Test
     fun `the trial offer wins over the bare base plan`() {
         assertSame(trial, preferredSubscriptionOffer(listOf(basePlan, trial)))
@@ -43,5 +49,17 @@ class SubscriptionOffersTest {
     @Test
     fun `a subscription without offers cannot be opened`() {
         assertNull(preferredSubscriptionOffer(emptyList()))
+    }
+
+    @Test
+    fun `an offer without pricing phases cannot open the flow`() {
+        // Покупать из оффера нечего: поток из него не открывается, и цена с него не читается.
+        assertNull(preferredSubscriptionOffer(listOf(emptyPhases)))
+    }
+
+    @Test
+    fun `an offer without pricing phases is skipped for one that can open`() {
+        // Пустой список фаз у первого оффера не прячет живой базовый план за ним.
+        assertSame(basePlan, preferredSubscriptionOffer(listOf(emptyPhases, basePlan)))
     }
 }

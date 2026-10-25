@@ -38,6 +38,24 @@ class LoadStoreShelfUseCaseTest {
     }
 
     @Test
+    fun `given the store answers with a row without a price when the shelf is loaded then the shelf stays ready`() = runTest {
+        // Подписка без покупаемого оффера — строка без цены, а не недостающий SKU: ответ остаётся
+        // успехом, полка — готовой, а безценная строка лежит на ней рядом с ценами остальных.
+        billing.productAnswer =
+            Result.success(
+                listOf(unpricedPremium(), product(StoreProductId.GOLD_PACK_SMALL)),
+            )
+
+        val shelf = loadShelf()
+
+        assertTrue(shelf is StoreShelf.Ready, "строка без цены не роняет полку")
+        assertEquals(
+            listOf(StoreProductId.PREMIUM_30D, StoreProductId.GOLD_PACK_SMALL),
+            (shelf as StoreShelf.Ready).products.map { it.id },
+        )
+    }
+
+    @Test
     fun `the shelf asks the store about every product it knows`() = runTest {
         loadShelf()
 
@@ -53,5 +71,16 @@ class LoadStoreShelfUseCaseTest {
             formattedPrice = "1,99 ₴",
             priceMicros = 1_990_000L,
             currency = "UAH",
+        )
+
+    /** Ответ магазина о подписке без цены: Play знает товар, но купить его не предлагает. */
+    private fun unpricedPremium() =
+        StoreProduct(
+            id = StoreProductId.PREMIUM_30D,
+            title = "Premium",
+            description = "Подписка",
+            formattedPrice = null,
+            priceMicros = 0L,
+            currency = "",
         )
 }
