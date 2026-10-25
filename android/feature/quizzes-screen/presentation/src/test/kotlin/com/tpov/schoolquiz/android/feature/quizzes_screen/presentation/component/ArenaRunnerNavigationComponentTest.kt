@@ -273,6 +273,7 @@ class ArenaRunnerNavigationComponentTest {
     private class RunnerStub : LessonRunnerRootComponent {
     override val needsTermsConsent = kotlinx.coroutines.flow.MutableStateFlow(false)
     override fun acceptTerms() = Unit
+    override fun onDismissTermsConsent() = Unit
         override val uiState = MutableStateFlow<RunnerUiState>(RunnerUiState.Loading)
         override val events: Flow<RunnerEvent> = emptyFlow()
         override val comments = MutableStateFlow<List<LessonComment>>(emptyList())

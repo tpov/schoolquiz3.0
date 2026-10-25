@@ -26,6 +26,8 @@ internal class DefaultArenaRunnerRootComponent private constructor(
 
     override val arenaView get() = instance.host.view
 
+    override fun onDismissTermsConsent() = instance.host.dismissTermsConsent()
+
     override fun onArenaAction(
         token: ArenaRunToken,
         action: ArenaRunAction,

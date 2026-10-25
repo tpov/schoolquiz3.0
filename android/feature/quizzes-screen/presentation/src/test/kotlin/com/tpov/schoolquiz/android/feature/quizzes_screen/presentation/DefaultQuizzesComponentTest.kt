@@ -562,6 +562,7 @@ class DefaultQuizzesComponentTest {
 private object StubLessonRunnerRootComponent : LessonRunnerRootComponent {
     override val needsTermsConsent = kotlinx.coroutines.flow.MutableStateFlow(false)
     override fun acceptTerms() = Unit
+    override fun onDismissTermsConsent() = Unit
     override val uiState: StateFlow<RunnerUiState> = MutableStateFlow(RunnerUiState.Loading)
     override val events: Flow<RunnerEvent> = emptyFlow()
     override val comments: StateFlow<List<LessonComment>> = MutableStateFlow(emptyList())

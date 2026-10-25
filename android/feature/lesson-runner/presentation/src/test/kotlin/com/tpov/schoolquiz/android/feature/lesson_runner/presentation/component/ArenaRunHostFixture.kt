@@ -37,7 +37,11 @@ import kotlinx.datetime.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-internal class ArenaRunHostFixture(scope: TestScope) {
+internal class ArenaRunHostFixture(
+    scope: TestScope,
+    /** Ручки согласия (CAP-16); по умолчанию хост без гейта — прежнее поведение тестов. */
+    private val consent: ArenaConsentHandles? = null,
+) {
     val run = RunCoordinatorFixture(scope)
     val sessionEvents = MutableStateFlow<ArenaSessionStamp?>(run.stamp)
     var walletCalls = 0
@@ -71,6 +75,7 @@ internal class ArenaRunHostFixture(scope: TestScope) {
 
                     override fun applyProfileFrequency(frequency: SyncFrequency) = error("Unexpected profile schedule")
                 },
+                consent,
             ),
         )
     private val dispatcher = StandardTestDispatcher(scope.testScheduler)

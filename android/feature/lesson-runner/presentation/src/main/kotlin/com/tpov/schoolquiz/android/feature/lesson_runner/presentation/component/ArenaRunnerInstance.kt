@@ -100,6 +100,8 @@ internal class ArenaRunnerInstance(
 
     override fun acceptTerms() = host.acceptTerms()
 
+    override fun onDismissTermsConsent() = host.dismissTermsConsent()
+
     override fun onBack() {
         val frame = host.view.value
         if (frame is ArenaRunnerView.Question) {

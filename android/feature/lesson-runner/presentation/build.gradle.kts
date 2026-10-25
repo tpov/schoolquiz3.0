@@ -4,6 +4,11 @@ plugins {
 
 android {
     namespace = "com.tpov.schoolquiz.android.feature.lesson_runner.presentation"
+    // Юнит-тесты consent-флоу зовут android.util.Log в guarded-ветке accept (ретро item 2c):
+    // возвращать дефолты вместо «not mocked» — иначе проверяемое падение accept падает тестом.
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {

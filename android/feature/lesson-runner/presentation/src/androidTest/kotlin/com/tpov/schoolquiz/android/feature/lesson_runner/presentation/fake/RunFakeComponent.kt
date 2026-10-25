@@ -97,6 +97,8 @@ class RunFakeComponent(
 
     override fun onSyncResult() = Unit
 
+    override fun onDismissTermsConsent() = Unit
+
     override fun onFinish() {
         finishCount++
     }

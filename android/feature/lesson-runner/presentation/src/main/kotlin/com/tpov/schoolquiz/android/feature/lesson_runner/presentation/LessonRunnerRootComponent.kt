@@ -27,6 +27,13 @@ interface LessonRunnerRootComponent {
     /** Решение игрока за условиями: фиксирует согласие и возвращает запись в отправку. */
     fun acceptTerms()
 
+    /**
+     * «Позже»/dismiss по диалогу согласия (ретро L5): флаг сбрасывается, экран результата
+     * остаётся на месте. Диалог может подняться снова — следующим явным запросом синхронизации,
+     * у которого для этого прогона есть незакрытая работа.
+     */
+    fun onDismissTermsConsent()
+
     fun onAnswer(answer: UserAnswerDraft)
 
     /** Called while user edits the current question — persists draft across rotation. */

@@ -15,6 +15,8 @@ internal interface ArenaRunnerRootComponent : LessonRunnerRootComponent {
     override val needsTermsConsent: kotlinx.coroutines.flow.StateFlow<Boolean>
 
     override fun acceptTerms()
+
+    override fun onDismissTermsConsent()
     val arenaView: StateFlow<ArenaRunnerView>
 
     fun onArenaAction(

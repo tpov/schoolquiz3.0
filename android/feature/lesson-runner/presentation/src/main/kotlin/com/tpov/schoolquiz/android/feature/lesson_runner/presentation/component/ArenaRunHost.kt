@@ -186,9 +186,11 @@ internal class ArenaRunHost(
         if (!destroyed && controller.checkSession() && !state.busy) {
             when {
                 pending?.decision == ArenaRunDecision.CANCEL -> dispatchCancel()
-                services.result.consent?.let { !it.satisfied() } == true -> {
-                    // Отказ terms-consent запарковал SETTLE в CONFLICT: без решения игрока
-                    // повтор бессмыслен — поднимаем диалог согласия (CAP-16, AD-5).
+                // Диалог поднимается только когда у этого прогона есть незакрытая работа
+                // (наблюдаемое решение SETTLE/CANCEL — ретро L5): голый вердикт гейта без
+                // запаркованной мутации диалога не заслуживает — отказ terms-consent запарковал
+                // SETTLE в CONFLICT, без решения игрока повтор бессмыслен (CAP-16, AD-5).
+                pending != null && services.result.consent?.let { !it.satisfied() } == true -> {
                     needsTermsConsent.value = true
                 }
                 state.canRetryReceiptSync(
@@ -213,6 +215,11 @@ internal class ArenaRunHost(
             needsTermsConsent.value = false
             sync()
         }
+    }
+
+    /** «Позже»/dismiss: флаг сбрасывается без ухода с экрана; явный sync может поднять диалог снова. */
+    fun dismissTermsConsent() {
+        needsTermsConsent.value = false
     }
 
     private fun dispatchCancel() {

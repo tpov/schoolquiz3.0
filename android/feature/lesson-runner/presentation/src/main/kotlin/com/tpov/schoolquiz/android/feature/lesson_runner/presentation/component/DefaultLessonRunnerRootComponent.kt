@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 
 import com.arkivanov.decompose.ComponentContext
+import android.util.Log
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnStop
@@ -176,13 +177,35 @@ class DefaultLessonRunnerRootComponent(
 
     override val needsTermsConsent: StateFlow<Boolean> = needsTermsConsentFlow.asStateFlow()
 
+    /**
+     * Решение игрока за условиями (порт из [ArenaRunHost.acceptTerms]): accept — подвесной
+     * комнатный I/O, и его падение не имеет права уронить прогон. Диалог остаётся открытым,
+     * ошибка логируется, очередь не дренируется; закрывает диалог только успех.
+     */
     override fun acceptTerms() {
+        Log.d(TAG, "terms consent: accept requested")
         scope.launch {
-            consent?.accept()
+            val handles = consent
+            if (handles != null) {
+                try {
+                    handles.accept()
+                    Log.d(TAG, "terms consent: accepted, requeue done")
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    Log.e(TAG, "terms consent: accept failed", error)
+                    return@launch
+                }
+            }
             needsTermsConsentFlow.value = false
             // Согласие вернуло ждущую запись в отправку (AD-5): сразу дренируем её.
             syncScheduler.enqueueManualSync()
         }
+    }
+
+    /** «Позже»/dismiss (ретро L5): флаг сбрасывается, экран результата остаётся на месте. */
+    override fun onDismissTermsConsent() {
+        needsTermsConsentFlow.value = false
     }
 
     override fun onAnswer(answer: UserAnswerDraft) {
@@ -676,3 +699,5 @@ class DefaultLessonRunnerRootComponent(
         _events.trySend(event)
     }
 }
+
+private const val TAG = "LessonConsent"

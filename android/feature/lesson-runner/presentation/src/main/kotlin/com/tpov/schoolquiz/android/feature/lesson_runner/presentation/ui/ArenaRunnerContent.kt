@@ -306,7 +306,8 @@ private val SYNC_STATUSES =
         ArenaRunnerStatus.PENDING_COMPLETION,
         ArenaRunnerStatus.PENDING_CANCEL,
         ArenaRunnerStatus.SETTLED_AWAITING_RECEIPT,
-        // Recovery тоже синхронизируется: запаркованная заявка (terms-consent/реплей) едет
-        // дословно тем же телом — fence идемпотентен, замена попытки не создаётся.
-        ArenaRunnerStatus.NEEDS_RECOVERY,
     )
+// Ручной Send предлагается только статусам, у которых в локальном журнале ещё живёт незакрытая
+// мутация (DecisionPending SETTLE/CANCEL — она читается как PENDING_COMPLETION/PENDING_CANCEL,
+// в том числе запаркованная согласием заявка). NEEDS_RECOVERY — нечитаемый журнал: Send там
+// ничего не отправляет (ретро L3), чинит карточку Reload, а не повтор.

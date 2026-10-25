@@ -528,4 +528,162 @@ class ArenaRunHostTest {
                 host.onDestroy()
             }
         }
+
+    @Test
+    fun unsatisfiedConsentOnPendingWorkRaisesDialogAndDecisionDrains() =
+        runTest {
+            var satisfied = false
+            var accepted = 0
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    ArenaConsentHandles(
+                        satisfied = { satisfied },
+                        accept = { accepted += 1; satisfied = true },
+                    ),
+                )
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                assertIs<ArenaRunnerView.Result>(host.view.value)
+                val syncsBefore = f.syncCalls
+
+                host.sync()
+                runCurrent()
+                assertTrue(
+                    host.needsTermsConsent.value,
+                    "у прогона есть незакрытый SETTLE: игрок должен увидеть запрос согласия",
+                )
+                assertEquals(syncsBefore, f.syncCalls, "без согласия очередь не дренируется")
+
+                host.acceptTerms()
+                runCurrent()
+                assertEquals(1, accepted, "согласие фиксируется один раз")
+                assertFalse(host.needsTermsConsent.value, "диалог закрывается только успехом")
+                assertEquals(syncsBefore + 1, f.syncCalls, "согласие сразу возвращает SETTLE в отправку")
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun throwingAcceptKeepsDialogOpenAndDrainsNothing() =
+        runTest {
+            var satisfied = false
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    ArenaConsentHandles(
+                        satisfied = { satisfied },
+                        accept = { throw IllegalStateException("room io failure") },
+                    ),
+                )
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                val syncsBefore = f.syncCalls
+
+                host.sync()
+                runCurrent()
+                assertTrue(host.needsTermsConsent.value)
+
+                host.acceptTerms()
+                runCurrent()
+                assertTrue(
+                    host.needsTermsConsent.value,
+                    "падение accept не закрывает диалог — решение ещё не принято",
+                )
+                assertEquals(
+                    syncsBefore,
+                    f.syncCalls,
+                    "ошибка согласия не дренирует очередь",
+                )
+                assertFalse(satisfied, "падение accept не считается согласием")
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun dismissClearsTheConsentFlagWithoutTouchingTheQueue() =
+        runTest {
+            var satisfied = false
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    ArenaConsentHandles(
+                        satisfied = { satisfied },
+                        accept = { satisfied = true },
+                    ),
+                )
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                host.sync()
+                runCurrent()
+                assertTrue(host.needsTermsConsent.value)
+                val syncsBefore = f.syncCalls
+
+                host.dismissTermsConsent()
+                assertFalse(
+                    host.needsTermsConsent.value,
+                    "«Позже» сбрасывает флаг — экран остаётся, хост не навигирует",
+                )
+                assertEquals(syncsBefore, f.syncCalls, "отказ от решения не дренирует очередь")
+
+                host.sync()
+                runCurrent()
+                assertTrue(
+                    host.needsTermsConsent.value,
+                    "следующий явный sync с незакрытой работой поднимает диалог снова",
+                )
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun bareGateVerdictWithoutPendingWorkDoesNotRaiseTheDialog() =
+        runTest {
+            var satisfied = false
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    ArenaConsentHandles(
+                        satisfied = { satisfied },
+                        accept = { satisfied = true },
+                    ),
+                )
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                // Тикет уже SETTLED-терминал: незакрытой мутации у прогона нет — гейт не важен.
+                f.run.observed = ArenaRunRead.Terminal(f.run.header.copy(status = ArenaTicketStatus.SETTLED))
+                host.reload()
+                runCurrent()
+
+                host.sync()
+                runCurrent()
+                assertFalse(
+                    host.needsTermsConsent.value,
+                    "голый вердикт гейта без pending-работы диалога не поднимает",
+                )
+                assertEquals(0, f.syncCalls)
+            } finally {
+                host.onDestroy()
+            }
+        }
 }

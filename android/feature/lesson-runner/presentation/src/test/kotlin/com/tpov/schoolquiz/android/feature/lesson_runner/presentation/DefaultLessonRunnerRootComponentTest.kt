@@ -49,10 +49,12 @@ import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -1712,5 +1714,136 @@ class DefaultLessonRunnerRootComponentTest {
             assertEquals(1, accepted, "согласие фиксируется один раз")
             assertEquals(false, component.needsTermsConsent.value, "диалог закрывается решением")
             assertEquals(syncsBefore + 1, fakeSyncScheduler.manualRequests, "согласие дренирует запись")
+        }
+
+    // GIVEN accept падает (комнатный I/O) WHEN игрок жмёт «Принять» THEN диалог остаётся открыт,
+    // очередь не дренируется, прогон не падает (ретро L4: guarded acceptTerms).
+    @Test
+    fun `throwing accept keeps the consent dialog and drains nothing`() =
+        runTest {
+            var satisfied = false
+            val consent = LessonConsentHandles(
+                satisfied = { satisfied },
+                accept = { throw IllegalStateException("room io failure") },
+            )
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+            val component =
+                buildComponent(
+                    profileRepository = FakeProfileRepository(),
+                    consent = consent,
+                )
+            testScheduler.advanceUntilIdle()
+            component.onAnswer(singleChoiceDraft())
+            assertIs<RunnerUiState.Result>(component.uiState.value)
+            val syncsBefore = fakeSyncScheduler.manualRequests
+
+            component.onSyncResult()
+            testScheduler.advanceUntilIdle()
+            assertTrue(component.needsTermsConsent.value)
+
+            component.acceptTerms()
+            testScheduler.advanceUntilIdle()
+            assertTrue(
+                component.needsTermsConsent.value,
+                "падение accept не закрывает диалог — решение ещё не принято",
+            )
+            assertEquals(
+                syncsBefore,
+                fakeSyncScheduler.manualRequests,
+                "ошибка согласия не дренирует очередь",
+            )
+            assertFalse(satisfied, "падение accept не считается согласием")
+        }
+
+    // GIVEN диалог виден WHEN «Позже»/dismiss THEN флаг сброшен, экран на месте, очередь тронута
+    // только явным sync (ретро L5: dismiss больше не уводит с экрана).
+    @Test
+    fun `dismiss clears the consent flag and stays on the result screen`() =
+        runTest {
+            var satisfied = false
+            val consent = LessonConsentHandles(
+                satisfied = { satisfied },
+                accept = { satisfied = true },
+            )
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+            val component =
+                buildComponent(
+                    profileRepository = FakeProfileRepository(),
+                    consent = consent,
+                )
+            testScheduler.advanceUntilIdle()
+            component.onAnswer(singleChoiceDraft())
+            val result = assertIs<RunnerUiState.Result>(component.uiState.value)
+            val syncsBefore = fakeSyncScheduler.manualRequests
+            val received = ArrayList<RunnerEvent>()
+            val collector =
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    component.events.collect { received += it }
+                }
+
+            component.onSyncResult()
+            testScheduler.advanceUntilIdle()
+            assertTrue(component.needsTermsConsent.value)
+
+            component.onDismissTermsConsent()
+            testScheduler.advanceUntilIdle()
+            assertEquals(false, component.needsTermsConsent.value, "«Позже» сбрасывает флаг")
+            assertEquals(
+                syncsBefore,
+                fakeSyncScheduler.manualRequests,
+                "отказ от решения не дренирует очередь",
+            )
+            assertIs<RunnerUiState.Result>(component.uiState.value, "экран результата остаётся на месте")
+            assertEquals(
+                result,
+                component.uiState.value,
+                "dismiss не меняет показанный результат",
+            )
+            assertTrue(
+                received.none { it is RunnerEvent.NavigateBack },
+                "dismiss не навигирует назад",
+            )
+            collector.cancel()
+
+            component.onSyncResult()
+            testScheduler.advanceUntilIdle()
+            assertTrue(
+                component.needsTermsConsent.value,
+                "следующий явный sync с незакрытой работой поднимает диалог снова",
+            )
+        }
+
+    // GIVEN согласие не подписано, но у прогона нет незакрытой работы WHEN sync THEN диалог не
+    // поднимается: голый вердикт гейта — не повод для диалога (ретро L4/L5).
+    @Test
+    fun `consent dialog is not raised when the sync request has no pending work`() =
+        runTest {
+            var satisfied = false
+            val consent = LessonConsentHandles(
+                satisfied = { satisfied },
+                accept = { satisfied = true },
+            )
+            fakeStart.result = makeReadyState(questions = 1)
+            val component = buildComponent(consent = consent)
+            testScheduler.advanceUntilIdle()
+
+            // Ещё вопрос, не результат: запроса sync с pending-работой нет.
+            component.onSyncResult()
+            assertFalse(
+                component.needsTermsConsent.value,
+                "голый вердикт гейта без результата не поднимает диалог",
+            )
+
+            // Результат есть, но пометки очереди NOT_SENT нет — sync нечего отправлять.
+            component.onAnswer(singleChoiceDraft())
+            val result = assertIs<RunnerUiState.Result>(component.uiState.value)
+            assertFalse(result.canRequestSync, "без пометки очереди ручной sync нечего дренировать")
+            component.onSyncResult()
+            assertFalse(
+                component.needsTermsConsent.value,
+                "голый вердикт гейта без незакрытой работы диалога не поднимает",
+            )
         }
 }

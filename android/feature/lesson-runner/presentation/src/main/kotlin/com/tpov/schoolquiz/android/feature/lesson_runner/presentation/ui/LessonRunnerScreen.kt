@@ -104,16 +104,17 @@ fun LessonRunnerScreen(
     val consentDismiss = stringResource(R.string.runner_terms_consent_dismiss)
 
     // Платная мутация запаркована отказом terms-consent (CAP-16): решение игрока возвращает её в отправку.
+    // «Позже» и dismiss НЕ уходят с экрана (ретро L5) — только сбрасывают флаг; навигация — onBack.
     if (needsTermsConsent) {
         AlertDialog(
-            onDismissRequest = component::onBack,
+            onDismissRequest = component::onDismissTermsConsent,
             title = { Text(consentTitle) },
             text = { Text(consentMessage) },
             confirmButton = {
                 TextButton(onClick = component::acceptTerms) { Text(consentAccept) }
             },
             dismissButton = {
-                TextButton(onClick = component::onBack) { Text(consentDismiss) }
+                TextButton(onClick = component::onDismissTermsConsent) { Text(consentDismiss) }
             },
         )
     }
@@ -571,6 +572,7 @@ private fun LessonRunnerScreenInitFailedPreview() {
 private class PreviewLessonRunnerComponent(initialState: RunnerUiState) : LessonRunnerRootComponent {
     override val needsTermsConsent = kotlinx.coroutines.flow.MutableStateFlow(false)
     override fun acceptTerms() = Unit
+    override fun onDismissTermsConsent() = Unit
     override val isHardMode: Boolean = false
     override val uiState: StateFlow<RunnerUiState> = MutableStateFlow(initialState)
     override val events: Flow<RunnerEvent> = emptyFlow()
