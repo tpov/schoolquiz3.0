@@ -114,7 +114,11 @@ val firebaseModule =
             )
         }
         single<ArenaLessonCatalogRemoteDataSource> { get<FirebaseArenaLessonCatalogRemoteDataSource>() }
-        single<QuestionWindowRemoteDataSource> {
+        // Онлайн-O2 (ретро A1): окно перехода поднимается лениво — разрешение не трогает ни SDK,
+        // ни сессию, ни сеть; вызовы окна начинаются только с явного Continue-из-паузы в хосте.
+        // Конкретный тип зарегистрирован рядом с интерфейсом — как у арены: проводные тесты
+        // ссылаются на бетон.
+        single {
             FirebaseQuestionWindowRemoteDataSource(
                 functions = get(),
                 sessions = get(),
@@ -122,6 +126,7 @@ val firebaseModule =
                 dispatcher = Dispatchers.IO,
             )
         }
+        single<QuestionWindowRemoteDataSource> { get<FirebaseQuestionWindowRemoteDataSource>() }
         // Соревнование (история 5.9): прямые вызовы через аренный транспортный образец; мутации
         // сессии едут из очереди, поэтому здесь только чтения, подготовка, операции и запись
         // скачивания. Строгие разборы и фасад привязывает tournamentDataModule.

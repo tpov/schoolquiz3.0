@@ -155,6 +155,38 @@ class FirebaseQuestionWindowRemoteDataSourceTest {
         }
 
     @Test
+    fun callableRefusalsMapByCodeIntoTypedWindowKinds() =
+        runTest {
+            // Маппинг callableFailure читает имя кода SDK, никогда текст: недоступный аккаунт
+            // (UNAUTHENTICATED/PERMISSION_DENIED) — ACCOUNT_UNAVAILABLE, кривой запрос
+            // (INVALID_ARGUMENT) — INVALID_REQUEST, остальной сервер — SERVER_FAILURE.
+            val unauthenticated = Fake(this)
+            unauthenticated.failure =
+                FirebaseQuestionWindowRemoteDataSource.QuestionWindowCallableException("UNAUTHENTICATED", null)
+            failed(unauthenticated.remote.beginWindow(request()), QuestionWindowFailureKind.ACCOUNT_UNAVAILABLE)
+
+            val permission = Fake(this)
+            permission.failure =
+                FirebaseQuestionWindowRemoteDataSource.QuestionWindowCallableException("PERMISSION_DENIED", null)
+            failed(permission.remote.fetchNext("attempt-7", 2), QuestionWindowFailureKind.ACCOUNT_UNAVAILABLE)
+
+            val invalid = Fake(this)
+            invalid.failure =
+                FirebaseQuestionWindowRemoteDataSource.QuestionWindowCallableException("INVALID_ARGUMENT", null)
+            failed(invalid.remote.beginWindow(request()), QuestionWindowFailureKind.INVALID_REQUEST)
+
+            val internal = Fake(this)
+            internal.failure =
+                FirebaseQuestionWindowRemoteDataSource.QuestionWindowCallableException("INTERNAL", null)
+            failed(internal.remote.beginWindow(request()), QuestionWindowFailureKind.SERVER_FAILURE)
+
+            val deadline = Fake(this)
+            deadline.failure =
+                FirebaseQuestionWindowRemoteDataSource.QuestionWindowCallableException("DEADLINE_EXCEEDED", null)
+            failed(deadline.remote.fetchNext("attempt-7", 2), QuestionWindowFailureKind.SERVER_FAILURE)
+        }
+
+    @Test
     fun callableNamesRemainBoundToTheActualServerExports() {
         assertEquals("beginLessonQuestionWindow", FirebaseQuestionWindowRemoteDataSource.BEGIN)
         assertEquals("fetchNextLessonQuestion", FirebaseQuestionWindowRemoteDataSource.FETCH)
@@ -187,6 +219,9 @@ class FirebaseQuestionWindowRemoteDataSourceTest {
                 "serverNowMs" to 1_760_000_060_000,
             )
         var beforeReply: suspend () -> Unit = {}
+
+        /** Когда выставлено, call бросает его вместо ответа: путь SDK-отказа без типов Firebase. */
+        var failure: Throwable? = null
         val sessions = OutboxSessionProvider { session }
         val calls = mutableListOf<Pair<String, Map<String, Any?>>>()
         val remote: FirebaseQuestionWindowRemoteDataSource =
@@ -194,6 +229,7 @@ class FirebaseQuestionWindowRemoteDataSourceTest {
                 call = { name, payload ->
                     calls += name to payload
                     beforeReply()
+                    failure?.let { throw it }
                     reply
                 },
                 sessions = sessions,

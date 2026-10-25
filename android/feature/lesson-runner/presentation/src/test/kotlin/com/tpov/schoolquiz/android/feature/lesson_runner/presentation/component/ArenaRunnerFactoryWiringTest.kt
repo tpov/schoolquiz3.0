@@ -4,7 +4,10 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunne
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSyncScheduler
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionWindowRequest
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaFrozenRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRepository
@@ -57,6 +60,48 @@ class ArenaRunnerFactoryWiringTest {
                 } finally {
                     app.close()
                 }
+            }
+        }
+
+    @Test
+    fun arenaFactoryGraphBuildsWithTheOnlineO2WindowServiceArmed() =
+        runTest {
+            // Ретро A1: сборка с окном и монитором связи проходит, разрешение остаётся ленивым —
+            // ни окно, ни связь не читаются, пока игрок не тапнёт Continue-из-паузы (CAP-1).
+            val f = RunCoordinatorFixture(this)
+            val app =
+                KoinApplication.init().modules(
+                    ports(f),
+                    clockModule,
+                    module {
+                        single<QuestionWindowRemoteDataSource> {
+                            object : QuestionWindowRemoteDataSource {
+                                override suspend fun beginWindow(request: QuestionWindowRequest) =
+                                    error("No window call during resolution")
+
+                                override suspend fun fetchNext(
+                                    attemptId: String,
+                                    completedQuestionIndex: Int,
+                                ) = error("No window call during resolution")
+                            }
+                        }
+                        single<NetworkMonitor> {
+                            object : NetworkMonitor {
+                                override fun observeOnline() = error("No network read during resolution")
+
+                                override suspend fun isOnline() = error("No network read during resolution")
+                            }
+                        }
+                    },
+                    lessonRunnerPresentationModule,
+                )
+            try {
+                val factory = app.koin.get<ArenaRunnerComponentFactory>()
+                assertSame(factory, app.koin.get<ArenaRunnerComponentFactory>())
+                assertEquals(0, f.freshCalls + f.readCalls + f.freezeCalls)
+                assertTrue(f.candidates.isEmpty())
+            } finally {
+                app.close()
             }
         }
 

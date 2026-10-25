@@ -2,10 +2,12 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaFreshStart
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaEntriesCursor
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPreparationsCursor
@@ -41,8 +43,13 @@ internal class ArenaRunHostFixture(
     scope: TestScope,
     /** Ручки согласия (CAP-16); по умолчанию хост без гейта — прежнее поведение тестов. */
     private val consent: ArenaConsentHandles? = null,
+    /** Сложность попытки: HARD нужен онлайн-O2-тестам бокового канала Continue-из-паузы. */
+    difficulty: Difficulty = Difficulty.EASY,
+    /** Онлайн-O2 (ретро A1): окно/связь для бокового канала; по умолчанию хост без окна (CAP-1). */
+    windows: QuestionWindowRemoteDataSource? = null,
+    online: (suspend () -> Boolean)? = null,
 ) {
-    val run = RunCoordinatorFixture(scope)
+    val run = RunCoordinatorFixture(scope, difficulty)
     val sessionEvents = MutableStateFlow<ArenaSessionStamp?>(run.stamp)
     var walletCalls = 0
     var syncCalls = 0
@@ -77,6 +84,8 @@ internal class ArenaRunHostFixture(
                 },
                 consent,
             ),
+            windows = windows,
+            online = online,
         )
     private val dispatcher = StandardTestDispatcher(scope.testScheduler)
 

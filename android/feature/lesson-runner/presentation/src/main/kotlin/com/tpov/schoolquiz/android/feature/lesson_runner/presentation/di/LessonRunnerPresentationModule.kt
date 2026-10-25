@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.logic.TermsConsentVerdict
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyTermsConsentGate
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonConsentHandles
@@ -47,6 +48,11 @@ val lessonRunnerPresentationModule =
                         accept = { get<EconomyTermsConsentGate>().acceptCurrentTerms() },
                     ),
                 ),
+                // Онлайн-O2 (ретро A1): окно перехода + проверка связи для бокового канала
+                // Continue-из-паузы. Оба nullable: сборка без firebase-графа (тесты) продолжает
+                // ездить на локальном таймере (CAP-1) — окно best-effort, не гейт.
+                windows = getOrNull(),
+                online = { get<NetworkMonitor>().isOnline() },
                 )
             val clock = get<kotlinx.datetime.Clock>()
             ArenaRunnerComponentFactory { context, request ->

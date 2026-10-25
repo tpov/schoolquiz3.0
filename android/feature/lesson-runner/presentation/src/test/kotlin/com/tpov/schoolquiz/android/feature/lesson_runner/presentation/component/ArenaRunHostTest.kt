@@ -2,15 +2,23 @@
 
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ArenaOnlineO2Adapter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionDelivery
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionDeliveryVerdict
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionWindowRequest
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionWindowView
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunDecision
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaRunRead
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -686,4 +694,285 @@ class ArenaRunHostTest {
                 host.onDestroy()
             }
         }
+
+    // ── Онлайн-O2 боковой канал: Continue-из-паузы на HARD-попытке (ретро A1, дев-дефолт) ──────
+
+    @Test
+    fun onlineHardContinueAnchorsTheDeadlineToTheServerWindow() =
+        runTest {
+            val windows = HostWindowFake.delivered()
+            var onlineReads = 0
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    difficulty = Difficulty.HARD,
+                    windows = windows,
+                    online = {
+                        onlineReads++
+                        true
+                    },
+                )
+            val host = f.host()
+            try {
+                val pauseDeadline = pausedAfterAnswer(f, host)
+                f.run.candidates.clear()
+
+                host.action(host.question().token, ArenaRunAction.Continue)
+                runCurrent()
+
+                assertEquals(1, onlineReads, "свежесть связи проверяется один раз на переход")
+                assertEquals(1, windows.beginCalls)
+                assertEquals(1, windows.fetchCalls)
+                assertEquals(
+                    listOf(ArenaRunnerPhase.ANSWERING),
+                    f.run.candidates.map { it.phase },
+                    "локальный Continue при armed-канале не диспетчится — резюм едет через CAS бокового канала",
+                )
+                assertEquals(
+                    f.run.now + 24_000,
+                    f.run.candidates.single().deadlineMs,
+                    "серверный остаток зажимается захваченной выдачей окна и ставит исходный deadline",
+                )
+                assertEquals(1, host.question().token.index)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun offlineHardContinueKeepsTheLocalTimerWithoutTouchingTheWindow() =
+        runTest {
+            val windows = HostWindowFake.delivered()
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    difficulty = Difficulty.HARD,
+                    windows = windows,
+                    online = { false },
+                )
+            val host = f.host()
+            try {
+                val pauseDeadline = pausedAfterAnswer(f, host)
+                f.run.candidates.clear()
+
+                host.action(host.question().token, ArenaRunAction.Continue)
+                runCurrent()
+
+                assertEquals(
+                    0,
+                    windows.beginCalls + windows.fetchCalls,
+                    "CAP-1: без связи окно не открывается — попытка едет на локальном таймере",
+                )
+                assertEquals(
+                    listOf(ArenaRunnerPhase.ANSWERING),
+                    f.run.candidates.map { it.phase },
+                )
+                assertEquals(pauseDeadline, f.run.candidates.single().deadlineMs, "локальный резюм хранит прежний deadline")
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun failedWindowCallFallsBackToLocalResume() =
+        runTest {
+            val windows = HostWindowFake.beginFails()
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    difficulty = Difficulty.HARD,
+                    windows = windows,
+                    online = { true },
+                )
+            val host = f.host()
+            try {
+                val pauseDeadline = pausedAfterAnswer(f, host)
+                f.run.candidates.clear()
+
+                host.action(host.question().token, ArenaRunAction.Continue)
+                runCurrent()
+
+                assertEquals(1, windows.beginCalls)
+                assertEquals(
+                    0,
+                    windows.fetchCalls,
+                    "упавшее окно не переигрывается — отказ quiet, CAP-1",
+                )
+                assertEquals(
+                    listOf(ArenaRunnerPhase.ANSWERING),
+                    f.run.candidates.map { it.phase },
+                )
+                assertEquals(pauseDeadline, f.run.candidates.single().deadlineMs, "фолбэк — прежний локальный resumePaused")
+                assertNull(f.run.coordinator.state.value.notice, "отказ окна не RELOAD_REQUIRED и не CONFLICT")
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun expiredWindowClosesTheAttemptThroughTheExistingCancelPath() =
+        runTest {
+            val windows = HostWindowFake.expired()
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    difficulty = Difficulty.HARD,
+                    windows = windows,
+                    online = { true },
+                )
+            val host = f.host()
+            try {
+                pausedAfterAnswer(f, host)
+                f.run.candidates.clear()
+
+                host.action(host.question().token, ArenaRunAction.Continue)
+                runCurrent()
+
+                // Ровно один заход: begin + fetch, без повторов — истёкшее окно не переигрывается.
+                assertEquals(2, windows.beginCalls + windows.fetchCalls)
+                assertTrue(f.run.candidates.isEmpty(), "истёкшее окно не заводит часы")
+                assertEquals(
+                    listOf("window-expired-${f.run.header.attemptId}-0"),
+                    f.entries.cancels,
+                    "закрытие — существующий путь отмены с детерминированным ключом",
+                )
+                assertEquals(
+                    ArenaRunnerStatus.PENDING_CANCEL,
+                    assertIs<ArenaRunnerView.Attention>(host.view.value).status,
+                )
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
+    fun easyAttemptNeverArmsTheWindowSideChannel() =
+        runTest {
+            val windows = HostWindowFake.delivered()
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    difficulty = Difficulty.EASY,
+                    windows = windows,
+                    online = { true },
+                )
+            val host = f.host()
+            try {
+                val pauseDeadline = pausedAfterAnswer(f, host)
+                f.run.candidates.clear()
+
+                host.action(host.question().token, ArenaRunAction.Continue)
+                runCurrent()
+
+                assertEquals(
+                    0,
+                    windows.beginCalls + windows.fetchCalls,
+                    "дев-дефолт: канал armed только на HARD-попытке",
+                )
+                assertEquals(
+                    listOf(ArenaRunnerPhase.ANSWERING),
+                    f.run.candidates.map { it.phase },
+                )
+                assertEquals(pauseDeadline, f.run.candidates.single().deadlineMs)
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    /**
+     * Answer + Continue-в-паузу под фоном: авторезюма нет (граница фона поглощает RevealPrepared),
+     * кадр остаётся PAUSED — тот же вход, что у игрока после возврата из фона. Возвращает паузный
+     * deadline — исходный срок локального резюма для последующих сравнений.
+     */
+    private fun TestScope.pausedAfterAnswer(
+        f: ArenaRunHostFixture,
+        host: ArenaRunHost,
+    ): Long {
+        host.foreground()
+        runCurrent()
+        host.action(host.question().token, ArenaRunAction.Answer(f.run.answer))
+        runCurrent()
+        val barrier = CompletableDeferred<Unit>()
+        f.run.beforeCas = { barrier.await() }
+        host.action(host.question().token, ArenaRunAction.Continue)
+        runCurrent()
+        host.background(false)
+        host.foreground()
+        barrier.complete(Unit)
+        runCurrent()
+        f.run.beforeCas = {}
+        assertEquals(ArenaRunnerPhase.PAUSED, host.question().token.phase)
+        return f.run.candidates.last().deadlineMs
+    }
+}
+
+/** Честный источник окна под тесты хоста: identity совпадает с фикстурой прогона. */
+private class HostWindowFake(
+    private val view: Result<QuestionWindowView>,
+    private val verdict: Result<QuestionDeliveryVerdict>,
+) : QuestionWindowRemoteDataSource {
+    var beginCalls = 0
+    var fetchCalls = 0
+
+    override suspend fun beginWindow(request: QuestionWindowRequest): Result<QuestionWindowView> {
+        beginCalls++
+        return view
+    }
+
+    override suspend fun fetchNext(
+        attemptId: String,
+        completedQuestionIndex: Int,
+    ): Result<QuestionDeliveryVerdict> {
+        fetchCalls++
+        return verdict
+    }
+
+    companion object {
+        /** Открытое окно с состоявшейся выдачей; остаток больше allocation — зажим до 24s. */
+        fun delivered(): HostWindowFake =
+            HostWindowFake(
+                view = Result.success(questionWindowView()),
+                verdict =
+                    Result.success(
+                        QuestionDeliveryVerdict.Delivered(
+                            windowId = "win_o2",
+                            delivery = QuestionDelivery(1, "q2", issuedAtMs = 1_000, answerDeadlineMs = 25_000),
+                            remainderMs = 500_000,
+                            serverNowMs = 1_000,
+                        ),
+                    ),
+            )
+
+        fun beginFails(): HostWindowFake =
+            HostWindowFake(
+                view = Result.failure(IllegalStateException("window begin unavailable")),
+                verdict = Result.failure(IllegalStateException("unreachable")),
+            )
+
+        fun expired(): HostWindowFake =
+            HostWindowFake(
+                view = Result.success(questionWindowView()),
+                verdict =
+                    Result.success(
+                        QuestionDeliveryVerdict.WindowExpired(
+                            windowId = "win_o2",
+                            closedAtMs = 61_000,
+                            serverNowMs = 61_000,
+                        ),
+                    ),
+            )
+
+        private fun questionWindowView(): QuestionWindowView =
+            QuestionWindowView(
+                windowId = "win_o2",
+                attemptId = "b".repeat(64),
+                completedQuestionIndex = 0,
+                nextQuestionIndex = 1,
+                state = ArenaOnlineO2Adapter.WINDOW_STATE_OPEN,
+                windowSeconds = 60,
+                allocatedSeconds = 24,
+                openedAtMs = 1_000,
+                expiresAtMs = 61_000,
+            )
+    }
 }

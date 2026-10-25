@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ArenaRunTra
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.advanceArenaFeedbackToPause
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.revealPreparedArenaQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.timeoutArenaQuestionToPause
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerCheckpoint
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
@@ -100,6 +101,35 @@ internal class ArenaRunCoordinator(
             val result = runs.checkpointCAS(stamp, ticketId, current.revision, candidate).getOrThrow()
             publish(result.current, if (result is ArenaRunCasOutcome.Conflict) ArenaRunNotice.CONFLICT else null)
         }
+    }
+
+    /**
+     * Итог онлайн-O2 бокового канала попадает сюда, а не через [dispatch]: окно уже прочитано
+     * хостом вне сериализованного писателя, здесь — только чистый кандидат из свежего состояния и
+     * CAS под тем же забором. Лямбда обязана быть чистой (сетевых вызовов в [perform] нет);
+     * брошенное адаптером расхождение — честный RELOAD_REQUIRED, а не тихий откат (ретро A1).
+     */
+    fun applyExternal(
+        token: ArenaRunToken,
+        candidate: (ArenaRunRead.Continuable, Long) -> ArenaRunnerCheckpoint,
+    ) {
+        if (token != this.token()) return
+        val current = state.value.observed as? ArenaRunRead.Continuable ?: return
+        perform({ clock.now().toEpochMilliseconds() }) { now ->
+            val adapted = candidate(current, now)
+            val result = runs.checkpointCAS(stamp, ticketId, current.revision, adapted).getOrThrow()
+            publish(result.current, if (result is ArenaRunCasOutcome.Conflict) ArenaRunNotice.CONFLICT else null)
+        }
+    }
+
+    /**
+     * Чистостороннее расхождение, найденное хостом до писателя (адаптер отверг запрос окна):
+     * остановка и перезагрузка, не тихий локальный таймер — серверные факты противоречат
+     * локальному состоянию, и второй отсчёт их не починит.
+     */
+    fun diverge() {
+        if (!checkSession() || active != null) return
+        mutableState.value = state.value.copy(busy = false, notice = ArenaRunNotice.RELOAD_REQUIRED)
     }
 
     /** Durable local final intent only. The resulting read remains pending until a genuine server receipt. */

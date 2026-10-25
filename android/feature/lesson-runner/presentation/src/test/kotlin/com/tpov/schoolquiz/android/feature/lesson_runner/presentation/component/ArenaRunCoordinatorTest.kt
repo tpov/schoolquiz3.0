@@ -5,6 +5,9 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
+import com.tpov.schoolquiz.shared.core.question_schema.RedactedQuestionContent
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ArenaOnlineO2Adapter
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ArenaRunTransitions
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTimer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.initialArenaRunnerCheckpoint
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.validateArenaRunnerTransition
@@ -17,6 +20,9 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicket
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketSnapshot
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionDelivery
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionDeliveryVerdict
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionWindowView
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
@@ -239,9 +245,92 @@ class ArenaRunCoordinatorTest {
             assertEquals(1, paused.indexInPool)
             assertEquals(1, paused.acceptedAnswers.size)
         }
+
+    // ── Онлайн-O2 боковой канал: итог возвращается писателю чистым кандидатом (ретро A1) ──────
+
+    @Test
+    fun externalServerResumeIsCasWrittenThroughTheSameSerializedWriter() =
+        runTest {
+            val f = RunCoordinatorFixture(this)
+            f.start()
+            f.coordinator.dispatch(requireNotNull(f.coordinator.token()), ArenaRunAction.Answer(f.answer))
+            runCurrent()
+            f.coordinator.dispatch(requireNotNull(f.coordinator.token()), ArenaRunAction.Background)
+            runCurrent()
+            val token = requireNotNull(f.coordinator.token())
+            assertEquals(ArenaRunnerPhase.PAUSED, token.phase)
+
+            // Чистый кандидат из свежего состояния — как строит его адаптер из серверной выдачи.
+            f.candidates.clear()
+            f.coordinator.applyExternal(token) { current, nowMs ->
+                ArenaRunTransitions.continueRun(current, nowMs + 40_000).copy(
+                    deadlineMs = nowMs + 24_000,
+                )
+            }
+            runCurrent()
+            val resumed = assertIs<ArenaRunRead.Continuable>(f.coordinator.state.value.observed)
+            assertEquals(ArenaRunnerPhase.ANSWERING, resumed.checkpoint.phase)
+            assertEquals(f.now + 24_000, resumed.checkpoint.deadlineMs, "the server remainder anchors the local projection")
+            assertEquals(1, f.candidates.size, "the side-channel result went through the same CAS writer")
+            assertNull(f.coordinator.state.value.notice)
+        }
+
+    @Test
+    fun adapterDivergenceInsideExternalApplyIsReloadRequiredNeverASilentFallback() =
+        runTest {
+            val f = RunCoordinatorFixture(this)
+            f.start()
+            val token = requireNotNull(f.coordinator.token())
+            // Чекпоинт в ANSWERING: адаптерный require (resumeDelivered требует паузу) падает —
+            // расхождение становится RELOAD_REQUIRED, локальный таймер не подменяет сервер.
+            f.coordinator.applyExternal(token) { current, _ ->
+                ArenaOnlineO2Adapter.resumeDelivered(current, 0, view = view(), verdict = delivered(), localNowMs = f.now)
+            }
+            runCurrent()
+            assertEquals(ArenaRunNotice.RELOAD_REQUIRED, f.coordinator.state.value.notice)
+            assertFalse(f.coordinator.state.value.busy)
+            assertEquals(0, f.candidates.size, "a diverged side-channel result never reaches the CAS")
+        }
+
+    @Test
+    fun pureSideDivergenceBeforeTheWriterStopsWithReloadRequired() =
+        runTest {
+            val f = RunCoordinatorFixture(this)
+            f.start()
+            f.coordinator.diverge()
+            assertEquals(ArenaRunNotice.RELOAD_REQUIRED, f.coordinator.state.value.notice)
+            assertFalse(f.coordinator.state.value.busy)
+            assertNull(f.coordinator.token(), "a diverged run is not interactive")
+        }
+
+    /** Минимальное честное окно под адаптерные проверки: identity совпадает, конфигурация валидна. */
+    private fun view() =
+        QuestionWindowView(
+            windowId = "win_test",
+            attemptId = "b".repeat(64),
+            completedQuestionIndex = 0,
+            nextQuestionIndex = 1,
+            state = ArenaOnlineO2Adapter.WINDOW_STATE_OPEN,
+            windowSeconds = 60,
+            allocatedSeconds = 24,
+            openedAtMs = 1_500_000,
+            expiresAtMs = 1_560_000,
+        )
+
+    private fun delivered() =
+        QuestionDeliveryVerdict.Delivered(
+            windowId = "win_test",
+            delivery = QuestionDelivery(1, "q2", 1_550_000, 1_574_000),
+            remainderMs = 24_000,
+            serverNowMs = 1_550_000,
+        )
 }
 
-internal class RunCoordinatorFixture(private val scope: TestScope) {
+internal class RunCoordinatorFixture(
+    private val scope: TestScope,
+    /** Сложность попытки; HARD нужен онлайн-O2-тестам бокового канала Continue-из-паузы. */
+    val difficulty: Difficulty = Difficulty.EASY,
+) {
     val stamp = ArenaSessionStamp("owner", 1)
     var session: ArenaSessionStamp? = stamp
     var now = 1500L
@@ -256,25 +345,43 @@ internal class RunCoordinatorFixture(private val scope: TestScope) {
     val header =
         ArenaTicketHeader(
             1, "a".repeat(64), "b".repeat(64), "owner", "request",
-            ArenaEntryMode.SELECTED, Difficulty.EASY, "lesson", 1, ArenaTicketStatus.RESERVED, 1, 50, 100, "2026-09-08",
+            ArenaEntryMode.SELECTED, difficulty, "lesson", 1, ArenaTicketStatus.RESERVED, 1, 50, 100, "2026-09-08",
         )
     private val questions =
         (1..2).map { index ->
             val id = "q$index"
+            // HARD-банк приезжает на клиент отредактированным (ключи не покидают сервер):
+            // биндинг требует RedactedQuestionContent/Survey, иначе честный чекпоинт не собрать.
+            val display =
+                if (difficulty == Difficulty.HARD) {
+                    RedactedQuestionContent.SingleChoice(
+                        id = id,
+                        difficulty = difficulty.name,
+                        text = "Question",
+                        imageUrl = null,
+                        options =
+                            listOf(
+                                RedactedQuestionContent.Row("A", "A"),
+                                RedactedQuestionContent.Row("B", "B"),
+                            ),
+                    )
+                } else {
+                    QuestionContent.SingleChoice(
+                        id,
+                        difficulty,
+                        "Question",
+                        null,
+                        listOf(QuestionContent.Option(OptionId("A"), "A"), QuestionContent.Option(OptionId("B"), "B")),
+                        OptionId("A"),
+                    )
+                }
             ArenaTicketQuestion(
                 id,
                 1,
                 index - 1,
                 "en",
                 "not-parsed-here",
-                QuestionContent.SingleChoice(
-                    id,
-                    Difficulty.EASY,
-                    "Question",
-                    null,
-                    listOf(QuestionContent.Option(OptionId("A"), "A"), QuestionContent.Option(OptionId("B"), "B")),
-                    OptionId("A"),
-                ),
+                display,
             )
         }
     private val binding =
@@ -288,7 +395,7 @@ internal class RunCoordinatorFixture(private val scope: TestScope) {
                 1000,
                 1000 + computeTimer(
                     questions.first().display,
-                    Difficulty.EASY,
+                    difficulty,
                     TimerCoefficients.Default,
                 ).seconds * 1000L,
             ),

@@ -3,13 +3,17 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.buildHintDraft
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ArenaOnlineO2Adapter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketHeader
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaTicketStatus
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptIdentity
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.QuestionDeliveryVerdict
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaEntryRepository
@@ -62,6 +66,7 @@ internal class ArenaRunHost(
     val view = mutableView.asStateFlow()
     private var showExit = false
     private var cancelDispatching = false
+    private var serverResumeInFlight = false
     private var destroyed = false
     private var receiptKey: ArenaReceiptKey? = null
     private var receiptFrame: ArenaRunnerView.Result? = null
@@ -103,9 +108,100 @@ internal class ArenaRunHost(
             if (permitted == ArenaRunAction.AdvanceToPause || permitted == ArenaRunAction.TimeoutToPause) {
                 visibility.advancing(token)
             }
+            // Продолжение из паузы на HARD-попытке при связи сначала пробует серверное окно
+            // (ONLINE-O2, дев-дефолт — см. requestServerResume); иначе локальный таймер как раньше.
+            if (permitted == ArenaRunAction.Continue && token.phase == ArenaRunnerPhase.PAUSED && requestServerResume(token)) {
+                return
+            }
             controller.dispatch(token, permitted)
         }
     }
+
+    /**
+     * Онлайн-O2 боковой канал при Continue из паузы (ретро A1; история 3.2). Вызовы окна живут
+     * ЗДЕСЬ, в scope хоста — никогда внутри сериализованного писателя координатора; их итог
+     * возвращается туда чистым кандидатом ([ArenaRunCoordinator.applyExternal]).
+     *
+     * Дев-дефолт триггера (записано для владельца): HARD-попытка И связь на момент перехода.
+     * Любой отказ окна — тихий фолбэк на прежний локальный resumePaused (CAP-1: офлайн-игра
+     * легальна без сетевого гейта); расхождение адаптера (require) — RELOAD_REQUIRED, не фолбэк:
+     * вторые часы расхождение не чинят. Истёкшее окно закрывает попытку существующим путём
+     * отмены (AD-31: исход — существующий mode contract, таймаут не побеждает).
+     */
+    private fun requestServerResume(token: ArenaRunToken): Boolean {
+        val controller = coordinator ?: return false
+        val windows = services.windows ?: return false
+        val online = services.online ?: return false
+        if (serverResumeInFlight) return true // Переход уже едет через боковой канал; второй тап ничего не добавляет.
+        val current = controller.state.value.observed as? ArenaRunRead.Continuable ?: return false
+        if (current.binding.snapshot.header.difficulty != Difficulty.HARD) return false
+        val index = current.checkpoint.indexInPool - 1
+        val request =
+            runCatching { ArenaOnlineO2Adapter.windowRequestOrNull(current.binding, index) }
+                .getOrElse {
+                    Log.w(TAG_ONLINE, "arena online-O2: window request diverged from the runner state", it)
+                    controller.diverge()
+                    return true
+                }
+        if (request == null) return false // Последний вопрос попытки: окно не открывается (§3) — обычный resume.
+        serverResumeInFlight = true
+        scope.launch {
+            try {
+                // Свежесть связи — часть триггера (дев-дефолт: HARD И связь на момент перехода).
+                // Проверка асинхронная, потому и живёт в launch: Offline/неответ → CAP-1, локальный
+                // таймер без единого сетевого захода.
+                val onlineNow = runCatching { online() }.getOrDefault(false)
+                if (!onlineNow) {
+                    Log.d(TAG_ONLINE, "arena online-O2: offline at the transition, local resume stands")
+                    fallbackToLocalResume(token)
+                    return@launch
+                }
+                val view = windows.beginWindow(request).getOrElse { error ->
+                    Log.d(TAG_ONLINE, "arena online-O2: begin unavailable, local resume stands ($error)")
+                    fallbackToLocalResume(token)
+                    return@launch
+                }
+                val verdict =
+                    windows.fetchNext(request.attemptId, request.completedQuestionIndex).getOrElse { error ->
+                        Log.d(TAG_ONLINE, "arena online-O2: fetch unavailable, local resume stands ($error)")
+                        fallbackToLocalResume(token)
+                        return@launch
+                    }
+                when (verdict) {
+                    is QuestionDeliveryVerdict.Delivered ->
+                        controller.applyExternal(token) { fresh, nowMs ->
+                            ArenaOnlineO2Adapter.resumeDelivered(fresh, request.completedQuestionIndex, view, verdict, nowMs)
+                        }
+                    is QuestionDeliveryVerdict.WindowExpired -> {
+                        val fresh = controller.state.value.observed as? ArenaRunRead.Continuable
+                        if (fresh == null) return@launch
+                        runCatching {
+                            ArenaOnlineO2Adapter.requireExpiryConsistent(fresh, request.completedQuestionIndex, view, verdict)
+                        }.onSuccess {
+                            controller.cancel(services.entries, expiredWindowRequestId(fresh.checkpoint.attemptId, index))
+                        }.onFailure {
+                            Log.w(TAG_ONLINE, "arena online-O2: expiry diverged from the runner state", it)
+                            controller.diverge()
+                        }
+                    }
+                }
+            } finally {
+                serverResumeInFlight = false
+            }
+        }
+        return true
+    }
+
+    /** CAP-1: отказ окна ничего не меняет — попытка продолжается на локальном таймере, как раньше. */
+    private fun fallbackToLocalResume(token: ArenaRunToken) {
+        coordinator?.dispatch(token, ArenaRunAction.Continue)
+    }
+
+    /** Детерминированный ключ намерения закрытия: повторный проход по истёкшему окну идемпотентен. */
+    private fun expiredWindowRequestId(
+        attemptId: String,
+        completedQuestionIndex: Int,
+    ): String = "window-expired-$attemptId-$completedQuestionIndex"
 
     private fun visibleAction(
         token: ArenaRunToken,
@@ -486,6 +582,15 @@ internal data class ArenaRunServices(
     val sessionEvents: ArenaSessionObserver,
     val wallet: ArenaWalletRepository,
     val result: ArenaRunResultServices,
+    /**
+     * Онлайн-O2 (ретро A1): источник окна перехода для бокового канала Continue-из-паузы на
+     * HARD-попытке. Null — хост без окна (тесты, сборки без firebase): переход всегда едет на
+     * локальном таймере (CAP-1). Сетевые вызовы источник делает сам; хост проверяет связь
+     * через [online] только чтобы не начинать заведомо мёртвый заход.
+     */
+    val windows: QuestionWindowRemoteDataSource? = null,
+    /** Свежесть связи на момент перехода; null эквивалентен «не проверяем — окно не armed». */
+    val online: (suspend () -> Boolean)? = null,
 )
 
 /** Result ports stay together so the main retained-host constructor remains small and legible. */
@@ -519,3 +624,5 @@ private fun ArenaRunnerView.Result.toVerifiedResult(): ArenaVerifiedResult? =
     }
 
 private const val TAG = "ArenaConsent"
+
+private const val TAG_ONLINE = "ArenaOnlineO2"

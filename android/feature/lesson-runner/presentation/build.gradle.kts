@@ -22,6 +22,8 @@ dependencies {
     // Next-lesson resolution reads lesson.themeId (design decision F3).
     implementation(project(":shared:feature:theme:domain"))
     implementation(project(":shared:core:question-schema"))
+    // Онлайн-O2 (ретро A1): хост сверяет связь перед боковым каналом окна (NetworkMonitor).
+    implementation(project(":shared:core:network"))
     // Приватный прогон (AD-29, 8.4): дверь читает сессию через AuthRepository (app-shell domain).
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(libs.kotlinx.datetime)

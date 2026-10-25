@@ -44,7 +44,9 @@ class ArenaOnlineO2AdapterTest {
     fun noWindowBeginsAfterTheAttemptsLastQuestion() {
         val binding = fixture().binding
         assertNull(ArenaOnlineO2Adapter.windowRequestOrNull(binding, 1), "the last question opens no window")
-        assertNull(ArenaOnlineO2Adapter.windowRequestOrNull(binding, 2))
+        // Индекс за пределами снапшота — расхождение с рановером, а не «нет окна» (ретро L7a):
+        // молчаливый null маскировал бы багу под честную границу.
+        assertFailsWith<IllegalArgumentException> { ArenaOnlineO2Adapter.windowRequestOrNull(binding, 2) }
         assertFailsWith<IllegalArgumentException> { ArenaOnlineO2Adapter.windowRequestOrNull(binding, -1) }
     }
 
@@ -71,29 +73,30 @@ class ArenaOnlineO2AdapterTest {
     @Test
     fun windowIdentityMismatchIsRejectedBeforeAnyFactIsRead() {
         val binding = fixture().binding
+        val states = ArenaOnlineO2Adapter.DELIVERABLE_WINDOW_STATES
         assertFailsWith<IllegalArgumentException> {
-            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(attempt = "other-attempt"))
+            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(attempt = "other-attempt"), states)
         }
         assertFailsWith<IllegalArgumentException> {
-            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 1, window())
+            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 1, window(), states)
         }
         assertFailsWith<IllegalArgumentException> {
-            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(nextQuestionIndex = 5))
+            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(nextQuestionIndex = 5), states)
         }
         assertFailsWith<IllegalArgumentException> {
-            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(id = " "))
+            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(id = " "), states)
         }
         assertFailsWith<IllegalArgumentException> {
-            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(seconds = 0))
+            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(seconds = 0), states)
         }
         assertFailsWith<IllegalArgumentException> {
-            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(allocated = -1))
+            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(allocated = -1), states)
         }
         assertFailsWith<IllegalArgumentException> {
-            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(expires = OPENED_AT_MS))
+            ArenaOnlineO2Adapter.requireWindowIdentity(binding, 0, window(expires = OPENED_AT_MS), states)
         }
         // Валидное окно проходит и повторно: повтор begin возвращает то же окно (§7).
-        assertEquals(window(), ArenaOnlineO2Adapter.requireWindowIdentity(fixture().binding, 0, window()))
+        assertEquals(window(), ArenaOnlineO2Adapter.requireWindowIdentity(fixture().binding, 0, window(), states))
     }
 
     // ── §3/§5: первая выдача — сервер ставит исходные часы, клиент строит легальный переход ──
@@ -107,6 +110,76 @@ class ArenaOnlineO2AdapterTest {
         assertEquals(1, candidate.indexInPool)
         assertEquals(LOCAL_NOW_MS + 24_000, candidate.deadlineMs, "the projection is anchored once, from the server remainder")
         assertEquals(paused.checkpoint.questionStartedAtMs, candidate.questionStartedAtMs, "the slot is the same position")
+    }
+
+    // ── §5: испорченный остаток не заводит почти бесконечных часов — зажим захваченной выдачей ──
+
+    @Test
+    fun corruptRemainderIsClampedToTheWindowSCapturedAllocation() {
+        val paused = pausedAtNextQuestion()
+        // Остаток больше allocation и больше deadline: зажим — allocation, не silence, не бросок.
+        val corrupt =
+            ArenaOnlineO2Adapter.resumeDelivered(
+                paused,
+                0,
+                window(),
+                delivered(remainder = 500_000, answerDeadline = ISSUED_AT_MS + 600_000),
+                LOCAL_NOW_MS,
+            )
+        assertEquals(LOCAL_NOW_MS + 24_000, corrupt.deadlineMs, "allocation bounds the projection, no near-infinite clock")
+        // Честный остаток на границе allocation зажим не трогает.
+        val exact =
+            ArenaOnlineO2Adapter.resumeDelivered(paused, 0, window(), delivered(remainder = 24_000), LOCAL_NOW_MS)
+        assertEquals(LOCAL_NOW_MS + 24_000, exact.deadlineMs)
+    }
+
+    // ── §6: состояние окна сверяется с явно названными для функции состояниями (ретро L7d) ────
+
+    @Test
+    fun eachTransitionNamesTheWindowStatesItProceedsOn() {
+        val paused = pausedAtNextQuestion()
+        // Возобновление едет из открытого окна и из окна с состоявшейся выдачей, не из истёкшего.
+        ArenaOnlineO2Adapter.resumeDelivered(paused, 0, window(), delivered(), LOCAL_NOW_MS)
+        ArenaOnlineO2Adapter.resumeDelivered(
+            paused,
+            0,
+            window(state = ArenaOnlineO2Adapter.WINDOW_STATE_DELIVERED),
+            delivered(),
+            LOCAL_NOW_MS,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            ArenaOnlineO2Adapter.resumeDelivered(
+                paused,
+                0,
+                window(state = ArenaOnlineO2Adapter.WINDOW_STATE_EXPIRED),
+                delivered(),
+                LOCAL_NOW_MS,
+            )
+        }
+        // Повтор выдачи при уже идущих часах читает только состоявшуюся выдачу.
+        val answering = resumedAfterDelivery()
+        ArenaOnlineO2Adapter.reconfirmDelivered(
+            answering,
+            0,
+            window(state = ArenaOnlineO2Adapter.WINDOW_STATE_DELIVERED),
+            delivered(remainder = 10_000),
+        )
+        assertFailsWith<IllegalArgumentException> {
+            ArenaOnlineO2Adapter.reconfirmDelivered(answering, 0, window(), delivered(remainder = 10_000))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ArenaOnlineO2Adapter.reconfirmDelivered(
+                answering,
+                0,
+                window(state = ArenaOnlineO2Adapter.WINDOW_STATE_EXPIRED),
+                delivered(remainder = 10_000),
+            )
+        }
+        // Истечение честно доезжает при любом из серверных состояний окна.
+        val expired = QuestionDeliveryVerdict.WindowExpired("win_test", closedAtMs = 500_000, serverNowMs = 500_000)
+        ArenaOnlineO2Adapter.WINDOW_STATES.forEach { state ->
+            ArenaOnlineO2Adapter.requireExpiryConsistent(paused, 0, window(state = state), expired)
+        }
     }
 
     @Test
@@ -147,11 +220,27 @@ class ArenaOnlineO2AdapterTest {
         val stored: ArenaRunnerCheckpoint = answering.checkpoint
         // Сервер отвечает тем же вопросом; локальное «сейчас» уже сильно позже якоря выдачи.
         val again = delivered(remainder = 10_000)
-        assertEquals(stored, ArenaOnlineO2Adapter.reconfirmDelivered(answering, 0, window(), again))
+        assertEquals(
+            stored,
+            ArenaOnlineO2Adapter.reconfirmDelivered(
+                answering,
+                0,
+                window(state = ArenaOnlineO2Adapter.WINDOW_STATE_DELIVERED),
+                again,
+            ),
+        )
 
         // Даже испорченный/сместившийся серверный ответ не двигает часы: окно одно, выдача одна.
         val rogue = delivered(answerDeadline = ISSUED_AT_MS + 600_000, remainder = 500_000)
-        assertEquals(stored, ArenaOnlineO2Adapter.reconfirmDelivered(answering, 0, window(), rogue))
+        assertEquals(
+            stored,
+            ArenaOnlineO2Adapter.reconfirmDelivered(
+                answering,
+                0,
+                window(state = ArenaOnlineO2Adapter.WINDOW_STATE_DELIVERED),
+                rogue,
+            ),
+        )
     }
 
     // ── §5: серверный остаток честный — ноль не растягивается в добавленное время ─────────────
@@ -236,6 +325,7 @@ class ArenaOnlineO2AdapterTest {
         attempt: String = attemptId,
         id: String = "win_test",
         nextQuestionIndex: Int = 1,
+        state: String = ArenaOnlineO2Adapter.WINDOW_STATE_OPEN,
         seconds: Int = 60,
         allocated: Int = 24,
         expires: Long = OPENED_AT_MS + 60_000,
@@ -245,7 +335,7 @@ class ArenaOnlineO2AdapterTest {
             attemptId = attempt,
             completedQuestionIndex = 0,
             nextQuestionIndex = nextQuestionIndex,
-            state = "OPEN",
+            state = state,
             windowSeconds = seconds,
             allocatedSeconds = allocated,
             openedAtMs = OPENED_AT_MS,

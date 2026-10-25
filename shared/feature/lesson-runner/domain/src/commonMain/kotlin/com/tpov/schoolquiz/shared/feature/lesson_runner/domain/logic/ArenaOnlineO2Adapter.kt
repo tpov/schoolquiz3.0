@@ -40,8 +40,10 @@ object ArenaOnlineO2Adapter {
      * Запрос окна перехода из [completedQuestionIndex], или `null` — окна нет.
      *
      * `null` — ровно одна граница: закрыт последний вопрос попытки (§3: после последнего вопроса
-     * окно не начинается, лишних 60 секунд нет). Отрицательный индекс — расхождение вызывающего
-     * с рановером, а не «нет окна»: ошибка, не вежливый отказ.
+     * окно не начинается, лишних 60 секунд нет). Отрицательный индекс и индекс за пределами
+     * снапшота — расхождение вызывающего с рановером, а не «нет окна»: ретро L7a — молчаливый
+     * `null` для чужого индекса маскировал бы багу рановера под честную границу; это require,
+     * а вызывающий переводит его в свой сигнал перезагрузки (RELOAD_REQUIRED), не в отказ окна.
      */
     fun windowRequestOrNull(
         binding: ArenaRunnerCheckpointBinding,
@@ -49,7 +51,10 @@ object ArenaOnlineO2Adapter {
     ): QuestionWindowRequest? {
         require(completedQuestionIndex >= 0) { "completedQuestionIndex must be non-negative" }
         val questions = binding.snapshot.questions
-        if (completedQuestionIndex >= questions.size - 1) return null
+        require(completedQuestionIndex < questions.size) {
+            "completedQuestionIndex $completedQuestionIndex is beyond the attempt's ${questions.size} questions"
+        }
+        if (completedQuestionIndex == questions.size - 1) return null
         val h = binding.snapshot.header
         return QuestionWindowRequest(
             attemptId = h.attemptId,
@@ -69,13 +74,22 @@ object ArenaOnlineO2Adapter {
      * здесь: положительные секунды и непустой срок — всё, что клиент вправе требовать; значения
      * сервер не перечитывает при выдаче (§3), поэтому сверять их с локальной формулой — значило бы
      * назначать серверные факты на клиенте (§5).
+     *
+     * Состояние окна сверяется с явно названными для функции состояниями (ретро L7d), а не с
+     * «непустой строкой»: каждая ветвь перехода называет, при каких состояниях окна она честно
+     * едет. Буквальное совпадение обязательно с [WINDOW_STATES_SOURCE] — константами
+     * `functions/lesson-question-window.js`.
      */
     fun requireWindowIdentity(
         binding: ArenaRunnerCheckpointBinding,
         completedQuestionIndex: Int,
         view: QuestionWindowView,
+        expectedStates: Set<String>,
     ): QuestionWindowView {
         require(completedQuestionIndex >= 0) { "completedQuestionIndex must be non-negative" }
+        require(view.state in expectedStates) {
+            "window state ${view.state} is not a state this transition proceeds on (expected $expectedStates)"
+        }
         val h = binding.snapshot.header
         require(view.attemptId == h.attemptId) { "window attempt ${view.attemptId} is not the attempt ${h.attemptId}" }
         require(view.completedQuestionIndex == completedQuestionIndex) {
@@ -88,7 +102,6 @@ object ArenaOnlineO2Adapter {
         require(view.windowSeconds > 0) { "captured windowSeconds must be positive" }
         require(view.allocatedSeconds > 0) { "captured allocatedSeconds must be positive" }
         require(view.openedAtMs >= 0 && view.expiresAtMs > view.openedAtMs) { "window term is not a term" }
-        require(view.state.isNotBlank()) { "window state must not be blank" }
         return view
     }
 
@@ -105,6 +118,12 @@ object ArenaOnlineO2Adapter {
      * Выданный вопрос обязан быть вопросом снапшота на следующей позиции: сервер подтверждает
      * выдачу конкретного id, и расхождение — не «другой вопрос», а чужой переход (AD-21: клиент не
      * назначает серверные факты; здесь и обратно — сервер не перевыгает пул попытки).
+     *
+     * Серверный остаток проецируется с ограничением захваченной выдачей окна (ретро L7b):
+     * `allocatedSeconds` — серверная конфигурация, захваченная при открытии, и честный остаток не
+     * может её превосходить (deadline = выдача + allocation, остаток считается от «сейчас» после
+     * выдачи). Испорченный остаток, превосходящий allocation, зажимается им — рядом не
+     * заводятся почти бесконечные часы; честный остаток зажим не трогает.
      */
     fun resumeDelivered(
         current: ArenaRunRead.Continuable,
@@ -113,7 +132,7 @@ object ArenaOnlineO2Adapter {
         verdict: QuestionDeliveryVerdict.Delivered,
         localNowMs: Long,
     ): ArenaRunnerCheckpoint {
-        requireWindowIdentity(binding(current), completedQuestionIndex, view)
+        requireWindowIdentity(binding(current), completedQuestionIndex, view, DELIVERABLE_WINDOW_STATES)
         requireSameWindow(view, verdict)
         val checkpoint = current.checkpoint
         require(checkpoint.phase == ArenaRunnerPhase.PAUSED) {
@@ -129,12 +148,12 @@ object ArenaOnlineO2Adapter {
             "delivered question ${delivery.questionId} is not the attempt's question at position $next"
         }
         require(verdict.remainderMs >= 0 && verdict.serverNowMs >= 0) { "verdict times must be non-negative" }
-        require(verdict.remainderMs <= delivery.answerDeadlineMs) { "remainder must not exceed the deadline" }
-        require(localNowMs >= 0 && verdict.remainderMs <= Long.MAX_VALUE - localNowMs) { "projection overflows" }
+        val remainderMs = minOf(verdict.remainderMs, view.allocatedSeconds * MILLIS_PER_SECOND.toLong())
+        require(localNowMs >= 0 && remainderMs <= Long.MAX_VALUE - localNowMs) { "projection overflows" }
         val candidate =
             checkpoint.copy(
                 phase = ArenaRunnerPhase.ANSWERING,
-                deadlineMs = localNowMs + verdict.remainderMs,
+                deadlineMs = localNowMs + remainderMs,
             )
         validateArenaRunnerTransition(checkpoint, candidate, binding(current))
         return candidate
@@ -153,7 +172,9 @@ object ArenaOnlineO2Adapter {
         view: QuestionWindowView,
         verdict: QuestionDeliveryVerdict.Delivered,
     ): ArenaRunnerCheckpoint {
-        requireWindowIdentity(binding(current), completedQuestionIndex, view)
+        // Повтор читает только состоявшуюся выдачу: локально часы уже идут, окно в состоянии OPEN
+        // (выдачи не было) или EXPIRED противоречит чекпоинту — расхождение, а не переподключение.
+        requireWindowIdentity(binding(current), completedQuestionIndex, view, setOf(WINDOW_STATE_DELIVERED))
         requireSameWindow(view, verdict)
         val checkpoint = current.checkpoint
         require(checkpoint.phase == ArenaRunnerPhase.ANSWERING) {
@@ -196,7 +217,9 @@ object ArenaOnlineO2Adapter {
             checkpoint.phase == ArenaRunnerPhase.ANSWERING &&
                 checkpoint.indexInPool == completedQuestionIndex + 1
         require(!onDeliveredSlot) { "expired window cannot close a question that is already answering" }
-        view?.let { requireWindowIdentity(binding(current), completedQuestionIndex, it) }
+        // Любое из серверных состояний окна честно доезжает до истечения: открыто и просрочено до
+        // выдачи, выдано с испорченным документом (сервер трактирует как истёкшее), уже закрыто.
+        view?.let { requireWindowIdentity(binding(current), completedQuestionIndex, it, WINDOW_STATES) }
         expired.windowId?.let { id -> require(id.isNotBlank()) { "expired windowId must not be blank" } }
         require(expired.closedAtMs >= 0 && expired.serverNowMs >= 0) { "expiry times must be non-negative" }
         return ArenaOnlineO2ExpiryDecision(
@@ -206,6 +229,34 @@ object ArenaOnlineO2Adapter {
             closedAtMs = expired.closedAtMs,
         )
     }
+
+    /**
+     * Состояния окна из сервера; значения обязаны совпадать с константами
+     * [WINDOW_STATES_SOURCE]: `WINDOW_OPEN`/`WINDOW_DELIVERED`/`WINDOW_EXPIRED` в
+     * `functions/lesson-question-window.js`.
+     */
+    const val WINDOW_STATE_OPEN: String = "OPEN"
+
+    /** Выдача состоялась: часы следующего вопроса уже идут (§5). */
+    const val WINDOW_STATE_DELIVERED: String = "DELIVERED"
+
+    /** Окно истекло без выдачи: попытка закрывается без ответа (§7). */
+    const val WINDOW_STATE_EXPIRED: String = "EXPIRED"
+
+    /** Все серверные состояния окна; источник буквалов — [WINDOW_STATES_SOURCE]. */
+    val WINDOW_STATES: Set<String> = setOf(WINDOW_STATE_OPEN, WINDOW_STATE_DELIVERED, WINDOW_STATE_EXPIRED)
+
+    /**
+     * Состояния, при которых честно едет возобновление выданного вопроса: окно, только что
+     * открытое событием завершения (OPEN), и окно, чья выдача уже была, а локальный resume
+     * потерялся (DELIVERED, §7). Истёкшее окно выдачи не несёт и сюда не попадает.
+     */
+    val DELIVERABLE_WINDOW_STATES: Set<String> = setOf(WINDOW_STATE_OPEN, WINDOW_STATE_DELIVERED)
+
+    private const val MILLIS_PER_SECOND = 1_000
+
+    /** Серверная половина буквалов состояний окна; обязан оставаться в синхроне. */
+    private const val WINDOW_STATES_SOURCE = "functions/lesson-question-window.js"
 
     private fun requireSameWindow(
         view: QuestionWindowView,

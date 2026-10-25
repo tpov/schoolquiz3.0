@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamCertific
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaTicketStatusRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaCatalogRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.ArenaEntryRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLessonCatalogFailure
@@ -367,6 +368,25 @@ class FirebaseArenaKoinWiringTest {
             assertEquals(0, f.networkReads)
             verify { f.functions wasNot Called }
             verify { f.dao wasNot Called }
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun questionWindowRemoteResolvesFromTheProductionFirebaseModule() {
+        val f = Fixture()
+        val app = f.graph()
+        try {
+            // Онлайн-O2 (ретро A1): окно перехода поднимается лениво из боевого модуля и при
+            // разрешении не трогает ни SDK, ни сессию, ни сеть — вызовы окна начинаются только
+            // с явного Continue-из-паузы в хосте.
+            val windows = app.koin.get<QuestionWindowRemoteDataSource>()
+            assertTrue(windows is FirebaseQuestionWindowRemoteDataSource)
+            assertSame(windows, app.koin.get<FirebaseQuestionWindowRemoteDataSource>())
+            assertEquals(0, f.sessionReads)
+            assertEquals(0, f.networkReads)
+            verify { f.functions wasNot Called }
         } finally {
             app.close()
         }
