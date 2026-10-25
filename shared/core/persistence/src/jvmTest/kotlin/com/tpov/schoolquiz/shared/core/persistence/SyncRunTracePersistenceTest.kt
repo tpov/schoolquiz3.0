@@ -109,6 +109,21 @@ class SyncRunTracePersistenceTest {
     }
 
     @Test
+    fun theSettlementAlreadyRecordedBranchSurvivesRestartAndIsNotUnknown() = runTest {
+        // Ветка записана при отказе SETTLEMENT_REUSE (branchName исчерпывающем when), но чтение
+        // её не поднимало: после перезапуска след называли «неизвестной ветвью». Назад из схемы
+        // поднимается сама ветвь (без причины и версии — их у неё и нет), а не Unknown.
+        store.recordFailure(previous, content, SyncError.SettlementAlreadyRecorded())
+
+        db.close()
+        db = open()
+        val afterRestart =
+            RoomSyncRunTraceStore(db.syncRunTraceDao()).observeTraces(previous).first().traceOf(content)
+
+        assertEquals(SyncError.SettlementAlreadyRecorded(), afterRestart.lastError)
+    }
+
+    @Test
     fun theTraceOfOneOwnerIsNotTheTraceOfAnother() = runTest {
         store.recordSuccess(previous, content, atMs = 1_000L)
         store.recordSuccess(next, content, atMs = 2_000L)

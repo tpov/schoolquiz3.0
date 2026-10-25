@@ -135,6 +135,7 @@ private fun SyncRunTraceEntity.toTrace(): SyncRunTrace {
             SyncErrorBranch.REFUSED -> SyncError.Refused(lastErrorReason.orEmpty())
             SyncErrorBranch.VERSION_CONFLICT -> SyncError.VersionConflict(lastErrorServerVersion)
             SyncErrorBranch.TERMS_CONSENT_REQUIRED -> SyncError.TermsConsentRequired
+            SyncErrorBranch.SETTLEMENT_ALREADY_RECORDED -> SyncError.SettlementAlreadyRecorded()
             // Строка, записанная версией приложения, которой здесь ещё не было: ветвь неизвестна,
             // но неудача была — молчать о ней хуже, чем назвать её неизвестной.
             else -> SyncError.Unknown()
