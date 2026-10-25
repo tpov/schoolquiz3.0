@@ -497,7 +497,7 @@ const hash = (text) => crypto.createHash('sha256').update(text).digest('hex');
 const q = value.quiescence;
 const quiescenceCounters = ['outboxRows', 'unresolvedArenaCommands', 'reservedArenaTickets', 'orphanedSubmitIntents', 'orphanedRatingIntents'];
 const quiescenceIsQuiescent = (candidate) => typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate) &&
-    Object.keys(candidate).sort().join(',') === [...quiescenceCounters].sort().join(',') &&
+    Object.keys(candidate).length === quiescenceCounters.length && quiescenceCounters.every((name) => Object.prototype.hasOwnProperty.call(candidate, name)) &&
     Object.values(candidate).every((count) => typeof count === 'number' && count === 0);
 const supportedRoomSchemas = new Set([
   JSON.stringify([14, 'ca5439bdc37decd3f21cb843d10bb3f4']),

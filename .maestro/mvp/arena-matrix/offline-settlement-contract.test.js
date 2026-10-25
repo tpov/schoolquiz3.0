@@ -444,7 +444,7 @@ testSealedSequenceHappyPath(ROOM_SCHEMA_V15);
 testUnsupportedRoomSchemaStopsBeforePreparationAndTransportCut(ROOM_SCHEMA_V15.version, ROOM_SCHEMA_V14.identityHash);
 testUnsupportedRoomSchemaStopsBeforePreparationAndTransportCut(16, "f".repeat(32));
 const quiescent = {outboxRows: 0, unresolvedArenaCommands: 0, reservedArenaTickets: 0, orphanedSubmitIntents: 0, orphanedRatingIntents: 0};
-for (const invalid of [{}, null, [], [0, 0, 0, 0, 0], "", {...quiescent, extraCounter: 0}, {...quiescent, outboxRows: "0"}]) {
+for (const invalid of [{}, null, [], [0, 0, 0, 0, 0], "", {...quiescent, extraCounter: 0}, {...quiescent, outboxRows: "0"}, {[Object.keys(quiescent).sort().join(',')]: 0}]) {
   testInvalidQuiescenceStopsBeforePreparationAndTransportCut(invalid);
 }
 for (const key of Object.keys(quiescent)) {
