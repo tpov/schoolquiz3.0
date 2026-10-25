@@ -223,9 +223,12 @@ class OutboxEngine
         ): StepOutcome {
             if (failure is CancellationException) throw failure
             val error = failure.syncErrorOrNull() ?: SyncError.Unknown(failure)
-            if (error is SyncError.SettlementAlreadyRecorded) {
+            if (error is SyncError.SettlementAlreadyRecorded && record.operation == OutboxOperations.SUBMIT_ATTEMPT) {
                 // Сервер уже зафиксировал результат этой попытки: строка ACK-ается маркером,
-                // а не повторяется и не карантинится (эффект уже на сервере).
+                // а не повторяется и не карантинится (эффект уже на сервере). Гард по операции —
+                // не перестраховка, а контракт ветви: она принадлежит попытке урока (маркер
+                // разбирает AttemptSettlementReceiptParser). Чужая операция с той же ошибкой
+                // едет дальше, в политику, где disposition CONFLICT паркует её без повтора.
                 return acknowledge(
                     record,
                     MutationReceipt(
@@ -233,7 +236,7 @@ class OutboxEngine
                         record.mutationId,
                         record.operation,
                         record.entityRef,
-                        "{\"settlementAlreadyRecorded\":true}",
+                        SettlementReplayReceipt.PAYLOAD_JSON,
                         clock(),
                     ),
                     session,

@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.data
 import com.tpov.schoolquiz.shared.core.outbox.MutationReceipt
 import com.tpov.schoolquiz.shared.core.outbox.MutationReceiptStore
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
+import com.tpov.schoolquiz.shared.core.outbox.SettlementReplayReceipt
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
@@ -156,6 +157,22 @@ class AttemptSettlementReceiptTest {
         ))), attempt)
         assertTrue(value.isConfirmedCompletion)
         assertEquals(0, value.percentScore?.raw)
+    }
+
+    @Test
+    fun settleReplayMarkerParsesDeliberatelyToLegacyRecordedNeverZero() {
+        // Движок ACK-нул реплей settle маркером SettlementReplayReceipt после серверного
+        // SETTLEMENT_REUSE: попытка уже зафиксирована, повтор терминален. Парсер обязан прочесть
+        // маркер нарочно — LEGACY_RECORDED (засчитано без доказательства оценки), а не через
+        // случайный провал в legacy-ветку и не как ноль или невалидную квитанцию.
+        val marker = wire(body()).copy(payloadJson = SettlementReplayReceipt.PAYLOAD_JSON)
+        val value = parser.parse(marker, attempt)
+        assertEquals(ServerAttemptSettlementState.LEGACY_RECORDED, value.state)
+        assertNull(value.percentScore, "никогда ноль: доказательства оценки нет вовсе")
+        assertNull(value.codeAnswer)
+        assertNull(value.reward)
+        assertFalse(value.isConfirmedCompletion)
+        assertFalse(value.canQueueRating, "повтору и оценке не подлежит")
     }
 
     @Test

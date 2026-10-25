@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class OutboxEngineBoundaryTest {
@@ -66,10 +67,39 @@ class OutboxEngineBoundaryTest {
             assertTrue(store.all.isEmpty(), "строка ACK-ается удалением, не крутится")
             val receipt = receipts.find(uid, row.mutationId)
             assertEquals(
-                "{\"settlementAlreadyRecorded\":true}",
+                SettlementReplayReceipt.PAYLOAD_JSON,
                 receipt?.payloadJson,
                 "маркер объясняет, почему квитанции сервера нет",
             )
+        }
+
+    @Test
+    fun `settlement already recorded on a foreign operation parks the row in conflict`() =
+        runTest {
+            // Гард ветви ACK — по операции: маркер принадлежит попытке урока. Чужая операция с той
+            // же ошибкой едет в политику, где disposition CONFLICT паркует её: серверный отказ
+            // терминален, повторять его нельзя, но и ACK с чужим маркером выдумывать нельзя.
+            val row = record(11).copy(operation = "private_quiz.SUBMIT_ATTEMPT")
+            val store = FakeOutboxStore().also { it.seed(row) }
+            val receipts = FakeMutationReceiptStore()
+            val summary =
+                engine(
+                    store,
+                    receipts,
+                    transport = {
+                        Result.failure(
+                            SyncFailure(SyncError.SettlementAlreadyRecorded()),
+                        )
+                    },
+                ).drain(uid)
+
+            assertEquals(0, summary.sent, "чужая операция не ACK-ается маркером попытки урока")
+            assertEquals(1, summary.conflicted, "политика паркует запись, а не повторяет отказ")
+            assertEquals(0, summary.quarantined)
+            assertEquals(1, store.all.size)
+            assertEquals(OutboxState.CONFLICT, store.all.single().state)
+            assertTrue(store.removed.isEmpty())
+            assertNull(receipts.find(uid, row.mutationId), "квитанцию выдумывать нельзя")
         }
 
     @Test

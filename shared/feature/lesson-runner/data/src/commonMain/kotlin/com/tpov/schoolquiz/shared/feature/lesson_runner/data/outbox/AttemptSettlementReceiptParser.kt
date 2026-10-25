@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox
 
 import com.tpov.schoolquiz.shared.core.outbox.MutationReceipt
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
+import com.tpov.schoolquiz.shared.core.outbox.SettlementReplayReceipt
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.core.scoring.computePercentScore
@@ -62,6 +63,13 @@ class AttemptSettlementReceiptParser {
         receipt: MutationReceipt,
         expected: AttemptIdentity,
     ): JsonObject {
+        // First-class marker envelope of the engine's settle-replay ACK (see
+        // SettlementReplayReceipt). The server refused a divergent re-settlement
+        // (SETTLEMENT_REUSE) after the attempt was already recorded: the attempt is terminal
+        // server-side and no retry may ever follow. The marker parses deliberately to
+        // LEGACY_RECORDED — settled without score proof, never zero, retry-excluded — instead
+        // of reaching that state by accident through the legacy fallback below.
+        if (receipt.payloadJson == SettlementReplayReceipt.PAYLOAD_JSON) markerLegacy()
         val envelope =
             runCatching { Json.parseToJsonElement(receipt.payloadJson) as? JsonObject }.getOrNull()
                 ?: invalid()
@@ -171,6 +179,14 @@ class AttemptSettlementReceiptParser {
         throw InvalidReceipt(ServerAttemptSettlementState.INVALID_RECEIPT, status)
 
     private fun legacy(): Nothing = throw InvalidReceipt(ServerAttemptSettlementState.LEGACY_RECORDED)
+
+    /**
+     * The named settle-replay marker ([SettlementReplayReceipt]): same LEGACY_RECORDED
+     * semantics as [legacy], but reached on purpose. The marker is not "an old receipt without
+     * receipts" — it is the engine's durable answer for a server-terminal re-settlement
+     * refusal, and this branch is the only reason it reads as settled-without-proof.
+     */
+    private fun markerLegacy(): Nothing = throw InvalidReceipt(ServerAttemptSettlementState.LEGACY_RECORDED)
 
     private fun unknown(
         state: ServerAttemptSettlementState,
