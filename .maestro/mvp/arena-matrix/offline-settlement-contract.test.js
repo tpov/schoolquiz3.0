@@ -405,6 +405,18 @@ function testInvalidQuiescenceStopsBeforePreparationAndTransportCut(quiescence) 
   } finally { value.dispose(); }
 }
 
+function testFakePreflightQuiescenceHookPassesCanonicalObject(quiescence) {
+  const value = fixture();
+  try {
+    const outcome = invoke(value, {FAKE_PREFLIGHT_QUIESCENCE_JSON: JSON.stringify(quiescence)});
+    assert.equal(outcome.status, 0, outcome.stderr);
+    const output = onlyOutput(value);
+    const preparationPreflight = JSON.parse(fs.readFileSync(path.join(output, "preparation-preflight.json"), "utf8"));
+    assert.deepEqual(preparationPreflight.quiescence, quiescence);
+    assert.equal(fs.existsSync(path.join(output, "prepared-ticket.json")), true);
+  } finally { value.dispose(); }
+}
+
 function testPreCutFailureDoesNotCutTransport() {
   const value = fixture();
   try {
@@ -453,6 +465,7 @@ for (const key of Object.keys(quiescent)) {
   testInvalidQuiescenceStopsBeforePreparationAndTransportCut(missing);
   testInvalidQuiescenceStopsBeforePreparationAndTransportCut({...quiescent, [key]: 1});
 }
+testFakePreflightQuiescenceHookPassesCanonicalObject(quiescent);
 testPreCutFailureDoesNotCutTransport();
 testInputMutationStopsBeforePrepare();
 testRecoveryRecordBlocksSecondPreparation();

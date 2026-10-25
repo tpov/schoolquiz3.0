@@ -53,12 +53,14 @@ EXIT_CODE=1
 
 This is the detection proof the 04.10 happy-path-only test could not give (retro F2: «happy-path тест не различает старый слабый гейт и новый»): the one-key collision object passed the pre-fix gate (`actual: 0` instead of exit 2).
 
+RED reproduction from committed history (fix and detecting case share `fc71bfc1` by design): on a scratch checkout take the test file from `fc71bfc1` and the leaf from `024675ea` (equivalently, revert the single leaf hunk of `fc71bfc1`), run `docker run --rm --network none -v <checkout>:/repo:ro node:22-bookworm-slim node /repo/.maestro/mvp/arena-matrix/offline-settlement-contract.test.js` — expect exit 1 with `unsafe quiescence passed` naming the collision object.
+
 ## F1 — gate fix + 18th case, GREEN runs (`fc71bfc1`)
 
 Predicate replaced in `validate_preparation_preflight()` (embedded Node heredoc, `.maestro/mvp/arena-matrix/run-arena-offline-settlement-leaf.sh`):
 
 ```js
-const quiescenceIsQuiscent = (candidate) => typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate) &&
+const quiescenceIsQuiescent = (candidate) => typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate) &&
     Object.keys(candidate).length === quiescenceCounters.length && quiescenceCounters.every((name) => Object.prototype.hasOwnProperty.call(candidate, name)) &&
     Object.values(candidate).every((count) => typeof count === 'number' && count === 0);
 ```
@@ -69,7 +71,7 @@ GREEN run immediately after the fix (working tree identical to `fc71bfc1`): exit
 
 ## F2b — wiring (`fa72bd73`)
 
-`scripts/package.json`: appended ` && node ../.maestro/mvp/arena-matrix/offline-settlement-contract.test.js` to `test` (last node, after `../.maestro/mvp/arena-e2b/run-arena-legacy-recovery.test.js`) and ` && node --check ../.maestro/mvp/arena-matrix/offline-settlement-contract.test.js` to `lint`; no other keys touched (2-line diff). JSON validated (`python3 -c "import json..."` + tail assertions). Note: the wave `lint` had gained four nodes since the 05.10 proposal (b8bc23ff) — `mvp-qualification-firestore-test.js`, `course-tournament-http.test.js`, `course-tournament-private-rules.test.js`, `course-tournament-lifecycle-demo.test.js`; the semantic diff (append the tails to the current strings) was applied to those, per the spec's «no other package.json changes».
+`scripts/package.json`: appended ` && node ../.maestro/mvp/arena-matrix/offline-settlement-contract.test.js` to `test` (last node, after `../.maestro/mvp/arena-e2b/run-arena-legacy-recovery.test.js`) and ` && node --check ../.maestro/mvp/arena-matrix/offline-settlement-contract.test.js` to `lint`; no other keys touched (2-line diff). JSON validated (`python3 -c "import json..."` + tail assertions). Note: the wave `lint` had gained four nodes since the 05.10 proposal (b8bc23ff) — `mvp-qualification-firestore-test.js`, `course-tournament-http.test.js`, `course-tournament-private-rules.test.js`, `course-tournament-lifecycle-demo.test.js` — so the proposal's literal diff hunks no longer matched; the semantic change (appending the same two tails to the CURRENT full `test`/`lint` strings, i.e. after those four nodes in `lint`) was applied instead, per the spec's «no other package.json changes».
 
 `npm test` run in `scripts/` with node on PATH (`/workspace/infrastructure/zcode/3.14.3/node24/node-v24.14.0-linux-x64/bin`, node v24.14.0 / npm 11.9.0 as measured 05.10): exit 0; the decisive tail (inlined):
 
@@ -81,6 +83,8 @@ GREEN run immediately after the fix (working tree identical to `fc71bfc1`): exit
 offline settlement composition tests: PASS
 EXIT_CODE=0
 ```
+
+Attribution note: the `ℹ tests 16 …` block is the node:test summary of the PRECEDING chain node (`../.maestro/mvp/arena-e2b/run-arena-legacy-recovery.test.js`, 16/16), not the contract test's; the contract test prints no summary — its evidence is its own final `offline settlement composition tests: PASS` line plus the recorded exit code 0 of the whole chain.
 
 The contract test is the final node of the chain (~2.5 min; baseline chain before it: ~2.6 s). `npm run lint` (same PATH): exit 0 with the new `--check` tail. `scriptsTest` → `npm test` → `ciCheck` picks this up automatically via `build.gradle.kts` — but note ciCheck itself stays RED (F3), so the leg is not exercised by the root gate yet.
 
