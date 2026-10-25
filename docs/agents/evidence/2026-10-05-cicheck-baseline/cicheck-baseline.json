@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-10-05T17:22:41Z",
+  "purpose": "Night track E: confirm the recorded root ciCheck RED baseline WITHOUT a new build, re-verify the RED precondition tonight in the b8bc23ff tree, and pin the RED-removal condition and the limits of what the record proves.",
+  "tree": {
+    "worktree": "/workspace/projects/schoolquiz3.0/.local/worktrees/night-e1f",
+    "branch": "night/e1-followups",
+    "baseCommit": "b8bc23ff"
+  },
+  "newBuildRunTonight": false,
+  "recordedBaselineReviewed": {
+    "evidenceDir": "/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/docs/agents/evidence/2026-10-04-root-cicheck/",
+    "files": ["cicheck-result.json", "root-cicheck-run1.log", "root-cicheck-run2-exit-code.log"],
+    "result": "FAIL",
+    "exitCode": 1,
+    "failingTask": ":apps:android-next:processDebugGoogleServices",
+    "error": "File google-services.json is missing. The Google Services Plugin cannot function without it.",
+    "command": "JAVA_HOME=/opt/jdks/jdk-27 ./gradlew ciCheck --no-configuration-cache --no-parallel --max-workers=1",
+    "candidateHead": "1e5961263a4c1ac85ad03eb7894a51bf44228a4a",
+    "branch": "continuation/mvp-candidate-20260926",
+    "runsNote": "two deterministic runs: BUILD FAILED in 19s (run1) and 15s with EXIT_CODE=1 (run2), identical failure",
+    "neverExecuted": "detekt/ktlint/test/allTests/compileAndroidTests/functionsTest/scriptsTest/detektMetadataCommonMain — ciCheck aborts at the first failing task (assembleDebug leg), per cicheck-result.json:44"
+  },
+  "preconditionRecheckTonight": {
+    "method": "filesystem existence checks and git queries in the night-e1f tree; no Gradle invoked",
+    "absentPaths": [
+      "apps/android-next/src/debug/google-services.json",
+      "apps/android-next/src/google-services.json",
+      "apps/android-next/src/Debug/google-services.json",
+      "apps/android-next/google-services.json"
+    ],
+    "trackedMvpVariant": "git ls-files → apps/android-next/src/mvp/google-services.json",
+    "gitignoreRules": {
+      "line19": "**/google-services.json",
+      "line54": "debug/ (matches apps/android-next/src/debug/google-services.json)"
+    },
+    "gateDefinition": "build.gradle.kts:68-84 — ciCheck = assembleDebug + activeSubproject test/allTests + compileAndroidTests + functionsTest + scriptsTest + detekt + ktlintCheck + detektMetadataCommonMain"
+  },
+  "redRemovalCondition": [
+    "Place the owner-local debug google-services.json at one of the plugin's searched paths; canonical: apps/android-next/src/debug/google-services.json (alternatives the plugin accepts: apps/android-next/src/google-services.json, apps/android-next/src/Debug/google-services.json, apps/android-next/google-services.json).",
+    "The file must stay untracked: .gitignore lines '**/google-services.json' (19) and 'debug/' (54) exclude it by policy. It exists in the owner's Mac checkout (cicheck-result.json rootCause); the owner either copies it into the VPS tree or runs ciCheck on the Mac.",
+    "Re-run the baseline command (JAVA_HOME=/opt/jdks/jdk-27 ./gradlew ciCheck --no-configuration-cache --no-parallel --max-workers=1), capture exit code and, on failure, the failing-task breakdown, into docs/agents/evidence/<date>-rerun-cicheck/.",
+    "Draft story 1.7 're-run ciCheck and record' added to _bmad-output/mvp-candidate/epic-candidate-rig/tickets.toml in this tree WITHOUT a status field — it must not be dispatched until the owner-local file is in place."
+  ],
+  "doesNotProve": [
+    "RED is not a code-quality signal: ciCheck aborted on a configuration task before any test, lint or analysis task ran.",
+    "It does not show the candidate is broken: assembleMvp at the same HEAD is BUILD SUCCESSFUL with APK eeb8fc6e… (docs/agents/2026-10-04-mvp-apk-identity.json); the mvp variant has a tracked google-services.json, the debug variant does not.",
+    "It says nothing about the owner's Mac checkout, where the debug file exists and the RED need not reproduce.",
+    "When the file appears, a green rerun proves only that the canonical gate passes at that HEAD with that file — not that the file matches any production Firebase config, and nothing about release/Play builds, which this gate does not assemble.",
+    "The baseline is pinned to HEAD 1e596126 and the tree state of 2026-10-04; it does not predict future runs after inputs change."
+  ],
+  "stories": { "1.6": "baseline confirmed unchanged (FAIL, processDebugGoogleServices)", "1.7": "draft added to tickets.toml, no status — awaits owner-local debug google-services.json" }
+}
