@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 12-10-2026 14:45
+last_updated: 10-26-2026 21:57
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -77,7 +77,7 @@ development_status:
     # вкладки (by lazy в корне, был старт приложения), события воронки вне CAS-лямбды update,
     # funnelCreditedTokens под мьютексом, no_account достижим (NoAccountException), тесты: офлайн-воронка,
     # не-аккаунт, цена без нулей, восстановленная нога. 3 defer + 2 новых известных красных app-shell
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
 
   epic-2: done  # 2.1–2.4 закрыты code review 2026-10-11; golden-прейскурант премиума записан
     # решением владельца 2026-10-12 в общий файл (premiumProducts: 1d=1, 7d=5, 30d=18, 365d=150,
@@ -154,7 +154,7 @@ development_status:
     # (minGroupsForStableRank) и сравнивает ответ целиком с метаданными, коробочный пин доходит
     # до трофейной ветки; 3 в defer (забор v2: инвертированный белый список, пин сигнатуры,
     # keyDocument-фикстура), 3 опровергнуты (в т.ч. «ответ отклонён по индексу» — эмпирически).
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   epic-3: done  # 3.1–3.4 закрыты 2026-10-11 (сборка 814d72c3 → 3-4); AdMob-хвост — владельцу:
     # аккаунт сети закрыт с 01.09 — живой показ, настройка SSV URL в консоли и настоящий E2E
@@ -205,7 +205,7 @@ development_status:
   # скана — токен «feature:ads»; ktlint-формат), 1 отвергнут по намерению, 3 с опровержениями.
   # Гейты: ads:domain allTests/detekt/ktlint зелёные; assembleMvp (сборка без id) зелёная;
   # functions 104/104.
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
   epic-4: done  # 4.1–4.3 закрыты 2026-10-12 (build-auto, полный маршрут, ревью 4 линз в-сессии —
     # платформа без субагентов, как в эпике 3); всё серверное: ставка, переворот месяца, проверка.
@@ -254,7 +254,7 @@ development_status:
   # Code review 2026-10-12 (4 линзы, в-сессии): 3 патча — возврат непросмотренного кандидата
   # прошлого месяца (иначе молчаливая потеря ставки), закрепление reviewStatus записи ставки,
   # валидация creative кандидата; 3 опровергнуты.
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   epic-5: done  # 5.1–5.4 закрыты 2026-10-12 (build-auto, полный маршрут, ревью 4 линз
     # в-сессии — платформа без субагентов, как в эпиках 3 и 4). Сезон закрывается снимком с
@@ -331,4 +331,278 @@ development_status:
   # quest-authoring, it09e, compileTestKotlin profile:data.
   # Code review 2026-10-12 (4 линзы, в-сессии): 1 патч (гейт по uid + тест гостя),
   # 4 опровергнуты.
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
+action_items:
+  - id: "epic-m1-retro-item-1-реальная-покупка-на-gms"
+    epic: 1
+    action: "Реальная покупка по phone-HITL-скриптам на GMS-устройстве — первый настоящий
+      E2E денежного пути: verify→credit→receipt→audit→ledger→consume→воронка, затем
+      живой RTDN-возврат и клэкбэк; скрипты готовы (32b159ad), ранбук deferred-work:402-404"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-2-решение-по-отказанному-токену"
+    epic: 1
+    action: "Продуктовое решение: гасить ли отказанный токен на устройстве — сценарий
+      «A заплатил — B заклинен» (ITEM_ALREADY_OWNED → TOKEN_OWNED_BY_ANOTHER_ACCOUNT)
+      воспроизводим; срок «до поставки полки» просрочен (deferred-work:498-500)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-3-четырёхлинзовый-ревью-1-1-и-1-2"
+    epic: 1
+    action: "Четырёхлинзовый ревью-проход по диффам деньги-core 1.1+1.2 (сентябрьская
+      реализация без dedicated ревью); точка входа — тест на ветку перехвата SettlementInterrupted
+      (SettlePurchaseUseCase.kt:89,200 — покрытие нулевое)"
+    owner: "агент"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-4-документ-configs-economy-в-проде"
+    epic: 1
+    action: "Создать документ configs/economy в проде (goldPacks + premiumProducts
+      + boxPacks + leaderboardBands, версия ≥2) — до него паки платят бутстрап 10/60/150,
+      аудит пишет version 0; общая задача с epic-2 — не потерять при сведении"
+    owner: "владелец/трекер"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-5-красный-mvp-isolation-на-head"
+    epic: 1
+    action: "Красный mvp-isolation.test.js на HEAD: лишний cleartext-домен 192.168.31.218
+      в apps/android-next/src/mvp/res/xml/mvp_network_security_config.xml:14 (merge
+      ed16fc81 от 22.10) — убрать домен или перепинить тест с объяснением; вне эпика-1"
+    owner: "трекер/агент"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-6-paused-on-hold-в-reasoncode"
+    epic: 1
+    action: "Различить PAUSED/ON_HOLD и отмену в reasonCode — сейчас пауза отвечает
+      PURCHASE_CANCELED (purchase-verification.js:327-336); REASON_SUBSCRIPTION_NOT_ACTIVE
+      уже существует (строка 129); поверхность эпика 2 (low)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-7-rtdn-прод-проверка"
+    epic: 1
+    action: "RTDN-прод-проверка после item-1: purchase_notifications/парковки/операторский
+      список — живых сообщений не наблюдалось; обработчик в проде с 12.10 (77042284)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-8-правило-done-после-ревью-протокола"
+    epic: 1
+    action: "Зафиксировать правило «история → done только после ревью-протокола» и
+      привести спеки к факту: spec-m1-2 задачи не отмечены при закрытой истории; review_loop_iteration
+      1.1/1.2 = 0"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m1-retro-item-9-зачистить-smb-appledouble-на-vps"
+    epic: 1
+    action: "Зачистить SMB AppleDouble ._* файлы на VPS (untracked, .gitignore:4 уже
+      покрывает; мусор от Mac-маунта)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
+  - id: "epic-m2-retro-item-1-golden-таблица-ровно-одно"
+    epic: 2
+    action: "Привести golden-таблицу к правилу «ровно одно»: salesEnabled:true только
+      у premium_30d (1d/7d/365d — false, деактивированы решением по модели владельца),
+      поправить functions/config/economy-constants.json; затем создать документ configs/economy
+      версией ≥2 — иначе документ-копия оставит золотую продажу мёртвой fail-closed
+      (находка F1 ретро)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m2-retro-2026-10-26.md"
+  - id: "epic-m2-retro-item-2-тест-shipped-дефолтов-exactly-one"
+    epic: 2
+    action: "Зажать shipped-дефолты exactly-one тестом: premiumGoldOffers(clientEconomyConstants(DEFAULTS))
+      + premiumGoldSaleOffer по закоммиченному конфигу — сегодня premium-shop.test.js:18
+      fixture'ит один SKU, economy-constants.test.js:185 пинит только непустоту; закрывает
+      возврат ловушки F1"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m2-retro-2026-10-26.md"
+  - id: "epic-m2-retro-item-3-gms-девайс-sandbox-покупка"
+    epic: 2
+    action: "GMS-девайс: sandbox-покупка + одно продление + снимок живого ответа subscriptionsv2
+      в фикстуру (tracked defer, deferred-work.md:538-540, rig-нота спеки 2.1)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m2-retro-2026-10-26.md"
+  - id: "epic-m2-retro-item-4-подтвердить-rtdn-триггер-в-проде"
+    epic: 2
+    action: "Подтвердить, что RTDN-триггер play-rtdn → playPurchaseNotifications жив
+      в проде: трекер 11.10 — «деплой по явному go владельца», трекер 12.10 — «трек
+      деплоя закрыт»; без триггера продления доезжают только перепредъявлением токена
+      клиентом"
+    owner: "владелец/ops"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m2-retro-2026-10-26.md"
+  - id: "epic-m2-retro-item-5-tracked-defers-эпика-2"
+    epic: 2
+    action: "Tracked defer'ы эпика остаются открытыми: fence v2 (frontmatter spec-m2-4),
+      тест проводки маппера user-stats (deferred-work.md:542-543), аналитика воронки
+      balance-пути (frontmatter spec-m2-2), золотая цена на store-backed строках (frontmatter
+      spec-m2-1)"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m2-retro-2026-10-26.md"
+  - id: "epic-m2-retro-item-6-приёмка-включает-owner-конфиги"
+    epic: 2
+    action: "Процесс: эпик-приёмка включает в верифицируемый change-set некоммит-исторические
+      коммиты (owner-decision конфиги) — урок находки F1 (9de14051 выпал из всех проверок
+      историй)"
+    owner: "владелец ретро-конвейера"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m2-retro-2026-10-26.md"
+  - id: "epic-m3-retro-item-1-инвариант-одного-магазинного-слота"
+    epic: 3
+    action: "Выделить движение пары часов магазинного слота (nextBonusBoxAtMs + nextAdRewardBoxAtMs)
+      в хелпер gift-boxes.js либо добавить инвариант-тест «после PREMIUM_DAILY и после
+      ad-выдачи оба часа равны» (box-service.js:153, ad-reward-progress.js:142)"
+    owner: "dev-цикл монетизации"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
+  - id: "epic-m3-retro-item-2-единый-стиль-отказа-boxcount"
+    epic: 3
+    action: "Единый стиль громкого отказа на испорченный boxCount: кодированный INVALID_ARGUMENT
+      (ad-reward-progress.js:137) против голого Error storedBoxCount (purchase-settlement.js:386)"
+    owner: "dev-цикл монетизации"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
+  - id: "epic-m3-retro-item-3-владельческие-действия-admob-play"
+    epic: 3
+    action: "Владельческие действия по спекам (блокировано закрытым аккаунтом AdMob
+      с 01.09): консоль AdMob + SSV URL + деплой endpoint'а (3.1); SKU коробки в Play
+      Console + строка boxPacks в configs/economy (3.3); живой SDK/потребители врат
+      + Android-обёртка Context→Map (3.4); retention/квоты журнала ad_reward_callbacks
+      (defer спеки 3.1)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
+  - id: "epic-m3-retro-item-4-сверить-замороженные-тексты-спек"
+    epic: 3
+    action: "Сверить замороженные тексты спек с постройкой через Spec Change Log:
+      сигнатура planAdRewardBox без boxCount (спека 3.2 Code Map) и потолок query
+      8192 байта (спека 3.1)"
+    owner: "владелец/спек-владелец"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
+  - id: "epic-m3-retro-item-5-квитанция-рекламной-коробки"
+    epic: 3
+    action: "Решить, пишет ли рекламная коробка игроку квитанцию — сейчас осознанно
+      нет (спека 3.2 Design Notes); витрина квитанций 5.4 рекламную коробку не покажет"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
+  - id: "epic-m3-retro-item-6-красный-mvp-isolation-mvp-линии"
+    epic: 3
+    action: "Отдать mvp-линии: красный гейт mvp-isolation.test.js на HEAD — LAN-IP
+      192.168.31.218 в mvp_network_security_config.xml:14 из коммита 7d8b91bd (story
+      5.13); не монетизация"
+    owner: "трек mvp-candidate"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-1-reviewstatus-в-stale-возврате"
+    epic: 4
+    action: "В stale-ветке возврата кандидата (offer-auction-settlement.js:191-205)
+      флипать и reviewStatus: REJECTED (+тест) — иначе возвращённая ставка навсегда
+      выглядит «ждущей проверки» и попадёт призраком в операторскую очередь (offer-ad-review.js:83
+      пускает её в решение)"
+    owner: "dev-цикл (по go владельца)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-2-проводной-тест-decideofferadreview"
+    epic: 4
+    action: "Проводной тест перевода NOT_FOUND/FAILED_PRECONDITION для decideOfferAdReview
+      (economy-handler.test.js:162-163 покрывает только unauthenticated ×2 и permission-denied;
+      карта index.js:4693) + заодно unauthenticated-путь fetchOffersScreen (index.js:4706-4708)"
+    owner: "dev-цикл"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-3-нормализовать-гейт-decideofferadreview"
+    epic: 4
+    action: "Нормализовать гейт decideOfferAdReview (index.js:4679) к именованной
+      форме isModerator/isDeveloper, как у соседних гейтов (index.js:5235, 5383)"
+    owner: "dev-цикл (косметика)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-4-убрать-вторую-копию-storedgold"
+    epic: 4
+    action: "Убрать вторую копию storedGold из offer-auction-settlement.js:61 — импортировать
+      из offer-auction.js:66"
+    owner: "dev-цикл (косметика)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-5-подтвердить-деплой-индексов-и-правил"
+    epic: 4
+    action: "Подтвердить, что деплой 12.10 (коммиты 74161850/77042284 — functions-only)
+      выкатил firestore.indexes.json (два композитных индекса offer_bids) и firestore.rules
+      (три deny-блока); без индексов fetchOfferAuction и порции возврата отвечают
+      ошибкой запроса"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-6-операторская-очередь-проверки"
+    epic: 4
+    action: "Операторская очередь проверки объявлений (defer 4.3); там же решить судьбу
+      двойного одобрения заранее APPROVED ставки-победителя (settlement пишет кандидата
+      безусловно PENDING)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-7-клиентская-витрина-аукциона"
+    epic: 4
+    action: "Клиентская витрина аукциона (fetchOfferAuction/fetchOffersScreen) — клиентская
+      история по UX-контракту (записано в трекере — перенести в исполнение)"
+    owner: "владелец/планирование"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m4-retro-item-8-тренд-роста-index-js"
+    epic: 4
+    action: "Процессное: тренд роста index.js (+105 строк за эпик поверх тысяч) —
+      решить, вводить ли feature-точки проводки, пока обвязка остаётся тонкой"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m4-retro-2026-10-26.md"
+  - id: "epic-m5-retro-item-1-развязать-cleartext-хост"
+    epic: 5
+    action: "Развязать cleartext-хост 192.168.31.218 (apps/android-next/src/mvp/res/xml/mvp_network_security_config.xml,
+      внесён 7d8b91bd, story 5.13 device proof) с контрактом functions/mvp-isolation.test.js:38-45
+      — вернуть конфиг или осознанно переписать пин; functions-гейт на HEAD красный
+      (трек competitions)"
+    owner: "владелец / трек competitions"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m5-retro-2026-10-26.md"
+  - id: "epic-m5-retro-item-2-глубокая-ссылка-рефералки"
+    epic: 5
+    action: "Постановка клиентской истории «проводка глубокой ссылки рефералки» (Play
+      Install Referrer → referredByUid в ensureUserProfile); серверная дверь готова
+      и закрыта тестами (referral-registration.js + economy-handler.test.js)"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m5-retro-2026-10-26.md"
+  - id: "epic-m5-retro-item-3-первый-живой-прогон-сезонов"
+    epic: 5
+    action: "Наблюдать первый живой прогон reconcileEconomySeasons на ближайшем календарном
+      переломе квартала (джоба ENABLED с 12.10): ожидание CLOSED→SETTLED, выплаты
+      payouts/*, строки книги, квитанции; ретро живой прогон не исполняло"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m5-retro-2026-10-26.md"
+  - id: "epic-m5-retro-item-4-полные-gradle-гейты-эпика"
+    epic: 5
+    action: "После снятия средовых красных (google-services.json, detekt jvm-target
+      27, ktlint platform:firebase/app-shell, it09e, profile:data) прогнать полные
+      gradle-гейты по поверхности эпика — закрыть сужение верификации 5.4"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m5-retro-2026-10-26.md"
+  - id: "epic-m5-retro-item-5-свойство-снимка-в-spec-m5-1"
+    epic: 5
+    action: "При правке спек зафиксировать в spec-m5-1 свойство «снимок счётчиков
+      = момент обхода, не endMs» и следствие — сдвиг атрибуции процента между соседними
+      сезонами при простое планировщика (находка R1), либо осознанно принять как есть"
+    owner: "tpov (владелец)"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-m5-retro-2026-10-26.md"
