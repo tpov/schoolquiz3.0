@@ -95,7 +95,11 @@ class RunFakeComponent(
         lastRating = rating
     }
 
+    override val needsTermsConsent: StateFlow<Boolean> = MutableStateFlow(false)
+
     override fun onSyncResult() = Unit
+
+    override fun acceptTerms() = Unit
 
     override fun onDismissTermsConsent() = Unit
 

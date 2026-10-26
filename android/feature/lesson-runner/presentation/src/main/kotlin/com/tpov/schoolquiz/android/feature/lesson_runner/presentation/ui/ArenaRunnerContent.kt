@@ -301,7 +301,7 @@ private const val RATING_ONE = 1
 private const val RATING_TWO = 2
 private const val RATING_THREE = 3
 private val ARENA_RATING_VALUES = RATING_ONE..RATING_THREE
-private val SYNC_STATUSES =
+internal val SYNC_STATUSES =
     setOf(
         ArenaRunnerStatus.PENDING_COMPLETION,
         ArenaRunnerStatus.PENDING_CANCEL,

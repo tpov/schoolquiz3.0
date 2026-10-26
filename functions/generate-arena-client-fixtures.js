@@ -347,7 +347,6 @@ async function main() {
     schemaVersion: 1,
     producer: recordedCatalog.producer,
     sourceSha256: sourceHashes(recordedCatalog.sourceSha256),
-    full: pageOne && {...(await quote({pageSize: 50}))},
     first: pageOne,
     second: pageTwo,
     last: await quote({pageSize: 3, cursor: pageTwo.nextCursor}),
@@ -379,10 +378,10 @@ async function main() {
       return quote({pageSize: 2, cursor: first.nextCursor});
     })(),
   };
-  catalogFixtures.full = {...(await (async () => {
-    store.reset(fullWorld);
-    return quote({});
-  })())};
+  // The full quote replays the whole universe after the paginated walks (each quote is its own
+  // read-only transaction, so the walk's cursors never reshape it).
+  store.reset(fullWorld);
+  catalogFixtures.full = await quote({});
   Date.now = realNow;
 
   // ---------------------------------------------------------------------------
