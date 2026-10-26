@@ -1,8 +1,9 @@
 ---
-date: 2026-10-22
+date: 2026-10-26
+original_date: 2026-10-22
 verdict: rejected
 criteria: declared
-headless: false
+headless: true
 ---
 
 # Ретроспектива эпика 1 — «Candidate and rig: restore, identify, measure» (mvp-candidate)
@@ -150,4 +151,64 @@ headless: false
 - Фокус «пост-done фиксы consent/settle-replay» взят из памяти владельца (22.10) как направляющий, не как находка: проверено — consent/settle-фиксы (92b055a7, c5fc4301, 0cba5717, b6912655) лежат в HEAD, к evidence эпика 1 претензий не дают.
 - Ревью диффа — тремя линзами bmad-review (adversarial, edge-case, verification-gap) на суженном диффе (4 коммита эпика, path-limited); все находки линз перед маршрутизацией сверены с первоисточниками, непрошедшие сверку отброшены (в финальном списке их нет; пример отброшенного: «scriptsTest упадёт следующим RED — node отсутствует»: e1f измерил node v24.14.0 на VPS 05.10, доступность node зависит от окружения сессии).
 - Behavior check — прогон контракт-теста и exploit в докере по методологии эпика; device-прогоны в ретро не повторялись; Gradle-сборок не было.
+- Оценки сроков нигде не приводятся.
+
+---
+
+# Перевёрстка 2026-10-26 (re-verdict после фикс-пака F1–F3)
+
+**Контекст.** С прошлого ретро (2026-10-22, verdict rejected) закрыт фикс-пак по его action items 1–3 (находки F1–F3): спека `_bmad-output/implementation-artifacts/spec-f1-f3-candidate-rig-retro-fixes.md` (created 2026-10-25, `status: done`, review pass 25 находок — 0 high, патчи в `015251bc`; закрыт коммитом `4774f308`). Коммиты цепочки на `night/e7-commerce` в заявленном порядке: `024675ea` (оракул) → `fc71bfc1` (фикс гейта + 18-й кейс) → `fa72bd73` (wiring) → `0c356339` (1.7 + мемо) → `cf2d8cb9` (evidence+спека) → `015251bc` (патч-раунд). HEAD `bd66776d` = `origin/night/e7-commerce` (проверено `git rev-parse` на VPS 2026-10-26). Все проверки ниже выполнены этой сессией 2026-10-26 на VPS (`ssh rnsrv`, `/workspace/projects/schoolquiz3.0`), если не сказано иное.
+
+## Follow-through: пункты прошлого ретро
+
+| # | Пункт (находка) | Статус | Доказательство |
+|---|---|---|---|
+| 1 | Чинить гейт F1 | **landed** | `fc71bfc1`; в HEAD `quiescenceIsQuiescent` = `Object.keys(candidate).length === quiescenceCounters.length` + `hasOwnProperty` по каждому имени + нулевые значения, join-сравнение из предиката убрано (`run-arena-offline-settlement-leaf.sh:499-501`; прочие `sort().join` в листе :150,:178-179,:214-215,:562 — другие валидаторы, не гейт квесценции) |
+| 2 | Влить оракул + wiring F2 | **landed** | `024675ea` — cherry-pick `d6e89fae`, в сообщении строка `(cherry picked from commit d6e89faed17a64b83946a64d411aee2a100ab2f2)`, patch-id пика и источника совпадают: `30ff39829224f700d9446b175223f58fffe6f2b6` (проверено `git show … \| git patch-id --stable`); в HEAD тест 472 строки, 18-й коллизионный кейс в цикле на :459, positive control env-хука на :408/:468. `fa72bd73` — `scripts/package.json`: `test` кончается `&& node ../.maestro/mvp/arena-matrix/offline-settlement-contract.test.js`, `lint` содержит `node --check` того же файла; хвосты сосуществуют с чужим `ba915081` (demo-fixtures-узлы после контракт-теста) |
+| 3 | История 1.7 + мемо RED-базы F3 | **landed** | `0c356339`; в HEAD `tickets.toml` несёт 1.7 `rerun-cicheck-record` статус-фри черновиком (:57-68, «no status on purpose»); `docs/agents/evidence/2026-10-05-cicheck-baseline/` — оба файла, `git diff night/e1-followups HEAD -- <dir>` пуст (байт-в-байт); условие снятия RED записано (README:42-46) |
+| 4 | Происхождение APK B + дисклеймер F4 | **не закрыт** | `apk-b-sha256.txt:1` по-прежнему только воркtree-путь (`.local/worktrees/night-impl/...`), HEAD/ветка не названы; README 1.3 не тронут со дня эпика (последний коммит `c0935a59`), дисклеймера «B — не кандидат 1.2» нет |
+| 5 | Решение 21:55 дословно F5 | **не закрыт** | `owner-decisions-2026-10-08.md` — grep по `21:55/redroid/эмулятор` пуст |
+| 6 | Проход сверки чисел + REVISED F6 | **не закрыт** | README рига без REVISED-пометки (grep `REVISED` пуст) |
+| 7 | `server-mutation-records.json` F7 | **не закрыт** | файл в HEAD по-прежнему `ключ => {...}` + `USER: {...}` — `json.load` падает |
+| 8 | Персональные данные F8 | **не закрыт** | `inventory-pixel.txt:28-29` — два реальных gmail-адреса владельца на месте |
+| 9 | Семантика рестарта + пересев F10 | **частично** | `backend-restore-result.json:44-59` уже с дня эпика (`8f8356ac`/`1c120a19`) несёт restartCycle (docker start = переимпорт staged-экспорта, history: 0); процедуры пересева насеянного эпиками 2–7 нет (grep `reseed/посев` пуст) — собственно запрос пункта не исполнен |
+| 10 | Погасить stale-запись deferred-work F10 | **не закрыт** | `_bmad-output/implementation-artifacts/deferred-work.md:509-510` — запрос «Require exactly the five zero-valued counters in a dedicated follow-up» жив, хотя фикс вышел (`fc71bfc1`) |
+| 11 | Defer: control-save history-doc + чистый контейнер | **открыт (defer)** | коммитов по этим поверхностям с 22.10 нет — следов исполнения не найдено |
+
+## Проверки перевёрстки (выполнены 2026-10-26)
+
+- **Контракт-тест в докере на HEAD — PASS.** `docker run --rm --network none -v /workspace/projects/schoolquiz3.0:/repo:ro node:22-bookworm-slim node /repo/.maestro/mvp/arena-matrix/offline-settlement-contract.test.js` → exit 0, `offline settlement composition tests: PASS`.
+- **Полный wired-канал — GREEN.** `cd scripts && PATH=/workspace/infrastructure/zcode/3.14.3/node24/node-v24.14.0-linux-x64/bin:$PATH npm test` → exit 0, последняя строка `offline settlement composition tests: PASS` (контракт-тест — финальный узел цепочки).
+- **RED-reproduction из истории — воспроизведена.** Полное дерево `git archive 024675ea` (лист побайтно равен `024675ea`, diff 0) + тест из `fc71bfc1` (с 18-м кейсом) → `AssertionError [ERR_ASSERTION]: unsafe quiescence passed: {"orphanedRatingIntents,orphanedSubmitIntents,outboxRows,reservedArenaTickets,unresolvedArenaCommands":0}`, exit 1. Старый гейт пропускает коллизию, новый тест её ловит; на HEAD тот же тест зелёный. (Первая попытка на минимальном двухфайловом дереве упала на MODULE_NOT_FOUND `../../../scripts/arena-e2e-pending-settlement-reader` — рецепт result.md:56 подразумевает полный checkout; засчитан только полный-деревьевский прогон.)
+- **Evidence-запись фикс-пака** `docs/agents/evidence/2026-10-25-f1-f3-retro-fix-package/result.md` читана: `schemaVersion: 1, capturedAtUtc: 2026-10-25T10:40:36Z` (:3), RED/GREEN-выводы зашиты (:34, :70, :83), рецепт RED (:56) — совпадает с моим независимым воспроизведением.
+- Не повторялись (и не требовались для перевёрстки): device-прогоны 1.3, Gradle-сборки, ciCheck (RED-базлайн документирован, снятие — за владельцем через 1.7).
+
+## Acceptance verdict (перевёрстка)
+
+**rejected** — машинный вердикт подтверждён; **override не применялся** (решений владельца (а)/(б) из Open questions прошлого ретро в evidence нет: `git log --since=2026-10-22 -- _bmad-output/mvp-candidate/` не содержит файлов решений). Критерии — объявленные (`epic-candidate-rig.md:25-30`); все шесть историй эпика `done` (`tickets.toml:13,21,30,38,47,55`), 1.7 — статус-фри черновик-трекер, созданный самим фикс-паком, к гейту полноты эпика не относится.
+
+- **Done-when 4 (гейт квесценции) — закрыт.** Фикс `fc71bfc1` (точно пять счётчиков, count+hasOwnProperty), оракул влит и wired (`024675ea`+`fa72bd73`), детекция дыры доказана RED-прогоном из истории, HEAD зелёный. Регрессионная нога выполняется в `npm test` (scriptsTest); в каноническом root `ciCheck` она заработает после снятия RED — отслеживается историей 1.7 (то, чего требовал пункт 3 прошлого ретро).
+- **Done-when 3 (CAP-20: «Installing the candidate over the populated Samsung installation retains…») — не выполнен в объявленном виде.** Как и 22.10: не Samsung, а эмулятор по не записанному устному решению (F5), не кандидат, а сборка-суррогат без привязки к коммиту (F4) — оба подменяющих факта по-прежнему не оформлены (follow-through №4, №5). Документационные находки F6–F10 тоже живы (№6–№10).
+
+Основание отклонения сузилось с двух критериев до одного. Путь в **accepted-with-open-items** не изменился и назван: владелец записывает (а) приёмку redroid-замены и (б) достаточность суррогатной сборки B до final-acceptance (либо заказывает candidate-верный install-over), затем закрываются документационные пункты 4–8 — после этого переоткрытие вердикта правомерно.
+
+## Action items (открытые после перевёрстки)
+
+1. **tpov (владелец)** — Решение по CAP-20: записать (а)+(б) в `owner-decisions/` или заказать candidate-верный install-over до final-acceptance. *(F4/F5; блокирует вердикт)*
+2. **tpov** — Положить debug `google-services.json` (пути в мемо README:44-46) → перезаписать RED `ciCheck`, снять 1.7; тогда контракт-тест поедет в каноническом гейте. *(F3-остаток; на владельце по дизайну)*
+3. **test-dev** — F4: происхождение APK B (HEAD/ветка/воркtree) + дисклеймер «B — не кандидат 1.2» в evidence 1.3.
+4. **tpov** — F5: решение 21:55 08.10 дословно в `owner-decisions-2026-10-08.md`; пометка сужения в tickets 1.3.
+5. **test-dev** — F6: один проход сверки (28/30 таблиц, 23:10:48/23:15:49, SDK 36/37, schema-дисклеймер пикселя, REVISED-пометка README рига).
+6. **test-dev** — F7: `server-mutation-records.json` → `.txt` или схема с schemaVersion/capturedAtUtc.
+7. **tpov** — F8: решение по персональным данным (редактура или записанная толерантность).
+8. **tpov/ops** — F10: процедура пересева после рестарта demo-бэкенда (restartCycle записан, пересев — нет).
+9. **test-dev** — F10: погасить stale-запись `deferred-work.md:509-510`.
+10. **defer** — control-save: досеять history-документ и проверить выживание; переимпорт в чистый контейнер.
+
+## Assumptions (перевёрстка)
+
+- Перевёрстка выполнена headless-сессией (суб-агент ретро-волны) по методике bmad-retrospective: фазы 1–2 — сверка follow-through и фикс-пака с первоисточниками на VPS; командный discussion не запускался (opt-in).
+- История 1.7 не засчитана незавершённой историей эпика: спека фикс-пака прямо требовала оставить её статус-фри до owner-локального `google-services.json`; шесть историй эпика (1.1–1.6) все `done` в `tickets.toml`.
+- Спека `spec-f1-f3-candidate-rig-retro-fixes.md` заявляет `status: done` и верификацию прогонов (RED/GREEN/npm/patch-id/мемо) — выборочно перепроверено этой сессией (patch-id, мемо-diff, код гейта, три прогона); результат — подтверждено, расхождений не найдено.
+- Параллельные волны: `sprint-status-monetisation.yaml` и `tickets.toml` эпика authoring-review не читались как surface правок и не редактировались; stories-mode (прецедент документа) — sprint-status не пишется.
 - Оценки сроков нигде не приводятся.
