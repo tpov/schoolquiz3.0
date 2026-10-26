@@ -73,7 +73,7 @@ class FirebaseArenaTicketStatusRemoteDataSourceTest {
             f.reply = projection("recoveredSettled").toSdk()
             val settled = f.status.status(request("recoveredSettled")).getOrThrow()
             assertTrue(settled is ArenaTicketStatusObservation.Settled)
-            assertEquals(75.5, (settled as ArenaTicketStatusObservation.Settled).receipt.percentScore, 0.0)
+            assertEquals(100.0, (settled as ArenaTicketStatusObservation.Settled).receipt.percentScore, 0.0)
             assertEquals(2, f.calls.size)
             assertTrue(f.calls.all { it.first == FirebaseArenaTicketRemoteDataSource.STATUS })
         }

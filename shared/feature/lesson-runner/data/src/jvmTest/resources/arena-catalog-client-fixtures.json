@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "producer": "actual catalog factory + full root loader + Firestore fake; no writes",
   "sourceSha256": {
-    "index.js": "7cad5bd6cb8b1d648112b063c67c418b8ff2464ada89a733fbfcf562882416ec",
+    "index.js": "4dc9a80ee66812acbb5db477ce4b510e763f48f18cf9aa1c1bf5c5fa099cb0eb",
     "arena-lesson-catalog.js": "ab1bd8754fd822c321ad50844af64b419b41a3e36cb25a6523da4f35b339f8a5",
     "arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
-    "_firestore-stub.js": "fcfecc9207bc75d69499db4e52622415c59ebc6a4b43ab043991407788f85468"
+    "_firestore-stub.js": "38fc6a3b84b1c1b4443cb64fabd614d8e1de0a0fbe814f20fa30d80ee39cff72"
   },
   "full": {
     "status": "OK",
     "catalogVersion": "arena-lesson-catalog-v1",
-    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "snapshotFingerprint": "8863b31130553717278866d49855651bb7bc836068ce9387d31a8a41d600e63d",
     "serverNowMs": 1788739200000,
     "entryAvailability": "PREPARE_REQUIRED",
     "totalEligibleLessons": 7,
@@ -175,7 +175,7 @@
   "first": {
     "status": "OK",
     "catalogVersion": "arena-lesson-catalog-v1",
-    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "snapshotFingerprint": "8863b31130553717278866d49855651bb7bc836068ce9387d31a8a41d600e63d",
     "serverNowMs": 1788739200000,
     "entryAvailability": "PREPARE_REQUIRED",
     "totalEligibleLessons": 7,
@@ -247,12 +247,12 @@
         }
       }
     ],
-    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYS1uZWFyIiwic25hcHNob3QiOiI3M2U5ZDMzODBjZTI3MjQzM2YwODJmMDIzMDcwNmM2MDIxYmMxOGRlNTUzZTExNzI0YTI4MzU2NThiMGRmNzcwIiwidiI6MX0"
+    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYS1uZWFyIiwic25hcHNob3QiOiI4ODYzYjMxMTMwNTUzNzE3Mjc4ODY2ZDQ5ODU1NjUxYmI3YmM4MzYwNjhjZTkzODdkMzFhOGE0MWQ2MDBlNjNkIiwidiI6MX0"
   },
   "second": {
     "status": "OK",
     "catalogVersion": "arena-lesson-catalog-v1",
-    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "snapshotFingerprint": "8863b31130553717278866d49855651bb7bc836068ce9387d31a8a41d600e63d",
     "serverNowMs": 1788739200000,
     "entryAvailability": "PREPARE_REQUIRED",
     "totalEligibleLessons": 7,
@@ -324,12 +324,12 @@
         }
       }
     ],
-    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYy1taWQiLCJzbmFwc2hvdCI6IjczZTlkMzM4MGNlMjcyNDMzZjA4MmYwMjMwNzA2YzYwMjFiYzE4ZGU1NTNlMTE3MjRhMjgzNTY1OGIwZGY3NzAiLCJ2IjoxfQ"
+    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYy1taWQiLCJzbmFwc2hvdCI6Ijg4NjNiMzExMzA1NTM3MTcyNzg4NjZkNDk4NTU2NTFiYjdiYzgzNjA2OGNlOTM4N2QzMWE4YTQxZDYwMGU2M2QiLCJ2IjoxfQ"
   },
   "last": {
     "status": "OK",
     "catalogVersion": "arena-lesson-catalog-v1",
-    "snapshotFingerprint": "73e9d3380ce272433f082f0230706c6021bc18de553e11724a2835658b0df770",
+    "snapshotFingerprint": "8863b31130553717278866d49855651bb7bc836068ce9387d31a8a41d600e63d",
     "serverNowMs": 1788739200000,
     "entryAvailability": "PREPARE_REQUIRED",
     "totalEligibleLessons": 7,
@@ -372,7 +372,7 @@
   "nullable": {
     "status": "OK",
     "catalogVersion": "arena-lesson-catalog-v1",
-    "snapshotFingerprint": "0f69b299cb5b4c9e5fff2e7756e09a1b309ced44c5183be31daae8498bdbaeb9",
+    "snapshotFingerprint": "d67ccad75fd367a0d5e021b98bf59512e435c6fb2a9df72b96e6a25245cdb8a1",
     "serverNowMs": 1788739200000,
     "entryAvailability": "PREPARE_REQUIRED",
     "totalEligibleLessons": 1,
@@ -405,7 +405,7 @@
   "tieFirst": {
     "status": "OK",
     "catalogVersion": "arena-lesson-catalog-v1",
-    "snapshotFingerprint": "8dfd95f3945be4c547f6c23c78911e7302161cd043ba16191be0467218cdfc2c",
+    "snapshotFingerprint": "112bee2ebd5d5c06e1ecf456e3483fb6145cfb93d7887295d8db23f24a45ed4a",
     "serverNowMs": 1788739200000,
     "entryAvailability": "PREPARE_REQUIRED",
     "totalEligibleLessons": 4,
@@ -455,12 +455,12 @@
         }
       }
     ],
-    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYi11bnJhdGVkIiwic25hcHNob3QiOiI4ZGZkOTVmMzk0NWJlNGM1NDdmNmMyM2M3ODkxMWU3MzAyMTYxY2QwNDNiYTE2MTkxYmUwNDY3MjE4Y2RmYzJjIiwidiI6MX0"
+    "nextCursor": "eyJhZnRlckxlc3NvbklkIjoiYi11bnJhdGVkIiwic25hcHNob3QiOiIxMTJiZWUyZWJkNWQ1YzA2ZTFlY2Y0NTZlMzQ4M2ZiNjE0NWNmYjkzZDc4ODcyOTVkOGRiMjNmMjRhNDVlZDRhIiwidiI6MX0"
   },
   "tieLast": {
     "status": "OK",
     "catalogVersion": "arena-lesson-catalog-v1",
-    "snapshotFingerprint": "8dfd95f3945be4c547f6c23c78911e7302161cd043ba16191be0467218cdfc2c",
+    "snapshotFingerprint": "112bee2ebd5d5c06e1ecf456e3483fb6145cfb93d7887295d8db23f24a45ed4a",
     "serverNowMs": 1788739200000,
     "entryAvailability": "PREPARE_REQUIRED",
     "totalEligibleLessons": 4,

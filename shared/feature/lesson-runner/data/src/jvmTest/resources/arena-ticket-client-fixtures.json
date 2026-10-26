@@ -6,11 +6,11 @@
     "arena-ticket-recovery.js": "fff151e782e62454773d7ae76627609267d1809febfa05357098739170d2a893",
     "arena-policy.js": "dad7678911bf2d4839f4d3f334ea420ffeb95d69ae3cd63855527f31aed6dc36",
     "question-redaction.js": "df1606e9a29f931c3cab8c3d34167ad0cf357d1099df49105ca530c39ccdf0e1",
-    "_question-fixtures.js": "9e6bfb9ebdf6e5ebc81ccee7b4b654444e919695ede5d67a578d7e82a11f114b",
+    "_question-fixtures.js": "3c41d7cfa94494ccd9d4e550a2410f88cb43c41ffc61f23501e7a08047ad38b7",
     "arena-ticket-recovery.test.js": "4eaeadc11d1ba6040d571a061cd7d209e0c102b5b6a6390ea0356a535bfdff49",
-    "index.js": "7cad5bd6cb8b1d648112b063c67c418b8ff2464ada89a733fbfcf562882416ec",
+    "index.js": "4dc9a80ee66812acbb5db477ce4b510e763f48f18cf9aa1c1bf5c5fa099cb0eb",
     "arena-entry-runtime.js": "2b755cb990a68d8e66fdd183736aa9b1b261fa7e4c99371e686bd42740fe1053",
-    "arena-entry-runtime.test.js": "7523a97c4b7ecb0a45b3560d0b5ea11d588672403b046eeb98196a7f4f256eaa",
+    "arena-entry-runtime.test.js": "51e22187348c540ab4f7ac9f6b918a864b7c12976772fd670666a2d13c00043e",
     "arena-public-question.js": "e83398a1ec5b69378d0d05abbb70ed9e41fb29223527d9043a8048f0f0148820"
   },
   "hashes": {
@@ -42,7 +42,7 @@
       "attemptId": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
       "uid": "player",
       "requestId": "client-selected",
-      "requestHash": "bfb83a4e791143f62032073a14fb3104b5efe60d8a9ec5c7cfe2eaa064c5ff03",
+      "requestHash": "151712b64b81ad693a436a28dc898e7f524383ad8c821d34508cac33a2145e7a",
       "mode": "SELECTED",
       "issuedAtMs": 1788696000000,
       "dayId": "2026-09-06",
@@ -58,7 +58,7 @@
             "language": "en",
             "lessonId": "lesson",
             "order": 0,
-            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"id\":\"q1\",\"difficulty\":\"EASY\"}",
             "version": 2
           }
         }
@@ -86,7 +86,7 @@
       "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
       "uid": "player",
       "requestId": "client-hard",
-      "requestHash": "2ec4e1a16ed059c2228209123b842cceac228dc4545fa0fd1adcc93b97b5b77b",
+      "requestHash": "e6a27918a24902341243d0c6c230430e67eb827dbe14345df01cf736e9d5938b",
       "mode": "SELECTED",
       "issuedAtMs": 1788696000000,
       "dayId": "2026-09-06",
@@ -146,7 +146,7 @@
             "language": "en",
             "lessonId": "lesson",
             "order": 0,
-            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"id\":\"q1\",\"difficulty\":\"EASY\"}",
             "version": 2
           }
         }
@@ -189,7 +189,7 @@
             "version": 2,
             "difficulty": "EASY",
             "order": 0,
-            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"id\":\"q1\",\"difficulty\":\"EASY\"}",
             "language": "en"
           }
         }
@@ -305,7 +305,7 @@
             "version": 2,
             "difficulty": "EASY",
             "order": 0,
-            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"id\":\"q1\",\"difficulty\":\"EASY\"}",
             "language": "en"
           }
         }
@@ -333,7 +333,7 @@
       "attemptId": "b5bdeb65adfe3de301c19058f67e751aa7bcba8619e1d6314cce0daa3a728bb5",
       "uid": "player",
       "requestId": "client-selected",
-      "requestHash": "bfb83a4e791143f62032073a14fb3104b5efe60d8a9ec5c7cfe2eaa064c5ff03",
+      "requestHash": "151712b64b81ad693a436a28dc898e7f524383ad8c821d34508cac33a2145e7a",
       "mode": "SELECTED",
       "issuedAtMs": 1788696000000,
       "dayId": "2026-09-06",
@@ -354,7 +354,7 @@
             "language": "en",
             "lessonId": "lesson",
             "order": 0,
-            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"q1\"}",
+            "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"id\":\"q1\",\"difficulty\":\"EASY\"}",
             "version": 2
           }
         }
@@ -390,7 +390,7 @@
         "receiptId": "arena-settle:a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
         "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
         "settledAtMs": 1788696000000,
-        "percentScore": 75.5,
+        "percentScore": 100,
         "consumedNolics": 10,
         "consumedLifePoints": 50,
         "authorCreditNolics": 8,
@@ -421,8 +421,8 @@
       "receiptId": "arena-settle:a04ea546f0a713f60857059c8b718c0bf2ff861404b9e3fabee7c1728e6b9382",
       "attemptId": "33103e4e369edcbb52e3e5694b098a31c0d01e1c14ae17042cf87bf9a4fff22e",
       "settledAtMs": 1788696000000,
-      "scoreDigest": "private-score-digest",
-      "percentScore": 75.5,
+      "scoreDigest": "2cfcf159d96816946f541f3ea1b69265b3f63ca93f4bab8f997072c72de53796",
+      "percentScore": 100,
       "consumedNolics": 10,
       "consumedLifePoints": 50,
       "authorCreditNolics": 8,
@@ -564,7 +564,7 @@
         "id": "q1",
         "difficulty": "HARD"
       },
-      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Elm\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Python\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[]}"
+      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Python\"},{\"id\":\"rc-1\",\"text\":\"Swift\"},{\"id\":\"rc-2\",\"text\":\"Elm\"},{\"id\":\"rc-3\",\"text\":\"Kotlin\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[]}"
     },
     {
       "name": "SURVEY",
@@ -629,13 +629,13 @@
     {
       "name": "FILL_BLANK",
       "field": "correctOptionId",
-      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Elm\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Python\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[],\"correctOptionId\":{\"answer\":\"private-answer\"}}",
+      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Python\"},{\"id\":\"rc-1\",\"text\":\"Swift\"},{\"id\":\"rc-2\",\"text\":\"Elm\"},{\"id\":\"rc-3\",\"text\":\"Kotlin\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[],\"correctOptionId\":{\"answer\":\"private-answer\"}}",
       "producerStatus": "already-redacted"
     },
     {
       "name": "FILL_BLANK",
       "field": "futurePrivate",
-      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Swift\"},{\"id\":\"rc-1\",\"text\":\"Elm\"},{\"id\":\"rc-2\",\"text\":\"Kotlin\"},{\"id\":\"rc-3\",\"text\":\"Python\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[],\"futurePrivate\":{\"answer\":\"private-answer\"}}",
+      "payload": "{\"type\":\"FillBlankRedacted\",\"id\":\"q1\",\"difficulty\":\"HARD\",\"text\":\"___ compiles to bytecode and ___ to machine code.\",\"imageUrl\":null,\"blanks\":[\"b1\",\"b2\"],\"candidates\":[{\"id\":\"rc-0\",\"text\":\"Python\"},{\"id\":\"rc-1\",\"text\":\"Swift\"},{\"id\":\"rc-2\",\"text\":\"Elm\"},{\"id\":\"rc-3\",\"text\":\"Kotlin\"},{\"id\":\"rc-4\",\"text\":\"Rust\"}],\"protectedTextSegments\":[],\"futurePrivate\":{\"answer\":\"private-answer\"}}",
       "producerStatus": "already-redacted"
     },
     {
@@ -693,26 +693,13 @@
         "attemptId": "79939ae7ab40e22fd95fea02d3c5bacf629c1514658c01caa6e3cb572e5c51f1",
         "uid": "player",
         "requestId": "client-actual-missing-id",
-        "requestHash": "a1687dd7388150f18fdaaa8c6a03f34b58ad6291273848c100985a895246e638",
+        "requestHash": "4e744c8dc180ab1ea679e8c9651a7197a3fd40e79541086cb16594ccfc0ef816",
         "mode": "SELECTED",
         "issuedAtMs": 1788696000000,
         "dayId": "2026-09-06",
         "status": "RESERVED",
         "terminal": null,
         "questions": [
-          {
-            "questionId": "EASY-0",
-            "questionVersion": 1,
-            "publicQuestion": {
-              "difficulty": "EASY",
-              "id": "EASY-0",
-              "language": "",
-              "lessonId": "lesson",
-              "order": 0,
-              "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"EASY-0\"}",
-              "version": 1
-            }
-          },
           {
             "questionId": "EASY-1",
             "questionVersion": 1,
@@ -721,8 +708,21 @@
               "id": "EASY-1",
               "language": "",
               "lessonId": "lesson",
-              "order": 1,
+              "order": 0,
               "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"EASY-1\"}",
+              "version": 1
+            }
+          },
+          {
+            "questionId": "EASY-0",
+            "questionVersion": 1,
+            "publicQuestion": {
+              "difficulty": "EASY",
+              "id": "EASY-0",
+              "language": "",
+              "lessonId": "lesson",
+              "order": 1,
+              "payload": "{\"type\":\"SingleChoice\",\"text\":\"Which keyword declares a read-only binding?\",\"imageUrl\":null,\"options\":[{\"id\":\"a\",\"text\":\"var\"},{\"id\":\"b\",\"text\":\"val\"},{\"id\":\"c\",\"text\":\"lateinit\"}],\"correctOptionId\":\"b\",\"info\":\"val is the read-only one\",\"difficulty\":\"EASY\",\"id\":\"EASY-0\"}",
               "version": 1
             }
           }

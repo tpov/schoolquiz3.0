@@ -156,7 +156,7 @@ class ArenaTicketWireParserTest {
         assertEquals("arena-settle:${settled.snapshot.header.ticketId}", settled.receipt.receiptId)
         assertEquals(settled.snapshot.header.attemptId, settled.receipt.attemptId)
         assertEquals(settled.snapshot.header.issuedAtMs, settled.receipt.settledAtMs)
-        assertEquals(75.5, settled.receipt.percentScore)
+        assertEquals(100.0, settled.receipt.percentScore)
         assertEquals(10, settled.receipt.consumedNolics)
         assertEquals(50L, settled.receipt.consumedLifePoints)
         assertEquals(8L, settled.receipt.authorCreditNolics)

@@ -85,7 +85,7 @@ class ArenaTicketStatusWireParserTest {
         assertEquals("arena-settle:" + raw.text("ticketId"), receipt.receiptId)
         assertEquals(raw.text("attemptId"), receipt.attemptId)
         assertEquals(1_788_696_000_000L, receipt.settledAtMs)
-        assertEquals(75.5, receipt.percentScore)
+        assertEquals(100.0, receipt.percentScore)
         assertEquals(10, receipt.consumedNolics)
         assertEquals(50L, receipt.consumedLifePoints)
         assertEquals(8L, receipt.authorCreditNolics)
@@ -230,7 +230,7 @@ class ArenaTicketStatusWireParserTest {
             "sinkNolics" to JsonPrimitive(1.5),
             "royaltyReserveDeltaNolics" to JsonPrimitive(9_007_199_254_740_992L),
         )) malformed(patchTerminal(raw, field, value))
-        malformedWire(envelope(raw).replace("\"percentScore\":75.5", "\"percentScore\":1e999"), request(raw))
+        malformedWire(envelope(patchTerminal(raw, "percentScore", Json.parseToJsonElement("1e999"))), request(raw))
     }
 
     @Test

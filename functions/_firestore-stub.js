@@ -243,6 +243,9 @@ function createFirestoreStub(seed, options) {
         if (operator === "in" && !Array.isArray(value)) throw new Error("stub requires an array value for in queries");
         return collectionRef(path, [...filters, [field, value, operator]], ordering, after, maximum);
       },
+      // Field projection shapes the read, not the rows; suites that assert projections keep
+      // their own fakes, so the stub accepts and ignores the field list.
+      select: () => ref,
       orderBy: (field, direction = "asc") => {
         if (!["asc", "desc"].includes(direction) || ordering.some(([old]) => old === field)) throw new Error("Unsupported fake ordering");
         return collectionRef(path, filters, [...ordering, [field, direction]], after, maximum);

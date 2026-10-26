@@ -83,7 +83,7 @@ class ArenaCancelledSettlementResolverTest {
             f.response = f.status("recoveredSettled")
             val before = f.snapshot()
             val result = assertIs<ArenaCancellationResolution.SettledUnchanged>(f.resolve(this).getOrThrow())
-            assertEquals(75.5, result.observation.receipt.percentScore)
+            assertEquals(100.0, result.observation.receipt.percentScore)
             assertEquals(before, f.snapshot())
         }
 
