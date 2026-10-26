@@ -280,21 +280,38 @@ internal class ArenaRunHost(
         val state = controller.state.value
         val pending = state.observed as? ArenaRunRead.DecisionPending
         if (!destroyed && controller.checkSession() && !state.busy) {
+            val consent = services.result.consent
+            val consentVerdict: Boolean? = consent?.let { handles -> runsCatchingVerdictOrNull(handles) }
             when {
                 pending?.decision == ArenaRunDecision.CANCEL -> dispatchCancel()
                 // Диалог поднимается только когда у этого прогона есть незакрытая работа
                 // (наблюдаемое решение SETTLE/CANCEL — ретро L5): голый вердикт гейта без
                 // запаркованной мутации диалога не заслуживает — отказ terms-consent запарковал
                 // SETTLE в CONFLICT, без решения игрока повтор бессмыслен (CAP-16, AD-5).
-                pending != null && services.result.consent?.let { !it.satisfied() } == true -> {
+                pending != null && consentVerdict == true -> {
                     needsTermsConsent.value = true
                 }
+                // Чтение вердикта упало (тот же Room-I/O, что и accept): ни диалога, ни дрена —
+                // неизвестно, требуется ли согласие; повторный тап честно повторит чтение.
+                pending != null && consent != null && consentVerdict == null -> Unit
                 state.canRetryReceiptSync(
                     receiptFrame?.settlement ?: pendingSettlement(),
                 ) -> services.result.sync.enqueueManualSync()
             }
         }
     }
+
+    /** Чтение вердикта — тот же Room-I/O, что и accept(): падение не должно ронять синк-тап
+     * (тот же класс отказа, от которого e289e3fc защитил accept). null = прочесть не удалось. */
+    private fun runsCatchingVerdictOrNull(handles: ArenaConsentHandles): Boolean? =
+        try {
+            !handles.satisfied()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            Log.w(TAG, "terms consent verdict read failed; the sync tap stays hands-off", e)
+            null
+        }
 
     /** Решение игрока за условиями: согласие возвращает запаркованный SETTLE в отправку. */
     fun acceptTerms() {

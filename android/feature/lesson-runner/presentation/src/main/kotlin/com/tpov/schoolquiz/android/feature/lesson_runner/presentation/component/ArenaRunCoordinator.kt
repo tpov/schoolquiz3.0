@@ -35,6 +35,7 @@ internal class ArenaRunCoordinator(
     private val mutableState = MutableStateFlow(ArenaRunCoordinatorState())
     val state = mutableState.asStateFlow()
     private var active: Any? = null
+    private var pendingDiverge: Boolean = false
     private var job: Job? = null
     private var started = false
 
@@ -105,9 +106,11 @@ internal class ArenaRunCoordinator(
 
     /**
      * Итог онлайн-O2 бокового канала попадает сюда, а не через [dispatch]: окно уже прочитано
-     * хостом вне сериализованного писателя, здесь — только чистый кандидат из свежего состояния и
-     * CAS под тем же забором. Лямбда обязана быть чистой (сетевых вызовов в [perform] нет);
-     * брошенное адаптером расхождение — честный RELOAD_REQUIRED, а не тихий откат (ретро A1).
+     * хостом вне сериализованного писателя, здесь — чистый кандидат из состояния на входе и CAS
+     * под тем же забором: свежесть держит ревизия (CAS-конфликт честно виден), а не повторное
+     * чтение. Лямбда обязана быть чистой (сетевых вызовов в [perform] нет); брошенное адаптером
+     * расхождение — честный RELOAD_REQUIRED, а не тихий откат (ретро A1). Внешняя (хостовая)
+     * дивергенция expiry идёт через [diverge] и переживает активного писателя.
      */
     fun applyExternal(
         token: ArenaRunToken,
@@ -128,7 +131,19 @@ internal class ArenaRunCoordinator(
      * локальному состоянию, и второй отсчёт их не починит.
      */
     fun diverge() {
-        if (!checkSession() || active != null) return
+        if (!checkSession()) return
+        if (active != null) {
+            // Расхождение, найденное во время активного писателя, не теряется: оно применится
+            // сразу после его завершения — тишина здесь означала бы тихий локальный таймер.
+            pendingDiverge = true
+            return
+        }
+        mutableState.value = state.value.copy(busy = false, notice = ArenaRunNotice.RELOAD_REQUIRED)
+    }
+
+    private fun applyPendingDiverge() {
+        if (!checkSession() || !pendingDiverge) return
+        pendingDiverge = false
         mutableState.value = state.value.copy(busy = false, notice = ArenaRunNotice.RELOAD_REQUIRED)
     }
 
@@ -163,6 +178,7 @@ internal class ArenaRunCoordinator(
         active = null
         job?.cancel()
         job = null
+        pendingDiverge = false
         mutableState.value = ArenaRunCoordinatorState(notice = ArenaRunNotice.ACCOUNT_CHANGED)
         return false
     }
@@ -219,6 +235,7 @@ internal class ArenaRunCoordinator(
             active = null
             job = null
             mutableState.value = state.value.copy(busy = false, notice = ArenaRunNotice.RELOAD_REQUIRED)
+            pendingDiverge = false
         }
     }
 
@@ -243,6 +260,7 @@ internal class ArenaRunCoordinator(
                 active = null
                 job = null
                 mutableState.value = state.value.copy(busy = false)
+                applyPendingDiverge()
             }
         }
     }

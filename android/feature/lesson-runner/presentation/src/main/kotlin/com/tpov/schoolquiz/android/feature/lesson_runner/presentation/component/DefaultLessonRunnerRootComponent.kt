@@ -166,12 +166,28 @@ class DefaultLessonRunnerRootComponent(
         val result = stateHolder.uiState.value as? RunnerUiState.Result ?: return
         if (!result.canRequestSync) return
         val handles = consent
-        if (handles != null && !handles.satisfied()) {
+        val verdict: Boolean? = handles?.let { runsCatchingVerdictOrNull(it) }
+        if (handles != null && verdict == true) {
             needsTermsConsentFlow.value = true
             return
         }
+        // Чтение вердикта упало: ни диалога, ни дрена — неизвестно, требуется ли согласие;
+        // повторный тап честно повторит чтение.
+        if (handles != null && verdict == null) return
         syncScheduler.enqueueManualSync()
     }
+
+    /** Чтение вердикта — тот же Room-I/O, что и accept(): падение не должно ронять синк-тап.
+     * null = прочесть не удалось. */
+    private fun runsCatchingVerdictOrNull(handles: LessonConsentHandles): Boolean? =
+        try {
+            !handles.satisfied()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            Log.w(TAG, "terms consent verdict read failed; the sync tap stays hands-off", e)
+            null
+        }
 
     private val needsTermsConsentFlow = MutableStateFlow(false)
 

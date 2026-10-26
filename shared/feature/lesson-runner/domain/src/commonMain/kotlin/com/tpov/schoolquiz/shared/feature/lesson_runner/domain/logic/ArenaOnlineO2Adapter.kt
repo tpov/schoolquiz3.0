@@ -148,6 +148,9 @@ object ArenaOnlineO2Adapter {
             "delivered question ${delivery.questionId} is not the attempt's question at position $next"
         }
         require(verdict.remainderMs >= 0 && verdict.serverNowMs >= 0) { "verdict times must be non-negative" }
+        // Оба серверных факта согласованы: остаток не длиннее выданного дедлайна (иначе выдача
+        // испорчена), а проекция дополнительно зажата выделенным окном (ретро L7b).
+        require(verdict.remainderMs <= delivery.answerDeadlineMs) { "remainder must not exceed the answer deadline" }
         val remainderMs = minOf(verdict.remainderMs, view.allocatedSeconds * MILLIS_PER_SECOND.toLong())
         require(localNowMs >= 0 && remainderMs <= Long.MAX_VALUE - localNowMs) { "projection overflows" }
         val candidate =

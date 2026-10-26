@@ -579,6 +579,38 @@ class ArenaRunHostTest {
         }
 
     @Test
+    fun throwingVerdictReadOnPendingWorkNeitherCrashesNorRaisesNorDrains() =
+        runTest {
+            val f =
+                ArenaRunHostFixture(
+                    this,
+                    ArenaConsentHandles(
+                        satisfied = { throw IllegalStateException("room io failure") },
+                        accept = { error("accept must not be reached from a failed verdict read") },
+                    ),
+                )
+            val host = f.host()
+            try {
+                host.foreground()
+                runCurrent()
+                f.run.observed = ArenaRunRead.DecisionPending(f.run.header, ArenaRunDecision.SETTLE)
+                host.reload()
+                runCurrent()
+                val syncsBefore = f.syncCalls
+
+                host.sync()
+                runCurrent()
+                assertFalse(
+                    host.needsTermsConsent.value,
+                    "verdict падает — диалога нет: чтение вердикта того же класса отказа, что и accept",
+                )
+                assertEquals(syncsBefore, f.syncCalls, "неудача чтения не дренирует очередь")
+            } finally {
+                host.onDestroy()
+            }
+        }
+
+    @Test
     fun throwingAcceptKeepsDialogOpenAndDrainsNothing() =
         runTest {
             var satisfied = false
@@ -936,7 +968,7 @@ private class HostWindowFake(
                     Result.success(
                         QuestionDeliveryVerdict.Delivered(
                             windowId = "win_o2",
-                            delivery = QuestionDelivery(1, "q2", issuedAtMs = 1_000, answerDeadlineMs = 25_000),
+                            delivery = QuestionDelivery(1, "q2", issuedAtMs = 1_000, answerDeadlineMs = 600_000),
                             remainderMs = 500_000,
                             serverNowMs = 1_000,
                         ),

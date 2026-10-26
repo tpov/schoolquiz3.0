@@ -1716,6 +1716,33 @@ class DefaultLessonRunnerRootComponentTest {
             assertEquals(syncsBefore + 1, fakeSyncScheduler.manualRequests, "согласие дренирует запись")
         }
 
+    // GIVEN чтение вердикта согласия падает (тот же комнатный I/O) WHEN ручной sync
+    // THEN ни падения, ни диалога, ни дрена — гвард чтения вердикта симметричен гварду accept.
+    @Test
+    fun `throwing verdict read on sync neither crashes nor raises nor drains`() =
+        runTest {
+            val consent = LessonConsentHandles(
+                satisfied = { throw IllegalStateException("room io failure") },
+                accept = { error("accept must not be reached from a failed verdict read") },
+            )
+            fakeStart.result = makeReadyState(questions = 1)
+            fakeSyncMarks.emit(AttemptSyncMark.NOT_SENT)
+            val component =
+                buildComponent(
+                    profileRepository = FakeProfileRepository(),
+                    consent = consent,
+                )
+            testScheduler.advanceUntilIdle()
+            component.onAnswer(singleChoiceDraft())
+            assertIs<RunnerUiState.Result>(component.uiState.value)
+            val syncsBefore = fakeSyncScheduler.manualRequests
+
+            component.onSyncResult()
+            testScheduler.advanceUntilIdle()
+            assertFalse(component.needsTermsConsent.value, "вердикт падает — диалога нет")
+            assertEquals(syncsBefore, fakeSyncScheduler.manualRequests, "неудача чтения не дренирует очередь")
+        }
+
     // GIVEN accept падает (комнатный I/O) WHEN игрок жмёт «Принять» THEN диалог остаётся открыт,
     // очередь не дренируется, прогон не падает (ретро L4: guarded acceptTerms).
     @Test

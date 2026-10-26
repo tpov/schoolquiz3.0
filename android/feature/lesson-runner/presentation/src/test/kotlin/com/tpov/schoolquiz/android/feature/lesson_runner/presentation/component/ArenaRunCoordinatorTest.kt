@@ -303,6 +303,26 @@ class ArenaRunCoordinatorTest {
             assertNull(f.coordinator.token(), "a diverged run is not interactive")
         }
 
+    @Test
+    fun divergenceFoundWhileTheWriterIsActiveIsDeferredNotDropped() =
+        runTest {
+            val f = RunCoordinatorFixture(this)
+            f.start()
+            val token = requireNotNull(f.coordinator.token())
+            f.coordinator.dispatch(token, ArenaRunAction.Answer(f.answer))
+            assertTrue(f.coordinator.state.value.busy, "the writer must be active for the race to exist")
+            // Хост нашёл расхождение, пока CAS ещё в полёте: тишина здесь — запрещённый тихий
+            // локальный таймер, расхождение обязано пережить писателя.
+            f.coordinator.diverge()
+            runCurrent()
+            assertEquals(
+                ArenaRunNotice.RELOAD_REQUIRED,
+                f.coordinator.state.value.notice,
+                "the deferred divergence lands after the writer completes",
+            )
+            assertFalse(f.coordinator.state.value.busy)
+        }
+
     /** Минимальное честное окно под адаптерные проверки: identity совпадает, конфигурация валидна. */
     private fun view() =
         QuestionWindowView(

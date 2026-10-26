@@ -79,7 +79,7 @@ class OutboxEngineBoundaryTest {
             // Гард ветви ACK — по операции: маркер принадлежит попытке урока. Чужая операция с той
             // же ошибкой едет в политику, где disposition CONFLICT паркует её: серверный отказ
             // терминален, повторять его нельзя, но и ACK с чужим маркером выдумывать нельзя.
-            val row = record(11).copy(operation = "private_quiz.SUBMIT_ATTEMPT")
+            val row = record(11).copy(operation = OutboxOperations.SUBMIT_PRIVATE_QUIZ_ATTEMPT)
             val store = FakeOutboxStore().also { it.seed(row) }
             val receipts = FakeMutationReceiptStore()
             val summary =

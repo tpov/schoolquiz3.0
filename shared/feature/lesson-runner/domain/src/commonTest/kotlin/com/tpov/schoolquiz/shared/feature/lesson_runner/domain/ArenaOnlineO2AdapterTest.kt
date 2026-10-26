@@ -133,6 +133,22 @@ class ArenaOnlineO2AdapterTest {
         assertEquals(LOCAL_NOW_MS + 24_000, exact.deadlineMs)
     }
 
+    @Test
+    fun remainderLongerThanTheDeliveredDeadlineIsACorruptedDeliveryNotAClock() {
+        val paused = pausedAtNextQuestion()
+        // Остаток длиннее собственного дедлайна выдачи — испорченный вердикт: зажим окном его
+        // не реабилитирует, кросс-проверка двух серверных фактов ловит его громким отказом.
+        assertFailsWith<IllegalArgumentException> {
+            ArenaOnlineO2Adapter.resumeDelivered(
+                paused,
+                0,
+                window(),
+                delivered(remainder = 500_000, answerDeadline = ISSUED_AT_MS + 100_000),
+                LOCAL_NOW_MS,
+            )
+        }
+    }
+
     // ── §6: состояние окна сверяется с явно названными для функции состояниями (ретро L7d) ────
 
     @Test
