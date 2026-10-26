@@ -26,7 +26,7 @@ after = [{ epic = 1, needs = "rig and restored demo accounts/fixtures" }, { epic
 id = 4
 slug = "epic-authoring-review"
 title = "Authoring, review, publication and curation"
-covers = ["CAP-2", "CAP-3", "CAP-4", "CAP-5", "CAP-6"]
+covers = ["CAP-2", "CAP-3", "CAP-4", "CAP-5", "CAP-6", "CAP-27"]
 after = [{ epic = 1, needs = "identified candidate" }, { epic = 2, needs = "durable delivery and config foundations" }]
 
 [[epic]]

@@ -31,10 +31,10 @@ User-facing competition terms are **турнир** for the first qualification p
 | --- | --- | --- |
 | CAP-1 | FR-1–4 | AD-1/2/8/21/25/31 |
 | CAP-2 | FR-5; accepted question editors | AD-1/3/20/27 |
-| CAP-3 | FR-6–8; EXPERIENCE F9 | AD-3/4/20/26/31 |
-| CAP-4 | FR-9–10 | AD-4/5/6/9/10 |
+| CAP-3 | FR-6–8; EXPERIENCE F9; PRD amendment 2026-10-26; UX-6/17/22 | AD-3/20/31/32 |
+| CAP-4 | FR-9–10; PRD amendment 2026-10-26 | AD-5/6/9/10/32 |
 | CAP-5 | FR-11–12 | AD-1/3/13/20/21 |
-| CAP-6 | FR-13–15 | AD-20/21 |
+| CAP-6 | FR-13–15; PRD amendment 2026-10-26 | AD-20/21/33 |
 | CAP-7 | FR-16–22 | AD-5–9/11/12/21 |
 | CAP-8 | FR-23–27 | AD-6–8/11/12/21 |
 | CAP-9 | FR-28–30 | AD-5/9/12/13 |
@@ -55,6 +55,7 @@ User-facing competition terms are **турнир** for the first qualification p
 | CAP-24 | EXPERIENCE F10; standalone polls and voting | AD-1/2/6/8/20/28 |
 | CAP-25 | EXPERIENCE F11; Приватные квизы | AD-1/2/6/8/20/29/31 |
 | CAP-26 | EXPERIENCE F9; own operation history and author-lesson earnings | AD-8/9/20/30 |
+| CAP-27 | PRD amendment 2026-10-26; proposals to another author's material; UX-22/23 | AD-3/9/20/32/33 |
 
 EXAM overlap is intentional: theme, final and correction share one feature contract. New UX capabilities do not invent additional FR numbers or discard the old ones.
 

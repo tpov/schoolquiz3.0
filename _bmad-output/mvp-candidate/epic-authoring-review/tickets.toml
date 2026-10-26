@@ -138,4 +138,138 @@ waits = [
   "hitl: device proof of disconnect/resume",
 ]
 hitl = true
-status = "blocked" # 2026-10-18 ночь: риг готов — тестер-роль на Samsung доказана (admin write qualifications.tester=1, очередь «Перевірка» рендерится), авторинг-форма работает; остался авторский квест с подачей на проверку (если у автора нет перехода «На перевірку» — тот же класс пробела проводки, что 7.4) — evidence docs/agents/evidence/2026-10-18-samsung-social/review-rig/; до этого — hitl + after 4.6 (hitl) Дополнение 2026-10-19: авторский путь дошёл до подачи (квест+лёгкие/сложные вопросы созданы, «Надіслати на арену» → op quest_authoring.SUBMIT_ARENA), сервер вернул REVIEW_FEE_INSUFFICIENT (cycle fee 1000 nolics — экономика, фикстура pointsNolics=1000); после фикса формы сбросились и оказалось, что локальный черновик НЕЛЬЗЯ выбрать в форме подачи (список только из каталога; карточка черновика открывает лишь редактор вопросов) — нужен decision: черновики в списке формы или action на карточке — evidence docs/agents/evidence/2026-10-18-samsung-social/review-rig/02-author-path-finding.md
+status = "cancelled" # 2026-10-26: superseded by the model pipeline (sprint-change-proposal-2026-10-26); the draft-selection finding moves to 4.11. Previous note (blocked): 2026-10-18 ночь: риг готов — тестер-роль на Samsung доказана (admin write qualifications.tester=1, очередь «Перевірка» рендерится), авторинг-форма работает; остался авторский квест с подачей на проверку (если у автора нет перехода «На перевірку» — тот же класс пробела проводки, что 7.4) — evidence docs/agents/evidence/2026-10-18-samsung-social/review-rig/; до этого — hitl + after 4.6 (hitl) Дополнение 2026-10-19: авторский путь дошёл до подачи (квест+лёгкие/сложные вопросы созданы, «Надіслати на арену» → op quest_authoring.SUBMIT_ARENA), сервер вернул REVIEW_FEE_INSUFFICIENT (cycle fee 1000 nolics — экономика, фикстура pointsNolics=1000); после фикса формы сбросились и оказалось, что локальный черновик НЕЛЬЗЯ выбрать в форме подачи (список только из каталога; карточка черновика открывает лишь редактор вопросов) — нужен decision: черновики в списке формы или action на карточке — evidence docs/agents/evidence/2026-10-18-samsung-social/review-rig/02-author-path-finding.md
+
+# Change 2026-10-26 (planning-artifacts/sprint-change-proposal-2026-10-26.md): human review is replaced by the
+# model pipeline (AD-32) and proposals to authors are added (AD-33, CAP-27). 4.10 cancelled; 4.11–4.26 added in
+# build order. Device journeys (4.20, 4.26) are blocked as hitl per this epic's inception rule.
+
+[[story]]
+id = "4.11"
+slug = "draft-submit-from-card"
+title = "A local draft is submitted for review from its card with «Отправить на проверку» (retro 2026-10-25 item 9a: drafts were not selectable in the submit form); the fee is shown before sending; evidence docs/agents/evidence/<date>-draft-submit/"
+covers = ["CAP-2", "CAP-3"]
+after = []
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.12"
+slug = "review-queue-worker"
+title = "Review queue worker on the VPS (AD-32): one quest at a time, lessons one by one with the quest title and category path as context; immutable verdict record (revision, stage, model, promptVersion, sources, rationale, attempts); schema linter returns a named error, at most three retries, then REVIEW_DELAYED, never a guessed verdict; idempotent jobs; lesson text passed as data; API key outside Git; evidence docs/agents/evidence/<date>-review-worker/"
+covers = ["CAP-3"]
+after = [{ story = "4.11", needs = "a submittable draft" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.13"
+slug = "stage-words"
+title = "«Слова» stage (AD-32): forbidden words and phrases for a children's audience, doubt rejects; versioned skill, output schema and linter cases; pass/fail with a reason per question; evidence docs/agents/evidence/<date>-stage-words/"
+covers = ["CAP-3"]
+after = [{ story = "4.12", needs = "queue worker and verdict record" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.14"
+slug = "stage-facts"
+title = "«Факты» stage (AD-32): the quest-audit checklist in judge mode (never edits the author's text) with web search; sources recorded; pass/fail with a reason per question; evidence docs/agents/evidence/<date>-stage-facts/"
+covers = ["CAP-3"]
+after = [{ story = "4.12", needs = "queue worker and verdict record" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.15"
+slug = "auto-translation"
+title = "Automatic translation after the checks (AD-32): source language detected, translation into the other app languages (RU/UK/EN), structure linter keeps option count, answer key and protected FillBlank ranges (AD-27); no author language field; evidence docs/agents/evidence/<date>-auto-translation/"
+covers = ["CAP-3"]
+after = [{ story = "4.13", needs = "stage results" }, { story = "4.14", needs = "stage results" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.16"
+slug = "author-review-outcome"
+title = "Author outcome (UX-6): passing lessons publish independently; My Quests shows two check strokes, the tag «Не прошёл» with the count and an expansion listing lesson, question, stage and reason with «Исправить вопросы»; «Проверка задерживается» for REVIEW_DELAYED; detected language row; evidence docs/agents/evidence/<date>-author-outcome/"
+covers = ["CAP-3"]
+after = [{ story = "4.14", needs = "per-question verdicts" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.17"
+slug = "admin-decisions-tab"
+title = "Decisions tab for admins (UX-22): server view with a role check; filters «Без отметки / Верно / Неверно»; ✓/✗ with an optional comment stored apart from verdicts; «Логи» (comment, sources, attempts, model/prompt/revision); the question in the runner preview without timer or charges; evidence docs/agents/evidence/<date>-decisions-tab/"
+covers = ["CAP-3"]
+after = [{ story = "4.14", needs = "verdict records" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.18"
+slug = "review-fee-burn-and-integrity"
+title = "Fee with zero reward units (CAP-4, AD-10): tariff 1000/100 unchanged, charged once, the whole fee burns, conservation test green; retro 2026-10-25 L4/item 2: validate draft ownership in planReviewFeeCharge and dual-write the nolics mirror in the charge and settlement paths; evidence docs/agents/evidence/<date>-review-fee-burn/"
+covers = ["CAP-4"]
+after = [{ story = "4.12", needs = "pipeline cycle terminal states" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.19"
+slug = "remove-human-review"
+title = "Remove human review (UX-17): reviewer screens, star rating and threshold, segment translation review, reviewer assignment/generation and reviewer reward inputs; the story overview lists every deleted file (testing.md); fee burn code stays; gates green; evidence docs/agents/evidence/<date>-remove-human-review/"
+covers = ["CAP-3"]
+after = [{ story = "4.16", needs = "author outcome replaces reviewer outcome" }, { story = "4.17", needs = "Decisions replaces the review queue" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.20"
+slug = "review-pipeline-journey"
+title = "Live journey on the rig: a real submission passes and fails questions, the author sees the outcome, an admin audits in Decisions, a forced linter failure ends in REVIEW_DELAYED; trial runs record cost per quest and model candidates for SPEC OQ-10; evidence docs/agents/evidence/<date>-review-pipeline-journey/"
+covers = ["CAP-3", "CAP-4"]
+after = [{ story = "4.15", needs = "translation" }, { story = "4.16", needs = "author outcome" }, { story = "4.17", needs = "Decisions" }, { story = "4.18", needs = "fee" }, { story = "4.19", needs = "removal" }]
+hitl = true
+status = "blocked" # 2026-10-26: hitl device journey; waits on 4.15–4.19
+
+[[story]]
+id = "4.21"
+slug = "proposal-core"
+title = "Proposal record (AD-33): kind REPORT/COPY_EDIT/NEW_LESSON, target lesson or course node, base revision, proposer; checks via the AD-32 pipeline before the author sees it; routing to the target owner; fees 0 / 100 per changed question / 1000 without payouts; STALE refusal; evidence docs/agents/evidence/<date>-proposal-core/"
+covers = ["CAP-27"]
+after = [{ story = "4.14", needs = "pipeline checks" }, { story = "4.18", needs = "fee path" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.22"
+slug = "proposal-error-report"
+title = "«Сообщить об ошибке» becomes a proposal (CAP-6/27): free text about the whole lesson plus an optional own variant; private to the author; reports delivered before the change stay readable; evidence docs/agents/evidence/<date>-proposal-report/"
+covers = ["CAP-6", "CAP-27"]
+after = [{ story = "4.21", needs = "proposal record" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.23"
+slug = "proposal-copy-edit"
+title = "«Предложить правку» (CAP-27): the server builds an editable copy from the player projection without secret keys (HARD, Arena, exam); the proposer marks the correct answer; approval applies exactly the checked revision as a new revision, author unchanged, proposer recorded as contributor; frozen banks kept; evidence docs/agents/evidence/<date>-proposal-copy-edit/"
+covers = ["CAP-27"]
+after = [{ story = "4.21", needs = "proposal record" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.24"
+slug = "proposal-new-lesson"
+title = "Quest creation with a target path in another author's course and «Предложить автору» (CAP-27): approval places the lesson in the course with the proposer as its author; evidence docs/agents/evidence/<date>-proposal-new-lesson/"
+covers = ["CAP-27"]
+after = [{ story = "4.21", needs = "proposal record" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.25"
+slug = "proposals-author-side"
+title = "«Предложения» section in Decisions (UX-22): rights-scoped server view, push event type with a client/server name sentinel (testing.md), ✓/✗ with an optional comment, the proposer sees the outcome; evidence docs/agents/evidence/<date>-proposals-author/"
+covers = ["CAP-27"]
+after = [{ story = "4.21", needs = "proposal record" }]
+status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+
+[[story]]
+id = "4.26"
+slug = "proposals-journey"
+title = "Live journey of all three proposal entries through author approval on the rig, including a stale refusal and no secret keys in the copy; evidence docs/agents/evidence/<date>-proposals-journey/"
+covers = ["CAP-27"]
+after = [{ story = "4.22", needs = "report entry" }, { story = "4.23", needs = "copy entry" }, { story = "4.24", needs = "new-lesson entry" }, { story = "4.25", needs = "author side" }]
+hitl = true
+status = "blocked" # 2026-10-26: hitl device journey; waits on 4.22–4.25

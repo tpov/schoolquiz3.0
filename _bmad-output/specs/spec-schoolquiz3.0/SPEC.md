@@ -1,7 +1,7 @@
 ---
 id: SPEC-schoolquiz3.0
 created: '2026-09-29'
-updated: '2026-10-01'
+updated: '2026-10-26'
 companions:
   - ../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/assessment-technical-contracts.md
   - contract-map.md
@@ -37,12 +37,12 @@ Deliver one complete, reviewable Android MVP in which learners study, demonstrat
   - **success:** Authorship, submitted revisions and change history remain attributable; permitted edits cannot silently overwrite another author's published material. Existing lesson titles stay immutable and lessons have no description. FillBlank and protected translation ranges retain the exact field, revision and text occurrence through editing and undo/redo, without exposing answer metadata to players.
 
 - **CAP-3 — Review and publish approved questions**
-  - **intent:** Independent reviewers can assess submitted content, and authors can see each question's review outcome.
-  - **success:** All required directions examine the concrete revision; successful questions can publish independently, affected dependencies are rechecked and unaffected valid evidence is retained. One independent TESTING review per question/revision is sufficient; its configurable pass threshold defaults to 2 on the 1–3 scale (1 fails, 2/3 pass). Review returns identify the failed stage without a mandatory reason field. Translation decisions are explicit per segment and complete before submission; missing text is never auto-approved. Saved review work resumes from confirmed progress, while an active timed question follows the common online timing rule.
+  - **intent:** A queued model review assesses submitted content; authors see which questions failed and why, and admins can audit every model decision.
+  - **success:** A submitted quest enters a server queue. A model pipeline checks one lesson at a time, with the quest title and full category path as context, in two stages — forbidden words and phrases for a children's audience (doubt rejects) and factual correctness with recorded web sources — and gives each question a pass/fail verdict with a reason; there is no rating scale or threshold. A format linter validates every stage output; an invalid output returns a named error and is retried at most three times, after which the lesson shows a delayed review, never a guessed verdict. The model judges and never edits the author's text. Each verdict binds the concrete revision, stage, model and prompt version. Passing lessons publish independently; a quest with failed questions shows «Не прошёл», and its expansion lists each failed question with lesson, stage and reason. Affected dependencies are rechecked and unaffected valid evidence is retained. After the checks the pipeline detects the source language and translates the content into the other app languages; translation is a processing step, not a check, and its structure linter preserves option count, answer key and protected FillBlank ranges. Admins see a Decisions tab with each verdict, ✓/✗ marks with an optional comment, the model's log and the question as the player sees it; a mark records agreement for debugging and changes no published state.
 
 - **CAP-4 — Pay for a review cycle and receive earned review rewards**
-  - **intent:** Authors can submit material at an agreed fee and reviewers can receive the defined reward for completed work.
-  - **success:** The accepted tariff is shown and charged once; retry and retained prior evidence create no extra paid work. A normal completed cycle, including justified rejection, conserves fee = reward entitlements + burned remainder under the adopted exact-arithmetic contract; an unfinished cycle is not finally settled.
+  - **intent:** Authors submit material at an agreed fee; this version pays no reviewer reward.
+  - **success:** The accepted tariff is shown and charged once; retry and retained prior evidence create no extra paid work. A completed cycle, including justified rejection, has zero reward entitlements and burns the whole fee, so fee = entitlements + burned remainder still holds under the exact-arithmetic contract. Proposal fees follow CAP-27. An unfinished cycle is not finally settled.
 
 - **CAP-5 — Curate placement with visible reasons**
   - **intent:** A curator can promote or remove a particular lesson while permitted users see its status and history.
@@ -50,7 +50,7 @@ Deliver one complete, reviewable Android MVP in which learners study, demonstrat
 
 - **CAP-6 — Discuss lessons and report errors privately**
   - **intent:** A learner can open comments or privately report a lesson error, and recipients can find relevant incoming items.
-  - **success:** Both post-lesson actions exist; private free text concerns the whole lesson without re-revealing questions or answers and reaches its permitted author. The shared inbox preserves each item's original readers and lesson link; reviewer or curator roles alone grant no access to that private message.
+  - **success:** Both post-lesson actions exist. A private error report (free text about the whole lesson, optionally with the reporter's own variant) is a CAP-27 proposal: it passes the checks and reaches the lesson's author in the Proposals section without re-revealing questions or answers to anyone else. The shared inbox keeps comments and preserves each item's original readers and lesson link; reviewer or curator roles alone grant no access to a private report. Reports delivered before this change stay readable.
 
 - **CAP-7 — Choose and prepare Arena participation**
   - **intent:** A signed-in player can browse Arena, understand available resources and reserves, and obtain the selected preparation.
@@ -132,11 +132,15 @@ Deliver one complete, reviewable Android MVP in which learners study, demonstrat
   - **intent:** An account holder can inspect their income and spending, and an author can inspect earnings for their lesson.
   - **success:** General history and lesson earnings show authorized records with consistent identity, date, reason, signed amount, resource and status. Filters, expansion and continued loading preserve context; pending is distinct from confirmed income, unlike resources are not summed, and changing accounts cannot reveal another owner’s records. Reading history creates no financial effect.
 
+- **CAP-27 — Propose changes to another author's material**
+  - **intent:** A signed-in user can propose a change to another author's lesson or course, and the author decides.
+  - **success:** Three entries end in «Предложить автору»: an error report (text and an optional own variant), an edited copy of a lesson, and an own new lesson created with a target path in another author's course. Every proposal passes the «Слова» and «Факты» checks before the author sees it in the Proposals section of the Decisions tab, with a push notification; the author approves or rejects with an optional comment and the proposer sees the outcome. An approved report marks the lesson for correction; an approved copy becomes a new revision of the author's lesson exactly as checked, with the proposer recorded as contributor; an approved new lesson is placed in the course with the proposer as its author. A copy never contains secret answer keys (HARD, Arena, exam); the proposer marks the correct answer and «Факты» checks it. A proposal based on an older revision becomes stale and cannot be applied. Error reports are free, an edited copy costs 100 nolics per changed question and a new lesson 1000; deciding costs the author nothing. Issued attempts keep their frozen banks.
+
 ## Constraints
 
 - Scope covers PRD FR-1–55/NFR-1–8, EXAM:CAP-1–21 and the finalized October 1 UX additions. FR-56 remains a named future capability, deferred from this version. Mandatory companions retain detailed numbers, formulas, acceptance cases and failure matrices; short summaries do not narrow them. Qualified IDs and source precedence are in contract-map.md.
 - The finalized architecture fixes ownership and boundaries. Preserve KMP/Clean Architecture, Decompose/Compose/Koin and separate ordinary, Arena, exam and competition lifecycles. Shared AD-31 timing does not introduce a common mode controller; technical tournament/event identifiers remain stable.
-- Independent checks approve a concrete immutable revision; preserve valid unaffected evidence and frozen issued banks. TESTING is per question with one independent reviewer and a server threshold defaulting to 2 of 3; other directions and explicit translation completeness remain mandatory. Online evidence writes pause on connection loss, but an active timed question continues under AD-31. Approved ordinary/Arena offline paths remain; no pretest or statistical admission gate is added.
+- Model review approves a concrete immutable revision; preserve valid unaffected evidence and frozen issued banks. Every question gets a pass/fail verdict with a reason from the «Слова» and «Факты» stages; there is no rating threshold. Lesson text is data to the model, never instructions; a verdict records model, prompt version, stage, sources and rationale. Translation follows the checks automatically from the detected source language and must pass the structure linter. Approved ordinary/Arena offline paths remain; no pretest or statistical admission gate is added.
 - Only confirmed server facts authorize authoritative results, grants and receipts. Preserve original operation/account identity and uncertain outcomes across retries; financial effects conserve funds, reserves and fractional entitlements. Read-only browsing and wallet inspection create no financial effect.
 - Ordinary offline lesson unlock retains its provisional local debit, durable intent and visible rollback contract. It grants access, not completed EASY coverage; online exam admission and atomic start/charge require authoritative prerequisites.
 - Apply server-enforced rights and mode-specific redaction to all projections. A shared inbox never widens readership; private forms, HARD/exam keys, tokens, original order IDs and private answer payloads do not leak through UI or shared logs. Existing ordinary EASY local scoring is preserved.
@@ -160,9 +164,9 @@ Deliver one complete, reviewable Android MVP in which learners study, demonstrat
 ## Non-goals
 
 - Mandatory iOS/web delivery, public release or transfer into the main KMP project as part of accepting this Android candidate.
-- Telegram/group delivery, arbitrary participant DMs, general editing of someone else's published text, or a public proposed-edit workflow.
+- Telegram/group delivery, arbitrary participant DMs, or direct editing of someone else's published text; changes by others arrive only as proposals the author approves (CAP-27).
 - Manual selection of tournament questions, a box for five ads, a new box type, or the superseded global two-box limit.
-- Unapproved message auto-translation, developer broadcast announcements or an AI-only reviewer model; existing content translation remains part of review.
+- Unapproved message auto-translation or developer broadcast announcements. Human reviewer pools, reviewer assignment, reviewer rewards and manual translation review are out of this version, and their code is removed.
 - Offline/queued exams, local exam scoring, a unified tournament/exam lifecycle, certificates for theme/section completion, or composite-course certificates.
 - Proctoring, personal identity verification, accreditation, automatic invalidation or bans from one suspicious statistic, or direct gold purchase of exam admission/retakes/cooldown bypass.
 - Invented fees, individual review-reward caps, certificate replacement without a newly passed final, quantitative product KPIs or new operational service-level promises.
@@ -177,7 +181,7 @@ Deliver one complete, reviewable Android MVP in which learners study, demonstrat
 - Correct an originally failed final to passing without issuing a certificate or replacing the current one; a new successful sitting is required. Preserve signing fulfilment for issuances already earned at original terminal success.
 - Use EXAM-TECH-1 fixtures to prove reward worth stays independent of assessment answer time, currencies round independently and accounted progress survives lower scores/zero currency awards; prove required EASY coverage across capped attempts and safe nonnumeric correction states.
 - Correct a settled assessment score upward and downward without changing its financial receipt or accounted maximum. During delayed correction/admission materialization, refuse a new final before charge; an obsolete materializer cannot restore an old passed projection.
-- Exercise the accepted question-timeout/next-download boundary without timer resets, extra answer time or a final-question wait. Prove one-reviewer TESTING and translation completeness; vote replay uniqueness; private link/limit changes with retained attempts, current visibility of old results and whole-quiz timeout outcomes; prize conservation, restored meeting confirmations, independent gift claims and scoped history.
+- Exercise the accepted question-timeout/next-download boundary without timer resets, extra answer time or a final-question wait. Prove the model review on a real submission (pass, failed questions with reasons, linter retry and delayed review, automatic translation with preserved structure), the admin Decisions tab and all three proposal entries through author approval; vote replay uniqueness; private link/limit changes with retained attempts, current visibility of old results and whole-quiz timeout outcomes; prize conservation, restored meeting confirmations, independent gift claims and scoped history.
 
 ## Open questions
 
@@ -187,3 +191,4 @@ Deliver one complete, reviewable Android MVP in which learners study, demonstrat
 - **OQ-6 — technical integration:** Resolve MAIN ONLINE-O1 (competition total/stage cutoff versus the full next-question window) before the affected competition adapter, and ONLINE-O2 (one delivery/ready-ACK receipt, replay and answer-start contract) before independent online transition adapters. The common timing policy is settled.
 - **OQ-7 — implementation contracts:** Complete the named UX handoff contracts before their dependent adapters: prize mapping before CREATE/reserve, meeting read/ACK, private settings/admission/results, annotation serialization/migration, poll votes/series/statistics, inbox/Play/exam operations, scoped projections/history continuation and separate gift receipts. Closed product choices UX-O1/O4/O5 are not new approval requests; use the owners and gates in MAIN Deferred.
 - **OQ-8 — future scope:** Only before separately enabling FR-56 define guide copy, experience triggers, placement, dismissal/repetition and persisted/migrated seen state. This version has no guide or placeholders; these future choices do not block its acceptance.
+- **OQ-10:** Choose the concrete GLM model and the per-quest budget after trial runs of the pipeline; until then no budget limit is assumed.

@@ -2,7 +2,7 @@
 type: epic
 title: "Authoring, review, publication and curation"
 parent: mvp-candidate
-covers: [CAP-2, CAP-3, CAP-4, CAP-5, CAP-6]
+covers: [CAP-2, CAP-3, CAP-4, CAP-5, CAP-6, CAP-27]
 after: ["epic-candidate-rig", "epic-ordinary-delivery"]
 assignee: ""
 risk: medium
@@ -14,7 +14,7 @@ estimate_basis: ""
 
 ## Description
 
-The content pipeline to the owner's plan §3 ТЗ06: an author creates and corrects material with attribution and protected ranges (CAP-2), independent per-question review with a configurable threshold admits concrete revisions (CAP-3), the paid review cycle conserves fee = rewards + burned remainder (CAP-4), a curator promotes/removes with reasons (CAP-5), and lesson comments plus private error reports reach permitted recipients through a shared inbox that never widens readership (CAP-6).
+The content pipeline to the owner's plan §3 ТЗ06: an author creates and corrects material with attribution and protected ranges (CAP-2), a queued model review gives each question a pass/fail verdict with a reason and translates passed content automatically (CAP-3), the paid review cycle charges once and burns the whole fee (CAP-4), a curator promotes/removes with reasons (CAP-5), lesson comments plus private error reports reach permitted recipients through a shared inbox that never widens readership (CAP-6), and users propose changes to other authors' material, which the author approves (CAP-27).
 
 ## Outcome
 
@@ -23,15 +23,15 @@ A lesson travels from author draft through independent checks to publication and
 ## Done when
 
 1. An author creates a lesson, submits a revision, sees per-question review outcomes and publishes an approved question; a permitted edit cannot silently overwrite another author's published material (CAP-2/3).
-2. One independent TESTING review per question/revision admits at the configured threshold (default 2 of 1–3); translation decisions are explicit per segment and never auto-approved (CAP-3).
-3. A paid review cycle, including justified rejection, conserves fee = rewards + burned remainder; retry and retained evidence create no extra paid work (CAP-4).
+2. A submitted quest passes the model pipeline («Слова», «Факты», linter with at most three retries, automatic translation); each question gets pass/fail with a reason; failed questions return to the author; admins audit verdicts in Decisions (CAP-3).
+3. A paid review cycle, including justified rejection, charges once and burns the whole fee; retry and retained evidence create no extra paid work (CAP-4).
 4. A curator transition has an authorized decision and reason; a failed replacement keeps the valid prior revision (CAP-5).
 5. A private lesson-error report reaches its permitted author through the shared inbox without re-revealing questions/answers; reviewer/curator roles alone grant no access (CAP-6).
-6. Saved review work resumes from confirmed progress; an active timed question follows AD-31.
+6. All three proposal entries reach the target author after checks; approval applies exactly the checked revision, a stale proposal is refused, a copy never carries secret keys (CAP-27).
 
 ## Boundaries
 
-Authoring, review, curation, lesson discussions. Not exams (epic-exams-certificates owns EXAM contracts and corrections), not the student-side catalog (epic-ordinary-delivery), not GLM parsing (out of MVP scope — no GLM in this version).
+Authoring, review, curation, lesson discussions. Not exams (epic-exams-certificates owns EXAM contracts and corrections), not the student-side catalog (epic-ordinary-delivery), GLM is used only by the review pipeline (AD-32); GLM parsing of other content stays out of scope.
 
 ## References
 
@@ -46,3 +46,4 @@ Authoring, review, curation, lesson discussions. Not exams (epic-exams-certifica
 - Unknown: ТЗ06A is an eight-file local draft — its verification status must be re-established at inception.
 - Waits on epic 1 because: the candidate identity is the build base.
 - Waits on epic 2 because: shared inbox and config ride the delivery foundations.
+- Change 2026-10-26 (planning-artifacts/sprint-change-proposal-2026-10-26.md): human review replaced by the model pipeline; 4.10 cancelled; stories 4.11–4.26 added.
