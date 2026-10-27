@@ -9,6 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
@@ -40,10 +41,14 @@ class MyQuestsQuestCardNoMenuTest {
             override val state: StateFlow<MyQuestsUiState> = MutableStateFlow(
                 MyQuestsUiState(quests = quests.toList()),
             )
+            override val submitState: StateFlow<DraftSubmitState?> = MutableStateFlow(null)
             override fun onCatalogSelected(id: CatalogId?) = Unit
             override fun onCreateQuestClick() = Unit
             override fun onQuestClick(quest: QuestDisplayItem) = Unit
             override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
+            override fun onDraftSubmitClick(draft: DraftQuestDisplayItem) = Unit
+            override fun onDraftSubmitDismiss() = Unit
+            override fun onDraftSubmitConfirm() = Unit
         }
     }
 
