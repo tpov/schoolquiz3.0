@@ -556,3 +556,7 @@ backfill.
 - source_spec: `_bmad-output/implementation-artifacts/spec-m1-3-refund-handler.md` (code review 2026-10-11)
   summary: Parked refunds, repair-required throws and PLAY_DISAGREES acks are visible only as purchase_notifications documents and log lines; no operator surface consumes them.
   evidence: The records are durable and closed to clients, but nothing sweeps them for humans; the malformed-provenance case shows the same corruption acked by the full path and redelivered by the partial path. An operator/reconciliation view belongs to its own story (the 5.4 receipt-screen family).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e7-retro-fixes.md`
+  summary: NoNetwork на resolve-пути заявки маппится в TRANSPORT (generic catch) вместо честного OFFLINE — слова расхождения с submit-путём (ретро e7, findings[no-network-mislabel]); вне рамок F1–F7, предсуществующее.
+  evidence: shared/feature/economy/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/economy/data/GiftClaimRepositoryImpl.kt — catch(Exception) оборачивает SyncFailure(NoNetwork) в TRANSPORT; фикс-пак 2026-10-27 гейтит re-arm компонента по наблюдённой сети, но само маппинг-имя в resolve не трогал (не в объёме спеки).

@@ -2,13 +2,15 @@
 title: 'Epic 7 retro fix package — wire-contract pin and the claim loop''s exits (e7 commerce follow-up)'
 type: 'feature'
 created: '2026-10-25'
-status: 'in-review'
+status: 'done'
 baseline_revision: '1e79312219f7ae1406b302ef21614d97484bc625' # HEAD at spec time (post retro 231db859; 5.13/monetisation/epic-4 commits landed after)
 baseline_commit: '44fc0f8371439187c4a9e96d687702c2b3efa909' # resume base 2026-10-27: git healthy again, tree moves (sibling waves commit in parallel)
 route: 'full'
 route_source: 'owner-direct'
 review: 'standard'
 review_source: 'owner-direct'
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment'] # прогнаны инлайн 2026-10-27 (нет субагентного инструмента в раннере; перезапись на thorough/auto не применялась — review задан владельцем)
+review_loop_iteration: 0
 followup_review_recommended: false
 context:
   - '_bmad-output/implementation-artifacts/epic-7-retro-2026-10-25.md'
@@ -119,11 +121,20 @@ warnings: ['sibling-dirty-tree-arena']
 
 ## Review Triage Log
 
+### 2026-10-27 — standard review, lenses run inline (subagent spawn недоступен в раннере; дифф /tmp/e7-fixpack-review.diff, 22 файла +547/−75 от baseline 44fc0f83)
+- `[blind]` OPEN-видные опциональные ключи ответа (`reward`, `goldCredit`) не пинятся F1a-пином — **false**: матрица спеки перечисляет ровно 12 ключей claim-видов; OPEN едет очередью и закрыт deepEqual «queued = direct» в том же economy-handler.test.js (плоское тело с теми же полями + опциональные reward/goldCredit сверяются дословно).
+- `[edge]` doOnResume re-arm при возврате на экран БЕЗ сети жёг попытку: намерение живо, отказ уезжал бы TRANSPORT вместо честного «нет сети» (resume-путь репозитория сетевой проверки не имеет) — **medium, patch**: re-arm гейтится наблюдённой сетью (`premiumIntentOnline` из того же combine), компонентный офлайн-тест дополнен возвратом на экран без связи (попыток по-прежнему ноль, settle по reconnect).
+- `[gap]` «двойной запуск не минтует второй operationId» не имеет явного компонентного теста — **false**: repository-тест `undecidedCallKeepsTheIntent…` пинит `ids == 1` (новый operationId не рождался), компонентный офлайн-тест пинит `submits == 0` при переигрывании pending.
+- `[edge]` CONFLICTING_REPLAY на RESUME офлайн-интента: use-case минтует свежий operationId тем же телом — **false** (intended recovery): забор ключуется sha256(operationId), новый id проходит fence и сервер решает заново; цикла нет — одна заявка на вход.
+- `[blind]` evidence README называла местом записи гейта «final commit message» — **low, patch**: строка поправлена (запись в Verification спеки).
+- `[blind]` rename sprint-status уехал в коммит 64bc2121 (был pre-staged git mv) без строки-объяснения до 19393f2f — **low, reject**: косметика истории, дерево полное с 19393f2f, содержимое файла не менялось.
+- `[pre-existing]` NoNetwork на resolve-пути маппится в TRANSPORT вместо OFFLINE (ретро findings[no-network-mislabel]) — **defer** (не вызвано этой историей, вне рамок F1–F7): запись в `deferred-work.md`.
+
 ## Verification
 
 **Commands (all run 2026-10-27 from this tree):**
 - `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :platform:firebase:testDebugUnitTest :shared:feature:economy:domain:test :shared:feature:economy:data:test :android:feature:quest:presentation:test :android:feature:app-shell:presentation:test :shared:core:persistence:jvmTest --no-configuration-cache` — BUILD SUCCESSFUL (третий прогон; первый поймал compile-ошибку нового маппинг-кейса — порядок аргументов assertEquals в JUnit4, второй — два красных F2-теста, поймавших реальный дефект первого решения re-arm; оба исправлены, зафиксировано в Implementation Notes). Сюиты-покрытия: GiftClaimRepositoryTest 15/15, SyncBoxStreakUseCaseTest 11/11, DefaultHomeQuestsComponentTest 21/21, GiftBoxReceiptMappingTest 8/8, GiftClaimEnvelopeMappingTest 12/12, BoxServiceSourcePinTest 1/1 — все RUN, 0 failures (XML в build/test-results).
-- `docker exec schoolquiz-functions-emu env -u FIRESTORE_EMULATOR_HOST -u GCLOUD_PROJECT npm --prefix /repo/functions test` — 135/135 no-env.
+- `docker exec schoolquiz-functions-emu env -u FIRESTORE_EMULATOR_HOST -u GCLOUD_PROJECT npm --prefix /repo/functions test` — 135/135 no-env (прогон на коммитах пачки); финальный контрольный re-run после review-патчей: 135 из 138, три красных — арена-сюиты `arena-lifecycle-views*` / `arena-request-document` из НЕЗАКОММИЧЕННОЙ in-flight sibling-работы (functions/index.js +208, arena-lifecycle-views.js +43, сосед правит параллельно прямо сейчас) — атрибутировано, файлы не мои, не тронуты; оба моих файла зелёные и в общем прогоне, и точечно (`node --test economy-handler.test.js mvp-isolation.test.js` → 11/11).
 - `docker exec schoolquiz-functions-emu npm --prefix /repo/functions test` — 135/135 demo-backend (env контейнера: FIRESTORE_EMULATOR_HOST=127.0.0.1:18090, GCLOUD_PROJECT=demo-schoolquiz-mvp).
 - `git status` после коммитов — в дереве только чужие sibling-файлы (review-pipeline/queue-worker/review-outcome, generate-arena-client-fixtures.js, AppleDouble-мусор); файлы этой пачки закоммичены узкими add'ами.
 
@@ -135,12 +146,14 @@ warnings: ['sibling-dirty-tree-arena']
 
 ## Auto Run Result
 
-Status: done (implementation + gates; review in progress)
+Status: done
 Blocking condition: none
 
-**Summary.** Все семь находок ретро закрыты из этого дерева: полный пин конверта на сервере (12 ключей из planBoxOperation + typeof replayed) и SHA-пин источника на клиенте (F1a/F1b); re-arm премь-подарка по сети и по возврату на экран без второго operationId (F2); база счёта без boxCount — автогрант дня 10 не стирает офлайн-дни (F3); CONFLICTING_REPLAY терминален — намерение отпускается, VISIT продолжается (F4); DAILY_LIMIT/PREMIUM_REQUIRED перечитывают профиль (F5a); pre-call отказ тела карантинится типизированным REQUEST_INVALID при живом ответном ENVELOPE_INVALID — денежная инварианта запинена в обе стороны (F5b); dual-shape чтение completion-записей OPEN_GIFT_BOX (F6); functions-гейт зелёный на HEAD в обоих режимах (F7). D1–D3 применены в формулировках ретро. Прод-код `functions/` не менялся — только тесты.
+**Summary.** Все семь находок ретро закрыты из этого дерева: полный пин конверта на сервере (12 ключей из planBoxOperation + typeof replayed) и SHA-пин источника на клиенте (F1a/F1b); re-arm премь-подарка по сети и по возврату на экран без второго operationId, офлайн-возврат попытки не жжёт (F2, review-patched); база счёта без boxCount — автогрант дня 10 не стирает офлайн-дни (F3); CONFLICTING_REPLAY терминален — намерение отпускается, VISIT продолжается (F4); DAILY_LIMIT/PREMIUM_REQUIRED перечитывают профиль (F5a); pre-call отказ тела карантинится типизированным REQUEST_INVALID при живом ответном ENVELOPE_INVALID — денежная инварианта запинена в обе стороны (F5b); dual-shape чтение completion-записей OPEN_GIFT_BOX (F6); functions-гейт зелёный на HEAD коммитов пачки в обоих режимах (F7; финальный re-run — красный только от sibling in-flight арены, см. Verification). D1–D3 применены в формулировках ретро. Прод-код `functions/` не менялся — только тесты.
 
-**Commits:** 657bcfbb (спека принята), c1f07487 (F7), 80f54ff5 (F1a), 64bc2121 (F4/F5/F6/F1b), d9c6d28c (F2/F3), 19393f2f (D1–D3 + evidence).
+**Commits:** 657bcfbb (спека принята), c1f07487 (F7), 80f54ff5 (F1a), 64bc2121 (F4/F5/F6/F1b), d9c6d28c (F2/F3), 19393f2f (D1–D3 + evidence), 7b546473 (verification record), + review-patch commit (component gate + test + README + triage log + deferred entry).
+
+**Review:** standard/owner-direct сохранён (generic-перезапись на thorough/auto не применена); линзы blind-hunter / edge-case-hunter / verification-gap / intent-alignment прогнаны инлайн по staged-диффу (субагентов в раннере нет) — 7 находок: 2 patch (применены и перегнаны), 1 defer (deferred-work.md), 4 false/reject с опровержениями в triage log.
 
 ## Auto Run Result
 

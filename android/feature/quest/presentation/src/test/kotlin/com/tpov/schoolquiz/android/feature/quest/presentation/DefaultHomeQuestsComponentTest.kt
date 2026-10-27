@@ -521,6 +521,17 @@ class DefaultHomeQuestsComponentTest {
             )
             assertTrue(component.state.value.premiumGift is HomePremiumGiftState.InFlight)
 
+            // Возврат на экран без связи тоже не жжёт попытку: отказ уехал бы TRANSPORT'ом вместо
+            // честного «нет сети» (review patch: doOnResume re-arm гейтится наблюдённой сетью).
+            lifecycle.stop()
+            lifecycle.resume()
+            testScheduler.advanceUntilIdle()
+            assertEquals(
+                emptyList(),
+                claimRepo.resumeAttempts,
+                "офлайн-возврат на экран не создаёт попытку",
+            )
+
             online.value = true
             testScheduler.advanceUntilIdle()
 

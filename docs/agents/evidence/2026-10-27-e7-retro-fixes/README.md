@@ -64,7 +64,7 @@ Production `functions/` code untouched — the pack changes server files ONLY by
   Suite count grew past the spec's expected 129 via sibling arena test files (allowed: growth by
   new files, not failures; the arena files are foreign in-flight work, untouched).
 - `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :platform:firebase:testDebugUnitTest :shared:feature:economy:domain:test :shared:feature:economy:data:test :android:feature:quest:presentation:test :android:feature:app-shell:presentation:test :shared:core:persistence:jvmTest --no-configuration-cache`
-  → result recorded in the spec's Verification block and the final commit message.
+  → result recorded in the spec's Verification block.
 - First gate run failed to COMPILE the new `GiftBoxReceiptMappingTest` case (JUnit4
   `assertEquals` argument order) — fixed, re-run green; recorded here for honesty.
 

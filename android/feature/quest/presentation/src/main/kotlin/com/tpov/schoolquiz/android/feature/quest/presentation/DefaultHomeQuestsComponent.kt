@@ -84,6 +84,7 @@ class DefaultHomeQuestsComponent(
     private var giftBoxRequest: Job? = null
     private var premiumGiftRequest: Job? = null
     private var premiumIntentPending = false
+    private var premiumIntentOnline = true
     private var streakSync: Job? = null
 
     private val continueLesson = MutableStateFlow<ContinueLessonUi?>(null)
@@ -221,7 +222,7 @@ class DefaultHomeQuestsComponent(
             // последнее НАБЛЮДЕННОЕ значение намерения, не презентационное состояние: Essenty
             // проигрывает doOnResume при регистрации, и застройка по state стреляла бы на
             // конструкции, в том числе без сети.
-            if (premiumIntentPending) {
+            if (premiumIntentPending && premiumIntentOnline) {
                 rearmPremiumGift()
             }
         }
@@ -264,6 +265,7 @@ class DefaultHomeQuestsComponent(
             ) { pending, online -> pending to online }
                 .collect { (pending, online) ->
                     premiumIntentPending = pending
+                    premiumIntentOnline = online
                     if (pending && online) {
                         rearmPremiumGift()
                     }
