@@ -28,10 +28,15 @@ const path = require("path");
 
 const SUITE_PATTERN = /\.test\.js$/;
 
+// macOS AppleDouble companions (`._name.test.js`) appear next to real suites when the repo is
+// reached through an SMB mount. They are metadata, not JavaScript, and one of them once turned
+// the whole gate red with a syntax error before a single test ran.
+const ARTIFACT_PATTERN = /^\._/;
+
 function suiteFiles(directory) {
   return fs
     .readdirSync(directory)
-    .filter((name) => SUITE_PATTERN.test(name))
+    .filter((name) => SUITE_PATTERN.test(name) && !ARTIFACT_PATTERN.test(name))
     .sort();
 }
 

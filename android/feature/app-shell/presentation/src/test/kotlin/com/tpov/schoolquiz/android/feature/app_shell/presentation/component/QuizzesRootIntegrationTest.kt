@@ -26,6 +26,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.PrivateQui
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeReviewFeeQuoteRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonRepository
@@ -86,8 +87,12 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepositor
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.RetirePublicQuestUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
@@ -286,6 +291,13 @@ class QuizzesRootIntegrationTest {
                 observeDraftSummaries = ObserveQuestDraftSummariesUseCase(FakeQuestAuthoringRepository()),
                 openQuestDraft = OpenQuestDraftUseCase(FakeQuestAuthoringRepository()),
                 observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+                quoteReviewFee = QuoteQuestReviewFeeUseCase(FakeReviewFeeQuoteRepository()),
+                submitQuestDraftToArena =
+                    SubmitQuestDraftToArenaUseCase(
+                        FakeQuestAuthoringRepository(),
+                        QuestAuthoringIdProvider { prefix -> "$prefix-1" },
+                        QuestAuthoringTimestampProvider { 1_000L },
+                    ),
                 navigator = navigator,
                 onQuestDrillDown = onQuestDrillDown,
                 mainContext = testDispatcher,

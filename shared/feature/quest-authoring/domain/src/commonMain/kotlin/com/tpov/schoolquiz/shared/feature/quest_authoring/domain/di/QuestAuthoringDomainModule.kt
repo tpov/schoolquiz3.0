@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Observ
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ResolveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitLessonErrorReportUseCase
@@ -38,6 +39,7 @@ val questAuthoringDomainModule =
         factory { ObserveReviewAssignmentsUseCase(get()) }
         factory { OpenQuestDraftUseCase(get()) }
         factory { ObserveReviewAssignmentSyncUseCase(get()) }
+        factory { QuoteQuestReviewFeeUseCase(get()) }
         factory { ResolveQuestDraftConflictUseCase(get()) }
         factory { SaveDraftQuestionUseCase(get(), get(), get(), get()) }
         factory { SubmitReviewActionUseCase(get(), get(), get()) }

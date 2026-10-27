@@ -5,11 +5,12 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
-import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
@@ -21,10 +22,14 @@ import kotlinx.coroutines.flow.StateFlow
 
 object StubMyQuestsComponent : MyQuestsComponent {
     override val state: StateFlow<MyQuestsUiState> = MutableStateFlow(MyQuestsUiState())
+    override val submitState: StateFlow<DraftSubmitState?> = MutableStateFlow(null)
     override fun onCatalogSelected(id: CatalogId?) = Unit
     override fun onCreateQuestClick() = Unit
     override fun onQuestClick(quest: QuestDisplayItem) = Unit
     override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
+    override fun onDraftSubmitClick(draft: DraftQuestDisplayItem) = Unit
+    override fun onDraftSubmitDismiss() = Unit
+    override fun onDraftSubmitConfirm() = Unit
 }
 
 object StubHomeQuestsComponent : HomeQuestsComponent {

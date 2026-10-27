@@ -45,4 +45,12 @@
     <string name="quest_questions_count">Questions: %1$d</string>
     <string name="quest_draft_returned">Returned: %1$s</string>
     <string name="quest_draft_returned_delivery">could not be sent to the server, try again</string>
+    <string name="quest_submit_for_review">Submit for review</string>
+    <string name="quest_submit_fee_line">Fee: %1$d nolics</string>
+    <string name="quest_submit_confirm">Submit</string>
+    <string name="quest_submit_retry">Retry</string>
+    <string name="quest_submit_sending">Sending…</string>
+    <string name="quest_submit_quote_failed">Could not fetch the fee. Check the connection and retry.</string>
+    <string name="quest_submit_failed">Could not submit for review.</string>
+    <string name="quest_cancel">Cancel</string>
 </resources>

@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,8 +30,10 @@ import com.tpov.schoolquiz.android.core.designsystem.components.BrandSquareIconB
 import com.tpov.schoolquiz.android.core.designsystem.components.CatalogSpinner
 import com.tpov.schoolquiz.android.core.designsystem.components.QuestCard
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.R
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SUBMITTABLE_DRAFT_STATUSES
 
 /**
  * "Мои квесты" screen.
@@ -49,6 +55,7 @@ fun MyQuestsScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsState()
+    val submitState by component.submitState.collectAsState()
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -92,6 +99,7 @@ fun MyQuestsScreen(
                         DraftQuestCard(
                             item = draft,
                             onClick = { component.onDraftClick(draft) },
+                            onSubmitClick = { component.onDraftSubmitClick(draft) },
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -112,6 +120,15 @@ fun MyQuestsScreen(
             }
         }
 
+        submitState?.let { current ->
+            DraftSubmitDialog(
+                state = current,
+                onConfirm = component::onDraftSubmitConfirm,
+                onRetry = { component.onDraftSubmitClick(current.draft) },
+                onDismiss = component::onDraftSubmitDismiss,
+            )
+        }
+
         BrandSquareIconButton(
             icon = Icons.Default.Add,
             contentDescription = stringResource(R.string.quest_cd_create_quest),
@@ -124,11 +141,15 @@ fun MyQuestsScreen(
     }
 }
 
+/** Кнопка подачи на карточке видна у подающего черновика: статус годен и есть вопросы. */
+private fun DraftQuestDisplayItem.isSubmittable(): Boolean = status in SUBMITTABLE_DRAFT_STATUSES && questionCount > 0
+
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun DraftQuestCard(
     item: DraftQuestDisplayItem,
     onClick: () -> Unit,
+    onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BrandCard(modifier = modifier.clickable(onClick = onClick)) {
@@ -161,8 +182,110 @@ private fun DraftQuestCard(
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
+            // Подача с карточки (история 4.11, D13): раньше карточка умела только открыть
+            // редактор, и черновик нельзя было выбрать в форме подачи.
+            if (item.isSubmittable()) {
+                Button(
+                    onClick = onSubmitClick,
+                    modifier =
+                        Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.quest_submit_for_review))
+                }
+            }
         }
     }
+}
+
+/**
+ * Диалог подачи: цена названа до отправки (D13), подтверждение без цитаты невозможно.
+ *
+ * Три состояния цитаты честно разведены: загрузка (спиннер), отказ (текст и «Повторить» —
+ * повтор перезапрашивает цену, а не отправляет вслепую) и готовность (плата + «Отправить»).
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun DraftSubmitDialog(
+    state: DraftSubmitState,
+    onConfirm: () -> Unit,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = modifier,
+        title = { Text(stringResource(R.string.quest_submit_for_review)) },
+        text = {
+            Column {
+                Text(
+                    text = state.draft.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                when {
+                    state.isQuoteLoading -> {
+                        CircularProgressIndicator(
+                            modifier =
+                                Modifier
+                                    .padding(top = 16.dp)
+                                    .size(24.dp),
+                        )
+                    }
+                    state.isQuoteFailed -> {
+                        Text(
+                            text = stringResource(R.string.quest_submit_quote_failed),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                    }
+                    state.quote != null -> {
+                        Text(
+                            text = stringResource(R.string.quest_submit_fee_line, state.quote.feeNolics),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                    }
+                }
+                if (state.isSubmitFailed) {
+                    Text(
+                        text = stringResource(R.string.quest_submit_failed),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            when {
+                state.isQuoteFailed ->
+                    TextButton(onClick = onRetry) {
+                        Text(stringResource(R.string.quest_submit_retry))
+                    }
+                state.quote != null ->
+                    TextButton(
+                        onClick = onConfirm,
+                        enabled = !state.isSubmitting,
+                    ) {
+                        Text(
+                            if (state.isSubmitting) {
+                                stringResource(R.string.quest_submit_sending)
+                            } else {
+                                stringResource(R.string.quest_submit_confirm)
+                            },
+                        )
+                    }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.quest_cancel))
+            }
+        },
+    )
 }
 
 /**

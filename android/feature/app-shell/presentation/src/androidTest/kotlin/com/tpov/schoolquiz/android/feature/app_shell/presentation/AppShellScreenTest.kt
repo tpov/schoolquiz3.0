@@ -43,6 +43,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.Loca
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.NoirSettingsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
@@ -429,10 +430,14 @@ class AppShellScreenTest {
             myQuestsFactory = { _, _, _ ->
                 object : MyQuestsComponent {
                     override val state: StateFlow<MyQuestsUiState> = MutableStateFlow(MyQuestsUiState())
+                    override val submitState: StateFlow<DraftSubmitState?> = MutableStateFlow(null)
                     override fun onCatalogSelected(id: CatalogId?) = Unit
                     override fun onCreateQuestClick() = Unit
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
                     override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
+                    override fun onDraftSubmitClick(draft: DraftQuestDisplayItem) = Unit
+                    override fun onDraftSubmitDismiss() = Unit
+                    override fun onDraftSubmitConfirm() = Unit
                 }
             },
             homeQuestsFactory = { _, _, _ ->

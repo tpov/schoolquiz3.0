@@ -31,6 +31,7 @@ import com.tpov.schoolquiz.platform.firebase.lesson_runner.FirebasePrivateQuizRu
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewFeeQuoteRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.social.FirebasePollsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseCatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseLessonContentSyncChangeRemoteDataSource
@@ -70,6 +71,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.PrivateQuizR
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewFeeQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentEventRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentMeetingRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentOperationRemoteDataSource
@@ -232,6 +234,9 @@ val firebaseModule =
         }
         single<LessonLifecycleRemoteDataSource> {
             FirebaseLessonLifecycleRemoteDataSource(functions = get())
+        }
+        single<ReviewFeeQuoteRemoteDataSource> {
+            FirebaseReviewFeeQuoteRemoteDataSource(functions = get())
         }
 
         single<PrivateQuizRunRemoteDataSource> {

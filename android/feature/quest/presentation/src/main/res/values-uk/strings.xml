@@ -42,4 +42,12 @@
     <string name="quest_questions_count">Питань: %1$d</string>
     <string name="quest_draft_returned">Повернуто: %1$s</string>
     <string name="quest_draft_returned_delivery">не вдалося надіслати на сервер, спробуйте ще раз</string>
+    <string name="quest_submit_for_review">Надіслати на перевірку</string>
+    <string name="quest_submit_fee_line">Плата: %1$d ноліків</string>
+    <string name="quest_submit_confirm">Надіслати</string>
+    <string name="quest_submit_retry">Повторити</string>
+    <string name="quest_submit_sending">Надсилається…</string>
+    <string name="quest_submit_quote_failed">Не вдалося дізнатися плату. Перевірте зв\'язок і спробуйте ще раз.</string>
+    <string name="quest_submit_failed">Не вдалося надіслати на перевірку.</string>
+    <string name="quest_cancel">Скасувати</string>
 </resources>

@@ -130,6 +130,7 @@ const {
   settleReviewFeeTenths,
   walletCreditForEntitlement,
 } = require("./review-fee");
+const {parseReviewFeeQuoteRequest, quoteReviewFee} = require("./review-fee-quote");
 const {ADMIN_REVIEW_SYNC_CHANGES, writeSyncChanges} = require("./sync-changes");
 const {readReviewAssignmentChanges, resolveReviewAssignments} = require("./review-journal");
 const {
@@ -5837,6 +5838,28 @@ async function processArenaRequest(request) {
 }
 
 // ─── Платный цикл проверки: плата и расчёт (AD-10, история 4.7) ─────────────────────────────────
+
+/**
+ * Цитата платы для диалога подачи с карточки черновика (история 4.11, D13).
+ *
+ * Только чтение: владелец выводится из Auth, тело — адрес квеста и число вопросов. `priorCycle` —
+ * серверная правда (оплаченный цикл или публикация уже были), поэтому клиент её не угадывает.
+ * Цитата называет цену заранее; платой станет расчёт приёмки из тела реальной заявки — цитата
+ * властью не обладает.
+ */
+exports.quoteQuestReviewFee = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const parsed = parseReviewFeeQuoteRequest(request.data);
+  if (!parsed.ok) throw new HttpsError("invalid-argument", parsed.reason);
+  const [tariffs, questSnap, publicSnap] = await Promise.all([
+    readReviewFeeTariffs(),
+    db.doc(`${REVIEW_FEE_QUESTS}/${parsed.questId}`).get(),
+    db.doc(`quests/${parsed.questId}`).get(),
+  ]);
+  const priorCycle = questSnap.exists || publicSnap.exists;
+  return quoteReviewFee({tariffs, priorCycle, questionCount: parsed.questionCount});
+});
 
 /** Где живут документы платного цикла. Коллекции закрыты правилами от клиентов. */
 const REVIEW_FEE_TARIFFS_DOC = "configs/review_fee";

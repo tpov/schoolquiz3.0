@@ -106,8 +106,10 @@ const ENDPOINTS = Object.freeze([
 // server-only onSchedule reconcileExamSittings, covered by the exam-* suites. Re-pinned
 // 2026-10-16 (review pass): materializeExamCorrection joins the surface — the curator-gated
 // C2 materialization callable covered by exam-corrections tests. Re-pinned 2026-10-18 (epic 6
-// merge into e5-inception): one pin over the union surface of both epics.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "8d667e8e6ce2161afcb29a29358695587c51a1772d2543327f45ddddea7ce4f0";
+// merge into e5-inception): one pin over the union surface of both epics. Re-pinned 2026-10-26
+// (story 4.11): quoteQuestReviewFee joins the surface — the read-only fee-quote view covered by
+// review-fee-quote tests.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "7b870bdc58d2cebe16c1ecad524fe0aa054c8c8aca50cecbe479d56faa7b0455";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

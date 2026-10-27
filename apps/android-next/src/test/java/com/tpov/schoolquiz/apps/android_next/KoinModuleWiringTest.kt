@@ -1109,6 +1109,8 @@ class KoinModuleWiringTest : KoinTest {
                     myQuestsFactory = { _, _, _ ->
                         object : MyQuestsComponent {
                             override val state = MutableStateFlow(MyQuestsUiState())
+                            override val submitState =
+                                MutableStateFlow<com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState?>(null)
 
                             override fun onCatalogSelected(id: CatalogId?) = Unit
 
@@ -1117,6 +1119,12 @@ class KoinModuleWiringTest : KoinTest {
                             override fun onQuestClick(quest: QuestDisplayItem) = Unit
 
                             override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
+
+                            override fun onDraftSubmitClick(draft: DraftQuestDisplayItem) = Unit
+
+                            override fun onDraftSubmitDismiss() = Unit
+
+                            override fun onDraftSubmitConfirm() = Unit
                         }
                     },
                     quizzesFactory = { _ ->
@@ -1259,6 +1267,8 @@ class KoinModuleWiringTest : KoinTest {
                 myQuestsFactory = { _, _, _ ->
                     object : MyQuestsComponent {
                         override val state = MutableStateFlow(MyQuestsUiState())
+                        override val submitState =
+                            MutableStateFlow<com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState?>(null)
 
                         override fun onCatalogSelected(id: CatalogId?) = Unit
 
@@ -1267,6 +1277,12 @@ class KoinModuleWiringTest : KoinTest {
                         override fun onQuestClick(quest: QuestDisplayItem) = Unit
 
                         override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
+
+                        override fun onDraftSubmitClick(draft: DraftQuestDisplayItem) = Unit
+
+                        override fun onDraftSubmitDismiss() = Unit
+
+                        override fun onDraftSubmitConfirm() = Unit
                     }
                 },
                 quizzesFactory = { _ ->

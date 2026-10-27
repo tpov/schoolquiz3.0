@@ -16,12 +16,16 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsU
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -53,6 +57,8 @@ class DefaultMyQuestsComponent(
     private val observeDraftSummaries: ObserveQuestDraftSummariesUseCase,
     private val openQuestDraft: OpenQuestDraftUseCase,
     private val observeCatalogs: ObserveCatalogsUseCase,
+    private val quoteReviewFee: QuoteQuestReviewFeeUseCase,
+    private val submitQuestDraftToArena: SubmitQuestDraftToArenaUseCase,
     private val navigator: Navigator,
     private val onQuestDrillDown: (QuestDisplayItem) -> Unit = {},
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
@@ -98,6 +104,11 @@ class DefaultMyQuestsComponent(
 
     // Catalogs are public data; no uid gating required.
     private val catalogsFlow = observeCatalogs()
+
+    // Диалог подачи с карточки (4.11) — отдельный поток состояния: главный combine и так
+    // собран из пяти источников, а диалогу не нужно пересобираться вместе со списком.
+    private val _submitState = MutableStateFlow<DraftSubmitState?>(null)
+    override val submitState: StateFlow<DraftSubmitState?> = _submitState.asStateFlow()
 
     override val state =
         combine(
@@ -157,6 +168,67 @@ class DefaultMyQuestsComponent(
                 openQuestDraft(ownerUid = uid, draftId = draft.id)
             }
             navigator.goTo(Destination.OpenQuestCreate)
+        }
+    }
+
+    /**
+     * Подача с карточки (история 4.11): сначала цитата платы, диалог — только с ценой на руках.
+     *
+     * Повторное нажатие по той же карточке перезапрашивает цитату: тариф мог измениться между
+     * отказом транспорта и повтором, а угадывать цену нельзя.
+     */
+    override fun onDraftSubmitClick(draft: DraftQuestDisplayItem) {
+        scope.launch {
+            val uid = authRepo.currentUid()
+            if (uid == null) {
+                // У гостя черновиков не бывает (список пуст при uid=null) — защитный no-op.
+                return@launch
+            }
+            _submitState.value = DraftSubmitState(draft = draft, isQuoteLoading = true)
+            val result = quoteReviewFee(draft.id, draft.questionCount)
+            val current = _submitState.value
+            // Явное чтение-запись вместо MutableStateFlow.update: диалог мог закрыться, пока
+            // цитата летела, и тогда апдейтить нечего — update с null-результатом крутился бы
+            // вечно.
+            if (current != null && current.draft.id == draft.id) {
+                _submitState.value =
+                    current.copy(
+                        quote = result.getOrNull(),
+                        isQuoteLoading = false,
+                        isQuoteFailed = result.isFailure,
+                    )
+            }
+        }
+    }
+
+    override fun onDraftSubmitDismiss() {
+        _submitState.value = null
+    }
+
+    /**
+     * Подтверждённая подача: тот же use case, что и «Отправить на арену» в форме, — весь черновик
+     * целиком на аренную полку (D13). Успех закрывает диалог: черновик уходит из списка
+     * активных сам, когда очередь подтвердит перевод статуса.
+     */
+    override fun onDraftSubmitConfirm() {
+        val current = _submitState.value ?: return
+        if (current.quote == null || current.isSubmitting) return
+        scope.launch {
+            val uid = authRepo.currentUid()
+            if (uid == null) {
+                _submitState.value = null
+                return@launch
+            }
+            _submitState.value = current.copy(isSubmitting = true, isSubmitFailed = false)
+            val result = submitQuestDraftToArena(current.draft.id)
+            if (result.isSuccess) {
+                _submitState.value = null
+            } else {
+                val state = _submitState.value
+                if (state != null && state.draft.id == current.draft.id) {
+                    _submitState.value = state.copy(isSubmitting = false, isSubmitFailed = true)
+                }
+            }
         }
     }
 

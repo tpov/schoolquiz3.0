@@ -12,20 +12,48 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRe
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeNavigator
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestAuthoringRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeReviewFeeQuoteRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.core.network.SyncError
+import com.tpov.schoolquiz.shared.core.network.SyncFailure
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLesson
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionValidationState
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSection
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSectionId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftTheme
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftThemeId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraft
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftConflict
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewFeeQuote
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewFeeQuoteRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -82,6 +110,8 @@ class DefaultMyQuestsComponentTest {
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
         navigator: FakeNavigator = FakeNavigator(),
         onQuestDrillDown: (QuestDisplayItem) -> Unit = { },
+        quoteRepo: ReviewFeeQuoteRepository = FakeReviewFeeQuoteRepository(),
+        submitRepo: QuestAuthoringRepository = authoringRepo,
     ) = DefaultMyQuestsComponent(
         componentContext = testCtx(),
         authRepo = authRepo,
@@ -89,6 +119,12 @@ class DefaultMyQuestsComponentTest {
         observeDraftSummaries = ObserveQuestDraftSummariesUseCase(authoringRepo),
         openQuestDraft = OpenQuestDraftUseCase(authoringRepo),
         observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+        quoteReviewFee = QuoteQuestReviewFeeUseCase(quoteRepo),
+        submitQuestDraftToArena = SubmitQuestDraftToArenaUseCase(
+            submitRepo,
+            QuestAuthoringIdProvider { prefix -> "$prefix-1" },
+            QuestAuthoringTimestampProvider { 1_000L },
+        ),
         navigator = navigator,
         onQuestDrillDown = onQuestDrillDown,
         mainContext = testDispatcher,
@@ -347,7 +383,242 @@ class DefaultMyQuestsComponentTest {
 
         component.onQuestClick(quest)
 
-        assertEquals(CatalogId("cat-2"), capturedQuest?.catalogId,
-            "lambda must preserve catalogId for breadcrumb resolution in DefaultRootComponent")
+        assertEquals(
+            CatalogId("cat-2"), capturedQuest?.catalogId,
+            "lambda must preserve catalogId for breadcrumb resolution in DefaultRootComponent",
+        )
+    }
+
+    // ── 4.11 — submit from the draft card: quote dialog → confirm → submission ───
+
+    private val submitDraft =
+        DraftQuestDisplayItem(
+            id = QuestDraftId("draft-1"),
+            catalogId = CatalogId("cat1"),
+            title = "Draft quest",
+            status = QuestDraftStatus.SAVED,
+            questionCount = 3,
+            isActive = true,
+        )
+
+    @Test
+    fun `submit click fetches the fee and shows it before anything is sent`() = runTest {
+        val quoteRepo = FakeReviewFeeQuoteRepository(
+            ReviewFeeQuote(priorCycle = false, tariff = "initial", feeNolics = 1000, tariffRevision = 1),
+        )
+        val submitRepo = SubmittableAuthoringRepo()
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            quoteRepo = quoteRepo,
+            submitRepo = submitRepo,
+        )
+
+        component.onDraftSubmitClick(submitDraft)
+
+        val ready = component.submitState.value
+        assertEquals(submitDraft.id, ready?.draft?.id)
+        assertEquals(1000, ready?.quote?.feeNolics, "fee must be on screen before the confirm")
+        assertEquals(0, submitRepo.queued.size, "no submission may leave before confirm")
+
+        component.onDraftSubmitConfirm()
+
+        assertTrue(component.submitState.value == null, "success closes the dialog")
+        assertEquals(1, submitRepo.queued.size, "confirm enqueues exactly one submission")
+        assertEquals("draft-1", submitRepo.queued.single().draftId.value)
+    }
+
+    @Test
+    fun `recheck quote carries per-question fee from the server`() = runTest {
+        val quoteRepo = FakeReviewFeeQuoteRepository(
+            ReviewFeeQuote(priorCycle = true, tariff = "recheck", feeNolics = 300, tariffRevision = 2),
+        )
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            quoteRepo = quoteRepo,
+        )
+        val draft = submitDraft.copy(questionCount = 3)
+
+        component.onDraftSubmitClick(draft)
+
+        assertEquals(300, component.submitState.value?.quote?.feeNolics)
+        assertEquals("recheck", component.submitState.value?.quote?.tariff)
+    }
+
+    @Test
+    fun `quote failure keeps the dialog without a confirm and without sending`() = runTest {
+        val quoteRepo = FakeReviewFeeQuoteRepository(
+            error = SyncFailure(SyncError.NoNetwork, IllegalStateException("offline")),
+        )
+        val submitRepo = SubmittableAuthoringRepo()
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            quoteRepo = quoteRepo,
+            submitRepo = submitRepo,
+        )
+
+        component.onDraftSubmitClick(submitDraft)
+
+        val state = component.submitState.value
+        assertTrue(state?.isQuoteFailed == true, "failure must be visible")
+        assertNull(state?.quote, "no quote — no fee shown")
+        assertEquals(0, submitRepo.queued.size)
+
+        component.onDraftSubmitConfirm()
+        assertEquals(0, submitRepo.queued.size, "confirm without a quote must not submit")
+    }
+
+    @Test
+    fun `submit rejection surfaces as a failed dialog state, app stays operable`() = runTest {
+        val quoteRepo = FakeReviewFeeQuoteRepository(
+            ReviewFeeQuote(priorCycle = false, tariff = "initial", feeNolics = 1000, tariffRevision = 1),
+        )
+        // Репозиторий без черновика: use case отклонит подачу (DraftNotFound) — честный отказ.
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            quoteRepo = quoteRepo,
+            submitRepo = FakeQuestAuthoringRepository(),
+        )
+
+        component.onDraftSubmitClick(submitDraft)
+        component.onDraftSubmitConfirm()
+
+        val state = component.submitState.value
+        assertTrue(state?.isSubmitFailed == true, "rejection must be visible in the dialog")
+        assertTrue(state?.isSubmitting == false, "spinner must stop on failure")
+    }
+
+    @Test
+    fun `dismiss closes the dialog without sending`() = runTest {
+        val quoteRepo = FakeReviewFeeQuoteRepository(
+            ReviewFeeQuote(priorCycle = false, tariff = "initial", feeNolics = 1000, tariffRevision = 1),
+        )
+        val submitRepo = SubmittableAuthoringRepo()
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            quoteRepo = quoteRepo,
+            submitRepo = submitRepo,
+        )
+
+        component.onDraftSubmitClick(submitDraft)
+        component.onDraftSubmitDismiss()
+
+        assertNull(component.submitState.value)
+        assertEquals(0, submitRepo.queued.size)
+    }
+
+    @Test
+    fun `stale dialog state is not overwritten by a quote for another draft`() = runTest {
+        val quoteRepo = FakeReviewFeeQuoteRepository(
+            ReviewFeeQuote(priorCycle = false, tariff = "initial", feeNolics = 1000, tariffRevision = 1),
+        )
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            quoteRepo = quoteRepo,
+        )
+        val other = submitDraft.copy(id = QuestDraftId("draft-2"))
+
+        component.onDraftSubmitClick(submitDraft)
+        component.onDraftSubmitDismiss()
+        component.onDraftSubmitClick(other)
+
+        assertEquals(QuestDraftId("draft-2"), component.submitState.value?.draft?.id)
+    }
+
+    /** Репозиторий с подающим черновиком: урок готов — вопросы обеих сложностей сохранены. */
+    private class SubmittableAuthoringRepo : QuestAuthoringRepository {
+        val queued = mutableListOf<QuestArenaSubmission>()
+
+        private fun question(
+            id: String,
+            difficulty: Difficulty,
+        ) = DraftQuestion(
+            id = DraftQuestionId(id),
+            draftId = QuestDraftId("draft-1"),
+            lessonId = DraftLessonId("l1"),
+            type = DraftQuestionType.SINGLE_CHOICE,
+            language = "ru",
+            difficulty = difficulty,
+            order = 0,
+            text = "2+2?",
+            imagePath = null,
+            payload = "{\"options\":[\"4\"],\"correct\":0}",
+            validationState = DraftQuestionValidationState.SAVED,
+            updatedAtMs = 1_000L,
+        )
+
+        private val bundle by lazy {
+            QuestAuthoringBundle(
+                draft =
+                    QuestDraft(
+                        id = QuestDraftId("draft-1"),
+                        ownerUid = "user1",
+                        catalogId = CatalogId("cat1"),
+                        title = "Draft quest",
+                        description = null,
+                        defaultLanguage = "ru",
+                        defaultDifficulty = Difficulty.EASY,
+                        status = QuestDraftStatus.SAVED,
+                        localRevision = 1L,
+                        serverRevision = null,
+                        publicQuestId = null,
+                        createdAtMs = 1_000L,
+                        updatedAtMs = 1_000L,
+                        isActive = true,
+                    ),
+                sections = listOf(DraftSection(DraftSectionId("s1"), QuestDraftId("draft-1"), "Section", 0)),
+                themes =
+                    listOf(
+                        DraftTheme(DraftThemeId("t1"), QuestDraftId("draft-1"), DraftSectionId("s1"), "Theme", 0),
+                    ),
+                lessons =
+                    listOf(
+                        DraftLesson(DraftLessonId("l1"), QuestDraftId("draft-1"), DraftThemeId("t1"), "Lesson", 0),
+                    ),
+                questions =
+                    listOf(
+                        question("q-easy", Difficulty.EASY),
+                        question("q-hard", Difficulty.HARD),
+                    ),
+            )
+        }
+
+        override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummary>> = flowOf(emptyList())
+
+        override fun observeDraft(draftId: QuestDraftId): Flow<QuestAuthoringBundle?> = flowOf(bundle)
+
+        override suspend fun getDraft(draftId: QuestDraftId): QuestAuthoringBundle? = bundle
+
+        override suspend fun getActiveDraft(ownerUid: String): QuestAuthoringBundle? = bundle
+
+        override suspend fun activateDraft(
+            ownerUid: String,
+            draftId: QuestDraftId,
+        ): Result<Unit> = Result.success(Unit)
+
+        override suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit> = Result.success(Unit)
+
+        override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> =
+            Result.success(Unit)
+
+        override suspend fun queueArenaSubmission(submission: QuestArenaSubmission): Result<Unit> {
+            queued += submission
+            return Result.success(Unit)
+        }
+
+        override fun observeDraftConflict(
+            ownerUid: String,
+            draftId: QuestDraftId,
+        ): Flow<QuestDraftConflict?> = flowOf(null)
+
+        override suspend fun resolveDraftConflict(
+            ownerUid: String,
+            draftId: QuestDraftId,
+        ): Result<Unit> = Result.success(Unit)
+
+        override suspend fun setDraftStatus(
+            draftId: QuestDraftId,
+            status: QuestDraftStatus,
+            updatedAtMs: Long,
+        ): Result<Unit> = Result.success(Unit)
     }
 }
