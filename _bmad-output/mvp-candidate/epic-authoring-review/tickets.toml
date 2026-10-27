@@ -206,7 +206,7 @@ slug = "review-fee-burn-and-integrity"
 title = "Fee with zero reward units (CAP-4, AD-10): tariff 1000/100 unchanged, charged once, the whole fee burns, conservation test green; retro 2026-10-25 L4/item 2: validate draft ownership in planReviewFeeCharge and dual-write the nolics mirror in the charge and settlement paths; evidence docs/agents/evidence/<date>-review-fee-burn/"
 covers = ["CAP-4"]
 after = [{ story = "4.12", needs = "pipeline cycle terminal states" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-27: расчёт модельного исхода (request.reviewOutcome) не читает человеческий мир — units=[], entitlements 0, весь фонд сгорает, консервация pinned манифестом (fee = 0 + burn); ретро L4/п.2 закрыто: (a) зеркало ноликов двустороннее в списании и расчёте (pointsNolics+nolics, форма «Both fields» как в других денежных путях), (b) planReviewFeeCharge сверяет владельца (review_fee_quests.ownerUid / quests.authorUid vs request.ownerUid) — чужой draft.id = permission-denied REVIEW_FEE_DRAFT_NOT_OWNED без записей под чужим именем. Сюита quest-review-fee-burn.test.js (5 кейсов на публичных поверхностях: burn/conservation, REJECTED-burn, чужой id, зеркало списания, зеркало расчёта человеческого цикла); review-fee-cycle 5/5 (человеческий путь нетронут); модельный исход 6/6. Тарифы 1000/100 не тронуты; REVIEW_DELAYED не рассчитывается (OQ-2 parked). Спека spec-4-18-review-fee-burn.md.
 
 [[story]]
 id = "4.19"

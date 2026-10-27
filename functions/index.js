@@ -5905,6 +5905,22 @@ async function planReviewFeeCharge(transaction, request) {
     readReviewFeeTariffs(),
   ]);
   const priorCycle = questSnap.exists || publicSnap.exists;
+  // Ретро 2026-10-25 L4/п.2 (история 4.18): тариф решают СВОИ документы квеста. Чужой id в
+  // заявке — именованный отказ без единой записи под чужим именем: и cheaper-recheck, и счётчик
+  // циклов на чужом документе закрыты этой сверкой. Документ без владельца (легаси до введения
+  // платы) чужим не считается — проверяется только известный и другой владелец.
+  if (questSnap.exists) {
+    const owner = stringValue((questSnap.data() || {}).ownerUid);
+    if (owner && owner !== request.ownerUid) {
+      throw new HttpsError("permission-denied", "REVIEW_FEE_DRAFT_NOT_OWNED");
+    }
+  }
+  if (publicSnap.exists) {
+    const author = stringValue((publicSnap.data() || {}).authorUid);
+    if (author && author !== request.ownerUid) {
+      throw new HttpsError("permission-denied", "REVIEW_FEE_DRAFT_NOT_OWNED");
+    }
+  }
   const feeNolics = reviewFeeNolics({tariffs, priorCycle, questionCount: request.questions.length});
 
   const userRef = db.doc(`users/${request.ownerUid}`);
@@ -5935,7 +5951,14 @@ async function planReviewFeeCharge(transaction, request) {
 function writeReviewFeeChargeToTransaction(transaction, request, charge, now) {
   transaction.set(
     charge.userRef,
-    clean({pointsNolics: charge.balance - charge.feeNolics, updatedAtMs: now}),
+    clean({
+      updatedAtMs: now,
+      // Both fields: FirebaseUserStatsDataSource reads pointsNolics and the economy data source
+      // reads nolics — ретро 2026-10-25 L4/п.2 (4.18): зеркало списания двустороннее, как во
+      // всех денежных путях.
+      pointsNolics: charge.balance - charge.feeNolics,
+      nolics: charge.balance - charge.feeNolics,
+    }),
     {merge: true},
   );
   transaction.create(charge.cycleRef, clean({
@@ -6004,18 +6027,23 @@ async function settleReviewFeeCycle(submissionId, outcome, now) {
   if (cycle.status === "SETTLED") return {settled: true, replayed: true};
 
   const request = normalizeRequest(requestSnapshot.data(), submissionId);
+  // Модельный мир (AD-32, история 4.18): проверяющих у конвейера нет — entitlements ровно нули,
+  // весь фонд сгорает; записи ревьюеров и задания человеческого мира не читаются вовсе.
+  const modelOutcome = request.reviewOutcome && typeof request.reviewOutcome === "object";
   const lessonIds =
     request.targetLessonIds.length > 0
       ? request.targetLessonIds
       : request.lessons.map((lesson) => lesson.id);
   const taskByLessonId = {};
   const recordsByLessonId = {};
-  for (const lessonId of lessonIds) {
-    const taskSnapshot = await db.doc(adminLessonPath(lessonId)).get();
-    if (taskSnapshot.exists) taskByLessonId[lessonId] = await adminLessonSnapshotToTask(taskSnapshot);
-    recordsByLessonId[lessonId] = await readReviewRecords(lessonId, submissionId);
+  if (!modelOutcome) {
+    for (const lessonId of lessonIds) {
+      const taskSnapshot = await db.doc(adminLessonPath(lessonId)).get();
+      if (taskSnapshot.exists) taskByLessonId[lessonId] = await adminLessonSnapshotToTask(taskSnapshot);
+      recordsByLessonId[lessonId] = await readReviewRecords(lessonId, submissionId);
+    }
   }
-  const units = buildReviewUnits({
+  const units = modelOutcome ? [] : buildReviewUnits({
     submissionId,
     lessonIds,
     taskByLessonId,
@@ -6071,11 +6099,13 @@ async function settleReviewFeeCycle(submissionId, outcome, now) {
     transaction.create(db.doc(`${REVIEW_FEE_MANIFESTS}/${submissionId}`), clean(manifest));
     // Кошельки пишутся из исходного массива: в манифесте баланса нет — он состояние кошелька,
     // а не факт расчёта. К этому месту buildSettlementManifest уже сверил арифметику carry.
+    // Зеркало двустороннее (ретро L4/п.2, 4.18): pointsNolics и nolics вместе, как в списании.
     for (const wallet of wallets) {
       transaction.set(
         db.doc(`users/${wallet.uid}`),
         clean({
           pointsNolics: wallet.balance + wallet.creditedNolics,
+          nolics: wallet.balance + wallet.creditedNolics,
           [REVIEW_FEE_CARRY_FIELD]: wallet.nextCarryTenths,
           updatedAtMs: now,
         }),
