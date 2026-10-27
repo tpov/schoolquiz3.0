@@ -40,11 +40,14 @@ test("cleartext is restricted to local emulator loopback and automatic telemetry
   assert.match(network, /base-config cleartextTrafficPermitted="false"/);
   const domains = [...network.matchAll(/<domain[^>]*>([^<]+)<\/domain>/g)].map((m) => m[1]);
   assert.deepEqual(domains.slice(0, 2), ["127.0.0.1", "localhost"]);
-  // Единственный внешний домен — VPS-хост hitl-пути (a2298084, device-proven 7.2): телефон идёт
-  // прямым интернетом к эмуляторам на VPS. Излишних доменов быть не должно.
+  // Внешние домены — ровно два задокументированных hitl-хоста, каждый со своим доказанным
+  // прогоном: 204.44.66.27 — VPS-хост прямого hitl-пути (a2298084, device-proven 7.2);
+  // 192.168.31.218 — LAN-хост overlay 5.13 для телефонов, где adb reverse не тащит данные
+  // (7d8b91bd, влит ed16fc81 22.10). Излишних доменов быть не должно; снятие LAN-домена —
+  // отдельное решение владельца, не этой пачки (retro e7 item 7).
   assert.deepEqual(
     domains.slice(2).filter((d) => d !== "127.0.0.1" && d !== "localhost"),
-    ["204.44.66.27"],
+    ["204.44.66.27", "192.168.31.218"],
   );
   const manifest = read(`${app}/src/mvp/AndroidManifest.xml`);
   assert.match(manifest, /firebase_analytics_collection_deactivated" android:value="true"/);
