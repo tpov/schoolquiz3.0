@@ -2,7 +2,7 @@
 title: '4.19 remove-human-review — удалить код живых проверяющих (UX-17)'
 type: 'refactor'
 created: '2026-10-27'
-status: 'in-progress'
+status: 'done'
 route: 'full'
 route_source: 'auto'
 review: 'quick'
@@ -96,6 +96,7 @@ Total: 43 files deleted.
 
 ## Spec Change Log
 
+- 2026-10-27, done: коммит 60d5484a (117 файлов, +3041/−9302), запушен на night/e7-commerce. 4.20/4.26 не тронуты; 4.21 в этой смене не бралась.
 - 2026-10-27, implementation loopbacks: (1) `loadArenaLessonContext`/`loadArenaLifecycleContext` (server) — «reviewApproved» переопределён полями публикации в документе урока (`reviewSubmissionId` + `reviewApprovedAtMs`); админ-задания и записи ревью больше не читаются, и это закрыло латентную дыру 4.16: модельно опубликованные уроки не были admissible для арены, потому что задание никогда не переходило в PUBLISHED. (2) `publishSubmissionIfReady` удалена целиком — после удаления человеческой ветки и журнального reconcile у неё не осталось вызывающих; модельную доводку делает `advanceModelReviewedSubmission`. (3) Модельный воркер сохраняет имя `createReviewQueueWorker` (4.12 slug) и статус черновика автора `REVIEW_QUEUED` — скан ловит имена поверхности экрана (`ReviewQueueComponent`/`ReviewQueueRoot`/…), а не слово целиком. (4) Курсоры и Kind-реестры: `SyncJournals` сокращён до трёх журналов (review-журнал сервера удалён из `sync-changes.js` вместе с kind `review_assignment` и админ-путями), `reviewAssignmentSyncCursorId` исчез, `OwnerScopedTables`/`OwnerRowsDao` потеряли две таблицы. (5) Поле `review` (авторская звёздная самодекларация) снято с провода: `requestToDocument`/`normalizeRequest`/`privateDocuments`, `QuestArenaSubmissionRequest`, `FirebaseQuestPrivateRemoteDataSource.toArenaReviewDto`, маппер подачи. (6) Импорт `MAX_AUTHOR_REJECTION_REASON_BYTES` из lifecycle-вью больше не нужен серверу (приёмник отклонения удалён); view оставил его себе — он валидирует легаси-документы. (7) Полные сиды `admin/review/...` вычищены из стабов арена-тестов; парные арена-тесты перепинены на новую семантику одобрения (полем документа урока).
 - 2026-10-27, gate record: functions `npm test` — 137/137 suites (было 140: удалены `testing-review-threshold`, `review-fee-cycle`, `review-journal.test`/`review-journal-wire`; добавлен `remove-human-review-scan`); export-set hash re-pinned (5 callables + schedule и обработчик очереди ушли); deferred-actions/outbox-registry/arena-request-document парности перепинованы. Детали gradle-гейтов — в Verification ниже.
 
