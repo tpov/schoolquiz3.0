@@ -53,4 +53,16 @@
     <string name="quest_submit_quote_failed">Could not fetch the fee. Check the connection and retry.</string>
     <string name="quest_submit_failed">Could not submit for review.</string>
     <string name="quest_cancel">Cancel</string>
+    <string name="quest_review_strokes">Checking: “Words” · “Facts”</string>
+    <string name="quest_review_delayed">Check is taking longer than expected</string>
+    <string name="quest_review_failed_tag">Failed: %1$d question(s)</string>
+    <string name="quest_review_failed_line">Lesson %1$s · %2$s: %3$s</string>
+    <string name="quest_review_language">Language: %1$s</string>
+    <string name="quest_fix_questions">Fix the questions</string>
+    <string name="quest_stage_words">Words</string>
+    <string name="quest_stage_facts">Facts</string>
+    <string name="quest_stage_translate">Translation</string>
+    <string name="quest_language_ru">Russian</string>
+    <string name="quest_language_uk">Ukrainian</string>
+    <string name="quest_language_en">English</string>
 </resources>

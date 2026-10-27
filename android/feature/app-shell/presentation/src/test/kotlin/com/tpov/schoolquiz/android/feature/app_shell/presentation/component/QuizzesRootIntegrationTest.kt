@@ -35,6 +35,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepo
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestReviewOutcomeRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaLessonCatalogComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
@@ -93,6 +94,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Observ
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
@@ -299,6 +301,7 @@ class QuizzesRootIntegrationTest {
                         QuestAuthoringIdProvider { prefix -> "$prefix-1" },
                         QuestAuthoringTimestampProvider { 1_000L },
                     ),
+                fetchReviewOutcomes = FetchQuestReviewOutcomesUseCase(FakeQuestReviewOutcomeRepository()),
                 navigator = navigator,
                 onQuestDrillDown = onQuestDrillDown,
                 mainContext = testDispatcher,

@@ -208,6 +208,7 @@ test("translation record binds revision, model, prompt, language and assembled q
     },
   });
   assert.equal(record.detectedLanguage, "ru");
+  assert.equal(record.stage, "TRANSLATE");
   assert.equal(record.promptVersion, "translate-v1");
   assert.deepEqual(Object.keys(record.questions).sort(), ["en", "uk"]);
   assert.throws(() => buildTranslationRecord({submissionId: "s", lessonId: "l", attempt: 1,

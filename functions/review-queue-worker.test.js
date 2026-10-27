@@ -208,6 +208,57 @@ test("three translation linter refusals land the lesson REVIEW_DELAYED with zero
   assert.deepEqual(forL1, [], "a delayed translation records nothing");
 });
 
+test("terminal quest writes the author outcome into the submission (4.16)", async () => {
+  const {admin, store} = createFirestoreStub(seedDocs({
+    "catalogs/cat-1": {name: "Математика"},
+    "quest_review_requests/sub-1": submission("1"),
+  }));
+  const db = admin.firestore();
+  await worker(db, scriptedStages({}), {maxStageCallsPerSweep: 12}).sweep();
+
+  const outcome = store.documents.get("quest_review_requests/sub-1").reviewOutcome;
+  assert.ok(outcome, "the terminal sweep records the author outcome");
+  assert.equal(outcome.pipelineStatus, "QUEST_REVIEWED");
+  assert.deepEqual(outcome.passingLessonIds, ["l1", "l2"]);
+  assert.deepEqual(outcome.failedQuestions, []);
+  assert.equal(outcome.detectedLanguage, "ru");
+  assert.ok(outcome.reviewedAtMs > 0);
+});
+
+test("a failed question reaches the outcome with lesson, stage and reason (UX-6)", async () => {
+  const {admin, store} = createFirestoreStub(seedDocs({
+    "catalogs/cat-1": {name: "Математика"},
+    "quest_review_requests/sub-1": submission("1"),
+  }));
+  const db = admin.firestore();
+  await worker(db, scriptedStages({failQuestions: ["q2"]}), {maxStageCallsPerSweep: 12}).sweep();
+
+  const outcome = store.documents.get("quest_review_requests/sub-1").reviewOutcome;
+  assert.equal(outcome.pipelineStatus, "QUEST_REVIEWED");
+  assert.deepEqual(outcome.passingLessonIds, ["l1"]);
+  // Скриптованные проверки валят q2 на обоих этапах: исход несёт по записи на каждый этап (UX-6).
+  assert.deepEqual(outcome.failedQuestions, [
+    {lessonId: "l2", questionId: "q2", stage: "WORDS", reason: "wrong answer"},
+    {lessonId: "l2", questionId: "q2", stage: "FACTS", reason: "wrong answer"},
+  ]);
+});
+
+test("a delayed stage writes REVIEW_DELAYED outcome with the delayed stage named", async () => {
+  const {admin, store} = createFirestoreStub(seedDocs({
+    "catalogs/cat-1": {name: "Математика"},
+    "quest_review_requests/sub-1": submission("1"),
+  }));
+  const db = admin.firestore();
+  await worker(db, scriptedStages({translateLintFailures: 3}), {maxStageCallsPerSweep: 12}).sweep();
+
+  const outcome = store.documents.get("quest_review_requests/sub-1").reviewOutcome;
+  assert.equal(outcome.pipelineStatus, "REVIEW_DELAYED");
+  // Лимит отказов общий на попытки: l1 сжёг три и задержался, l2 тем же скиллом прошёл.
+  assert.deepEqual(outcome.delayedStages, [{lessonId: "l1", stage: "TRANSLATE"}]);
+  assert.deepEqual(outcome.passingLessonIds, ["l2"]);
+  assert.deepEqual(outcome.detectedLanguage, "ru");
+});
+
 test("linter rejects three times, then the stage lands REVIEW_DELAYED with zero verdicts", async () => {
   const {admin, store} = createFirestoreStub(seedDocs({
     "catalogs/cat-1": {name: "Математика"},
@@ -315,7 +366,7 @@ test("crash after a translation write resumes idempotently: record kept, no seco
       questionVerdicts: [{questionId: "q1", verdict: "PASS", reason: "clean"}],
     },
     [`${TRANSLATIONS_COLLECTION}/${translationId}`]: {
-      schemaVersion: 1, submissionId: "sub-1", lessonId: "l1", attempt: 1,
+      schemaVersion: 1, submissionId: "sub-1", lessonId: "l1", stage: "TRANSLATE", attempt: 1,
       revision: 5, model: "glm-test", promptVersion: "translate-v1", detectedLanguage: "ru",
       questions: {uk: [{id: "q1__uk"}], en: [{id: "q1__en"}]},
     },

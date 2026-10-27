@@ -13,6 +13,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestAuth
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeReviewFeeQuoteRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestReviewOutcomeRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
@@ -21,6 +22,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Observ
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -92,6 +94,7 @@ class OfflineEmptyIntegrationTest {
                 QuestAuthoringIdProvider { prefix -> "$prefix-1" },
                 QuestAuthoringTimestampProvider { 1_000L },
             ),
+        fetchReviewOutcomes = FetchQuestReviewOutcomesUseCase(FakeQuestReviewOutcomeRepository()),
         navigator = FakeNavigator(),
         mainContext = testDispatcher,
     )

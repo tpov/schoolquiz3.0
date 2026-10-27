@@ -14,6 +14,8 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestReviewOutcomeSnapshot
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
@@ -59,6 +61,7 @@ class DefaultMyQuestsComponent(
     private val observeCatalogs: ObserveCatalogsUseCase,
     private val quoteReviewFee: QuoteQuestReviewFeeUseCase,
     private val submitQuestDraftToArena: SubmitQuestDraftToArenaUseCase,
+    private val fetchReviewOutcomes: FetchQuestReviewOutcomesUseCase,
     private val navigator: Navigator,
     private val onQuestDrillDown: (QuestDisplayItem) -> Unit = {},
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
@@ -110,7 +113,13 @@ class DefaultMyQuestsComponent(
     private val _submitState = MutableStateFlow<DraftSubmitState?>(null)
     override val submitState: StateFlow<DraftSubmitState?> = _submitState.asStateFlow()
 
-    override val state =
+    // Исходы модельной проверки (4.16, UX-6): серверная правда о вердиктах, ключ — draftId.
+    // Читаются по списку видимых черновиков; отказ чтения оставляет пустую карту, список живёт.
+    private val _reviewOutcomes = MutableStateFlow<Map<String, QuestReviewOutcomeSnapshot>>(emptyMap())
+
+    // combine без vararg берёт пять потоков: база списка собирается отдельно, исходы (4.16)
+    // склеиваются последним combine — состояние экрана реагирует и на то, и на другое.
+    private val baseState =
         combine(
             questsFlow,
             draftSummariesFlow,
@@ -126,6 +135,11 @@ class DefaultMyQuestsComponent(
                 isGuest = isGuest,
                 isLoading = false,
             )
+        }
+
+    override val state =
+        combine(baseState, _reviewOutcomes) { base, reviewOutcomes ->
+            base.copy(reviewOutcomes = reviewOutcomes)
         }.stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
@@ -133,8 +147,25 @@ class DefaultMyQuestsComponent(
         )
 
     init {
+        // Перечитываем исходы, когда меняется состав черновиков: новая подача или вернувшийся
+        // отказ меняют множество запроса. Повторы по тому же множеству id не летают.
+        scope.launch {
+            draftSummariesFlow.collect { drafts ->
+                val ids = drafts.map { it.id.value }.toSet()
+                if (ids.isEmpty()) {
+                    _reviewOutcomes.value = emptyMap()
+                } else if (ids != requestedOutcomeIds) {
+                    requestedOutcomeIds = ids
+                    val snapshots = fetchReviewOutcomes(submissionIds = emptySet(), legacyDraftIds = ids)
+                    _reviewOutcomes.value = snapshots.associateBy { it.draftId }
+                }
+            }
+        }
         lifecycle.doOnDestroy { componentJob.cancel() }
     }
+
+    @Volatile
+    private var requestedOutcomeIds: Set<String> = emptySet()
 
     override fun onCatalogSelected(id: CatalogId?) {
         selectedCatalog.value = id

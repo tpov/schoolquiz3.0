@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepo
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeReviewFeeQuoteRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestReviewOutcomeRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.core.network.SyncError
@@ -39,6 +40,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraf
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftConflict
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestReviewOutcomeSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewFeeQuote
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
@@ -49,6 +51,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Observ
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestReviewOutcomeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -111,6 +115,7 @@ class DefaultMyQuestsComponentTest {
         navigator: FakeNavigator = FakeNavigator(),
         onQuestDrillDown: (QuestDisplayItem) -> Unit = { },
         quoteRepo: ReviewFeeQuoteRepository = FakeReviewFeeQuoteRepository(),
+        outcomeRepo: QuestReviewOutcomeRepository = FakeQuestReviewOutcomeRepository(),
         submitRepo: QuestAuthoringRepository = authoringRepo,
     ) = DefaultMyQuestsComponent(
         componentContext = testCtx(),
@@ -125,6 +130,7 @@ class DefaultMyQuestsComponentTest {
             QuestAuthoringIdProvider { prefix -> "$prefix-1" },
             QuestAuthoringTimestampProvider { 1_000L },
         ),
+        fetchReviewOutcomes = FetchQuestReviewOutcomesUseCase(outcomeRepo),
         navigator = navigator,
         onQuestDrillDown = onQuestDrillDown,
         mainContext = testDispatcher,
@@ -254,6 +260,73 @@ class DefaultMyQuestsComponentTest {
         assertEquals(1, drafts.size)
         assertEquals("Draft quest", drafts.first().title)
         assertEquals(3, drafts.first().questionCount)
+    }
+
+    // ── 4.16 / UX-6: исход модельной проверки доезжает до состояния экрана ────────────────
+
+    @Test
+    fun `when drafts are visible then review outcomes surface keyed by draft id`() = runTest {
+        val authoringRepo = FakeQuestAuthoringRepository()
+        authoringRepo.emit(
+            listOf(
+                QuestDraftSummary(
+                    id = QuestDraftId("draft-1"),
+                    catalogId = CatalogId("cat1"),
+                    title = "Draft quest",
+                    status = QuestDraftStatus.REVIEW_QUEUED,
+                    questionCount = 3,
+                    updatedAtMs = 10L,
+                    isActive = true,
+                ),
+            ),
+        )
+        val outcomeRepo = FakeQuestReviewOutcomeRepository(
+            snapshots = listOf(
+                QuestReviewOutcomeSnapshot(
+                    submissionId = "sub-1",
+                    draftId = "draft-1",
+                    status = QuestReviewOutcomeSnapshot.STATUS_REVIEW_DELAYED,
+                    rejectionReason = null,
+                    failedQuestions = emptyList(),
+                    detectedLanguage = "ru",
+                    outcomeReady = false,
+                ),
+            ),
+        )
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            authoringRepo = authoringRepo,
+            outcomeRepo = outcomeRepo,
+        )
+
+        val review = component.state.value.reviewOutcomes["draft-1"]
+        assertEquals(QuestReviewOutcomeSnapshot.STATUS_REVIEW_DELAYED, review?.status)
+        assertTrue(outcomeRepo.fetchCalls.isNotEmpty(), "the component must fetch outcomes for visible drafts")
+        assertEquals(setOf("draft-1"), outcomeRepo.fetchCalls.single().second)
+    }
+
+    @Test
+    fun `when an outcome is ready then the use case advances and refetches`() = runTest {
+        val outcomeRepo = FakeQuestReviewOutcomeRepository(
+            snapshots = listOf(
+                QuestReviewOutcomeSnapshot(
+                    submissionId = "sub-9",
+                    draftId = "draft-9",
+                    status = QuestReviewOutcomeSnapshot.STATUS_UNDER_REVIEW,
+                    rejectionReason = null,
+                    failedQuestions = emptyList(),
+                    detectedLanguage = null,
+                    outcomeReady = true,
+                ),
+            ),
+        )
+        val fetch = FetchQuestReviewOutcomesUseCase(outcomeRepo)
+
+        val snapshots = fetch(submissionIds = emptySet(), legacyDraftIds = setOf("draft-9"))
+
+        assertEquals(listOf("sub-9"), outcomeRepo.advancedIds, "ready outcome must be advanced")
+        assertEquals(2, outcomeRepo.fetchCalls.size, "advance is followed by a refetch")
+        assertEquals("sub-9", snapshots.single().submissionId)
     }
 
     // ── AC#47 — archived quests visible as on-demand roots ───────────────────

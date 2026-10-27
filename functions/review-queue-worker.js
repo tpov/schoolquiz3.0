@@ -27,6 +27,7 @@ const {
   translationDocumentId,
   verdictDocumentId,
 } = require("./review-pipeline");
+const {buildSubmissionOutcome} = require("./review-outcome");
 const {wrapLessonData} = require("./review-model-client");
 
 const WORKER_STATE_COLLECTION = "review_worker_state";
@@ -308,7 +309,41 @@ function createReviewQueueWorker({
     pipeline.lease = null;
     pipeline.updatedAtMs = now();
     await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set(pipeline);
-    return pipeline.status;
+    const status = pipeline.status;
+    if (status === QUEST_STATUS.RUNNING) return status;
+    // Терминал: исход для автора (4.16) считается из записей и едет в заявку. Публикацию и
+    // смену статуса заявки делает index.js (advanceQuestReviewOutcome / догон) — воркер только
+    // фиксирует вердиктную правду. Сбой исхода не отменяет терминал: догон пересчитает.
+    try {
+      await writeReviewOutcome(submissionId, pipeline);
+    } catch (error) {
+      report(submissionId, error && error.code ? error.code : "OUTCOME_WRITE_FAILED");
+    }
+    return status;
+  }
+
+  /** Исход (4.16): вердикты и переводы читаются заново из хранилища, не из памяти шага. */
+  async function writeReviewOutcome(submissionId, pipeline) {
+    const verdicts = [];
+    const translations = [];
+    for (const lessonId of Object.keys(pipeline.lessons)) {
+      for (const stage of ["WORDS", "FACTS"]) {
+        const verdictId = pipeline.lessons[lessonId].stages[stage] &&
+          pipeline.lessons[lessonId].stages[stage].verdictId;
+        if (!verdictId) continue;
+        const snapshot = await db.doc(`${VERDICTS_COLLECTION}/${verdictId}`).get();
+        if (snapshot && snapshot.exists) verdicts.push(data(snapshot));
+      }
+      const translateState = pipeline.lessons[lessonId].stages.TRANSLATE;
+      if (translateState && translateState.verdictId) {
+        const snapshot = await db.doc(`${TRANSLATIONS_COLLECTION}/${translateState.verdictId}`).get();
+        if (snapshot && snapshot.exists) translations.push(data(snapshot));
+      }
+    }
+    const outcome = buildSubmissionOutcome({pipeline, verdicts, translations});
+    if (!outcome) return null;
+    await db.doc(`${QUEUE_COLLECTION}/${submissionId}`).set({reviewOutcome: outcome, updatedAtMs: now()}, {merge: true});
+    return outcome;
   }
 
   /** Один шаг: одно задание (урок × этап × попытка) от запроса модели до записи. */

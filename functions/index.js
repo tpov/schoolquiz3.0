@@ -6142,6 +6142,9 @@ function requestToDocument(request) {
     lessons: request.lessons,
     questions: request.questions.map(questionToDocument),
     review: checksToCallableMap(request.review),
+    // Исход модельной проверки (4.16): при подаче его ещё нет — поле существует и пусто,
+    // как failedStages выше; writer/reader симметрию стережёт arena-request-document.test.
+    reviewOutcome: null,
   };
 }
 
@@ -6555,6 +6558,204 @@ function currentAuthorRatingScore(userData, profileData) {
   );
 }
 
+/**
+ * Строгий гейт исхода модельной проверки (4.16): документ пишет воркер, но читать его публикуя
+ * можно только в форме, которую этот код понимает. Всё прочее — громкий отказ на ремонте, а не
+ * молчаливая публикация чего-то непонятного.
+ */
+function normalizeReviewOutcome(raw) {
+  const outcome = raw;
+  if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)) {
+    throw new HttpsError("data-loss", "review outcome must be an object");
+  }
+  if (outcome.pipelineStatus !== "QUEST_REVIEWED" && outcome.pipelineStatus !== "REVIEW_DELAYED") {
+    throw new HttpsError("data-loss", "review outcome names an unknown pipeline status");
+  }
+  if (!Array.isArray(outcome.passingLessonIds)) {
+    throw new HttpsError("data-loss", "review outcome must name passing lessons");
+  }
+  if (outcome.passingLessonIds.some((id) => typeof id !== "string" || !id)) {
+    throw new HttpsError("data-loss", "review outcome passing lessons must be identifiers");
+  }
+  if (outcome.detectedLanguage !== null && outcome.detectedLanguage !== undefined &&
+    !["ru", "uk", "en"].includes(outcome.detectedLanguage)) {
+    throw new HttpsError("data-loss", "review outcome names an unknown detected language");
+  }
+  return outcome;
+}
+
+/**
+ * Публикация модельной заявки (AD-32, 4.16, UX-6).
+ *
+ * Исход воркера решает: REVIEW_DELAYED — заявка получает «Проверка задерживается» и фонд не
+ * делит (незавершённый цикл, OQ-2 parked); QUEST_REVIEWED без прошедших уроков — отказ с
+ * «Не прошёл» и списком заваленных вопросов; иначе публикуются прошедшие уроки независимо от
+ * соседей: заявка сужается до прошедшего состава, переводы (review_translations) едут в дерево
+ * вариантами `__lang` рядом с оригиналом. Оркестрация повторяет человеческую половину
+ * публикации — общие помощники те же, ветка своя, чтобы мир ревьюеров не тянуть через флаги
+ * (4.19 удалит его целиком).
+ */
+async function publishModelReviewedSubmission(submissionId, request, requestSnapshot, config, now) {
+  const outcome = normalizeReviewOutcome(request.reviewOutcome);
+  if (outcome.pipelineStatus === "REVIEW_DELAYED") {
+    await requestSnapshot.ref.set({status: "REVIEW_DELAYED", updatedAtMs: now}, {merge: true});
+    return false;
+  }
+  const passing = await resolvePassingLessonsWithTranslations(submissionId, request, outcome);
+  if (passing.lessonIds.length === 0) {
+    await requestSnapshot.ref.set({
+      status: "REJECTED",
+      rejectedAtMs: now,
+      rejectionReason: "REVIEW_FAILED_QUESTIONS",
+      updatedAtMs: now,
+    }, {merge: true});
+    await settleReviewFeeCycle(submissionId, "REJECTED", now);
+    return false;
+  }
+
+  const publishable = {
+    ...request,
+    lessons: passing.lessons,
+    questions: mergeQuestions(
+      request.questions.filter((question) => passing.ids.has(question.lessonId)),
+      passing.translatedQuestions,
+    ),
+  };
+  const batch = db.batch();
+  // Версии узлов читаются до батча: батч писать умеет, а читать нет (AD-12).
+  const hierarchySnapshots = await readPublicHierarchySnapshots(publishable);
+  const currentVersions = versionsByPath(hierarchySnapshots);
+  // Снимается только то, что эта публикация описывает: прошедший состав и есть весь состав.
+  const pruned = planHierarchyPrune({
+    request: publishable,
+    existing: await readPublishedSubtree(publishable),
+    now,
+  });
+  const privatePruned = planPrivateHierarchyPrune({
+    request: publishable,
+    existing: await readPrivateSubtree(publishable),
+  });
+  const existingQuest = hierarchySnapshots[0];
+  if (existingQuest.exists) {
+    const existing = existingQuest.data() || {};
+    const previousVisibleOn = Array.isArray(existing.visibleOn)
+      ? existing.visibleOn.filter((shelf) => typeof shelf === "string")
+      : [];
+    const nextShelf = request.targetShelf;
+    if (previousVisibleOn.length !== 1 || previousVisibleOn[0] !== nextShelf) {
+      writeShelfMoveAudit(batch, {
+        questId: request.draft.id,
+        catalogId: request.draft.catalogId,
+        actorUid: request.ownerUid,
+        action: "republish",
+        previousVisibleOn,
+        visibleOn: [nextShelf],
+        reason: null,
+        now,
+      });
+    }
+  }
+  const assignedVersion = nextVersionAtPath(currentVersions, `quests/${request.draft.id}`);
+  writePublicHierarchyToBatch(batch, publishable, now, currentVersions, assignedVersion);
+  writeHierarchyPruneToBatch(batch, pruned, now);
+  writePrivateHierarchyPruneToBatch(batch, db, privatePruned, now);
+  logPrivatePruneOutcome(privatePruned);
+  writeQuestVersionMirror(batch, {
+    ownerUid: request.ownerUid,
+    catalogId: request.draft.catalogId,
+    questId: request.draft.id,
+    assignedVersion,
+    now,
+  });
+  for (const lesson of publishable.lessons) {
+    const lessonPath = `lessons/${lesson.id}`;
+    const previous = hierarchySnapshots.find((snapshot) => snapshot.ref.path === lessonPath);
+    const previousData = previous && previous.exists ? previous.data() || {} : {};
+    batch.set(db.doc(lessonPath), {
+      authorUid: request.ownerUid,
+      reviewSubmissionId: submissionId,
+      reviewApprovedAtMs: now,
+      publishedAtMs: nonNegativeInteger(previousData.publishedAtMs, now),
+    }, {merge: true});
+  }
+  batch.set(
+    requestSnapshot.ref,
+    {
+      status: "PUBLISHED",
+      publishedAtMs: now,
+      updatedAtMs: now,
+      publicQuestId: request.draft.id,
+    },
+    {merge: true},
+  );
+  await batch.commit();
+  // Публикация зафиксирована — автору уходит повод синхронизироваться, не данные (AD-20).
+  await notifyUser(PUSH_EVENTS.QUEST_PUBLISHED, request.draft.id, request.ownerUid);
+  // Полный цикл: фонд делится сразу за публикацией; отказ расчёта догонится следующим вызовом.
+  await settleReviewFeeCycle(submissionId, "PUBLISHED", Date.now());
+  return true;
+}
+
+/**
+ * Прошедшие уроки с их переводами (4.16): состав берётся из исхода воркера, переводы — из
+ * записей review_translations по checkpoint-у конвейера. Урок из исхода, которого нет в заявке,
+ * публике не открывается: исход описывает этот submission, чужой идентификатор — мусор.
+ */
+async function resolvePassingLessonsWithTranslations(submissionId, request, outcome) {
+  const lessonsById = new Map(request.lessons.map((lesson) => [lesson.id, lesson]));
+  const ids = [];
+  const lessons = [];
+  const translatedQuestions = [];
+  const pipelineSnapshot = await db.doc(`review_pipeline/${submissionId}`).get();
+  const pipeline = pipelineSnapshot && pipelineSnapshot.exists ? pipelineSnapshot.data() || {} : {};
+  for (const lessonId of outcome.passingLessonIds) {
+    const lesson = lessonsById.get(lessonId);
+    if (!lesson) continue;
+    ids.push(lessonId);
+    lessons.push(lesson);
+    const verdictId = pipeline.lessons && pipeline.lessons[lessonId] &&
+      pipeline.lessons[lessonId].stages && pipeline.lessons[lessonId].stages.TRANSLATE &&
+      pipeline.lessons[lessonId].stages.TRANSLATE.verdictId;
+    if (!verdictId) continue;
+    const translationSnapshot = await db.doc(`review_translations/${verdictId}`).get();
+    const translation = translationSnapshot && translationSnapshot.exists
+      ? translationSnapshot.data() || {} : {};
+    for (const language of ["uk", "en"]) {
+      for (const question of Array.isArray(translation.questions && translation.questions[language])
+        ? translation.questions[language] : []) {
+        if (question && typeof question === "object" && question.id) {
+          translatedQuestions.push(normalizeQuestion(question));
+        }
+      }
+    }
+  }
+  return {ids: new Set(ids), lessonIds: ids, lessons, translatedQuestions};
+}
+
+/** Прочитать исход модельной заявки и довести её до авторского статуса (4.16, UX-6). */
+async function advanceModelReviewedSubmission(submissionId) {
+  const requestSnapshot = await db.collection("quest_review_requests").doc(submissionId).get();
+  if (!requestSnapshot.exists) return false;
+  const request = normalizeRequest(requestSnapshot.data() || {}, submissionId);
+  if (!request.reviewOutcome || typeof request.reviewOutcome !== "object") return false;
+  if (request.status !== "UNDER_REVIEW" && request.status !== "PROCESSING") return false;
+  return publishModelReviewedSubmission(submissionId, request, requestSnapshot, await readArenaReviewConfig(), Date.now());
+}
+
+exports.advanceQuestReviewOutcome = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const submissionId = stringValue(request.data && request.data.submissionId);
+  if (!submissionId) throw new HttpsError("invalid-argument", "submissionId is required");
+  // Чужая заявка неотличима от отсутствующей: право проверяет владелец, не существование.
+  const snapshot = await db.collection("quest_review_requests").doc(submissionId).get();
+  if (!snapshot.exists || snapshot.data().ownerUid !== uid) {
+    throw new HttpsError("not-found", "Review submission could not be found");
+  }
+  const published = await advanceModelReviewedSubmission(submissionId);
+  return {published};
+});
+
 async function publishSubmissionIfReady(submissionId, config, now) {
   const requestSnapshot = await db.collection("quest_review_requests").doc(submissionId).get();
   if (!requestSnapshot.exists) return false;
@@ -6571,6 +6772,12 @@ async function publishSubmissionIfReady(submissionId, config, now) {
   if (request.status === "REJECTED") {
     await settleReviewFeeCycle(submissionId, "REJECTED", now);
     return false;
+  }
+  // Модельный конвейер (AD-32, история 4.16): исход записал воркер, здесь — публикация
+  // прошедших уроков и авторский статус заявки. Человеческий путь ниже не тронут: его уносит
+  // 4.19 вместе с ролями ревьюеров.
+  if (request.reviewOutcome && typeof request.reviewOutcome === "object") {
+    return publishModelReviewedSubmission(submissionId, request, requestSnapshot, config, now);
   }
 
   const taskSnapshot = await db.collection("admin/review/lessons")
@@ -8007,6 +8214,10 @@ function normalizeRequest(data, fallbackSubmissionId) {
     // который начнёт его слать, включает снятие, ничего больше не меняя (AD-13).
     draftTree: normalizeDraftTree(data.draftTree),
     status: stringValue(data.status),
+    // Исход модельной проверки (4.16) пишет воркер; форму проверяет normalizeReviewOutcome
+    // в точке использования — здесь только честный проход, чтобы публикация видела правду.
+    reviewOutcome: data.reviewOutcome && typeof data.reviewOutcome === "object" &&
+      !Array.isArray(data.reviewOutcome) ? data.reviewOutcome : null,
     draft: {
       id: stringValue(data.draft && data.draft.id),
       catalogId: stringValue(data.draft && data.draft.catalogId),

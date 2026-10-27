@@ -177,6 +177,7 @@ function buildTranslationRecord({submissionId, lessonId, attempt, revision, mode
     schemaVersion: SCHEMA_VERSION,
     submissionId,
     lessonId,
+    stage: "TRANSLATE",
     attempt: requireAttempt(attempt),
     revision: Number(revision) || 0,
     model: String(model),

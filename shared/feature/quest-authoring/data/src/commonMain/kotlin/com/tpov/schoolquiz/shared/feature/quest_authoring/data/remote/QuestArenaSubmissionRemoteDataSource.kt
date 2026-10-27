@@ -25,6 +25,17 @@ data class QuestionReviewOutcome(
     val passed: Boolean,
 )
 
+/**
+ * Заваленный вопрос модельной проверки (AD-32, история 4.16, UX-6): где, что и почему не прошло.
+ * Этап — один из WORDS/FACTS/TRANSLATE; причина — текст для автора, а не код.
+ */
+data class QuestionReviewFailure(
+    val lessonId: String,
+    val questionId: String,
+    val stage: String,
+    val reason: String,
+)
+
 /** What the server decided about a submission the author sent. */
 data class QuestSubmissionOutcome(
     val submissionId: String,
@@ -35,15 +46,28 @@ data class QuestSubmissionOutcome(
     val failedStages: List<String> = emptyList(),
     /** TESTING-исходы по вопросам ревизии; пусто, пока ревью не начал читать порог. */
     val questionOutcomes: List<QuestionReviewOutcome> = emptyList(),
+    /** Модельная проверка (4.16): заваленные вопросы с уроком, этапом и причиной. */
+    val failedQuestions: List<QuestionReviewFailure> = emptyList(),
+    /** Определённый язык источника (ru/uk/en); null, пока переводов нет. */
+    val detectedLanguage: String? = null,
+    /**
+     * Исход готов, заявка ещё UNDER_REVIEW: клиент просит сервер довести её до статуса
+     * (advance), иначе автор ждал бы ночного reconcile.
+     */
+    val outcomeReady: Boolean = false,
 ) {
     val isRejected: Boolean get() = status == STATUS_REJECTED
 
     /** Опубликовано. Такой же терминальный исход, как отказ, и автору о нём тоже надо сказать. */
     val isPublished: Boolean get() = status == STATUS_PUBLISHED
 
+    /** Проверка задерживается (REVIEW_DELAYED): не терминал черновика, но автору видно сразу. */
+    val isDelayed: Boolean get() = status == STATUS_REVIEW_DELAYED
+
     companion object {
         const val STATUS_REJECTED = "REJECTED"
         const val STATUS_PUBLISHED = "PUBLISHED"
+        const val STATUS_REVIEW_DELAYED = "REVIEW_DELAYED"
     }
 }
 
@@ -66,4 +90,10 @@ interface QuestArenaSubmissionRemoteDataSource {
      * intentionally bounded and never becomes a history scan.
      */
     suspend fun fetchOutcomes(request: QuestSubmissionOutcomeRequest): List<QuestSubmissionOutcome> = emptyList()
+
+    /**
+     * Довести модельную заявку с готовым исходом до авторского статуса (4.16). Чтение владельца —
+     * сервер; чужая или неготовая заявка отвечает отказом и ничего не меняет.
+     */
+    suspend fun advanceOutcome(submissionId: String): Unit = Unit
 }

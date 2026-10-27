@@ -260,14 +260,33 @@ function createFirestoreStub(seed, options) {
     settings: () => {},
     collection: (name) => collectionRef(name),
     doc: (path) => documentRef(path),
+    // Пачка чтений публикации (readPublicHierarchySnapshots): тот же снимок, что у doc().get,
+    // и тот же учёт операций — порядок «чтения до записей» остаётся проверяемым.
+    getAll: async (...refs) => {
+      const results = [];
+      for (const ref of refs) {
+        record("read", ref.path);
+        maybeFail("read", ref.path);
+        results.push(snapshotFor(ref.path));
+      }
+      return results;
+    },
     batch: () => {
       const pending = [];
       return {
         set: (ref, data, writeOptions) => pending.push([ref.path, data, writeOptions]),
+        // Снятие публикации (writeHierarchyPruneToBatch) удаляет узлы: удаление в заглушке —
+        // то же отложенное действие, что и в транзакции.
+        delete: (ref) => pending.push([ref.path, DELETE, undefined]),
         commit: async () => {
           for (const [path, data, writeOptions] of pending) {
             record("write", path);
-            writeDocument(path, data, writeOptions);
+            if (data === DELETE) {
+              store.documents.delete(path);
+              store.writes.push({path, data: undefined, merge: false, deleted: true});
+            } else {
+              writeDocument(path, data, writeOptions);
+            }
           }
         },
       };

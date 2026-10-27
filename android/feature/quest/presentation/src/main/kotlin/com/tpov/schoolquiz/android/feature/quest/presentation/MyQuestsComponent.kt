@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestReviewOutcomeSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewFeeQuote
 import kotlinx.coroutines.flow.StateFlow
 
@@ -55,6 +56,8 @@ data class MyQuestsUiState(
     val selectedCatalogId: CatalogId? = null,
     val isGuest: Boolean = false,
     val isLoading: Boolean = false,
+    /** Исход модельной проверки по draftId (4.16, UX-6): штрихи, «Не прошёл», задержка. */
+    val reviewOutcomes: Map<String, QuestReviewOutcomeSnapshot> = emptyMap(),
 )
 
 data class DraftQuestDisplayItem(

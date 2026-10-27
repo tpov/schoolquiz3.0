@@ -108,8 +108,9 @@ const ENDPOINTS = Object.freeze([
 // C2 materialization callable covered by exam-corrections tests. Re-pinned 2026-10-18 (epic 6
 // merge into e5-inception): one pin over the union surface of both epics. Re-pinned 2026-10-26
 // (story 4.11): quoteQuestReviewFee joins the surface — the read-only fee-quote view covered by
-// review-fee-quote tests.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "7b870bdc58d2cebe16c1ecad524fe0aa054c8c8aca50cecbe479d56faa7b0455";
+// review-fee-quote tests. Re-pinned 2026-10-27 (story 4.16): advanceQuestReviewOutcome joins
+// the surface — the owner-checked advance behind the model-review outcome.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "e5ccaeb97c84cbf32974009e1d2a15b30f94235f44476d56a3ab0caec23a622d";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
@@ -364,16 +365,19 @@ test("actual callable enforces author/curator scope, hides foreign lesson existe
   const outcomes = await call("listMyQuestReviewSubmissions", "author", {
     submissionIds: ["submission-rejected", "submission-published", "submission-in-review"], legacyDraftIds: [],
   });
-  assert.deepEqual(outcomes, {viewVersion: "quest-review-submissions-v1", entries: [
+  assert.deepEqual(outcomes, {viewVersion: "quest-review-submissions-v2", entries: [
     {submissionId: "submission-in-review", draftId: "draft-in-review", status: "UNDER_REVIEW",
       rejectionReason: null, failedStages: ["TESTING", "TRANSLATION"],
       questionOutcomes: [
         {questionId: "q1", testingScore: 2.5, passed: true},
         {questionId: "q2", testingScore: 1, passed: false},
-      ]},
+      ],
+      failedQuestions: [], detectedLanguage: null, outcomeReady: false},
     {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED",
+      failedQuestions: [], detectedLanguage: null, outcomeReady: false,
       rejectionReason: null, failedStages: [], questionOutcomes: []},
     {submissionId: "submission-rejected", draftId: "draft-rejected", status: "REJECTED",
+      failedQuestions: [], detectedLanguage: null, outcomeReady: false,
       rejectionReason: "Correct the unsupported question format", failedStages: [], questionOutcomes: []},
   ]});
   assertNoRawReviewRequest(outcomes);
@@ -382,6 +386,7 @@ test("actual callable enforces author/curator scope, hides foreign lesson existe
   });
   assert.deepEqual(legacyOutcome.entries, [
     {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null,
+      failedQuestions: [], detectedLanguage: null, outcomeReady: false,
       failedStages: [], questionOutcomes: []},
   ]);
   assertNoRawReviewRequest(legacyOutcome);

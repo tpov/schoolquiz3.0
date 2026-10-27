@@ -299,9 +299,10 @@ test("author outcome view binds exact submissions or bounded legacy drafts to Au
   }});
   assert.deepEqual(exact, {viewVersion: REVIEW_SUBMISSION_VIEW_VERSION, entries: [
     {submissionId: "submission-published", draftId: "draft-published", status: "PUBLISHED", rejectionReason: null,
-      failedStages: [], questionOutcomes: []},
+      failedStages: [], questionOutcomes: [], failedQuestions: [], detectedLanguage: null, outcomeReady: false},
     {submissionId: "submission-rejected", draftId: "draft-rejected", status: "REJECTED",
-      rejectionReason: "Correct the unsupported question format", failedStages: [], questionOutcomes: []},
+      rejectionReason: "Correct the unsupported question format", failedStages: [], questionOutcomes: [],
+      failedQuestions: [], detectedLanguage: null, outcomeReady: false},
   ]});
   noPrivate(exact);
 
@@ -310,7 +311,7 @@ test("author outcome view binds exact submissions or bounded legacy drafts to Au
   }});
   assert.deepEqual(legacy, {viewVersion: REVIEW_SUBMISSION_VIEW_VERSION, entries: [
     {submissionId: "legacy-current", draftId: "draft-legacy", status: "UNDER_REVIEW", rejectionReason: null,
-      failedStages: [], questionOutcomes: []},
+      failedStages: [], questionOutcomes: [], failedQuestions: [], detectedLanguage: null, outcomeReady: false},
   ]});
   noPrivate(legacy);
 
@@ -355,6 +356,78 @@ test("author outcome view rejects malformed identity lists before reads and fail
   await rejects(f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
     submissionIds: ["submission-in-review"], legacyDraftIds: [],
   }}), "UNAVAILABLE");
+  assert.deepEqual(f.writes, []);
+});
+
+test("model review outcome fields reach the author with strict shapes and bounded lists (4.16)", async () => {
+  const f = fixture();
+  f.documents.set("quest_review_requests/submission-model", reviewSubmission(
+    "author", "draft-model", "UNDER_REVIEW", 120, {
+      reviewOutcome: {
+        pipelineStatus: "QUEST_REVIEWED",
+        failedQuestions: [
+          {lessonId: "lesson-model", questionId: "q2", stage: "FACTS", reason: "ключ неверен: Париж"},
+          {lessonId: "lesson-model", questionId: "q3", stage: "WORDS", reason: "запрещённый оборот"},
+        ],
+        detectedLanguage: "uk",
+        passingLessonIds: ["lesson-model"],
+        delayedStages: [],
+        reviewedAtMs: 500,
+      },
+    },
+  ));
+  const reply = await f.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-model"], legacyDraftIds: [],
+  }});
+  assert.deepEqual(reply.entries[0].failedQuestions, [
+    {lessonId: "lesson-model", questionId: "q2", stage: "FACTS", reason: "ключ неверен: Париж"},
+    {lessonId: "lesson-model", questionId: "q3", stage: "WORDS", reason: "запрещённый оборот"},
+  ]);
+  assert.equal(reply.entries[0].detectedLanguage, "uk");
+  assert.equal(reply.entries[0].outcomeReady, true, "UNDER_REVIEW + QUEST_REVIEWED asks the client to advance");
+  // noPrivate здесь адресный: reason заваленного вопроса — авторское поле по UX-6 (расширение
+  // списка), а приватным остаётся тело заявки и его служебные поля.
+  const exposed = JSON.stringify(reply);
+  for (const token of ["PRIVATE_", "\"questions\"", "processedAtMs", "lastError", "payload"]) {
+    assert.equal(exposed.includes(token), false, token);
+  }
+  assert.deepEqual(f.writes, []);
+
+  // Задержка: исход виден, довести до статуса не просят.
+  const delayed = fixture();
+  delayed.documents.set("quest_review_requests/submission-delayed", reviewSubmission(
+    "author", "draft-delayed", "UNDER_REVIEW", 121, {
+      reviewOutcome: {pipelineStatus: "REVIEW_DELAYED", failedQuestions: [], detectedLanguage: null,
+        passingLessonIds: [], delayedStages: [{lessonId: "l", stage: "TRANSLATE"}], reviewedAtMs: 500},
+    },
+  ));
+  const delayedReply = await delayed.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-delayed"], legacyDraftIds: [],
+  }});
+  assert.equal(delayedReply.entries[0].outcomeReady, false);
+  assert.deepEqual(delayedReply.entries[0].failedQuestions, []);
+
+  // Битые формы — generic unavailable: чужой этап, неизвестный язык, чужой submissionId,
+  // слишком длинный список.
+  for (const patch of [
+    {reviewOutcome: {pipelineStatus: "QUEST_REVIEWED", failedQuestions: [
+      {lessonId: "l", questionId: "q", stage: "MADE_UP", reason: "x"}], passingLessonIds: [], reviewedAtMs: 1}},
+    {reviewOutcome: {pipelineStatus: "QUEST_REVIEWED", failedQuestions: [], detectedLanguage: "fr",
+      passingLessonIds: [], reviewedAtMs: 1}},
+    {reviewOutcome: {pipelineStatus: "WEIRD", failedQuestions: [], passingLessonIds: [], reviewedAtMs: 1}},
+    {reviewOutcome: {pipelineStatus: "QUEST_REVIEWED",
+      failedQuestions: Array.from({length: 201}, (_, i) =>
+        ({lessonId: `l${i}`, questionId: "q", stage: "WORDS", reason: "x"})),
+      passingLessonIds: [], reviewedAtMs: 1}},
+  ]) {
+    const g = fixture();
+    g.documents.set("quest_review_requests/submission-model", reviewSubmission(
+      "author", "draft-model", "UNDER_REVIEW", 120, patch,
+    ));
+    await rejects(g.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+      submissionIds: ["submission-model"], legacyDraftIds: [],
+    }}), "UNAVAILABLE");
+  }
   assert.deepEqual(f.writes, []);
 });
 

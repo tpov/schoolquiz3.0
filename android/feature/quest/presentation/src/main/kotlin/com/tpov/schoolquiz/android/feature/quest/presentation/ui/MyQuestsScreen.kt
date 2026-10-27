@@ -34,6 +34,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.R
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SUBMITTABLE_DRAFT_STATUSES
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestReviewOutcomeSnapshot
 
 /**
  * "Мои квесты" screen.
@@ -98,6 +99,7 @@ fun MyQuestsScreen(
                     items(state.drafts) { draft ->
                         DraftQuestCard(
                             item = draft,
+                            review = state.reviewOutcomes[draft.id.value],
                             onClick = { component.onDraftClick(draft) },
                             onSubmitClick = { component.onDraftSubmitClick(draft) },
                             modifier =
@@ -148,6 +150,7 @@ private fun DraftQuestDisplayItem.isSubmittable(): Boolean = status in SUBMITTAB
 @Composable
 private fun DraftQuestCard(
     item: DraftQuestDisplayItem,
+    review: QuestReviewOutcomeSnapshot?,
     onClick: () -> Unit,
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -182,6 +185,9 @@ private fun DraftQuestCard(
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
+            // Исход модельной проверки (4.16, UX-6): штрихи проверок, «Проверка задерживается»,
+            // «Не прошёл» со списком заваленных вопросов и «Исправить вопросы».
+            DraftReviewOutcomeBlock(review = review, onFixClick = onClick)
             // Подача с карточки (история 4.11, D13): раньше карточка умела только открыть
             // редактор, и черновик нельзя было выбрать в форме подачи.
             if (item.isSubmittable()) {
@@ -198,6 +204,92 @@ private fun DraftQuestCard(
         }
     }
 }
+
+/**
+ * Блок исхода проверки на карточке черновика (4.16, UX-6).
+ *
+ * Ожидание — два штриха проверок («Слова», «Факты»); задержка — «Проверка задерживается» (никогда
+ * не отказ по качеству); отказ — «Не прошёл» с числом и расширением по вопросам: урок, этап,
+ * причина, затем «Исправить вопросы». Определённый язык — деталь-строка. Публикация тегами
+ * места показывается списком квестов и здесь не дублируется.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun DraftReviewOutcomeBlock(
+    review: QuestReviewOutcomeSnapshot?,
+    onFixClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (review == null) return
+    Column(modifier = modifier.fillMaxWidth()) {
+        review.detectedLanguage?.let { language ->
+            Text(
+                text = stringResource(R.string.quest_review_language, humanReadableLanguage(language)),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        when {
+            review.isDelayed -> Text(
+                text = stringResource(R.string.quest_review_delayed),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            review.isWaiting -> Text(
+                text = stringResource(R.string.quest_review_strokes),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            review.isRejected -> {
+                Text(
+                    text = stringResource(R.string.quest_review_failed_tag, review.failedQuestions.size),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                review.failedQuestions.forEach { failure ->
+                    Text(
+                        text = stringResource(
+                            R.string.quest_review_failed_line,
+                            failure.lessonId,
+                            humanReadableStage(failure.stage),
+                            failure.reason,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+                Button(
+                    onClick = onFixClick,
+                    modifier =
+                        Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.quest_fix_questions))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun humanReadableStage(stage: String): String =
+    when (stage) {
+        "WORDS" -> stringResource(R.string.quest_stage_words)
+        "FACTS" -> stringResource(R.string.quest_stage_facts)
+        "TRANSLATE" -> stringResource(R.string.quest_stage_translate)
+        else -> stage
+    }
+
+@Composable
+private fun humanReadableLanguage(language: String): String =
+    when (language) {
+        "ru" -> stringResource(R.string.quest_language_ru)
+        "uk" -> stringResource(R.string.quest_language_uk)
+        "en" -> stringResource(R.string.quest_language_en)
+        else -> language
+    }
 
 /**
  * Диалог подачи: цена названа до отправки (D13), подтверждение без цитаты невозможно.

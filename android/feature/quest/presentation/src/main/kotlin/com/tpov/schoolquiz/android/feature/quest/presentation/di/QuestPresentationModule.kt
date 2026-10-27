@@ -24,6 +24,7 @@ val questPresentationModule =
                 observeCatalogs = get(),
                 quoteReviewFee = get(),
                 submitQuestDraftToArena = get(),
+                fetchReviewOutcomes = get(),
                 navigator = nav,
                 onQuestDrillDown = onQuestDrillDown,
             )

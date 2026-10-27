@@ -38,13 +38,28 @@ class QuestArenaOutcomeSync(
                 "Awaiting drafts must not share an active review submission"
             }
             val legacyDraftIds = targets.filter { it.activeSubmissionId == null }.mapTo(linkedSetOf()) { it.draftId }
-            val outcomes =
+            val firstPass =
                 remote.fetchOutcomes(
                     QuestSubmissionOutcomeRequest(
                         submissionIds = exactBySubmissionId.keys,
                         legacyDraftIds = legacyDraftIds,
                     ),
                 )
+            // Исход готов, статус ещё не доведён (4.16): просим сервер опубликовать/отказать и
+            // перечитываем один раз — автор видит вердикт в этом же цикле, а не в ночном догоне.
+            val readyIds = firstPass.filter { it.outcomeReady }.map { it.submissionId }
+            val outcomes =
+                if (readyIds.isEmpty()) {
+                    firstPass
+                } else {
+                    readyIds.forEach { remote.advanceOutcome(it) }
+                    remote.fetchOutcomes(
+                        QuestSubmissionOutcomeRequest(
+                            submissionIds = exactBySubmissionId.keys,
+                            legacyDraftIds = legacyDraftIds,
+                        ),
+                    )
+                }
             validateOutcomes(outcomes, exactBySubmissionId, legacyDraftIds)
 
             outcomes.forEach { outcome ->
@@ -136,6 +151,6 @@ class QuestArenaOutcomeSync(
     }
 
     private companion object {
-        val REVIEW_SUBMISSION_STATUSES = setOf("PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED")
+        val REVIEW_SUBMISSION_STATUSES = setOf("PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED", "REVIEW_DELAYED")
     }
 }

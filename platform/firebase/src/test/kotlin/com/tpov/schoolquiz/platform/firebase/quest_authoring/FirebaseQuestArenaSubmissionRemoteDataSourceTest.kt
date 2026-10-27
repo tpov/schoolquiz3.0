@@ -23,7 +23,7 @@ class FirebaseQuestArenaSubmissionRemoteDataSourceTest {
         val outcomes =
             questReviewSubmissionOutcomes(
                 mapOf(
-                    "viewVersion" to "quest-review-submissions-v1",
+                    "viewVersion" to "quest-review-submissions-v2",
                     "entries" to
                         listOf(
                             mapOf(
@@ -58,7 +58,7 @@ class FirebaseQuestArenaSubmissionRemoteDataSourceTest {
         val outcomes =
             questReviewSubmissionOutcomes(
                 mapOf(
-                    "viewVersion" to "quest-review-submissions-v1",
+                    "viewVersion" to "quest-review-submissions-v2",
                     "entries" to
                         listOf(
                             mapOf(
@@ -111,12 +111,96 @@ class FirebaseQuestArenaSubmissionRemoteDataSourceTest {
     }
 
     @Test
+    fun decoderCarriesModelOutcomeFields_failedQuestionsLanguageReady() {
+        val outcomes =
+            questReviewSubmissionOutcomes(
+                mapOf(
+                    "viewVersion" to "quest-review-submissions-v2",
+                    "entries" to
+                        listOf(
+                            mapOf(
+                                "submissionId" to "submission-1",
+                                "draftId" to "draft-1",
+                                "status" to "REVIEW_DELAYED",
+                                "rejectionReason" to null,
+                                "failedQuestions" to
+                                    listOf(
+                                        mapOf(
+                                            "lessonId" to "l1",
+                                            "questionId" to "q2",
+                                            "stage" to "FACTS",
+                                            "reason" to "ключ неверен",
+                                        ),
+                                    ),
+                                "detectedLanguage" to "uk",
+                                "outcomeReady" to false,
+                            ),
+                            mapOf(
+                                "submissionId" to "submission-2",
+                                "draftId" to "draft-2",
+                                "status" to "UNDER_REVIEW",
+                                "rejectionReason" to null,
+                                "failedQuestions" to emptyList<Any?>(),
+                                "detectedLanguage" to null,
+                                "outcomeReady" to true,
+                            ),
+                        ),
+                ),
+                QuestSubmissionOutcomeRequest(setOf("submission-1", "submission-2"), emptySet()),
+            )
+
+        assertEquals("REVIEW_DELAYED", outcomes[0].status)
+        assertEquals(1, outcomes[0].failedQuestions.size)
+        assertEquals("l1", outcomes[0].failedQuestions[0].lessonId)
+        assertEquals("FACTS", outcomes[0].failedQuestions[0].stage)
+        assertEquals("ключ неверен", outcomes[0].failedQuestions[0].reason)
+        assertEquals("uk", outcomes[0].detectedLanguage)
+        assertEquals(false, outcomes[0].outcomeReady)
+        assertEquals(true, outcomes[1].outcomeReady)
+    }
+
+    @Test
+    fun decoderFailsClosedOnMalformedModelOutcomeFields() {
+        val request = QuestSubmissionOutcomeRequest(setOf("submission-1"), emptySet())
+
+        fun entry(failedQuestions: Any?, detectedLanguage: Any?, outcomeReady: Any?) = mapOf(
+            "viewVersion" to "quest-review-submissions-v2",
+            "entries" to
+                listOf(
+                    mapOf(
+                        "submissionId" to "submission-1",
+                        "draftId" to "draft-1",
+                        "status" to "UNDER_REVIEW",
+                        "rejectionReason" to null,
+                        "failedQuestions" to failedQuestions,
+                        "detectedLanguage" to detectedLanguage,
+                        "outcomeReady" to outcomeReady,
+                    ),
+                ),
+        )
+
+        // Чужой этап, неизвестный язык и небулев флаг — мусор, а не пустота.
+        assertIllegalState {
+            questReviewSubmissionOutcomes(
+                entry(listOf(mapOf("lessonId" to "l", "questionId" to "q", "stage" to "MADE_UP", "reason" to "x")), null, false),
+                request,
+            )
+        }
+        assertIllegalState {
+            questReviewSubmissionOutcomes(entry(emptyList<Any?>(), "fr", false), request)
+        }
+        assertIllegalState {
+            questReviewSubmissionOutcomes(entry(emptyList<Any?>(), null, "yes"), request)
+        }
+    }
+
+    @Test
     fun decoderFailsClosedOnMalformedOutcomes() {
         val request = QuestSubmissionOutcomeRequest(setOf("submission-1"), emptySet())
 
         fun entry(outcomes: Any?) =
             mapOf(
-                "viewVersion" to "quest-review-submissions-v1",
+                "viewVersion" to "quest-review-submissions-v2",
                 "entries" to
                     listOf(
                         mapOf(
@@ -137,7 +221,7 @@ class FirebaseQuestArenaSubmissionRemoteDataSourceTest {
         assertIllegalState {
             questReviewSubmissionOutcomes(
                 mapOf(
-                    "viewVersion" to "quest-review-submissions-v1",
+                    "viewVersion" to "quest-review-submissions-v2",
                     "entries" to
                         listOf(
                             mapOf(
@@ -161,7 +245,7 @@ class FirebaseQuestArenaSubmissionRemoteDataSourceTest {
         assertIllegalState {
             questReviewSubmissionOutcomes(
                 mapOf(
-                    "viewVersion" to "quest-review-submissions-v1",
+                    "viewVersion" to "quest-review-submissions-v2",
                     "entries" to
                         listOf(
                             mapOf(
@@ -178,7 +262,7 @@ class FirebaseQuestArenaSubmissionRemoteDataSourceTest {
         assertIllegalState {
             questReviewSubmissionOutcomes(
                 mapOf(
-                    "viewVersion" to "quest-review-submissions-v1",
+                    "viewVersion" to "quest-review-submissions-v2",
                     "entries" to
                         listOf(
                             mapOf(

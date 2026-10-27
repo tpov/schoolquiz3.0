@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.platform.firebase.quest_authoring
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.network.withAppTimeout
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.MAX_QUEST_REVIEW_OUTCOME_TARGETS
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestionReviewFailure
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcome
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestSubmissionOutcomeRequest
@@ -34,6 +35,14 @@ class FirebaseQuestArenaSubmissionRemoteDataSource(
                 .await()
                 .data
         return questReviewSubmissionOutcomes(data, request)
+    }
+
+    override suspend fun advanceOutcome(submissionId: String) {
+        functions
+            .getHttpsCallable(ADVANCE_QUEST_REVIEW_OUTCOME)
+            .withAppTimeout()
+            .call(mapOf(SUBMISSION_ID to submissionId))
+            .await()
     }
 }
 
@@ -77,6 +86,9 @@ internal fun questReviewSubmissionOutcomes(
             rejectionReason = reason,
             failedStages = entry.failedStages(),
             questionOutcomes = entry.questionOutcomes(),
+            failedQuestions = entry.failedQuestions(),
+            detectedLanguage = entry.detectedLanguage(),
+            outcomeReady = entry.outcomeReady(),
         )
     }
 }
@@ -84,10 +96,13 @@ internal fun questReviewSubmissionOutcomes(
 /**
  * Стадии и по-вопросные исходы — аддитивные поля вью: старый документ отвечает их отсутствием,
  * и это честная пустота. Битое поле — не пустота, а повод перечитать: оседать на мусоре синхронизация
- * не должна.
+ * не должна. Модельные поля (4.16) — той же школы: отсутствие честно пусто, мусор — отказ.
  */
 private const val MAX_FAILED_STAGES = 8
 private const val MAX_QUESTION_OUTCOMES = 64
+private const val MAX_FAILED_QUESTIONS = 200
+private val MODEL_REVIEW_STAGES = setOf("WORDS", "FACTS", "TRANSLATE")
+private val MODEL_LANGUAGES = setOf("ru", "uk", "en")
 
 private fun Map<*, *>.failedStages(): List<String> {
     val raw = this[FAILED_STAGES] ?: return emptyList()
@@ -116,13 +131,44 @@ private fun Map<*, *>.questionOutcomes(): List<QuestionReviewOutcome> {
     }
 }
 
+private fun Map<*, *>.failedQuestions(): List<QuestionReviewFailure> {
+    val raw = this[FAILED_QUESTIONS] ?: return emptyList()
+    val failures = raw as? List<*> ?: throw IllegalStateException("Review outcome failures are not a list")
+    check(failures.size <= MAX_FAILED_QUESTIONS) { "Review outcome exceeds its failure bound" }
+    return failures.map { item ->
+        val failure = item as? Map<*, *> ?: throw IllegalStateException("Review failure entry is not an object")
+        val stage = failure.requiredString(STAGE)
+        check(stage in MODEL_REVIEW_STAGES) { "Review failure names an unknown stage" }
+        QuestionReviewFailure(
+            lessonId = failure.requiredString(LESSON_ID),
+            questionId = failure.requiredString(QUESTION_ID),
+            stage = stage,
+            reason = failure.requiredString(REASON),
+        )
+    }
+}
+
+private fun Map<*, *>.detectedLanguage(): String? {
+    val raw = this[DETECTED_LANGUAGE] ?: return null
+    check(raw is String && raw in MODEL_LANGUAGES) { "Review outcome names an unknown detected language" }
+    return raw
+}
+
+private fun Map<*, *>.outcomeReady(): Boolean =
+    when (val raw = this[OUTCOME_READY]) {
+        null -> false
+        is Boolean -> raw
+        else -> throw IllegalStateException("Review outcome ready flag is not a boolean")
+    }
+
 private fun Map<*, *>.string(key: String): String? = this[key] as? String
 
 private fun Map<*, *>.requiredString(key: String): String =
     string(key)?.takeIf { it.isNotBlank() } ?: throw IllegalStateException("Review outcome field $key is missing")
 
 private const val LIST_MY_QUEST_REVIEW_SUBMISSIONS = "listMyQuestReviewSubmissions"
-private const val QUEST_REVIEW_SUBMISSIONS_VIEW_VERSION = "quest-review-submissions-v1"
+private const val ADVANCE_QUEST_REVIEW_OUTCOME = "advanceQuestReviewOutcome"
+private const val QUEST_REVIEW_SUBMISSIONS_VIEW_VERSION = "quest-review-submissions-v2"
 private const val SUBMISSION_IDS = "submissionIds"
 private const val LEGACY_DRAFT_IDS = "legacyDraftIds"
 private const val VIEW_VERSION = "viewVersion"
@@ -136,4 +182,11 @@ private const val QUESTION_OUTCOMES = "questionOutcomes"
 private const val QUESTION_ID = "questionId"
 private const val TESTING_SCORE = "testingScore"
 private const val PASSED = "passed"
-private val REVIEW_SUBMISSION_STATUSES = setOf("PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED")
+private const val FAILED_QUESTIONS = "failedQuestions"
+private const val LESSON_ID = "lessonId"
+private const val STAGE = "stage"
+private const val REASON = "reason"
+private const val DETECTED_LANGUAGE = "detectedLanguage"
+private const val OUTCOME_READY = "outcomeReady"
+private val REVIEW_SUBMISSION_STATUSES =
+    setOf("PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED", "REVIEW_DELAYED")

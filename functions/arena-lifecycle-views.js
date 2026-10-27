@@ -7,7 +7,7 @@ const VIEW_VERSION = "arena-lifecycle-views-v1";
 // Собственная история операций и «Начисления» урока (AD-30/UX-20, история 8.6) — та же семья
 // авторизованных view, тот же курсор; контракт полей — ux-o10-own-ledger-projection-contract.md.
 const OWN_HISTORY_VIEW_VERSION = "own-history-v1";
-const REVIEW_SUBMISSION_VIEW_VERSION = "quest-review-submissions-v1";
+const REVIEW_SUBMISSION_VIEW_VERSION = "quest-review-submissions-v2";
 const LIMITS = Object.freeze({defaultPageSize: 20, maxPageSize: 20, cursorBytes: 4096, responseBytes: 100_000});
 const SHELVES = new Set(["review", "arena", "tournament", "home", "retired", "rejected"]);
 const HISTORY_STATUSES = new Set(["APPLIED", "REJECTED"]);
@@ -27,12 +27,19 @@ const FIRST_TRANSITION_REJECTION_CODES = new Set([
 const CURSOR_VERSION = 1;
 const CURSOR_NONCE_BYTES = 12;
 const CURSOR_TAG_BYTES = 16;
-const REVIEW_SUBMISSION_STATUSES = new Set(["PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED"]);
+const REVIEW_SUBMISSION_STATUSES = new Set(["PROCESSING", "UNDER_REVIEW", "PUBLISHED", "REJECTED", "REVIEW_DELAYED"]);
 // Stages the submission document may name as not passed; the author reads them verbatim (CAP-3).
 const REVIEW_STAGES = new Set(["TESTING", "LOGIC", "TRANSLATION"]);
+// Model-pipeline stages (AD-32, story 4.16): failed questions name one of these verbatim.
+const MODEL_REVIEW_STAGES = new Set(["WORDS", "FACTS", "TRANSLATE"]);
+// Model-pipeline languages: the detected source language of a submission (UX-6 detail row).
+const MODEL_LANGUAGES = new Set(["ru", "uk", "en"]);
 // A reviewer writes this explanation specifically for the author. It is not a free pass to ship
 // an unbounded request document through a callable response.
 const MAX_AUTHOR_REJECTION_REASON_BYTES = 1000;
+// Bound of the failed-question list (UX-6 expansion): a quest carries dozens of questions, not
+// thousands; a longer list is a hostile document, refused for re-read.
+const MAX_FAILED_QUESTIONS = 200;
 
 class ArenaLifecycleViewError extends Error {
   constructor(code) {
@@ -237,7 +244,37 @@ function reviewSubmissionEntry(snapshot, uid, expectedDraftId = null) {
   return {submissionId, draftId: raw.draftId, status: raw.status,
     rejectionReason: raw.status === "REJECTED" ? authorVisibleRejectionReason(raw.rejectionReason) : null,
     failedStages: inFlight ? reviewFailedStages(raw.failedStages) : [],
-    questionOutcomes: inFlight ? reviewQuestionOutcomes(raw.questionOutcomes) : []};
+    questionOutcomes: inFlight ? reviewQuestionOutcomes(raw.questionOutcomes) : [],
+    ...modelReviewOutcomeEntry(raw, inFlight)};
+}
+
+/**
+ * Поля модельного конвейера (AD-32, история 4.16, UX-6): список заваленных вопросов с уроком,
+ * этапом и причиной; определённый язык источника; флаг «исход готов, доведи заявку до статуса».
+ * Старые документы отвечают отсутствием — честная пустота, как и у стадий выше.
+ */
+function modelReviewOutcomeEntry(raw, inFlight) {
+  const outcome = plain(raw.reviewOutcome) ? raw.reviewOutcome : null;
+  const entry = {failedQuestions: [], detectedLanguage: null, outcomeReady: false};
+  if (!outcome) return entry;
+  unavailable(outcome.pipelineStatus === "QUEST_REVIEWED" || outcome.pipelineStatus === "REVIEW_DELAYED");
+  if (Array.isArray(outcome.failedQuestions)) {
+    unavailable(outcome.failedQuestions.length <= MAX_FAILED_QUESTIONS);
+    const seen = new Set();
+    entry.failedQuestions = outcome.failedQuestions.map((item) => {
+      unavailable(plain(item) && identifier(item.lessonId) && identifier(item.questionId) &&
+        MODEL_REVIEW_STAGES.has(item.stage) && authorVisibleRejectionReason(item.reason));
+      unavailable(seen.add(`${item.lessonId}_${item.questionId}_${item.stage}`));
+      return {lessonId: item.lessonId, questionId: item.questionId, stage: item.stage, reason: item.reason.trim()};
+    });
+  }
+  if (outcome.detectedLanguage !== null && outcome.detectedLanguage !== undefined) {
+    unavailable(typeof outcome.detectedLanguage === "string" &&
+      MODEL_LANGUAGES.has(outcome.detectedLanguage));
+    entry.detectedLanguage = outcome.detectedLanguage;
+  }
+  entry.outcomeReady = inFlight && outcome.pipelineStatus === "QUEST_REVIEWED";
+  return entry;
 }
 
 function reviewFailedStages(raw) {

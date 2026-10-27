@@ -50,4 +50,16 @@
     <string name="quest_submit_quote_failed">Не вдалося дізнатися плату. Перевірте зв\'язок і спробуйте ще раз.</string>
     <string name="quest_submit_failed">Не вдалося надіслати на перевірку.</string>
     <string name="quest_cancel">Скасувати</string>
+    <string name="quest_review_strokes">Перевірка: «Слова» · «Факти»</string>
+    <string name="quest_review_delayed">Перевірка затримується</string>
+    <string name="quest_review_failed_tag">Не пройшов: питань — %1$d</string>
+    <string name="quest_review_failed_line">Урок %1$s · %2$s: %3$s</string>
+    <string name="quest_review_language">Мова: %1$s</string>
+    <string name="quest_fix_questions">Виправити питання</string>
+    <string name="quest_stage_words">Слова</string>
+    <string name="quest_stage_facts">Факти</string>
+    <string name="quest_stage_translate">Переклад</string>
+    <string name="quest_language_ru">російська</string>
+    <string name="quest_language_uk">українська</string>
+    <string name="quest_language_en">English</string>
 </resources>
