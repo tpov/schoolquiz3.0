@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.android.core.designsystem.model.toDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxFailureReason
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
@@ -64,6 +65,7 @@ class DefaultHomeQuestsComponent(
     private val openGiftBoxUseCase: OpenGiftBoxUseCase,
     private val syncBoxStreak: SyncBoxStreakUseCase,
     private val claimPremiumDailyGift: ClaimPremiumDailyGiftUseCase,
+    private val networkMonitor: NetworkMonitor,
     private val onCatalogDrillDown: (CatalogId, String) -> Unit,
     private val onResumeLesson: (LessonId) -> Unit,
     private val attemptRepository: LessonAttemptRepository,
@@ -81,6 +83,7 @@ class DefaultHomeQuestsComponent(
     private val pendingGiftBox = MutableStateFlow<PendingGiftBoxOpening?>(null)
     private var giftBoxRequest: Job? = null
     private var premiumGiftRequest: Job? = null
+    private var premiumIntentPending = false
     private var streakSync: Job? = null
 
     private val continueLesson = MutableStateFlow<ContinueLessonUi?>(null)
@@ -213,6 +216,14 @@ class DefaultHomeQuestsComponent(
                         syncBoxStreak()
                     }
             }
+            // Возврат на экран доигрывает лежащее намерение и без смени сети (таймаут, не офлайн):
+            // re-arm (retro e7 F2) — иначе кнопка жила бы «забираем…» до конца сессии. Условие —
+            // последнее НАБЛЮДЕННОЕ значение намерения, не презентационное состояние: Essenty
+            // проигрывает doOnResume при регистрации, и застройка по state стреляла бы на
+            // конструкции, в том числе без сети.
+            if (premiumIntentPending) {
+                rearmPremiumGift()
+            }
         }
     }
 
@@ -241,13 +252,29 @@ class DefaultHomeQuestsComponent(
         // отправкой и ответом (AC процесса-смерти 7.4), а кнопка в состоянии InFlight тапа не
         // принимает — без этого прохода «забираем…» застревало навсегда. Новая заявка этим путём
         // не создаётся: invoke сперва resumePending и только при отсутствии намерения — submit.
+        //
+        // Re-arm (retro e7 F2): первая же неудачная попытка (офлайн/таймаут) оставляла
+        // pending=true, distinctUntilChanged больше не эммитил, и повтор не происходил никогда.
+        // Теперь доигрывание стреляет и на возвращении сети — до появления сети попытка не
+        // начинается вовсе, бессмысленного круга нет.
         scope.launch {
-            claimPremiumDailyGift.observePending().collectLatest { pending ->
-                if (pending && premiumGiftRequest?.isActive != true) {
-                    premiumGiftRequest = scope.launch { claimPremiumDailyGift() }
+            combine(
+                claimPremiumDailyGift.observePending(),
+                networkMonitor.observeOnline(),
+            ) { pending, online -> pending to online }
+                .collect { (pending, online) ->
+                    premiumIntentPending = pending
+                    if (pending && online) {
+                        rearmPremiumGift()
+                    }
                 }
-            }
         }
+    }
+
+    /** Доигрывает лежащее намерение; параллельного запуска не бывает — один активный запрос. */
+    private fun rearmPremiumGift() {
+        if (premiumGiftRequest?.isActive == true) return
+        premiumGiftRequest = scope.launch { claimPremiumDailyGift() }
     }
 
     override fun onContinueClick() {

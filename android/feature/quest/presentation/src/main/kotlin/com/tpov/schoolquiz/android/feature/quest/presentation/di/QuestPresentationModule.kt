@@ -43,6 +43,7 @@ val questPresentationModule =
                 openGiftBoxUseCase = get(),
                 syncBoxStreak = get(),
                 claimPremiumDailyGift = get(),
+                networkMonitor = get(),
                 onCatalogDrillDown = onCatalogDrillDown,
                 onResumeLesson = onResumeLesson,
                 attemptRepository = get(),

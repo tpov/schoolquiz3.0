@@ -272,6 +272,7 @@ class QuizzesRootIntegrationTest {
                 openGiftBoxUseCase = OpenGiftBoxUseCase(NoGiftBoxRepository),
                 syncBoxStreak = noSyncBoxStreak(),
                 claimPremiumDailyGift = noClaimPremiumGift(),
+                networkMonitor = alwaysOnlineMonitor(),
                 onCatalogDrillDown = onCatalogDrillDown,
                 onResumeLesson = {},
                 attemptRepository = FakeLessonAttemptRepository(),
@@ -676,6 +677,13 @@ private fun noSyncBoxStreak() =
     )
 
 private fun noClaimPremiumGift() = ClaimPremiumDailyGiftUseCase(noClaimRepository())
+
+private fun alwaysOnlineMonitor() =
+    object : NetworkMonitor {
+        override fun observeOnline() = flowOf(true)
+
+        override suspend fun isOnline() = true
+    }
 
 private object NoGiftBoxRepository : GiftBoxRepository {
     override suspend fun openGiftBox(): Result<GiftBoxOpening> =

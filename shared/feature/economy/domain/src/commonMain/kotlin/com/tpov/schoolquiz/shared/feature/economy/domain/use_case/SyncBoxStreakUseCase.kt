@@ -76,8 +76,13 @@ class SyncBoxStreakUseCase(
         val profile = profileRepository.currentProfile()
         val base = GiftBoxStreak(profile.boxCount, profile.boxStreakDays, profile.nextBoxAtMs)
         // Чужая база — сервер уже сказал новое слово (второе устройство, своя заявка): местный
-        // счёт пересеивается, а не складывается с чужим.
-        val local = localStreak.find(uid)?.takeIf { it.base == base } ?: LocalBoxStreak(base, base, now)
+        // счёт пересеивается, а не складывается с чужим. Совпадение проверяется ТОЛЬКО парой
+        // (streakDays, nextBoxAtMs): boxCount в OFFLINE_STREAK-wire не ездит, и автогрант
+        // десятого дня при чтении профиля сдвигает его в одиночку — сравнение полной структурой
+        // принимало живую базу за чужую и стирая счёт честно насчитанных офлайн-дней (retro e7 F3).
+        val local =
+            localStreak.find(uid)?.takeIf { it.base.streakDays == base.streakDays && it.base.nextBoxAtMs == base.nextBoxAtMs }
+                ?: LocalBoxStreak(base, base, now)
         val afterVisit = local.counted.visited(now)
         // Заявка считается от счёта с сегодняшним визитом — кроме случая, когда визит из-за
         // пропуска суток ОБОРВАЛ местную серию: тогда до заявки живёт прежний счёт. Поздний
@@ -101,9 +106,17 @@ class SyncBoxStreakUseCase(
             val result = claims.submit(GiftClaimRequest(GiftClaimKind.OFFLINE_STREAK, base, claim))
             offlineClaim = result.getOrNull()
             if (offlineClaim == null) {
-                // Решения нет: визит поверх несосчитанного якоря выглядел бы для сервера
-                // пропущенными сутками и оборвал серию. Намерение лежит — повтор на входе.
-                claimUndecided = true
+                val terminal =
+                    (result.exceptionOrNull() as? GiftClaimException)?.reason == GiftClaimFailureReason.CONFLICTING_REPLAY
+                if (terminal) {
+                    // Fence скрепил operationId с другим телом/владельцем: решения для ЭТОГО тела
+                    // не будет никогда, репозиторий уже отпустил намерение. Визит не запирать —
+                    // вечный «недорешённый» проход блокировал каждый вход навсегда (retro e7 F4).
+                } else {
+                    // Решения нет: визит поверх несосчитанного якоря выглядел бы для сервера
+                    // пропущенными сутками и оборвал серию. Намерение лежит — повтор на входе.
+                    claimUndecided = true
+                }
             } else if (offlineClaim.status == GiftClaimStatus.STALE_BASE) {
                 // Слово сервера выиграло: профиль перечитан репозиторием, счёт пересеивается
                 // ниже, заявка больше не повторяется.

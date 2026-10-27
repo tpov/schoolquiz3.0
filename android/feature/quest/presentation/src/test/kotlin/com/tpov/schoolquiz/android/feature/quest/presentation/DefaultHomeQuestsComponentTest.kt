@@ -23,6 +23,8 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpeningException
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimException
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimFailureReason
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimStatus
@@ -94,6 +96,7 @@ class DefaultHomeQuestsComponentTest {
 
     private val day = 24L * 60 * 60 * 1000
     private val now = MutableStateFlow(10_000L * day)
+    private val online = MutableStateFlow(true)
 
     private fun buildComponent(
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
@@ -120,6 +123,7 @@ class DefaultHomeQuestsComponentTest {
                     clock = { now.value },
                 ),
             claimPremiumDailyGift = ClaimPremiumDailyGiftUseCase(claims),
+            networkMonitor = onlineMonitor(),
             onCatalogDrillDown = onCatalogDrillDown,
             onResumeLesson = onResumeLesson,
             attemptRepository = FakeLessonAttemptRepository(),
@@ -135,9 +139,9 @@ class DefaultHomeQuestsComponentTest {
 
     private fun onlineMonitor() =
         object : NetworkMonitor {
-            override fun observeOnline(): Flow<Boolean> = flowOf(true)
+            override fun observeOnline(): Flow<Boolean> = online
 
-            override suspend fun isOnline() = true
+            override suspend fun isOnline() = online.value
         }
 
     /** Общий порт заявок: и репозиторий в use-cases, и счётчик того, что нажал экран. */
@@ -171,6 +175,10 @@ class DefaultHomeQuestsComponentTest {
         // Лежащие намерения отдельны по виду — как строки (owner_uid, kind) в магазине.
         val pendingKinds = MutableStateFlow<Set<GiftClaimKind>>(emptySet())
 
+        /** Сколько следующих resume упадут, оставив намерение лежать (транспортный отказ). */
+        var resumeFailures = 0
+        val resumeAttempts = mutableListOf<GiftClaimKind>()
+
         override suspend fun submit(request: GiftClaimRequest) = Result.success(
             GiftClaimOutcome(request.kind, GiftClaimStatus.CLAIMED, false, 1, 2, 3, 4, 1, 5),
         )
@@ -179,6 +187,13 @@ class DefaultHomeQuestsComponentTest {
         // null только при отсутствии намерения, как в репозитории.
         override suspend fun resumePending(kind: GiftClaimKind): Result<GiftClaimOutcome>? {
             if (kind !in pendingKinds.value) return null
+            resumeAttempts += kind
+            if (resumeFailures > 0) {
+                resumeFailures--
+                return Result.failure(
+                    GiftClaimException(GiftClaimFailureReason.TRANSPORT, kind),
+                )
+            }
             resumes += kind
             pendingKinds.value = pendingKinds.value - kind
             return Result.success(
@@ -481,6 +496,74 @@ class DefaultHomeQuestsComponentTest {
                 "перезапуск доигрывает лежащую заявку тем же operationId без всякого тапа",
             )
             assertTrue(!claimRepo.pendingKinds.value.contains(GiftClaimKind.PREMIUM_DAILY), "разрешённое намерение больше не числится лежащим")
+            assertTrue(component.state.value.premiumGift !is HomePremiumGiftState.InFlight)
+        }
+
+    // ── 7.4 retro F2: re-arm лежащего намерения — Claiming конечен ────────────
+
+    @Test
+    fun `an offline premium resume waits for the network and settles on reconnect without a new submit`() =
+        runTest {
+            online.value = false
+            val claimRepo = FakeGiftClaimRepository()
+            claimRepo.pendingKinds.value = setOf(GiftClaimKind.PREMIUM_DAILY)
+            val component =
+                buildComponent(
+                    profileRepo = FakeProfileRepository(premiumProfile(untilMs = now.value + day, nextBonusAtMs = 0L)),
+                    claimRepo = claimRepo,
+                )
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(
+                emptyList(),
+                claimRepo.resumeAttempts,
+                "без связи попытка не начинается вовсе — бессмысленного круга нет",
+            )
+            assertTrue(component.state.value.premiumGift is HomePremiumGiftState.InFlight)
+
+            online.value = true
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(
+                listOf(GiftClaimKind.PREMIUM_DAILY),
+                claimRepo.resumes,
+                "возвращение сети доигрывает лежащее намерение",
+            )
+            assertTrue(component.state.value.premiumGift !is HomePremiumGiftState.InFlight, "Claiming конечен")
+            assertEquals(
+                0,
+                claimRepo.submits.count { it == GiftClaimKind.PREMIUM_DAILY },
+                "повтор идёт лежащим намерением — новый operationId не минтуется",
+            )
+        }
+
+    @Test
+    fun `a failed premium resume is re-armed by returning to the screen`() =
+        runTest {
+            // Сеть есть, но ответ не пришёл (таймаут): pending остаётся, новых эмиссий нет —
+            // доиграть обязан возврат на экран (doOnResume), не только смена сети.
+            val claimRepo = FakeGiftClaimRepository()
+            claimRepo.resumeFailures = 1
+            claimRepo.pendingKinds.value = setOf(GiftClaimKind.PREMIUM_DAILY)
+            val component =
+                buildComponent(
+                    profileRepo = FakeProfileRepository(premiumProfile(untilMs = now.value + day, nextBonusAtMs = 0L)),
+                    claimRepo = claimRepo,
+                )
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(1, claimRepo.resumeAttempts.size, "первая попытка упала транспортом")
+            assertTrue(component.state.value.premiumGift is HomePremiumGiftState.InFlight)
+
+            lifecycle.stop()
+            lifecycle.resume()
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(
+                listOf(GiftClaimKind.PREMIUM_DAILY),
+                claimRepo.resumes,
+                "возврат на экран доигрывает намерение после неудачи",
+            )
             assertTrue(component.state.value.premiumGift !is HomePremiumGiftState.InFlight)
         }
 

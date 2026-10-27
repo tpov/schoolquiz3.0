@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.shared.feature.economy.domain.use_case
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.economy.domain.logic.GiftBoxStreak
 import com.tpov.schoolquiz.shared.feature.economy.domain.logic.OfflineAccrualClaim
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimException
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimFailureReason
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimOutcome
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftClaimStatus
@@ -156,6 +158,66 @@ class SyncBoxStreakUseCaseTest {
             assertNull(report.visit, "без решения по заявке визит не посылается")
         }
 
+    @Test fun conflictingReplayFromTheOfflineClaimDoesNotBlockTheVisitAnymore() =
+        runTest {
+            // Fence скрепил operationId с другим телом: решения для ЭТОГО тела не будет никогда,
+            // репозиторий намерение уже отпустил — вечное «недорешение» запирало каждый вход
+            // (retro e7 F4). VISIT продолжает проход.
+            profile.value = UserProfile.offline().copy(uid = "A", boxCount = 0, boxStreakDays = 9, nextBoxAtMs = now.value - 1)
+            localStreak.saved["A"] =
+                LocalBoxStreak(
+                    GiftBoxStreak(0, 9, now.value - 1),
+                    GiftBoxStreak(1, 10, now.value + DAY - 1),
+                    now.value - 1,
+                )
+            claims.failures[GiftClaimKind.OFFLINE_STREAK] =
+                GiftClaimException(GiftClaimFailureReason.CONFLICTING_REPLAY, GiftClaimKind.OFFLINE_STREAK)
+
+            val report = useCase().invoke().getOrThrow()
+
+            assertEquals(
+                listOf(GiftClaimKind.OFFLINE_STREAK, GiftClaimKind.VISIT),
+                claims.submits.map { it.kind },
+                "перманентный отказ заявки не запирает визит",
+            )
+            assertTrue(report.visit != null, "визит ушёл и получил исход")
+        }
+
+    @Test fun autoGrantShiftingOnlyBoxCountKeepsTheHonestlyCountedOfflineDays() =
+        runTest {
+            // Автогрант десятого дня сработал на чтении профиля: свежее слово — boxCount 0→1 при
+            // тех же streakDays/якоре. Полная структурная проверка базы принимала живую базу за
+            // чужую и пересеивала счёт — три честных офлайн-дня исчезали без заявки (retro e7 F3).
+            val lastOfflineVisit = now.value - DAY / 2
+            profile.value =
+                UserProfile.offline().copy(uid = "A", boxCount = 1, boxStreakDays = 9, nextBoxAtMs = now.value - 3 * DAY)
+            localStreak.saved["A"] =
+                LocalBoxStreak(
+                    GiftBoxStreak(0, 9, now.value - 3 * DAY),
+                    GiftBoxStreak(3, 12, lastOfflineVisit + DAY),
+                    lastOfflineVisit,
+                )
+
+            useCase().invoke().getOrThrow()
+
+            assertEquals(
+                listOf(GiftClaimKind.OFFLINE_STREAK, GiftClaimKind.VISIT),
+                claims.submits.map { it.kind },
+                "счёт выжил: заявка уезжает раньше визита",
+            )
+            val claim = claims.submits.first()
+            assertEquals(
+                OfflineAccrualClaim(12, 2),
+                claim.claim,
+                "12 дней серии, 2 коробки сверх автогранта (бокс дня 10 уже выдан словом сервера)",
+            )
+            assertEquals(
+                GiftBoxStreak(1, 9, now.value - 3 * DAY),
+                claim.base,
+                "base — свежее слово дословно, boxCount автогранта в нём виден и не пересчитывается",
+            )
+        }
+
     @Test fun secondEntryInTheSameWindowSendsOnlyTheIdempotentVisit() =
         runTest {
             // После первого прохода счёт пересеян свежим словом; повторный вход в те же сутки
@@ -239,10 +301,12 @@ private class FakeGiftClaimRepository : GiftClaimRepository {
     val resumeOrder = mutableListOf<GiftClaimKind>()
     var refreshes = 0
     var failNext = false
+    val failures = mutableMapOf<GiftClaimKind, Exception>()
     var nextStatus: GiftClaimStatus? = null
 
     override suspend fun submit(request: GiftClaimRequest): Result<GiftClaimOutcome> {
         submits += request
+        failures.remove(request.kind)?.let { return Result.failure(it) }
         if (failNext) return Result.failure(IllegalStateException("no decision"))
         val status = nextStatus ?: if (request.kind == GiftClaimKind.OFFLINE_STREAK) GiftClaimStatus.CLAIMED else GiftClaimStatus.NO_CHANGE
         return Result.success(
