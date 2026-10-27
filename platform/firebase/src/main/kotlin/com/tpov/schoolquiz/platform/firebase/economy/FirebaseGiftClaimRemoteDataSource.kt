@@ -80,9 +80,13 @@ internal data class GiftClaimWireRequest(
  *
  * A body this reader refuses would have been refused by the server too (`invalid-argument`), but
  * refusing here keeps the failed intent where it was written instead of burning a round trip.
+ * Every refusal here is a PRE-CALL refusal ([GiftClaimFailureReason.REQUEST_INVALID]): the request
+ * never leaves the device, so no server decision for this body can exist — the repository
+ * quarantines the intent instead of retrying it forever. This is the opposite direction from the
+ * response-side [GiftClaimFailureReason.ENVELOPE_INVALID], which must keep the intent.
  */
 internal fun giftClaimRequestFrom(payloadJson: String): GiftClaimWireRequest {
-    val body = Json.parseToJsonElement(payloadJson) as? JsonObject ?: error("Missing gift claim body")
+    val body = Json.parseToJsonElement(payloadJson) as? JsonObject ?: throw requestInvalid("Missing gift claim body")
     val kind = kindFrom(body.text("kind"))
     val request =
         GiftClaimWireRequest(
@@ -94,16 +98,17 @@ internal fun giftClaimRequestFrom(payloadJson: String): GiftClaimWireRequest {
             claimedBoxStreakDays = body.objectOrNull("claimed")?.longOrNullAt("boxStreakDays"),
             claimedBoxesEarned = body.objectOrNull("claimed")?.longOrNullAt("boxesEarned"),
         )
-    check(kind == GiftClaimKind.OFFLINE_STREAK || request.baseBoxStreakDays == null) {
-        "Only OFFLINE_STREAK carries a base"
+    if (kind != GiftClaimKind.OFFLINE_STREAK && request.baseBoxStreakDays != null) {
+        throw requestInvalid("Only OFFLINE_STREAK carries a base")
     }
     // Половины офлайн-тела обязательны: тело пишет только GiftClaimRepositoryImpl и всегда с
-    // базой и заявкой; неполное — испорченная строка, и отказать ей нужно здесь, по имени, а не
-    // позже в toWireMap голым IllegalStateException, который превращает намерение в вечный повтор.
-    check(kind != GiftClaimKind.OFFLINE_STREAK || (request.baseBoxStreakDays != null && request.claimedBoxesEarned != null)) {
-        "OFFLINE_STREAK requires both its base and claimed halves"
+    // базой и заявкой; неполное — испорченная строка, и отказать ей нужно здесь, по имени, ДО
+    // вызова: решения сервера для такого тела не существует, и карантин правильнее вечного
+    // повтора, в который голый IllegalStateException превращал намерение раньше.
+    if (kind == GiftClaimKind.OFFLINE_STREAK && (request.baseBoxStreakDays == null || request.claimedBoxesEarned == null)) {
+        throw requestInvalid("OFFLINE_STREAK requires both its base and claimed halves")
     }
-    check(operationIdShape.matches(request.operationId)) { "Gift claim operation id is off-contract" }
+    if (!operationIdShape.matches(request.operationId)) throw requestInvalid("Gift claim operation id is off-contract")
     return request
 }
 
@@ -175,6 +180,10 @@ internal fun giftClaimFailureFrom(
 private fun unreadable(message: String): GiftClaimException =
     GiftClaimException(GiftClaimFailureReason.ENVELOPE_INVALID, cause = IllegalStateException(message))
 
+/** Pre-call отказ разбора сохранённого ТЕЛА: вызова не было, решения не существует — карантин. */
+private fun requestInvalid(message: String): GiftClaimException =
+    GiftClaimException(GiftClaimFailureReason.REQUEST_INVALID, cause = IllegalStateException(message))
+
 /** Статусы, которые планировщик сервера способен вернуть на каждый вид заявки. */
 private val allowedStatuses: Map<GiftClaimKind, Set<GiftClaimStatus>> =
     mapOf(
@@ -188,7 +197,7 @@ private val allowedStatuses: Map<GiftClaimKind, Set<GiftClaimStatus>> =
 private val operationIdShape = Regex("[A-Za-z0-9_-]{16,128}")
 
 private fun kindFrom(name: String): GiftClaimKind =
-    GiftClaimKind.entries.firstOrNull { it.name == name } ?: error("Unknown gift claim kind $name")
+    GiftClaimKind.entries.firstOrNull { it.name == name } ?: throw requestInvalid("Unknown gift claim kind $name")
 
 internal fun GiftClaimWireRequest.toWireMap(): Map<String, Any> {
     val wire =
@@ -214,17 +223,17 @@ internal fun GiftClaimWireRequest.toWireMap(): Map<String, Any> {
 
 private fun JsonObject.objectOrNull(key: String): JsonObject? = this[key] as? JsonObject
 
-private fun JsonObject.text(key: String): String = textOrNull(key) ?: error("Missing $key")
+private fun JsonObject.text(key: String): String = textOrNull(key) ?: throw requestInvalid("Missing $key")
 
 private fun JsonObject.textOrNull(key: String): String? {
     val value = this[key] as? JsonPrimitive ?: return null
-    check(value.isString) { "$key must be a string" }
-    return value.content.takeIf { it.isNotBlank() } ?: error("Blank $key")
+    if (!value.isString) throw requestInvalid("$key must be a string")
+    return value.content.takeIf { it.isNotBlank() } ?: throw requestInvalid("Blank $key")
 }
 
 private fun JsonObject.longOrNullAt(key: String): Long? {
     val value = this[key] as? JsonPrimitive ?: return null
-    check(!value.isString) { "$key must be a number" }
+    if (value.isString) throw requestInvalid("$key must be a number")
     return value.longOrNull
 }
 

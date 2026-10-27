@@ -30,6 +30,24 @@ class GiftBoxReceiptMappingTest {
         assertEquals(parse(wire()), parse(wire().replace("\"replayed\":false", "\"replayed\":true")))
     }
 
+    @Test fun preConversionPlanNestedCompletionRecordsStillDeliver() {
+        // Completion-записи до конвертной правки сервера (c2c1a414) хранили в `result` весь план
+        // с вложенным `response`; после выката читатель обязан доиграть и их — dual-shape read,
+        // не свип старых ключей (retro e7 F6). Новые записи остаются плоскими.
+        val body = """{"schemaVersion":1,"ownerUid":"owner","operationId":"opening-00000001","kind":"OPEN",
+            "status":"OPENED","boxCount":0,"boxStreakDays":2,"nextBoxAtMs":3,"nextBonusBoxAtMs":0,
+            "earnedBoxes":0,"openedBoxes":1,"premiumUntilMs":0,"reward":{"type":"addNolics","amount":500}}"""
+        val flat = parse("""{"replayed":false,"result":$body}""")
+        val planNested =
+            parse(
+                """{"replayed":false,"result":{"uid":"owner","id":"boxop_1","caughtUp":true,
+                   "replayed":false,"premiumPlan":{},"userPatch":{},"response":$body,"receipt":{}}}""",
+            )
+        assertEquals(GiftBoxReceiptStatus.OPENED, planNested.status)
+        assertEquals(GiftBoxReward.Nolics(500), planNested.reward)
+        assertEquals("плоская и plan-nested записи доигрывают одинаково", flat, planNested)
+    }
+
     @Test fun noBoxesIsAFinalResultWithoutFabricatedReward() {
         val result = parse(wire(reward = "", status = "NO_BOXES"))
         assertEquals(GiftBoxReceiptStatus.NO_BOXES, result.status)

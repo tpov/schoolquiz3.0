@@ -81,6 +81,16 @@ class GiftClaimRepositoryImpl(
             } catch (error: CancellationException) {
                 throw error
             } catch (error: GiftClaimException) {
+                // Денежная инварианта держит намерение, пока решение сервера могло быть принято.
+                // Оба отказа ниже — «решения для ЭТОГО тела не существует никогда»: CONFLICTING_REPLAY
+                // — operationId скреплён забором с другим телом/владельцем, REQUEST_INVALID — тело
+                // не читается до вызова и запрос не покидал устройство. Отпускаем терминально:
+                // вечный ретрай отравленной строки запирал бы входной проход и кнопку навсегда.
+                if (error.reason == GiftClaimFailureReason.CONFLICTING_REPLAY ||
+                    error.reason == GiftClaimFailureReason.REQUEST_INVALID
+                ) {
+                    intents.resolve(intent)
+                }
                 throw error
             } catch (error: Exception) {
                 throw GiftClaimException(
@@ -97,11 +107,14 @@ class GiftClaimRepositoryImpl(
         // Любой статус сервера — терминальный: повтор вернул бы то же слово по тому же ключу.
         intents.resolve(intent)
         when (outcome.status) {
-            // Слово сервера выиграло: местная заявка брошена, профиль перечитывается.
+            // Слово сервера выигрывает: местная заявка брошена, профиль перечитывается.
             GiftClaimStatus.STALE_BASE -> profileRepository.ensureCurrentProfile()
             // Коробка уже начислена — пусть счёт на экране поедет в этом же проходе.
             GiftClaimStatus.CLAIMED -> profileRepository.ensureCurrentProfile()
-            GiftClaimStatus.NO_CHANGE, GiftClaimStatus.PREMIUM_REQUIRED, GiftClaimStatus.DAILY_LIMIT -> Unit
+            // Отказ слота/срока тоже перечитывает слово: без этого кнопка жила Available и каждый
+            // тап минтовал новый operationId, хотя суточный слот уже закрыт (retro e7 F5a).
+            GiftClaimStatus.PREMIUM_REQUIRED, GiftClaimStatus.DAILY_LIMIT -> profileRepository.ensureCurrentProfile()
+            GiftClaimStatus.NO_CHANGE -> Unit
         }
         return outcome
     }

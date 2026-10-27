@@ -167,13 +167,56 @@ class GiftClaimRepositoryTest {
             assertNull(intents.active("A", GiftClaimKind.PREMIUM_DAILY))
         }
 
-    @Test fun conflictingReplayKeepsTheIntentAndTouchesNothingElse() =
+    @Test fun conflictingReplayReleasesTheIntentTerminallyInsteadOfRetryingForever() =
         runTest {
+            // Инверсия retro e7 F4: fence скрепил operationId с другим телом/владельцем — решения
+            // для ЭТОГО тела не существует никогда, и вечный ретрай запирал входной проход.
             error = GiftClaimException(GiftClaimFailureReason.CONFLICTING_REPLAY, GiftClaimKind.PREMIUM_DAILY)
             val failure = repository().submit(GiftClaimRequest(GiftClaimKind.PREMIUM_DAILY)).exceptionOrNull()
             assertEquals(GiftClaimFailureReason.CONFLICTING_REPLAY, (failure as GiftClaimException).reason)
             assertEquals(0, refreshes)
+            assertNull(intents.active("A", GiftClaimKind.PREMIUM_DAILY), "отравленное намерение отпущено терминально")
+        }
+
+    @Test fun corruptedBodyIsQuarantinedByANamedPreCallRefusal() =
+        runTest {
+            // REQUEST_INVALID — отказ ДО вызова: запрос не покидал устройство, решения сервера
+            // быть не может — карантин тела, а не TRANSPORT-цикл (retro e7 F5b).
+            error = GiftClaimException(GiftClaimFailureReason.REQUEST_INVALID, GiftClaimKind.PREMIUM_DAILY)
+            val failure = repository().submit(GiftClaimRequest(GiftClaimKind.PREMIUM_DAILY)).exceptionOrNull()
+            assertEquals(GiftClaimFailureReason.REQUEST_INVALID, (failure as GiftClaimException).reason)
+            assertEquals(0, refreshes)
+            assertNull(intents.active("A", GiftClaimKind.PREMIUM_DAILY), "испорченная строка не отравляет каждый вход")
+        }
+
+    @Test fun responseEnvelopeInvalidKeepsTheIntentForAVerbatimReplay() =
+        runTest {
+            // Денежная инварианта, вторая сторона направления: сервер ОТВЕТИЛ, но конверт не
+            // разобрался — решение могло быть принято, намерение обязано жить (retro e7 F5b).
+            error = GiftClaimException(GiftClaimFailureReason.ENVELOPE_INVALID, GiftClaimKind.PREMIUM_DAILY)
+            val repo = repository()
+            val failure = repo.submit(GiftClaimRequest(GiftClaimKind.PREMIUM_DAILY)).exceptionOrNull()
+            assertEquals(GiftClaimFailureReason.ENVELOPE_INVALID, (failure as GiftClaimException).reason)
+            assertEquals(0, refreshes)
             assertNotNull(intents.active("A", GiftClaimKind.PREMIUM_DAILY))
+
+            // Повтор уедет тем же телом — когда конверт починят, решение найдётся тем же ключом.
+            error = null
+            val resumed = repo.resumePending(GiftClaimKind.PREMIUM_DAILY)!!.getOrThrow()
+            assertEquals(GiftClaimStatus.CLAIMED, resumed.status)
+            assertNull(intents.active("A", GiftClaimKind.PREMIUM_DAILY))
+        }
+
+    @Test fun limitAndExpiryRefreshTheProfileSoTheButtonReadsTheFreshServerWord() =
+        runTest {
+            // DAILY_LIMIT/PREMIUM_REQUIRED — терминальные исходы слота/срока: без перечитывания
+            // кнопка жила Available и каждый тап минтовал новый operationId (retro e7 F5a).
+            for (status in listOf(GiftClaimStatus.DAILY_LIMIT, GiftClaimStatus.PREMIUM_REQUIRED)) {
+                answer = { claimed(it).copy(kind = GiftClaimKind.PREMIUM_DAILY, status = status, earnedBoxes = 0) }
+                repository().submit(GiftClaimRequest(GiftClaimKind.PREMIUM_DAILY)).getOrThrow()
+                assertNull(intents.active("A", GiftClaimKind.PREMIUM_DAILY), "$status разрешает намерение")
+            }
+            assertEquals(2, refreshes, "оба отказа слота перечитывают слово сервера")
         }
 
     @Test fun accountChangeBetweenSendAndAnswerRefusesWithoutRefreshOrResolve() =

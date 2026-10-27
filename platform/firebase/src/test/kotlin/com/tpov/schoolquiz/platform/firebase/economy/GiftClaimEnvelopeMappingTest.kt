@@ -165,27 +165,32 @@ class GiftClaimEnvelopeMappingTest {
         assertEquals(mapOf("kind" to "VISIT", "ownerUid" to "owner", "operationId" to "visit-id-0000000001"), visit.toWireMap())
     }
 
-    @Test fun malformedStoredBodiesAreRefusedBeforeAnyCall() {
-        assertThrows(RuntimeException::class.java) { giftClaimRequestFrom("not-json") }
-        assertThrows(RuntimeException::class.java) { giftClaimRequestFrom("""{"kind":"VISIT","ownerUid":"owner"}""") }
-        assertThrows(RuntimeException::class.java) {
-            giftClaimRequestFrom("""{"kind":"WAT","ownerUid":"owner","operationId":"visit-id-0000000001"}""")
+    @Test fun malformedStoredBodiesAreRefusedAsATypedPreCallInvalid() {
+        // Направление запинено типом (retro e7 F5b): отказ разбора ТЕЛА — REQUEST_INVALID ДО
+        // вызова: запрос не покидал устройство, решения сервера не существует — карантин.
+        for (body in listOf(
+            "not-json",
+            """{"kind":"VISIT","ownerUid":"owner"}""",
+            """{"kind":"WAT","ownerUid":"owner","operationId":"visit-id-0000000001"}""",
+            """{"kind":"VISIT","ownerUid":"owner","operationId":"short"}""",
+            """{"kind":"VISIT","ownerUid":"owner","operationId":"visit-id-0000000001","base":{"boxStreakDays":1}}""",
+            // Неполное офлайн-тело отказывает здесь, по имени, — не позже голым
+            // IllegalStateException из toWireMap.
+            """{"kind":"OFFLINE_STREAK","ownerUid":"owner","operationId":"offline-id-000000001"}""",
+        )) {
+            val error = assertThrows(GiftClaimException::class.java) { giftClaimRequestFrom(body) }
+            assertEquals(GiftClaimFailureReason.REQUEST_INVALID, error.reason)
         }
-        assertThrows(RuntimeException::class.java) {
-            giftClaimRequestFrom("""{"kind":"VISIT","ownerUid":"owner","operationId":"short"}""")
-        }
-        assertThrows(RuntimeException::class.java) {
-            giftClaimRequestFrom(
-                """{"kind":"VISIT","ownerUid":"owner","operationId":"visit-id-0000000001","base":{"boxStreakDays":1}}""",
-            )
-        }
-        // Неполное офлайн-тело отказывает здесь, по имени, — не позже голым IllegalStateException
-        // из toWireMap, который превращает намерение в вечный повтор.
-        assertThrows(RuntimeException::class.java) {
-            giftClaimRequestFrom(
-                """{"kind":"OFFLINE_STREAK","ownerUid":"owner","operationId":"offline-id-000000001"}""",
-            )
-        }
+    }
+
+    @Test fun unreadableAnswersAreEnvelopeInvalidWhichMustKeepTheIntent() {
+        // Вторая сторона направления: ОТВЕТ не разобрался — решение сервера могло быть принято,
+        // отказ обязан быть ENVELOPE_INVALID (держит намерение), а не REQUEST_INVALID (карантин).
+        val error =
+            assertThrows(GiftClaimException::class.java) {
+                parseMap(jsonToMap(wire().replace("\"result\"", "\"data\"")))
+            }
+        assertEquals(GiftClaimFailureReason.ENVELOPE_INVALID, error.reason)
     }
 
     @Test fun fenceRefusalIsNamedNotSwallowedIntoTransport() {

@@ -20,7 +20,13 @@ class FirebaseGiftBoxRemoteDataSource : GiftBoxRemoteDataSource {
         val envelope = Json.parseToJsonElement(payloadJson) as? JsonObject ?: error("Missing envelope")
         val replayed = envelope["replayed"] as? JsonPrimitive ?: error("Missing replay marker")
         check(!replayed.isString && replayed.booleanOrNull != null)
-        val result = envelope.objectAt("result")
+        val stored = envelope.objectAt("result")
+        // Completion-записи OPEN_GIFT_BOX живут в двух формах (retro e7 F6): записи до серверной
+        // правки конверта (c2c1a414) хранили в `result` весь ПЛАН с вложенным `response`; новые
+        // записи — плоское тело ответа (плоский ответ не содержит ключа `response`, так что
+        // развязка однозначная). Читаются обе — лежащий пре-конвертный ключ доигрывает доставку,
+        // а не падает RECEIPT_INVALID навсегда; новые записи пишутся только плоскими.
+        val result = stored["response"] as? JsonObject ?: stored
         check(result.number("schemaVersion") == 1L)
         check(result.text("ownerUid") == ownerUid && result.text("operationId") == openingId)
         check(result.text("kind") == "OPEN")
