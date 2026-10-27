@@ -80,14 +80,24 @@ test("profile refresh preserves offline anchor; daily premium is a separate once
   assert.equal(store.documents.get(`users/${uid}`).nextBoxAtMs, anchor);
   assert.equal(store.documents.get(`users/${uid}`).boxCount, 2);
   const daily = await call("submitGiftBoxOperation", {kind: "PREMIUM_DAILY", ownerUid: uid, operationId: "daily-id-0000000001"});
+  assert.equal(typeof daily.replayed, "boolean");
   assert.equal(daily.replayed, false);
   assert.equal(daily.result.status, "CLAIMED");
+  // Пин полного конверта (retro e7 F1a): набор ключей выведен из конструкции ответа planBoxOperation
+  // (functions/box-service.js) — ...boxes даёт boxCount/boxStreakDays/nextBoxAtMs, остальное дословно:
+  // schemaVersion, ownerUid, operationId, kind, status, nextBonusBoxAtMs, earnedBoxes, openedBoxes,
+  // premiumUntilMs. Дроп/переименование любого ключа обязан краснить эту сюиту, а не живое устройство.
+  const claimResultKeys = ["boxCount", "boxStreakDays", "earnedBoxes", "kind", "nextBonusBoxAtMs", "nextBoxAtMs",
+    "openedBoxes", "operationId", "ownerUid", "premiumUntilMs", "schemaVersion", "status"];
+  assert.deepEqual(Object.keys(daily.result).sort(), claimResultKeys);
   assert.equal(store.documents.get(`users/${uid}`).boxCount, 3);
   assert.equal(store.documents.get(`users/${uid}`).nextBoxAtMs, anchor);
   const again = await call("submitGiftBoxOperation", {kind: "PREMIUM_DAILY", ownerUid: uid, operationId: "daily-id-0000000002"});
   assert.equal(again.result.status, "DAILY_LIMIT");
+  assert.deepEqual(Object.keys(again.result).sort(), claimResultKeys);
   const visit = await call("submitGiftBoxOperation", {kind: "VISIT", ownerUid: uid, operationId: "visit-id-0000000001"});
   assert.equal(visit.result.earnedBoxes, 1);
+  assert.deepEqual(Object.keys(visit.result).sort(), claimResultKeys);
   assert.equal(store.documents.get(`users/${uid}`).boxCount, 4);
   // Повтор того же operationId читает сохранённый чек как конверт с `replayed:true` и тем же
   // телом результата — клиент обязан засчитать его тем же исходом, а не вечным ретраем.
