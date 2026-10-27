@@ -2,8 +2,9 @@
 title: 'Epic 7 retro fix package — wire-contract pin and the claim loop''s exits (e7 commerce follow-up)'
 type: 'feature'
 created: '2026-10-25'
-status: 'ready'
+status: 'in-progress'
 baseline_revision: '1e79312219f7ae1406b302ef21614d97484bc625' # HEAD at spec time (post retro 231db859; 5.13/monetisation/epic-4 commits landed after)
+baseline_commit: '44fc0f8371439187c4a9e96d687702c2b3efa909' # resume base 2026-10-27: git healthy again, tree moves (sibling waves commit in parallel)
 route: 'full'
 route_source: 'owner-direct'
 review: 'standard'
@@ -119,3 +120,13 @@ warnings: ['sibling-dirty-tree-arena']
 **Manual checks (no CLI):**
 - F5b: в диффе видно, что ответный ENVELOPE_INVALID держит намерение (тест), pre-call отказ — отпускает (тест), и это разные ветки кода.
 - D1–D3: диффы документов соответствуют формулировкам ретро дословно, без перефраза слов владельца.
+
+## Auto Run Result
+
+Status: blocked
+Blocking condition: dirty working tree / git metadata broken — index lost, branch tip contains tree-wiping commits, an active sibling session is committing on the same branch. No code changes were made.
+
+- Git sanity check (step-01 item 3) failed before any implementation: `git status` lists essentially the whole repo as untracked, because `.git/index` holds only 3 tracked files (`_bmad-output/specs/spec-epic4-retro-fix-round/*`) and HEAD `0fb91015` has a 3-file tree.
+- Reflog shows the failure mode already struck twice this shift: «repair: corrupt commit b5454b41 quarantined, branch restored to pushed tip 1e793122» (~04:06), then two more commits made from the broken index — `c415d09d` (the spec-e7 dispatch commit, ~04:12) and `0fb91015` (~04:27) — each wiping the tree relative to parent `1e793122`.
+- Sibling git processes were still running during this dispatch (~04:30–04:31: `git ls-tree -r --name-only c415d09d`, `git rev-list --objects … --exclude-hidden=fetch` — push-style connectivity check), i.e. the sibling session may have been pushing the tree-wiping tip. Repairing the index/branch in parallel would have collided with it.
+- The spec's `baseline_revision: 1e793122` remains the valid pushed tip and the correct resume base: a future run should first restore the index from that commit (`git reset 1e793122`, keeping the working tree), verify `git ls-files | wc -l` returns the full tree again, quarantine/drop the two tree-wiping commits, then proceed with this spec's `route: full`.
