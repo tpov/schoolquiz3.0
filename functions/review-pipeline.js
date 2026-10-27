@@ -14,8 +14,8 @@
 
 const SCHEMA_VERSION = 1;
 
-/** Этапы конвейера в порядке исполнения (AD-32: «Слова» → «Факты»; перевод — 4.15). */
-const STAGE_PLAN = Object.freeze(["WORDS", "FACTS"]);
+/** Этапы конвейера в порядке исполнения (AD-32: «Слова» → «Факты» → перевод, 4.15). */
+const STAGE_PLAN = Object.freeze(["WORDS", "FACTS", "TRANSLATE"]);
 
 const MAX_ATTEMPTS = 3;
 
@@ -23,7 +23,15 @@ const STAGE = Object.freeze({
   PENDING: "PENDING",
   DONE: "DONE",
   DELAYED: "DELAYED",
+  // Перевод неприменим: урок с FAIL вопросом возвращается автору, переводить нечего (4.15).
+  SKIPPED: "SKIPPED",
 });
+
+/** Этапы, без которых перевод не запускается: судить можно только прошедшее (AD-32). */
+const TRANSLATE_PREREQUISITES = Object.freeze(["WORDS", "FACTS"]);
+
+/** Вердикты существуют только у проверочных этапов; перевод пишет свою запись (4.15). */
+const CHECK_STAGES = Object.freeze(["WORDS", "FACTS"]);
 
 const QUEST_STATUS = Object.freeze({
   RUNNING: "RUNNING",
@@ -43,11 +51,11 @@ function verdictDocumentId({submissionId, lessonId, stage, attempt}) {
   if (!Number.isInteger(attemptNumber) || attemptNumber < 1) {
     throw new RangeError(`verdict attempt must be a positive integer, got ${JSON.stringify(attempt)}`);
   }
-  if (!STAGE_PLAN.includes(stage)) throw new RangeError(`unknown stage ${stage}`);
+  if (!CHECK_STAGES.includes(stage)) throw new RangeError(`unknown check stage ${stage}`);
   return `${submissionId}_${lessonId}_${stage}_${attemptNumber}`;
 }
 
-/** Свежее состояние конвейера: все уроки — все этапы PENDING, перевод ждёт своей истории (4.15). */
+/** Свежее состояние конвейера: все уроки — все этапы PENDING, включая перевод (4.15). */
 function createPipelineState({submissionId, ownerUid, questId, questTitle, categoryPath, revision, lessonIds}) {
   if (!submissionId || !ownerUid || !questId) throw new RangeError("pipeline identity is required");
   if (!Array.isArray(lessonIds) || lessonIds.length === 0) throw new RangeError("pipeline needs lessons");
@@ -81,12 +89,20 @@ function freshStage() {
  * Следующее задание конвейера — или его итог.
  *
  * Порядок: уроки как в заявке, внутри урока — план этапов. Задание живо, пока этап PENDING и
- * попыток не исчерпано; DELAYED этап пропускается. Урок без живых заданий получает итог.
+ * попыток не исчерпано; DELAYED и SKIPPED этапы пропускаются. Перевод требует завершённых
+ * проверок: урок с задержанной или непройденной проверкой переводом не занимается. Урок без
+ * живых заданий получает итог.
  */
 function nextJob(state) {
   for (const [lessonId, lesson] of Object.entries(state.lessons)) {
     for (const stage of STAGE_PLAN) {
       const stageState = lesson.stages[stage];
+      if (!stageState) throw new RangeError(`unknown stage ${stage} in lesson ${lessonId}`);
+      if (stage === "TRANSLATE" &&
+        !TRANSLATE_PREREQUISITES.every((prerequisite) =>
+          lesson.stages[prerequisite] && lesson.stages[prerequisite].state === STAGE.DONE)) {
+        continue;
+      }
       if (stageState.state === STAGE.PENDING && stageState.attempts < MAX_ATTEMPTS) {
         return {lessonId, stage, attempt: stageState.attempts + 1};
       }
@@ -100,8 +116,10 @@ function questStatus(state) {
   const delayed = lessons.some((lesson) =>
     STAGE_PLAN.some((stage) => lesson.stages[stage].state === STAGE.DELAYED));
   if (delayed) return QUEST_STATUS.DELAYED;
+  // SKIPPED перевод — завершён без перевода: урок с FAIL вопросом вернётся автору (4.16).
+  const settled = (stageState) => stageState.state === STAGE.DONE || stageState.state === STAGE.SKIPPED;
   const allDone = lessons.every((lesson) =>
-    STAGE_PLAN.every((stage) => lesson.stages[stage].state === STAGE.DONE));
+    STAGE_PLAN.every((stage) => settled(lesson.stages[stage])));
   return allDone ? QUEST_STATUS.REVIEWED : QUEST_STATUS.RUNNING;
 }
 
@@ -128,6 +146,44 @@ function applyVerdict(state, lessonId, stage, verdictId) {
   stageState.state = STAGE.DONE;
   stageState.verdictId = String(verdictId);
   return state;
+}
+
+/**
+ * Перевод неприменим (4.15): в уроке есть FAIL вопрос, воркер не вызывает модель. Отдельное
+ * состояние, а не DONE с флагом: итог конвейера обязан отличать «переведено» от «не переводится»,
+ * не изобретая вердиктоподобную запись об уроке, который автор переработает.
+ */
+function applyStageSkip(state, lessonId, stage) {
+  const stageState = requireStage(state, lessonId, stage);
+  if (stageState.state === STAGE.DONE) return state;
+  stageState.state = STAGE.SKIPPED;
+  return state;
+}
+
+/**
+ * Неизменяемая запись перевода (4.15): связывает ревизию, модель, версию промпта, определённый
+ * язык источника и собранные документы переведённых вопросов по каждому целевому языку.
+ */
+function buildTranslationRecord({submissionId, lessonId, attempt, revision, model, promptVersion,
+  detectedLanguage, questions}) {
+  const languages = Object.keys(questions || {});
+  if (languages.length === 0) throw new RangeError("translation must name target languages");
+  for (const language of languages) {
+    if (!Array.isArray(questions[language]) || questions[language].length === 0) {
+      throw new RangeError(`translation for ${language} must name questions`);
+    }
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    submissionId,
+    lessonId,
+    attempt: requireAttempt(attempt),
+    revision: Number(revision) || 0,
+    model: String(model),
+    promptVersion: String(promptVersion),
+    detectedLanguage: String(detectedLanguage),
+    questions,
+  };
 }
 
 /**
@@ -169,6 +225,21 @@ function buildVerdictRecord({submissionId, lessonId, stage, attempt, revision, m
   };
 }
 
+/** Имя документа перевода: та же идентичность задания, отдельная коллекция (4.15). */
+function translationDocumentId({submissionId, lessonId, attempt}) {
+  for (const [name, value] of [["submissionId", submissionId], ["lessonId", lessonId], ["attempt", attempt]]) {
+    if (typeof value !== "string" && typeof value !== "number") {
+      throw new RangeError(`translation identity ${name} is missing`);
+    }
+    if (String(value).includes("/")) throw new RangeError(`translation identity ${name} contains a separator`);
+  }
+  const attemptNumber = Number(attempt);
+  if (!Number.isInteger(attemptNumber) || attemptNumber < 1) {
+    throw new RangeError(`translation attempt must be a positive integer, got ${JSON.stringify(attempt)}`);
+  }
+  return `${submissionId}_${lessonId}_TRANSLATE_${attemptNumber}`;
+}
+
 function requireStage(state, lessonId, stage) {
   const lesson = state.lessons[lessonId];
   if (!lesson) throw new RangeError(`unknown lesson ${lessonId}`);
@@ -186,16 +257,21 @@ function requireAttempt(attempt) {
 }
 
 module.exports = {
+  CHECK_STAGES,
   MAX_ATTEMPTS,
   QUEST_STATUS,
   SCHEMA_VERSION,
   STAGE,
   STAGE_PLAN,
+  TRANSLATE_PREREQUISITES,
   applyStageError,
+  applyStageSkip,
   applyVerdict,
+  buildTranslationRecord,
   buildVerdictRecord,
   createPipelineState,
   nextJob,
   questStatus,
+  translationDocumentId,
   verdictDocumentId,
 };

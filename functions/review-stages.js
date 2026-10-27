@@ -3,18 +3,20 @@
 /**
  * Реестр скиллов этапов проверки (AD-32): то, что раннер передаёт воркеру.
  *
- * Полный план этапов (WORDS → FACTS) обязателен: полуконфигурированный воркер отказывает
- * (STAGE_MISSING) и очередь не трогает. Сторож полного покрытия живёт здесь же — новая стадия
- * в STAGE_PLAN без скилла ломает реестр тестом, а не боем.
+ * Полный план этапов (WORDS → FACTS → TRANSLATE) обязателен: полуконфигурированный воркер
+ * отказывает (STAGE_MISSING) и очередь не трогает. Сторож полного покрытия живёт здесь же —
+ * новая стадия в STAGE_PLAN без скилла ломает реестр тестом, а не боем.
  */
 
 const {STAGE_PLAN} = require("./review-pipeline");
 const stageWords = require("./stage-words");
 const stageFacts = require("./stage-facts");
+const stageTranslate = require("./stage-translate");
 
 const reviewStages = {
   WORDS: stageWords,
   FACTS: stageFacts,
+  TRANSLATE: stageTranslate,
 };
 
 function completeReviewStages() {

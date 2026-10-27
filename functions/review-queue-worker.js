@@ -18,10 +18,13 @@ const {
   QUEST_STATUS,
   STAGE_PLAN,
   applyStageError,
+  applyStageSkip,
   applyVerdict,
+  buildTranslationRecord,
   buildVerdictRecord,
   createPipelineState,
   nextJob,
+  translationDocumentId,
   verdictDocumentId,
 } = require("./review-pipeline");
 const {wrapLessonData} = require("./review-model-client");
@@ -30,6 +33,7 @@ const WORKER_STATE_COLLECTION = "review_worker_state";
 const WORKER_STATE_PATH = `${WORKER_STATE_COLLECTION}/sweep`;
 const PIPELINE_COLLECTION = "review_pipeline";
 const VERDICTS_COLLECTION = "review_verdicts";
+const TRANSLATIONS_COLLECTION = "review_translations";
 const QUEUE_COLLECTION = "quest_review_requests";
 const LEASE_MS = 660_000;
 /** Судящий вызов занимает минуты: один шаг свипа — один вызов этапа, и свип на этом честно кончается. */
@@ -221,6 +225,58 @@ function createReviewQueueWorker({
     return Boolean(snapshot && snapshot.exists);
   }
 
+  /** Запись перевода уже стоит (падение после записи, до чекпойнта)? Идемпотентность — имя. */
+  async function translationExists(lessonId, attempt, submissionId) {
+    const snapshot = await db.doc(`${TRANSLATIONS_COLLECTION}/${translationDocumentId({submissionId, lessonId, attempt})}`).get();
+    return Boolean(snapshot && snapshot.exists);
+  }
+
+  /**
+   * Судьба перевода урока (4.15): переводится только прошедшее. Вердикты этапов уже стоят
+   * (nextJob даёт TRANSLATE лишь после DONE проверок); любой FAIL вопрос — SKIPPED без вызова
+   * модели. Нечитаемый вердикт — именованная ошибка этапа: молча угадывать исход нельзя.
+   */
+  async function translateLessonEligibility(pipeline, lessonId, submissionId) {
+    const failed = [];
+    for (const stage of ["WORDS", "FACTS"]) {
+      const stageState = pipeline.lessons[lessonId].stages[stage];
+      const verdictId = stageState && stageState.verdictId;
+      if (!verdictId) return {ok: false, error: "TRANSLATE_VERDICT_MISSING"};
+      const snapshot = await db.doc(`${VERDICTS_COLLECTION}/${verdictId}`).get();
+      const verdict = data(snapshot);
+      if (!verdict || !Array.isArray(verdict.questionVerdicts)) {
+        return {ok: false, error: "TRANSLATE_VERDICT_UNREADABLE"};
+      }
+      for (const outcome of verdict.questionVerdicts) {
+        if (outcome && outcome.verdict === "FAIL") failed.push(outcome.questionId);
+      }
+    }
+    return failed.length > 0 ? {ok: true, skip: true, failedQuestionIds: failed} : {ok: true, skip: false};
+  }
+
+  async function writeTranslation({submissionId, pipeline, job, skill, translation}) {
+    const record = buildTranslationRecord({
+      submissionId,
+      lessonId: job.lessonId,
+      attempt: job.attempt,
+      revision: pipeline.revision,
+      model: modelClient.modelName,
+      promptVersion: skill.promptVersion,
+      detectedLanguage: translation.detectedLanguage,
+      questions: translation.questions,
+    });
+    const translationId = translationDocumentId({submissionId, lessonId: job.lessonId, attempt: job.attempt});
+    await db.runTransaction(async (tx) => {
+      // Чтение до записей; create как идемпотентный замок — вторая запись того же задания невозможна.
+      const current = pipelineRecord(data(await tx.get(db.doc(`${PIPELINE_COLLECTION}/${submissionId}`))));
+      applyVerdict(current, job.lessonId, "TRANSLATE", translationId);
+      current.updatedAtMs = now();
+      tx.create(db.doc(`${TRANSLATIONS_COLLECTION}/${translationId}`), record);
+      tx.set(db.doc(`${PIPELINE_COLLECTION}/${submissionId}`), current);
+    });
+    return translationId;
+  }
+
   async function writeVerdict({submissionId, pipeline, job, skill, verdict}) {
     const record = buildVerdictRecord({
       submissionId,
@@ -269,6 +325,10 @@ function createReviewQueueWorker({
       await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
       return {status: "ADVANCED", terminal: false};
     }
+    // Перевод — свой шаг: пригодность по вердиктам, запись перевода, SKIPPED без вызова.
+    if (job.stage === "TRANSLATE") {
+      return advanceTranslate(submissionId, pipeline, source, job);
+    }
     // Кризисный повтор: вердикт по этому заданию уже стоит — свернуть без повторного вызова.
     if (await verdictExists(job.lessonId, job.stage, job.attempt, submissionId)) {
       const current = pipelineRecord(data(await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).get()));
@@ -308,6 +368,67 @@ function createReviewQueueWorker({
       return {status: "ADVANCED", terminal: false};
     }
     await writeVerdict({submissionId, pipeline, job, skill, verdict: lint.verdict});
+    return {status: "ADVANCED", terminal: false};
+  }
+
+  /** Шаг перевода (4.15): пригодность по вердиктам → запись → либо SKIPPED без вызова. */
+  async function advanceTranslate(submissionId, pipeline, source, job) {
+    const eligibility = await translateLessonEligibility(pipeline, job.lessonId, submissionId);
+    if (!eligibility.ok) {
+      applyStageError(pipeline, job.lessonId, "TRANSLATE", job.attempt, eligibility.error);
+      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
+      return {status: "ADVANCED", terminal: false};
+    }
+    if (eligibility.skip) {
+      const current = pipelineRecord(data(await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).get()));
+      applyStageSkip(current, job.lessonId, "TRANSLATE");
+      current.updatedAtMs = now();
+      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set(current);
+      return {status: "ADVANCED", terminal: false};
+    }
+    // Кризисный повтор: запись перевода уже стоит — свернуть без повторного вызова.
+    if (await translationExists(job.lessonId, job.attempt, submissionId)) {
+      const current = pipelineRecord(data(await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).get()));
+      applyVerdict(current, job.lessonId, "TRANSLATE",
+        translationDocumentId({submissionId, lessonId: job.lessonId, attempt: job.attempt}));
+      current.updatedAtMs = now();
+      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set(current);
+      return {status: "ADVANCED", terminal: false};
+    }
+    const skill = requireStageSkill(stages, "TRANSLATE");
+    const lesson = (source.lessons || []).find((item) => item && item.id === job.lessonId);
+    if (!lesson) {
+      applyStageError(pipeline, job.lessonId, "TRANSLATE", job.attempt, "REVIEW_LESSON_NOT_IN_SUBMISSION");
+      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
+      return {status: "ADVANCED", terminal: false};
+    }
+    const lessonContext = {
+      questTitle: pipeline.questTitle,
+      categoryPath: pipeline.categoryPath,
+      lessonId: job.lessonId,
+      lessonTitle: lesson.title,
+      questions: lessonQuestions(source, job.lessonId),
+    };
+    const reply = await modelClient.judge({
+      system: skill.systemPrompt(),
+      user: `${skill.userPrompt(lessonContext)}\n${wrapLessonData(lessonContext)}`,
+      tools: typeof skill.tools === "function" ? skill.tools() : undefined,
+    });
+    if (!reply.ok) {
+      if (reply.code === "REVIEW_MODEL_UNAVAILABLE") {
+        return {status: "MODEL_UNAVAILABLE", terminal: false};
+      }
+      applyStageError(pipeline, job.lessonId, "TRANSLATE", job.attempt, reply.code);
+      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
+      return {status: "ADVANCED", terminal: false};
+    }
+    const lint = skill.lint(reply.content, lessonContext);
+    if (!lint.ok) {
+      applyStageError(pipeline, job.lessonId, "TRANSLATE", job.attempt, lint.error);
+      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
+      return {status: "ADVANCED", terminal: false};
+    }
+    await writeTranslation({submissionId, pipeline, job, skill, translation: lint.translation});
     return {status: "ADVANCED", terminal: false};
   }
 
@@ -419,6 +540,7 @@ module.exports = {
   MAX_STAGE_CALLS_PER_SWEEP,
   PIPELINE_COLLECTION,
   QUEUE_COLLECTION,
+  TRANSLATIONS_COLLECTION,
   VERDICTS_COLLECTION,
   WORKER_STATE_COLLECTION,
   WORKER_STATE_PATH,

@@ -250,6 +250,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /review_translations/{translationId} {
+      // Immutable auto-translation records (AD-32, story 4.15): the worker writes them
+      // create-only; publication (story 4.16) reads them server-side. No client path exists.
+      allow read, write: if false;
+    }
+
     match /review_worker_state/{stateId} {
       // Worker lease state (AD-32, modeled on the arena season sweep): lease and nonce live
       // here; a client that could write it could double-claim quests.

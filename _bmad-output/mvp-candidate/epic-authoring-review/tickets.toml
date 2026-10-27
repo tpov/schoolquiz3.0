@@ -182,7 +182,7 @@ slug = "auto-translation"
 title = "Automatic translation after the checks (AD-32): source language detected, translation into the other app languages (RU/UK/EN), structure linter keeps option count, answer key and protected FillBlank ranges (AD-27); no author language field; evidence docs/agents/evidence/<date>-auto-translation/"
 covers = ["CAP-3"]
 after = [{ story = "4.13", needs = "stage results" }, { story = "4.14", needs = "stage results" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-27: этап TRANSLATE в конвейере (STAGE_PLAN WORDS→FACTS→TRANSLATE; SKIPPED для урока с FAIL — без вызова модели); functions/review-translation-schema.js — строгий разбор (именованные отказы TRANSLATION_*) и сборщик: структуру переведённого вопроса строит сервер из исходного payload (ключ, число вариантов, id, protectedTextSegments — не власть модели), маркеры ___ по счётчику, защищённые термины дословно (AD-27); скилл stage-translate.js (translate-v1, без инструментов); неизменяемые записи review_translations/{submission}_{lesson}_TRANSLATE_{attempt} (create-only) + правила closed + проба (37 проверок). Гейт: npm test 136/136 suites (mvp-isolation зелёный на HEAD — чинён соседом e7 в c1f07487, не этой историей). Живое качество перевода — 4.20 (OQ-10). Спека spec-4-15-auto-translation.md.
 
 [[story]]
 id = "4.16"

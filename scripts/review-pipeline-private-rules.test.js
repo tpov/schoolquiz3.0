@@ -1,7 +1,7 @@
 "use strict";
 
-// Private DEMO-only access probes for the model review collections (AD-32, story 4.12).
-// Creates three fresh Auth identities and three create-only synthetic documents; never deletes,
+// Private DEMO-only access probes for the model review collections (AD-32, stories 4.12/4.15).
+// Creates fresh Auth identities and create-only synthetic documents; never deletes,
 // resets, overwrites existing fixtures or uses Play.
 const assert = require("node:assert/strict");
 const {randomUUID, createHash} = require("node:crypto");
@@ -45,6 +45,7 @@ async function main() {
   const targets = [
     [`review_pipeline/${id}`, {schemaVersion: 1, submissionId: id, status: "RUNNING", syntheticRun: runId}],
     [`review_verdicts/${id}`, {schemaVersion: 1, submissionId: id, stage: "WORDS", syntheticRun: runId}],
+    [`review_translations/${id}`, {schemaVersion: 1, submissionId: id, stage: "TRANSLATE", syntheticRun: runId}],
     [`review_worker_state/sweep-${id}`, {schemaVersion: 1, lease: null, syntheticRun: runId}],
   ];
   const batch = db.batch();

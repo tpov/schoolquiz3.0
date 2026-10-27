@@ -50,7 +50,7 @@ async function main(argv = process.argv.slice(2), env = process.env) {
   const admin = require("../functions/node_modules/firebase-admin");
   admin.initializeApp({projectId});
   const db = admin.firestore();
-  // Реестр скиллов этапов: «Слова» + «Факты» (4.13/4.14); полный план проверяет сам реестр.
+  // Реестр скиллов этапов: «Слова» + «Факты» + «Перевод» (4.13–4.15); полный план проверяет реестр.
   const {completeReviewStages} = require("../functions/review-stages");
   const worker = createReviewQueueWorker({
     db,
