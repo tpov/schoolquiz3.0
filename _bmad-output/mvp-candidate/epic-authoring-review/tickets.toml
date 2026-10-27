@@ -232,7 +232,24 @@ slug = "remove-human-review"
 title = "Remove human review (UX-17): reviewer screens, star rating and threshold, segment translation review, reviewer assignment/generation and reviewer reward inputs; the story overview lists every deleted file (testing.md); fee burn code stays; gates green; evidence docs/agents/evidence/<date>-remove-human-review/"
 covers = ["CAP-3"]
 after = [{ story = "4.16", needs = "author outcome replaces reviewer outcome" }, { story = "4.17", needs = "Decisions replaces the review queue" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-27: мир живых проверяющих удалён целиком — 43 файла списком (спека Deleted Files): functions
+# (submitReviewAction/fetchReviewAssignments/fetchReviewAssignmentChanges/rejectReviewSubmission/reconcileQuestReviewDaily,
+# quest_authoring.SUBMIT_REVIEW из MUTATION_HANDLERS, applySubmitReviewAction и блок ревьюер-хелперов, генерация заданий,
+# человеческие ветки публикации/расчёта — юниты buildReviewUnits и их сюиты, review-journal с kind review_assignment и
+# админ-путями из sync-changes; testing-review-threshold/review-fee-cycle/review-journal-сюиты удалены перечисленно),
+# клиент — ReviewQueue-экраны/компоненты/строки ×3 и секция шторки, assignment домен/данные/sync/outbox/карантин,
+# Firebase-транспорт и NamedReadFailures-обёртка, Room v18→v19 (дроп review_assignments + вопросы, Migration18to19,
+# схема 19.json), поле review (звёздная самодекларация) снято с провода; fee-мир нетронут: тариф/цитата/списание/сгорание
+# и консервация манифестом (модельный исход 4.18 остался единственным путём расчёта). «Никаких упоминаний ролей живых
+# проверяющих» заперто counted-сканом functions/remove-human-review-scan.test.js (исключая миграцию 18→19, её тест,
+# detekt-baseline и чужой untracked fixtures-скрипт). Гейты: functions npm test 137/137 (было 140: −3 удалённых сюита,
+# +1 скан; mvp-isolation зелёный); gradle (JAVA_HOME=/opt/jdks/jdk-27, sgw): persistence/outbox/sync/question-schema/
+# quest-authoring domain+data/app-shell domain jvmTest, platform:firebase + quest-authoring/app-shell presentation
+# testDebugUnitTest, apps:android-next:compileDebugKotlin — BUILD SUCCESSFUL; ktlint — только пять предсуществующих
+# файлов (та же корзина wrapper 9.8.0, что в 4.16/4.17; DefaultReviewQueueComponent исчез вместе с файлом);
+# detekt — предсуществующий (владелец). Экспорт-пин перепинован; deferred-actions/outbox-registry/arena-request-document
+# парности перепинованы. Заметка: reviewApproved теперь доказывается полями публикации в документе урока — закрыта
+# латентная дыра 4.16 (модельно опубликованные уроки не были admissible для арены). Спека spec-4-19-remove-human-review.md.
 
 [[story]]
 id = "4.20"

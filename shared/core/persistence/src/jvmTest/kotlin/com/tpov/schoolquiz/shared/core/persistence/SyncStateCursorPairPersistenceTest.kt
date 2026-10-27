@@ -95,11 +95,11 @@ class SyncStateCursorPairPersistenceTest {
     @Test
     fun aResetPutsEveryCursorBackToTheBeginning() = runTest {
         repository.setCursor("catalog_sync:cat-1", SyncCursor(1700L, "quest_q-2"))
-        repository.setCursor("review_assignments:u-1", SyncCursor(2600L, "a-1"))
+        repository.setCursor("private_quests:u-1", SyncCursor(2600L, "a-1"))
 
         repository.resetAllCursors()
 
         assertEquals(SyncCursor.BEGINNING, repository.getCursor("catalog_sync:cat-1"))
-        assertEquals(SyncCursor.BEGINNING, repository.getCursor("review_assignments:u-1"))
+        assertEquals(SyncCursor.BEGINNING, repository.getCursor("private_quests:u-1"))
     }
 }

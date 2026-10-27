@@ -21,8 +21,6 @@ import androidx.room.TypeConverters
         DraftThemeEntity::class,
         DraftLessonEntity::class,
         DraftQuestionEntity::class,
-        ReviewAssignmentEntity::class,
-        ReviewAssignmentQuestionEntity::class,
         UserProfileEntity::class,
         QuestionAnswerEntity::class,
         QuestionRepetitionEntity::class,
@@ -37,7 +35,8 @@ import androidx.room.TypeConverters
         GiftBoxLocalStreakEntity::class,
     ],
     // Every version has an explicit non-destructive migration and a generated Room schema.
-    version = 18,
+    // 18→19: таблицы заданий на ревью дропнуты — мир живых проверяющих удалён (4.19, UX-17).
+    version = 19,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
@@ -69,8 +68,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun syncStateDao(): SyncStateDao
 
     abstract fun questAuthoringDao(): QuestAuthoringDao
-
-    abstract fun reviewAssignmentDao(): ReviewAssignmentDao
 
     abstract fun userProfileDao(): UserProfileDao
 

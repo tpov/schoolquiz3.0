@@ -12,7 +12,6 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.persistence.DraftQuestionEntity
 import com.tpov.schoolquiz.shared.core.persistence.OutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
-import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentEntity
 import com.tpov.schoolquiz.shared.core.persistence.SectionEntity
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
@@ -36,7 +35,6 @@ import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRep
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringEntityBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ArenaReviewSubmissionTarget
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.section.data.SectionLocalDataSource
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
@@ -308,24 +306,6 @@ class UnusedQuestAuthoringLocal : QuestAuthoringLocalDataSource {
         replacement: OutboxEntity,
         draftId: String,
         updatedAtMs: Long,
-    ) = Unit
-}
-
-/** Локальная сторона заданий на ревью: до неё проход тоже не доходит. */
-class UnusedReviewAssignmentLocal : ReviewAssignmentLocalDataSource {
-    override fun observeAssignments(ownerUid: String): Flow<List<ReviewAssignmentEntity>> = emptyFlow()
-
-    override suspend fun findAssignments(ownerUid: String): List<ReviewAssignmentEntity> = emptyList()
-
-    override suspend fun replaceAssignments(
-        ownerUid: String,
-        assignments: List<ReviewAssignmentEntity>,
-    ) = Unit
-
-    override suspend fun applyAssignmentChanges(
-        ownerUid: String,
-        changedIds: Set<String>,
-        assignments: List<ReviewAssignmentEntity>,
     ) = Unit
 }
 

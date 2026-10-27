@@ -198,18 +198,18 @@ class VisibilityTest {
     fun `scenario 22 visibleSections LOCAL guest returns the always-visible sections`() {
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
         // DesignCatalog removed from LocalSection (now DrawerFooterAction).
-        // AuthorLifecycle/Curation (TZ06C) are always visible like ReviewQueue: the real
+        // AuthorLifecycle/Curation (TZ06C) are always visible: the real
         // permission gate is server-side, the screen shows the refusal. Inbox (4.9, AD-20) and
         // Polls (8.2, UX-O7) join the same rule — the list drifted red at 4.9 and is re-pinned
         // here with the two server-gated sections. OperationHistory (8.6, AD-30) joins it:
         // чужая книга не читается, граница — серверная.
         // Decisions (4.17, UX-22) joins the same rule — the verifier gate is server-side;
         // the non-admin screen shows only the proposals half of the tab.
+        // The reviewer queue section is gone with the human-review world (4.19, UX-17).
         assertEquals(
             listOf(
                 DrawerSection.LocalSection.HomeQuests,
                 DrawerSection.LocalSection.Archive,
-                DrawerSection.LocalSection.ReviewQueue,
                 DrawerSection.LocalSection.Decisions,
                 DrawerSection.LocalSection.AuthorLifecycle,
                 DrawerSection.LocalSection.Curation,
@@ -382,17 +382,17 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules LOCAL has exactly eleven always-visible sections`() {
+    fun `visibility rules LOCAL has exactly ten always-visible sections`() {
         // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction);
-        // AuthorLifecycle/Curation join ReviewQueue with no client-side role gate (TZ06C);
+        // AuthorLifecycle/Curation have no client-side role gate (TZ06C);
         // Inbox (4.9) and Polls (8.2) follow the same server-gated rule;
         // OperationHistory (8.6) — тот же принцип: настоящая граница серверная (AD-30).
         // Decisions (4.17) — то же: requireVerifier на сервере, вкладка сама показывает отказ.
+        // The reviewer queue is removed with the human-review world (4.19, UX-17).
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
-        assertEquals(11, sections.size)
+        assertEquals(10, sections.size)
         assertTrue(sections.contains(DrawerSection.LocalSection.HomeQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Archive))
-        assertTrue(sections.contains(DrawerSection.LocalSection.ReviewQueue))
         assertTrue(sections.contains(DrawerSection.LocalSection.Decisions))
         assertTrue(sections.contains(DrawerSection.LocalSection.AuthorLifecycle))
         assertTrue(sections.contains(DrawerSection.LocalSection.Curation))
@@ -516,7 +516,6 @@ class VisibilityTest {
         assertEquals(LocalConfig.MyQuestsRoot, rootOf(DrawerSection.LocalSection.MyQuests))
         assertEquals(LocalConfig.HomeQuestsRoot, rootOf(DrawerSection.LocalSection.HomeQuests))
         assertEquals(LocalConfig.ArchiveRoot, rootOf(DrawerSection.LocalSection.Archive))
-        assertEquals(LocalConfig.ReviewQueueRoot, rootOf(DrawerSection.LocalSection.ReviewQueue))
         assertEquals(LocalConfig.DecisionsRoot, rootOf(DrawerSection.LocalSection.Decisions))
         assertEquals(LocalConfig.SettingsRoot, rootOf(DrawerSection.LocalSection.Settings))
         assertEquals(InternetConfig.ArenaRoot, rootOf(DrawerSection.InternetSection.Arena))

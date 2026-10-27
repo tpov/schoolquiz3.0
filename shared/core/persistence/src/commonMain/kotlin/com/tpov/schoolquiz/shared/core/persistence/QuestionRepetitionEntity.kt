@@ -11,8 +11,8 @@ import androidx.room.Index
  * mutable current state. Deriving the schedule from the whole history on every read would get
  * slower with every answer.
  *
- * Named "repetition", not "review": in this project *review* already means content moderation
- * (`review_assignments`), and reusing the word would make both harder to search for.
+ * Named "repetition", not "review": in this project *review* means the content pipeline, and
+ * reusing the word would make both harder to search for.
  *
  * The columns are the SM-2 working set, so the schedule can move from the simple starting rule to
  * the full algorithm without touching stored data.

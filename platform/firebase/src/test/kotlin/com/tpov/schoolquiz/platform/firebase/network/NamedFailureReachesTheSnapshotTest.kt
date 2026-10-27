@@ -10,7 +10,6 @@ import com.tpov.schoolquiz.platform.firebase.network.fake.SilentQuestRepository
 import com.tpov.schoolquiz.platform.firebase.network.fake.SilentQuestionRepository
 import com.tpov.schoolquiz.platform.firebase.network.fake.SilentThemeRepository
 import com.tpov.schoolquiz.platform.firebase.network.fake.UnusedQuestAuthoringLocal
-import com.tpov.schoolquiz.platform.firebase.network.fake.UnusedReviewAssignmentLocal
 import com.tpov.schoolquiz.platform.firebase.network.fake.UnusedSectionLocal
 import com.tpov.schoolquiz.platform.firebase.network.fake.UnusedUserStatsDao
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -30,12 +29,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.data.UserStatsRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSyncChange
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentChangeDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.SubmitReviewActionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestPrivateSync
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.ReviewAssignmentSync
 import com.tpov.schoolquiz.shared.feature.section.data.SectionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.section.data.SectionRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.section.data.dto.SectionDto
@@ -117,26 +111,6 @@ class NamedFailureReachesTheSnapshotTest {
                 )
 
             val snapshot = runThrough(SyncRunKind.CONTENT, privateQuests)
-
-            assertEquals(SyncError.NoNetwork, snapshot.lastError)
-        }
-
-    // ── Задания на ревью ──────────────────────────────────────────────────────
-
-    @Test
-    fun `given the route is gone when the review run reads its journal then the snapshot says no network`() =
-        runTest {
-            val reviews =
-                ReviewAssignmentSync(
-                    local = UnusedReviewAssignmentLocal(),
-                    // Задания приезжают вызовом функции, а не запросом к Firestore: обрыв выглядит
-                    // как неизвестный хост, а не как код статуса.
-                    remote = OfflineReviewAssignmentReads { UnknownHostException("firebase") }.namingFailures(),
-                    syncStateRepo = InMemorySyncStateRepository(),
-                    currentUidProvider = { owner },
-                )
-
-            val snapshot = runThrough(SyncRunKind.CONTENT, reviews)
 
             assertEquals(SyncError.NoNetwork, snapshot.lastError)
         }
@@ -261,17 +235,4 @@ private class OfflineQuestPrivateReads(
 
     override suspend fun fetchSnapshots(changes: List<PrivateQuestSyncChange>): List<PrivateQuestSnapshot> =
         throw failure()
-}
-
-private class OfflineReviewAssignmentReads(
-    private val failure: () -> Throwable,
-) : ReviewAssignmentRemoteDataSource {
-    override suspend fun fetchAssignmentChangePage(
-        cursor: SyncCursor,
-        limit: Int,
-    ): SyncChangePage<ReviewAssignmentChangeDto> = throw failure()
-
-    override suspend fun fetchByIds(ids: Set<String>): List<ReviewAssignmentDto> = throw failure()
-
-    override suspend fun submitReviewAction(action: SubmitReviewActionDto): Unit = throw failure()
 }

@@ -64,12 +64,9 @@ import com.tpov.schoolquiz.shared.feature.quest.data.outbox.QuestShelfOutbox
 import com.tpov.schoolquiz.shared.feature.quest.data.outbox.QuestShelfQuarantineMark
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaQuarantineRollback
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ReviewActionQuarantine
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestArenaOutcomeSync
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestPrivateSync
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.ReviewAssignmentSync
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.privateQuestSyncCursorId
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.reviewAssignmentSyncCursorId
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
@@ -163,9 +160,6 @@ val syncModule =
                         // читает из очереди по entity_ref. Обработчик объявлен у фичи профиля.
                         OutboxOperations.CANCEL_NICKNAME_LISTING to get<ListingCancelQuarantine>(),
                         OutboxOperations.CANCEL_LOGO_LISTING to get<ListingCancelQuarantine>(),
-                        // Решение ревьюера: локальной половины нет, пометку даёт сама запись очереди
-                        // по entity_ref (AD-25, AD-28). Обработчик объявлен фичей, здесь только связь.
-                        OutboxOperations.SUBMIT_REVIEW to get<ReviewActionQuarantine>(),
                     ),
                 // Операция без обработчика — молчаливое расхождение, которое AD-28 запрещает.
                 onUnhandled =
@@ -234,7 +228,7 @@ val syncModule =
         }
         single<OwnerTraces> {
             RoomOwnerTraces(get<OwnerRowsDao>()) { uid ->
-                listOf(privateQuestSyncCursorId(uid), reviewAssignmentSyncCursorId(uid))
+                listOf(privateQuestSyncCursorId(uid))
             }
         }
         single<AccountSwitchGuard> {
@@ -303,16 +297,6 @@ val syncModule =
                 policy = get<JournalReadPolicy>(),
             )
         }
-        single<ReviewAssignmentSync> {
-            ReviewAssignmentSync(
-                local = get(),
-                remote = get(),
-                syncStateRepo = get<SyncStateRepository>(),
-                currentUidProvider = { get<AuthRepository>().currentUid() },
-                status = get<SyncStatusRepository>(),
-                policy = get<JournalReadPolicy>(),
-            )
-        }
         single<ProfileBootstrapSync> {
             ProfileBootstrapSync(
                 repository = get<ProfileRepository>(),
@@ -344,7 +328,6 @@ val syncModule =
                 get<QuestPrivateSync>(),
                 // Вердикт рецензентов движок принести не может: это чтение, а не отправка.
                 get<QuestArenaOutcomeSync>(),
-                get<ReviewAssignmentSync>(),
                 // Таблица настроек экономики: цены и потолки должны меняться на сервере, без
                 // релиза. Едет вместе с содержимым, а не с профилем, — она общая, не аккаунтная.
                 object : Syncable {

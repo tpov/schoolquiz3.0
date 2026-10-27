@@ -192,10 +192,6 @@ test("вопрос заявки round-trip: questionToDocument против norm
   assert.deepStrictEqual(fieldsOf("questionToDocument"), fieldsOf("normalizeQuestion"));
 });
 
-test("отметки автора round-trip: checksToCallableMap против reviewToChecks", () => {
-  assert.deepStrictEqual(fieldsOf("checksToCallableMap"), fieldsOf("reviewToChecks"));
-});
-
 test("обработчик заявки пишет тело, а не одну отметку об обработке", () => {
   const body = functionBody("processArenaRequest");
   assert.ok(

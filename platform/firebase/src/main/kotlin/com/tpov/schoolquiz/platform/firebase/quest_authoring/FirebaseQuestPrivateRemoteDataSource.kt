@@ -13,7 +13,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraft
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaPrivateQuizSettingsDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaSectionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaThemeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
@@ -99,7 +98,6 @@ class FirebaseQuestPrivateRemoteDataSource(
                     themes = themeDtos,
                     lessons = lessonDtos,
                     questions = questionDtos,
-                    review = reviewMap().toArenaReviewDto(),
                     targetShelf = string(TARGET_SHELF, fallback = "arena"),
                     targetLessonIds = stringList(TARGET_LESSON_IDS).toSet(),
                 ),
@@ -227,17 +225,6 @@ class FirebaseQuestPrivateRemoteDataSource(
             updatedAtMs = long(UPDATED_AT_MS),
         )
 
-    private fun Map<String, Any?>.toArenaReviewDto(): ArenaReviewDto =
-        ArenaReviewDto(
-            isTested = boolean(IS_TESTED),
-            testingScore = doubleOrNull(TESTING_SCORE),
-            isLogicReviewed = boolean(IS_LOGIC_REVIEWED),
-            logicScore = doubleOrNull(LOGIC_SCORE),
-            isTranslationReviewed = boolean(IS_TRANSLATION_REVIEWED),
-            translationScore = longOrNull(TRANSLATION_SCORE)?.toInt(),
-            translatedLanguages = languageLevels(TRANSLATED_LANGUAGES),
-        )
-
     private fun DocumentSnapshot.string(
         field: String,
         fallback: String = "",
@@ -253,34 +240,6 @@ class FirebaseQuestPrivateRemoteDataSource(
 
     private fun DocumentSnapshot.longOrNull(field: String): Long? = millisField(field)
 
-    private fun DocumentSnapshot.reviewMap(): Map<String, Any?> =
-        (get(REVIEW) as? Map<*, *>).orEmpty().mapKeys { it.key.toString() }
-
-    private fun Map<String, Any?>.boolean(field: String): Boolean = this[field] as? Boolean ?: false
-
-    private fun Map<String, Any?>.doubleOrNull(field: String): Double? =
-        when (val value = this[field]) {
-            is Double -> value
-            is Float -> value.toDouble()
-            is Number -> value.toDouble()
-            else -> null
-        }
-
-    private fun Map<String, Any?>.longOrNull(field: String): Long? =
-        when (val value = this[field]) {
-            is Long -> value
-            is Int -> value.toLong()
-            is Number -> value.toLong()
-            else -> null
-        }
-
-    private fun Map<String, Any?>.languageLevels(field: String): Map<String, Int> =
-        (this[field] as? Map<*, *>).orEmpty().mapNotNull { (key, value) ->
-            val language = key?.toString()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            val level = (value as? Number)?.toInt() ?: return@mapNotNull null
-            language to level
-        }.toMap()
-
     private companion object {
         const val PRIVATE_COLLECTION = "private"
         const val CATALOGS_COLLECTION = "catalogs"
@@ -290,7 +249,6 @@ class FirebaseQuestPrivateRemoteDataSource(
         const val THEMES_COLLECTION = "themes"
         const val LESSONS_COLLECTION = "lessons"
         const val QUESTIONS_COLLECTION = "questions"
-        const val REVIEW = "review"
         const val SUBMISSION_ID = "submissionId"
         const val DRAFT_ID = "draftId"
         const val TITLE = "title"
@@ -320,12 +278,5 @@ class FirebaseQuestPrivateRemoteDataSource(
         const val TEXT = "text"
         const val IMAGE_PATH = "imagePath"
         const val PAYLOAD = "payload"
-        const val IS_TESTED = "isTested"
-        const val TESTING_SCORE = "testingScore"
-        const val IS_LOGIC_REVIEWED = "isLogicReviewed"
-        const val LOGIC_SCORE = "logicScore"
-        const val IS_TRANSLATION_REVIEWED = "isTranslationReviewed"
-        const val TRANSLATION_SCORE = "translationScore"
-        const val TRANSLATED_LANGUAGES = "translatedLanguages"
     }
 }

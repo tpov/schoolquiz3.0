@@ -2,7 +2,6 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toEntityBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
 import kotlin.test.Test
@@ -61,7 +60,6 @@ class PrivateQuestSnapshotMappingTest {
                     themes = emptyList(),
                     lessons = emptyList(),
                     questions = emptyList(),
-                    review = ArenaReviewDto(),
                 ),
         )
 }

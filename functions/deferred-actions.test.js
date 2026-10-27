@@ -58,38 +58,6 @@ function receiver(registry) {
   };
 }
 
-test("решение ревьюера, доставленное дважды, начисляет репутацию один раз", async () => {
-  // Модель `applySubmitReviewAction`: запись ревью пишется, потом — вне транзакции — репутация.
-  const reputation = new Map();
-  const records = [];
-  const registry = {
-    "quest_authoring.SUBMIT_REVIEW": async (uid, payload, now) => {
-      const recordId = `${payload.assignmentId}_${payload.kind.toLowerCase()}_${now}_${uid}`;
-      records.push(recordId);
-      reputation.set(uid, (reputation.get(uid) || 0) + 5);
-      return {recordId, reviewerDeltas: [{reviewerUid: uid, points: 5}], published: false};
-    },
-  };
-  const deliver = receiver(registry);
-  const envelope = {
-    mutationId: "review-a1-1",
-    uid: UID,
-    operation: "quest_authoring.SUBMIT_REVIEW",
-    payload: {assignmentId: "a1", lessonId: "l1", kind: "LOGIC", score: 3},
-    now: NOW,
-  };
-
-  const first = await deliver(envelope);
-  // Сеть оборвала ответ; клиент честно повторяет ту же запись очереди с тем же ключом.
-  const second = await deliver({...envelope, now: NOW + 30_000});
-
-  assert.strictEqual(first.replayed, false);
-  assert.strictEqual(second.replayed, true, "вторая доставка — повтор, а не выполнение");
-  assert.deepStrictEqual(second.result, first.result, "ответ на повтор совпадает с сохранённым");
-  assert.strictEqual(records.length, 1, "запись ревью создана один раз");
-  assert.strictEqual(reputation.get(UID), 5, "репутация начислена один раз");
-});
-
 test("повторное снятие лота возвращает первый результат, а не второе not-found", async () => {
   // Модель `applyCancelNicknameListing`: после первого снятия лота в базе нет.
   const listings = new Map([["nick-1", {sellerUid: UID}]]);
@@ -174,7 +142,6 @@ const SOURCE = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
 /** Имена операций — ровно те, что в историях 5.4–5.6, и тело у каждой одно. */
 const DEFERRED_ACTIONS = [
   {operation: "quest.SET_SHELF", body: "applySetPublicQuestShelf", callable: "setPublicQuestShelf"},
-  {operation: "quest_authoring.SUBMIT_REVIEW", body: "applySubmitReviewAction", callable: "submitReviewAction"},
   {operation: "profile.CANCEL_NICKNAME_LISTING", body: "applyCancelNicknameListing", callable: "cancelNicknameListing"},
   {operation: "profile.CANCEL_LOGO_LISTING", body: "applyCancelLogoListing", callable: "cancelLogoListing"},
 ];
@@ -213,14 +180,6 @@ for (const action of DEFERRED_ACTIONS) {
   });
 }
 
-test("тело решения ревьюера не сверяет ключ само — единственная проверка живёт в приёмнике", () => {
-  const start = SOURCE.indexOf("async function applySubmitReviewAction(uid, payload");
-  const end = SOURCE.indexOf("\n}\n", start);
-  const body = SOURCE.slice(start, end);
-  assert.ok(body.includes("addReviewerReputation("), "репутация начисляется в общем теле");
-  assert.ok(!body.includes("mutation_keys"), "второй сверки ключа рядом с приёмником быть не должно");
-});
-
 (async () => {
   for (const [name, fn] of SUITE) {
     try {
@@ -236,32 +195,6 @@ test("тело решения ревьюера не сверяет ключ са
   process.exit(1);
 });
 
-
-// Повтор после смерти инстанса: запись ревью уже лежит, ключ остался в резерве, повтор идёт снова
-// через тело. reviewId выведен из ключа, поэтому тело узнаёт свою запись и не начисляет второй раз.
-{
-  const src = require("fs").readFileSync(__dirname + "/index.js", "utf8");
-  assert.ok(
-    /"quest_authoring\.SUBMIT_REVIEW": \(uid, payload, _now, mutationId\) =>/.test(src),
-    "обработчик SUBMIT_REVIEW обязан получать ключ мутации",
-  );
-  assert.ok(
-    /resolved\.handler\(uid, body\.payload, now, mutationId\)/.test(src),
-    "приёмник обязан передавать ключ обработчику",
-  );
-  assert.ok(
-    /existingRecords\.some\(\(record\) => record\.id === pinnedReviewId\)/.test(src),
-    "тело обязано узнавать уже записанный reviewId до canSubmit",
-  );
-  const guardIdx = src.indexOf("record.id === pinnedReviewId");
-  const canSubmitIdx = src.indexOf("if (!canSubmit(profile, task, action.kind, config, existingRecords))");
-  assert.ok(guardIdx > 0 && canSubmitIdx > guardIdx, "ранний выход стоит РАНЬШЕ canSubmit — иначе повтор уйдёт в карантин");
-  assert.ok(
-    /const reviewId = pinnedReviewId \|\|/.test(src),
-    "actionToRecord обязан брать id из ключа, когда он задан",
-  );
-  console.log("review-replay-idempotency: all tests passed");
-}
 
 // Отказ тела снимает резерв ключа: приёмник в миниатюре выше делает это в catch, и настоящий
 // `submitMutation` обязан делать то же — иначе транзиентный отказ держит ключ до таймаута резерва.

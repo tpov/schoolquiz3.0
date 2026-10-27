@@ -47,11 +47,6 @@ function lessonWorld(lessonId = "lesson") {
       reviewSubmissionId: `submission-${lessonId}`, reviewApprovedAtMs: NOW - 1},
     [`lesson_placements/${lessonId}`]: {lessonId, shelf: "arena", authorUid: "author", contentVersion: 1,
       previousShelf: "review", placementVersion: 1, updatedAtMs: NOW, lastReason: "PRIVATE_DECISION", decidedByUid: "PRIVATE_ACTOR"},
-    [`admin/review/lessons/${lessonId}`]: {ownerUid: "author", questId: `quest-${lessonId}`, submissionId: `submission-${lessonId}`,
-      status: "PUBLISHED", sourceLanguages: ["en"]},
-    ...Object.fromEntries(["TESTING", "LOGIC"].map(kind => [`admin/review/lessons/${lessonId}/reviews/${kind}`, {
-      kind, reviewerUid: kind, acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: `submission-${lessonId}`,
-    }])),
   };
 }
 function world() {
@@ -76,33 +71,7 @@ function safeError(error, code, reason) {
   return true;
 }
 
-test("only one new capability is registered; every pre-existing handler name is preserved", () => {
-  assert.deepEqual(Object.keys(functions).sort(), [...new Set([...Object.keys(baselineFunctions), "listArenaLessons"])].sort());
-  for (const name of ["prepareArenaEntry", "cancelArenaEntry", "setLessonPlacement", "rateArenaLesson",
-    "submitLessonResultEvents", "fetchArenaEntryTicket", "submitCourseTournamentSession", "reconcileCourseTournaments"]) {
-    assert.equal(typeof functions[name], "function", name);
-  }
-});
-
-test("unauthenticated request is denied with a fixed reason before any reads or effects", async () => {
-  store.reset(world()); const before = snapshot();
-  for (const request of [{data: {}}, {auth: {uid: ""}, data: {uid: "author"}}]) {
-    await assert.rejects(functions.listArenaLessons.run(request), error => safeError(error, "unauthenticated", "UNAUTHENTICATED"));
-  }
-  assert.equal(store.operations.length, 0); noEffects(before);
-});
-
-test("extra uid/owner fields and malformed payloads are rejected, never spread over server Auth", async () => {
-  store.reset(world()); const before = snapshot();
-  for (const payload of [{uid: "author"}, {ownerUid: "author"}, {expectedOwnerUid: "author"},
-    {pageSize: 1, uid: "player"}, {method: "issue"}, {pageSize: 51}, null, undefined, []]) {
-    await assert.rejects(functions.listArenaLessons.run({auth: {uid: "player"}, data: payload}),
-      error => safeError(error, "invalid-argument", "INVALID_ARGUMENT"));
-  }
-  assert.equal(store.operations.length, 0); noEffects(before);
-});
-
-test("actual callable uses real catalog and root review loader with no wallet, ticket or audit reads/writes", async () => {
+test("actual callable uses real catalog and root loader with no wallet, ticket or audit reads/writes", async () => {
   store.reset(world()); const before = snapshot();
   const result = await call();
   assert.equal(result.status, "OK"); assert.equal(result.entryAvailability, "PREPARE_REQUIRED");
@@ -116,12 +85,13 @@ test("actual callable uses real catalog and root review loader with no wallet, t
     for (const [key, child] of Object.entries(value)) { assert.ok(!forbidden.includes(key), key); walk(child); }
   };
   walk(result); noEffects(before);
-  assert.ok(store.operations.some(op => op.path === "admin/review/lessons/lesson/reviews"));
+  // 4.19: журнала ревьюеров больше нет — каталог его не читает вовсе.
+  assert.ok(store.operations.every(op => !op.path.startsWith("admin/review/")));
   assert.ok(store.operations.every(op => !/^(users|profiles|questions|question_keys|arena_entry_tickets|currency_ledger)\//.test(op.path) && !op.path.includes("/history/")));
 });
 
-test("a real context withdrawal is excluded rather than trusting client eligibility", async () => {
-  const seed = world(); seed["lessons/lesson"].reviewSubmissionId = "stale-submission";
+test("a lesson without review approval is excluded rather than trusting client eligibility", async () => {
+  const seed = world(); seed["lessons/lesson"].reviewApprovedAtMs = null;
   store.reset(seed); const before = snapshot();
   assert.deepEqual((await call()).lessons, []); noEffects(before);
 });

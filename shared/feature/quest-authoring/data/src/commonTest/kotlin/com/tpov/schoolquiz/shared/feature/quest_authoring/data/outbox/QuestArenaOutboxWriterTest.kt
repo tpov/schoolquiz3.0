@@ -3,7 +3,6 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftTreeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaSectionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaThemeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
@@ -82,7 +81,6 @@ class QuestArenaOutboxWriterTest {
             themes = listOf(ArenaThemeDto("theme-1", "draft-1", "section-1", "Theme", 0)),
             lessons = listOf(ArenaLessonDto("lesson-1", "draft-1", "theme-1", "Lesson", 0)),
             questions = emptyList(),
-            review = ArenaReviewDto(),
             targetShelf = "arena",
             targetLessonIds = linkedSetOf("lesson-1"),
             draftTree = draftTree,

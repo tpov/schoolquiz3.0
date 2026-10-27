@@ -17,7 +17,6 @@ data class QuestArenaSubmissionRequest(
     val themes: List<ArenaThemeDto>,
     val lessons: List<ArenaLessonDto>,
     val questions: List<ArenaQuestionDto>,
-    val review: ArenaReviewDto,
     val targetShelf: String = "arena",
     val targetLessonIds: Set<String> = emptySet(),
     /**
@@ -45,31 +44,6 @@ data class ArenaDraftTreeDto(
     val themes: Set<String> = emptySet(),
     val lessons: Set<String> = emptySet(),
 )
-
-data class ArenaReviewDto(
-    val isTested: Boolean = false,
-    val testingScore: Double? = null,
-    val isLogicReviewed: Boolean = false,
-    val logicScore: Double? = null,
-    val isTranslationReviewed: Boolean = false,
-    val translationScore: Int? = null,
-    val translatedLanguages: Map<String, Int> = emptyMap(),
-) {
-    init {
-        require(testingScore == null || testingScore in 0.0..3.0) {
-            "ArenaReviewDto.testingScore must be null or in 0.0..3.0"
-        }
-        require(logicScore == null || logicScore in 0.0..3.0) {
-            "ArenaReviewDto.logicScore must be null or in 0.0..3.0"
-        }
-        require(translationScore == null || translationScore in 0..100) {
-            "ArenaReviewDto.translationScore must be null or in 0..100"
-        }
-        require(translatedLanguages.values.all { it >= 0 }) {
-            "ArenaReviewDto.translatedLanguages levels must be >= 0"
-        }
-    }
-}
 
 data class ArenaDraftDto(
     val id: String,

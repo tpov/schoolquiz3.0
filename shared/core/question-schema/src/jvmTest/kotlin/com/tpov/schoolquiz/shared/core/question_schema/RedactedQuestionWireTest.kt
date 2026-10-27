@@ -193,7 +193,7 @@ class RedactedQuestionWireTest {
     /**
      * A redacted payload must never become a [QuestionContent].
      *
-     * `DefaultQuestCreateComponent` and `DefaultReviewQueueComponent` re-encode what they parse, so
+     * `DefaultQuestCreateComponent` and the question editor re-encode what they parse, so
      * a redacted value that arrived there as a QuestionContent would overwrite the stored question
      * with its own public half. Both overloads are checked: the enriched one is the path those
      * components actually take.

@@ -2,16 +2,13 @@
 
 const assert = require("assert");
 const {
-  ADMIN_REVIEW_SYNC_CHANGES,
   JOURNALS,
   JOURNAL_CATALOG,
   JOURNAL_LESSON_CONTENT,
   JOURNAL_PRIVATE,
-  JOURNAL_REVIEW,
   NODE_JOURNALS,
   NODE_KINDS,
   SYNC_CHANGE_FIELDS,
-  adminSyncChangePath,
   isSyncChangeDocument,
   journalOfCollectionPath,
   lessonContentSyncChangePath,
@@ -73,16 +70,15 @@ function journalOfPath(path) {
 // ─── 7.1: тело и id ───────────────────────────────────────────────────────────────────────────
 
 function testTheBodyIsExactlyThreeFieldsInEveryJournal() {
-  // По одному свежезаписанному документу на каждый из четырёх путей.
+  // По одному свежезаписанному документу на каждый из трёх путей.
   const db = fakeFirestore();
   const batch = db.batch();
   writeSyncChanges(batch, db, {kind: "quest", id: "q-1", catalogId: "cat-1", ownerUid: "author-1"}, NOW);
   writeSyncChanges(batch, db, {kind: "question", id: "qn-1", catalogId: "cat-1", lessonId: "lesson-1"}, NOW);
-  writeSyncChanges(batch, db, {kind: "review_assignment", id: "sub-1_lesson-1"}, NOW);
   return batch.commit().then(() => {
     const paths = db.paths();
     const journalsSeen = new Set(paths.map(journalOfPath));
-    assert.deepStrictEqual([...journalsSeen].sort(), [...JOURNALS].sort(), "все четыре журнала получили запись");
+    assert.deepStrictEqual([...journalsSeen].sort(), [...JOURNALS].sort(), "все три журнала получили запись");
     for (const path of paths) {
       const body = db.read(path);
       assert.deepStrictEqual(
@@ -97,9 +93,6 @@ function testTheBodyIsExactlyThreeFieldsInEveryJournal() {
     // `id` — ключ для fetchByIds, а не id документа журнала.
     assert.strictEqual(db.read(privateSyncChangePath("author-1", "cat-1", "q-1")).id, "q-1");
     assert.strictEqual(db.read(publicCatalogSyncChangePath("cat-1", "quest", "q-1")).id, "q-1");
-    assert.strictEqual(db.read(adminSyncChangePath("sub-1_lesson-1")).id, "sub-1_lesson-1");
-    // Журнал ревью раньше писал тело без `type` — теперь оно есть.
-    assert.strictEqual(db.read(adminSyncChangePath("sub-1_lesson-1")).type, "review_assignment");
   });
 }
 
@@ -124,7 +117,6 @@ function testDocumentIdsCarryNoTime() {
   assert.strictEqual(publicCatalogSyncChangePath("cat-1", "quest", "q-1"), "catalogs/cat-1/sync_changes/quest_q-1");
   assert.strictEqual(lessonContentSyncChangePath("l-1", "qn-1"), "lesson_content/l-1/sync_changes/qn-1");
   assert.strictEqual(privateSyncChangePath("u-1", "cat-1", "q-1"), "private/u-1/sync_changes/cat-1_q-1");
-  assert.strictEqual(adminSyncChangePath("sub-1_l-1"), "admin/review/sync_changes/sub-1_l-1");
   for (const kind of NODE_KINDS) {
     for (const write of syncChangeWrites(everyAddress(kind, "node-1"), NOW)) {
       const docId = write.path.slice(write.path.lastIndexOf("/") + 1);
@@ -272,20 +264,12 @@ function testTheLessonJournalKeepsOnlyTheQuestionId() {
 }
 
 function testExtraFieldsAreStrippedAndAMissingTypeIsRestored() {
-  // Приватный журнал нёс catalogId и questId сверх формы; журнал ревью — тело без type.
+  // Приватный журнал нёс catalogId и questId сверх формы.
   const privatePlan = planJournalBackfill(JOURNAL_PRIVATE, [
     {id: "cat-1_q-1", data: {id: "q-1", type: "quest", catalogId: "cat-1", questId: "q-1", changedAtMs: NOW}},
   ]);
   assert.deepStrictEqual(privatePlan.writes, [{id: "cat-1_q-1", data: {type: "quest", id: "q-1", changedAtMs: NOW}}]);
   assert.deepStrictEqual(privatePlan.deletes, []);
-
-  const reviewPlan = planJournalBackfill(JOURNAL_REVIEW, [
-    {id: "sub-1_l-1", data: {id: "sub-1_l-1", assignmentId: "sub-1_l-1", lessonId: "l-1", changedAtMs: NOW}},
-  ]);
-  assert.deepStrictEqual(reviewPlan.writes, [
-    {id: "sub-1_l-1", data: {type: "review_assignment", id: "sub-1_l-1", changedAtMs: NOW}},
-  ]);
-  assert.deepStrictEqual(reviewPlan.deletes, []);
 }
 
 function testAnUnreadableEntryIsLeftAloneAndNamed() {
@@ -320,7 +304,8 @@ function testJournalsAreRecognisedByCollectionPath() {
   assert.strictEqual(journalOfCollectionPath("catalogs/cat-1/sync_changes"), JOURNAL_CATALOG);
   assert.strictEqual(journalOfCollectionPath("lesson_content/l-1/sync_changes"), JOURNAL_LESSON_CONTENT);
   assert.strictEqual(journalOfCollectionPath("private/u-1/sync_changes"), JOURNAL_PRIVATE);
-  assert.strictEqual(journalOfCollectionPath(ADMIN_REVIEW_SYNC_CHANGES), JOURNAL_REVIEW);
+  // Журнал ревью удалён (4.19): его коллекция — не журнал, и бэкфилл её не трогает.
+  assert.strictEqual(journalOfCollectionPath("admin/review/sync_changes"), null);
   // Одноимённая коллекция где-то ещё — не журнал, и бэкфилл её не трогает.
   assert.strictEqual(journalOfCollectionPath("quests/q-1/sync_changes"), null);
   assert.strictEqual(journalOfCollectionPath("catalogs/cat-1/nodes/n-1/sync_changes"), null);

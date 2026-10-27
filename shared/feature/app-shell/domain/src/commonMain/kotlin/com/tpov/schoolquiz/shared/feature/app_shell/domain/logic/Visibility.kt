@@ -94,7 +94,6 @@ fun visibleSections(
             buildList {
                 add(DrawerSection.LocalSection.HomeQuests)
                 add(DrawerSection.LocalSection.Archive)
-                add(DrawerSection.LocalSection.ReviewQueue)
                 add(DrawerSection.LocalSection.Decisions)
                 add(DrawerSection.LocalSection.AuthorLifecycle)
                 add(DrawerSection.LocalSection.Curation)
@@ -148,7 +147,6 @@ fun rootOf(section: DrawerSection): TabConfig =
         DrawerSection.LocalSection.MyQuests -> LocalConfig.MyQuestsRoot
         DrawerSection.LocalSection.HomeQuests -> LocalConfig.HomeQuestsRoot
         DrawerSection.LocalSection.Archive -> LocalConfig.ArchiveRoot
-        DrawerSection.LocalSection.ReviewQueue -> LocalConfig.ReviewQueueRoot
         DrawerSection.LocalSection.Decisions -> LocalConfig.DecisionsRoot
         DrawerSection.LocalSection.AuthorLifecycle -> LocalConfig.AuthorLifecycleRoot
         DrawerSection.LocalSection.Curation -> LocalConfig.CuratorRoot

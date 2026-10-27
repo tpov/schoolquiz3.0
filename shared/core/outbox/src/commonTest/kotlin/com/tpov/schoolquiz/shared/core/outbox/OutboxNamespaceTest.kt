@@ -51,7 +51,7 @@ class OutboxNamespaceTest {
         val store = FakeOutboxStore()
 
         store.enqueue(record(OutboxOperations.SUBMIT_ATTEMPT, "lesson_runner:attempt:a1"))
-        store.enqueue(record(OutboxOperations.SUBMIT_REVIEW, "quest_authoring.ASSIGNMENT:7").copy(mutationId = "m-2"))
+        store.enqueue(record(OutboxOperations.SUBMIT_ARENA, "quest_authoring.CATALOG:7").copy(mutationId = "m-2"))
 
         assertEquals(2, store.all.size)
     }
@@ -91,7 +91,6 @@ class OutboxNamespaceTest {
                 OutboxOperations.SUBMIT_ATTEMPT,
                 OutboxOperations.SUBMIT_RATING,
                 OutboxOperations.SUBMIT_ARENA,
-                OutboxOperations.SUBMIT_REVIEW,
                 OutboxOperations.SET_SHELF,
                 OutboxOperations.CANCEL_NICKNAME_LISTING,
                 OutboxOperations.CANCEL_LOGO_LISTING,

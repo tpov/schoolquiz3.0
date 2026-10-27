@@ -6,7 +6,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArena
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftTreeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaPrivateQuizSettingsDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.PrivateQuizSettings
@@ -138,7 +137,6 @@ class PrivateQuizSettingsWireTest {
             themes = emptyList(),
             lessons = emptyList(),
             questions = emptyList(),
-            review = ArenaReviewDto(),
             targetShelf = "arena",
             targetLessonIds = emptySet(),
             draftTree = ArenaDraftTreeDto(),

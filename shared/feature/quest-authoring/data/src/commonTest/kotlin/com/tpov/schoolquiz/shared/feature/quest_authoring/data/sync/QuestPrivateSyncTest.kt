@@ -14,7 +14,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringEnt
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ArenaReviewSubmissionTarget
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSyncChange
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
@@ -370,7 +369,6 @@ class QuestPrivateSyncTest {
                     themes = emptyList(),
                     lessons = emptyList(),
                     questions = emptyList(),
-                    review = ArenaReviewDto(),
                 ),
         )
 }

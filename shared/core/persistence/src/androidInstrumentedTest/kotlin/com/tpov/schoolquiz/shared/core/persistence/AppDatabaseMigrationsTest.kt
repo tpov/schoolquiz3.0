@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration15to16
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration16to17
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration17to18
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration18to19
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -472,7 +473,7 @@ class AppDatabaseMigrationsTest {
     fun migrate_7_to_8_adds_the_document_half_of_the_cursor_and_keeps_the_time_half() {
         helper.createDatabase(DB_NAME, version = 7).use { db ->
             db.execSQL("INSERT INTO sync_state (collectionId, cursor) VALUES ('catalog_sync:cat-1', 1700)")
-            db.execSQL("INSERT INTO sync_state (collectionId, cursor) VALUES ('review_assignments:u-1', 2600)")
+            db.execSQL("INSERT INTO sync_state (collectionId, cursor) VALUES ('private_quests:u-1', 2600)")
         }
 
         helper.runMigrationsAndValidate(DB_NAME, 8, true, Migration7to8).use { db ->
@@ -843,6 +844,43 @@ class AppDatabaseMigrationsTest {
         }
     }
 
+    /**
+     * Мир живых проверяющих удалён (4.19): обе таблицы заданий дропнуты, соседние строки целы.
+     */
+    @Test
+    fun migrate_18_to_19_drops_the_review_assignment_tables_and_keeps_the_neighbours() {
+        helper.createDatabase(DB_NAME, version = 18).use { db ->
+            db.execSQL(
+                "INSERT INTO review_assignments(id, ownerUid, submissionId, catalogId, draftId, questId, " +
+                    "lessonId, title, createdAtMs, taskKinds, sourceLanguages, newTranslationLanguages, " +
+                    "reviewLanguages, isTested, testingScore, isLogicReviewed, logicScore, " +
+                    "isTranslationReviewed, translationScore, translatedLanguages) VALUES " +
+                    "('ra-1', 'owner-18', 'sub', 'catalog-18', 'draft-18', 'quest', 'lesson-18', 'Review', 1, " +
+                    "'', '', '', 0, NULL, 0, NULL, 0, NULL, '')",
+            )
+            db.execSQL(
+                "INSERT INTO review_assignment_questions(ownerUid, assignmentId, questionId, draftId, " +
+                    "lessonId, type, language, languageLevel, difficulty, \"order\", text, imagePath, " +
+                    "payload, updatedAtMs) VALUES " +
+                    "('owner-18', 'ra-1', 'rq-1', 'draft-18', 'lesson-18', 'SINGLE', 'ru', 1, 'EASY', 0, 'Q', " +
+                    "NULL, '{}', 1)",
+            )
+            db.execSQL("INSERT INTO sync_state(collectionId, cursor, doc_id) VALUES ('migration-19-proof', 719, 'doc-19')")
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 19, true, Migration18to19).use { db ->
+            db.query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN " +
+                "('review_assignments', 'review_assignment_questions')").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            db.query("SELECT cursor FROM sync_state WHERE collectionId = 'migration-19-proof'").use { c ->
+                assertTrue("соседние строки переживают дроп таблиц", c.moveToFirst())
+                assertEquals(719L, c.getLong(0))
+            }
+        }
+    }
+
     @Test
     fun migrate_all_the_way_from_1_validates_against_the_current_schema() {
         helper.createDatabase(DB_NAME, version = 1).close()
@@ -869,6 +907,7 @@ class AppDatabaseMigrationsTest {
             Migration15to16,
             Migration16to17,
             Migration17to18,
+            Migration18to19,
         ).close()
     }
 
@@ -876,7 +915,7 @@ class AppDatabaseMigrationsTest {
         const val DB_NAME = "migration_test"
 
         /** Must match `@Database(version = …)` on [AppDatabase]; [MigrationCoverageTest] pins it. */
-        const val CURRENT_VERSION = 18
+        const val CURRENT_VERSION = 19
 
         /** Три очереди, сведённые в одну миграцией 5 -> 6. Ни одна не должна пережить её. */
         val OLD_QUEUE_TABLES =

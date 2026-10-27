@@ -1,21 +1,18 @@
 "use strict";
 
 /**
- * Платный цикл проверки: фонд цикла делится между проверяющими, остаток сгорает (AD-10, CAP-4).
+ * Платный цикл проверки: весь фонд сгорает (AD-10, CAP-4, AD-32).
  *
  * Модель денег принята владельцем (PRD, «Оплата подачи на проверку»): первоначальная полная
  * подача стоит 1000 ноликов, частичная перепроверка после исправлений — 100 ноликов за вопрос;
  * плата привязана к принятой заявке и не возвращается (в том числе при отклонении по качеству и
- * техническом сбое). Вознаграждение проверяющего — личный уровень за урок целиком: уровень 200
- * даёт 20 ноликов независимо от числа проверенных вопросов. Всё, что выплаты не съели, сгорает;
- * равенство «плата = вознаграждения + сгоревший остаток» держится всегда.
+ * техническом сбое). С 4.18 проверяющих у конвейера нет (AD-32), с 4.19 удалён и код их наград:
+ * entitlements всегда нули, консервация вырождается в «fee = 0 + burn» и держится манифестом.
+ * Арифметика распределения и кошельков остаётся ровно той же — форма манифеста неизменяема и
+ * обязана описывать и прежние расчёты тоже.
  *
- * Что решил AD-10 из открытых вопросов владельца:
+ * Правила AD-10, которые остаются в силе:
  *
- *   — единица вознаграждения — unit=(оплаченный цикл, урок, проверяющий), направления объединяются:
- *     проверивший и тестирование, и перевод получает одну выплату за урок, а не две;
- *   — личный уровень Li фиксирует первый принятый завершённый результат юнита, и поздние записи
- *     с другим уровнем его не двигают;
  *   — вся арифметика — в десятых нолика: при ΣLi ≤ 10P entitlement_i = Li и burn = 10P − ΣLi;
  *     иначе доли 10P×Li/ΣLi берутся floors, а остаточные десятые раздаются по убыванию остатка,
  *     ничья — по стабильному id юнита;
@@ -28,17 +25,8 @@
  *
  * Границы, которые модуль не пересекает (честно, а не молча):
  *
- *   — «завершённый результат» сервер видит по-своему: TESTING/LOGIC завершены записью с оценкой
- *     урока (покрытие вопросов приёмник проверяет при записи), TRANSLATION — записью, накрывшей
- *     все вопросы задания содержимым (тот же предикат, что засчитывает язык), TRANSLATION_REVIEW —
- *     записью с явными решениями по сегментам; перечислить сегменты независимо сервер не может —
- *     полнота сегментного ревью принимается на интейке;
- *   — отклонение задания — тоже завершённый результат: судья отклонения получает юнит с уровнем
- *     на момент отклонения (поле задания rejectedReviewerLevelAtSubmit);
- *   — тариф перепроверки считается от всех вопросов заявки: нынешняя модель ревью перепроверяет
- *     каждую новую заявку целиком (записи привязаны к submissionId), значит «вопросов, требующих
- *     повторной проверки», у неё ровно questionCount; настоящий частичный перечёт появится вместе
- *     с моделью сохранных проверок и унесёт свой диф.
+ *   — юниты и кошельки приходят пустыми всегда: писателей наград у конвейера нет; документы
+ *     прежних человеческих циклов читает только их собственный (уже рассчитанный) манифест.
  */
 
 const TENTHS_PER_NOLIC = 10;
@@ -96,118 +84,6 @@ function tenths(value, name) {
     throw new RangeError(`${name} must be a non-negative integer, got ${JSON.stringify(value)}`);
   }
   return value;
-}
-
-/** Перенос содержимого: вопрос без текста и без картинки переводом не считается (CAP-3). */
-function carriesContent(question) {
-  return (question.text !== null && question.text !== undefined && String(question.text).trim().length > 0) ||
-    (question.imagePath !== null && question.imagePath !== undefined);
-}
-
-/** Вопросов на язык: та же мера полноты перевода, что засчитывает язык в агрегате. */
-function sourceQuestionCount(questions) {
-  const groups = {};
-  for (const question of questions || []) {
-    const language = question.language ? String(question.language).trim().toLowerCase() : "";
-    groups[language] = (groups[language] || 0) + 1;
-  }
-  const counts = Object.values(groups);
-  return counts.length > 0 ? Math.max(...counts) : (questions || []).length;
-}
-
-/**
- * Запись — завершённый результат своего направления.
- *
- * Полнота сегментного ревью сервером не перечисляется (сегменты живут у клиента), поэтому
- * завершённость TRANSLATION_REVIEW — явные решения, принятые на интейке; это граница, а не молчаливое
- * допущение: непустых решений без явного вердикта приёмник не пишет.
- */
-function completedRecord(record, task) {
-  if (!record || !record.acceptedByServer || !record.reviewerUid) return false;
-  if (record.kind === "TESTING" || record.kind === "LOGIC") {
-    return record.score !== null && record.score !== undefined;
-  }
-  if (record.kind === "TRANSLATION") {
-    const translated = record.translatedQuestions || [];
-    const required = task && Array.isArray(task.questions) ? sourceQuestionCount(task.questions) : 0;
-    return required > 0 && translated.length >= required && translated.every(carriesContent);
-  }
-  if (record.kind === "TRANSLATION_REVIEW") {
-    return Array.isArray(record.segmentResults) && record.segmentResults.length > 0;
-  }
-  return false;
-}
-
-/**
- * Юниты цикла: по одному на (урок, проверяющий), направления объединены.
- *
- * Уровень юнита даёт первый по времени завершённый результат (ничья — по id записи): поздний
- * уровень другого направления фикс уже не двигает. Отклонение задания приносит юнит судье —
- * уровень берётся из поля задания `rejectedReviewerLevelAtSubmit`.
- *
- * @param {object} input `{submissionId, lessonIds, taskByLessonId, recordsByLessonId, ownerUid}` —
- *   записи одного цикла; модуль и сам фильтрует по submissionId: чужая заявка чужой цикл не кормит.
- * @returns {Array} юниты `{unitId, lessonId, reviewerUid, levelTenths, evidenceRecordId}` по
- *   возрастанию unitId.
- */
-function buildReviewUnits({submissionId, lessonIds, taskByLessonId, recordsByLessonId, ownerUid}) {
-  const units = new Map();
-  for (const lessonId of lessonIds || []) {
-    const task = (taskByLessonId || {})[lessonId] || null;
-    for (const record of (recordsByLessonId || {})[lessonId] || []) {
-      if (submissionId && record.submissionId !== submissionId) continue;
-      if (!completedRecord(record, task)) continue;
-      if (ownerUid && record.reviewerUid === ownerUid) continue;
-      const unitId = `${lessonId}/${record.reviewerUid}`;
-      const previous = units.get(unitId);
-      if (!previous || recordWinsLevel(previous, record)) {
-        units.set(unitId, {
-          unitId,
-          lessonId,
-          reviewerUid: record.reviewerUid,
-          levelTenths: tenths(record.reviewerLevelAtSubmit, `reviewerLevelAtSubmit of ${unitId}`),
-          evidenceRecordId: record.id,
-          createdAtMs: record.createdAtMs,
-        });
-      }
-    }
-    const rejection = task && task.rejectedAtMs ? rejectionUnit(task, lessonId, ownerUid, submissionId) : null;
-    if (rejection && !units.has(rejection.unitId)) units.set(rejection.unitId, rejection);
-  }
-  return Array.from(units.values()).sort((a, b) => (a.unitId < b.unitId ? -1 : a.unitId > b.unitId ? 1 : 0));
-}
-
-/**
- * Судья отклонения: юнит с его уровнем на момент отклонения (обоснованное отклонение — работа).
- *
- * Задание, уже переписанное новой заявкой того же урока, своё отклонение с собой унесло: судить
- * его в старом цикле — значит платить за чужой цикл.
- */
-function rejectionUnit(task, lessonId, ownerUid, submissionId) {
-  if (submissionId && task.submissionId && task.submissionId !== submissionId) return null;
-  const reviewerUid = task.rejectedByUid;
-  if (!reviewerUid || (ownerUid && reviewerUid === ownerUid)) return null;
-  const level = task.rejectedReviewerLevelAtSubmit;
-  if (level === null || level === undefined) return null;
-  return {
-    unitId: `${lessonId}/${reviewerUid}`,
-    lessonId,
-    reviewerUid,
-    levelTenths: tenths(level, `rejectedReviewerLevelAtSubmit of ${lessonId}`),
-    evidenceRecordId: null,
-  };
-}
-
-/**
- * Фиксирует ли запись уровень вместо прежней: берётся более ранний завершённый результат,
- * одновременные — по меньшему id записи. Юнит от отклонения записи не имеет и не соревнуется:
- * он появляется, только когда записей у судьи нет вовсе.
- */
-function recordWinsLevel(previous, candidate) {
-  if (candidate.createdAtMs !== previous.createdAtMs) {
-    return candidate.createdAtMs < previous.createdAtMs;
-  }
-  return String(candidate.id) < String(previous.evidenceRecordId);
 }
 
 /**
@@ -357,9 +233,7 @@ module.exports = {
   CALCULATION_VERSION,
   DEFAULT_TARIFFS,
   TENTHS_PER_NOLIC,
-  buildReviewUnits,
   buildSettlementManifest,
-  completedRecord,
   normalizeReviewFeeTariffs,
   reviewFeeNolics,
   settleReviewFeeTenths,

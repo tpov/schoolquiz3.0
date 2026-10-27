@@ -18,7 +18,6 @@ import com.tpov.schoolquiz.shared.core.persistence.QuestDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
-import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentDao
 import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
 import com.tpov.schoolquiz.shared.core.persistence.SyncRunTraceDao
@@ -35,6 +34,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration14to15
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration15to16
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration16to17
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration17to18
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration18to19
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
@@ -75,6 +75,7 @@ val persistenceModule =
                     Migration15to16,
                     Migration16to17,
                     Migration17to18,
+                    Migration18to19,
                 )
                 .build()
         }
@@ -92,7 +93,6 @@ val persistenceModule =
         single<SyncStateDao> { get<AppDatabase>().syncStateDao() }
         single<SyncRunTraceDao> { get<AppDatabase>().syncRunTraceDao() }
         single<QuestAuthoringDao> { get<AppDatabase>().questAuthoringDao() }
-        single<ReviewAssignmentDao> { get<AppDatabase>().reviewAssignmentDao() }
         single<UserProfileDao> { get<AppDatabase>().userProfileDao() }
         single<GiftClaimIntentDao> { get<AppDatabase>().giftClaimIntentDao() }
         single<GiftBoxLocalStreakDao> { get<AppDatabase>().giftBoxLocalStreakDao() }

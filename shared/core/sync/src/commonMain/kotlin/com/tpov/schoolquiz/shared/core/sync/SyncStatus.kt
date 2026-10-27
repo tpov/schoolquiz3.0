@@ -124,7 +124,4 @@ object SyncJournals {
 
     /** Журнал приватных квестов автора: `private/{uid}/sync_changes`. */
     const val PRIVATE_QUESTS: String = "private_quests"
-
-    /** Журнал заданий на ревью: `admin/review/sync_changes`. */
-    const val REVIEW_ASSIGNMENTS: String = "review_assignments"
 }

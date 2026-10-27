@@ -7,13 +7,9 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLoc
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSourceImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestReviewOutcomeRepositoryImpl
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentLocalDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentLocalDataSourceImpl
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewDecisionsRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewFeeQuoteRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaQuarantineRollback
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ReviewActionQuarantine
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
@@ -27,7 +23,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.Inbo
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonLifecycleRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestReviewOutcomeRepository
-import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewAssignmentRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewDecisionsRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewFeeQuoteRepository
 import org.koin.dsl.module
@@ -35,7 +30,6 @@ import org.koin.dsl.module
 val questAuthoringDataModule =
     module {
         single<QuestAuthoringLocalDataSource> { QuestAuthoringLocalDataSourceImpl(get()) }
-        single<ReviewAssignmentLocalDataSource> { ReviewAssignmentLocalDataSourceImpl(get()) }
         single<QuestAuthoringRepository> { QuestAuthoringRepositoryImpl(get(), get(), get()) }
         // Проекции TZ06B и кураторский переход — прямой callable без локальной половины (AD-25);
         // транспортBinding (Firebase) подключается в platform-модуле.
@@ -43,11 +37,6 @@ val questAuthoringDataModule =
             LessonLifecycleRepositoryImpl(
                 remote = get<LessonLifecycleRemoteDataSource>(),
             )
-        }
-        // Решение ревьюера уходит общей очередью, а не callable (AD-6): репозиторию нужен только
-        // локальный источник и сама очередь.
-        single<ReviewAssignmentRepository> {
-            ReviewAssignmentRepositoryImpl(local = get<ReviewAssignmentLocalDataSource>(), outbox = get<OutboxStore>())
         }
         // Общий inbox (AD-20): чтение — view-транспорт (Firebase), подача отчёта — общая очередь.
         single<InboxRepository> {
@@ -70,9 +59,6 @@ val questAuthoringDataModule =
         }
         // Откат локальной половины при карантине — решение владеющей фичи (AD-28).
         single { QuestArenaQuarantineRollback(get(), get()) }
-        // У решения ревьюера локальной половины нет (AD-25): карантин — пометка по entity_ref, не откат.
-        // Обработчик живёт в модуле фичи, чьё имя стоит в operation и entity_ref (NFR4, NFR5).
-        single { ReviewActionQuarantine() }
         single<QuestAuthoringIdProvider> { DefaultQuestAuthoringIdProvider() }
         single<QuestAuthoringTimestampProvider> { DefaultQuestAuthoringTimestampProvider() }
     }

@@ -51,7 +51,7 @@ class OwnerTracesPersistenceTest {
         store = RoomOutboxStore(db.outboxDao())
         traces =
             RoomOwnerTraces(db.ownerRowsDao()) { uid ->
-                listOf("private_quests:$uid", "review_assignments:$uid")
+                listOf("private_quests:$uid")
             }
     }
 
@@ -64,7 +64,6 @@ class OwnerTracesPersistenceTest {
     fun personalCursorsOfThePreviousOwnerAreDeletedAndTheSharedOnesStay() =
         runTest {
             syncState.setCursor("private_quests:$previous", SyncCursor(5_000L))
-            syncState.setCursor("review_assignments:$previous", SyncCursor(6_000L))
             syncState.setCursor("private_quests:$next", SyncCursor(7_000L))
             syncState.setCursor("catalog_sync:cat-1", SyncCursor(8_000L))
             syncState.setCursor("catalogs", SyncCursor(9_000L))
@@ -72,7 +71,6 @@ class OwnerTracesPersistenceTest {
             traces.forget(previous)
 
             assertNull("удалена строка, а не записан ноль", cursorOf("private_quests:$previous"))
-            assertNull(cursorOf("review_assignments:$previous"))
             assertEquals(SyncCursor(7_000L), cursorOf("private_quests:$next"))
             assertEquals(SyncCursor(8_000L), cursorOf("catalog_sync:cat-1"))
             assertEquals(SyncCursor(9_000L), cursorOf("catalogs"))
@@ -296,11 +294,10 @@ class OwnerTracesPersistenceTest {
     @Test
     fun rowsWithAServerTwinAreNotNamedToThePlayer() =
         runTest {
-            // Профиль, статистика, задания ревью и локальные оценки вернутся после входа: снимать их
-            // надо, а спрашивать про них не о чем.
+            // Профиль, статистика и локальные оценки вернутся после входа: снимать их надо,
+            // а спрашивать про них не о чем.
             db.userProfileDao().upsert(userProfile(previous))
             db.userStatsDao().upsert(userStats(previous))
-            db.reviewAssignmentDao().insertAll(listOf(reviewAssignment(previous)))
             db.lessonRatingLocalDao().upsert(LessonRatingSubmittedLocalEntity(previous, "lesson-1", 1L))
             db.lessonAttemptDao().upsert(lessonAttempt(previous))
 
@@ -346,8 +343,6 @@ class OwnerTracesPersistenceTest {
         owner: String,
         withQueueRow: Boolean = true,
     ) {
-        db.reviewAssignmentDao().insertAll(listOf(reviewAssignment(owner)))
-        db.reviewAssignmentDao().insertQuestions(listOf(reviewAssignmentQuestion(owner)))
         db.questAuthoringDao().insertDraft(draft(owner))
         db.questAuthoringDao().insertSections(listOf(DraftSectionEntity("sec-$owner", "draft-$owner", "S", 0)))
         db.questAuthoringDao().insertThemes(
@@ -492,48 +487,6 @@ class OwnerTracesPersistenceTest {
             imagePath = null,
             payload = null,
             validationState = "VALID",
-            updatedAtMs = 1L,
-        )
-
-    private fun reviewAssignment(owner: String) =
-        ReviewAssignmentEntity(
-            id = "ra-$owner",
-            ownerUid = owner,
-            submissionId = "sub",
-            catalogId = "cat-1",
-            draftId = "draft-$owner",
-            questId = "quest",
-            lessonId = "lesson-1",
-            title = "Review",
-            createdAtMs = 1L,
-            taskKinds = emptyList(),
-            sourceLanguages = emptyList(),
-            newTranslationLanguages = emptyList(),
-            reviewLanguages = emptyList(),
-            isTested = false,
-            testingScore = null,
-            isLogicReviewed = false,
-            logicScore = null,
-            isTranslationReviewed = false,
-            translationScore = null,
-            translatedLanguages = emptyList(),
-        )
-
-    private fun reviewAssignmentQuestion(owner: String) =
-        ReviewAssignmentQuestionEntity(
-            ownerUid = owner,
-            assignmentId = "ra-$owner",
-            questionId = "rq-$owner",
-            draftId = "draft-$owner",
-            lessonId = "lesson-1",
-            type = "SINGLE",
-            language = "ru",
-            languageLevel = 1,
-            difficulty = "EASY",
-            order = 0,
-            text = "Q",
-            imagePath = null,
-            payload = "{}",
             updatedAtMs = 1L,
         )
 

@@ -29,9 +29,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderDecisionsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
@@ -167,7 +165,6 @@ class DefaultRootComponent(
     questCreateFactory: (ComponentContext, Navigator) -> QuestCreateComponent = { _, nav ->
         PlaceholderQuestCreateComponent(nav)
     },
-    reviewQueueFactory: (ComponentContext) -> ReviewQueueComponent = { PlaceholderReviewQueueComponent() },
     decisionsFactory: (ComponentContext) -> DecisionsComponent = { PlaceholderDecisionsComponent() },
     curatorFactory: (ComponentContext) -> CuratorComponent = { PlaceholderCuratorComponent() },
     authorLifecycleFactory: (ComponentContext) -> AuthorLifecycleComponent = { PlaceholderAuthorLifecycleComponent() },
@@ -324,10 +321,6 @@ class DefaultRootComponent(
         questCreateFactory(
             childContext("QuestCreateContent"),
             navigator,
-        )
-    val reviewQueueComponent: ReviewQueueComponent =
-        reviewQueueFactory(
-            childContext("ReviewQueueContent"),
         )
     val decisionsComponent: DecisionsComponent =
         decisionsFactory(

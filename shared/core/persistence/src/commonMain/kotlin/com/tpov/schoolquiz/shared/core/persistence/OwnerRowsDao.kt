@@ -31,12 +31,6 @@ interface OwnerRowsDao {
     @Query("SELECT owner_uid FROM arena_command_journal UNION SELECT owner_uid FROM arena_ticket_records")
     suspend fun ownersWithArenaFinancialRecords(): List<String>
 
-    @Query("DELETE FROM review_assignment_questions WHERE ownerUid = :uid")
-    suspend fun deleteReviewAssignmentQuestions(uid: String)
-
-    @Query("DELETE FROM review_assignments WHERE ownerUid = :uid")
-    suspend fun deleteReviewAssignments(uid: String)
-
     // Дерево черновика режется от листьев к корню и по родителю: колонки владельца у веток нет,
     // владелец лежит только на самом черновике. Каскад в схеме описан, но полагаться на него —
     // значит зависеть от того, включены ли внешние ключи в этом соединении.
@@ -122,9 +116,7 @@ interface OwnerRowsDao {
      */
     @Query(
         """
-        SELECT ownerUid FROM review_assignments
-        UNION SELECT ownerUid FROM review_assignment_questions
-        UNION SELECT ownerUid FROM quest_drafts
+        SELECT ownerUid FROM quest_drafts
         UNION SELECT uid FROM user_stats
         UNION SELECT uid FROM user_profiles
         UNION SELECT user_id FROM lesson_attempts
@@ -165,8 +157,6 @@ interface OwnerRowsDao {
         privateCursorIds: List<String>,
         reason: OwnerForgetReason = OwnerForgetReason.ERASE_LOCAL_DATA,
     ) {
-        deleteReviewAssignmentQuestions(uid)
-        deleteReviewAssignments(uid)
         deleteDraftQuestions(uid)
         deleteDraftLessons(uid)
         deleteDraftThemes(uid)
@@ -272,20 +262,6 @@ object OwnerScopedTables {
                 "owner_uid",
                 OwnerCleanup.TRACES,
                 hasServerTwin = false,
-                namedToPlayer = null,
-            ),
-            OwnerScopedTable(
-                "review_assignments",
-                "ownerUid",
-                OwnerCleanup.TRACES,
-                hasServerTwin = true,
-                namedToPlayer = null,
-            ),
-            OwnerScopedTable(
-                "review_assignment_questions",
-                "ownerUid",
-                OwnerCleanup.TRACES,
-                hasServerTwin = true,
                 namedToPlayer = null,
             ),
             // Неопубликованный черновик серверу неизвестен: после переключения он не вернётся.

@@ -31,7 +31,6 @@ class OutboxOperationProducersTest {
             "READY_ACK" to OutboxOperations.READY_ACK,
             "SUBMIT_RATING" to OutboxOperations.SUBMIT_RATING,
             "SUBMIT_ARENA" to OutboxOperations.SUBMIT_ARENA,
-            "SUBMIT_REVIEW" to OutboxOperations.SUBMIT_REVIEW,
             "SET_SHELF" to OutboxOperations.SET_SHELF,
             "CANCEL_NICKNAME_LISTING" to OutboxOperations.CANCEL_NICKNAME_LISTING,
             "CANCEL_LOGO_LISTING" to OutboxOperations.CANCEL_LOGO_LISTING,

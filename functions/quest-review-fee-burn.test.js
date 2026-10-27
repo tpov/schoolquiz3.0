@@ -7,9 +7,9 @@
  * манифестом. Ретро 2026-10-25 L4/п.2: чужой draft.id в заявке — именованный отказ без записей
  * под чужим именем; зеркало ноликов (pointsNolics и nolics) пишется и списанием, и расчётом.
  *
- * Сюита гоняет настоящие публичные поверхности: submitMutation (приёмка с платой),
- * advanceQuestReviewOutcome (модельный исход → статус → расчёт), submitReviewAction/reject
- * (человеческий цикл для проверки зеркала в кошельках расчёта).
+ * Сюита гоняет настоящие публичные поверхности: submitMutation (приёмка с платой) и
+ * advanceQuestReviewOutcome (модельный исход → статус → расчёт). Человеческого цикла больше нет
+ * (4.19): зеркала расчёта держатся теми же строками платы и списания.
  */
 
 const assert = require("node:assert/strict");
@@ -42,7 +42,6 @@ function submissionPayload(overrides = {}) {
     questions: [{id: "q1", draftId: "draft-1", lessonId: "lesson", type: "SINGLE_CHOICE", language: "ru",
       languageLevel: 1, difficulty: "EASY", order: 0, text: "Вопрос?", imagePath: null, payload: "{}",
       updatedAtMs: 1}],
-    review: {},
     ...overrides,
   };
 }
@@ -59,10 +58,6 @@ function world(extra = {}) {
   return {
     "profiles/author": {uid: "author"},
     "users/author": {uid: "author", pointsNolics: 1000, nolics: 1000},
-    "users/tester": {uid: "tester", pointsNolics: 0, nolics: 0},
-    "users/judge": {uid: "judge", pointsNolics: 0, nolics: 0},
-    "profiles/tester": {uid: "tester", testerLevel: 100},
-    "profiles/judge": {uid: "judge", adminLevel: 150},
     "catalogs/catalog": {name: "Каталог"},
     ...extra,
   };
@@ -158,35 +153,4 @@ test("the charge dual-writes the nolics mirror", async () => {
   assert.equal(author.pointsNolics, 0);
   assert.equal(author.nolics, 0, "the charge leaves both mirror fields consistent");
   assert.equal(ledgerRows().find((row) => row.reason === "review_fee").delta, -1000);
-});
-
-test("a wallet settlement dual-writes the nolics mirror too (human cycle, same code path)", async () => {
-  store.reset(world({
-    "admin/review/lessons/lesson": {
-      assignmentId: "sub_lesson", submissionId: "sub", ownerUid: "author", catalogId: "catalog",
-      draftId: "draft-1", questId: "quest", title: "Lesson", targetShelf: "arena",
-      status: "UNDER_REVIEW", generation: 1, sourceLanguages: ["ru"], checks: {},
-      createdAtMs: 1, changedAtMs: 1,
-      questions: [{id: "q1", text: "Вопрос?", language: "ru"}],
-    },
-  }));
-  await submit("author", submissionPayload());
-  await functions.submitReviewAction.run({
-    auth: {uid: "tester"},
-    data: {assignmentId: "sub_lesson", lessonId: "lesson", kind: "TESTING", score: 2,
-      questionScores: [{questionId: "q1", score: 2}]},
-  });
-  await functions.rejectReviewSubmission.run({
-    auth: {uid: "judge"},
-    data: {assignmentId: "sub_lesson", reason: "Justified quality rejection"},
-  });
-
-  const manifest = store.documents.get("review_fee_manifests/sub");
-  assert.equal(manifest.feeTenths, manifest.sumEntitlementTenths + manifest.burnTenths,
-    "the human path stays conservative");
-  for (const uid of ["tester", "judge"]) {
-    const user = store.documents.get(`users/${uid}`);
-    const credited = manifest.wallets.find((wallet) => wallet.uid === uid).creditedNolics;
-    assert.equal(user.nolics, credited, `${uid}: the settlement mirror carries the credit`);
-  }
 });

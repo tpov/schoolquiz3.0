@@ -95,7 +95,7 @@ const {createArenaEntryRuntime} = require("./arena-entry-runtime");
 const {createArenaTicketRecovery} = require("./arena-ticket-recovery");
 const {createArenaLessonCatalog} = require("./arena-lesson-catalog");
 const {
-  createArenaLifecycleViews, ArenaLifecycleViewError, MAX_AUTHOR_REJECTION_REASON_BYTES,
+  createArenaLifecycleViews, ArenaLifecycleViewError,
 } = require("./arena-lifecycle-views");
 const {createInboxViews, InboxViewError} = require("./inbox-views");
 const {createPollViews, PollViewError} = require("./poll-views");
@@ -123,7 +123,6 @@ const {
 } = require("./charge-claims");
 const {
   TENTHS_PER_NOLIC,
-  buildReviewUnits,
   buildSettlementManifest,
   normalizeReviewFeeTariffs,
   reviewFeeNolics,
@@ -131,8 +130,7 @@ const {
   walletCreditForEntitlement,
 } = require("./review-fee");
 const {parseReviewFeeQuoteRequest, quoteReviewFee} = require("./review-fee-quote");
-const {ADMIN_REVIEW_SYNC_CHANGES, writeSyncChanges} = require("./sync-changes");
-const {readReviewAssignmentChanges, resolveReviewAssignments} = require("./review-journal");
+const {writeSyncChanges} = require("./sync-changes");
 const {readReviewDecisions, writeReviewDecisionMark} = require("./review-decisions");
 const {
   planHierarchyPrune,
@@ -269,14 +267,6 @@ const LIFECYCLE_CALLABLE_OPTIONS = {...CALLABLE_OPTIONS, secrets: [ARENA_LIFECYC
 const PLAY_RTDN_TOPIC = "play-rtdn";
 const QUALIFIED_LEVEL = 100;
 const DEVELOPER_ALL_ACCESS_LEVEL = 100;
-const TRANSLATION_REVIEW_LEVEL_GAP = 100;
-const ACTIVE_LEVEL_WINDOW = 100;
-const ACCEPTED_TRANSLATION_SEGMENT_POINTS = 5;
-const REJECTED_TRANSLATION_SEGMENT_POINTS = -1;
-const REVIEW_PASS_LEVEL = 100;
-// Review scores run 1..3; the pass mark lives in configs/arena_review.testingPassScore
-// (default 2) so the owner can raise the bar without a deploy. One is a refusal, not a quiet
-// approval.
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PUBLIC_SCOPE = "public";
 const PRIVATE_SCOPE = "private";
@@ -1322,22 +1312,14 @@ async function loadArenaLessonContext(transaction, lessonId) {
   const catalog = catalogSnapshot.data() || {};
   const authorUid = stringValue(quest.authorUid || quest.ownerUid);
   if (!isSingleDocumentId(authorUid) || !Number.isSafeInteger(lesson.version) || lesson.version < 1) return null;
-  const [reviewSnapshot, recordSnapshots, configSnapshot, changeSnapshot] = await Promise.all([
-    transaction.get(db.doc(adminLessonPath(lessonId))),
-    transaction.get(db.collection(`${adminLessonPath(lessonId)}/reviews`)),
-    transaction.get(db.doc("configs/arena_review")),
-    transaction.get(db.doc(`catalogs/${quest.catalogId}/sync_changes/lesson_${lessonId}`)),
-  ]);
-  const review = reviewSnapshot.exists ? reviewSnapshot.data() || {} : {};
-  const config = configSnapshot.exists ? configSnapshot.data() || {} : {};
-  const task = {lessonId, ownerUid: authorUid, submissionId: review.submissionId,
-    sourceLanguages: new Set(stringArray(review.sourceLanguages)), questions: [], checks: reviewToChecks({})};
-  const records = recordSnapshots.docs.map((doc) => normalizeReviewRecord(doc.data() || {}, doc.id, lessonId));
-  const checks = rebuildAggregate(task, records, config).checks;
-  const reviewApproved = review.status === "PUBLISHED" && !review.rejectedAtMs &&
-    review.ownerUid === authorUid && review.questId === section.questId &&
-    isSingleDocumentId(lesson.reviewSubmissionId) && lesson.reviewSubmissionId === review.submissionId &&
-    Number.isSafeInteger(lesson.reviewApprovedAtMs) && lessonPassed(checks, task, config);
+  // 4.19: мир ревьюеров удалён — доказательство проверки живёт в самом документе урока.
+  // Поля `reviewSubmissionId` и `reviewApprovedAtMs` пишет только публикация (человеческий
+  // цикл прежде, модельный конвейер теперь); урока без них на полках арены не существует.
+  const changeSnapshot = await transaction.get(
+    db.doc(`catalogs/${quest.catalogId}/sync_changes/lesson_${lessonId}`),
+  );
+  const reviewApproved = isSingleDocumentId(lesson.reviewSubmissionId) &&
+    Number.isSafeInteger(lesson.reviewApprovedAtMs);
   const change = changeSnapshot.exists ? changeSnapshot.data() || {} : {};
   return {lessonId, authorUid, catalogId: quest.catalogId, questId: section.questId,
     sectionId: theme.sectionId, themeId: lesson.themeId,
@@ -1377,11 +1359,10 @@ async function loadArenaLifecycleContext(transaction, lessonId) {
   const catalog = catalogSnapshot.data() || {};
   const authorUid = stringValue(quest.authorUid || quest.ownerUid);
   if (!isSingleDocumentId(authorUid) || !Number.isSafeInteger(lesson.version) || lesson.version < 1) return null;
-  const reviewSnapshot = await transaction.get(db.doc(adminLessonPath(lessonId)));
-  const review = reviewSnapshot.exists ? reviewSnapshot.data() || {} : {};
-  const reviewApproved = review.status === "PUBLISHED" && !review.rejectedAtMs &&
-    review.ownerUid === authorUid && review.questId === section.questId &&
-    isSingleDocumentId(lesson.reviewSubmissionId) && lesson.reviewSubmissionId === review.submissionId &&
+  // 4.19: задание админ-ревью больше не пишется и не читается — доказательство проверки
+  // в самом документе урока (поля публикации). Уроки, изданные человеческим циклом, эти
+  // поля несут тоже.
+  const reviewApproved = isSingleDocumentId(lesson.reviewSubmissionId) &&
     Number.isSafeInteger(lesson.reviewApprovedAtMs);
   return {lessonId, authorUid,
     questType: stringValue(catalog.questType || quest.questType, "REGULAR").toUpperCase(),
@@ -1429,204 +1410,6 @@ exports.processQuestReviewRequest = onDocumentCreated(
  * оставшаяся от снятой прямой записи, либо запись админского скрипта; догонять их вторым входом в
  * рабочий код значит держать этот вход открытым постоянно ради ситуации, которой в проде нет.
  */
-
-/**
- * Страница журнала ревью.
- *
- * Единственный из четырёх журналов, который клиент читает не из Firestore напрямую: коллекция
- * `admin/review/sync_changes` закрыта правилами. Поэтому ограничение и продолжаемость выборки
- * (AD-31) здесь обязан выполнить сервер, а не запрос клиента: курсор — пара `(changedAtMs, docId)`,
- * страница ограничена `limit`, и ответ говорит, есть ли ещё. Скалярный `cursorMs` остаётся
- * запасным входом для клиента прежней версии. Разбор и запрос живут в `review-journal.js` — там же
- * их тест на фейке Firestore.
- */
-exports.fetchReviewAssignmentChanges = onCall(CALLABLE_OPTIONS, async (request) => {
-  const uid = requireAuthUid(request);
-  await requireProfile(uid);
-  return readReviewAssignmentChanges(db, request.data || {}, {
-    documentId: firestoreTypes.FieldPath.documentId(),
-  });
-});
-
-exports.fetchReviewAssignments = onCall(CALLABLE_OPTIONS, async (request) => {
-  const uid = requireAuthUid(request);
-  const profile = await requireProfile(uid);
-  const ids = stringArray(request.data && request.data.ids);
-  if (ids.length === 0) return {assignments: []};
-
-  const config = await readArenaReviewConfig();
-  const tasks = await readAdminReviewLessonTasksByIds(new Set(ids));
-  const assignments = [];
-  for (const task of tasks) {
-    const assignment = toAssignmentDto(task, profile, config);
-    if (assignment) assignments.push(assignment);
-  }
-  return {assignments};
-});
-
-/**
- * Sends a quest back to its author with a reason.
- *
- * Scoring a lesson low leaves it UNDER_REVIEW forever, which tells the author nothing and blocks
- * the queue. Rejection is the other half: the submission stops being reviewable, the reason
- * travels back to the author's draft, and nothing of it reaches a public shelf. Resubmission is
- * how it comes back — the author edits and sends again, minting a new submission.
- */
-exports.rejectReviewSubmission = onCall(CALLABLE_OPTIONS, async (request) => {
-  const uid = requireAuthUid(request);
-  const profile = await requireProfile(uid);
-  const assignmentId = stringValue(request.data && request.data.assignmentId);
-  if (!assignmentId) throw new HttpsError("invalid-argument", "assignmentId is required");
-  const reason = stringValue(request.data && request.data.reason).trim();
-  // A rejection without a reason is indistinguishable from silence, and the author cannot act
-  // on silence.
-  if (!reason) throw new HttpsError("invalid-argument", "reason is required");
-  if (Buffer.byteLength(reason, "utf8") > MAX_AUTHOR_REJECTION_REASON_BYTES) {
-    throw new HttpsError("invalid-argument", "reason is too long");
-  }
-
-  const task = await readAdminReviewLessonTask(assignmentId);
-  if (!task) throw new HttpsError("not-found", `Review assignment ${assignmentId} not found`);
-
-  const config = await readArenaReviewConfig();
-  const existingRecords = await readReviewRecords(task.lessonId, task.submissionId);
-  // Whoever may score this lesson may refuse it: same gate, both directions. The author-exclusion
-  // and the developer exemption inside canSubmit apply here unchanged.
-  const mayJudge =
-    canSubmit(profile, task, "TESTING", config, existingRecords) ||
-    canSubmit(profile, task, "LOGIC", config, existingRecords);
-  if (!mayJudge) {
-    throw new HttpsError("permission-denied", `Reviewer ${uid} cannot judge ${assignmentId}`);
-  }
-
-  const now = Date.now();
-  const rejectedTask = {
-    ...task,
-    rejectedAtMs: now,
-    rejectedByUid: uid,
-    // Уровень судьи на момент отклонения: расчёт цикла платит за обоснованное отклонение как за
-    // завершённую работу (AD-10), а уровня у отклонения без этого поля нет.
-    rejectedReviewerLevelAtSubmit: Math.max(levelFor(profile, "TESTING"), levelFor(profile, "LOGIC")),
-    rejectionReason: reason,
-    status: "REJECTED",
-    changedAtMs: now,
-  };
-  const batch = db.batch();
-  writeAdminReviewLessonTasksToBatch(batch, [rejectedTask]);
-  batch.set(
-    db.collection("quest_review_requests").doc(task.submissionId),
-    {
-      status: "REJECTED",
-      rejectedAtMs: now,
-      rejectedByUid: uid,
-      rejectionReason: reason,
-      updatedAtMs: now,
-    },
-    {merge: true},
-  );
-  await batch.commit();
-  // Отклонение — тоже полный цикл (CAP-4): фонд делится, остаток сгорает, возврата платы нет.
-  await settleReviewFeeCycle(task.submissionId, "REJECTED", now);
-  return {assignmentId, submissionId: task.submissionId, rejectedAtMs: now, reason};
-});
-
-exports.submitReviewAction = onCall(CALLABLE_OPTIONS, async (request) => {
-  const uid = requireAuthUid(request);
-  return applySubmitReviewAction(uid, request.data || {});
-});
-
-/**
- * Решение ревьюера — тело, общее для прямого вызова и для очереди.
- *
- * Тело — сериализованный `SubmitReviewActionCommand`, в той же форме, что и прямой вызов.
- * Задание, к моменту доставки переназначенное или закрытое, отвечает окончательным отказом
- * (`not-found` / `permission-denied`), и запись очереди уходит в карантин — локальной половины у
- * этого действия нет, откатывать нечего (AD-25, AD-28).
- *
- * Начисление репутации ниже идёт вне транзакции. От двойного начисления при повторной доставке
- * защищает ключ идемпотентности приёмника (AD-1): повтор по выполненному ключу получает
- * сохранённый ответ и сюда не попадает. Здесь этот ключ не сверяется и не может — у тела нет
- * доступа к конверту, и второй проверки рядом с единственной быть не должно.
- */
-async function applySubmitReviewAction(uid, payload, options = {}) {
-  const action = normalizeSubmitAction(payload || {});
-  const pinnedReviewId = stringValue(options.reviewId) || null;
-  const profile = await requireProfile(uid);
-  const task = await readAdminReviewLessonTask(action.assignmentId);
-  if (!task) {
-    throw new HttpsError("not-found", `Review assignment ${action.assignmentId} not found`);
-  }
-  if (task.lessonId !== action.lessonId) {
-    throw new HttpsError(
-      "invalid-argument",
-      `Action lessonId ${action.lessonId} does not match assignment lessonId ${task.lessonId}`,
-    );
-  }
-
-  const config = await readArenaReviewConfig();
-  const existingRecords = await readReviewRecords(action.lessonId, task.submissionId);
-  // Эффект уже лёг — инстанс умер после batch.commit(), но до того, как ключ был закрыт.
-  // Отвечаем эквивалентом сохранённого результата и не трогаем ни записи, ни репутацию:
-  // проверка раньше canSubmit, иначе «уже отрецензировано» ушло бы отказом в карантин, а
-  // карантин откатил бы ревью, которое на самом деле состоялось.
-  if (pinnedReviewId && existingRecords.some((record) => record.id === pinnedReviewId)) {
-    const settled = rebuildAggregate(task, existingRecords, config);
-    return {
-      recordId: pinnedReviewId,
-      aggregate: checksToCallableMap(settled.checks),
-      reviewerDeltas: [],
-      published: await publishSubmissionIfReady(task.submissionId, config, Date.now()),
-      replayed: true,
-    };
-  }
-  if (!canSubmit(profile, task, action.kind, config, existingRecords)) {
-    throw new HttpsError(
-      "permission-denied",
-      `Reviewer ${profile.uid} is not allowed to submit ${action.kind} for ${action.assignmentId}`,
-    );
-  }
-
-  const now = Date.now();
-  const record = {...actionToRecord(action, profile, task, config, existingRecords, now, pinnedReviewId),
-    submissionId: task.submissionId};
-  const taskWithTranslatedQuestions =
-    record.kind === "TRANSLATION"
-      ? {...task, questions: mergeQuestions(task.questions, record.translatedQuestions)}
-      : task;
-  const aggregation = rebuildAggregate(taskWithTranslatedQuestions, existingRecords.concat(record), config);
-  const previousAggregation = rebuildAggregate(task, existingRecords, config);
-  const updatedTask = {
-    ...taskWithTranslatedQuestions,
-    checks: aggregation.checks,
-    status: lessonReviewStatus(aggregation.checks, taskWithTranslatedQuestions, config),
-    changedAtMs: now,
-  };
-  const reviewerDeltas = newReviewerDeltas(
-    previousAggregation.reviewerDeltas,
-    aggregation.reviewerDeltas,
-  ).concat(translationReviewerDeltas(record, existingRecords));
-
-  const batch = db.batch();
-  batch.set(
-    db.doc(adminReviewRecordPath(record.lessonId, record.id)),
-    reviewRecordToDocument(record),
-    {merge: true},
-  );
-  writeAdminReviewLessonTasksToBatch(batch, [updatedTask]);
-  await batch.commit();
-
-  for (const delta of reviewerDeltas) {
-    if (delta.points !== 0) await addReviewerReputation(delta.reviewerUid, delta.points);
-  }
-  const published = await publishSubmissionIfReady(updatedTask.submissionId, config, now);
-
-  return {
-    recordId: record.id,
-    aggregate: checksToCallableMap(aggregation.checks),
-    reviewerDeltas,
-    published,
-  };
-}
 
 /** Сколько аккаунтов сверяем за один прогон. Остальные дождутся следующего: сверка не срочная. */
 const MAX_RECONCILED_ACCOUNTS_PER_RUN = 200;
@@ -1700,14 +1483,6 @@ function storedBalanceOf(user, currency) {
   if (currency === CURRENCY.STANDARD_CHARGE_POINTS) return nonNegativeInteger(user.lifePoints, 0);
   return 0;
 }
-
-exports.reconcileQuestReviewDaily = onSchedule(
-  {...FUNCTION_OPTIONS, schedule: "every day 03:00", timeZone: "UTC"},
-  async () => {
-    const now = Date.now();
-    await reconcileChangedReviewLessons(now - DAY_MS, now);
-  },
-);
 
 /** Key for one lesson at one difficulty, so easy and hard keep separate bests. */
 function lessonBestKey(lessonId, difficulty) {
@@ -2312,16 +2087,6 @@ const PRECONDITION_PENDING_DETAIL = "precondition-pending";
  * Разблокировка урока подходит: цену считает сервер из времени самого урока, повтор безопасен по
  * набору купленного, и без сети игрок всё равно не увидит цену раньше отправки.
  */
-/**
- * Идентификатор записи ревью для мутации из очереди.
- *
- * Ключ уже проверен приёмником (`[A-Za-z0-9_-]`, до 128 символов), поэтому годится в id
- * документа как есть. Префикс отличает его от записей, созданных прямым callable по часам.
- */
-function reviewIdForMutation(mutationId) {
-  return `m_${stringValue(mutationId)}`;
-}
-
 const MUTATION_HANDLERS = {
   // Разблокировка урока. Имя в пространстве владеющей фичи (NFR4): раньше ключ был голым
   // `UNLOCK_LESSON`, и это единственное имя реестра, у которого фичи не было. Клиентская половина
@@ -2349,10 +2114,6 @@ const MUTATION_HANDLERS = {
   // тот же результат, а закрытие идемпотентно и по сути. Re-enable решением не назначен: ссылка
   // закрывается навсегда, и перезаявка её не открывает — рантайм настроек перезаявкой не пишется.
   "quest_authoring.CLOSE_PRIVATE_QUIZ_LINK": (uid, payload) => applyClosePrivateQuizLink(uid, payload),
-  // Решение ревьюера по заданию. Начисление репутации в теле идёт вне транзакции, и защищает его
-  // от повтора только ключ: вторая доставка получает сохранённый ответ и до обработчика не доходит.
-  "quest_authoring.SUBMIT_REVIEW": (uid, payload, _now, mutationId) =>
-    applySubmitReviewAction(uid, payload, {reviewId: reviewIdForMutation(mutationId)}),
   // Перенос публичного квеста на полку. Полка серверно-защищена (AD-25): клиент кладёт в очередь
   // намерение, а новое значение приезжает к нему журналом изменений.
   "quest.SET_SHELF": (uid, payload) => applySetPublicQuestShelf(uid, payload),
@@ -5781,7 +5542,6 @@ async function processArenaRequest(request) {
   await requireProfile(request.ownerUid);
 
   const now = Date.now();
-  const adminTasks = toAdminLessonTasks(request, now);
   // Плата и принятие заявки — одна транзакция (CAP-4): подача без денег не принимается, принятая
   // подача без платы не существует. Записи прежнего батча здесь не теряют ни поля.
   //
@@ -5799,7 +5559,6 @@ async function processArenaRequest(request) {
       null;
     const charge = isPrivateSubmission ? null : await planReviewFeeCharge(transaction, request);
     writePrivateHierarchyToBatch(transaction, request, now, previousPrivateQuizSettings);
-    writeAdminReviewLessonTasksToBatch(transaction, adminTasks);
     transaction.set(
       db.collection("quest_review_requests").doc(request.submissionId),
       clean({
@@ -5812,17 +5571,13 @@ async function processArenaRequest(request) {
         // по `ownerUid` и требует `draftId`, и правило чтения смотрит на тот же `ownerUid`.
         //
         // Состав полей — ровно тот, что читает `normalizeRequest`: документ обязан пережить
-        // перезапуск и остаться единственным источником для `publishSubmissionIfReady`, которая
-        // перечитывает его спустя дни после подачи.
+        // перезапуск и остаться единственным источником для доводки исхода,
+        // которая перечитывает его спустя дни после подачи.
         ...requestToDocument(request),
         processed: true,
         processedAtMs: now,
         lastError: null,
         status: "UNDER_REVIEW",
-        // Свежая заявка не прошла ещё ничего: стадии называются сразу, а не молчанием,
-        // по-вопросных исходов TESTING пока нет — пустой список, а не отсутствие поля.
-        failedStages: initialFailedStages(request),
-        questionOutcomes: [],
       }),
       {merge: true},
     );
@@ -5832,7 +5587,6 @@ async function processArenaRequest(request) {
     return {
       submissionId: request.submissionId,
       privateQuestPath: privateQuestPath(request.ownerUid, request.draft.catalogId, request.draft.id),
-      adminLessonTaskPaths: adminTasks.map((task) => adminLessonPath(task.lessonId)),
       reviewFee,
     };
   });
@@ -6028,60 +5782,16 @@ async function settleReviewFeeCycle(submissionId, outcome, now) {
   if (cycle.status === "SETTLED") return {settled: true, replayed: true};
 
   const request = normalizeRequest(requestSnapshot.data(), submissionId);
-  // Модельный мир (AD-32, история 4.18): проверяющих у конвейера нет — entitlements ровно нули,
-  // весь фонд сгорает; записи ревьюеров и задания человеческого мира не читаются вовсе.
-  const modelOutcome = request.reviewOutcome && typeof request.reviewOutcome === "object";
-  const lessonIds =
-    request.targetLessonIds.length > 0
-      ? request.targetLessonIds
-      : request.lessons.map((lesson) => lesson.id);
-  const taskByLessonId = {};
-  const recordsByLessonId = {};
-  if (!modelOutcome) {
-    for (const lessonId of lessonIds) {
-      const taskSnapshot = await db.doc(adminLessonPath(lessonId)).get();
-      if (taskSnapshot.exists) taskByLessonId[lessonId] = await adminLessonSnapshotToTask(taskSnapshot);
-      recordsByLessonId[lessonId] = await readReviewRecords(lessonId, submissionId);
-    }
-  }
-  const units = modelOutcome ? [] : buildReviewUnits({
-    submissionId,
-    lessonIds,
-    taskByLessonId,
-    recordsByLessonId,
-    ownerUid: request.ownerUid,
-  });
+  // Проверяющих больше нет в принципе (AD-32; 4.18 сделал это путём модельного исхода, 4.19
+  // удалил и человеческую половину): юнитов и кошельков всегда ноль, весь фонд сгорает,
+  // консервацию держит манифест (fee = 0 + burn).
+  const units = [];
   const plan = settleReviewFeeTenths({feeTenths: numberValue(cycle.feeTenths, 0), units});
-  const entitlementByReviewer = new Map();
-  for (const allocation of plan.allocations) {
-    const unit = units.find((item) => item.unitId === allocation.unitId);
-    entitlementByReviewer.set(
-      unit.reviewerUid,
-      (entitlementByReviewer.get(unit.reviewerUid) || 0) + allocation.entitlementTenths,
-    );
-  }
 
   return db.runTransaction(async (transaction) => {
     const current = await transaction.get(cycleRef);
     if (!current.exists || (current.data() || {}).status === "SETTLED") {
       return {settled: true, replayed: true};
-    }
-    const wallets = [];
-    for (const [uid, entitlementTenths] of Array.from(entitlementByReviewer.entries()).sort()) {
-      const userSnap = await transaction.get(db.doc(`users/${uid}`));
-      const userData = userSnap.exists ? userSnap.data() || {} : {};
-      const credit = walletCreditForEntitlement({
-        priorCarryTenths: nonNegativeInteger(userData[REVIEW_FEE_CARRY_FIELD], 0),
-        entitlementTenths,
-      });
-      wallets.push({
-        uid,
-        entitlementTenths,
-        priorCarryTenths: nonNegativeInteger(userData[REVIEW_FEE_CARRY_FIELD], 0),
-        creditedNolics: credit.creditedNolics,
-        nextCarryTenths: credit.nextCarryTenths,
-        balance: nonNegativeInteger(userData.pointsNolics, numberValue(userData.nolics, 0)),
-      });
     }
     const manifest = buildSettlementManifest({
       submissionId,
@@ -6094,39 +5804,10 @@ async function settleReviewFeeCycle(submissionId, outcome, now) {
       tariffRevision: numberValue(cycle.tariffRevision, 1),
       units,
       allocations: plan.allocations,
-      wallets,
+      wallets: [],
     });
     // Неизменяемость манифеста — create: второй расчёт того же цикла не существует.
     transaction.create(db.doc(`${REVIEW_FEE_MANIFESTS}/${submissionId}`), clean(manifest));
-    // Кошельки пишутся из исходного массива: в манифесте баланса нет — он состояние кошелька,
-    // а не факт расчёта. К этому месту buildSettlementManifest уже сверил арифметику carry.
-    // Зеркало двустороннее (ретро L4/п.2, 4.18): pointsNolics и nolics вместе, как в списании.
-    for (const wallet of wallets) {
-      transaction.set(
-        db.doc(`users/${wallet.uid}`),
-        clean({
-          pointsNolics: wallet.balance + wallet.creditedNolics,
-          nolics: wallet.balance + wallet.creditedNolics,
-          [REVIEW_FEE_CARRY_FIELD]: wallet.nextCarryTenths,
-          updatedAtMs: now,
-        }),
-        {merge: true},
-      );
-      for (const entry of ledgerEntries({
-        uid: wallet.uid,
-        reason: REASON.REVIEW_REWARD,
-        sourceId: submissionId,
-        atMs: now,
-        deltas: {[CURRENCY.NOLICS]: wallet.creditedNolics},
-        details: {
-          entitlementTenths: wallet.entitlementTenths,
-          priorCarryTenths: wallet.priorCarryTenths,
-          newCarryTenths: wallet.nextCarryTenths,
-        },
-      })) {
-        transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
-      }
-    }
     transaction.set(
       cycleRef,
       clean({
@@ -6148,7 +5829,7 @@ async function settleReviewFeeCycle(submissionId, outcome, now) {
  * Заявка как документ — обратная сторона `normalizeRequest`.
  *
  * Читатель и писатель заявки живут в одном файле и обязаны знать одни и те же поля: `normalizeRequest`
- * достаёт из документа ровно этот состав, `publishSubmissionIfReady` перечитывает документ спустя дни
+ * достаёт из документа ровно этот состав, `advanceModelReviewedSubmission` перечитывает документ спустя дни
  * после подачи и строит по нему публичный квест, а выборка вердиктов автору ищет по `ownerUid` и
  * `draftId`. Расхождение здесь не падает и не логируется — оно тихо публикует квест по пустому пути.
  * Парность двух списков закреплена `arena-request-document.test.js`.
@@ -6172,7 +5853,6 @@ function requestToDocument(request) {
     themes: request.themes,
     lessons: request.lessons,
     questions: request.questions.map(questionToDocument),
-    review: checksToCallableMap(request.review),
     // Исход модельной проверки (4.16): при подаче его ещё нет — поле существует и пусто,
     // как failedStages выше; writer/reader симметрию стережёт arena-request-document.test.
     reviewOutcome: null,
@@ -6255,52 +5935,6 @@ function writeQuestVersionMirror(writer, options) {
  * `admin/review/sync_changes/{assignmentId}` ложится запись с новым `changedAtMs` — иначе рецензент,
  * читающий журнал, о смене статуса не узнает.
  */
-function writeAdminReviewLessonTasksToBatch(batch, tasks) {
-  for (const [path, data] of Object.entries(adminDocuments(tasks))) {
-    batch.set(db.doc(path), clean(data), {merge: true});
-  }
-  for (const task of tasks) {
-    writeSyncChanges(batch, db, {kind: "review_assignment", id: task.id}, task.changedAtMs);
-  }
-}
-
-async function reconcileChangedReviewLessons(sinceMs, now) {
-  const changes = await db.collection(ADMIN_REVIEW_SYNC_CHANGES)
-    .where("changedAtMs", ">", sinceMs)
-    .get();
-  const assignmentIds = new Set(
-    changes.docs
-      .map((doc) => stringValue((doc.data() || {}).id, doc.id))
-      .filter(Boolean),
-  );
-  if (assignmentIds.size === 0) return {checked: 0, published: 0};
-
-  const config = await readArenaReviewConfig();
-  const tasks = await readAdminReviewLessonTasksByIds(assignmentIds);
-  const touchedSubmissionIds = new Set();
-  const batch = db.batch();
-
-  for (const task of tasks) {
-    const records = await readReviewRecords(task.lessonId, task.submissionId);
-    const aggregation = rebuildAggregate(task, records, config);
-    const updatedTask = {
-      ...task,
-      checks: aggregation.checks,
-      status: lessonReviewStatus(aggregation.checks, task, config),
-      changedAtMs: now,
-    };
-    writeAdminReviewLessonTasksToBatch(batch, [updatedTask]);
-    touchedSubmissionIds.add(task.submissionId);
-  }
-  await batch.commit();
-
-  let published = 0;
-  for (const submissionId of touchedSubmissionIds) {
-    if (await publishSubmissionIfReady(submissionId, config, now)) published += 1;
-  }
-  return {checked: tasks.length, published};
-}
-
 async function aggregateDirtyQuestRatings(now, maxDirtyDocs) {
   const publicResult = await aggregateDirtyQuestRatingsForScope(PUBLIC_SCOPE, now, maxDirtyDocs);
   const remaining = Math.max(0, maxDirtyDocs - publicResult.processed - publicResult.skipped);
@@ -6622,11 +6256,10 @@ function normalizeReviewOutcome(raw) {
  * делит (незавершённый цикл, OQ-2 parked); QUEST_REVIEWED без прошедших уроков — отказ с
  * «Не прошёл» и списком заваленных вопросов; иначе публикуются прошедшие уроки независимо от
  * соседей: заявка сужается до прошедшего состава, переводы (review_translations) едут в дерево
- * вариантами `__lang` рядом с оригиналом. Оркестрация повторяет человеческую половину
- * публикации — общие помощники те же, ветка своя, чтобы мир ревьюеров не тянуть через флаги
- * (4.19 удалит его целиком).
+ * вариантами `__lang` рядом с оригиналом. С 4.19 это единственная публикация: мир ревьюеров
+ * удалён целиком, человеческой половины больше не существует.
  */
-async function publishModelReviewedSubmission(submissionId, request, requestSnapshot, config, now) {
+async function publishModelReviewedSubmission(submissionId, request, requestSnapshot, now) {
   const outcome = normalizeReviewOutcome(request.reviewOutcome);
   if (outcome.pipelineStatus === "REVIEW_DELAYED") {
     await requestSnapshot.ref.set({status: "REVIEW_DELAYED", updatedAtMs: now}, {merge: true});
@@ -6770,7 +6403,7 @@ async function advanceModelReviewedSubmission(submissionId) {
   const request = normalizeRequest(requestSnapshot.data() || {}, submissionId);
   if (!request.reviewOutcome || typeof request.reviewOutcome !== "object") return false;
   if (request.status !== "UNDER_REVIEW" && request.status !== "PROCESSING") return false;
-  return publishModelReviewedSubmission(submissionId, request, requestSnapshot, await readArenaReviewConfig(), Date.now());
+  return publishModelReviewedSubmission(submissionId, request, requestSnapshot, Date.now());
 }
 
 exports.advanceQuestReviewOutcome = onCall(CALLABLE_OPTIONS, async (request) => {
@@ -6826,178 +6459,6 @@ exports.markReviewDecision = onCall(CALLABLE_OPTIONS, async (request) => {
     rethrowDecisionsError(error);
   }
 });
-
-async function publishSubmissionIfReady(submissionId, config, now) {
-  const requestSnapshot = await db.collection("quest_review_requests").doc(submissionId).get();
-  if (!requestSnapshot.exists) return false;
-  const request = normalizeRequest(requestSnapshot.data() || {}, submissionId);
-  // Терминальные заявки фонд делят при каждом обращении: расчёт идемпотентен статусом цикла, и
-  // вызов, увидевший уже рассчитанный цикл, стоит двух чтений. Заявка, ставшая терминальной в
-  // упавшем перед расчётом инстансе, догоняется первым же следующим действием (AD-9).
-  if (request.status === "PUBLISHED") {
-    await settleReviewFeeCycle(submissionId, "PUBLISHED", now);
-    return false;
-  }
-  // A rejected submission is finished. The author resubmits to try again, which mints a new
-  // submission id — this one never publishes, not even through the nightly reconcile.
-  if (request.status === "REJECTED") {
-    await settleReviewFeeCycle(submissionId, "REJECTED", now);
-    return false;
-  }
-  // Модельный конвейер (AD-32, история 4.16): исход записал воркер, здесь — публикация
-  // прошедших уроков и авторский статус заявки. Человеческий путь ниже не тронут: его уносит
-  // 4.19 вместе с ролями ревьюеров.
-  if (request.reviewOutcome && typeof request.reviewOutcome === "object") {
-    return publishModelReviewedSubmission(submissionId, request, requestSnapshot, config, now);
-  }
-
-  const taskSnapshot = await db.collection("admin/review/lessons")
-    .where("submissionId", "==", submissionId)
-    .get();
-  const tasks = [];
-  for (const doc of taskSnapshot.docs) {
-    tasks.push(await adminLessonSnapshotToTask(doc));
-  }
-  const requestedLessonIds =
-    request.targetLessonIds.length > 0
-      ? new Set(request.targetLessonIds)
-      : new Set(request.lessons.map((lesson) => lesson.id));
-  const targetTasks = tasks.filter((task) => requestedLessonIds.has(task.lessonId));
-  if (targetTasks.length === 0 || targetTasks.length < requestedLessonIds.size) {
-    await requestSnapshot.ref.set({status: "UNDER_REVIEW", updatedAtMs: now}, {merge: true});
-    return false;
-  }
-  if (targetTasks.some((task) => task.rejectedAtMs)) {
-    await requestSnapshot.ref.set({status: "REJECTED", updatedAtMs: now}, {merge: true});
-    await settleReviewFeeCycle(submissionId, "REJECTED", now);
-    return false;
-  }
-  // A stored aggregate is not proof: older clients could submit their own checks, and review
-  // documents survive a new submission of the same lesson. Rebuild from this submission's
-  // independently accepted records; preserve the old history without laundering it into proof.
-  for (const task of targetTasks) {
-    const records = (await readReviewRecords(task.lessonId)).filter((record) =>
-      record.submissionId === task.submissionId && record.reviewerUid !== task.ownerUid);
-    task.checks = rebuildAggregate({...task, checks: reviewToChecks({})}, records, config).checks;
-  }
-  const allReady = targetTasks.every((task) => lessonPassed(task.checks, task, config));
-  if (!allReady) {
-    // Автор видит, КАКИЕ стадии не пущены, поимённо и без чьей-либо причины: стадии считаются
-    // из оценок, причина — атрибут только отклонения. Рядом лежат и по-вопросные исходы
-    // TESTING (CAP-3): какой вопрос оценён, сколько он набрал и прошёл ли порог.
-    const failedStages = Array.from(
-      new Set(targetTasks.flatMap((task) => failedReviewStages(task.checks, task, config))),
-    ).sort();
-    const questionOutcomes = Array.from(
-      new Map(
-        targetTasks
-          .flatMap((task) => task.checks.questionOutcomes || [])
-          .map((outcome) => [outcome.questionId, outcome]),
-      ).values(),
-    ).sort((a, b) => (a.questionId < b.questionId ? -1 : a.questionId > b.questionId ? 1 : 0));
-    await requestSnapshot.ref.set(
-      {status: "UNDER_REVIEW", updatedAtMs: now, failedStages, questionOutcomes},
-      {merge: true},
-    );
-    return false;
-  }
-
-  const batch = db.batch();
-  const publishable = requestWithPublishedQuestions(request, targetTasks);
-  // Версии узлов дерева читаются здесь, до батча: батч писать умеет, а читать нет, и без этого
-  // чтения сервер не знает, какая версия у каждого узла сейчас. Первым в списке идёт сам квест —
-  // тот же снимок отвечает и на вопрос про полки ниже, второе чтение того же документа не нужно.
-  const hierarchySnapshots = await readPublicHierarchySnapshots(publishable);
-  const currentVersions = versionsByPath(hierarchySnapshots);
-  // Что автор из дерева убрал. Публикация пишет только узлы заявки и только с `merge`, поэтому без
-  // этого шага удалённый урок или вопрос остаётся на сервере с `archived: false`, возвращается из
-  // `refreshByIds` и живёт на устройстве игрока вечно (AD-26).
-  // Судить о составе вопросов сервер вправе только у тех уроков, чьи вопросы этот батч и пишет:
-  // урок из заявки, не попавший в эту публикацию, ею не описан, и его вопросы трогать нельзя.
-  const prunable = {
-    ...publishable,
-    lessons: publishable.lessons.filter((lesson) => requestedLessonIds.has(lesson.id)),
-  };
-  const pruned = planHierarchyPrune({
-    request: prunable,
-    existing: await readPublishedSubtree(prunable),
-    now,
-  });
-  // Та же половина работы на приватной копии автора. Публичное снятие ей ничего не говорит: автор
-  // читает своё дерево из `private/{uid}/…`, и урок, снятый только в каталоге, оставался у него
-  // навсегда — приватный документ жил вечным объединением всех прошлых публикаций.
-  const privatePruned = planPrivateHierarchyPrune({
-    request: prunable,
-    existing: await readPrivateSubtree(prunable),
-  });
-  // A republish overwrites visibleOn with the submission's target shelf, which demotes a quest a
-  // curator had placed elsewhere. That reset stays — unreviewed edits must not remain on a curated
-  // shelf — but it stops being silent: the audit names the author as the actor.
-  const existingQuest = hierarchySnapshots[0];
-  if (existingQuest.exists) {
-    const existing = existingQuest.data() || {};
-    const previousVisibleOn = Array.isArray(existing.visibleOn)
-      ? existing.visibleOn.filter((shelf) => typeof shelf === "string")
-      : [];
-    const nextShelf = request.targetShelf;
-    if (previousVisibleOn.length !== 1 || previousVisibleOn[0] !== nextShelf) {
-      writeShelfMoveAudit(batch, {
-        questId: request.draft.id,
-        catalogId: request.draft.catalogId,
-        actorUid: request.ownerUid,
-        action: "republish",
-        previousVisibleOn,
-        visibleOn: [nextShelf],
-        reason: null,
-        now,
-      });
-    }
-  }
-  // Версия квеста назначается один раз и здесь: её получает публичный документ, её же получает
-  // приватный. Два вызова `nextVersionAtPath` на одну карту дали бы сегодня то же число и разошлись
-  // бы в тот день, когда один из них поправят.
-  const assignedVersion = nextVersionAtPath(currentVersions, `quests/${request.draft.id}`);
-  writePublicHierarchyToBatch(batch, publishable, now, currentVersions, assignedVersion);
-  writeHierarchyPruneToBatch(batch, pruned, now);
-  writePrivateHierarchyPruneToBatch(batch, db, privatePruned, now);
-  logPrivatePruneOutcome(privatePruned);
-  writeQuestVersionMirror(batch, {
-    ownerUid: request.ownerUid,
-    catalogId: request.draft.catalogId,
-    questId: request.draft.id,
-    assignedVersion,
-    now,
-  });
-  for (const task of targetTasks) {
-    writeAdminReviewLessonTasksToBatch(batch, [{...task, status: "PUBLISHED", changedAtMs: now}]);
-    const lessonPath = `lessons/${task.lessonId}`;
-    const previous = hierarchySnapshots.find((snapshot) => snapshot.ref.path === lessonPath);
-    const previousData = previous && previous.exists ? previous.data() || {} : {};
-    batch.set(db.doc(lessonPath), {
-      authorUid: task.ownerUid,
-      reviewSubmissionId: task.submissionId,
-      reviewApprovedAtMs: now,
-      publishedAtMs: nonNegativeInteger(previousData.publishedAtMs, now),
-    }, {merge: true});
-  }
-  batch.set(
-    requestSnapshot.ref,
-    {
-      status: "PUBLISHED",
-      publishedAtMs: now,
-      updatedAtMs: now,
-      publicQuestId: request.draft.id,
-    },
-    {merge: true},
-  );
-  await batch.commit();
-  // Публикация зафиксирована — автору уходит повод синхронизироваться, не данные (AD-20).
-  await notifyUser(PUSH_EVENTS.QUEST_PUBLISHED, request.draft.id, request.ownerUid);
-  // Полный цикл: фонд делится сразу за публикацией. Отказ расчёта не отменяет публикацию — его
-  // догонит следующий вызов на этой заявке (см. терминальные ветки выше).
-  await settleReviewFeeCycle(submissionId, "PUBLISHED", Date.now());
-  return true;
-}
 
 /**
  * Читает узлы публикуемого дерева пачкой.
@@ -7165,29 +6626,6 @@ function writeHierarchyPruneToBatch(batch, plan, now) {
   }
 }
 
-function requestWithPublishedQuestions(request, targetTasks) {
-  const questionsByLesson = new Map(
-    targetTasks.map((task) => [task.lessonId, task.questions]),
-  );
-  const writtenLessons = new Set();
-  const questions = [];
-  for (const question of request.questions) {
-    const publishedQuestions = questionsByLesson.get(question.lessonId);
-    if (!publishedQuestions) {
-      questions.push(question);
-    } else if (!writtenLessons.has(question.lessonId)) {
-      questions.push(...publishedQuestions);
-      writtenLessons.add(question.lessonId);
-    }
-  }
-  for (const [lessonId, publishedQuestions] of questionsByLesson.entries()) {
-    if (!writtenLessons.has(lessonId)) {
-      questions.push(...publishedQuestions);
-    }
-  }
-  return {...request, questions};
-}
-
 /**
  * Документы приватного дерева автора.
  *
@@ -7239,7 +6677,6 @@ function privateDocuments(request, now, previousSettings = null) {
     localRevision: request.localRevision,
     updatedAtMs: request.draft.updatedAtMs,
     changedAtMs: now,
-    review: checksToCallableMap(request.review),
     // Настройки пишет только заявка, чьё тело их несёт (draft.privateQuiz — разбор отрезал
     // рантайм-поля). Перезаявка обычного (неприватного) квеста настроек не пишет вовсе, и
     // merge не трогает то, что в документе уже лежит.
@@ -7300,59 +6737,6 @@ function privateDocuments(request, now, previousSettings = null) {
   return documents;
 }
 
-function adminDocuments(tasks) {
-  const documents = {};
-  for (const task of tasks) {
-    documents[adminLessonPath(task.lessonId)] = {
-      id: task.lessonId,
-      // Id задания — то, по чему клиент зовёт fetchReviewAssignments после журнала. Раньше урок
-      // задания хранился в теле записи журнала; тело теперь три поля (AD-11), и задание ищется
-      // по этому полю (`readAdminReviewLessonTasksByIds`).
-      assignmentId: task.id,
-      submissionId: task.submissionId,
-      ownerUid: task.ownerUid,
-      catalogId: task.catalogId,
-      draftId: task.draftId,
-      questId: task.questId,
-      title: task.title,
-      createdAtMs: task.createdAtMs,
-      changedAtMs: task.changedAtMs,
-      status: task.status || lessonReviewStatus(task.checks, task, null),
-      generation: numberValue(task.generation, 1),
-      rejectedAtMs: task.rejectedAtMs || null,
-      rejectedByUid: task.rejectedByUid || null,
-      // Уровень судьи на момент отклонения: расчёт платного цикла платит за отклонение как за
-      // работу (AD-10), и без этого поля в документе юнит отклонения не существует.
-      rejectedReviewerLevelAtSubmit: task.rejectedReviewerLevelAtSubmit === undefined
-        ? null
-        : task.rejectedReviewerLevelAtSubmit,
-      rejectionReason: task.rejectionReason || null,
-      targetShelf: task.targetShelf,
-      availableLanguages: Array.from(availableLanguages(task)).sort(),
-      sourceLanguages: Array.from(task.sourceLanguages).sort(),
-      testingScore: task.checks.testingScore,
-      logicScore: task.checks.logicScore,
-      translationScore: task.checks.translationScore,
-      translatedLanguages: task.checks.translatedLanguages,
-      isTested: task.checks.isTested,
-      isLogicReviewed: task.checks.isLogicReviewed,
-      isTranslationReviewed: task.checks.isTranslationReviewed,
-      checks: checksToCallableMap(task.checks),
-      questionCount: task.questions.length,
-    };
-    documents[adminQuestPath(task.lessonId, task.questId)] = {
-      id: task.questId,
-      lessonId: task.lessonId,
-      ownerUid: task.ownerUid,
-      title: task.title,
-      checks: checksToCallableMap(task.checks),
-    };
-    for (const question of task.questions) {
-      documents[adminQuestionPath(task.lessonId, task.questId, question.id)] = questionToDocument(question);
-    }
-  }
-  return documents;
-}
 
 function writePublicHierarchyToBatch(batch, request, now, currentVersions, assignedVersion) {
   for (const [path, data] of Object.entries(publicDocuments(request, now, currentVersions, assignedVersion))) {
@@ -7508,665 +6892,6 @@ function publicDocuments(request, now, currentVersions, assignedVersion) {
 
 /** How many refused questions one publish reports by name before the count has to speak for them. */
 const LOGGED_REFUSAL_SAMPLE = 50;
-
-function toAdminLessonTasks(request, createdAtMs) {
-  return request.lessons.map((lesson) => {
-    const lessonQuestions = request.questions.filter((question) => question.lessonId === lesson.id);
-    return {
-      id: `${request.submissionId}_${lesson.id}`,
-      submissionId: request.submissionId,
-      ownerUid: request.ownerUid,
-      catalogId: request.draft.catalogId,
-      draftId: request.draftId,
-      questId: request.draft.id,
-      lessonId: lesson.id,
-      title: lesson.title,
-      targetShelf: request.targetShelf,
-      // Поколение заданий: одна ревизия заявки — одно поколение; результат ревью едет с номером
-      // поколения, чтобы перегенерация заданий была видна в уже принятых решениях.
-      generation: 1,
-      createdAtMs,
-      changedAtMs: createdAtMs,
-      // Author claims about testing/logic/translation never grant publication authority.
-      checks: reviewToChecks({}),
-      questions: lessonQuestions,
-      sourceLanguages: new Set(lessonQuestions.map((question) => normalizeLanguage(question.language))),
-    };
-  });
-}
-
-function toAssignmentDto(task, profile, config) {
-  const taskKinds = availableTasks(profile, task, config);
-  if (taskKinds.size === 0) return null;
-  const targets = translationTargets(profile, task, config);
-  return {
-    id: task.id,
-    submissionId: task.submissionId,
-    ownerUid: task.ownerUid,
-    catalogId: task.catalogId,
-    draftId: task.draftId,
-    questId: task.questId,
-    lessonId: task.lessonId,
-    title: task.title,
-    createdAtMs: task.createdAtMs,
-    taskKinds: Array.from(taskKinds).sort(),
-    sourceLanguages: Array.from(targets.sourceLanguages).sort(),
-    newTranslationLanguages: Array.from(targets.newTranslationLanguages).sort(),
-    reviewLanguages: Array.from(targets.reviewLanguages).sort(),
-    checks: checksToCallableMap(task.checks),
-    questions: task.questions.map(questionToDocument),
-  };
-}
-
-function availableTasks(profile, task, config) {
-  const openTasks =
-    profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL
-      ? openTasksForDeveloper(task, config)
-      : openTasksFor(profile, task, config);
-  if (profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL) return openTasks;
-
-  // The author's own quest never shows up in their queue — canSubmit refuses it anyway, but an
-  // offer that always errors is worse than no offer.
-  if (task.ownerUid && profile.uid === task.ownerUid) return new Set();
-
-  const result = new Set();
-  if (profile.testerLevel >= QUALIFIED_LEVEL && openTasks.has("TESTING")) result.add("TESTING");
-  if (profile.adminLevel >= QUALIFIED_LEVEL) {
-    if (openTasks.has("TESTING")) result.add("TESTING");
-    if (openTasks.has("LOGIC")) result.add("LOGIC");
-  }
-  if (profile.translatorLevel >= QUALIFIED_LEVEL) {
-    const targets = translationTargets(profile, task, config);
-    if (targets.newTranslationLanguages.size > 0) result.add("TRANSLATION");
-    if (targets.reviewLanguages.size > 0) result.add("TRANSLATION_REVIEW");
-  }
-  return result;
-}
-
-function canSubmit(profile, task, kind, config, existingRecords) {
-  if (profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL) {
-    return isStageOpenForSubmit(task, kind, existingRecords, config);
-  }
-  // Nobody waves their own quest through. The one exemption is above, not here: a developer's
-  // blanket access covers their own content by the owner's explicit rule, everyone else's does not.
-  if (task.ownerUid && profile.uid === task.ownerUid) return false;
-  switch (kind) {
-    case "TESTING":
-      return (
-        hasTestingQualification(profile) &&
-        isStageOpenForSubmit(task, "TESTING", existingRecords, config)
-      );
-    case "LOGIC":
-      return (
-        hasLogicQualification(profile) &&
-        isStageOpenForSubmit(task, "LOGIC", existingRecords, config)
-      );
-    case "TRANSLATION":
-      return (
-        profile.translatorLevel >= QUALIFIED_LEVEL &&
-        translationTargets(profile, task, config).newTranslationLanguages.size > 0
-      );
-    case "TRANSLATION_REVIEW":
-      return (
-        profile.translatorLevel >= QUALIFIED_LEVEL &&
-        translationTargets(profile, task, config).reviewLanguages.size > 0
-      );
-    default:
-      return false;
-  }
-}
-
-function translationTargets(profile, task, config) {
-  const hasDeveloperOverride = profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL;
-  if (!isReadyForTranslation(task.checks) || (!hasDeveloperOverride && profile.translatorLevel < QUALIFIED_LEVEL)) {
-    return emptyTranslationTargets();
-  }
-  const sourceLanguages = new Set(
-    Array.from(task.sourceLanguages).map(normalizeLanguage).filter(Boolean),
-  );
-  const required = requiredLanguages(task, config);
-  const known = new Set(
-    (hasDeveloperOverride
-      ? [...profile.knownLanguages, ...sourceLanguages, ...required]
-      : profile.knownLanguages
-    ).map(normalizeLanguage).filter(Boolean),
-  );
-  const translated = new Set(Object.keys(task.checks.translatedLanguages || {}).map(normalizeLanguage).filter(Boolean));
-  const knownSources = hasDeveloperOverride ? sourceLanguages : intersect(sourceLanguages, known);
-  if (knownSources.size === 0) return emptyTranslationTargets();
-
-  const newTargets = intersect(difference(required, translated), known);
-  const reviewThreshold = profile.translatorLevel - TRANSLATION_REVIEW_LEVEL_GAP;
-  let reviewTargets = new Set();
-  if (newTargets.size === 0) {
-    reviewTargets = new Set(
-      Object.entries(task.checks.translatedLanguages || {})
-        .filter(([language]) => known.has(normalizeLanguage(language)))
-        .filter(([language]) => !sourceLanguages.has(normalizeLanguage(language)))
-        .filter(([, level]) => numberValue(level, 0) <= reviewThreshold)
-        .map(([language]) => normalizeLanguage(language)),
-    );
-  }
-  return {
-    sourceLanguages: knownSources,
-    newTranslationLanguages: newTargets,
-    reviewLanguages: reviewTargets,
-  };
-}
-
-function openTasksFor(profile, task, config) {
-  const result = new Set();
-  if (!hasTestingResult(task.checks)) {
-    result.add("TESTING");
-  } else if (!hasLogicResult(task.checks)) {
-    result.add("LOGIC");
-  } else {
-    const targets = translationTargets(profile, task, config);
-    if (targets.newTranslationLanguages.size > 0) result.add("TRANSLATION");
-    if (targets.reviewLanguages.size > 0) result.add("TRANSLATION_REVIEW");
-  }
-  return result;
-}
-
-function openTasksForDeveloper(task, config) {
-  if (!hasTestingResult(task.checks)) return new Set(["TESTING"]);
-  if (!hasLogicResult(task.checks)) return new Set(["LOGIC"]);
-  const translated = new Set(Object.keys(task.checks.translatedLanguages || {}).map(normalizeLanguage));
-  return Array.from(requiredLanguages(task, config)).some((language) => !translated.has(language))
-    ? new Set(["TRANSLATION"])
-    : new Set();
-}
-
-function isStageOpenForSubmit(task, kind, existingRecords, config) {
-  switch (kind) {
-    case "TESTING":
-      return !hasLogicResult(task.checks) && !existingRecords.some((record) => record.acceptedByServer && record.kind === "LOGIC");
-    case "LOGIC":
-      return hasTestingResult(task.checks) && !existingRecords.some((record) => record.acceptedByServer && (record.kind === "TRANSLATION" || record.kind === "TRANSLATION_REVIEW"));
-    case "TRANSLATION": {
-      const translated = new Set(Object.keys(task.checks.translatedLanguages || {}).map(normalizeLanguage));
-      return (
-        isReadyForTranslation(task.checks) &&
-        Array.from(requiredLanguages(task, config)).some((language) => !translated.has(language))
-      );
-    }
-    case "TRANSLATION_REVIEW":
-      return isReadyForTranslation(task.checks);
-    default:
-      return false;
-  }
-}
-
-function rebuildAggregate(task, records, config) {
-  const accepted = records.filter((record) => record.acceptedByServer && record.reviewerUid !== task.ownerUid &&
-    (!task.submissionId || record.submissionId === task.submissionId));
-  const testing = scoreAggregate(accepted, "TESTING");
-  const logic = scoreAggregate(accepted, "LOGIC");
-  const questionOutcomes = testingQuestionOutcomes(task, accepted, config);
-  const translated = translatedLanguages(task, accepted);
-  const required = requiredLanguages(task, config);
-  const reviewedSegments = accepted
-    .filter((record) => record.kind === "TRANSLATION_REVIEW")
-    .flatMap((record) => record.segmentResults || []);
-  const translationScore =
-    reviewedSegments.length > 0
-      ? Math.trunc((reviewedSegments.filter((segment) => segment.accepted).length * 100) / reviewedSegments.length)
-      : null;
-  return {
-    checks: {
-      // Стадия закрыта оценкой урока И, когда задание знает состав вопросов, проходом каждого:
-      // задание без вопросного состава (старые записи) судится по оценке урока, как прежде.
-      isTested:
-        stagePassed(testing.score, config) &&
-        (questionOutcomes.length === 0 || questionOutcomes.every((outcome) => outcome.passed)),
-      testingScore: testing.score,
-      questionOutcomes,
-      isLogicReviewed: logic.score !== null,
-      logicScore: logic.score,
-      isTranslationReviewed: Array.from(required).every((language) => Object.prototype.hasOwnProperty.call(translated, language)),
-      translationScore,
-      translatedLanguages: translated,
-      // Результат привязан к тому, ПОД ЧЕМ он посчитан: ревизия конфига и поколение заданий
-      // едут вместе с проверками, чтобы смена порога посреди цикла не переписывала задним
-      // числом уже принятые решения.
-      appliedConfigRevision: numberValue(config && config.configRevision, 1),
-      assignmentGeneration: numberValue(task && task.generation, 1),
-    },
-    reviewerDeltas: testing.reviewerDeltas.concat(logic.reviewerDeltas),
-  };
-}
-
-/**
- * По-вопросные исходы TESTING: один независимый ревью (≠ автор) на каждый вопрос ревизии.
- *
- * Оценка вопроса — среднее по принятым записям, отдавшим за него вопросную оценку; вопрос
- * пропущен, когда оценён и его среднее дошло до порога из конфига. Вопрос без единой оценки
- * остаётся неоценённым (testingScore null) — тишина никогда не считается одобрением.
- */
-function testingQuestionOutcomes(task, acceptedRecords, config) {
-  const threshold = numberValue(config && config.testingPassScore, DEFAULT_TESTING_PASS_SCORE);
-  // Ревизию судят по её собственному составу: переведённые варианты (`__<lang>`, влитые
-  // mergeQuestions после допуска перевода) — новый языковой контент, а не неоценённые вопросы
-  // ревизии; их появление не отзывает уже пройденное тестирование. Вопрос без языка
-  // классифицировать нельзя — он остаётся (задания прежних версий языка не несли).
-  const sources = new Set(Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean));
-  const taskQuestions = (Array.isArray(task.questions) ? task.questions : []).filter((question) => {
-    const language = normalizeLanguage(question.language);
-    return sources.size === 0 || language === "" || sources.has(language);
-  });
-  const outcomes = taskQuestions.map((question) => {
-    const scores = [];
-    for (const record of acceptedRecords) {
-      if (record.kind !== "TESTING") continue;
-      const perQuestion = (record.questionScores || []).find((entry) => entry.questionId === question.id);
-      if (perQuestion && perQuestion.score !== null && perQuestion.score !== undefined) {
-        scores.push(numberValue(perQuestion.score, null));
-      }
-    }
-    if (scores.length === 0) {
-      return {questionId: question.id, testingScore: null, passed: false};
-    }
-    const score = scores.reduce((sum, value) => sum + value, 0) / scores.length;
-    return {questionId: question.id, testingScore: score, passed: score >= threshold};
-  });
-  // Урок без вопросного списка (старые задания) живёт по записям с вопросными оценками как есть:
-  // пустой список вопросов не может превратить isTested в ложь, когда стадия закрыта оценками.
-  if (taskQuestions.length === 0) return [];
-  return outcomes;
-}
-
-function lessonReviewStatus(checks, task, config) {
-  // A rejection is terminal until the author resubmits, so it outranks the score arithmetic.
-  if (task && task.rejectedAtMs) return "REJECTED";
-  return lessonPassed(checks, task, config) ? "READY_FOR_PUBLICATION" : "UNDER_REVIEW";
-}
-
-/**
- * Какие стадии не пущены, поимённо — без всякой причины от ревьюера.
- *
- * Причина — атрибут отклонения (rejectReviewSubmission требует её обязательно); проваленная
- * стадия вычисляется из оценок и говорит сама за себя: автор видит, ЧТО не прошло (TESTING /
- * LOGIC / TRANSLATION), и чинит именно это. Ничего не не пущено — пустой список.
- */
-/**
- * Стадии, не пройденные свежей заявкой (ещё до первого ревью): тестирование и логика ждут
- * оценок, перевод — требуемых языков. Автор видит это с момента подачи.
- */
-function initialFailedStages(request) {
-  const tasks = request.lessons.map((lesson) => {
-    const lessonQuestions = request.questions.filter((question) => question.lessonId === lesson.id);
-    return {
-      checks: reviewToChecks({}),
-      questions: lessonQuestions,
-      sourceLanguages: new Set(lessonQuestions.map((question) => normalizeLanguage(question.language))),
-    };
-  });
-  return Array.from(new Set(tasks.flatMap((task) => failedReviewStages(task.checks, task, null)))).sort();
-}
-
-function failedReviewStages(checks, task, config) {
-  const failed = [];
-  if (!stagePassed(checks.testingScore, config) || !checks.isTested) failed.push("TESTING");
-  if (!stagePassed(checks.logicScore, config) || !checks.isLogicReviewed) failed.push("LOGIC");
-  const required = requiredLanguages(task, config);
-  const translated = checks.translatedLanguages || {};
-  const sourceLanguages = new Set(
-    Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean),
-  );
-  const translationMissing = Array.from(required).some(
-    (language) =>
-      !sourceLanguages.has(normalizeLanguage(language)) &&
-      numberValue(translated[language], 0) < REVIEW_PASS_LEVEL,
-  );
-  if (translationMissing) failed.push("TRANSLATION");
-  return failed;
-}
-
-function lessonPassed(checks, task, config) {
-  const required = requiredLanguages(task, config);
-  const translated = checks.translatedLanguages || {};
-  const sourceLanguages = new Set(
-    Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean),
-  );
-  return (
-    stagePassed(checks.testingScore, config) &&
-    checks.isTested &&
-    stagePassed(checks.logicScore, config) &&
-    checks.isLogicReviewed &&
-    Array.from(required).every((language) =>
-      sourceLanguages.has(normalizeLanguage(language)) ||
-      numberValue(translated[language], 0) >= REVIEW_PASS_LEVEL
-    )
-  );
-}
-
-function scoreAggregate(records, kind) {
-  const scored = records.filter((record) => record.kind === kind && record.score !== null && record.score !== undefined);
-  if (scored.length === 0) return {score: null, reviewerDeltas: []};
-
-  const maxReviewerLevel = Math.max(...scored.map((record) => record.reviewerLevelAtSubmit));
-  const activeThreshold = maxReviewerLevel - ACTIVE_LEVEL_WINDOW;
-  const active = scored.filter((record) => record.reviewerLevelAtSubmit >= activeThreshold);
-  const activeScore = active.reduce((sum, record) => sum + record.score, 0) / active.length;
-  const activeStars = Math.min(3, Math.max(1, Math.round(activeScore)));
-  const activeIds = new Set(active.map((record) => record.id));
-  const reviewerDeltas = scored
-    .filter((record) => !activeIds.has(record.id))
-    .map((record) => {
-      const diff = Math.abs(record.score - activeStars);
-      const points = diff === 0 ? 3 : diff === 1 ? 0 : -3;
-      return {reviewerUid: record.reviewerUid, points};
-    });
-  return {score: activeScore, reviewerDeltas};
-}
-
-function translatedLanguages(task, records) {
-  const sourceQuestionCount = getSourceQuestionCount(task);
-  const result = {};
-  for (const [language, level] of Object.entries(task.checks.translatedLanguages || {}).sort()) {
-    const normalized = normalizeLanguage(language);
-    if (normalized) result[normalized] = numberValue(level, 0);
-  }
-
-  const byLanguage = new Map();
-  for (const record of records) {
-    if (record.kind !== "TRANSLATION" || !record.language) continue;
-    const language = normalizeLanguage(record.language);
-    if (!byLanguage.has(language)) byLanguage.set(language, []);
-    byLanguage.get(language).push(record);
-  }
-  for (const [language, languageRecords] of byLanguage.entries()) {
-    // «Незавершённого перевода не существует»: вопрос без текста (и без картинки) — не перевод,
-    // и такая запись никогда не засчитывает язык, что бы ни было в счётчике вопросов (CAP-3).
-    const completed = languageRecords
-      .filter((record) => (record.translatedQuestions || []).length >= sourceQuestionCount)
-      .filter((record) => record.translatedQuestions.every(carriesContent))
-      .sort((a, b) => b.reviewerLevelAtSubmit - a.reviewerLevelAtSubmit)[0];
-    if (completed) result[language] = completed.reviewerLevelAtSubmit;
-  }
-  return result;
-}
-
-function carriesContent(question) {
-  return (question.text !== null && question.text !== undefined && String(question.text).trim().length > 0) ||
-    (question.imagePath !== null && question.imagePath !== undefined);
-}
-
-function requiredLanguages(task, config) {
-  const configured = new Set(
-    ((config && config.requiredLanguages) || []).map(normalizeLanguage).filter(Boolean),
-  );
-  return configured.size > 0 ? configured : new Set(Array.from(task.sourceLanguages).map(normalizeLanguage).filter(Boolean));
-}
-
-function actionToRecord(action, profile, task, config, existingRecords, now, pinnedReviewId = null) {
-  const reviewerLevel = levelFor(profile, action.kind);
-  const language = action.language ? normalizeLanguage(action.language) : null;
-  // Из очереди id задан ключом мутации и не зависит от часов: повтор строит ту же запись.
-  const reviewId = pinnedReviewId ||
-    `${action.assignmentId}_${action.kind.toLowerCase()}_${now}_${profile.uid}`
-    .replace(/[^A-Za-z0-9_.-]/g, "_");
-
-  if (action.kind === "TESTING" || action.kind === "LOGIC") {
-    if (action.score === null || action.score === undefined) {
-      throw new HttpsError("invalid-argument", `${action.kind} requires score`);
-    }
-    // TESTING оценивает КАЖДЫЙ вопрос ревизии (один независимый ревью на вопрос); LOGIC судит
-    // урок целиком. Вопросный список задания — единственный источник состава: чужой/лишний id
-    // и пропущенный вопрос собираются здесь, на приёмнике, а не доверяются проводу.
-    let questionScores = [];
-    if (action.kind === "TESTING") {
-      questionScores = validatedTestingQuestionScores(action.questionScores, task);
-    }
-    return {
-      id: reviewId,
-      lessonId: action.lessonId,
-      kind: action.kind,
-      reviewerUid: profile.uid,
-      reviewerLevelAtSubmit: reviewerLevel,
-      score: action.score,
-      questionScores,
-      createdAtMs: now,
-      acceptedByServer: true,
-      segmentResults: [],
-      translatedQuestions: [],
-    };
-  }
-
-  if (action.kind === "TRANSLATION") {
-    if (!language) throw new HttpsError("invalid-argument", "TRANSLATION requires language");
-    const targets = translationTargets(profile, task, config);
-    if (!targets.newTranslationLanguages.has(language)) {
-      throw new HttpsError("failed-precondition", `Language ${language} is not open for translation`);
-    }
-    if (!action.translatedQuestions || action.translatedQuestions.length === 0) {
-      throw new HttpsError("invalid-argument", "TRANSLATION requires translatedQuestions");
-    }
-    const translatedQuestions = action.translatedQuestions.map((question) => ({
-      ...question,
-      id: translatedQuestionId(question.id, language),
-      language,
-      languageLevel: reviewerLevel,
-    }));
-    return {
-      id: reviewId,
-      lessonId: action.lessonId,
-      kind: action.kind,
-      reviewerUid: profile.uid,
-      reviewerLevelAtSubmit: reviewerLevel,
-      language,
-      createdAtMs: now,
-      acceptedByServer: true,
-      segmentResults: [],
-      translatedQuestions,
-    };
-  }
-
-  if (action.kind === "TRANSLATION_REVIEW") {
-    if (!language) throw new HttpsError("invalid-argument", "TRANSLATION_REVIEW requires language");
-    if (!action.segmentResults || action.segmentResults.length === 0) {
-      throw new HttpsError("invalid-argument", "TRANSLATION_REVIEW requires segmentResults");
-    }
-    const targets = translationTargets(profile, task, config);
-    if (!targets.reviewLanguages.has(language)) {
-      throw new HttpsError("failed-precondition", `Language ${language} is not open for translation review`);
-    }
-    const targetRecord =
-      (action.targetReviewId && existingRecords.find((record) => record.id === action.targetReviewId)) ||
-      existingRecords
-        .filter((record) => record.kind === "TRANSLATION" && record.language === language)
-        .sort((a, b) => b.createdAtMs - a.createdAtMs)[0];
-    if (!targetRecord) throw new HttpsError("not-found", `Translation record for ${language} not found`);
-    if (profile.translatorLevel < targetRecord.reviewerLevelAtSubmit + TRANSLATION_REVIEW_LEVEL_GAP) {
-      throw new HttpsError(
-        "permission-denied",
-        `Reviewer level must be at least ${TRANSLATION_REVIEW_LEVEL_GAP} above translation level`,
-      );
-    }
-    return {
-      id: reviewId,
-      lessonId: action.lessonId,
-      kind: action.kind,
-      reviewerUid: profile.uid,
-      reviewerLevelAtSubmit: reviewerLevel,
-      language,
-      targetReviewId: targetRecord.id,
-      createdAtMs: now,
-      acceptedByServer: true,
-      segmentResults: action.segmentResults,
-      translatedQuestions: [],
-    };
-  }
-
-  throw new HttpsError("invalid-argument", `Unknown review kind ${action.kind}`);
-}
-
-function translationReviewerDeltas(record, existingRecords) {
-  if (record.kind !== "TRANSLATION_REVIEW") return [];
-  const targetRecord = existingRecords.find((candidate) => candidate.id === record.targetReviewId);
-  if (!targetRecord) return [];
-  return (record.segmentResults || []).map((result) => ({
-    reviewerUid: targetRecord.reviewerUid,
-    points: result.accepted ? ACCEPTED_TRANSLATION_SEGMENT_POINTS : REJECTED_TRANSLATION_SEGMENT_POINTS,
-  }));
-}
-
-function newReviewerDeltas(previous, current) {
-  const remainingPrevious = new Map();
-  for (const delta of previous) {
-    const key = deltaKey(delta);
-    remainingPrevious.set(key, (remainingPrevious.get(key) || 0) + 1);
-  }
-  return current.filter((delta) => {
-    const key = deltaKey(delta);
-    const count = remainingPrevious.get(key) || 0;
-    if (count > 0) {
-      if (count === 1) remainingPrevious.delete(key);
-      else remainingPrevious.set(key, count - 1);
-      return false;
-    }
-    return true;
-  });
-}
-
-function deltaKey(delta) {
-  return `${delta.reviewerUid}\u0000${delta.points}`;
-}
-
-/**
- * Задания по их id.
- *
- * Задание — документ урока под `admin/review/lessons`, а id задания — «заявка × урок». Урок ищется
- * по полю `assignmentId` документа: журнал ревью больше не носит `lessonId` в теле (AD-11: три
- * поля, `id` — ключ для этой самой выборки).
- *
- * Одним запросом по этому полю обойтись нельзя. Задания, записанные прежней версией сервера, поля
- * не имеют вовсе, и такое задание перестало бы находиться навсегда: рецензент получал бы из журнала
- * его id и пустой ответ, а `ReviewAssignmentSync` понимает пустой ответ как «задание удалено» и
- * стирает его с устройства. Поэтому поиск — цепочка из трёх шагов (`review-journal.js`), а найденное
- * окольным путём задание тут же доклеивает себе поле: следующее чтение идёт коротким путём, и
- * доклейка не превращается в постоянный второй запрос.
- */
-async function readAdminReviewLessonTasksByIds(ids) {
-  if (!ids || ids.size === 0) return [];
-  const wanted = [...ids].map((id) => stringValue(id)).filter(Boolean);
-  const {resolved, heals} = await resolveReviewAssignments(db, wanted);
-  const tasks = [];
-  for (const hit of resolved) {
-    const lesson = hit.lesson || (await db.doc(adminLessonPath(hit.lessonId)).get());
-    if (lesson.exists) tasks.push(await adminLessonSnapshotToTask(lesson));
-  }
-  await stampAssignmentIds(heals);
-  return tasks;
-}
-
-/**
- * Доклеивает `assignmentId` заданиям, найденным окольным путём.
- *
- * Отдельным батчем, а не внутри чтения: чтение обязано вернуть задания даже если запись не удалась
- * — рецензент важнее ускорения следующего чтения. Поэтому отказ здесь только логируется.
- */
-async function stampAssignmentIds(heals) {
-  if (!heals || heals.length === 0) return;
-  try {
-    const batch = db.batch();
-    for (const heal of heals) batch.set(db.doc(heal.path), heal.data, {merge: true});
-    await batch.commit();
-  } catch (error) {
-    logger.warn("review-assignment: could not stamp assignmentId", {
-      count: heals.length,
-      error: errorMessage(error),
-    });
-  }
-}
-
-async function readAdminReviewLessonTask(assignmentId) {
-  const tasks = await readAdminReviewLessonTasksByIds(new Set([assignmentId]));
-  return tasks[0] || null;
-}
-
-async function adminLessonSnapshotToTask(snapshot) {
-  const data = snapshot.data() || {};
-  const questId = stringValue(data.questId);
-  const questionsSnapshot = await snapshot.ref
-    .collection("quests")
-    .doc(questId)
-    .collection("questions")
-    .get();
-  const questions = questionsSnapshot.docs.map((doc) => normalizeQuestion(doc.data() || {}, doc.id));
-  const checks = reviewToChecks(data.checks || {
-    isTested: data.isTested,
-    testingScore: data.testingScore,
-    isLogicReviewed: data.isLogicReviewed,
-    logicScore: data.logicScore,
-    isTranslationReviewed: data.isTranslationReviewed,
-    translationScore: data.translationScore,
-    translatedLanguages: data.translatedLanguages,
-  });
-  return {
-    id: `${stringValue(data.submissionId)}_${snapshot.id}`,
-    submissionId: stringValue(data.submissionId),
-    ownerUid: stringValue(data.ownerUid),
-    catalogId: stringValue(data.catalogId),
-    draftId: stringValue(data.draftId),
-    questId,
-    lessonId: snapshot.id,
-    title: stringValue(data.title),
-    targetShelf: targetShelfValue(data.targetShelf),
-    status: stringValue(data.status, "UNDER_REVIEW"),
-    generation: numberValue(data.generation, 1),
-    rejectedAtMs: numberValue(data.rejectedAtMs, 0) || null,
-    rejectedByUid: nullableString(data.rejectedByUid),
-    rejectedReviewerLevelAtSubmit: data.rejectedReviewerLevelAtSubmit === null ||
-      data.rejectedReviewerLevelAtSubmit === undefined
-      ? null
-      : numberValue(data.rejectedReviewerLevelAtSubmit, 0),
-    rejectionReason: nullableString(data.rejectionReason),
-    createdAtMs: numberValue(data.createdAtMs, 0),
-    changedAtMs: numberValue(data.changedAtMs, numberValue(data.createdAtMs, 0)),
-    checks,
-    questions,
-    sourceLanguages: new Set(
-      stringArray(data.sourceLanguages).length > 0
-        ? stringArray(data.sourceLanguages).map(normalizeLanguage)
-        : questions.map((question) => normalizeLanguage(question.language)),
-    ),
-  };
-}
-
-async function readReviewRecords(lessonId, submissionId = null) {
-  const snapshot = await db.doc(adminLessonPath(lessonId)).collection("reviews").get();
-  return snapshot.docs.map((doc) => normalizeReviewRecord(doc.data() || {}, doc.id, lessonId))
-    .filter((record) => !submissionId || record.submissionId === submissionId);
-}
-
-async function readArenaReviewConfig() {
-  const snapshot = await db.doc("configs/arena_review").get();
-  if (!snapshot.exists) return defaultArenaReviewConfig();
-  const data = snapshot.data() || {};
-  const testingPassScore = numberValue(data.testingPassScore, DEFAULT_TESTING_PASS_SCORE);
-  // Порог решает судьбу контента: тихо исправленный неверный порог ловит ошибку слишком поздно —
-  // конфиг с числом вне 1..3 громко отказывает всем ревью-путям, пока владелец не починит.
-  if (!Number.isInteger(testingPassScore) || testingPassScore < 1 || testingPassScore > 3) {
-    throw new HttpsError(
-      "failed-precondition",
-      `configs/arena_review.testingPassScore must be an integer in 1..3, got ${data.testingPassScore}`,
-    );
-  }
-  return {
-    requiredLanguages: stringArray(data.requiredLanguages),
-    testingPassScore,
-    configRevision: numberValue(data.configRevision, 1),
-    updatedAtMs: numberValue(data.updatedAtMs, 0),
-  };
-}
-
-/** Порог, при котором TESTING-оценка пропускает вопрос/ревизию (1..3: 1 валит, 2 и 3 пропускают). */
-const DEFAULT_TESTING_PASS_SCORE = 2;
-
-function defaultArenaReviewConfig() {
-  return {requiredLanguages: [], testingPassScore: DEFAULT_TESTING_PASS_SCORE, configRevision: 1, updatedAtMs: 0};
-}
 
 async function requireProfile(uid) {
   const snapshot = await db.collection("profiles").doc(uid).get();
@@ -8325,7 +7050,6 @@ function normalizeRequest(data, fallbackSubmissionId) {
       order: numberValue(item.order, 0),
     })),
     questions: listMaps(data.questions).map((item) => normalizeQuestion(item)),
-    review: reviewToChecks(data.review || {}),
   };
 }
 
@@ -8471,81 +7195,21 @@ function normalizeDirtyQuestRating(data, fallbackContentKey, scope) {
   };
 }
 
-function normalizeSubmitAction(data) {
-  const score = data.score === null || data.score === undefined ? null : numberValue(data.score, null);
-  if (score !== null && (score < 1 || score > 3)) {
-    throw new HttpsError("invalid-argument", "score must be in 1..3");
-  }
+function questionToDocument(question) {
   return {
-    assignmentId: stringValue(data.assignmentId),
-    lessonId: stringValue(data.lessonId),
-    kind: stringValue(data.kind),
-    score,
-    questionScores: listMaps(data.questionScores).map((item) => ({
-      questionId: stringValue(item.questionId),
-      score: numberValue(item.score, null),
-    })),
-    language: nullableString(data.language),
-    targetReviewId: nullableString(data.targetReviewId),
-    translatedQuestions: listMaps(data.translatedQuestions).map((item) => normalizeQuestion(item)),
-    segmentResults: listMaps(data.segmentResults).map(normalizeSegmentDecision),
+    id: question.id,
+    draftId: question.draftId,
+    lessonId: question.lessonId,
+    type: question.type,
+    language: question.language,
+    languageLevel: question.languageLevel,
+    difficulty: question.difficulty,
+    order: question.order,
+    text: question.text,
+    imagePath: question.imagePath,
+    payload: question.payload,
+    updatedAtMs: question.updatedAtMs,
   };
-}
-
-/**
- * Сегментное решение перевода — явное: correct/error; отсутствие решения — unchecked, и оно
- * никогда не хранится как одобрение. Молчаливая approved-булева вида «accepted: true» без
- * решения проводом запрещена: именно она позволяла сегменту пройти, пока ревьюер молчал.
- */
-function normalizeSegmentDecision(item) {
-  const questionId = stringValue(item.questionId);
-  const segmentKey = stringValue(item.segmentKey);
-  const raw = item.decision === null || item.decision === undefined ? null : stringValue(item.decision);
-  if (raw === null) {
-    throw new HttpsError(
-      "invalid-argument",
-      `segmentResults[${questionId}/${segmentKey}] requires an explicit decision "correct" or "error"`,
-    );
-  }
-  if (raw !== "correct" && raw !== "error") {
-    throw new HttpsError("invalid-argument", `segmentResults[${questionId}/${segmentKey}] decision must be "correct" or "error"`);
-  }
-  return {questionId, segmentKey, decision: raw, accepted: raw === "correct"};
-}
-
-/**
- * Вопросные оценки TESTING: покрытие ровно вопросного состава задания, оценки в 1..3.
- *
- * Один независимый ревью на вопрос — это состав, названный заданием: не хватает вопроса — ревью
- * неполно; лишний или чужой id — провод собран мимо задания. Порог здесь не проверяется:
- * низкая оценка — валидное решение, а не ошибка провода.
- */
-function validatedTestingQuestionScores(questionScores, task) {
-  const expected = new Set((task.questions || []).map((question) => question.id));
-  if (expected.size === 0) {
-    throw new HttpsError("failed-precondition", "Assignment carries no questions to test");
-  }
-  const seen = new Set();
-  for (const entry of questionScores) {
-    if (!entry.questionId) {
-      throw new HttpsError("invalid-argument", "questionScores entry requires questionId");
-    }
-    if (entry.score === null || entry.score === undefined || entry.score < 1 || entry.score > 3 || !Number.isInteger(entry.score)) {
-      throw new HttpsError("invalid-argument", `questionScores[${entry.questionId}] score must be an integer in 1..3`);
-    }
-    if (!expected.has(entry.questionId)) {
-      throw new HttpsError("invalid-argument", `questionScores names unknown question ${entry.questionId}`);
-    }
-    if (seen.has(entry.questionId)) {
-      throw new HttpsError("invalid-argument", `questionScores duplicates question ${entry.questionId}`);
-    }
-    seen.add(entry.questionId);
-  }
-  const missing = Array.from(expected).filter((id) => !seen.has(id));
-  if (missing.length > 0) {
-    throw new HttpsError("invalid-argument", `questionScores must cover every question, missing: ${missing.join(", ")}`);
-  }
-  return questionScores.map((entry) => ({questionId: entry.questionId, score: entry.score}));
 }
 
 function normalizeQuestion(data, fallbackId) {
@@ -8565,122 +7229,6 @@ function normalizeQuestion(data, fallbackId) {
   };
 }
 
-function normalizeReviewRecord(data, fallbackId, fallbackLessonId) {
-  return {
-    id: stringValue(data.id, fallbackId),
-    submissionId: nullableString(data.submissionId),
-    lessonId: stringValue(data.lessonId, fallbackLessonId),
-    kind: stringValue(data.kind),
-    reviewerUid: stringValue(data.reviewerUid),
-    reviewerLevelAtSubmit: numberValue(data.reviewerLevelAtSubmit, 0),
-    score: data.score === null || data.score === undefined ? null : numberValue(data.score, null),
-    questionScores: listMaps(data.questionScores).map((item) => ({
-      questionId: stringValue(item.questionId),
-      score: numberValue(item.score, null),
-    })),
-    language: nullableString(data.language),
-    targetReviewId: nullableString(data.targetReviewId),
-    createdAtMs: numberValue(data.createdAtMs, 0),
-    acceptedByServer: Boolean(data.acceptedByServer),
-    segmentResults: listMaps(data.segmentResults).map((item) => ({
-      questionId: stringValue(item.questionId),
-      segmentKey: stringValue(item.segmentKey),
-      decision: stringValue(item.decision, item.accepted ? "correct" : "error"),
-      accepted: Boolean(item.accepted),
-    })),
-    translatedQuestions: listMaps(data.translatedQuestions).map((item) => normalizeQuestion(item)),
-  };
-}
-
-function reviewToChecks(review, fallbackLanguages) {
-  const translated = languageLevels(review && review.translatedLanguages);
-  return {
-    isTested: Boolean(review && review.isTested),
-    testingScore: nullableNumber(review && review.testingScore),
-    questionOutcomes: listMaps(review && review.questionOutcomes).map((item) => ({
-      questionId: stringValue(item.questionId),
-      testingScore: nullableNumber(item.testingScore),
-      passed: Boolean(item.passed),
-    })),
-    isLogicReviewed: Boolean(review && review.isLogicReviewed),
-    logicScore: nullableNumber(review && review.logicScore),
-    isTranslationReviewed: Boolean(review && review.isTranslationReviewed),
-    translationScore:
-      review && review.translationScore !== null && review.translationScore !== undefined
-        ? numberValue(review.translationScore, null)
-        : null,
-    translatedLanguages:
-      Object.keys(translated).length > 0 ? translated : (fallbackLanguages || {}),
-    appliedConfigRevision: nullableNumber(review && review.appliedConfigRevision),
-    assignmentGeneration: nullableNumber(review && review.assignmentGeneration),
-  };
-}
-
-function checksToCallableMap(checks) {
-  return {
-    isTested: Boolean(checks.isTested),
-    testingScore: checks.testingScore === undefined ? null : checks.testingScore,
-    questionOutcomes: (checks.questionOutcomes || []).map((outcome) => ({
-      questionId: outcome.questionId,
-      testingScore: outcome.testingScore === undefined ? null : outcome.testingScore,
-      passed: Boolean(outcome.passed),
-    })),
-    isLogicReviewed: Boolean(checks.isLogicReviewed),
-    logicScore: checks.logicScore === undefined ? null : checks.logicScore,
-    isTranslationReviewed: Boolean(checks.isTranslationReviewed),
-    translationScore: checks.translationScore === undefined ? null : checks.translationScore,
-    translatedLanguages: checks.translatedLanguages || {},
-    appliedConfigRevision:
-      checks.appliedConfigRevision === undefined ? null : checks.appliedConfigRevision,
-    assignmentGeneration:
-      checks.assignmentGeneration === undefined ? null : checks.assignmentGeneration,
-  };
-}
-
-function questionToDocument(question) {
-  return {
-    id: question.id,
-    draftId: question.draftId,
-    lessonId: question.lessonId,
-    type: question.type,
-    language: question.language,
-    languageLevel: question.languageLevel,
-    difficulty: question.difficulty,
-    order: question.order,
-    text: question.text,
-    imagePath: question.imagePath,
-    payload: question.payload,
-    updatedAtMs: question.updatedAtMs,
-  };
-}
-
-function reviewRecordToDocument(record) {
-  return clean({
-    id: record.id,
-    submissionId: record.submissionId,
-    lessonId: record.lessonId,
-    kind: record.kind,
-    reviewerUid: record.reviewerUid,
-    reviewerLevelAtSubmit: record.reviewerLevelAtSubmit,
-    score: record.score,
-    questionScores: (record.questionScores || []).map((item) => ({
-      questionId: item.questionId,
-      score: item.score,
-    })),
-    language: record.language,
-    targetReviewId: record.targetReviewId,
-    createdAtMs: record.createdAtMs,
-    acceptedByServer: record.acceptedByServer,
-    segmentResults: (record.segmentResults || []).map((item) => ({
-      questionId: item.questionId,
-      segmentKey: item.segmentKey,
-      decision: item.decision,
-      accepted: item.accepted,
-    })),
-    translatedQuestions: (record.translatedQuestions || []).map(questionToDocument),
-  });
-}
-
 function mergeQuestions(current, translated) {
   const translatedIds = new Set(translated.map((question) => question.id));
   return current
@@ -8693,92 +7241,6 @@ function mergeQuestions(current, translated) {
     );
 }
 
-function translatedQuestionId(sourceQuestionId, language) {
-  const suffix = `__${language}`;
-  return sourceQuestionId.endsWith(suffix) ? sourceQuestionId : `${sourceQuestionId}${suffix}`;
-}
-
-function levelFor(profile, kind) {
-  switch (kind) {
-    case "TESTING":
-      return Math.max(profile.testerLevel, profile.adminLevel, profile.developerLevel);
-    case "LOGIC":
-      return Math.max(profile.adminLevel, profile.developerLevel);
-    case "TRANSLATION":
-    case "TRANSLATION_REVIEW":
-      return Math.max(profile.translatorLevel, profile.developerLevel);
-    default:
-      return 0;
-  }
-}
-
-function questionLanguages(questions) {
-  const levels = {};
-  for (const question of questions) {
-    const language = question.language;
-    levels[language] = Math.max(levels[language] || 0, numberValue(question.languageLevel, 0));
-  }
-  return levels;
-}
-
-function getSourceQuestionCount(task) {
-  const groups = {};
-  for (const question of task.questions) {
-    const language = normalizeLanguage(question.language);
-    groups[language] = (groups[language] || 0) + 1;
-  }
-  const counts = Object.values(groups);
-  return counts.length > 0 ? Math.max(...counts) : task.questions.length;
-}
-
-function availableLanguages(task) {
-  const translatedLanguages = Object.keys(task.checks.translatedLanguages || {});
-  if (translatedLanguages.length > 0) return new Set(translatedLanguages);
-  return new Set(task.questions.map((question) => question.language));
-}
-
-function hasTestingResult(checks) {
-  return Boolean(checks.isTested) || checks.testingScore !== null && checks.testingScore !== undefined;
-}
-
-function hasLogicResult(checks) {
-  return Boolean(checks.isLogicReviewed) || checks.logicScore !== null && checks.logicScore !== undefined;
-}
-
-/**
- * A stage clears when its score reaches the pass mark. Scores run 1..3 and the mark comes from
- * `configs/arena_review.testingPassScore` (default 2), so the lowest score is a refusal rather
- * than an approval, and the owner can raise the bar without a deploy.
- *
- * Until this existed, publication asked only whether a score was PRESENT — a reviewer scoring 1
- * published the quest exactly as a reviewer scoring 3 did, which made the whole review stage
- * decorative. A score below the mark leaves the lesson UNDER_REVIEW indefinitely; raising it
- * publishes without any other action, and the reject action below is the way to send it back.
- */
-function stagePassed(score, config) {
-  const threshold = numberValue(config && config.testingPassScore, DEFAULT_TESTING_PASS_SCORE);
-  return score !== null && score !== undefined && score >= threshold;
-}
-
-function isReadyForTranslation(checks) {
-  return hasTestingResult(checks) && hasLogicResult(checks);
-}
-
-function hasTestingQualification(profile) {
-  return profile.testerLevel >= QUALIFIED_LEVEL || profile.adminLevel >= QUALIFIED_LEVEL;
-}
-
-function hasLogicQualification(profile) {
-  return profile.adminLevel >= QUALIFIED_LEVEL;
-}
-
-function emptyTranslationTargets() {
-  return {
-    sourceLanguages: new Set(),
-    newTranslationLanguages: new Set(),
-    reviewLanguages: new Set(),
-  };
-}
 
 function requireAuthUid(request) {
   const uid = request.auth && request.auth.uid;
@@ -9299,24 +7761,6 @@ function privateLessonPath(ownerUid, catalogId, questId, sectionId, themeId, les
 
 function privateQuestionPath(ownerUid, catalogId, questId, sectionId, themeId, lessonId, questionId) {
   return `${privateLessonPath(ownerUid, catalogId, questId, sectionId, themeId, lessonId)}/questions/${questionId}`;
-}
-
-const ADMIN_REVIEW_LESSONS = "admin/review/lessons";
-
-function adminLessonPath(lessonId) {
-  return `${ADMIN_REVIEW_LESSONS}/${lessonId}`;
-}
-
-function adminQuestPath(lessonId, questId) {
-  return `${adminLessonPath(lessonId)}/quests/${questId}`;
-}
-
-function adminQuestionPath(lessonId, questId, questionId) {
-  return `${adminQuestPath(lessonId, questId)}/questions/${questionId}`;
-}
-
-function adminReviewRecordPath(lessonId, reviewId) {
-  return `${adminLessonPath(lessonId)}/reviews/${reviewId}`;
 }
 
 function clean(value) {

@@ -5,7 +5,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraft
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaPrivateQuizSettingsDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaReviewDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaSectionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaThemeDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRequest
@@ -100,13 +99,6 @@ object QuestArenaSubmissionRequestMapper {
                             updatedAtMs = it.updatedAtMs,
                         )
                     },
-            review =
-                ArenaReviewDto(
-                    translatedLanguages =
-                        savedTargetQuestions
-                            .groupBy { it.language }
-                            .mapValues { (_, questions) -> questions.maxOf { it.languageLevel } },
-                ),
             targetShelf = targetShelf,
             targetLessonIds = lessonIds.mapTo(linkedSetOf()) { it.value },
             // Не порция, а черновик целиком: только так сервер отличает «узел удалён автором» от

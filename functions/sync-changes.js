@@ -31,9 +31,8 @@
 const JOURNAL_CATALOG = "catalog";
 const JOURNAL_LESSON_CONTENT = "lesson_content";
 const JOURNAL_PRIVATE = "private";
-const JOURNAL_REVIEW = "review";
 
-const JOURNALS = Object.freeze([JOURNAL_CATALOG, JOURNAL_LESSON_CONTENT, JOURNAL_PRIVATE, JOURNAL_REVIEW]);
+const JOURNALS = Object.freeze([JOURNAL_CATALOG, JOURNAL_LESSON_CONTENT, JOURNAL_PRIVATE]);
 
 /** Имя подколлекции журнала — одно на все четыре пути. */
 const SYNC_CHANGES_COLLECTION = "sync_changes";
@@ -61,8 +60,6 @@ const SYNC_CHANGES_COLLECTION = "sync_changes";
  *   `question` читается двумя журналами — каталожным и журналом своего урока. Запись только в один
  *   означает, что половина читателей об изменении не узнает;
  *
- *   `review_assignment` — задание на ревью, документ на пару «заявка × урок». Квест в журнале ревью
- *   не живёт: рецензент читает задания, а не квесты, и их id — id задания.
  */
 const NODE_JOURNALS = Object.freeze({
   catalog: Object.freeze([JOURNAL_CATALOG]),
@@ -72,7 +69,6 @@ const NODE_JOURNALS = Object.freeze({
   lesson: Object.freeze([JOURNAL_CATALOG]),
   question: Object.freeze([JOURNAL_CATALOG, JOURNAL_LESSON_CONTENT]),
   private_quest: Object.freeze([JOURNAL_PRIVATE]),
-  review_assignment: Object.freeze([JOURNAL_REVIEW]),
 });
 
 const NODE_KINDS = Object.freeze(Object.keys(NODE_JOURNALS));
@@ -102,11 +98,6 @@ function privateSyncChangeId(catalogId, questId) {
   return `${catalogId}_${questId}`;
 }
 
-/** Документ журнала ревью: id задания как есть. */
-function adminSyncChangeId(assignmentId) {
-  return String(assignmentId);
-}
-
 function publicCatalogSyncChangePath(catalogId, type, id) {
   return `catalogs/${catalogId}/${SYNC_CHANGES_COLLECTION}/${catalogSyncChangeId(type, id)}`;
 }
@@ -117,12 +108,6 @@ function lessonContentSyncChangePath(lessonId, questionId) {
 
 function privateSyncChangePath(ownerUid, catalogId, questId) {
   return `private/${ownerUid}/${SYNC_CHANGES_COLLECTION}/${privateSyncChangeId(catalogId, questId)}`;
-}
-
-const ADMIN_REVIEW_SYNC_CHANGES = `admin/review/${SYNC_CHANGES_COLLECTION}`;
-
-function adminSyncChangePath(assignmentId) {
-  return `${ADMIN_REVIEW_SYNC_CHANGES}/${adminSyncChangeId(assignmentId)}`;
 }
 
 // ─── тело записи ──────────────────────────────────────────────────────────────────────────────
@@ -193,8 +178,6 @@ function journalPath(journal, node, type) {
         requireAddress(node, "catalogId", kind, journal),
         node.id,
       );
-    case JOURNAL_REVIEW:
-      return adminSyncChangePath(node.id);
     default:
       throw new TypeError(`sync change: unknown journal ${journal}`);
   }
@@ -313,10 +296,6 @@ function interpretJournalEntry(journal, docId, data) {
       if (!id) return null;
       return {docId, type: "quest", id, changedAtMs};
     }
-    case JOURNAL_REVIEW: {
-      const id = stringOrNull(body.assignmentId) || stringOrNull(body.id) || docId;
-      return {docId: adminSyncChangeId(id), type: "review_assignment", id, changedAtMs};
-    }
     default:
       throw new TypeError(`sync change: unknown journal ${journal}`);
   }
@@ -382,7 +361,6 @@ function planJournalBackfill(journal, entries) {
  */
 function journalOfCollectionPath(collectionPath) {
   const path = String(collectionPath || "");
-  if (path === ADMIN_REVIEW_SYNC_CHANGES) return JOURNAL_REVIEW;
   const match = /^([a-z_]+)\/[^/]+\/sync_changes$/.exec(path);
   if (!match) return null;
   switch (match[1]) {
@@ -398,18 +376,14 @@ function journalOfCollectionPath(collectionPath) {
 }
 
 module.exports = {
-  ADMIN_REVIEW_SYNC_CHANGES,
   JOURNALS,
   JOURNAL_CATALOG,
   JOURNAL_LESSON_CONTENT,
   JOURNAL_PRIVATE,
-  JOURNAL_REVIEW,
   NODE_JOURNALS,
   NODE_KINDS,
   SYNC_CHANGES_COLLECTION,
   SYNC_CHANGE_FIELDS,
-  adminSyncChangeId,
-  adminSyncChangePath,
   catalogSyncChangeId,
   interpretJournalEntry,
   isSyncChangeDocument,

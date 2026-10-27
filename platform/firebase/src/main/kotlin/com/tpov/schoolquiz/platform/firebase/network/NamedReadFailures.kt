@@ -18,16 +18,12 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSyncChange
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentChangeDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.SubmitReviewActionDto
 import kotlin.coroutines.cancellation.CancellationException
 
 // Вторая половина границы из CallableErrors.
 //
 // Отправка отложенной мутации давно проходит через toSyncError и уезжает наверх доменной ветвью.
-// Чтения — каталога, приватных квестов, заданий на ревью, профиля — этой границы не имели вовсе:
+// Чтения — каталога, приватных квестов, профиля — этой границы не имели вовсе:
 // исключение SDK летело сквозь них как есть, и наверху от «нет сети» оставался только текст. По
 // AD-15 наружу обязана выходить ветвь, а критерий 4.5 обещает игроку названную причину — значит
 // читающая сторона должна проходить ровно через тот же разбор, а не заводить свой.
@@ -81,10 +77,6 @@ internal fun LessonContentSyncChangeRemoteDataSource.namingFailures(): LessonCon
 internal fun QuestPrivateRemoteDataSource.namingFailures(): QuestPrivateRemoteDataSource =
     NamedFailureQuestPrivateReads(this)
 
-/** То же для журнала заданий на ревью. */
-internal fun ReviewAssignmentRemoteDataSource.namingFailures(): ReviewAssignmentRemoteDataSource =
-    NamedFailureReviewAssignmentReads(this)
-
 /** То же для профиля. */
 internal fun ProfileRemoteDataSource.namingFailures(): ProfileRemoteDataSource = NamedFailureProfileReads(this)
 
@@ -129,24 +121,6 @@ private class NamedFailureQuestPrivateReads(
 
     override suspend fun fetchSnapshots(changes: List<PrivateQuestSyncChange>): List<PrivateQuestSnapshot> =
         withNamedFailure { delegate.fetchSnapshots(changes) }
-}
-
-private class NamedFailureReviewAssignmentReads(
-    private val delegate: ReviewAssignmentRemoteDataSource,
-) : ReviewAssignmentRemoteDataSource {
-    override suspend fun fetchAssignmentChangePage(
-        cursor: SyncCursor,
-        limit: Int,
-    ): SyncChangePage<ReviewAssignmentChangeDto> =
-        withNamedFailure {
-            delegate.fetchAssignmentChangePage(cursor, limit)
-        }
-
-    override suspend fun fetchByIds(ids: Set<String>): List<ReviewAssignmentDto> =
-        withNamedFailure { delegate.fetchByIds(ids) }
-
-    override suspend fun submitReviewAction(action: SubmitReviewActionDto) =
-        withNamedFailure { delegate.submitReviewAction(action) }
 }
 
 private class NamedFailureProfileReads(

@@ -36,11 +36,6 @@ function world() {
     "quests/course": {catalogId: "catalog", authorUid: "author", version: 1, visibleOn: ["archive"], archived: true},
     "sections/section": {questId: "course", version: 1}, "themes/theme": {sectionId: "section", version: 1},
     "lessons/lesson": {themeId: "theme", version: 1, reviewSubmissionId: "submission", reviewApprovedAtMs: NOW - 1},
-    "admin/review/lessons/lesson": {ownerUid: "author", questId: "course", submissionId: "submission",
-      status: "PUBLISHED", sourceLanguages: ["en"]},
-    ...Object.fromEntries(["TESTING", "LOGIC"].map((kind) => [`admin/review/lessons/lesson/reviews/${kind}`, {
-      kind, reviewerUid: kind, acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "submission",
-    }])),
     ...Object.fromEntries(Array.from({length: 80}, (_, i) => [`questions/q${String(i).padStart(3, "0")}`, {
       lessonId: "lesson", version: 1, language: "en", difficulty: i < 60 ? "EASY" : "HARD",
       payload: JSON.stringify({...SINGLE, difficulty: i < 60 ? "EASY" : "HARD"}),

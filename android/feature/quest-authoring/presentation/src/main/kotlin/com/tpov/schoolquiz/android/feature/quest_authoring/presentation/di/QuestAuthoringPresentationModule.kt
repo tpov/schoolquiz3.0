@@ -9,10 +9,8 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultDecisionsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultQuestCreateComponent
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DefaultReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import org.koin.dsl.module
 
@@ -37,18 +35,6 @@ val questAuthoringPresentationModule =
                 navigator = navigator,
                 closePrivateQuizLink = get(),
                 timestampProvider = get(),
-            )
-        }
-
-        factory<ReviewQueueComponent> { (ctx: ComponentContext) ->
-            DefaultReviewQueueComponent(
-                componentContext = ctx,
-                authRepository = get(),
-                observeReviewAssignments = get(),
-                observeReviewAssignmentSync = get(),
-                submitReviewAction = get(),
-                submitLessonErrorReport = get(),
-                questionContentParser = get(),
             )
         }
 

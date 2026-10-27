@@ -23,12 +23,6 @@ function world(extra = {}) {
     "lessons/lesson": {themeId: "theme", version: 1, authorUid: "author", publishedAtMs: NOW - 2000,
       reviewSubmissionId: "submission", reviewApprovedAtMs: NOW - 1000},
     "lessons/sibling": {themeId: "theme", version: 1},
-    "admin/review/lessons/lesson": {ownerUid: "author", questId: "quest", submissionId: "submission",
-      status: "PUBLISHED", sourceLanguages: ["en"], testingScore: 3, logicScore: 3},
-    "admin/review/lessons/lesson/reviews/tester": {kind: "TESTING", reviewerUid: "tester",
-      acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "submission"},
-    "admin/review/lessons/lesson/reviews/logic": {kind: "LOGIC", reviewerUid: "reviewer",
-      acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "submission"},
     ...extra,
   };
 }
@@ -45,16 +39,16 @@ function seedReceipt(uid, attemptId, patch = {}) {
       settledAtMs: NOW - 100, ...patch}});
 }
 
-test("real handlers require curator and independently accepted records of the published submission", async () => {
+test("real handlers require curator and the lesson's own review approval", async () => {
   store.reset(world());
   const spoofed = await call("setLessonPlacement", "player", {uid: "curator", lessonId: "lesson",
     targetShelf: "arena", mutationId: "spoofed", reason: "claimed authority"});
   assert.equal(spoofed.result.code, "CURATOR_REQUIRED");
-  for (const badRecord of [
-    {kind: "TESTING", reviewerUid: "author", acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "submission"},
-    {kind: "TESTING", reviewerUid: "tester", acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "previous"},
-  ]) {
-    store.reset(world({"admin/review/lessons/lesson/reviews/tester": badRecord}));
+  // Одобрение с 4.19 доказывают поля публикации в документе урока: без них контекст арены
+  // отвечает отказом, и никакая подделка заданий/записей (их больше нет) не помогает.
+  for (const patch of [{reviewApprovedAtMs: null}, {reviewSubmissionId: null}]) {
+    store.reset(world());
+    store.documents.set("lessons/lesson", {...store.documents.get("lessons/lesson"), ...patch});
     const refused = await move("arena", "unverified");
     assert.equal(refused.result.code, "REVIEW_APPROVAL_REQUIRED");
     assert.equal(store.documents.get("users/author").boxCount, 0);

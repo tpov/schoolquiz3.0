@@ -98,56 +98,10 @@
     <string name="qa_cd_add_question">Add question</string>
 
     <!-- Review queue -->
-    <string name="qa_review_title">Review</string>
-    <string name="qa_review_empty">No assignments</string>
-    <string name="qa_filter_all">All</string>
-    <string name="qa_filter_testing">Testing</string>
-    <string name="qa_filter_logic">Validation</string>
-    <string name="qa_filter_translation">Translation</string>
-    <string name="qa_filter_translation_review">Translation review</string>
-    <string name="qa_review_translation_label">Translation</string>
-    <string name="qa_review_no_translation">No translation</string>
-    <string name="qa_review_accepted">Accepted</string>
-    <string name="qa_review_correct">Correct</string>
-    <string name="qa_review_error">Error</string>
-    <string name="qa_review_question_score_label">Score for this question</string>
-    <string name="qa_error_score_all_questions">Score every question</string>
-    <string name="qa_error_decide_all_segments">Decide every segment: correct or error</string>
-    <string name="qa_review_submit">Submit</string>
-    <string name="qa_review_score_testing">Test: %1$s</string>
-    <string name="qa_review_score_logic">Validation: %1$s</string>
-    <string name="qa_review_score_translation">Translation: %1$s%%</string>
-    <string name="qa_review_languages_from">from %1$s</string>
-    <string name="qa_review_languages_to">to %1$s</string>
-    <string name="qa_review_languages_review">review %1$s</string>
-    <string name="qa_review_languages_none">languages not specified</string>
-    <string name="qa_review_question_title">Question %1$d</string>
-    <string name="qa_review_queued">Review queued — it will be sent when online</string>
-    <string name="qa_review_sync_pending">Decision waiting to be sent</string>
-    <string name="qa_review_sync_quarantined">Decision not accepted: the assignment was closed or reassigned</string>
-    <string name="qa_error_submit_review_failed">Failed to submit the review</string>
-    <string name="qa_error_load_assignments_failed">Failed to load assignments</string>
-    <string name="qa_error_choose_score">Choose a score from 1 to 3</string>
-    <string name="qa_error_choose_translation_language">Choose a translation language</string>
-    <string name="qa_error_fill_all_translations">Fill in every translation field</string>
-    <string name="qa_error_choose_review_language">Choose a review language</string>
 
     <!-- Review segments -->
-    <string name="qa_segment_text">Text</string>
-    <string name="qa_segment_option">Option %1$s</string>
-    <string name="qa_segment_item">Item %1$s</string>
-    <string name="qa_segment_candidate">Candidate %1$s</string>
-    <string name="qa_segment_info">Explanation</string>
 
     <!-- Plurals -->
-    <plurals name="qa_review_assignments_count">
-        <item quantity="one">%1$d assignment</item>
-        <item quantity="other">%1$d assignments</item>
-    </plurals>
-    <plurals name="qa_review_questions_count">
-        <item quantity="one">%1$d question</item>
-        <item quantity="other">%1$d questions</item>
-    </plurals>
 
     <string name="qa_conflict_banner">The quest moved to version %1$d on the server while your submission waited</string>
     <string name="qa_conflict_banner_unknown_version">The server refused your submission as outdated but did not say which version the quest is on</string>
@@ -191,11 +145,6 @@
     <string name="qa_inbox_kind_comment">Comment</string>
     <string name="qa_inbox_readers_author_only">Private: only the lesson\'s author reads this</string>
     <string name="qa_inbox_readers_public">Public comment by %1$s</string>
-    <string name="qa_review_report_error">Report an error</string>
-    <string name="qa_review_report_dialog_title">Private error report</string>
-    <string name="qa_review_report_hint">What is wrong with the whole lesson? Only its author will read this.</string>
-    <string name="qa_review_report_blank">Describe the problem first</string>
-    <string name="qa_review_report_done">Report queued for the lesson\'s author</string>
     <string name="qa_private_link_settings">Private quiz link</string>
     <string name="qa_private_attempt_limit">Attempt limit</string>
     <string name="qa_private_show_result">Show result to participants</string>

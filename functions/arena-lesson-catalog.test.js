@@ -47,11 +47,6 @@ function lessonWorld(lessonId = "lesson", patch = {}) {
       reviewSubmissionId: `submission-${lessonId}`, reviewApprovedAtMs: NOW - 1, averageRating: 88, top3: [{nickname: "not-a-lesson-rating"}], ...patch},
     [`lesson_placements/${lessonId}`]: {lessonId, shelf: "arena", authorUid: "author", contentVersion: 1,
       previousShelf: "review", placementVersion: 1, updatedAtMs: NOW - 1, decidedByUid: "private-curator", lastReason: "private reason"},
-    [`admin/review/lessons/${lessonId}`]: {ownerUid: "author", questId: `quest-${lessonId}`, submissionId: `submission-${lessonId}`,
-      status: "PUBLISHED", sourceLanguages: ["en"]},
-    ...Object.fromEntries(["TESTING", "LOGIC"].map(kind => [`admin/review/lessons/${lessonId}/reviews/${kind}`, {
-      kind, reviewerUid: kind, acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: `submission-${lessonId}`,
-    }])),
   };
 }
 function bankWorld() {
@@ -88,7 +83,7 @@ test("Auth and strict request/cursor validation precede all reads and writes", a
   assert.equal(store.operations.length, 0); noWrites(before);
 });
 
-test("actual root review loader + actual published key producer yield only safe lesson metadata", async () => {
+test("actual root loader + actual published key producer yield only safe lesson metadata", async () => {
   store.reset(bankWorld()); const before = snapshot();
   const response = await read();
   assert.equal(response.catalogVersion, CATALOG_VERSION); assert.equal(response.entryAvailability, "PREPARE_REQUIRED");
@@ -97,7 +92,8 @@ test("actual root review loader + actual published key producer yield only safe 
     rating: {sum: 0, count: 0, weightedScore: {numerator: 40, denominator: 20}, ratingVersion: 0}, priceNolics: 1,
     placement: {shelf: "arena", previousShelf: "review", placementVersion: 1, updatedAtMs: NOW - 1}}]);
   safe(response); noWrites(before);
-  assert.ok(store.operations.some(op => op.path === "admin/review/lessons/lesson/reviews"));
+  // 4.19: журнала ревьюеров больше нет — каталог его не читает вовсе.
+  assert.ok(store.operations.every(op => !op.path.startsWith("admin/review/")));
   assert.ok(store.operations.every(op => !/^(questions|question_keys|users|profiles)\//.test(op.path) && !op.path.includes("/history/")));
 });
 
@@ -150,7 +146,7 @@ test("cursor detects unseen pricing, display, version, membership and eligibilit
     () => patch("lessons/b", {title: "Changed title"}),
     () => patch("lesson_placements/b", {placementVersion: 2}),
     () => patch("lessons/b", {version: 2}),
-    () => patch("admin/review/lessons/b", {status: "REJECTED"}),
+    () => patch("lessons/b", {reviewApprovedAtMs: null}),
     () => patch("lesson_placements/b", {authorUid: "other-author"}),
     () => { for (const [key, value] of Object.entries(lessonWorld("c"))) store.documents.set(key, value); }];
   for (const change of changes) {
@@ -183,7 +179,7 @@ test("stale placement author/version are absent from catalog and cannot influenc
 test("COURSE/SURVEY, stale review, unpublished and mismatched placement author/version are excluded", async () => {
   const changes = [() => patch("catalogs/catalog-lesson", {questType: "COURSE"}),
     () => patch("catalogs/catalog-lesson", {questType: "SURVEY"}),
-    () => patch("lessons/lesson", {reviewSubmissionId: "stale"}),
+    () => patch("lessons/lesson", {reviewApprovedAtMs: null}),
     () => patch("lessons/lesson", {archived: true}),
     () => patch("lesson_placements/lesson", {authorUid: "someone-else"}),
     () => patch("lesson_placements/lesson", {contentVersion: 2})];
@@ -210,12 +206,6 @@ test("catalog pricing-universe limit matches current runtime, and exactly 1000 r
   store.reset(Object.fromEntries(Array.from({length: LIMITS.placements}, (_, n) => [`lesson_placements/p${n}`, {shelf: "arena"}])));
   const before = snapshot(); const result = await read();
   assert.equal(result.totalEligibleLessons, 0); assert.deepEqual(result.lessons, []); noWrites(before);
-});
-
-test("actual root's unbounded review query is bounded with +1 and never receives truncated reviews", async () => {
-  const rows = Object.fromEntries(Array.from({length: 1001}, (_, n) => [`admin/review/lessons/lesson/reviews/r${n}`, {}]));
-  store.reset({...lessonWorld(), ...rows}); const before = snapshot();
-  await assert.rejects(read(), {code: "CATALOG_TOO_LARGE"}); noWrites(before);
 });
 
 test("exactly 12000 document reads are permitted without an off-by-one rejection", async () => {

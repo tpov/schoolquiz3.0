@@ -77,7 +77,6 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.C
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.DecisionsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.InboxScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.QuestCreateScreen
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.ReviewQueueScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R as QuizzesR
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
@@ -491,11 +490,6 @@ private fun LocalTabContent(
                     )
                 is LocalConfig.ArchiveRoot ->
                     CourseArchiveContent(rootComponent = rootComponent, paddingValues = paddingValues)
-                is LocalConfig.ReviewQueueRoot ->
-                    ReviewQueueScreen(
-                        component = rootComponent.reviewQueueComponent,
-                        modifier = Modifier.padding(paddingValues),
-                    )
                 is LocalConfig.DecisionsRoot ->
                     DecisionsScreen(
                         component = rootComponent.decisionsComponent,

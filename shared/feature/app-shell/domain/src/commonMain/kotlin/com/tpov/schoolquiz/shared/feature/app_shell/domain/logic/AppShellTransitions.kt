@@ -31,7 +31,6 @@ fun rootLocalStackForSection(section: DrawerSection.LocalSection): NavStack<Loca
         DrawerSection.LocalSection.MyQuests -> NavStack(LocalConfig.MyQuestsRoot)
         DrawerSection.LocalSection.HomeQuests -> NavStack(LocalConfig.HomeQuestsRoot)
         DrawerSection.LocalSection.Archive -> NavStack(LocalConfig.ArchiveRoot)
-        DrawerSection.LocalSection.ReviewQueue -> NavStack(LocalConfig.ReviewQueueRoot)
         DrawerSection.LocalSection.Decisions -> NavStack(LocalConfig.DecisionsRoot)
         DrawerSection.LocalSection.AuthorLifecycle -> NavStack(LocalConfig.AuthorLifecycleRoot)
         DrawerSection.LocalSection.Curation -> NavStack(LocalConfig.CuratorRoot)

@@ -4,9 +4,9 @@
  * Консервация платного цикла проверки — чистая арифметика AD-10 (история 4.7, CAP-4).
  *
  * Модуль без Firestore: сюита гоняется везде, где есть node, и держит те ветки, которые у денег
- * не имеют права на исключение — равенство «плата = вознаграждения + сгоревший остаток»,
- * целочисленность (никаких floating-point), раздачу остаточных десятых по убыванию остатка с
- * ничьей по стабильному id, фиксацию уровня первым завершённым результатом и перенос кошелька.
+ * не имеют права на исключение — вырожденную консервацию «fee = 0 + burn» (4.18/4.19: писателей
+ * наград у конвейера нет), целочисленность (никаких floating-point), раздачу остаточных десятых
+ * по убыванию остатка с ничьей по стабильному id и перенос кошелька.
  */
 
 const assert = require("node:assert/strict");
@@ -15,7 +15,6 @@ const {
   CALCULATION_VERSION,
   DEFAULT_TARIFFS,
   TENTHS_PER_NOLIC,
-  buildReviewUnits,
   buildSettlementManifest,
   normalizeReviewFeeTariffs,
   reviewFeeNolics,
@@ -35,25 +34,6 @@ function unit(unitId, levelTenths) {
   };
 }
 
-function record(patch) {
-  return {
-    id: "r1",
-    submissionId: "submission",
-    lessonId: "lesson",
-    kind: "TESTING",
-    reviewerUid: "reviewer",
-    reviewerLevelAtSubmit: 100,
-    score: 3,
-    questionScores: [],
-    language: null,
-    targetReviewId: null,
-    createdAtMs: 10,
-    acceptedByServer: true,
-    segmentResults: [],
-    translatedQuestions: [],
-    ...patch,
-  };
-}
 
 test("tariffs default to the owner-accepted prices and refuse broken values loudly", () => {
   assert.deepEqual(normalizeReviewFeeTariffs(null), {
@@ -183,134 +163,6 @@ test("wallet credit floors whole nolics and keeps the carry", () => {
   assert.deepEqual(walletCreditForEntitlement({priorCarryTenths: 9, entitlementTenths: 0}),
     {creditedNolics: 0, nextCarryTenths: 9});
   assert.throws(() => walletCreditForEntitlement({priorCarryTenths: -1, entitlementTenths: 0}), RangeError);
-});
-
-test("units merge directions per (lesson, reviewer) and fix the level with the first completed result", () => {
-  const records = [
-    // Поздний TESTING с высоким уровнем не должен перебить ранний TRANSLATION.
-    record({id: "late-testing", kind: "TESTING", reviewerLevelAtSubmit: 300, createdAtMs: 30}),
-    record({id: "early-translation", kind: "TRANSLATION", language: "en", reviewerLevelAtSubmit: 100,
-      createdAtMs: 10, translatedQuestions: [{id: "q1__en", text: "one", language: "en", languageLevel: 100}]}),
-    // Логичный уровень между ними — тоже не фикс (позднее раннего).
-    record({id: "mid-logic", kind: "LOGIC", reviewerLevelAtSubmit: 200, createdAtMs: 20}),
-  ];
-  const task = {questions: [{id: "q1", text: "one", language: "ru"}]};
-  const units = buildReviewUnits({
-    submissionId: "submission",
-    lessonIds: ["lesson"],
-    taskByLessonId: {lesson: task},
-    recordsByLessonId: {lesson: records},
-    ownerUid: "author",
-  });
-  assert.equal(units.length, 1);
-  assert.deepEqual(units[0], {
-    unitId: "lesson/reviewer",
-    lessonId: "lesson",
-    reviewerUid: "reviewer",
-    levelTenths: 100,
-    evidenceRecordId: "early-translation",
-    createdAtMs: 10,
-  });
-});
-
-test("same-time records break the level tie by record id, and the owner never earns", () => {
-  const records = [
-    record({id: "zzz", reviewerUid: "reviewer", reviewerLevelAtSubmit: 200, createdAtMs: 10}),
-    record({id: "aaa", reviewerUid: "reviewer", reviewerLevelAtSubmit: 300, createdAtMs: 10}),
-    record({id: "own", reviewerUid: "author", reviewerLevelAtSubmit: 900, createdAtMs: 5}),
-  ];
-  const units = buildReviewUnits({
-    submissionId: "submission",
-    lessonIds: ["lesson"],
-    taskByLessonId: {},
-    recordsByLessonId: {lesson: records},
-    ownerUid: "author",
-  });
-  assert.equal(units.length, 1);
-  assert.equal(units[0].levelTenths, 300);
-  assert.equal(units[0].evidenceRecordId, "aaa");
-});
-
-test("incomplete work creates no unit: partial translation, missing score, silent segments, foreign submissions", () => {
-  const task = {questions: [{id: "q1", text: "one", language: "ru"}, {id: "q2", text: "two", language: "ru"}]};
-  const records = [
-    // Перевод накрыл один вопрос из двух — не завершённый результат.
-    record({id: "partial", kind: "TRANSLATION", language: "en", translatedQuestions: [
-      {id: "q1__en", text: "one", language: "en", languageLevel: 100},
-    ]}),
-    // Полный по числу, но пустой текст — содержимого нет (CAP-3).
-    record({id: "blank", kind: "TRANSLATION", language: "de", translatedQuestions: [
-      {id: "q1__de", text: " ", language: "de", languageLevel: 100},
-      {id: "q2__de", text: "zwei", language: "de", languageLevel: 100},
-    ]}),
-    // TESTING без оценки — не завершён.
-    record({id: "unscored", kind: "TESTING", score: null}),
-    // Чужая заявка — чужой цикл.
-    record({id: "foreign", submissionId: "another", score: 3}),
-  ];
-  const units = buildReviewUnits({
-    submissionId: "submission",
-    lessonIds: ["lesson"],
-    taskByLessonId: {lesson: task},
-    recordsByLessonId: {lesson: records},
-    ownerUid: "author",
-  });
-  assert.deepEqual(units, []);
-});
-
-test("a record of another submission never earns in this cycle, even with the same reviewer", () => {
-  const units = buildReviewUnits({
-    submissionId: "submission",
-    lessonIds: ["lesson"],
-    taskByLessonId: {},
-    recordsByLessonId: {lesson: [record({id: "retained", submissionId: "older-submission", score: 3})]},
-    ownerUid: "author",
-  });
-  assert.deepEqual(units, [], "retained prior evidence is history, not new paid work");
-});
-
-test("justified rejection earns its judge a unit at the recorded level, once, and never to the author", () => {
-  const task = {
-    questions: [{id: "q1", text: "one", language: "ru"}],
-    rejectedAtMs: 50,
-    rejectedByUid: "judge",
-    rejectedReviewerLevelAtSubmit: 150,
-  };
-  const units = buildReviewUnits({
-    submissionId: "submission",
-    lessonIds: ["lesson"],
-    taskByLessonId: {lesson: task},
-    recordsByLessonId: {lesson: []},
-    ownerUid: "author",
-  });
-  assert.deepEqual(units, [{
-    unitId: "lesson/judge",
-    lessonId: "lesson",
-    reviewerUid: "judge",
-    levelTenths: 150,
-    evidenceRecordId: null,
-  }]);
-
-  // У судьи есть и запись — работает запись (первый завершённый результат), отклонение юнит не дублирует.
-  const withRecord = buildReviewUnits({
-    submissionId: "submission",
-    lessonIds: ["lesson"],
-    taskByLessonId: {lesson: task},
-    recordsByLessonId: {lesson: [record({reviewerUid: "judge", reviewerLevelAtSubmit: 100})]},
-    ownerUid: "author",
-  });
-  assert.equal(withRecord.length, 1);
-  assert.equal(withRecord[0].levelTenths, 100);
-
-  // Уровень отклонения не записан — юнита нет: не выдумываем уровень из воздуха.
-  const withoutLevel = buildReviewUnits({
-    submissionId: "submission",
-    lessonIds: ["lesson"],
-    taskByLessonId: {lesson: {...task, rejectedReviewerLevelAtSubmit: null}},
-    recordsByLessonId: {lesson: []},
-    ownerUid: "author",
-  });
-  assert.deepEqual(withoutLevel, []);
 });
 
 test("manifest records the calculation version and refuses to enshrine broken conservation", () => {

@@ -26,8 +26,6 @@ sealed interface LocalConfig : TabConfig {
 
     data object ArchiveRoot : LocalConfig
 
-    data object ReviewQueueRoot : LocalConfig
-
     /** Admin audit of model verdicts (4.17, UX-22): decisions, marks, logs, question preview. */
     data object DecisionsRoot : LocalConfig
 

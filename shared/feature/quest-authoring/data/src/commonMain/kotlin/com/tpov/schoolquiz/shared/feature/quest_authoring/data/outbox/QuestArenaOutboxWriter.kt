@@ -179,23 +179,6 @@ object QuestArenaOutboxWriter {
                 },
             )
             put("questions", buildJsonArray { questions.forEach { add(it.toJson()) } })
-            put(
-                "review",
-                buildJsonObject {
-                    put("isTested", review.isTested)
-                    putNullable("testingScore", review.testingScore)
-                    put("isLogicReviewed", review.isLogicReviewed)
-                    putNullable("logicScore", review.logicScore)
-                    put("isTranslationReviewed", review.isTranslationReviewed)
-                    putNullable("translationScore", review.translationScore)
-                    put(
-                        "translatedLanguages",
-                        buildJsonObject {
-                            review.translatedLanguages.forEach { (language, level) -> put(language, level) }
-                        },
-                    )
-                },
-            )
         }
 
     private fun ArenaQuestionDto.toJson(): JsonObject =

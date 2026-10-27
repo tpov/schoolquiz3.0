@@ -29,7 +29,7 @@ import kotlin.test.assertTrue
  *    the Kotlin-internal half — that the supertype agrees with the per-type code the runner uses
  *    today, and exactly where it deliberately does not.
  * 3. **The old entry points still refuse a redacted payload**, which is what keeps
- *    `DefaultQuestCreateComponent` and `DefaultReviewQueueComponent` — which re-encode whatever
+ *    `DefaultQuestCreateComponent` and the question editor — which re-encode whatever
  *    they parse — from overwriting a stored question with its own public half.
  */
 class QuestionDisplayTest {

@@ -258,7 +258,7 @@ function testNotifyRunsAfterCommitAndSwallowsFailures() {
   assert.ok(/try \{[\s\S]*sendPushToUser\([\s\S]*\} catch \(error\) \{[\s\S]*logger\.warn/.test(wrapper), "notifyUser глотает сбой messaging, а не бросает в операцию");
   const sites = [
     {head: "exports.decideVerification = onCall(", event: "VERIFICATION_APPROVED", commit: "runTransaction("},
-    {head: "async function publishSubmissionIfReady(", event: "QUEST_PUBLISHED", commit: ".commit()"},
+    {head: "async function publishModelReviewedSubmission(", event: "QUEST_PUBLISHED", commit: ".commit()"},
     {head: "async function aggregateDirtyQuestRatingDoc(", event: "AUTHOR_RATING_CHANGED", commit: "runTransaction("},
   ];
   for (const site of sites) {

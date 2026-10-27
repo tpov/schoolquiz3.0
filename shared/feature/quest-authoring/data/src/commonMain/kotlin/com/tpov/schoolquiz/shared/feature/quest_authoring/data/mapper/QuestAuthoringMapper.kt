@@ -7,15 +7,10 @@ import com.tpov.schoolquiz.shared.core.persistence.DraftSectionEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftThemeEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
-import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentEntity
-import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentQuestionEntity
-import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentWithQuestions
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringEntityBundle
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLesson
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
@@ -280,60 +275,6 @@ object QuestAuthoringMapper {
                         languageLevel = it.languageLevel,
                     )
                 },
-        )
-
-    fun ReviewAssignmentDto.toEntity(viewerUid: String): ReviewAssignmentEntity =
-        ReviewAssignmentEntity(
-            id = id,
-            ownerUid = viewerUid,
-            submissionId = submissionId,
-            catalogId = catalogId,
-            draftId = draftId,
-            questId = questId,
-            lessonId = lessonId,
-            title = title,
-            createdAtMs = createdAtMs,
-            taskKinds = taskKinds.sorted(),
-            sourceLanguages = sourceLanguages.sorted(),
-            newTranslationLanguages = newTranslationLanguages.sorted(),
-            reviewLanguages = reviewLanguages.sorted(),
-            isTested = checks.isTested,
-            testingScore = checks.testingScore,
-            isLogicReviewed = checks.isLogicReviewed,
-            logicScore = checks.logicScore,
-            isTranslationReviewed = checks.isTranslationReviewed,
-            translationScore = checks.translationScore,
-            translatedLanguages =
-                checks.translatedLanguages
-                    .toSortedMap()
-                    .map { (language, level) -> "$language=$level" },
-        )
-
-    fun ReviewAssignmentDto.toEntityWithQuestions(viewerUid: String): ReviewAssignmentWithQuestions =
-        ReviewAssignmentWithQuestions(
-            assignment = toEntity(viewerUid),
-            questions = questions.map { it.toQuestionEntity(viewerUid, id) },
-        )
-
-    private fun ArenaQuestionDto.toQuestionEntity(
-        viewerUid: String,
-        assignmentId: String,
-    ): ReviewAssignmentQuestionEntity =
-        ReviewAssignmentQuestionEntity(
-            ownerUid = viewerUid,
-            assignmentId = assignmentId,
-            questionId = id,
-            draftId = draftId,
-            lessonId = lessonId,
-            type = type,
-            language = language,
-            languageLevel = languageLevel,
-            difficulty = difficulty,
-            order = order,
-            text = text,
-            imagePath = imagePath,
-            payload = payload,
-            updatedAtMs = updatedAtMs,
         )
 
     private fun PrivateQuestSnapshot.snapshotUpdatedAt(): Long = maxOf(changedAtMs, request.draft.updatedAtMs)

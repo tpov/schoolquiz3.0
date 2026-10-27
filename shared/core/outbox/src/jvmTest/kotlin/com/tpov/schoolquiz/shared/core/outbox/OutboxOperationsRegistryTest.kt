@@ -52,7 +52,6 @@ class OutboxOperationsRegistryTest {
             OutboxOperations.READY_ACK,
             OutboxOperations.SUBMIT_RATING,
             OutboxOperations.SUBMIT_ARENA,
-            OutboxOperations.SUBMIT_REVIEW,
             OutboxOperations.SET_SHELF,
             OutboxOperations.SUBMIT_LESSON_ERROR,
             OutboxOperations.SUBMIT_POLL_VOTE,

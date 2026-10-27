@@ -37,11 +37,6 @@ function world() {
     "quests/course": {catalogId: "catalog", authorUid: "author", version: 1, visibleOn: ["archive"], archived: true},
     "sections/section": {questId: "course", version: 1}, "themes/theme": {sectionId: "section", version: 1},
     "lessons/lesson": {themeId: "theme", version: 1, reviewSubmissionId: "submission", reviewApprovedAtMs: NOW - 1},
-    "admin/review/lessons/lesson": {ownerUid: "author", questId: "course", submissionId: "submission",
-      status: "PUBLISHED", sourceLanguages: ["en"]},
-    ...Object.fromEntries(["TESTING", "LOGIC"].map(kind => [`admin/review/lessons/lesson/reviews/${kind}`, {
-      kind, reviewerUid: kind, acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "submission",
-    }])),
     ...Object.fromEntries(Array.from({length: 80}, (_, i) => [`questions/q${String(i).padStart(3, "0")}`, {
       lessonId: "lesson", version: 1, language: "en", difficulty: i < 60 ? "EASY" : "HARD",
       payload: JSON.stringify({...SINGLE, difficulty: i < 60 ? "EASY" : "HARD"}),
@@ -121,7 +116,9 @@ test("root session call derives owner/form and preserves answer replay without g
 }));
 
 test("source preparation error is stable and contains no private content", () => fixed(async () => {
-  store.documents.get("admin/review/lessons/lesson/reviews/LOGIC").submissionId = "old";
+  // 4.19: записи ревьюеров удалены; подготовка отказывает на уроке без одобрения публикации.
+  store.documents.set("lessons/lesson",
+    {...store.documents.get("lessons/lesson"), reviewApprovedAtMs: null});
   await assert.rejects(call("prepareCourseTournamentBank", "author", {
     requestId: "invalid_handler_00001", source: {kind: "COURSE", id: "course"},
   }), error => {

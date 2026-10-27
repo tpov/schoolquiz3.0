@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
  *    with its answer", and its invariants — a `correctOptionId` that names a real option, five or
  *    ten candidates, a `correctCandidateId` for every blank — say so. A redacted question satisfies
  *    none of them, and relaxing them to fit would weaken the validation every authoring path
- *    relies on. More concretely: `DefaultQuestCreateComponent` and `DefaultReviewQueueComponent`
+ *    relies on. More concretely: `DefaultQuestCreateComponent` and the question editor
  *    parse a payload and then re-encode what they parsed. If a redacted value could arrive there as
  *    a [QuestionContent], saving would rewrite the stored question into its own public half and the
  *    answer would be gone for good. Keeping the hierarchies apart makes that structurally

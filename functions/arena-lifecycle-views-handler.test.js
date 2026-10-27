@@ -113,7 +113,7 @@ const ENDPOINTS = Object.freeze([
 // (story 4.17): the decisions pair joins the surface — the verifier-gated read
 // fetchReviewDecisions and the mark writer markReviewDecision (UX-22), covered by
 // review-decisions.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "21afceaf385abd862bcf65a3f7e0883628204f46bcc4916ade67c2be65ef917a";
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "e87b34c2911f7e4ec15c011c253ee506e76c4ca60acfe91e9061c0e48487888a";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }
@@ -146,14 +146,6 @@ function hierarchy(lessonId, authorUid, patch = {}) {
     [`themes/${ids.theme}`]: {sectionId: ids.section},
     [`lessons/${lessonId}`]: {themeId: ids.theme, version: 1, publishedAtMs: NOW - 100,
       reviewSubmissionId: ids.submission, reviewApprovedAtMs: NOW - 10},
-    [`admin/review/lessons/${lessonId}`]: {ownerUid: authorUid, questId: ids.quest,
-      submissionId: ids.submission, status: "PUBLISHED", sourceLanguages: ["en"]},
-    [`admin/review/lessons/${lessonId}/reviews/testing-${lessonId}`]: {kind: "TESTING",
-      reviewerUid: `PRIVATE_TESTER_${lessonId}`, acceptedByServer: true, score: 3,
-      reviewerLevelAtSubmit: 100, submissionId: ids.submission},
-    [`admin/review/lessons/${lessonId}/reviews/logic-${lessonId}`]: {kind: "LOGIC",
-      reviewerUid: `PRIVATE_LOGIC_${lessonId}`, acceptedByServer: true, score: 3,
-      reviewerLevelAtSubmit: 100, submissionId: ids.submission},
     [`catalogs/${ids.catalog}/sync_changes/lesson_${lessonId}`]: {changedAtMs: NOW},
     ...patch,
   };
@@ -401,18 +393,15 @@ test("actual callable enforces author/curator scope, hides foreign lesson existe
   unchanged(state);
 });
 
-test("lifecycle context stays bounded when a lesson has a large historic review journal", async () => {
-  const seeded = world();
-  for (let index = 0; index < 64; index += 1) {
-    seeded[`admin/review/lessons/lesson-owned-a/reviews/old-${index}`] = {
-      reviewerUid: `PRIVATE_OLD_${index}`, acceptedByServer: true, score: 3,
-    };
-  }
-  store.reset(seeded); const state = before();
+test("lifecycle context reads its named documents and no review collections at all", async () => {
+  // 4.19: мира ревьюеров нет — контекст читает урок/тему/раздел/квест/каталог, вью — свои
+  // документы, и упереться в размер чужого журнала он не может по построению.
+  store.reset(world()); const state = before();
   const result = await call("getLessonLifecycle", "author", {lessonId: "lesson-owned-a"});
   assert.equal(result.lifecycle.lessonId, "lesson-owned-a"); assertNoPrivate(result);
-  assert.equal(store.operations.some(operation => operation.path.endsWith("/reviews")), false);
-  assert.equal(store.operations.length, 8);
+  assert.equal(store.operations.some(operation =>
+    operation.path.startsWith("admin/review/") || operation.path.endsWith("/reviews")), false);
+  assert.equal(store.operations.length, 7);
   unchanged(state);
 });
 

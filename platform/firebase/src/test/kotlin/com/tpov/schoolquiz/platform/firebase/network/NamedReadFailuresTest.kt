@@ -20,10 +20,6 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSyncChange
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentChangeDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentDto
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.SubmitReviewActionDto
 import java.net.UnknownHostException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -132,31 +128,6 @@ class NamedReadFailuresTest {
 
             // Firestore своей версии не присылает — ветвь есть, номера нет (AD-24).
             assertEquals(SyncError.VersionConflict(serverVersion = null), failure.error)
-        }
-
-    // ── Задания на ревью ──────────────────────────────────────────────────────
-
-    @Test
-    fun `given the callable transport finds no route when the review journal is read then the branch is no network`() =
-        runTest {
-            val reviews = FailingReviewAssignmentReads { UnknownHostException("firebase") }.namingFailures()
-
-            val failure =
-                caught<SyncFailure> {
-                    reviews.fetchAssignmentChangePage(SyncCursor.BEGINNING, limit = 200)
-                }
-
-            assertEquals(SyncError.NoNetwork, failure.error)
-        }
-
-    @Test
-    fun `given the review assignments are read by id when the connection breaks then the branch is no network`() =
-        runTest {
-            val reviews = FailingReviewAssignmentReads { UnknownHostException("firebase") }.namingFailures()
-
-            val failure = caught<SyncFailure> { reviews.fetchByIds(setOf("a-1")) }
-
-            assertEquals(SyncError.NoNetwork, failure.error)
         }
 
     // ── Профиль ───────────────────────────────────────────────────────────────
@@ -281,19 +252,6 @@ private class FailingQuestPrivateReads(
 
     override suspend fun fetchSnapshots(changes: List<PrivateQuestSyncChange>): List<PrivateQuestSnapshot> =
         throw failure()
-}
-
-private class FailingReviewAssignmentReads(
-    private val failure: () -> Throwable,
-) : ReviewAssignmentRemoteDataSource {
-    override suspend fun fetchAssignmentChangePage(
-        cursor: SyncCursor,
-        limit: Int,
-    ): SyncChangePage<ReviewAssignmentChangeDto> = throw failure()
-
-    override suspend fun fetchByIds(ids: Set<String>): List<ReviewAssignmentDto> = throw failure()
-
-    override suspend fun submitReviewAction(action: SubmitReviewActionDto): Unit = throw failure()
 }
 
 private class FailingProfileReads(

@@ -25,12 +25,6 @@ function world() {
     "sections/section": {questId: "quest"}, "themes/theme": {sectionId: "section"},
     "lessons/lesson": {themeId: "theme", version: 1, reviewSubmissionId: "submission", reviewApprovedAtMs: now - 1000},
     "lesson_placements/lesson": {lessonId: "lesson", shelf: "arena", authorUid: "author", contentVersion: 1},
-    "admin/review/lessons/lesson": {ownerUid: "author", questId: "quest", submissionId: "submission",
-      status: "PUBLISHED", sourceLanguages: ["en"]},
-    "admin/review/lessons/lesson/reviews/tester": {kind: "TESTING", reviewerUid: "tester",
-      acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "submission"},
-    "admin/review/lessons/lesson/reviews/logic": {kind: "LOGIC", reviewerUid: "reviewer",
-      acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100, submissionId: "submission"},
     ...Object.fromEntries(["EASY", "HARD"].flatMap((difficulty) => [0, 1].map((n) => [`questions/${difficulty}-${n}`,
       {lessonId: "lesson", version: 1, difficulty, payload: JSON.stringify({...SINGLE, difficulty})}]))),
   };
@@ -45,12 +39,6 @@ function eligiblePriceLesson(id, ratingSum, ratingCount, ratingVersion = 1) {
       reviewApprovedAtMs: 1},
     [`lesson_placements/${id}`]: {lessonId: id, shelf: "arena", authorUid: `author-${id}`, contentVersion: 1},
     [`lesson_ratings/${id}`]: {ratingSum, ratingCount, ratingVersion},
-    [`admin/review/lessons/${id}`]: {ownerUid: `author-${id}`, questId: `quest-${id}`,
-      submissionId: `submission-${id}`, status: "PUBLISHED", sourceLanguages: ["en"]},
-    ...Object.fromEntries(["TESTING", "LOGIC"].map((kind) => [`admin/review/lessons/${id}/reviews/${kind}`, {
-      kind, reviewerUid: `${kind}-${id}`, acceptedByServer: true, score: 3, reviewerLevelAtSubmit: 100,
-      submissionId: `submission-${id}`,
-    }])),
   };
 }
 function putAll(rows) { for (const [path, value] of Object.entries(rows)) store.documents.set(path, value); }
@@ -204,11 +192,13 @@ test("missing or mismatched frozen key remains retryable with its hold, not a fa
   assert.equal((await submit(payload)).receipts[0].percentScore, 0);
 });
 
-test("server-selected random is free; missing independent approval refuses before reserving", async () => {
+test("server-selected random is free; missing review approval refuses before reserving", async () => {
   store.reset(world());
   const ticket = await issue("random", {mode: "RANDOM", lessonId: null});
   assert.equal(ticket.priceNolics, 0); assert.equal(ticket.lessonId, "lesson");
-  store.documents.delete("admin/review/lessons/lesson/reviews/tester");
+  // Одобрение живёт в документе урока (4.19): снимаем его — записей ревьюеров больше нет.
+  store.documents.set("lessons/lesson",
+    {...store.documents.get("lessons/lesson"), reviewApprovedAtMs: null});
   const before = structuredClone([...store.documents]);
   await assert.rejects(issue("no-review"), {code: "failed-precondition"});
   assert.deepEqual(structuredClone([...store.documents]), before);
@@ -285,11 +275,20 @@ test("selected top level costs 100 and price remains frozen after ratings change
   assert.equal(store.documents.get("users/player").nolics, 900);
 });
 
-test("a full eligible index preserves the 12000 cap and rejects selected or random prepare before writes", async () => {
-  const extras = {};
-  for (let n = 0; n < 999; n++) Object.assign(extras, eligiblePriceLesson(`capacity-${n}`, 0, 0));
+test("a full eligible index stays inside the read budget; a larger index refuses before writes", async () => {
+  // 4.19: контекст урока перестал читать задания и записи ревьюеров — полный индекс размещений
+  // (1000, продуктовый предел) укладывается в 12000 чтений. Переполнение продолжает отказывать
+  // до всякой записи: индекс больше предела размещений отказывает по границе выборки.
+  const full = {};
+  for (let n = 0; n < 999; n++) Object.assign(full, eligiblePriceLesson(`capacity-${n}`, 0, 0));
+  store.reset({...world(), ...full});
+  const ticket = await issue("full-index");
+  assert.equal(ticket.lessonId, "lesson");
+
+  const over = {};
+  for (let n = 0; n < 1001; n++) Object.assign(over, eligiblePriceLesson(`over-${n}`, 0, 0));
   for (const mode of ["SELECTED", "RANDOM"]) {
-    store.reset({...world(), ...extras});
+    store.reset({...world(), ...over});
     const before = structuredClone([...store.documents]);
     const payload = mode === "SELECTED" ? {
       requestId: `capacity-${mode}`, mode, lessonId: "lesson", difficulty: "EASY",

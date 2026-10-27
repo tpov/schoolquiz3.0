@@ -96,60 +96,10 @@
     <string name="qa_cd_add_question">Добавить вопрос</string>
 
     <!-- Review queue -->
-    <string name="qa_review_title">Проверка</string>
-    <string name="qa_review_empty">Нет заданий</string>
-    <string name="qa_filter_all">Все</string>
-    <string name="qa_filter_testing">Тестирование</string>
-    <string name="qa_filter_logic">Валидация</string>
-    <string name="qa_filter_translation">Перевод</string>
-    <string name="qa_filter_translation_review">Проверка перевода</string>
-    <string name="qa_review_translation_label">Перевод</string>
-    <string name="qa_review_no_translation">Нет перевода</string>
-    <string name="qa_review_accepted">Принято</string>
-    <string name="qa_review_correct">Верно</string>
-    <string name="qa_review_error">Ошибка</string>
-    <string name="qa_review_question_score_label">Оценка за этот вопрос</string>
-    <string name="qa_error_score_all_questions">Оцените каждый вопрос</string>
-    <string name="qa_error_decide_all_segments">Решите каждый сегмент: верно или ошибка</string>
-    <string name="qa_review_submit">Отправить</string>
-    <string name="qa_review_score_testing">Тест: %1$s</string>
-    <string name="qa_review_score_logic">Валидация: %1$s</string>
-    <string name="qa_review_score_translation">Перевод: %1$s%%</string>
-    <string name="qa_review_languages_from">из %1$s</string>
-    <string name="qa_review_languages_to">в %1$s</string>
-    <string name="qa_review_languages_review">проверка %1$s</string>
-    <string name="qa_review_languages_none">языки не указаны</string>
-    <string name="qa_review_question_title">Вопрос %1$d</string>
-    <string name="qa_review_queued">Решение в очереди — отправится, когда появится сеть</string>
-    <string name="qa_review_sync_pending">Решение ждёт отправки</string>
-    <string name="qa_review_sync_quarantined">Решение не принято: задание закрыто или передано другому</string>
-    <string name="qa_error_submit_review_failed">Не удалось отправить проверку</string>
-    <string name="qa_error_load_assignments_failed">Не удалось загрузить задания</string>
-    <string name="qa_error_choose_score">Выберите оценку 1..3</string>
-    <string name="qa_error_choose_translation_language">Выберите язык перевода</string>
-    <string name="qa_error_fill_all_translations">Заполните все поля перевода</string>
-    <string name="qa_error_choose_review_language">Выберите язык проверки</string>
 
     <!-- Review segments -->
-    <string name="qa_segment_text">Текст</string>
-    <string name="qa_segment_option">Вариант %1$s</string>
-    <string name="qa_segment_item">Элемент %1$s</string>
-    <string name="qa_segment_candidate">Кандидат %1$s</string>
-    <string name="qa_segment_info">Пояснение</string>
 
     <!-- Plurals -->
-    <plurals name="qa_review_assignments_count">
-        <item quantity="one">%1$d задание</item>
-        <item quantity="few">%1$d задания</item>
-        <item quantity="many">%1$d заданий</item>
-        <item quantity="other">%1$d заданий</item>
-    </plurals>
-    <plurals name="qa_review_questions_count">
-        <item quantity="one">%1$d вопрос</item>
-        <item quantity="few">%1$d вопроса</item>
-        <item quantity="many">%1$d вопросов</item>
-        <item quantity="other">%1$d вопросов</item>
-    </plurals>
 
     <string name="qa_conflict_banner">Пока заявка ждала, квест на сервере ушёл до версии %1$d</string>
     <string name="qa_conflict_banner_unknown_version">Сервер отклонил заявку как устаревшую, но версию квеста не назвал</string>
@@ -193,11 +143,6 @@
     <string name="qa_inbox_kind_comment">Комментарий</string>
     <string name="qa_inbox_readers_author_only">Приватно: читает только автор урока</string>
     <string name="qa_inbox_readers_public">Публичный комментарий от %1$s</string>
-    <string name="qa_review_report_error">Сообщить об ошибке</string>
-    <string name="qa_review_report_dialog_title">Приватный отчёт об ошибке</string>
-    <string name="qa_review_report_hint">Что не так с уроком целиком? Это прочитает только его автор.</string>
-    <string name="qa_review_report_blank">Сначала опишите проблему</string>
-    <string name="qa_review_report_done">Отчёт поставлен в очередь автору урока</string>
     <string name="qa_private_link_settings">Ссылка приватного квиза</string>
     <string name="qa_private_attempt_limit">Лимит попыток</string>
     <string name="qa_private_show_result">Показывать результат участникам</string>

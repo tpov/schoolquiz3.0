@@ -30,7 +30,6 @@ import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseInboxRemote
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivateRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewDecisionsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewFeeQuoteRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.social.FirebasePollsRemoteDataSource
@@ -71,7 +70,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewDecisionsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewFeeQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentEventRemoteDataSource
@@ -266,9 +264,6 @@ val firebaseModule =
                 auth = FirebaseAuth.getInstance(),
                 policy = get(),
             ).namingFailures()
-        }
-        single<ReviewAssignmentRemoteDataSource> {
-            FirebaseReviewAssignmentRemoteDataSource(functions = get(), policy = get()).namingFailures()
         }
         single<TournamentLeaderboardRemoteDataSource> {
             FirebaseTournamentLeaderboardRemoteDataSource(functions = get())

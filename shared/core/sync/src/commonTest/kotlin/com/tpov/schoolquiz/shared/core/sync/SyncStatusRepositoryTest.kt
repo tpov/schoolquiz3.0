@@ -181,16 +181,15 @@ class SyncStatusRepositoryTest {
 
     @Test
     fun `given four journals then their unreadable counts add up instead of overwriting`() = runTest {
-        // Число одно, а журналов четыре. Без имени журнала последний доложивший затирал бы
-        // остальных, и три журнала показывали бы чужой ноль (AD-11).
+        // Число одно, а журналов три. Без имени журнала последний доложивший затирал бы
+        // остальных, и два журнала показывали бы чужой ноль (AD-11).
         val repo = repository(FakeStore(), "uid-1")
 
         repo.recordUnreadableChanges(SyncJournals.CATALOGS, 1)
         repo.recordUnreadableChanges(SyncJournals.LESSON_CONTENT, 2)
         repo.recordUnreadableChanges(SyncJournals.PRIVATE_QUESTS, 3)
-        repo.recordUnreadableChanges(SyncJournals.REVIEW_ASSIGNMENTS, 4)
 
-        assertEquals(10, repo.observeStatus().first().unreadableChanges)
+        assertEquals(6, repo.observeStatus().first().unreadableChanges)
     }
 
     @Test

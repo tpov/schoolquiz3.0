@@ -33,7 +33,7 @@ interface QuestionContentParser {
      * Parses a payload of *either* hierarchy into the half of it that can be shown.
      *
      * The two [parse] overloads answer "give me a question with its answer key" and must keep
-     * refusing a redacted payload: `DefaultQuestCreateComponent` and `DefaultReviewQueueComponent`
+     * refusing a redacted payload: `DefaultQuestCreateComponent` and the question editor
      * re-encode whatever they parse, so a redacted value arriving there as a [QuestionContent]
      * would overwrite the stored question with its own public half. This one answers the different
      * question "parse this, whichever kind it is, because I only mean to display it" — so it
