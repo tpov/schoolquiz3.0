@@ -59,8 +59,8 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.Tour
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.InternetScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.LocalScreenComponent
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.ShopScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.OperationHistoryScreen
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.ShopScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.drawer.DrawerContent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.icon
@@ -74,9 +74,11 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScree
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.AuthorLifecycleScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.CuratorScreen
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.DecisionsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.InboxScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.QuestCreateScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.ReviewQueueScreen
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R as QuizzesR
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
 import com.tpov.schoolquiz.android.feature.tournament.presentation.screen.TournamentAdmissionScreen
@@ -103,9 +105,8 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventView
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R as QuizzesR
+import kotlinx.coroutines.launch
 
 private const val TAB_CROSSFADE_DURATION_MS = 300
 private const val HOME_SHELF = "home"
@@ -493,6 +494,11 @@ private fun LocalTabContent(
                 is LocalConfig.ReviewQueueRoot ->
                     ReviewQueueScreen(
                         component = rootComponent.reviewQueueComponent,
+                        modifier = Modifier.padding(paddingValues),
+                    )
+                is LocalConfig.DecisionsRoot ->
+                    DecisionsScreen(
+                        component = rootComponent.decisionsComponent,
                         modifier = Modifier.padding(paddingValues),
                     )
                 is LocalConfig.QuestCreateRoot ->

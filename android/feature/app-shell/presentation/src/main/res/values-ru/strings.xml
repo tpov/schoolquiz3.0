@@ -12,6 +12,7 @@
     <string name="section_home_quests">Домашние квесты</string>
     <string name="section_archive">Архив</string>
     <string name="section_review_queue">Проверка</string>
+    <string name="section_decisions">Решения</string>
     <string name="section_author_lifecycle">Мои уроки: статусы</string>
     <string name="section_curation">Кураторская</string>
     <string name="section_inbox">Входящие</string>

@@ -133,6 +133,7 @@ const {
 const {parseReviewFeeQuoteRequest, quoteReviewFee} = require("./review-fee-quote");
 const {ADMIN_REVIEW_SYNC_CHANGES, writeSyncChanges} = require("./sync-changes");
 const {readReviewAssignmentChanges, resolveReviewAssignments} = require("./review-journal");
+const {readReviewDecisions, writeReviewDecisionMark} = require("./review-decisions");
 const {
   planHierarchyPrune,
   planPrivateHierarchyPrune,
@@ -6784,6 +6785,46 @@ exports.advanceQuestReviewOutcome = onCall(CALLABLE_OPTIONS, async (request) => 
   }
   const published = await advanceModelReviewedSubmission(submissionId);
   return {published};
+});
+
+/**
+ * Страница «Решений» для админов (4.17, UX-22): по-вопросные вердикты модели, соединённые
+ * с заявкой (названия, тело вопроса) и отметками админов. Право решает requireVerifier —
+ * тем же забором, что и прочие админские чтения; не-админ получает отказ, не данные.
+ */
+/** Именованные отказы модуля «Решений» — в честные коды HTTPS, без сырых внутренних кодов. */
+function rethrowDecisionsError(error) {
+  const httpsCode = {INVALID_ARGUMENT: "invalid-argument", NOT_FOUND: "not-found", DATA_LOSS: "data-loss"}[
+    error && error.code
+  ];
+  if (httpsCode) throw new HttpsError(httpsCode, error.message);
+  throw error;
+}
+
+exports.fetchReviewDecisions = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireVerifier(uid);
+  try {
+    return await readReviewDecisions(db, request.data || {}, {
+      documentId: firestoreTypes.FieldPath.documentId(),
+    });
+  } catch (error) {
+    rethrowDecisionsError(error);
+  }
+});
+
+/**
+ * Отметка админа на вопросе вердикта (✓/✗ с необязательным комментарием): живёт отдельно
+ * от неизменяемых вердиктов, право — тот же requireVerifier. Повторная отметка перезаписывает.
+ */
+exports.markReviewDecision = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireVerifier(uid);
+  try {
+    return await writeReviewDecisionMark(db, {uid, nowMs: Date.now()}, request.data || {});
+  } catch (error) {
+    rethrowDecisionsError(error);
+  }
 });
 
 async function publishSubmissionIfReady(submissionId, config, now) {

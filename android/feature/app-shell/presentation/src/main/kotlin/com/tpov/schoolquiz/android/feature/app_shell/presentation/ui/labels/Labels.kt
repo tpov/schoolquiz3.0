@@ -70,6 +70,7 @@ val DrawerSection.labelRes: Int
             DrawerSection.LocalSection.HomeQuests -> R.string.section_home_quests
             DrawerSection.LocalSection.Archive -> R.string.section_archive
             DrawerSection.LocalSection.ReviewQueue -> R.string.section_review_queue
+            DrawerSection.LocalSection.Decisions -> R.string.section_decisions
             DrawerSection.LocalSection.AuthorLifecycle -> R.string.section_author_lifecycle
             DrawerSection.LocalSection.Curation -> R.string.section_curation
             DrawerSection.LocalSection.Inbox -> R.string.section_inbox
@@ -98,6 +99,7 @@ val DrawerSection.icon: ImageVector
             DrawerSection.LocalSection.HomeQuests -> Icons.Default.Home
             DrawerSection.LocalSection.Archive -> Icons.Default.Book
             DrawerSection.LocalSection.ReviewQueue -> Icons.Default.Book
+            DrawerSection.LocalSection.Decisions -> Icons.Default.FactCheck
             DrawerSection.LocalSection.AuthorLifecycle -> Icons.Default.Book
             DrawerSection.LocalSection.Curation -> Icons.Default.FactCheck
             DrawerSection.LocalSection.Inbox -> Icons.Default.Info
@@ -127,6 +129,7 @@ val TabConfig.labelRes: Int
                     LocalConfig.HomeQuestsRoot -> R.string.section_home_quests
                     LocalConfig.ArchiveRoot -> R.string.section_archive
                     LocalConfig.ReviewQueueRoot -> R.string.section_review_queue
+                    LocalConfig.DecisionsRoot -> R.string.section_decisions
                     LocalConfig.AuthorLifecycleRoot -> R.string.section_author_lifecycle
                     LocalConfig.CuratorRoot -> R.string.section_curation
                     LocalConfig.InboxRoot -> R.string.section_inbox

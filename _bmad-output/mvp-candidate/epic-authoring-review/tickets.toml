@@ -198,7 +198,25 @@ slug = "admin-decisions-tab"
 title = "Decisions tab for admins (UX-22): server view with a role check; filters «Без отметки / Верно / Неверно»; ✓/✗ with an optional comment stored apart from verdicts; «Логи» (comment, sources, attempts, model/prompt/revision); the question in the runner preview without timer or charges; evidence docs/agents/evidence/<date>-decisions-tab/"
 covers = ["CAP-3"]
 after = [{ story = "4.14", needs = "verdict records" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-27: вкладка «Решения» (UX-22) — functions/review-decisions.js: вью quest-review-decisions-v1
+# (строка = вопрос вердикта: квест/урок, этап, попытка, модель/промпт/ревизия, источники, основание,
+# тело вопроса; битая запись = строка-метка unreadable, AD-10) + отметки ✓/✗ с комментарием в
+# review_decision_marks (отметки отдельно от неизменяемых вердиктов, повтор перезаписывает, чужие
+# входы — именованные отказы invalid-argument/not-found/data-loss); callable fetchReviewDecisions /
+# markReviewDecision за requireVerifier (не-админ = permission-denied, клиент показывает только
+# «Предложения»); курсор страницы (verdictId, afterQuestionId) докручивается без потерь и повторов.
+# Клиент: домен (модели/репозиторий/сценарии; отказ роли — доменное исключение), строгий парсер +
+# транспорт (PERMISSION_DENIED → отказ роли), компонент/вью/строки ×3 (фильтры «Без отметки /
+# Верно / Неверно», 64dp строки, «Логи», статический предпросмотр вопроса без таймера и плат,
+# «Отправляется…»→«Сохранено»), секция Decisions в шторке (гейт серверный; VisibilityTest
+# перепинован), сентинел имён callable + пин версии вью. Гейты: functions npm test 140/140
+# (mvp-isolation зелёный); gradle (JAVA_HOME=/opt/jdks/jdk-27, sgw): app-shell domain jvmTest,
+# quest-authoring domain+data jvmTest, platform:firebase testDebugUnitTest, quest-authoring +
+# app-shell presentation testDebugUnitTest — зелёные; ktlint по модулям — красный предсуществующий
+# под wrapper 9.8.0 (нарушают нетронутые файлы истории; сами файлы истории не тронуты — та же
+# корзина, что detekt jvm-target 27, владелец); detekt — предсуществующий (владелец). Loopback:
+# FetchQuestReviewOutcomesUseCase не был зарегистрирован в Koin (4.16) — фабрика добавлена рядом
+# с фабриками этой истории. Спека spec-4-17-admin-decisions-tab.md (change log с гейтами).
 
 [[story]]
 id = "4.18"

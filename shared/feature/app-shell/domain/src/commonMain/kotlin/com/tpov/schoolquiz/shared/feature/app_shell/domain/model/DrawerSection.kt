@@ -50,6 +50,12 @@ sealed interface DrawerSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
+        // «Решения» (4.17, UX-22): настоящий гейт серверный (requireVerifier); не-админ видит
+        // только авторскую сторону вкладки — секцию «Предложения».
+        data object Decisions : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
         // emptyMap (always visible) — как у ReviewQueue: настоящий гейт разрешений серверный (TZ06B),
         // не-автор видит пустую страницу, не-куратор — отказ view.
         data object AuthorLifecycle : LocalSection {

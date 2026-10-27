@@ -28,6 +28,9 @@ sealed interface LocalConfig : TabConfig {
 
     data object ReviewQueueRoot : LocalConfig
 
+    /** Admin audit of model verdicts (4.17, UX-22): decisions, marks, logs, question preview. */
+    data object DecisionsRoot : LocalConfig
+
     /** Author view of TZ06B lifecycle projections (statuses, history, royalties). */
     data object AuthorLifecycleRoot : LocalConfig
 

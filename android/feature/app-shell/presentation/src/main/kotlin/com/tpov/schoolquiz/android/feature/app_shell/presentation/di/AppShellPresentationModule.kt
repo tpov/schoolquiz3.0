@@ -1,9 +1,6 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultOwnHistoryComponent
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
@@ -15,14 +12,19 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponen
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DecisionsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderDecisionsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultOwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAgreementComponent
@@ -96,6 +98,13 @@ val appShellPresentationModule =
                         koin.get(ReviewQueueComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderReviewQueueComponent()
+                    }
+                },
+                decisionsFactory = { compCtx ->
+                    runCatching<DecisionsComponent> {
+                        koin.get(DecisionsComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderDecisionsComponent()
                     }
                 },
                 curatorFactory = { compCtx ->

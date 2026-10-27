@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ClosePrivateQuizLinkUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchReviewDecisionsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetArenaReadinessUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListCuratorLifecycleUseCase
@@ -9,6 +11,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListIn
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListLessonHistoryUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListLessonRoyaltyUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ListOwnedLifecycleUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.MarkReviewDecisionUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveReviewAssignmentSyncUseCase
@@ -27,6 +30,12 @@ val questAuthoringDomainModule =
     module {
         factory { ClosePrivateQuizLinkUseCase(get()) }
         factory { CreateQuestDraftUseCase(get(), get(), get()) }
+        // Исход модельной проверки (4.16): сценарий добивается фабрикой здесь — MyQuests
+        // резолвит его через get(), и без этой строки разрешение падало бы в рантайме.
+        factory { FetchQuestReviewOutcomesUseCase(get()) }
+        // «Решения» админов (4.17, UX-22): чтение страницы и отметка — прямые callable.
+        factory { FetchReviewDecisionsUseCase(get()) }
+        factory { MarkReviewDecisionUseCase(get()) }
         factory { GetActiveQuestDraftUseCase(get()) }
         factory { GetArenaReadinessUseCase(get()) }
         factory { ListCuratorLifecycleUseCase(get()) }

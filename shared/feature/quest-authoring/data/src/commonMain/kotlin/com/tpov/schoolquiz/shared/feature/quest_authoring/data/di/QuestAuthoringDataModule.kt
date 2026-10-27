@@ -10,14 +10,16 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestReviewOutcom
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentLocalDataSourceImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewAssignmentRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewDecisionsRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.ReviewFeeQuoteRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArenaQuarantineRollback
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ReviewActionQuarantine
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewDecisionsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewFeeQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
@@ -26,6 +28,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.Less
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestReviewOutcomeRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewAssignmentRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewDecisionsRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.ReviewFeeQuoteRepository
 import org.koin.dsl.module
 
@@ -59,6 +62,11 @@ val questAuthoringDataModule =
         // живёт на сервере, кэш только врал бы между свипами воркера.
         single<QuestReviewOutcomeRepository> {
             QuestReviewOutcomeRepositoryImpl(remote = get<QuestArenaSubmissionRemoteDataSource>())
+        }
+        // «Решения» админов (4.17, UX-22): прямые callable — чтение страницы вердиктов и отметки
+        // ✓/✗; правда о вердиктах и отметках живёт на сервере, локального кэша нет.
+        single<ReviewDecisionsRepository> {
+            ReviewDecisionsRepositoryImpl(remote = get<ReviewDecisionsRemoteDataSource>())
         }
         // Откат локальной половины при карантине — решение владеющей фичи (AD-28).
         single { QuestArenaQuarantineRollback(get(), get()) }

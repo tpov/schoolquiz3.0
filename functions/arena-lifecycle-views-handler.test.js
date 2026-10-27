@@ -109,8 +109,11 @@ const ENDPOINTS = Object.freeze([
 // merge into e5-inception): one pin over the union surface of both epics. Re-pinned 2026-10-26
 // (story 4.11): quoteQuestReviewFee joins the surface — the read-only fee-quote view covered by
 // review-fee-quote tests. Re-pinned 2026-10-27 (story 4.16): advanceQuestReviewOutcome joins
-// the surface — the owner-checked advance behind the model-review outcome.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "e5ccaeb97c84cbf32974009e1d2a15b30f94235f44476d56a3ab0caec23a622d";
+// the surface — the owner-checked advance behind the model-review outcome. Re-pinned 2026-10-27
+// (story 4.17): the decisions pair joins the surface — the verifier-gated read
+// fetchReviewDecisions and the mark writer markReviewDecision (UX-22), covered by
+// review-decisions.test.js.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "21afceaf385abd862bcf65a3f7e0883628204f46bcc4916ade67c2be65ef917a";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

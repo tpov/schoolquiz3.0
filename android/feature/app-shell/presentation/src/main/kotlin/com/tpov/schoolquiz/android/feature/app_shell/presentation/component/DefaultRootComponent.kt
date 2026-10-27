@@ -18,20 +18,22 @@ import com.tpov.schoolquiz.android.feature.internet.profile.presentation.compone
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PlaceholderPollsComponent
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.AuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.CuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.DecisionsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.InboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderAuthorLifecycleComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderCuratorComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderDecisionsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderInboxComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.OwnHistoryComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.PlaceholderOwnHistoryComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.PlaceholderTournamentAdmissionComponent
@@ -83,6 +85,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapProgress
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapResult
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.use_case.ActivateDevModeUseCase
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,7 +101,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 
 private val PUBLIC_SHELF_MANAGER_DEVELOPER_LEVEL = QualificationLevel.LEVEL_1.points + 1
 
@@ -166,6 +168,7 @@ class DefaultRootComponent(
         PlaceholderQuestCreateComponent(nav)
     },
     reviewQueueFactory: (ComponentContext) -> ReviewQueueComponent = { PlaceholderReviewQueueComponent() },
+    decisionsFactory: (ComponentContext) -> DecisionsComponent = { PlaceholderDecisionsComponent() },
     curatorFactory: (ComponentContext) -> CuratorComponent = { PlaceholderCuratorComponent() },
     authorLifecycleFactory: (ComponentContext) -> AuthorLifecycleComponent = { PlaceholderAuthorLifecycleComponent() },
     inboxFactory: (ComponentContext) -> InboxComponent = { PlaceholderInboxComponent() },
@@ -325,6 +328,10 @@ class DefaultRootComponent(
     val reviewQueueComponent: ReviewQueueComponent =
         reviewQueueFactory(
             childContext("ReviewQueueContent"),
+        )
+    val decisionsComponent: DecisionsComponent =
+        decisionsFactory(
+            childContext("DecisionsContent"),
         )
     val curatorComponent: CuratorComponent =
         curatorFactory(

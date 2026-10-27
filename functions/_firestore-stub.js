@@ -194,6 +194,14 @@ function createFirestoreStub(seed, options) {
     const described = path + (filters.length ? `?${filters.map(([field, value, op]) => `${field}${op || "=="}${Array.isArray(value) ? `[${value.join("|")}]` : value}`).join("&")}` : "");
     const valueOf = (child, field) => {
       if (field === "__name__") return child.slice(child.lastIndexOf("/") + 1);
+      // FieldPath заглушки — только documentId(): сортировок по составным путям проект
+      // не делает, и честный отказ лучше молчаливой неправды.
+      if (field !== null && typeof field === "object" && Array.isArray(field.segments)) {
+        if (field.segments.length === 1 && field.segments[0] === "__name__") {
+          return child.slice(child.lastIndexOf("/") + 1);
+        }
+        throw new Error("stub supports only documentId() field paths");
+      }
       const doc = store.documents.get(child);
       // Один уровень вложенности (`details.lessonId`) — ровно столько, сколько запросы проекта
       // делают по карте details; глубже заглушка не умеет и честно не притворяется.
@@ -351,6 +359,15 @@ function createFirestoreStub(seed, options) {
     increment: (by) => new IncrementTransform(by),
     arrayUnion: (...values) => new ArrayTransform("union", values),
     arrayRemove: (...values) => new ArrayTransform("remove", values),
+  };
+  firestore.FieldPath = class StubFieldPath {
+    constructor(...segments) {
+      this.segments = Object.freeze(segments);
+    }
+
+    static documentId() {
+      return new StubFieldPath("__name__");
+    }
   };
   firestore.Timestamp = Timestamp;
   firestore.GeoPoint = GeoPoint;

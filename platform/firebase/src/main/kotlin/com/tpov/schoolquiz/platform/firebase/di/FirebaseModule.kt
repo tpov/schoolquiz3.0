@@ -11,13 +11,14 @@ import com.tpov.schoolquiz.platform.firebase.arena.FirebaseQuestionWindowRemoteD
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyReceiptsDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseEconomyRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.economy.FirebaseOwnHistoryRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftClaimRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.economy.FirebaseOwnHistoryRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.economy.FirebasePurchaseVerifier
 import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamCertificateRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.exam.FirebaseExamSittingRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.lesson_runner.FirebasePrivateQuizRunRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.network.EconomyCapturedTermsJson
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseMutationTransport
 import com.tpov.schoolquiz.platform.firebase.network.FirebaseOutboxSessionProvider
@@ -27,10 +28,10 @@ import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteData
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseInboxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonLifecycleRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.lesson_runner.FirebasePrivateQuizRunRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewDecisionsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewFeeQuoteRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.social.FirebasePollsRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseCatalogSyncChangeRemoteDataSource
@@ -46,9 +47,9 @@ import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSou
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyConstantsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyReceiptsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.economy.data.remote.OwnHistoryRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftClaimRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.OwnHistoryRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.PurchaseVerifier
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.LogoRemoteDataSource
@@ -63,14 +64,15 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ArenaWalletR
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamCertificateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.ExamSittingRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.PrivateQuizRunRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWindowRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
-import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.PrivateQuizRunRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewDecisionsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewFeeQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentEventRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.tournament.domain.remote.TournamentMeetingRemoteDataSource
@@ -237,6 +239,12 @@ val firebaseModule =
         }
         single<ReviewFeeQuoteRemoteDataSource> {
             FirebaseReviewFeeQuoteRemoteDataSource(functions = get())
+        }
+
+        // «Решения» админов (4.17, UX-22): чтение страницы вердиктов и отметки ✓/✗ — прямые
+        // callable за requireVerifier; отказ роли транспорт переводит в свой тип исключения.
+        single<ReviewDecisionsRemoteDataSource> {
+            FirebaseReviewDecisionsRemoteDataSource(functions = get())
         }
 
         single<PrivateQuizRunRemoteDataSource> {
