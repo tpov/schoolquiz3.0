@@ -150,7 +150,7 @@ slug = "draft-submit-from-card"
 title = "A local draft is submitted for review from its card with «Отправить на проверку» (retro 2026-10-25 item 9a: drafts were not selectable in the submit form); the fee is shown before sending; evidence docs/agents/evidence/<date>-draft-submit/"
 covers = ["CAP-2", "CAP-3"]
 after = []
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-26 (dee5ecfa): кнопка на DraftQuestCard + диалог цитаты; сервер — read-only view quoteQuestReviewFee (priorCycle — серверная правда, формула reviewFeeNolics); стек вью по образцу TZ06B со сторожем имени. Гейты: functions 131/132 (mvp-isolation — предсуществующий, атрибуция в спеке), quest-authoring domain+data, platform:firebase, quest:presentation, app-shell:presentation — зелёные; ktlint файлов истории чист; detekt --jvm-target 27 — предсуществующий (владелец). Спека _bmad-output/implementation-artifacts/spec-4-11-draft-submit-from-card.md (change log с гейтами). Device-прогона нет — не требуется инспекцией (ready-правило: код+тесты).
 
 [[story]]
 id = "4.12"
@@ -158,7 +158,7 @@ slug = "review-queue-worker"
 title = "Review queue worker on the VPS (AD-32): one quest at a time, lessons one by one with the quest title and category path as context; immutable verdict record (revision, stage, model, promptVersion, sources, rationale, attempts); schema linter returns a named error, at most three retries, then REVIEW_DELAYED, never a guessed verdict; idempotent jobs; lesson text passed as data; API key outside Git; evidence docs/agents/evidence/<date>-review-worker/"
 covers = ["CAP-3"]
 after = [{ story = "4.11", needs = "a submittable draft" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-27: функции review-pipeline (машина: STAGE_PLAN WORDS→FACTS, ≤3 попыток, DELAYED), review-model-client (ключ только из env VPS, урок данными между <<<LESSON_DATA>>>-разграничителями, именованные отказы), review-queue-worker (lease по образцу arena-season-worker, один квест до терминала, вердикты детерминированным create — идемпотентность в самом имени, resumption без повторного судейства), раннер scripts/review-queue-worker-run.js (громкий отказ без env, STAGE_MISSING до 4.13/4.14). Гейты: npm test 132/133 (mvp-isolation — предсуществующий, атрибуция в spec-4-11; arena-lifecycle-views флакнул один раз, дважды перезапущен зелёным); rules-проба review-pipeline-private-rules.test.js PASS (27 отказов + позитивный контроль живых правил; смонтированные правила эмулятора default-deny покрывают новые коллекции до следующего owner-gated деплоя правил). Спека spec-4-12-review-queue-worker.md (change log с деталями).
 
 [[story]]
 id = "4.13"

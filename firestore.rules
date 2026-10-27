@@ -237,6 +237,25 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /review_pipeline/{submissionId} {
+      // Model review pipeline state (AD-32, story 4.12): the VPS worker's private checkpoint.
+      // Admins read verdicts through the Decisions view (story 4.17), never through this raw
+      // document; no client has any business here.
+      allow read, write: if false;
+    }
+
+    match /review_verdicts/{verdictId} {
+      // Immutable verdict records (AD-32, story 4.12). Nothing may rewrite history from a
+      // device: the Decisions view (story 4.17) will expose its own narrow projection.
+      allow read, write: if false;
+    }
+
+    match /review_worker_state/{stateId} {
+      // Worker lease state (AD-32, modeled on the arena season sweep): lease and nonce live
+      // here; a client that could write it could double-claim quests.
+      allow read, write: if false;
+    }
+
     match /catalogs/{catalogId} {
       // Public read — catalogs are static categories shown to all users incl. guests.
       allow read: if true;
