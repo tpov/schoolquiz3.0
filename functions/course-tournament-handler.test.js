@@ -159,8 +159,14 @@ test("the organizer's link token admits a player with no download record and nev
   assert.ok(/^[a-f0-9]{48}$/.test(token));
   const link = store.documents.get(`course_tournament_links/${EVENT}`);
   assert.ok(/^[a-f0-9]{64}$/.test(link.digest));
+  // L2, live wire: a START without any basis refuses with the named reason in details —
+  // the client's typed branch reads it; the generic permission-denied shape is gone.
   await assert.rejects(call("submitCourseTournamentOperation", "linky", {kind: "START_QUALIFICATION", eventId: EVENT,
-    operationId: "start_linky_0000001", attemptId: "attempt_linky_000001", roundNumber: 1}), {code: "permission-denied"});
+    operationId: "start_linky_0000001", attemptId: "attempt_linky_000001", roundNumber: 1}), error => {
+    assert.equal(error.code, "failed-precondition");
+    assert.equal(error.details.reason, "NO_ADMISSION_BASIS");
+    return true;
+  });
   // Receipt replay with the same operation id is how the organizer recovers a lost token.
   const replayed = await call("submitCourseTournamentOperation", "author", request);
   assert.equal(replayed.admissionLink.token, token);

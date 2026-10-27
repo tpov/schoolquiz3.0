@@ -42,6 +42,7 @@
     <string name="tournament_organizer_consent_prize_row">Місце %1$d: %2$d коробок</string>
     <string name="tournament_organizer_consent_warning">Депозит резервується в ескроу при підтвердженні</string>
     <string name="tournament_organizer_confirm_create">Створити з цим депозитом</string>
+    <string name="tournament_organizer_admission_link">Токен посилання доступу: %1$s</string>
     <string name="tournament_organizer_created">Турнір створено</string>
     <string name="tournament_organizer_new_create">Створити нове</string>
     <string name="tournament_organizer_consent_starts">Відкривається: %1$s</string>

@@ -15,6 +15,10 @@ import org.junit.Test
  * чинимого. Ловится текстом обеих сторон (стиль `OutboxOperationsRegistryTest`): каждая причина,
  * которую серверная таблица называет по имени, обязана быть названа и в клиентской — безмолвный
  * `else` годится только для причин будущего сервера, которых ещё никто не видел.
+ *
+ * L8: меряется не только тело маппера, но и эмиттеры — каждый `fail("ИМЯ"`-литерал шести
+ * серверных модулей турнира обязан быть классифицирован клиентской таблицей: переименование
+ * причины на сервере больше не проходит молча (ретро эпика 5, P1).
  */
 class TournamentRefusalsBindingTest {
     private val serverSource: String by lazy {
@@ -93,10 +97,57 @@ class TournamentRefusalsBindingTest {
     }
 
     @Test
+    fun `every fail literal across the six server modules is classified by name in the client table`() {
+        // L8: эмиттеры, а не маппер — `fail("ИМЯ"` в любом из шести турнирных модулей обязан
+        // находить ветвь клиентской таблицы; молчаливый else — только для будущего сервера.
+        val modules =
+            listOf(
+                "tournament-service.js",
+                "tournament-session.js",
+                "tournament-policy.js",
+                "tournament-source-bank.js",
+                "tournament-bank.js",
+                "tournament-worker.js",
+            )
+        val emitted = sortedMapOf<String, MutableSet<String>>()
+        for (module in modules) {
+            val file = File(findRepoRoot(), "functions/$module")
+            assertTrue("нет серверного модуля: ${file.absolutePath}", file.exists())
+            for (name in failLiterals(file.readText())) {
+                emitted.getOrPut(name) { mutableSetOf() }.add(module)
+            }
+        }
+        assertTrue("эмиттеры шести модулей опустели — проверь список модулей: $emitted", emitted.size >= 20)
+        val silent =
+            emitted.keys.filterNot { reason ->
+                (reason.endsWith("_") && clientSource.contains(reason)) || reason in classified
+            }
+        assertEquals(
+            "серверный модуль называет причину fail-литералом, а клиентская таблица её не знает: " +
+                silent.map { reason -> "$reason (${emitted[reason]?.joinToString()})" },
+            emptyList<String>(),
+            silent,
+        )
+    }
+
+    /** Причины, названные сервером, обязаны быть классифицированы по имени. */
+    private fun failLiterals(source: String): Set<String> =
+        Regex("fail\\(\"([A-Z][A-Z_]{0,63})\"")
+            .findAll(source)
+            .map { it.groupValues[1] }
+            .toSet()
+
+    @Test
     fun `permanent prepare and create refusals are Refused, never retryable unknown`() {
         for (reason in listOf("SOURCE_NOT_ELIGIBLE", "RESOURCE_EXHAUSTED")) {
             val error = tournamentSyncError("failed-precondition", mapOf("reason" to reason), null, causedByIo = false)
             assertEquals("причина $reason повтором не лечится", SyncError.Refused(reason), error)
+        }
+        // L2: типизированные причины допуска теперь реально доезжают до клиента именем —
+        // обе обязаны быть Refused, а не безмолвным Unknown.
+        for (reason in listOf("NO_ADMISSION_BASIS", "OUTSIDE_QUALIFICATION_WINDOW")) {
+            val error = tournamentSyncError("failed-precondition", mapOf("reason" to reason), null, causedByIo = false)
+            assertEquals("причина допуска $reason обязана быть поимённым отказом", SyncError.Refused(reason), error)
         }
     }
 

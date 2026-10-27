@@ -274,7 +274,11 @@ async function readPlanTournamentOperation({db, transaction, uid, payload, now, 
             }
           }
           const admission = policy.planAdmission({event, uid, nowMs: at, downloadRecord, linkTokenDigest});
-          if (!admission.allowed) fail("PERMISSION_DENIED", admission.reason);
+          // L2: the typed admission reason rides AS the wire reason (`courseTournamentFailure`
+          // derives `details.reason` from `error.code`, and both names satisfy the reason
+          // grammar), so the client's named branches NO_ADMISSION_BASIS /
+          // OUTSIDE_QUALIFICATION_WINDOW actually fire instead of generic permission-denied.
+          if (!admission.allowed) fail(admission.reason, admission.reason);
           stage(admissionPath, {schemaVersion: 1, eventId: event.eventId, uid, basis: admission.basis, admittedAtMs: at}, true);
         }
         const form = event.qualificationForms[request.roundNumber - 1];

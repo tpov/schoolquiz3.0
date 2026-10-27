@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 /**
  * Контракт разбора сессий против настоящих ответов контроллера (фикстуры сняты с
  * `functions/index.js`): окно чтения, settled-результат, ready-ACK, вопрос, записи скачивания
- * в обеих формах, ответ подготовки банка, дроп токена ссылки организатора, fail-closed.
+ * в обеих формах, ответ подготовки банка, типизированный токен ссылки организатора (L4), fail-closed.
  */
 class TournamentSessionWireParserTest {
     private val fixture = loadFixture()
@@ -126,14 +126,30 @@ class TournamentSessionWireParserTest {
     }
 
     @Test
-    fun `organizer admission link is accepted by key and decoded into nothing`() {
-        val root = TournamentWireTestMutable.deepCopy(Json.parseToJsonElement(fixture.wire("startView")).jsonObject)
-        root.put("admissionLink", mutableMapOf<String, Any?>("token" to "a".repeat(48)))
-        val wire = Json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), TournamentWireTestMutable.build(root))
-        val view = views.parseOperationView(wire)
-        // Токен не въезжает ни в один клиентский тип: у модели такого поля нет по построению.
-        assertEquals("SESSION", view.status)
-        assertTrue(view.toString().contains("token").not())
+    fun `organizer admission link decodes typed from the CREATE receipt and readings carry none`() {
+        // L4: CREATE-квитанция организатора — единственный легальный клиентский путь токена;
+        // он типизирован и читается, а чтения (не-CREATE ответы) ключа не несут вовсе.
+        fun withAdmissionLink(name: String, token: Any?): String {
+            val root = TournamentWireTestMutable.deepCopy(Json.parseToJsonElement(fixture.wire(name)).jsonObject)
+            root.put("admissionLink", mutableMapOf<String, Any?>("token" to token))
+            return Json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), TournamentWireTestMutable.build(root))
+        }
+        val created = views.parseOperationView(withAdmissionLink("startView", "a".repeat(48)))
+        assertEquals("a".repeat(48), requireNotNull(created.admissionLink).token)
+        // Чтение сессии ключа не имеет: пустота честная, не «нулевой токен».
+        assertNull(views.parseOperationView(fixture.wire("readSessionStarted")).admissionLink)
+        // Fail-closed: пустой токен, не-текст, дрейф ключа внутри ссылки — отказ разбора.
+        assertFailsWith<MalformedWire> { views.parseOperationView(withAdmissionLink("startView", "   ")) }
+        assertFailsWith<MalformedWire> { views.parseOperationView(withAdmissionLink("startView", 5)) }
+        val drifting =
+            TournamentWireTestMutable.deepCopy(Json.parseToJsonElement(fixture.wire("startView")).jsonObject).apply {
+                put("admissionLink", mutableMapOf<String, Any?>("token" to "a".repeat(48), "url" to "https://x"))
+            }
+        assertFailsWith<MalformedWire> {
+            views.parseOperationView(
+                Json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), TournamentWireTestMutable.build(drifting)),
+            )
+        }
     }
 
     @Test

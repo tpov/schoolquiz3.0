@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.android.feature.tournament.presentation.model.SESSION
 import com.tpov.schoolquiz.android.feature.tournament.presentation.model.TournamentAnswerPayload
 import com.tpov.schoolquiz.android.feature.tournament.presentation.model.TournamentNotice
 import com.tpov.schoolquiz.android.feature.tournament.presentation.model.TournamentQuestionTypes
+import com.tpov.schoolquiz.android.feature.tournament.presentation.model.WINDOW_DELIVERED
 import com.tpov.schoolquiz.android.feature.tournament.presentation.model.WINDOW_OPEN
 import com.tpov.schoolquiz.android.feature.tournament.presentation.model.failureNotice
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
@@ -31,7 +32,8 @@ import kotlinx.coroutines.launch
 /**
  * Единая машина игры вопроса сессии соревнования (истории 5.10 и 5.11): ответ уезжает только
  * из очереди 5.9, квитанция приёмника — единственный источник факта доставки, READY_ACK ставится
- * после доставки в открытое окно, край окна ведёт перечитывание по серверному expiresAtMs.
+ * по доставленному (DELIVERED) окну из сессии квитанции — предусловие серверного гейта, —
+ * край окна ведёт перечитывание по серверным часам с нижней границей и backoff.
  * Квалификация и матч играют одной машиной — разнятся только тем, чья сессия открыта.
  *
  * Хозяин машины ([TournamentPlayHost]) владеет состоянием маршрута; машина пишет в него через
@@ -45,7 +47,6 @@ abstract class TournamentSessionPlayComponent(
     dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
     protected val nowMs: () -> Long = System::currentTimeMillis,
 ) : ComponentContext by context {
-
     /** Хозяин состояния маршрута: машина видит только игру, занятость и честное состояние. */
     protected interface TournamentPlayHost {
         /** Текущая активная игра; пусто — поверхность игры закрыта. */
@@ -90,6 +91,11 @@ abstract class TournamentSessionPlayComponent(
 
     /** Наблюдатель пометки «не отправлено» на активной сессии (AD-14). */
     private var sessionObserver: Job? = null
+
+    /** Окно последнего перевзвода края (L6): тот же windowId при backlog — удвоение нижней
+     * границы; новое окно — сброс. */
+    private var rearmWindowId: String? = null
+    private var rearmAttempt = 0
 
     /** Ответ и его маршрут применения: одно применение на квитанцию, кто бы ни приехал первым. */
     private class PendingAnswer(
@@ -212,8 +218,13 @@ abstract class TournamentSessionPlayComponent(
             is TournamentSessionReceiptOutcome.Acknowledged -> {
                 val view = outcome.receipt.view
                 host.reducePlay { it?.copy(lastStatus = view.status, awaitingDelivery = false) }
-                val window = view.window
-                if (window != null && window.state == WINDOW_OPEN) {
+                // L1: окно операции живёт вложенным в `session` (серверный `responseFor` кладёт
+                // его туда; top-level окна у операций не бывает). ACK гейтится по DELIVERED —
+                // ровно серверное предусловие READY_ACK (boundary.state=WINDOW_DELIVERED):
+                // доставка клиентской операцией и есть delivery; OPEN (недоставленное) окно
+                // ACK не порождает.
+                val window = view.window ?: view.session?.window
+                if (window != null && window.state == WINDOW_DELIVERED) {
                     val ack =
                         TournamentSessionIntent.ReadyAck(
                             sessionId = pending.sessionId,
@@ -300,11 +311,25 @@ abstract class TournamentSessionPlayComponent(
             )
         }
         host.applyNotice(TournamentNotice.Ready)
-        // Окно открыто: следующий вопрос приезжает его краем — перечитываем по серверному expiresAtMs.
+        // Окно открыто: следующий вопрос приезжает его краем — перечитываем по серверному
+        // expiresAtMs. L6: device-часы — только источник offset от serverNowMs последнего
+        // чтения (сместились/спешат — краем не становятся); нижняя граница не даёт петли
+        // zero-delay read при sweep backlog, а повторный перевзвод того же окна удваивает
+        // её (cap 60s); смена окна (уникальный windowId) счётчик сбрасывает.
         if (window?.state == WINDOW_OPEN) {
-            val wait = (window.expiresAtMs - nowMs()).coerceAtLeast(0L)
+            if (rearmWindowId == window.windowId) rearmAttempt += 1 else rearmWindowId = window.windowId
+            val floorMs =
+                (WINDOW_REARM_FLOOR_MS shl rearmAttempt.coerceAtMost(REARM_BACKOFF_STEPS))
+                    .coerceAtMost(WINDOW_REARM_CAP_MS)
+            val readAtMs = nowMs()
+            val serverOffsetMs = view.serverNowMs?.let { serverNow -> readAtMs - serverNow }
+            val serverNowEstimateMs = readAtMs - (serverOffsetMs ?: 0L)
+            val waitMs =
+                (window.expiresAtMs - serverNowEstimateMs)
+                    .coerceAtLeast(floorMs)
+                    .coerceAtMost(WINDOW_REARM_CAP_MS)
             scope.launch {
-                delay(wait)
+                delay(waitMs)
                 if (scope.isActive && host.play()?.sessionId == sessionId) {
                     // Край через act: занятость уважается — перечитывание не встаёт посреди
                     // доставки ответа (доставшееся применение само перечитается и перевзведёт
@@ -431,5 +456,14 @@ abstract class TournamentSessionPlayComponent(
     private companion object {
         const val RECEIPT_POLLS = 100
         const val RECEIPT_POLL_MS = 100L
+
+        /** Нижняя граница перевзвода края (L6): sweep backlog не строит петлю zero-delay read. */
+        const val WINDOW_REARM_FLOOR_MS = 1_000L
+
+        /** Потолок перевзвода: окно короче 60s не бывает, дольше ждать смысла нет. */
+        const val WINDOW_REARM_CAP_MS = 60_000L
+
+        /** Удвоений нижней границы до потолка: 1s × 2^6 = 64s > cap. */
+        const val REARM_BACKOFF_STEPS = 6
     }
 }

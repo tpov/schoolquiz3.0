@@ -41,8 +41,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.buildJsonObject
@@ -60,7 +62,8 @@ import kotlin.test.assertTrue
 /**
  * Участие в квалификации (история 5.10): старт раунда под постоянной личностью попытки, ответ
  * только из очереди 5.9 (квитанция приёмника — единственный источник факта доставки), READY_ACK
- * в открытое окно после доставки, честный опоздавший ответ и честные отказы допуска.
+ * по доставленному (DELIVERED) окну из сессии квитанции — серверное предусловие (L1), честный
+ * опоздавший ответ и честные отказы допуска. Провод квитанций = серверная форма (P2).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultTournamentQualificationComponentTest {
@@ -168,7 +171,11 @@ class DefaultTournamentQualificationComponentTest {
                 nowMs = { 1L },
             )
 
-        /** Квитанция приёмника для намерения: конверт {replayed, result} с тем же operationId. */
+        /**
+         * Квитанция приёмника для намерения: конверт {replayed, result} с тем же operationId.
+         * P2: провод = серверная форма `responseFor` — окно операции вложено в `session`
+         * (top-level окна у операций сервер не отвечает), состояние доставки — как на сервере.
+         */
         fun deliver(
             intent: TournamentSessionIntent,
             status: String,
@@ -194,22 +201,22 @@ class DefaultTournamentQualificationComponentTest {
                             put("endsAtMs", 100)
                             put("questionStartedAtMs", 0)
                             put("questionEndsAtMs", 50)
+                            if (window != null) {
+                                put(
+                                    "window",
+                                    buildJsonObject {
+                                        put("windowId", window.windowId)
+                                        put("completedQuestionIndex", window.completedQuestionIndex)
+                                        put("nextQuestionIndex", window.nextQuestionIndex)
+                                        put("windowSeconds", window.windowSeconds)
+                                        put("openedAtMs", window.openedAtMs)
+                                        put("expiresAtMs", window.expiresAtMs)
+                                        put("state", window.state)
+                                    },
+                                )
+                            }
                         },
                     )
-                    if (window != null) {
-                        put(
-                            "window",
-                            buildJsonObject {
-                                put("windowId", window.windowId)
-                                put("completedQuestionIndex", window.completedQuestionIndex)
-                                put("nextQuestionIndex", window.nextQuestionIndex)
-                                put("windowSeconds", window.windowSeconds)
-                                put("openedAtMs", window.openedAtMs)
-                                put("expiresAtMs", window.expiresAtMs)
-                                put("state", window.state)
-                            },
-                        )
-                    }
                     if (intent is TournamentSessionIntent.ReadyAck) {
                         // Квитанция готовности обязана ехать в ответе READY_ACK (ONLINE-O2 §4).
                         put(
@@ -301,7 +308,9 @@ class DefaultTournamentQualificationComponentTest {
         assertEquals(0, play.questionIndex)
         assertEquals("A?", play.question?.publicPayload?.text)
 
-        // Ответ уезжает из очереди; квитанция приёмника несёт окно следующего вопроса.
+        // Ответ уезжает из очереди; квитанция приёмника несёт доставленное (DELIVERED) окно
+        // следующего вопроса, вложенное в session — серверная форма `responseFor` (P2): ACK
+        // гейтится ровно этим состоянием (L1).
         val answerIntent =
             TournamentSessionIntent.Answer(
                 sessionId = sessionId,
@@ -315,7 +324,7 @@ class DefaultTournamentQualificationComponentTest {
                 questionIndex = 1,
                 windowId = "win_" + "cd".repeat(16),
             )
-        val openWindow =
+        val deliveredWindow =
             TournamentWindowView(
                 windowId = ackIntent.windowId,
                 completedQuestionIndex = 0,
@@ -323,9 +332,9 @@ class DefaultTournamentQualificationComponentTest {
                 windowSeconds = 5,
                 openedAtMs = 1L,
                 expiresAtMs = 101L,
-                state = "OPEN",
+                state = "DELIVERED",
             )
-        f.deliver(answerIntent, status = "ANSWER_ACCEPTED", window = openWindow, questionIndex = 1)
+        f.deliver(answerIntent, status = "ANSWER_ACCEPTED", window = deliveredWindow, questionIndex = 1)
         f.deliver(ackIntent, status = "READY_ACK", questionIndex = 1)
         f.repository.readSessionResult =
             Result.success(
@@ -353,7 +362,7 @@ class DefaultTournamentQualificationComponentTest {
         f.component.onSubmitAnswerClick()
         advanceUntilIdle()
 
-        // Одна очередь — два намерения: ответ и квитанция готовности в открытое окно.
+        // Одна очередь — два намерения: ответ и квитанция готовности в доставленное окно.
         assertEquals(2, f.outboxStore.rows.size)
         // Приёмник ответил обоим: движок увозит доставленные строки (AD-4 — очередь, не архив).
         f.outboxStore.markDelivered()
@@ -362,6 +371,105 @@ class DefaultTournamentQualificationComponentTest {
         assertEquals(1, playAfter.questionIndex)
         assertEquals(ackIntent.windowId, playAfter.readyAckWindowId)
         assertFalse(playAfter.awaitingDelivery)
+    }
+
+    @Test
+    fun `an OPEN window on the receipt never fires the ready ack`() = runTest(dispatcher) {
+        // L1, негатив: OPEN — недоставленное окно (его видит только чтение при backlog свипа);
+        // серверное предусловие READY_ACK — DELIVERED, поэтому ACK из очереди не уезжает.
+        val f = fixture()
+        pickAndStart(f)
+        val answerIntent =
+            TournamentSessionIntent.Answer(
+                sessionId = sessionId,
+                questionIndex = 0,
+                questionId = questionId,
+                answerPayload = buildJsonObject { put("type", "single-choice"); put("selected", "a") },
+            )
+        val openWindow =
+            TournamentWindowView(
+                windowId = "win_" + "ef".repeat(16),
+                completedQuestionIndex = 0,
+                nextQuestionIndex = 1,
+                windowSeconds = 5,
+                openedAtMs = 1L,
+                expiresAtMs = 101L,
+                state = "OPEN",
+            )
+        f.deliver(answerIntent, status = "ANSWER_ACCEPTED", window = openWindow, questionIndex = 1)
+        f.repository.readSessionResult =
+            Result.success(operationView(session = sessionView(1), currentQuestion = question(1), serverNowMs = 10L))
+
+        f.component.onToggleChoice("a")
+        f.component.onSubmitAnswerClick()
+        advanceUntilIdle()
+
+        // Одна очередь — ровно одно намерение: ответ; READY_ACK не построен.
+        assertEquals(1, f.outboxStore.rows.size)
+        val play = requireNotNull(f.component.state.value.play)
+        assertEquals(1, play.questionIndex)
+        assertNull(play.readyAckWindowId)
+    }
+
+    @Test
+    fun `an expired open window rearms the read on the server clock with floor and backoff`() = runTest(dispatcher) {
+        // L6: край окна ведёт перечитывание по серверным часам (offset от serverNowMs последнего
+        // чтения) с нижней границей и backoff за повтор того же windowId — просроченное
+        // OPEN-окно при backlog свипа не строит zero-delay петлю device-часов.
+        val f = fixture()
+        pickAndStart(f)
+        val baseline = f.repository.readSessionCalls.size
+        val expiredOpen =
+            TournamentWindowView(
+                windowId = "win_" + "9a".repeat(16),
+                completedQuestionIndex = 0,
+                nextQuestionIndex = 1,
+                windowSeconds = 5,
+                openedAtMs = 1L,
+                expiresAtMs = 5L, // край уже прошёл по серверным часам (serverNowMs = 10)
+                state = "OPEN",
+            )
+        f.repository.readSessionResult =
+            Result.success(
+                TournamentOperationView(
+                    schemaVersion = null,
+                    operationId = null,
+                    status = null,
+                    serverNowMs = 10L,
+                    deadlineReached = null,
+                    questionDeadlineReached = null,
+                    deliveredNowMs = null,
+                    window = expiredOpen,
+                    event = null,
+                    session = sessionView(0),
+                    sessions = null,
+                    meeting = null,
+                    currentQuestion = question(0),
+                    lastClosed = null,
+                    readyAck = null,
+                    result = null,
+                ),
+            )
+        f.component.onRecheckClick()
+        runCurrent()
+        assertEquals(baseline + 1, f.repository.readSessionCalls.size)
+        // Нижняя граница (1с): под ней чтения нет, сколько бы device-часов ни спешили.
+        advanceTimeBy(999)
+        runCurrent()
+        assertEquals(baseline + 1, f.repository.readSessionCalls.size)
+        advanceTimeBy(1)
+        runCurrent()
+        assertEquals(baseline + 2, f.repository.readSessionCalls.size)
+        // Backoff за повтор того же windowId: следующая нижняя граница удвоена (2с).
+        advanceTimeBy(1999)
+        runCurrent()
+        assertEquals(baseline + 2, f.repository.readSessionCalls.size)
+        advanceTimeBy(1)
+        runCurrent()
+        assertEquals(baseline + 3, f.repository.readSessionCalls.size)
+        // Цепь перевзвода бесконечна по построению (окно не сменится) — гасим область машины,
+        // иначе дренаж планировщика runTest гоняет её до исчерпания памяти.
+        lifecycle.destroy()
     }
 
     @Test

@@ -42,6 +42,7 @@
     <string name="tournament_organizer_consent_prize_row">Place %1$d: %2$d boxes</string>
     <string name="tournament_organizer_consent_warning">The deposit is reserved in escrow on confirmation</string>
     <string name="tournament_organizer_confirm_create">Create with this deposit</string>
+    <string name="tournament_organizer_admission_link">Admission link token: %1$s</string>
     <string name="tournament_organizer_created">Tournament created</string>
     <string name="tournament_organizer_new_create">Start a new competition</string>
     <string name="tournament_organizer_consent_starts">Opens at: %1$s</string>

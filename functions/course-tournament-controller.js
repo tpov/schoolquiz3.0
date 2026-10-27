@@ -10,7 +10,7 @@ const {loadQualificationRanking, selectQualificationCalculation, QUALIFICATION_R
 const {advanceQualificationScan} = require("./tournament-qualification-scan");
 const {advanceQualificationCalculation} = require("./tournament-qualification-calculation");
 const {tournamentDigest: digest} = require("./tournament-bank");
-const {progressBracket, evaluateMeeting, READY_WINDOW_MS} = require("./tournament-policy");
+const {progressBracket, evaluateMeeting, READY_WINDOW_MS, eligibleCourseSource} = require("./tournament-policy");
 const {PREMIUM_CATCHUP_PASSES} = require("./premium-economy");
 
 const CLIENT_OPERATIONS = Object.freeze(["CREATE", "START_QUALIFICATION", "PROPOSE", "CONFIRM", "READY"]);
@@ -91,10 +91,12 @@ function safeEvent(value) {
     source: pick(value.source, ["kind", "id"]),
     qualification: pick(value.qualification, ["startsAtMs", "endsAtMs", "roundCount", "questionsPerRound", "attemptsPerRound"]),
     // Unified prize-list projection (L2): both stored forms read as {listVersion, rows,
-    // maximumLiabilityBoxes}; legacy DTO fields and frozen-list mismatches never leak.
+    // maximumLiabilityBoxes}; legacy DTO fields and frozen-list mismatches never leak. A
+    // degraded stored shape falls back to the parseable empty v0 (L7) — never to `{}`, which
+    // the strict client mirror would reject as transport-malformed and kill whole pages.
     prizes: value.prizes && typeof value.prizes === "object" && !Array.isArray(value.prizes)
       ? (() => { try { return prizeView(value); } catch (error) { fail("UNAVAILABLE", "Event prizes require repair"); } })()
-      : {},
+      : {listVersion: 0, rows: [], maximumLiabilityBoxes: 0},
     escrow: pick(value.escrow, ["reservedBoxes", "remainingBoxes", "paidBoxes", "returnedBoxes"])};
   if (value.progress) result.progress = safeProgress(value.progress);
   return result;
@@ -360,6 +362,14 @@ function createCourseTournamentController({db, loadLessonContext, isCurator, now
       }
       const course = data(await transaction.get(db.doc(`quests/${courseId}`)));
       if (!course) fail("INVALID_ARGUMENT", "Unknown course");
+      // L5: the download basis is a real, visible COURSE quest — the same course/catalog gate
+      // the source bank applies (policy.eligibleCourseSource), not "a document existed".
+      // Any existing but ineligible quest refuses typed and stages no attestation.
+      const catalog = typeof course.catalogId === "string"
+        ? data(await transaction.get(db.doc(`catalogs/${course.catalogId}`))) : null;
+      if (!eligibleCourseSource({course, catalog})) {
+        fail("SOURCE_NOT_ELIGIBLE", "Download attestation requires an eligible published COURSE source");
+      }
       const record = {schemaVersion: 1, uid, courseId, downloadedAtMs: now(), operationId: payload.operationId};
       transaction.create(ref, record);
       return {courseId, downloadedAtMs: record.downloadedAtMs};

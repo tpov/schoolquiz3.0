@@ -289,13 +289,33 @@ function planAdmission({event, uid, nowMs, downloadRecord = null, linkTokenDiges
 }
 
 /** A download record admits only its own account for its own course; anything else in the
- * shared collection fails closed as "no record" rather than widening the gate.
+ * shared collection fails closed as "no record" rather than widening the gate. An unknown
+ * schemaVersion is "no record" too (L9): it never throws out of the admission transaction.
  */
 function attestedDownload(record, uid, courseId) {
   if (record === null || record === undefined) return false;
   obj(record, "downloadRecord");
-  if (record.schemaVersion !== 1) throw new RangeError("downloadRecord schemaVersion must be 1");
+  if (record.schemaVersion !== 1) return false;
   return str(record.uid, "downloadRecord.uid") === uid && str(record.courseId, "downloadRecord.courseId") === courseId;
+}
+
+/** COURSE source eligibility (L5, UX-O4/download basis): the course/catalog gate the source
+ * bank applies before collecting a COURSE source (`tournament-source-bank.js` collect) —
+ * a versioned course published to its archive, bound to a live unarchived catalog whose
+ * resolved quest type is COURSE. Authorization (whose collection, whose download record)
+ * is the caller's clause and is deliberately NOT part of course-eligibility: the predicate
+ * answers only "is this quest an eligible COURSE source at all". `recordDownload` uses it
+ * so a download attestation requires a real, visible COURSE quest — never a bare document.
+ */
+function eligibleCourseSource({course, catalog}) {
+  if (!course || typeof course !== "object" || Array.isArray(course)) return false;
+  if (!Array.isArray(course.visibleOn) || !course.visibleOn.includes("archive")) return false;
+  if (typeof course.catalogId !== "string" || !course.catalogId.trim() || course.catalogId.includes("/") ||
+      [".", ".."].includes(course.catalogId) || /^__.*__$/.test(course.catalogId)) return false;
+  if (!Number.isSafeInteger(course.version) || course.version < 1) return false;
+  if (!catalog || typeof catalog !== "object" || Array.isArray(catalog)) return false;
+  if (catalog.archived === true) return false;
+  return String(catalog.questType || course.questType || "REGULAR").toUpperCase() === "COURSE";
 }
 
 /** Uses the supplied authoritative LS places. It never recalculates or replaces LS. */
@@ -580,7 +600,7 @@ function planPrizePayouts({eventId, prizes, fundedBoxes, placements}) {
 module.exports = {
   READY_WINDOW_MS, QUALIFICATION_DURATION_MS, STAGE_DURATION_MS,
   preflightPool, validatePrizeSchedule, validateStoredPrizeSchedule, prizeListProjection, createEventPlan,
-  qualificationForms, planQualificationAttempt, planAdmission,
+  qualificationForms, planQualificationAttempt, planAdmission, eligibleCourseSource,
   selectQualifiers, buildBracket, planMeetingProposal, evaluateMeeting, resolvePlayedMatch,
   progressBracket, planPrizePayouts,
 };

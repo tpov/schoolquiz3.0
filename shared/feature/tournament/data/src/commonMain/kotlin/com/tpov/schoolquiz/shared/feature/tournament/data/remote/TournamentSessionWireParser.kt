@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.tournament.data.remote
 
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentAdmissionLink
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentDownloadRecord
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentLastClosed
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentOperationView
@@ -24,8 +25,8 @@ import kotlinx.serialization.json.jsonObject
  *
  * Край окна — [TournamentWindowView.expiresAtMs]; `windowSeconds` — грубая захваченная
  * константа, для отсчёта не используется. Токен ссылки организатора (`admissionLink`)
- * допускается по ключу, но значение его не декодируется ни в какой тип: ссылку организатора
- * читает только её создатель, клиентская модель токена не несёт по построению. Лишний ключ,
+ * декодируется только в CREATE-квитанции (L4): типизированный непустой токен — единственный
+ * легальный клиентский путь к раздаче допуска; ни в какой журнал он не пишется. Лишний ключ,
  * отсутствующее обязательное поле и неверный тип — одно и то же [MalformedWire].
  */
 class TournamentSessionWireParser(
@@ -49,9 +50,14 @@ class TournamentSessionWireParser(
             // обязанный и непустой: пустой или null статус «присутствует» и потому испорчен.
             val schemaVersion = root.whole("schemaVersion")
             if (schemaVersion != null && schemaVersion != SCHEMA_VERSION) malformedWire()
-            // organizer-only CREATE response: the key must be well-formed, its value is never decoded.
-            root.obj("admissionLink")?.exact("token")
+            // organizer-only CREATE response: the token is decoded (L4) — it is the one legal
+            // client-side path to the shareable admission link; blank or non-text fails closed.
             TournamentOperationView(
+                admissionLink =
+                    root.obj("admissionLink")?.let { link ->
+                        link.exact("token")
+                        TournamentAdmissionLink(token = link.nonBlank("token"))
+                    },
                 schemaVersion = schemaVersion,
                 operationId = root.text("operationId"),
                 status = if (root.element("status") == null) null else root.nonBlank("status"),

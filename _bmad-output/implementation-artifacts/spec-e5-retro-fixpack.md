@@ -2,7 +2,7 @@
 title: 'Epic 5 retro fix pack: ретро-пункты 1–11 (L1–L9, rig-дыра, бухгалтерия)'
 type: 'bugfix'
 created: '2026-10-25'
-status: 'blocked'
+status: 'in-progress'
 baseline_revision: '4e2ca56c0963289baf7ea67116b02a1cd914eebf'
 route: 'full'
 route_source: 'pinned'
@@ -111,6 +111,28 @@ Blocking condition: no subagents — запуск write-сабагента (`gen
 - Ветка `night/e5-retro-fixpack` @ `4e2ca56c0963289baf7ea67116b02a1cd914eebf` (= baseline) чекаутена в worktree `/workspace/projects/schoolquiz3.0/.local/worktrees/e5-fixpack` на VPS — работать там, НЕ в main worktree (он занят активной sibling-сессией `night/e7-commerce`).
 - Все 15 якорей Code Map перепроверены read-only пробой сабагента на живом коде baseline — все подтверждены (включая уточнения: предикат элигибельности для L5 в `functions/tournament-source-bank.js:99-103`, нужен новый экспорт; pin-тест статусов в `TournamentSessionOutboxContractTest.kt:179-217`; второй фабрикующий тест-сайт `DefaultTournamentQualificationComponentTest.kt:313-330`; строки 145/145/145 — новые ключи во все три локали).
 - Тяжёлые сборки через `sgw`, node — `/root/.zcode/server/node`; доказательство — `docs/agents/evidence/<дата>-e5-retro-fixpack/`.
+
+### 2026-10-26 (повторный автозапуск)
+
+Status: blocked
+Blocking condition: dirty working tree — поверх baseline лежит незакоммиченный WIP, оставленный предыдущим запуском; гард чистого дерева воркфлоу запрещает принимать его без решения владельца.
+
+- Спека была `blocked` (2026-10-25: write-сабагент недоступен). Запись «реализация не начата» в предыдущем результате неточна: файлы `functions/` правились 2026-10-25 17:48–17:59 UTC, ДО коммита спеки 73b411c9 (18:37 UTC), и остались незакоммиченными (7 файлов: tournament-policy.js, tournament-service.js, tournament-session.js, course-tournament-controller.js + tournament-policy.test.js, tournament-service.test.js, course-tournament-handler.test.js).
+- WIP покрывает задачи 1–3 (L9 fail-closed, L2 именованный отказ допуска, L5 eligibleCourseSource + L7 parseable fallback, F3 удаление мёртвой ветки `if (!opened)`) и выглядит добротным, но не закончен и красный на собственных тестах: `tournament-policy.test.js` — 1 детерминированный отказ (тест eligibleCourseSource :170 «catalog: {} → true» противоречит предикату и собственному комментарию «default is REGULAR»); `course-tournament-controller.test.js` — :106 всё ещё ждёт PERMISSION_DENIED (переименование L2 не проведено в этом тесте); `course-tournament-handler.test.js` — красный; `tournament-session.test.js` — зелёный изолированно, 3 сбоя только под параллельной нагрузкой (timing-тесты). `tournament-service.test.js` — зелёный (57 тестов).
+- Этот запуск не менял код: ни коммитов, ни откатов. Задачи 4–13 (Kotlin: L3 MAX_PRIZE_ROWS, WINDOW_DELIVERED, L10 KDoc, L1 ACK-гейт, L6 re-read, L8 binding, L4 токен, P2 фиксаторные тесты; demo item 10; tickets F12) не начинались — ни один Kotlin-файл не тронут.
+
+### 2026-10-27 (ручное возобновление — реализация)
+
+Status: implemented (гейты зелёные; живой полный lifecycle-PASS не достигнут — деградация общего рига; пункт в openItems)
+
+- WIP задач 1–3 ревизирован против `tournament-source-bank.js` collect (предикат L5 зеркалирует его гейт; авторизация вне предиката — как в KDoc), доведён до зелёного: policy-тест :170-171 переписан под фактическую цепочку разрешения questType (catalog → course → REGULAR), предикату добавлена проверка пустых-по-пробелу catalogId (fidelity к `id()`), контроллер-тест :458-459 переведён на именованный отказ L2, дописаны тесты L5 (SOURCE_NOT_ELIGIBLE + прежний путь) и L7 (деградировавший fallback в readEvent и listEvents).
+- Задачи 4–13 реализованы с нуля: L3 (cap 16, hash-pin `tournament-policy.js`, граничная фикстура `eventReadPrizeBoundary16`, снятая с реального контроллера над stub: 16 строк, места 1..16, ответственность 22); WINDOW_DELIVERED; L10 re-doc + pin; L1 (ACK по DELIVERED из session-вложения квитанции, OPEN-негатив); L6 (re-arm по серверным часам: offset от serverNowMs, floor 1s, backoff ×2 до 60s, тест на виртуальном времени); L8 (grep fail-литералов шести модулей + behavior-проверка причин допуска); L4 (типизированный токен: models → wire-parser → organizer component/state/screen → строки 145/145/145 → тесты парсера и компонента); P2 (deliver-хелперы qualification И match компонентных тестов переведены на серверную форму — окно вложено в session, DELIVERED; match-сайт не был назван в Code Map — найден красным на гейте); item 10 (sink-фаза: CREATE → link-token START → ANSWER/READY_ACK через `submitMutation.run` под логическими часами → окно воркера истекает → FORCED_CUTOFF по захваченному краю → отмена события с полным возвратом); F12 (tickets.toml 5.1/5.2 — принятие 2026-10-16, решения 1/2).
+- Гейты: `run-tests.js` 128/129 (единственный красный — предсуществующий mvp-isolation, атрибутирован); `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :shared:feature:tournament:data:jvmTest :android:feature:tournament:presentation:test :platform:firebase:test --no-configuration-cache` → BUILD SUCCESSFUL (JAVA_HOME нужен: buildSrc jvmToolchain(27) не автодетектится — та же toolchain-особость, что в 4.6–4.9); `node --check` lifecycle-скрипта → OK. Матрица I/O покрыта прогнанными тестами по всем 7 строкам (аудит в evidence README).
+- Живой риг: механика sink доказана пробником (START по токену → ANSWER через submitMutation → DELIVERED-окно в session → READY_ACK с квитанцией; `e5-sink-probe.js` в evidence-папке). Полный lifecycle-PASS не достигнут за 4 попытки: 2 прогонных бага фазы найдены и исправлены (синтетический игрок без Auth-токена; HTTP-sink на реальных часах эмулятора против логических часов фазы — дренируется в процессе), попытки 3–4 упали ДО sink-фазы на деградировавшем общем риге (флейм `2 UNKNOWN` транзакций firestore-эмулятора; DEADLINE_EXCEEDED на preflight при ~125-155% CPU functions-emu — hot-reload от правок соседа e7 в монтируемом worktree). Рестарт общего эмулятора — решение владельца; пункт вынесен в openItems.
+- ktlint: module-wide ktlintFormat зацепил чужие main-файлы (economy/exam/arena/network) — весь коллатерал откачен; единственный известный красный форматирования — предсуществующая некорректируемая строка `FirebaseGiftClaimRemoteDataSource.kt:104` (файл вне ветки).
+- Процесс: копия спеки в main worktree была ошибочно переведена в in-progress в начале сессии — откачена (`git checkout --`), правки только в этой, worktree-копии.
+
+Разблокировка (решение владельца): ревизия WIP в `functions/` (завершить или откатить), коммит, вернуть spec status (например `ready-for-dev`) и перезапустить build-auto. Рабочее дерево этого worktree после коммита WIP станет чистым.
 
 ## Spec Change Log
 

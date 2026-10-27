@@ -8,8 +8,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 /**
- * Намерение игрока на мутацию сессии соревнования (история 5.9): ответ, закрытие вопроса и
- * квитанция готовности — всё едет из очереди единственным приёмником `tournament.SESSION_OP`.
+ * Намерение игрока на мутацию сессии соревнования (история 5.9): ответ, наблюдение края
+ * вопроса и квитанция готовности — всё едет из очереди единственным приёмником `tournament.SESSION_OP`.
  *
  * Тело каждого варианта — ровно allowlist приёмника `tournament.SESSION_OP`, то есть
  * `courseTournaments.session` в `functions/index.js` (прямой вызываемый
@@ -21,7 +21,7 @@ sealed interface TournamentSessionIntent {
     /** Серверная сессия (`q_…`/`m_…`), к которой относится намерение. */
     val sessionId: String
 
-    /** Позиция вопроса в намерении; у [Advance] — закрываемая, у остальных — отвечаемая/подтверждаемая. */
+    /** Позиция вопроса в намерении; у [Advance] — наблюдаемая, у остальных — отвечаемая/подтверждаемая. */
     val questionIndex: Int
 
     /** Ответ на текущий вопрос: позиция, привязка вопроса и полезная нагрузка ответа игрока. */
@@ -32,7 +32,11 @@ sealed interface TournamentSessionIntent {
         val answerPayload: JsonObject,
     ) : TournamentSessionIntent
 
-    /** Закрытие текущего вопроса сейчас: позиция фиксирует, о каком закрытии намерение. */
+    /** Наблюдение края текущего вопроса (poll-семантика, L10): сервер НИКОГДА не закрывает окно
+     * досрочно по клиентскому запросу — ADVANCE лишь спрашивает «истёк ли край?», и ответ сервера
+     * (`QUESTION_TIMED_OUT`, если край захвачен, иначе `CURRENT_QUESTION`) приходит тем же
+     * наблюдением. Досрочного закрытия («close-now») в контракте нет; край — [WINDOW_OPEN]-окна
+     * и захваченный `expiresAtMs`. Позиция фиксирует, о каком крае намерение. */
     data class Advance(
         override val sessionId: String,
         override val questionIndex: Int,

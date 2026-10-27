@@ -37,7 +37,7 @@ waits = [
   "AD-31 and the ONLINE-O1 gate row are the settled policy inputs; online-o2-contract.md (adopted) supplies the window mechanics the reconciliation must compose with",
   "owner: adoption of the reconciliation edition (rides the same flow as 2.5/2.9; adoption is an input to dependent stories, not to drafting)",
 ]
-status = "done" # 2026-10-16: контракт издание 1 написан и прошёл review passes 1-2 (pass 1: bad_spec loopback — клэмп создания квалификации tournament-service.js:219-220, спека Code Map дополнен; pass 2: 9 патчей — PLAYED при срезе конверта, ready-ACK не для вопроса 0, персистентность openedAt/expiresAt, свежесть указателей и др.). Контракт ОЖИДАЕТ УТВЕРЖДЕНИЯ ВЛАДЕЛЬЦЕМ — 5.5/5.6/5.7 под гейтом after до записи решения (после adoption обновить needs). Доказательство docs/agents/evidence/2026-10-16-online-o1-contract/; спека _bmad-output/implementation-artifacts/spec-5-1-online-o1-timing-contract.md; коммит 7a7f86c5
+status = "done" # 2026-10-16: контракт издание 1 написан и прошёл review passes 1-2 (pass 1: bad_spec loopback — клэмп создания квалификации tournament-service.js:219-220, спека Code Map дополнен; pass 2: 9 патчей — PLAYED при срезе конверта, ready-ACK не для вопроса 0, персистентность openedAt/expiresAt, свежесть указателей и др.). Контракт ПРИНЯТ ВЛАДЕЛЬЦЕМ 2026-10-16 («принимаю», решение 1 в _bmad-output/mvp-candidate/owner-decisions-2026-10-16.md) — гейт after для 5.5/5.6/5.7 снят. Доказательство docs/agents/evidence/2026-10-16-online-o1-contract/; спека _bmad-output/implementation-artifacts/spec-5-1-online-o1-timing-contract.md; коммит 7a7f86c5
 
 [[story]]
 id = "5.2"
@@ -49,7 +49,7 @@ waits = [
   "AD-17 prize rules and the UX-O2 gate row are settled inputs; the plan §3 note «два третьих места» and plan §4 tournament special cases bind the mapping cases",
   "owner: adoption of the contract edition (gates 5.4 server rework, not this drafting)",
 ]
-status = "done" # 2026-10-16: контракт издание 1 написан, review pass 1 — 15 находок, все medium/low запатчены (16/17 кейсы, A12 ревалидация :394, BigInt-охрана, rowKey-сериализация, таблица совместимости), 1 false отклонён; followup review рекомендован до owner adoption (patch'и оркестратора без свежего линз-прохода). Контракт ОЖИДАЕТ УТВЕРЖДЕНИЯ ВЛАДЕЛЬЦЕМ — 5.4 под гейтом after. Доказательство docs/agents/evidence/2026-10-16-prize-list-contract/; спека spec-5-2-prize-list-contract.md; коммит f81b8c59
+status = "done" # 2026-10-16: контракт издание 1 написан, review pass 1 — 15 находок, все medium/low запатчены (16/17 кейсы, A12 ревалидация :394, BigInt-охрана, rowKey-сериализация, таблица совместимости), 1 false отклонён; followup review рекомендован до owner adoption (patch'и оркестратора без свежего линз-прохода). Контракт ПРИНЯТ ВЛАДЕЛЬЦЕМ 2026-10-16 («принимаю», решение 2 в _bmad-output/mvp-candidate/owner-decisions-2026-10-16.md) — гейт after для 5.4 снят. Доказательство docs/agents/evidence/2026-10-16-prize-list-contract/; спека spec-5-2-prize-list-contract.md; коммит f81b8c59
 
 [[story]]
 id = "5.3"

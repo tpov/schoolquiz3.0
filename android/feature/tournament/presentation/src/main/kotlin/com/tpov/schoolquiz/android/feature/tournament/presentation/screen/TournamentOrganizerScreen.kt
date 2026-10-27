@@ -108,6 +108,15 @@ fun TournamentOrganizerScreen(
                         color = NoirT3,
                         modifier = Modifier.testTag("tournament_organizer_created_event"),
                     )
+                    // L4: токен ссылки допуска — единственный легальный путь второго аккаунта
+                    // в событие (для ARENA_LESSON — единственная основа допуска вовсе).
+                    state.admissionToken?.let { token ->
+                        Text(
+                            stringResource(R.string.tournament_organizer_admission_link, token),
+                            color = NoirT3,
+                            modifier = Modifier.testTag("tournament_organizer_admission_link"),
+                        )
+                    }
                     Text(stringResource(R.string.tournament_organizer_escrow_title), style = NoirType.groupTitle)
                     EscrowRow(
                         tag = "tournament_escrow_reserved",

@@ -136,7 +136,8 @@ class TournamentSessionReceiptParser(
         /** Ответ ANSWER по `responseFor`: принят, закрыт по краю вопроса или завершивший попытку. */
         val ANSWER_STATUSES = setOf("ANSWER_ACCEPTED", "QUESTION_TIMED_OUT", "COMPLETED")
 
-        /** Ответ ADVANCE: вопрос ещё открыт, закрыт по краю или попытка завершена. */
+        /** Ответ ADVANCE — poll-наблюдение края (L10: сервер не закрывает окно досрочно по
+         * клиентской просьбе): вопрос ещё открыт, закрыт по краю или попытка завершена. */
         val ADVANCE_STATUSES = setOf("CURRENT_QUESTION", "QUESTION_TIMED_OUT", "COMPLETED")
     }
 }
