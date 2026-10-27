@@ -2,7 +2,7 @@
 title: 'Epic 7 retro fix package — wire-contract pin and the claim loop''s exits (e7 commerce follow-up)'
 type: 'feature'
 created: '2026-10-25'
-status: 'in-progress'
+status: 'in-review'
 baseline_revision: '1e79312219f7ae1406b302ef21614d97484bc625' # HEAD at spec time (post retro 231db859; 5.13/monetisation/epic-4 commits landed after)
 baseline_commit: '44fc0f8371439187c4a9e96d687702c2b3efa909' # resume base 2026-10-27: git healthy again, tree moves (sibling waves commit in parallel)
 route: 'full'
@@ -105,21 +105,42 @@ warnings: ['sibling-dirty-tree-arena']
 - (appended during implementation)
 - Порядок: F7 первым (гейт зеленеет на HEAD сразу), затем F1 (пины поверх живого контракта), затем F2–F6 (поведение), D1–D3 в конце одним docs-коммитом.
 - F5b — самый дизайновый пункт: направление «до вызова / после вызова» обязано остаться явным в типах (например, distinct typed exception для pre-call отказа), чтобы будущий читатель не мог их перепутать.
+- 2026-10-27, прогон: спека принята из рабочего дерева (это был осмысленный диспатч: HEAD-версия + статус blocked + Auto Run Result заблокированного прогона; коммит 657bcfbb). Провенанс F7 из Code Map уточнён: коммита `a2299284` в репо нет — VPS-хост добавлен `a2298084`; в комментарии пина процитированы существующие хеши (a2298084/7d8b91bd/ed16fc81).
+- functions-гейт гонялся в контейнере `schoolquiz-functions-emu` (репо смонтировано ro на /repo): no-env — `env -u FIRESTORE_EMULATOR_HOST -u GCLOUD_PROJECT npm --prefix /repo/functions test` = 135/135; demo-backend — тот же прогон с env контейнера = 135/135. Каунт вырос против ожидаемых 129 за счёт новых чужих арена-сюит sibling-волны (допустимый рост новыми файлами); mvp-isolation зелёный.
+- F2: первое решение с условием по презентационному состоянию в doOnResume стреляло на конструкции — Essenty проигрывает doOnResume при регистрации, а Eagerly-state на unconfined-диспетчере уже показывает InFlight; переписано на флаг последнего наблюдённого значения намерения (`premiumIntentPending`), тесты это и ловят.
+- Попутная правка вызывающего: `QuizzesRootIntegrationTest` (новый обязательный параметр компонента) — единственный живой construction-site вне сюиты самого компонента; архивные worktrees под `.local/` не трогались.
+- В дереве на момент гейтов лежала незакоммиченная sibling-работа (review-pipeline/queue-worker + review-outcome, functions) — в коммиты не вошла (узкие git add), в 135/135 не внесла изменений против HEAD.
 
 ## Spec Change Log
+
+### 2026-10-27 — resume run
+- Принята рабочая версия спеки (blocked-диспатч) как исходная; добавлен `baseline_commit`; статус in-progress → in-review по шагам workflow.
+- Review оставлен `standard`/`owner-direct` (перезапись на thorough/auto из generic-шага не применяется: значение задано владельцем при вызове).
 
 ## Review Triage Log
 
 ## Verification
 
-**Commands:**
-- `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :platform:firebase:testDebugUnitTest :shared:feature:economy:domain:test :shared:feature:economy:data:test :android:feature:quest:presentation:test :shared:core:persistence:jvmTest --no-configuration-cache` — зелено.
-- `cd functions && npm test` — 129/129 no-env (и demo-backend в контейнере `schoolquiz-functions-emu`).
-- `git status` — только файлы этой пачки; арена-файлы sibling-сессии не тронуты.
+**Commands (all run 2026-10-27 from this tree):**
+- `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew :platform:firebase:testDebugUnitTest :shared:feature:economy:domain:test :shared:feature:economy:data:test :android:feature:quest:presentation:test :android:feature:app-shell:presentation:test :shared:core:persistence:jvmTest --no-configuration-cache` — BUILD SUCCESSFUL (третий прогон; первый поймал compile-ошибку нового маппинг-кейса — порядок аргументов assertEquals в JUnit4, второй — два красных F2-теста, поймавших реальный дефект первого решения re-arm; оба исправлены, зафиксировано в Implementation Notes). Сюиты-покрытия: GiftClaimRepositoryTest 15/15, SyncBoxStreakUseCaseTest 11/11, DefaultHomeQuestsComponentTest 21/21, GiftBoxReceiptMappingTest 8/8, GiftClaimEnvelopeMappingTest 12/12, BoxServiceSourcePinTest 1/1 — все RUN, 0 failures (XML в build/test-results).
+- `docker exec schoolquiz-functions-emu env -u FIRESTORE_EMULATOR_HOST -u GCLOUD_PROJECT npm --prefix /repo/functions test` — 135/135 no-env.
+- `docker exec schoolquiz-functions-emu npm --prefix /repo/functions test` — 135/135 demo-backend (env контейнера: FIRESTORE_EMULATOR_HOST=127.0.0.1:18090, GCLOUD_PROJECT=demo-schoolquiz-mvp).
+- `git status` после коммитов — в дереве только чужие sibling-файлы (review-pipeline/queue-worker/review-outcome, generate-arena-client-fixtures.js, AppleDouble-мусор); файлы этой пачки закоммичены узкими add'ами.
+
+**Matrix test audit (step-03):** каждая строка F1a–F7 закрыта тестом, который реально гонялся и зелёный — F1a → пин ключей в economy-handler (8/8); F1b → BoxServiceSourcePinTest; F2 → два компонентных теста re-arm; F3 → autoGrantShiftingOnlyBoxCount…; F4 → conflictingReplay… (репо+use-case); F5a → limitAndExpiryRefresh…; F5b → malformedStoredBodies…+unreadableAnswers…+corruptedBody…+responseEnvelope…; F6 → preConversionPlanNested…; F7 → functions no-env 135/135.
 
 **Manual checks (no CLI):**
 - F5b: в диффе видно, что ответный ENVELOPE_INVALID держит намерение (тест), pre-call отказ — отпускает (тест), и это разные ветки кода.
 - D1–D3: диффы документов соответствуют формулировкам ретро дословно, без перефраза слов владельца.
+
+## Auto Run Result
+
+Status: done (implementation + gates; review in progress)
+Blocking condition: none
+
+**Summary.** Все семь находок ретро закрыты из этого дерева: полный пин конверта на сервере (12 ключей из planBoxOperation + typeof replayed) и SHA-пин источника на клиенте (F1a/F1b); re-arm премь-подарка по сети и по возврату на экран без второго operationId (F2); база счёта без boxCount — автогрант дня 10 не стирает офлайн-дни (F3); CONFLICTING_REPLAY терминален — намерение отпускается, VISIT продолжается (F4); DAILY_LIMIT/PREMIUM_REQUIRED перечитывают профиль (F5a); pre-call отказ тела карантинится типизированным REQUEST_INVALID при живом ответном ENVELOPE_INVALID — денежная инварианта запинена в обе стороны (F5b); dual-shape чтение completion-записей OPEN_GIFT_BOX (F6); functions-гейт зелёный на HEAD в обоих режимах (F7). D1–D3 применены в формулировках ретро. Прод-код `functions/` не менялся — только тесты.
+
+**Commits:** 657bcfbb (спека принята), c1f07487 (F7), 80f54ff5 (F1a), 64bc2121 (F4/F5/F6/F1b), d9c6d28c (F2/F3), 19393f2f (D1–D3 + evidence).
 
 ## Auto Run Result
 
