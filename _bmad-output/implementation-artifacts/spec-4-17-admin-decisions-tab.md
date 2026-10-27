@@ -2,7 +2,7 @@
 title: '4.17 admin-decisions-tab — решения админов по вердиктам модели (UX-22)'
 type: 'feature'
 created: '2026-10-27'
-status: 'in-review'
+status: 'done'
 route: 'full'
 route_source: 'auto'
 review: 'quick'
@@ -98,6 +98,8 @@ context: []
 - 2026-10-27, verification: functions `npm test` — **140/140 suites passed** (new: review-decisions 9 cases over the real callables against the stub: rows+join, filters, overwrite-in-place, mark refusals, unreadable trace + data-loss mark, orphan submission, bounded paging with lossless resume, verifier refusals, named refusals; export-set pin re-pinned with both callables). Gradle via `JAVA_HOME=/opt/jdks/jdk-27 sgw ./gradlew` — app-shell domain jvmTest (VisibilityTest re-pinned: Decisions joins the server-gated LOCAL sections, `rootOf` mapping), quest-authoring domain+data jvmTest (parser strictness suite), platform:firebase testDebugUnitTest (callable-name sentinel + view-version pin), quest-authoring + app-shell presentation testDebugUnitTest (component suite: load/detail/preview key, mark save+fail, refused→proposals-only, broken payload, filter reload) — all green. ktlint: module-wide `ktlint*SourceSetCheck` is red **pre-existing** under the 9.8.0 wrapper (untouched files violate: DefaultQuestCreateComponent 7, DefaultReviewQueueComponent 2, QuestCreateUiState 2, QuestCreateScreen 1, OperationHistoryScreen, FirebaseGiftClaimRemoteDataSource, QuestReviewOutcomeRepositoryImpl, QuestAuthoringMapper, PrivateQuizLinkOutboxWriter, InboxWireParser, LessonErrorReportOutboxWriter) — the same toolchain bucket as the owner-known detekt red (4.6–4.9 precedent); no violation names a file of this story after the owned-files format pass, and untouched violating files were restored byte-identical. detekt — pre-existing toolchain-wide jvm-target 27 (owner).
 
 ## Review Triage Log
+
+- 2026-10-27, self-review during implementation (autonomous wave, quick lens inline): test-first iteration caught four real defects before landing — the lossless mid-record cursor (row-bound page resumed after the whole verdict doc, losing its tail questions), the thrown access-refused crashing the load coroutine (now caught and folded into the proposals-only state), the optimistic mark value surviving a failed save (now reverted to the previous value), and the access-refused type living in the data layer where presentation cannot see it (moved to domain). Stub `FieldPath` support added so the page orders by doc id exactly as production code requests.
 
 ## Design Notes
 
