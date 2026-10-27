@@ -31,20 +31,23 @@ deferred:
       shared/core/persistence/src/androidMain/kotlin/com/tpov/schoolquiz/shared/core/persistence/migrations/Migration15to16.kt:15
     severity: low
   - summary: >-
-      The device finding recorded 2026-10-19 — a fixture-set premiumUntilMs (now+30d, read back
-      verified) was silently wiped to 0 server-side across the app's entry pass — remains open
-      and blocks the premium-gift half of 7.4's device proof; the new client code only reads the
-      profile, so the suspect set is a server write path or a pre-existing client upsert.
+      [RESOLVED 2026-10-20, retro action item 11] The device finding recorded 2026-10-19 — a
+      fixture-set premiumUntilMs (now+30d, read back verified) silently wiped to 0 server-side
+      across the app's entry pass — was ROOT-CAUSED as a fixture error, not a product defect: the
+      account was already premium-migrated at first login, `users.premiumUntilMs` is a DERIVED
+      projection recomputed from header+lots by every premium advance, and the fixture wrote the
+      derived field directly after the migration; a real user cannot lose premium this way (every
+      real grant path issues lots atomically). The correct fixture is a GRANT lot through the
+      server's own pure code — recipe `wire/premium-grant-fixture.js`; premium survival through
+      the entry sync proven on-device the same night.
     evidence: |-
-      docs/agents/evidence/2026-10-19-gift-claims/README.md records the wipe with the fixture
-      recipe and names the suspects (ensureUserProfile/upsertUserProfile vs box-op userPatch).
-      What would settle it: a focused session that stages premiumUntilMs on the demo fixture,
-      walks the entry pass one step at a time (profile read → sync → box op), and diffs
-      users/{uid} + premium_accounts after each step; until then the premium claim is proven by
-      JVM/Node tests only and stays device-NOT_RUN.
+      docs/agents/evidence/2026-10-20-premium-wire-repair/README.md §1 (root cause, money-adjacent
+      concern answered, fixture recipe issued and verified) and §2 (premium SURVIVES sync,
+      device/74-home-1.png). tickets.toml 7.3 "УРОК ФИКСТУРАМ" records the cursor-mismatch
+      corollary for future hitl sessions.
     location: >-
-      docs/agents/evidence/2026-10-19-gift-claims/README.md
-    severity: high (unverified)
+      docs/agents/evidence/2026-10-20-premium-wire-repair/README.md
+    severity: resolved (fixture error, not a product defect)
 ---
 
 <intent-contract>
@@ -68,7 +71,7 @@ deferred:
 - Migration/additivity rules hold for any new local persistence: new tables only, no destructive resets; pending intents survive restarts.
 
 **Never:**
-- No server-side changes: do not add MUTATION_HANDLERS keys, do not touch `MUTATION_TERMS_OPERATIONS`, do not modify box/premium handlers, rules, or the purchase pipeline (7.7 audited; box ops are deliberately NOT terms-gated — "open a box is a credit, not a debit").
+- No server-side changes: do not add MUTATION_HANDLERS keys, do not touch `MUTATION_TERMS_OPERATIONS`, do not modify box/premium handlers, rules, or the purchase pipeline (7.7 audited; box ops are deliberately NOT terms-gated — "open a box is a credit, not a debit"). *(Reconciled 2026-10-25, retro action item 11: the freeze was broken deliberately by `c2c1a414` on 19.10 — root-caused envelope defect this spec itself had laid: the committed client reader demanded the `{replayed, result}` envelope while the server suite pinned the flat body, both sides green against opposite contracts; evidence `docs/agents/evidence/2026-10-20-premium-wire-repair` §3. "No server changes" above is historical, not a live claim.)*
 - No dropped rules may reappear: no ad-gated premium gift, no box-for-five-ads, no general 2-box cap, no client-commanded credits.
 - No invented SKUs, money prices, or Play behavior; premium per-30-days normalization waits on story 7.1 money prices — do not fake it from gold prices.
 - No local midnight/timezone/calendar-day math gating claims — the day model is a rolling 24h window from `nextBoxAtMs` on server time; local clocks only feed the offline visit counter, conservatively (clock backwards/forwards never inflates claimed days).
@@ -174,6 +177,11 @@ Baseline `bdbe448a` on `night/e5-inception`; work lands on a fresh `night/e7-com
 
 ## Spec Change Log
 
+### 2026-10-25 — Retro reconciliation (epic-7-retro-2026-10-25 action item 11, applied by spec-e7-retro-fixes)
+- Retracted "No server changes" (Boundaries, Never) and "Server untouched (0 changes)" (Auto Run Result): the freeze was broken deliberately by `c2c1a414` on 19.10 — the server answered `{replayed, result}` after the envelope defect this spec had laid (client reader vs server pin on opposite contracts, caught only on-device); replaced with a record of that commit and its cause.
+- Deferred `premiumUntilMs-wipe` moved to resolved: fixture error (derived field written post-migration), recipe `wire/premium-grant-fixture.js`, survival proven on-device — evidence `2026-10-20-premium-wire-repair` §1–2.
+- Transport decision direct-callables-vs-outbox recorded as an ADR note in `epic-7-context.md` (Technical Decisions), reasoned from the Design Notes below.
+
 ## Review Triage Log
 
 ### 2026-10-19 — Review pass (thorough: edge-case-hunter, verification-gap)
@@ -225,7 +233,7 @@ Baseline `bdbe448a` on `night/e5-inception`; work lands on a fresh `night/e7-com
 Status: done
 Blocking condition: none
 
-**Summary.** Epic 7 (epic-commerce) closed from this tree: the client learned to claim gifts against the server's direct-callable contract — VISIT / OFFLINE_STREAK / PREMIUM_DAILY via `submitGiftBoxOperation` with a locally persisted operationId intent (outbox discipline without outbox ops), entry streak sync ordering the offline claim before the visit so the 48h reset cannot eat honest offline days, the explicit «Получить подарок» button with typed states (Available/InFlight/ClaimedToday/Hidden), `nextBonusBoxAtMs` synced end-to-end (additive migration 15→16), gift-claim persistence (16→17) joined to the owner-rows registry, a minimal shop premium surface naming the server's words, and the offline-claim math parity-tested against the shared fixtures' server verdicts. Server untouched (0 changes in functions/, firestore.rules, purchase pipeline); stories 7.1/7.6 recorded NOT_RUN/external (7.1 was resolved by the owner mid-run and recorded by the implementing session), 7.2/7.5/7.7/7.8 previously closed.
+**Summary.** Epic 7 (epic-commerce) closed from this tree: the client learned to claim gifts against the server's direct-callable contract — VISIT / OFFLINE_STREAK / PREMIUM_DAILY via `submitGiftBoxOperation` with a locally persisted operationId intent (outbox discipline without outbox ops), entry streak sync ordering the offline claim before the visit so the 48h reset cannot eat honest offline days, the explicit «Получить подарок» button with typed states (Available/InFlight/ClaimedToday/Hidden), `nextBonusBoxAtMs` synced end-to-end (additive migration 15→16), gift-claim persistence (16→17) joined to the owner-rows registry, a minimal shop premium surface naming the server's words, and the offline-claim math parity-tested against the shared fixtures' server verdicts. Server changed post-spec by `c2c1a414` (19.10, the `{replayed, result}` envelope repair) — a root-caused wire defect the spec itself had laid: the client reader demanded the envelope while the server suite pinned the flat body, both sides green against opposite contracts (evidence `docs/agents/evidence/2026-10-20-premium-wire-repair` §3; reconciled 2026-10-25, retro action item 11); firestore.rules and the purchase pipeline stayed untouched. Stories 7.1/7.6 recorded NOT_RUN/external (7.1 was resolved by the owner mid-run and recorded by the implementing session), 7.2/7.5/7.7/7.8 previously closed.
 
 **Files changed (baseline bdbe448a → 3870ca6c, 19 commits + docs):** profile model/Room/Firebase mapping (+`nextBonusBoxAtMs`); `GiftBoxStreak.kt` (+`GiftBoxAccrual` ceiling mirror); new domain `GiftClaim.kt`/ports/`SyncBoxStreakUseCase`/`ClaimPremiumDailyGiftUseCase`; new data `GiftClaimIntentStore`/`GiftClaimRepositoryImpl`/`RoomGiftBoxLocalStreakStore`/remote port + `FirebaseGiftClaimRemoteDataSource` (strict envelope reader); persistence migrations 15→16, 16→17 + entities/DAOs/owner-registry; home entry sync + premium gift button + streak badge (strings ×3); shop premium card + `PremiumSurfaceState`; Koin modules + graph gates; baseline compile repairs (FakeAttemptDao stubs, MVP_EMULATOR buildConfig fields for all build types, Byte Buddy test flag); Node mvp-isolation stale-pin catch-up (test-only); evidence `2026-10-19-epic7-commerce-client` + `2026-10-19-gift-claims`; tickets.toml statuses restated.
 
