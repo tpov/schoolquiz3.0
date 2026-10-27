@@ -289,6 +289,8 @@ function createReviewQueueWorker({
     const reply = await modelClient.judge({
       system: skill.systemPrompt(),
       user: `${skill.userPrompt(lessonContext)}\n${wrapLessonData(lessonContext)}`,
+      // Этап сам называет свои инструменты («Факты» — поиск); транспорт их только доставляет.
+      tools: typeof skill.tools === "function" ? skill.tools() : undefined,
     });
     if (!reply.ok) {
       if (reply.code === "REVIEW_MODEL_UNAVAILABLE") {

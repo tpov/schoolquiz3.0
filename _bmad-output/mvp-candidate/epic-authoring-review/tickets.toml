@@ -166,7 +166,7 @@ slug = "stage-words"
 title = "«Слова» stage (AD-32): forbidden words and phrases for a children's audience, doubt rejects; versioned skill, output schema and linter cases; pass/fail with a reason per question; evidence docs/agents/evidence/<date>-stage-words/"
 covers = ["CAP-3"]
 after = [{ story = "4.12", needs = "queue worker and verdict record" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-27: functions/stage-words.js — версионируемый скилл words-v1 (детская аудитория 7–15, запреты по D2, сомнение=FAIL с причиной, урок данными между разграничителями, модель не правит текст), общий линтер review-stage-schema.js (строгий JSON, полное покрытие вопросов, PASS/FAIL, непустые reason/rationale; 12 именованных отказов); реестр review-stages.js со сторожем полного плана. Гейт: npm test 134/135 (mvp-isolation — предсуществующий). Схема вердиктов и поведение линтера доказаны scripted-ответами; качество промпта на живой модели — предмет 4.20 (OQ-10), не гейт истории.
 
 [[story]]
 id = "4.14"
@@ -174,7 +174,7 @@ slug = "stage-facts"
 title = "«Факты» stage (AD-32): the quest-audit checklist in judge mode (never edits the author's text) with web search; sources recorded; pass/fail with a reason per question; evidence docs/agents/evidence/<date>-stage-facts/"
 covers = ["CAP-3"]
 after = [{ story = "4.12", needs = "queue worker and verdict record" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "done" # 2026-10-27: functions/stage-facts.js — скилл facts-v1 (чек-лист квест-аудита в судейском режиме: верность ключа, однозначность, школьный уровень, порядок и fill-blank; сомнение=FAIL; правка текста автора невозможна по схеме), web_search-инструмент GLM протягивается этапом через воркер в общий клиент (tools в judge), источники https обязательны (REVIEW_SCHEMA_SOURCES_EMPTY). Гейт: npm test 134/135. Живой поиск и качество вердиктов — 4.20 (OQ-10).
 
 [[story]]
 id = "4.15"

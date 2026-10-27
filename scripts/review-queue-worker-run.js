@@ -50,11 +50,11 @@ async function main(argv = process.argv.slice(2), env = process.env) {
   const admin = require("../functions/node_modules/firebase-admin");
   admin.initializeApp({projectId});
   const db = admin.firestore();
-  // Скиллы этапов подключает 4.13/4.14; пустой реестр честно держит воркер в STAGE_MISSING.
-  const stages = {};
+  // Реестр скиллов этапов: «Слова» + «Факты» (4.13/4.14); полный план проверяет сам реестр.
+  const {completeReviewStages} = require("../functions/review-stages");
   const worker = createReviewQueueWorker({
     db,
-    stages,
+    stages: completeReviewStages(),
     modelClient: createReviewModelClient({config: config.config}),
     log: (record) => console.warn(JSON.stringify(record)),
   });

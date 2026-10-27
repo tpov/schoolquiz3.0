@@ -51,20 +51,23 @@ function createReviewModelClient({config, transport = defaultTransport, timeoutM
   }
   return {
     modelName: config.modelName,
-    async judge({system, user}) {
+    async judge({system, user, tools}) {
       let raw;
       try {
+        const body = {
+          model: config.modelName,
+          messages: [
+            {role: "system", content: system},
+            {role: "user", content: user},
+          ],
+        };
+        // Этап просит инструменты сам («Факты» — поиск); транспорт только доставляет запрос.
+        if (Array.isArray(tools) && tools.length > 0) body.tools = tools;
         raw = await transport({
           url: config.apiUrl,
           apiKey: config.apiKey,
           timeoutMs,
-          body: {
-            model: config.modelName,
-            messages: [
-              {role: "system", content: system},
-              {role: "user", content: user},
-            ],
-          },
+          body,
         });
       } catch (error) {
         return {ok: false, code: "REVIEW_MODEL_UNAVAILABLE", message: String(error && error.message || error)};
