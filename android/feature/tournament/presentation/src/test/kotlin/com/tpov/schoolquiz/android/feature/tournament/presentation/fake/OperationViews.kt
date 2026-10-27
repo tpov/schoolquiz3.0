@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.tournament.presentation.fake
 
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentAdmissionLink
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventView
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentMeetingView
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentOperationView
@@ -17,6 +18,7 @@ fun operationView(
     serverNowMs: Long? = null,
     currentQuestion: TournamentPublicQuestion? = null,
     result: TournamentSessionResult? = null,
+    admissionLink: TournamentAdmissionLink? = null,
 ): TournamentOperationView =
     TournamentOperationView(
         schemaVersion = null,
@@ -35,4 +37,5 @@ fun operationView(
         lastClosed = null,
         readyAck = null,
         result = result,
+        admissionLink = admissionLink,
     )

@@ -444,6 +444,15 @@ test("download records are create-only server attestations, idempotent on repeat
   for (const courseId of ["", " ".repeat(1), "x".repeat(513), 5]) await error(() => f.controller.recordDownload("alice", {operationId: f.id(), courseId}), "INVALID_ARGUMENT");
   await error(() => f.controller.recordDownload("alice", {operationId: "ctw_match_reserved0000", courseId: "course"}), "INVALID_ARGUMENT");
   await error(() => f.controller.recordDownload("alice", {operationId: f.id(), courseId: "course", uid: "bob"}), "INVALID_ARGUMENT");
+  // L5: a bare existing document is not a download basis — only an eligible published COURSE
+  // source (the source bank's course/catalog gate) stages an attestation; ineligible quests
+  // refuse typed and leave no record behind.
+  f.db.store.set("catalogs/regular-catalog", {questType: "REGULAR", version: 1});
+  f.db.store.set("quests/regular-quest", {catalogId: "regular-catalog", authorUid: OWNER, version: 1, visibleOn: ["archive"], archived: true});
+  f.db.store.set("quests/unpublished-course", {catalogId: "catalog", authorUid: OWNER, version: 1, visibleOn: [], archived: true});
+  await error(() => f.controller.recordDownload("alice", {operationId: f.id(), courseId: "regular-quest"}), "SOURCE_NOT_ELIGIBLE");
+  await error(() => f.controller.recordDownload("alice", {operationId: f.id(), courseId: "unpublished-course"}), "SOURCE_NOT_ELIGIBLE");
+  assert.equal(f.db.store.has(`course_tournament_downloads/${digest(["alice", "regular-quest"])}`), false);
   // The seeded attested record for the fixture course admits alice's first qualification round.
   await f.create();
   const started = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"});
@@ -455,8 +464,10 @@ test("the organizer's link token admits a player without any download record; re
   const created = await f.create();
   const token = created.admissionLink?.token;
   assert.ok(/^[a-f0-9]{48}$/.test(token));
-  await error(() => f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"}), "PERMISSION_DENIED");
-  await error(() => f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001", linkToken: "f".repeat(48)}), "PERMISSION_DENIED");
+  // L2: the typed admission reason rides AS the wire reason — a START without any basis
+  // (and one with a wrong token) refuses by name, not as generic permission-denied.
+  await error(() => f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001"}), "NO_ADMISSION_BASIS");
+  await error(() => f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001", linkToken: "f".repeat(48)}), "NO_ADMISSION_BASIS");
   const started = await f.operate("START_QUALIFICATION", "alice", {roundNumber: 1, attemptId: "attempt_alice_00000001", linkToken: token});
   assertSafe(started); assert.equal(Object.hasOwn(started, "admissionLink"), false);
   const view = await f.controller.readEvent("viewer", {eventId: EVENT});
@@ -479,6 +490,14 @@ test("event reads project both prize forms through one shape and never leak the 
     rows: [{place: 1, amountBoxes: 5}, {place: 2, amountBoxes: 3}, {place: 3, amountBoxes: 1}, {place: 3, amountBoxes: 1}]});
   assert.ok(!["first", "second", "third"].some((name) => Object.hasOwn(legacy.event.prizes, name)));
   assertSafe(legacy);
+  // L7: a degraded stored shape (non-object prizes) falls back to the parseable empty v0 —
+  // the strict client mirror decodes it and discovery pages survive one corrupted event
+  // instead of dying transport-malformed.
+  stored.prizes = "corrupted";
+  const degraded = await f.controller.readEvent("viewer", {eventId: EVENT});
+  assert.deepEqual(degraded.event.prizes, {listVersion: 0, rows: [], maximumLiabilityBoxes: 0});
+  const degradedList = await f.controller.listEvents("viewer", {});
+  assert.deepEqual(degradedList.events.find((row) => row.eventId === EVENT).prizes, {listVersion: 0, rows: [], maximumLiabilityBoxes: 0});
   // Discovery rows flow through the same projection.
   const list = await f.controller.listEvents("viewer", {});
   assert.equal(list.events.find((row) => row.eventId === EVENT).prizes.listVersion, 0);

@@ -103,12 +103,21 @@ data class TournamentSessionResult(
 )
 
 /**
+ * Токен ссылки допуска организатора (L4): единственный легальный клиентский путь получить
+ * его — квитанция CREATE; показывается на экране созданного события, по нему второй аккаунт
+ * стартует (START_QUALIFICATION с linkToken — для ARENA_LESSON это единственная основа допуска).
+ */
+data class TournamentAdmissionLink(
+    val token: String,
+)
+
+/**
  * Ответ операции/чтения сессии — зеркало `safeResponse`. Члены приходят по мере вызова:
  * у операции — статус и (по виду операции) событие, сессия, встреча, вопрос; у чтения
  * сессии — окно, вопрос, результат, а [schemaVersion]/[operationId]/[status] у чтения
  * отсутствуют вовсе (сервер выводит в проекцию только определённые поля). Токен ссылки
- * организатора (`admissionLink`) клиентским типом не переносится: разбор допускает ключ, но
- * значения его не декодирует ни в какой тип и ни в какой журнал.
+ * допуска ([admissionLink]) приезжает только в CREATE-квитанции организатора (L4): поле
+ * типизировано и показывается один раз на созданном событии; ни в какой журнал оно не пишется.
  */
 data class TournamentOperationView(
     val schemaVersion: Long?,
@@ -127,6 +136,7 @@ data class TournamentOperationView(
     val lastClosed: TournamentLastClosed?,
     val readyAck: TournamentReadyAckReceipt?,
     val result: TournamentSessionResult?,
+    val admissionLink: TournamentAdmissionLink? = null,
 )
 
 /** Ответ чтения сессии (`fetchCourseTournamentSession`) — те же члены `safeResponse`. */

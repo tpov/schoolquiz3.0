@@ -149,6 +149,9 @@ class FirebaseTournamentRemoteDataSourceTest {
                     Triple("PERMISSION_DENIED", "PERMISSION_DENIED", SyncError.Refused("PERMISSION_DENIED")),
                     Triple("ALREADY_EXISTS", "CONFLICTING_REPLAY", SyncError.Refused("CONFLICTING_REPLAY")),
                     Triple("ALREADY_EXISTS", "PREPARATION_REUSE", SyncError.Refused("PREPARATION_REUSE")),
+                    // L2: типизированные отказы допуска теперь живут на живом проводе — сервер
+                    // (`fail(admission.reason, admission.reason)` + `courseTournamentFailure`)
+                    // отвечает failed-precondition с details.reason, а не permission-denied.
                     Triple("FAILED_PRECONDITION", "NO_ADMISSION_BASIS", SyncError.Refused("NO_ADMISSION_BASIS")),
                     Triple("FAILED_PRECONDITION", "OUTSIDE_QUALIFICATION_WINDOW", SyncError.Refused("OUTSIDE_QUALIFICATION_WINDOW")),
                     Triple("FAILED_PRECONDITION", "QUESTION_ALREADY_CLOSED", SyncError.Refused("QUESTION_ALREADY_CLOSED")),

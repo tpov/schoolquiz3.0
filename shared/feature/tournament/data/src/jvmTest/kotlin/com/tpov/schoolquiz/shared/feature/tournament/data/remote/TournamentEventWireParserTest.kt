@@ -272,9 +272,50 @@ class TournamentEventWireParserTest {
     }
 
     @Test
+    fun `sixteen prize rows with place 16 decode and the seventeenth fails closed`() {
+        // L3: серверный кап MAX_QUALIFIERS=16 — полный список top16 (место 16) легален на
+        // проводе и читается целиком; 17-я строка/место 17 — MalformedWire, не «почти влезло».
+        val read = parser.parseEventRead(fixture.wire("eventReadPrizeBoundary16"))
+        val prizes = read.event.prizes
+        assertEquals(1, prizes.listVersion)
+        assertEquals((1..16).toList(), prizes.rows.map { it.place })
+        assertEquals(5L, prizes.rows.first().amountBoxes)
+        assertEquals(1L, prizes.rows.last().amountBoxes)
+        assertEquals(22L, prizes.maximumLiabilityBoxes)
+
+        fun mutated(block: (MutableMap<String, Any?>) -> Unit): String {
+            val root = Json.parseToJsonElement(fixture.wire("eventReadPrizeBoundary16")).jsonObject
+            val copy = TournamentWireTestMutable.deepCopy(root)
+            block(copy)
+            return Json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), TournamentWireTestMutable.build(copy))
+        }
+        // 17-я строка — не призовой список этого контракта.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutated {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    val prizesMap = event["prizes"] as MutableMap<String, Any?>
+                    (prizesMap["rows"] as MutableList<Any?>).add(mapOf("place" to 16, "amountBoxes" to 1))
+                },
+            )
+        }
+        // Место 17 вне замороженного cap'а — отказ разбора.
+        assertFailsWith<MalformedWire> {
+            parser.parseEventRead(
+                mutated {
+                    val event = it["event"] as MutableMap<String, Any?>
+                    val prizesMap = event["prizes"] as MutableMap<String, Any?>
+                    val rows = prizesMap["rows"] as MutableList<Any?>
+                    (rows[15] as MutableMap<String, Any?>)["place"] = 17
+                },
+            )
+        }
+    }
+
+    @Test
     fun `fixture shapes stay bound to the actual server sources`() {
         val sources = fixture.getValue("sourceSha256").jsonObject
-        for (name in listOf("course-tournament-controller.js", "tournament-session.js")) {
+        for (name in listOf("course-tournament-controller.js", "tournament-session.js", "tournament-policy.js")) {
             assertEquals(
                 sources.getValue(name).jsonPrimitive.content,
                 TournamentWireTestHash.sha256(File(findRepoRoot(), "functions/$name").readText()),

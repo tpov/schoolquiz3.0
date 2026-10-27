@@ -41,6 +41,7 @@
     <string name="tournament_organizer_consent_prize_row">Место %1$d: %2$d коробок</string>
     <string name="tournament_organizer_consent_warning">Депозит резервируется в эскроу при подтверждении</string>
     <string name="tournament_organizer_confirm_create">Создать с этим депозитом</string>
+    <string name="tournament_organizer_admission_link">Токен ссылки допуска: %1$s</string>
     <string name="tournament_organizer_created">Турнир создан</string>
     <string name="tournament_organizer_new_create">Создать новое</string>
     <string name="tournament_organizer_consent_starts">Открывается: %1$s</string>

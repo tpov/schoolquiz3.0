@@ -52,6 +52,9 @@ data class OrganizerUiState(
     val notice: TournamentNotice = TournamentNotice.NotLoaded,
     /** Последний CREATE кончился отказом: повтор той же личностью операции показан игроку. */
     val canRetryCreate: Boolean = false,
+    /** Токен ссылки допуска из CREATE-квитанции (L4): живёт до нового цикла создания; по нему
+     * второй аккаунт стартует (для ARENA_LESSON — единственная основа допуска). */
+    val admissionToken: String? = null,
 ) {
     /** Сумма призового фонда — депозит CREATE по умолчанию: покрывает обязательства ровно. */
     val fundBoxes: Long get() = prizeRows.sumOf { it.amountBoxes }

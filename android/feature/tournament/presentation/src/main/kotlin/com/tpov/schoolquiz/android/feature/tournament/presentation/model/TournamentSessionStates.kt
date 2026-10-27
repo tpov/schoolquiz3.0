@@ -19,6 +19,10 @@ const val SESSION_QUESTION_TIMED_OUT = "QUESTION_TIMED_OUT"
 /** Окно следующего вопроса открыто; его край — [com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentWindowView.expiresAtMs]. */
 const val WINDOW_OPEN = "OPEN"
 
+/** Окно доставлено в сессию ответом операции (deliverTournamentQuestionWindow) — серверное
+ * состояние delivery, предусловие READY_ACK (`tournament-session.js` boundary.state). */
+const val WINDOW_DELIVERED = "DELIVERED"
+
 /** Статусы встречи матча (история 5.11) тем же словарём: стадия согласования и её концы. */
 const val MEETING_WAITING_FOR_AGREEMENT = "WAITING_FOR_AGREEMENT"
 

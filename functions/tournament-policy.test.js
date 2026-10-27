@@ -5,7 +5,7 @@ const test = require("node:test");
 const {
   READY_WINDOW_MS, QUALIFICATION_DURATION_MS, STAGE_DURATION_MS,
   preflightPool, validatePrizeSchedule, validateStoredPrizeSchedule, prizeListProjection, createEventPlan,
-  qualificationForms, planQualificationAttempt, planAdmission,
+  qualificationForms, planQualificationAttempt, planAdmission, eligibleCourseSource,
   selectQualifiers, buildBracket, planMeetingProposal, evaluateMeeting, resolvePlayedMatch,
   progressBracket, planPrizePayouts,
 } = require("./tournament-policy");
@@ -123,8 +123,13 @@ test("admission refuses without a basis and never trusts foreign records or bare
     assert.equal(planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: record}).reason, "NO_ADMISSION_BASIS");
   }
   // A client-claimed record shape (not a server attestation) cannot widen the gate either:
-  // the pure policy judges only the attested (uid, courseId, schemaVersion) tuple.
-  assert.throws(() => planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: {schemaVersion: 2, uid: "u", courseId: "course"}}), /schemaVersion/);
+  // the pure policy judges only the attested (uid, courseId, schemaVersion) tuple. An unknown
+  // schema fails closed as "no record" (L9) — a typed "no basis", never a RangeError escaping
+  // the admission transaction as an opaque server failure.
+  assert.equal(planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: {schemaVersion: 2, uid: "u", courseId: "course"}}).reason,
+    "NO_ADMISSION_BASIS");
+  assert.equal(planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: {schemaVersion: "1", uid: "u", courseId: "course"}}).reason,
+    "NO_ADMISSION_BASIS");
   assert.throws(() => planAdmission({event: e, uid: "u", nowMs: 1000, linkTokenDigest: "deadbeef"}), /sha-256/);
   assert.throws(() => planAdmission({event: e, uid: "", nowMs: 1000, downloadRecord: download("u", "course")}), /nonblank/);
   assert.throws(() => planAdmission({event: {...e, source: {kind: "MYSTERY", id: "course"}}, uid: "u", nowMs: 1000, linkTokenDigest: DIGEST}), /admission basis/);
@@ -138,6 +143,45 @@ test("arena-lesson events are link-only: download records do not apply (owner-vi
   // for the source id is not a basis; without the link the gate stays shut.
   assert.equal(planAdmission({event: a, uid: "u", nowMs: 1000, downloadRecord: download("u", "lesson")}).reason, "NO_ADMISSION_BASIS");
   assert.equal(planAdmission({event: a, uid: "u", nowMs: 1000}).reason, "NO_ADMISSION_BASIS");
+});
+
+// L9: the download-record gate is honest fail-closed — a record whose schema the server does
+// not know is "no record", so admission degrades to NO_ADMISSION_BASIS instead of a RangeError
+// escaping the START transaction as an opaque server failure that bricks the account.
+test("a download record of an unknown schema admits nothing and never throws (L9)", () => {
+  const e = event();
+  for (const record of [null, undefined, {schemaVersion: 2, uid: "u", courseId: "course"},
+    {schemaVersion: 0, uid: "u", courseId: "course"}, {uid: "u", courseId: "course"}]) {
+    assert.equal(planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: record}).reason,
+      "NO_ADMISSION_BASIS", JSON.stringify(record));
+  }
+  // Malformed non-object shapes keep their own input validation; the fail-closed default
+  // covers only "a document of an unknown/absent schema".
+  assert.throws(() => planAdmission({event: e, uid: "u", nowMs: 1000, downloadRecord: 5}), /must be an object/);
+});
+
+// L5: the COURSE eligibility predicate mirrors the source bank's course/catalog gate
+// (tournament-source-bank collect): published-to-archive course, exact version, live
+// unarchived COURSE-typed catalog. Authorization is NOT part of the predicate.
+test("eligibleCourseSource judges course/catalog shape and never widens to any document", () => {
+  const course = {catalogId: "catalog", authorUid: "author", version: 1, visibleOn: ["archive"]};
+  assert.equal(eligibleCourseSource({course, catalog: {questType: "COURSE", version: 1}}), true);
+  // The quest type resolves through the catalog, then the course; the default is REGULAR.
+  assert.equal(eligibleCourseSource({course: {...course, questType: "course"}, catalog: {}}), true);
+  assert.equal(eligibleCourseSource({course, catalog: {}}), false);
+  assert.equal(eligibleCourseSource({course: {...course, questType: "course"}, catalog: {questType: "REGULAR"}}), false);
+  assert.equal(eligibleCourseSource({course, catalog: null}), false);
+  assert.equal(eligibleCourseSource({course: null, catalog: {questType: "COURSE"}}), false);
+  // Not published to the archive / archived catalog / wrong type / bad version — not a source.
+  assert.equal(eligibleCourseSource({course: {...course, visibleOn: []}, catalog: {questType: "COURSE"}}), false);
+  assert.equal(eligibleCourseSource({course, catalog: {questType: "COURSE", archived: true}}), false);
+  assert.equal(eligibleCourseSource({course, catalog: {questType: "REGULAR"}}), false);
+  assert.equal(eligibleCourseSource({course: {...course, version: 0}, catalog: {questType: "COURSE"}}), false);
+  assert.equal(eligibleCourseSource({course: {...course, version: 1.5}, catalog: {questType: "COURSE"}}), false);
+  assert.equal(eligibleCourseSource({course: {...course, catalogId: ""}, catalog: {questType: "COURSE"}}), false);
+  assert.equal(eligibleCourseSource({course: {...course, catalogId: "a/b"}, catalog: {questType: "COURSE"}}), false);
+  assert.equal(eligibleCourseSource({course: {...course, catalogId: " "}, catalog: {questType: "COURSE"}}), false);
+  assert.equal(eligibleCourseSource({course: [course], catalog: {questType: "COURSE"}}), false);
 });
 
 test("the qualification window stays the sole admission time gate, half-open on endsAtMs", () => {

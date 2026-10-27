@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.android.feature.tournament.presentation.model.Tournam
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSession
 import com.tpov.schoolquiz.shared.core.outbox.OutboxSessionProvider
 import com.tpov.schoolquiz.shared.feature.tournament.data.repository.TournamentCompetitionRepository
+import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentAdmissionLink
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEscrowView
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentEventView
 import com.tpov.schoolquiz.shared.feature.tournament.domain.model.TournamentOperateRequest
@@ -203,6 +204,42 @@ class DefaultTournamentOrganizerComponentTest {
         assertTrue(creates[1].operationId != creates[0].operationId, "a new create cycle replayed the old operation identity")
         assertTrue(creates[1].eventId != creates[0].eventId)
         assertNotNull(component.state.value.created)
+    }
+
+    @Test
+    fun `create receipt carries the admission link token and a new cycle drops it`() = runTest(dispatcher) {
+        // L4: CREATE-квитанция — единственный легальный путь токена; состояние несёт его до
+        // нового цикла создания (по нему второй аккаунт стартует; ARENA_LESSON — единственная
+        // основа допуска).
+        val repository = FakeTournamentRepository()
+        val token = "a".repeat(48)
+        val escrow = TournamentEscrowView(reservedBoxes = 10, remainingBoxes = 10, paidBoxes = 0, returnedBoxes = 0)
+        repository.prepareResult = Result.success(prepareReply("snapshot-1"))
+        repository.operateResult =
+            Result.success(
+                operationView(
+                    status = "CREATED",
+                    event = createEventView(escrow),
+                    serverNowMs = 1L,
+                    admissionLink = TournamentAdmissionLink(token = token),
+                ),
+            )
+        val component = component(repository)
+
+        component.onSourceIdChange("course-1")
+        component.onPrepareClick()
+        advanceUntilIdle()
+        component.onShowConsentClick()
+        component.onConfirmCreate(requireNotNull(component.state.value.consent).dialogId)
+        advanceUntilIdle()
+
+        assertEquals(token, component.state.value.admissionToken)
+        assertNotNull(component.state.value.created)
+
+        // Новый цикл: показанный токен уходит вместе с созданным событием.
+        component.onNewCreateClick()
+        assertNull(component.state.value.admissionToken)
+        assertNull(component.state.value.created)
     }
 
     @Test

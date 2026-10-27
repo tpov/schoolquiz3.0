@@ -154,13 +154,20 @@ class DefaultTournamentOrganizerComponent(
                     throw failure
                 }
             val event: TournamentEventView = requireNotNull(view.event) { "CREATE response without its event view" }
+            // L4: токен ссылки допуска живёт только в CREATE-квитанции организатора — показываем
+            // его на экране созданного события; повтор той же операции вернёт тот же токен.
             mutable.update {
-                it.copy(created = event, notice = TournamentNotice.Ready, prepare = null)
+                it.copy(
+                    created = event,
+                    admissionToken = view.admissionLink?.token,
+                    notice = TournamentNotice.Ready,
+                    prepare = null,
+                )
             }
         }
     }
 
-    /** Новый цикл создания: замороженное согласие и личность прошлой операции не наследуются. */
+    /** Новый цикл создания: замороженное согласие, личность прошлой операции и показанный токен не наследуются. */
     override fun onNewCreateClick() {
         createOperationId = null
         createEventId = null
@@ -168,6 +175,7 @@ class DefaultTournamentOrganizerComponent(
         mutable.update {
             it.copy(
                 created = null,
+                admissionToken = null,
                 consent = null,
                 canRetryCreate = false,
                 notice = TournamentNotice.Ready,

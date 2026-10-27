@@ -251,7 +251,9 @@ class TournamentEventWireParser {
         }
 
     private companion object {
-        const val MAX_PRIZE_ROWS = 15
+        /** Верх призового списка — серверная константа MAX_QUALIFIERS=16 (`tournament-policy.js`);
+         * место 16 легально (полная сетка top16), 17-я строка/место 17 — MalformedWire. */
+        const val MAX_PRIZE_ROWS = 16
 
         /** Верх сетки — серверная константа qualification top16; больше строк заморозка не несёт. */
         const val MAX_RANKING_ROWS = 16

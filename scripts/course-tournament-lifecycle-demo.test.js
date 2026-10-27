@@ -20,6 +20,7 @@
 const assert = require("node:assert/strict");
 const {randomUUID, createHash} = require("node:crypto");
 const {readFileSync} = require("node:fs");
+const {createRequire, Module} = require("node:module");
 const PROJECT = "demo-schoolquiz-mvp";
 const HOST = "schoolquiz-mvp-firebase";
 assert.equal(process.env.GCLOUD_PROJECT, PROJECT);
@@ -31,7 +32,7 @@ const {SINGLE} = require("/repo/functions/_question-fixtures");
 const {TOURNAMENT_PATHS: P, matchSessionId, qualificationSessionId} = require("/repo/functions/tournament-service");
 const {tournamentDigest: digest} = require("/repo/functions/tournament-bank");
 const {SOURCE_BANKS} = require("/repo/functions/tournament-source-bank");
-const {VERIFIED_RUNS} = require("/repo/functions/tournament-session");
+const {VERIFIED_RUNS, advanceTournamentSession} = require("/repo/functions/tournament-session");
 const {QUALIFICATION_RANKINGS} = require("/repo/functions/tournament-qualification-freeze");
 const {LEDGER_PATH} = require("/repo/functions/currency-ledger");
 const {createCourseTournamentController} = require("/repo/functions/course-tournament-controller");
@@ -46,8 +47,8 @@ const PLAYER_COUNT = 4;
 const runId = `lc_${randomUUID().replaceAll("-", "")}`;
 const id = (name) => `${runId}_${name}`;
 const names = Object.fromEntries(["catalog", "course", "section", "theme", "lesson", "submission",
-  "mainEvent", "event0", "event1", "event2"].map((name) => [name, id(name)]));
-const events = [names.mainEvent, names.event0, names.event1, names.event2];
+  "mainEvent", "event0", "event1", "event2", "event3"].map((name) => [name, id(name)]));
+const events = [names.mainEvent, names.event0, names.event1, names.event2, names.event3];
 const endpoints = ["prepareCourseTournamentBank", "submitCourseTournamentOperation",
   "submitCourseTournamentSession", "fetchCourseTournamentEvent", "fetchCourseTournamentSession",
   "recordCourseTournamentDownload"];
@@ -618,6 +619,121 @@ async function main() {
   const sweepAfterFinish2 = await sweep(names.event2);
   assert.equal(sweepAfterFinish2.done, true); assert.equal(sweepAfterFinish2.status, "FINISHED");
   passed("degenerate-2-plays-full-final-to-FINISHED-with-conservation");
+
+  // --- Retro item 10: the queue receiver drives a real session end to end ---
+  // One sink-driven qualification session over `tournament.SESSION_OP` (the app outbox's only
+  // server entrance): CREATE mints the admission link (L4), the player STARTs with that token
+  // and no download record, ANSWER and READY_ACK ride the single mutation sink, the delivered
+  // window is left to expire, and two worker passes settle the attempt — TIMEOUT at the
+  // question edge, then FORCED_CUTOFF at the captured window edge (D4: a worker close leaves
+  // the next window OPEN until its sweep).
+  advance(nowMs() + 60_000);
+  const sinkCreate = await controller().operate(author.uid, {kind: "CREATE", operationId: id("create_sink"),
+    eventId: names.event3, source: {...source, snapshotId: prepared.snapshotId}, startsAtMs: nowMs() + DELAY,
+    prizes: PRIZES, fundedBoxes: 12});
+  assert.equal(sinkCreate.status, "CREATED"); safe(sinkCreate);
+  const linkToken = sinkCreate.admissionLink?.token;
+  assert.ok(/^[a-f0-9]{48}$/.test(linkToken), "The CREATE receipt must carry the admission link token (L4)");
+  assert.equal(JSON.stringify(sinkCreate.event).includes(linkToken), false,
+    "The token must live in the organizer receipt only, never in the event view");
+  // The sink player is a real account of this run; its balances are untouched by the phase
+  // (event3 cancels with a full refund).
+  const sinkPlayer = players[3];
+  advance(nowMs() + DELAY + 1_000);
+  const sinkAttempt = id("att_sink_1");
+  sessions.add(qualificationSessionId(sinkAttempt)); // The START transaction creates this doc.
+  const sinkStart = await controller().operate(sinkPlayer.uid, {kind: "START_QUALIFICATION", eventId: names.event3,
+    operationId: id("start_sink_1"), attemptId: sinkAttempt, roundNumber: 1, linkToken});
+  safe(sinkStart); assert.equal(sinkStart.session.kind, "QUALIFICATION");
+  sessions.add(sinkStart.session.sessionId);
+  const sinkSessionId = sinkStart.session.sessionId;
+  // The sink is drained in-process (the callable entry point itself, `submitMutation.run`),
+  // under the run's logical clock: every post-cutoff phase rides the injected clock, and the
+  // mutation sink must judge answer timeliness on the SAME clock the session was seeded with.
+  // The mounted functions module reuses this run's admin app (a proxy stands in for
+  // initializeApp) and keeps the captured pinned clock permanently.
+  const repoReq = createRequire("/repo/functions/index.js");
+  const adminPath = repoReq.resolve("firebase-admin");
+  const appProxy = new Proxy(admin, {get(target, prop) {
+    if (prop === "initializeApp") return () => target.app();
+    return target[prop];
+  }});
+  const adminStub = new Module(adminPath, null);
+  adminStub.filename = adminPath; adminStub.loaded = true; adminStub.exports = appProxy;
+  const savedAdminEntry = require.cache[adminPath];
+  const pinnedNow = Date.now;
+  Date.now = () => logical;
+  let sinkFunctions = null;
+  try { sinkFunctions = repoReq("/repo/functions/index.js"); } finally { Date.now = pinnedNow; require.cache[adminPath] = savedAdminEntry; }
+  // The sink envelope is exactly what the client outbox sends: {mutationId, operation, payload}.
+  const sinkSubmit = async (payload) => {
+    const delivered = await sinkFunctions.submitMutation.run({auth: {uid: sinkPlayer.uid},
+      data: {mutationId: id(`mut_${payload.operationId}`), operation: "tournament.SESSION_OP",
+        payload: JSON.stringify(payload)}});
+    assert.equal(delivered.replayed, false, "A fresh sink operation must not replay");
+    safe(delivered.result);
+    return delivered.result;
+  };
+  const sinkView = await controller().readSession(sinkPlayer.uid, {sessionId: sinkSessionId});
+  safe(sinkView);
+  assert.ok(sinkView.currentQuestion, "The seeded question must be served to its owner");
+  const sinkAnswer = await sinkSubmit({kind: "ANSWER", sessionId: sinkSessionId, operationId: id("sink_ans_0"),
+    questionIndex: 0, questionId: sinkView.currentQuestion.questionId, answerPayload: CORRECT});
+  assert.equal(sinkAnswer.status, "ANSWER_ACCEPTED");
+  // L1 server half: the operation's window rides NESTED in the session and this client-driven
+  // close IS the delivery.
+  const deliveredWindow = sinkAnswer.session.window;
+  assert.ok(deliveredWindow, "A client-driven close must deliver the next window");
+  assert.equal(deliveredWindow.state, "DELIVERED");
+  assert.equal(deliveredWindow.nextQuestionIndex, 1);
+  const sinkAck = await sinkSubmit({kind: "READY_ACK", sessionId: sinkSessionId, operationId: id("sink_ack_0"),
+    questionIndex: deliveredWindow.nextQuestionIndex, windowId: deliveredWindow.windowId});
+  assert.equal(sinkAck.status, "READY_ACK");
+  assert.deepEqual({questionIndex: sinkAck.readyAck.questionIndex, windowId: sinkAck.readyAck.windowId},
+    {questionIndex: 1, windowId: deliveredWindow.windowId}, "The ready-ACK receipt must name the served triple");
+  assert.ok(sinkAck.readyAck.ackedAtMs <= sinkAck.readyAck.answerDeadlineMs);
+  passed("sink-driven-READY_ACK-over-tournament-SESSION_OP-with-delivered-window");
+  // Worker pass 1: the delivered q1 window expired unanswered — TIMEOUT at the question edge;
+  // the worker close opens q2's window and leaves it OPEN (the sweep clock stays inside the
+  // envelope so the cutoff flush cannot preempt the window path).
+  advance(Math.max(deliveredWindow.expiresAtMs, sinkView.serverNowMs) + 1_000);
+  assert.ok(nowMs() < sinkStart.session.endsAtMs, "The window pass must run inside the envelope");
+  const windowPass = await advanceTournamentSession({db, sessionId: sinkSessionId,
+    operationId: id("wadv_window"), now: nowMs()});
+  assert.equal(windowPass.status, "QUESTION_TIMED_OUT");
+  const openWindow = windowPass.session.window;
+  assert.ok(openWindow, "A worker close must open the next window");
+  assert.equal(openWindow.state, "OPEN", "A worker close leaves the next window OPEN (D4)");
+  // Worker pass 2: the worker window left to expire — FORCED_CUTOFF at the captured edge.
+  advance(openWindow.expiresAtMs + 1_000);
+  const cutoffPass = await advanceTournamentSession({db, sessionId: sinkSessionId,
+    operationId: id("wadv_cutoff"), now: nowMs()});
+  assert.equal(cutoffPass.status, "COMPLETED");
+  assert.equal(cutoffPass.session.status, "SETTLED");
+  const sinkRun = await read(`${VERIFIED_RUNS}/${sinkSessionId}`);
+  assert.equal(sinkRun.status, "SETTLED");
+  assert.equal(sinkRun.percentScore, 5, "One correct of twenty: captured-edge cutoffs score zero");
+  const cutoffSlot = await read(`${P.sessions}/${sinkSessionId}/answers/02`);
+  assert.equal(cutoffSlot.kind, "FORCED_CUTOFF");
+  assert.equal(cutoffSlot.closedAtMs, openWindow.expiresAtMs,
+    "The cutoff rides the captured window edge, never the observation moment");
+  passed("worker-window-left-to-expire-FORCED_CUTOFF-at-captured-edge");
+  // The half-played event still closes honestly: one qualifier cancels with a full refund.
+  const sinkCutoff = (await eventDoc(names.event3)).qualification.endsAtMs;
+  advance(sinkCutoff + 1_000);
+  let sinkClosed = false; let lastSinkResult = null;
+  for (let attempt = 0; attempt < 12 && !sinkClosed; attempt++) {
+    lastSinkResult = await sweep(names.event3);
+    sinkClosed = (await eventDoc(names.event3)).status !== "QUALIFICATION";
+  }
+  assert.equal(sinkClosed, true, `The sink event did not close: ${JSON.stringify(lastSinkResult)}`);
+  const sinkTerminal = await eventDoc(names.event3);
+  assert.equal(sinkTerminal.status, "CANCELLED");
+  assert.equal(sinkTerminal.cancelReason, "FEWER_THAN_TWO_QUALIFIERS");
+  assertEscrowIntact(sinkTerminal);
+  assert.deepEqual(sinkTerminal.escrow, {reservedBoxes: 12, paidBoxes: 0, returnedBoxes: 12, remainingBoxes: 0},
+    "The cancelled sink event must refund the full fund once");
+  passed("sink-event-cancels-with-full-refund-after-sink-driven-session");
 
   // --- Terminal state across the whole run ---
   for (const [index, eventId] of events.entries()) {

@@ -250,13 +250,16 @@ test("START without a server admission basis is refused as a typed gate error an
   f.db.store.set(`${P.downloads}/${digest(["alice", "other-course"])}`,
     {schemaVersion: 1, uid: "alice", courseId: "other-course", downloadedAtMs: T});
   const before = structuredClone([...f.db.store]);
+  // L2: the typed admission refusal rides AS the wire reason — the error's code AND message
+  // are the named reason, which `courseTournamentFailure` forwards in `details.reason`, so
+  // the client's named branch fires instead of generic permission-denied.
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
     {roundNumber: 1, attemptId: "attempt_0000000000000001"}),
-  (error) => { assert.equal(error.code, "PERMISSION_DENIED"); assert.equal(error.message, "NO_ADMISSION_BASIS"); return true; });
+  (error) => { assert.equal(error.code, "NO_ADMISSION_BASIS"); assert.equal(error.message, "NO_ADMISSION_BASIS"); return true; });
   assert.deepEqual([...f.db.store], before);
   assert.equal(admissionRows(f).length, 0);
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
-    {roundNumber: 1, attemptId: "attempt_0000000000000001"}), {code: "PERMISSION_DENIED"});
+    {roundNumber: 1, attemptId: "attempt_0000000000000001"}), {code: "NO_ADMISSION_BASIS"});
   assert.deepEqual([...f.db.store], before);
 });
 
@@ -270,9 +273,10 @@ test("the minted link token admits without any download record and never persist
   assert.ok(/^[a-f0-9]{48}$/.test(token));
   assert.ok(!JSON.stringify(created.event).includes(token));
   assert.equal(f.db.store.get(`${P.links}/${EVENT}`).digest, digest(token));
-  // Wrong token: refused, nothing staged. Right token: admitted via LINK, doc created once.
+  // Wrong token: refused by name (the link digest never matches), nothing staged. Right
+  // token: admitted via LINK, doc created once.
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
-    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "f".repeat(48)}), {code: "PERMISSION_DENIED"});
+    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "f".repeat(48)}), {code: "NO_ADMISSION_BASIS"});
   // A malformed token is a request error before any record is read.
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
     {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "zzz-not-hex"}), {code: "INVALID_ARGUMENT"});
@@ -318,12 +322,12 @@ test("ARENA_LESSON events are link-only end to end: no course download basis exi
     startsAtMs: T, prizes: PRIZES, fundedBoxes: 12});
   const token = created.admissionLink.token;
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
-    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "0".repeat(48)}), {code: "PERMISSION_DENIED"});
+    {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: "0".repeat(48)}), {code: "NO_ADMISSION_BASIS"});
   // Even an attested download record for the arena source id is no basis (owner-visible reading).
   f.db.store.set(`${P.downloads}/${digest(["alice", "arena-lesson"])}`,
     {schemaVersion: 1, uid: "alice", courseId: "arena-lesson", downloadedAtMs: T});
   await assert.rejects(f.call("START_QUALIFICATION", "alice", T + 100,
-    {roundNumber: 1, attemptId: "attempt_0000000000000001"}), {code: "PERMISSION_DENIED"});
+    {roundNumber: 1, attemptId: "attempt_0000000000000001"}), {code: "NO_ADMISSION_BASIS"});
   const started = await f.call("START_QUALIFICATION", "alice", T + 100,
     {roundNumber: 1, attemptId: "attempt_0000000000000001", linkToken: token});
   assert.equal(started.status, "SESSION");

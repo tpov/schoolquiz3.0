@@ -143,7 +143,10 @@ class DefaultTournamentMatchPlayComponentTest {
                 nowMs = { 1L },
             )
 
-        /** Квитанция приёмника для намерения: конверт {replayed, result} с тем же operationId. */
+        /**
+         * Квитанция приёмника для намерения: конверт {replayed, result} с тем же operationId.
+         * P2: провод = серверная форма `responseFor` — окно операции вложено в `session`.
+         */
         fun deliver(
             intent: TournamentSessionIntent,
             status: String,
@@ -169,22 +172,22 @@ class DefaultTournamentMatchPlayComponentTest {
                             put("endsAtMs", 100)
                             put("questionStartedAtMs", 0)
                             put("questionEndsAtMs", 50)
+                            if (window != null) {
+                                put(
+                                    "window",
+                                    buildJsonObject {
+                                        put("windowId", window.windowId)
+                                        put("completedQuestionIndex", window.completedQuestionIndex)
+                                        put("nextQuestionIndex", window.nextQuestionIndex)
+                                        put("windowSeconds", window.windowSeconds)
+                                        put("openedAtMs", window.openedAtMs)
+                                        put("expiresAtMs", window.expiresAtMs)
+                                        put("state", window.state)
+                                    },
+                                )
+                            }
                         },
                     )
-                    if (window != null) {
-                        put(
-                            "window",
-                            buildJsonObject {
-                                put("windowId", window.windowId)
-                                put("completedQuestionIndex", window.completedQuestionIndex)
-                                put("nextQuestionIndex", window.nextQuestionIndex)
-                                put("windowSeconds", window.windowSeconds)
-                                put("openedAtMs", window.openedAtMs)
-                                put("expiresAtMs", window.expiresAtMs)
-                                put("state", window.state)
-                            },
-                        )
-                    }
                     if (intent is TournamentSessionIntent.ReadyAck) {
                         put(
                             "readyAck",
@@ -232,7 +235,8 @@ class DefaultTournamentMatchPlayComponentTest {
         assertEquals(matchId, f.component.state.value.matchId)
         assertEquals("A?", play.question?.publicPayload?.text)
 
-        // Та же машина: ответ уезжает из очереди, квитанция несёт окно следующего вопроса.
+        // Та же машина: ответ уезжает из очереди, квитанция несёт доставленное (DELIVERED) окно,
+        // вложенное в session — серверная форма `responseFor` (P2/L1).
         val answerIntent =
             TournamentSessionIntent.Answer(
                 sessionId = matchSessionId,
@@ -246,7 +250,7 @@ class DefaultTournamentMatchPlayComponentTest {
                 questionIndex = 1,
                 windowId = "win_" + "cd".repeat(16),
             )
-        val openWindow =
+        val deliveredWindow =
             TournamentWindowView(
                 windowId = ackIntent.windowId,
                 completedQuestionIndex = 0,
@@ -254,9 +258,9 @@ class DefaultTournamentMatchPlayComponentTest {
                 windowSeconds = 5,
                 openedAtMs = 1L,
                 expiresAtMs = 101L,
-                state = "OPEN",
+                state = "DELIVERED",
             )
-        f.deliver(answerIntent, status = "ANSWER_ACCEPTED", window = openWindow, questionIndex = 1)
+        f.deliver(answerIntent, status = "ANSWER_ACCEPTED", window = deliveredWindow, questionIndex = 1)
         f.deliver(ackIntent, status = "READY_ACK", questionIndex = 1)
         f.repository.readSessionResult = Result.success(readAnswer(1))
 

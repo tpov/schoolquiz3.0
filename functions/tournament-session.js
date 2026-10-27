@@ -394,21 +394,13 @@ function planTournamentSessionOperation({snapshot, now, serverDriven = false}) {
   // OPEN for the client to claim (D4). At the envelope edge (remainder <= 0) no window opens —
   // the envelope sweep above has already terminated the attempt (D3/D4, matrix "zero remainder").
   if (closed.length && session.questionIndex < QUESTION_COUNT && session.endsAtMs > at) {
+    // `openTournamentQuestionWindow` always returns the window object (the caller's
+    // `endsAtMs > at` guard keeps the remainder positive), so there is no falsy path: the
+    // window opens unconditionally and a client-driven close IS the delivery (F3 — the
+    // former sub-second-remainder branch here was dead and its comment lied).
     const opened = openTournamentQuestionWindow({session, form, completedQuestionIndex: session.questionIndex - 1, openedAtMs: at});
-    if (!opened) {
-      // Sub-second remainder: no waiting window exists. A client-driven close IS the delivery —
-      // clocks anchor at `at` with the envelope clamp (the shortened-last-question semantics);
-      // a worker close cannot be claimed, so the attempt terminates at the envelope edge (D4).
-      if (!serverDriven) {
-        session.questionStartedAtMs = at;
-        session.questionEndsAtMs = Math.min(add(at, form.questions[session.questionIndex].maxDurationMs), session.endsAtMs);
-      } else {
-        while (session.questionIndex < QUESTION_COUNT) close("FORCED_CUTOFF", session.endsAtMs);
-      }
-    } else {
-      session.window = opened;
-      if (!serverDriven) deliverTournamentQuestionWindow(session, form, at);
-    }
+    session.window = opened;
+    if (!serverDriven) deliverTournamentQuestionWindow(session, form, at);
   }
   let run = null;
   if (session.questionIndex === QUESTION_COUNT) {

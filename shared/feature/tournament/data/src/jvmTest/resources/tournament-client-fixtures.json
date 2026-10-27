@@ -236,6 +236,101 @@
   },
   "serverNowMs": 1789603200000
  },
+ "eventReadPrizeBoundary16": {
+  "event": {
+   "eventId": "event_fixture_00000002",
+   "organizerUid": "author",
+   "status": "QUALIFICATION",
+   "source": {
+    "kind": "COURSE",
+    "id": "course"
+   },
+   "qualification": {
+    "startsAtMs": 1788739200000,
+    "endsAtMs": 1789344000000,
+    "roundCount": 3,
+    "questionsPerRound": 20,
+    "attemptsPerRound": 1
+   },
+   "prizes": {
+    "listVersion": 1,
+    "rows": [
+     {
+      "place": 1,
+      "amountBoxes": 5
+     },
+     {
+      "place": 2,
+      "amountBoxes": 3
+     },
+     {
+      "place": 3,
+      "amountBoxes": 1
+     },
+     {
+      "place": 4,
+      "amountBoxes": 1
+     },
+     {
+      "place": 5,
+      "amountBoxes": 1
+     },
+     {
+      "place": 6,
+      "amountBoxes": 1
+     },
+     {
+      "place": 7,
+      "amountBoxes": 1
+     },
+     {
+      "place": 8,
+      "amountBoxes": 1
+     },
+     {
+      "place": 9,
+      "amountBoxes": 1
+     },
+     {
+      "place": 10,
+      "amountBoxes": 1
+     },
+     {
+      "place": 11,
+      "amountBoxes": 1
+     },
+     {
+      "place": 12,
+      "amountBoxes": 1
+     },
+     {
+      "place": 13,
+      "amountBoxes": 1
+     },
+     {
+      "place": 14,
+      "amountBoxes": 1
+     },
+     {
+      "place": 15,
+      "amountBoxes": 1
+     },
+     {
+      "place": 16,
+      "amountBoxes": 1
+     }
+    ],
+    "maximumLiabilityBoxes": 22
+   },
+   "escrow": {
+    "reservedBoxes": 24,
+    "remainingBoxes": 24,
+    "paidBoxes": 0,
+    "returnedBoxes": 0
+   }
+  },
+  "serverNowMs": 1788739200000
+ },
  "eventReadQualification": {
   "event": {
    "escrow": {
@@ -792,8 +887,9 @@
   "status": "READY_ACK"
  },
  "sourceSha256": {
-  "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
-  "tournament-session.js": "a4b36169e0440258aaa094aa994f4b19cb37bf9643b4912981658d7a7791f309"
+  "course-tournament-controller.js": "b8d75c8a17b99ddd31f60f92a2ecc1bdfbb53f0fa266fbf331d7ed577e2905ad",
+  "tournament-session.js": "1c661566869746da9870799173bf51743d5d3bddf4a9156de3a4a626f6998e06",
+  "tournament-policy.js": "b84ff069a861410436304c8804d6b46aadb3767e9f9c547cb7d8823c14db48b5"
  },
  "startView": {
   "operationId": "fixture_start_0000001",
