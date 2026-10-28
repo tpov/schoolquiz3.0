@@ -112,8 +112,11 @@ const ENDPOINTS = Object.freeze([
 // the surface — the owner-checked advance behind the model-review outcome. Re-pinned 2026-10-27
 // (story 4.17): the decisions pair joins the surface — the verifier-gated read
 // fetchReviewDecisions and the mark writer markReviewDecision (UX-22), covered by
-// review-decisions.test.js.
-const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "e87b34c2911f7e4ec15c011c253ee506e76c4ca60acfe91e9061c0e48487888a";
+// review-decisions.test.js. Re-pinned 2026-10-28 (story 4.21): the proposal pair joins the
+// surface — the read-only fee quote quoteLessonProposalFee and the owner decision
+// decideLessonProposal (AD-33/UX-22), covered by lesson-proposals.test.js and the
+// proposal-names-sentinel; the submission itself rides the queue, not the export surface.
+const ACCEPTED_NON_LIFECYCLE_EXPORT_SET_SHA256 = "0540294d2c1c3461c8c406fecd7859fab064687d52602c5489d131e931a25c68";
 function exportSetHash(names) {
   return createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex");
 }

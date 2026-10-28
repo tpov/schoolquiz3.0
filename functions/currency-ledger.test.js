@@ -78,6 +78,7 @@ function testTheListOfReasonsIsClosedAndNamesEveryWayMoneyMoves() {
     "premium_refund",
     "premium_regen",
     "premium_time",
+    "proposal_fee",
     "purchase_refund",
     "referral_bonus",
     "review_fee",

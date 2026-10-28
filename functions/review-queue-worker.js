@@ -28,6 +28,13 @@ const {
   verdictDocumentId,
 } = require("./review-pipeline");
 const {buildSubmissionOutcome} = require("./review-outcome");
+const {
+  PROPOSALS_COLLECTION,
+  buildProposalCheckSource,
+  buildProposalOutcome,
+  proposalCheckStatus,
+  proposalPipelinePath,
+} = require("./lesson-proposals");
 const {wrapLessonData} = require("./review-model-client");
 
 const WORKER_STATE_COLLECTION = "review_worker_state";
@@ -36,6 +43,10 @@ const PIPELINE_COLLECTION = "review_pipeline";
 const VERDICTS_COLLECTION = "review_verdicts";
 const TRANSLATIONS_COLLECTION = "review_translations";
 const QUEUE_COLLECTION = "quest_review_requests";
+// Предложения (4.21, AD-33) — вторая семья того же свипа: свой конвейер и свои вердикты, чтобы
+// мир заявок (и вкладка «Решений» на нём) не увидел ни одной чужой записи.
+const PROPOSAL_PIPELINE_COLLECTION = "proposal_pipeline";
+const PROPOSAL_VERDICTS_COLLECTION = "proposal_verdicts";
 const LEASE_MS = 660_000;
 /** Судящий вызов занимает минуты: один шаг свипа — один вызов этапа, и свип на этом честно кончается. */
 const MAX_STAGE_CALLS_PER_SWEEP = 2;
@@ -353,24 +364,38 @@ function createReviewQueueWorker({
       const status = await finishQuest(submissionId, pipeline);
       return {status, terminal: true};
     }
-    const skill = requireStageSkill(stages, job.stage);
-    const lesson = (source.lessons || []).find((item) => item && item.id === job.lessonId);
-    if (!lesson) {
-      applyStageError(pipeline, job.lessonId, job.stage, job.attempt, "REVIEW_LESSON_NOT_IN_SUBMISSION");
-      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
-      return {status: "ADVANCED", terminal: false};
-    }
     // Перевод — свой шаг: пригодность по вердиктам, запись перевода, SKIPPED без вызова.
     if (job.stage === "TRANSLATE") {
       return advanceTranslate(submissionId, pipeline, source, job);
     }
+    const skill = requireStageSkill(stages, job.stage);
+    return advanceCheckJob(submissionId, pipeline, source, job, skill, {
+      pipelineCollection: PIPELINE_COLLECTION,
+      verdictId: verdictDocumentId,
+      verdictExistsFn: verdictExists,
+      writeVerdictFn: writeVerdict,
+    });
+  }
+
+  /**
+   * Проверочный шаг, общий для заявок и предложений (4.21): кризисный повтор по имени вердикта,
+   * судящий вызов, линтер, запись. Коллекции и функцию записи передаёт семья; модель, скиллы и
+   * правила попыток у обеих семей одни.
+   */
+  async function advanceCheckJob(submissionId, pipeline, source, job, skill, family) {
+    const lesson = (source.lessons || []).find((item) => item && item.id === job.lessonId);
+    if (!lesson) {
+      applyStageError(pipeline, job.lessonId, job.stage, job.attempt, "REVIEW_LESSON_NOT_IN_SUBMISSION");
+      await db.doc(`${family.pipelineCollection}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
+      return {status: "ADVANCED", terminal: false};
+    }
     // Кризисный повтор: вердикт по этому заданию уже стоит — свернуть без повторного вызова.
-    if (await verdictExists(job.lessonId, job.stage, job.attempt, submissionId)) {
-      const current = pipelineRecord(data(await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).get()));
+    if (await family.verdictExistsFn(job.lessonId, job.stage, job.attempt, submissionId)) {
+      const current = pipelineRecord(data(await db.doc(`${family.pipelineCollection}/${submissionId}`).get()));
       applyVerdict(current, job.lessonId, job.stage,
-        verdictDocumentId({submissionId, lessonId: job.lessonId, stage: job.stage, attempt: job.attempt}));
+        family.verdictId({submissionId, lessonId: job.lessonId, stage: job.stage, attempt: job.attempt}));
       current.updatedAtMs = now();
-      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set(current);
+      await db.doc(`${family.pipelineCollection}/${submissionId}`).set(current);
       return {status: "ADVANCED", terminal: false};
     }
 
@@ -393,16 +418,16 @@ function createReviewQueueWorker({
         return {status: "MODEL_UNAVAILABLE", terminal: false};
       }
       applyStageError(pipeline, job.lessonId, job.stage, job.attempt, reply.code);
-      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
+      await db.doc(`${family.pipelineCollection}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
       return {status: "ADVANCED", terminal: false};
     }
     const lint = skill.lint(reply.content, lessonContext);
     if (!lint.ok) {
       applyStageError(pipeline, job.lessonId, job.stage, job.attempt, lint.error);
-      await db.doc(`${PIPELINE_COLLECTION}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
+      await db.doc(`${family.pipelineCollection}/${submissionId}`).set({...pipeline, updatedAtMs: now()});
       return {status: "ADVANCED", terminal: false};
     }
-    await writeVerdict({submissionId, pipeline, job, skill, verdict: lint.verdict});
+    await family.writeVerdictFn({submissionId, pipeline, job, skill, verdict: lint.verdict});
     return {status: "ADVANCED", terminal: false};
   }
 
@@ -465,6 +490,183 @@ function createReviewQueueWorker({
     }
     await writeTranslation({submissionId, pipeline, job, skill, translation: lint.translation});
     return {status: "ADVANCED", terminal: false};
+  }
+
+  /**
+   * ─── Предложения (4.21, AD-33): вторая семья того же свипа ────────────────────────────────────
+   *
+   * Один урок-единица, этапы «Слова» и «Факты» (перевода у предложений нет), свой конвейер и
+   * свои неизменяемые вердикты. Терминал атомарен: конвейер и статус записи предложения едут
+   * одной транзакцией — упавший между ними воркер не оставляет QUEUED-запись с законченным
+   * конвейером (у заявок этот шов дотянут догоном, предложениям достаточно одной записи).
+   */
+
+  /** Кандидаты: предложения в очереди на проверку; сортировка по возрасту — в памяти. */
+  async function proposalCandidates() {
+    const snapshot = await db.collection(PROPOSALS_COLLECTION).where("status", "==", "QUEUED").get();
+    const rows = (snapshot && Array.isArray(snapshot.docs) ? snapshot.docs : [])
+      .filter((doc) => doc && doc.id)
+      .slice(0, candidatePage)
+      .map((doc) => ({id: doc.id, createdAtMs: Number(doc.data() && doc.data().createdAtMs) || 0}));
+    rows.sort((a, b) => (a.createdAtMs !== b.createdAtMs ? a.createdAtMs - b.createdAtMs : (a.id < b.id ? -1 : 1)));
+    return rows;
+  }
+
+  /** Заявка предложений годна, пока конвейера нет, его lease истёк или он ещё бежит. */
+  async function claimProposal(proposalId, nonce) {
+    return db.runTransaction(async (tx) => {
+      const ref = db.doc(proposalPipelinePath(proposalId));
+      const existing = data(await tx.get(ref));
+      const at = now();
+      if (existing && existing.lease && existing.lease.expiresAtMs > at) return null;
+      if (existing && pipelineRecord(existing).status !== QUEST_STATUS.RUNNING) return null;
+      const proposalSnapshot = await tx.get(db.doc(`${PROPOSALS_COLLECTION}/${proposalId}`));
+      const proposal = proposalSnapshot && proposalSnapshot.exists ? proposalSnapshot.data() || {} : null;
+      if (!proposal || proposal.status !== "QUEUED") return null;
+      let source;
+      try {
+        source = buildProposalCheckSource(proposal);
+      } catch (error) {
+        fail("PROPOSAL_SOURCE_UNREADABLE", `Proposal ${proposalId} requires repair: ${error.message}`);
+      }
+      const unit = source.lessons[0];
+      const target = proposal.target || {};
+      const pipeline = existing ||
+        createPipelineState({
+          submissionId: proposalId,
+          ownerUid: proposal.proposerUid,
+          questId: proposal.kind === "NEW_LESSON" ? target.questId : target.lessonId,
+          questTitle: unit && unit.title ? unit.title : "",
+          categoryPath: "",
+          revision: proposal.baseRevision,
+          lessonIds: [unit && unit.id],
+          stages: ["WORDS", "FACTS"],
+        });
+      pipeline.lease = {ownerNonce: nonce, expiresAtMs: at + leaseMs};
+      pipeline.createdAtMs = pipeline.createdAtMs || at;
+      pipeline.updatedAtMs = at;
+      tx.set(ref, pipeline);
+      return {pipeline, source, proposal};
+    });
+  }
+
+  /** Вердикт предложения уже стоит (падение после записи, до чекпойнта)? Идемпотентность — имя. */
+  async function proposalVerdictExists(lessonId, stage, attempt, proposalId) {
+    const snapshot = await db.doc(`${PROPOSAL_VERDICTS_COLLECTION}/${verdictDocumentId({submissionId: proposalId, lessonId, stage, attempt})}`).get();
+    return Boolean(snapshot && snapshot.exists);
+  }
+
+  async function writeProposalVerdict({submissionId, pipeline, job, skill, verdict}) {
+    const record = buildVerdictRecord({
+      submissionId,
+      lessonId: job.lessonId,
+      stage: job.stage,
+      attempt: job.attempt,
+      revision: pipeline.revision,
+      model: modelClient.modelName,
+      promptVersion: skill.promptVersion,
+      questionVerdicts: verdict.questionVerdicts,
+      sources: verdict.sources,
+      rationale: verdict.rationale,
+    });
+    const verdictId = verdictDocumentId({submissionId, lessonId: job.lessonId, stage: job.stage, attempt: job.attempt});
+    await db.runTransaction(async (tx) => {
+      // Чтение до записей; create в роли идемпотентного замка — как у заявок.
+      const current = pipelineRecord(data(await tx.get(db.doc(proposalPipelinePath(submissionId)))));
+      applyVerdict(current, job.lessonId, job.stage, verdictId);
+      current.updatedAtMs = now();
+      tx.create(db.doc(`${PROPOSAL_VERDICTS_COLLECTION}/${verdictId}`), record);
+      tx.set(db.doc(proposalPipelinePath(submissionId)), current);
+    });
+    return verdictId;
+  }
+
+  /** Терминал предложения: конвейер, исход и статус записи — одной транзакцией. */
+  async function finishProposal(proposalId, proposal, pipeline) {
+    pipeline.status = nextJob(pipeline).status;
+    pipeline.lease = null;
+    pipeline.updatedAtMs = now();
+    const verdicts = [];
+    for (const lessonId of Object.keys(pipeline.lessons)) {
+      for (const stage of ["WORDS", "FACTS"]) {
+        const verdictId = pipeline.lessons[lessonId].stages[stage] &&
+          pipeline.lessons[lessonId].stages[stage].verdictId;
+        if (!verdictId) continue;
+        const snapshot = await db.doc(`${PROPOSAL_VERDICTS_COLLECTION}/${verdictId}`).get();
+        if (snapshot && snapshot.exists) verdicts.push(data(snapshot));
+      }
+    }
+    const outcome = buildProposalOutcome({pipeline, verdicts});
+    if (!outcome) fail("PROPOSAL_OUTCOME_MISSING", "Proposal terminal without an outcome");
+    const status = proposalCheckStatus(outcome);
+    await db.runTransaction(async (tx) => {
+      tx.set(db.doc(proposalPipelinePath(proposalId)), pipeline);
+      tx.set(db.doc(`${PROPOSALS_COLLECTION}/${proposalId}`), {
+        schemaVersion: 1,
+        status,
+        reviewOutcome: outcome,
+        checkedAtMs: now(),
+        updatedAtMs: now(),
+      }, {merge: true});
+    });
+    return status;
+  }
+
+  /** Один шаг предложения — тот же проверочный движок, proposal-семья. */
+  async function advanceProposalStep(proposalId, pipeline, source) {
+    const job = nextJob(pipeline);
+    if (job.done) {
+      return {status: "PROPOSAL_TERMINAL", terminal: true};
+    }
+    const skill = requireStageSkill(stages, job.stage);
+    return advanceCheckJob(proposalId, pipeline, source, job, skill, {
+      pipelineCollection: PROPOSAL_PIPELINE_COLLECTION,
+      verdictId: verdictDocumentId,
+      verdictExistsFn: proposalVerdictExists,
+      writeVerdictFn: writeProposalVerdict,
+    });
+  }
+
+  /**
+   * Проверить предложения внутри уже удерживаемого lease: бюджеты общие, заявки — первые
+   * (публикация авторского пути — основной продукт); предложения ждут свободный свип.
+   */
+  async function processProposals(budget, nonce) {
+    let stageCalls = 0;
+    let attempted = 0;
+    let terminal = false;
+    for (const candidate of await proposalCandidates()) {
+      if (stageCalls >= budget) break;
+      if (!owns(stateRecord(data(await stateRef.get())), nonce, now())) return {status: "LEASE_LOST", attempted, stageCalls};
+      let claim = null;
+      try {
+        claim = await claimProposal(candidate.id, nonce);
+      } catch (error) {
+        report(candidate.id, error && error.code ? error.code : "PROPOSAL_CLAIM_FAILED");
+        attempted++;
+        continue;
+      }
+      if (!claim) continue;
+      attempted++;
+      try {
+        while (stageCalls < budget) {
+          const pipeline = pipelineRecord(data(await db.doc(proposalPipelinePath(candidate.id)).get()));
+          const step = await advanceProposalStep(candidate.id, pipeline, claim.source);
+          if (step.terminal) {
+            await finishProposal(candidate.id, claim.proposal, pipeline);
+            terminal = true;
+            break;
+          }
+          if (step.status === "MODEL_UNAVAILABLE") return {status: "MODEL_UNAVAILABLE", attempted, stageCalls};
+          stageCalls++;
+          if (!await checkpoint(nonce)) return {status: "LEASE_LOST", attempted, stageCalls};
+        }
+      } catch (error) {
+        report(candidate.id, error && error.code ? error.code : "PROPOSAL_ADVANCE_FAILED");
+        return {status: "PROCESSED_WITH_ERRORS", attempted, stageCalls};
+      }
+    }
+    return {status: terminal ? "PROCESSED" : "IDLE", attempted, stageCalls};
   }
 
   /**
@@ -547,6 +749,17 @@ function createReviewQueueWorker({
           break;
         }
       }
+      // Предложения (4.21) — вторая семья того же lease: заявки первые, предложения получают
+      // остаток бюджета свипа и те же статусы результата.
+      if (status !== "LEASE_LOST" && stageCalls < maxStageCallsPerSweep) {
+        const proposalResult = await processProposals(maxStageCallsPerSweep - stageCalls, nonce);
+        attempted += proposalResult.attempted;
+        stageCalls += proposalResult.stageCalls;
+        if (proposalResult.status === "PROCESSED") status = "PROCESSED";
+        else if (proposalResult.status === "PROCESSED_WITH_ERRORS") status = "PROCESSED_WITH_ERRORS";
+        else if (proposalResult.status === "LEASE_LOST") status = "LEASE_LOST";
+        else if (proposalResult.status === "MODEL_UNAVAILABLE") status = "MODEL_UNAVAILABLE";
+      }
     } catch (error) {
       report(null, "SWEEP_STORAGE_FAILED");
       status = "STORAGE_FAILED";
@@ -574,6 +787,8 @@ module.exports = {
   LEASE_MS,
   MAX_STAGE_CALLS_PER_SWEEP,
   PIPELINE_COLLECTION,
+  PROPOSAL_PIPELINE_COLLECTION,
+  PROPOSAL_VERDICTS_COLLECTION,
   QUEUE_COLLECTION,
   TRANSLATIONS_COLLECTION,
   VERDICTS_COLLECTION,

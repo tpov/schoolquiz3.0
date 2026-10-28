@@ -55,15 +55,30 @@ function verdictDocumentId({submissionId, lessonId, stage, attempt}) {
   return `${submissionId}_${lessonId}_${stage}_${attemptNumber}`;
 }
 
+/**
+ * План этапов состояния: подмножество STAGE_PLAN в порядке плана, по умолчанию весь. Предложения
+ * (4.21) не переводятся — их состояние живёт на «Словах» и «Фактах»; поле в записи хранится,
+ * чтобы nextJob/questStatus читали план из самого состояния, а не из глобальной константы.
+ */
+function stateStagePlan(stages) {
+  if (stages === undefined) return STAGE_PLAN;
+  if (!Array.isArray(stages) || stages.length === 0 || stages.length > STAGE_PLAN.length ||
+    !STAGE_PLAN.slice(0, stages.length).every((stage, index) => stages[index] === stage)) {
+    throw new RangeError("pipeline stages must be a prefix of the stage plan");
+  }
+  return Object.freeze([...stages]);
+}
+
 /** Свежее состояние конвейера: все уроки — все этапы PENDING, включая перевод (4.15). */
-function createPipelineState({submissionId, ownerUid, questId, questTitle, categoryPath, revision, lessonIds}) {
+function createPipelineState({submissionId, ownerUid, questId, questTitle, categoryPath, revision, lessonIds, stages}) {
   if (!submissionId || !ownerUid || !questId) throw new RangeError("pipeline identity is required");
   if (!Array.isArray(lessonIds) || lessonIds.length === 0) throw new RangeError("pipeline needs lessons");
+  const stagePlan = stateStagePlan(stages);
   const lessons = {};
   for (const lessonId of lessonIds) {
     lessons[lessonId] = {
       overall: "PENDING",
-      stages: Object.fromEntries(STAGE_PLAN.map((stage) => [stage, freshStage()])),
+      stages: Object.fromEntries(stagePlan.map((stage) => [stage, freshStage()])),
     };
   }
   return {
@@ -74,6 +89,7 @@ function createPipelineState({submissionId, ownerUid, questId, questTitle, categ
     questTitle: String(questTitle || ""),
     categoryPath: String(categoryPath || ""),
     revision: Number(revision) || 0,
+    stages: stagePlan,
     status: QUEST_STATUS.RUNNING,
     lessons,
     createdAtMs: 0,
@@ -94,8 +110,9 @@ function freshStage() {
  * живых заданий получает итог.
  */
 function nextJob(state) {
+  const stagePlan = stateStagePlan(state.stages);
   for (const [lessonId, lesson] of Object.entries(state.lessons)) {
-    for (const stage of STAGE_PLAN) {
+    for (const stage of stagePlan) {
       const stageState = lesson.stages[stage];
       if (!stageState) throw new RangeError(`unknown stage ${stage} in lesson ${lessonId}`);
       if (stage === "TRANSLATE" &&
@@ -112,14 +129,15 @@ function nextJob(state) {
 }
 
 function questStatus(state) {
+  const stagePlan = stateStagePlan(state.stages);
   const lessons = Object.values(state.lessons);
   const delayed = lessons.some((lesson) =>
-    STAGE_PLAN.some((stage) => lesson.stages[stage].state === STAGE.DELAYED));
+    stagePlan.some((stage) => lesson.stages[stage].state === STAGE.DELAYED));
   if (delayed) return QUEST_STATUS.DELAYED;
   // SKIPPED перевод — завершён без перевода: урок с FAIL вопросом вернётся автору (4.16).
   const settled = (stageState) => stageState.state === STAGE.DONE || stageState.state === STAGE.SKIPPED;
   const allDone = lessons.every((lesson) =>
-    STAGE_PLAN.every((stage) => settled(lesson.stages[stage])));
+    stagePlan.every((stage) => settled(lesson.stages[stage])));
   return allDone ? QUEST_STATUS.REVIEWED : QUEST_STATUS.RUNNING;
 }
 

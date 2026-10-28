@@ -216,3 +216,54 @@ test("translation record binds revision, model, prompt, language and assembled q
   assert.throws(() => buildTranslationRecord({submissionId: "s", lessonId: "l", attempt: 1,
     model: "m", promptVersion: "p", detectedLanguage: "ru", questions: {en: []}}), RangeError);
 });
+
+// ─── Сокращённый план этапов (4.21): предложения не переводятся ────────────────────────────────
+
+function proposalState(lessonIds = ["p1"]) {
+  return createPipelineState({
+    submissionId: "prop-1",
+    ownerUid: "proposer",
+    questId: "lesson_1",
+    questTitle: "Урок",
+    categoryPath: "",
+    revision: 3,
+    lessonIds,
+    stages: ["WORDS", "FACTS"],
+  });
+}
+
+test("a reduced plan stores itself in the state and walks only its stages", () => {
+  const pipeline = proposalState();
+  assert.deepEqual(pipeline.stages, ["WORDS", "FACTS"]);
+  assert.ok(pipeline.lessons.p1.stages.WORDS, "WORDS exists");
+  assert.equal(pipeline.lessons.p1.stages.TRANSLATE, undefined, "no TRANSLATE stage in a proposal");
+  applyVerdict(pipeline, "p1", "WORDS", "pv1");
+  applyVerdict(pipeline, "p1", "FACTS", "pv2");
+  assert.equal(nextJob(pipeline).done, true, "terminal right after both checks");
+  assert.equal(nextJob(pipeline).status, QUEST_STATUS.REVIEWED, "no translation is waited for");
+});
+
+test("a reduced plan refuses stages outside the plan, repeats and an empty list", () => {
+  assert.throws(() => createPipelineState({
+    submissionId: "s", ownerUid: "o", questId: "q", lessonIds: ["l"], stages: ["WORDS", "TRANSLATE"],
+  }), RangeError, "TRANSLATE without WORDS+FACTS order is out of the reduced plan");
+  assert.throws(() => createPipelineState({
+    submissionId: "s", ownerUid: "o", questId: "q", lessonIds: ["l"], stages: ["WORDS", "WORDS"],
+  }), RangeError);
+  assert.throws(() => createPipelineState({
+    submissionId: "s", ownerUid: "o", questId: "q", lessonIds: ["l"], stages: [],
+  }), RangeError);
+  assert.throws(() => createPipelineState({
+    submissionId: "s", ownerUid: "o", questId: "q", lessonIds: ["l"], stages: ["MYSTERY"],
+  }), RangeError);
+});
+
+test("a delayed check in a reduced plan still delays the proposal quest", () => {
+  const pipeline = proposalState();
+  applyVerdict(pipeline, "p1", "WORDS", "pv1");
+  applyStageError(pipeline, "p1", "FACTS", 1, "REVIEW_SCHEMA_BAD_SHAPE");
+  applyStageError(pipeline, "p1", "FACTS", 2, "REVIEW_SCHEMA_BAD_SHAPE");
+  applyStageError(pipeline, "p1", "FACTS", 3, "REVIEW_SCHEMA_BAD_SHAPE");
+  assert.equal(nextJob(pipeline).done, true, "no live jobs remain");
+  assert.equal(nextJob(pipeline).status, QUEST_STATUS.DELAYED);
+});

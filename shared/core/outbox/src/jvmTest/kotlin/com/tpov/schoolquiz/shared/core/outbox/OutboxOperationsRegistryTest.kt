@@ -61,6 +61,8 @@ class OutboxOperationsRegistryTest {
             OutboxOperations.TOURNAMENT_SESSION_OP,
             OutboxOperations.CLOSE_PRIVATE_QUIZ_LINK,
             OutboxOperations.SUBMIT_PRIVATE_QUIZ_ATTEMPT,
+            // Предложение автору (AD-33, 4.21): один приёмник для трёх входов (report/copy/new).
+            OutboxOperations.SUBMIT_PROPOSAL,
         )
 
     @Test
