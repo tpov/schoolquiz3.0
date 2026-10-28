@@ -85,6 +85,16 @@ test("the counted scan really walked the functions tree", () => {
   assert.ok(index.includes("PROPOSAL_FEE"), "the ledger reason is part of the server surface");
 });
 
+test("the copy-edit surface is named and pinned (story 4.23)", () => {
+  const copyEdit = require("./lesson-copy-edit");
+  assert.equal(copyEdit.EDIT_COPY_VIEW, "lesson-edit-copy-v1");
+  const index = fs.readFileSync(path.join(ROOT, "index.js"), "utf8");
+  assert.ok(index.includes("exports.buildLessonEditCopy = onCall("),
+    "the keyless copy builder is a registered read callable");
+  assert.ok(index.includes("applyCopyEditProposal(proposal"),
+    "an approved copy edit applies exactly the checked revision");
+});
+
 test("the proposals view is a named surface the client can pin (story 4.25)", () => {
   const view = require("./quest-proposals-view");
   assert.equal(view.PROPOSALS_VIEW_VERSION, "quest-proposals-v1");

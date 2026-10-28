@@ -413,10 +413,16 @@ test("одобренный отчёт помечает урок к исправ�
   assert.equal(record.decision.comment, "спасибо");
 });
 
-test("одобрение правки копии до 4.23/4.24 — именованный промежуточный отказ", async () => {
+test("одобренная правка копии уезжает в применение, а не в промежуточный отказ (4.23)", async () => {
+  // Мир сюиты не содержит документов урока: применение честно отвечает not-found, но путь —
+  // примененческий (apply), а не промежуточный отказ с его формулировкой.
   await seedChecked({kind: "COPY_EDIT"});
+  // Мир сюиты содержит урок, но без вопросов: применение доходит до сборки копии и честно
+  // отказывает на её форме — это примененческий путь, а не промежуточный отказ 4.21.
   await assert.rejects(decide(AUTHOR, {proposalId: "prop-decide-1", decision: "APPROVE"}),
-    /PROPOSAL_APPLY_PENDING/);
+    /edit copy needs questions/);
+  const record = store.documents.get(`${PROPOSALS_COLLECTION}/prop-decide-1`);
+  assert.equal(record.status, PROPOSAL_STATUS.CHECK_PASSED, "применение атомарно: отказ — записи нет");
 });
 
 test("форма решения: неизвестный исход, битый id и длинный комментарий отвергаются", async () => {

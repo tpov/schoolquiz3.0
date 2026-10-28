@@ -137,6 +137,12 @@ const {
   settleProposalFeeCycle,
 } = require("./quest-proposals-view");
 const {
+  EDIT_COPY_VIEW,
+  buildEditCopy,
+  mergedQuestionsForApply,
+  parseEditCopyRequest,
+} = require("./lesson-copy-edit");
+const {
   PROPOSALS_COLLECTION,
   PROPOSAL_KINDS,
   PROPOSAL_STATUS,
@@ -6061,6 +6067,111 @@ exports.quoteLessonProposalFee = onCall(CALLABLE_OPTIONS, async (request) => {
 });
 
 /**
+ * Редактируемая копия урока для «Предложить правку» (AD-33, история 4.23, UX-23).
+ *
+ * Только чтение: копию собирает сервер из опубликованных вопросов — redactable-вопросы едут
+ * публичными половинами без ключа, Survey и легаси — запертыми байт-в-байт. Документ ключей
+ * урока (`question_keys`) не читается: секретные ключи HARD, Арены и экзаменов в копию не
+ * попадают по построению. Автору копию не отдают: править свой урок автор может и так.
+ */
+exports.buildLessonEditCopy = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const parsed = parseEditCopyRequest(request.data);
+  const lessonSnapshot = await db.doc(`lessons/${parsed.lessonId}`).get();
+  if (!lessonSnapshot.exists) throw new HttpsError("not-found", "Edit copy lesson could not be found");
+  const lesson = lessonSnapshot.data() || {};
+  const authorUid = stringValue(lesson.authorUid);
+  if (!authorUid) throw new HttpsError("not-found", "Edit copy lesson could not be found");
+  if (authorUid === uid) throw new HttpsError("failed-precondition", "PROPOSAL_TARGET_OWN");
+  const questionsSnapshot = await db.collection("questions").where("lessonId", "==", parsed.lessonId).get();
+  const questions = (questionsSnapshot.docs || []).map((doc) => ({...(doc.data() || {}), id: doc.id}));
+  if (questions.length === 0) throw new HttpsError("not-found", "Edit copy lesson could not be found");
+  return buildEditCopy({lesson: {...lesson, id: parsed.lessonId}, questions});
+});
+
+/**
+ * Применение одобренной правки копии (AD-33, история 4.23): ровно проверенная редакция — новой
+ * редакцией урока. Автор прежний, предложивший записан соавтором (`contributorUids`), версия
+ * урока поднимается и зеркалится в приватный документ автора (AD-11), журналы sync-changes
+ * названы по узлам публикации. Запертые вопросы копии проверяются байт-в-байт против текущих
+ * опубликованных: STALE уже сверил версию урока, здесь сверяется содержимое запертых строк.
+ * Замороженные попытки и выданные банки не читаются и не пишутся (AD-3) — применяются только
+ * документы дерева.
+ */
+async function applyCopyEditProposal(proposal, uid, comment, now) {
+  const lessonId = stringValue(proposal.target && proposal.target.lessonId);
+  if (!lessonId) throw new HttpsError("failed-precondition", "PROPOSAL_TARGET_MISSING");
+  const lessonRef = db.doc(`lessons/${lessonId}`);
+  const lessonSnapshot = await lessonRef.get();
+  const lesson = lessonSnapshot.exists ? lessonSnapshot.data() || {} : null;
+  if (!lesson || !stringValue(lesson.authorUid)) {
+    throw new HttpsError("not-found", "Proposal target lesson could not be found");
+  }
+  const questionsSnapshot = await db.collection("questions").where("lessonId", "==", lessonId).get();
+  const baseQuestions = (questionsSnapshot.docs || []).map((doc) => ({...(doc.data() || {}), id: doc.id}));
+  const baseRows = buildEditCopy({lesson: {...lesson, id: lessonId}, questions: baseQuestions}).questions;
+  const {questions: validated} = mergedQuestionsForApply({
+    baseQuestions: baseRows,
+    proposalQuestions: (proposal.payload && proposal.payload.questions) || [],
+  });
+
+  const questPath = `quests/${stringValue(lesson.questId)}`;
+  const catalogId = stringValue(lesson.catalogId);
+  const versions = {
+    [`lessons/${lessonId}`]: numberValue(lesson.version, 0),
+  };
+  for (const question of baseQuestions) {
+    versions[`questions/${question.id}`] = numberValue(question.version, 0);
+  }
+  const lessonVersion = nextVersionAtPath(versions, `lessons/${lessonId}`);
+  await db.runTransaction(async (transaction) => {
+    for (const question of validated) {
+      const path = `questions/${question.id}`;
+      transaction.set(db.doc(path), clean({
+        id: question.id,
+        lessonId,
+        text: question.text,
+        payload: question.payload,
+        language: question.language,
+        languageLevel: numberValue(question.languageLevel, 0),
+        order: numberValue(question.order, 0),
+        version: nextVersionAtPath(versions, path),
+        lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
+        archived: false,
+      }), {merge: true});
+      writeSyncChanges(transaction, db, {kind: "question", id: question.id, catalogId, lessonId}, now);
+    }
+    // Ключи урока пересобираются из новых payload: вторая половина каждого вопроса там, где её
+    // ищет расчёт попыток. Замена целиком (список) — прошлые ответы не наследуются.
+    const keyDocuments = questionKeyDocuments(validated.map((question) => ({...question, lessonId})));
+    for (const [path, data] of Object.entries(keyDocuments.documents)) {
+      transaction.set(db.doc(path), clean(data), {merge: true});
+    }
+    transaction.set(lessonRef, clean({
+      version: nextVersionAtPath(versions, `lessons/${lessonId}`),
+      contributorUids: firestoreTypes.FieldValue ? null : null,
+      updatedAtMs: now,
+    }), {merge: true});
+    transaction.set(lessonRef, {
+      contributorUids: admin.firestore.FieldValue.arrayUnion(uid),
+    }, {merge: true});
+    writeSyncChanges(transaction, db, {kind: "lesson", id: lessonId, catalogId}, now);
+    writeSyncChanges(transaction, db, {kind: "quest", id: stringValue(lesson.questId), catalogId,
+      ownerUid: stringValue(lesson.authorUid)}, now);
+    // Где назначается версия квеста, там же она и зеркалится (AD-11): приватный документ автора.
+    writeQuestVersionMirror(transaction, {
+      ownerUid: stringValue(lesson.authorUid),
+      catalogId,
+      questId: stringValue(lesson.questId),
+      assignedVersion: numberValue(lesson.version, 0) + 1,
+      now,
+    });
+  });
+  return {lessonId, lessonVersion, changedQuestions: validated.length};
+}
+
+/**
  * Решение автора по предложению (UX-22 «Предложения», AD-33): одобрить или отклонить с
  * комментарием. Право — владелец цели: чужое предложение неотличимо от отсутствующего. Применять
  * можно только проверенное и только по актуальной базе — STALE отказывает единым правилом для
@@ -6112,7 +6223,14 @@ exports.decideLessonProposal = onCall(CALLABLE_OPTIONS, async (request) => {
   if (proposalStaleness(proposal, target.revision)) {
     throw new HttpsError("failed-precondition", "PROPOSAL_STALE");
   }
-  if (proposal.kind !== "REPORT") {
+  // Применение по виду: отчёт помечает урок к исправлению, правка копии едет новой редакцией
+  // (4.23), свой урок встаёт в курс (4.24). Решение и пуш предложившему — общие.
+  if (proposal.kind === "COPY_EDIT") {
+    const applied = await applyCopyEditProposal(proposal, uid, comment, now);
+    await notifyUser(PUSH_EVENTS.QUEST_PROPOSAL_DECIDED, proposalId, proposal.proposerUid);
+    return {proposalId, status: PROPOSAL_STATUS.APPROVED, ...applied};
+  }
+  if (proposal.kind === "NEW_LESSON") {
     throw new HttpsError("failed-precondition", "PROPOSAL_APPLY_PENDING");
   }
   await db.runTransaction(async (transaction) => {

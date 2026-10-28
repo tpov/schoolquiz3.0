@@ -282,7 +282,7 @@ slug = "proposal-copy-edit"
 title = "«Предложить правку» (CAP-27): the server builds an editable copy from the player projection without secret keys (HARD, Arena, exam); the proposer marks the correct answer; approval applies exactly the checked revision as a new revision, author unchanged, proposer recorded as contributor; frozen banks kept; evidence docs/agents/evidence/<date>-proposal-copy-edit/"
 covers = ["CAP-27"]
 after = [{ story = "4.21", needs = "proposal record" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "in-progress" # 2026-10-28: серверная половина доведена до лендинга taken-over сменой (apply-ветка подключена в decideLessonProposal, сюита lesson-copy-edit 5/5, пин 161fc07c, сентинел контракта копии; см. change log спеки). Открытый хвост: клиентская половина (редактор копии без секретных ключей, отметка ответа, подача COPY_EDIT через ProposalOutboxWriter, транспорт lesson-edit-copy-v1). # 2026-10-26: added by sprint-change-proposal-2026-10-26
 
 [[story]]
 id = "4.24"
