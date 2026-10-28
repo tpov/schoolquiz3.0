@@ -16,6 +16,17 @@
     <string name="qa_easy_questions">Легкі питання</string>
     <string name="qa_hard_questions">Складні питання</string>
     <string name="qa_submit_to_arena">Надіслати на арену</string>
+    <string name="qa_proposal_open">Запропонувати автору</string>
+    <string name="qa_proposal_header">ЗАПРОПОНУВАТИ СВІЙ УРОК ІНШОМУ АВТОРУ</string>
+    <string name="qa_proposal_lesson">Урок чернетки</string>
+    <string name="qa_proposal_target_catalog">Каталог курсу</string>
+    <string name="qa_proposal_fee_unknown">Плата: —</string>
+    <string name="qa_proposal_fee">Плата: %1$d ноликів</string>
+    <string name="qa_proposal_send">Запропонувати автору</string>
+    <string name="qa_proposal_sending">Надсилаємо…</string>
+    <string name="qa_proposal_sent">Пропозицію поставлено в чергу</string>
+    <string name="qa_proposal_failed">Не вдалося поставити в чергу — спробуйте ще раз</string>
+    <string name="qa_proposal_cancel">Скасувати</string>
 
     <!-- Structure dropdowns -->
     <string name="qa_label_quest">Квест</string>

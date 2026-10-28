@@ -2,7 +2,7 @@
 title: '4.22 proposal-error-report — «Сообщить об ошибке» становится предложением (CAP-6/27, UX-23)'
 type: 'feature'
 created: '2026-10-28'
-status: 'in-progress'
+status: 'done'
 route: 'full'
 route_source: 'auto'
 review: 'quick'
@@ -94,8 +94,7 @@ context: []
 
 ## Verification
 
-**Commands:**
-- (заполняется по гейтам)
+**Commands:** выполнены лендинг-сменой (e51cfe5f) и перепроверены попутно в этой смене: quest-authoring domain+data jvmTest, lesson-runner presentation testDebugUnitTest (сюита 4.22), platform:firebase testDebugUnitTest (сентинел) — зелёные; functions run-tests.js 141/141. Примечание: фронтмэтр спеки остался in-progress при лендинге — флипнут этой сменой; фейк репозитория в ErrorReportProposalPresentationTest, сломанный лендингом 4.24 (не компилировался), починен в spec-4-23.
 
 **Manual checks (if no CLI):**
 - None beyond the suites.

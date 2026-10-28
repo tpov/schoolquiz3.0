@@ -2,7 +2,7 @@
 title: '4.24 proposal-new-lesson — свой урок с целевым путём в чужом курсе и «Предложить автору» (CAP-27, AD-33, UX-23)'
 type: 'feature'
 created: '2026-10-28'
-status: 'in-progress'
+status: 'done'
 route: 'full'
 route_source: 'auto'
 review: 'quick'
@@ -75,7 +75,15 @@ context: []
 - 2026-10-28, спека создана, status in-progress (заявка истории); реализация — после лендинга 4.23.
 - 2026-10-28, server landing: applyNewLessonProposal подключён в диспетчер решения (вместо PROPOSAL_APPLY_PENDING): цепочка курса перечитывается до транзакции (тема на чужом разделе — не-found на сверке решения, примененческий PROPOSAL_TARGET_MOVED — защита внутри), урок встаёт под целевую темой следующим по порядку, authorUid урока — предложивший (поймано тестом: uid решения — владелец курса, не предложивший), поля публикации делают урок арено-допустимым, версия темы/уроков — из entity-version (инлайн-producer под гейт), ключи собираются рядом, sync-changes по узлам, предложение → APPROVED одной транзакцией. Сюита в lesson-proposals.test.js: размещение (автор-предложивший, порядок, допустимость, ключи, версия темы), STALE по версии курса (baseRevision — версия квеста из readCourseTarget), уехавшая тема. Гейты: node --test 94/94 по proposal-миру. Открытый хвост истории: клиентский вход (выбор целевого пути в потоке создания и подача через ProposalOutboxWriter — домен, писатель и wire-сентинел уже стоят)
 
+## Spec Change Log (дополнение)
+
+- 2026-10-28, client landing (эта смена): вход «Предложить автору» в потоке создания квеста — кнопка рядом с «Отправить на арену» (видна при живом черновике); диалог с целевым путём в чужом курсе — каталог → квест → раздел → тема из прочитанных опубликованных деревьев (наблюдатели тех же репозиториев, селекторы только-выбор: чужой курс нельзя создать), выбор урока черновика чипами (один урок на предложение), плата 1000 до отправки (QuoteLessonProposalFeeUseCase, kind NEW_LESSON), «Предложить автору»; подача — ProposeDraftLessonToCourseUseCase (урок собирается из черновика: вопросы авторской формы с ключом, вопрос без payload — отказ до очереди, чужой урок черновика — отказ; словарь типов — серверный CONTENT_TYPE) через приземленный SubmitNewLessonProposalUseCase и ProposalOutboxWriter.recordNewLesson. Строки ×3; PlaceholderQuestCreateComponent и ArenaRunnerInstance получили честные нули новых членов интерфейса. Новая сюита: ProposeDraftLessonToCourseUseCaseTest 3/3 (авторская форма и словарь типов, отказ без payload, отказ чужого урока).
+
 ## Verification
 
-**Commands:**
-- (заполняется по гейтам)
+**Commands (все выполнены в этой смене, sgw/JDK 27):**
+- `functions`: `node run-tests.js` — 141/141 на финальном дереве (lesson-proposals 24/24 внутри — серверная половина этой истории).
+- `sgw ./gradlew :shared:feature:quest-authoring:domain:jvmTest …` (полный батч пяти модулей) — зелёные; domain jvmTest включает ProposeDraftLessonToCourseUseCaseTest 3/3.
+- ktlint: quest-authoring presentation (`ktlintDebugSourceSetCheck`) — SUCCESS; корзина platform:firebase — предсуществующая, атрибутирована в spec-4-23.
+
+**Manual checks (if no CLI):** None beyond the suites; живой прогон — 4.26 (hitl, риг владельца).

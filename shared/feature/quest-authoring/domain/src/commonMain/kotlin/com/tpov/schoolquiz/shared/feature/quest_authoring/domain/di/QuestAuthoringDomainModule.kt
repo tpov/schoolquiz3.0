@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ClosePrivateQuizLinkUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.DecideQuestProposalUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchLessonEditCopyUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestProposalsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitErrorReportProposalUseCase
@@ -20,9 +21,11 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.MarkRe
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.OpenQuestDraftUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ProposeDraftLessonToCourseUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteQuestReviewFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ResolveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitCopyEditProposalUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitLessonErrorReportUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.TransitionLessonUseCase
@@ -35,6 +38,11 @@ val questAuthoringDomainModule =
         // цитата платы до отправки (UX-23). Учебная поверхность — экран результата урока.
         factory { SubmitErrorReportProposalUseCase(get(), get(), get()) }
         factory { SubmitNewLessonProposalUseCase(get(), get(), get()) }
+        // «Предложить правку» (4.23, CAP-27): копия без секретных ключей и подача отмеченных правок.
+        factory { FetchLessonEditCopyUseCase(get()) }
+        factory { SubmitCopyEditProposalUseCase(get(), get(), get()) }
+        // Свой урок в чужой курс (4.24, CAP-27): сборка урока из черновика и подача предложения.
+        factory { ProposeDraftLessonToCourseUseCase(get(), get()) }
         factory { QuoteLessonProposalFeeUseCase(get()) }
         // «Предложения» (4.25, UX-22): страница прав и решение автора тем же приёмником 4.21.
         factory { FetchQuestProposalsUseCase(get()) }

@@ -5,8 +5,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +29,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -52,11 +56,17 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalSubmissionState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LINK_EXPIRY_DAY_PRESETS
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
@@ -67,6 +77,7 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 
@@ -77,6 +88,7 @@ fun QuestCreateScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsState()
+    val proposalState by component.newLessonProposalState.collectAsState()
     val context = LocalContext.current
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -149,7 +161,24 @@ fun QuestCreateScreen(
             onResubmitOverServerVersionClick = component::onResubmitOverServerVersionClick,
             onSubmitNodeLongClick = component::onSubmitNodeToArenaLongClick,
             onQuestionsClick = component::onQuestionsClick,
+            proposalState = proposalState,
+            onOpenProposal = component::onNewProposalDialogOpened,
             modifier = modifier,
+        )
+    }
+
+    // «Предложить автору» (CAP-27, история 4.24): целевой путь в чужом курсе, плата 1000 до
+    // отправки (UX-23); подача — общая очередь 4.22 через recordNewLesson.
+    if (proposalState.visible) {
+        NewLessonProposalDialog(
+            state = proposalState,
+            onCatalogSelected = component::onProposalTargetCatalogSelected,
+            onQuestSelected = component::onProposalTargetQuestSelected,
+            onSectionSelected = component::onProposalTargetSectionSelected,
+            onThemeSelected = component::onProposalTargetThemeSelected,
+            onLessonSelected = component::onProposalLessonSelected,
+            onSubmit = component::onProposeLessonToAuthorClick,
+            onDismiss = component::onNewProposalDialogDismissed,
         )
     }
 }
@@ -180,6 +209,9 @@ private fun QuestCreateContent(
     onResubmitOverServerVersionClick: () -> Unit,
     onSubmitNodeLongClick: (QuestArenaTargetNode) -> Unit,
     onQuestionsClick: (Difficulty) -> Unit,
+    /** «Предложить автору» (4.24, CAP-27): состояние диалога и его открытие. */
+    proposalState: NewLessonProposalUiState,
+    onOpenProposal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isStructureActionEnabled = if (state.hasActiveDraft) state.canContinueDraft else state.canCreate
@@ -399,6 +431,13 @@ private fun QuestCreateContent(
                     },
                 onClick = onSubmitToArenaClick,
                 enabled = state.canSubmitToArena,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            // Третий вход CAP-27 (4.24, UX-23): свой урок — в чужой курс, решает автор курса.
+            BrandPrimaryButton(
+                text = stringResource(R.string.qa_proposal_open),
+                onClick = onOpenProposal,
+                enabled = !state.isSubmittingToArena,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -769,6 +808,198 @@ private fun SettingSwitchRow(
     }
 }
 
+/**
+ * Диалог «Предложить автору» (CAP-27, история 4.24, UX-23): целевой путь в чужом курсе —
+ * каталог → квест → раздел → тема из опубликованных деревьев; урок черновика на выбор; плата
+ * 1000 видна до отправки. Показ платы — не власть: платит приёмка 4.21 из тела подачи.
+ */
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Suppress("FunctionNaming", "ktlint:standard:function-naming", "LongMethod")
+@Composable
+private fun NewLessonProposalDialog(
+    state: NewLessonProposalUiState,
+    onCatalogSelected: (CatalogId?) -> Unit,
+    onQuestSelected: (QuestId?) -> Unit,
+    onSectionSelected: (SectionId?) -> Unit,
+    onThemeSelected: (ThemeId?) -> Unit,
+    onLessonSelected: (DraftLessonId?) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {},
+        dismissButton = {},
+        containerColor = schoolQuizDesignDeepSurfaceColor(),
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.qa_proposal_header),
+                    style = NoirType.kicker,
+                )
+                if (state.lessonChoices.size > 1) {
+                    Text(
+                        text = stringResource(R.string.qa_proposal_lesson),
+                        style = NoirType.rowSub.copy(color = NoirT2),
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        state.lessonChoices.forEach { choice ->
+                            FilterChip(
+                                selected = state.selectedLessonId == choice.id,
+                                onClick = { onLessonSelected(choice.id) },
+                                label = { Text(choice.title, style = NoirType.rowSub) },
+                            )
+                        }
+                    }
+                }
+                ProposalTargetDropdown(
+                    label = stringResource(R.string.qa_proposal_target_catalog),
+                    options = state.catalogs.map { ProposalTargetOption(it.id.value, it.name) },
+                    selectedId = state.selectedCatalogId?.value,
+                    onSelected = { id -> onCatalogSelected(id?.let(::CatalogId)) },
+                )
+                ProposalTargetDropdown(
+                    label = stringResource(R.string.qa_label_quest),
+                    options = state.questItems.map { ProposalTargetOption(it.id.value, it.title) },
+                    selectedId = state.selectedQuestId?.value,
+                    onSelected = { id -> onQuestSelected(id?.let(::QuestId)) },
+                )
+                ProposalTargetDropdown(
+                    label = stringResource(R.string.qa_label_section),
+                    options = state.sectionItems.map { ProposalTargetOption(it.id.value, it.title) },
+                    selectedId = state.selectedSectionId?.value,
+                    onSelected = { id -> onSectionSelected(id?.let(::SectionId)) },
+                )
+                ProposalTargetDropdown(
+                    label = stringResource(R.string.qa_label_theme),
+                    options = state.themeItems.map { ProposalTargetOption(it.id.value, it.title) },
+                    selectedId = state.selectedThemeId?.value,
+                    onSelected = { id -> onThemeSelected(id?.let(::ThemeId)) },
+                )
+                Text(
+                    text =
+                        if (state.feeQuote == null) {
+                            stringResource(R.string.qa_proposal_fee_unknown)
+                        } else {
+                            stringResource(R.string.qa_proposal_fee, state.feeQuote.feeNolics)
+                        },
+                    style = NoirType.rowSub.copy(color = NoirT2),
+                )
+                when (state.submission) {
+                    NewLessonProposalSubmissionState.Failed ->
+                        Text(
+                            text = stringResource(R.string.qa_proposal_failed),
+                            style = NoirType.rowSub.copy(color = NoirDanger),
+                        )
+                    NewLessonProposalSubmissionState.Done ->
+                        Text(
+                            text = stringResource(R.string.qa_proposal_sent),
+                            style = NoirType.rowSub.copy(color = NoirSuccess),
+                        )
+                    NewLessonProposalSubmissionState.Idle -> Unit
+                    NewLessonProposalSubmissionState.Sending -> Unit
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.qa_proposal_cancel),
+                        style = NoirType.button.copy(color = NoirT3),
+                        modifier = Modifier.clickable(onClick = onDismiss),
+                    )
+                    Text(
+                        text =
+                            if (state.submission == NewLessonProposalSubmissionState.Sending) {
+                                stringResource(R.string.qa_proposal_sending)
+                            } else {
+                                stringResource(R.string.qa_proposal_send)
+                            },
+                        style = NoirType.button.copy(
+                            color = if (state.targetComplete &&
+                                state.submission != NewLessonProposalSubmissionState.Sending
+                            ) {
+                                LocalNoirAccent.current
+                            } else {
+                                NoirTOff
+                            },
+                        ),
+                        modifier = Modifier.clickable(
+                            enabled = state.targetComplete &&
+                                state.submission != NewLessonProposalSubmissionState.Sending,
+                            onClick = onSubmit,
+                        ),
+                    )
+                }
+            }
+        },
+    )
+}
+
+/** Вариант целевого пути — строка опубликованного дерева. */
+private data class ProposalTargetOption(
+    val id: String,
+    val title: String,
+)
+
+/** Селектор только-чтение: чужой курс нельзя создать из диалога — только выбрать существующий. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ProposalTargetDropdown(
+    label: String,
+    options: List<ProposalTargetOption>,
+    selectedId: String?,
+    onSelected: (String?) -> Unit,
+) {
+    val expanded = remember { mutableStateOf(false) }
+    val selectedTitle = selectedId?.let { id -> options.firstOrNull { it.id == id }?.title }.orEmpty()
+    ExposedDropdownMenuBox(
+        expanded = expanded.value,
+        onExpandedChange = { expanded.value = it },
+    ) {
+        OutlinedTextField(
+            value = selectedTitle,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) },
+            shape = schoolQuizDesignCardShape(),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = NoirT1,
+                    unfocusedTextColor = NoirT1,
+                    focusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
+                    unfocusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
+                    focusedBorderColor = LocalNoirAccent.current,
+                    unfocusedBorderColor = schoolQuizDesignLightBorderColor(),
+                ),
+            modifier =
+                Modifier
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded.value,
+            onDismissRequest = { expanded.value = false },
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.title) },
+                    onClick = {
+                        onSelected(option.id)
+                        expanded.value = false
+                    },
+                )
+            }
+        }
+    }
+}
+
 private data class StructureOption<T>(
     val id: T,
     val title: String,
@@ -815,6 +1046,8 @@ private fun questCreateScreenPreview() {
             onResubmitOverServerVersionClick = {},
             onSubmitNodeLongClick = {},
             onQuestionsClick = {},
+            proposalState = NewLessonProposalUiState(),
+            onOpenProposal = {},
         )
     }
 }

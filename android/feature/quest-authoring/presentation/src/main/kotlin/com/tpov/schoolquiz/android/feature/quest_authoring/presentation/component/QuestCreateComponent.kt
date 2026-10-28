@@ -1,12 +1,14 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component
 
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
@@ -16,8 +18,30 @@ import kotlinx.coroutines.flow.StateFlow
 interface QuestCreateComponent {
     val state: StateFlow<QuestCreateUiState>
 
-    fun onCatalogSelected(id: CatalogId?)
+    /**
+     * «Предложить автору» (CAP-27, история 4.24): целевой путь в чужом курсе для урока
+     * черновика. Пикеры читают опубликованные деревья, плата 1000 видна до отправки (UX-23).
+     */
+    val newLessonProposalState: StateFlow<NewLessonProposalUiState>
 
+    fun onNewProposalDialogOpened()
+
+    fun onNewProposalDialogDismissed()
+
+    fun onProposalTargetCatalogSelected(id: CatalogId?)
+
+    fun onProposalTargetQuestSelected(id: QuestId?)
+
+    fun onProposalTargetSectionSelected(id: SectionId?)
+
+    fun onProposalTargetThemeSelected(id: ThemeId?)
+
+    fun onProposalLessonSelected(id: DraftLessonId?)
+
+    fun onProposeLessonToAuthorClick()
+
+    fun onCatalogSelected(id: CatalogId?)
+    
     fun onQuestSelected(id: QuestId?)
 
     fun onSectionSelected(id: SectionId?)

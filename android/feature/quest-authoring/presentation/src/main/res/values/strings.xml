@@ -16,6 +16,17 @@
     <string name="qa_easy_questions">Easy questions</string>
     <string name="qa_hard_questions">Hard questions</string>
     <string name="qa_submit_to_arena">Send to arena</string>
+    <string name="qa_proposal_open">Propose to author</string>
+    <string name="qa_proposal_header">PROPOSE YOUR LESSON TO ANOTHER AUTHOR</string>
+    <string name="qa_proposal_lesson">Lesson of your draft</string>
+    <string name="qa_proposal_target_catalog">Course catalog</string>
+    <string name="qa_proposal_fee_unknown">Fee: —</string>
+    <string name="qa_proposal_fee">Fee: %1$d nolics</string>
+    <string name="qa_proposal_send">Propose to author</string>
+    <string name="qa_proposal_sending">Sending…</string>
+    <string name="qa_proposal_sent">Proposal queued</string>
+    <string name="qa_proposal_failed">Could not queue the proposal — try again</string>
+    <string name="qa_proposal_cancel">Cancel</string>
 
     <!-- Structure dropdowns -->
     <string name="qa_label_quest">Quest</string>

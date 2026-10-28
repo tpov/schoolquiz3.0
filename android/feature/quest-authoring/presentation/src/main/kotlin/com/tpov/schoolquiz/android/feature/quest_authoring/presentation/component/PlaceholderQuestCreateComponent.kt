@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.compone
 
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
@@ -11,6 +12,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
@@ -63,6 +65,26 @@ class PlaceholderQuestCreateComponent(
     override fun onPrivateLinkExpiryDaysChanged(days: Int) = Unit
 
     override fun onClosePrivateQuizLinkClick() = Unit
+
+    // «Предложить автору» (4.24): заглушка молчит вместе с остальным экраном-заглушкой.
+    override val newLessonProposalState: StateFlow<NewLessonProposalUiState> =
+        MutableStateFlow(NewLessonProposalUiState())
+
+    override fun onNewProposalDialogOpened() = Unit
+
+    override fun onNewProposalDialogDismissed() = Unit
+
+    override fun onProposalTargetCatalogSelected(id: CatalogId?) = Unit
+
+    override fun onProposalTargetQuestSelected(id: QuestId?) = Unit
+
+    override fun onProposalTargetSectionSelected(id: SectionId?) = Unit
+
+    override fun onProposalTargetThemeSelected(id: ThemeId?) = Unit
+
+    override fun onProposalLessonSelected(id: DraftLessonId?) = Unit
+
+    override fun onProposeLessonToAuthorClick() = Unit
 
     override fun onStructureCheckClick() = Unit
 

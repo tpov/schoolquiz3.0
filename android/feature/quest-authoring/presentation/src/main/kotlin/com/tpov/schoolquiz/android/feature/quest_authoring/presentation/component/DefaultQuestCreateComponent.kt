@@ -19,8 +19,11 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankAnswerItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalSubmissionState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ProposalLessonChoice
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestQuestionEditorUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.SectionPathItem
@@ -56,6 +59,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARC
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARENA_TARGET_SHELF
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.PrivateQuizSettings
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmissionRejection
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.NewLessonProposalTarget
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
@@ -63,6 +67,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CloseP
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftConflictUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ProposeDraftLessonToCourseUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ResolveQuestDraftConflictUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
@@ -97,6 +103,9 @@ private const val MAX_FILL_BLANK_CANDIDATES = 10
 private const val MIN_FILL_BLANK_CANDIDATES = 5
 private val STRUCTURE_SHELVES = listOf("home", "archive", "arena")
 
+/** Вид предложения в теле подачи — тот же словарь, что у приёмника 4.21 (PROPOSAL_KINDS). */
+private const val KIND_NEW_LESSON = "NEW_LESSON"
+
 /** Техническое имя узла иерархии, которого у приватного квиза автор не видит (плоский набор, AD-29). */
 private const val PRIVATE_FLAT_NODE_TITLE = "Вопросы"
 
@@ -110,6 +119,12 @@ class DefaultQuestCreateComponent(
     private val saveDraftQuestion: SaveDraftQuestionUseCase,
     private val submitQuestDraftToArena: SubmitQuestDraftToArenaUseCase,
     private val closePrivateQuizLink: ClosePrivateQuizLinkUseCase,
+    /**
+     * «Предложить автору» (CAP-27, история 4.24): урок черновика с целевым путём в чужом курсе.
+     * null — хост без авторинг-графа (тесты): вход скрыт, а не мёртвая кнопка.
+     */
+    private val proposeDraftLessonToCourse: ProposeDraftLessonToCourseUseCase? = null,
+    private val quoteProposalFee: QuoteLessonProposalFeeUseCase? = null,
     private val timestampProvider: QuestAuthoringTimestampProvider,
     private val observeQuestDraftConflict: ObserveQuestDraftConflictUseCase,
     private val resolveQuestDraftConflict: ResolveQuestDraftConflictUseCase,
@@ -133,6 +148,9 @@ class DefaultQuestCreateComponent(
     private var themesJob: Job? = null
     private var lessonsJob: Job? = null
     private var conflictJob: Job? = null
+    private var proposalQuestsJob: Job? = null
+    private var proposalSectionsJob: Job? = null
+    private var proposalThemesJob: Job? = null
 
     override val state: StateFlow<QuestCreateUiState> = _state.asStateFlow()
 
@@ -266,6 +284,185 @@ class DefaultQuestCreateComponent(
 
     override fun onLessonTitleChanged(value: String) {
         _state.update { it.copy(newLessonTitle = value, errorMessage = null) }
+    }
+
+    // ─── «Предложить автору» (CAP-27, история 4.24): целевой путь в чужом курсе ─────────────────
+
+    private val _newLessonProposalState = MutableStateFlow(NewLessonProposalUiState())
+
+    override val newLessonProposalState: StateFlow<NewLessonProposalUiState> =
+        _newLessonProposalState.asStateFlow()
+
+    /** Диалог открыт: уроки черновика на выбор и плата 1000 до отправки (UX-23). */
+    override fun onNewProposalDialogOpened() {
+        val bundle = activeBundle
+        _newLessonProposalState.value = NewLessonProposalUiState(
+            visible = true,
+            catalogs = _state.value.catalogs,
+            lessonChoices =
+                bundle?.lessons
+                    ?.sortedBy { it.order }
+                    ?.map { ProposalLessonChoice(id = it.id, title = it.title) }
+                    .orEmpty(),
+            selectedLessonId = bundle?.lessons?.sortedBy { it.order }?.firstOrNull()?.id,
+        )
+        val quote = quoteProposalFee ?: return
+        scope.launch {
+            val fee = quote(KIND_NEW_LESSON).getOrNull()
+            _newLessonProposalState.update { it.copy(feeQuote = fee) }
+        }
+    }
+
+    override fun onNewProposalDialogDismissed() {
+        proposalQuestsJob?.cancel()
+        proposalSectionsJob?.cancel()
+        proposalThemesJob?.cancel()
+        _newLessonProposalState.value = NewLessonProposalUiState()
+    }
+
+    override fun onProposalTargetCatalogSelected(id: CatalogId?) {
+        proposalQuestsJob?.cancel()
+        _newLessonProposalState.update {
+            it.copy(
+                selectedCatalogId = id,
+                questItems = emptyList(),
+                selectedQuestId = null,
+                sectionItems = emptyList(),
+                selectedSectionId = null,
+                themeItems = emptyList(),
+                selectedThemeId = null,
+            )
+        }
+        if (id != null) observeProposalQuestsForCatalog(id)
+    }
+
+    override fun onProposalTargetQuestSelected(id: QuestId?) {
+        proposalSectionsJob?.cancel()
+        _newLessonProposalState.update {
+            it.copy(
+                selectedQuestId = id,
+                sectionItems = emptyList(),
+                selectedSectionId = null,
+                themeItems = emptyList(),
+                selectedThemeId = null,
+            )
+        }
+        if (id != null) observeProposalSectionsForQuest(id)
+    }
+
+    override fun onProposalTargetSectionSelected(id: SectionId?) {
+        proposalThemesJob?.cancel()
+        _newLessonProposalState.update {
+            it.copy(
+                selectedSectionId = id,
+                themeItems = emptyList(),
+                selectedThemeId = null,
+            )
+        }
+        if (id != null) observeProposalThemesForSection(id)
+    }
+
+    override fun onProposalTargetThemeSelected(id: ThemeId?) {
+        _newLessonProposalState.update { it.copy(selectedThemeId = id) }
+    }
+
+    override fun onProposalLessonSelected(id: DraftLessonId?) {
+        _newLessonProposalState.update { it.copy(selectedLessonId = id) }
+    }
+
+    /** Подача (AD-2/AD-3): урок черновика уезжает телом предложения, шторка показывает состояние. */
+    override fun onProposeLessonToAuthorClick() {
+        val propose = proposeDraftLessonToCourse ?: return
+        val state = _newLessonProposalState.value
+        if (state.submission == NewLessonProposalSubmissionState.Sending) return
+        val uid = ownerUid
+        val bundle = activeBundle
+        val draftId = bundle?.draft?.id
+        val lessonId = state.selectedLessonId
+        val target = state.proposalTarget()
+        if (uid == null || draftId == null || lessonId == null || target == null) {
+            _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_save_quest_first)) }
+            return
+        }
+        scope.launch {
+            _newLessonProposalState.update { it.copy(submission = NewLessonProposalSubmissionState.Sending) }
+            val outcome = propose(uid, draftId, lessonId, target)
+            _newLessonProposalState.update {
+                it.copy(
+                    submission =
+                        if (outcome.isSuccess) NewLessonProposalSubmissionState.Done
+                        else NewLessonProposalSubmissionState.Failed,
+                )
+            }
+        }
+    }
+
+    private fun NewLessonProposalUiState.proposalTarget(): NewLessonProposalTarget? {
+        val catalogId = selectedCatalogId ?: return null
+        val questId = selectedQuestId ?: return null
+        val sectionId = selectedSectionId ?: return null
+        val themeId = selectedThemeId ?: return null
+        return NewLessonProposalTarget(
+            catalogId = catalogId.value,
+            questId = questId.value,
+            sectionId = sectionId.value,
+            themeId = themeId.value,
+        )
+    }
+
+    private fun observeProposalQuestsForCatalog(catalogId: CatalogId) {
+        proposalQuestsJob =
+            scope.launch {
+                combine(STRUCTURE_SHELVES.map { shelf -> questRepository.observeByCatalog(catalogId, shelf) }) {
+                        questLists ->
+                    questLists
+                        .flatMap { it }
+                        .distinctBy { it.id }
+                        .sortedWith(compareBy<Quest> { it.title.lowercase() }.thenBy { it.id.value })
+                }
+                    .collect { quests ->
+                        _newLessonProposalState.update { current ->
+                            val selectedQuest =
+                                current.selectedQuestId?.takeIf { id -> quests.any { it.id == id } }
+                            current.copy(
+                                questItems = quests.map { QuestPathItem(id = it.id, title = it.title) },
+                                selectedQuestId = selectedQuest,
+                            )
+                        }
+                    }
+            }
+    }
+
+    private fun observeProposalSectionsForQuest(questId: QuestId) {
+        proposalSectionsJob =
+            scope.launch {
+                sectionRepository.observeByQuest(questId).collect { sections ->
+                    _newLessonProposalState.update { current ->
+                        val selectedSection =
+                            current.selectedSectionId?.takeIf { id -> sections.any { it.id == id } }
+                        current.copy(
+                            sectionItems = sections.toSectionPathItems(),
+                            selectedSectionId = selectedSection,
+                        )
+                    }
+                }
+            }
+    }
+
+    private fun observeProposalThemesForSection(sectionId: SectionId) {
+        proposalThemesJob =
+            scope.launch {
+                themeRepository.observeBySection(sectionId).collect { themes ->
+                    _newLessonProposalState.update { current ->
+                        val selectedTheme =
+                            current.selectedThemeId?.takeIf { id -> themes.any { it.id == id } }
+                        current.copy(
+                            themeItems = themes.toThemePathItems(),
+                            selectedThemeId = selectedTheme,
+                        )
+                    }
+                }
+            }
     }
 
     override fun onStructureCheckClick() {

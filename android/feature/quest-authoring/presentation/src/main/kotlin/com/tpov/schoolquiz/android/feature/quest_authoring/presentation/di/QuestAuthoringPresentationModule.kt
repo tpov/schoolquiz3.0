@@ -25,6 +25,10 @@ val questAuthoringPresentationModule =
                 getActiveQuestDraft = get(),
                 saveDraftQuestion = get(),
                 submitQuestDraftToArena = get(),
+                // «Предложить автору» (4.24, CAP-27): урок черновика с целевым путём в чужом
+                // курсе; цитата 1000 до отправки.
+                proposeDraftLessonToCourse = get(),
+                quoteProposalFee = get(),
                 observeQuestDraftConflict = get(),
                 resolveQuestDraftConflict = get(),
                 questionContentParser = get(),
