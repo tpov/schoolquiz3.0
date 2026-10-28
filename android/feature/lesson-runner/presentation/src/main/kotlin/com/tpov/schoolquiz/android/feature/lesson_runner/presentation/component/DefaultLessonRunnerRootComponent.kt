@@ -13,6 +13,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toE
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toQuestionUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toUiReason
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toUserAnswer
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState.RatingSubmissionState
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
@@ -47,6 +48,10 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitErrorReportProposalCommand
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitErrorReportProposalUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -64,6 +69,9 @@ import kotlinx.datetime.Clock
 import kotlin.coroutines.CoroutineContext
 
 private const val DEFAULT_AUTHOR = "Аноним"
+
+/** Вид предложения в теле подачи — тот же словарь, что у приёмника 4.21 (PROPOSAL_KINDS). */
+private const val KIND_REPORT = "REPORT"
 
 @Suppress("LongParameterList")
 class DefaultLessonRunnerRootComponent(
@@ -101,6 +109,14 @@ class DefaultLessonRunnerRootComponent(
      * гейта (тесты): тогда синхронизация уходит как раньше, а согласие никто не спрашивает.
      */
     private val consent: LessonConsentHandles? = null,
+    /**
+     * «Сообщить об ошибке» как предложение автору (CAP-6/27, история 4.22). null — хост без
+     * авторинг-графа (тесты): строка-действие скрыта, а не мёртвая кнопка.
+     */
+    private val submitErrorReportProposal: SubmitErrorReportProposalUseCase? = null,
+    private val quoteProposalFee: QuoteLessonProposalFeeUseCase? = null,
+    /** Текущий uid для записи очереди; null — хост без авторизации (подача невозможна). */
+    private val currentUid: suspend () -> String? = { null },
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonRunnerRootComponent {
     private val stateHolder =
@@ -397,6 +413,50 @@ class DefaultLessonRunnerRootComponent(
                 authorAvatarUrl = profile?.avatarUrl,
                 text = trimmed,
             )
+        }
+    }
+
+    private val proposalFeeQuoteFlow = MutableStateFlow<LessonProposalFeeQuote?>(null)
+
+    override val proposalFeeQuote: StateFlow<LessonProposalFeeQuote?> =
+        proposalFeeQuoteFlow.asStateFlow()
+
+    private val errorReportStateFlow = MutableStateFlow(ErrorReportSubmissionState.Idle)
+
+    override val errorReportState: StateFlow<ErrorReportSubmissionState> =
+        errorReportStateFlow.asStateFlow()
+
+    /** Диалог открыт: одна цитата на открытие — повторный запрос перечитывает тариф (UX-23). */
+    override fun onReportDialogOpened() {
+        val quote = quoteProposalFee ?: return
+        scope.launch {
+            proposalFeeQuoteFlow.value = quote(KIND_REPORT).getOrNull()
+        }
+    }
+
+    /** Подача отчёта (AD-2/AD-3): намерение уходит в очередь, экран честно показывает состояние. */
+    override fun onReportError(
+        text: String,
+        ownVariant: String?,
+    ) {
+        val submit = submitErrorReportProposal ?: return
+        if (errorReportStateFlow.value == ErrorReportSubmissionState.Sending) return
+        val trimmedVariant = ownVariant?.trim().takeUnless { it.isNullOrEmpty() }
+        scope.launch {
+            errorReportStateFlow.value = ErrorReportSubmissionState.Sending
+            // currentUid — подвесное чтение (AuthRepository): подача без uid невозможна.
+            val uid = currentUid().orEmpty()
+            val outcome =
+                submit(
+                    uid,
+                    SubmitErrorReportProposalCommand(
+                        lessonId = lessonId.value,
+                        text = text,
+                        ownVariant = trimmedVariant,
+                    ),
+                )
+            errorReportStateFlow.value =
+                if (outcome.isSuccess) ErrorReportSubmissionState.Done else ErrorReportSubmissionState.Failed
         }
     }
 

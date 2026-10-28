@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ClosePrivateQuizLinkUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitErrorReportProposalUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchReviewDecisionsUseCase
@@ -26,6 +28,10 @@ import org.koin.dsl.module
 val questAuthoringDomainModule =
     module {
         factory { ClosePrivateQuizLinkUseCase(get()) }
+        // «Сообщить об ошибке» — предложение автору (4.22, CAP-6/27): подача в общую очередь и
+        // цитата платы до отправки (UX-23). Учебная поверхность — экран результата урока.
+        factory { SubmitErrorReportProposalUseCase(get(), get(), get()) }
+        factory { QuoteLessonProposalFeeUseCase(get()) }
         factory { CreateQuestDraftUseCase(get(), get(), get()) }
         // Исход модельной проверки (4.16): сценарий добивается фабрикой здесь — MyQuests
         // резолвит его через get(), и без этой строки разрешение падало бы в рантайме.

@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteData
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseInboxRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonLifecycleRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonProposalQuoteRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewDecisionsRemoteDataSource
@@ -68,6 +69,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonProposalQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewDecisionsRemoteDataSource
@@ -234,6 +236,9 @@ val firebaseModule =
         }
         single<LessonLifecycleRemoteDataSource> {
             FirebaseLessonLifecycleRemoteDataSource(functions = get())
+        }
+        single<LessonProposalQuoteRemoteDataSource> {
+            FirebaseLessonProposalQuoteRemoteDataSource(functions = get())
         }
         single<ReviewFeeQuoteRemoteDataSource> {
             FirebaseReviewFeeQuoteRemoteDataSource(functions = get())

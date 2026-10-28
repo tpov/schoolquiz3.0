@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -66,6 +67,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
@@ -74,6 +76,7 @@ import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
@@ -102,10 +105,16 @@ fun ResultContent(
     onNextLesson: () -> Unit,
     onPostComment: (String) -> Unit,
     onSyncResult: () -> Unit,
+    /** Цитата платы предложения (4.22); null — не приходила/сервер недоступен («—»). */
+    proposalFeeQuote: LessonProposalFeeQuote?,
+    errorReportState: ErrorReportSubmissionState,
+    onReportDialogOpened: () -> Unit,
+    onReportError: (String, String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isHard = state.mode == Difficulty.HARD
     var discussionOpen by remember { mutableStateOf(false) }
+    var reportOpen by remember { mutableStateOf(false) }
 
     Column(
         modifier
@@ -171,6 +180,15 @@ fun ResultContent(
 
         DiscussionRow(count = comments.size, onOpen = { discussionOpen = true })
 
+        // «Сообщить об ошибке» — предложение автору (CAP-6/27, UX-23): текст про весь урок и
+        // (по желанию) свой вариант; проходит проверки 4.21 до показа автору.
+        ErrorReportRow(
+            onOpen = {
+                reportOpen = true
+                onReportDialogOpened()
+            },
+        )
+
         // Existing advice is local. Show it only when the server confirms the exact same answers.
         if (state.serverSettlement.isConfirmedCompletion &&
             state.serverSettlement.codeAnswer?.raw?.map { it - '0' } == state.questionScores
@@ -202,6 +220,15 @@ fun ResultContent(
             comments = comments,
             onPostComment = onPostComment,
             onDismiss = { discussionOpen = false },
+        )
+    }
+
+    if (reportOpen) {
+        ErrorReportSheet(
+            proposalFeeQuote = proposalFeeQuote,
+            submissionState = errorReportState,
+            onSubmit = onReportError,
+            onDismiss = { reportOpen = false },
         )
     }
 }
@@ -417,6 +444,178 @@ private fun RowScope.RewardCell(
     }
 }
 
+/**
+ * «Сообщить об ошибке» — вход предложения (UX-23), как строка-дверь рядом с обсуждением.
+ * null-хост (без авторинг-графа) строку не показывает: мёртвой кнопки не бывает.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ErrorReportRow(
+    onOpen: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .defaultMinSize(minHeight = 60.dp)
+            .padding(vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                stringResource(R.string.runner_report_title),
+                style = NoirType.rowTitle.copy(fontSize = 15.sp, color = NoirT1),
+            )
+            Text(
+                stringResource(R.string.runner_report_subtitle),
+                style = NoirType.rowSub.copy(fontSize = 12.5.sp, color = NoirT2),
+            )
+        }
+        Text(
+            stringResource(R.string.runner_report_open),
+            style = NoirType.num.copy(fontSize = 12.sp, color = LocalNoirAccent.current),
+        )
+    }
+}
+
+/**
+ * Диалог отчёта: текст про весь урок, сворачиваемое поле «свой вариант», строка платы из цитаты
+ * («—», пока цитаты нет) и «Предложить автору». Границы текста — серверные; use case дублирует
+ * их до постановки в очередь, длинный текст просто не отправится.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ErrorReportSheet(
+    proposalFeeQuote: LessonProposalFeeQuote?,
+    submissionState: ErrorReportSubmissionState,
+    onSubmit: (String, String?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        var text by remember { mutableStateOf("") }
+        var variant by remember { mutableStateOf("") }
+        var variantVisible by remember { mutableStateOf(false) }
+        val accent = LocalNoirAccent.current
+        val trimmed = text.trim()
+        val canSend =
+            trimmed.isNotEmpty() &&
+                trimmed.length <= MAX_REPORT_CHARS &&
+                submissionState != ErrorReportSubmissionState.Sending
+        Column(
+            Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.runner_report_header),
+                style = NoirType.kicker.copy(color = NoirT2),
+            )
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 76.dp)
+                    .clip(NoirShapeMd)
+                    .background(NoirS2)
+                    .border(1.dp, NoirOutline, NoirShapeMd)
+                    .padding(12.dp),
+            ) {
+                if (text.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.runner_report_placeholder),
+                        style = NoirType.rowSub.copy(color = NoirTOff),
+                    )
+                }
+                BasicTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    textStyle = NoirType.rowSub.copy(color = NoirT1),
+                    cursorBrush = SolidColor(accent),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (variantVisible) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp)
+                        .clip(NoirShapeMd)
+                        .background(NoirS2)
+                        .border(1.dp, NoirOutline, NoirShapeMd)
+                        .padding(12.dp),
+                ) {
+                    if (variant.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.runner_report_variant_placeholder),
+                            style = NoirType.rowSub.copy(color = NoirTOff),
+                        )
+                    }
+                    BasicTextField(
+                        value = variant,
+                        onValueChange = { variant = it },
+                        textStyle = NoirType.rowSub.copy(color = NoirT1),
+                        cursorBrush = SolidColor(accent),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.runner_report_add_variant),
+                    style = NoirType.rowSub.copy(color = NoirT2),
+                    modifier = Modifier.clickable { variantVisible = true },
+                )
+            }
+            // Плата до отправки (UX-23): показ — не власть, плату считает приёмка (4.21).
+            Text(
+                text =
+                    if (proposalFeeQuote == null) {
+                        stringResource(R.string.runner_report_fee_unknown)
+                    } else if (proposalFeeQuote.feeNolics == 0) {
+                        stringResource(R.string.runner_report_fee_free)
+                    } else {
+                        stringResource(R.string.runner_report_fee_value, proposalFeeQuote.feeNolics)
+                    },
+                style = NoirType.rowSub.copy(color = NoirT2),
+            )
+            when (submissionState) {
+                ErrorReportSubmissionState.Failed ->
+                    Text(
+                        text = stringResource(R.string.runner_report_failed),
+                        style = NoirType.rowSub.copy(color = NoirDanger),
+                    )
+                ErrorReportSubmissionState.Done -> Unit
+                ErrorReportSubmissionState.Idle -> Unit
+                ErrorReportSubmissionState.Sending -> Unit
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.runner_report_cancel),
+                    style = NoirType.button.copy(color = NoirT3),
+                    modifier = Modifier.clickable(onClick = onDismiss),
+                )
+                Text(
+                    text =
+                        if (submissionState == ErrorReportSubmissionState.Sending) {
+                            stringResource(R.string.runner_report_sending)
+                        } else {
+                            stringResource(R.string.runner_report_send)
+                        },
+                    style = NoirType.button.copy(color = if (canSend) accent else NoirTOff),
+                    modifier =
+                        Modifier.clickable(enabled = canSend) {
+                            onSubmit(trimmed, variant.trim().takeUnless { it.isEmpty() })
+                        },
+                )
+            }
+        }
+    }
+}
+
+private const val MAX_REPORT_CHARS = 2000
+
 /** How far the corner wash reaches across the card, as a share of its longest side. */
 private const val SCORE_WASH_REACH = 1.32f
 
@@ -608,6 +807,10 @@ private fun ResultContentPreview() {
             onNextLesson = {},
             onPostComment = {},
             onSyncResult = {},
+            proposalFeeQuote = null,
+            errorReportState = ErrorReportSubmissionState.Idle,
+            onReportDialogOpened = {},
+            onReportError = { _, _ -> },
         )
     }
 }
@@ -642,6 +845,10 @@ private fun ResultContentSaveWarningPreview() {
             onNextLesson = {},
             onPostComment = {},
             onSyncResult = {},
+            proposalFeeQuote = null,
+            errorReportState = ErrorReportSubmissionState.Idle,
+            onReportDialogOpened = {},
+            onReportError = { _, _ -> },
         )
     }
 }

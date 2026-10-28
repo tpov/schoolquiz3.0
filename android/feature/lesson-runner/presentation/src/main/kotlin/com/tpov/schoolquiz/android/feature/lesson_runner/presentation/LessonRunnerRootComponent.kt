@@ -1,9 +1,11 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation
 
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -72,6 +74,25 @@ interface LessonRunnerRootComponent {
 
     /** Publishes a trimmed, non-empty discussion comment for the current lesson. */
     fun onPostComment(text: String)
+
+    /**
+     * «Сообщить об ошибке» как предложение автору (CAP-6/27, история 4.22): цитата платы
+     * предложения (UX-23). null — цитата ещё не приходила или сервер недоступен; строка платы
+     * честно показывает «—», отправку это не блокирует.
+     */
+    val proposalFeeQuote: StateFlow<LessonProposalFeeQuote?>
+
+    /** Состояние подачи отчёта: ожидание → «Отправляется…» → подано/отказ. */
+    val errorReportState: StateFlow<ErrorReportSubmissionState>
+
+    /** Диалог отчёта открыт: спрашиваем плату до отправки (показ, не власть — платит приёмка). */
+    fun onReportDialogOpened()
+
+    /** Подача отчёта: текст про весь урок + опциональный свой вариант (свободный текст). */
+    fun onReportError(
+        text: String,
+        ownVariant: String?,
+    )
 
     fun onBack()
 }

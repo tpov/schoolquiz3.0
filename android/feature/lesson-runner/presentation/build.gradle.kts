@@ -13,6 +13,9 @@ android {
 
 dependencies {
     implementation(project(":shared:feature:lesson-runner:domain"))
+    // «Сообщить об ошибке» — предложение автору (4.22, CAP-6/27): use cases авторинга на экране
+    // результата; репозиторий и транспорт приходят из Koin-графа приложения.
+    implementation(project(":shared:feature:quest-authoring:domain"))
     // Экзамен (CAP-21/22): транспорт сидинга — источник данных шести вызовов.
     implementation(project(":shared:feature:lesson-runner:data"))
     // Платное согласие (CAP-16): экран результата ведёт игрока через TermsConsent-гейт.

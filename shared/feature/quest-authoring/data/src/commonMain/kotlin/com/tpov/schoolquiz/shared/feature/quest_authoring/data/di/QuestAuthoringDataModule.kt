@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.data.di
 
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.InboxRepositoryImpl
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.LessonProposalRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.LessonLifecycleRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringLocalDataSourceImpl
@@ -13,6 +14,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArena
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonProposalQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewDecisionsRemoteDataSource
@@ -20,6 +22,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewFeeQ
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.InboxRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonProposalRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonLifecycleRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestReviewOutcomeRepository
@@ -46,6 +49,11 @@ val questAuthoringDataModule =
         // живут на сервере, кэш цитаты только врал бы.
         single<ReviewFeeQuoteRepository> {
             ReviewFeeQuoteRepositoryImpl(remote = get<ReviewFeeQuoteRemoteDataSource>())
+        }
+        // Предложения автору (4.22, AD-33): подача отчёта — общая очередь, цитата — читающий
+        // callable; транспортBinding цитаты подключается в platform-модуле.
+        single<LessonProposalRepository> {
+            LessonProposalRepositoryImpl(outbox = get<OutboxStore>(), quoteRemote = get<LessonProposalQuoteRemoteDataSource>())
         }
         // Исход модельной проверки (4.16): только чтение и доведение статуса; правда о вердиктах
         // живёт на сервере, кэш только врал бы между свипами воркера.

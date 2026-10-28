@@ -81,6 +81,20 @@
         <item quantity="other">%1$d answers scored below half marks</item>
     </plurals>
     <string name="runner_discussion_title">Discussion</string>
+    <string name="runner_report_title">Report a mistake</string>
+    <string name="runner_report_subtitle">Goes to the lesson author as a proposal</string>
+    <string name="runner_report_open">Propose</string>
+    <string name="runner_report_header">REPORT A MISTAKE</string>
+    <string name="runner_report_placeholder">What is wrong with this lesson?</string>
+    <string name="runner_report_variant_placeholder">Your own variant (optional)</string>
+    <string name="runner_report_add_variant">Add your own variant</string>
+    <string name="runner_report_fee_unknown">Fee: —</string>
+    <string name="runner_report_fee_free">Free</string>
+    <string name="runner_report_fee_value">Fee: %1$d nolics</string>
+    <string name="runner_report_failed">Could not queue the report — try again</string>
+    <string name="runner_report_cancel">Cancel</string>
+    <string name="runner_report_send">Propose to author</string>
+    <string name="runner_report_sending">Sending…</string>
     <string name="runner_discussion_open">Open →</string>
     <string name="runner_settlement_pending">Waiting for server confirmation. Score and rewards are not confirmed yet.</string>
     <string name="runner_result_sync_now">Sync result now</string>

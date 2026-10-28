@@ -86,6 +86,20 @@
         <item quantity="other">%1$d відповіді набрали менше половини бала</item>
     </plurals>
     <string name="runner_discussion_title">Обговорення</string>
+    <string name="runner_report_title">Повідомити про помилку</string>
+    <string name="runner_report_subtitle">Поде автору уроку як пропозицію</string>
+    <string name="runner_report_open">Запропонувати</string>
+    <string name="runner_report_header">ПОВІДОМИТИ ПРО ПОМИЛКУ</string>
+    <string name="runner_report_placeholder">Що не так з цим уроком?</string>
+    <string name="runner_report_variant_placeholder">Свій варіант (необовʼязково)</string>
+    <string name="runner_report_add_variant">Додати свій варіант</string>
+    <string name="runner_report_fee_unknown">Плата: —</string>
+    <string name="runner_report_fee_free">Безкоштовно</string>
+    <string name="runner_report_fee_value">Плата: %1$d ноліків</string>
+    <string name="runner_report_failed">Не вдалося поставити звіт у чергу — спробуйте ще раз</string>
+    <string name="runner_report_cancel">Пізніше</string>
+    <string name="runner_report_send">Запропонувати автору</string>
+    <string name="runner_report_sending">Надсилається…</string>
     <string name="runner_discussion_open">Відкрити →</string>
     <string name="runner_settlement_pending">Очікуємо підтвердження сервера. Оцінка й нагороди поки не підтверджені.</string>
     <string name="runner_settlement_confirmed">Завершення підтверджено сервером</string>

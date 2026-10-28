@@ -4,13 +4,16 @@ import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +41,21 @@ internal class ArenaRunnerInstance(
         host.view.map { (it as? ArenaRunnerView.Question)?.question ?: RunnerUiState.Loading }
             .stateIn(scope, SharingStarted.Eagerly, RunnerUiState.Loading)
     override val isHardMode get() = (host.view.value as? ArenaRunnerView.Question)?.question?.isHard == true
+
+    // Арена не подаёт отчётов-предложений (4.22): честные нули, а не мёртвые ручки.
+    override val proposalFeeQuote: StateFlow<LessonProposalFeeQuote?> =
+        MutableStateFlow<LessonProposalFeeQuote?>(null).asStateFlow()
+
+    override val errorReportState: StateFlow<ErrorReportSubmissionState> =
+        MutableStateFlow(ErrorReportSubmissionState.Idle).asStateFlow()
+
+    override fun onReportDialogOpened() = Unit
+
+    override fun onReportError(
+        text: String,
+        ownVariant: String?,
+    ) = Unit
+
     private var cancelId: String? = null
     private var leaveAfterCancellation = false
 
