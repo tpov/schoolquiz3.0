@@ -75,6 +75,10 @@ name: Accessibility key screens sweep at elevated font scale (9.9)
 # ── Арена-каталог
 - tapOn: "^ARENA$"
 - extendedWaitUntil:
+    visible: "Open lesson catalog"
+    timeout: 30000
+- tapOn: "Open lesson catalog"
+- extendedWaitUntil:
     visible: "^Load lessons$"
     timeout: 30000
 - takeScreenshot: "99-arena-before-load"
