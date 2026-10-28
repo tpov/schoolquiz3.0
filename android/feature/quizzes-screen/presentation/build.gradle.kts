@@ -5,6 +5,13 @@ plugins {
 
 android {
     namespace = "com.tpov.schoolquiz.android.feature.quizzes_screen.presentation"
+    testOptions {
+        unitTests {
+            // Robolectric compose tests resolve string resources from the merged resources
+            // (NoirArenaEntryContentTest, epic 9.3).
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -38,6 +45,11 @@ dependencies {
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
+    // Compose-тесты экранов под Robolectric (эпик 9.3) — тот же набор, что у settings-модуля.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
     testImplementation(project(":shared:feature:lesson-runner:domain"))
     testImplementation(project(":shared:feature:app-shell:domain"))
     testImplementation(project(":shared:feature:economy:domain"))

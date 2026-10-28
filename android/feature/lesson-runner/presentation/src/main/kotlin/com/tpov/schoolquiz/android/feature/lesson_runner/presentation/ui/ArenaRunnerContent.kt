@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,6 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunAction
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.ArenaRunnerRootComponent
@@ -30,6 +34,11 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaFrozenRatingState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaRunnerPhase
 import kotlinx.coroutines.delay
+
+/*
+ * NOIR (эпик 9.3): сырое Text/TextButton семейства результата/внимания — на NoirType/NoirButton.
+ * Строки не менялись: квитанции арены читает риг (3.x-джорни управляются текстами и семантикой).
+ */
 
 @Composable
 internal fun ArenaRunnerContent(component: ArenaRunnerRootComponent) {
@@ -61,7 +70,7 @@ private fun ArenaQuestion(
     if (frame.foreground && frame.token.phase == ArenaRunnerPhase.PAUSED) {
         // No question text behind a saving spinner: the next slot is not exposed until reveal CAS succeeds.
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (frame.busy) CircularProgressIndicator()
+            if (frame.busy) CircularProgressIndicator(color = LocalNoirAccent.current)
         }
         ArenaDialogs(frame, component, false) {}
     } else if (frame.foreground) {
@@ -81,7 +90,12 @@ private fun ArenaQuestion(
                         modifier = Modifier.align(Alignment.TopEnd).padding(20.dp),
                     )
                 }
-                if (frame.busy) CircularProgressIndicator(Modifier.align(Alignment.Center))
+                if (frame.busy) {
+                    CircularProgressIndicator(
+                        color = LocalNoirAccent.current,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
             }
         }
         ArenaDialogs(frame, component, showInfo) { showInfo = false }
@@ -107,9 +121,13 @@ private fun ArenaHeader(
         onTimeout = { component.onArenaAction(frame.token, ArenaRunAction.Timeout) },
     )
     if (!question.isHard && question.revealCorrect) {
-        TextButton(onClick = component::onArenaRefreshWallet, enabled = !frame.busy) {
-            Text(stringResource(R.string.arena_run_refresh_hint_budget))
-        }
+        NoirButton(
+            text = stringResource(R.string.arena_run_refresh_hint_budget),
+            onClick = component::onArenaRefreshWallet,
+            enabled = !frame.busy,
+            style = NoirButtonStyle.Ghost,
+            fillWidth = false,
+        )
     }
 }
 
@@ -186,28 +204,51 @@ private fun ArenaResult(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.arena_run_result_title))
-        Text(stringResource(settlementStatusText(settlement)))
+        Text(stringResource(R.string.arena_run_result_title), style = NoirType.groupTitle)
+        Text(stringResource(settlementStatusText(settlement)), style = NoirType.rowSub)
         if (settlement.isConfirmedCompletion) {
             val percent = requireNotNull(settlement.percentScore)
             val code = requireNotNull(settlement.codeAnswer)
             val reward = requireNotNull(settlement.reward)
-            Text(stringResource(R.string.arena_run_result_percent, percent.raw))
-            Text(stringResource(R.string.arena_run_result_code, code.raw))
-            Text(stringResource(R.string.arena_run_result_reward_skill, reward.skillPoints))
-            Text(stringResource(R.string.arena_run_result_reward_nolics, reward.nolics))
-            Text(stringResource(R.string.arena_run_result_life_cost, requireNotNull(settlement.lifePointsSpent)))
-            Text(stringResource(R.string.arena_run_result_plasma_cost, requireNotNull(settlement.plasmaPointsSpent)))
+            Text(stringResource(R.string.arena_run_result_percent, percent.raw), style = NoirType.price)
+            Text(stringResource(R.string.arena_run_result_code, code.raw), style = NoirType.num)
+            Text(
+                stringResource(R.string.arena_run_result_reward_skill, reward.skillPoints),
+                style = NoirType.rowSub,
+                color = NoirT2,
+            )
+            Text(
+                stringResource(R.string.arena_run_result_reward_nolics, reward.nolics),
+                style = NoirType.rowSub,
+                color = NoirT2,
+            )
+            Text(
+                stringResource(R.string.arena_run_result_life_cost, requireNotNull(settlement.lifePointsSpent)),
+                style = NoirType.rowSub,
+                color = NoirT2,
+            )
+            Text(
+                stringResource(R.string.arena_run_result_plasma_cost, requireNotNull(settlement.plasmaPointsSpent)),
+                style = NoirType.rowSub,
+                color = NoirT2,
+            )
             ArenaRating(frame, component)
         }
         if (frame.canSync) {
-            TextButton(onClick = component::onSyncResult) {
-                Text(stringResource(R.string.arena_run_sync))
-            }
+            NoirButton(
+                text = stringResource(R.string.arena_run_sync),
+                onClick = component::onSyncResult,
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
-        TextButton(onClick = component::onBack, enabled = !frame.rating.submitting) {
-            Text(stringResource(R.string.arena_run_back_to_tickets))
-        }
+        NoirButton(
+            text = stringResource(R.string.arena_run_back_to_tickets),
+            onClick = component::onBack,
+            enabled = !frame.rating.submitting,
+            style = NoirButtonStyle.Ghost,
+            fillWidth = false,
+        )
     }
 }
 
@@ -219,34 +260,36 @@ private fun ArenaRating(
     val rating = frame.rating
     when (val local = rating.local) {
         ArenaFrozenRatingState.Pending -> {
-            Text(stringResource(R.string.arena_run_rating_choose))
+            Text(stringResource(R.string.arena_run_rating_choose), style = NoirType.rowSub)
             for (value in ARENA_RATING_VALUES) {
-                TextButton(
+                NoirButton(
+                    text = stringResource(ratingOptionResource(value)),
                     onClick = { component.onArenaSubmitRating(frame, value) },
                     enabled = rating.canSubmit,
-                ) {
-                    Text(stringResource(ratingOptionResource(value)))
-                }
+                    style = NoirButtonStyle.Ghost,
+                    fillWidth = false,
+                )
             }
         }
         is ArenaFrozenRatingState.Queued -> {
-            Text(stringResource(R.string.arena_run_rating_queued, local.rating))
-            TextButton(
+            Text(stringResource(R.string.arena_run_rating_queued, local.rating), style = NoirType.rowSub)
+            NoirButton(
+                text = stringResource(R.string.arena_run_rating_sync),
                 onClick = { component.onArenaRequestRatingSync(frame) },
                 enabled = rating.canSync,
-            ) {
-                Text(stringResource(R.string.arena_run_rating_sync))
-            }
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
         is ArenaFrozenRatingState.Accepted ->
-            Text(stringResource(R.string.arena_run_rating_accepted, local.rating))
+            Text(stringResource(R.string.arena_run_rating_accepted, local.rating), style = NoirType.rowSub)
         ArenaFrozenRatingState.ExistingUnverified ->
-            Text(stringResource(R.string.arena_run_rating_existing_unverified))
+            Text(stringResource(R.string.arena_run_rating_existing_unverified), style = NoirType.rowSub)
         ArenaFrozenRatingState.Unavailable ->
-            Text(stringResource(R.string.arena_run_rating_unavailable))
+            Text(stringResource(R.string.arena_run_rating_unavailable), style = NoirType.rowSub)
     }
-    if (rating.submitting) CircularProgressIndicator()
-    if (rating.submitFailed) Text(stringResource(R.string.arena_run_rating_submit_failed))
+    if (rating.submitting) CircularProgressIndicator(color = LocalNoirAccent.current)
+    if (rating.submitFailed) Text(stringResource(R.string.arena_run_rating_submit_failed), style = NoirType.rowSub)
 }
 
 private fun ratingOptionResource(value: Int): Int =
@@ -267,17 +310,31 @@ private fun ArenaAttention(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(frame.status.messageResource()))
-        if (frame.busy) CircularProgressIndicator()
+        Text(stringResource(frame.status.messageResource()), style = NoirType.rowSub)
+        if (frame.busy) CircularProgressIndicator(color = LocalNoirAccent.current)
         if (frame.canReload) {
-            TextButton(onClick = component::onArenaReload) { Text(stringResource(R.string.arena_run_reload)) }
+            NoirButton(
+                text = stringResource(R.string.arena_run_reload),
+                onClick = component::onArenaReload,
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
         if (!frame.busy && frame.status in SYNC_STATUSES) {
-            TextButton(onClick = component::onSyncResult) { Text(stringResource(R.string.arena_run_sync)) }
+            NoirButton(
+                text = stringResource(R.string.arena_run_sync),
+                onClick = component::onSyncResult,
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
-        TextButton(onClick = component::onBack, enabled = !frame.busy) {
-            Text(stringResource(R.string.arena_run_back_to_tickets))
-        }
+        NoirButton(
+            text = stringResource(R.string.arena_run_back_to_tickets),
+            onClick = component::onBack,
+            enabled = !frame.busy,
+            style = NoirButtonStyle.Ghost,
+            fillWidth = false,
+        )
     }
 }
 

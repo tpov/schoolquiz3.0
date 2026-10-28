@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,6 +17,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryEvent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ArenaEntryPage
@@ -32,6 +35,12 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaLocalEntry
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ArenaPendingPreparation
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionStamp
+
+/*
+ * NOIR (эпик 9.3): карточки → NoirGroup, кнопки → NoirButton (ghost по умолчанию; на экране
+ * решает владелец состояния), тексты → NoirType. ВСЕ testTag сохранены байт-в-байт — риг-джорни
+ * 3.x управляются этими селекторами; строки не менялись (UX-9).
+ */
 
 internal fun LazyListScope.arenaEntryItems(
     state: ArenaEntryUiState,
@@ -74,23 +83,32 @@ private fun ArenaEntryHeader(
 ) {
     val stamp = state.session
     val enabled = stamp != null && !state.busy
-    Card(Modifier.fillMaxWidth().padding(16.dp).testTag("arena_entry")) {
+    NoirGroup(Modifier.fillMaxWidth().padding(16.dp).testTag("arena_entry")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.arena_entry_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.arena_entry_title), style = NoirType.groupTitle)
             val wallet = state.wallet
             if (wallet == null) {
-                Text(stringResource(R.string.arena_entry_wallet_unknown), Modifier.testTag("arena_wallet_unknown"))
+                Text(
+                    stringResource(R.string.arena_entry_wallet_unknown),
+                    Modifier.testTag("arena_wallet_unknown"),
+                    style = NoirType.rowSub,
+                )
             } else {
                 Text(
                     stringResource(R.string.arena_entry_nolics, wallet.availableNolics, wallet.reservedNolics),
                     Modifier.testTag("arena_wallet_nolics"),
+                    style = NoirType.rowSub,
                 )
-                Text(stringResource(R.string.arena_entry_life, wallet.storedLifePoints, wallet.reservedLifePoints))
+                Text(
+                    stringResource(R.string.arena_entry_life, wallet.storedLifePoints, wallet.reservedLifePoints),
+                    style = NoirType.rowSub,
+                )
                 Text(
                     stringResource(
                         R.string.arena_entry_observed,
                         java.text.DateFormat.getDateTimeInstance().format(java.util.Date(wallet.observedAtMs)),
                     ),
+                    style = NoirType.rowSub,
                 )
             }
             EntryButton(R.string.arena_entry_refresh_wallet, "arena_wallet_refresh", enabled) {
@@ -108,18 +126,20 @@ private fun ArenaEntryHeader(
             EntryButton(R.string.arena_entry_recover, "arena_recovery_load", enabled) {
                 if (stamp != null) onEvent(ArenaEntryEvent.Load(stamp, ArenaEntryPage.RECOVERY))
             }
-            if (state.busy) CircularProgressIndicator(Modifier.testTag("arena_entry_busy"))
-            Text(stringResource(state.notice.entryResource()), Modifier.testTag("arena_entry_notice"))
-            state.lastRequestId?.let { Text(stringResource(R.string.arena_entry_request_id, it)) }
+            if (state.busy) CircularProgressIndicator(Modifier.testTag("arena_entry_busy"), color = LocalNoirAccent.current)
+            Text(
+                stringResource(state.notice.entryResource()),
+                Modifier.testTag("arena_entry_notice"),
+                style = NoirType.rowSub,
+            )
+            state.lastRequestId?.let {
+                Text(stringResource(R.string.arena_entry_request_id, it), style = NoirType.rowSub)
+            }
             if (state.hasLoadedTickets && state.tickets.isEmpty()) {
-                Text(
-                    stringResource(R.string.arena_entry_no_local_tickets),
-                )
+                Text(stringResource(R.string.arena_entry_no_local_tickets), style = NoirType.rowSub)
             }
             if (state.hasLoadedPreparations && state.preparations.isEmpty()) {
-                Text(
-                    stringResource(R.string.arena_entry_no_preparations),
-                )
+                Text(stringResource(R.string.arena_entry_no_preparations), style = NoirType.rowSub)
             }
         }
     }
@@ -132,11 +152,11 @@ private fun ArenaPreparationCard(
     busy: Boolean,
     onEvent: (ArenaEntryEvent) -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth().padding(16.dp).testTag("arena_preparation_" + row.requestId)) {
+    NoirGroup(Modifier.fillMaxWidth().padding(16.dp).testTag("arena_preparation_" + row.requestId)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.arena_entry_request_id, row.requestId))
-            Text(stringResource(row.reason.preparationResource()))
-            Text(stringResource(R.string.arena_entry_retry_warning))
+            Text(stringResource(R.string.arena_entry_request_id, row.requestId), style = NoirType.rowTitle)
+            Text(stringResource(row.reason.preparationResource()), style = NoirType.rowSub)
+            Text(stringResource(R.string.arena_entry_retry_warning), style = NoirType.rowSub)
             EntryButton(
                 R.string.arena_entry_retry_prepare,
                 "arena_retry_prepare_" + row.requestId,
@@ -154,14 +174,14 @@ private fun ArenaTicketCard(
     callbacks: ArenaEntryCallbacks,
 ) {
     val onEvent = callbacks.onEvent
-    Card(Modifier.fillMaxWidth().padding(16.dp).testTag("arena_ticket_" + row.ticketId)) {
+    NoirGroup(Modifier.fillMaxWidth().padding(16.dp).testTag("arena_ticket_" + row.ticketId)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.arena_entry_ticket_id, row.ticketId))
+            Text(stringResource(R.string.arena_entry_ticket_id, row.ticketId), style = NoirType.rowTitle)
             row.header?.let {
-                Text(stringResource(R.string.arena_entry_frozen_cost, it.priceNolics, it.lifeCost))
-                Text(stringResource(R.string.arena_entry_request_id, it.requestId))
+                Text(stringResource(R.string.arena_entry_frozen_cost, it.priceNolics, it.lifeCost), style = NoirType.rowSub)
+                Text(stringResource(R.string.arena_entry_request_id, it.requestId), style = NoirType.rowSub)
             }
-            Text(stringResource(row.state.localStateResource()))
+            Text(stringResource(row.state.localStateResource()), style = NoirType.rowSub, color = NoirT2)
             val open = callbacks.onOpenRun
             if (open != null && row.canStartArenaRun()) {
                 EntryButton(R.string.arena_entry_start_run, "arena_start_" + row.ticketId, !busy) {
@@ -196,7 +216,13 @@ private fun EntryButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    OutlinedButton(onClick, Modifier.fillMaxWidth().testTag(tag), enabled = enabled) { Text(stringResource(label)) }
+    NoirButton(
+        text = stringResource(label),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().testTag(tag),
+        style = NoirButtonStyle.Ghost,
+        enabled = enabled,
+    )
 }
 
 @Preview(showBackground = true)
