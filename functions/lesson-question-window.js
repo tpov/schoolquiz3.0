@@ -85,12 +85,18 @@ function hash12(value) {
  * правилом, что у награды (`questionAllocatedSeconds`), — и замораживаются в документе вместе с
  * константой окна: выдача потом только прикладывает захваченное, ничего не перечитывая (§3).
  * Клиент не назначает ни секунды, ни момент: тело запроса на deadline не влияет (§5).
+ *
+ * `ownerUid` — вход с аутентификации (ретро эпика 2, F10): окно принадлежит открывшему его
+ * аккаунту, и чужой профиль не начинает, не выдаёт и не закрывает его. Читатели проверяют поле,
+ * когда оно стоит; документы, написанные до поля, живут только в памяти демо-бэкенда до
+ * рестарта (docker start переимпортирует staged-базлайн).
  */
-function openQuestionWindow({attemptId, lessonId, lessonVersion, completedQuestionIndex, nextQuestionId, nextQuestionContent, isHard, nowMs}) {
+function openQuestionWindow({ownerUid, attemptId, lessonId, lessonVersion, completedQuestionIndex, nextQuestionId, nextQuestionContent, isHard, nowMs}) {
   const allocatedSeconds = questionAllocatedSeconds(nextQuestionContent, isHard);
   return {
     schemaVersion: 1,
     windowId: mintWindowId(attemptId, completedQuestionIndex),
+    ownerUid,
     attemptId,
     lessonId,
     lessonVersion,
@@ -126,6 +132,14 @@ function sameWindowIntent(record, request) {
 }
 
 /**
+ * Чужое ли окно (F10): у документа стоит владелец, и это не аутентифицированный профиль.
+ * Документы без `ownerUid` (до-полевые) ведутся как раньше — их век ограничен памятью демо-бэкенда.
+ */
+function foreignWindowOwner(record, uid) {
+  return Boolean(record && record.ownerUid && record.ownerUid !== uid);
+}
+
+/**
  * Вердикт на запрос выдачи следующего вопроса (§3).
  *
  * - `ISSUE` — первая выдача: вопрос уходит, часы стартуют от серверного «сейчас»;
@@ -135,13 +149,16 @@ function sameWindowIntent(record, request) {
  *
  * Выдача после выдачи не пересоздаётся никогда (§5): состояние `DELIVERED` без `delivery`
  * внутренне противоречиво и трактуется как истёкшее, чтобы испорченный документ не открыл вторые
- * часы.
+ * часы. Туда же (ретро эпика 2, F12) уходит документ с нечисловыми захваченными секундами или
+ * дедлайном выдачи: NaN-часы «вечного ответа», закреплённые правилом no-reissue (§5), — не выдача,
+ * а испорченное окно, и закрывается оно без платного эффекта, как всякий expiry (§7).
  */
 function deliveryVerdict(record, nowMs) {
   if (!record) return {status: "NO_WINDOW"};
   const issued = record.delivery || null;
   const expired = record.state === WINDOW_EXPIRED ||
-    (!issued && (record.state === WINDOW_DELIVERED || nowMs >= record.expiresAtMs));
+    (issued && issued.answerDeadlineMs !== undefined && !Number.isFinite(issued.answerDeadlineMs)) ||
+    (!issued && (record.state === WINDOW_DELIVERED || !Number.isFinite(record.allocatedSeconds) || nowMs >= record.expiresAtMs));
   if (expired) {
     return {status: "WINDOW_EXPIRED", record};
   }
@@ -215,6 +232,7 @@ module.exports = {
   deliveryUpdate,
   deliveryVerdict,
   expiryUpdate,
+  foreignWindowOwner,
   mintWindowId,
   openQuestionWindow,
   readyAckVerdict,

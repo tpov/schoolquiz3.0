@@ -133,6 +133,18 @@ const {parseReviewFeeQuoteRequest, quoteReviewFee} = require("./review-fee-quote
 const {writeSyncChanges} = require("./sync-changes");
 const {readReviewDecisions, writeReviewDecisionMark} = require("./review-decisions");
 const {
+  PROPOSALS_COLLECTION,
+  PROPOSAL_KINDS,
+  PROPOSAL_STATUS,
+  PROPOSAL_TARIFFS_DOC,
+  buildProposalRecord,
+  normalizeProposalTariffs,
+  parseProposalSubmissionBody,
+  proposalFeeNolics,
+  proposalStaleness,
+  quoteProposalFee,
+} = require("./lesson-proposals");
+const {
   planHierarchyPrune,
   planPrivateHierarchyPrune,
   writePrivateHierarchyPruneToBatch,
@@ -169,6 +181,7 @@ const {
   deliveryUpdate,
   deliveryVerdict,
   expiryUpdate,
+  foreignWindowOwner,
   openQuestionWindow,
   readyAckVerdict,
   sameWindowIntent,
@@ -2094,8 +2107,11 @@ const MUTATION_HANDLERS = {
   // `OutboxOperationsRegistryTest`.
   "lesson.UNLOCK": (uid, payload) => applyLessonUnlock(uid, payload),
   // Прохождение урока. Приёмник у него теперь один: очередь несёт по одному прохождению за
-  // запись, а пакетный callable остаётся для синхронной отправки — тело у обоих общее.
-  "lesson_runner.SUBMIT_ATTEMPT": (uid, payload) => applyLessonResultEvents(uid, [payload || {}]),
+  // запись, а пакетный callable остаётся для синхронной отправки — тело у обоих общее. Пятый
+  // аргумент — снятка таблицы, под которой приёмник сверил согласие (ретро эпика 2, F8): цены
+  // попытки считаются по ней же, а не по перечитанному документу.
+  "lesson_runner.SUBMIT_ATTEMPT": (uid, payload, _now, _mutationId, verifiedEconomy) =>
+    applyLessonResultEvents(uid, [payload || {}], verifiedEconomy),
   // Оценка квеста.
   "lesson_runner.SUBMIT_RATING": (uid, payload) => applyQuestRatingEvents(uid, [payload || {}]),
   // Квитанция готовности онлайн-перехода next-question (ONLINE-O2 §4, история 2.6). Пер-вопросная
@@ -2125,6 +2141,13 @@ const MUTATION_HANDLERS = {
   // урок и его id уже лежат в теле, адресата (разрешённого автора) сервер выводит сам из
   // документа размещения, а повтор по ключу возвращает ту же запись.
   "lesson_report.SUBMIT_ERROR": (uid, payload) => applyLessonErrorReport(uid, payload),
+  // Предложение автору (AD-33, 4.21): один приёмник для трёх входов — отчёт об ошибке, правка
+  // копии урока, новый урок с целевым путём в чужом курсе. Откладывается по AD-3: содержание
+  // едет в теле, адресата (владельца цели) сервер выводит из документа цели, плата по виду
+  // считается на приёмке из тела реальной подачи; повтор по ключу возвращает сохранённую запись
+  // и не платит второй раз. Клиентская половина — OutboxOperations.SUBMIT_PROPOSAL; совпадение
+  // имён сторожит OutboxOperationsRegistryTest.
+  "quest_authoring.SUBMIT_PROPOSAL": (uid, payload) => applyLessonProposalSubmission(uid, payload),
   // Публикация серии опросов единым draft (UX-O7 §6.2, история 8.2). Откладывается по AD-3: всё
   // содержание серии едет в теле, эффекта вне его нет. Повтор того же намерения (тот же ключ)
   // возвращает сохранённую revision; повторная публикация того же содержания — no-op без
@@ -2729,62 +2752,73 @@ exports.submitMutation = onCall(CALLABLE_OPTIONS, async (request) => {
     throw new HttpsError("failed-precondition", gate.reason, PRECONDITION_PENDING_DETAIL);
   }
 
-  const versionSource = MUTATION_VERSION_SOURCES[operation];
-  if (expected.expectedVersion !== null && typeof versionSource !== "function") {
-    // Клиент считает операцию версионируемой, а сервер — нет. Применить её мимо сверки значит
-    // сделать вид, что сверка была: это отказ, а не конфликт.
-    await releaseReservation(keyRef, gate.reservation);
-    throw new HttpsError("invalid-argument", `operation ${operation} carries no version`);
-  }
-  if (typeof versionSource === "function") {
-    // Сверка идёт и тогда, когда поля в конверте нет.
-    //
-    // Отсутствие `expected_version` у версионируемой операции — это утверждение «сущности ещё
-    // нет», а не разрешение пропустить проверку. Пока отсутствие означало «не сверяем», сверку
-    // выключало молчание клиента: приватный документ без поля `version` давал `serverRevision`
-    // ноль, клиент опускал поле, и мутация проходила без единой проверки — то есть не проверялось
-    // вообще ничего и никогда.
-    const verdict = versionVerdict(expected.expectedVersion, await versionSource(uid, body.payload));
-    if (verdict.conflict) {
-      // Конфликт — не отказ (AD-24): эффект не применён, версия не сдвинулась, а ключ обязан
-      // освободиться целиком. Останься он выполненным — повтор вернул бы пустой сохранённый
-      // результат как успех; останься зарезервированным — новая мутация поверх серверной версии
-      // ждала бы минуту таймаута.
-      await releaseReservation(keyRef, gate.reservation);
-      throw new HttpsError(
-        "aborted",
-        `Entity moved to version ${verdict.serverVersion}`,
-        versionConflictDetail(verdict.serverVersion),
-      );
+  // Сверка версии и согласия — между резервированием и обработчиком. Ретро эпика 2 (F9): здесь
+  // два чтения, чей отказ раньше прожигал резерв — `versionSource` и `readEconomyConstantsDocument`
+  // (внутри terms-блока явные отказы ключ освобождали, а reject чтения улетал мимо). Обе сверки
+  // стоят под одним release-on-throw: любой исход между резервированием и обработчиком оставляет
+  // ключ свободным.
+  let termsEconomy = null;
+  try {
+    const versionSource = MUTATION_VERSION_SOURCES[operation];
+    if (expected.expectedVersion !== null && typeof versionSource !== "function") {
+      // Клиент считает операцию версионируемой, а сервер — нет. Применить её мимо сверки значит
+      // сделать вид, что сверка была: это отказ, а не конфликт.
+      throw new HttpsError("invalid-argument", `operation ${operation} carries no version`);
     }
-  }
+    if (typeof versionSource === "function") {
+      // Сверка идёт и тогда, когда поля в конверте нет.
+      //
+      // Отсутствие `expected_version` у версионируемой операции — это утверждение «сущности ещё
+      // нет», а не разрешение пропустить проверку. Пока отсутствие означало «не сверяем», сверку
+      // выключало молчание клиента: приватный документ без поля `version` давал `serverRevision`
+      // ноль, клиент опускал поле, и мутация проходила без единой проверки — то есть не проверялось
+      // вообще ничего и никогда.
+      const verdict = versionVerdict(expected.expectedVersion, await versionSource(uid, body.payload));
+      if (verdict.conflict) {
+        // Конфликт — не отказ (AD-24): эффект не применён, версия не сдвинулась, а ключ обязан
+        // освободиться целиком. Останься он выполненным — повтор вернул бы пустой сохранённый
+        // результат как успех; останься зарезервированным — новая мутация поверх серверной версии
+        // ждала бы минуту таймаута.
+        throw new HttpsError(
+          "aborted",
+          `Entity moved to version ${verdict.serverVersion}`,
+          versionConflictDetail(verdict.serverVersion),
+        );
+      }
+    }
 
-  // Сверка согласия с текущей таблицей — после резервирования ключа и до обработчика, как сверка
-  // версии: расхождение условий — не применение эффекта (AD-24), эффект по ним не считается, и
-  // ключ обязан освободиться целиком. Повтор известного ключа сюда не доходит (он вернул
-  // сохранённое ещё в гейте) — согласие повторно не переспрашивает. Согласовавший старые цены
-  // игрок получит свежую таблицу при следующей синхронизации, согласится заново, и повтор той же
-  // мутации пройдёт уже по новым.
-  if (MUTATION_TERMS_OPERATIONS.has(operation)) {
-    if (!captured.captured) {
-      // Платная операция без согласия не выполняется: игроку сначала показывают текущие
-      // условия, согласие фиксируется, и только тогда операция едет. Повтор этого не изменит,
-      // поэтому отказ окончательный до нового согласия.
-      await releaseReservation(keyRef, gate.reservation);
-      throw new HttpsError("failed-precondition", `operation ${operation} requires captured payable terms`, {code: TERMS_CONSENT_DETAIL});
+    // Сверка согласия с текущей таблицей — после резервирования ключа и до обработчика, как сверка
+    // версии: расхождение условий — не применение эффекта (AD-24), эффект по ним не считается, и
+    // ключ обязан освободиться целиком. Повтор известного ключа сюда не доходит (он вернул
+    // сохранённое ещё в гейте) — согласие повторно не переспрашивает. Согласовавший старые цены
+    // игрок получит свежую таблицу при следующей синхронизации, согласится заново, и повтор той же
+    // мутации пройдёт уже по новым.
+    if (MUTATION_TERMS_OPERATIONS.has(operation)) {
+      if (!captured.captured) {
+        // Платная операция без согласия не выполняется: игроку сначала показывают текущие
+        // условия, согласие фиксируется, и только тогда операция едет. Повтор этого не изменит,
+        // поэтому отказ окончательный до нового согласия.
+        throw new HttpsError("failed-precondition", `operation ${operation} requires captured payable terms`, {code: TERMS_CONSENT_DETAIL});
+      }
+      // Ретро эпика 2 (F8): таблица читается один раз, и тот же снимок едет в обработчик — иначе
+      // публикация между сверкой согласия и чтением прейскуранта считала бы попытку по ценам,
+      // которые согласованное условия никогда не покрывало.
+      termsEconomy = await readEconomyConstantsDocument();
+      const terms = termsVerdict(captured.captured, payableTermsProjection(termsEconomy));
+      if (!terms.sufficient) {
+        throw new HttpsError("failed-precondition", "Payable terms changed since consent", {code: TERMS_CONSENT_DETAIL, change: terms.change});
+      }
     }
-    const terms = termsVerdict(captured.captured, payableTermsProjection(await readEconomyConstantsDocument()));
-    if (!terms.sufficient) {
-      await releaseReservation(keyRef, gate.reservation);
-      throw new HttpsError("failed-precondition", "Payable terms changed since consent", {code: TERMS_CONSENT_DETAIL, change: terms.change});
-    }
+  } catch (error) {
+    await releaseReservation(keyRef, gate.reservation);
+    throw error;
   }
 
   // Ключ едет в обработчик: телу, чей эффект не умещается в транзакцию с ключом, нужен свой
   // детерминированный идентификатор, чтобы повтор по протухшему резерву не применил его дважды (AD-1).
   let result;
   try {
-    result = await resolved.handler(uid, body.payload, now, mutationId);
+    result = await resolved.handler(uid, body.payload, now, mutationId, termsEconomy);
   } catch (error) {
     // Отказ тела — не результат: ключ освобождается, как при конфликте версии. Останься он
     // зарезервированным, честный повтор транзиентной ошибки ждал бы минуту таймаута, а
@@ -2869,12 +2903,6 @@ function windowView(record) {
   };
 }
 
-/** Пул урока нужной сложности по серверному содержимому — то же правило, что у цены урока. */
-async function lessonQuestionPoolSize(lessonId, isHard) {
-  const snapshot = await db.collection("questions").where("lessonId", "==", lessonId).get();
-  return lessonPoolSize(snapshot.docs.map(questionDocumentFor), isHard);
-}
-
 /**
  * Событие завершения вопроса и открытие окна загрузки (ONLINE-O2 §2–§3).
  *
@@ -2898,14 +2926,11 @@ exports.beginLessonQuestionWindow = onCall(CALLABLE_OPTIONS, async (request) => 
   const lessonVersion = Math.max(0, Math.trunc(numberValue(data.lessonVersion, 0)));
   const completedQuestionIndex = wholeIndex(data.completedQuestionIndex, "completedQuestionIndex");
   const isHard = stringValue(data.difficulty, "HARD").toUpperCase() !== "EASY";
-
-  // После последнего вопроса окно не начинается (§3): пул знает сервер, до любых полей выдачи.
-  const poolSize = await lessonQuestionPoolSize(lessonId, isHard);
-  if (completedQuestionIndex + 1 >= poolSize) {
-    throw new HttpsError("invalid-argument", "no next question: the completed question is the last of the pool");
-  }
-
-  const nextQuestionId = requiredWindowString(data.nextQuestionId, "nextQuestionId");
+  // Отсутствующее поле разбирается после щупала пула (в транзакции): для последнего вопроса
+  // окна и не должно быть (§3), и отказ называет именно это, а не «нет nextQuestionId».
+  const nextQuestionId = data.nextQuestionId === undefined
+    ? null
+    : requiredWindowString(data.nextQuestionId, "nextQuestionId");
 
   const intent = {attemptId, lessonId, lessonVersion, completedQuestionIndex, nextQuestionId, isHard};
   const docRef = lessonWindowRef(attemptId, completedQuestionIndex);
@@ -2913,11 +2938,29 @@ exports.beginLessonQuestionWindow = onCall(CALLABLE_OPTIONS, async (request) => 
     const snapshot = await transaction.get(docRef);
     const existing = snapshot.exists ? snapshot.data() : null;
     if (existing) {
+      // Окно принадлежит открывшему (F10): чужой профиль не читает чужой переход и не спорит
+      // с его identity под чужим attemptId.
+      if (foreignWindowOwner(existing, uid)) {
+        throw new HttpsError("permission-denied", "question window belongs to another account");
+      }
       if (!sameWindowIntent(existing, intent)) {
         throw new HttpsError("invalid-argument", "window already opened for a different transition");
       }
+      // Повтор обязан вернуть существующее окно и тогда, когда серверный пул с тех пор уехал
+      // (F11): щупало пула стоит после existing-ветки, ровно чтобы §7-повтор при дрейфе
+      // получал то же окно, а не отказ «нет следующего вопроса».
       return existing;
     }
+    // После последнего вопроса окно не начинается (§3): пул знает сервер, до любых полей выдачи.
+    // Чтение внутри транзакции и после existing-ветки: пул решает только путь нового окна
+    // (F11; чтения — до первой записи).
+    const poolSnapshot = await transaction.get(
+      db.collection("questions").where("lessonId", "==", lessonId));
+    const poolSize = lessonPoolSize(poolSnapshot.docs.map(questionDocumentFor), isHard);
+    if (completedQuestionIndex + 1 >= poolSize) {
+      throw new HttpsError("invalid-argument", "no next question: the completed question is the last of the pool");
+    }
+    if (!nextQuestionId) throw new HttpsError("invalid-argument", "nextQuestionId is required");
     // Содержимое вопроса читает сервер: секунды ответа считаются здесь и замораживаются в окне
     // (§3, captured config) — тело запроса на deadline не влияет (§5).
     const questionDoc = await transaction.get(db.collection("questions").doc(nextQuestionId));
@@ -2927,6 +2970,7 @@ exports.beginLessonQuestionWindow = onCall(CALLABLE_OPTIONS, async (request) => 
     }
     const created = openQuestionWindow({
       ...intent,
+      ownerUid: uid,
       nextQuestionContent: questionRowFrom(question).content,
       nowMs: Date.now(),
     });
@@ -2956,6 +3000,10 @@ exports.fetchNextLessonQuestion = onCall(CALLABLE_OPTIONS, async (request) => {
   const verdict = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(docRef);
     const record = snapshot.exists ? snapshot.data() : null;
+    // Выдача и закрытие — над чужим окном не совершаются (F10): они двигают серверные часы.
+    if (foreignWindowOwner(record, uid)) {
+      throw new HttpsError("permission-denied", "question window belongs to another account");
+    }
     const outcome = deliveryVerdict(record, nowMs);
     if (outcome.status === "ISSUE") {
       transaction.set(docRef, {...record, ...deliveryUpdate(outcome.issued)});
@@ -3009,7 +3057,13 @@ async function applyLessonReadyAck(uid, payload, now) {
     throw new HttpsError("invalid-argument", "ready-ack names no delivered question");
   }
   const snapshot = await lessonWindowRef(attemptId, questionIndex - 1).get();
-  const verdict = readyAckVerdict(snapshot.exists ? snapshot.data() : null, {attemptId, questionIndex, windowId}, now);
+  const record = snapshot.exists ? snapshot.data() : null;
+  // Квитанция читает серверные факты чужого окна — не позволено и здесь (F10); объявление
+  // `userId` в теле проверялось и раньше, но окно знает владельца лучше тела.
+  if (foreignWindowOwner(record, uid)) {
+    throw new HttpsError("permission-denied", "question window belongs to another account");
+  }
+  const verdict = readyAckVerdict(record, {attemptId, questionIndex, windowId}, now);
   if (!verdict.ok) throw new HttpsError(verdict.code, verdict.reason);
   return verdict.receipt;
 }
@@ -3026,8 +3080,11 @@ exports.submitLessonResultEvents = onCall(CALLABLE_OPTIONS, async (request) => {
  * Одно и то же действие приезжает двумя дорогами: синхронно, пока игрок смотрит на экран, и
  * отложенно из общей очереди, если сети не было. Логика обязана быть одна: жизни, награда и
  * турнирный зачёт, посчитанные двумя копиями, однажды разойдутся.
+ *
+ * `verifiedEconomy` — снимок таблицы, под которым приёмник сверил согласие (ретро эпика 2, F8);
+ * он же считается цены попытки. Прямой callable согласия не сверяет и читает таблицу сам.
  */
-async function applyLessonResultEvents(uid, attempts) {
+async function applyLessonResultEvents(uid, attempts, verifiedEconomy = null) {
   if (attempts.length > MAX_RESULT_EVENTS_PER_CALL) {
     throw new HttpsError("invalid-argument", `At most ${MAX_RESULT_EVENTS_PER_CALL} attempts are accepted per call`);
   }
@@ -3088,7 +3145,8 @@ async function applyLessonResultEvents(uid, attempts) {
     // устройство: под прейскурантом клиент, объявивший `home` для турнира, платил бы 33 очка
     // вместо 500. Объявление остаётся в событии как диагностика; списание от него не зависит.
     readLessonContexts(events.map((item) => item.event)),
-    readEconomyConstantsDocument(),
+    // Снимок согласия, если он приехал из приёмника (F8); прямой callable читает таблицу сам.
+    verifiedEconomy || readEconomyConstantsDocument(),
     // Какие из серверных попыток уже лежат: повтор не пересчитывается заново.
     readStoredAttemptScores(events),
   ]);
@@ -4453,7 +4511,11 @@ exports.reconcileEconomySeasons = onSchedule({...FUNCTION_OPTIONS,
 exports.decideOfferAdReview = onCall(MONETARY_CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const profile = await requireProfile(uid);
-  if (profile.moderatorLevel < QUALIFIED_LEVEL && profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
+  // Ретро m4 (п.3): гейт приведён к именованной форме соседей (образец — decideReport ниже),
+  // чтобы во всей монетизации гейт читался одинаково и не ждал третьего глаза на инверсию.
+  const isModerator = profile.moderatorLevel >= QUALIFIED_LEVEL;
+  const isDeveloper = profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL;
+  if (!isModerator && !isDeveloper) {
     throw new HttpsError("permission-denied", "Moderator level is required");
   }
   const payload = request.data || {};
@@ -5839,6 +5901,229 @@ async function settleReviewFeeCycle(submissionId, outcome, now) {
       burnTenths: manifest.burnTenths};
   });
 }
+
+/**
+ * ─── Предложения автору: приёмка, цитата, решение (AD-33, CAP-27, история 4.21) ────────────────
+ *
+ * Proposal = (kind REPORT | COPY_EDIT | NEW_LESSON, целевой урок или узел курса, base revision,
+ * proposer). Маршрут — владельцу цели, выведенному сервером из документа цели; все виды проходят
+ * этапы AD-32 (свайп предложений воркера) до показа автору; плата по виду 0 / 100 × изменённые
+ * вопросы / 1000 без выплат; решение автора бесплатно и отказывает по STALE.
+ */
+
+/** Комментарий решения автора: необязателен, но ограничен — заметка, не эссе (как у отметок). */
+const MAX_PROPOSAL_COMMENT_BYTES = 2000;
+
+/** Тарифы предложения — или громкий отказ: испорченный тариф не выглядит ценой по умолчанию. */
+async function readProposalTariffs() {
+  const snapshot = await db.doc(PROPOSAL_TARIFFS_DOC).get();
+  try {
+    return normalizeProposalTariffs(snapshot.exists ? snapshot.data() : null);
+  } catch (error) {
+    throw new HttpsError("failed-precondition", `${PROPOSAL_TARIFFS_DOC}: ${error.message}`);
+  }
+}
+
+/** Владелец и текущая редакция целевого урока: адресата выводит документ цели, не тело. */
+async function readLessonTarget(lessonId) {
+  const snapshot = await db.doc(`lessons/${lessonId}`).get();
+  const data = snapshot.exists ? snapshot.data() || {} : {};
+  const authorUid = stringValue(data.authorUid);
+  if (!authorUid) throw new HttpsError("not-found", "Proposal target lesson could not be found");
+  return {ownerUid: authorUid, revision: numberValue(data.version, 0)};
+}
+
+/** Владелец и текущая редакция целевого курса: путь сверяется с документами дерева. */
+async function readCourseTarget({catalogId, questId, sectionId, themeId}) {
+  const [questSnap, sectionSnap, themeSnap] = await Promise.all([
+    db.doc(`quests/${questId}`).get(),
+    db.doc(`sections/${sectionId}`).get(),
+    db.doc(`themes/${themeId}`).get(),
+  ]);
+  const quest = questSnap.exists ? questSnap.data() || {} : {};
+  const section = sectionSnap.exists ? sectionSnap.data() || {} : {};
+  const theme = themeSnap.exists ? themeSnap.data() || {} : {};
+  const authorUid = stringValue(quest.authorUid);
+  if (!authorUid || stringValue(quest.catalogId) !== catalogId ||
+    stringValue(section.questId) !== questId || stringValue(theme.sectionId) !== sectionId) {
+    throw new HttpsError("not-found", "Proposal target course path could not be found");
+  }
+  return {ownerUid: authorUid, revision: numberValue(quest.version, 0)};
+}
+
+/**
+ * Приёмка предложения (AD-9/10): плата и запись — одна транзакция; подача без денег не
+ * принимается, принятая подача без платы не существует. Повтор того же proposalId возвращает
+ * сохранённую запись — плата стоит за намерение, а не за попытку.
+ */
+async function applyLessonProposalSubmission(uid, payload) {
+  await requireProfile(uid);
+  const parsed = parseProposalSubmissionBody(payload);
+  const existing = await db.collection(PROPOSALS_COLLECTION).doc(parsed.proposalId).get();
+  if (existing.exists) {
+    const stored = existing.data() || {};
+    return {
+      proposalId: parsed.proposalId,
+      status: stringValue(stored.status),
+      feeNolics: stored.fee ? numberValue(stored.fee.nolics, 0) : 0,
+    };
+  }
+  const targetRef = parsed.kind === "NEW_LESSON"
+    ? {catalogId: parsed.targetCatalogId, questId: parsed.targetQuestId,
+      sectionId: parsed.targetSectionId, themeId: parsed.targetThemeId}
+    : {lessonId: parsed.targetLessonId};
+  const target = parsed.kind === "NEW_LESSON"
+    ? await readCourseTarget(targetRef)
+    : await readLessonTarget(targetRef.lessonId);
+  if (target.ownerUid === uid) {
+    throw new HttpsError("failed-precondition", "PROPOSAL_TARGET_OWN");
+  }
+  const changedQuestions = parsed.kind === "COPY_EDIT" ? parsed.payload.editedQuestionIds.length : 0;
+  const tariffs = await readProposalTariffs();
+  const feeNolics = proposalFeeNolics({kind: parsed.kind, changedQuestions}, tariffs);
+
+  const now = Date.now();
+  const record = buildProposalRecord({
+    proposalId: parsed.proposalId,
+    kind: parsed.kind,
+    proposerUid: uid,
+    targetOwnerUid: target.ownerUid,
+    target: targetRef,
+    baseRevision: target.revision,
+    payload: parsed.payload,
+  });
+  record.fee = {
+    nolics: feeNolics,
+    changedQuestions,
+    tariffRevision: tariffs.revision,
+    chargedAtMs: feeNolics > 0 ? now : 0,
+  };
+  record.createdAtMs = now;
+  record.updatedAtMs = now;
+
+  await db.runTransaction(async (transaction) => {
+    const userRef = db.doc(`users/${uid}`);
+    if (feeNolics > 0) {
+      const userSnap = await transaction.get(userRef);
+      const userData = userSnap.exists ? userSnap.data() || {} : {};
+      const balance = nonNegativeInteger(userData.pointsNolics, numberValue(userData.nolics, 0));
+      if (balance < feeNolics) {
+        // Окончательный отказ: повтор с тем же кошельком изменит нечего — денег по-прежнему нет.
+        throw new HttpsError("failed-precondition",
+          `PROPOSAL_FEE_INSUFFICIENT: proposal fee ${feeNolics} nolics exceeds balance ${balance}`);
+      }
+      transaction.set(userRef, clean({
+        updatedAtMs: now,
+        // Both fields: зеркало списания двустороннее, как во всех денежных путях (4.18).
+        pointsNolics: balance - feeNolics,
+        nolics: balance - feeNolics,
+      }), {merge: true});
+      for (const entry of ledgerEntries({
+        uid,
+        reason: REASON.PROPOSAL_FEE,
+        sourceId: parsed.proposalId,
+        atMs: now,
+        deltas: {[CURRENCY.NOLICS]: -feeNolics},
+        details: {kind: parsed.kind, changedQuestions, tariffRevision: tariffs.revision},
+      })) {
+        transaction.set(db.doc(`${LEDGER_PATH}/${entry.id}`), entry, {merge: true});
+      }
+    }
+    // create — замок идемпотентности: гонка повторов платит ровно один раз.
+    transaction.create(db.collection(PROPOSALS_COLLECTION).doc(parsed.proposalId), clean(record));
+  });
+  return {proposalId: parsed.proposalId, status: record.status, feeNolics};
+}
+
+/**
+ * Цитата платы предложения (UX-23: вход показывает плату до отправки). Только чтение; показ —
+ * не власть: платой остаётся расчёт приёмки из тела реальной подачи.
+ */
+exports.quoteLessonProposalFee = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const body = request.data && typeof request.data === "object" ? request.data : {};
+  const kind = stringValue(body.kind);
+  if (!PROPOSAL_KINDS.includes(kind)) throw new HttpsError("invalid-argument", "proposal kind is required");
+  const changedQuestions = body.changedQuestions === undefined ? 0 : body.changedQuestions;
+  if (!Number.isInteger(changedQuestions) || changedQuestions < 0) {
+    throw new HttpsError("invalid-argument", "changedQuestions must be a whole number");
+  }
+  if (kind === "COPY_EDIT" && changedQuestions < 1) {
+    throw new HttpsError("invalid-argument", "COPY_EDIT quote needs at least one changed question");
+  }
+  const tariffs = await readProposalTariffs();
+  return quoteProposalFee({kind, changedQuestions}, tariffs);
+});
+
+/**
+ * Решение автора по предложению (UX-22 «Предложения», AD-33): одобрить или отклонить с
+ * комментарием. Право — владелец цели: чужое предложение неотличимо от отсутствующего. Применять
+ * можно только проверенное и только по актуальной базе — STALE отказывает единым правилом для
+ * всех видов (AD-33 «применение отказывает»). Применение COPY_EDIT/NEW_LESSON привозят 4.23/4.24;
+ * пока их половин нет, одобрение этих видов — именованный промежуточный отказ, а не тишина.
+ */
+exports.decideLessonProposal = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const body = request.data && typeof request.data === "object" ? request.data : {};
+  const proposalId = stringValue(body.proposalId);
+  if (!proposalId || proposalId.includes("/")) {
+    throw new HttpsError("invalid-argument", "proposalId is required");
+  }
+  const decision = stringValue(body.decision);
+  if (decision !== "APPROVE" && decision !== "REJECT") {
+    throw new HttpsError("invalid-argument", "decision must be APPROVE or REJECT");
+  }
+  const comment = typeof body.comment === "string" ? body.comment.trim() : "";
+  if (Buffer.byteLength(comment, "utf8") > MAX_PROPOSAL_COMMENT_BYTES) {
+    throw new HttpsError("invalid-argument", "comment is too long");
+  }
+
+  const proposalRef = db.collection(PROPOSALS_COLLECTION).doc(proposalId);
+  const snapshot = await proposalRef.get();
+  if (!snapshot.exists || stringValue((snapshot.data() || {}).targetOwnerUid) !== uid) {
+    throw new HttpsError("not-found", "Proposal could not be found");
+  }
+  const proposal = snapshot.data() || {};
+  if (proposal.status !== PROPOSAL_STATUS.CHECK_PASSED) {
+    throw new HttpsError("failed-precondition", "PROPOSAL_NOT_ACTIONABLE");
+  }
+  const now = Date.now();
+  if (decision === "REJECT") {
+    await proposalRef.set({
+      status: PROPOSAL_STATUS.REJECTED,
+      decision: {decision, comment, decidedByUid: uid, decidedAtMs: now},
+      decidedAtMs: now,
+      updatedAtMs: now,
+    }, {merge: true});
+    return {proposalId, status: PROPOSAL_STATUS.REJECTED};
+  }
+  // STALE (AD-33): база предложения сверяется с текущей редакцией цели в момент решения.
+  const target = proposal.kind === "NEW_LESSON"
+    ? await readCourseTarget(proposal.target)
+    : await readLessonTarget(proposal.target.lessonId);
+  if (proposalStaleness(proposal, target.revision)) {
+    throw new HttpsError("failed-precondition", "PROPOSAL_STALE");
+  }
+  if (proposal.kind !== "REPORT") {
+    throw new HttpsError("failed-precondition", "PROPOSAL_APPLY_PENDING");
+  }
+  await db.runTransaction(async (transaction) => {
+    // Одобренный отчёт помечает урок к исправлению; само содержимое урока не меняется (CAP-27).
+    transaction.set(db.doc(`lessons/${proposal.target.lessonId}`), {
+      correctionRequestedAtMs: now,
+      updatedAtMs: now,
+    }, {merge: true});
+    transaction.set(proposalRef, {
+      status: PROPOSAL_STATUS.APPROVED,
+      decision: {decision, comment, decidedByUid: uid, decidedAtMs: now},
+      decidedAtMs: now,
+      updatedAtMs: now,
+    }, {merge: true});
+  });
+  return {proposalId, status: PROPOSAL_STATUS.APPROVED};
+});
 
 /**
  * Заявка как документ — обратная сторона `normalizeRequest`.

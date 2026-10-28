@@ -40,6 +40,28 @@ function capturedOf(table) {
   return JSON.parse(JSON.stringify({version: table.version, activityPrices: table.activityPrices, standard: table.standard, plasma: table.plasma}));
 }
 
+
+function testTheCommittedClientLiteralIsAcceptedVerbatim() {
+  // Ретро эпика 2 (F16): единственная кросс-половинная проверка провода согласия. Литерал —
+  // дословный вывод PayableTermsCodec.toJson; тот же литерал зажат в PayableTermsCodecTest,
+  // так что дрейф ключа, порядка или формы на любой из половин ломает одну из двух проверок.
+  // Приёмник обязан принять его целиком и назвать достаточным против таблицы тех же значений.
+  const literal = {"version":7,"standard":{"maxOwned":12,"regenMs":3600000,"priceLadder":[500,900],"currency":"NOLICS","requiresSettledAccount":false,"premiumRegenDivisor":1},"plasma":{"maxOwned":4,"regenMs":86400000,"priceLadder":[1,2,3],"currency":"GOLD","requiresSettledAccount":true,"premiumRegenDivisor":3},"activityPrices":{"ORDINARY_LESSON":33,"ARENA":50,"THEME_TEST":100,"FINAL_EXAM":200,"TOURNAMENT":750}};
+
+  const read = readCapturedTerms({capturedTerms: literal});
+  assert.strictEqual(read.valid, true, "литерал клиентского кодека обязан проходить форму целиком");
+  assert.strictEqual(read.captured.version, 7);
+  assert.strictEqual(read.captured.activityPrices.TOURNAMENT, 750);
+  assert.strictEqual(read.captured.standard.maxOwned, 12);
+  assert.strictEqual(read.captured.plasma.premiumRegenDivisor, 3);
+  assert.strictEqual(termsVerdict(read.captured, payableTermsProjection(literal)).sufficient, true);
+
+  // Строковая форма — тот же конверт из очереди; литерал обязан выживать и в ней.
+  const fromQueue = readCapturedTerms({capturedTerms: JSON.stringify(literal)});
+  assert.strictEqual(fromQueue.valid, true);
+  assert.strictEqual(termsVerdict(fromQueue.captured, payableTermsProjection(literal)).sufficient, true);
+}
+
 function testAProjectionCarriesOnlyPayableFields() {
   const table = currentTable();
   table.clockSkewToleranceMs = 45000;
@@ -152,6 +174,13 @@ function testACapturedTermsMustBeComplete() {
   delete missingRuleField.plasma.currency;
   assert.strictEqual(readCapturedTerms({capturedTerms: missingRuleField}).valid, false);
 
+  // Ретро эпика 2 (F13): `undefined < 1` — false, и согласие без делителя раньше проходило форму,
+  // а разворачивалось в фантомное «условия изменились». Пропущенное поле — ошибка формы.
+  const missingDivisor = capturedOf(table);
+  delete missingDivisor.standard.premiumRegenDivisor;
+  assert.strictEqual(readCapturedTerms({capturedTerms: missingDivisor}).valid, false,
+    "согласие без premiumRegenDivisor — ошибка формы, а не фантомное изменение");
+
   const negativePrice = capturedOf(table);
   negativePrice.activityPrices.ARENA = -1;
   assert.strictEqual(readCapturedTerms({capturedTerms: negativePrice}).valid, false, "отрицательной цены не бывает");
@@ -192,6 +221,7 @@ function testTheDetailMarkIsStable() {
 }
 
 testAProjectionCarriesOnlyPayableFields();
+testTheCommittedClientLiteralIsAcceptedVerbatim();
 testAProjectionSurvivesADegradedTable();
 testACapturedVerbatimProjectionIsSufficient();
 testAVersionBumpAloneIsNotAChange();

@@ -9,6 +9,7 @@ const {
   WINDOW_OPEN,
   deliveryUpdate,
   deliveryVerdict,
+  foreignWindowOwner,
   expiryUpdate,
   mintWindowId,
   openQuestionWindow,
@@ -153,6 +154,31 @@ function testAWindowExpiredWithoutDeliveryClosesWithoutAnAnswer() {
   assert.strictEqual(deliveryVerdict(closed, late + 1_000).status, "WINDOW_EXPIRED");
 }
 
+
+function testACorruptedCapturedClockClosesInsteadOfIssuingNaNHours() {
+  // F12: not-finite captured seconds in the ISSUE branch would mint a NaN deadline that the
+  // no-reissue rule (5) would then fix forever. A corrupted window closes as expired (7).
+  const broken = {...open(), allocatedSeconds: "24"};
+  assert.strictEqual(deliveryVerdict(broken, NOW + 1000).status, "WINDOW_EXPIRED");
+
+  // A delivered window with a non-finite deadline shows no NaN remainder: it expired too.
+  const delivered = deliver(open(), NOW + 1000);
+  const corruptDeadline = {...delivered, delivery: {...delivered.delivery, answerDeadlineMs: "soon"}};
+  const verdict = deliveryVerdict(corruptDeadline, NOW + 2000);
+  assert.strictEqual(verdict.status, "WINDOW_EXPIRED");
+}
+
+function testTheWindowRecordsItsOwner() {
+  // F10: the window belongs to whoever opened it; a foreign profile neither begins, nor
+  // delivers, nor closes it. Pre-field documents (no ownerUid) behave as before.
+  const record = open({ownerUid: "player-a"});
+  assert.strictEqual(record.ownerUid, "player-a");
+  assert.strictEqual(foreignWindowOwner(record, "player-a"), false);
+  assert.strictEqual(foreignWindowOwner(record, "player-b"), true);
+  assert.strictEqual(foreignWindowOwner(open(), "player-b"), false);
+  assert.strictEqual(foreignWindowOwner(null, "player-a"), false);
+}
+
 function testAContradictoryDeliveredStateWithoutADeliveryIsNotASecondIssue() {
   // Испорченный документ не открывает вторые часы: противоречие трактуется как истёкшее.
   const broken = {...open(), state: WINDOW_DELIVERED, delivery: null};
@@ -222,6 +248,8 @@ test("the first delivery starts the clock at the server moment", testTheFirstDel
 test("a repeated delivery returns the same question and the same deadline", testARepeatedDeliveryReturnsTheSameQuestionAndTheSameDeadline);
 test("a window expired without delivery closes without an answer", testAWindowExpiredWithoutDeliveryClosesWithoutAnAnswer);
 test("a contradictory delivered state without a delivery is not a second issue", testAContradictoryDeliveredStateWithoutADeliveryIsNotASecondIssue);
+test("a corrupted captured clock closes instead of issuing NaN hours", testACorruptedCapturedClockClosesInsteadOfIssuingNaNHours);
+test("the window records its owner", testTheWindowRecordsItsOwner);
 test("delivery without a window is a refusal", testDeliveryWithoutAWindowIsAFinalRefusal);
 test("ready-ack returns the server facts and never reads deadlines from the body", testReadyAckReturnsTheServerFactsAndNeverReadsDeadlinesFromBody);
 test("ready-ack rejects unknown or mismatched identity", testReadyAckRejectsUnknownOrMismatchedIdentity);

@@ -61,7 +61,10 @@ function capturedChargeRules(source) {
   const maxOwned = wholeInt(rules.maxOwned);
   const regenMs = wholeInt(rules.regenMs);
   const premiumRegenDivisor = wholeInt(rules.premiumRegenDivisor);
-  if (maxOwned === undefined || regenMs === undefined || premiumRegenDivisor < 1) return null;
+  // Ретро эпика 2 (F13): `undefined < 1` — false, так что согласие без делителя проходило как
+  // полное и разворачивалось дальше в фантомное «условия изменились». Пропущенное поле — ошибка
+  // формы, а не расхождение с таблицей.
+  if (maxOwned === undefined || regenMs === undefined || premiumRegenDivisor === undefined || premiumRegenDivisor < 1) return null;
   if (!Array.isArray(rules.priceLadder) || rules.priceLadder.length === 0) return null;
   const priceLadder = rules.priceLadder.map((rung) => wholeInt(rung));
   if (priceLadder.some((rung) => rung === undefined)) return null;

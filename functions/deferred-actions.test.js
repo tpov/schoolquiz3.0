@@ -200,7 +200,7 @@ for (const action of DEFERRED_ACTIONS) {
 // `submitMutation` обязан делать то же — иначе транзиентный отказ держит ключ до таймаута резерва.
 {
   const src = require("fs").readFileSync(__dirname + "/index.js", "utf8");
-  const call = src.indexOf("result = await resolved.handler(uid, body.payload, now, mutationId);");
+  const call = src.indexOf("result = await resolved.handler(uid, body.payload, now, mutationId, termsEconomy);");
   assert.ok(call > 0, "вызов обработчика из приёмника должен существовать");
   const catchBlock = src.slice(call, src.indexOf("await keyRef.set(completionRecord(", call));
   assert.ok(

@@ -272,6 +272,67 @@ test("a next question outside the lesson is refused before any window exists", a
   assert.strictEqual(windowDoc(ATTEMPT, 2), null);
 });
 
+
+// ─── F10/F11 (retro, epic 2): the window has an owner and survives pool drift ───────────────────
+
+const FOREIGN = "player-foreign";
+
+test("the window belongs to its opener: a foreign profile neither begins, delivers nor acks it (F10)", async () => {
+  resetWorld();
+  store.documents.set(`profiles/${FOREIGN}`, {uid: FOREIGN});
+  await withFixedClock(NOW, () => begin(ATTEMPT, 2));
+  const windowId = windowDoc(ATTEMPT, 2).data.windowId;
+
+  // Чужой begin под тем же attemptId — отказ владения (до всякой сверки identity).
+  await assert.rejects(
+    () => withFixedClock(NOW + 1_000, () => functions.beginLessonQuestionWindow.run({
+      auth: {uid: FOREIGN},
+      data: {attemptId: ATTEMPT, lessonId: LESSON, lessonVersion: 1,
+        completedQuestionIndex: 2, nextQuestionId: "q3", difficulty: "HARD"},
+    })),
+    (error) => error.code === "permission-denied",
+  );
+  // Чужая выдача двигала бы серверные часы чужой попытки — тоже владение.
+  await assert.rejects(
+    () => withFixedClock(NOW + 2_000, () => functions.fetchNextLessonQuestion.run({
+      auth: {uid: FOREIGN}, data: {attemptId: ATTEMPT, completedQuestionIndex: 2},
+    })),
+    (error) => error.code === "permission-denied",
+  );
+  // Чужой ACK читает серверные факты чужого окна: владелец в документе, не в теле (тело честное).
+  await assert.rejects(
+    () => withFixedClock(NOW + 3_000, () => functions.submitMutation.run({
+      auth: {uid: FOREIGN},
+      data: {mutationId: readyAckKey("foreign-attempt", 3, windowId),
+        operation: "lesson_runner.READY_ACK",
+        payload: JSON.stringify({attemptId: ATTEMPT, userId: FOREIGN, questionIndex: 3, windowId})},
+    })),
+    (error) => error.code === "permission-denied" && /another account/.test(error.message),
+    "the record owner decides, not the declared userId",
+  );
+  // Свои окна чужому игроку доступны: владение — не запрет на поверхность.
+  const own = await withFixedClock(NOW + 4_000, () => functions.beginLessonQuestionWindow.run({
+    auth: {uid: FOREIGN},
+    data: {attemptId: "attempt-foreign", lessonId: LESSON, lessonVersion: 1,
+      completedQuestionIndex: 2, nextQuestionId: "q3", difficulty: "HARD"},
+  }));
+  assert.strictEqual(own.state, "OPEN");
+  assert.strictEqual(windowDoc("attempt-foreign", 2).data.ownerUid, FOREIGN);
+});
+
+test("a repeat after the pool drifted returns the same window, not a refusal (F11)", async () => {
+  resetWorld();
+  await withFixedClock(NOW, () => begin(ATTEMPT, 2));
+  // Дрейф сервера: пул урока уехал после открытия окна (архив/удаление вопросов).
+  for (const path of [...store.documents.keys()]) {
+    if (path.startsWith("questions/")) store.documents.delete(path);
+  }
+  // §7: потерянный ответ не создаёт второго окна и не наказывает за чужой дрейф.
+  const repeat = await withFixedClock(NOW + 1_000, () => begin(ATTEMPT, 2));
+  assert.strictEqual(repeat.state, "OPEN");
+  assert.strictEqual(repeat.windowId, windowDoc(ATTEMPT, 2).data.windowId);
+});
+
 // ─── Run ────────────────────────────────────────────────────────────────────────────────────────
 
 async function run() {
