@@ -2,18 +2,56 @@
 title: 'E8 social retro fixes: per-question poll option ids and poll-series ownership'
 type: 'bugfix'
 created: '2026-10-28'
-status: 'in-progress'
+status: 'done'
 baseline_revision: '75193bfa97038eeb7ec3f5665bc274c91b03774e'
 route: 'full'
 route_source: 'pinned'
-review: ''
-review_source: ''
-lenses_ran: []
+review: 'thorough'
+review_source: 'pinned'
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
 followup_review_recommended: false
 context: []
 warnings: ['multiple-goals']
-deferred: []
+deferred:
+  - summary: >-
+      Транзакционная атомарность applyPublishPollSeries (две конкурентных публикации поверх одной
+      ревизии) не демонстрируется выполняемым тестом: in-memory заглушка однопоточна.
+    evidence: |-
+      Ревью-линзы (blind-hunter/edge-case claims-check/verification-gap): откат обёртки
+      db.runTransaction к read-then-set не ломает ни один тест набора — заглушка гоняет тело
+      транзакции синхционно без контеншна. Поведение корректно по построению (семантика
+      runTransaction — контракт Firestore SDK), поимённая ветка конфликта зажата тестом
+      «stale basis refuses by name». Смирило бы: строгий эмулятор Firestore с реальным
+      контеншном или прод-наблюдение первого конкурентного издания.
+    location: functions/index.js:2407
+    severity: medium (unverified)
+  - summary: >-
+      Ветка повтора намерения на уровне обработчика (current == expected + 1 при том же
+      содержании) не покрыта тестом — предсуществующая, перенесена в транзакцию без изменений.
+    evidence: |-
+      Прочитан poll-vote-handler.test.js целиком: повтор ключа проверяется на уровне гейта
+      (replayed=true, обработчик не зовётся), семантическая ветка +1 без нового ключа не прогоняется. Дешёвый тест: публикация expected=0 с тем же содержанием поверх существующей
+      r1 → возврат r1 без второй ревизии.
+    location: functions/index.js:2438
+    severity: low
+  - summary: >-
+      Публикация на отсутствующую серию с expectedRevisionId > 0 — поименованный конфликт не
+      покрыт тестом (предсуществующая ветка).
+    evidence: |-
+      В poll-vote-handler.test.js отказ POLL_SERIES_REVISION_CONFLICT проверяется только для
+      существующей серии (probe-ключ); ветка «current 0 (series does not exist)» не прогоняется.
+    location: functions/index.js:2477
+    severity: low
+  - summary: >-
+      sameContent сравнивает вопросы через JSON.stringify — чувствительно к порядку ключей
+      (предсуществующее, направление ошибки безопасное: лишняя ревизия, не потерянная правка).
+    evidence: |-
+      Функция перенесена в транзакцию дословно; расхождение порядка ключей даёт «разное
+      содержание» → ревизию+1 вместо no-op — переоткрытие голосования с нуля, заметимо автору.
+    location: functions/index.js:2443
+    severity: low
+
 ---
 
 <intent-contract>
@@ -86,10 +124,44 @@ deferred: []
 - node на VPS: CLI npm отсутствует; `npm test` = `node run-tests.js` (bundled node v22.16.0, соответствует engines node 22). `npm run lint` (check-syntax.js) падает только на AppleDouble-мусоре `._*` от SMB-записей с Mac — свои четыре удалены, чужие (`._lesson-proposals.js`, `._review-pipeline.js`, `._currency-ledger.js`, `._mutation-terms.js` и др.) оставлены соседям.
 - ktlint toolchain-wide красный по `apps/android-next/build.gradle.kts:65-66` — предсуществующее (строки коммичены эпохой 5.13, `ed16fc81`), не из этого фикса, не чинилось.
 - Journey-инструмент `scripts/demo-fixtures/poll-journey.js` продолжает строить ключи и тела по старой формуле — action item 6 ретро (test-dev), не тронуто.
+- Патч ревью (87e8fef7): сентинел-тест громкого отказа для документа голоса без questionIndex. Первая редакция теста падала — читатель без собственного голоса не доходит до счёта (§5: distribution скрыт), отказ не возникал; исправлено голосом ALICE — снапшот считается только после ownVote. Сюит в functions стало 139 против 137 на старте волны: две сюиты соседей (lesson-proposals, proposal-names-sentinel) приехали в дерево посреди волны, обе зелёные.
+
+## Auto Run Result
+
+Status: done
+
+**Summary.** Закрыты обе блокирующие находки ретро эпика 8 (2026-10-25, rejected). Находка 1 (критерий 1): `countsFor` считает по полной тройке идентичности (revisionId + questionIndex, `functions/poll-views.js:136-138`), клиент генерирует optionId с осью вопроса `q<index>-opt-<n>` (`PollUseCases.kt:161`) — «проценты по различным респондентам вопроса» выполняются и для уже хранимых голосов, и для новых UI-серий. Находка 2: публикация/перезапись существующей серии — только автору (`stored.authorUid === uid`, permission-denied до всех веток, включая no-op), чтение-сравнение-запись в `db.runTransaction` по образцу `applyPollVote` (`functions/index.js:2403-2487`); заодно закрыта транзакционная механика находки 3 (рецепт action item 2 предписывал их вместе).
+
+**Files changed.**
+- `functions/poll-views.js` — ось вопроса в countsFor + KDoc.
+- `functions/index.js` — только два хунка фикса (KDoc + тело applyPublishPollSeries: владение + транзакция); файл разделён с незакоммиченной работой соседей, вошли два хунка через временный индекс.
+- `shared/.../domain/use_case/PollUseCases.kt` — генерация optionId по оси вопроса.
+- `functions/poll-views.test.js` — продакшн-коллизия id (RED→GREEN доказан) + сентинел громкого отказа (патч ревью).
+- `functions/poll-vote-handler.test.js` — чужая публикация/чужой no-op/создание чужим аккаунтом.
+- `shared/.../domain/src/commonTest/.../PublishPollSeriesOptionIdsTest.kt` — новый, уникальность optionId между вопросами + чарсет.
+- Спека — этот файл.
+
+**Review findings breakdown.** 14 находок 4 линз: medium 3 / low 10 / false 1 / maybe-false 0. Патч: 1 группа (сентинел громкого отказа, low, коммит 87e8fef7). Deferred: 4 (атомарность вне досягаемости заглушки — medium unverified; три предсуществующие ветки/сравнение без тестов — low). Rejected: 1 low (косметика тест-хелперов) + 1 false (дрейф authorUid недостижим — оба писателя пишут authorUid). followup_review_recommended: false (запатчена одна low-группа, medium отложены с обоснованием).
+
+**Verification.** RED-доказательство: poll-views.js от HEAD 75193bfa в изолированной копии — новый тест красный (not ok 7), с фиксом 8/8. `functions npm test` = `node run-tests.js` (node v22.16.0, CLI npm на VPS нет): 137/137 на фикс-коммите, 139/139 после патча и приезда двух сюит соседей. `sgw` (JAVA_HOME=/opt/jdks/jdk-27): `:shared:feature:internet:social:domain:allTests` + `:shared:core:outbox:allTests` BUILD SUCCESSFUL, новый тест зелёный в jvmTest и testDebugUnitTest (tests=1 failures=0); ktlint: `:shared:feature:internet:social:domain:ktlintCheck` зелёный (после исправления `${index}`→`$index`, пойманного линтом), toolchain-ktlint красный только по предсуществующему `apps/android-next/build.gradle.kts:65-66` (коммичено эпохой 5.13, ed16fc81 — не из этого изменения). Сентинелы: mvp-isolation, deferred-actions, arena-request-document, remove-human-review-scan — зелёные внутри npm test; сентинел реестра outbox — зелёный в gradle. Матрица I/O: строки 1,2,3,5 покрыты выполняемыми тестами; строка 4 (конкурентные издания) — конфликтная ветка зажата probe-тестом, истинный контеншн за пределами заглушки — deferred (medium unverified).
+
+**Residual risks.** (1) Атомарность публикации под реальным контеншном не демонстрировалась — закрыть строгим эмулятором до первого боевого сезона опросов. (2) Существующие в dev-базах серии с коллидирующими optionId считаются корректно сервером (ось вопроса), но их id-семантика осталась старой — прод-базы нет, миграции не требуют. (3) Девиации от воркфлоу: субагенты воркфлоу в этом харнессе недоступны — линзы и реализация исполнены самим агентом по методикам линз; итоговое «дерево чисто» неприменимо буквально к общей волне — чужие M/D/?? остаются по праву соседей, все файлы этого изменения закоммичены.
 
 ## Spec Change Log
 
 ## Review Triage Log
+
+### 2026-10-28 — Review pass
+- verdicts: 14 findings — high 0, medium 3, low 10, false 1, maybe-false 0
+- lenses: blind-hunter (7), edge-case-hunter (5, включая claims-check), verification-gap (2, pre-verified), intent-alignment (0 — дескриптивный отчёт: обе трактовки намерения перечислены, реализована ретро-верная; расхождение с буквальной скобкой задачи (только клиентская генерация для находки 1) закрыто тем, что ретро определяет находку 1 как дефект вью — серверный фильтр и есть её рецепт, действие 1)
+- findings:
+  - `[medium]` `[defer]` Транзакционная атомарность публикации не демонстрируется выполняемым тестом (blind-hunter BH1; edge-case EC1 claims-check: строка матрицы «конкурентные издания»; verification-gap VG2) — заглушка однопоточна, откат обёртки к read-then-set тесты не ловит; поведение корректно по построению (семантика runTransaction — контракт SDK), ветка конфликта зажата probe-тестом; отложено с указанием, что смирило бы (строгий эмулятор с контеншном).
+  - `[low]` `[patch]` Новая громкая ветка countsFor (документ голоса без questionIndex → UNAVAILABLE) не зажата тестом (blind-hunter BH7; edge-case EC2; verification-gap VG1, pre-verified Regression gap) — патч применён: тест «a vote document without the question axis refuses loudly» в poll-views.test.js (коммит 87e8fef7), poll-views 9/9, functions 139/139.
+  - `[low]` `[defer]` Ветка current == expected + 1 (повтор намерения после протухшего резерва) без теста (blind-hunter BH2; edge-case EC4) — предсуществующая, перенесена дословно; дешёвый тест назван в deferred.
+  - `[low]` `[defer]` Публикация на отсутствующую серию с expected > 0 — конфликт без теста (blind-hunter BH3; edge-case EC3) — предсуществующая ветка.
+  - `[low]` `[defer]` sameContent через JSON.stringify чувствителен к порядку ключей (blind-hunter BH4; edge-case EC5) — предсуществующее; направление ошибки безопасное (лишняя ревизия, не потерянная правка).
+  - `[low]` `[reject]` Дублирование collide*-хелперов в poll-views.test.js вместо параметризации общих (blind-hunter BH5) — тест-внутренняя косметика, повседневного вреда нет, исправление = рефакторный шум.
+  - `[false]` Дрейф-документ серии без authorUid дал бы легитимному автору permission-denied (blind-hunter BH6) — опровержение: оба пути записи poll_series в этом же обработчике пишут authorUid: uid, чужих писателей нет (правила коллекции закрыты); недостижимое состояние.
 
 ## Design Notes
 
