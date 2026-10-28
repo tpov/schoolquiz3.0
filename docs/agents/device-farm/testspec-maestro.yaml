@@ -62,17 +62,16 @@ phases:
       - adb shell settings put global transition_animation_scale 0
       - adb shell settings put global animator_duration_scale 0
       - if [ -n "$MAESTRO_FONT_SCALE" ]; then adb shell settings put system font_scale "$MAESTRO_FONT_SCALE"; fi
-      # Диагностика сети устройства (прогон №3: ENETUNREACH к IPv4-литералу
-      # длился минутами, tcpdump пуст — проверяем v4/v6-маршруты телефона).
+      # Диагностика сети устройства (прогон №4: ICMP до рига ходит 0% потерь,
+      # IPv4 есть; ENETUNREACH ловил только TCP-канал Firestore — канал
+      # привязывается к сети, существовавшей на первый старт приложения).
       # ВАЖНО: составные shell-конструкции (for/$(...)) Device Farm ломает —
       # только простые однострочные команды.
-      - adb shell ip -4 addr show wlan0
-      - adb shell ip -6 addr show wlan0
-      - adb shell ip route show
-      - adb shell ping -c 2 -W 3 8.8.8.8
       - adb shell ping -c 2 -W 3 204.44.66.27
-      - adb shell ping -c 2 -W 3 aws.amazon.com
       - curl -s -o /dev/null -w "host->vps-8080 %{http_code}\n" http://204.44.66.27:8080/
+      # Убить инстанс, стартовавший до готовности WiFi (DF ставит APK при
+      # подготовке устройства) — флоу запустит приложение заново на живой сети.
+      - adb shell am force-stop com.tpov.schoolquiz.mvp
       - adb logcat -c
 
   test:
