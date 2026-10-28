@@ -26,7 +26,26 @@ verified these artifacts, finished the journey and flipped the statuses.
 - 23:08–23:10 maestro-driven lesson run on the updated install; APK B built
   (`assemble-mvp-candidate-b.log`, sha256 `apk-b-sha256.txt` = 61acb693…) and
   installed over A (`adb install -r`), install times recorded
-  (`install-times-*.txt`).
+  (`install-times-*.txt`). Provenance and the two disclaimers for both APKs —
+  see "APK provenance and disclaimers" below (reconciled 2026-10-28, retro F4).
+
+## APK provenance and disclaimers (reconciled 2026-10-28, retro F4)
+
+- **APK B (61acb693…) is NOT the identified candidate 1.2** (`eeb8fc6e…`,
+  HEAD `1e596126` per `reproducibility.results`): it is a build surrogate
+  assembled from this session's working tree, not from the identified
+  candidate revision. The 1.3 retention claims stand for the surrogate only.
+- Provenance of B: branch `night/e3-e8-inception`, worktree
+  `.local/worktrees/night-impl`. The build window (23:08–23:10) sits between
+  `1940b0dd` (08.10 21:56 — the last commit on that branch before the window)
+  and `c0935a59` (09.10 01:12); `assemble-mvp-candidate-b.log` does not record
+  the git HEAD, so the tip-at-build attribution is reconstructed from the
+  branch history, not proven by the log.
+- **APK A bytes were not captured** — no sha256 was recorded for A. What was
+  recorded: the debug-keystore certificate (`00:33:E7:FA…`) and install times;
+  the certificate was deemed sufficient identification at the time.
+- Whether a candidate-faithful install-over is required before final
+  acceptance (CAP-20) is an owner decision (retro item 1 of the re-verdict).
 - 23:14 `inventory-15.txt` — story 1.5 device inventory (serial/Android/app/
   signature/DB schema/role/GMS) with the rig role explicit: device C
   (ordinary player), NOT a battle-session device.

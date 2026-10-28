@@ -60,7 +60,7 @@ last_error=NULL WHERE state='CONFLICT' AND operation IN ('lesson_runner.SUBMIT_A
   synced yet» исчез; таблица outbox в `db-after-drain.db` **пуста** (обе записи
   ушли и удалены движком), ворки одноразовой синхронизации — SUCCEEDED
   (`workmanager-workdb-after-drain.db`: 22 succeeded, 2 periodic enqueued);
-- `server-mutation-records.json` — по одному `mutation_keys`-документу на
+- `server-mutation-records.txt` — по одному `mutation_keys`-документу на
   mutationId, оба `state: completed` с квитанциями SETTLED:
   - `…-6856201c…`: percentScore 50, lifePointsSpent 33, reward skillPoints 9 +
     nolics 1, `termsVersion 0`;

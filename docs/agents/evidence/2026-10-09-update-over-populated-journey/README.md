@@ -14,7 +14,10 @@ same owner decision. App under test: `com.tpov.schoolquiz.mvp` (versionName
 APK A installed 22:06, populated (first launches, one lesson completed offline
 → outbox op `6856201c…` WAITING, last_error NoNetwork), APK B built
 (sha256 61acb693…) and installed over A (`adb install -r`, lastUpdateTime
-23:15:49), inventory pulled (story 1.5). That session was interrupted before it
+23:15:49 [REVISED 2026-10-28: the recorded artifact
+`../2026-10-08-redroid-hitl/install-times-after.txt` reads **23:10:48**; the
+23:15:49 reading is this session's re-check, taken without its own artifact]),
+inventory pulled (story 1.5). That session was interrupted before it
 could write its README or update ticket statuses; this session verified its
 artifacts and continued the journey.
 
@@ -71,6 +74,14 @@ lesson with retained progress "CONTINUE 0/1"), `02-menu-after-update.png`
 
 ## Queue drain on the rig: blocked by a rig-level WorkManager dysfunction
 
+**REVISED 2026-10-28** (retro F6): the verdict below was written mid-session
+and is refuted by `drain/README.md` in this directory — the workers DID run
+and failed on recoverable causes (NoNetwork backoff cycle, no host
+functions-emulator at 5001, missing adb reverse; R8 had stripped the WM log
+lines), and the 03:22 retry **succeeded**: the queue drained exactly once.
+Read that file as the final word for the rig's drain; the text below is kept
+as the honest 09.10-morning state.
+
 Not an app-code verdict — a rig limitation, hit independently by both the
 08.10 session (flows `flows/10-sync-now.yaml`…`12-sync-now3.yaml`, all
 "SYNC NOW" attempts failed the same way) and this session:
@@ -91,6 +102,8 @@ Not an app-code verdict — a rig limitation, hit independently by both the
 - The stuck chain dates back to the 08.10 session's force-stops while the
   sync was failing with NoNetwork (backoff cycle); WorkManager on this
   userdebug redroid image never dispatches job starts into SystemJobService.
+  [REVISED 2026-10-28: see the section head and `drain/README.md` — the
+  "never" did not survive the night; the 03:22 drain settled both ops once.]
 
 Consequently the outbox ops remain WAITING on the rig (`06-menu-final-queue-pending.png`,
 "Not synced yet") — they belong to the demo anonymous user only. The drain
