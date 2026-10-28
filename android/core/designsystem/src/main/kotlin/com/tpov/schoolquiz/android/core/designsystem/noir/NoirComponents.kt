@@ -64,6 +64,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 
 // ─── App bar ────────────────────────────────────────────────────────────────
@@ -527,6 +528,71 @@ fun NoirButton(
     ) {
         Text(text.uppercase(), style = NoirType.button, color = fgFinal)
     }
+}
+
+// ─── Dialog: surface-4 at radius 20 ─────────────────────────────────────────
+
+/**
+ * The system's one dialog: surface [NoirS4] at [NoirShapeXl] (the specification's dialog level —
+ * radius 20), a hairline edge instead of a shadow, a display-less title and mono actions.
+ *
+ * Every screen previously grew its own [androidx.compose.material3.AlertDialog] with Material
+ * defaults that answered to the theme, not to NOIR; those migrate here one at a time. The slots
+ * stay raw so a dialog can be a fee line, a difficulty picker or a warning — only the shell is
+ * owned here.
+ */
+@Composable
+fun NoirDialog(
+    onDismissRequest: () -> Unit,
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Column(
+            modifier
+                .fillMaxWidth()
+                .clip(NoirShapeXl)
+                .background(NoirS4)
+                .border(1.dp, NoirHair, NoirShapeXl)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(title, style = NoirType.groupTitle, color = NoirT1)
+            content()
+            // An empty actions slot lays out at zero height, so a dialog without buttons keeps
+            // its 12dp rhythm intact.
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                content = actions,
+            )
+        }
+    }
+}
+
+/**
+ * One dialog action: half the row (a dialog never has more than two choices side by side).
+ * [primary] marks the dialog's titled action — there is exactly one per dialog, and only when the
+ * action is actually available.
+ */
+@Composable
+fun RowScope.NoirDialogAction(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    primary: Boolean = false,
+    enabled: Boolean = true,
+) {
+    NoirButton(
+        text = text,
+        onClick = onClick,
+        modifier = modifier.weight(1f),
+        style = if (primary) NoirButtonStyle.Primary else NoirButtonStyle.Ghost,
+        enabled = enabled,
+    )
 }
 
 // ─── Chips and statuses ─────────────────────────────────────────────────────

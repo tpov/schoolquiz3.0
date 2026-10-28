@@ -77,7 +77,7 @@ mockito-core = "5.15.2"
 mockito-kotlin = "5.4.0"
 mockk = "1.13.10"
 turbine = "1.1.0"
-robolectric = "4.11.1"
+robolectric = "4.17"
 
 [libraries]
 # Kotlin / coroutines / serialization
