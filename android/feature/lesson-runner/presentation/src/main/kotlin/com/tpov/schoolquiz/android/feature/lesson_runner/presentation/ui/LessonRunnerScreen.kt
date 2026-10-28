@@ -58,8 +58,10 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditSheetState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.logic.EditCopyMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
@@ -223,6 +225,7 @@ private fun RunnerStateContent(
             val comments by component.comments.collectAsState()
             val proposalFeeQuote by component.proposalFeeQuote.collectAsState()
             val errorReportState by component.errorReportState.collectAsState()
+            val copyEditSheetState by component.copyEditSheetState.collectAsState()
             ResultContent(
                 state = state,
                 comments = comments,
@@ -235,6 +238,10 @@ private fun RunnerStateContent(
                 errorReportState = errorReportState,
                 onReportDialogOpened = component::onReportDialogOpened,
                 onReportError = component::onReportError,
+                copyEditSheetState = copyEditSheetState,
+                onCopyEditDialogOpened = component::onCopyEditDialogOpened,
+                onCopyEditMarkChanged = component::onCopyEditMarkChanged,
+                onCopyEditSubmit = component::onCopyEditSubmit,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -625,6 +632,14 @@ private class PreviewLessonRunnerComponent(initialState: RunnerUiState) : Lesson
         text: String,
         ownVariant: String?,
     ) = Unit
+
+    override val copyEditSheetState: StateFlow<CopyEditSheetState> = MutableStateFlow(CopyEditSheetState())
+
+    override fun onCopyEditDialogOpened() = Unit
+
+    override fun onCopyEditMarkChanged(rowId: String, mark: EditCopyMark?) = Unit
+
+    override fun onCopyEditSubmit() = Unit
 
     override fun onBack() = Unit
 

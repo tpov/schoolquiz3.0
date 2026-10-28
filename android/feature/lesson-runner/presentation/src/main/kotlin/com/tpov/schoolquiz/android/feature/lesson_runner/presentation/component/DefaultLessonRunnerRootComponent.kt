@@ -13,6 +13,10 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toE
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toQuestionUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toUiReason
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toUserAnswer
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditLoadState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditRowState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditSheetState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState.RatingSubmissionState
@@ -20,6 +24,8 @@ import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
 import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
+import com.tpov.schoolquiz.shared.core.question_schema.RedactedQuestionContent
 import com.tpov.schoolquiz.shared.core.scoring.ChargeClaimMask
 import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
@@ -48,9 +54,16 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ServerAttemptSettlementRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.logic.EditCopyMark
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.logic.EditCopyMarking
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.CopyEditProposalQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonEditCopy
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitCopyEditProposalCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitErrorReportProposalCommand
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchLessonEditCopyUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitCopyEditProposalUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitErrorReportProposalUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
@@ -72,6 +85,7 @@ private const val DEFAULT_AUTHOR = "Аноним"
 
 /** Вид предложения в теле подачи — тот же словарь, что у приёмника 4.21 (PROPOSAL_KINDS). */
 private const val KIND_REPORT = "REPORT"
+private const val KIND_COPY_EDIT = "COPY_EDIT"
 
 @Suppress("LongParameterList")
 class DefaultLessonRunnerRootComponent(
@@ -115,6 +129,12 @@ class DefaultLessonRunnerRootComponent(
      */
     private val submitErrorReportProposal: SubmitErrorReportProposalUseCase? = null,
     private val quoteProposalFee: QuoteLessonProposalFeeUseCase? = null,
+    /**
+     * «Предложить правку» (CAP-27, история 4.23): копия чужого урока и подача отмеченных правок.
+     * null — хост без авторинг-графа (тесты): строка-действие скрыта, а не мёртвая кнопка.
+     */
+    private val fetchLessonEditCopy: FetchLessonEditCopyUseCase? = null,
+    private val submitCopyEditProposal: SubmitCopyEditProposalUseCase? = null,
     /** Текущий uid для записи очереди; null — хост без авторизации (подача невозможна). */
     private val currentUid: suspend () -> String? = { null },
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
@@ -457,6 +477,123 @@ class DefaultLessonRunnerRootComponent(
                 )
             errorReportStateFlow.value =
                 if (outcome.isSuccess) ErrorReportSubmissionState.Done else ErrorReportSubmissionState.Failed
+        }
+    }
+
+    private val copyEditSheetStateFlow = MutableStateFlow(CopyEditSheetState())
+
+    override val copyEditSheetState: StateFlow<CopyEditSheetState> =
+        copyEditSheetStateFlow.asStateFlow()
+
+    /** Копия последней загрузки — по ней собирается подача; строк в шторке может быть много. */
+    private var loadedEditCopy: LessonEditCopy? = null
+
+    private val editCopyRowParser = KotlinxSerializationQuestionContentParser()
+
+    /** Шторка правки открыта: копия с сервера (строки без ключа) и плата за ноль изменённых. */
+    override fun onCopyEditDialogOpened() {
+        val fetch = fetchLessonEditCopy ?: return
+        if (copyEditSheetStateFlow.value.load == CopyEditLoadState.Loading) return
+        scope.launch {
+            copyEditSheetStateFlow.value = CopyEditSheetState(load = CopyEditLoadState.Loading)
+            val copy = fetch(lessonId.value).getOrNull()
+            if (copy == null) {
+                copyEditSheetStateFlow.value = CopyEditSheetState(load = CopyEditLoadState.Failed)
+                return@launch
+            }
+            loadedEditCopy = copy
+            copyEditSheetStateFlow.value = CopyEditSheetState(
+                load = CopyEditLoadState.Loaded,
+                rows = copy.questions
+                    .sortedBy { it.order }
+                    .map { row ->
+                        val parsed =
+                            if (row.editable) {
+                                editCopyRowParser.parseForDisplay(row.payload, row.id, row.text, Difficulty.EASY)
+                                    .getOrNull() as? RedactedQuestionContent
+                            } else {
+                                null
+                            }
+                        CopyEditRowState(row = row, parsed = parsed, mark = null)
+                    },
+            )
+            refreshCopyEditQuote()
+        }
+    }
+
+    /** Отметка строки изменилась: пересчитываем изменённые, перечитываем плату 100×N (UX-23). */
+    override fun onCopyEditMarkChanged(rowId: String, mark: EditCopyMark?) {
+        val state = copyEditSheetStateFlow.value
+        if (state.load != CopyEditLoadState.Loaded) return
+        copyEditSheetStateFlow.value = state.copy(
+            rows = state.rows.map { row ->
+                if (row.row.id == rowId && row.row.editable) row.copy(mark = mark) else row
+            },
+        )
+        refreshCopyEditQuote()
+    }
+
+    /**
+     * Подача правки (AD-2/AD-3): отмеченные строки — авторской формой (публичная половина плюс
+     * отметка) — уходят в очередь; шторка честно показывает состояние.
+     */
+    override fun onCopyEditSubmit() {
+        val submit = submitCopyEditProposal ?: return
+        val copy = loadedEditCopy ?: return
+        val state = copyEditSheetStateFlow.value
+        if (state.submission == CopyEditSubmissionState.Sending) return
+        val edited = state.editedRows
+        if (edited.isEmpty()) return
+        scope.launch {
+            copyEditSheetStateFlow.value = state.copy(submission = CopyEditSubmissionState.Sending)
+            val questions =
+                try {
+                    edited.map { rowState ->
+                        val content = EditCopyMarking.buildMarkedQuestionOrThrow(rowState.row, rowState.mark!!)
+                        CopyEditProposalQuestion(
+                            id = rowState.row.id,
+                            type = rowState.row.type,
+                            language = rowState.row.language,
+                            languageLevel = rowState.row.languageLevel,
+                            difficulty = rowState.row.difficulty,
+                            order = rowState.row.order,
+                            text = content.text,
+                            imagePath = rowState.row.imagePath,
+                            payload = EditCopyMarking.encodePayload(content),
+                        )
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: IllegalArgumentException) {
+                    copyEditSheetStateFlow.value =
+                        copyEditSheetStateFlow.value.copy(submission = CopyEditSubmissionState.Failed)
+                    return@launch
+                }
+            // currentUid — подвесное чтение (AuthRepository): подача без uid невозможна.
+            val uid = currentUid().orEmpty()
+            val outcome =
+                submit(
+                    uid,
+                    SubmitCopyEditProposalCommand(
+                        lessonId = copy.lessonId,
+                        lessonTitle = copy.lessonTitle,
+                        questions = questions,
+                        editedQuestionIds = edited.map { it.row.id },
+                    ),
+                )
+            copyEditSheetStateFlow.value = copyEditSheetStateFlow.value.copy(
+                submission =
+                if (outcome.isSuccess) CopyEditSubmissionState.Done else CopyEditSubmissionState.Failed,
+            )
+        }
+    }
+
+    /** Одна цитата на состояние отметок: COPY_EDIT × изменённые (показ, не власть — UX-23). */
+    private fun refreshCopyEditQuote() {
+        val quote = quoteProposalFee ?: return
+        val editedCount = copyEditSheetStateFlow.value.editedCount
+        scope.launch {
+            proposalFeeQuoteFlow.value = quote(KIND_COPY_EDIT, editedCount).getOrNull()
         }
     }
 

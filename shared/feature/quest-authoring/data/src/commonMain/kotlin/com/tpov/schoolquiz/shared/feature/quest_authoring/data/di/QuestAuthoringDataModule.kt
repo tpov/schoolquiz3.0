@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.QuestArena
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringIdProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.provider.DefaultQuestAuthoringTimestampProvider
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonEditCopyRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonProposalQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestProposalsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
@@ -53,10 +54,14 @@ val questAuthoringDataModule =
         single<ReviewFeeQuoteRepository> {
             ReviewFeeQuoteRepositoryImpl(remote = get<ReviewFeeQuoteRemoteDataSource>())
         }
-        // Предложения автору (4.22, AD-33): подача отчёта — общая очередь, цитата — читающий
-        // callable; транспортBinding цитаты подключается в platform-модуле.
+        // Предложения автору (4.22–4.24, AD-33): подачи — общая очередь, цитата и копия — читающие
+        // callable; транспортBinding подключается в platform-модуле.
         single<LessonProposalRepository> {
-            LessonProposalRepositoryImpl(outbox = get<OutboxStore>(), quoteRemote = get<LessonProposalQuoteRemoteDataSource>())
+            LessonProposalRepositoryImpl(
+                outbox = get<OutboxStore>(),
+                quoteRemote = get<LessonProposalQuoteRemoteDataSource>(),
+                editCopyRemote = get<LessonEditCopyRemoteDataSource>(),
+            )
         }
         // «Предложения» (4.25, UX-22): страница прав и решение автора — прямые callable.
         single<QuestProposalsRepository> { QuestProposalsRepositoryImpl(remote = get<QuestProposalsRemoteDataSource>()) }

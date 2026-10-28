@@ -21,8 +21,11 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeS
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.CopyEditProposal
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ErrorReportProposal
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonEditCopy
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.NewLessonProposal
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitErrorReportProposalCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonProposalRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
@@ -48,6 +51,8 @@ class ErrorReportProposalPresentationTest {
     private lateinit var lifecycle: LifecycleRegistry
 
     private val recordedProposals = mutableListOf<ErrorReportProposal>()
+    private val recordedCopyEdits = mutableListOf<CopyEditProposal>()
+    private var editCopyReply: LessonEditCopy? = null
     private var quoteReply: LessonProposalFeeQuote? =
         LessonProposalFeeQuote(kind = "REPORT", feeNolics = 0, tariffRevision = 1)
 
@@ -56,6 +61,20 @@ class ErrorReportProposalPresentationTest {
             override suspend fun queueErrorReportProposal(proposal: ErrorReportProposal): Result<Unit> {
                 recordedProposals += proposal
                 return Result.success(Unit)
+            }
+
+            override suspend fun queueNewLessonProposal(proposal: NewLessonProposal): Result<Unit> =
+                Result.success(Unit)
+
+            override suspend fun queueCopyEditProposal(proposal: CopyEditProposal): Result<Unit> {
+                recordedCopyEdits += proposal
+                return Result.success(Unit)
+            }
+
+            override suspend fun fetchLessonEditCopy(lessonId: String): Result<LessonEditCopy> {
+                val reply = editCopyReply
+                    ?: return Result.failure(IllegalStateException("copy unavailable"))
+                return Result.success(reply)
             }
 
             override suspend fun quoteProposalFee(

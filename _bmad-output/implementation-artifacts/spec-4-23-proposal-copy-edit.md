@@ -2,7 +2,7 @@
 title: '4.23 proposal-copy-edit — «Предложить правку»: копия без секретных ключей и применение одобренной правки (CAP-27, AD-33, UX-23)'
 type: 'feature'
 created: '2026-10-28'
-status: 'in-progress'
+status: 'done'
 route: 'full'
 route_source: 'auto'
 review: 'quick'
@@ -71,7 +71,14 @@ context: []
 ## Spec Change Log
 
 - 2026-10-28, спека создана, status in-progress; серверная половина в работе, клиентская ждёт инфраструктуру 4.22 (соседняя смена той же волны).
+- 2026-10-28, server landing (takeover-смена, 2e31293a): диспетчер решения подключает applyCopyEditProposal; callable buildLessonEditCopy (view lesson-edit-copy-v1); сюита lesson-copy-edit.test.js 5/5; сентинел контракта копии; пин 161fc07c.
+- 2026-10-28, client landing (эта смена, takeover хвоста): редактор копии на экране результата урока — вход «Предложить правку» рядом с «Сообщить об ошибке» (UX-23, «на уроке»); копия грузится callable buildLessonEditCopy строгим парсером lesson-edit-copy-v1; предложивший отмечает верный ответ в публичных половинах (SingleChoice/MultipleChoice радиочек-боксы, Ordering стрелками, FillBlank кандидатами по пропускам), запертые строки показываются как есть и не едут; счёт изменённых → цитата 100×N (QuoteLessonProposalFeeUseCase, kind COPY_EDIT); подача — ProposalOutboxWriter.recordCopyEdit (тело строго по белому списку 4.21: proposalId/kind/target.lessonId/lessonTitle/questions[авторская форма]/editedQuestionIds — только изменённые), отмеченные строки собираются EditCopyMarking (публичная половина + отметка = полный QuestionContent тем же kotlinx-движком); строки ×3; сентинелы: ProposalReportWireSentinelTest дополнен COPY_EDIT-кейсом (ключи payload против парсера 4.21), LessonEditCopyCallableNamesTest читает functions/index.js. Починен сломанный ещё лендингом 4.24 фейк репозитория в ErrorReportProposalPresentationTest (нет queueNewLessonProposal/queueCopyEditProposal/fetchLessonEditCopy — сюита не компилировалась). Новые сюиты: CopyEditProposalPresentationTest 5/5 (загрузка копии, перезапрос платы по отметке, подача только отмеченных в авторской форме, ноль-п подача, хост без ручек), LessonEditCopyWireParserTest 4/4.
 
 ## Verification
 
-(заполняется по гейтам)
+**Commands (все выполнены в этой смене, sgw/JDK 27):**
+- `functions`: `node run-tests.js` — 141/141 (дважды: на HEAD 50e6a187 и на финальном дереве; сентинелы копий внутри).
+- `sgw ./gradlew :shared:feature:quest-authoring:domain:jvmTest :shared:feature:quest-authoring:data:jvmTest :android:feature:quest-authoring:presentation:testDebugUnitTest :android:feature:lesson-runner:presentation:testDebugUnitTest :platform:firebase:testDebugUnitTest` — зелёные (data jvmTest 98 тестов включая LessonEditCopyWireParserTest 4/4 и COPY_EDIT-кейс сентинела; lesson-runner — CopyEditProposalPresentationTest 5/5; firebase — LessonEditCopyCallableNamesTest).
+- ktlint: `ktlintDebugSourceSetCheck` (quest-authoring, lesson-runner) и `ktlintJvmMainCheck` (domain, data) — SUCCESS; `platform:firebase:ktlintMainSourceSetCheck` — предсуществующая корзина (PushEvents, FirebaseMutationTransport, GiftClaim, QuestPrivate, ReviewDecisions, Tournament, Arena… и чужая инверсия QuestProposals/QuestArena в FirebaseModule — до моей правки); мои файлы и вставка импорта — чисто.
+
+**Manual checks (if no CLI):** None beyond the suites; живой прогон — 4.26 (hitl, риг владельца).

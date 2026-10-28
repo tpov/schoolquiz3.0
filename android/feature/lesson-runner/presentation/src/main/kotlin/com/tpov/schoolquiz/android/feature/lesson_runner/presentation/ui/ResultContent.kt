@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +22,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -67,19 +71,25 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditLoadState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditRowState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditSheetState
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.question_schema.RedactedQuestionContent
 import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptSyncMark
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
-import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptReward
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlement
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.ServerAttemptSettlementState
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.logic.EditCopyMark
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 
 // Accuracy chart geometry, lifted from the design's SVG (viewBox 340×120 rendered at 104×44):
 // the plot spans x 10..330, score digits 1..9 sit on nine levels 11.5 units apart with '9' on
@@ -105,16 +115,22 @@ fun ResultContent(
     onNextLesson: () -> Unit,
     onPostComment: (String) -> Unit,
     onSyncResult: () -> Unit,
-    /** Цитата платы предложения (4.22); null — не приходила/сервер недоступен («—»). */
+    /** Цитата платы предложения (4.22/4.23); null — не приходила/сервер недоступен («—»). */
     proposalFeeQuote: LessonProposalFeeQuote?,
     errorReportState: ErrorReportSubmissionState,
     onReportDialogOpened: () -> Unit,
     onReportError: (String, String?) -> Unit,
+    /** «Предложить правку» (4.23): шторка редактора копии без секретных ключей. */
+    copyEditSheetState: CopyEditSheetState,
+    onCopyEditDialogOpened: () -> Unit,
+    onCopyEditMarkChanged: (String, EditCopyMark?) -> Unit,
+    onCopyEditSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isHard = state.mode == Difficulty.HARD
     var discussionOpen by remember { mutableStateOf(false) }
     var reportOpen by remember { mutableStateOf(false) }
+    var copyEditOpen by remember { mutableStateOf(false) }
 
     Column(
         modifier
@@ -189,6 +205,15 @@ fun ResultContent(
             },
         )
 
+        // «Предложить правку» — второй вход CAP-27 (4.23, UX-23): копия урока без секретных
+        // ключей, предложивший отмечает верные ответы, «Факты» проверяет отметки.
+        CopyEditRow(
+            onOpen = {
+                copyEditOpen = true
+                onCopyEditDialogOpened()
+            },
+        )
+
         // Existing advice is local. Show it only when the server confirms the exact same answers.
         if (state.serverSettlement.isConfirmedCompletion &&
             state.serverSettlement.codeAnswer?.raw?.map { it - '0' } == state.questionScores
@@ -229,6 +254,16 @@ fun ResultContent(
             submissionState = errorReportState,
             onSubmit = onReportError,
             onDismiss = { reportOpen = false },
+        )
+    }
+
+    if (copyEditOpen) {
+        CopyEditSheet(
+            sheetState = copyEditSheetState,
+            proposalFeeQuote = proposalFeeQuote,
+            onMarkChanged = onCopyEditMarkChanged,
+            onSubmit = onCopyEditSubmit,
+            onDismiss = { copyEditOpen = false },
         )
     }
 }
@@ -616,6 +651,346 @@ private fun ErrorReportSheet(
 
 private const val MAX_REPORT_CHARS = 2000
 
+/** Строка-вход «Предложить правку» (4.23, UX-23): копия без секретных ключей, отметки — за игроком. */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun CopyEditRow(
+    onOpen: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .defaultMinSize(minHeight = 60.dp)
+            .padding(vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                stringResource(R.string.runner_copyedit_title),
+                style = NoirType.rowTitle.copy(fontSize = 15.sp, color = NoirT1),
+            )
+            Text(
+                stringResource(R.string.runner_copyedit_subtitle),
+                style = NoirType.rowSub.copy(fontSize = 12.5.sp, color = NoirT2),
+            )
+        }
+        Text(
+            stringResource(R.string.runner_report_open),
+            style = NoirType.num.copy(fontSize = 12.sp, color = LocalNoirAccent.current),
+        )
+    }
+}
+
+/**
+ * Шторка «Предложить правку» (4.23): копия урока строками; редактируемые — публичные половины
+ * без ключа, предложивший отмечает верный ответ сам; запертые (Survey, легаси) показываются
+ * как есть и в предложение не едут. Плата — цитата COPY_EDIT × изменённые; показ, не власть
+ * (платит приёмка 4.21 из тела подачи).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Suppress("FunctionNaming", "ktlint:standard:function-naming", "LongMethod", "CyclomaticComplexMethod")
+@Composable
+private fun CopyEditSheet(
+    sheetState: CopyEditSheetState,
+    proposalFeeQuote: LessonProposalFeeQuote?,
+    onMarkChanged: (String, EditCopyMark?) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        val accent = LocalNoirAccent.current
+        val editedCount = sheetState.editedCount
+        val hasInvalidMark = sheetState.rows.any { it.mark != null && !it.marked }
+        val canSend = editedCount > 0 && !hasInvalidMark &&
+            sheetState.submission != CopyEditSubmissionState.Sending
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(max = 480.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.runner_copyedit_header),
+                style = NoirType.kicker.copy(color = NoirT2),
+            )
+            when (sheetState.load) {
+                CopyEditLoadState.Loading, CopyEditLoadState.Idle ->
+                    Text(
+                        text = stringResource(R.string.runner_copyedit_loading),
+                        style = NoirType.rowSub.copy(color = NoirT2),
+                    )
+                CopyEditLoadState.Failed ->
+                    Text(
+                        text = stringResource(R.string.runner_copyedit_load_failed),
+                        style = NoirType.rowSub.copy(color = NoirDanger),
+                    )
+                CopyEditLoadState.Loaded ->
+                    sheetState.rows.forEach { rowState ->
+                        CopyEditQuestionRow(
+                            rowState = rowState,
+                            onMarkChanged = { mark -> onMarkChanged(rowState.row.id, mark) },
+                        )
+                    }
+            }
+            if (hasInvalidMark) {
+                Text(
+                    text = stringResource(R.string.runner_copyedit_need_two),
+                    style = NoirType.rowSub.copy(color = NoirDanger),
+                )
+            }
+            Text(
+                text = stringResource(R.string.runner_copyedit_edited, editedCount),
+                style = NoirType.rowSub.copy(color = NoirT2),
+            )
+            // Плата до отправки (UX-23): показ — не власть, плату считает приёмка (4.21).
+            Text(
+                text =
+                    if (proposalFeeQuote == null || editedCount == 0) {
+                        stringResource(R.string.runner_report_fee_unknown)
+                    } else if (proposalFeeQuote.feeNolics == 0) {
+                        stringResource(R.string.runner_report_fee_free)
+                    } else {
+                        stringResource(R.string.runner_report_fee_value, proposalFeeQuote.feeNolics)
+                    },
+                style = NoirType.rowSub.copy(color = NoirT2),
+            )
+            when (sheetState.submission) {
+                CopyEditSubmissionState.Failed ->
+                    Text(
+                        text = stringResource(R.string.runner_report_failed),
+                        style = NoirType.rowSub.copy(color = NoirDanger),
+                    )
+                CopyEditSubmissionState.Done ->
+                    Text(
+                        text = stringResource(R.string.runner_copyedit_sent),
+                        style = NoirType.rowSub.copy(color = NoirSuccess),
+                    )
+                CopyEditSubmissionState.Idle -> Unit
+                CopyEditSubmissionState.Sending -> Unit
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.runner_report_cancel),
+                    style = NoirType.button.copy(color = NoirT3),
+                    modifier = Modifier.clickable(onClick = onDismiss),
+                )
+                Text(
+                    text =
+                        if (sheetState.submission == CopyEditSubmissionState.Sending) {
+                            stringResource(R.string.runner_report_sending)
+                        } else {
+                            stringResource(R.string.runner_report_send)
+                        },
+                    style = NoirType.button.copy(color = if (canSend) accent else NoirTOff),
+                    modifier = Modifier.clickable(enabled = canSend, onClick = onSubmit),
+                )
+            }
+        }
+    }
+}
+
+/** Строка вопроса копии: текст, метка редактируемости и — по раскрытию — отметка ответа. */
+@OptIn(ExperimentalLayoutApi::class)
+@Suppress("FunctionNaming", "ktlint:standard:function-naming", "CyclomaticComplexMethod")
+@Composable
+private fun CopyEditQuestionRow(
+    rowState: CopyEditRowState,
+    onMarkChanged: (EditCopyMark?) -> Unit,
+) {
+    var expanded by remember(rowState.row.id) { mutableStateOf(false) }
+    val editable = rowState.row.editable && rowState.parsed != null
+    val accent = LocalNoirAccent.current
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(NoirShapeMd)
+            .background(NoirS2)
+            .border(1.dp, NoirOutline, NoirShapeMd)
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = rowState.row.text,
+                style = NoirType.rowSub.copy(color = NoirT1),
+                modifier = Modifier.weight(1f),
+                maxLines = 3,
+            )
+            Text(
+                text =
+                    when {
+                        !editable -> stringResource(R.string.runner_copyedit_locked)
+                        rowState.marked -> stringResource(R.string.runner_copyedit_marked)
+                        else -> stringResource(R.string.runner_copyedit_editable)
+                    },
+                style = NoirType.num.copy(
+                    fontSize = 11.sp,
+                    color = when {
+                        !editable -> NoirTOff
+                        rowState.marked -> NoirSuccess
+                        else -> accent
+                    },
+                ),
+            )
+        }
+        if (editable) {
+            Text(
+                text = stringResource(R.string.runner_copyedit_edit_hint),
+                style = NoirType.num.copy(fontSize = 11.sp, color = NoirT2),
+                modifier = Modifier.clickable { expanded = !expanded },
+            )
+        }
+        if (expanded && rowState.parsed != null) {
+            MarkingEditor(
+                parsed = rowState.parsed,
+                mark = rowState.mark,
+                onMarkChanged = onMarkChanged,
+            )
+        }
+    }
+}
+
+/** Отметка верного ответа по типу публичной половины; запертые строки сюда не попадают. */
+@OptIn(ExperimentalLayoutApi::class)
+@Suppress("FunctionNaming", "ktlint:standard:function-naming", "CyclomaticComplexMethod")
+@Composable
+private fun MarkingEditor(
+    parsed: RedactedQuestionContent,
+    mark: EditCopyMark?,
+    onMarkChanged: (EditCopyMark?) -> Unit,
+) {
+    val accent = LocalNoirAccent.current
+    when (parsed) {
+        is RedactedQuestionContent.SingleChoice -> {
+            val selected = (mark as? EditCopyMark.SingleChoice)?.correctOptionId
+            parsed.options.forEach { option ->
+                val isSelected = option.id == selected
+                Text(
+                    text = ("● ").takeIf { isSelected }.orEmpty() + option.text,
+                    style = NoirType.rowSub.copy(color = if (isSelected) accent else NoirT1),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onMarkChanged(
+                                if (isSelected) null else EditCopyMark.SingleChoice(option.id),
+                            )
+                        },
+                )
+            }
+        }
+        is RedactedQuestionContent.MultipleChoice -> {
+            val selected = (mark as? EditCopyMark.MultipleChoice)?.correctOptionIds ?: emptySet()
+            parsed.options.forEach { option ->
+                val isSelected = option.id in selected
+                Text(
+                    text = ("✓ ").takeIf { isSelected }.orEmpty() + option.text,
+                    style = NoirType.rowSub.copy(color = if (isSelected) accent else NoirT1),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val next = selected.toMutableSet().apply {
+                                if (isSelected) remove(option.id) else add(option.id)
+                            }
+                            onMarkChanged(
+                                if (next.isEmpty()) null else EditCopyMark.MultipleChoice(next),
+                            )
+                        },
+                )
+            }
+        }
+        is RedactedQuestionContent.Ordering -> {
+            val orderedIds = (mark as? EditCopyMark.Ordering)?.orderedItemIds
+                ?: parsed.items.map { it.id }
+            val textById = parsed.items.associate { it.id to it.text }
+            orderedIds.forEachIndexed { index, itemId ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "${index + 1}. ${textById[itemId].orEmpty()}",
+                        style = NoirType.rowSub.copy(color = NoirT1),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = "↑",
+                        style = NoirType.button.copy(color = if (index > 0) accent else NoirTOff),
+                        modifier = Modifier.clickable(enabled = index > 0) {
+                            val next = orderedIds.toMutableList().apply {
+                                removeAt(index)
+                                add(index - 1, itemId)
+                            }
+                            onMarkChanged(EditCopyMark.Ordering(next))
+                        },
+                    )
+                    Text(
+                        text = "↓",
+                        style = NoirType.button.copy(
+                            color = if (index < orderedIds.lastIndex) accent else NoirTOff,
+                        ),
+                        modifier = Modifier.clickable(enabled = index < orderedIds.lastIndex) {
+                            val next = orderedIds.toMutableList().apply {
+                                removeAt(index)
+                                add(index + 1, itemId)
+                            }
+                            onMarkChanged(EditCopyMark.Ordering(next))
+                        },
+                    )
+                }
+            }
+        }
+        is RedactedQuestionContent.FillBlank -> {
+            val marked = (mark as? EditCopyMark.FillBlank)?.correctCandidateByBlank ?: emptyMap()
+            parsed.blanks.forEachIndexed { blankIndex, blankId ->
+                Text(
+                    text = stringResource(R.string.runner_copyedit_blank, blankIndex + 1),
+                    style = NoirType.num.copy(fontSize = 11.sp, color = NoirT2),
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    parsed.candidates.forEach { candidate ->
+                        val isSelected = marked[blankId] == candidate.id
+                        Text(
+                            text = candidate.text,
+                            style = NoirType.rowSub.copy(
+                                color = when {
+                                    isSelected -> accent
+                                    candidate.id in marked.values -> NoirTOff
+                                    else -> NoirT1
+                                },
+                            ),
+                            modifier = Modifier
+                                .clip(NoirShapeMd)
+                                .border(1.dp, if (isSelected) accent else NoirOutline, NoirShapeMd)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .clickable {
+                                    val next = marked.toMutableMap()
+                                    if (isSelected) next.remove(blankId) else next[blankId] = candidate.id
+                                    onMarkChanged(
+                                        if (next.isEmpty()) null else EditCopyMark.FillBlank(next),
+                                    )
+                                },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** How far the corner wash reaches across the card, as a share of its longest side. */
 private const val SCORE_WASH_REACH = 1.32f
 
@@ -811,6 +1186,10 @@ private fun ResultContentPreview() {
             errorReportState = ErrorReportSubmissionState.Idle,
             onReportDialogOpened = {},
             onReportError = { _, _ -> },
+            copyEditSheetState = CopyEditSheetState(),
+            onCopyEditDialogOpened = {},
+            onCopyEditMarkChanged = { _, _ -> },
+            onCopyEditSubmit = {},
         )
     }
 }
@@ -849,6 +1228,10 @@ private fun ResultContentSaveWarningPreview() {
             errorReportState = ErrorReportSubmissionState.Idle,
             onReportDialogOpened = {},
             onReportError = { _, _ -> },
+            copyEditSheetState = CopyEditSheetState(),
+            onCopyEditDialogOpened = {},
+            onCopyEditMarkChanged = { _, _ -> },
+            onCopyEditSubmit = {},
         )
     }
 }

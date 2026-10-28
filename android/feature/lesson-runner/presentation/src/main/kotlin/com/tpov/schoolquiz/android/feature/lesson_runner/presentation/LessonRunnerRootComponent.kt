@@ -1,10 +1,12 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation
 
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditSheetState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.logic.EditCopyMark
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -93,6 +95,22 @@ interface LessonRunnerRootComponent {
         text: String,
         ownVariant: String?,
     )
+
+    /**
+     * «Предложить правку» (CAP-27, история 4.23): шторка редактора копии. Открывается запросом
+     * копии с сервера (call `buildLessonEditCopy`); строки без ключа, отметки ответов — работа
+     * предложившего.
+     */
+    val copyEditSheetState: StateFlow<CopyEditSheetState>
+
+    /** Шторка правки открыта: грузим копию и сразу спрашиваем плату (изменённых пока ноль). */
+    fun onCopyEditDialogOpened()
+
+    /** Отметка строки копии изменилась: пересчитываем «изменённые» и перечитываем плату 100×N. */
+    fun onCopyEditMarkChanged(rowId: String, mark: EditCopyMark?)
+
+    /** Подача правки: отмеченные строки собираются в авторскую форму и уезжают в очередь. */
+    fun onCopyEditSubmit()
 
     fun onBack()
 }

@@ -100,4 +100,67 @@ class ProposalReportWireSentinelTest {
             "граница текста сервера — та, что дублирует use case",
         )
     }
+
+    // ─── COPY_EDIT (история 4.23) ────────────────────────────────────────────────────────────────
+
+    private fun copyEditRecord() = ProposalOutboxWriter.recordCopyEdit(
+        com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.CopyEditProposal(
+            id = "lesson-proposal-2",
+            ownerUid = "owner",
+            requestedAtMs = 1L,
+            command = com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitCopyEditProposalCommand(
+                lessonId = "lesson-1",
+                lessonTitle = "Чужой урок",
+                questions =
+                    listOf(
+                        com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.CopyEditProposalQuestion(
+                            id = "q-1",
+                            type = "SingleChoice",
+                            language = "ru",
+                            languageLevel = 0,
+                            difficulty = "EASY",
+                            order = 0,
+                            text = "Вопрос?",
+                            imagePath = null,
+                            payload = "{\"type\":\"SingleChoice\",\"correctOptionId\":\"ri-0\"}",
+                        ),
+                    ),
+                editedQuestionIds = listOf("q-1"),
+            ),
+        ),
+    )
+
+    @Test
+    fun `copy edit payload carries exactly the keys the server parser accepts`() {
+        val payload = Json.parseToJsonElement(copyEditRecord().payload).jsonObject
+        assertEquals(
+            setOf("proposalId", "kind", "target", "lessonTitle", "questions", "editedQuestionIds"),
+            payload.keys,
+            "ключи payload COPY_EDIT обязаны совпадать с белым списком парсера 4.21",
+        )
+        val questions = payload.getValue("questions")
+        assertTrue(questions is kotlinx.serialization.json.JsonArray, "questions COPY_EDIT — массив")
+        assertTrue(
+            questions.toString().contains("\"lessonId\""),
+            "каждый вопрос COPY_EDIT несёт lessonId цели — парсер 4.21 сверяет его",
+        )
+        assertEquals("COPY_EDIT", (payload.getValue("kind") as JsonPrimitive).content)
+    }
+
+    @Test
+    fun `server parser names exactly the copy edit fields the writer sends`() {
+        for (marker in listOf(
+            "nonBlank(body.lessonTitle)",
+            "parseProposalQuestions(body.questions, targetLessonId)",
+            "body.editedQuestionIds",
+        )) {
+            assertTrue(serverParser.contains(marker), "парсер COPY_EDIT обязан читать $marker")
+        }
+        val titleBound = Regex("MAX_LESSON_TITLE_CHARS = (\\d+)").find(serverParser)
+        assertEquals(
+            "200",
+            titleBound?.groupValues?.get(1),
+            "граница заголовка сервера — та, что дублирует use case",
+        )
+    }
 }

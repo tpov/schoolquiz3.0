@@ -27,7 +27,9 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResul
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.StartLessonAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.SubmitLessonRatingUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchLessonEditCopyUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitCopyEditProposalUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitErrorReportProposalUseCase
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
@@ -87,6 +89,9 @@ val lessonRunnerPresentationModule =
                 // платы; uid — из авторизации, как у приватного квиза.
                 submitErrorReportProposal = get<SubmitErrorReportProposalUseCase>(),
                 quoteProposalFee = get<QuoteLessonProposalFeeUseCase>(),
+                // «Предложить правку» (4.23): копия чужого урока и подача отмеченных правок.
+                fetchLessonEditCopy = get<FetchLessonEditCopyUseCase>(),
+                submitCopyEditProposal = get<SubmitCopyEditProposalUseCase>(),
                 currentUid = { get<AuthRepository>().currentUid() },
                 getResultAdvice = GetResultAdviceUseCase(lessonRepository = get()),
                 clock = get(),

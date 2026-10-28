@@ -4,11 +4,13 @@ import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ArenaRunnerRequest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.CopyEditSheetState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.logic.EditCopyMark
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -55,6 +57,16 @@ internal class ArenaRunnerInstance(
         text: String,
         ownVariant: String?,
     ) = Unit
+
+    // Арена не подаёт правок копии (4.23): честные нули, как и у отчёта-предложения.
+    override val copyEditSheetState: StateFlow<CopyEditSheetState> =
+        MutableStateFlow(CopyEditSheetState()).asStateFlow()
+
+    override fun onCopyEditDialogOpened() = Unit
+
+    override fun onCopyEditMarkChanged(rowId: String, mark: EditCopyMark?) = Unit
+
+    override fun onCopyEditSubmit() = Unit
 
     private var cancelId: String? = null
     private var leaveAfterCancellation = false

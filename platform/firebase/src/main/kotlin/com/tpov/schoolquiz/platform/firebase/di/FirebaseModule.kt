@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseLogoRemoteDataSour
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseInboxRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonEditCopyRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonLifecycleRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseLessonProposalQuoteRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestProposalsRemoteDataSource
@@ -70,6 +71,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestionWind
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.ArenaSessionObserver
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.InboxRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonLifecycleRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonEditCopyRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonProposalQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestProposalsRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
@@ -241,6 +243,9 @@ val firebaseModule =
         }
         single<LessonProposalQuoteRemoteDataSource> {
             FirebaseLessonProposalQuoteRemoteDataSource(functions = get())
+        }
+        single<LessonEditCopyRemoteDataSource> {
+            FirebaseLessonEditCopyRemoteDataSource(functions = get())
         }
         single<QuestProposalsRemoteDataSource> {
             FirebaseQuestProposalsRemoteDataSource(functions = get())
