@@ -67,7 +67,9 @@ function publishKey(expectedRevisionId) {
 }
 
 function voteKey(seriesId, revisionId, questionIndex) {
-  return `polls-SUBMIT_VOTE-series-${seriesId}-r${revisionId}-q${questionIndex}`;
+  // §2 (поправка 2026-10-18): ключ несёт участника, как его строит Kotlin-писатель
+  // (PollOutboxWriters.voteSourceId): `…-q<idx>-u-<uid>`. Все голоса этой сюиты — за VOTER.
+  return `polls-SUBMIT_VOTE-series-${seriesId}-r${revisionId}-q${questionIndex}-u-${VOTER}`;
 }
 
 async function withFixedClock(atMs, fn) {
@@ -203,6 +205,90 @@ test("a fresh series can be created by any account, which becomes its author", a
   assert.strictEqual(fresh.result.revisionId, 1);
   assert.strictEqual(store.documents.get("poll_series/series-fresh").authorUid, VOTER,
     "creation keeps ownership follows facts: the creator is the author");
+});
+
+// ─── Publish: предсуществующие ветки без тестов (open item 9 ретро-перевёрстки) ─────────────────
+
+test("a repeat of the same intention returns the stored revision without a second one", async () => {
+  resetWorld();
+  await publish(AUTHOR, 0, [SINGLE_Q, MULTI_Q]);
+  // Ветка current == expected + 1 при том же содержании: резерв ключа протух, намерение
+  // повторилось под новым ключом с прежним ожидаемым базисом — обработчик возвращает то, что
+  // уже стоит, без второй revision (§6.2: повтор не переоткрывает голосование).
+  const repeat = await withFixedClock(NOW + 1000, () =>
+    submit(AUTHOR, `${publishKey(0)}-repeat`, "polls.PUBLISH_SERIES",
+      draft("Demo poll", [SINGLE_Q, MULTI_Q], 0)));
+  assert.strictEqual(repeat.replayed, false);
+  assert.deepStrictEqual(repeat.result, {seriesId: SERIES, revisionId: 1, questionCount: 2});
+  assert.strictEqual(seriesDoc().revisionId, 1);
+});
+
+test("an expected revision onto a missing series refuses by name and creates nothing", async () => {
+  resetWorld();
+  const ghost = await httpsErrorOf(withFixedClock(NOW, () =>
+    submit(AUTHOR, publishKey(1), "polls.PUBLISH_SERIES", draft("Ghost", [SINGLE_Q], 1))));
+  assert.strictEqual(ghost.code, "failed-precondition");
+  assert.ok(ghost.message.includes("POLL_SERIES_REVISION_CONFLICT"), ghost.message);
+  assert.ok(ghost.message.includes("series does not exist"), ghost.message);
+  assert.strictEqual(store.documents.has(`poll_series/${SERIES}`), false, "no series document appeared");
+});
+
+test("same content compares canonically: key order in the body is not an edit", async () => {
+  resetWorld();
+  await publish(AUTHOR, 0, [SINGLE_Q, MULTI_Q]);
+  // Open item 9 (deferred посылка ревью): sameContent сверяет через JSON.stringify и посылка
+  // называла чувствительность к порядку ключей. Канонизация normalizePollSeriesDraft
+  // перестраивает вопрос и вариант в фиксированном порядке полей, поэтому порядок ключей в
+  // присланном теле сравнение не меняет — закрепляем фактическое поведение: no-op, а не лишняя
+  // revision. (Порядок вариантов в массиве — содержание, его канонизация не трогает.)
+  const flipped = {
+    questionIndex: 0, mode: SINGLE_Q.mode, text: SINGLE_Q.text,
+    options: [{text: "Red", optionId: "opt-red"}, {text: "Green", optionId: "opt-green"}, {text: "Blue", optionId: "opt-blue"}],
+  };
+  const repeat = await withFixedClock(NOW + 1000, () =>
+    submit(AUTHOR, `${publishKey(1)}-flipped`, "polls.PUBLISH_SERIES",
+      draft("Demo poll", [flipped, MULTI_Q], 1)));
+  assert.deepStrictEqual(repeat.result, {seriesId: SERIES, revisionId: 1, questionCount: 2});
+  assert.strictEqual(seriesDoc().revisionId, 1, "key order alone must not reopen the vote");
+});
+
+// ─── Publish: атомарность под контеншном (defer фикс-пака — открытый пункт 8 перевёрстки) ────────
+
+test("two publications over the same basis resolve by retry to one revision and a named conflict", async () => {
+  resetWorld();
+  await publish(AUTHOR, 0, [SINGLE_Q, MULTI_Q]); // r1
+  // Издание A поверх базиса r1; пока оно в полёте, издание B поверх того же базиса коммитит r2.
+  // Ретрай транзакции (контракт SDK: записи конфликтного прогона выбрасываются, тело
+  // перечитывает свежий базис) обязан увидеть r2 и ответить поимённым конфликтом — тихой
+  // перезаписи r2 содержимым A нет. Демонстрация на управляемом ретрае заглушки; строгий
+  // эмулятор с реальным параллелизмом — открытый пункт владельца до боевого сезона.
+  // Ретрай обязан достаться транзакции обработчика (второй runTransaction приёмника), а не
+  // гейту ключей (первый): у гейта конфликтного базиса нет. Хук-арбитр: первый ретрай — гейт,
+  // перезаряжаем; второй — обработчик, поверх него коммитится издание B настоящим приёмником.
+  let gateRetried = false;
+  const retryOnHandler = async () => {
+    if (!gateRetried) {
+      gateRetried = true;
+      store.retryTransactionOnce = retryOnHandler; // перезарядка на следующий runTransaction
+      return;
+    }
+    store.retryTransactionOnce = null;
+    const b = await submit(AUTHOR, `${publishKey(1)}-b`, "polls.PUBLISH_SERIES",
+      draft("Content B", [SINGLE_Q], 1));
+    assert.strictEqual(b.result.revisionId, 2, "B lands first on the same basis");
+  };
+  store.retryTransactionOnce = retryOnHandler;
+
+  const conflicted = await httpsErrorOf(withFixedClock(NOW + 1000, () =>
+    submit(AUTHOR, `${publishKey(1)}-a`, "polls.PUBLISH_SERIES",
+      draft("Content A", [{...MULTI_Q, questionIndex: 0}], 1))));
+  assert.strictEqual(conflicted.code, "failed-precondition");
+  assert.ok(conflicted.message.includes("POLL_SERIES_REVISION_CONFLICT"), conflicted.message);
+  assert.ok(conflicted.message.includes("current 2"), conflicted.message);
+
+  const stored = seriesDoc();
+  assert.strictEqual(stored.revisionId, 2, "exactly one new revision");
+  assert.strictEqual(stored.title, "Content B", "the retried A did not silently overwrite B");
 });
 
 // ─── Vote: один подтверждённый набор на участника на вопрос ─────────────────────────────────────

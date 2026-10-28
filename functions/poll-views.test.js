@@ -256,6 +256,48 @@ test("a vote document without the question axis refuses loudly, never counts sil
   assert.equal(refused.details && refused.details.reason, "UNAVAILABLE");
 });
 
+test("the series scan ceiling refuses loudly, never shows a truncated list (retro finding 5)", async () => {
+  // Ретро эпика 8, находка 5: скан серий молча обрезался на LIMITS.maxSeries — 51-я серия
+  // невидима всем, «обрезанная правда» вопреки AD-8 и собственному правилу модуля (соседние
+  // сканы голосов на потолке отказывают громко). 49 серий — обычный список, 50-я — поимённый
+  // SOURCE_TOO_LARGE, как у голосовых сканов.
+  store.reset(Object.fromEntries([AUTHOR, ALICE].map((uid) => [`profiles/${uid}`, {uid}])));
+  const question = {questionIndex: 0, mode: "SINGLE", text: "One?",
+    options: [{optionId: "opt-a", text: "A"}, {optionId: "opt-b", text: "B"}]};
+  async function publishSeries(n) {
+    const seriesId = `series-cap-${n}`;
+    // publishedAtMs сервер берёт из Date.now(): шагаем часы по n — сортировка списка
+    // детерминирована. Равные метки разрешаются убыванием seriesId, где «series-cap-9»
+    // лексикографически новее «series-cap-49», и утверждение о голове списка стало бы гонкой
+    // на реальных часах.
+    const realNow = Date.now;
+    Date.now = () => NOW + n;
+    try {
+      const result = await functions.submitMutation.run({
+        auth: {uid: AUTHOR},
+        data: {
+          mutationId: `polls-PUBLISH_SERIES-series-cap-${n}-r1`,
+          operation: "polls.PUBLISH_SERIES",
+          payload: JSON.stringify({seriesId, title: `Series ${n}`, expectedRevisionId: 0, questions: [question]}),
+        },
+      });
+      assert.equal(result.result.revisionId, 1);
+    } finally {
+      Date.now = realNow;
+    }
+  }
+  for (let n = 1; n <= 49; n += 1) await publishSeries(n);
+  const under = await listSeries(ALICE);
+  assert.equal(under.entries.length, 20, "49 series list normally (default page still applies)");
+  assert.equal(under.entries[0].seriesId, "series-cap-49", "newest first, nothing silently hidden");
+
+  await publishSeries(50);
+  const atCeiling = await listSeries(ALICE).then(() => null, (error) => error);
+  assert.equal(atCeiling.code, "resource-exhausted");
+  assert.equal(atCeiling.details && atCeiling.details.reason, "SOURCE_TOO_LARGE",
+    "the ceiling is a loud named refusal, not a truncated page (AD-8)");
+});
+
 test("malformed requests refuse without touching the store", async () => {
   await freshWorld();
   const extraField = await functions.getPollQuestionState.run({

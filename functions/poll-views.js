@@ -159,6 +159,9 @@ function createPollViews({db}) {
     if (!unsigned(value, 1) || value > LIMITS.maxPageSize) fail("INVALID_ARGUMENT");
 
     const seriesRows = await db.collection("poll_series").limit(LIMITS.maxSeries).get();
+    // Потолок достигнут — за ним серии, которых читатель не увидит; обрезанный список
+    // изображал бы полную правду (AD-8), поэтому громкий отказ — как у сканов голосов ниже.
+    if (seriesRows.docs.length >= LIMITS.maxSeries) fail("SOURCE_TOO_LARGE");
     const series = [];
     for (const doc of seriesRows.docs) {
       const entry = readSeries(doc);
