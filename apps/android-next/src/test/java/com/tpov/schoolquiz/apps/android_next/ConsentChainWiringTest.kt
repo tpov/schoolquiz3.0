@@ -36,7 +36,13 @@ class ConsentChainWiringTest {
 
     @Test
     fun `given the economy data module then the gate is bound with the requeue in its constructor`() {
-        val text = read("shared/feature/economy/data/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/economy/data/di/EconomyDataModule.kt")
+        // Пути от рабочего каталога тестов (каталог модуля apps/android-next), как у соседей:
+        // "src/main/..." — от модуля, "../../..." — от корня репозитория (review 2026-10-28:
+        // было "shared/..." и "android/..." без префикса — файлы не нашлись бы при прогоне).
+        val text = read(
+            "../../shared/feature/economy/data/src/commonMain/kotlin/" +
+                "com/tpov/schoolquiz/shared/feature/economy/data/di/EconomyDataModule.kt",
+        )
         assertTrue(
             "гейт согласия обязан быть привязан в модуле экономики: single<EconomyTermsConsentGate>",
             text.contains("single<EconomyTermsConsentGate>"),
@@ -53,7 +59,7 @@ class ConsentChainWiringTest {
     @Test
     fun `given both runners then their consent handles resolve the real gate`() {
         val text = read(
-            "android/feature/lesson-runner/presentation/src/main/kotlin/" +
+            "../../android/feature/lesson-runner/presentation/src/main/kotlin/" +
                 "com/tpov/schoolquiz/android/feature/lesson_runner/presentation/di/LessonRunnerPresentationModule.kt",
         )
         val handles = text.lineSequence().filter { "get<EconomyTermsConsentGate>()" in it }.count()
