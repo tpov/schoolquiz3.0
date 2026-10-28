@@ -8,6 +8,11 @@ android {
     // возвращать дефолты вместо «not mocked» — иначе проверяемое падение accept падает тестом.
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests {
+            // Robolectric compose tests resolve string resources from the merged resources
+            // (NoirRunnerDialogsTest, epic 9.2).
+            isIncludeAndroidResources = true
+        }
     }
 }
 
@@ -48,6 +53,11 @@ dependencies {
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Compose-тесты экранов под Robolectric (эпик 9.2) — тот же набор, что у settings-модуля.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
     testImplementation(project(":shared:feature:theme:domain"))
     testImplementation(project(":shared:feature:question:domain"))
     testImplementation(project(":shared:feature:app-shell:domain"))

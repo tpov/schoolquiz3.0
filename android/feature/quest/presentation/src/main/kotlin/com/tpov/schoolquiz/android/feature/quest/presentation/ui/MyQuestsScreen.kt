@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.quest.presentation.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,31 +11,40 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
-import com.tpov.schoolquiz.android.core.designsystem.components.BrandSquareIconButton
 import com.tpov.schoolquiz.android.core.designsystem.components.CatalogSpinner
 import com.tpov.schoolquiz.android.core.designsystem.components.QuestCard
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialog
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialogAction
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSkeletonRows
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftSubmitState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.R
-import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SUBMITTABLE_DRAFT_STATUSES
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestReviewOutcomeSnapshot
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SUBMITTABLE_DRAFT_STATUSES
 
 /**
  * "Мои квесты" screen.
@@ -46,6 +56,11 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestRevi
  *   - FAB: create quest (navigates to OpenQuestCreate)
  *
  * isGuest=true → same empty state as 0 quests (no login CTA per spec).
+ *
+ * NOIR (epic 9.2): the screen's own surfaces — draft cards, outcome block, submit dialog, FAB —
+ * are built from designsystem/noir primitives and tokens; [QuestCard] and [CatalogSpinner] stay
+ * the shared design-system components they are. Strings and component contracts untouched
+ * (UX-5/UX-6/UX-14).
  *
  * Spec: AC#23-29; DFD 3 (02-behavior.md)
  */
@@ -71,8 +86,10 @@ fun MyQuestsScreen(
             )
 
             if (state.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                // Настоящая загрузка — скелет, не пустота (UX-14): экран показывает, что список
+                // будет, а не что его нет.
+                Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                    NoirSkeletonRows(modifier = Modifier.fillMaxWidth())
                 }
             } else if (state.quests.isEmpty() && state.drafts.isEmpty()) {
                 Box(
@@ -85,11 +102,11 @@ fun MyQuestsScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = stringResource(R.string.quest_empty_quests_title),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = NoirType.groupTitle,
                         )
                         Text(
                             text = stringResource(R.string.quest_empty_quests_hint),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = NoirType.rowSub,
                             modifier = Modifier.padding(top = 8.dp),
                         )
                     }
@@ -131,14 +148,41 @@ fun MyQuestsScreen(
             )
         }
 
-        BrandSquareIconButton(
-            icon = Icons.Default.Add,
+        CreateQuestFab(
             contentDescription = stringResource(R.string.quest_cd_create_quest),
             onClick = component::onCreateQuestClick,
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
+        )
+    }
+}
+
+/**
+ * Круглая акцентная кнопка создания: 56dp (цель ≥44dp с запасом), ink-иконка на акценте —
+ * единственная залитая кнопка экрана (NOIR-SPEC §6.1, бюджет акцента).
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun CreateQuestFab(
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(LocalNoirAccent.current)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = contentDescription,
+            tint = NoirInk,
+            modifier = Modifier.size(24.dp),
         )
     }
 }
@@ -155,24 +199,20 @@ private fun DraftQuestCard(
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BrandCard(modifier = modifier.clickable(onClick = onClick)) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-            Row(modifier = Modifier.fillMaxWidth()) {
+    NoirGroup(modifier = modifier.clickable(onClick = onClick)) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = item.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = NoirType.rowTitle,
                     modifier = Modifier.weight(1f),
                 )
-                Text(
-                    text = stringResource(R.string.quest_draft_label),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelMedium,
-                )
+                NoirChip(text = stringResource(R.string.quest_draft_label))
             }
             Text(
                 text = stringResource(R.string.quest_questions_count, item.questionCount),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp),
+                style = NoirType.rowSub,
+                modifier = Modifier.padding(top = 6.dp),
             )
             // Почему работа вернулась к автору. Причина хранилась с самого начала и доезжала до
             // модели, но не показывалась: автор видел «Черновик» и не мог отличить свою
@@ -180,9 +220,9 @@ private fun DraftQuestCard(
             item.rejectionReason?.takeIf { it.isNotBlank() }?.let { reason ->
                 Text(
                     text = stringResource(R.string.quest_draft_returned, humanReadableReason(reason)),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp),
+                    color = NoirDanger,
+                    style = NoirType.rowSub,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
             }
             // Исход модельной проверки (4.16, UX-6): штрихи проверок, «Проверка задерживается»,
@@ -191,15 +231,16 @@ private fun DraftQuestCard(
             // Подача с карточки (история 4.11, D13): раньше карточка умела только открыть
             // редактор, и черновик нельзя было выбрать в форме подачи.
             if (item.isSubmittable()) {
-                Button(
+                // Ghost, не primary: залитая кнопка на экране одна — FAB создания (NOIR-SPEC §6.1).
+                NoirButton(
+                    text = stringResource(R.string.quest_submit_for_review),
                     onClick = onSubmitClick,
                     modifier =
                         Modifier
-                            .padding(top = 8.dp)
+                            .padding(top = 10.dp)
                             .fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.quest_submit_for_review))
-                }
+                    style = NoirButtonStyle.Ghost,
+                )
             }
         }
     }
@@ -225,49 +266,54 @@ private fun DraftReviewOutcomeBlock(
         review.detectedLanguage?.let { language ->
             Text(
                 text = stringResource(R.string.quest_review_language, humanReadableLanguage(language)),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp),
+                style = NoirType.rowSub,
+                modifier = Modifier.padding(top = 6.dp),
             )
         }
         when {
-            review.isDelayed -> Text(
-                text = stringResource(R.string.quest_review_delayed),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-            review.isWaiting -> Text(
-                text = stringResource(R.string.quest_review_strokes),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp),
-            )
+            review.isDelayed -> {
+                Text(
+                    text = stringResource(R.string.quest_review_delayed),
+                    style = NoirType.rowSub,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            review.isWaiting -> {
+                Text(
+                    text = stringResource(R.string.quest_review_strokes),
+                    style = NoirType.rowSub,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
             review.isRejected -> {
                 Text(
                     text = stringResource(R.string.quest_review_failed_tag, review.failedQuestions.size),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp),
+                    color = NoirDanger,
+                    style = NoirType.rowSub,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
                 review.failedQuestions.forEach { failure ->
                     Text(
-                        text = stringResource(
-                            R.string.quest_review_failed_line,
-                            failure.lessonId,
-                            humanReadableStage(failure.stage),
-                            failure.reason,
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
+                        text =
+                            stringResource(
+                                R.string.quest_review_failed_line,
+                                failure.lessonId,
+                                humanReadableStage(failure.stage),
+                                failure.reason,
+                            ),
+                        style = NoirType.rowSub,
                         modifier = Modifier.padding(top = 2.dp),
                     )
                 }
-                Button(
+                NoirButton(
+                    text = stringResource(R.string.quest_fix_questions),
                     onClick = onFixClick,
                     modifier =
                         Modifier
-                            .padding(top = 8.dp)
+                            .padding(top = 10.dp)
                             .fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.quest_fix_questions))
-                }
+                    style = NoirButtonStyle.Ghost,
+                )
             }
         }
     }
@@ -296,6 +342,7 @@ private fun humanReadableLanguage(language: String): String =
  *
  * Три состояния цитаты честно разведены: загрузка (спиннер), отказ (текст и «Повторить» —
  * повтор перезапрашивает цену, а не отправляет вслепую) и готовность (плата + «Отправить»).
+ * NOIR-оболочка (9.2): NoirDialog, mono-кнопки; строки не менялись.
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -306,75 +353,70 @@ private fun DraftSubmitDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AlertDialog(
+    NoirDialog(
         onDismissRequest = onDismiss,
+        title = stringResource(R.string.quest_submit_for_review),
         modifier = modifier,
-        title = { Text(stringResource(R.string.quest_submit_for_review)) },
-        text = {
-            Column {
-                Text(
-                    text = state.draft.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                when {
-                    state.isQuoteLoading -> {
-                        CircularProgressIndicator(
-                            modifier =
-                                Modifier
-                                    .padding(top = 16.dp)
-                                    .size(24.dp),
-                        )
-                    }
-                    state.isQuoteFailed -> {
-                        Text(
-                            text = stringResource(R.string.quest_submit_quote_failed),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(top = 12.dp),
-                        )
-                    }
-                    state.quote != null -> {
-                        Text(
-                            text = stringResource(R.string.quest_submit_fee_line, state.quote.feeNolics),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 12.dp),
-                        )
-                    }
+        content = {
+            Text(
+                text = state.draft.title,
+                style = NoirType.rowTitle,
+            )
+            when {
+                state.isQuoteLoading -> {
+                    CircularProgressIndicator(
+                        modifier =
+                            Modifier
+                                .padding(top = 12.dp)
+                                .size(24.dp),
+                    )
                 }
-                if (state.isSubmitFailed) {
+                state.isQuoteFailed -> {
                     Text(
-                        text = stringResource(R.string.quest_submit_failed),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp),
+                        text = stringResource(R.string.quest_submit_quote_failed),
+                        color = NoirDanger,
+                        style = NoirType.rowSub,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                state.quote != null -> {
+                    Text(
+                        text = stringResource(R.string.quest_submit_fee_line, state.quote.feeNolics),
+                        style = NoirType.rowSub,
+                        modifier = Modifier.padding(top = 4.dp),
                     )
                 }
             }
+            if (state.isSubmitFailed) {
+                Text(
+                    text = stringResource(R.string.quest_submit_failed),
+                    color = NoirDanger,
+                    style = NoirType.rowSub,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
         },
-        confirmButton = {
+        actions = {
             when {
-                state.isQuoteFailed ->
-                    TextButton(onClick = onRetry) {
-                        Text(stringResource(R.string.quest_submit_retry))
-                    }
-                state.quote != null ->
-                    TextButton(
-                        onClick = onConfirm,
-                        enabled = !state.isSubmitting,
-                    ) {
-                        Text(
+                state.isQuoteFailed -> {
+                    NoirDialogAction(stringResource(R.string.quest_submit_retry), onRetry, primary = true)
+                    NoirDialogAction(stringResource(R.string.quest_cancel), onDismiss)
+                }
+                state.quote != null -> {
+                    NoirDialogAction(
+                        text =
                             if (state.isSubmitting) {
                                 stringResource(R.string.quest_submit_sending)
                             } else {
                                 stringResource(R.string.quest_submit_confirm)
                             },
-                        )
-                    }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.quest_cancel))
+                        onClick = onConfirm,
+                        primary = true,
+                        enabled = !state.isSubmitting,
+                    )
+                    NoirDialogAction(stringResource(R.string.quest_cancel), onDismiss)
+                }
+                else -> NoirDialogAction(stringResource(R.string.quest_cancel), onDismiss)
             }
         },
     )

@@ -1,32 +1,29 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialog
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialogAction
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 
+/**
+ * Подтверждение выхода из попытки (NOIR, 9.2): NoirDialog вместо material3 AlertDialog; строки
+ * и семантика не менялись.
+ */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun ExitConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    NoirDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.runner_exit_confirm_title)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.runner_action_exit))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.runner_action_cancel))
-            }
+        title = stringResource(R.string.runner_exit_confirm_title),
+        actions = {
+            NoirDialogAction(stringResource(R.string.runner_action_exit), onConfirm, primary = true)
+            NoirDialogAction(stringResource(R.string.runner_action_cancel), onDismiss)
         },
     )
 }
