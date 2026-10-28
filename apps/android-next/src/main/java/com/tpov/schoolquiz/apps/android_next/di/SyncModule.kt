@@ -160,6 +160,11 @@ val syncModule =
                         // читает из очереди по entity_ref. Обработчик объявлен у фичи профиля.
                         OutboxOperations.CANCEL_NICKNAME_LISTING to get<ListingCancelQuarantine>(),
                         OutboxOperations.CANCEL_LOGO_LISTING to get<ListingCancelQuarantine>(),
+                        // Квитанция готовности онлайн-перехода: локальной половины нет — квитанция
+                        // живёт в хранилище квитанций и серверных полей не касается (AD-25).
+                        // Ретро эпика 2 (F15): объявлено явно, чтобы «нечего откатывать» и «забыли
+                        // обработчик» не выглядели одинаково; пин — ReadyAckQuarantineWiringTest.
+                        OutboxOperations.READY_ACK to com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect(),
                     ),
                 // Операция без обработчика — молчаливое расхождение, которое AD-28 запрещает.
                 onUnhandled =

@@ -81,10 +81,6 @@ class FirebaseMutationTransport(
      */
     private companion object {
         const val SUBMIT_MUTATION = "submitMutation"
-        const val MUTATION_ID = "mutationId"
-        const val OPERATION = "operation"
-        const val PAYLOAD = "payload"
-        const val EXPECTED_VERSION = "expectedVersion"
     }
 }
 

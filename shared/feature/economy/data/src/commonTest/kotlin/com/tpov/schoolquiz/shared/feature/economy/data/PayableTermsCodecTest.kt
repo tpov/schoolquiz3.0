@@ -45,6 +45,17 @@ class PayableTermsCodecTest {
     }
 
     @Test
+    fun `given the committed cross-half literal then the codec writes it back byte for byte`() {
+        // Ретро эпика 2 (F16): литерал один на обе половины провода — functions/mutation-terms.test.js
+        // принимает его дословно readCapturedTerms; здесь кодек обязан писать ровно его. Дрейф
+        // ключа, порядка или формы на любой из половин ломает одну из двух проверок.
+        val literal = """{"version":7,"standard":{"maxOwned":12,"regenMs":3600000,"priceLadder":[500,900],"currency":"NOLICS","requiresSettledAccount":false,"premiumRegenDivisor":1},"plasma":{"maxOwned":4,"regenMs":86400000,"priceLadder":[1,2,3],"currency":"GOLD","requiresSettledAccount":true,"premiumRegenDivisor":3},"activityPrices":{"ORDINARY_LESSON":33,"ARENA":50,"THEME_TEST":100,"FINAL_EXAM":200,"TOURNAMENT":750}}"""
+
+        assertEquals(literal, PayableTermsCodec.toJson(terms))
+        assertEquals(literal, PayableTermsCodec.toJson(requireNotNull(PayableTermsCodec.fromJson(literal))))
+    }
+
+    @Test
     fun `given a truncated record then it is discarded rather than half-read`() {
         assertNull(PayableTermsCodec.fromJson("""{"version":"""))
     }
