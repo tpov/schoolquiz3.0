@@ -8,6 +8,7 @@ const {
   SETTLEMENT_OUTCOME_UNAVAILABLE,
   SKU_NOT_SOLD_HINT,
   settlePurchase,
+  storedBoxCount,
 } = require("./purchase-settlement");
 const {
   PLAY_OUTCOME_FOUND,
@@ -535,6 +536,16 @@ async function testABoughtBoxForAPlayerWithoutBoxesStartsTheCounterAtOne() {
   assert.strictEqual(userWrite.data.boxCount, 1);
 }
 
+async function testACorruptBoxCountIsACodedRefusalNotABareError() {
+  // Ретро m3 (п.2): единый стиль громкого отказа — кодированный INVALID_ARGUMENT, как у
+  // exactNonNegative соседей по деньгам; голый Error читался бы как «внутренняя ошибка».
+  assert.throws(() => storedBoxCount({boxCount: "garbage"}),
+    (error) => error.code === "INVALID_ARGUMENT" && /repair required/.test(error.message));
+  assert.strictEqual(storedBoxCount({boxCount: 0}), 0, "ноль — честное отсутствие коробок");
+  assert.strictEqual(storedBoxCount({}), 0);
+  assert.strictEqual(storedBoxCount(undefined), 0);
+}
+
 async function testACorruptBoxCountRefusesTheCreditAndWritesNothing() {
   const db = fakeDb({docs: {[USER_PATH]: {gold: 5, boxCount: "garbage"}, [ECONOMY_CONSTANTS_DOC]: BOX_CONSTANTS_DOC}});
 
@@ -572,6 +583,7 @@ async function testABoughtBoxIgnoresTheGoldShortfall() {
   await testABoughtBoxLandsInTheSameBoxCountWithItsOwnLedgerReason();
   await testABoughtBoxQuantityMultipliesAndStaysOnTheProductEndpoint();
   await testABoughtBoxForAPlayerWithoutBoxesStartsTheCounterAtOne();
+  await testACorruptBoxCountIsACodedRefusalNotABareError();
   await testACorruptBoxCountRefusesTheCreditAndWritesNothing();
   await testABoughtBoxIgnoresTheGoldShortfall();
   console.log("purchase-settlement.test.js OK");

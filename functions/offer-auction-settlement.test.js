@@ -8,6 +8,7 @@ const {
   OFFER_AUCTION_SETTLING,
   OFFER_AUCTION_SETTLED,
   OFFER_BIDS_COLLECTION,
+  OFFER_BID_REVIEW,
   OFFER_BID_STATUS,
   offerBidId,
   placeOfferBid,
@@ -185,6 +186,9 @@ test("an unreviewed candidate does not survive the next month: its bid returns, 
   assert.equal(db.store.get("users/old-winner").gold, 60,
     "непоказанное объявление не держит золото: кандидата сменили — ставка вернулась");
   assert.equal(db.store.get(`${OFFER_BIDS_COLLECTION}/2026-11_old-winner`).status, OFFER_BID_STATUS.REFUNDED);
+  // Ретро m4 (п.1): возврат кандидата уходит и с проверки — иначе ставка оставалась PENDING
+  // и призраком доезжала до операторской очереди (offer-ad-review решает ровно PENDING).
+  assert.equal(db.store.get(`${OFFER_BIDS_COLLECTION}/2026-11_old-winner`).reviewStatus, OFFER_BID_REVIEW.REJECTED);
   const row = db.store.get(`${LEDGER}/old-winner_${CURRENCY.GOLD}_${REASON.OFFER_BID_REFUND}_2026-11_old-winner`);
   assert.equal(row.delta, 60);
   assert.deepEqual(row.details, {auctionId: "2026-11", stale: true});

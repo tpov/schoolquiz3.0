@@ -163,6 +163,29 @@ test("the offers-auction pair keeps its named wire codes and the open table stay
   }
 });
 
+
+test("the review decision names NOT_FOUND and FAILED_PRECONDITION on the wire (retro m4)", async () => {
+  store.reset(world());
+  const now = Date.UTC(2027, 0, 3);
+  const originalNow = Date.now;
+  Date.now = () => now;
+  try {
+    store.documents.set(`profiles/${uid}`, {...store.documents.get(`profiles/${uid}`), moderatorLevel: 100});
+    // NOT_FOUND: решения по несуществующей ставке не бывает — код доезжает до клиента, а не 500.
+    await assert.rejects(call("decideOfferAdReview", {bidId: "2027-01_missing", decision: "APPROVED"}),
+      {code: "not-found"});
+    // FAILED_PRECONDITION: повторное решение по уже решённой ставке — именованный отказ.
+    store.documents.set("offer_bids/2027-01_decided", {auctionId: "2027-01", uid,
+      amount: 30, createdAtMs: now, raiseCount: 0, status: "WON", reviewStatus: "REJECTED"});
+    await assert.rejects(call("decideOfferAdReview", {bidId: "2027-01_decided", decision: "APPROVED"}),
+      {code: "failed-precondition"});
+    // Экран — только для входа: без аутентификации чтение витрины не начинается.
+    await assert.rejects(functions.fetchOffersScreen.run({data: {}}), {code: "unauthenticated"});
+  } finally {
+    Date.now = originalNow;
+  }
+});
+
 test("the offers review gate refuses the unqualified, and the screen serves only approved ads", async () => {
   store.reset(world());
   const now = Date.UTC(2027, 0, 2);

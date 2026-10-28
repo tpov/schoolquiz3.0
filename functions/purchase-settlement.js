@@ -382,11 +382,15 @@ function settledRenewals(existing) {
  * Коробки игрока строгим целым: поле пишет только сервер, испорченное — ремонт, а не ноль.
  *
  * Ноль — честное отсутствие: игрок без коробок покупает первую. Отсутствующее поле и есть ноль.
+ * Отказ — кодированный INVALID_ARGUMENT (ретро m3, п.2: тот же стиль громкого отказа, что у
+ * exactNonNegative в ad-reward-progress), обвязка verifyPurchase переводит его на провод.
  */
 function storedBoxCount(userData) {
   const value = userData && userData.boxCount !== undefined && userData.boxCount !== null ? userData.boxCount : 0;
   if (!Number.isSafeInteger(value) || value < 0) {
-    throw new Error("stored boxCount is corrupt; repair required");
+    const error = new Error("stored boxCount is corrupt; repair required");
+    error.code = "INVALID_ARGUMENT";
+    throw error;
   }
   return value;
 }
@@ -464,4 +468,5 @@ module.exports = {
   SKU_NOT_SOLD_HINT,
   settlePurchase,
   settleSubscriptionRenewal,
+  storedBoxCount,
 };

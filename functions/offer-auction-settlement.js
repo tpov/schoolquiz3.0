@@ -30,6 +30,7 @@ const {
   OFFER_BIDS_COLLECTION,
   OFFER_BID_STATUS,
   OFFER_BID_REVIEW,
+  storedGold,
 } = require("./offer-auction");
 
 /** Куда ложится объявление победителя; читает его будущая витрина, правилам закрыто. */
@@ -56,11 +57,6 @@ function fail(code, message) { const error = new Error(message); error.code = co
 function exactNonNegative(value, label) {
   if (!Number.isSafeInteger(value) || value < 0) fail("INVALID_ARGUMENT", `${label} must be an exact nonnegative integer`);
   return value;
-}
-
-function storedGold(user) {
-  const gold = Math.floor(Number(user && user.gold));
-  return Number.isSafeInteger(gold) && gold >= 0 ? gold : 0;
 }
 
 /**
@@ -189,8 +185,12 @@ async function closeOfferAuction({db, auctionId, now}) {
       transaction.delete(pendingRef);
     }
     if (stale && !stale.refunded) {
+      // Ретро m4 (п.1): возвращённая ставка уходит с проверки навсегда — иначе она оставалась
+      // reviewStatus: PENDING и призраком доезжала до операторской очереди: offer-ad-review
+      // пускает в решение ровно PENDING.
       transaction.set(db.collection(OFFER_BIDS_COLLECTION).doc(stale.bidId),
-        {status: OFFER_BID_STATUS.REFUNDED, refundedAtMs: now, updatedAtMs: now}, {merge: true});
+        {status: OFFER_BID_STATUS.REFUNDED, reviewStatus: OFFER_BID_REVIEW.REJECTED,
+          refundedAtMs: now, updatedAtMs: now}, {merge: true});
       transaction.set(db.collection("users").doc(stale.uid),
         {gold: stale.gold + stale.amount, updatedAtMs: now}, {merge: true});
       const row = ledgerEntry({

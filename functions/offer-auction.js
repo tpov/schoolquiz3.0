@@ -281,4 +281,5 @@ module.exports = {
   openOfferAuction,
   placeOfferBid,
   planOfferBid,
+  storedGold,
 };
