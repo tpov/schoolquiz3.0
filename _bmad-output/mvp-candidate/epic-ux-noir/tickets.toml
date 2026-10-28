@@ -1,0 +1,111 @@
+# tickets.toml — epic-ux-noir: stories in build order.
+# Inception 2026-10-28 (autonomous wave, night/e7-commerce): epic Done-when (epic-ux-noir.md,
+# CAP-17) sliced by journeys per owner mandate. Story ids follow the source journey's epic number
+# (обычное обучение = 9.2 from epic-2, арена = 9.3, …, соц = 9.8); 9.1 owns the shared NOIR
+# foundation + the sweep inventory this epic is responsible for; 9.9 is the final device sweep and
+# accessibility proof (Done-when item 2) — hitl on the owner's rig.
+#
+# Canonical styling sources in this tree: noir-design-system/NOIR-SPEC.md (§1–§10),
+# android/core/designsystem/.../noir/ (NoirTheme/NoirComponents — the single shared Compose
+# implementation), ux-constraints.md UX-1–UX-23. NOTE: the final DESIGN.md/EXPERIENCE.md pair
+# referenced by the epic (planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/) is NOT
+# present in the tree (checked 2026-10-28: directory absent on VPS) — styling is transcribed from
+# NOIR-SPEC + the in-tree noir package; where a journey has journey-specific constraints
+# (UX-5/6/7/9/20/22) they bind from ux-constraints.md.
+#
+# Scope rule (fixed for this inception, arena epic precedent): a story is dispatchable "ready"
+# when the orchestrator can prove it from this tree — code + JVM/Robolectric Compose tests via sgw
+# (JDK 27) + ktlint attribution. Device visual/a11y proof (real Compose font scaling, assistive)
+# is hitl — story 9.9.
+#
+# Owner caveat for 9.4 (инсепшн 2026-10-28): поверхности предложений автора (4.21–4.25 — entry
+# «Сообщить об ошибке» на результате, «Предложить правку», target-path в QuestCreate, секция
+# «Предложения» в Decisions) строятся соседним потоком прямо сейчас — НЕ стилизуются в этой волне;
+# they are restyled after 4.26 (open item, зафиксирован в 9.4).
+#
+# Survey method (2026-10-28, story 9.1 inventory): main-source presentation files importing
+# androidx.compose.material3 without any designsystem.noir import (grep over
+# android/feature/*/presentation), plus manual reading of each hit; component/uistate files
+# without composable UI are out of scope.
+
+[[story]]
+id = "9.1"
+slug = "noir-shared-foundation-and-sweep-inventory"
+title = "Shared NOIR foundation stays the single implementation (AD-25/UX-3): designsystem/noir tokens+components cover every family the sweep needs (dialog primitive included), sweep inventory recorded (which journey surfaces still speak raw material3); no feature-local NOIR forks introduced by the sweep"
+covers = ["CAP-17"]
+after = []
+status = "done" # 2026-10-28: инвентарь снят (метод выше); shared-примитив NoirDialog/NoirDialogAction заленден в designsystem/noir/NoirComponents.kt (surface-4, радиус 20, mono-кнопки) и покрыт тестами 9.2/9.3. Корень-почин волны: robolectric 4.11.1 → 4.17 в libs.versions.toml — 4.11.1 не мог запустить НИ ОДИН robolectric-compose тест на этом toolchain (ASM «major version 71» под JDK 27; targetSdk 35 > maxSdk 34) — предсуществующий красный NoirSettingsScreenTest и собратья; после апгрейда settings-модуль проверен отдельно — GREEN. Гейт designsystem 18/0.
+
+[[story]]
+id = "9.2"
+slug = "noir-ordinary-learning"
+title = "Ordinary learning journey speaks NOIR end to end: My Quests screen (cards, draft/review outcome block, submit dialog) and the runner leftovers (exit-confirm dialog, survey check/radio) on designsystem/noir tokens+components; strings, states and component contracts untouched (UX-5/UX-6/UX-14); locale-independent Compose tests"
+covers = ["CAP-17"]
+after = [{ story = "9.1", needs = "shared dialog primitive and inventory" }]
+status = "done" # 2026-10-28: MyQuestsScreen → NoirGroup/NoirChip/NoirButton/NoirType + скелет загрузки + акцентный FAB; DraftSubmitDialog/ExitConfirmDialog → NoirDialog; SurveyContent → NOIR-цвета чекбокса/радио. Compose-тесты NoirMyQuestsScreenTest (9 кейсов) + NoirRunnerDialogsTest (4 кейса). Гейты: sgw jdk-27 пяти-модульный прогон BUILD SUCCESSFUL — quest/presentation 63/0, lesson-runner 240/0, designsystem 18/0; ktlint модулей чисто кроме предсуществующего DefaultMyQuestsComponent.kt:118 (приземлён 4.16/77bdb0fe, файл волной не тронут — атрибуция владельцу). Спека spec-9-2-noir-ordinary-learning.md.
+
+[[story]]
+id = "9.3"
+slug = "noir-arena"
+title = "Arena journey speaks NOIR: entry/catalog screens and dialogs (ArenaEntryContent, ArenaEntryDialogs, ArenaLessonCatalogScreen) and the arena runner result/attention surfaces (ArenaRunnerContent) on designsystem/noir; every uiautomator/testTag selector preserved verbatim (the rig drives 3.x journeys through them), all strings byte-identical (UX-9); tests"
+covers = ["CAP-17"]
+after = [{ story = "9.1", needs = "shared dialog primitive and inventory" }]
+status = "done" # 2026-10-28: ArenaEntryContent/ArenaEntryDialogs/ArenaLessonCatalogScreen/ArenaRunnerContent → NOIR; ВСЕ testTag байт-в-байт (риг 3.x), строки не менялись. Тест NoirArenaEntryContentTest (4 кейса: селекторы, wallet_unknown, busy-тег, проводка ChangeDifficulty+Confirm). Гейт: тот же пяти-модульный sgw-прогон зелёный — quizzes-screen 191/0, lesson-runner 240/0; ktlint чисто. Спека spec-9-3-noir-arena.md.
+
+[[story]]
+id = "9.4"
+slug = "noir-authoring-curation"
+title = "Authoring/curation journey speaks NOIR: audit Inbox/AuthorLifecycle/Curator/QuestQuestionEditor surfaces on designsystem/noir and close stragglers that are NOT proposal surfaces; proposal entries (4.21–4.25: «Сообщить об ошибке», «Предложить правку», QuestCreate target-path, Decisions «Предложения») are restyled after 4.26 by whoever lands them"
+covers = ["CAP-17"]
+after = [{ epic = 4, needs = "review pipeline family final (4.15–4.19)" }]
+status = "done" # 2026-10-28: аудит по методу 9.1 — InboxScreen/AuthorLifecycleScreen/CuratorScreen/QuestQuestionEditorContent уже на noir (imports designsystem.noir, сырого material3 нет); DecisionsScreen/DecisionsView (4.25), QuestCreateScreen (4.24) и entry-поверхности предложений СОЗНАТЕЛЬНО НЕ ТРОНУТЫ (оговорка владельца); нового кода не требуется — примитив NoirDialog из 9.1 готов к их переезду.
+openItems = ["поверхности предложений (4.21–4.25) достиловываются после 4.26"]
+
+[[story]]
+id = "9.5"
+slug = "noir-competitions"
+title = "Competitions journey speaks NOIR: audit the eight tournament screens + event surfaces in app-shell on designsystem/noir, close stragglers"
+covers = ["CAP-17"]
+after = [{ epic = 5, needs = "tournament screens final" }]
+status = "done" # 2026-10-28: аудит — все 8 Tournament*Screen импортируют designsystem.noir; TournamentNoticeText/модели/компоненты — текстовые хелперы и логика без raw-material3 UI. Новой работы нет.
+
+[[story]]
+id = "9.6"
+slug = "noir-exams"
+title = "Exams and certificates journey speaks NOIR: ExamRun entry/sitting/closure/result surfaces and CertificateContent on designsystem/noir tokens (typography, surfaces, buttons, progress); placeholder EXAM_*/CERT_* strings and the owner-content protocol untouched"
+covers = ["CAP-17"]
+after = [{ epic = 6, needs = "exam/certificate structure final (content copy still owner-confirmed)" }]
+status = "done" # 2026-10-28: ExamRunContent → NoirType/NoirButton/NoirSwitch (согласие с условиями — свитч §6.4, contentDescription из строки условий)/NOIR-цвета поля; CertificateContent → та же семья. Строки ExamText.*/CertificateText.* байт-в-байт, структура состояний не тронута (контент-подтверждение владельца остаётся отдельным протоколом). Гейт: lesson-runner 240/0, exam 7/0 в общем прогоне; ktlint чисто. Спека spec-9-6-noir-exams.md.
+
+[[story]]
+id = "9.7"
+slug = "noir-shop"
+title = "Shop journey speaks NOIR: audit ShopView/NoirShopStore/NoirNicknameMarket family and operation-history surfaces; close stragglers outside the revenue-critical string set"
+covers = ["CAP-17"]
+after = [{ epic = 7, needs = "commerce surfaces final" }]
+status = "done" # 2026-10-28: аудит — ShopScreen это shell над ShopView (уже noir: NoirShopStore/NoirNicknameMarket, NoirShopStoreStateLineTest существует); EconomyReceiptText — словарь ключ→ресурс без UI (ложный хит инвентаря). Новой работы нет.
+
+[[story]]
+id = "9.8"
+slug = "noir-social"
+title = "Social journey speaks NOIR: audit Polls/Profile/drawer surfaces on designsystem/noir, close stragglers"
+covers = ["CAP-17"]
+after = [{ epic = 8, needs = "social surfaces final" }]
+status = "done" # 2026-10-28: аудит — PollsScreen/ProfileScreen/NoirProfileSections/AccountSwitchWarningDialog импортируют designsystem.noir; drawer-семья app-shell на noir-токенах; DrawerSectionList — утилита без стилей. Новой работы нет.
+
+[[story]]
+id = "9.9"
+slug = "noir-final-sweep-a11y"
+title = "Final device sweep and accessibility proof (Done-when 2/3): every journey runs through its screens on the rig at elevated Compose font scale (text does not hide values/actions), focus order + focus ring + semantic actions verified via assistive operation, no guide placeholder or discovery-era artifact remains; evidence docs/agents/evidence/<date>-noir-final-sweep/"
+covers = ["CAP-17"]
+after = [
+  { story = "9.2", needs = "ordinary learning NOIR" },
+  { story = "9.3", needs = "arena NOIR" },
+  { story = "9.6", needs = "exams NOIR" },
+  { story = "9.4", needs = "authoring audit (proposals after 4.26)" },
+]
+waits = [
+  "hitl: physical/redroid rig run — font scaling, TalkBack/focus, screenshots are the owner's device rows",
+]
+hitl = true
+status = "blocked" # 2026-10-28: hitl-строка рига; кодовые половины 9.2/9.3(/9.6) закрываются в эту волну, 9.4 несёт open item «после 4.26».
