@@ -94,7 +94,7 @@ async function reportQueueState() {
 }
 
 async function reportProposals(knownIds) {
-  const proposals = await db.collection("lessonProposals").get();
+  const proposals = await db.collection("lesson_proposals").get();
   for (const doc of proposals.docs) {
     if (knownIds && knownIds.has(doc.id)) continue;
     const proposal = doc.data();
@@ -288,12 +288,12 @@ async function cmdAwaitReviewRequest() {
 async function cmdAwaitProposals() {
   const expected = Number(argv[1]);
   const maxWaitSec = Number(argv[2] || 900);
-  const baseline = new Set((await db.collection("lessonProposals").get()).docs.map((doc) => doc.id));
+  const baseline = new Set((await db.collection("lesson_proposals").get()).docs.map((doc) => doc.id));
   const deadline = now() + maxWaitSec * 1000;
   let seen = 0;
   const known = new Set();
   while (seen < expected && now() < deadline) {
-    const snapshot = await db.collection("lessonProposals").get();
+    const snapshot = await db.collection("lesson_proposals").get();
     for (const doc of snapshot.docs) {
       if (baseline.has(doc.id) || known.has(doc.id)) continue;
       known.add(doc.id);
