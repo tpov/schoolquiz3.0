@@ -1,0 +1,138 @@
+appId: com.tpov.schoolquiz.mvp
+name: Author submits a draft for review and observes the delayed check (4.20 partial)
+---
+# 4.20 авторская половина без модельного ключа: черновик → «Send to arena» (плата
+# 1000, очередь) → UNDER_REVIEW («Checking: “Words” · “Facts”») → честный REVIEW_DELAYED
+# («Check is taking longer than expected») после свипов воркера с VPS (модель не
+# настроена — REVIEW_MODEL_ENV_MISSING выжигает попытки этапов, конвейер уходит в
+# DELAYED). Живые вердикты «Слов»/«Фактов» — хвост владельца (ключ модели).
+- launchApp:
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "Open menu"
+- assertVisible: "^SYNC NOW$"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- tapOn: "^MY QUESTS$"
+- takeScreenshot: "420-my-quests"
+# Создание структуры: квест → раздел → тема → урок
+- tapOn: "Create quest"
+- assertVisible: "Quest creation"
+- takeScreenshot: "420-create-empty"
+- tapOn: "^Quest$"
+- inputText: "DF420 review journey quest"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Quest$"
+- tapOn: "^Section$"
+- inputText: "DF420 section"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Section$"
+- tapOn: "^Topic$"
+- inputText: "DF420 topic"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Topic$"
+- tapOn: "^Lesson$"
+- inputText: "DF420 lesson"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Lesson$"
+- takeScreenshot: "420-structure-created"
+# Простой вопрос без отметки верного (Ordering): два пункта достаточно
+- tapOn: "Easy questions"
+- extendedWaitUntil:
+    visible: "Add question"
+    timeout: 30000
+- tapOn: "Add question"
+- tapOn: "^Ordering$"
+- tapOn: "^Question$"
+- inputText: "DF420 easy ordering question"
+- tapOn: "^Item$"
+- inputText: "DF420 easy first"
+- tapOn: "Add item"
+- tapOn:
+    text: "^Item$"
+    index: 1
+- inputText: "DF420 easy second"
+- tapOn: "Back to structure"
+- tapOn: "Hard questions"
+- extendedWaitUntil:
+    visible: "Add question"
+    timeout: 30000
+- tapOn: "Add question"
+- tapOn: "^Ordering$"
+- tapOn: "^Question$"
+- inputText: "DF420 hard ordering question"
+- tapOn: "^Item$"
+- inputText: "DF420 hard first"
+- tapOn: "Add item"
+- tapOn:
+    text: "^Item$"
+    index: 1
+- inputText: "DF420 hard second"
+- tapOn: "Back to structure"
+- takeScreenshot: "420-questions-done"
+# Подача: плата 1000 ноликов списывается сервером при приёме заявки
+- tapOn: "Send to arena"
+- extendedWaitUntil:
+    visible: ".*queued for arena"
+    timeout: 120000
+- takeScreenshot: "420-arena-queued"
+- tapOn: "^Back$"
+- assertVisible: "DF420 review journey quest"
+- takeScreenshot: "420-back-to-my-quests"
+# Заявка уходит на сервер (outbox дренирует синк), сервер ставит UNDER_REVIEW
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- tapOn: "^MY QUESTS$"
+- extendedWaitUntil:
+    visible: "Checking: “Words” · “Facts”"
+    timeout: 300000
+- takeScreenshot: "420-under-review"
+# Воркер с VPS доводит конвейер (без ключа модели — DELAYED); клиент сворачивает
+# исход при следующем чтении своих заявок (синк).
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- tapOn: "^MY QUESTS$"
+- runFlow:
+    when:
+      notVisible: "Check is taking longer than expected"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - tapOn: "^MY QUESTS$"
+- runFlow:
+    when:
+      notVisible: "Check is taking longer than expected"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - tapOn: "^MY QUESTS$"
+- extendedWaitUntil:
+    visible: "Check is taking longer than expected"
+    timeout: 420000
+- takeScreenshot: "420-review-delayed"

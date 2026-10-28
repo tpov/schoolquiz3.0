@@ -1,0 +1,204 @@
+appId: com.tpov.schoolquiz.mvp
+name: Organizer tournament route with device qualification (5.13)
+---
+# 5.13 организаторский маршрут: Events → Organize → prepare → согласие → эскроу →
+# допуск → квалификация. Курс-источник df513-course (80 вопросов, владелец = аккаунт
+# устройства) препарируется с VPS (setup-513) сразу после появления аккаунта; оппонент
+# гоняет свои 3 раунда по HTTP с VPS (course-tournament-device-opponent.js) параллельно.
+- launchApp:
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "Open menu"
+- assertVisible: "SYNC NOW"
+- tapOn: "SYNC NOW"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- takeScreenshot: "513-synced"
+# ── Организатор: Events → Qualifier tournament → Organize a tournament
+- tapOn: "QUALIFIER TOURNAMENT"
+- extendedWaitUntil:
+    visible: "Organize a tournament"
+    timeout: 30000
+- takeScreenshot: "513-organizer-empty"
+- tapOn: "Course identifier"
+- inputText: "df513-course"
+- hideKeyboard
+- tapOn: "Prepare the course bank"
+- extendedWaitUntil:
+    visible: "Bank ready: 60 easy, 20 hard questions"
+    timeout: 180000
+- takeScreenshot: "513-bank-ready"
+# ── Согласие с замороженными условиями и CREATE с депозитом
+- tapOn: "Review prize list and deposit"
+- extendedWaitUntil:
+    visible: "Create with this deposit"
+    timeout: 30000
+- takeScreenshot: "513-consent-terms"
+- tapOn: "Create with this deposit"
+- extendedWaitUntil:
+    visible: "Tournament created"
+    timeout: 180000
+- takeScreenshot: "513-tournament-created"
+- extendedWaitUntil:
+    visible: "Reserved: 10 boxes"
+    timeout: 60000
+- takeScreenshot: "513-escrow"
+# ── Browser: Active events → деталь → Enter → допуск
+- tapOn: "Open menu"
+- tapOn: "ACTIVE EVENTS"
+- extendedWaitUntil:
+    visible: "Qualification open"
+    timeout: 120000
+- takeScreenshot: "513-browser-open"
+- tapOn: "Info"
+- extendedWaitUntil:
+    visible: "Enter"
+    timeout: 60000
+- takeScreenshot: "513-event-detail"
+- tapOn: "Enter"
+- extendedWaitUntil:
+    visible: "I downloaded the course"
+    timeout: 60000
+- takeScreenshot: "513-admission"
+- tapOn: "I downloaded the course"
+- extendedWaitUntil:
+    visible: "Download attested by the server"
+    timeout: 120000
+- takeScreenshot: "513-download-attested"
+- tapOn: "Continue to qualification"
+- extendedWaitUntil:
+    visible: "Start round"
+    timeout: 120000
+- takeScreenshot: "513-qualification-ready"
+# ── Раунд 1: 20 вопросов, верный ответ фикстуры — "val"
+- tapOn: "Start round"
+- extendedWaitUntil:
+    visible: "Submit answer"
+    timeout: 120000
+- takeScreenshot: "513-round1-question1"
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- takeScreenshot: "513-round1-progress"
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- takeScreenshot: "513-round1-halfway"
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- takeScreenshot: "513-round1-late"
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Answer delivered"
+    timeout: 60000
+# Последний (20-й) ответ закрывает раунд
+- tapOn: "val"
+- tapOn: "Submit answer"
+- extendedWaitUntil:
+    visible: "Round settled: .*"
+    timeout: 240000
+- takeScreenshot: "513-round1-settled"

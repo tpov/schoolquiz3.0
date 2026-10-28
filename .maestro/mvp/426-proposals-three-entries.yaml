@@ -1,0 +1,233 @@
+appId: com.tpov.schoolquiz.mvp
+name: Three proposal entries up to the author side (4.26)
+---
+# 4.26: «Сообщить об ошибке» после урока, «Предложить правку» копии, свой урок с
+# путём в чужом курсе; mvp = предлагающий, mvpb = автор курса (одобряет в «Решениях»
+# → «Предложения»). Без ключа модели проверки предложений уходят в CHECK_DELAYED и
+# до автора не доезжают (право видеть — только CHECK_PASSED/решения): авторская
+# половина согласования — хвост владельца, здесь честно фиксируются обе стороны.
+# Препарация с VPS: seed-author-lesson под аккаунт mvpb + кошелёк mvp (см. скрипт
+# scripts/devicefarm-rig-prep.js — watcher «await-users 2»).
+- launchApp:
+    appId: com.tpov.schoolquiz.mvpb
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "Open menu"
+- assertVisible: "^SYNC NOW$"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- takeScreenshot: "426-author-client-synced"
+# ── Предлагающий: свежий аккаунт mvp, полный синк (сид-курс уже на сервере)
+- launchApp:
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- takeScreenshot: "426-proposer-synced"
+- tapOn: "^HOME QUESTS$"
+# ── Урок автора (DF author course → DF author lesson), ответ "val" ×2
+- assertVisible: "DF author catalog"
+- tapOn: "DF author catalog"
+- assertVisible: "DF author course"
+- tapOn: "DF author course"
+- assertVisible: "DF author section"
+- tapOn: "DF author section"
+- assertVisible: "DF author theme"
+- tapOn: "DF author theme"
+- assertVisible: "DF author lesson"
+- tapOn: "DF author lesson"
+- runFlow:
+    when:
+      visible: "^GOT IT$"
+    commands:
+      - tapOn: "^GOT IT$"
+- tapOn: "^val$"
+- assertVisible: "CORRECT"
+- extendedWaitUntil:
+    visible: "Continue lesson"
+    timeout: 30000
+- tapOn: "Continue lesson"
+- tapOn: "^val$"
+- extendedWaitUntil:
+    visible: "Continue lesson"
+    timeout: 30000
+- tapOn: "Continue lesson"
+- extendedWaitUntil:
+    visible: "Sync result now"
+    timeout: 60000
+- tapOn: "Sync result now"
+- extendedWaitUntil:
+    visible: "Completion confirmed by the server"
+    timeout: 120000
+- takeScreenshot: "426-lesson-result"
+# ── Вход 1: «Сообщить об ошибке» (REPORT, бесплатно)
+- scrollUntilVisible:
+    element:
+      text: "Report a mistake"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "^Propose$"
+- assertVisible: "REPORT A MISTAKE"
+- takeScreenshot: "426-report-sheet-empty"
+- tapOn: "What is wrong with this lesson?"
+- inputText: "DF426 device report: the wording of the question can be clearer"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "^Free$"
+    timeout: 45000
+- takeScreenshot: "426-report-filled"
+- tapOn:
+    text: "^Propose to author$"
+    index: 0
+- runFlow:
+    when:
+      visible: "^Cancel$"
+    commands:
+      - tapOn: "^Cancel$"
+- takeScreenshot: "426-report-submitted"
+# ── Вход 2: «Предложить правку» (COPY_EDIT, отметка верного в копии)
+- scrollUntilVisible:
+    element:
+      text: "Suggest an edit"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "^Propose$"
+    below:
+      text: "Suggest an edit"
+- extendedWaitUntil:
+    visible: "SUGGEST AN EDIT"
+    timeout: 60000
+- takeScreenshot: "426-copyedit-sheet"
+- tapOn: "Mark the correct answer"
+- tapOn: "^val$"
+- extendedWaitUntil:
+    visible: "^Marked$"
+    timeout: 30000
+- takeScreenshot: "426-copyedit-marked"
+- tapOn:
+    text: "^Propose to author$"
+    index: 0
+- runFlow:
+    when:
+      visible: "^Cancel$"
+    commands:
+      - tapOn: "^Cancel$"
+- takeScreenshot: "426-copyedit-submitted"
+# ── Вход 3: свой урок с путём в чужом курсе (NEW_LESSON, 1000 ноликов)
+- tapOn: "Exit lesson"
+- runFlow:
+    when:
+      visible: "^Exit$"
+    commands:
+      - tapOn: "^Exit$"
+- tapOn: "Open menu"
+- tapOn: "^MY QUESTS$"
+- tapOn: "Create quest"
+- assertVisible: "Quest creation"
+- tapOn: "^Quest$"
+- inputText: "DF426 proposer quest"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Quest$"
+- tapOn: "^Section$"
+- inputText: "DF426 proposer section"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Section$"
+- tapOn: "^Topic$"
+- inputText: "DF426 proposer topic"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Topic$"
+- tapOn: "^Lesson$"
+- inputText: "DF426 proposer lesson"
+- hideKeyboard
+- tapOn:
+    text: "^Create$"
+    below:
+      text: "^Lesson$"
+- tapOn: "Easy questions"
+- extendedWaitUntil:
+    visible: "Add question"
+    timeout: 30000
+- tapOn: "Add question"
+- tapOn: "^Ordering$"
+- tapOn: "^Question$"
+- inputText: "DF426 proposer ordering question"
+- tapOn: "^Item$"
+- inputText: "DF426 proposer first"
+- tapOn: "Add item"
+- tapOn:
+    text: "^Item$"
+    index: 1
+- inputText: "DF426 proposer second"
+- tapOn: "Back to structure"
+- tapOn: "Propose to author"
+- assertVisible: "PROPOSE YOUR LESSON TO ANOTHER AUTHOR"
+- takeScreenshot: "426-proposal-dialog-open"
+- tapOn: "Course catalog"
+- tapOn: "DF author catalog"
+- tapOn: "^Quest$"
+- tapOn: "DF author course"
+- tapOn: "^Section$"
+- tapOn: "DF author section"
+- tapOn: "^Topic$"
+- tapOn: "DF author theme"
+- extendedWaitUntil:
+    visible: "Fee: 1000 nolics"
+    timeout: 45000
+- takeScreenshot: "426-proposal-dialog-target-chosen"
+- tapOn:
+    text: "^Propose to author$"
+    index: 1
+- extendedWaitUntil:
+    visible: "Proposal queued"
+    timeout: 120000
+- takeScreenshot: "426-new-lesson-proposed"
+# ── Исходы: предлагающий видит три записи в «Решениях» → «Предложения»
+- tapOn: "^Back$"
+- runFlow:
+    when:
+      visible: "^Exit$"
+    commands:
+      - tapOn: "^Exit$"
+- tapOn: "Open menu"
+- tapOn: "^DECISIONS$"
+- extendedWaitUntil:
+    visible: "My proposals"
+    timeout: 60000
+- tapOn: "My proposals"
+- extendedWaitUntil:
+    visible: "Error report"
+    timeout: 120000
+- takeScreenshot: "426-proposer-outgoing"
+- scrollUntilVisible:
+    element:
+      text: "New lesson"
+    direction: DOWN
+    timeout: 20000
+- takeScreenshot: "426-proposer-outgoing-full"
+# ── Автор (mvpb): «Предложения» → «For my lessons» — задержанные проверки до
+# автора не доезжают (без ключа модели терминал CHECK_DELAYED невидим владельцу цели)
+- launchApp:
+    appId: com.tpov.schoolquiz.mvpb
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "Open menu"
+- tapOn: "^DECISIONS$"
+- extendedWaitUntil:
+    visible: "For my lessons"
+    timeout: 60000
+- takeScreenshot: "426-author-proposals"

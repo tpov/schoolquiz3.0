@@ -1,0 +1,92 @@
+appId: com.tpov.schoolquiz.mvp
+name: Accessibility key screens sweep at elevated font scale (9.9)
+---
+# 9.9 автоматизируемая половина: ключевые флоу (меню / синк / урок / арена-каталог /
+# магазин) на повышенном масштабе шрифта (MAESTRO_FONT_SCALE=1.3 задаёт тест-спека),
+# скриншот каждого экрана. TalkBack/фокус — remote access руками владельца.
+- launchApp:
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- takeScreenshot: "99-home-quests"
+- tapOn: "Open menu"
+- assertVisible: "^SYNC NOW$"
+- takeScreenshot: "99-drawer-menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- assertNotVisible: "Not synced yet"
+- takeScreenshot: "99-sync-last"
+- tapOn: "^HOME QUESTS$"
+# ── Урок: фикстура mvp-smoke-v2 (MVP validated checks → MVP smoke course), ответ "val"
+- assertVisible: "MVP validated checks"
+- tapOn: "MVP validated checks"
+- assertVisible: "MVP smoke course"
+- tapOn: "MVP smoke course"
+- assertVisible: "MVP section"
+- tapOn: "MVP section"
+- assertVisible: "MVP theme"
+- tapOn: "MVP theme"
+- assertVisible: "MVP quick lesson"
+- tapOn: "MVP quick lesson"
+- runFlow:
+    when:
+      visible: "^GOT IT$"
+    commands:
+      - tapOn: "^GOT IT$"
+- takeScreenshot: "99-lesson-first-question"
+- tapOn: "^val$"
+- assertVisible: "CORRECT"
+- takeScreenshot: "99-answer-feedback"
+- extendedWaitUntil:
+    visible: "Continue lesson"
+    timeout: 30000
+- tapOn: "Continue lesson"
+- tapOn: "^val$"
+- extendedWaitUntil:
+    visible: "Continue lesson"
+    timeout: 30000
+- tapOn: "Continue lesson"
+- extendedWaitUntil:
+    visible: "Sync result now"
+    timeout: 60000
+- takeScreenshot: "99-lesson-result-before-sync"
+- tapOn: "Sync result now"
+- extendedWaitUntil:
+    visible: "Completion confirmed by the server"
+    timeout: 120000
+- takeScreenshot: "99-lesson-result"
+- scrollUntilVisible:
+    element:
+      text: "Report a mistake"
+    direction: DOWN
+    timeout: 15000
+- takeScreenshot: "99-result-entries"
+# Выход из урока обратно в оболочку
+- tapOn: "Exit lesson"
+- runFlow:
+    when:
+      visible: "^Exit$"
+    commands:
+      - tapOn: "^Exit$"
+- assertVisible: "Open menu"
+- tapOn: "Open menu"
+- takeScreenshot: "99-menu-after-lesson"
+# ── Арена-каталог
+- tapOn: "^ARENA$"
+- extendedWaitUntil:
+    visible: "^Load lessons$"
+    timeout: 30000
+- takeScreenshot: "99-arena-before-load"
+- tapOn: "^Load lessons$"
+- extendedWaitUntil:
+    visible: "Loaded [0-9]+ of [0-9]+ lessons"
+    timeout: 90000
+- takeScreenshot: "99-arena-catalog"
+# ── Магазин
+- tapOn: "Open menu"
+- tapOn: "^SHOP$"
+- extendedWaitUntil:
+    visible: "Premium"
+    timeout: 30000
+- takeScreenshot: "99-shop"
