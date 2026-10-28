@@ -219,3 +219,6 @@ ad-reward-progress.js); тесты обеих ног закрепили. Гей�
 
 **Residual risks:** живой показ рекламы по-прежнему невозможен (аккаунт AdMob закрыт) — путь
 закреплён фикстурами; SSV callback URL в консоли AdMob — действие владельца.
+
+### 2026-10-28 — сверка с постройкой (ретро m3, п.4; фикс-пак spec-retro-fixpack-e1-e2-e3-e6-m.md)
+- Code Map называет `planAdRewardBox({views, boxCount, nextAdBoxAtMs, nowMs})`; в постройке план не принимает `boxCount` — `planAdRewardBox({views, nextAdBoxAtMs, nowMs})` (`functions/ad-reward-progress.js:70`), подсчёт/запись `boxCount` живёт в транзакции подтверждения (`ad-reward-progress.js:138`), а не в плане. Замороженный текст исправлению не подлежит — расхождение зафиксировано здесь.

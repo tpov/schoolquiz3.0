@@ -212,3 +212,18 @@ headless: true
 - Спека `spec-f1-f3-candidate-rig-retro-fixes.md` заявляет `status: done` и верификацию прогонов (RED/GREEN/npm/patch-id/мемо) — выборочно перепроверено этой сессией (patch-id, мемо-diff, код гейта, три прогона); результат — подтверждено, расхождений не найдено.
 - Параллельные волны: `sprint-status-monetisation.yaml` и `tickets.toml` эпика authoring-review не читались как surface правок и не редактировались; stories-mode (прецедент документа) — sprint-status не пишется.
 - Оценки сроков нигде не приводятся.
+
+---
+
+# Фикс-пак 2026-10-28 (сквозная волна «после ретро билд»; спека `_bmad-output/implementation-artifacts/spec-retro-fixpack-e1-e2-e3-e6-m.md`)
+
+Follow-through открытых пунктов перевёрстки — исполненные dev-позиции:
+
+| Пункт | Статус | Исполнение |
+|---|---|---|
+| 3 (F4: происхождение APK B + дисклеймеры) | **закрыт** | README 08.10 дополнен разделом «APK provenance and disclaimers»: B — ветка `night/e3-e8-inception`, worktree `.local/worktrees/night-impl`, tip окна сборки `1940b0dd` (лог HEAD не пишет — атрибуция реконструирована и помечена); «B — не кандидат 1.2» записано; «байты A не сняты, сертификат сочтён достаточным» записано |
+| 5 (F6: проход сверки) | **закрыт** | README 09: lastUpdateTime 23:15:49 помечен против артефакта `install-times-after.txt` (23:10:48); секция «Queue drain…» и хвост «never dispatches» получают REVISED-пометки на `drain/README.md` (ворки работали и упирались в backoff/порты/terms-гейт; досылка 03:22 — ровно один раз); Pixel README: SDK поправлен на измеренные 37 (`inventory-pixel.txt:8`), room-schema секция инвентаря помечена указателем на исходник, не измерением |
+| 6 (F7: читаемый JSON) | **закрыт** | `drain/server-mutation-records.json` → `.txt` (переименование тем же содержимым), ссылка в `drain/README.md` обновлена |
+| 9 (F10: stale-запись deferred-work) | **закрыт** | запись «Require exactly the five zero-valued counters» погашена с указанием `fc71bfc1` + оракул `024675ea`/wiring `fa72bd73`/трекер 1.7 `0c356339` |
+
+Пункты 1 (CAP-20), 2 (debug google-services.json), 4 (решение 21:55 дословно), 7 (F8 персональные данные), 8 (пересев demo-бэкенда) — за владельцем, не тронуты. Пункт 10 (control-save defer) — открыт.

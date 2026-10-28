@@ -140,3 +140,27 @@ Recorded because this run received no user input after invocation:
 3. **Going-in concerns** — none supplied; the analysis ran unweighted (standard aggregate views + review lenses + behavior check).
 4. **Verdict** — rendered on evidence alone with no human decision recorded at render time; a human may override (see Acceptance verdict).
 5. **Proposed items** — action items 1–13 above are proposals (remediation, verification, spec reconciliation, process); none was auto-applied. No `--set-action-status` was run (no prior retro exists to follow through on).
+
+---
+
+## Fix pack 2026-10-28 (skvoznoy retro-fix wave; spec `_bmad-output/implementation-artifacts/spec-retro-fixpack-e1-e2-e3-e6-m.md`)
+
+Action item statuses after the wave (evidence anchors verified on HEAD `75193bfa+`):
+
+| # | Status | Notes |
+|---|---|---|
+| 1 | **partial — pin half closed** | Server-semantics disposition stays owner-owned (Open question 1); the drift pin is in: `ActivityKindRegistryTest` (economy/domain jvmTest) scrapes `functions/economy-constants.js` ACTIVITY_KINDS ↔ `ActivityKind.entries`, OutboxOperationsRegistryTest style |
+| 2 | **closed** | F8: `submitMutation` reads `configs/economy` once in the terms block and hands the verified snapshot to the handler (`applyLessonResultEvents(uid, attempts, verifiedEconomy)`); pricing can no longer outrun consent |
+| 3 | **closed** | F10: windows store + enforce `ownerUid` (begin/fetch/ready-ack; pre-field docs behave as before); F11: pool probe moved inside the transaction after the existing-window branch (drifted-pool repeat returns the same window); F12: finite-guards — corrupt captured seconds/deadline close as WINDOW_EXPIRED instead of minting NaN hours |
+| 4 | **closed** | F13: `premiumRegenDivisor === undefined \|\| < 1` (missing field is a form error, not a phantom change); F9: version+terms checks share one release-on-throw, so `readEconomyConstantsDocument`/`versionSource` rejections no longer strand the RESERVED key |
+| 5 | **closed** | F15: `lesson_runner.READY_ACK → NoLocalEffect()` in the quarantine router (`SyncModule`), pinned by `ReadyAckQuarantineWiringTest` |
+| 6 | **closed** | F16: one committed literal `PayableTermsCodec.toJson` output; `mutation-terms.test.js` accepts it verbatim (object and queue-string forms), `PayableTermsCodecTest` pins the codec to the same literal byte-for-byte |
+| 7 | **closed with substitution** | A true Koin resolution is unavailable in JVM (syncModule needs Android context/WorkManager/Firebase — the `LessonUnlockQuarantineWiringTest` precedent); `ConsentChainWiringTest` pins the four load-bearing bindings instead (consent store + requeue in the composition root, gate-with-requeue in EconomyDataModule, both runner consent handles on the real gate) |
+| 8 | **closed** | F22: dead `MUTATION_ID/OPERATION/PAYLOAD/EXPECTED_VERSION` companion constants removed from `FirebaseMutationTransport` (the live KEY_* table remains) |
+| 9 | **tickets half closed** | Story 2.10 `examfactor-ad3-alignment` (done, e7b610b1) appended to `tickets.toml`; the contract §8/§10.3 reconciliation still needs the 2.9-style owner adoption cycle — open |
+| 10 | **open (owner)** | untouched |
+| 11 | **closed** | F3: the 2.6 evidence README now says 06.10 approved the clock rule only; full edition adopted 08.10 (owner-decisions-2026-10-08 p.1, blob e142341e) |
+| 12 | **closed earlier** | by spec-e3-retro-fixpack item 5 (fixture generator `19f8c255` + regeneration; `:platform:firebase` green) |
+| 13 | **partial** | loud skip is in (`submit-mutation-terms.test.js` prints its SKIP reason); the seeded happy-path case is consciously declined in the file header (full positive wiring would require seeding a whole lesson — proven by 2.6/acceptance); recorded as the standing deviation |
+
+Gates of the pack: functions `npm test` (full), gradle for the touched modules via sgw (JDK 27), ktlint on touched files.

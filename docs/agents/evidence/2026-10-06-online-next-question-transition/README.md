@@ -30,7 +30,9 @@
   unbounded pause and without replacement clocks after a lost ACK — proven by one real transition
   through the callable receiver on the demo backend plus contract tests of both sides.
 - Contract: `_bmad-output/mvp-candidate/epic-ordinary-delivery/online-o2-contract.md` (full
-  edition, adopted by the owner 2026-10-06). Section references below (§) are to that document.
+  edition; [corrected 2026-10-28, retro F3] on 2026-10-06 the owner approved the clock rule
+  only — the full edition was adopted 2026-10-08, owner-decisions-2026-10-08 p.1, pinned to
+  blob `e142341e…`). Section references below (§) are to that document.
 
 ## What changed and why
 

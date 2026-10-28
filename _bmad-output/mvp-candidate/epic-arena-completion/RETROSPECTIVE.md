@@ -100,3 +100,9 @@ Proposed, not applied. Owners: **dev** = next fix-round shift(s); **owner** = hu
 ## Assumptions
 
 Interactive run — the two activation questions (epic selection; going-in focus) expired unanswered; recorded with the resolution in Epic summary. Phase 3 (team discussion) was not requested and is skipped. All lens/agent findings routed above were re-checked against primary sources; two were dropped for not holding up (details-as-list shape; server-contract agreement for `WINDOW_SCHEMA_VERSION` asserted by tests rather than verified against functions source — recorded here as the one reconciliation the analyses did not close).
+
+---
+
+## Status update 2026-10-28 (retro-fix wave)
+
+Action items 1–7 (dev) are **closed** by `spec-e3-retro-fixpack` (`status: done`): item 1 `455f19ee`, item 2 `c305427a`+`73c54cfa`, item 3 `6521e5df`, item 4 `ba915081`, item 5 `19f8c255` (re-land of b5454b41), item 6 `98539e88`, item 7 `919be5a5`, review patches `c42d0c9c` — all present in `night/e7-commerce` history (verified 2026-10-28). Item 8 stays **owner**. Item 9 is a record.

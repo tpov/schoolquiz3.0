@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-01-2026 10:10
-last_updated: 10-26-2026 21:57
+last_updated: 10-28-2026  # ретро-фикс-пак: m1-5/m3-1/m3-6/m5-1 → done
 project: schoolquiz3.0
 project_key: NOKEY
 tracking_system: file-system
@@ -371,7 +371,7 @@ action_items:
       в apps/android-next/src/mvp/res/xml/mvp_network_security_config.xml:14 (merge
       ed16fc81 от 22.10) — убрать домен или перепинить тест с объяснением; вне эпика-1"
     owner: "трекер/агент"
-    status: open
+    status: done  # 2026-10-28: пин догнал закоммиченный NSC — c1f07487 (фикс-пак e7, F7), loopback strict, externals ровно 204.44.66.27 + 192.168.31.218 с provenance; functions-гейт зелёный на HEAD (137/137 после волны 4.19)
     ref: "_bmad-output/implementation-artifacts/epic-m1-retro-2026-10-26.md"
   - id: "epic-m1-retro-item-6-paused-on-hold-в-reasoncode"
     epic: 1
@@ -461,7 +461,7 @@ action_items:
       в хелпер gift-boxes.js либо добавить инвариант-тест «после PREMIUM_DAILY и после
       ad-выдачи оба часа равны» (box-service.js:153, ad-reward-progress.js:142)"
     owner: "dev-цикл монетизации"
-    status: open
+    status: done  # 2026-10-28: инвариант уже зажат с двух сторон коммитом 7de873f2 (решение владельца 12.10) — premium-нога box-service.test.js («забрав магазинную коробку кнопкой, закрываем слот и рекламе») и ad-нога ad-reward-progress.test.js («магазинная коробка, взятая за просмотры, закрыта и премиальной кнопке»); ретро 26.10 filing избыточен, кода не требовал
     ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
   - id: "epic-m3-retro-item-2-единый-стиль-отказа-boxcount"
     epic: 3
@@ -501,7 +501,7 @@ action_items:
       192.168.31.218 в mvp_network_security_config.xml:14 из коммита 7d8b91bd (story
       5.13); не монетизация"
     owner: "трек mvp-candidate"
-    status: open
+    status: done  # 2026-10-28: тот же пин c1f07487 (фикс-пак e7, F7) — домен оставлен осознанно и зажат пином с provenance; functions-гейт зелёный на HEAD
     ref: "_bmad-output/implementation-artifacts/epic-m3-retro-2026-10-26.md"
   - id: "epic-m4-retro-item-1-reviewstatus-в-stale-возврате"
     epic: 4
@@ -572,7 +572,7 @@ action_items:
       — вернуть конфиг или осознанно переписать пин; functions-гейт на HEAD красный
       (трек competitions)"
     owner: "владелец / трек competitions"
-    status: open
+    status: done  # 2026-10-28: развязано пином c1f07487 (фикс-пак e7, F7) — контракт mvp-isolation принимает закоммиченный конфиг как осознанный (loopback strict, externals с provenance); functions-гейт зелёный на HEAD
     ref: "_bmad-output/implementation-artifacts/epic-m5-retro-2026-10-26.md"
   - id: "epic-m5-retro-item-2-глубокая-ссылка-рефералки"
     epic: 5
