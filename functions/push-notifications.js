@@ -62,6 +62,16 @@ const PUSH_EVENTS = Object.freeze({
     eventType: "quest_authoring.QUEST_PUBLISHED",
     entityRef: (questId) => `quest_authoring.QUEST:${questId}`,
   }),
+  /** Предложение прошло проверку и доехало до автора цели (AD-33, история 4.25). */
+  QUEST_PROPOSAL_RECEIVED: Object.freeze({
+    eventType: "quest_authoring.QUEST_PROPOSAL_RECEIVED",
+    entityRef: (proposalId) => `quest_authoring.PROPOSAL:${proposalId}`,
+  }),
+  /** Автор цели решил предложение; исход видит предложивший (история 4.25). */
+  QUEST_PROPOSAL_DECIDED: Object.freeze({
+    eventType: "quest_authoring.QUEST_PROPOSAL_DECIDED",
+    entityRef: (proposalId) => `quest_authoring.PROPOSAL:${proposalId}`,
+  }),
   /** Уровень квалификации автора (рейтинг от звёзд игроков) изменился. */
   AUTHOR_RATING_CHANGED: Object.freeze({
     eventType: "qualification.AUTHOR_RATING_CHANGED",

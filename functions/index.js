@@ -133,6 +133,10 @@ const {parseReviewFeeQuoteRequest, quoteReviewFee} = require("./review-fee-quote
 const {writeSyncChanges} = require("./sync-changes");
 const {readReviewDecisions, writeReviewDecisionMark} = require("./review-decisions");
 const {
+  readQuestProposalsPage,
+  settleProposalFeeCycle,
+} = require("./quest-proposals-view");
+const {
   PROPOSALS_COLLECTION,
   PROPOSAL_KINDS,
   PROPOSAL_STATUS,
@@ -6097,6 +6101,8 @@ exports.decideLessonProposal = onCall(CALLABLE_OPTIONS, async (request) => {
       decidedAtMs: now,
       updatedAtMs: now,
     }, {merge: true});
+    // Исход предложившему — повод синхронизироваться, не данные (AD-20, история 4.25).
+    await notifyUser(PUSH_EVENTS.QUEST_PROPOSAL_DECIDED, proposalId, proposal.proposerUid);
     return {proposalId, status: PROPOSAL_STATUS.REJECTED};
   }
   // STALE (AD-33): база предложения сверяется с текущей редакцией цели в момент решения.
@@ -6122,6 +6128,7 @@ exports.decideLessonProposal = onCall(CALLABLE_OPTIONS, async (request) => {
       updatedAtMs: now,
     }, {merge: true});
   });
+  await notifyUser(PUSH_EVENTS.QUEST_PROPOSAL_DECIDED, proposalId, proposal.proposerUid);
   return {proposalId, status: PROPOSAL_STATUS.APPROVED};
 });
 
@@ -6758,6 +6765,19 @@ exports.markReviewDecision = onCall(CALLABLE_OPTIONS, async (request) => {
   } catch (error) {
     rethrowDecisionsError(error);
   }
+});
+
+/**
+ * Страница «Предложений» (история 4.25, UX-22): владелец цели видит то, что до него доехало,
+ * предложивший — свою запись с исходом проверки. Право решает выборка по uid (чужое
+ * неотличимо от пустой страницы); STALE считает сервер; догон манифеста платы идёт на той же
+ * странице чтения. Решение автора — decideLessonProposal (4.21), здесь его не дублируют.
+ */
+exports.fetchQuestProposals = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const parsed = parseQuestProposalsRequest(request.data || {});
+  return readQuestProposalsPage(db, {uid, ...parsed});
 });
 
 /**

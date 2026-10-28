@@ -28,4 +28,22 @@ class PlaceholderDecisionsComponent : DecisionsComponent {
     override fun onMarkSelected(mark: ReviewDecisionMarkValue) = Unit
 
     override fun onCommentChanged(value: String) = Unit
+
+    override fun onSurfaceSelected(
+        surface: com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DecisionsSurfaceUi,
+    ) = Unit
+
+    override fun onProposalsBoxSelected(
+        box: com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestProposalBox,
+    ) = Unit
+
+    override fun onLoadMoreProposalsClick() = Unit
+
+    override fun onProposalSelected(proposalId: String) = Unit
+
+    override fun onBackToProposalsListClick() = Unit
+
+    override fun onProposalDecision(approve: Boolean) = Unit
+
+    override fun onProposalCommentChanged(value: String) = Unit
 }

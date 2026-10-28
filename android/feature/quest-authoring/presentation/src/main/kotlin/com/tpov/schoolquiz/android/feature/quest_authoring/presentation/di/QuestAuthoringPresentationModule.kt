@@ -44,6 +44,9 @@ val questAuthoringPresentationModule =
                 fetchDecisions = get(),
                 markDecision = get(),
                 questionContentParser = get(),
+                // «Предложения» (4.25, UX-22): страница прав и решение автора.
+                fetchProposals = getOrNull(),
+                decideProposal = getOrNull(),
             )
         }
 

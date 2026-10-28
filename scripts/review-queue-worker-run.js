@@ -52,11 +52,21 @@ async function main(argv = process.argv.slice(2), env = process.env) {
   const db = admin.firestore();
   // Реестр скиллов этапов: «Слова» + «Факты» + «Перевод» (4.13–4.15); полный план проверяет реестр.
   const {completeReviewStages} = require("../functions/review-stages");
+  const {sendPushToUser} = require("../functions/push-notifications");
   const worker = createReviewQueueWorker({
     db,
     stages: completeReviewStages(),
     modelClient: createReviewModelClient({config: config.config}),
     log: (record) => console.warn(JSON.stringify(record)),
+    // «Предложение доехало до автора» (4.25): push несёт повод, не данные (AD-20).
+    notifyProposalReceived: (proposalId, proposal) =>
+      sendPushToUser(
+        {db, messaging: admin.messaging()},
+        require("../functions/push-notifications").PUSH_EVENTS.QUEST_PROPOSAL_RECEIVED,
+        proposalId,
+        proposal.targetOwnerUid,
+        {warn: () => {}, info: () => {}, error: () => {}},
+      ),
   });
 
   for (;;) {

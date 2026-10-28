@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ClosePrivateQuizLinkUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.DecideQuestProposalUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestProposalsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitErrorReportProposalUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
@@ -32,6 +34,9 @@ val questAuthoringDomainModule =
         // цитата платы до отправки (UX-23). Учебная поверхность — экран результата урока.
         factory { SubmitErrorReportProposalUseCase(get(), get(), get()) }
         factory { QuoteLessonProposalFeeUseCase(get()) }
+        // «Предложения» (4.25, UX-22): страница прав и решение автора тем же приёмником 4.21.
+        factory { FetchQuestProposalsUseCase(get()) }
+        factory { DecideQuestProposalUseCase(get()) }
         factory { CreateQuestDraftUseCase(get(), get(), get()) }
         // Исход модельной проверки (4.16): сценарий добивается фабрикой здесь — MyQuests
         // резолвит его через get(), и без этой строки разрешение падало бы в рантайме.
