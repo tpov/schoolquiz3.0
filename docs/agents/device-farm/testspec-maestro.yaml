@@ -1,0 +1,80 @@
+version: 0.1
+# AWS Device Farm custom-environment test spec — Maestro-риг SchoolQuiz.
+#
+# Где использовать: консоль Device Farm → Create run → Framework «Appium» →
+# «Appium Node.js» → Replace default spec содержимым этого файла (полностью).
+# Тест-пакет: run/device-farm/pkg/devicefarm-test-package.zip из
+# docs/agents/device-farm/build-test-package.sh (несёт apks/ и flows/).
+#
+# Ручки прогона — переменные в начале нужной фазы (консоль позволяет править
+# spec перед запуском прогона; правится одна строка export):
+#   MAESTRO_FLOW       — какой флоу гнать (путь внутри flows/ тест-пакета);
+#                        дефолт flows/02-request-sync.yaml = связность
+#                        устройство → 204.44.66.27:9099/8080/5001 → демо-риг VPS.
+#   INSTALL_MVPB       — 1 = доустановить второй изолированный клиент
+#                        com.tpov.schoolquiz.mvpb (второй аккаунт для 4.26).
+#   MAESTRO_FONT_SCALE — 1.3 и т.п. = повышенный масштаб шрифта (9.9 NOIR-свип);
+#                        после прогона возвращается 1.0.
+# Видео экрана Device Farm пишет сам; логи/скриншоты Maestro и logcat
+# собираются в Customer Artifacts прогона (см. artifacts внизу).
+
+phases:
+  install:
+    commands:
+      - echo "install phase start"
+      - apt-get update -y
+      - apt-get install -y unzip jq
+      # Maestro CLI несёт собственную JRE; на VPS-риге стоит 2.10.0 —
+      # ставится свежий стабильный, версия пишется в лог.
+      - curl -fsSL "https://get.maestro.mobile.dev" | bash
+      - export PATH="$PATH:$HOME/.maestro/bin"
+      - maestro --version
+
+  pre_test:
+    commands:
+      - echo "pre_test phase start"
+      - ls -la "$DEVICEFARM_TEST_PACKAGE_PATH"
+      # Устройство ровно одно на тест-хост; берём udid из окружения DF,
+      # иначе из adb devices. maestro сам найдёт единственное устройство.
+      - adb devices -l
+      - DEVICE_UDID="${DEVICEFARM_DEVICE_UDID:-$(adb devices | sed -n 's/^\([A-Za-z0-9._-]*\)[[:space:]].*device.*/\1/p' | head -1)}"
+      - echo "device udid = $DEVICE_UDID"
+      # Приложение под тестом Device Farm ставит сам; перепиновываем из пакета,
+      # чтобы зафиксировать SHA-256 собираемых нами APK (идентичность — культура рига).
+      - sha256sum "$DEVICEFARM_TEST_PACKAGE_PATH"/apks/*.apk
+      - adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvp.apk"
+      # ---- ручки прогона (pre_test) ----
+      - export INSTALL_MVPB="${INSTALL_MVPB:-0}"
+      - export MAESTRO_FONT_SCALE="${MAESTRO_FONT_SCALE:-}"
+      - if [ "$INSTALL_MVPB" = "1" ]; then adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvpb.apk"; fi
+      # Стабильность тапов + опциональный повышенный шрифт для 9.9.
+      - adb shell settings put global window_animation_scale 0
+      - adb shell settings put global transition_animation_scale 0
+      - adb shell settings put global animator_duration_scale 0
+      - if [ -n "$MAESTRO_FONT_SCALE" ]; then adb shell settings put system font_scale "$MAESTRO_FONT_SCALE"; fi
+      # Диагностика сети — тест-хост видит демо-риг VPS? (устройство ходит своим стеком)
+      - curl -s -o /dev/null -w "vps-8080 %{http_code}\n" http://204.44.66.27:8080/ || true
+      - adb logcat -c
+
+  test:
+    commands:
+      - export PATH="$PATH:$HOME/.maestro/bin"
+      - export MAESTRO_ANALYTICS_ENABLED=false
+      # ---- ручка прогона — выбранный флоу ----
+      - export MAESTRO_FLOW="${MAESTRO_FLOW:-flows/02-request-sync.yaml}"
+      - echo "test flow = $MAESTRO_FLOW"
+      - cd "$DEVICEFARM_TEST_PACKAGE_PATH"
+      - maestro test "$MAESTRO_FLOW" 2>&1 | tee "$DEVICEFARM_LOG_DIR/maestro-stdout.log"
+
+  post_test:
+    commands:
+      - echo "post_test — сбор evidence"
+      # Вернуть устройству исходное состояние.
+      - if [ -n "${MAESTRO_FONT_SCALE:-}" ]; then adb shell settings put system font_scale 1.0; fi
+      - adb logcat -d > "$DEVICEFARM_LOG_DIR/logcat.txt" 2>/dev/null || true
+      # Отчёты Maestro (скриншоты шагов, junit-xml) — из cwd тест-фазы.
+      - cp -r "$DEVICEFARM_TEST_PACKAGE_PATH/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests" 2>/dev/null || true
+      - cp -r "$HOME/.maestro" "$DEVICEFARM_LOG_DIR/maestro-home" 2>/dev/null || true
+
+artifacts:
+  - $DEVICEFARM_LOG_DIR
