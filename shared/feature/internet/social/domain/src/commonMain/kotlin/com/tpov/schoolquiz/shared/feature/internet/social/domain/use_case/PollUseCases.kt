@@ -103,8 +103,10 @@ class SubmitPollVoteUseCase(
 
 /**
  * Публикация серии (§6.2): единый draft собирается здесь в тело приёмника — questionIndex
- * становятся позициями, optionId рождаются из нумерации. Серия без вопросов и вопрос
- * с меньшим числом вариантов, чем 2, существовать не могут (AD-28).
+ * становятся позициями, optionId рождаются из нумерации с осью вопроса (`q<index>-opt-<n>`):
+ * у двух разных вопросов одной серии optionId не пересекаются, и счёт сервера не смешивает
+ * чужие голоса даже при равных текстах вариантов (ретро эпика 8, находка 1). Серия без
+ * вопросов и вопрос с меньшим числом вариантов, чем 2, существовать не могут (AD-28).
  */
 class PublishPollSeriesUseCase(
     private val repository: PollsRepository,
@@ -156,7 +158,7 @@ class PublishPollSeriesUseCase(
                 .mapIndexed { optionIndex, optionText -> optionText.trim() }
                 .filter { it.isNotEmpty() }
                 .mapIndexed { optionIndex, optionText ->
-                    PollOption(optionId = "opt-${optionIndex + 1}", text = optionText.take(200))
+                    PollOption(optionId = "q$index-opt-${optionIndex + 1}", text = optionText.take(200))
                 }
         if (options.size < 2 || options.size > 8) return null
         return PollQuestion(

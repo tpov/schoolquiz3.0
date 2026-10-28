@@ -118,14 +118,21 @@ function readOwnVote(raw) {
  * Один снапшот счётов (§5): счёт по каждому варианту вопроса + знаменатель — участники,
  * ответившие на вопрос тройки идентичности. Отметки не участники: multi-choice сумма
  * счетов может превышать знаменатель.
+ *
+ * Ось вопроса обязательна: источник запроса — все голоса серии, а продакшн-тела могли
+ * назначать одинаковые optionId на разные вопросы, поэтому без равенства `questionIndex`
+ * голос чужого вопроса попадал бы и в счёт варианта, и в знаменатель (ретро эпика 8,
+ * находка 1). Поле пишет приёмник (`index.js`, applyPollVote) — кривой документ, как и
+ * прежде, серверный баг: UNAVAILABLE, а не молчаливый пропуск.
  */
 function countsFor(votes, question) {
   const known = new Set(question.options.map((option) => option.optionId));
   const optionCounts = Object.fromEntries(question.options.map((option) => [option.optionId, 0]));
   let respondentCount = 0;
   for (const vote of votes) {
-    unavailable(plain(vote) && unsigned(vote.revisionId, 1) && Array.isArray(vote.selectedOptionIds));
-    if (vote.revisionId !== question.revisionId) continue;
+    unavailable(plain(vote) && unsigned(vote.revisionId, 1) && unsigned(vote.questionIndex) &&
+      Array.isArray(vote.selectedOptionIds));
+    if (vote.revisionId !== question.revisionId || vote.questionIndex !== question.questionIndex) continue;
     let counted = false;
     for (const optionId of vote.selectedOptionIds) {
       if (!known.has(optionId)) continue;

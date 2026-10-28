@@ -165,6 +165,46 @@ test("a real content edit bumps the revision; a stale basis refuses by name", as
   assert.ok(stale.message.includes("POLL_SERIES_REVISION_CONFLICT"), stale.message);
 });
 
+// ─── Publish: владение серией (ретро эпика 8, находка 2) ────────────────────────────────────────
+
+test("publishing someone else's series refuses by name and rewrites nothing", async () => {
+  resetWorld();
+  await publish(AUTHOR, 0, [SINGLE_Q, MULTI_Q]);
+  const foreign = await httpsErrorOf(withFixedClock(NOW + 1000, () =>
+    // Чужая рука с актуальным базисом и новым содержанием: без проверки владения ветка бампа
+    // перезаписала бы вопросы и вписала authorUid атакующего.
+    submit(VOTER, `${publishKey(1)}-foreign`, "polls.PUBLISH_SERIES", draft("Hijacked", [SINGLE_Q], 1))));
+  assert.strictEqual(foreign.code, "permission-denied");
+  assert.ok(foreign.message.includes("Poll series belongs to another account"), foreign.message);
+
+  const stored = seriesDoc();
+  assert.strictEqual(stored.authorUid, AUTHOR, "authorUid survives the foreign attempt");
+  assert.strictEqual(stored.revisionId, 1, "no revision bump happened");
+  assert.strictEqual(stored.title, "Demo poll", "stored content is untouched");
+  assert.strictEqual(stored.revision.questions.length, 2);
+});
+
+test("a foreign no-op (identical content) is denied, not returned as success", async () => {
+  resetWorld();
+  await publish(AUTHOR, 0, [SINGLE_Q, MULTI_Q]);
+  const foreign = await httpsErrorOf(withFixedClock(NOW + 1000, () =>
+    submit(VOTER, `${publishKey(1)}-foreign-noop`, "polls.PUBLISH_SERIES",
+      draft("Demo poll", [SINGLE_Q, MULTI_Q], 1))));
+  assert.strictEqual(foreign.code, "permission-denied",
+    "publishing is the author's right: same content does not make it the stranger's");
+  assert.strictEqual(seriesDoc().revisionId, 1);
+});
+
+test("a fresh series can be created by any account, which becomes its author", async () => {
+  resetWorld();
+  const fresh = await withFixedClock(NOW + 500, () =>
+    submit(VOTER, "polls-PUBLISH_SERIES-series-fresh-r1", "polls.PUBLISH_SERIES",
+      {seriesId: "series-fresh", title: "Fresh", expectedRevisionId: 0, questions: [SINGLE_Q]}));
+  assert.strictEqual(fresh.result.revisionId, 1);
+  assert.strictEqual(store.documents.get("poll_series/series-fresh").authorUid, VOTER,
+    "creation keeps ownership follows facts: the creator is the author");
+});
+
 // ─── Vote: один подтверждённый набор на участника на вопрос ─────────────────────────────────────
 
 async function worldWithPublishedSeries() {

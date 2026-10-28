@@ -184,6 +184,61 @@ test("progress and counts keep the revision identity: other-revision rows do not
     "stale-revision rows do not count toward current progress");
 });
 
+test("distribution keeps the question axis even when production ids collide across questions", async () => {
+  // Продакшн-авторинг назначал одинаковые optionId на каждый вопрос (opt-1..opt-8 — до
+  // клиентского фикса единственный путь из UI). Ретро эпика 8, находка 1: счёт обязан держать
+  // ось вопроса независимо от коллизий id, иначе голос чужого вопроса попадает в счёт варианта
+  // и в знаменатель («проценты по различным респондентам вопроса», критерий 1).
+  store.reset(Object.fromEntries([AUTHOR, ALICE, BOB].map((uid) => [`profiles/${uid}`, {uid}])));
+  const colliding = [
+    {questionIndex: 0, text: "First?", mode: "SINGLE",
+      options: [{optionId: "opt-1", text: "A"}, {optionId: "opt-2", text: "B"}]},
+    {questionIndex: 1, text: "Second?", mode: "SINGLE",
+      options: [{optionId: "opt-1", text: "A"}, {optionId: "opt-2", text: "B"}]},
+  ];
+  const published = await functions.submitMutation.run({
+    auth: {uid: AUTHOR},
+    data: {
+      mutationId: "polls-PUBLISH_SERIES-series-collide-r1",
+      operation: "polls.PUBLISH_SERIES",
+      payload: JSON.stringify({seriesId: "series-collide", title: "Colliding ids", expectedRevisionId: 0, questions: colliding}),
+    },
+  });
+  assert.equal(published.result.revisionId, 1);
+
+  async function collideVote(uid, questionIndex, optionIds) {
+    return functions.submitMutation.run({
+      auth: {uid},
+      data: {
+        mutationId: `polls-SUBMIT_VOTE-series-collide-r1-q${questionIndex}-${uid}`,
+        operation: "polls.SUBMIT_VOTE",
+        payload: JSON.stringify({
+          seriesId: "series-collide", revisionId: 1, questionIndex,
+          selectedOptionIds: optionIds, confirmedAtMs: NOW,
+        }),
+      },
+    });
+  }
+  async function collideState(uid, questionIndex) {
+    return functions.getPollQuestionState.run({auth: {uid}, data: {seriesId: "series-collide", questionIndex}});
+  }
+
+  await collideVote(ALICE, 0, ["opt-1"]);
+  await collideVote(BOB, 1, ["opt-2"]);
+
+  const q0 = await collideState(ALICE, 0);
+  assert.deepEqual(q0.distribution, {
+    optionCounts: {"opt-1": 1, "opt-2": 0},
+    respondentCount: 1,
+  }, "the q0 distribution must not see the q1 vote of BOB");
+
+  const q1 = await collideState(BOB, 1);
+  assert.deepEqual(q1.distribution, {
+    optionCounts: {"opt-1": 0, "opt-2": 1},
+    respondentCount: 1,
+  }, "the q1 distribution must not see the q0 vote of ALICE");
+});
+
 test("malformed requests refuse without touching the store", async () => {
   await freshWorld();
   const extraField = await functions.getPollQuestionState.run({

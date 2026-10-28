@@ -2368,6 +2368,12 @@ function isPlainObject(value) {
  * revision. Серия, за которой автор редактировал устаревшую revision, отказывается поименованным
  * конфликтом — клиент перечитывает список и решает сам; сервер не решает за автора.
  *
+ * Владение — по факту документа (ownership follows facts): публиковать и перезаписывать
+ * существующую серию может только её автор, `authorUid` перепишению не подлежит. Чтение-
+ * сравнение-запись живёт в транзакции (образец — applyPollVote): без неё два конкурентных
+ * издания читают одинаковый `currentRevisionId`, оба вычисляют одну следующую revision, и
+ * вторая молча затирает первую вместе с голосами, принятыми против её содержания.
+ *
  * Идемпотентность двух слоёв: ключ мутации защищает повтор намерения (тот же ключ — тот же
  * ответ), а одинаковое содержание поверх текущей revision — no-op без новой revision (§6.2:
  * переиздание не переписывает и не «переоткрывает» принятые голоса).
@@ -2394,63 +2400,72 @@ async function applyPublishPollSeries(uid, payload) {
   const questions = normalizePollSeriesDraft(data);
 
   const seriesRef = db.collection("poll_series").doc(seriesId);
-  const existing = await seriesRef.get();
   const now = Date.now();
 
-  if (existing.exists) {
-    const stored = existing.data() || {};
-    const currentRevisionId = numberValue(stored.revisionId, 0);
-    const sameContent = stored.revision &&
-      JSON.stringify(stored.revision.questions) === JSON.stringify(questions) &&
-      stringValue(stored.title) === title;
-    // Повтор намерения после протухшего резерва ключа: тот же ожидаемый базис уже опубликован
-    // (current = expected + 1) и содержание то же — возвращаем то, что уже стоит, без второй
-    // revision.
-    if (currentRevisionId === data.expectedRevisionId + 1 && sameContent) {
-      return {seriesId, revisionId: currentRevisionId, questionCount: questions.length};
-    }
-    if (currentRevisionId === data.expectedRevisionId) {
-      if (sameContent) {
-        // Переиздание того же содержания — no-op: новая revision переоткрыла бы голосование
-        // с нуля, а §6.2 переизданием принятые голоса не переписывает и не «переоткрывает».
+  return db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(seriesRef);
+
+    if (existing.exists) {
+      const stored = existing.data() || {};
+      // Право на публикацию проверяется до всех веток — и перезаписи, и «совпадения
+      // содержания»: иначе чужая рука получала бы успешный ответ на операцию публикации
+      // чужой серии, а не поимённый отказ.
+      if (stringValue(stored.authorUid) !== uid) {
+        throw new HttpsError("permission-denied", "Poll series belongs to another account");
+      }
+      const currentRevisionId = numberValue(stored.revisionId, 0);
+      const sameContent = stored.revision &&
+        JSON.stringify(stored.revision.questions) === JSON.stringify(questions) &&
+        stringValue(stored.title) === title;
+      // Повтор намерения после протухшего резерва ключа: тот же ожидаемый базис уже опубликован
+      // (current = expected + 1) и содержание то же — возвращаем то, что уже стоит, без второй
+      // revision.
+      if (currentRevisionId === data.expectedRevisionId + 1 && sameContent) {
         return {seriesId, revisionId: currentRevisionId, questionCount: questions.length};
       }
-      const revisionId = currentRevisionId + 1;
-      await seriesRef.set(clean({
-        seriesId,
-        authorUid: uid,
-        title,
-        revisionId,
-        revision: {revisionId, publishedAtMs: now, questions},
-        schemaVersion: 1,
-        updatedAtMs: now,
-        createdAtMs: numberValue(stored.createdAtMs, now),
-      }), {merge: false});
-      return {seriesId, revisionId, questionCount: questions.length};
+      if (currentRevisionId === data.expectedRevisionId) {
+        if (sameContent) {
+          // Переиздание того же содержания — no-op: новая revision переоткрыла бы голосование
+          // с нуля, а §6.2 переизданием принятые голоса не переписывает и не «переоткрывает».
+          return {seriesId, revisionId: currentRevisionId, questionCount: questions.length};
+        }
+        const revisionId = currentRevisionId + 1;
+        transaction.set(seriesRef, clean({
+          seriesId,
+          authorUid: uid,
+          title,
+          revisionId,
+          revision: {revisionId, publishedAtMs: now, questions},
+          schemaVersion: 1,
+          updatedAtMs: now,
+          createdAtMs: numberValue(stored.createdAtMs, now),
+        }), {merge: false});
+        return {seriesId, revisionId, questionCount: questions.length};
+      }
+      throw new HttpsError(
+        "failed-precondition",
+        `POLL_SERIES_REVISION_CONFLICT: expected ${data.expectedRevisionId}, current ${currentRevisionId}`,
+      );
     }
-    throw new HttpsError(
-      "failed-precondition",
-      `POLL_SERIES_REVISION_CONFLICT: expected ${data.expectedRevisionId}, current ${currentRevisionId}`,
-    );
-  }
 
-  if (data.expectedRevisionId !== 0) {
-    throw new HttpsError(
-      "failed-precondition",
-      `POLL_SERIES_REVISION_CONFLICT: expected ${data.expectedRevisionId}, current 0 (series does not exist)`,
-    );
-  }
-  await seriesRef.set(clean({
-    seriesId,
-    authorUid: uid,
-    title,
-    revisionId: 1,
-    revision: {revisionId: 1, publishedAtMs: now, questions},
-    schemaVersion: 1,
-    updatedAtMs: now,
-    createdAtMs: now,
-  }), {merge: false});
-  return {seriesId, revisionId: 1, questionCount: questions.length};
+    if (data.expectedRevisionId !== 0) {
+      throw new HttpsError(
+        "failed-precondition",
+        `POLL_SERIES_REVISION_CONFLICT: expected ${data.expectedRevisionId}, current 0 (series does not exist)`,
+      );
+    }
+    transaction.set(seriesRef, clean({
+      seriesId,
+      authorUid: uid,
+      title,
+      revisionId: 1,
+      revision: {revisionId: 1, publishedAtMs: now, questions},
+      schemaVersion: 1,
+      updatedAtMs: now,
+      createdAtMs: now,
+    }), {merge: false});
+    return {seriesId, revisionId: 1, questionCount: questions.length};
+  });
 }
 
 /**
