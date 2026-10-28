@@ -239,6 +239,23 @@ test("distribution keeps the question axis even when production ids collide acro
   }, "the q1 distribution must not see the q0 vote of ALICE");
 });
 
+test("a vote document without the question axis refuses loudly, never counts silently", async () => {
+  await freshWorld();
+  await vote(BOB, 0, ["opt-red"]);
+  await vote(ALICE, 0, ["opt-green"]);
+  // Дрейф хранилища: документ голоса, написанный мимо серверного писателя, без questionIndex.
+  // Счёт без оси вопроса — ровно дефект находки 1: громкий UNAVAILABLE, а не тихий пропуск
+  // и не счёт «по ревизии» (поле пишет приёмник, его отсутствие — серверный баг).
+  const drifted = store.documents.get(`poll_votes/${SERIES}-r1-q0-${BOB}`);
+  delete drifted.questionIndex;
+  store.documents.set(`poll_votes/${SERIES}-r1-q0-${BOB}`, drifted);
+
+  // Снапшот считается только после собственного голоса (§5): читатель с ownVote доходит до счёта.
+  const refused = await questionState(ALICE, 0).then(() => null, (error) => error);
+  assert.equal(refused.code, "unavailable");
+  assert.equal(refused.details && refused.details.reason, "UNAVAILABLE");
+});
+
 test("malformed requests refuse without touching the store", async () => {
   await freshWorld();
   const extraField = await functions.getPollQuestionState.run({
