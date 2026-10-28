@@ -16,16 +16,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,16 +27,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSelectableChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
@@ -159,19 +158,16 @@ private fun DecisionsSurfaceToggle(
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DecisionsSurfaceUi.entries.forEach { surface ->
-            FilterChip(
+            NoirSelectableChip(
+                text =
+                    stringResource(
+                        when (surface) {
+                            DecisionsSurfaceUi.VERDICTS -> R.string.qa_proposals_surface_verdicts
+                            DecisionsSurfaceUi.PROPOSALS -> R.string.qa_proposals_surface_proposals
+                        },
+                    ),
                 selected = surface == selected,
                 onClick = { onSurfaceSelected(surface) },
-                label = {
-                    Text(
-                        stringResource(
-                            when (surface) {
-                                DecisionsSurfaceUi.VERDICTS -> R.string.qa_proposals_surface_verdicts
-                                DecisionsSurfaceUi.PROPOSALS -> R.string.qa_proposals_surface_proposals
-                            },
-                        ),
-                    )
-                },
             )
         }
     }
@@ -197,19 +193,16 @@ private fun ProposalsSurface(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             QuestProposalBox.entries.forEach { box ->
-                FilterChip(
+                NoirSelectableChip(
+                    text =
+                        stringResource(
+                            when (box) {
+                                QuestProposalBox.INCOMING -> R.string.qa_proposals_box_incoming
+                                QuestProposalBox.OUTGOING -> R.string.qa_proposals_box_outgoing
+                            },
+                        ),
                     selected = box == state.proposalsBox,
                     onClick = { onBoxSelected(box) },
-                    label = {
-                        Text(
-                            stringResource(
-                                when (box) {
-                                    QuestProposalBox.INCOMING -> R.string.qa_proposals_box_incoming
-                                    QuestProposalBox.OUTGOING -> R.string.qa_proposals_box_outgoing
-                                },
-                            ),
-                        )
-                    },
                 )
             }
         }
@@ -451,10 +444,10 @@ private fun DecisionsFilters(
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         ReviewDecisionFilter.entries.forEach { filter ->
-            FilterChip(
+            NoirSelectableChip(
+                text = filter.label(),
                 selected = filter == selected,
                 onClick = { onFilterSelected(filter) },
-                label = { Text(filter.label()) },
             )
         }
     }
@@ -484,7 +477,7 @@ private fun DecisionsList(
                 modifier = modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = LocalNoirAccent.current)
             }
         state.entries.isEmpty() ->
             Text(text = stringResource(R.string.qa_decisions_empty), color = NoirT3, modifier = modifier)
@@ -500,11 +493,14 @@ private fun DecisionsList(
                     item(key = "load-more") {
                         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             if (state.loadingMore) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicator(color = LocalNoirAccent.current)
                             } else {
-                                TextButton(onClick = onLoadMoreClick) {
-                                    Text(stringResource(R.string.qa_decisions_load_more))
-                                }
+                                NoirButton(
+                                    text = stringResource(R.string.qa_decisions_load_more),
+                                    onClick = onLoadMoreClick,
+                                    style = NoirButtonStyle.Ghost,
+                                    fillWidth = false,
+                                )
                             }
                         }
                     }
@@ -520,14 +516,13 @@ private fun DecisionsRowCard(
     item: DecisionsListItemUiState,
     onClick: () -> Unit,
 ) {
-    Card(
-        onClick = onClick,
-        shape = MaterialTheme.shapes.small,
-        colors = CardDefaults.cardColors(containerColor = NoirS1),
+    NoirGroup(
         modifier =
-            Modifier.fillMaxWidth().heightIn(
-                min = 64.dp,
-            ).testTag("decisions-row-${item.verdictId}-${item.questionId}"),
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp)
+                .clickable(role = Role.Button, onClick = onClick)
+                .testTag("decisions-row-${item.verdictId}-${item.questionId}"),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -616,9 +611,12 @@ private fun DecisionsDetail(
         modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        OutlinedButton(onClick = onBackToListClick) {
-            Text(stringResource(R.string.qa_decisions_back_to_list))
-        }
+        NoirButton(
+            text = stringResource(R.string.qa_decisions_back_to_list),
+            onClick = onBackToListClick,
+            style = NoirButtonStyle.Ghost,
+            fillWidth = false,
+        )
         if (detail.unreadable) {
             Text(
                 text = stringResource(R.string.qa_decisions_unreadable_detail),
@@ -634,9 +632,7 @@ private fun DecisionsDetail(
             DecisionsQuestionPreview(detail.preview)
             // «Логи» (UX-22): основание модели, источники, попытка, модель/промпт/ревизия —
             // всё из неизменяемой записи вердикта.
-            Card(
-                shape = MaterialTheme.shapes.small,
-                colors = CardDefaults.cardColors(containerColor = NoirS1),
+            NoirGroup(
                 modifier = Modifier.fillMaxWidth().testTag("decisions-logs-${detail.verdictId}"),
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -672,9 +668,7 @@ private fun DecisionsDetail(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun DecisionsQuestionPreview(preview: DecisionsQuestionPreviewUiState?) {
-    Card(
-        shape = MaterialTheme.shapes.small,
-        colors = CardDefaults.cardColors(containerColor = NoirS1),
+    NoirGroup(
         modifier = Modifier.fillMaxWidth().testTag("decisions-preview"),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -718,20 +712,21 @@ private fun DecisionsMarkControls(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
+            NoirButton(
+                text = stringResource(R.string.qa_decisions_mark_valid),
                 onClick = { onMarkSelected(ReviewDecisionMarkValue.VALID) },
                 enabled = detail.markState != DecisionsMarkStateUi.SAVING,
+                fillWidth = false,
                 modifier = Modifier.testTag("decisions-mark-valid"),
-            ) {
-                Text(stringResource(R.string.qa_decisions_mark_valid))
-            }
-            OutlinedButton(
+            )
+            NoirButton(
+                text = stringResource(R.string.qa_decisions_mark_invalid),
                 onClick = { onMarkSelected(ReviewDecisionMarkValue.INVALID) },
                 enabled = detail.markState != DecisionsMarkStateUi.SAVING,
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
                 modifier = Modifier.testTag("decisions-mark-invalid"),
-            ) {
-                Text(stringResource(R.string.qa_decisions_mark_invalid))
-            }
+            )
             when (detail.markState) {
                 DecisionsMarkStateUi.SAVING -> Text(stringResource(R.string.qa_decisions_mark_saving), color = NoirT3)
                 DecisionsMarkStateUi.SAVED ->
@@ -746,6 +741,18 @@ private fun DecisionsMarkControls(
             value = detail.commentDraft,
             onValueChange = onCommentChanged,
             label = { Text(stringResource(R.string.qa_decisions_comment_hint)) },
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = NoirT1,
+                    unfocusedTextColor = NoirT1,
+                    focusedContainerColor = NoirS2,
+                    unfocusedContainerColor = NoirS2,
+                    focusedBorderColor = LocalNoirAccent.current,
+                    unfocusedBorderColor = NoirOutline,
+                    focusedLabelColor = LocalNoirAccent.current,
+                    unfocusedLabelColor = NoirT2,
+                    cursorColor = LocalNoirAccent.current,
+                ),
             modifier = Modifier.fillMaxWidth().heightIn(min = 88.dp).testTag("decisions-comment"),
         )
     }

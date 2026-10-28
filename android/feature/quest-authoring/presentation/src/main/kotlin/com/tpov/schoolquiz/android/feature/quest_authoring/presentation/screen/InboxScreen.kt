@@ -8,12 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,7 +17,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
@@ -50,18 +51,21 @@ fun InboxScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(stringResource(R.string.qa_inbox_title), style = NoirType.groupTitle)
-            OutlinedButton(onClick = component::onRefreshClick) {
-                Text(stringResource(R.string.qa_inbox_refresh))
-            }
+            NoirButton(
+                text = stringResource(R.string.qa_inbox_refresh),
+                onClick = component::onRefreshClick,
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
         when {
-            state.isLoading -> CircularProgressIndicator()
+            state.isLoading -> CircularProgressIndicator(color = LocalNoirAccent.current)
 
             else -> {
                 state.errorMessage?.let { message ->
                     Text(
                         message.resolveText(),
-                        color = MaterialTheme.colorScheme.error,
+                        color = NoirDanger,
                         style = NoirType.rowSub,
                     )
                 }
@@ -78,9 +82,13 @@ fun InboxScreen(
                     }
                     if (state.canLoadMore) {
                         item {
-                            OutlinedButton(onClick = component::onLoadMoreClick, enabled = !state.isLoadingMore) {
-                                Text(stringResource(R.string.qa_lifecycle_load_more))
-                            }
+                            NoirButton(
+                                text = stringResource(R.string.qa_lifecycle_load_more),
+                                onClick = component::onLoadMoreClick,
+                                enabled = !state.isLoadingMore,
+                                style = NoirButtonStyle.Ghost,
+                                fillWidth = false,
+                            )
                         }
                     }
                 }
@@ -92,29 +100,23 @@ fun InboxScreen(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun InboxEntryCard(entry: InboxItem) {
-    Card(
-        shape = MaterialTheme.shapes.small,
-        colors = CardDefaults.cardColors(containerColor = NoirS1),
+    NoirGroup(
         modifier = Modifier.fillMaxWidth().testTag("inbox-entry-${entry.id}"),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(
-                    onClick = {},
-                    label = {
-                        Text(
-                            when (entry) {
-                                is InboxItem.PrivateErrorReport ->
-                                    stringResource(R.string.qa_inbox_kind_private_report)
-                                is InboxItem.LessonComment ->
-                                    stringResource(R.string.qa_inbox_kind_comment)
-                            },
-                        )
-                    },
+                NoirChip(
+                    text =
+                        when (entry) {
+                            is InboxItem.PrivateErrorReport ->
+                                stringResource(R.string.qa_inbox_kind_private_report)
+                            is InboxItem.LessonComment ->
+                                stringResource(R.string.qa_inbox_kind_comment)
+                        },
                 )
-                AssistChip(onClick = {}, label = { Text(entry.lessonId) })
+                NoirChip(text = entry.lessonId)
             }
-            Text(entry.text, style = MaterialTheme.typography.bodyMedium)
+            Text(entry.text, style = NoirType.rowSub, color = NoirT1)
             Text(
                 when (entry) {
                     is InboxItem.PrivateErrorReport ->

@@ -10,24 +10,29 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialog
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialogAction
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
@@ -60,7 +65,7 @@ fun CuratorScreen(
     ) {
         Text(stringResource(R.string.qa_curator_title), style = NoirType.groupTitle)
         when {
-            state.isLoading -> CircularProgressIndicator()
+            state.isLoading -> CircularProgressIndicator(color = LocalNoirAccent.current)
 
             state.permissionDenied ->
                 Text(stringResource(R.string.qa_curator_permission_denied), style = NoirType.rowSub, color = NoirT3)
@@ -69,7 +74,7 @@ fun CuratorScreen(
                 state.errorMessage?.let { message ->
                     Text(
                         messageText(message),
-                        color = MaterialTheme.colorScheme.error,
+                        color = NoirDanger,
                         style = NoirType.rowSub,
                     )
                 }
@@ -87,9 +92,13 @@ fun CuratorScreen(
                     }
                     if (state.canLoadMore) {
                         item {
-                            OutlinedButton(onClick = component::onLoadMoreClick, enabled = !state.isLoadingMore) {
-                                Text(stringResource(R.string.qa_lifecycle_load_more))
-                            }
+                            NoirButton(
+                                text = stringResource(R.string.qa_lifecycle_load_more),
+                                onClick = component::onLoadMoreClick,
+                                enabled = !state.isLoadingMore,
+                                style = NoirButtonStyle.Ghost,
+                                fillWidth = false,
+                            )
                         }
                     }
                     if (state.selectedLessonId != null) {
@@ -121,9 +130,12 @@ fun CuratorScreen(
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = component::onRefreshClick) {
-                        Text(stringResource(R.string.qa_lifecycle_refresh))
-                    }
+                    NoirButton(
+                        text = stringResource(R.string.qa_lifecycle_refresh),
+                        onClick = component::onRefreshClick,
+                        style = NoirButtonStyle.Ghost,
+                        fillWidth = false,
+                    )
                 }
             }
         }
@@ -151,10 +163,10 @@ private fun TransitionConfirmDialog(
     onDismiss: () -> Unit,
     onReasonChanged: (String) -> Unit,
 ) {
-    AlertDialog(
+    NoirDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.qa_curator_confirm_title)) },
-        text = {
+        title = stringResource(R.string.qa_curator_confirm_title),
+        content = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     stringResource(
@@ -168,20 +180,35 @@ private fun TransitionConfirmDialog(
                     value = state.reasonDraft,
                     onValueChange = onReasonChanged,
                     label = { Text(stringResource(R.string.qa_curator_reason_label)) },
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = NoirT1,
+                            unfocusedTextColor = NoirT1,
+                            focusedContainerColor = NoirS2,
+                            unfocusedContainerColor = NoirS2,
+                            focusedBorderColor = LocalNoirAccent.current,
+                            unfocusedBorderColor = NoirOutline,
+                            focusedLabelColor = LocalNoirAccent.current,
+                            unfocusedLabelColor = NoirT2,
+                            cursorColor = LocalNoirAccent.current,
+                        ),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (state.isTransitioning) CircularProgressIndicator()
+                if (state.isTransitioning) CircularProgressIndicator(color = LocalNoirAccent.current)
             }
         },
-        confirmButton = {
-            TextButton(onClick = onConfirm, enabled = !state.isTransitioning) {
-                Text(stringResource(R.string.qa_curator_confirm_positive))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !state.isTransitioning) {
-                Text(stringResource(R.string.qa_curator_confirm_negative))
-            }
+        actions = {
+            NoirDialogAction(
+                text = stringResource(R.string.qa_curator_confirm_positive),
+                onClick = onConfirm,
+                enabled = !state.isTransitioning,
+                primary = true,
+            )
+            NoirDialogAction(
+                text = stringResource(R.string.qa_curator_confirm_negative),
+                onClick = onDismiss,
+                enabled = !state.isTransitioning,
+            )
         },
     )
 }
@@ -202,8 +229,7 @@ internal fun LifecycleEntryCard(
     onMenuDismiss: () -> Unit = {},
     onTargetChosen: (LessonShelf) -> Unit = {},
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = NoirS1),
+    NoirGroup(
         modifier =
             if (onLongClick != null) {
                 Modifier
@@ -251,10 +277,14 @@ internal fun LifecycleEntryCard(
             }
             // Меню разрешённых целей: «Разместить» (arena/tournament/home) и «Снять»
             // (retired/rejected). Проверку допустимости самого перехода ведёт сервер.
-            DropdownMenu(expanded = menuOpen, onDismissRequest = onMenuDismiss) {
+            DropdownMenu(
+                expanded = menuOpen,
+                onDismissRequest = onMenuDismiss,
+                containerColor = NoirS2,
+            ) {
                 TRANSITION_TARGETS.forEach { target ->
                     DropdownMenuItem(
-                        text = { Text(stringResource(target.transitionLabelRes())) },
+                        text = { Text(stringResource(target.transitionLabelRes()), color = NoirT1) },
                         onClick = { onTargetChosen(target) },
                     )
                 }
@@ -270,14 +300,14 @@ internal fun HistoryCard(
     history: List<LessonHistoryEntry>,
     loading: Boolean,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    NoirGroup(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(title, style = NoirType.groupTitle)
             when {
-                loading -> CircularProgressIndicator()
+                loading -> CircularProgressIndicator(color = LocalNoirAccent.current)
 
                 history.isEmpty() ->
                     Text(stringResource(R.string.qa_lifecycle_history_empty), style = NoirType.rowSub, color = NoirT3)

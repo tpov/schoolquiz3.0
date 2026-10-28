@@ -40,6 +40,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +64,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -654,6 +657,67 @@ fun NoirChip(
             Text(text.uppercase(), style = NoirType.chip, color = color)
         }
     }
+}
+
+// ─── Selectable chip: §6.5 tones on the two-state control ───────────────────
+
+/**
+ * The two-state chip selectors speak when NOIR owns the colours, not the control: unselected
+ * reads Neutral (surface-2 fill, outline hairline, text-2), selected reads Accent
+ * (accent×10% fill, accent×45% border, accent label) — the same tone pair [NoirChip] carries,
+ * on Material's [FilterChip] the same way the input fields keep Material's outline box (§6.7)
+ * and the checkboxes keep Material's box (9.2). No feature grows its own tint mapping.
+ */
+@Composable
+fun NoirSelectableChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    leadingIcon: ImageVector? = null,
+    maxLines: Int = Int.MAX_VALUE,
+) {
+    val accent = LocalNoirAccent.current
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        enabled = enabled,
+        leadingIcon = {
+            if (leadingIcon != null) {
+                Icon(
+                    leadingIcon,
+                    contentDescription = null,
+                    tint = if (selected) accent else NoirT2,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        },
+        label = {
+            Text(
+                text,
+                maxLines = maxLines,
+                overflow = if (maxLines != Int.MAX_VALUE) TextOverflow.Ellipsis else TextOverflow.Clip,
+            )
+        },
+        colors =
+            FilterChipDefaults.filterChipColors(
+                containerColor = NoirS2,
+                labelColor = NoirT2,
+                iconColor = NoirT2,
+                selectedContainerColor = accent.copy(alpha = 0.10f),
+                selectedLabelColor = accent,
+                selectedLeadingIconColor = accent,
+            ),
+        border =
+            FilterChipDefaults.filterChipBorder(
+                enabled = enabled,
+                selected = selected,
+                borderColor = NoirOutline,
+                selectedBorderColor = accent.copy(alpha = 0.45f),
+            ),
+        modifier = modifier,
+    )
 }
 
 // ─── Progress ───────────────────────────────────────────────────────────────

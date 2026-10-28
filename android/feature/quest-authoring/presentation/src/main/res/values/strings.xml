@@ -172,7 +172,7 @@
     <string name="qa_proposals_status_check_delayed">Checks delayed</string>
     <string name="qa_proposals_status_approved">Approved</string>
     <string name="qa_proposals_status_rejected">Rejected</string>
-    <string name="qa_proposals_own_variant">Proposer's variant: %1$s</string>
+    <string name="qa_proposals_own_variant">Proposer\'s variant: %1$s</string>
     <string name="qa_proposals_questions">Questions in the proposal</string>
     <string name="qa_proposals_outcome">Outcome: %1$s</string>
     <string name="qa_proposals_decide_approve">Approve</string>

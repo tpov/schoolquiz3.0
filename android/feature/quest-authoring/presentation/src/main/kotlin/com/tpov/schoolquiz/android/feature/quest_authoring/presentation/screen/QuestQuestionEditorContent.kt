@@ -31,8 +31,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,7 +59,9 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignNeutralBorderColor
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSelectableChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
@@ -277,7 +280,7 @@ private fun EditorTopPanel(
                     )
                 }
                 if (state.isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp), color = LocalNoirAccent.current)
                 }
             }
             FeedbackLine(state)
@@ -304,10 +307,10 @@ private fun TypeRail(
                 DraftQuestionType.entries.toList()
             }
         shelf.forEach { type ->
-            FilterChip(
+            NoirSelectableChip(
+                text = type.displayTitle,
                 selected = state.type == type,
                 onClick = { onQuestionTypeSelected(type) },
-                label = { Text(type.displayTitle) },
             )
         }
     }
@@ -679,11 +682,22 @@ private fun AnswerRow(
                 Checkbox(
                     checked = selected,
                     onCheckedChange = { onSelected() },
+                    colors =
+                        CheckboxDefaults.colors(
+                            checkedColor = LocalNoirAccent.current,
+                            checkmarkColor = NoirInk,
+                            uncheckedColor = NoirT3,
+                        ),
                 )
             } else {
                 RadioButton(
                     selected = selected,
                     onClick = onSelected,
+                    colors =
+                        RadioButtonDefaults.colors(
+                            selectedColor = LocalNoirAccent.current,
+                            unselectedColor = NoirT3,
+                        ),
                 )
             }
             EditorTextField(
@@ -906,6 +920,12 @@ private fun FillBlankAnswerRow(
                 Checkbox(
                     checked = answer.isProtected,
                     onCheckedChange = onProtectedChanged,
+                    colors =
+                        CheckboxDefaults.colors(
+                            checkedColor = LocalNoirAccent.current,
+                            checkmarkColor = NoirInk,
+                            uncheckedColor = NoirT3,
+                        ),
                 )
                 Text(
                     text = stringResource(R.string.qa_editor_do_not_translate),
@@ -994,18 +1014,12 @@ private fun AddRowButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    FilterChip(
+    NoirSelectableChip(
+        text = text,
         selected = false,
         enabled = enabled,
         onClick = onClick,
-        label = { Text(text) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-        },
+        leadingIcon = Icons.Filled.Add,
     )
 }
 
@@ -1182,22 +1196,17 @@ private fun QuestionChip(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    FilterChip(
+    NoirSelectableChip(
+        text =
+            if (item.title.isBlank()) {
+                "${item.number}. ${item.type.displayTitle}"
+            } else {
+                "${item.number}. ${item.title}"
+            },
         selected = selected,
         onClick = onClick,
-        label = {
-            Text(
-                text =
-                    if (item.title.isBlank()) {
-                        "${item.number}. ${item.type.displayTitle}"
-                    } else {
-                        "${item.number}. ${item.title}"
-                    },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 150.dp),
-            )
-        },
+        maxLines = 1,
+        modifier = Modifier.widthIn(max = 150.dp),
     )
 }
 
@@ -1208,17 +1217,11 @@ private fun NewQuestionChip(
     number: Int,
     onClick: () -> Unit,
 ) {
-    FilterChip(
+    NoirSelectableChip(
+        text = stringResource(R.string.qa_editor_new_question_number, number),
         selected = selected,
         onClick = onClick,
-        label = { Text(stringResource(R.string.qa_editor_new_question_number, number)) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-        },
+        leadingIcon = Icons.Filled.Add,
     )
 }
 

@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -29,7 +28,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -55,20 +53,24 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialog
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialogAction
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSelectableChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LINK_EXPIRY_DAY_PRESETS
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalSubmissionState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.NewLessonProposalUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LINK_EXPIRY_DAY_PRESETS
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.SectionPathItem
@@ -434,11 +436,12 @@ private fun QuestCreateContent(
                 modifier = Modifier.fillMaxWidth(),
             )
             // Третий вход CAP-27 (4.24, UX-23): свой урок — в чужой курс, решает автор курса.
-            BrandPrimaryButton(
+            // Ghost (§6.1): рядом уже стоит залитая «Отправить на арену».
+            NoirButton(
                 text = stringResource(R.string.qa_proposal_open),
                 onClick = onOpenProposal,
                 enabled = !state.isSubmittingToArena,
-                modifier = Modifier.fillMaxWidth(),
+                style = NoirButtonStyle.Ghost,
             )
         }
         // Расхождение показывается словами и одним действием: работа автора цела и лежит в
@@ -826,17 +829,11 @@ private fun NewLessonProposalDialog(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    NoirDialog(
         onDismissRequest = onDismiss,
-        confirmButton = {},
-        dismissButton = {},
-        containerColor = schoolQuizDesignDeepSurfaceColor(),
-        text = {
+        title = stringResource(R.string.qa_proposal_header),
+        content = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = stringResource(R.string.qa_proposal_header),
-                    style = NoirType.kicker,
-                )
                 if (state.lessonChoices.size > 1) {
                     Text(
                         text = stringResource(R.string.qa_proposal_lesson),
@@ -846,10 +843,10 @@ private fun NewLessonProposalDialog(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         state.lessonChoices.forEach { choice ->
-                            FilterChip(
+                            NoirSelectableChip(
+                                text = choice.title,
                                 selected = state.selectedLessonId == choice.id,
                                 onClick = { onLessonSelected(choice.id) },
-                                label = { Text(choice.title, style = NoirType.rowSub) },
                             )
                         }
                     }
@@ -901,40 +898,26 @@ private fun NewLessonProposalDialog(
                     NewLessonProposalSubmissionState.Idle -> Unit
                     NewLessonProposalSubmissionState.Sending -> Unit
                 }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.qa_proposal_cancel),
-                        style = NoirType.button.copy(color = NoirT3),
-                        modifier = Modifier.clickable(onClick = onDismiss),
-                    )
-                    Text(
-                        text =
-                            if (state.submission == NewLessonProposalSubmissionState.Sending) {
-                                stringResource(R.string.qa_proposal_sending)
-                            } else {
-                                stringResource(R.string.qa_proposal_send)
-                            },
-                        style = NoirType.button.copy(
-                            color = if (state.targetComplete &&
-                                state.submission != NewLessonProposalSubmissionState.Sending
-                            ) {
-                                LocalNoirAccent.current
-                            } else {
-                                NoirTOff
-                            },
-                        ),
-                        modifier = Modifier.clickable(
-                            enabled = state.targetComplete &&
-                                state.submission != NewLessonProposalSubmissionState.Sending,
-                            onClick = onSubmit,
-                        ),
-                    )
-                }
             }
+        },
+        actions = {
+            NoirDialogAction(
+                text = stringResource(R.string.qa_proposal_cancel),
+                onClick = onDismiss,
+            )
+            NoirDialogAction(
+                text =
+                    if (state.submission == NewLessonProposalSubmissionState.Sending) {
+                        stringResource(R.string.qa_proposal_sending)
+                    } else {
+                        stringResource(R.string.qa_proposal_send)
+                    },
+                onClick = onSubmit,
+                enabled =
+                    state.targetComplete &&
+                        state.submission != NewLessonProposalSubmissionState.Sending,
+                primary = true,
+            )
         },
     )
 }
@@ -986,10 +969,11 @@ private fun ProposalTargetDropdown(
         ExposedDropdownMenu(
             expanded = expanded.value,
             onDismissRequest = { expanded.value = false },
+            containerColor = NoirS2,
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option.title) },
+                    text = { Text(option.title, color = NoirT1) },
                     onClick = {
                         onSelected(option.id)
                         expanded.value = false

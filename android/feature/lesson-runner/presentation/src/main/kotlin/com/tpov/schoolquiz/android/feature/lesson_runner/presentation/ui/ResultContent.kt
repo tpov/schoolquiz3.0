@@ -23,11 +23,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,8 +50,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChrome
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialog
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialogAction
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
@@ -177,9 +180,12 @@ fun ResultContent(
         }
 
         if (state.canRequestSync) {
-            TextButton(onClick = onSyncResult) {
-                Text(stringResource(R.string.runner_result_sync_now), style = NoirType.button)
-            }
+            NoirButton(
+                text = stringResource(R.string.runner_result_sync_now),
+                onClick = onSyncResult,
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
 
         if (state.canSubmitRating) {
@@ -527,126 +533,116 @@ private fun ErrorReportSheet(
     onSubmit: (String, String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        var text by remember { mutableStateOf("") }
-        var variant by remember { mutableStateOf("") }
-        var variantVisible by remember { mutableStateOf(false) }
-        val accent = LocalNoirAccent.current
-        val trimmed = text.trim()
-        val canSend =
-            trimmed.isNotEmpty() &&
-                trimmed.length <= MAX_REPORT_CHARS &&
-                submissionState != ErrorReportSubmissionState.Sending
-        Column(
-            Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(9.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.runner_report_header),
-                style = NoirType.kicker.copy(color = NoirT2),
-            )
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 76.dp)
-                    .clip(NoirShapeMd)
-                    .background(NoirS2)
-                    .border(1.dp, NoirOutline, NoirShapeMd)
-                    .padding(12.dp),
-            ) {
-                if (text.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.runner_report_placeholder),
-                        style = NoirType.rowSub.copy(color = NoirTOff),
-                    )
-                }
-                BasicTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    textStyle = NoirType.rowSub.copy(color = NoirT1),
-                    cursorBrush = SolidColor(accent),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            if (variantVisible) {
+    var text by remember { mutableStateOf("") }
+    var variant by remember { mutableStateOf("") }
+    var variantVisible by remember { mutableStateOf(false) }
+    val accent = LocalNoirAccent.current
+    val trimmed = text.trim()
+    val canSend =
+        trimmed.isNotEmpty() &&
+            trimmed.length <= MAX_REPORT_CHARS &&
+            submissionState != ErrorReportSubmissionState.Sending
+    NoirDialog(
+        onDismissRequest = onDismiss,
+        title = stringResource(R.string.runner_report_header),
+        content = {
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 56.dp)
+                        .heightIn(min = 76.dp)
                         .clip(NoirShapeMd)
                         .background(NoirS2)
                         .border(1.dp, NoirOutline, NoirShapeMd)
                         .padding(12.dp),
                 ) {
-                    if (variant.isEmpty()) {
+                    if (text.isEmpty()) {
                         Text(
-                            text = stringResource(R.string.runner_report_variant_placeholder),
+                            text = stringResource(R.string.runner_report_placeholder),
                             style = NoirType.rowSub.copy(color = NoirTOff),
                         )
                     }
                     BasicTextField(
-                        value = variant,
-                        onValueChange = { variant = it },
+                        value = text,
+                        onValueChange = { text = it },
                         textStyle = NoirType.rowSub.copy(color = NoirT1),
                         cursorBrush = SolidColor(accent),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-            } else {
-                Text(
-                    text = stringResource(R.string.runner_report_add_variant),
-                    style = NoirType.rowSub.copy(color = NoirT2),
-                    modifier = Modifier.clickable { variantVisible = true },
-                )
-            }
-            // Плата до отправки (UX-23): показ — не власть, плату считает приёмка (4.21).
-            Text(
-                text =
-                    if (proposalFeeQuote == null) {
-                        stringResource(R.string.runner_report_fee_unknown)
-                    } else if (proposalFeeQuote.feeNolics == 0) {
-                        stringResource(R.string.runner_report_fee_free)
-                    } else {
-                        stringResource(R.string.runner_report_fee_value, proposalFeeQuote.feeNolics)
-                    },
-                style = NoirType.rowSub.copy(color = NoirT2),
-            )
-            when (submissionState) {
-                ErrorReportSubmissionState.Failed ->
+                if (variantVisible) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp)
+                            .clip(NoirShapeMd)
+                            .background(NoirS2)
+                            .border(1.dp, NoirOutline, NoirShapeMd)
+                            .padding(12.dp),
+                    ) {
+                        if (variant.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.runner_report_variant_placeholder),
+                                style = NoirType.rowSub.copy(color = NoirTOff),
+                            )
+                        }
+                        BasicTextField(
+                            value = variant,
+                            onValueChange = { variant = it },
+                            textStyle = NoirType.rowSub.copy(color = NoirT1),
+                            cursorBrush = SolidColor(accent),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                } else {
                     Text(
-                        text = stringResource(R.string.runner_report_failed),
-                        style = NoirType.rowSub.copy(color = NoirDanger),
+                        text = stringResource(R.string.runner_report_add_variant),
+                        style = NoirType.rowSub.copy(color = NoirT2),
+                        modifier = Modifier.clickable { variantVisible = true },
                     )
-                ErrorReportSubmissionState.Done -> Unit
-                ErrorReportSubmissionState.Idle -> Unit
-                ErrorReportSubmissionState.Sending -> Unit
-            }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.runner_report_cancel),
-                    style = NoirType.button.copy(color = NoirT3),
-                    modifier = Modifier.clickable(onClick = onDismiss),
-                )
+                }
+                // Плата до отправки (UX-23): показ — не власть, плату считает приёмка (4.21).
                 Text(
                     text =
-                        if (submissionState == ErrorReportSubmissionState.Sending) {
-                            stringResource(R.string.runner_report_sending)
+                        if (proposalFeeQuote == null) {
+                            stringResource(R.string.runner_report_fee_unknown)
+                        } else if (proposalFeeQuote.feeNolics == 0) {
+                            stringResource(R.string.runner_report_fee_free)
                         } else {
-                            stringResource(R.string.runner_report_send)
+                            stringResource(R.string.runner_report_fee_value, proposalFeeQuote.feeNolics)
                         },
-                    style = NoirType.button.copy(color = if (canSend) accent else NoirTOff),
-                    modifier =
-                        Modifier.clickable(enabled = canSend) {
-                            onSubmit(trimmed, variant.trim().takeUnless { it.isEmpty() })
-                        },
+                    style = NoirType.rowSub.copy(color = NoirT2),
                 )
+                when (submissionState) {
+                    ErrorReportSubmissionState.Failed ->
+                        Text(
+                            text = stringResource(R.string.runner_report_failed),
+                            style = NoirType.rowSub.copy(color = NoirDanger),
+                        )
+                    ErrorReportSubmissionState.Done -> Unit
+                    ErrorReportSubmissionState.Idle -> Unit
+                    ErrorReportSubmissionState.Sending -> Unit
+                }
             }
-        }
-    }
+        },
+        actions = {
+            NoirDialogAction(
+                text = stringResource(R.string.runner_report_cancel),
+                onClick = onDismiss,
+            )
+            NoirDialogAction(
+                text =
+                    if (submissionState == ErrorReportSubmissionState.Sending) {
+                        stringResource(R.string.runner_report_sending)
+                    } else {
+                        stringResource(R.string.runner_report_send)
+                    },
+                onClick = { onSubmit(trimmed, variant.trim().takeUnless { it.isEmpty() }) },
+                enabled = canSend,
+                primary = true,
+            )
+        },
+    )
 }
 
 private const val MAX_REPORT_CHARS = 2000
@@ -699,101 +695,97 @@ private fun CopyEditSheet(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        val accent = LocalNoirAccent.current
-        val editedCount = sheetState.editedCount
-        val hasInvalidMark = sheetState.rows.any { it.mark != null && !it.marked }
-        val canSend = editedCount > 0 && !hasInvalidMark &&
+    val editedCount = sheetState.editedCount
+    val hasInvalidMark = sheetState.rows.any { it.mark != null && !it.marked }
+    val canSend =
+        editedCount > 0 && !hasInvalidMark &&
             sheetState.submission != CopyEditSubmissionState.Sending
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(max = 480.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(9.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.runner_copyedit_header),
-                style = NoirType.kicker.copy(color = NoirT2),
-            )
-            when (sheetState.load) {
-                CopyEditLoadState.Loading, CopyEditLoadState.Idle ->
-                    Text(
-                        text = stringResource(R.string.runner_copyedit_loading),
-                        style = NoirType.rowSub.copy(color = NoirT2),
-                    )
-                CopyEditLoadState.Failed ->
-                    Text(
-                        text = stringResource(R.string.runner_copyedit_load_failed),
-                        style = NoirType.rowSub.copy(color = NoirDanger),
-                    )
-                CopyEditLoadState.Loaded ->
-                    sheetState.rows.forEach { rowState ->
-                        CopyEditQuestionRow(
-                            rowState = rowState,
-                            onMarkChanged = { mark -> onMarkChanged(rowState.row.id, mark) },
-                        )
-                    }
-            }
-            if (hasInvalidMark) {
-                Text(
-                    text = stringResource(R.string.runner_copyedit_need_two),
-                    style = NoirType.rowSub.copy(color = NoirDanger),
-                )
-            }
-            Text(
-                text = stringResource(R.string.runner_copyedit_edited, editedCount),
-                style = NoirType.rowSub.copy(color = NoirT2),
-            )
-            // Плата до отправки (UX-23): показ — не власть, плату считает приёмка (4.21).
-            Text(
-                text =
-                    if (proposalFeeQuote == null || editedCount == 0) {
-                        stringResource(R.string.runner_report_fee_unknown)
-                    } else if (proposalFeeQuote.feeNolics == 0) {
-                        stringResource(R.string.runner_report_fee_free)
-                    } else {
-                        stringResource(R.string.runner_report_fee_value, proposalFeeQuote.feeNolics)
-                    },
-                style = NoirType.rowSub.copy(color = NoirT2),
-            )
-            when (sheetState.submission) {
-                CopyEditSubmissionState.Failed ->
-                    Text(
-                        text = stringResource(R.string.runner_report_failed),
-                        style = NoirType.rowSub.copy(color = NoirDanger),
-                    )
-                CopyEditSubmissionState.Done ->
-                    Text(
-                        text = stringResource(R.string.runner_copyedit_sent),
-                        style = NoirType.rowSub.copy(color = NoirSuccess),
-                    )
-                CopyEditSubmissionState.Idle -> Unit
-                CopyEditSubmissionState.Sending -> Unit
-            }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+    NoirDialog(
+        onDismissRequest = onDismiss,
+        title = stringResource(R.string.runner_copyedit_header),
+        content = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(9.dp),
             ) {
+                when (sheetState.load) {
+                    CopyEditLoadState.Loading, CopyEditLoadState.Idle ->
+                        Text(
+                            text = stringResource(R.string.runner_copyedit_loading),
+                            style = NoirType.rowSub.copy(color = NoirT2),
+                        )
+                    CopyEditLoadState.Failed ->
+                        Text(
+                            text = stringResource(R.string.runner_copyedit_load_failed),
+                            style = NoirType.rowSub.copy(color = NoirDanger),
+                        )
+                    CopyEditLoadState.Loaded ->
+                        sheetState.rows.forEach { rowState ->
+                            CopyEditQuestionRow(
+                                rowState = rowState,
+                                onMarkChanged = { mark -> onMarkChanged(rowState.row.id, mark) },
+                            )
+                        }
+                }
+                if (hasInvalidMark) {
+                    Text(
+                        text = stringResource(R.string.runner_copyedit_need_two),
+                        style = NoirType.rowSub.copy(color = NoirDanger),
+                    )
+                }
                 Text(
-                    text = stringResource(R.string.runner_report_cancel),
-                    style = NoirType.button.copy(color = NoirT3),
-                    modifier = Modifier.clickable(onClick = onDismiss),
+                    text = stringResource(R.string.runner_copyedit_edited, editedCount),
+                    style = NoirType.rowSub.copy(color = NoirT2),
                 )
+                // Плата до отправки (UX-23): показ — не власть, плату считает приёмка (4.21).
                 Text(
                     text =
-                        if (sheetState.submission == CopyEditSubmissionState.Sending) {
-                            stringResource(R.string.runner_report_sending)
+                        if (proposalFeeQuote == null || editedCount == 0) {
+                            stringResource(R.string.runner_report_fee_unknown)
+                        } else if (proposalFeeQuote.feeNolics == 0) {
+                            stringResource(R.string.runner_report_fee_free)
                         } else {
-                            stringResource(R.string.runner_report_send)
+                            stringResource(R.string.runner_report_fee_value, proposalFeeQuote.feeNolics)
                         },
-                    style = NoirType.button.copy(color = if (canSend) accent else NoirTOff),
-                    modifier = Modifier.clickable(enabled = canSend, onClick = onSubmit),
+                    style = NoirType.rowSub.copy(color = NoirT2),
                 )
+                when (sheetState.submission) {
+                    CopyEditSubmissionState.Failed ->
+                        Text(
+                            text = stringResource(R.string.runner_report_failed),
+                            style = NoirType.rowSub.copy(color = NoirDanger),
+                        )
+                    CopyEditSubmissionState.Done ->
+                        Text(
+                            text = stringResource(R.string.runner_copyedit_sent),
+                            style = NoirType.rowSub.copy(color = NoirSuccess),
+                        )
+                    CopyEditSubmissionState.Idle -> Unit
+                    CopyEditSubmissionState.Sending -> Unit
+                }
             }
-        }
-    }
+        },
+        actions = {
+            NoirDialogAction(
+                text = stringResource(R.string.runner_report_cancel),
+                onClick = onDismiss,
+            )
+            NoirDialogAction(
+                text =
+                    if (sheetState.submission == CopyEditSubmissionState.Sending) {
+                        stringResource(R.string.runner_report_sending)
+                    } else {
+                        stringResource(R.string.runner_report_send)
+                    },
+                onClick = onSubmit,
+                enabled = canSend,
+                primary = true,
+            )
+        },
+    )
 }
 
 /** Строка вопроса копии: текст, метка редактируемости и — по раскрытию — отметка ответа. */
