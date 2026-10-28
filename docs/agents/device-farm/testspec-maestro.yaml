@@ -48,25 +48,31 @@ phases:
       - adb devices -l
       - DEVICE_UDID="${DEVICEFARM_DEVICE_UDID:-$(adb devices | sed -n 's/^\([A-Za-z0-9._-]*\)[[:space:]].*device.*/\1/p' | head -1)}"
       - echo "device udid = $DEVICE_UDID"
-      # Приложение под тестом Device Farm ставит сам; перепиновываем из пакета,
-      # чтобы зафиксировать SHA-256 собираемых нами APK (идентичность — культура рига).
+      # Приложение ставит сам Device Farm (переподписывает своим ключом —
+      # adb install -r поверх даёт INSTALL_FAILED_UPDATE_INCOMPATIBLE).
+      # SHA-256 наших APK фиксируем для протокола идентичности.
       - sha256sum "$DEVICEFARM_TEST_PACKAGE_PATH"/apks/*.apk
-      - adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvp.apk"
+      - adb shell pm list packages com.tpov.schoolquiz
       # ---- ручки прогона (pre_test) ----
       - export INSTALL_MVPB="${INSTALL_MVPB:-0}"
       - export MAESTRO_FONT_SCALE="${MAESTRO_FONT_SCALE:-}"
-      - if [ "$INSTALL_MVPB" = "1" ]; then adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvpb.apk"; fi
+      - if [ "$INSTALL_MVPB" = "1" ]; then adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvpb.apk" || echo "WARN: mvpb install failed (signature)"; fi
       # Стабильность тапов + опциональный повышенный шрифт для 9.9.
       - adb shell settings put global window_animation_scale 0
       - adb shell settings put global transition_animation_scale 0
       - adb shell settings put global animator_duration_scale 0
       - if [ -n "$MAESTRO_FONT_SCALE" ]; then adb shell settings put system font_scale "$MAESTRO_FONT_SCALE"; fi
-      # Диагностика сети — тест-хост видит демо-риг VPS? (устройство ходит своим стеком)
-      - curl -s -o /dev/null -w "vps-8080 %{http_code}\n" http://204.44.66.27:8080/ || true
-      # Готовность сети УСТРОЙСТВА до запуска флоу: первый прогон показал,
-      # что приложение стартует раньше WiFi (Firestore: ENETUNREACH) и канал
-      # уходит в длинный retry-backoff — ждём пинга рига с телефона.
-      - NET_OK=0; for i in $(seq 1 18); do if adb shell ping -c 1 -W 3 204.44.66.27 >/dev/null 2>&1; then NET_OK=1; echo "device network ready (try $i)"; break; fi; sleep 5; done; [ "$NET_OK" = "1" ] || echo "WARN: device cannot ping rig, continuing anyway"
+      # Диагностика сети устройства (прогон №3: ENETUNREACH к IPv4-литералу
+      # длился минутами, tcpdump пуст — проверяем v4/v6-маршруты телефона).
+      # ВАЖНО: составные shell-конструкции (for/$(...)) Device Farm ломает —
+      # только простые однострочные команды.
+      - adb shell ip -4 addr show wlan0
+      - adb shell ip -6 addr show wlan0
+      - adb shell ip route show
+      - adb shell ping -c 2 -W 3 8.8.8.8
+      - adb shell ping -c 2 -W 3 204.44.66.27
+      - adb shell ping -c 2 -W 3 aws.amazon.com
+      - curl -s -o /dev/null -w "host->vps-8080 %{http_code}\n" http://204.44.66.27:8080/
       - adb logcat -c
 
   test:
