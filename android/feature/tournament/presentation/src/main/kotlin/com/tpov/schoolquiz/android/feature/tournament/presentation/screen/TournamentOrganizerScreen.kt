@@ -10,13 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,7 +21,16 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialog
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDialogAction
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.tournament.presentation.R
@@ -56,23 +62,36 @@ fun TournamentOrganizerScreen(
             onValueChange = component::onSourceIdChange,
             label = { Text(stringResource(R.string.tournament_organizer_source_hint)) },
             modifier = Modifier.fillMaxWidth().testTag("tournament_organizer_source"),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = NoirT1,
+                    unfocusedTextColor = NoirT1,
+                    focusedContainerColor = NoirS2,
+                    unfocusedContainerColor = NoirS2,
+                    focusedBorderColor = LocalNoirAccent.current,
+                    unfocusedBorderColor = NoirOutline,
+                    focusedLabelColor = LocalNoirAccent.current,
+                    unfocusedLabelColor = NoirT2,
+                    cursorColor = LocalNoirAccent.current,
+                ),
             singleLine = true,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
+            NoirButton(
+                text = stringResource(R.string.tournament_organizer_prepare),
                 onClick = component::onPrepareClick,
                 enabled = !state.busy && state.sourceId.isNotBlank(),
                 modifier = Modifier.testTag("tournament_organizer_prepare"),
-            ) {
-                Text(stringResource(R.string.tournament_organizer_prepare))
-            }
-            OutlinedButton(
+                fillWidth = false,
+            )
+            NoirButton(
+                text = stringResource(R.string.tournament_organizer_show_consent),
                 onClick = component::onShowConsentClick,
                 enabled = !state.busy && state.hasPrepare,
                 modifier = Modifier.testTag("tournament_organizer_show_consent"),
-            ) {
-                Text(stringResource(R.string.tournament_organizer_show_consent))
-            }
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
         state.prepare?.let { prepare ->
             Text(
@@ -84,17 +103,18 @@ fun TournamentOrganizerScreen(
                 color = NoirT3,
             )
         }
-        if (state.busy) CircularProgressIndicator()
+        if (state.busy) CircularProgressIndicator(color = LocalNoirAccent.current)
         Text(noticeText(state.notice), color = NoirT3)
         // Отказ CREATE повторяем: повтор живёт вне созданного события, он виден и без него.
         if (state.canRetryCreate) {
-            OutlinedButton(
+            NoirButton(
+                text = stringResource(R.string.tournament_retry),
                 onClick = component::onRetryCreateClick,
                 enabled = !state.busy,
                 modifier = Modifier.testTag("tournament_organizer_create_retry"),
-            ) {
-                Text(stringResource(R.string.tournament_retry))
-            }
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
         state.created?.let { created ->
             NoirGroup {
@@ -147,36 +167,39 @@ fun TournamentOrganizerScreen(
                             ),
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
+                        NoirButton(
+                            text = stringResource(R.string.tournament_retry),
                             onClick = component::onRetryCreateClick,
                             enabled = !state.busy,
-                        ) {
-                            Text(stringResource(R.string.tournament_retry))
-                        }
-                        OutlinedButton(
+                            style = NoirButtonStyle.Ghost,
+                            fillWidth = false,
+                        )
+                        NoirButton(
+                            text = stringResource(R.string.tournament_refresh),
                             onClick = component::onRefreshClick,
                             enabled = !state.busy,
-                        ) {
-                            Text(stringResource(R.string.tournament_refresh))
-                        }
-                        OutlinedButton(
+                            style = NoirButtonStyle.Ghost,
+                            fillWidth = false,
+                        )
+                        NoirButton(
+                            text = stringResource(R.string.tournament_organizer_new_create),
                             onClick = component::onNewCreateClick,
                             enabled = !state.busy,
                             modifier = Modifier.testTag("tournament_organizer_new_create"),
-                        ) {
-                            Text(stringResource(R.string.tournament_organizer_new_create))
-                        }
+                            style = NoirButtonStyle.Ghost,
+                            fillWidth = false,
+                        )
                     }
                 }
             }
         }
     }
     state.consent?.let { consent ->
-        AlertDialog(
-            modifier = Modifier.testTag("tournament_consent_dialog"),
+        NoirDialog(
             onDismissRequest = { if (!state.busy) component.onDismissConsent(consent.dialogId) },
-            title = { Text(stringResource(R.string.tournament_organizer_consent_title)) },
-            text = {
+            modifier = Modifier.testTag("tournament_consent_dialog"),
+            title = stringResource(R.string.tournament_organizer_consent_title),
+            content = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.tournament_organizer_consent_terms), style = NoirType.groupTitle)
                     // Замороженный момент открытия: то, что уедет в CREATE, а не «сейчас» экрана.
@@ -202,22 +225,19 @@ fun TournamentOrganizerScreen(
                     Text(stringResource(R.string.tournament_organizer_consent_warning))
                 }
             },
-            confirmButton = {
-                Button(
+            actions = {
+                NoirDialogAction(
+                    text = stringResource(R.string.tournament_organizer_confirm_create),
                     onClick = { component.onConfirmCreate(consent.dialogId) },
                     enabled = !state.busy,
                     modifier = Modifier.testTag("tournament_consent_confirm"),
-                ) {
-                    Text(stringResource(R.string.tournament_organizer_confirm_create))
-                }
-            },
-            dismissButton = {
-                TextButton(
+                    primary = true,
+                )
+                NoirDialogAction(
+                    text = stringResource(R.string.tournament_close),
                     onClick = { component.onDismissConsent(consent.dialogId) },
                     enabled = !state.busy,
-                ) {
-                    Text(stringResource(R.string.tournament_close))
-                }
+                )
             },
         )
     }

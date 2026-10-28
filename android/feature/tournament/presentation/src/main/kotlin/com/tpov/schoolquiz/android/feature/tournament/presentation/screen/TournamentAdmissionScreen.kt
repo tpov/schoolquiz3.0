@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,6 +17,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
@@ -47,16 +48,17 @@ fun TournamentAdmissionScreen(
         Text(stringResource(R.string.tournament_admission_title), style = NoirType.groupTitle)
         if (event == null) {
             Text(stringResource(R.string.tournament_empty), color = NoirT3)
-            OutlinedButton(
+            NoirButton(
+                text = stringResource(R.string.tournament_back),
                 onClick = {
                     onBack()
                     component.onClose()
                 },
                 modifier =
                     Modifier.testTag("tournament_admission_back").semantics { contentDescription = backLabel },
-            ) {
-                Text(stringResource(R.string.tournament_back))
-            }
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
             return@Column
         }
         Text(statusText(event), color = NoirT3)
@@ -68,13 +70,14 @@ fun TournamentAdmissionScreen(
             )
         }
         if (state.downloadFitsEvent) {
-            Button(
+            NoirButton(
+                text = stringResource(R.string.tournament_admission_download),
                 onClick = component::onRecordDownloadClick,
                 enabled = !state.busy,
                 modifier = Modifier.testTag("tournament_admission_download"),
-            ) {
-                Text(stringResource(R.string.tournament_admission_download))
-            }
+                style = NoirButtonStyle.Ghost,
+                fillWidth = false,
+            )
         }
         state.download?.let { download ->
             Text(
@@ -88,14 +91,15 @@ fun TournamentAdmissionScreen(
             )
         }
         Text(stringResource(R.string.tournament_admission_link_note), color = NoirT3)
-        if (state.busy) CircularProgressIndicator()
+        if (state.busy) CircularProgressIndicator(color = LocalNoirAccent.current)
         Text(noticeText(state.notice), color = NoirT3)
         NoirGroup {
             Column(
                 modifier = Modifier.padding(12.dp).testTag("tournament_admission_continue_group"),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Button(
+                NoirButton(
+                    text = stringResource(R.string.tournament_admission_to_participation),
                     onClick = {
                         component.onContinueClick()
                         onContinue()
@@ -104,17 +108,17 @@ fun TournamentAdmissionScreen(
                         Modifier.testTag("tournament_admission_continue").semantics {
                             contentDescription = continueLabel
                         },
-                ) {
-                    Text(stringResource(R.string.tournament_admission_to_participation))
-                }
-                OutlinedButton(
+                    fillWidth = false,
+                )
+                NoirButton(
+                    text = stringResource(R.string.tournament_back),
                     onClick = {
                         component.onClose()
                         onBack()
                     },
-                ) {
-                    Text(stringResource(R.string.tournament_back))
-                }
+                    style = NoirButtonStyle.Ghost,
+                    fillWidth = false,
+                )
             }
         }
     }

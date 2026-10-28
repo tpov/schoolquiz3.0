@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +20,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.feature.tournament.presentation.R
 import com.tpov.schoolquiz.android.feature.tournament.presentation.component.TournamentAgreementComponent
@@ -60,15 +66,16 @@ fun TournamentAgreementScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(stringResource(R.string.tournament_agreement_title))
-                OutlinedButton(
+                NoirButton(
+                    text = stringResource(R.string.tournament_back),
                     onClick = {
                         component.onCloseMatch()
                         onBack()
                     },
                     modifier = Modifier.testTag("tournament_agreement_back"),
-                ) {
-                    Text(stringResource(R.string.tournament_back))
-                }
+                    style = NoirButtonStyle.Ghost,
+                    fillWidth = false,
+                )
             }
         }
         val meeting = state.meeting
@@ -144,13 +151,20 @@ fun TournamentAgreementScreen(
                                 ),
                                 color = NoirT3,
                             )
-                            OutlinedButton(
+                            NoirButton(
+                                text = stringResource(R.string.tournament_agreement_confirm),
                                 onClick = { component.onConfirmClick(offer.slotStartsAtMs) },
-                                enabled = rowConfirmEnabled(offer.slotStartsAtMs, meeting, state.session?.ownerUid, state.busy),
+                                enabled =
+                                    rowConfirmEnabled(
+                                        offer.slotStartsAtMs,
+                                        meeting,
+                                        state.session?.ownerUid,
+                                        state.busy,
+                                    ),
                                 modifier = Modifier.testTag("tournament_agreement_confirm_$index"),
-                            ) {
-                                Text(stringResource(R.string.tournament_agreement_confirm))
-                            }
+                                style = NoirButtonStyle.Ghost,
+                                fillWidth = false,
+                            )
                         }
                     }
                     Text(stringResource(R.string.tournament_agreement_confirmations))
@@ -167,13 +181,14 @@ fun TournamentAgreementScreen(
                         )
                     }
                     if (meeting.hasMoreOffers || meeting.hasMoreConfirmations) {
-                        OutlinedButton(
+                        NoirButton(
+                            text = stringResource(R.string.tournament_load_more),
                             onClick = component::onLoadMoreClick,
                             enabled = !state.busy,
                             modifier = Modifier.testTag("tournament_agreement_load_more"),
-                        ) {
-                            Text(stringResource(R.string.tournament_load_more))
-                        }
+                            style = NoirButtonStyle.Ghost,
+                            fillWidth = false,
+                        )
                     }
                 }
             }
@@ -196,38 +211,51 @@ fun TournamentAgreementScreen(
                         onValueChange = component::onSlotStartsAtChange,
                         label = { Text(stringResource(R.string.tournament_agreement_slot_hint)) },
                         modifier = Modifier.fillMaxWidth().testTag("tournament_agreement_slot_input"),
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = NoirT1,
+                                unfocusedTextColor = NoirT1,
+                                focusedContainerColor = NoirS2,
+                                unfocusedContainerColor = NoirS2,
+                                focusedBorderColor = LocalNoirAccent.current,
+                                unfocusedBorderColor = NoirOutline,
+                                focusedLabelColor = LocalNoirAccent.current,
+                                unfocusedLabelColor = NoirT2,
+                                cursorColor = LocalNoirAccent.current,
+                            ),
                         singleLine = true,
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
+                        NoirButton(
+                            text = stringResource(R.string.tournament_agreement_propose),
                             onClick = component::onProposeClick,
                             enabled = !state.busy,
                             modifier = Modifier.testTag("tournament_agreement_propose"),
-                        ) {
-                            Text(stringResource(R.string.tournament_agreement_propose))
-                        }
-                        Button(
+                            fillWidth = false,
+                        )
+                        NoirButton(
+                            text = stringResource(R.string.tournament_agreement_ready),
                             onClick = component::onReadyClick,
                             enabled = !state.busy,
                             modifier = Modifier.testTag("tournament_agreement_ready"),
-                        ) {
-                            Text(stringResource(R.string.tournament_agreement_ready))
-                        }
+                            style = NoirButtonStyle.Ghost,
+                            fillWidth = false,
+                        )
                     }
                     val playSessionId = state.playSessionId
                     if (playSessionId != null && state.meeting?.meeting?.status == SESSION_STARTED) {
-                        Button(
+                        NoirButton(
+                            text = stringResource(R.string.tournament_agreement_play),
                             onClick = { onPlay(playSessionId) },
                             modifier = Modifier.testTag("tournament_agreement_play"),
-                        ) {
-                            Text(stringResource(R.string.tournament_agreement_play))
-                        }
+                            fillWidth = false,
+                        )
                     }
                 }
             }
         }
         if (state.busy) {
-            item { CircularProgressIndicator() }
+            item { CircularProgressIndicator(color = LocalNoirAccent.current) }
         }
         item { Text(noticeText(state.notice), color = NoirT3) }
     }

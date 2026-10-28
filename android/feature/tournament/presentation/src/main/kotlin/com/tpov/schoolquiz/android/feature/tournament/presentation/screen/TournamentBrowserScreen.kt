@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +21,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
@@ -65,35 +66,38 @@ fun TournamentBrowserScreen(
                     style = NoirType.groupTitle,
                 )
                 if (detail != null) {
-                    OutlinedButton(
+                    NoirButton(
+                        text = stringResource(R.string.tournament_back),
                         onClick = component::onCloseEvent,
                         modifier =
                             Modifier
                                 .testTag("tournament_browser_back")
                                 .semantics { contentDescription = backLabel },
-                    ) {
-                        Text(stringResource(R.string.tournament_back))
-                    }
+                        style = NoirButtonStyle.Ghost,
+                        fillWidth = false,
+                    )
                 } else {
-                    OutlinedButton(
+                    NoirButton(
+                        text = stringResource(R.string.tournament_refresh),
                         onClick = component::onRefreshClick,
                         enabled = !state.busy,
                         modifier = Modifier.testTag("tournament_browser_refresh"),
-                    ) {
-                        Text(stringResource(R.string.tournament_refresh))
-                    }
+                        style = NoirButtonStyle.Ghost,
+                        fillWidth = false,
+                    )
                 }
             }
         }
         if (detail == null) {
             if (!state.hasLoaded && !state.busy) {
                 item {
-                    OutlinedButton(
+                    NoirButton(
+                        text = stringResource(R.string.tournament_state_not_loaded),
                         onClick = component::onRefreshClick,
                         modifier = Modifier.testTag("tournament_browser_first_load"),
-                    ) {
-                        Text(stringResource(R.string.tournament_state_not_loaded))
-                    }
+                        style = NoirButtonStyle.Ghost,
+                        fillWidth = false,
+                    )
                 }
             }
             if (state.events.isEmpty() && state.hasLoaded) {
@@ -110,28 +114,30 @@ fun TournamentBrowserScreen(
                             stringResource(R.string.tournament_browser_rounds, event.qualification.roundCount),
                             color = NoirT3,
                         )
-                        OutlinedButton(
+                        NoirButton(
+                            text = stringResource(R.string.tournament_info),
                             onClick = { component.onOpenEvent(event.eventId) },
                             enabled = !state.busy,
                             modifier =
                                 Modifier
                                     .testTag("tournament_browser_open_" + event.eventId)
                                     .semantics { contentDescription = infoLabel },
-                        ) {
-                            Text(stringResource(R.string.tournament_info))
-                        }
+                            style = NoirButtonStyle.Ghost,
+                            fillWidth = false,
+                        )
                     }
                 }
             }
             if (state.canLoadMore) {
                 item {
-                    OutlinedButton(
+                    NoirButton(
+                        text = stringResource(R.string.tournament_load_more),
                         onClick = component::onLoadMoreClick,
                         enabled = !state.busy,
                         modifier = Modifier.testTag("tournament_browser_load_more"),
-                    ) {
-                        Text(stringResource(R.string.tournament_load_more))
-                    }
+                        style = NoirButtonStyle.Ghost,
+                        fillWidth = false,
+                    )
                 }
             }
         } else {
@@ -150,18 +156,18 @@ fun TournamentBrowserScreen(
                             color = NoirT3,
                         )
                     }
-                    Button(
+                    NoirButton(
+                        text = stringResource(R.string.tournament_browser_enter),
                         onClick = { onEnterEvent(detail.event, detail.serverNowMs) },
                         modifier = Modifier.testTag("tournament_browser_enter"),
-                    ) {
-                        Text(stringResource(R.string.tournament_browser_enter))
-                    }
+                        fillWidth = false,
+                    )
                 }
             }
             item { RankingBoard(detail.event.ranking) }
         }
         if (state.busy) {
-            item { CircularProgressIndicator() }
+            item { CircularProgressIndicator(color = LocalNoirAccent.current) }
         }
         item { Text(noticeText(state.notice), color = NoirT3) }
     }

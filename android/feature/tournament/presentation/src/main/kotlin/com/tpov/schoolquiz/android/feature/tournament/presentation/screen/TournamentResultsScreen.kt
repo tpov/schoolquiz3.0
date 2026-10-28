@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,6 +18,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.tournament.presentation.R
@@ -47,15 +49,16 @@ fun TournamentResultsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(stringResource(R.string.tournament_results_title), style = NoirType.groupTitle)
-                OutlinedButton(
+                NoirButton(
+                    text = stringResource(R.string.tournament_back),
                     onClick = {
                         component.onClose()
                         onBack()
                     },
                     modifier = Modifier.testTag("tournament_results_back"),
-                ) {
-                    Text(stringResource(R.string.tournament_back))
-                }
+                    style = NoirButtonStyle.Ghost,
+                    fillWidth = false,
+                )
             }
         }
         if (detail == null) {
@@ -112,7 +115,7 @@ fun TournamentResultsScreen(
             }
         }
         if (state.busy) {
-            item { CircularProgressIndicator() }
+            item { CircularProgressIndicator(color = LocalNoirAccent.current) }
         }
         item { Text(noticeText(state.notice), color = NoirT3) }
     }

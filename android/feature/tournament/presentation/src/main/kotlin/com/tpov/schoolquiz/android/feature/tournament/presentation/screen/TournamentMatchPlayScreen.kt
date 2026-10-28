@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +20,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.tournament.presentation.R
@@ -52,20 +58,21 @@ fun TournamentMatchPlayScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(stringResource(R.string.tournament_match_play_title))
-                OutlinedButton(
+                NoirButton(
+                    text = stringResource(R.string.tournament_back),
                     onClick = {
                         component.onCloseMatchSession()
                         onBack()
                     },
                     modifier = Modifier.testTag("tournament_match_play_back"),
-                ) {
-                    Text(stringResource(R.string.tournament_back))
-                }
+                    style = NoirButtonStyle.Ghost,
+                    fillWidth = false,
+                )
             }
         }
         item { state.play?.let { PlayPanel(it, component, state.serverNowMs) } }
         if (state.busy) {
-            item { CircularProgressIndicator() }
+            item { CircularProgressIndicator(color = LocalNoirAccent.current) }
         }
         item { Text(noticeText(state.notice), color = NoirT3) }
     }
@@ -98,9 +105,12 @@ private fun PlayPanel(
                     Modifier.testTag("tournament_match_play_timed_out"),
                     style = NoirType.groupTitle,
                 )
-                OutlinedButton(onClick = component::onRecheckClick) {
-                    Text(stringResource(R.string.tournament_match_play_recheck))
-                }
+                NoirButton(
+                    text = stringResource(R.string.tournament_match_play_recheck),
+                    onClick = component::onRecheckClick,
+                    style = NoirButtonStyle.Ghost,
+                    fillWidth = false,
+                )
             }
             else -> QuestionPanel(play, component, serverNowMs)
         }
@@ -116,9 +126,12 @@ private fun QuestionPanel(
     val question = play.question
     if (question == null) {
         Text(stringResource(R.string.tournament_empty), color = NoirT3)
-        OutlinedButton(onClick = component::onRecheckClick) {
-            Text(stringResource(R.string.tournament_match_play_recheck))
-        }
+        NoirButton(
+            text = stringResource(R.string.tournament_match_play_recheck),
+            onClick = component::onRecheckClick,
+            style = NoirButtonStyle.Ghost,
+            fillWidth = false,
+        )
         return
     }
     val payload = question.publicPayload
@@ -131,7 +144,8 @@ private fun QuestionPanel(
     val options = payload.options.orEmpty() + payload.items.orEmpty() + payload.candidates.orEmpty()
     options.forEach { option ->
         val selected = option.id in play.selectedIds
-        OutlinedButton(
+        NoirButton(
+            text = (if (selected) "[x] " else "[ ] ") + option.text,
             onClick = {
                 if (payload.type == TournamentQuestionTypes.ORDERING) {
                     component.onOrderTap(
@@ -143,9 +157,9 @@ private fun QuestionPanel(
             },
             enabled = !play.awaitingDelivery,
             modifier = Modifier.testTag("tournament_match_play_option_" + option.id),
-        ) {
-            Text((if (selected) "[x] " else "[ ] ") + option.text)
-        }
+            style = NoirButtonStyle.Ghost,
+            fillWidth = false,
+        )
     }
     payload.blanks.orEmpty().forEachIndexed { index, blank ->
         OutlinedTextField(
@@ -153,6 +167,18 @@ private fun QuestionPanel(
             onValueChange = { component.onBlankChange(index, it) },
             label = { Text(stringResource(R.string.tournament_match_play_blank_hint, index + 1)) },
             modifier = Modifier.fillMaxWidth().testTag("tournament_match_play_blank_$index"),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = NoirT1,
+                    unfocusedTextColor = NoirT1,
+                    focusedContainerColor = NoirS2,
+                    unfocusedContainerColor = NoirS2,
+                    focusedBorderColor = LocalNoirAccent.current,
+                    unfocusedBorderColor = NoirOutline,
+                    focusedLabelColor = LocalNoirAccent.current,
+                    unfocusedLabelColor = NoirT2,
+                    cursorColor = LocalNoirAccent.current,
+                ),
             singleLine = true,
         )
     }
@@ -173,12 +199,12 @@ private fun QuestionPanel(
             color = NoirT3,
         )
     } else {
-        Button(
+        NoirButton(
+            text = stringResource(R.string.tournament_match_play_answer_submit),
             onClick = component::onSubmitAnswerClick,
             modifier = Modifier.testTag("tournament_match_play_submit"),
-        ) {
-            Text(stringResource(R.string.tournament_match_play_answer_submit))
-        }
+            fillWidth = false,
+        )
     }
     // Окно AD-31 словами: ответ доставлен (в том числе поздней доставкой), готовность
     // подтверждена квитанцией READY_ACK; край окна — серверный expiresAtMs.

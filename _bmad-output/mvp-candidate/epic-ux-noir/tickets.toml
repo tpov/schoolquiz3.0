@@ -27,6 +27,14 @@
 # androidx.compose.material3 without any designsystem.noir import (grep over
 # android/feature/*/presentation), plus manual reading of each hit; component/uistate files
 # without composable UI are out of scope.
+#
+# WAVE-2 CORRECTION (2026-10-28, вторая смена): верификация заявлений волны-1 показала слепую
+# зону метода 9.1 — файлы, импортирующие designsystem.noir И сырой material3 ОДНОВРЕМЕННО,
+# инвентарём не ловились, а статусы-комментарии утверждали «сырого material3 нет». Проверка тел
+# (не импортов) нашла: raw m3 кнопки/диалоги/поля в 8 турнирных экранах (9.5 — закрыто этой
+# волной настоящим рестайлом) и в 4 экранах quest-authoring (9.4 — модуль у соседнего прогона,
+# blocked); feature-local legacy-форк рефералки в ShopView (9.7 — open item на дизайн-решение
+# владельца); PollsScreen у соседнего эпика-8 в полёте (9.8 — вердикт садится с их фикс-паком).
 
 [[story]]
 id = "9.1"
@@ -58,8 +66,11 @@ slug = "noir-authoring-curation"
 title = "Authoring/curation journey speaks NOIR: audit Inbox/AuthorLifecycle/Curator/QuestQuestionEditor surfaces on designsystem/noir and close stragglers that are NOT proposal surfaces; proposal entries (4.21–4.25: «Сообщить об ошибке», «Предложить правку», QuestCreate target-path, Decisions «Предложения») are restyled after 4.26 by whoever lands them"
 covers = ["CAP-17"]
 after = [{ epic = 4, needs = "review pipeline family final (4.15–4.19)" }]
-status = "done" # 2026-10-28: аудит по методу 9.1 — InboxScreen/AuthorLifecycleScreen/CuratorScreen/QuestQuestionEditorContent уже на noir (imports designsystem.noir, сырого material3 нет); DecisionsScreen/DecisionsView (4.25), QuestCreateScreen (4.24) и entry-поверхности предложений СОЗНАТЕЛЬНО НЕ ТРОНУТЫ (оговорка владельца); нового кода не требуется — примитив NoirDialog из 9.1 готов к их переезду.
-openItems = ["поверхности предложений (4.21–4.25) достиловываются после 4.26"]
+status = "blocked" # 2026-10-28, волна-2: заявление волны-1 «сырого material3 нет» НЕ подтвердилось — grep тел экранов нашёл сырые m3-примитивы: InboxScreen (AssistChip/Card/OutlinedButton/Text), AuthorLifecycleScreen (Card/OutlinedButton), CuratorScreen (AlertDialog/DropdownMenu/OutlinedTextField/TextButton), QuestQuestionEditorContent (Checkbox/FilterChip/RadioButton/OutlinedTextField/Surface). Весь модуль quest-authoring — поверхность соседнего прогона эпика-4 (прямое запрет-правило владельца) — закрывается после 4.26 вместе с предложными поверхностями; NoirDialog/NoirButton из 9.1 к их переезду готовы.
+openItems = [
+  "поверхности предложений (4.21–4.25) достиловываются после 4.26",
+  "raw m3-стрэгглеры Inbox/AuthorLifecycle/Curator/QuestQuestionEditor — после 4.26, вместе с модульной волной соседа",
+]
 
 [[story]]
 id = "9.5"
@@ -67,7 +78,7 @@ slug = "noir-competitions"
 title = "Competitions journey speaks NOIR: audit the eight tournament screens + event surfaces in app-shell on designsystem/noir, close stragglers"
 covers = ["CAP-17"]
 after = [{ epic = 5, needs = "tournament screens final" }]
-status = "done" # 2026-10-28: аудит — все 8 Tournament*Screen импортируют designsystem.noir; TournamentNoticeText/модели/компоненты — текстовые хелперы и логика без raw-material3 UI. Новой работы нет.
+status = "done" # 2026-10-28, волна-2 (перезакрыто честно): волна-1 посчитала «импорт noir = готово», но тела 8 экранов модуля tournament несли сырые m3 Button/OutlinedButton/AlertDialog/OutlinedTextField/TextButton поверх noir-типографики. Эта волна переодела: TournamentAdmission/Agreement/Bracket/Browser/MatchPlay/Organizer/Qualification/Results → NoirButton (primary=главное действие состояния, ghost=второстепенные и опции; «рядом одна залитая» §6.1: propose=Primary+ready=Ghost, download=Ghost при continue=Primary), согласие организатора → NoirDialog/NoirDialogAction (9.1), поля → NOIR-цвета (§6.7, паттерн 9.6), спиннеры → акцент. testTag байт-в-байт, строки/семантика не тронуты. App-shell TournamentEventScreen/TournamentEventDetailScreen (Leaderboard/Participants) проверены телами — уже noir (NoirButton/NoirGroup/акцентные прогресс-бары), правки не требовали. Гейт (sgw, JDK 27): tournament:presentation testDebugUnitTest — BUILD SUCCESSFUL (юнит-тесты компонентов 5.x зелёные); ktlint — мои файлы чисты, остались ПРЕДСУЩЕСТВУЮЩИЕ нарушения вне моего diff: AgreementScreen 94/200 (HEAD 87/185, длинные ряды Text) и unused import в нетронутом DefaultTournamentQualificationComponent.kt:19 — атрибуция владельцу (новая корзина tournament, ktlint на модуль в волне-1 не гонялся). Спека spec-9-5-noir-competitions.md.
 
 [[story]]
 id = "9.6"
@@ -83,7 +94,8 @@ slug = "noir-shop"
 title = "Shop journey speaks NOIR: audit ShopView/NoirShopStore/NoirNicknameMarket family and operation-history surfaces; close stragglers outside the revenue-critical string set"
 covers = ["CAP-17"]
 after = [{ epic = 7, needs = "commerce surfaces final" }]
-status = "done" # 2026-10-28: аудит — ShopScreen это shell над ShopView (уже noir: NoirShopStore/NoirNicknameMarket, NoirShopStoreStateLineTest существует); EconomyReceiptText — словарь ключ→ресурс без UI (ложный хит инвентаря). Новой работы нет.
+status = "done" # 2026-10-28, волна-2 (поправлено): ядро заявления волны-1 подтвердилось — ShopScreen чистый shell без m3; NoirShopStore/NoirNicknameMarket на noir («хиты» скана волны-2 — имена хелперов PremiumSurfaceCard/ShopOfferCard, ложные); EconomyReceiptText — словарь ключ→ресурс без UI (история операций отдельной raw-поверхности не имеет). НО в ShopView найден feature-local форк: реферальный блок LegacyReferralCard/LegacyCircleIconButton на сыром m3 Surface с Legacy-палитрой (~440 строк, конец файла) — не механический свип: роль/палитра рефералки в NOIR-SPEC не определены (§7 ролей), поверхность монетизационная. Уходит владельцу как дизайн-решение, самовольно не стилизовалось.
+openItems = ["реферальный legacy-блок ShopView — дизайн-решение владельца (роль рефералки в NOIR-SPEC отсутствует), затем механический переезд на noir-семью"]
 
 [[story]]
 id = "9.8"
@@ -91,7 +103,8 @@ slug = "noir-social"
 title = "Social journey speaks NOIR: audit Polls/Profile/drawer surfaces on designsystem/noir, close stragglers"
 covers = ["CAP-17"]
 after = [{ epic = 8, needs = "social surfaces final" }]
-status = "done" # 2026-10-28: аудит — PollsScreen/ProfileScreen/NoirProfileSections/AccountSwitchWarningDialog импортируют designsystem.noir; drawer-семья app-shell на noir-токенах; DrawerSectionList — утилита без стилей. Новой работы нет.
+status = "done" # 2026-10-28, волна-2: импорт-заявление волны-1 подтвердилось, но тела: PollsScreen несёт ~22 сырых m3-вызова — и файл ПРЯМО СЕЙЧАС в незакоммиченной правке соседнего эпика-8 (соц-фикс-пак), как и строки/DI/тесты модуля; NoirProfileSections/ProfileScreen/AccountSwitchWarningDialog — точечные m3 (DropdownMenu/Surface-каркас и диалог соседа). Финальный вердикт по соц-джорни садится вместе с фикс-паком эпика-8 — не трогать (запрет-правило владельца); сверить остатки после их лендинга (см. openItems).
+openItems = ["после лендинга соц-фикс-пака эпика-8: пересчитать raw m3 в PollsScreen/NoirProfileSections и закрыть остатки"]
 
 [[story]]
 id = "9.9"
