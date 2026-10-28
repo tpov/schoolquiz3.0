@@ -6,6 +6,12 @@ version: 0.1
 # Тест-пакет: run/device-farm/pkg/devicefarm-test-package.zip из
 # docs/agents/device-farm/build-test-package.sh (несёт apks/ и flows/).
 #
+# Контейнер Device Farm — НЕ Ubuntu (apt-get отсутствует; ставим только
+# curl-ом). Java контейнера младше 17, а Maestro 2.x требует Java 17+ —
+# поэтому install-фаза ставит портативный JDK 17 (Temurin) в $HOME/jdk17.
+# Ошибки не глотаем: каждая критичная команда валит фазу (|| exit 1),
+# maestro-прогон под pipefail — Device Farm увидит FAILED честно.
+#
 # Ручки прогона — переменные в начале нужной фазы (консоль позволяет править
 # spec перед запуском прогона; правится одна строка export):
 #   MAESTRO_FLOW       — какой флоу гнать (путь внутри flows/ тест-пакета);
@@ -22,13 +28,16 @@ phases:
   install:
     commands:
       - echo "install phase start"
-      - apt-get update -y
-      - apt-get install -y unzip jq
-      # Maestro CLI несёт собственную JRE; на VPS-риге стоит 2.10.0 —
-      # ставится свежий стабильный, версия пишется в лог.
+      # JDK 17 для Maestro 2.x (java контейнера старше; ставим рядом, не трогаем системный).
+      - curl -fsSL -o /tmp/jdk17.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" || { echo "JDK DOWNLOAD FAILED"; exit 1; }
+      - mkdir -p "$HOME/jdk17" && tar -xzf /tmp/jdk17.tar.gz -C "$HOME/jdk17" --strip-components=1 || { echo "JDK EXTRACT FAILED"; exit 1; }
+      - export JAVA_HOME="$HOME/jdk17"
+      - export PATH="$JAVA_HOME/bin:$PATH"
+      - java -version || { echo "JAVA 17 NOT USABLE"; exit 1; }
+      # Maestro CLI.
       - curl -fsSL "https://get.maestro.mobile.dev" | bash
       - export PATH="$PATH:$HOME/.maestro/bin"
-      - maestro --version
+      - maestro --version || { echo "MAESTRO INSTALL FAILED"; exit 1; }
 
   pre_test:
     commands:
@@ -58,23 +67,30 @@ phases:
 
   test:
     commands:
-      - export PATH="$PATH:$HOME/.maestro/bin"
+      - export JAVA_HOME="$HOME/jdk17"
+      - export PATH="$JAVA_HOME/bin:$PATH:$HOME/.maestro/bin"
       - export MAESTRO_ANALYTICS_ENABLED=false
       # ---- ручка прогона — выбранный флоу ----
       - export MAESTRO_FLOW="${MAESTRO_FLOW:-flows/02-request-sync.yaml}"
       - echo "test flow = $MAESTRO_FLOW"
       - cd "$DEVICEFARM_TEST_PACKAGE_PATH"
-      - maestro test "$MAESTRO_FLOW" 2>&1 | tee "$DEVICEFARM_LOG_DIR/maestro-stdout.log"
+      # pipefail: код maestro не глотается tee — иначе Device Farm увидит
+      # PASSED на упавшем флоу (урок первого прогона 2026-10-28).
+      - set -o pipefail
+      - maestro test "$MAESTRO_FLOW" 2>&1 | tee "$DEVICEFARM_LOG_DIR/maestro-stdout.log" || { echo "MAESTRO FLOW FAILED"; exit 1; }
 
   post_test:
     commands:
       - echo "post_test — сбор evidence"
+      - export JAVA_HOME="$HOME/jdk17"
+      - export PATH="$JAVA_HOME/bin:$PATH:$HOME/.maestro/bin"
+      - maestro --version > "$DEVICEFARM_LOG_DIR/maestro-version.txt" 2>/dev/null || true
       # Вернуть устройству исходное состояние.
       - if [ -n "${MAESTRO_FONT_SCALE:-}" ]; then adb shell settings put system font_scale 1.0; fi
       - adb logcat -d > "$DEVICEFARM_LOG_DIR/logcat.txt" 2>/dev/null || true
       # Отчёты Maestro (скриншоты шагов, junit-xml) — из cwd тест-фазы.
+      # Установку Maestro ($HOME/.maestro, ~350 МБ джарников) в артефакты НЕ копируем.
       - cp -r "$DEVICEFARM_TEST_PACKAGE_PATH/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests" 2>/dev/null || true
-      - cp -r "$HOME/.maestro" "$DEVICEFARM_LOG_DIR/maestro-home" 2>/dev/null || true
 
 artifacts:
   - $DEVICEFARM_LOG_DIR
