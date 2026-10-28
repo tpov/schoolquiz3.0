@@ -16,26 +16,26 @@ name: Organizer tournament route with device qualification (5.13)
     timeout: 90000
 - takeScreenshot: "513-synced"
 # ── Организатор: Events → Qualifier tournament → Organize a tournament
-- tapOn: "QUALIFIER TOURNAMENT"
+- tapOn: "^QUALIFIER TOURNAMENT$"
 - extendedWaitUntil:
     visible: "Organize a tournament"
     timeout: 30000
 - takeScreenshot: "513-organizer-empty"
-- tapOn: "Course identifier"
+- tapOn: "^Course identifier$"
 - inputText: "df513-course"
 - hideKeyboard
-- tapOn: "Prepare the course bank"
+- tapOn: "^Prepare the course bank$"
 - extendedWaitUntil:
     visible: "Bank ready: 60 easy, 20 hard questions"
     timeout: 180000
 - takeScreenshot: "513-bank-ready"
 # ── Согласие с замороженными условиями и CREATE с депозитом
-- tapOn: "Review prize list and deposit"
+- tapOn: "^Review prize list and deposit$"
 - extendedWaitUntil:
     visible: "Create with this deposit"
     timeout: 30000
 - takeScreenshot: "513-consent-terms"
-- tapOn: "Create with this deposit"
+- tapOn: "^Create with this deposit$"
 - extendedWaitUntil:
     visible: "Tournament created"
     timeout: 180000
@@ -46,158 +46,163 @@ name: Organizer tournament route with device qualification (5.13)
 - takeScreenshot: "513-escrow"
 # ── Browser: Active events → деталь → Enter → допуск
 - tapOn: "Open menu"
-- tapOn: "ACTIVE EVENTS"
+- tapOn: "^ACTIVE EVENTS$"
 - extendedWaitUntil:
     visible: "Qualification open"
     timeout: 120000
 - takeScreenshot: "513-browser-open"
-- tapOn: "Info"
+- tapOn: "^Info$"
 - extendedWaitUntil:
     visible: "Enter"
     timeout: 60000
 - takeScreenshot: "513-event-detail"
-- tapOn: "Enter"
+- tapOn: "^Enter$"
 - extendedWaitUntil:
     visible: "I downloaded the course"
     timeout: 60000
 - takeScreenshot: "513-admission"
-- tapOn: "I downloaded the course"
+- tapOn: "^I downloaded the course$"
 - extendedWaitUntil:
     visible: "Download attested by the server"
     timeout: 120000
 - takeScreenshot: "513-download-attested"
-- tapOn: "Continue to qualification"
+- tapOn: "^Continue to qualification$"
+- runFlow:
+    when:
+      visible: "Pick an event"
+    commands:
+      - tapOn: "^Enter$"
 - extendedWaitUntil:
-    visible: "Start round"
+    visible: "^Start round$"
     timeout: 120000
 - takeScreenshot: "513-qualification-ready"
 # ── Раунд 1: 20 вопросов, верный ответ фикстуры — "val"
-- tapOn: "Start round"
+- tapOn: "^Start round$"
 - extendedWaitUntil:
     visible: "Submit answer"
     timeout: 120000
 - takeScreenshot: "513-round1-question1"
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - takeScreenshot: "513-round1-progress"
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - takeScreenshot: "513-round1-halfway"
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - takeScreenshot: "513-round1-late"
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Answer delivered"
     timeout: 60000
 # Последний (20-й) ответ закрывает раунд
 - tapOn: "val"
-- tapOn: "Submit answer"
+- tapOn: "^Submit answer$"
 - extendedWaitUntil:
     visible: "Round settled: .*"
     timeout: 240000

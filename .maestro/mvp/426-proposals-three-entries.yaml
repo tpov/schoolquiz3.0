@@ -127,6 +127,10 @@ name: Three proposal entries up to the author side (4.26)
     commands:
       - tapOn: "^Exit$"
 - tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
 - tapOn: "^MY QUESTS$"
 - tapOn: "Create quest"
 - assertVisible: "Quest creation"
@@ -166,13 +170,16 @@ name: Three proposal entries up to the author side (4.26)
 - tapOn: "^Ordering$"
 - tapOn: "^Question$"
 - inputText: "DF426 proposer ordering question"
+- hideKeyboard
 - tapOn: "^Item$"
 - inputText: "DF426 proposer first"
+- hideKeyboard
 - tapOn: "Add item"
 - tapOn:
     text: "^Item$"
     index: 1
 - inputText: "DF426 proposer second"
+- hideKeyboard
 - tapOn: "Back to structure"
 - tapOn: "Propose to author"
 - assertVisible: "PROPOSE YOUR LESSON TO ANOTHER AUTHOR"
@@ -203,6 +210,11 @@ name: Three proposal entries up to the author side (4.26)
       visible: "^Exit$"
     commands:
       - tapOn: "^Exit$"
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
 - tapOn: "Open menu"
 - tapOn: "^DECISIONS$"
 - extendedWaitUntil:

@@ -59,13 +59,16 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - tapOn: "^Ordering$"
 - tapOn: "^Question$"
 - inputText: "DF420 easy ordering question"
+- hideKeyboard
 - tapOn: "^Item$"
 - inputText: "DF420 easy first"
+- hideKeyboard
 - tapOn: "Add item"
 - tapOn:
     text: "^Item$"
     index: 1
 - inputText: "DF420 easy second"
+- hideKeyboard
 - tapOn: "Back to structure"
 - tapOn: "Hard questions"
 - extendedWaitUntil:
@@ -75,13 +78,16 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - tapOn: "^Ordering$"
 - tapOn: "^Question$"
 - inputText: "DF420 hard ordering question"
+- hideKeyboard
 - tapOn: "^Item$"
 - inputText: "DF420 hard first"
+- hideKeyboard
 - tapOn: "Add item"
 - tapOn:
     text: "^Item$"
     index: 1
 - inputText: "DF420 hard second"
+- hideKeyboard
 - tapOn: "Back to structure"
 - takeScreenshot: "420-questions-done"
 # Подача: плата 1000 ноликов списывается сервером при приёме заявки
