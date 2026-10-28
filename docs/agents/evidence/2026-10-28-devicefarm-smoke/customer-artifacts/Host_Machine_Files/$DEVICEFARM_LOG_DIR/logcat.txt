@@ -1,0 +1,46 @@
+--------- beginning of main
+10-28 21:05:00.401  4034 22200 I WS1_BaseMessage: Response code for https://ds1688.awmdm.com/DeviceServices/SecureChannel.aws/v2?bundleId=com.airwatch.androidagent&type=interrogator&deviceId=cf4bdb25-f44c-40b4-b5cc-e52e616ae072 200
+10-28 21:05:00.402  4034 22200 I WS1     : Response code is: 200
+10-28 21:05:00.407  4034 22200 I WS1_SecureChannelUtil: Secure Channel is already protected!
+10-28 21:05:00.430  4034 22200 I WS1_SecureChannelUtil: Decrypted sc-key successfully! 2317/2355
+10-28 21:05:00.431  4034 22200 I WS1_AWSecureMsg: ResponseType  [application/octet-stream; version=3] with size 1805
+10-28 21:05:00.433  4034 22200 I WS1_SecureChannelUtil: Secure Channel is already protected!
+10-28 21:05:00.453  4034 22200 I WS1_SecureChannelUtil: Decrypted sc-key successfully! 2317/2355
+10-28 21:05:00.472  4034 22200 I WS1_SecureChannelUtil: Decrypted sc-key successfully! 2317/2355
+10-28 21:05:00.472  4034 22200 I WS1_OpenSSLCryptUtil: Is r-key null ? false
+10-28 21:05:00.468  4034  4034 W Q-Sampler: type=1400 audit(0.0:7233): avc:  denied  { nlmsg_readpriv } for  scontext=u:r:untrusted_app_34:s0:c70,c257,c512,c768 tcontext=u:r:untrusted_app_34:s0:c70,c257,c512,c768 tclass=netlink_route_socket permissive=0 app=com.airwatch.androidagent
+10-28 21:05:00.473  4034 22200 I WS1_OpenSSLCryptUtil: Length of r-key : 2317
+10-28 21:05:00.477  4034 22200 I WS1_TamperChecker: CompDetectionResponse is 4
+10-28 21:05:00.477  4034 22200 I WS1_TamperChecker: DI status=false
+10-28 21:05:00.478  4034 22200 I WS1_TamperChecker: At launch: Root status=false
+10-28 21:05:00.478  4034 22200 I WS1_TamperChecker: At post-launch: Root status=false
+10-28 21:05:00.478  4034 22200 I WS1_TamperChecker: Bootloader tamper status=true
+10-28 21:05:00.479  4034 22200 I WS1_TamperChecker: Root status=false
+10-28 21:05:00.479  4034 22200 W WS1_SysUtil: There is an error while reading androidboot.flash.locked
+10-28 21:05:00.480  4034 22200 W libc    : Access denied finding property "ro.product.bootimage.brand"
+10-28 21:05:00.481  4034 22200 I NativeSecChnl: Finding SDK Logger class!
+10-28 21:05:00.482  4034 22200 W NativeSecChnl: SDK Logger class is invalid, logging via android logger!
+10-28 21:05:00.482  4034 22200 D NativeSecChnl: RSA byte array length = 2317
+10-28 21:05:00.482  4034 22200 I NativeSecChnl: Finding SDK Logger class!
+10-28 21:05:00.483  4034 22200 W NativeSecChnl: SDK Logger class is invalid, logging via android logger!
+10-28 21:05:00.483  4034 22200 I NativeSecChnl: CMS Extract enveloped CMS, Decrypt Enveloped Cms Start
+10-28 21:05:00.476  4034  4034 W Q-Sampler: type=1400 audit(0.0:7234): avc:  denied  { read } for  name="u:object_r:build_bootimage_prop:s0" dev="tmpfs" ino=129 scontext=u:r:untrusted_app_34:s0:c70,c257,c512,c768 tcontext=u:object_r:build_bootimage_prop:s0 tclass=file permissive=0 app=com.airwatch.androidagent
+10-28 21:05:00.510  4034 22200 I WS1_AWSecureMsg: SC response is decrypted - size: 22
+10-28 21:05:00.511  4034 22200 I AW_Native: Finding SDK Logger class!
+10-28 21:05:00.511  4034 22200 W AW_Native: SDK Logger class is invalid, logging via android logger!
+10-28 21:05:00.511  4034 22200 I AW_Native: sha1Algo 
+10-28 21:05:00.511  4034 22200 I AW_Native: Finding SDK Logger class!
+10-28 21:05:00.511  4034 22200 W AW_Native: SDK Logger class is invalid, logging via android logger!
+10-28 21:05:00.511  4034 22200 D AW_Native: aw_Generate_Seed_Hash : cleaning up inByte.
+10-28 21:05:00.512  4034 22200 I WS1_SecureChannelUtil: SC: DI thumbprint: BFB70F10035251F9454EA9D74D34BFC20DA7131E/7C319922CAA243FCC4FA2557846C67BEF5634E02382D128BDD11490966D3BCE9
+10-28 21:05:00.513  4034 22200 I WS1_SecureChannelUtil: SC: DI cert updated at: 1781885515595, validity: Fri Jun 19 16:11:55 UTC 2026/Mon Jun 16 16:11:55 UTC 2036
+10-28 21:05:00.514  4034 22200 I WS1_SCEventListener: SC Decrypt - Done
+10-28 21:05:00.514  4034 22200 E WS1_InterrogatorMessage: Interrogator not ready. reserved flag: -64
+10-28 21:05:00.514  4034 22200 I WS1_Aggregator: SendHTTP: sample files with status : 200
+10-28 21:05:00.514  4034 22200 W WS1_AndroidEnterpriseMigrationSampleNotifier: No callback set
+10-28 21:05:00.514  4034 22200 I WS1_Aggregator: Clearing reported sample files since data is uploaded to console
+10-28 21:05:00.515  4034 22200 I WS1_Aggregator: All reported sample files cleared
+10-28 21:05:00.527  1358  1358 I adbd    : adbd service requested 'shell:export ANDROID_LOG_TAGS="''"; exec logcat '-d''
+10-28 21:05:00.535  4034 22200 I WS1_Aggregator: Sample sent, so deleting the cache file sampleCache.1
+10-28 21:05:00.536  4034 22200 I WS1_Aggregator: Aggregator.aggregate END
+10-28 21:05:00.537  4034 22200 I WS1_SamplingExecutionHelper: release WakeLock, Idle mode = false

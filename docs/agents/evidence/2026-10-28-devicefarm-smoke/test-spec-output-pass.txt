@@ -1,0 +1,151 @@
+[DEVICEFARM] Setting up your device. This usually takes 2-3 minutes.
+[DEVICEFARM] ########### Start executing testspec ###########
+ 
+ 
+[DEVICEFARM] ########### Entering phase install ###########
+ 
+[DeviceFarm] echo "install phase start"
+install phase start
+[DeviceFarm] curl -fsSL -o /tmp/jdk17.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" || { echo "JDK DOWNLOAD FAILED"; exit 1; }
+[DeviceFarm] mkdir -p "$HOME/jdk17" && tar -xzf /tmp/jdk17.tar.gz -C "$HOME/jdk17" --strip-components=1 || { echo "JDK EXTRACT FAILED"; exit 1; }
+[DeviceFarm] export JAVA_HOME="$HOME/jdk17"
+[DeviceFarm] export PATH="$JAVA_HOME/bin:$PATH"
+[DeviceFarm] java -version || { echo "JAVA 17 NOT USABLE"; exit 1; }
+openjdk version "17.0.21" 2026-10-20
+OpenJDK Runtime Environment Temurin-17.0.21+9 (build 17.0.21+9)
+OpenJDK 64-Bit Server VM Temurin-17.0.21+9 (build 17.0.21+9, mixed mode, sharing)
+[DeviceFarm] curl -fsSL "https://get.maestro.mobile.dev" | bash
+which: no maestro in (/home/device-farm/jdk17/bin:/tmp/devicefarm-workspace/execution-am8nrnyp/shared-jmc6w95h/android-home-g45r5oi8/platform-tools:/tmp/devicefarm-workspace/execution-am8nrnyp/shared-jmc6w95h/android-home-g45r5oi8/build-tools/34.0.0:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/tmp/devicefarm-workspace/execution-am8nrnyp/shared-jmc6w95h/android-home-g45r5oi8/bundletool:/home/device-farm/.gems/bin:/home/device-farm/.devicefarm_cli/ruby/bin:/home/device-farm/.local/bin:/home/device-farm/.devicefarm_cli/python/bin:/home/device-farm/.npm-packages/bin:/home/device-farm/.devicefarm_cli/node/bin:/home/device-farm/.devicefarm_cli/java/bin:/home/device-farm/.devicefarm_cli/bin:/var/devicefarm/runtime/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin)
+* Create distribution directories...
+* Downloading...
+#=#=#                                                                         
+##O#-#                                                                        
+##O=#  #                                                                      
+
+##                                                                         3.0%
+########                                                                  11.3%
+##############                                                            20.5%
+#####################                                                     29.5%
+###########################                                               38.2%
+#################################                                         46.4%
+######################################                                    54.0%
+###########################################                               60.0%
+##################################################                        70.5%
+##########################################################                80.9%
+#################################################################         91.5%
+#######################################################################   99.3%
+######################################################################## 100.0%
+* Checking archive integrity...
+* Extracting archive...
+* Remove previous installation (if any)
+* Copying archive contents...
+* Cleaning up...
+
+Attempt update of interactive bash profile on regular UNIX...
+Adding maestro to your PATH in /home/device-farm/.bashrc
+Adding maestro to your PATH in /home/device-farm/.zshrc
+
+Installation was successful!
+Please open a new terminal OR run the following in the existing one:
+
+    export PATH="$PATH":"$HOME/.maestro/bin"
+
+Then run the following command:
+
+    maestro
+
+Welcome to Maestro!
+[DeviceFarm] export PATH="$PATH:$HOME/.maestro/bin"
+[DeviceFarm] maestro --version || { echo "MAESTRO INSTALL FAILED"; exit 1; }
+Anonymous analytics enabled. To opt out, set MAESTRO_CLI_NO_ANALYTICS environment variable to any value before running Maestro.
+
+???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+?                                                                                                                                         ?
+?   Try out our new Analyze with Ai feature.                                                                                              ?
+?                                                                                                                                         ?
+?   See what's new:                                                                                                                       ?
+?   > https://maestro.mobile.dev/cli/test-suites-and-reports#analyze                                                                      ?
+?   Analyze command:                                                                                                                      ?
+?   $ maestro test flow-file.yaml --analyze | bash                                                                                        ?
+?                                                                                                                                         ?
+?   To disable this notification, set MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED environment variable to "true" before running Maestro.   ?
+?                                                                                                                                         ?
+???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+
+2.12.0
+ 
+[DEVICEFARM] ########### Entering phase pre_test ###########
+ 
+[DeviceFarm] echo "pre_test phase start"
+pre_test phase start
+[DeviceFarm] ls -la "$DEVICEFARM_TEST_PACKAGE_PATH"
+total 0
+drwxrwxrwx  4 995 1001  31 Oct 28 21:51 .
+drwxr-xr-x 10 995 1001 218 Oct 28 21:51 ..
+drwxrwxrwx  2 995 1001  63 Oct 28 21:51 apks
+drwxrwxrwx  2 995 1001 255 Oct 28 21:51 flows
+[DeviceFarm] adb devices -l
+List of devices attached
+57281FDCR00AQV         device usb:2-1 product:frankel model:Pixel_10 device:frankel transport_id:3
+
+[DeviceFarm] DEVICE_UDID="${DEVICEFARM_DEVICE_UDID:-$(adb devices | sed -n 's/^\([A-Za-z0-9._-]*\)[[:space:]].*device.*/\1/p' | head -1)}"
+[DeviceFarm] echo "device udid = $DEVICE_UDID"
+device udid = 57281FDCR00AQV
+[DeviceFarm] sha256sum "$DEVICEFARM_TEST_PACKAGE_PATH"/apks/*.apk
+2268f62a25a2003ac97845146d475d5c93508cfceb0abd804a175a7332f2b815  /tmp/devicefarm-workspace/execution-am8nrnyp/test-package-sbfxdwo7/apks/android-next-mvp.apk
+fc9f5051679287230307aa8d97c0c91fcda9ace240b002f43794d9e4ebd46be6  /tmp/devicefarm-workspace/execution-am8nrnyp/test-package-sbfxdwo7/apks/android-next-mvpb.apk
+[DeviceFarm] adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvp.apk"
+Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.tpov.schoolquiz.mvp signatures do not match newer version; ignoring!]
+[DeviceFarm] export INSTALL_MVPB="${INSTALL_MVPB:-0}"
+[DeviceFarm] export MAESTRO_FONT_SCALE="${MAESTRO_FONT_SCALE:-}"
+[DeviceFarm] if [ "$INSTALL_MVPB" = "1" ]; then adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvpb.apk"; fi
+[DeviceFarm] adb shell settings put global window_animation_scale 0
+[DeviceFarm] adb shell settings put global transition_animation_scale 0
+[DeviceFarm] adb shell settings put global animator_duration_scale 0
+[DeviceFarm] if [ -n "$MAESTRO_FONT_SCALE" ]; then adb shell settings put system font_scale "$MAESTRO_FONT_SCALE"; fi
+[DeviceFarm] curl -s -o /dev/null -w "vps-8080 %{http_code}\n" http://204.44.66.27:8080/ || true
+vps-8080 200
+[DeviceFarm] {'NET_OK=0; for i in $(seq 1 18); do if adb shell ping -c 1 -W 3 204.44.66.27 >/dev/null 2>&1; then NET_OK=1; echo "device network ready (try $i)"; break; fi; sleep 5; done; [ "$NET_OK" = "1" ] || echo "WARN': 'device cannot ping rig, continuing anyway"'}
+/tmp/devicefarm-workspace/execution-am8nrnyp/shell-script-atqqw3zj/shell_script.sh: line 63: {NET_OK=0; for i in $(seq 1 18); do if adb shell ping -c 1 -W 3 204.44.66.27 >/dev/null 2>&1; then NET_OK=1; echo "device network ready (try $i)"; break; fi; sleep 5; done; [ "$NET_OK" = "1" ] || echo "WARN:: No such file or directory
+[DeviceFarm] adb logcat -c
+ 
+[DEVICEFARM] ########### Entering phase test ###########
+ 
+[DeviceFarm] export JAVA_HOME="$HOME/jdk17"
+[DeviceFarm] export PATH="$JAVA_HOME/bin:$PATH:$HOME/.maestro/bin"
+[DeviceFarm] export MAESTRO_ANALYTICS_ENABLED=false
+[DeviceFarm] export MAESTRO_FLOW="${MAESTRO_FLOW:-flows/02-request-sync.yaml}"
+[DeviceFarm] echo "test flow = $MAESTRO_FLOW"
+test flow = flows/02-request-sync.yaml
+[DeviceFarm] cd "$DEVICEFARM_TEST_PACKAGE_PATH"
+[DeviceFarm] set -o pipefail
+[DeviceFarm] maestro test "$MAESTRO_FLOW" 2>&1 | tee "$DEVICEFARM_LOG_DIR/maestro-stdout.log" || { echo "MAESTRO FLOW FAILED"; exit 1; }
+Running on 57281FDCR00AQV
+ > Flow Isolated MVP manual synchronization
+Launch app "com.tpov.schoolquiz.mvp"... COMPLETED
+Assert that "HOME QUESTS" is visible... COMPLETED
+Tap on "Open menu"... COMPLETED
+Assert that "SYNC NOW" is visible... COMPLETED
+Tap on "SYNC NOW"... COMPLETED
+Assert that "Last sync: .*" is visible... COMPLETED
+Assert that "Not synced yet" is not visible... COMPLETED
+Take screenshot sync-requested... COMPLETED
+ 
+[DEVICEFARM] ########### Entering phase post_test ###########
+ 
+[DeviceFarm] echo "post_test — сбор evidence"
+post_test — сбор evidence
+[DeviceFarm] export JAVA_HOME="$HOME/jdk17"
+[DeviceFarm] export PATH="$JAVA_HOME/bin:$PATH:$HOME/.maestro/bin"
+[DeviceFarm] maestro --version > "$DEVICEFARM_LOG_DIR/maestro-version.txt" 2>/dev/null || true
+[DeviceFarm] if [ -n "${MAESTRO_FONT_SCALE:-}" ]; then adb shell settings put system font_scale 1.0; fi
+[DeviceFarm] adb logcat -d > "$DEVICEFARM_LOG_DIR/logcat.txt" 2>/dev/null || true
+[DeviceFarm] cp -r "$HOME/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests" 2>/dev/null || true
+[DeviceFarm] cp -r "$DEVICEFARM_TEST_PACKAGE_PATH/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests-cwd" 2>/dev/null || true
+ 
+[DEVICEFARM] ########### Finish executing testspec ###########
+ 
+[DEVICEFARM] ########### Setting upload permissions ###########
+ 
+ 
+[DEVICEFARM] Tearing down your device. Your tests report will come shortly.

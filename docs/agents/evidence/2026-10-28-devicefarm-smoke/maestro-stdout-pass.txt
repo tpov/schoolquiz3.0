@@ -1,0 +1,10 @@
+Running on 57281FDCR00AQV
+ > Flow Isolated MVP manual synchronization
+Launch app "com.tpov.schoolquiz.mvp"... COMPLETED
+Assert that "HOME QUESTS" is visible... COMPLETED
+Tap on "Open menu"... COMPLETED
+Assert that "SYNC NOW" is visible... COMPLETED
+Tap on "SYNC NOW"... COMPLETED
+Assert that "Last sync: .*" is visible... COMPLETED
+Assert that "Not synced yet" is not visible... COMPLETED
+Take screenshot sync-requested... COMPLETED

@@ -1,0 +1,135 @@
+[DEVICEFARM] Setting up your device. This usually takes 2-3 minutes.
+[DEVICEFARM] ########### Start executing testspec ###########
+ 
+ 
+[DEVICEFARM] ########### Entering phase install ###########
+ 
+[DeviceFarm] echo "install phase start"
+install phase start
+[DeviceFarm] apt-get update -y
+/tmp/devicefarm-workspace/execution-wt0o9fdj/shell-script-x17ugg6e/shell_script.sh: line 11: apt-get: command not found
+[DeviceFarm] apt-get install -y unzip jq
+/tmp/devicefarm-workspace/execution-wt0o9fdj/shell-script-x17ugg6e/shell_script.sh: line 13: apt-get: command not found
+[DeviceFarm] curl -fsSL "https://get.maestro.mobile.dev" | bash
+which: no maestro in (/tmp/devicefarm-workspace/execution-wt0o9fdj/shared-98t__7w7/android-home-7n2dveph/platform-tools:/tmp/devicefarm-workspace/execution-wt0o9fdj/shared-98t__7w7/android-home-7n2dveph/build-tools/34.0.0:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/tmp/devicefarm-workspace/execution-wt0o9fdj/shared-98t__7w7/android-home-7n2dveph/bundletool:/home/device-farm/.gems/bin:/home/device-farm/.devicefarm_cli/ruby/bin:/home/device-farm/.local/bin:/home/device-farm/.devicefarm_cli/python/bin:/home/device-farm/.npm-packages/bin:/home/device-farm/.devicefarm_cli/node/bin:/home/device-farm/.devicefarm_cli/java/bin:/home/device-farm/.devicefarm_cli/bin:/var/devicefarm/runtime/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin)
+* Create distribution directories...
+* Downloading...
+#=#=#                                                                         
+##O#-#                                                                        
+
+                                                                           0.1%
+####                                                                       6.0%
+########                                                                  12.3%
+##############                                                            19.9%
+##################                                                        26.4%
+#######################                                                   32.4%
+############################                                              39.0%
+#################################                                         46.0%
+#####################################                                     52.8%
+########################################                                  55.8%
+############################################                              61.4%
+###############################################                           65.4%
+#################################################                         69.0%
+######################################################                    75.4%
+##########################################################                81.0%
+##############################################################            87.4%
+###################################################################       93.9%
+#######################################################################   99.3%
+######################################################################## 100.0%
+* Checking archive integrity...
+* Extracting archive...
+* Remove previous installation (if any)
+* Copying archive contents...
+* Cleaning up...
+
+Attempt update of interactive bash profile on regular UNIX...
+Adding maestro to your PATH in /home/device-farm/.bashrc
+Adding maestro to your PATH in /home/device-farm/.zshrc
+
+Installation was successful!
+Please open a new terminal OR run the following in the existing one:
+
+    export PATH="$PATH":"$HOME/.maestro/bin"
+
+Then run the following command:
+
+    maestro
+
+Welcome to Maestro!
+[DeviceFarm] export PATH="$PATH:$HOME/.maestro/bin"
+[DeviceFarm] maestro --version
+
+ERROR: Java 17 or higher is required.
+
+Please update Java, then try again.
+To check your Java version, run: java -version
+
+See https://maestro.dev/blog/introducing-maestro-2-0-0 for more details.
+
+ 
+[DEVICEFARM] ########### Entering phase pre_test ###########
+ 
+[DeviceFarm] echo "pre_test phase start"
+pre_test phase start
+[DeviceFarm] ls -la "$DEVICEFARM_TEST_PACKAGE_PATH"
+total 0
+drwxrwxrwx  4 995 1001  31 Oct 28 21:04 .
+drwxr-xr-x 10 995 1001 218 Oct 28 21:04 ..
+drwxrwxrwx  2 995 1001  63 Oct 28 21:04 apks
+drwxrwxrwx  2 995 1001 255 Oct 28 21:04 flows
+[DeviceFarm] adb devices -l
+List of devices attached
+57281FDCR00BAK         device usb:2-1 product:frankel model:Pixel_10 device:frankel transport_id:3
+
+[DeviceFarm] DEVICE_UDID="${DEVICEFARM_DEVICE_UDID:-$(adb devices | sed -n 's/^\([A-Za-z0-9._-]*\)[[:space:]].*device.*/\1/p' | head -1)}"
+[DeviceFarm] echo "device udid = $DEVICE_UDID"
+device udid = 57281FDCR00BAK
+[DeviceFarm] sha256sum "$DEVICEFARM_TEST_PACKAGE_PATH"/apks/*.apk
+2268f62a25a2003ac97845146d475d5c93508cfceb0abd804a175a7332f2b815  /tmp/devicefarm-workspace/execution-wt0o9fdj/test-package-m4ao8qjl/apks/android-next-mvp.apk
+fc9f5051679287230307aa8d97c0c91fcda9ace240b002f43794d9e4ebd46be6  /tmp/devicefarm-workspace/execution-wt0o9fdj/test-package-m4ao8qjl/apks/android-next-mvpb.apk
+[DeviceFarm] adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvp.apk"
+Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.tpov.schoolquiz.mvp signatures do not match newer version; ignoring!]
+[DeviceFarm] export INSTALL_MVPB="${INSTALL_MVPB:-0}"
+[DeviceFarm] export MAESTRO_FONT_SCALE="${MAESTRO_FONT_SCALE:-}"
+[DeviceFarm] if [ "$INSTALL_MVPB" = "1" ]; then adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvpb.apk"; fi
+[DeviceFarm] adb shell settings put global window_animation_scale 0
+[DeviceFarm] adb shell settings put global transition_animation_scale 0
+[DeviceFarm] adb shell settings put global animator_duration_scale 0
+[DeviceFarm] if [ -n "$MAESTRO_FONT_SCALE" ]; then adb shell settings put system font_scale "$MAESTRO_FONT_SCALE"; fi
+[DeviceFarm] curl -s -o /dev/null -w "vps-8080 %{http_code}\n" http://204.44.66.27:8080/ || true
+vps-8080 200
+[DeviceFarm] adb logcat -c
+ 
+[DEVICEFARM] ########### Entering phase test ###########
+ 
+[DeviceFarm] export PATH="$PATH:$HOME/.maestro/bin"
+[DeviceFarm] export MAESTRO_ANALYTICS_ENABLED=false
+[DeviceFarm] export MAESTRO_FLOW="${MAESTRO_FLOW:-flows/02-request-sync.yaml}"
+[DeviceFarm] echo "test flow = $MAESTRO_FLOW"
+test flow = flows/02-request-sync.yaml
+[DeviceFarm] cd "$DEVICEFARM_TEST_PACKAGE_PATH"
+[DeviceFarm] maestro test "$MAESTRO_FLOW" 2>&1 | tee "$DEVICEFARM_LOG_DIR/maestro-stdout.log"
+
+ERROR: Java 17 or higher is required.
+
+Please update Java, then try again.
+To check your Java version, run: java -version
+
+See https://maestro.dev/blog/introducing-maestro-2-0-0 for more details.
+
+ 
+[DEVICEFARM] ########### Entering phase post_test ###########
+ 
+[DeviceFarm] echo "post_test — сбор evidence"
+post_test — сбор evidence
+[DeviceFarm] if [ -n "${MAESTRO_FONT_SCALE:-}" ]; then adb shell settings put system font_scale 1.0; fi
+[DeviceFarm] adb logcat -d > "$DEVICEFARM_LOG_DIR/logcat.txt" 2>/dev/null || true
+[DeviceFarm] cp -r "$DEVICEFARM_TEST_PACKAGE_PATH/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests" 2>/dev/null || true
+[DeviceFarm] cp -r "$HOME/.maestro" "$DEVICEFARM_LOG_DIR/maestro-home" 2>/dev/null || true
+ 
+[DEVICEFARM] ########### Finish executing testspec ###########
+ 
+[DEVICEFARM] ########### Setting upload permissions ###########
+ 
+ 
+[DEVICEFARM] Tearing down your device. Your tests report will come shortly.
