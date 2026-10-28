@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ProposalOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.LessonProposalQuoteRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ErrorReportProposal
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.NewLessonProposal
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.LessonProposalRepository
 import kotlinx.coroutines.CancellationException
@@ -21,6 +22,18 @@ class LessonProposalRepositoryImpl(
     override suspend fun queueErrorReportProposal(proposal: ErrorReportProposal): Result<Unit> =
         try {
             outbox.enqueue(ProposalOutboxWriter.recordErrorReport(proposal))
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Result.failure(e)
+        }
+
+    override suspend fun queueNewLessonProposal(proposal: NewLessonProposal): Result<Unit> =
+        try {
+            outbox.enqueue(ProposalOutboxWriter.recordNewLesson(proposal))
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e

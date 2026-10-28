@@ -290,7 +290,7 @@ slug = "proposal-new-lesson"
 title = "Quest creation with a target path in another author's course and «Предложить автору» (CAP-27): approval places the lesson in the course with the proposer as its author; evidence docs/agents/evidence/<date>-proposal-new-lesson/"
 covers = ["CAP-27"]
 after = [{ story = "4.21", needs = "proposal record" }]
-status = "ready" # 2026-10-26: added by sprint-change-proposal-2026-10-26
+status = "in-progress" # 2026-10-28: серверная половина — applyNewLessonProposal в диспетчере решения (размещение под целевой темой, автор урока — предложивший, поля публикации, версии entity-version, ключи, sync-changes; сюита в lesson-proposals.test.js 24/24). Домен/data клиента готовы (SubmitNewLessonProposalUseCase, ProposalOutboxWriter.recordNewLesson, ProposalReportWireSentinelTest NEW_LESSON-кейс). Открытый хвост: клиентский вход (выбор целевого пути в создании квеста). # 2026-10-26: added by sprint-change-proposal-2026-10-26
 
 [[story]]
 id = "4.25"

@@ -425,6 +425,84 @@ test("одобренная правка копии уезжает в приме�
   assert.equal(record.status, PROPOSAL_STATUS.CHECK_PASSED, "применение атомарно: отказ — записи нет");
 });
 
+test("одобренный новый урок встаёт в курс под целевой темой — его автор предложивший (4.24)", async () => {
+  const payload = JSON.stringify({
+    type: "SingleChoice", id: "qn1", difficulty: "EASY", text: "2+2?", imageUrl: null,
+    options: [{id: "a", text: "три"}, {id: "b", text: "четыре"}], correctOptionId: "b",
+  });
+  store.reset(proposalWorld({
+    "themes/theme-1": {sectionId: "sec-1", version: 2},
+    "lesson_proposals/prop-new-1": checkedProposal({
+      proposalId: "prop-new-1",
+      kind: "NEW_LESSON",
+      target: {catalogId: "cat-1", questId: QUEST, sectionId: "sec-1", themeId: "theme-1"},
+      baseRevision: 7,
+      payload: {
+        lesson: {id: "lesson_new", title: "Свой урок"},
+        questions: [{
+          id: "qn1", lessonId: "lesson_new", type: "SingleChoice", language: "ru",
+          languageLevel: 0, difficulty: "EASY", order: 0, text: "2+2?", payload,
+        }],
+      },
+    }),
+  }));
+  const result = await decide(AUTHOR, {proposalId: "prop-new-1", decision: "APPROVE", comment: "берём"});
+  assert.equal(result.status, PROPOSAL_STATUS.APPROVED);
+  const lesson = store.documents.get("lessons/lesson_new");
+  assert.equal(lesson.authorUid, PROPOSER, "автор урока — предложивший (CAP-27)");
+  assert.equal(lesson.themeId, "theme-1");
+  assert.equal(lesson.order, 0, "первый урок в теме");
+  assert.equal(lesson.reviewSubmissionId, "prop-new-1");
+  assert.ok(lesson.reviewApprovedAtMs > 0, "поля публикации делают урок арено-допустимым");
+  assert.ok(store.documents.get("questions/qn1"), "вопрос едет той же транзакцией");
+  assert.ok([...store.documents.keys()].some((path) => path.startsWith("question_keys/lesson_new")),
+    "ключи урока собираются рядом с вопросами");
+  assert.ok(store.documents.get("themes/theme-1").version >= 1, "версия темы поднята");
+  const record = store.documents.get(`${PROPOSALS_COLLECTION}/prop-new-1`);
+  assert.equal(record.status, PROPOSAL_STATUS.APPROVED);
+  assert.equal(record.decision.comment, "берём");
+});
+
+test("устаревший новый урок применению не подлежит — STALE (4.24)", async () => {
+  store.reset(proposalWorld({
+    "themes/theme-1": {sectionId: "sec-1", version: 5},
+    "lesson_proposals/prop-new-1": checkedProposal({
+      proposalId: "prop-new-1",
+      kind: "NEW_LESSON",
+      target: {catalogId: "cat-1", questId: QUEST, sectionId: "sec-1", themeId: "theme-1"},
+      baseRevision: 2,
+      payload: {lesson: {id: "lesson_new", title: "Свой урок"}, questions: [
+        {id: "qn1", lessonId: "lesson_new", type: "SingleChoice", language: "ru",
+         languageLevel: 0, difficulty: "EASY", order: 0, text: "2+2?", payload: "{}"},
+      ]},
+    }),
+  }));
+  await assert.rejects(decide(AUTHOR, {proposalId: "prop-new-1", decision: "APPROVE"}),
+    /PROPOSAL_STALE/);
+  assert.ok(!store.documents.get("lessons/lesson_new"));
+});
+
+test("уехавший путь темы отказывает применением, а не размещением (4.24)", async () => {
+  store.reset(proposalWorld({
+    "sections/sec-2": {questId: "quest-other"},
+    "themes/theme-1": {sectionId: "sec-2", version: 2},
+    "lesson_proposals/prop-new-1": checkedProposal({
+      proposalId: "prop-new-1",
+      kind: "NEW_LESSON",
+      target: {catalogId: "cat-1", questId: QUEST, sectionId: "sec-1", themeId: "theme-1"},
+      baseRevision: 2,
+      payload: {lesson: {id: "lesson_new", title: "Свой урок"}, questions: [
+        {id: "qn1", lessonId: "lesson_new", type: "SingleChoice", language: "ru",
+         languageLevel: 0, difficulty: "EASY", order: 0, text: "2+2?", payload: "{}"},
+      ]},
+    }),
+  }));
+  await assert.rejects(decide(AUTHOR, {proposalId: "prop-new-1", decision: "APPROVE"}),
+    (error) => error.code === "not-found",
+    "уехавшая тема неотличима от отсутствующей на сверкe решения");
+  assert.ok(!store.documents.get("lessons/lesson_new"));
+});
+
 test("форма решения: неизвестный исход, битый id и длинный комментарий отвергаются", async () => {
   await seedChecked();
   await assert.rejects(decide(AUTHOR, {proposalId: "prop-decide-1", decision: "MAYBE"}),

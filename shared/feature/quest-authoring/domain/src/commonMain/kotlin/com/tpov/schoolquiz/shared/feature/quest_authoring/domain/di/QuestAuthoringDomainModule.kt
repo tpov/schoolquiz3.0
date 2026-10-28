@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.Decide
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestProposalsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.QuoteLessonProposalFeeUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitErrorReportProposalUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitNewLessonProposalUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchReviewDecisionsUseCase
@@ -33,6 +34,7 @@ val questAuthoringDomainModule =
         // «Сообщить об ошибке» — предложение автору (4.22, CAP-6/27): подача в общую очередь и
         // цитата платы до отправки (UX-23). Учебная поверхность — экран результата урока.
         factory { SubmitErrorReportProposalUseCase(get(), get(), get()) }
+        factory { SubmitNewLessonProposalUseCase(get(), get(), get()) }
         factory { QuoteLessonProposalFeeUseCase(get()) }
         // «Предложения» (4.25, UX-22): страница прав и решение автора тем же приёмником 4.21.
         factory { FetchQuestProposalsUseCase(get()) }

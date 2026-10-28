@@ -3,6 +3,10 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.data
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.outbox.ProposalOutboxWriter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ErrorReportProposal
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.NewLessonProposal
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.NewLessonProposalQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.NewLessonProposalTarget
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitNewLessonProposalCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.SubmitErrorReportProposalCommand
 import java.io.File
 import kotlin.test.Test

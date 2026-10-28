@@ -6172,6 +6172,121 @@ async function applyCopyEditProposal(proposal, uid, comment, now) {
 }
 
 /**
+ * Применение одобренного нового урока (AD-33, история 4.24): CAP-27 — урок встаёт в курс под
+ * целевой темой, его автор — предложивший. Ровно проверенная редакция: payload уже прошёл
+ * конвейер (4.21), применение модель не зовёт и содержание не правит. Цепочка курса
+ * перечитывается до транзакции: тема должна по-прежнему висеть на заявленном пути, иначе —
+ * именованный отказ (путь уехал). Версии — из entity-version; ключи урока собираются рядом
+ * (вторая половина каждого вопроса там, где её ищет расчёт попыток); журналы — по узлам
+ * публикации; доказательство проверки — поля публикации в документе урока (4.19), поэтому
+ * размещённый урок арено-допустим. Фонд 1000 сгорает догоном на чтении (4.25).
+ */
+async function applyNewLessonProposal(proposal, uid, comment, now) {
+  const target = proposal.target || {};
+  const catalogId = stringValue(target.catalogId);
+  const questId = stringValue(target.questId);
+  const sectionId = stringValue(target.sectionId);
+  const themeId = stringValue(target.themeId);
+  if (!catalogId || !questId || !sectionId || !themeId) {
+    throw new HttpsError("failed-precondition", "PROPOSAL_TARGET_MISSING");
+  }
+  const themeSnapshot = await db.doc(`themes/${themeId}`).get();
+  const theme = themeSnapshot.exists ? themeSnapshot.data() || {} : null;
+  if (!theme || stringValue(theme.sectionId) !== sectionId) {
+    throw new HttpsError("failed-precondition", "PROPOSAL_TARGET_MOVED");
+  }
+  const sectionSnapshot = await db.doc(`sections/${sectionId}`).get();
+  const section = sectionSnapshot.exists ? sectionSnapshot.data() || {} : null;
+  if (!section || stringValue(section.questId) !== questId) {
+    throw new HttpsError("failed-precondition", "PROPOSAL_TARGET_MOVED");
+  }
+  const questSnapshot = await db.doc(`quests/${questId}`).get();
+  const quest = questSnapshot.exists ? questSnapshot.data() || {} : null;
+  if (!quest || !stringValue(quest.authorUid)) {
+    throw new HttpsError("not-found", "Proposal target course could not be found");
+  }
+  const payload = proposal.payload || {};
+  const lesson = payload.lesson || {};
+  const lessonId = stringValue(lesson.id);
+  const lessonTitle = stringValue(lesson.title);
+  const questions = Array.isArray(payload.questions) ? payload.questions : [];
+  if (!lessonId || !lessonTitle || questions.length === 0) {
+    throw new HttpsError("failed-precondition", "PROPOSAL_PAYLOAD_INCOMPLETE");
+  }
+  // Порядок — следующим в теме; версии — по дереву (тема и квест меняются вместе с уроком).
+  const siblings = await db.collection("lessons").where("themeId", "==", themeId).get();
+  const maxOrder = (siblings.docs || []).reduce(
+    (max, doc) => Math.max(max, numberValue((doc.data() || {}).order, 0)), -1);
+  const themeVersion = numberValue(theme.version, 0);
+  const questVersion = numberValue(quest.version, 0);
+  const lessonPath = `lessons/${lessonId}`;
+  const versions = {
+    [`themes/${themeId}`]: themeVersion,
+    [`quests/${questId}`]: questVersion,
+  };
+  const proposalRef = db.collection(PROPOSALS_COLLECTION).doc(stringValue(proposal.proposalId));
+  await db.runTransaction(async (transaction) => {
+    transaction.set(db.doc(lessonPath), clean({
+      id: lessonId,
+      themeId,
+      title: lessonTitle,
+      order: maxOrder + 1,
+      version: nextVersionAtPath(versions, lessonPath),
+      lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
+      archived: false,
+      // Автор урока — предложивший (CAP-27; uid здесь — решающий владелец курса), автор
+      // курса прежний. Доказательство проверки — поля публикации (4.19): конвейер 4.21 уже
+      // отработал по этому содержимому.
+      authorUid: stringValue(proposal.proposerUid),
+      reviewSubmissionId: stringValue(proposal.proposalId),
+      reviewApprovedAtMs: now,
+      publishedAtMs: now,
+      updatedAtMs: now,
+    }));
+    transaction.set(db.doc(`themes/${themeId}`), clean({
+      version: nextVersionAtPath(versions, `themes/${themeId}`),
+      lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
+      updatedAtMs: now,
+    }), {merge: true});
+    for (const question of questions) {
+      const questionId = stringValue(question.id);
+      if (!questionId) throw new HttpsError("failed-precondition", "PROPOSAL_PAYLOAD_INCOMPLETE");
+      const path = `questions/${questionId}`;
+      transaction.set(db.doc(path), clean({
+        id: questionId,
+        lessonId,
+        text: stringValue(question.text),
+        payload: stringValue(question.payload),
+        language: stringValue(question.language),
+        languageLevel: numberValue(question.languageLevel, 0),
+        order: numberValue(question.order, 0),
+        version: nextVersionAtPath(versions, path),
+        lastModifiedAt: firestoreTypes.Timestamp.fromMillis(now),
+        archived: false,
+      }));
+      writeSyncChanges(transaction, db, {kind: "question", id: questionId, catalogId, lessonId}, now);
+    }
+    const keyDocuments = questionKeyDocuments(questions.map((question) => ({
+      ...question,
+      lessonId,
+    })));
+    for (const [path, data] of Object.entries(keyDocuments.documents)) {
+      transaction.set(db.doc(path), clean(data), {merge: true});
+    }
+    writeSyncChanges(transaction, db, {kind: "lesson", id: lessonId, catalogId}, now);
+    writeSyncChanges(transaction, db, {kind: "quest", id: questId, catalogId,
+      ownerUid: stringValue(quest.authorUid)}, now);
+    transaction.set(proposalRef, clean({
+      status: PROPOSAL_STATUS.APPROVED,
+      decision: {decision: "APPROVE", comment, decidedByUid: uid, decidedAtMs: now},
+      decidedAtMs: now,
+      updatedAtMs: now,
+    }), {merge: true});
+  });
+  return {lessonId, lessonVersion: nextVersionAtPath(versions, lessonPath)};
+}
+
+/**
  * Решение автора по предложению (UX-22 «Предложения», AD-33): одобрить или отклонить с
  * комментарием. Право — владелец цели: чужое предложение неотличимо от отсутствующего. Применять
  * можно только проверенное и только по актуальной базе — STALE отказывает единым правилом для
@@ -6231,7 +6346,9 @@ exports.decideLessonProposal = onCall(CALLABLE_OPTIONS, async (request) => {
     return {proposalId, status: PROPOSAL_STATUS.APPROVED, ...applied};
   }
   if (proposal.kind === "NEW_LESSON") {
-    throw new HttpsError("failed-precondition", "PROPOSAL_APPLY_PENDING");
+    const applied = await applyNewLessonProposal(proposal, uid, comment, now);
+    await notifyUser(PUSH_EVENTS.QUEST_PROPOSAL_DECIDED, proposalId, proposal.proposerUid);
+    return {proposalId, status: PROPOSAL_STATUS.APPROVED, ...applied};
   }
   await db.runTransaction(async (transaction) => {
     // Одобренный отчёт помечает урок к исправлению; само содержимое урока не меняется (CAP-27).

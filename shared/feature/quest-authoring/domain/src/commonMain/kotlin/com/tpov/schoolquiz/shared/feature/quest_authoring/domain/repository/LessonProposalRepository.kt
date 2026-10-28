@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ErrorReportProposal
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.NewLessonProposal
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote
 
 /**
@@ -12,6 +13,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonPro
  */
 interface LessonProposalRepository {
     suspend fun queueErrorReportProposal(proposal: ErrorReportProposal): Result<Unit>
+
+    suspend fun queueNewLessonProposal(proposal: NewLessonProposal): Result<Unit>
 
     suspend fun quoteProposalFee(
         kind: String,
