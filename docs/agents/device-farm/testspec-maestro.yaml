@@ -63,6 +63,10 @@ phases:
       - if [ -n "$MAESTRO_FONT_SCALE" ]; then adb shell settings put system font_scale "$MAESTRO_FONT_SCALE"; fi
       # Диагностика сети — тест-хост видит демо-риг VPS? (устройство ходит своим стеком)
       - curl -s -o /dev/null -w "vps-8080 %{http_code}\n" http://204.44.66.27:8080/ || true
+      # Готовность сети УСТРОЙСТВА до запуска флоу: первый прогон показал,
+      # что приложение стартует раньше WiFi (Firestore: ENETUNREACH) и канал
+      # уходит в длинный retry-backoff — ждём пинга рига с телефона.
+      - NET_OK=0; for i in $(seq 1 18); do if adb shell ping -c 1 -W 3 204.44.66.27 >/dev/null 2>&1; then NET_OK=1; echo "device network ready (try $i)"; break; fi; sleep 5; done; [ "$NET_OK" = "1" ] || echo "WARN: device cannot ping rig, continuing anyway"
       - adb logcat -c
 
   test:
@@ -88,9 +92,11 @@ phases:
       # Вернуть устройству исходное состояние.
       - if [ -n "${MAESTRO_FONT_SCALE:-}" ]; then adb shell settings put system font_scale 1.0; fi
       - adb logcat -d > "$DEVICEFARM_LOG_DIR/logcat.txt" 2>/dev/null || true
-      # Отчёты Maestro (скриншоты шагов, junit-xml) — из cwd тест-фазы.
-      # Установку Maestro ($HOME/.maestro, ~350 МБ джарников) в артефакты НЕ копируем.
-      - cp -r "$DEVICEFARM_TEST_PACKAGE_PATH/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests" 2>/dev/null || true
+      # Отчёты Maestro (скриншоты шагов, junit-xml) — Maestro пишет их в
+      # $HOME/.maestro/tests (cwd-путь — запасной). Установку Maestro
+      # (~350 МБ джарников) в артефакты НЕ копируем.
+      - cp -r "$HOME/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests" 2>/dev/null || true
+      - cp -r "$DEVICEFARM_TEST_PACKAGE_PATH/.maestro/tests" "$DEVICEFARM_LOG_DIR/maestro-tests-cwd" 2>/dev/null || true
 
 artifacts:
   - $DEVICEFARM_LOG_DIR
