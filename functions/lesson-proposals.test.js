@@ -511,3 +511,150 @@ test("форма решения: неизвестный исход, битый i
   await assert.rejects(decide(AUTHOR, {proposalId: "prop-decide-1", decision: "REJECT",
     comment: "x".repeat(2001)}), /comment is too long/);
 });
+
+// ─── применение COPY_EDIT: декларация сверяется с фактическим диффом (L-new-1, ретро 2026-10-28) ─
+
+function storedQuestion(id, text, version) {
+  return {
+    id, lessonId: LESSON, type: "SingleChoice", language: "ru", languageLevel: 0,
+    difficulty: "EASY", order: 0, text, imagePath: null, version,
+    payload: JSON.stringify({
+      type: "SingleChoice", id, difficulty: "EASY", text, imageUrl: null,
+      options: [{id: "a", text: "три"}, {id: "b", text: "четыре"}], correctOptionId: "b",
+    }),
+  };
+}
+
+function legacyLockedQuestion(version) {
+  return {
+    id: "q-legacy", lessonId: LESSON, type: "", language: "ru", languageLevel: 0,
+    difficulty: "EASY", order: 2, text: "легаси", imagePath: null, version,
+    payload: JSON.stringify({someLegacyDialect: true, answer: "а"}),
+  };
+}
+
+/** Авторская форма правки: публичная половина копии + отмеченный ответ (как собирает клиент 4.23). */
+function markedAuthorPayload(copy, id, optionIndex = 0) {
+  const row = copy.questions.find((question) => question.id === id);
+  const content = JSON.parse(row.payload);
+  content.correctOptionId = content.options[optionIndex].id;
+  return JSON.stringify(content);
+}
+
+function copyRow(copy, id) {
+  const row = copy.questions.find((question) => question.id === id);
+  return {...row};
+}
+
+function applyWorld(extra = {}) {
+  return proposalWorld({
+    [`lessons/${LESSON}`]: {id: LESSON, title: "Урок 1", authorUid: AUTHOR, version: 3,
+      questId: QUEST, catalogId: "cat-1"},
+    "questions/q1": storedQuestion("q1", "Сколько будет 2+2?", 3),
+    "questions/q2": storedQuestion("q2", "Сколько будет 3+3?", 2),
+    ...extra,
+  });
+}
+
+async function copyEditProposalPayload(build) {
+  store.reset(applyWorld());
+  const copy = await functions.buildLessonEditCopy.run({auth: {uid: PROPOSER}, data: {lessonId: LESSON}});
+  return {copy, payload: build(copy)};
+}
+
+function seedApply(payload, extra = {}) {
+  store.reset(applyWorld({
+    "lesson_proposals/prop-decide-1": checkedProposal({kind: "COPY_EDIT", payload}),
+    ...extra,
+  }));
+}
+
+test("честная правка применяется: меняется только заявленный вопрос, счёт — по диффу", async () => {
+  const {payload} = await copyEditProposalPayload((copy) => ({
+    lessonTitle: "Урок 1",
+    questions: [{...copyRow(copy, "q1"), payload: markedAuthorPayload(copy, "q1", 1)}],
+    editedQuestionIds: ["q1"],
+  }));
+  seedApply(payload);
+
+  const result = await decide(AUTHOR, {proposalId: "prop-decide-1", decision: "APPROVE", comment: "верно"});
+
+  assert.equal(result.status, PROPOSAL_STATUS.APPROVED);
+  assert.equal(result.changedQuestions, 1, "счёт применения — фактический дифф, не размер тела");
+  const applied = store.documents.get("questions/q1");
+  assert.equal(applied.payload, payload.questions[0].payload, "заявленный вопрос уезжает авторской формой");
+  assert.equal(applied.version, 4, "версия изменённого вопроса поднята");
+  const untouched = store.documents.get("questions/q2");
+  assert.equal(untouched.version, 2, "незатронутый вопрос не переписывается (L-new-2a)");
+  assert.equal(untouched.payload, storedQuestion("q2", "Сколько будет 3+3?", 2).payload);
+  assert.equal(store.documents.get(`lessons/${LESSON}`).version, 4, "версия урока поднята");
+  assert.ok([...store.documents.keys()].some((path) => path.startsWith("question_keys/")),
+    "ключевой документ пересобирается рядом с вопросами");
+});
+
+test("заявлено меньше факта: применение отказывает поимённо и не пишет ничего", async () => {
+  const {payload} = await copyEditProposalPayload((copy) => ({
+    lessonTitle: "Урок 1",
+    questions: [
+      {...copyRow(copy, "q1"), payload: markedAuthorPayload(copy, "q1", 1)},
+      {...copyRow(copy, "q2"), payload: markedAuthorPayload(copy, "q2", 0)},
+    ],
+    editedQuestionIds: ["q1"],
+  }));
+  seedApply(payload);
+
+  await assert.rejects(decide(AUTHOR, {proposalId: "prop-decide-1", decision: "APPROVE"}),
+    /PROPOSAL_EDITED_SET_MISMATCH/);
+  assert.equal(store.documents.get("questions/q1").version, 3, "до транзакции — ни одной записи");
+  assert.equal(store.documents.get("questions/q2").version, 2);
+  assert.equal(store.documents.get(`lessons/${LESSON}`).version, 3);
+  const record = store.documents.get(`${PROPOSALS_COLLECTION}/prop-decide-1`);
+  assert.equal(record.status, PROPOSAL_STATUS.CHECK_PASSED, "запись не переведена в APPROVED");
+  assert.ok(!record.decision, "решения при отказе не существует");
+});
+
+test("заявлено больше факта: запертый вопрос в декларации без диффа — отказ", async () => {
+  const world = applyWorld({"questions/q-legacy": legacyLockedQuestion(1)});
+  store.reset(world);
+  const copy = await functions.buildLessonEditCopy.run({auth: {uid: PROPOSER}, data: {lessonId: LESSON}});
+  seedApply({
+    lessonTitle: "Урок 1",
+    questions: [
+      {...copyRow(copy, "q1"), payload: markedAuthorPayload(copy, "q1", 1)},
+      copyRow(copy, "q-legacy"),
+    ],
+    editedQuestionIds: ["q1", "q-legacy"],
+  }, {"questions/q-legacy": legacyLockedQuestion(1)});
+
+  await assert.rejects(decide(AUTHOR, {proposalId: "prop-decide-1", decision: "APPROVE"}),
+    /PROPOSAL_EDITED_SET_MISMATCH.*q-legacy/);
+  assert.equal(store.documents.get("questions/q1").version, 3, "переплата не применяет правку");
+});
+
+test("пустая декларация на применении — расхождение (парсер режет её только на подаче)", async () => {
+  const {payload} = await copyEditProposalPayload((copy) => ({
+    lessonTitle: "Урок 1",
+    questions: [{...copyRow(copy, "q1"), payload: markedAuthorPayload(copy, "q1", 1)}],
+    editedQuestionIds: [],
+  }));
+  seedApply(payload);
+
+  await assert.rejects(decide(AUTHOR, {proposalId: "prop-decide-1", decision: "APPROVE"}),
+    /PROPOSAL_EDITED_SET_MISMATCH/);
+  assert.equal(store.documents.get("questions/q1").version, 3);
+});
+
+test("повтор одобрения после применения — именованный отказ без второй записи", async () => {
+  const {payload} = await copyEditProposalPayload((copy) => ({
+    lessonTitle: "Урок 1",
+    questions: [{...copyRow(copy, "q1"), payload: markedAuthorPayload(copy, "q1", 1)}],
+    editedQuestionIds: ["q1"],
+  }));
+  seedApply(payload);
+
+  await decide(AUTHOR, {proposalId: "prop-decide-1", decision: "APPROVE"});
+  await assert.rejects(decide(AUTHOR, {proposalId: "prop-decide-1", decision: "APPROVE"}),
+    /PROPOSAL_STALE/, "версия урока поднята — повтор устарел по единому правилу AD-33");
+  assert.equal(store.documents.get("questions/q1").version, 4, "второго наложения нет");
+  assert.equal(store.documents.get(`lessons/${LESSON}`).version, 4, "версия урока не уехала дважды");
+});

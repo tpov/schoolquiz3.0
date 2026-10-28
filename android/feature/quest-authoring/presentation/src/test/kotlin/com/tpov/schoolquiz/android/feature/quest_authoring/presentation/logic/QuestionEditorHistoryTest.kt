@@ -110,6 +110,67 @@ class QuestionEditorHistoryTest {
         assertEquals("два", restored?.text, "история прежней сессии не пережила clear")
     }
 
+    @Test
+    fun `given a textual run then consecutive keystrokes collapse into one step`() {
+        // Ретро 2026-10-25, L8: кольцо на 100 шагов обязано пережить набор текста —
+        // серия текстовых правок это ОДИН шаг истории, а не одно нажатие.
+        val history = QuestionEditorHistory()
+        val before = editorState(text = "")
+        history.push(before, textual = true)
+
+        var current = before.copy(text = "к")
+        repeat(149) {
+            assertTrue(history.canCoalesceTextual, "серия набора открыта")
+            history.coalesceTextualEdit()
+            current = current.copy(text = current.text + "о")
+        }
+
+        val restored = history.undo(current)
+        assertEquals("", restored?.text, "undo возвращает состояние ДО всей серии набора")
+    }
+
+    @Test
+    fun `given a coalesced textual edit then the redo branch is still cut off`() {
+        val history = QuestionEditorHistory()
+        history.push(editorState(text = "раз"))
+        history.undo(editorState(text = "два"))
+        assertTrue(history.canRedo)
+
+        // Отменённую ветку обрывает и текстовая правка, не заводящая нового шага.
+        history.coalesceTextualEdit()
+
+        assertFalse(history.canRedo, "набранный текст не сосуществует с отменённым будущим")
+    }
+
+    @Test
+    fun `given undo or redo then a textual run starts fresh`() {
+        val history = QuestionEditorHistory()
+        history.push(editorState(text = "раз"), textual = true)
+        history.undo(editorState(text = "два"))
+
+        assertFalse(history.canCoalesceTextual, "после undo текстовая серия начинается заново")
+
+        history.redo(editorState(text = "два"))
+        assertFalse(history.canCoalesceTextual, "после redo текстовая серия начинается заново")
+
+        history.clear()
+        history.push(editorState(text = "раз"), textual = true)
+        history.clear()
+        assertFalse(history.canCoalesceTextual, "clear закрывает серию")
+    }
+
+    @Test
+    fun `given a structural edit inside a textual run then it becomes its own step`() {
+        val history = QuestionEditorHistory()
+        history.push(editorState(text = "раз"), textual = true)
+
+        // Переключение защиты ответа — дискретное действие: отдельный шаг, не продолжение серии.
+        history.push(editorState(text = "раз"), textual = false)
+        assertFalse(history.canCoalesceTextual)
+        val restored = history.undo(editorState(text = "раз", fillBlankAnswers = listOf(FillBlankAnswerItem(text = "", isProtected = true))))
+        assertEquals("раз", restored?.text, "структурный шаг откатывается к снимку до правки")
+    }
+
     private fun editorState(
         text: String = "",
         fillBlankText: String = "",

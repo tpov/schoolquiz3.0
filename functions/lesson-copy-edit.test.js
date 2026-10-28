@@ -121,6 +121,7 @@ test("merge names only the questions that actually changed and refuses a no-op",
       {id: "q1", text: editable[0].text, payload: choicePayload({correctOptionId: "a"})},
       {id: "q2", text: editable[1].text, payload: editable[1].payload},
     ],
+    declaredEditedIds: ["q1"],
   });
   assert.deepEqual(changedQuestionIds, ["q1"], "only the edited question counts toward the fee");
   assert.equal(questions.length, 2);
@@ -128,7 +129,50 @@ test("merge names only the questions that actually changed and refuses a no-op",
     () => mergedQuestionsForApply({
       baseQuestions: editable,
       proposalQuestions: editable.map((q) => ({id: q.id, text: q.text, payload: q.payload})),
+      declaredEditedIds: ["q1"],
     }),
     /PROPOSAL_NOTHING_CHANGED/,
   );
+});
+
+test("apply refuses a declared edited set that disagrees with the actual diff (L-new-1)", () => {
+  const editable = buildEditCopy({
+    lesson: {id: "l", version: 1},
+    questions: [baseQuestion(), baseQuestion({id: "q2", text: "3+3?", payload: choicePayload({id: "q2", text: "3+3?"})})],
+  }).questions;
+  const changed = [
+    {id: "q1", text: editable[0].text, payload: choicePayload({correctOptionId: "a"})},
+    {id: "q2", text: editable[1].text, payload: choicePayload({id: "q2", text: editable[1].text, correctOptionId: "a"})},
+  ];
+  // Заявлено меньше факта: q2 тоже изменён, но не заявлен — плата была за один.
+  assert.throws(
+    () => mergedQuestionsForApply({baseQuestions: editable, proposalQuestions: changed, declaredEditedIds: ["q1"]}),
+    /PROPOSAL_EDITED_SET_MISMATCH.*q2/,
+  );
+  // Заявлено больше факта: q2 заявлен, но едет байт-в-байт с базой.
+  assert.throws(
+    () => mergedQuestionsForApply({
+      baseQuestions: editable,
+      proposalQuestions: [changed[0], {id: "q2", text: editable[1].text, payload: editable[1].payload}],
+      declaredEditedIds: ["q1", "q2"],
+    }),
+    /PROPOSAL_EDITED_SET_MISMATCH.*q2/,
+  );
+  // Пустая декларация на применении — расхождение (на подаче пустое режет парсер 4.21).
+  assert.throws(
+    () => mergedQuestionsForApply({baseQuestions: editable, proposalQuestions: changed, declaredEditedIds: []}),
+    /PROPOSAL_EDITED_SET_MISMATCH/,
+  );
+  // Применение без декларации вовсе — отказ, а не молчаливая запись.
+  assert.throws(
+    () => mergedQuestionsForApply({baseQuestions: editable, proposalQuestions: changed}),
+    /PROPOSAL_EDITED_SET_MISMATCH/,
+  );
+  // Совпадающие множества в другом порядке применяются; дубликаты декларации не мешают.
+  const {changedQuestionIds} = mergedQuestionsForApply({
+    baseQuestions: editable,
+    proposalQuestions: changed,
+    declaredEditedIds: ["q2", "q1", "q1"],
+  });
+  assert.deepEqual(changedQuestionIds, ["q1", "q2"]);
 });

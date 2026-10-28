@@ -237,6 +237,31 @@ class DefaultCuratorComponentTest {
         assertEquals(UiMessage.Raw(SyncError.Refused("INVALID_TRANSITION").toString()), component.state.value.errorMessage)
     }
 
+    @Test
+    fun `a retry after a failed transition rides the same mutation key`() = runTest(testScheduler) {
+        // Ретро 2026-10-25, L7 (AD-2): транспортный исход не закрывает намерение — повтор едет
+        // под тем же ключом, и решённый-таки переход ответит той же квитанцией, а не вторым.
+        val fakes = FakeUseCases(
+            ownedEntries = listOf(lifecycleEntry("lesson-1")),
+            transitionResult = Result.failure(SyncFailure(SyncError.Refused("INVALID_TRANSITION"))),
+        )
+        val component = buildComponent(fakes)
+        openMenuAndRequest(component, "lesson-1", LessonShelf.HOME)
+        component.onReasonChanged("attempted skipped rung")
+        component.onTransitionClick(LessonShelf.HOME)
+
+        openMenuAndRequest(component, "lesson-1", LessonShelf.HOME)
+        component.onTransitionClick(LessonShelf.HOME)
+
+        assertEquals(2, fakes.transitionCalls.size, "the retry is sent again")
+        assertEquals("transition-1", fakes.transitionCalls[0].third, "первая попытка — первый ключ")
+        assertEquals(
+            "transition-1",
+            fakes.transitionCalls[1].third,
+            "ретрай не минтит новый ключ: намерение живо до квитанции",
+        )
+    }
+
     private fun openMenuAndRequest(
         component: DefaultCuratorComponent,
         lessonId: String,

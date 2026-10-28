@@ -133,8 +133,16 @@ function validateEditProposalAgainstBase({baseQuestions, proposalQuestions}) {
   return rows;
 }
 
-/** Вопросы к записи: предложившему принадлежит только отмеченный ответ и его правки. */
-function mergedQuestionsForApply({baseQuestions, proposalQuestions}) {
+/**
+ * Вопросы к записи: предложившему принадлежит только отмеченный ответ и его правки.
+ *
+ * `declaredEditedIds` — заявленный при подаче набор изменённых вопросов (payload.editedQuestionIds):
+ * по нему взята плата и под ним автор видел и одобрял правку (ретро 2026-10-28, L-new-1).
+ * Применение сверяет заявление с фактическим диффом по базе — сервер источник истины; расхождение
+ * в любую сторону — именованный отказ до всякой записи: плата остаётся сгоревшей (консервация),
+ * повтор на том же документе даёт тот же отказ (идемпотентность).
+ */
+function mergedQuestionsForApply({baseQuestions, proposalQuestions, declaredEditedIds}) {
   const validated = validateEditProposalAgainstBase({baseQuestions, proposalQuestions});
   const changedQuestionIds = [];
   for (const question of validated) {
@@ -144,6 +152,20 @@ function mergedQuestionsForApply({baseQuestions, proposalQuestions}) {
     }
   }
   if (changedQuestionIds.length === 0) fail("PROPOSAL_NOTHING_CHANGED");
+  if (!Array.isArray(declaredEditedIds)) {
+    fail("PROPOSAL_EDITED_SET_MISMATCH: apply needs the declared editedQuestionIds");
+  }
+  const declared = new Set(declaredEditedIds);
+  const actual = new Set(changedQuestionIds);
+  const undeclared = changedQuestionIds.filter((id) => !declared.has(id)).sort();
+  const unchanged = [...declared].filter((id) => !actual.has(id)).sort();
+  if (undeclared.length > 0 || unchanged.length > 0) {
+    const why = [
+      undeclared.length > 0 ? `changed but not declared: ${undeclared.join(", ")}` : null,
+      unchanged.length > 0 ? `declared but not changed: ${unchanged.join(", ")}` : null,
+    ].filter(Boolean).join("; ");
+    fail(`PROPOSAL_EDITED_SET_MISMATCH: declared ${declared.size}, actually changed ${actual.size}; ${why}`);
+  }
   return {questions: validated, changedQuestionIds};
 }
 

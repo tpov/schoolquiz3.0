@@ -266,4 +266,84 @@ class LessonLifecycleWireParserTest {
             )
         }
     }
+
+    @Test
+    fun `integer fields decode the non-Long wire forms the callable SDK sends`() {
+        // Ретро 2026-10-25, L1: requiredLong/optionalLong исчерпывающе матчили is Long/is Int,
+        // хотя живой прогон 4.3 уже доказал, что SDK отдаёт числа и другими Number-формами, —
+        // чтение падало после того, как сервер применил переход.
+        val page =
+            LessonLifecycleWireParser.lifecyclePage(
+                mapOf(
+                    "viewVersion" to LessonLifecycleWireParser.VIEW_VERSION,
+                    "entries" to
+                        listOf(
+                            mapOf(
+                                "lessonId" to "lesson-int-forms",
+                                "currentContentVersion" to 3,
+                                "published" to true,
+                                "reviewApproved" to false,
+                                "rating" to
+                                    mapOf(
+                                        "sum" to 4,
+                                        "count" to 2,
+                                        "average" to 2.0,
+                                        "version" to 2,
+                                        "updatedAtMs" to null,
+                                    ),
+                                "state" to "PLACED",
+                                "placement" to
+                                    mapOf(
+                                        "shelf" to "arena",
+                                        "previousShelf" to "review",
+                                        "contentVersion" to 6,
+                                        "currentVersion" to true,
+                                        "placementVersion" to 2,
+                                        "updatedAtMs" to 2_000,
+                                    ),
+                            ),
+                        ),
+                    "nextLessonId" to null,
+                ),
+            )
+
+        val entry = page.entries.single()
+        assertEquals(3L, entry.currentContentVersion)
+        assertEquals(4L, entry.rating.sum)
+        assertEquals(2L, entry.rating.version)
+        assertNull(entry.rating.updatedAtMs)
+        assertEquals(2L, entry.placement?.placementVersion)
+        assertEquals(2_000L, entry.placement?.updatedAtMs)
+
+        // Строка в целом поле по-прежнему отказ: коэрсия — только про числовые формы.
+        val stringForm =
+            assertFailsWith<IllegalStateException> {
+                LessonLifecycleWireParser.lifecyclePage(
+                    mapOf(
+                        "viewVersion" to LessonLifecycleWireParser.VIEW_VERSION,
+                        "entries" to
+                            listOf(
+                                mapOf(
+                                    "lessonId" to "lesson-string-form",
+                                    "currentContentVersion" to "3",
+                                    "published" to true,
+                                    "reviewApproved" to false,
+                                    "rating" to
+                                        mapOf(
+                                            "sum" to 0L,
+                                            "count" to 0L,
+                                            "average" to null,
+                                            "version" to 0L,
+                                            "updatedAtMs" to null,
+                                        ),
+                                    "state" to "REVIEW",
+                                    "placement" to null,
+                                ),
+                            ),
+                        "nextLessonId" to null,
+                    ),
+                )
+            }
+        assertTrue(stringForm.message!!.contains("not an integer"))
+    }
 }

@@ -2302,6 +2302,12 @@ async function applyLessonErrorReport(uid, payload) {
   const existing = await reportRef.get();
   if (existing.exists) {
     const stored = existing.data() || {};
+    // Повтор отвечает только владельцу записи под этим id: чужой reportId и чужой урок — не
+    // «та же запись», а подмена адресата. Молчаливый успех здесь показывал бы заявителю
+    // «отчёт доставлен», которого никто не доставил (ретро 2026-10-25, L5).
+    if (stringValue(stored.reporterUid) !== uid || stringValue(stored.lessonId) !== lessonId) {
+      throw new HttpsError("failed-precondition", "REPORT_ID_NOT_OWNED");
+    }
     return {reportId, lessonId: stringValue(stored.lessonId), createdAtMs: numberValue(stored.createdAtMs, 0)};
   }
 
@@ -6094,7 +6100,9 @@ exports.buildLessonEditCopy = onCall(CALLABLE_OPTIONS, async (request) => {
  * Применение одобренной правки копии (AD-33, история 4.23): ровно проверенная редакция — новой
  * редакцией урока. Автор прежний, предложивший записан соавтором (`contributorUids`), версия
  * урока поднимается и зеркалится в приватный документ автора (AD-11), журналы sync-changes
- * названы по узлам публикации. Запертые вопросы копии проверяются байт-в-байт против текущих
+ * названы по узлам публикации. Заявленный набор изменённых вопросов сверяется с фактическим
+ * диффом по свежей базе (L-new-1): расхождение — именованный отказ до транзакции, плата при
+ * этом остаётся сгоревшей. Запертые вопросы копии проверяются байт-в-байт против текущих
  * опубликованных: STALE уже сверил версию урока, здесь сверяется содержимое запертых строк.
  * Замороженные попытки и выданные банки не читаются и не пишутся (AD-3) — применяются только
  * документы дерева.
@@ -6111,10 +6119,18 @@ async function applyCopyEditProposal(proposal, uid, comment, now) {
   const questionsSnapshot = await db.collection("questions").where("lessonId", "==", lessonId).get();
   const baseQuestions = (questionsSnapshot.docs || []).map((doc) => ({...(doc.data() || {}), id: doc.id}));
   const baseRows = buildEditCopy({lesson: {...lesson, id: lessonId}, questions: baseQuestions}).questions;
-  const {questions: validated} = mergedQuestionsForApply({
+  // Заявленный набор изменённых вопросов сверяется с фактическим диффом по свежей базе: по
+  // декларации взята плата и под ней автор одобрял правку — применить иное нельзя (L-new-1).
+  const {questions: validated, changedQuestionIds} = mergedQuestionsForApply({
     baseQuestions: baseRows,
     proposalQuestions: (proposal.payload && proposal.payload.questions) || [],
+    declaredEditedIds: proposal.payload ? proposal.payload.editedQuestionIds : undefined,
   });
+  // Пишется только реально изменённое: версии и sync-changes незатронутых вопросов не churn-ятся
+  // (L-new-2a). Ключевой документ пересобирается из validated целиком — он один на урок и
+  // заменяет список ключей целиком; вход вне этого фикс-пака (находка о подмножестве — владельцу).
+  const changedSet = new Set(changedQuestionIds);
+  const changedQuestions = validated.filter((question) => changedSet.has(question.id));
 
   const questPath = `quests/${stringValue(lesson.questId)}`;
   const catalogId = stringValue(lesson.catalogId);
@@ -6126,7 +6142,7 @@ async function applyCopyEditProposal(proposal, uid, comment, now) {
   }
   const lessonVersion = nextVersionAtPath(versions, `lessons/${lessonId}`);
   await db.runTransaction(async (transaction) => {
-    for (const question of validated) {
+    for (const question of changedQuestions) {
       const path = `questions/${question.id}`;
       transaction.set(db.doc(path), clean({
         id: question.id,
@@ -6150,7 +6166,6 @@ async function applyCopyEditProposal(proposal, uid, comment, now) {
     }
     transaction.set(lessonRef, clean({
       version: nextVersionAtPath(versions, `lessons/${lessonId}`),
-      contributorUids: firestoreTypes.FieldValue ? null : null,
       updatedAtMs: now,
     }), {merge: true});
     transaction.set(lessonRef, {
@@ -6168,7 +6183,7 @@ async function applyCopyEditProposal(proposal, uid, comment, now) {
       now,
     });
   });
-  return {lessonId, lessonVersion, changedQuestions: validated.length};
+  return {lessonId, lessonVersion, changedQuestions: changedQuestionIds.length};
 }
 
 /**

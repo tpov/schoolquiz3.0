@@ -1009,3 +1009,18 @@ test("a pending season reservation fences reused mutation IDs from rating and pl
     targetShelf: "tournament", reason: "must not share the reservation"}), error => error.code === "MUTATION_REUSE");
   assert.equal(f.db.read("lesson_placements/lesson").shelf, "arena");
 });
+
+test("transition reason is byte-bounded by the same ceiling the client cites", async () => {
+  const f = setup();
+  // 501 кириллических символов — 1002 байта UTF-8: форма отказа излишня, граница должна звучать
+  // до записи заявки (ретро 2026-10-25, L10).
+  await assert.rejects(() => f.service.transitionLesson({uid: "player", mutationId: "reason-over",
+    lessonId: "lesson", targetShelf: "arena", reason: "в".repeat(501)}),
+  error => error.code === "INVALID_ARGUMENT");
+  assert.equal(f.db.read("lesson_placements/lesson"), undefined, "никаких записей до отказа");
+  // Ровно 1000 байт проходят форму и доходят до отказа права — сам потолок не режет легальные причины.
+  const receipt = await f.service.transitionLesson({uid: "player", mutationId: "reason-boundary",
+    lessonId: "lesson", targetShelf: "arena", reason: "a".repeat(1000)});
+  assert.equal(receipt.result.code, "CURATOR_REQUIRED");
+  assert.equal(f.db.read("lesson_placements/lesson"), undefined);
+});

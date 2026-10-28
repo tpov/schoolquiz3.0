@@ -129,12 +129,14 @@ class DefaultCuratorComponent(
                     LessonTransitionCommand(lessonId, target, reason),
                     pending.mutationId,
                 )
-            pendingTransition = null
             _state.update {
                 it.copy(isTransitioning = false, pendingConfirmation = null)
             }
             result.fold(
                 onSuccess = { decision ->
+                    // Квитанция решена (APPLIED/REJECTED) — намерение закрыто (AD-2, ретро
+                    // 2026-10-25, L7): следующая попытка — новое намерение с новым ключом.
+                    pendingTransition = null
                     _state.update { state ->
                         state.copy(
                             lastDecision = decision,
@@ -148,6 +150,8 @@ class DefaultCuratorComponent(
                     loadHistory(lessonId)
                 },
                 onFailure = { error ->
+                    // Транспортный исход — не квитанция: намерение живо, повтор кнопки едет
+                    // под тем же ключом, и решённый-таки переход ответит той же квитанцией.
                     _state.update { state ->
                         state.copy(
                             lastDecision = null,

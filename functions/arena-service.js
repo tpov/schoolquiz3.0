@@ -18,6 +18,9 @@ const {
 const LEDGER_PATH = "audit/currency_ledger/entries";
 const AWARD_REASONS = {MILESTONE: "arena_milestone", SEASON_WIN: "arena_season"};
 
+/** Причина перехода — заметка, не эссе: byte-bound отказа автора (index.js), на который ссылается клиент. */
+const MAX_TRANSITION_REASON_BYTES = 1000;
+
 class ArenaServiceError extends Error {
   constructor(code, message) { super(message); this.name = "ArenaServiceError"; this.code = code; }
 }
@@ -261,6 +264,13 @@ function createArenaService({db, policy = require("./arena-policy"), nowMs = Dat
   async function transitionLesson(input) {
     const {uid, mutationId, lessonId, targetShelf, reason} = input;
     docId(lessonId, "lessonId"); text(targetShelf, "targetShelf"); text(reason, "reason");
+    // Тот же byte-bound, что у отказа автора (MAX_AUTHOR_REJECTION_REASON_BYTES = 1000, index.js):
+    // клиент режет причину на 1000 байт, ссылаясь на серверный потолок (TransitionLessonUseCase) —
+    // приёмник обязан его держать, иначе lastReason/history возят мегабайты в каждой странице.
+    if (Buffer.byteLength(reason, "utf8") > MAX_TRANSITION_REASON_BYTES) {
+      throw new ArenaServiceError("INVALID_ARGUMENT",
+        `reason exceeds ${MAX_TRANSITION_REASON_BYTES} bytes`);
+    }
     const req = request(uid, mutationId, "TRANSITION_LESSON", {lessonId, targetShelf, reason});
     return db.runTransaction(async (tx) => {
       const previous = await replay(tx, req); if (previous) return previous;

@@ -264,7 +264,11 @@ function modelReviewOutcomeEntry(raw, inFlight) {
     entry.failedQuestions = outcome.failedQuestions.map((item) => {
       unavailable(plain(item) && identifier(item.lessonId) && identifier(item.questionId) &&
         MODEL_REVIEW_STAGES.has(item.stage) && authorVisibleRejectionReason(item.reason));
-      unavailable(seen.add(`${item.lessonId}_${item.questionId}_${item.stage}`));
+      // Set.add возвращает Set (всегда truthy) — дубль ловит только проверка has до add
+      // (ретро 2026-10-25, L11).
+      const outcomeKey = `${item.lessonId}_${item.questionId}_${item.stage}`;
+      unavailable(!seen.has(outcomeKey));
+      seen.add(outcomeKey);
       return {lessonId: item.lessonId, questionId: item.questionId, stage: item.stage, reason: item.reason.trim()};
     });
   }
@@ -291,7 +295,9 @@ function reviewQuestionOutcomes(raw) {
     unavailable(plain(outcome) && identifier(outcome.questionId) &&
       (outcome.testingScore === null || scoreAverage(outcome.testingScore)) &&
       typeof outcome.passed === "boolean");
-    unavailable(seen.add(outcome.questionId));
+    // Set.add возвращает Set — guard дублей работал только через has до add (L11).
+    unavailable(!seen.has(outcome.questionId));
+    seen.add(outcome.questionId);
     return {questionId: outcome.questionId, testingScore: outcome.testingScore, passed: outcome.passed};
   }).sort((a, b) => (a.questionId < b.questionId ? -1 : a.questionId > b.questionId ? 1 : 0));
 }

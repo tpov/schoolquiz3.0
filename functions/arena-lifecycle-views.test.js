@@ -453,3 +453,59 @@ test("a missing or malformed server cursor key fails closed instead of falling b
   await rejects(f.views.listMyRoyalty({uid: "author", payload: {pageSize: 1}}), "UNAVAILABLE");
   assert.deepEqual(f.writes, []);
 });
+
+test("duplicate rows in per-question projections refuse instead of sailing through the dead guard (L11)", async () => {
+  // Дубль questionId в по-вопросных исходах TESTING: guard, который не мог сработать
+  // (Set.add возвращает Set), теперь ловит повтор до сортировки.
+  const duplicates = fixture();
+  duplicates.documents.set("quest_review_requests/submission-dup-outcomes", reviewSubmission(
+    "author", "draft-dup-outcomes", "UNDER_REVIEW", 150,
+    {failedStages: [], questionOutcomes: [
+      {questionId: "q1", testingScore: 2, passed: true},
+      {questionId: "q1", testingScore: 3, passed: false},
+    ]},
+  ));
+  await rejects(duplicates.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-dup-outcomes"], legacyDraftIds: [],
+  }}), "UNAVAILABLE");
+
+  // Дубль (урок, вопрос, этап) в исходах модельного конвейера — тот же отказ.
+  const duplicateVerdicts = fixture();
+  duplicateVerdicts.documents.set("quest_review_requests/submission-dup-verdicts", reviewSubmission(
+    "author", "draft-dup-verdicts", "UNDER_REVIEW", 160,
+    {failedStages: [], questionOutcomes: [], reviewOutcome: {
+      pipelineStatus: "QUEST_REVIEWED",
+      failedQuestions: [
+        {lessonId: "lesson-a", questionId: "q1", stage: "WORDS", reason: "первый вердикт"},
+        {lessonId: "lesson-a", questionId: "q1", stage: "WORDS", reason: "второй вердикт"},
+      ],
+      detectedLanguage: null, passingLessonIds: [], delayedStages: [], reviewedAtMs: 160,
+    }},
+  ));
+  await rejects(duplicateVerdicts.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-dup-verdicts"], legacyDraftIds: [],
+  }}), "UNAVAILABLE");
+
+  // Различные строки (тот же вопрос, другой этап) проходят — отказ именно про дубли.
+  const distinct = fixture();
+  distinct.documents.set("quest_review_requests/submission-distinct", reviewSubmission(
+    "author", "draft-distinct", "UNDER_REVIEW", 170,
+    {failedStages: [], questionOutcomes: [
+      {questionId: "q1", testingScore: 2, passed: true},
+      {questionId: "q2", testingScore: null, passed: false},
+    ], reviewOutcome: {
+      pipelineStatus: "QUEST_REVIEWED",
+      failedQuestions: [
+        {lessonId: "lesson-a", questionId: "q1", stage: "WORDS", reason: "первый"},
+        {lessonId: "lesson-a", questionId: "q1", stage: "FACTS", reason: "второй"},
+      ],
+      detectedLanguage: null, passingLessonIds: [], delayedStages: [], reviewedAtMs: 170,
+    }},
+  ));
+  const reply = await distinct.views.listMyQuestReviewSubmissions({uid: "author", payload: {
+    submissionIds: ["submission-distinct"], legacyDraftIds: [],
+  }});
+  assert.deepEqual(reply.entries[0].failedQuestions.map((row) => row.stage).sort(), ["FACTS", "WORDS"],
+    "разные строки того же вопроса — не дубли, проекция работает");
+  assert.deepEqual(distinct.writes, []);
+});

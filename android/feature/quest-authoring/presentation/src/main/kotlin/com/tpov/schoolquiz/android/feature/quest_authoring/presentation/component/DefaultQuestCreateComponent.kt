@@ -802,7 +802,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onQuestionTextChanged(value: String) {
-        updateEditable { it.copy(text = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditableText { it.copy(text = value, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onQuestionImagePathChanged(value: String) {
@@ -810,14 +810,14 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onQuestionInfoChanged(value: String) {
-        updateEditable { it.copy(info = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditableText { it.copy(info = value, errorMessage = null, lastSavedMessage = null) }
     }
 
     override fun onOptionTextChanged(
         index: Int,
         value: String,
     ) {
-        updateEditable {
+        updateEditableText {
             it.copy(
                 optionTexts = it.optionTexts.withValue(index, value),
                 errorMessage = null,
@@ -880,7 +880,7 @@ class DefaultQuestCreateComponent(
         index: Int,
         value: String,
     ) {
-        updateEditable {
+        updateEditableText {
             it.copy(
                 orderingItems = it.orderingItems.withValue(index, value),
                 errorMessage = null,
@@ -918,7 +918,7 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onFillBlankTextChanged(value: String) {
-        updateEditable {
+        updateEditableText {
             it.withSyncedFillBlankText(value)
                 .copy(errorMessage = null, lastSavedMessage = null)
         }
@@ -1030,7 +1030,7 @@ class DefaultQuestCreateComponent(
         index: Int,
         value: String,
     ) {
-        updateEditable {
+        updateEditableText {
             it.copy(
                 fillBlankDistractors = it.fillBlankDistractors.withValue(index, value),
                 errorMessage = null,
@@ -1531,13 +1531,34 @@ class DefaultQuestCreateComponent(
      *
      * Единица undo/redo — целый снимок редактора, поэтому текст и его метки восстанавливаются
      * вместе (UX-O6 §4, AD-27). Служебные переходы (сохранение, ошибки, превью) заводит
-     * [updateEditor] — историю они не трогают.
+     * [updateEditor] — историю они не трогают. «Одна правка — один шаг истории» (ретро
+     * 2026-10-25, L8): no-op — страж границы ряда — шага не заводит; набор свободного текста
+     * ([updateEditableText]) сливается в один шаг, чтобы кольцо на 100 шагов пережило сессию
+     * набора; дискретные действия (отметка, добавление варианта, защита ответа) — свои шаги.
      */
     private fun updateEditable(transform: (QuestQuestionEditorUiState) -> QuestQuestionEditorUiState) {
+        updateEditableHistory(textual = false, transform)
+    }
+
+    /** Посимвольный ввод свободного текста: серия нажатий — один шаг истории. */
+    private fun updateEditableText(transform: (QuestQuestionEditorUiState) -> QuestQuestionEditorUiState) {
+        updateEditableHistory(textual = true, transform)
+    }
+
+    private fun updateEditableHistory(
+        textual: Boolean,
+        transform: (QuestQuestionEditorUiState) -> QuestQuestionEditorUiState,
+    ) {
         _state.update { current ->
             val editor = current.editor ?: return@update current
-            editorHistory.push(editor)
-            current.copy(editor = editorHistory.attach(transform(editor)))
+            val next = transform(editor)
+            if (next == editor) return@update current
+            if (textual && editorHistory.canCoalesceTextual) {
+                editorHistory.coalesceTextualEdit()
+            } else {
+                editorHistory.push(editor, textual)
+            }
+            current.copy(editor = editorHistory.attach(next))
         }
     }
 

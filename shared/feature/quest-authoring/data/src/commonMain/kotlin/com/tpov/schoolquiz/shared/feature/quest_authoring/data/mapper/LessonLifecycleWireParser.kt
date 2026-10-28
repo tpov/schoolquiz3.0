@@ -203,23 +203,16 @@ object LessonLifecycleWireParser {
         return value
     }
 
-    private fun Map<*, *>.requiredLong(key: String): Long {
-        val value =
-            when (val raw = this[key]) {
-                is Long -> raw
-                is Int -> raw.toLong()
-                else -> error("Field $key is not an integer")
-            }
-        return value
-    }
+    private fun Map<*, *>.requiredLong(key: String): Long =
+        // Android callable SDK кладёт JSON-числа не только в Long (живой прогон 4.3: schemaVersion
+        // приехал не Long) — сверяю через Number, как и остальные парсеры семейства
+        // (InboxWireParser.requiredLong). Ретро 2026-10-25, L1: исчерпывающий матч is Long/is Int
+        // ронял чтение после того, как сервер уже применил переход.
+        (this[key] as? Number)?.toLong() ?: error("Field $key is not an integer")
 
     private fun Map<*, *>.optionalLong(key: String): Long? {
         val raw = this[key] ?: return null
-        return when (raw) {
-            is Long -> raw
-            is Int -> raw.toLong()
-            else -> error("Field $key is not an integer")
-        }
+        return (raw as? Number)?.toLong() ?: error("Field $key is not an integer")
     }
 
     /** Целые числа SDK отдаёт как Long/Int — средний рейтинг 2.0 не обязан ехать Double. */
