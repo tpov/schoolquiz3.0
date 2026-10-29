@@ -23,10 +23,10 @@
   (frame.io forum, «SignatureDoesNotMatch on S3 presigned URLs»), — на нашу волну накрыло
   Device Farm-бакеты между 21:40 и 22:35 UTC.
 
-Фоновый health-probe остаётся крутиться на VPS до ~05:00 UTC:
-`systemd-run --unit=df-probe bash /tmp/df-upload-probe.sh` — лог `/tmp/df-upload-probe.log`,
-одна строка на попытку каждые ~3 минуты; при `http=200` строка `RECOVERED`. Пробных мусорных
-upload-документов (probe-*) в проекте DF немного — можно игнорировать/чистить.
+Фоновый health-probe остаётся крутиться на VPS (systemd-юнит `df-probe2`, запущен 02:04 UTC,
+100 попыток × ~3 мин ≈ до 07:00 UTC): лог `/tmp/df-upload-probe.log`, одна строка на попытку;
+при `http=200` строка `RECOVERED`. Инцидент длился не меньше 22:35→02:23 UTC (все попытки 403).
+Пробных мусорных upload-документов (probe-*) в проекте DF немного — можно игнорировать/чистить.
 
 ## Что подготовлено и закоммичено (ночь/e7-commerce, HEAD c03e7938)
 
