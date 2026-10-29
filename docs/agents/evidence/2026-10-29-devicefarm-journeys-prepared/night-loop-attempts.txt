@@ -1,0 +1,242 @@
+17:24:01 PHASE 1: жду канал больших заливок (до 240 попыток по ~75 с ≈ 5 ч)
+17:24:11 try 1: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+17:25:15 try 2: curl PUT 403
+17:26:21 try 3: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:27:26 try 4: curl PUT 403
+17:28:33 try 5: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:29:37 try 6: curl PUT 403
+17:30:44 try 7: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:31:48 try 8: curl PUT 403
+17:32:55 try 9: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:33:59 try 10: curl PUT 403
+17:35:06 try 11: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:36:12 try 12: curl PUT 403
+17:37:20 try 13: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:38:25 try 14: curl PUT 403
+17:39:32 try 15: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:40:37 try 16: curl PUT 403
+17:41:44 try 17: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:42:49 try 18: curl PUT 403
+17:44:05 try 19: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+17:45:11 try 20: curl PUT 403
+17:46:18 try 21: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:47:23 try 22: curl PUT 403
+17:48:32 try 23: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+17:49:37 try 24: curl PUT 403
+17:50:46 try 25: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+17:51:51 try 26: curl PUT 403
+17:52:58 try 27: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:54:03 try 28: curl PUT 403
+17:55:12 try 29: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:56:18 try 30: curl PUT 403
+17:57:25 try 31: urllib.error.HTTPError: HTTP Error 403: Forbidden
+17:58:30 try 32: curl PUT 403
+17:59:38 try 33: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:00:43 try 34: curl PUT 403
+18:01:49 try 35: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:02:54 try 36: curl PUT 403
+18:04:01 try 37: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:05:08 try 38: curl PUT 403
+18:06:23 try 39: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+18:07:27 try 40: curl PUT 403
+18:08:35 try 41: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:09:40 try 42: curl PUT 403
+18:10:47 try 43: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:11:51 try 44: curl PUT 403
+18:12:58 try 45: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:14:04 try 46: curl PUT 403
+18:15:13 try 47: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+18:16:17 try 48: curl PUT 403
+18:17:25 try 49: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:18:29 try 50: curl PUT 403
+18:19:37 try 51: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:20:41 try 52: curl PUT 403
+18:21:50 try 53: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+18:22:54 try 54: curl PUT 403
+18:24:03 try 55: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+18:25:09 try 56: curl PUT 403
+18:26:16 try 57: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:27:20 try 58: curl PUT 403
+18:28:28 try 59: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:29:32 try 60: curl PUT 403
+18:30:38 try 61: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:31:43 try 62: curl PUT 403
+18:32:51 try 63: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+18:33:55 try 64: curl PUT 403
+18:35:03 try 65: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:36:08 try 66: curl PUT 403
+18:37:15 try 67: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:38:20 try 68: curl PUT 403
+18:39:27 try 69: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:40:32 try 70: curl PUT 403
+18:41:39 try 71: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:42:43 try 72: curl PUT 403
+18:43:51 try 73: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:44:56 try 74: curl PUT 403
+18:46:03 try 75: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:47:08 try 76: curl PUT 403
+18:48:15 try 77: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:49:20 try 78: curl PUT 403
+18:50:27 try 79: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:51:31 try 80: curl PUT 403
+18:52:39 try 81: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:53:44 try 82: curl PUT 403
+18:54:51 try 83: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:55:56 try 84: curl PUT 403
+18:57:02 try 85: urllib.error.HTTPError: HTTP Error 403: Forbidden
+18:58:07 try 86: curl PUT 403
+18:59:14 try 87: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:00:19 try 88: curl PUT 403
+19:01:25 try 89: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:02:30 try 90: curl PUT 403
+19:03:37 try 91: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:04:41 try 92: curl PUT 403
+19:05:48 try 93: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:06:53 try 94: curl PUT 403
+19:08:00 try 95: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:09:05 try 96: curl PUT 403
+19:10:13 try 97: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:11:17 try 98: curl PUT 403
+19:12:24 try 99: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:13:29 try 100: curl PUT 403
+19:14:36 try 101: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:15:40 try 102: curl PUT 403
+19:16:46 try 103: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:17:50 try 104: curl PUT 403
+19:18:57 try 105: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:20:02 try 106: curl PUT 403
+19:21:09 try 107: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:22:13 try 108: curl PUT 403
+19:23:22 try 109: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+19:24:26 try 110: curl PUT 403
+19:25:33 try 111: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:26:37 try 112: curl PUT 403
+19:27:43 try 113: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:28:47 try 114: curl PUT 403
+19:29:54 try 115: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:30:59 try 116: curl PUT 403
+19:32:06 try 117: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:33:11 try 118: curl PUT 403
+19:34:17 try 119: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:35:22 try 120: curl PUT 403
+19:36:29 try 121: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:37:33 try 122: curl PUT 403
+19:38:40 try 123: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:39:45 try 124: curl PUT 403
+19:40:54 try 125: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:41:59 try 126: curl PUT 403
+19:43:07 try 127: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:44:12 try 128: curl PUT 403
+19:45:20 try 129: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:46:25 try 130: curl PUT 403
+19:47:34 try 131: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+19:48:38 try 132: curl PUT 403
+19:49:45 try 133: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:50:50 try 134: curl PUT 403
+19:51:57 try 135: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:53:02 try 136: curl PUT 403
+19:54:10 try 137: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:55:15 try 138: curl PUT 403
+19:56:22 try 139: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:57:27 try 140: curl PUT 403
+19:58:35 try 141: urllib.error.HTTPError: HTTP Error 403: Forbidden
+19:59:39 try 142: curl PUT 403
+20:00:47 try 143: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:01:51 try 144: curl PUT 403
+20:03:00 try 145: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:04:05 try 146: curl PUT 403
+20:05:14 try 147: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:06:18 try 148: curl PUT 403
+20:07:25 try 149: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:08:30 try 150: curl PUT 403
+20:09:43 try 151: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+20:10:47 try 152: curl PUT 403
+20:11:55 try 153: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:13:01 try 154: curl PUT 403
+20:14:10 try 155: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+20:15:15 try 156: curl PUT 403
+20:16:24 try 157: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:17:30 try 158: curl PUT 403
+20:18:37 try 159: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:19:42 try 160: curl PUT 403
+20:20:49 try 161: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:21:53 try 162: curl PUT 403
+20:23:00 try 163: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:24:06 try 164: curl PUT 403
+20:25:12 try 165: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:26:17 try 166: curl PUT 403
+20:27:26 try 167: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:28:31 try 168: curl PUT 403
+20:29:38 try 169: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:30:42 try 170: curl PUT 403
+20:31:49 try 171: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:32:54 try 172: curl PUT 403
+20:34:00 try 173: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:35:06 try 174: curl PUT 403
+20:36:13 try 175: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:37:18 try 176: curl PUT 403
+20:38:25 try 177: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:39:30 try 178: curl PUT 403
+20:40:43 try 179: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:41:47 try 180: curl PUT 403
+20:42:54 try 181: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:43:58 try 182: curl PUT 403
+20:45:07 try 183: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:46:12 try 184: curl PUT 403
+20:47:20 try 185: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:48:25 try 186: curl PUT 403
+20:49:34 try 187: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+20:50:39 try 188: curl PUT 403
+20:51:46 try 189: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:52:51 try 190: curl PUT 403
+20:53:58 try 191: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:55:03 try 192: curl PUT 403
+20:56:11 try 193: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:57:16 try 194: curl PUT 403
+20:58:23 try 195: urllib.error.HTTPError: HTTP Error 403: Forbidden
+20:59:28 try 196: curl PUT 403
+21:00:35 try 197: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:01:40 try 198: curl PUT 403
+21:02:48 try 199: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:03:52 try 200: curl PUT 403
+21:04:59 try 201: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:06:06 try 202: curl PUT 403
+21:07:13 try 203: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:08:18 try 204: curl PUT 403
+21:09:26 try 205: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:10:31 try 206: curl PUT 403
+21:11:37 try 207: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:12:42 try 208: curl PUT 403
+21:13:48 try 209: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:14:53 try 210: curl PUT 403
+21:15:59 try 211: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:17:05 try 212: curl PUT 403
+21:18:13 try 213: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:19:17 try 214: curl PUT 403
+21:20:25 try 215: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:21:30 try 216: curl PUT 403
+21:22:37 try 217: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:23:42 try 218: curl PUT 403
+21:24:50 try 219: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:25:55 try 220: curl PUT 403
+21:27:03 try 221: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:28:09 try 222: curl PUT 403
+21:29:16 try 223: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:30:21 try 224: curl PUT 403
+21:31:29 try 225: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:32:34 try 226: curl PUT 403
+21:33:42 try 227: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:34:47 try 228: curl PUT 403
+21:35:57 try 229: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+21:37:01 try 230: curl PUT 403
+21:38:09 try 231: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:39:14 try 232: curl PUT 403
+21:40:21 try 233: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:41:25 try 234: curl PUT 403
+21:42:36 try 235: urllib.error.URLError: <urlopen error EOF occurred in violation of protocol (_ssl.c:2417)>
+21:43:40 try 236: curl PUT 403
+21:44:48 try 237: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:45:52 try 238: curl PUT 403
+21:46:59 try 239: urllib.error.HTTPError: HTTP Error 403: Forbidden
+21:48:05 try 240: curl PUT 403
+21:49:05 КАНАЛ ТАК И НЕ ОТКРЫЛСЯ — смена закончена
