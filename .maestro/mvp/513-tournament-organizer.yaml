@@ -74,6 +74,16 @@ name: Organizer tournament route with device qualification (5.13)
     direction: DOWN
     timeout: 15000
 - tapOn: "Active events"
+# v4 FALL (evidence 2026-10-31-devicefarm-513-tournament): экран браузера событий
+# («ACTIVE EVENTS / Active tournaments / REFRESH / NOTHING LOADED YET») сам список
+# не подтягивает за окно ассерта — тапаем REFRESH перед ассертами карточки. Тап
+# условный: если полка вдруг заполнилась сама и кнопки нет, шаг — no-op и флоу
+# не терминируется на новой правке.
+- runFlow:
+    when:
+      visible: "^REFRESH$"
+    commands:
+      - tapOn: "^REFRESH$"
 - extendedWaitUntil:
     visible: "Qualification open"
     timeout: 120000

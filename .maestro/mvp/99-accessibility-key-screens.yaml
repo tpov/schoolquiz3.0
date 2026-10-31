@@ -70,13 +70,13 @@ name: Accessibility key screens sweep at elevated font scale (9.9)
     direction: DOWN
     timeout: 15000
 - takeScreenshot: "99-result-entries"
-# Выход из урока обратно в оболочку. «Exit lesson» — это contentDescription
-# иконки-крестика в фиксированном верхнем баре (CrossButton.kt, runner_cd_exit_lesson),
-# текстового узла с такой строкой на экране нет — текстовый селектор Maestro не
-# совпадёт ни при каком скролле (evidence 2026-10-31-devicefarm-99-accessibility,
-# v2/v3 FALL). Тап по координате ×-бейджа в правом верхнем углу.
-- tapOn:
-    point: "90%,6%"
+# Выход из урока обратно в оболочку. На экране результата выходного контрола НЕТ
+# вовсе (ResultContent.kt — только Run again / Next lesson / discussion; ×-бейдж
+# живёт только на ЭКРАНАХ ВОПРОСОВ и стоит СЛЕВА, QuestionProgressHeader.kt), так
+# что point-tap «90%,6%» попадал в пустую зону хедера и диалог «Exit» не поднимался
+# (v4 FALL, evidence 2026-10-31-devicefarm-99-accessibility, диагноз по коду).
+# Выход — системный Back; подтверждение закрывает условный тап по диалогу ниже.
+- pressKey: back
 - runFlow:
     when:
       visible: "^Exit$"

@@ -31,8 +31,11 @@ name: Three proposal entries up to the author side (4.26)
 # осесть и перечитывает полку (до 30 с).
 - tapOn: "^HOME QUESTS$"
 - takeScreenshot: "426-proposer-first-home"
-- extendedWaitUntil:
-    visible: "DF author catalog"
+# v5 (v4 FALL, evidence 2026-10-31-devicefarm-426-proposals): жёсткий 30с
+# extendedWaitUntil убран — в Maestro его таймаут терминирует флоу ДО условного
+# ретрая ниже (в трейсе v4 нет ни скрина 426-catalog-absent, ни второго синка).
+# Мягкое ожидание не может упасть; реальную догрузку полки делает ретрай.
+- waitForAnimationToEnd:
     timeout: 30000
 # Каталог не приехал первым синком (v3: сервер чист — сид лёг за 25 с до синка;
 # гипотеза — Room-кэш/курсор изолированной сборки не применяет каталог-пулл
@@ -51,6 +54,8 @@ name: Three proposal entries up to the author side (4.26)
           timeout: 90000
       - takeScreenshot: "426-proposer-second-sync"
       - tapOn: "^HOME QUESTS$"
+# Жёсткий ассерт только здесь — ПОСЛЕ ретрая: к этому моменту каталог обязан
+# приехать, иначе это честный провал, а не дефект конструкции флоу.
 - extendedWaitUntil:
     visible: "DF author catalog"
     timeout: 120000

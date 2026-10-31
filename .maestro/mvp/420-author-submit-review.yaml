@@ -155,6 +155,21 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
     direction: DOWN
     timeout: 15000
 - tapOn: "My quests"
+# v4 FALL (evidence 2026-10-31-devicefarm-420-review): заявка создаётся на сервере
+# уже ПОСЛЕ дренажного синка выше — статус «Checking» клиент показывает только по
+# данным синка, сам не обновляется. Повторный SYNC NOW перед ассертом привозит
+# UNDER_REVIEW на устройство (тот же класс правки, что «второй синк» 5.13).
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      text: "My quests"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "My quests"
 - extendedWaitUntil:
     visible: "Checking: “Words” · “Facts”"
     timeout: 300000

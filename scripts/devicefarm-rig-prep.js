@@ -45,8 +45,12 @@
 //
 // Свипы очереди проверки (4.20/4.26): прогоняется НАСТОЯЩИЙ рабочий модуль
 // functions/review-queue-worker.js — тот же код, что обязан крутить отдельный процесс
-// на VPS (AD-32: «отдельный процесс, не триггер функции»). leaseMs уменьшен до
-// секунды, чтобы терминал достигался за минуты прогона, а не за полчаса; сами
+// на VPS (AD-32: «отдельный процесс, не триггер функции»). leaseMs 90 с: контракт
+// воркера продлевает лизу checkpoint()-ом только МЕЖДУ стадиями, поэтому лиза
+// обязана покрывать вызов живой модели целиком — 900 мс (до v5) давали с glm-4.7
+// LEASE_LOST/TIME_BUDGET по одной стадии за свип (evidence
+// 2026-10-31-devicefarm-420-review; ручные свипы с lease 180000 мс довели
+// WORDS/FACTS до DONE за минуту); сами
 // вердикты/отказы код пишет сам. Модельный клиент честный: без REVIEW_MODEL_* в env
 // воркер получает ровно тот отказ, который даёт readModelConfig
 // (REVIEW_MODEL_ENV_MISSING) — этапы честно выжигают попытки и уходят в DELAYED.
@@ -84,7 +88,7 @@ async function sweepQueue(maxSweeps = 12) {
   const worker = createReviewQueueWorker({
     db, stages: completeReviewStages(), modelClient: honestModelClient(),
     nowMs: now, log: (record) => log({event: "worker", ...record}),
-    leaseMs: 900, maxStageCallsPerSweep: 2,
+    leaseMs: 90000, maxStageCallsPerSweep: 2,
   });
   for (let index = 1; index <= maxSweeps; index++) {
     const result = await worker.sweep();
