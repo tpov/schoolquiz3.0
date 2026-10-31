@@ -1,4 +1,37 @@
-# Device Farm · джорни 5.13 (организатор турнира) — v3: организаторская половина зелёная повторно, второй синк работает, но «Active events» не появился: второй синк устройства сам затёр роли нулями (31.10)
+# Device Farm · джорни 5.13 (организатор турнира) — v4: санитайз ролей работает, «Active events» появился; браузер — «Nothing loaded yet» без REFRESH; оппонент квалифицировался в свежем ивенте (31.10)
+
+## Прогон v4 (пакет sha256 8c1b2426…) — санитайз ролей РАБОТАЕТ: «Active events» появился;
+браузер упал на «Nothing loaded yet»; оппонент квалифицировался в СВЕЖЕМ ивенте (31.10 ночь)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/efc86a8e-5aef-4ee1-9416-8515ed09e235`,
+  FAILED, 5.02 устройсте-минуты, окно 22:11:36–22:17:23 UTC; спека `upload:…/9f448e72…`
+  (SUCCEEDED, мост Mac→AWS). Артефакты: `run/device-farm/513-tournament-v4/` (кадры в
+  `frames/`); приборка — `run/device-farm/watch-513/watch.log`.
+- **Санитайз v3-бага доказан:** организаторская половина зелёная третий раз подряд
+  (Events → Organize → df513-course → банк «60 easy, 20 hard» → CREATE → «Tournament
+  created» → «Reserved: 10 boxes», boxCount 100→90), а **роли пережили все клиентские
+  синки: users/WrPSOOnI… = tester/moderator/admin/developer 100×4 на конец прогона**
+  (v3 к этому моменту уже стоял в нулях). Второй SYNC NOW после эскроу (правка v3) +
+  выжившие роли → **пункт шторки «Active events» появился и был тапнут** (34 шага
+  COMPLETED) — главный блокер v2b/v3 снят серверным фиксом 51eeafdb.
+- **Падение (кадры f214–f271):** экран «ACTIVE EVENTS / Active tournaments / REFRESH /
+  NOTHING LOADED YET / Nothing loaded yet» — список событий не заполнился сам за окно
+  ассерта (120 с), `Assert that "Qualification open" is visible` FAILED. Событие при этом
+  живо на сервере (status=QUALIFICATION, organizer=WrPSOOnI…, escrow 10). Флоу заморожен —
+  владельцу: после входа в Active events нужен тап «REFRESH» (кнопка на экране) перед
+  ассертами карточки; если и после REFRESH пусто — клиентский кандидат (пулл списка
+  событий), репро на риге.
+- **Оппонент — свежий ивент (закрыт хвост v3):** watch-старт оппонента через ~35 с после
+  CREATE упал `FAILED_PRECONDITION` на операции после recordCourseTournamentDownload
+  (скачивание записано за 615 мс, отказ — в следующей submitCourseTournamentOperation,
+  85 мс: окно квалификации ещё не открыто). Ручной повтор через ~10 минут (скрипт не
+  менялся): download-recorded → **round-settled ×3 → OPPONENT_QUALIFIED** против
+  `event_53a75a88…` — сессии `course_tournament_sessions/q_132e7c9d4b1c…`,
+  `q_534f1ec7db22…`, `q_d97143c6ff83…`, все state=SETTLED. Базовая линия+фильтр
+  организатора в await-tournament v4 отработали верно (матчнуто свежее событие устройства).
+- Правки следующей итерации (владельцу): [флоу] тап REFRESH на экране Active events;
+  [драйвер] задержка старта оппонента (квалификация открывается позже создания события —
+  точное окно выяснить по коду тарифов/статусов).
 
 ## Прогон v3 (пакет sha256 ad9f3939…)
 

@@ -1,4 +1,30 @@
-# Device Farm · джорни 9.9 (авто-половина, FONT_SCALE=1.3) — v3: ядро зелёное снова, хвост упал на селектор «Exit lesson» (это contentDescription, не текст) (31.10)
+# Device Farm · джорни 9.9 (авто-половина, FONT_SCALE=1.3) — v4: ядро зелёное, point-tap мимо: на экране результата выхода нет вовсе (выход = Back), × только на экранах вопросов и слева (31.10)
+
+## Прогон v4 (пакет sha256 8c1b2426…) — ядро зелёное повторно; point-tap 90%,6% попал мимо:
+на экране результата НЕТ ×-бейджа вовсе, выход — системный Back (31.10 ночь)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/71e1319e-2454-4e88-b31a-acda46aff77d`,
+  FAILED, 2.92 устройсте-минуты, окно 21:57:47–22:01:23 UTC; спека `upload:…/c7969f76…`
+  (SUCCEEDED, мост Mac→AWS; FONT_SCALE=1.3). Артефакты: `run/device-farm/99-accessibility-v4/`
+  (кадры в `frames/`).
+- Пройдено живьём (40 шагов COMPLETED): launch → HOME QUESTS → меню → SYNC NOW → «Last sync» →
+  «Not synced yet» нет → MVP validated checks → курсс → урок → «val» ×2 (CORRECT) → Continue →
+  Sync result now → consent «Accept and send» → **«Completion confirmed by the server»** →
+  скрин 99-lesson-result → скролл до «Report a mistake» → скрин 99-result-entries →
+  **tap point (90%,6%) механически исполнен**. Упало: следующий `assertVisible "Open menu"`
+  (диалог «^Exit$» не поднялся — SKIPPED, раннер остался открыт; последние кадры видео —
+  всё ещё экран результата).
+- **Причина (проверена по коду, а не по видео):** диагноз v3 «×-бейдж справа вверху» был
+  неверен дважды. (1) На экране результата выходного контрола НЕТ ВООБЩЕ:
+  `ResultContent.kt` (night-e2) начинается с кикера «LESSON COMPLETE — EASY», внутри только
+  Run again / Next lesson / discussion — ни CrossButton, ни Exit. (2) ×-бейдж существует
+  только на ЭКРАНАХ ВОПРОСОВ и стоит СЛЕВА: `QuestionProgressHeader.kt` — Row: Close-иконка
+  → pills → `Spacer(weight 1f)` → таймер справа. Тап 90%,6% попадает в пустую зону хедера.
+- **Точная правка (владельцу; флоу заморожен):** вместо point-tap дать системный Back —
+  `pressKey: back` (или свайп от левой кромки); далее существующий `runFlow when visible
+  "^Exit$" → tapOn "^Exit"` сработает по диалогу подтверждения. ARENA-каталог и SHOP снова
+  не достигнуты. TalkBack-половина 9.9 — по-прежнему remote access руками владельца
+  (list-remote-access-sessions = 0 после прогона).
 
 ## Прогон v3 (пакет sha256 ad9f3939…)
 
