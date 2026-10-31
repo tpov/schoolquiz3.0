@@ -52,6 +52,14 @@ name: Accessibility key screens sweep at elevated font scale (9.9)
     timeout: 60000
 - takeScreenshot: "99-lesson-result-before-sync"
 - tapOn: "Sync result now"
+# Свежее устройство обязано дать первое согласие на платные условия (CAP-16:
+# TermsConsentGate captured==null → Required) — иначе «Completion confirmed»
+# недостижим (evidence 2026-10-31-devicefarm-99-accessibility, прогон 2).
+- runFlow:
+    when:
+      visible: "Accept and send"
+    commands:
+      - tapOn: "Accept and send"
 - extendedWaitUntil:
     visible: "Completion confirmed by the server"
     timeout: 120000

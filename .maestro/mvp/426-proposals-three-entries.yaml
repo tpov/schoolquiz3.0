@@ -61,6 +61,13 @@ name: Three proposal entries up to the author side (4.26)
     visible: "Sync result now"
     timeout: 60000
 - tapOn: "Sync result now"
+# Первое согласие на платные условия обязательно для свежего аккаунта mvp
+# (CAP-16, evidence 2026-10-31-devicefarm-99-accessibility) — закрываем диалог.
+- runFlow:
+    when:
+      visible: "Accept and send"
+    commands:
+      - tapOn: "Accept and send"
 - extendedWaitUntil:
     visible: "Completion confirmed by the server"
     timeout: 120000
@@ -131,7 +138,14 @@ name: Three proposal entries up to the author side (4.26)
 - extendedWaitUntil:
     visible: "Last sync: .*"
     timeout: 90000
-- tapOn: "^MY QUESTS$"
+# В v4.0.1 «My quests» — 9-й пункт шторки LOCAL (ниже кромки, см. evidence
+# 2026-10-31-devicefarm-420-review): скролл шторки + тап по фактической метке.
+- scrollUntilVisible:
+    element:
+      text: "My quests"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "My quests"
 - tapOn: "Create quest"
 - assertVisible: "Quest creation"
 - tapOn: "^Quest$"
@@ -199,6 +213,13 @@ name: Three proposal entries up to the author side (4.26)
 - tapOn:
     text: "^Propose to author$"
     index: 1
+# Платная подача (Fee: 1000 nolics) может поднять тот же economy-consent, если
+# согласие ещё не захвачено — закрывашка условная, без диалога это no-op.
+- runFlow:
+    when:
+      visible: "Accept and send"
+    commands:
+      - tapOn: "Accept and send"
 - extendedWaitUntil:
     visible: "Proposal queued"
     timeout: 120000

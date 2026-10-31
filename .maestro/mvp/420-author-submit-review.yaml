@@ -15,7 +15,14 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - extendedWaitUntil:
     visible: "Last sync: .*"
     timeout: 90000
-- tapOn: "^MY QUESTS$"
+# В v4.0.1 авторская зона — «My quests», 9-й пункт шторки LOCAL ниже кромки
+# (evidence 2026-10-31-devicefarm-420-review): скролл шторки + фактическая метка.
+- scrollUntilVisible:
+    element:
+      text: "My quests"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "My quests"
 - takeScreenshot: "420-my-quests"
 # Создание структуры: квест → раздел → тема → урок
 - tapOn: "Create quest"
@@ -92,6 +99,14 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - takeScreenshot: "420-questions-done"
 # Подача: плата 1000 ноликов списывается сервером при приёме заявки
 - tapOn: "Send to arena"
+# Платная подача на свежем устройстве поднимает economy-consent (CAP-16,
+# captured==null → Required, evidence 2026-10-31-devicefarm-99-accessibility):
+# закрываем диалог, после чего заявка уходит в очередь дренирующим синком ниже.
+- runFlow:
+    when:
+      visible: "Accept and send"
+    commands:
+      - tapOn: "Accept and send"
 - extendedWaitUntil:
     visible: ".*queued for arena"
     timeout: 120000
@@ -105,7 +120,12 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - extendedWaitUntil:
     visible: "Last sync: .*"
     timeout: 90000
-- tapOn: "^MY QUESTS$"
+- scrollUntilVisible:
+    element:
+      text: "My quests"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "My quests"
 - extendedWaitUntil:
     visible: "Checking: “Words” · “Facts”"
     timeout: 300000
@@ -117,7 +137,12 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - extendedWaitUntil:
     visible: "Last sync: .*"
     timeout: 90000
-- tapOn: "^MY QUESTS$"
+- scrollUntilVisible:
+    element:
+      text: "My quests"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "My quests"
 - runFlow:
     when:
       notVisible: "Check is taking longer than expected"
@@ -127,7 +152,12 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
       - extendedWaitUntil:
           visible: "Last sync: .*"
           timeout: 90000
-      - tapOn: "^MY QUESTS$"
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
 - runFlow:
     when:
       notVisible: "Check is taking longer than expected"
@@ -137,7 +167,12 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
       - extendedWaitUntil:
           visible: "Last sync: .*"
           timeout: 90000
-      - tapOn: "^MY QUESTS$"
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
 - extendedWaitUntil:
     visible: "Check is taking longer than expected"
     timeout: 420000

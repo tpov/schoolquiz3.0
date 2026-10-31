@@ -15,8 +15,13 @@ name: Organizer tournament route with device qualification (5.13)
     visible: "Last sync: .*"
     timeout: 90000
 - takeScreenshot: "513-synced"
-# ── Организатор: Events → Qualifier tournament → Organize a tournament
-- tapOn: "^QUALIFIER TOURNAMENT$"
+# ── Организатор: события живут на вкладке EVENTS нижней нав-полосы (v4.0.1).
+# Закрываем шторку тапом по скриму, переключаем вкладку — корень EVENTS уже
+# экран организатора (Qualifier tournament → OrganizerCreate), тап по пункту
+# шторки не нужен (evidence 2026-10-31-devicefarm-513-tournament).
+- tapOn:
+    point: "94%,50%"
+- tapOn: "Events"
 - extendedWaitUntil:
     visible: "Organize a tournament"
     timeout: 30000
@@ -44,9 +49,16 @@ name: Organizer tournament route with device qualification (5.13)
     visible: "Reserved: 10 boxes"
     timeout: 60000
 - takeScreenshot: "513-escrow"
-# ── Browser: Active events → деталь → Enter → допуск
+# ── Browser: Active events → деталь → Enter → допуск. Пункт требует ролей
+# (TESTER+MODERATOR+ADMIN+DEVELOPER ≥ 100, DrawerSection.kt) и лежит ниже
+# кромки шторки EVENTS — скроллим; без приборки ролей в watch-513 пункт скрыт.
 - tapOn: "Open menu"
-- tapOn: "^ACTIVE EVENTS$"
+- scrollUntilVisible:
+    element:
+      text: "Active events"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "Active events"
 - extendedWaitUntil:
     visible: "Qualification open"
     timeout: 120000
@@ -203,6 +215,14 @@ name: Organizer tournament route with device qualification (5.13)
 # Последний (20-й) ответ закрывает раунд
 - tapOn: "val"
 - tapOn: "^Submit answer$"
+# Первый результат квалификации — платная подача: свежее устройство обязано
+# дать согласие на условия (CAP-16, evidence 2026-10-31-devicefarm-99-accessibility),
+# иначе сеттлмент раунда не уйдёт на сервер.
+- runFlow:
+    when:
+      visible: "Accept and send"
+    commands:
+      - tapOn: "Accept and send"
 - extendedWaitUntil:
     visible: "Round settled: .*"
     timeout: 240000
