@@ -1,4 +1,36 @@
-# Device Farm · джорни 5.13 (организатор турнира) — v4: санитайз ролей работает, «Active events» появился; браузер — «Nothing loaded yet» без REFRESH; оппонент квалифицировался в свежем ивенте (31.10)
+# Device Farm · джорни 5.13 (организатор турнира) — v5: REFRESH-правка сработала, допуск доказан («Download attested by the server»), упёрлись в пустой «Pick an event» (окно квалификации ещё закрыто, оппонент не успел); оппонент дожат руками до OPPONENT_QUALIFIED (31.10)
+
+## Прогон v5 (пакет sha256 d2164b1a…, коммит ebf8e0c9) — браузерная половина прошла до квалификации, новый фолл «Nothing loaded yet» на «Pick an event» (31.10 ночь)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/30bf922c-acf3-4d90-9c0f-10ae205f32d4`,
+  FAILED, 2.21 устройсте-минуты, окно 23:07:07–23:10:22 UTC; спека `upload:…/623bbc20…`
+  (SUCCEEDED, релей create-upload VPS → presigned-URL → PUT с Mac). Пул p10-11. Артефакты:
+  `run/device-farm/513-tournament-v5-p11/` (кадры f001–f005); приборка —
+  `run/device-farm/watch-513-v5/watch.log` (+ `opp-retry.log`).
+- **Преп-гонка выиграна тёплым watcher-ом** (весь конвейер одним процессом, как v4b):
+  device uid 23:08:06 → setup-513 за 4 с (23:08:10, кошелёк 3000/100, роли 100×4 — санитайз
+  51eeafdb жив) → CREATE 23:08:24: `event_e66883c554604ccfb3226333a326075a`, QUALIFICATION,
+  эскроу 10, organizer = устройство `tSP5AZXVTNZBldSgW4N2olT6eFX2`.
+- **Правка v5 (условный тап REFRESH) отработала — браузерная половина прорвалась:**
+  REFRESH COMPLETED → «Qualification open» visible (скрин 513-browser-open) → Info →
+  «Enter» → «I downloaded the course» (скрин 513-admission) → тап →
+  **«Download attested by the server» visible (скрин 513-download-attested — ДОПУСК
+  доказан живьём впервые)** → «Continue to qualification» COMPLETED.
+- **Новый фолл (кадр f005, 23:09):** экран квалификации «QUALIFIER TOURNAMENT /
+  Qualification / REFRESH / **Pick an event / Nothing loaded yet**» — список событий пуст,
+  условный тап «^Enter$» FAILED. В этот момент (CREATE + 36 с) окно квалификации ещё не
+  открыто (по v4b окно = CREATE + 54 с) и оппонент ещё НЕ квалифицировался (ниже).
+- **Оппонент — дефект watcher-a вскрыт:** in-watcher старт упал `ERR_ASSERTION`:
+  контракт argv `course-tournament-device-opponent.js` = `<eventId> <courseId> <uid>
+  <token>` (4 аргумента), а watch-fast (со времён v4b) передаёт «uid token» ОДНИМ
+  аргументом → token=undefined (в v4b это же маскировалось ручным повтором). Ручной
+  повтор с правильным argv (23:15, скрипт не менялся): download-recorded → round-settled ×3
+  (`q_1e2117f02aec`, `q_96a3dc951756`, `q_1ea91b4561ec`, state=SETTLED) →
+  **OPPONENT_QUALIFIED** против свежего ивента v5 — лог `watch-513-v5/opp-retry.log`.
+- Владельцу: [watcher] чинить argv в watch-fast (uid и токен отдельными аргументами);
+  [флоу] на экране квалификации «Pick an event» нужен условный REFRESH + ожидание окна
+  (~54 с после CREATE, подтверждено v4b/v5) перед ассертами карточки — иначе список пуст
+  и «Enter» не существует. Оставшийся хвост: карточка ивента → квалификация 20 вопросов.
 
 ## Прогон v4 (пакет sha256 8c1b2426…) — санитайз ролей РАБОТАЕТ: «Active events» появился;
 браузер упал на «Nothing loaded yet»; оппонент квалифицировался в СВЕЖЕМ ивенте (31.10 ночь)

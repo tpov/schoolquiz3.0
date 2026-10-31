@@ -1,4 +1,39 @@
-# Device Farm · джорни 4.20-partial (автор → Send to arena → ревью) — v4/v4b: платная подача доказана живьём (фи списан, UNDER_REVIEW, вердикты «Слов»/«Фактов» glm-4.7), флоу падает на пост-дренажном ассерте (31.10)
+# Device Farm · джорни 4.20-partial (автор → Send to arena → ревью) — v5: повторный SYNC NOW отработал, гонки больше нет (заявка жила 5 минут) — но «Checking» в строке квеста НЕ появился вообще (строка осталась DRAFT): клиентский кандидат; вердикты «Слов»/«Фактов» glm-4.7 при lease 90 c доходят за 2 свипа (31.10)
+
+## Прогон v5 (пакет sha256 d2164b1a…, коммит ebf8e0c9; lease свипов 90 c) — платная подача и вердикты повторены, фолл ушёл в новый класс (31.10 ночь)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/71329e73-0813-4d55-b496-9dafafe5aecd`,
+  FAILED, 15.18 устройсте-минуты, окно 23:13:31–23:29:19 UTC; спека `upload:…/b5419a25…`
+  (SUCCEEDED, релей create-upload VPS → presigned-URL → PUT с Mac). Пул smoke-pixel10.
+  Артефакты: `run/device-farm/420-review-v5/` (кадры f001–f004); приборка —
+  `run/device-farm/watch-420-v5/watch.log` (+ `final-sweeps.js` — терминальные свипы).
+- **Вся цепочка v4b повторена живьём + правка v5 отработала:** авторинг → SYNC NOW
+  (топап 3000 в pointsNolics по АВТООТЧЁТУ до первого синка, watcher) → «Send to arena» →
+  economy-гейт пройден → «…queued for arena» → Back → дренажный SYNC NOW → My quests →
+  **повторный SYNC NOW (правка v5, видна в трейсе: Open menu → SYNC NOW → Last sync →
+  My quests)** → `Assert "Checking: “Words” · “Facts”"` FAILED.
+- **Сервер (база):** заявка `quest_review_requests/arena-submission-1isyv164wa8gi`
+  создана **23:23:14.843Z**, status=UNDER_REVIEW; **цикл-фи 1000 списан: кошелёк
+  3000→2000 (оба поля)**. Конвейер `review_pipeline/…`: **WORDS DONE + FACTS DONE**
+  (`review_verdicts/…_WORDS_1`, `…_FACTS_1` — настоящие вердикты живой glm-4.7:
+  WORDS FAIL — маркер «DF420»; FACTS FAIL — плейсхолдер-ORDERING без проверяемых фактов,
+  источник ru.wikipedia.org/wiki/Педагогика).
+- **Драйвер (правка lease 900→90000 подтверждена):** 2 стадийных вызова за свип,
+  WORDS+FACTS до DONE за 2 свипа (v4: почти каждый свип LEASE_LOST/TIME_BUDGET по 0
+  стадий). **Новый ops-кандидат:** TRANSLATE/агрегат не терминалятся — воркер честно
+  атемптит (TIME_BUDGET, attempted=1, stageCalls=2), но translate-вызов живой модели не
+  укладывается в бюджет свипа даже при lease 240000 (80+ свипов, TRANSLATE PENDING,
+  статус заявки UNDER_REVIEW). Владельцу: бюджет свипа vs латентность translate-вызова.
+- **Фолл — НОВЫЙ класс (кадр f004, 23:28:32):** «MY QUESTS» — строка «DF420 review
+  journey quest» с бейджем **DRAFT**, «Checking: “Words” · “Facts”» НЕ появился, хотя
+  заявка к этому моменту жила ~5 минут и после неё было два полных синка. **Гонки v4b
+  больше нет** — клиентская строка квеста в принципе не отражает UNDER_REVIEW на экране
+  «My quests» (клиентский кандидат: статус заявки не маппится в строку/экран). «Исходы
+  автора» не достигнуты (следующий шаг владельца; флоу заморожен).
+- ops: все четыре спеки v5 залиты релеем «create-upload с VPS → presigned-URL → PUT с
+  Mac» (Mac-креды не нужны) — прямой VPS-PUT 403 даже на малых файлах; df-collect с VPS
+  при этом работает (GET жив). Волна v5 целиком: 24.33 устройсте-минуты
+  (2.71+4.23+2.21+15.18); list-remote-access-sessions = 0 после всех прогонов.
 
 ## Прогоны v4/v4b (пакет sha256 8c1b2426…, коммит 51eeafdb) — 31.10 ночь
 
