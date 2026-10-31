@@ -1,4 +1,42 @@
-# Device Farm · джорни 9.9 (авто-половина, FONT_SCALE=1.3) — v2: partial PASS (31.10)
+# Device Farm · джорни 9.9 (авто-половина, FONT_SCALE=1.3) — v3: ядро зелёное снова, хвост упал на селектор «Exit lesson» (это contentDescription, не текст) (31.10)
+
+## Прогон v3 (пакет sha256 ad9f3939…)
+
+Вердикт: **FAILED/частичный PASS ядра (1 прогон, 3.0 устройстве-минуты; run
+`arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/7ffa98cd-0176-45c5-9ad1-cdd8e967ae68`,
+окно 19:34:18–19:38:10 UTC)**. Спека `upload:…/9e263005-f703-49f9-9807-dccb196aefb4`
+(SUCCEEDED, мост Mac→AWS; FONT_SCALE=1.3). Артефакты: `run/device-farm/99-accessibility-v3/`
+(maestro-stdout, testspec output, видео, logcat, кадры).
+
+Пройдено живьём (36 шагов COMPLETED): launch → HOME QUESTS → меню → SYNC NOW → «Last sync»
+→ «Not synced yet» отсутствует → MVP validated checks → курсс → урок → «val» ×2 (CORRECT) →
+Continue → **Sync result now → consent-диалог реально поднялся → «Accept and send» COMPLETED →
+«Completion confirmed by the server»** → скрин 99-lesson-result → скролл до «Report a mistake» →
+скрин 99-result-entries. Ядро джорни (до подтверждения сервером и записей результата
+включительно) зелёное, как и в v2.
+
+Упало: `scrollUntilVisible { text: "Exit lesson", direction: DOWN }` — **No visible element
+found** (15 с скролла). Причина — селектор, и она же была реальной причиной v2 (диагноз v2
+«кнопка ниже кромки» неверен): **«Exit lesson» — это contentDescription иконки-крестика**
+(`CrossButton.kt:25`, `R.string.runner_cd_exit_lesson`, префикс runner_cd_ = content desc),
+кнопка **без текста** сидит в ФИКСИРОВАННОМ верхнем баре экрана результата (кадр видео:
+×-бейдж справа вверху, «LESSON COMPLETE 2/2» под ним). Текстового узла «Exit lesson» на
+экране не существует — текстовый селектор Maestro не может совпасть ни при каком скролле
+(v2 tap и v3 scroll падали об одно и то же).
+
+### Точная правка флоу на следующую итерацию (пакет заморожен — в отчёт владельцу)
+
+Заменить шаг на тап по ×-бейджу в правом верхнем углу — единственный безтекстовый контрол
+джорни:
+```yaml
+- tapOn:
+    point: "90%,6%"   # CrossButton (×) в фиксированном top bar; текста нет — только contentDescription
+```
+(альтернатива долгосрочная: дать CrossButton семантический testTag и селектить по id).
+Дальше хвост уже совместим: runFlow `when visible: "^Exit$"` (диалог подтверждения
+`runner_action_exit` = «Exit») — во флоу есть и сработает.
+
+## Прогон v2 (пакет sha256 50ac4967… с consent-закрывашкой) — partial PASS, историческая секция
 
 Вердикт (v2, пакет sha256 50ac4967… с consent-закрывашкой): **partial PASS — ядро джорни доказано живьём до подтверждения сервером включительно; хвост после результата урока упал на навигации (заранее известная правка, не итерировали)**. Прогоны 1–2 (31.10 утро, пакет debd5457…) — FAILED, см. ниже.
 
