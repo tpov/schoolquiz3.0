@@ -202,10 +202,17 @@ async function cmdSetup513() {
   const at = now();
   const walletFields = {nolics: 3000, pointsNolics: 3000, standardHearts: 5, goldHearts: 1,
     lifePoints: 500, plasmaPoints: 100, lifePointsUpdatedAtMs: at, plasmaPointsUpdatedAtMs: at};
+  // Роли для пункта шторки «Active events»: DrawerSection.EventsSection.ActiveEvents
+  // требует TESTER+MODERATOR+ADMIN+DEVELOPER ≥ QualificationLevel.LEVEL_1.points (=100),
+  // AND-семантика (Visibility.kt, BR #16). Поля users/<uid> — по фактическому чтению
+  // клиента FirebaseUserStatsDataSource.kt: tester/moderator/admin/developer (спонсор и
+  // переводчик не требуются; поле переводчика в схеме — «translater», опечатка прод-схемы).
+  const QUALIFICATION_FIELDS = Object.freeze({tester: 100, moderator: 100, admin: 100, developer: 100});
   const device = (await db.doc(`users/${deviceUid}`).get()).data() || {};
   await db.doc(`users/${deviceUid}`).set({
     nolics: Math.max(Number(device.nolics || 0), 3000),
     boxCount: Math.max(Number(device.boxCount || 0), 100),
+    ...QUALIFICATION_FIELDS,
     testFixture: DF513.marker,
   }, {merge: true});
   if (!(await db.doc(`profiles/${deviceUid}`).get()).exists) {
@@ -256,6 +263,7 @@ async function cmdSetup513() {
   await batch.commit();
   log({event: "setup-513", deviceUid, courseId: DF513.course,
     wallet: {nolics: Math.max(Number(device.nolics || 0), 3000), boxCount: Math.max(Number(device.boxCount || 0), 100)},
+    qualification: QUALIFICATION_FIELDS,
     opponentUid: opponent.localId, opponentToken: opponent.idToken, questions: 80});
 }
 
