@@ -49,6 +49,21 @@ name: Organizer tournament route with device qualification (5.13)
     visible: "Reserved: 10 boxes"
     timeout: 60000
 - takeScreenshot: "513-escrow"
+# Роли (tester/moderator/admin/developer=100) setup-513 мержит в users-документ
+# ПОСЛЕ появления аккаунта, то есть после первого синка флоу; клиент же читает
+# квалификацию из Room-кэша (UserStatsRepositoryImpl.observeStats → userStatsDao,
+# строка обновляется только refreshProfile() из sync()). Без повторного синка
+# isVisible(ActiveEvents) — ложь (evidence 2026-10-31-devicefarm-513-tournament,
+# v2b FALL). Открываем шторку, синкаемся, ждём «Last sync», закрываем по скриму.
+- tapOn: "Open menu"
+- assertVisible: "SYNC NOW"
+- tapOn: "SYNC NOW"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- takeScreenshot: "513-post-escrow-sync"
+- tapOn:
+    point: "94%,50%"
 # ── Browser: Active events → деталь → Enter → допуск. Пункт требует ролей
 # (TESTER+MODERATOR+ADMIN+DEVELOPER ≥ 100, DrawerSection.kt) и лежит ниже
 # кромки шторки EVENTS — скроллим; без приборки ролей в watch-513 пункт скрыт.

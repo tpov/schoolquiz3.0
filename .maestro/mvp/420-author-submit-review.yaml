@@ -97,7 +97,14 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - hideKeyboard
 - tapOn: "Back to structure"
 - takeScreenshot: "420-questions-done"
-# Подача: плата 1000 ноликов списывается сервером при приёме заявки
+# Подача: плата 1000 ноликов списывается сервером при приёме заявки. После
+# добавленных вопросов структура выросла — «Send to arena» уходит ниже кромки,
+# доскролливаем (evidence 2026-10-31-devicefarm-420-review, v2 FALL).
+- scrollUntilVisible:
+    element:
+      text: "Send to arena"
+    direction: DOWN
+    timeout: 15000
 - tapOn: "Send to arena"
 # Платная подача на свежем устройстве поднимает economy-consent (CAP-16,
 # captured==null → Required, evidence 2026-10-31-devicefarm-99-accessibility):
