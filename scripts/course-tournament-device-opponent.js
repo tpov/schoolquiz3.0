@@ -7,10 +7,21 @@
 const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const PROJECT = "demo-schoolquiz-mvp";
-const HOST = "schoolquiz-mvp-firebase";
+// Контекст запуска (31.10): оригинально скрипт жил в контейнере демо-рига, где эмуляторы
+// видны как schoolquiz-mvp-firebase:8080/9099 и functions на :5001. watch-513 гоняет его
+// docker-exec-ом внутри schoolquiz-functions-emu — там эмуляторы на 127.0.0.1:18090/19090
+// (передаёт env), functions на 127.0.0.1:5001. Скрипт ходит ТОЛЬКО HTTP-коллблами на :5001,
+// поэтому хост вычисляем по переданному env; строгие ассерты остаются для обоих контекстов.
+const CONTAINER_HOST = "schoolquiz-mvp-firebase";
+const HOST = String(process.env.FIRESTORE_EMULATOR_HOST || "").startsWith("127.0.0.1:")
+  ? "127.0.0.1" : CONTAINER_HOST;
 assert.equal(process.env.GCLOUD_PROJECT, PROJECT);
-assert.equal(process.env.FIRESTORE_EMULATOR_HOST, `${HOST}:8080`);
-assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST, `${HOST}:9099`);
+if (HOST === CONTAINER_HOST) {
+  assert.equal(process.env.FIRESTORE_EMULATOR_HOST, `${HOST}:8080`);
+  assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST, `${HOST}:9099`);
+} else {
+  assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST, `${HOST}:19090`);
+}
 assert.equal(process.env.GOOGLE_APPLICATION_CREDENTIALS, undefined, "Real credentials are not permitted");
 const [, , eventId, courseId, uid, token] = process.argv;
 assert.equal(typeof uid, "string", "uid required");
