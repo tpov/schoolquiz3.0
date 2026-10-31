@@ -97,6 +97,28 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
 - hideKeyboard
 - tapOn: "Back to structure"
 - takeScreenshot: "420-questions-done"
+# Промежуточный синк ради кошелька (v3 FALL: economy-гейт подачи сравнил ЛОКАЛЬНЫЙ
+# снимок кошелька — 0 — с ценой 1000 и терминально отказал, AD-28; topup от
+# watch-420 уже лежал на сервере, но писался прямым admin set() — клиент узнаёт о
+# нём только refreshProfile() из sync(), а авторинг к этому моменту шёл без единого
+# синка). Авторинг занял минуты — topup давно на сервере; выходим в список,
+# синкаемся, возвращаемся в черновик: к «Send to arena» локальный кошелёк уже 3000.
+- tapOn: "^Back$"
+- assertVisible: "DF420 review journey quest"
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- takeScreenshot: "420-wallet-synced"
+- scrollUntilVisible:
+    element:
+      text: "My quests"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "My quests"
+- tapOn: "DF420 review journey quest"
+- assertVisible: "Quest creation"
 # Подача: плата 1000 ноликов списывается сервером при приёме заявки. После
 # добавленных вопросов структура выросла — «Send to arena» уходит ниже кромки,
 # доскролливаем (evidence 2026-10-31-devicefarm-420-review, v2 FALL).

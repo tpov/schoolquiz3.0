@@ -70,15 +70,13 @@ name: Accessibility key screens sweep at elevated font scale (9.9)
     direction: DOWN
     timeout: 15000
 - takeScreenshot: "99-result-entries"
-# Выход из урока обратно в оболочку. При font_scale 1.3 после скролла к
-# «Report a mistake» кнопка ниже кромки (evidence 2026-10-31-devicefarm-99-accessibility,
-# v2 FALL) — доскролливаем до неё перед тапом.
-- scrollUntilVisible:
-    element:
-      text: "Exit lesson"
-    direction: DOWN
-    timeout: 15000
-- tapOn: "Exit lesson"
+# Выход из урока обратно в оболочку. «Exit lesson» — это contentDescription
+# иконки-крестика в фиксированном верхнем баре (CrossButton.kt, runner_cd_exit_lesson),
+# текстового узла с такой строкой на экране нет — текстовый селектор Maestro не
+# совпадёт ни при каком скролле (evidence 2026-10-31-devicefarm-99-accessibility,
+# v2/v3 FALL). Тап по координате ×-бейджа в правом верхнем углу.
+- tapOn:
+    point: "90%,6%"
 - runFlow:
     when:
       visible: "^Exit$"

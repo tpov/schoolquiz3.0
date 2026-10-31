@@ -14,8 +14,16 @@
 //       (снимок базовой линии делается на старте); на каждого нового uid печатает
 //       одну JSON-строку {"event":"user","uid":...} и наращивает счётчик; выходит,
 //       когда увидено <expected> новых или истёк таймаут (exit 2).
+//   await-auth-users <expected> [maxWaitSec] — то же по АВТОРИЗАЦИИ эмулятора
+//       (admin.auth().listUsers): аккаунт появляется при запуске клиента, ДО его
+//       первого синка. Это позволяет успеть с topup ДО того, как клиент впервые
+//       прочитает кошелёк (джорни 4.20 v3: топап после первого синка клиент не
+//       видел, economy-гейт отказал по локальному нулю); печатает {"event":"authUser",...}.
 //   topup <uid> <nolics> [boxCount]      — поднять кошелёк аккаунта до величин
 //       (only-increase: существующий больший баланс не уменьшается); печатает before/after.
+//       Пишет ОБА поля: pointsNolics (его читает клиент — FirebaseUserStatsDataSource)
+//       и nolics (зеркало setup-513); раньше писался только nolics — клиент при
+//       любом числе синков видел 0.
 //   seed-author-lesson <authorUid>       — опубликованный домашний квест ФИКСИРОВАННЫХ
 //       названий ("DF author course/section/theme/lesson", 2 вопроса SINGLE) под
 //       авторством <authorUid> — цель для трёх входов предложений 4.26; идемпотентен
@@ -29,8 +37,11 @@
 //       печатает статусы конвейера заявок и предложений.
 //   await-proposals <expected> [maxWaitSec] — ждать <expected> новых предложений
 //       lessonProposals, затем свипы до терминала; печатает статусы.
-//   await-tournament <courseId> [maxWaitSec] — ждать событие course_tournament_events
-//       с source.id == <courseId>; печатает {eventId, status, escrow}.
+//   await-tournament <courseId> [maxWaitSec] [organizerUid] — ждать НОВОЕ событие
+//       course_tournament_events с source.id == <courseId> (базовая линия по id
+//       снимается на старте: вчерашние события прогона не матчатся — джорни 5.13
+//       v3, где оппонент отыграл по старому ивенту); опциональный organizerUid
+//       сужает до события конкретного устройства; печатает {eventId, status, escrow}.
 //
 // Свипы очереди проверки (4.20/4.26): прогоняется НАСТОЯЩИЙ рабочий модуль
 // functions/review-queue-worker.js — тот же код, что обязан крутить отдельный процесс
@@ -143,9 +154,42 @@ async function cmdTopup() {
   const ref = db.doc(`users/${uid}`);
   const before = (await ref.get()).data() || {};
   const update = {nolics: Math.max(Number(before.nolics || 0), nolics)};
+  // Кошелёк клиента — pointsNolics (FirebaseUserStatsDataSource.longField("pointsNolics")):
+  // одно лишь nolics клиенту не видно ни при каком числе синков (джорни 4.20 v3 —
+  // economy-гейт отказал «have 0» при nolics=3000 в базе).
+  update.pointsNolics = Math.max(Number(before.pointsNolics || 0), nolics);
   if (boxCount !== null) update.boxCount = Math.max(Number(before.boxCount || 0), boxCount);
   await ref.set({...update, testFixture: "df-devicefarm-2026-10-29"}, {merge: true});
-  log({event: "topup", uid, before: {nolics: before.nolics || 0, boxCount: before.boxCount || 0}, after: update});
+  log({event: "topup", uid, before: {nolics: before.nolics || 0, pointsNolics: before.pointsNolics || 0,
+    boxCount: before.boxCount || 0}, after: update});
+}
+
+/**
+ * Новые АВТООТЧЁТЫ эмулятора: аккаунт рождается при запуске клиента, до первого
+ * синка — в отличие от users-документа, который создаётся самим первым синком.
+ * watcher-ы 4.20/4.26 используют это, чтобы успеть с topup до первого чтения
+ * кошелька клиентом.
+ */
+async function cmdAwaitAuthUsers() {
+  const expected = Number(argv[1]);
+  const maxWaitSec = Number(argv[2] || 900);
+  const baseline = new Set((await admin.auth().listUsers(1000)).users.map((user) => user.uid));
+  log({event: "auth-baseline", users: baseline.size});
+  const deadline = now() + maxWaitSec * 1000;
+  let seen = 0;
+  while (seen < expected && now() < deadline) {
+    for (const user of (await admin.auth().listUsers(1000)).users) {
+      if (baseline.has(user.uid)) continue;
+      baseline.add(user.uid);
+      seen++;
+      log({event: "authUser", uid: user.uid});
+    }
+    await sleep(2500);
+  }
+  if (seen < expected) {
+    log({event: "timeout", seen, expected});
+    process.exitCode = 2;
+  }
 }
 
 const DF426 = Object.freeze({
@@ -328,24 +372,39 @@ async function cmdAwaitProposals() {
 async function cmdAwaitTournament() {
   const courseId = argv[1];
   const maxWaitSec = Number(argv[2] || 900);
+  const organizerUid = argv[3] || null;
+  // Базовая линия по id на старте: матчить «любое событие курса» нельзя — вчерашние
+  // документы прошлого прогона живут в той же демо-базе, и оппонент 5.13 v3
+  // отыграл весь свой цикл по старому ивенту, не увидев свежий от устройства.
+  const baseline = new Set((await db.collection("course_tournament_events")
+    .where("source.id", "==", courseId).get()).docs.map((doc) => doc.id));
+  log({event: "tournament-baseline", courseId, known: baseline.size});
   const deadline = now() + maxWaitSec * 1000;
   while (now() < deadline) {
     const snapshot = await db.collection("course_tournament_events")
       .where("source.id", "==", courseId).get();
-    if (!snapshot.empty) {
-      const event = snapshot.docs[0].data();
-      log({event: "tournament", eventId: snapshot.docs[0].id, status: event.status,
-        escrow: event.escrow, organizer: event.organizerUid});
+    // Из событий после базовой линии берём самое свежее по createdAtMs — «новое
+    // событие устройства», а не первое попавшееся.
+    const fresh = snapshot.docs
+      .filter((doc) => !baseline.has(doc.id))
+      .filter((doc) => !organizerUid || (doc.data().organizerUid === organizerUid))
+      .sort((a, b) => Number(b.data().createdAtMs || 0) - Number(a.data().createdAtMs || 0));
+    if (fresh.length > 0) {
+      const event = fresh[0].data();
+      log({event: "tournament", eventId: fresh[0].id, status: event.status,
+        escrow: event.escrow, organizer: event.organizerUid,
+        createdAtMs: Number(event.createdAtMs || 0)});
       return;
     }
     await sleep(2500);
   }
-  log({event: "timeout", wanted: "course_tournament_events", courseId});
+  log({event: "timeout", wanted: "course_tournament_events", courseId, organizer: organizerUid});
   process.exitCode = 2;
 }
 
 const commands = {
   "await-users": cmdAwaitUsers,
+  "await-auth-users": cmdAwaitAuthUsers,
   topup: cmdTopup,
   "seed-author-lesson": cmdSeedAuthorLesson,
   "setup-513": cmdSetup513,

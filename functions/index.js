@@ -7854,6 +7854,8 @@ async function upsertUserProfile(uid, options) {
     const premiumPlan = await advancePremiumInTransaction(transaction, uid, existingUser, economy, options.now);
     if (!premiumPlan.caughtUp) return writePremiumCheckpoint(transaction, uid, premiumPlan);
     const existingProfile = profileSnapshot.exists ? profileSnapshot.data() || {} : {};
+    // Читается, но не пишется (см. комментарий у publicProfile): квалификация — админ-поля, и
+    // значение здесь нужно только для честного ответа клиенту, каким состояние было на входе.
     const qualification = readQualification(existingProfile, existingUser);
     const status = profileStatus(options.authStatus, hasTrophy(existingUser.trophies, TROPHY_VERIFIED));
     const shouldReplaceNickname =
@@ -7921,20 +7923,15 @@ async function upsertUserProfile(uid, options) {
       city: nullableString(existingUser.city),
       telegram: nullableString(existingUser.telegram),
       verifiedAtMs: numberValue(existingUser.verifiedAtMs, 0),
-      sponsor: qualification.sponsorLevel,
-      tester: qualification.testerLevel,
-      translater: qualification.translatorLevel,
-      moderator: qualification.moderatorLevel,
-      admin: qualification.adminLevel,
-      developer: qualification.developerLevel,
-      qualifications: {
-        sponsor: qualification.sponsorLevel,
-        tester: qualification.testerLevel,
-        translater: qualification.translatorLevel,
-        moderator: qualification.moderatorLevel,
-        admin: qualification.adminLevel,
-        developer: qualification.developerLevel,
-      },
+      // Квалификация сюда НЕ пишется. Поля ролей (tester/translater/moderator/admin/
+      // developer и карта qualifications) — админ-управляемые: их единственные писцы — админ-пути
+      // (Admin SDK: сид/преп-драйвер, e2e-приборка), а клиент читает их прямо из users-документа
+      // (FirebaseUserStatsDataSource). Раньше этот пуш выводил уровни из profiles-документа и
+      // перезаливал их сюда merge-ом: бутстрап клал в profiles нули, админ потом поднимал роли
+      // в users, и следующий же клиентский синк затирал их нулями обратно (джорни 5.13 v3,
+      // users-doc update ~7 с после CREATE турнира — «Active events» отваливался на ровном месте).
+      // merge:true ниже оставляет чужие (админские) значения нетронутыми; у нового аккаунта полей
+      // просто нет, и клиент читает свои дефолтные нули.
     };
     const trustedProfile = {
       uid,
@@ -7944,12 +7941,11 @@ async function upsertUserProfile(uid, options) {
       createdAtMs,
       updatedAtMs,
       reviewReputation: numberValue(existingProfile.reviewReputation, 0),
-      sponsorLevel: qualification.sponsorLevel,
-      testerLevel: qualification.testerLevel,
-      translatorLevel: qualification.translatorLevel,
-      moderatorLevel: qualification.moderatorLevel,
-      adminLevel: qualification.adminLevel,
-      developerLevel: qualification.developerLevel,
+      // Уровни не пишутся и сюда — по той же причине: profiles — доверенный документ, куда уровни
+      // кладут только админ-пути. Бутстраповое клеймо «testerLevel: 0» убивало fallback на
+      // users-зеркало в readQualification (primary-ноль — это всё ещё число) и превращало каждый
+      // последующий апсерт в затирание админских ролей. Поля нет — fallback жив, админ-значение
+      // в ответе честное.
     };
     writePremiumEconomy({db, transaction, uid, plan: premiumPlan});
     transaction.set(
@@ -7966,7 +7962,9 @@ async function upsertUserProfile(uid, options) {
     );
     transaction.set(userRef, publicProfile, {merge: true});
     transaction.set(profileRef, trustedProfile, {merge: true});
-    return {uid, publicProfile, trustedProfile};
+    // qualification — снимок админ-состояния на входе транзакции (profiles-уровни с fallback-ом на
+    // users-зеркало): сам пуш его не меняет, но ответ клиенту обязан показывать то, что есть.
+    return {uid, publicProfile, trustedProfile, qualification};
   });
 }
 
@@ -8132,7 +8130,10 @@ function profileResponse(result, economy) {
     telegram: nullableString(user.telegram),
     verifiedAtMs: numberValue(user.verifiedAtMs, 0),
     ownedLogos: stringArray(user.ownedLogos),
-    qualification: {
+    // Снимок админ-состояния из транзакции апсерта (profiles-уровни с fallback-ом на users-зеркало):
+    // сам пуш квалификацию больше не переписывает, поэтому источник ответа — то, что лежит в базе,
+    // а не производная от полей, которых пуш в документы не кладёт.
+    qualification: result.qualification || {
       sponsorLevel: numberValue(profile.sponsorLevel, 0),
       testerLevel: numberValue(profile.testerLevel, 0),
       translatorLevel: numberValue(profile.translatorLevel, 0),

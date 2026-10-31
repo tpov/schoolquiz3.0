@@ -25,13 +25,37 @@ name: Three proposal entries up to the author side (4.26)
 - assertVisible: "HOME QUESTS"
 - tapOn: "Open menu"
 - tapOn: "^SYNC NOW$"
-- extendedWaitUntil:
-    visible: "Last sync: .*"
-    timeout: 90000
-- takeScreenshot: "426-proposer-synced"
+# Ловушка v3: «Last sync: .*» совпадает и с устаревшим лейблом бандла («Last sync:
+# 23.10.2026 19:06», evidence 2026-10-31-devicefarm-426-proposals) — строкой синка
+# свежесть не доказать, ждём сам сид-каталог. Первый вход в HOME QUESTS даёт синку
+# осесть и перечитывает полку (до 30 с).
 - tapOn: "^HOME QUESTS$"
+- takeScreenshot: "426-proposer-first-home"
+- extendedWaitUntil:
+    visible: "DF author catalog"
+    timeout: 30000
+# Каталог не приехал первым синком (v3: сервер чист — сид лёг за 25 с до синка;
+# гипотеза — Room-кэш/курсор изолированной сборки не применяет каталог-пулл
+# пост-фактум) — повторный SYNC NOW и повторный вход в HOME QUESTS: экран читает
+# то, что успело примениться ко второму входу (тот же класс фикса, что «Active
+# events» 5.13 v3).
+- runFlow:
+    when:
+      notVisible: "DF author catalog"
+    commands:
+      - takeScreenshot: "426-catalog-absent-after-first-sync"
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - takeScreenshot: "426-proposer-second-sync"
+      - tapOn: "^HOME QUESTS$"
+- extendedWaitUntil:
+    visible: "DF author catalog"
+    timeout: 120000
+- takeScreenshot: "426-proposer-home-catalog"
 # ── Урок автора (DF author course → DF author lesson), ответ "val" ×2
-- assertVisible: "DF author catalog"
 - tapOn: "DF author catalog"
 - assertVisible: "DF author course"
 - tapOn: "DF author course"
@@ -127,7 +151,11 @@ name: Three proposal entries up to the author side (4.26)
       - tapOn: "^Cancel$"
 - takeScreenshot: "426-copyedit-submitted"
 # ── Вход 3: свой урок с путём в чужом курсе (NEW_LESSON, 1000 ноликов)
-- tapOn: "Exit lesson"
+# «Exit lesson» — contentDescription иконки-× в фиксированном верхнем баре
+# (CrossButton.kt, runner_cd_exit_lesson), текстового узла нет — тап по координате
+# (evidence 2026-10-31-devicefarm-99-accessibility, v2/v3 FALL об этот же селектор).
+- tapOn:
+    point: "90%,6%"
 - runFlow:
     when:
       visible: "^Exit$"
