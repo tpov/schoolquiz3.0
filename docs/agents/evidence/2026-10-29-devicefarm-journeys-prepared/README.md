@@ -134,3 +134,21 @@ VPS-путь df-run2.sh оставить как fallback на случай вы�
 …-420-review/ (4.26 не гонялся: его блок идентичен доказанному в 9.9).
 TalkBack-половина 9.9 — по-прежнему remote access руками владельца
 (list-remote-access-sessions пуст).
+
+## Кампейн v2 (31.10 вечер, пакет sha256 50ac4967… с consent-закрывашками) — итоги
+
+5 прогонов, 22.17 устройстве-минуты (счёт DF $0, квота не тронута), список запуска ниже;
+все спеки — мост Mac→AWS, schedule — с VPS, артефакты — df-mac-collect. Socat-релеи
+переведены под systemd (schoolquiz-relay-auth/-firestore); орфанный socat на 8080 убран.
+
+| Джорни | Run | Вердикт | Ключевое доказательство |
+| --- | --- | --- | --- |
+| 9.9 | 5e71a2f8 (2.85 мин) | **partial PASS** | ядро джорни до «Completion confirmed by the server» включительно при FONT_SCALE=1.3; сервер: SUBMIT_ATTEMPT completed 16:59:21Z (uid bVvQPnoV…); хвост = «Exit lesson» ниже кромки при 1.3 (правка в README) |
+| 4.26 | 901a2456 (2.68 мин) | FAILED (дефект APK) | mvpb без networkSecurityConfig — cleartext к ригу запрещён, «Not synced yet!»; распаковка обоих APK это доказывает; правка: манифест src/mvpb (evidence …-426-proposals/) |
+| 4.20 | c91d1254 (9.28 мин) | FAILED (глубокий прогресс) | «My quests»-навигация + полный черновик (квест/раздел/тема/урок/2 вопроса) живьём; «Send to arena» ниже кромки — правка scrollUntilVisible; конвейер не стартовал (заявки не было), модель glm-4.7 в эмуляторе готова |
+| 5.13 | 15015d1b (4.42 мин) | FAILED (сид-дефект, исправлен в смену) | prepareCourseTournamentBank молча SOURCE_NOT_ELIGIBLE: сид клал archived=true на всю иерархию; fix 73d3ce41 + префлайт prepare→counts 60/20 |
+| 5.13 v2b | 45c2b1e6 (2.94 мин) | **partial PASS** | организаторская половина целиком: Events-вкладка → банк 60/20 → Tournament created → эскроу 10 boxes; событие на сервере QUALIFICATION; оппонент QUALIFIED (3 раунда) после фикса 175c2397; браузерная половина = Room-кэш квалификации без второго синка во флоу |
+
+Коммиты смены: d0586aa1 (роли setup-513), 44feb731/04fd8be6/4e39dc97/3117f6d2 (evidence),
+73d3ce41 (форма сида 513), 175c2397 (оппонент из functions-emu). Все стены дальнейших
+итераций детерминированы (флоу заморожен) — точные правки перечислены в evidence-README каждой джорни.
