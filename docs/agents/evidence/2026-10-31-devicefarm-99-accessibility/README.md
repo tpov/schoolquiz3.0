@@ -1,12 +1,36 @@
-# Device Farm · джорни 9.9 (авто-половина, FONT_SCALE=1.3) — FAIL: флоу не тапает первый economy-consent (31.10)
+# Device Farm · джорни 9.9 (авто-половина, FONT_SCALE=1.3) — v2: partial PASS (31.10)
 
-Вердикт: **FAILED (2 прогона, 6.65 устройстве-минут)**. Автоматизируемая половина 9.9
-доказана до результата урока включительно (меню → синк → каталог → урок → 2 ответа →
-экран результата) на Pixel 10 с font_scale 1.3; прогресс упёрся в дефект флоу, а не в
-продукт: свежее устройство обязано дать первое согласие на платные условия (CAP-16),
-флоу диалог не закрывает — шаг «Completion confirmed by the server» недостижим без правки флоу.
+Вердикт (v2, пакет sha256 50ac4967… с consent-закрывашкой): **partial PASS — ядро джорни доказано живьём до подтверждения сервером включительно; хвост после результата урока упал на навигации (заранее известная правка, не итерировали)**. Прогоны 1–2 (31.10 утро, пакет debd5457…) — FAILED, см. ниже.
 
-## Прогоны
+## Прогон v2
+
+- Run ARN: `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/5e71a2f8-4fbd-490c-a516-1ad575651f06`
+- FAILED (хвост), 2.85 устройстве-минуты, окно 16:56:55–17:00:50 UTC; спека `upload:…/d3d73125…` (SUCCEEDED, мост Mac→AWS).
+- Артефакты: `run/device-farm/99-accessibility-v2/` (maestro-stdout, testspec output, видео, logcat).
+
+Пройдено живьём (каждый шаг COMPLETED в maestro-stdout): launch → HOME QUESTS → меню → SYNC NOW →
+«Last sync» → MVP validated checks → MVP smoke course → урок → «val» ×2 (CORRECT оба) → Continue →
+**Sync result now → consent-диалог «Accept and send» (закрывашка v2 отработала) → «Completion confirmed
+by the server»** → скрин 99-lesson-result → скролл до «Report a mistake» → скрин 99-result-entries.
+
+Серверное подтверждение результата (главное отличие от прогонов 1–2): в эмуляторе mutation_keys —
+`lesson_runner.SUBMIT_ATTEMPT state=completed` в **16:59:21.780Z**, uid устройства `bVvQPnoV…`
+(окно прогона 16:56:55–17:00:50) — результат урока реально доехал до сервера и был принят.
+
+Упало (хвост, известная правка): `tapOn "Exit lesson"` — Element not found: после скролла к
+«Report a mistake» кнопка «Exit lesson» ниже кромки при font_scale 1.3. Ядро джорни (до результата
+урока включительно) зелёное от начала до конца, поэтому по решению координатора — partial PASS,
+без итерации. ARENA-каталог и SHOP в этом прогоне не достигнуты.
+
+### Точная правка флоу на следующую итерацию (владельцу)
+
+В `99-accessibility-key-screens.yaml` перед `tapOn: "Exit lesson"` добавить
+`scrollUntilVisible: { element: { text: "Exit lesson" }, direction: DOWN, timeout: 15000 }`
+(скрин результата при 1.3 не показывает кнопку целиком); далее хвост как задуман
+(шторка → ^ARENA$ → Load lessons → SHOP). TalkBack-половина 9.9 — по-прежнему remote access
+руками владельца (list-remote-access-sessions = 0 после прогона).
+
+## Прогоны v1 (пакет debd5457…, без закрывашки) — FAILED, историческая секция
 
 | # | Run ARN | Итог | Минуты | Где остановились |
 | --- | --- | --- | --- | --- |
