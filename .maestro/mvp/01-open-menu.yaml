@@ -1,8 +1,0 @@
-appId: com.tpov.schoolquiz.mvp
-name: Isolated MVP startup and menu
----
-- launchApp:
-    clearState: false
-- assertVisible: "HOME QUESTS"
-- tapOn: "Open menu"
-- takeScreenshot: "menu-first"

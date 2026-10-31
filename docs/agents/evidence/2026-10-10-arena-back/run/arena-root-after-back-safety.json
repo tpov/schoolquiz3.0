@@ -1,9 +1,0 @@
-{
-  "status": "CONTEXT",
-  "expectedState": "arena-root",
-  "observedState": "arena-root",
-  "unsafeScreenMarkers": [],
-  "observedKnownState": true,
-  "observedTextFieldCount": 16,
-  "artifactVersion": 2
-}

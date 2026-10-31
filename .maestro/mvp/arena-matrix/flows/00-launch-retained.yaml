@@ -1,5 +1,0 @@
-appId: com.tpov.schoolquiz.mvp
-name: Arena matrix launch retained application
----
-- launchApp:
-    clearState: false

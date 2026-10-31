@@ -26,6 +26,21 @@
   не достигнуты. TalkBack-половина 9.9 — по-прежнему remote access руками владельца
   (list-remote-access-sessions = 0 после прогона).
 
+## Параллельная волна · пул p10-9xl (Pixel 9 Pro XL) — независимый повтор v4 (31.10 ночь)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/f636a37f-7e59-446b-9f7b-90cd08215158`, FAILED, 2.7 устройсте-минуты, окно
+  22:04:23–22:07:37 UTC; спека `upload:…/a4fe80d0-bea8-46d2-8045-070c5179fb71` (SUCCEEDED, мост
+  Mac→AWS; FONT_SCALE=1.3). Артефакты: `run/device-farm/99-accessibility-v4-p9xl/` (кадры f055/
+  f058/f060 из видео). Выделенный пул волны, параллельно прогону v4 на общем пуле.
+- Ядро зелёное очередной раз (36 шагов COMPLETED): launch → синк → MVP validated checks →
+  курс/урок → «val» ×2 → Sync result now → consent «Accept and send» → «Completion confirmed
+  by the server» (кадр f058: 100%, +31/+3) → скролл «Report a mistake» → записи результата.
+- Хвост: point-tap (90%,6%) COMPLETED (22:06:40), но `runFlow when "^Exit$"` SKIPPED — диалог
+  выхода не поднялся, `Assert "Open menu"` FAILED (22:06:58); кадры f058/f060 — приложение
+  осталось на «LESSON COMPLETE · EASY», ×-бейджа в топ-баре нет. Независимое подтверждение
+  вердикта v4 выше (выхода на экране результата нет вовсе; Back-подход в df-v5).
+
+
 ## Прогон v3 (пакет sha256 ad9f3939…)
 
 Вердикт: **FAILED/частичный PASS ядра (1 прогон, 3.0 устройстве-минуты; run

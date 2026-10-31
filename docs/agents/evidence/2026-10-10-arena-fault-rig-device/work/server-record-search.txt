@@ -1,3 +1,0 @@
-server_results 0
-result_events_public 0
-server_contexts 0

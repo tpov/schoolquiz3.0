@@ -1,1 +1,0 @@
-Spec complete, вопросов нет.

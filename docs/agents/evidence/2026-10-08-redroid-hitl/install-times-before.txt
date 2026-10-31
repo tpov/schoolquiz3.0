@@ -1,2 +1,0 @@
-    firstInstallTime=2026-10-08 22:06:07
-    lastUpdateTime=2026-10-08 22:06:07
