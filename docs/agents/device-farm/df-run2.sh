@@ -19,8 +19,12 @@ if [ -n "$FONT_SCALE" ]; then
   sed -i "s|export MAESTRO_FONT_SCALE=\"${MAESTRO_FONT_SCALE:-}\"|export MAESTRO_FONT_SCALE=\"$FONT_SCALE\"|" "$SPEC_RUN"
 fi
 
-put() {
-  python3 -c "import sys,urllib.request; d=open(sys.argv[2],'rb').read(); r=urllib.request.Request(sys.argv[1],data=d,method='PUT'); print('PUT', urllib.request.urlopen(r, timeout=300).status)" "$1" "$2"
+put() {  # presigned PUT: curl --path-as-is (urllib в контексте скрипта ловит 403 даже
+  # на малых файлах — 30.10 подтверждено: руками curl с VPS канал малых заливок жив)
+  local code
+  code=$(curl -sS --path-as-is -o /dev/null -w "%{http_code}" -X PUT --data-binary @"$2" "$1")
+  echo "PUT $code"
+  [ "$code" = "200" ]
 }
 
 up() {  # $1=type $2=name $3=file -> ARN; до 8 попыток
@@ -44,14 +48,22 @@ up() {  # $1=type $2=name $3=file -> ARN; до 8 попыток
   return 1
 }
 
-PKG_ARN=$(up APPIUM_NODE_TEST_PACKAGE devicefarm-test-package.zip run/device-farm/pkg/devicefarm-test-package.zip) || { echo "package upload FAILED"; exit 1; }
-echo "pkg: $PKG_ARN [SUCCEEDED]"
+# DF_PKG_ARN: ARN уже залитого тест-пакета (канал больших заливок с VPS режется
+# провайдером — 30.10 пакет залит с другой сети и передаётся сюда; без переменной
+# скрипт по-прежнему заливает пакет сам).
+if [ -n "${DF_PKG_ARN:-}" ]; then
+  PKG_ARN="$DF_PKG_ARN"
+  echo "pkg: $PKG_ARN [pre-uploaded]"
+else
+  PKG_ARN=$(up APPIUM_NODE_TEST_PACKAGE devicefarm-test-package.zip run/device-farm/pkg/devicefarm-test-package.zip) || { echo "package upload FAILED"; exit 1; }
+  echo "pkg: $PKG_ARN [SUCCEEDED]"
+fi
 SPEC_ARN=$(up APPIUM_NODE_TEST_SPEC testspec-maestro.yaml "$SPEC_RUN") || { echo "spec upload FAILED"; exit 1; }
 echo "spec: $SPEC_ARN [SUCCEEDED]"
 
 RUN_ARN=$(aws devicefarm schedule-run --project-arn "$PROJ" --app-arn "$APP" \
   --device-pool-arn "$POOL" --name "$RUN_NAME" \
-  --execution-configuration '{"skipAppResigning":false,"jobTimeoutMinutes":20,"accountsCleanup":true,"appPackagesCleanup":true,"videoCapture":true}' \
+  --execution-configuration '{"skipAppResign":false,"jobTimeoutMinutes":20,"accountsCleanup":true,"appPackagesCleanup":true,"videoCapture":true}' \
   --test "{\"type\":\"APPIUM_NODE\",\"testPackageArn\":\"$PKG_ARN\",\"testSpecArn\":\"$SPEC_ARN\"}" \
   --query run.arn --output text --region "$REGION")
 echo "run: $RUN_ARN"

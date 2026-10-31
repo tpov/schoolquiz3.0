@@ -56,7 +56,11 @@ phases:
       # ---- ручки прогона (pre_test) ----
       - export INSTALL_MVPB="${INSTALL_MVPB:-0}"
       - export MAESTRO_FONT_SCALE="${MAESTRO_FONT_SCALE:-}"
-      - if [ "$INSTALL_MVPB" = "1" ]; then adb install -r "$DEVICEFARM_TEST_PACKAGE_PATH/apks/android-next-mvpb.apk" || echo "WARN: mvpb install failed (signature)"; fi
+      # Составные конструкции (if ...; then ...; fi) Device Farm ломает при
+      # конвертации спеки в shell-скрипт (поймано 31.10: строка превращается в
+      # {if [...]} и падает No such file or directory). Раннер заменяет этот
+      # маркер одной простой командой: mvpb=1 → adb install mvpb.apk, mvpb=0 → echo.
+      - echo "MVPB_INSTALL_PLACEHOLDER"
       # Стабильность тапов + опциональный повышенный шрифт для 9.9.
       - adb shell settings put global window_animation_scale 0
       - adb shell settings put global transition_animation_scale 0
