@@ -237,14 +237,22 @@ async function cmdSetup513() {
   for (const doc of oldQuestions.docs) await doc.ref.delete();
   const oldReviews = await db.collection(`admin/review/lessons/${DF513.lesson}/reviews`).get();
   for (const doc of oldReviews.docs) await doc.ref.delete();
-  const common = {version: 1, lastModifiedAt: at, archived: true, testFixture: DF513.marker};
+  // Видимость архива: archived=true несёт ТОЛЬКО корень-квест (visibleOn=["archive"]) как
+  // маркер публикации. Каталог/раздел/тема/урок обязаны быть без archived: trusted loader
+  // турнирного банка отбрасывает архивные ряды (tournament-source-bank.js collect():
+  // catalog.archived → SOURCE_NOT_ELIGIBLE — пруф: прогон 5.13 v2 31.10, prepare отработал
+  // 534 мс и НЕ написал ни банка, ни preparation). Форма рядов зеркалит проверенный живьём
+  // scripts/course-tournament-device-prep.js (волна 5.13 device-proof 18.10): текст вопроса
+  // удлинён — короткий текст фикстуры не проходит безопасную редакцию (redact → INVALID_SOURCE).
+  const root = {version: 1, lastModifiedAt: at, archived: true, testFixture: DF513.marker};
+  const plain = {version: 1, lastModifiedAt: at, testFixture: DF513.marker};
   const batch = db.batch();
-  batch.create(db.doc(`catalogs/${DF513.catalog}`), {...common, questType: "COURSE"});
-  batch.create(db.doc(`quests/${DF513.course}`), {...common, catalogId: DF513.catalog,
+  batch.create(db.doc(`catalogs/${DF513.catalog}`), {...plain, questType: "COURSE"});
+  batch.create(db.doc(`quests/${DF513.course}`), {...root, catalogId: DF513.catalog,
     authorUid: deviceUid, visibleOn: ["archive"]});
-  batch.create(db.doc(`sections/${DF513.section}`), {...common, questId: DF513.course});
-  batch.create(db.doc(`themes/${DF513.theme}`), {...common, sectionId: DF513.section});
-  batch.create(db.doc(`lessons/${DF513.lesson}`), {...common, themeId: DF513.theme,
+  batch.create(db.doc(`sections/${DF513.section}`), {...plain, questId: DF513.course});
+  batch.create(db.doc(`themes/${DF513.theme}`), {...plain, sectionId: DF513.section});
+  batch.create(db.doc(`lessons/${DF513.lesson}`), {...plain, themeId: DF513.theme,
     reviewSubmissionId: DF513.submission, reviewApprovedAtMs: at - 1000});
   batch.create(db.doc(`admin/review/lessons/${DF513.lesson}`), {ownerUid: deviceUid, questId: DF513.course,
     submissionId: DF513.submission, status: "PUBLISHED", sourceLanguages: ["en"], testFixture: DF513.marker});
@@ -257,7 +265,8 @@ async function cmdSetup513() {
     batch.create(db.doc(`questions/df513-q-${String(index).padStart(3, "0")}`), {
       lessonId: DF513.lesson, version: 1, language: "en", testFixture: DF513.marker,
       difficulty: index < 60 ? "EASY" : "HARD",
-      payload: JSON.stringify({...SINGLE, difficulty: index < 60 ? "EASY" : "HARD"}),
+      payload: JSON.stringify({...SINGLE, text: `${SINGLE.text} ${"Device proof synthetic fixture. ".repeat(12)}`,
+        difficulty: index < 60 ? "EASY" : "HARD"}),
     });
   }
   await batch.commit();
