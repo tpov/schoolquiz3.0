@@ -8,7 +8,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.Ques
  * считает вызовы доведения — тесты проверяют и показ, и «доведи статус».
  */
 class FakeQuestReviewOutcomeRepository(
-    private val snapshots: List<QuestReviewOutcomeSnapshot> = emptyList(),
+    var snapshots: List<QuestReviewOutcomeSnapshot> = emptyList(),
     private val error: Exception? = null,
 ) : QuestReviewOutcomeRepository {
     val fetchCalls = mutableListOf<Pair<Set<String>, Set<String>>>()

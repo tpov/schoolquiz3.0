@@ -9,10 +9,12 @@ import com.tpov.schoolquiz.android.core.designsystem.model.toDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.mapper.toDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestReviewOutcomeSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestReviewOutcomesUseCase
@@ -35,6 +37,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Default implementation of [MyQuestsComponent].
@@ -62,6 +65,7 @@ class DefaultMyQuestsComponent(
     private val quoteReviewFee: QuoteQuestReviewFeeUseCase,
     private val submitQuestDraftToArena: SubmitQuestDraftToArenaUseCase,
     private val fetchReviewOutcomes: FetchQuestReviewOutcomesUseCase,
+    private val syncStatus: SyncStatusRepository,
     private val navigator: Navigator,
     private val onQuestDrillDown: (QuestDisplayItem) -> Unit = {},
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
@@ -147,25 +151,49 @@ class DefaultMyQuestsComponent(
         )
 
     init {
-        // Перечитываем исходы, когда меняется состав черновиков: новая подача или вернувшийся
-        // отказ меняют множество запроса. Повторы по тому же множеству id не летают.
+        // Перечитываем исходы, когда меняется состав или статус черновиков ИЛИ когда приезжает
+        // свежий контентный синк (4.20): заявка уходит на сервер из очереди, и «Checking» в строке
+        // появляется только по данным синка, случившегося уже после подачи — сам он локальную
+        // строку черновика не трогает, поэтому по составу черновиков перечитывания не случится
+        // никогда. Повторы по тому же ключу не летают.
         scope.launch {
-            draftSummariesFlow.collect { drafts ->
+            combine(draftSummariesFlow, syncStatus.observeStatus()) { drafts, status ->
+                drafts to status.lastSuccessAtMs
+            }.collect { (drafts, lastSyncAtMs) ->
                 val ids = drafts.map { it.id.value }.toSet()
                 if (ids.isEmpty()) {
+                    requestedOutcomeKey = null
                     _reviewOutcomes.value = emptyMap()
-                } else if (ids != requestedOutcomeIds) {
-                    requestedOutcomeIds = ids
-                    val snapshots = fetchReviewOutcomes(submissionIds = emptySet(), legacyDraftIds = ids)
-                    _reviewOutcomes.value = snapshots.associateBy { it.draftId }
+                    return@collect
                 }
+                val key = OutcomeRequestKey(ids, drafts.associate { it.id.value to it.status }, lastSyncAtMs)
+                if (key == requestedOutcomeKey) return@collect
+                requestedOutcomeKey = key
+                val snapshots =
+                    try {
+                        fetchReviewOutcomes(submissionIds = emptySet(), legacyDraftIds = ids)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // Отказ чтения оставляет прошлые исходы на экране (4.16): список живёт,
+                        // а сборщик не умирает — следующий синк или правка черновиков перечитает.
+                        return@collect
+                    }
+                _reviewOutcomes.value = snapshots.associateBy { it.draftId }
             }
         }
         lifecycle.doOnDestroy { componentJob.cancel() }
     }
 
+    /** Ключ перечитывания: черновики (id+статус) и контентный синк, после которого читали сервер. */
+    private data class OutcomeRequestKey(
+        val draftIds: Set<String>,
+        val draftStatuses: Map<String, QuestDraftStatus>,
+        val lastSyncAtMs: Long,
+    )
+
     @Volatile
-    private var requestedOutcomeIds: Set<String> = emptySet()
+    private var requestedOutcomeKey: OutcomeRequestKey? = null
 
     override fun onCatalogSelected(id: CatalogId?) {
         selectedCatalog.value = id

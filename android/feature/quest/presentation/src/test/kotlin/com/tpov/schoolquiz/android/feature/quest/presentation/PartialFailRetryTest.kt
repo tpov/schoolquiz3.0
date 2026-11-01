@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepo
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeReviewFeeQuoteRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestReviewOutcomeRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSyncStatusRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.provider.QuestAuthoringIdProvider
@@ -96,6 +97,7 @@ class PartialFailRetryTest {
                 QuestAuthoringTimestampProvider { 1_000L },
             ),
         fetchReviewOutcomes = FetchQuestReviewOutcomesUseCase(FakeQuestReviewOutcomeRepository()),
+        syncStatus = FakeSyncStatusRepository(),
         navigator = FakeNavigator(),
         mainContext = testDispatcher,
     )

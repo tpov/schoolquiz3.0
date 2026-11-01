@@ -16,11 +16,13 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeReviewFee
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestReviewOutcomeRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSyncStatusRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.network.SyncFailure
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.sync.SyncRunKind
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
@@ -116,6 +118,7 @@ class DefaultMyQuestsComponentTest {
         onQuestDrillDown: (QuestDisplayItem) -> Unit = { },
         quoteRepo: ReviewFeeQuoteRepository = FakeReviewFeeQuoteRepository(),
         outcomeRepo: QuestReviewOutcomeRepository = FakeQuestReviewOutcomeRepository(),
+        syncRepo: FakeSyncStatusRepository = FakeSyncStatusRepository(),
         submitRepo: QuestAuthoringRepository = authoringRepo,
     ) = DefaultMyQuestsComponent(
         componentContext = testCtx(),
@@ -131,6 +134,7 @@ class DefaultMyQuestsComponentTest {
             QuestAuthoringTimestampProvider { 1_000L },
         ),
         fetchReviewOutcomes = FetchQuestReviewOutcomesUseCase(outcomeRepo),
+        syncStatus = syncRepo,
         navigator = navigator,
         onQuestDrillDown = onQuestDrillDown,
         mainContext = testDispatcher,
@@ -327,6 +331,117 @@ class DefaultMyQuestsComponentTest {
         assertEquals(listOf("sub-9"), outcomeRepo.advancedIds, "ready outcome must be advanced")
         assertEquals(2, outcomeRepo.fetchCalls.size, "advance is followed by a refetch")
         assertEquals("sub-9", snapshots.single().submissionId)
+    }
+
+    // ── 4.20: «Checking» в строке квеста после подачи — исходы перечитываются по статусу и синку ─
+
+    private fun draftSummary(
+        id: String,
+        status: QuestDraftStatus,
+    ) = QuestDraftSummary(
+        id = QuestDraftId(id),
+        catalogId = CatalogId("cat1"),
+        title = "DF420 review journey quest",
+        status = status,
+        questionCount = 2,
+        updatedAtMs = 10L,
+        isActive = true,
+    )
+
+    @Test
+    fun `when a draft is queued for review then outcomes refetch without waiting for a sync`() = runTest {
+        val authoringRepo = FakeQuestAuthoringRepository()
+        authoringRepo.emit(listOf(draftSummary("draft-1", QuestDraftStatus.DRAFT)))
+        val outcomeRepo = FakeQuestReviewOutcomeRepository()
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            authoringRepo = authoringRepo,
+            outcomeRepo = outcomeRepo,
+        )
+        testScheduler.advanceUntilIdle()
+        val fetchedBefore = outcomeRepo.fetchCalls.size
+
+        // «Send to arena» переводит черновик в очередь проверки локально: состав id не меняется,
+        // но статус меняется — перечитывание обязано случиться без всякого синка.
+        authoringRepo.emit(listOf(draftSummary("draft-1", QuestDraftStatus.REVIEW_QUEUED)))
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(
+            outcomeRepo.fetchCalls.size > fetchedBefore,
+            "status transition to review-queued must refetch outcomes",
+        )
+    }
+
+    @Test
+    fun `when a content sync lands after submission then the waiting draft surfaces checking`() = runTest {
+        // Джорни 4.20: подача уезжает очередью, сервер создаёт заявку уже ПОСЛЕ перечитывания
+        // на открытии экрана; локальная строка при этом не меняется — без сигнала синка экран
+        // не узнает про UNDER_REVIEW никогда.
+        val authoringRepo = FakeQuestAuthoringRepository()
+        authoringRepo.emit(listOf(draftSummary("draft-1", QuestDraftStatus.REVIEW_QUEUED)))
+        val outcomeRepo = FakeQuestReviewOutcomeRepository()
+        val syncRepo = FakeSyncStatusRepository()
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            authoringRepo = authoringRepo,
+            outcomeRepo = outcomeRepo,
+            syncRepo = syncRepo,
+        )
+        testScheduler.advanceUntilIdle()
+        assertNull(
+            component.state.value.reviewOutcomes["draft-1"],
+            "before the sync reaches the server there is no outcome yet",
+        )
+
+        // Синк довёл заявку до сервера; сервер вернул UNDER_REVIEW по legacy-чтению черновика.
+        outcomeRepo.snapshots =
+            listOf(
+                QuestReviewOutcomeSnapshot(
+                    submissionId = "arena-submission-1",
+                    draftId = "draft-1",
+                    status = QuestReviewOutcomeSnapshot.STATUS_UNDER_REVIEW,
+                    rejectionReason = null,
+                    failedQuestions = emptyList(),
+                    detectedLanguage = null,
+                    outcomeReady = false,
+                ),
+            )
+        syncRepo.recordSuccess(SyncRunKind.CONTENT, atMs = 1_000L)
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(
+            QuestReviewOutcomeSnapshot.STATUS_UNDER_REVIEW,
+            component.state.value.reviewOutcomes["draft-1"]?.status,
+            "the synced submission must surface as the visible Checking state",
+        )
+        val lastFetch = outcomeRepo.fetchCalls.last()
+        assertTrue(lastFetch.first.isEmpty(), "outcomes are read by draft ids, not guessed submission ids")
+        assertEquals(setOf("draft-1"), lastFetch.second)
+    }
+
+    @Test
+    fun `when outcome fetch fails then the collector survives the next sync`() = runTest {
+        val authoringRepo = FakeQuestAuthoringRepository()
+        authoringRepo.emit(listOf(draftSummary("draft-1", QuestDraftStatus.REVIEW_QUEUED)))
+        val outcomeRepo = FakeQuestReviewOutcomeRepository(error = SyncFailure(SyncError.NoNetwork))
+        val syncRepo = FakeSyncStatusRepository()
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            authoringRepo = authoringRepo,
+            outcomeRepo = outcomeRepo,
+            syncRepo = syncRepo,
+        )
+        testScheduler.advanceUntilIdle()
+        val fetchesAfterFailure = outcomeRepo.fetchCalls.size
+
+        // Отказ чтения не должен убивать сборщик: следующий синк перечитывает исходы снова.
+        syncRepo.recordSuccess(SyncRunKind.CONTENT, atMs = 2_000L)
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(
+            outcomeRepo.fetchCalls.size > fetchesAfterFailure,
+            "a failed read must not silence later outcome refetches",
+        )
     }
 
     // ── AC#47 — archived quests visible as on-demand roots ───────────────────
