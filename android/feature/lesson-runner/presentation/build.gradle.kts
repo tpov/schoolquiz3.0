@@ -46,6 +46,8 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)
+    // Системный Back на экране результата (джорни 9.9): BackHandler живёт в activity-compose.
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.bundles.decompose)
     implementation(libs.bundles.koin.android)

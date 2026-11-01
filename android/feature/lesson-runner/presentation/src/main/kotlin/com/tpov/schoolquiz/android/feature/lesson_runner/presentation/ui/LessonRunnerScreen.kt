@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
 import android.app.Activity
 import android.view.WindowManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -154,6 +155,13 @@ fun LessonRunnerScreen(
                 is RunnerEvent.OpenNextLesson -> onOpenLesson(event.lessonId)
             }
         }
+    }
+
+    // Выход с экрана результата — системный Back (джорни 9.9): результат уже сохранён, потому
+    // подтверждение не нужно, и Back ведёт назад по иерархии компонента. На остальных состояниях
+    // обработчик выключен — их выход остаётся прежним (крест с диалогом на вопросах).
+    BackHandler(enabled = state is RunnerUiState.Result) {
+        component.onBack()
     }
 
     val isHard =
