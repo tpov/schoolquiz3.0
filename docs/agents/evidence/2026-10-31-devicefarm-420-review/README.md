@@ -1,4 +1,35 @@
-# Device Farm · джорни 4.20-partial (автор → Send to arena → ревью) — v5: повторный SYNC NOW отработал, гонки больше нет (заявка жила 5 минут) — но «Checking» в строке квеста НЕ появился вообще (строка осталась DRAFT): клиентский кандидат; вердикты «Слов»/«Фактов» glm-4.7 при lease 90 c доходят за 2 свипа (31.10)
+# Device Farm · джорни 4.20-partial (автор → Send to arena → ревью) — v6 (клиент с 4 фиксами, свежий app 9cad8b0e): «Checking: „Слова“ · „Факты“» ДОКАЗАН живьём (фикс aeb03366), вердикты WORDS/FACTS живой glm-4.7 DONE, фи 1000 списан; конвейер застрял на TRANSLATE PENDING — «Returned»/исходы автора не достигнуты, финальный ассерт честно упал (01.11)
+
+## Прогон v6 (пакет sha256 86dbf7a4…, клиент aeb03366/6b07ce61/3cd726de/719b4dbb; app-аплоад 9cad8b0e — сборка 01.11) — «Checking» появился, заявка и вердикты живые; фолл ушёл в ожидаемый терминал DELAYED, которого при живой модели не бывает (01.11)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/976e3072-203b-417f-a010-e8fa2ec3c6fe`,
+  FAILED, 12.67 устройсте-минуты, окно 03:04:31–03:17:11 UTC; спека `upload:…/83e8a338…`
+  (SUCCEEDED, SigV4-пут с Mac). Пул smoke-pixel10. Артефакты:
+  `run/device-farm/420-review-v6/` (кадры f300/f640; **f640, 03:15 — строка «DF420 review
+  journey quest» с бейджем DRAFT и «Checking: “Words” · “Facts”»**); приборка —
+  `run/device-farm/watch-420-v6/watch.log`.
+- **OPS-предпосылка волны:** Device Farm ставит app из app-аплоада (`c1bc3e88`, 28.10 —
+  БЕЗ ноябрьских фиксов), пакетные APK туда не попадают. Свежий mvp-APK залит отдельным
+  ANDROID_APP `upload:…/9cad8b0e` (SigV4 CreateUpload+PUT с Mac). Релей «create-upload VPS →
+  presigned-URL → PUT» мёртв: presigned-пут отдаёт 403 SignatureDoesNotMatch с ОБЕИХ сторон
+  (VPS и Mac) даже на probe-файле — инцидент канала глубже, чем «битый VPS-PUT».
+- Цепочка: topup по автоотчёту ДО первого синка (uid `V6JpXA2…`, 0→3000 в оба поля,
+  watcher) → авторинг → SYNC NOW → «Send to arena» → economy-гейт пройден → «…queued for
+  arena» → заявка `quest_review_requests/arena-submission-hsfscy6j34tj` UNDER_REVIEW,
+  **фи 1000 списан: кошелёк 3000→2000 (оба поля)**.
+- **Фикс aeb03366 доказан живьём:** `Assert "Checking: “Words” · “Facts”" is visible...
+  COMPLETED` (v5: строка оставалась DRAFT и после 5 минут и двух синков) — исходы
+  перечитываются по статусу черновика и контентному синку, скрин 420-under-review.
+- Живые вердикты glm-4.7: `review_verdicts/…_WORDS_1` («исключительно служебный
+  плейсхолдерный текст…») + `…_FACTS_1` — DONE за 2-3 свипа (lease 90 c, stageCalls 2,
+  watch-420-v6). TRANSLATE PENDING/0 — не атемптится вовсе (v5: честные TIME_BUDGET;
+  v6: четвёртый свип сразу IDLE) → конвейер RUNNING, статус заявки UNDER_REVIEW.
+  Владельцу: бюджет свипа vs латентность translate-вызова — теперь это блокирует и
+  терминал (REVIEWED→исходы автора «Returned: …»), а не только агрегат.
+- Фолл: `Assert "Check is taking longer than expected"` FAILED (420 c) — флоу заморожен
+  под no-model-исход DELAYED; с живой моделью конвейер не DELAYED, и строка честно
+  остаётся «Checking» (кадр f640). Оба условных ретрай-синка отработали COMPLETED.
+
 
 ## Прогон v5 (пакет sha256 d2164b1a…, коммит ebf8e0c9; lease свипов 90 c) — платная подача и вердикты повторены, фолл ушёл в новый класс (31.10 ночь)
 

@@ -1,4 +1,32 @@
-# Device Farm · джорни 5.13 (организатор турнира) — v5: REFRESH-правка сработала, допуск доказан («Download attested by the server»), упёрлись в пустой «Pick an event» (окно квалификации ещё закрыто, оппонент не успел); оппонент дожат руками до OPPONENT_QUALIFIED (31.10)
+# Device Farm · джорни 5.13 (организатор турнира) — v6: квалификационный экран сам грузит события (фикс 3cd726de доказан: условный Enter → «Start round» COMPLETED); оппонент с правильным argv QUALIFIED ×3 в событии устройства; Start round принят, но раунд убит FAILED_PRECONDITION — окно закрылось за 14 секунд оппонента (01.11)
+
+## Прогон v6 (пакет sha256 86dbf7a4…, клиент с фиксами; app 9cad8b0e) — обе половины впервые встретились в одном прогоне; не хватило темпа оппонента (01.11)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/ce47c34f-abdd-4c7a-bd8d-ba4e4e316df9`,
+  FAILED, 5.12 устройсте-минуты, окно 03:09:15–03:14:22 UTC; спека `upload:…/f54aa9bd…`
+  (SUCCEEDED). Пул p10-11. Артефакты: `run/device-farm/513-tournament-v6-p11/` (кадр
+  f215, 03:13 — «QUALIFIER TOURNAMENT / Qualification», Round 1/2/3 «Not started»,
+  «The server refused this operation: FAILED_PRECONDITION»); приборка —
+  `run/device-farm/watch-513-v6/` (лог в контейнере /tmp/watch-513-v6/watch.log).
+- **Оппонент — argv исправлен** (uid и токен отдельными аргументами,
+  `watch-513-v6/watch-fast-v6.js`): exit 0, download-recorded → round-settled ×3
+  (`q_59025d78895b`, `q_c888d3c59d97`, `q_82632dd4277f`) → **OPPONENT_QUALIFIED** в
+  событии устройства `event_99a0b50fbf6245adbbc237d9de077974` (QUALIFICATION, эскроу 10,
+  organizer = устройство `MlbIa…`, CREATE 03:10:34). v5-дефект ERR_ASSERTION закрыт.
+- Организаторская половина зелёная 4-й раз подряд: bank «60 easy, 20 hard» → CREATE →
+  «Tournament created» → «Reserved: 10 boxes», роли пережили синки → REFRESH →
+  «Qualification open» → Info → Enter → «I downloaded the course» → **«Download attested
+  by the server»** → Continue (допуск доказан второй раз).
+- **Фикс 3cd726de доказан живьём:** «Pick an event» грузит список сам при входе —
+  условный тап Enter COMPLETED, `Assert "^Start round$" is visible... COMPLETED` (v5:
+  «Nothing loaded yet», список пуст), `Tap "Start round"` COMPLETED.
+- Фолл: `Assert "Submit answer"` FAILED (120 c) — сервер отказал FAILED_PRECONDITION:
+  оппонент отыграл все 3 раунда за 14 секунд (старт 03:12:04, exit 03:12:18) и
+  квалификация закрылась до тапа устройства (~03:12:2x). Это не бага клиента — темп
+  оппонента. Правка watcher-a на следующую волну: паузы между раундами оппонента
+  (держать окно открытым 4-5 минут) или старт оппонента только после «Round settled»
+  устройства. Раунд 20 вопросов (val ×20 → settle) — единственный непройденный кусок.
+
 
 ## Прогон v5 (пакет sha256 d2164b1a…, коммит ebf8e0c9) — браузерная половина прошла до квалификации, новый фолл «Nothing loaded yet» на «Pick an event» (31.10 ночь)
 
