@@ -48,6 +48,7 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.RefreshCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
@@ -270,6 +271,7 @@ class QuizzesRootIntegrationTest {
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
                 observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+                refreshCatalogs = RefreshCatalogsUseCase(catalogRepo),
                 observeProfile = ObserveCurrentProfileUseCase(OfflineProfileRepository()),
                 openGiftBoxUseCase = OpenGiftBoxUseCase(NoGiftBoxRepository),
                 syncBoxStreak = noSyncBoxStreak(),
@@ -302,6 +304,7 @@ class QuizzesRootIntegrationTest {
                         QuestAuthoringTimestampProvider { 1_000L },
                     ),
                 fetchReviewOutcomes = FetchQuestReviewOutcomesUseCase(FakeQuestReviewOutcomeRepository()),
+                syncStatus = FakeSyncStatusRepository(),
                 navigator = navigator,
                 onQuestDrillDown = onQuestDrillDown,
                 mainContext = testDispatcher,

@@ -18,6 +18,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.RefreshCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxFailureReason
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpeningException
@@ -111,6 +112,7 @@ class DefaultHomeQuestsComponentTest {
         return DefaultHomeQuestsComponent(
             componentContext = testCtx(),
             observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+            refreshCatalogs = RefreshCatalogsUseCase(catalogRepo),
             observeProfile = ObserveCurrentProfileUseCase(profileRepo),
             openGiftBoxUseCase = OpenGiftBoxUseCase(giftBoxRepo),
             syncBoxStreak =
@@ -232,6 +234,48 @@ class DefaultHomeQuestsComponentTest {
             assertEquals(2, catalogs.size, "both catalogs must appear in state")
             assertTrue(catalogs.any { it.id == CatalogId("cat1") })
             assertTrue(catalogs.any { it.id == CatalogId("cat2") })
+        }
+
+    // ── Джорни 4.26: возврат на полку перечитывает каталог с сервера ──────────
+
+    @Test
+    fun `when returning to the shelf then the catalog list is refetched and a synced catalog surfaces`() =
+        runTest {
+            val catalogRepo = FakeCatalogRepository()
+            catalogRepo.emit(listOf(buildCatalog(id = "mvp-checks", name = "MVP checks")))
+            val component = buildComponent(catalogRepo = catalogRepo)
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(
+                1,
+                catalogRepo.refreshCalls,
+                "entering the shelf refetches the catalog list (Essenty replays doOnResume at registration)",
+            )
+            assertTrue(
+                component.state.value.catalogs.none { it.id == CatalogId("df-author") },
+                "before the refresh the shelf does not know the catalog published after the last sync",
+            )
+
+            // Сид положил каталог на сервер уже после первого синка устройства: возврат на экран
+            // обязан перечитать список и показать «DF author catalog» без ручного SYNC NOW.
+            catalogRepo.onRefresh = {
+                catalogRepo.emit(
+                    listOf(
+                        buildCatalog(id = "mvp-checks", name = "MVP checks"),
+                        buildCatalog(id = "df-author", name = "DF author catalog"),
+                    ),
+                )
+            }
+
+            lifecycle.stop()
+            lifecycle.resume()
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(2, catalogRepo.refreshCalls, "returning to the shelf refetches again")
+            assertTrue(
+                component.state.value.catalogs.any { it.id == CatalogId("df-author") },
+                "the catalog pulled on resume must be visible on the shelf",
+            )
         }
 
     // ── AC#22 — archived catalog not in state ────────────────────────────────

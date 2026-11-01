@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.android.core.designsystem.model.toDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.RefreshCatalogsUseCase
 import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxFailureReason
@@ -61,6 +62,7 @@ private const val PERFECT_SCORE = 100
 class DefaultHomeQuestsComponent(
     componentContext: ComponentContext,
     private val observeCatalogs: ObserveCatalogsUseCase,
+    private val refreshCatalogs: RefreshCatalogsUseCase,
     private val observeProfile: ObserveCurrentProfileUseCase,
     private val openGiftBoxUseCase: OpenGiftBoxUseCase,
     private val syncBoxStreak: SyncBoxStreakUseCase,
@@ -86,6 +88,7 @@ class DefaultHomeQuestsComponent(
     private var premiumIntentPending = false
     private var premiumIntentOnline = true
     private var streakSync: Job? = null
+    private var catalogRefresh: Job? = null
 
     private val continueLesson = MutableStateFlow<ContinueLessonUi?>(null)
 
@@ -209,6 +212,16 @@ class DefaultHomeQuestsComponent(
         // Входная синхронизация серии (7.4): на каждом возврате на главный экран проход
         // офлайн-заявка → визит → перечитывание начинается заново, пока предыдущий не кончился.
         lifecycle.doOnResume {
+            // Полка перечитывает каталог с сервера на каждом возврате на экран (джорни 4.26):
+            // каталог, опубликованный после прошлого синка, обязан появиться без ожидания
+            // планировщика синхронизации — кэш не знает, что на сервере уже есть новее. Отказ
+            // чтения полку не ломает: список остаётся как был, следующий синк догонит.
+            if (catalogRefresh?.isActive != true) {
+                catalogRefresh =
+                    scope.launch {
+                        refreshCatalogs()
+                    }
+            }
             if (streakSync?.isActive != true) {
                 streakSync =
                     scope.launch {

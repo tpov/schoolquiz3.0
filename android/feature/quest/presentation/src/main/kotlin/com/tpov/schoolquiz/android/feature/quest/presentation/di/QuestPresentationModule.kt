@@ -41,6 +41,7 @@ val questPresentationModule =
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
                 observeCatalogs = get(),
+                refreshCatalogs = get(),
                 observeProfile = get(),
                 openGiftBoxUseCase = get(),
                 syncBoxStreak = get(),
