@@ -84,7 +84,8 @@ abstract class TournamentSessionPlayComponent(
     /** Хозяин этой машины. */
     protected abstract val host: TournamentPlayHost
 
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    /** Общая область машины состояний: гасится вместе с экраном (doOnDestroy ниже). */
+    protected val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     /** Ответ, чья квитанция ещё не применена: страхует опрос — поздняя доставка доедет по нему. */
     private var pendingAnswer: PendingAnswer? = null

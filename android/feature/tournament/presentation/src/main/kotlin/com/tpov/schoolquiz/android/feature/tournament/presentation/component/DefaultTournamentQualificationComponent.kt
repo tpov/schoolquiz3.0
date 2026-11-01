@@ -92,6 +92,17 @@ class DefaultTournamentQualificationComponent(
      */
     private var eventGeneration = 0L
 
+    init {
+        // Первый экран квалификации показывает «Pick an event» сразу (джорни 5.13): список
+        // событий подтягивается сам при входе — тап REFRESH остаётся ручным повтором, а не
+        // единственным способом увидеть список. Запуск через очередь (не в конструкторе): явное
+        // действие игрока, сделанное сразу после входа, честно выигрывает у автозагрузки —
+        // она молча уступает, если экран уже занят. Сессии нет — и выбирать нечего.
+        if (mutable.value.session != null) {
+            scope.launch { loadEvents(append = false) }
+        }
+    }
+
     override fun onRefreshEventsClick() {
         eventsCursor = null
         loadEvents(append = false)

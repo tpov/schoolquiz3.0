@@ -300,6 +300,60 @@ class DefaultTournamentQualificationComponentTest {
     }
 
     @Test
+    fun `qualification entry loads the event list without a refresh tap`() = runTest(dispatcher) {
+        // Джорни 5.13: после допуска экран «Pick an event» пуст, пока не тапнут REFRESH —
+        // список обязан подгрузиться сам при входе; REFRESH остаётся ручным повтором.
+        val f = fixture()
+        f.repository.listEventsResult =
+            Result.success(
+                TournamentEventPage(
+                    events = listOf(event("event_list_000000001")),
+                    hasMore = false,
+                    nextEventId = null,
+                    serverNowMs = 1L,
+                ),
+            )
+
+        advanceUntilIdle()
+
+        assertTrue(
+            f.repository.listEventsCalls.isNotEmpty(),
+            "entering the qualification screen must fetch the event list",
+        )
+        assertEquals(listOf("event_list_000000001"), f.component.state.value.events.map { it.eventId })
+        assertTrue(f.component.state.value.hasLoaded)
+    }
+
+    @Test
+    fun `entry without a session stays honest and fetches nothing`() = runTest(dispatcher) {
+        val repository = FakeTournamentRepository()
+        val outbox =
+            TournamentSessionOutboxRepository(
+                outbox = FakeOutboxStore(),
+                receipts = FakeReceiptStore(),
+                sessions = OutboxSessionProvider { session },
+                parser = TournamentSessionReceiptParser(TournamentSessionWireParser(TournamentEventWireParser(), TournamentMeetingWireParser())),
+                clock = { 1L },
+            )
+        // Сессии нет: экрану нечего и выбирать — список не запрашивается, остаётся «Nothing loaded yet».
+        val component =
+            DefaultTournamentQualificationComponent(
+                context = DefaultComponentContext(lifecycle),
+                repository = repository,
+                outbox = outbox,
+                sessions = OutboxSessionProvider { null },
+                dispatcher = dispatcher,
+                nowMs = { 1L },
+            )
+
+        advanceUntilIdle()
+
+        assertEquals(0, repository.listEventsCalls.size)
+        assertNull(component.state.value.session)
+        assertFalse(component.state.value.hasLoaded)
+    }
+
+    @Test
     fun `start round plays the first question and answers through the outbox`() = runTest(dispatcher) {
         val f = fixture()
         pickAndStart(f)
