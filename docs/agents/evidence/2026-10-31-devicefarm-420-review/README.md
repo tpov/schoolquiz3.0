@@ -1,5 +1,18 @@
 # Device Farm · джорни 4.20-partial (автор → Send to arena → ревью) — v6 (клиент с 4 фиксами, свежий app 9cad8b0e): «Checking: „Слова“ · „Факты“» ДОКАЗАН живьём (фикс aeb03366), вердикты WORDS/FACTS живой glm-4.7 DONE, фи 1000 списан; конвейер застрял на TRANSLATE PENDING — «Returned»/исходы автора не достигнуты, финальный ассерт честно упал (01.11)
 
+## Волна v7 (подготовка, прогон не исполнялся) — свип терпеливый (02.11)
+
+- scripts/devicefarm-rig-prep.js sweepQueue больше не бросает очередь по первому
+  IDLE-свипу (v6: «четвёртый свип сразу IDLE», TRANSLATE остался PENDING, конвейер
+  RUNNING, «Returned» не достижим). Свипы идут циклом с паузами SWEEP_IDLE_WAIT_MS
+  (10 с) до терминала или бюджета SWEEP_PATIENT_MS (10 минут; оба — env). Продолжает
+  цикл queueBusy(): конвейер RUNNING; UNDER_REVIEW-заявка или QUEUED-предложение без
+  конвейера (ещё ни разу не клейменное); терминал (QUEST_REVIEWED/REVIEW_DELAYED/
+  CHECK_PASSED/CHECK_FAILED/CHECK_DELAYED) отпускает. Латентность живого
+  translate-вызова glm-4.7 укладывается в лизу 90 с; паузы закрывают бэкоффы между
+  стадиями.
+
+
 ## Прогон v6 (пакет sha256 86dbf7a4…, клиент aeb03366/6b07ce61/3cd726de/719b4dbb; app-аплоад 9cad8b0e — сборка 01.11) — «Checking» появился, заявка и вердикты живые; фолл ушёл в ожидаемый терминал DELAYED, которого при живой модели не бывает (01.11)
 
 - Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/976e3072-203b-417f-a010-e8fa2ec3c6fe`,

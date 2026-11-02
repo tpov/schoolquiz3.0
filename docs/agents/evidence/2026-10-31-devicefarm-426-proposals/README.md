@@ -1,5 +1,28 @@
 # Device Farm · джорни 4.26 (три входа предложений) — v6: каталог НЕ появился и с фиксом-рефетчем 6b07ce61 — обе ветки честного ретрая COMPLETED, полка снова только бандл; четвёртое независимое подтверждение клиентского кандидата; входы не достигнуты; ops: коллизия вотчеров 426/513 (01.11)
 
+## Волна v7 (подготовка, прогон не исполнялся) — КОРЕНЬ ПОЛКИ НАЙДЕН: prep-сид писал lastModifiedAt ЧИСЛОМ, клиентский каталог-пулл ограничивает Timestamp (02.11)
+
+- Разбор кода слоя «ответ сервера → Room → полка» (кандидат четырёх подтверждений снят):
+  `FirebaseCatalogRemoteDataSource.fetchChangedSince` сортирует `catalogs` по `lastModifiedAt`
+  и ограничивает выборку парой (Timestamp, id); Firestore упорядочивает числа РАНЬШЕ любых
+  Timestamp, поэтому сид-каталог `df426-catalog` с ЧИСЛОВЫМ `lastModifiedAt` (prep-скрипт:
+  `lastModifiedAt: at`, где at = Date.now()) стоял до границы курсора при ЛЮБОМ курсоре
+  (включая начало списка) и не возвращался запросом никогда. Сервер чист, синк отрабатывал,
+  журналы sync_changes числовые и читаются (их читатель FirestoreSyncChangePage ограничивает
+  Long-ом) — а каталог до Room/полки не доезжал. Контракт прод-данных — Timestamp
+  (functions/index.js: Timestamp.fromMillis; backfill-catalogs.js: «client expects Firestore
+  Timestamp, not Number»). Полка как таковая не виновата: рефеч 6b07ce61 честно перечитывал
+  Room без df426. Флоу 4.26 правки не требует.
+- Правка prep-скрипта (scripts/devicefarm-rig-prep.js): seed-author-lesson и setup-513 пишут
+  `lastModifiedAt` как `admin.firestore.Timestamp.fromMillis(at)` (журнал остаётся числовым).
+  questType сида REGULAR — верен: полка HOME QUESTS показывает filterNot COURSE
+  (DefaultHomeQuestsComponent), REGULAR показуем.
+- Попутный клиентский фикс того же слоя с тестом: CatalogDtoMapper.toEntity() терял questType
+  (CatalogDto → CatalogEntity) — курсовый каталог с сервера ложился в Room как REGULAR и попал
+  бы на домашнюю полку; тип теперь доезжает. Тесты CatalogMapperTest (COURSE сохраняется,
+  round-trip SURVEY жив) — jvmTest зелёный на VPS.
+
+
 ## Прогон v6 (пакет sha256 86dbf7a4…, клиент с фиксами; app 9cad8b0e) — рефеч на входе исполняется, каталог всё равно не применяется (01.11)
 
 - Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/7cb28d52-323c-4e57-8d09-37bc512f6526`,

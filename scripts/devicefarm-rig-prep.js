@@ -84,17 +84,50 @@ function honestModelClient() {
   };
 }
 
-async function sweepQueue(maxSweeps = 12) {
+// Терпеливый свип (джорни 4.20 v6): TRANSLATE PENDING — не терминал. Свип воркера отвечает
+// IDLE, когда стадия ещё не созрела (бэкофф следующей попытки) или её лиза ещё держится, и
+// прежний драйвер бросал очередь по первому же IDLE-свипу («четвёртый свип сразу IDLE»,
+// конвейер оставался RUNNING, статус заявки UNDER_REVIEW — «Returned» не достижим). Теперь
+// свипы идут с паузами, пока в очереди есть живая работа (конвейер RUNNING; заявка
+// UNDER_REVIEW / предложение QUEUED, ещё ни разу не клейменное — конвейера нет), до
+// терминала (QUEST_REVIEWED / REVIEW_DELAYED / CHECK_* ) или бюджета SWEEP_PATIENT_MS.
+// Бюджет по умолчанию 10 минут: живой translate-вызов glm-4.7 минуты и укладывается в
+// лизу 90 с, между стадиями бывают бэкоффы; оба параметра переопределяются env.
+const SWEEP_IDLE_WAIT_MS = Number(process.env.SWEEP_IDLE_WAIT_MS || 10000);
+const SWEEP_PATIENT_MS = Number(process.env.SWEEP_PATIENT_MS || 600000);
+
+async function queueBusy() {
+  const [pipelines, proposalPipelines] = await Promise.all([
+    db.collection("review_pipeline").get(),
+    db.collection("proposal_pipeline").get(),
+  ]);
+  const running = (docs) => docs.filter((doc) => (doc.data().status || "RUNNING") === "RUNNING").length;
+  if (running(pipelines.docs) + running(proposalPipelines.docs) > 0) return true;
+  // Конвейера нет — работа могла ещё ни разу не клеймениться: UNDER_REVIEW-заявка или
+  // QUEUED-предложение без своего конвейера обязаны дождаться первого свипа.
+  const [requests, queued] = await Promise.all([
+    db.collection("quest_review_requests").where("status", "==", "UNDER_REVIEW").get(),
+    db.collection("lesson_proposals").where("status", "==", "QUEUED").get(),
+  ]);
+  const pipelineIds = new Set([...pipelines.docs, ...proposalPipelines.docs].map((doc) => doc.id));
+  const anyUnclaimed = (docs) => docs.some((doc) => !pipelineIds.has(doc.id));
+  return anyUnclaimed(requests.docs) || anyUnclaimed(queued.docs);
+}
+
+async function sweepQueue(maxSweeps = 60) {
   const worker = createReviewQueueWorker({
     db, stages: completeReviewStages(), modelClient: honestModelClient(),
     nowMs: now, log: (record) => log({event: "worker", ...record}),
     leaseMs: 90000, maxStageCallsPerSweep: 2,
   });
-  for (let index = 1; index <= maxSweeps; index++) {
+  const deadline = now() + SWEEP_PATIENT_MS;
+  for (let index = 1; index <= maxSweeps && now() < deadline; index++) {
     const result = await worker.sweep();
     log({event: "sweep", index, ...result});
-    if (!result.attempted) break;
-    await sleep(1200);
+    const busy = await queueBusy();
+    log({event: "queue-busy", busy});
+    if (!busy) break;
+    await sleep(result.attempted ? 1200 : SWEEP_IDLE_WAIT_MS);
   }
 }
 
@@ -217,7 +250,17 @@ async function cmdSeedAuthorLesson() {
     `themes/${DF426.theme}`, `lessons/${DF426.lesson}`, ...DF426.questions.map((id) => `questions/${id}`)]) {
     await deleteIfOurs(path);
   }
-  const common = {version: 1, lastModifiedAt: at, archived: false, testFixture: DF426.marker};
+  // Клиентский каталог-пулл (FirebaseCatalogRemoteDataSource.fetchChangedSince) сортирует
+  // коллекцию catalogs по lastModifiedAt и ограничивает выборку парой (Timestamp, id):
+  // Firestore упорядочивает числа РАНЬШЕ любых Timestamp, поэтому сид-каталог с числовым
+  // lastModifiedAt стоит до границы курсора при ЛЮБОМ курсоре (включая начало списка) и
+  // не возвращается запросом никогда — сервер чист, синк отрабатывает, а каталог до полки
+  // не доезжает (джорни 4.26: четыре независимых подтверждения v3–v6). Контракт
+  // прод-данных — Timestamp (functions/index.js: Timestamp.fromMillis; backfill-catalogs.js:
+  // «client expects Firestore Timestamp, not Number»). Журнал sync_changes при этом
+  // остаётся числовым — его читатель (FirestoreSyncChangePage) ограничивает Long-ом.
+  const lastModifiedAt = admin.firestore.Timestamp.fromMillis(at);
+  const common = {version: 1, lastModifiedAt, archived: false, testFixture: DF426.marker};
   const rows = [
     ["catalog", DF426.catalog, {name: "DF author catalog", questType: "REGULAR", iconNames: []}],
     ["quest", DF426.quest, {catalogId: DF426.catalog, authorUid, title: "DF author course", visibleOn: ["home"]}],
@@ -292,8 +335,13 @@ async function cmdSetup513() {
   // 534 мс и НЕ написал ни банка, ни preparation). Форма рядов зеркалит проверенный живьём
   // scripts/course-tournament-device-prep.js (волна 5.13 device-proof 18.10): текст вопроса
   // удлинён — короткий текст фикстуры не проходит безопасную редакцию (redact → INVALID_SOURCE).
-  const root = {version: 1, lastModifiedAt: at, archived: true, testFixture: DF513.marker};
-  const plain = {version: 1, lastModifiedAt: at, testFixture: DF513.marker};
+  // Тот же контракт типов, что и в seed-author-lesson: клиентский каталог-пулл ограничивает
+  // выборку Timestamp-ом, числовое lastModifiedAt делает каталог невидимым пуллу. Курс-источник
+  // турнира читает серверный trusted loader (tournament-source-bank.js), он поле не читает,
+  // но каталог лежит в той же коллекции catalogs — держим форму прод-данных.
+  const lastModifiedAt = admin.firestore.Timestamp.fromMillis(at);
+  const root = {version: 1, lastModifiedAt, archived: true, testFixture: DF513.marker};
+  const plain = {version: 1, lastModifiedAt, testFixture: DF513.marker};
   const batch = db.batch();
   batch.create(db.doc(`catalogs/${DF513.catalog}`), {...plain, questType: "COURSE"});
   batch.create(db.doc(`quests/${DF513.course}`), {...root, catalogId: DF513.catalog,
