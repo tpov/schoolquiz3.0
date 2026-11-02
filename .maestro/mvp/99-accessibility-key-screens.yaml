@@ -85,6 +85,11 @@ name: Accessibility key screens sweep at elevated font scale (9.9)
 - assertVisible: "Open menu"
 - tapOn: "Open menu"
 - takeScreenshot: "99-menu-after-lesson"
+# Шторка открыта и перекрывает вкладки нижней нав-полосы (v6 FALL, кадр flast: тап по
+# «ARENA» — Element not found): ARENA/SHOP — вкладки полосы, а не пункты шторки. Закрываем
+# шторку тапом по скриму — паттерн 513-флоу (evidence 2026-10-31-devicefarm-513-tournament).
+- tapOn:
+    point: "94%,50%"
 # ── Арена-каталог
 - tapOn: "^ARENA$"
 - extendedWaitUntil:
@@ -102,6 +107,9 @@ name: Accessibility key screens sweep at elevated font scale (9.9)
 - takeScreenshot: "99-arena-catalog"
 # ── Магазин
 - tapOn: "Open menu"
+# Тот же скрим-тап: SHOP — вкладка нижней нав-полосы, открытая шторка её перекрывает.
+- tapOn:
+    point: "94%,50%"
 - tapOn: "^SHOP$"
 - extendedWaitUntil:
     visible: "Premium"
