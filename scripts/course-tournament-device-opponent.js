@@ -32,6 +32,19 @@ assert.equal(typeof courseId, "string", "courseId required");
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const id = (name) => `dp_opp_${randomUUID().replaceAll("-", "").slice(0, 16)}_${name}`;
 
+// Темп оппонента (джорни 5.13 v6): оппонент, отыгравший 3 раунда подряд за 14 с, закрыл
+// квалификацию ДО тапа устройства — «Start round» устройства получил FAILED_PRECONDITION
+// («Qualification is closed», кадр f215 03:13). Паузы держат событие в статусе QUALIFICATION,
+// пока физическое устройство само доходит до раунда и играет его.
+//   OPP_ROUND_PAUSE_MS  — пауза ПЕРЕД каждым раундом, кроме первого (мс, по умолчанию 60000);
+//   OPP_ANSWER_DELAY_MS — пауза между ответами на вопросы внутри раунда (мс, 120 как прежде).
+// 60 с на раунд: три раунда растягиваются на ~3 минуты после старта оппонента — окно
+// остаётся открытым на весь путь устройства (REFRESH → Enter → допуск → Start round ×3).
+const ROUND_PAUSE_MS = Number(process.env.OPP_ROUND_PAUSE_MS || 60000);
+const ANSWER_DELAY_MS = Number(process.env.OPP_ANSWER_DELAY_MS || 120);
+assert.ok(Number.isFinite(ROUND_PAUSE_MS) && ROUND_PAUSE_MS >= 0, "OPP_ROUND_PAUSE_MS must be a non-negative number");
+assert.ok(Number.isFinite(ANSWER_DELAY_MS) && ANSWER_DELAY_MS >= 0, "OPP_ANSWER_DELAY_MS must be a non-negative number");
+
 async function post(url, body, tok) {
   for (let attempt = 0; ; attempt++) {
     let response;
@@ -61,6 +74,10 @@ async function main() {
   console.log(JSON.stringify({ stage: "download-recorded", courseId: download.courseId }));
 
   for (let round = 1; round <= 3; round++) {
+    if (round > 1) {
+      console.log(JSON.stringify({ stage: "round-pause", round, pauseMs: ROUND_PAUSE_MS }));
+      await delay(ROUND_PAUSE_MS);
+    }
     const started = await call("submitCourseTournamentOperation", { kind: "START_QUALIFICATION",
       eventId, operationId: id(`start_r${round}`), attemptId: id(`attempt_r${round}`), roundNumber: round });
     assert.equal(started.session.kind, "QUALIFICATION", JSON.stringify(started).slice(0, 200));
@@ -75,7 +92,7 @@ async function main() {
         questionId: view.currentQuestion.questionId, answerPayload: null });
       assert.ok(["ANSWER_ACCEPTED", "COMPLETED"].includes(answered.status), answered.status);
       current = null;
-      await delay(120);
+      await delay(ANSWER_DELAY_MS);
     }
     const final = await call("fetchCourseTournamentSession", { sessionId });
     assert.equal(final.session.status, "SETTLED", JSON.stringify(final.session).slice(0, 200));
