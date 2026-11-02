@@ -50,7 +50,8 @@
 // обязана покрывать вызов живой модели целиком — 900 мс (до v5) давали с glm-4.7
 // LEASE_LOST/TIME_BUDGET по одной стадии за свип (evidence
 // 2026-10-31-devicefarm-420-review; ручные свипы с lease 180000 мс довели
-// WORDS/FACTS до DONE за минуту); сами
+// WORDS/FACTS до DONE за минуту); TRANSLATE — отдельная фаза со своей лизой
+// (см. «Терпеливый свип» ниже); сами
 // вердикты/отказы код пишет сам. Модельный клиент честный: без REVIEW_MODEL_* в env
 // воркер получает ровно тот отказ, который даёт readModelConfig
 // (REVIEW_MODEL_ENV_MISSING) — этапы честно выжигают попытки и уходят в DELAYED.
@@ -90,11 +91,29 @@ function honestModelClient() {
 // конвейер оставался RUNNING, статус заявки UNDER_REVIEW — «Returned» не достижим). Теперь
 // свипы идут с паузами, пока в очереди есть живая работа (конвейер RUNNING; заявка
 // UNDER_REVIEW / предложение QUEUED, ещё ни разу не клейменное — конвейера нет), до
-// терминала (QUEST_REVIEWED / REVIEW_DELAYED / CHECK_* ) или бюджета SWEEP_PATIENT_MS.
-// Бюджет по умолчанию 10 минут: живой translate-вызов glm-4.7 минуты и укладывается в
-// лизу 90 с, между стадиями бывают бэкоффы; оба параметра переопределяются env.
+// терминала (QUEST_REVIEWED / REVIEW_DELAYED / CHECK_* ) или бюджета SWEEP_PATIENT_MS
+// (по умолчанию 10 минут; переопределяется env).
+//
+// TRANSLATE-фаза (джорни 4.20 v7b): v7 опроверг «translate укладывается в лизу 90 с» —
+// TRANSLATE остался PENDING с attempts=0 и verdictId=null при живых WORDS/FACTS (evidence
+// 2026-10-31-devicefarm-420-review, 51 терпеливый свип). По контракту воркера запись
+// перевода/ошибки не смотрит на лизу: пустые attempts и verdictId означают, что вызов
+// модели не ДОЕХАЛ до записи — транспорт модели снимает вызов по своему таймауту 300 с
+// (REQUEST_TIMEOUT_MS review-model-client) с кодом REVIEW_MODEL_UNAVAILABLE, который
+// воркер честно считает «не попытка, конвейер не двигается». Латентность живого
+// translate-вызова glm-4.7 больше таймаута транспорта, поэтому внутри быстрых свипов
+// (лизa 90 с под минутные WORDS/FACTS) перевод не доезжает никогда. Контракт воркера:
+// лиза обязана покрывать вызов модели ЦЕЛИКОМ (checkpoint только МЕЖДУ стадиями), бюджет
+// свипа — счётчик вызовов стадий, не время. Решение: перевод — ОТДЕЛЬНАЯ ФАЗА свипа, вне
+// быстрых свипов: свипы с лизой SWEEP_TRANSLATE_LEASE_MS (360 с: таймаут транспорта 300 с
+// плюс маржа, один вызов на свип) и собственным бюджетом SWEEP_TRANSLATE_MS (5 мин) на
+// активацию фазы; оба переопределяются env.
 const SWEEP_IDLE_WAIT_MS = Number(process.env.SWEEP_IDLE_WAIT_MS || 10000);
 const SWEEP_PATIENT_MS = Number(process.env.SWEEP_PATIENT_MS || 600000);
+const SWEEP_TRANSLATE_LEASE_MS = Number(process.env.SWEEP_TRANSLATE_LEASE_MS || 360000);
+const SWEEP_TRANSLATE_MS = Number(process.env.SWEEP_TRANSLATE_MS || 300000);
+// review-pipeline MAX_ATTEMPTS: задание живо, пока PENDING и попыток меньше трёх.
+const MAX_STAGE_ATTEMPTS = 3;
 
 async function queueBusy() {
   const [pipelines, proposalPipelines] = await Promise.all([
@@ -114,15 +133,60 @@ async function queueBusy() {
   return anyUnclaimed(requests.docs) || anyUnclaimed(queued.docs);
 }
 
-async function sweepQueue(maxSweeps = 60) {
-  const worker = createReviewQueueWorker({
+/** Перевод дозрел до вызова: проверки DONE, TRANSLATE жив — зеркало nextJob из review-pipeline. */
+async function translatePending() {
+  const snapshot = await db.collection("review_pipeline").where("status", "==", "RUNNING").get();
+  return snapshot.docs.some((doc) => {
+    const pipeline = doc.data() || {};
+    return Object.values(pipeline.lessons || {}).some((lesson) => {
+      const stages = (lesson && lesson.stages) || {};
+      const checksReady = ["WORDS", "FACTS"].every((stage) =>
+        Boolean(stages[stage]) && stages[stage].state === "DONE");
+      const translate = stages.TRANSLATE || {};
+      return checksReady && translate.state === "PENDING" &&
+        Number(translate.attempts || 0) < MAX_STAGE_ATTEMPTS;
+    });
+  });
+}
+
+function makeSweepWorker(leaseMs, maxStageCallsPerSweep) {
+  return createReviewQueueWorker({
     db, stages: completeReviewStages(), modelClient: honestModelClient(),
     nowMs: now, log: (record) => log({event: "worker", ...record}),
-    leaseMs: 90000, maxStageCallsPerSweep: 2,
+    leaseMs, maxStageCallsPerSweep,
   });
+}
+
+async function sweepQueue(maxSweeps = 60) {
+  // Быстрая фаза: WORDS/FACTS с лизой 90 с (вызовы ~минутные, контракт: лиза покрывает
+  // вызов целиком, checkpoint между стадиями). TRANSLATE-фаза: лиза 360 с под вызов
+  // минутами и один вызов на свип — вне бюджета быстрых свипов (см. блок выше).
+  const checkWorker = makeSweepWorker(90000, 2);
+  const translateWorker = makeSweepWorker(SWEEP_TRANSLATE_LEASE_MS, 1);
   const deadline = now() + SWEEP_PATIENT_MS;
+
+  // TRANSLATE-фаза: собственный таймаут, не общий бюджет быстрых свипов. После активации
+  // цикл пересматривает очередь: успех фазы открывает дорогу следующим заданиям.
+  async function sweepTranslate() {
+    const phaseDeadline = Math.min(deadline, now() + SWEEP_TRANSLATE_MS);
+    for (let index = 1; now() < phaseDeadline; index++) {
+      const result = await translateWorker.sweep();
+      log({event: "sweep", phase: "translate", index, ...result});
+      const busy = await queueBusy();
+      log({event: "queue-busy", phase: "translate", busy});
+      if (!busy) return;
+      if (!await translatePending()) return;
+      await sleep(result.attempted ? 1200 : SWEEP_IDLE_WAIT_MS);
+    }
+    log({event: "translate-phase-budget-exhausted", budgetMs: SWEEP_TRANSLATE_MS});
+  }
+
   for (let index = 1; index <= maxSweeps && now() < deadline; index++) {
-    const result = await worker.sweep();
+    if (await translatePending()) {
+      await sweepTranslate();
+      continue;
+    }
+    const result = await checkWorker.sweep();
     log({event: "sweep", index, ...result});
     const busy = await queueBusy();
     log({event: "queue-busy", busy});
