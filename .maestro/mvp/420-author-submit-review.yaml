@@ -217,7 +217,11 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
           direction: DOWN
           timeout: 15000
       - tapOn: "My quests"
+- takeScreenshot: "420-line-before-delayed-wait"
+# v7: терпеливый свип доводит конвейер до терминала при живой модели — DELAYED
+# не наступает, ждать no-model-исход 7 минут не нужно (бюджет устройства);
+# состояние строки квеста (Checking/Returned) фиксирует скрин выше.
 - extendedWaitUntil:
     visible: "Check is taking longer than expected"
-    timeout: 420000
+    timeout: 90000
 - takeScreenshot: "420-review-delayed"

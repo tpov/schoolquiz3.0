@@ -1,6 +1,42 @@
-# Device Farm · джорни 4.26 (три входа предложений) — v6: каталог НЕ появился и с фиксом-рефетчем 6b07ce61 — обе ветки честного ретрая COMPLETED, полка снова только бандл; четвёртое независимое подтверждение клиентского кандидата; входы не достигнуты; ops: коллизия вотчеров 426/513 (01.11)
+# Device Farm · джорни 4.26 (три входа предложений) — v7: КОРЕНЬ ПОЛКИ ПОДТВЕРЖДЁН ЖИВЬЁМ — «DF author catalog» встал карточкой на полку HOME QUESTS (Timestamp-фикс сида), весь спуск каталог→курс→урок→результат→лист подачи пройден; ввод подачи упёрся в плейсхолдер вне семантики — точный фикс заложен (02.11)
 
-## Волна v7 (подготовка, прогон не исполнялся) — КОРЕНЬ ПОЛКИ НАЙДЕН: prep-сид писал lastModifiedAt ЧИСЛОМ, клиентский каталог-пулл ограничивает Timestamp (02.11)
+## Прогон v7 (пакет 91c7106d v7-prep, app 8d7d8d8e — сборка 02.11 с фиксом QuestType-маппера; сид Timestamp.fromMillis) — каталог на полке COMPLETED, цепочка до листа подачи, плейсхолдер «Element not found» (02.11)
+
+- Run `arn:aws:devicefarm:us-west-2:453713320584:run:69133ff9-bd68-4307-82e3-02855263c8f8/13d0656c-c388-45e4-9da2-4d3686343a32`,
+  FAILED, 4.75 устройсте-минуты (metered 4.42), окно 14:58:28–15:03:57 UTC; спека
+  `upload:…/ed0400e2…` (SUCCEEDED, SigV4-пут с Mac). Пул p10-8a, INSTALL_MVPB=1. Артефакты:
+  `run/device-farm/426-proposals-v7-p8a/` (кадры: **f06b-shelf2** — полка с «DF author
+  catalog», f-sheet — открытый лист «REPORT A MISTAKE»); приборка —
+  `run/device-farm/watch-426-v7/watch.log` (mvpb `CDyCd9XS…` засечён и засеян ДО первого
+  синка, mvp `2rRTgk1y…` — topup 3000/3000 до первого синка).
+- **КОРЕНЬ ПОЛКИ ПОДТВЕРЖДЁН ЖИВЬЁМ (цель волны):** два SYNC NOW → `Assert "DF author
+  catalog" is visible... COMPLETED` (15:01:04, кадр f06b-shelf2: карточка «DF author
+  catalog · 1 квест» стоит на полке рядом с бандловскими «MVP checks») — после пяти волн
+  (v3-гипотеза → v4 → v5 → v6 → v7-разбор) каталог, приезжающий синком, ПРИМЕНИЛСЯ.
+  `runFlow when "DF author catalog" is not visible` SKIPPED — ретрай не понадобился.
+- Далее весь спуск без единого фола: каталог → «DF author course» → section → theme →
+  урок → CORRECT → «Continue lesson» → «Sync result now» → consent «Accept and send» →
+  **«Completion confirmed by the server»** → скролл до «Report a mistake» → `Tap "^Propose$"`
+  COMPLETED → `Assert "REPORT A MISTAKE" is visible COMPLETED` (лист открыт, кадр f-sheet:
+  поле, «Add your own variant», «Fee: —», CANCEL/PROPOSE TO AUTHOR).
+- **Фолл — селектор, не сервер:** `Tap "What is wrong with this lesson?"` FAILED
+  (Element not found, 44 с). Плейсхолдер (`runner_report_placeholder`) ВИДЕН на экране
+  (кадр f-sheet), но не попадает в семантику Compose-поля — maestro-текстовый матчер его
+  не находит. Точный фикс заложен в v7b-пакет (sha 89ad0449, НЕ исполнялся — бюджет):
+  point-tap «50%,47.5%» (центр поля листа, кадр f-sheet). lessonProposals по метке df426 —
+  0 (до `inputText`/`Propose to author` не дошло); входы 2 (copyedit) и 3 (свой урок),
+  авторская половина «For my lessons» — не достигнуты.
+- Верdict v7-подготовки: сид-фикс Timestamp (79ccaa45) — единственное изменение волны на
+  этом джорни — ПОДТВЕРЖДЁН; клиентский QuestType-маппер (c4a2ed68) в прогоне с сборки
+  app 8d7d8d8e 02.11.
+- **OPS:** (1) `run.message` обоих v7-прогонов несёт баннер «test spec targets the legacy
+  Android test environment…» — при этом прогон исполняется ПОЛНОСТЬЮ (баннер не блокер,
+  но миграцию спеки на Amazon Linux 2 владельцу стоит запланировать: поддержка legacy
+  заканчивается). (2) Спеки с именем БЕЗ расширения `.yaml` валидируются FAILED молча
+  (PUT 200; поймано 02.11 до прогонов, перезалито с `.yaml`). (3) 74-МБ пакет доехал
+  SigV4-путом с Mac (VPS-PUT по-прежнему 403).
+
+## Волна v7 (подготовка) — КОРЕНЬ ПОЛКИ НАЙДЕН: prep-сид писал lastModifiedAt ЧИСЛОМ, клиентский каталог-пулл ограничивает Timestamp (02.11)
 
 - Разбор кода слоя «ответ сервера → Room → полка» (кандидат четырёх подтверждений снят):
   `FirebaseCatalogRemoteDataSource.fetchChangedSince` сортирует `catalogs` по `lastModifiedAt`
