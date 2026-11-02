@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.catalog.data.mapper.toDomain
 import com.tpov.schoolquiz.shared.core.catalog.data.mapper.toEntity
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.persistence.CatalogEntity
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -100,5 +101,56 @@ class CatalogMapperTest {
         val domain = entity.toDomain()
 
         assertEquals(listOf("VideogameAsset", "Casino"), domain.iconNames)
+    }
+
+    // Тип с сервера обязан доезжать до Room: полка домашних квестов фильтрует COURSE
+    // («у курсов свой вход»), и потеря поля клала курсовый каталог на полку как REGULAR.
+    @Test
+    fun `when dto has course questType then toEntity preserves it`() {
+        val dto = CatalogDto(
+            id = "courses",
+            name = "Курсы",
+            picturePath = null,
+            version = 1L,
+            lastModifiedAt = 0L,
+            archived = false,
+            questType = "COURSE",
+        )
+
+        val entity = dto.toEntity()
+
+        assertEquals("COURSE", entity.questType)
+    }
+
+    @Test
+    fun `when entity has course questType then toDomain maps it to COURSE`() {
+        val entity = CatalogEntity(
+            id = "courses",
+            name = "Курсы",
+            picturePath = null,
+            pictureUrl = null,
+            questType = "COURSE",
+        )
+
+        val domain = entity.toDomain()
+
+        assertEquals(QuestType.COURSE, domain.questType)
+    }
+
+    @Test
+    fun `when dto round-trips through entity and domain then questType survives`() {
+        val dto = CatalogDto(
+            id = "surveys",
+            name = "Опросы",
+            picturePath = null,
+            version = 2L,
+            lastModifiedAt = 42L,
+            archived = false,
+            questType = "SURVEY",
+        )
+
+        val domain = dto.toEntity().toDomain()
+
+        assertEquals(QuestType.SURVEY, domain.questType)
     }
 }
