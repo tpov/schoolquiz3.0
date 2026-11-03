@@ -330,8 +330,17 @@ async function cmdSeedAuthorLesson() {
     ["quest", DF426.quest, {catalogId: DF426.catalog, authorUid, title: "DF author course", visibleOn: ["home"]}],
     ["section", DF426.section, {questId: DF426.quest, title: "DF author section", order: 0}],
     ["theme", DF426.theme, {sectionId: DF426.section, title: "DF author theme", order: 0}],
-    ["lesson", DF426.lesson, {themeId: DF426.theme, title: "DF author lesson", order: 0}],
+    ["lesson", DF426.lesson, {themeId: DF426.theme, title: "DF author lesson", order: 0,
+      // Прод-публикация пишет authorUid на КАЖДЫЙ урок (index.js: batch.set(lessonPath,
+      // {authorUid: request.ownerUid, ...}, {merge:true})); без него buildLessonEditCopy
+      // отвечает NOT_FOUND «Edit copy lesson could not be found» и вход 2 «Предложить
+      // правку» (COPY_EDIT) джорни 4.26 не строит копию (локальная кампания A14 03.11).
+      authorUid}],
     ...DF426.questions.map((id, order) => ["question", id, {lessonId: DF426.lesson, text: SINGLE.text,
+      // Прод-форма вопроса (publicDocuments/questionToDocument) несёт type: у SingleChoice
+      // черновика это SINGLE; с пустым type клиентский разбор копии правки (вход 2,
+      // COPY_EDIT) падал в «Could not build the copy» (локальная кампания A14 03.11).
+      type: "SINGLE",
       payload: JSON.stringify({...SINGLE, id, difficulty: "EASY"}), difficulty: "EASY",
       language: "en", languageLevel: 0, order}]),
   ];
