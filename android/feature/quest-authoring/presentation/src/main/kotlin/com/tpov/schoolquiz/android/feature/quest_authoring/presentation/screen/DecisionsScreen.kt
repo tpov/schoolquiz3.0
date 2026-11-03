@@ -21,6 +21,13 @@ fun DecisionsScreen(
         onBackToListClick = component::onBackToListClick,
         onMarkSelected = component::onMarkSelected,
         onCommentChanged = component::onCommentChanged,
+        onSurfaceSelected = component::onSurfaceSelected,
+        onProposalsBoxSelected = component::onProposalsBoxSelected,
+        onLoadMoreProposalsClick = component::onLoadMoreProposalsClick,
+        onProposalSelected = component::onProposalSelected,
+        onBackToProposalsListClick = component::onBackToProposalsListClick,
+        onProposalDecision = component::onProposalDecision,
+        onProposalCommentChanged = component::onProposalCommentChanged,
         modifier = modifier,
     )
 }

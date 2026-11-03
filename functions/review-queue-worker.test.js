@@ -104,13 +104,14 @@ function scriptedStages({lintFailures = 0, translateLintFailures = 0, failQuesti
   return {WORDS: build("WORDS"), FACTS: build("FACTS"), TRANSLATE: translate};
 }
 
-function worker(db, stages, options = {}, modelClient = undefined) {
+function worker(db, stages, options = {}, modelClient = undefined, notifyProposalReceived = null) {
   return createReviewQueueWorker({
     db,
     stages,
     modelClient: modelClient || {modelName: "glm-test", judge: async () => ({ok: true, content: "{}"})},
     nowMs: () => NOW,
     log: () => {},
+    notifyProposalReceived,
     ...options,
   });
 }
@@ -509,6 +510,26 @@ test("a QUEUED proposal is checked by the same skills into its own verdict colle
     .filter((path) => path.startsWith(`${PROPOSAL_VERDICTS_COLLECTION}/`));
   assert.equal(proposalVerdicts.length, 2, "WORDS and FACTS verdicts are immutable records");
   assert.ok(proposalVerdicts.every((path) => path.includes("prop-1_lesson_1_")));
+});
+
+test("CHECK_PASSED notifies the target owner; failures and notifier crashes do not flip the terminal", async () => {
+  const notifications = [];
+  const {admin, store} = createFirestoreStub(proposalWorld("prop-notify"));
+  const db = admin.firestore();
+  const result = await worker(db, scriptedStages({}), {maxStageCallsPerSweep: 12}, null,
+    async (proposalId, proposal) => {
+      notifications.push([proposalId, proposal.targetOwnerUid, proposal.status]);
+    }).sweep();
+  assert.equal(result.status, "PROCESSED");
+  assert.equal(store.documents.get(`${PROPOSALS_COLLECTION}/prop-notify`).status, "CHECK_PASSED");
+  assert.deepEqual(notifications, [["prop-notify", "author-1", "CHECK_PASSED"]]);
+
+  const failed = createFirestoreStub(proposalWorld("prop-notify-fail"));
+  await worker(failed.admin.firestore(), scriptedStages({failQuestions: ["report"]}),
+    {maxStageCallsPerSweep: 12}, null, async () => {
+      throw new Error("push is not the verdict");
+    }).sweep();
+  assert.equal(failed.store.documents.get(`${PROPOSALS_COLLECTION}/prop-notify-fail`).status, "CHECK_FAILED");
 });
 
 test("a FAIL question fails the proposal, never reaching the author state", async () => {

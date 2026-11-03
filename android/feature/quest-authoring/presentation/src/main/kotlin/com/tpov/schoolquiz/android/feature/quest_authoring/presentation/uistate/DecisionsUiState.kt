@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate
 
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestProposalBox
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestProposalRow
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecisionFilter
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecisionMarkValue
 
@@ -16,6 +18,18 @@ data class DecisionsUiState(
     val isLoading: Boolean = true,
     /** Сервер отказал по роли: вкладка показывает авторскую сторону — только «Предложения». */
     val accessRefused: Boolean = false,
+    /** Поверхность вкладки: вердикты админа или «Предложения» (история 4.25, UX-22). */
+    val surface: DecisionsSurfaceUi = DecisionsSurfaceUi.VERDICTS,
+    /** Активная полка «Предложений» и её строки (страница прав сервера). */
+    val proposalsBox: QuestProposalBox = QuestProposalBox.INCOMING,
+    val proposals: List<QuestProposalRow> = emptyList(),
+    val proposalsHasMore: Boolean = false,
+    val proposalsLoading: Boolean = false,
+    val proposalsLoadingMore: Boolean = false,
+    val proposalsDetail: QuestProposalRow? = null,
+    val proposalCommentDraft: String = "",
+    val proposalDecisionState: DecisionsMarkStateUi = DecisionsMarkStateUi.NONE,
+    val proposalsErrorMessage: UiMessage? = null,
     val selectedFilter: ReviewDecisionFilter = ReviewDecisionFilter.UNMARKED,
     val entries: List<DecisionsListItemUiState> = emptyList(),
     val hasMore: Boolean = false,
@@ -23,6 +37,12 @@ data class DecisionsUiState(
     val detail: DecisionsDetailUiState? = null,
     val errorMessage: UiMessage? = null,
 )
+
+/** Поверхность «Решений»: вердикты — админская половина, «Предложения» — общая (UX-22). */
+enum class DecisionsSurfaceUi {
+    VERDICTS,
+    PROPOSALS,
+}
 
 data class DecisionsListItemUiState(
     val verdictId: String,

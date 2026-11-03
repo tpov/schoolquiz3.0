@@ -111,6 +111,8 @@ function createReviewQueueWorker({
   maxStageCallsPerSweep = MAX_STAGE_CALLS_PER_SWEEP,
   candidatePage = CANDIDATE_PAGE,
   statePath: trustedStatePath = WORKER_STATE_PATH,
+  /** Push «предложение доехало до автора» (4.25): внедряется раннером, в тестах — null. */
+  notifyProposalReceived = null,
 }) {
   if (!db || typeof db.runTransaction !== "function" || !stages || !modelClient ||
     typeof modelClient.judge !== "function" || typeof nowMs !== "function" || typeof log !== "function") {
@@ -609,6 +611,15 @@ function createReviewQueueWorker({
         updatedAtMs: now(),
       }, {merge: true});
     });
+    // Терминал зафиксирован — автору цели уходит повод синхронизироваться (AD-20, 4.25).
+    // Пуш — не вердиктная правда: сбой нотификатора журнал читает, терминал не отменяет.
+    if (status === "CHECK_PASSED" && typeof notifyProposalReceived === "function") {
+      try {
+        await notifyProposalReceived(proposalId, {...proposal, status});
+      } catch (error) {
+        report(proposalId, "PROPOSAL_NOTIFY_FAILED");
+      }
+    }
     return status;
   }
 

@@ -42,6 +42,12 @@ object PushEvents {
     /** Квест продвинулся: заявка на арену прошла, квест опубликован. */
     val QUEST_PUBLISHED = PushEvent("quest_authoring.QUEST_PUBLISHED")
 
+    /** Предложение прошло проверку и доехало до автора цели (AD-33, история 4.25). */
+    val QUEST_PROPOSAL_RECEIVED = PushEvent("quest_authoring.QUEST_PROPOSAL_RECEIVED")
+
+    /** Автор цели решил предложение; исход видит предложивший (история 4.25). */
+    val QUEST_PROPOSAL_DECIDED = PushEvent("quest_authoring.QUEST_PROPOSAL_DECIDED")
+
     /**
      * Рейтинг автора изменился — с ним уровень квалификации (ADR-0006). Имя — серверное: реестр в
      * `functions/push-notifications.js` единственный источник, а клиентская копия обязана ему
@@ -52,7 +58,13 @@ object PushEvents {
     /** Верификация одобрена. */
     val VERIFICATION_APPROVED = PushEvent("profile.VERIFICATION_APPROVED")
 
-    val all: List<PushEvent> = listOf(QUEST_PUBLISHED, AUTHOR_RATING_CHANGED, VERIFICATION_APPROVED)
+    val all: List<PushEvent> = listOf(
+        QUEST_PUBLISHED,
+        QUEST_PROPOSAL_RECEIVED,
+        QUEST_PROPOSAL_DECIDED,
+        AUTHOR_RATING_CHANGED,
+        VERIFICATION_APPROVED,
+    )
 
     /**
      * Фичи, чьи имена допустимы в `eventType` и `entityRef` (NFR4) — те же, что стоят перед

@@ -9,10 +9,13 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DecisionsMarkStateUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DecisionsPreviewOptionUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DecisionsQuestionPreviewUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DecisionsSurfaceUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DecisionsUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestProposalBox
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestProposalRow
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecision
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecisionCursor
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecisionFilter
@@ -21,6 +24,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDec
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecisionQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecisionVerdict
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.ReviewDecisionsAccessRefusedException
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.DecideQuestProposalUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchQuestProposalsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.FetchReviewDecisionsUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.MarkReviewDecisionUseCase
 import kotlinx.coroutines.CoroutineDispatcher
@@ -49,6 +54,8 @@ class DefaultDecisionsComponent(
     private val fetchDecisions: FetchReviewDecisionsUseCase,
     private val markDecision: MarkReviewDecisionUseCase,
     private val questionContentParser: QuestionContentParser,
+    private val fetchProposals: FetchQuestProposalsUseCase? = null,
+    private val decideProposal: DecideQuestProposalUseCase? = null,
     mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : DecisionsComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
@@ -61,9 +68,141 @@ class DefaultDecisionsComponent(
 
     override val state: StateFlow<DecisionsUiState> = _state.asStateFlow()
 
+    private var proposalsCursor: String? = null
+    private val proposalsList = mutableListOf<QuestProposalRow>()
+    private var proposalsLoadJob: Job? = null
+    private var proposalDecisionJob: Job? = null
+
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
         reload(ReviewDecisionFilter.UNMARKED)
+        // «Предложения» — общая половина вкладки (UX-22): админ видит её переключателем,
+        // не-админ после отказа роли — целиком. Страница прав ограничена, предзагрузка дешёвая.
+        reloadProposals()
+    }
+
+    override fun onSurfaceSelected(surface: DecisionsSurfaceUi) {
+        if (surface == _state.value.surface) return
+        _state.update {
+            it.copy(
+                surface = surface,
+                proposalsDetail = null,
+                detail = null,
+                errorMessage = null,
+                proposalsErrorMessage = null,
+            )
+        }
+        if (surface == DecisionsSurfaceUi.PROPOSALS && _state.value.proposals.isEmpty() &&
+            !_state.value.proposalsLoading
+        ) {
+            reloadProposals()
+        }
+    }
+
+    override fun onProposalsBoxSelected(box: QuestProposalBox) {
+        if (box == _state.value.proposalsBox) return
+        _state.update { it.copy(proposalsBox = box, proposalsDetail = null, proposalsErrorMessage = null) }
+        reloadProposals()
+    }
+
+    override fun onLoadMoreProposalsClick() {
+        val current = _state.value
+        if (!current.proposalsHasMore || current.proposalsLoadingMore) return
+        loadProposalsPage(append = true)
+    }
+
+    override fun onProposalSelected(proposalId: String) {
+        val entry = proposalsList.firstOrNull { it.proposalId == proposalId } ?: return
+        _state.update { it.copy(proposalsDetail = entry, proposalsErrorMessage = null) }
+    }
+
+    override fun onBackToProposalsListClick() {
+        _state.update { it.copy(proposalsDetail = null, proposalsErrorMessage = null) }
+    }
+
+    override fun onProposalDecision(approve: Boolean) {
+        val detail = _state.value.proposalsDetail ?: return
+        val decide = decideProposal ?: return
+        if (detail.stale || detail.unreadable) return
+        if (detail.status != "CHECK_PASSED") return
+        // Решение одноразовое: повтор по решённой записи — не второй ход (приёмник 4.21).
+        if (detail.decision != null) return
+        if (_state.value.proposalDecisionState == DecisionsMarkStateUi.SAVING) return
+        _state.update { it.copy(proposalDecisionState = DecisionsMarkStateUi.SAVING, proposalsErrorMessage = null) }
+        val commentAtSend = _state.value.proposalCommentDraft
+        proposalDecisionJob?.cancel()
+        proposalDecisionJob =
+            scope.launch {
+                val outcome = decide(detail.proposalId, approve, commentAtSend)
+                outcome.fold(
+                    onSuccess = {
+                        // Решение одноразовое: перечитываем полку, чтобы статус пришёл сервером.
+                        _state.update { it.copy(proposalDecisionState = DecisionsMarkStateUi.SAVED) }
+                        reloadProposals()
+                    },
+                    onFailure = { error ->
+                        _state.update {
+                            it.copy(
+                                proposalDecisionState = DecisionsMarkStateUi.NONE,
+                                proposalsErrorMessage = UiMessage.Raw(error.message ?: "decision failed"),
+                            )
+                        }
+                    },
+                )
+            }
+    }
+
+    override fun onProposalCommentChanged(value: String) {
+        _state.update { it.copy(proposalCommentDraft = value) }
+    }
+
+    private fun reloadProposals() {
+        proposalsCursor = null
+        proposalsList.clear()
+        _state.update { it.copy(proposals = emptyList(), proposalsHasMore = false, proposalsLoading = true) }
+        loadProposalsPage(append = false)
+    }
+
+    private fun loadProposalsPage(append: Boolean) {
+        val fetch = fetchProposals
+        if (fetch == null) {
+            _state.update { it.copy(proposalsLoading = false, proposalsLoadingMore = false) }
+            return
+        }
+        proposalsLoadJob?.cancel()
+        proposalsLoadJob =
+            scope.launch {
+                val box = _state.value.proposalsBox
+                try {
+                    val result = fetch(box, PROPOSALS_PAGE_LIMIT, if (append) proposalsCursor else null)
+                    result.fold(
+                        onSuccess = { page ->
+                            if (!append) proposalsList.clear()
+                            proposalsList.addAll(page.rows)
+                            proposalsCursor = page.nextCursor
+                            _state.update {
+                                it.copy(
+                                    proposals = proposalsList.toList(),
+                                    proposalsHasMore = page.hasMore,
+                                    proposalsLoading = false,
+                                    proposalsLoadingMore = false,
+                                )
+                            }
+                        },
+                        onFailure = { error ->
+                            _state.update {
+                                it.copy(
+                                    proposalsLoading = false,
+                                    proposalsLoadingMore = false,
+                                    proposalsErrorMessage = UiMessage.Raw(error.message ?: "proposals load failed"),
+                                )
+                            }
+                        },
+                    )
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                }
+            }
     }
 
     override fun onFilterSelected(filter: ReviewDecisionFilter) {
@@ -198,6 +337,7 @@ class DefaultDecisionsComponent(
                                 DecisionsUiState(
                                     isLoading = false,
                                     accessRefused = true,
+                                    surface = DecisionsSurfaceUi.PROPOSALS,
                                     selectedFilter = filter,
                                 )
                         } else {
@@ -325,6 +465,8 @@ class DefaultDecisionsComponent(
     }
 
     private companion object {
+        /** Граница страницы «Предложений» — серверной вью quest-proposals-v1. */
+        private const val PROPOSALS_PAGE_LIMIT = 20
         const val COMMENT_MAX_CHARS = 2000
     }
 }

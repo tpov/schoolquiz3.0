@@ -598,5 +598,22 @@ private object StubLessonRunnerRootComponent : LessonRunnerRootComponent {
 
     override fun onPostComment(text: String) = Unit
 
+    override val proposalFeeQuote:
+        kotlinx.coroutines.flow.StateFlow<com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.LessonProposalFeeQuote?> =
+            kotlinx.coroutines.flow.MutableStateFlow(null)
+
+    override val errorReportState:
+        kotlinx.coroutines.flow.StateFlow<com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState> =
+            kotlinx.coroutines.flow.MutableStateFlow(
+                com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.ErrorReportSubmissionState.Idle,
+            )
+
+    override fun onReportDialogOpened() = Unit
+
+    override fun onReportError(
+        text: String,
+        ownVariant: String?,
+    ) = Unit
+
     override fun onBack() = Unit
 }
