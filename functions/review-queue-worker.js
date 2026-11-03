@@ -16,6 +16,7 @@
 const {createHash, randomBytes} = require("node:crypto");
 const {
   QUEST_STATUS,
+  STAGE,
   STAGE_PLAN,
   applyStageError,
   applyStageSkip,
@@ -180,14 +181,47 @@ function createReviewQueueWorker({
     return rows;
   }
 
-  /** Заявка годна, если её конвейера нет вовсе, или его lease истёк, или он ещё не в терминале. */
+  /** Заявка годна, если её конвейера нет вовсе; существующий (даже с истёкшей лизой) — адоптируется. */
   async function claimable(submissionId, nonce) {
     return db.runTransaction(async (tx) => {
       const ref = db.doc(`${PIPELINE_COLLECTION}/${submissionId}`);
       const existing = data(await tx.get(ref));
       const at = now();
-      if (existing && existing.lease && existing.lease.expiresAtMs > at) return null;
-      if (existing && pipelineRecord(existing).status !== QUEST_STATUS.RUNNING) return null;
+      // Существующий конвейер АДОПТИРУЕТСЯ, не пересоздаётся: пересоздание (createPipelineState
+      // поверх живого документа) ЗАТИРАЛО прогресс — все стадии обратно PENDING, свип тратил
+      // бюджет (2 вызова) на crisis-repeat WORDS/FACTS по уже стоящим вердиктам, и TRANSLATE
+      // не доставался никогда: конвейер висел RUNNING при DONE-проверках и attempts=0 у
+      // перевода (джорни 4.20: волны v5-v7 31.10-02.11, локальная кампания A14 03.11 — 60+
+      // свипов без терминала; корень также «TRANSLATE так и не атемптится» из evidence v7).
+      if (existing) {
+        const pipeline = pipelineRecord(existing);
+        if (pipeline.status !== QUEST_STATUS.RUNNING) return null;
+        if (pipeline.lease && pipeline.lease.expiresAtMs > at) return null;
+        const claimSource = data(await tx.get(db.doc(`${QUEUE_COLLECTION}/${submissionId}`)));
+        if (!claimSource) return null;
+        // Сироты записей (вердикт/перевод встали, чекпойнт конвейера — нет): пришиваем обратно,
+        // чтобы nextJob не переигрывал записанное попыткой с новым номером.
+        for (const [lessonId, lesson] of Object.entries(pipeline.lessons || {})) {
+          for (const [stage, stageState] of Object.entries(lesson.stages || {})) {
+            if (!stageState || stageState.state !== STAGE.PENDING || stageState.verdictId) continue;
+            for (let attempt = Number(stageState.attempts || 0) + 1; attempt >= 1; attempt--) {
+              const isTranslate = stage === "TRANSLATE";
+              const recordId = isTranslate
+                ? translationDocumentId({submissionId, lessonId, attempt})
+                : verdictDocumentId({submissionId, lessonId, stage, attempt});
+              const collection = isTranslate ? TRANSLATIONS_COLLECTION : VERDICTS_COLLECTION;
+              if ((await tx.get(db.doc(`${collection}/${recordId}`))).exists) {
+                applyVerdict(pipeline, lessonId, stage, recordId);
+                break;
+              }
+            }
+          }
+        }
+        pipeline.lease = {ownerNonce: nonce, expiresAtMs: at + leaseMs};
+        pipeline.updatedAtMs = at;
+        tx.set(ref, pipeline);
+        return {pipeline, source: claimSource};
+      }
       const source = data(await tx.get(db.doc(`${QUEUE_COLLECTION}/${submissionId}`)));
       if (!source || source.status !== "UNDER_REVIEW" || !Array.isArray(source.lessons) ||
         source.lessons.length === 0 || !source.draft || !source.draft.id ||

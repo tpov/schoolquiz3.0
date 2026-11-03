@@ -133,6 +133,7 @@ const {parseReviewFeeQuoteRequest, quoteReviewFee} = require("./review-fee-quote
 const {writeSyncChanges} = require("./sync-changes");
 const {readReviewDecisions, writeReviewDecisionMark} = require("./review-decisions");
 const {
+  parseQuestProposalsRequest,
   readQuestProposalsPage,
   settleProposalFeeCycle,
 } = require("./quest-proposals-view");
