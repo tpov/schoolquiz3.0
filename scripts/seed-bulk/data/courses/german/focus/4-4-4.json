@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 4,
+    "l": 4
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+  "lessonTitle": "Урок 4. Вежливые просьбы и предложения через Konjunktiv II",
+  "focus": "Научиться применять формы из уроков 1–3 в живой коммуникации: вежливо просить, предлагать, давать совет и смягчать высказывание. Это коммуникативная отработка темы.",
+  "grammar_points": [
+    "Konjunktiv II смягчает прямые формы: Ich will → Ich würde gern / Ich hätte gern; Kannst du? → Könntest du?; Du musst → Du solltest.",
+    "Вежливая просьба: Könnten Sie / Würden Sie + Infinitiv … (+ bitte) в конце.",
+    "Вежливое предложение и приглашение: Wir könnten …; Hättest du Lust, … zu + Infinitiv?",
+    "Смягчённый совет и мнение: Ich würde sagen, …; An deiner Stelle würde ich …; Du solltest …",
+    "Слово bitte и форма обращения Sie усиливают вежливость; Konjunktiv II уместен с начальством, в магазине, ресторане, у врача."
+  ],
+  "vocab": [
+    "höflich — вежливый",
+    "die Bitte — просьба",
+    "entschuldigen — извинять(ся)",
+    "reservieren — резервировать, бронировать",
+    "empfehlen — рекомендовать",
+    "stören — мешать, беспокоить",
+    "gern(e) — охотно",
+    "möchte — хотел(а) бы"
+  ],
+  "examples": [
+    "Würden Sie mir bitte die Tür aufmachen? — Не могли бы вы открыть мне дверь, пожалуйста?",
+    "Ich möchte einen Tisch für zwei Personen reservieren. — Я хотел бы забронировать столик на двоих.",
+    "Hättest du Lust, am Wochenende ins Kino zu gehen? — Не хотел бы ты сходить в кино на выходных?",
+    "Entschuldigung, könnten Sie mir den Weg zum Bahnhof zeigen? — Извините, не могли бы вы показать мне дорогу к вокзалу?",
+    "Wir könnten uns morgen um drei treffen. — Мы могли бы встретиться завтра в три."
+  ]
+}

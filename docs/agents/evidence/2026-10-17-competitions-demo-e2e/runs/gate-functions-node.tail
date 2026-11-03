@@ -1,0 +1,25 @@
+PASS  review-journal.test.js
+PASS  scoring-pool.test.js
+PASS  submit-mutation-terms.test.js
+PASS  sync-change-clock.test.js
+PASS  sync-changes.test.js
+PASS  testing-review-threshold.test.js
+PASS  tournament-policy.test.js
+PASS  tournament-qualification-calculation.test.js
+PASS  tournament-qualification-compact.test.js
+PASS  tournament-qualification-freeze.test.js
+PASS  tournament-qualification-scan.test.js
+PASS  tournament-qualification-version.test.js
+PASS  tournament-qualification.test.js
+PASS  tournament-ranking.test.js
+PASS  tournament-service.test.js
+PASS  tournament-session-sink.test.js
+PASS  tournament-session.test.js
+PASS  tournament-source-bank.test.js
+PASS  tournament-storage-contract.test.js
+PASS  tournament-worker.test.js
+PASS  trophies.test.js
+PASS  unlock-price-fixtures.test.js
+PASS  verification.test.js
+──────────────────────────────────────────────────────────────
+111 of 111 suites passed

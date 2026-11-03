@@ -1,0 +1,29 @@
+{
+  "structural": "PASS",
+  "broken_links": [],
+  "preexisting_files_changed": [],
+  "specs": {
+    "spec-schoolquiz3.0": {
+      "capabilities": 23,
+      "companions": 10,
+      "fields_and_ids": "PASS",
+      "updated": "2026-09-30"
+    },
+    "spec-theme-exams": {
+      "capabilities": 21,
+      "companions": 5,
+      "fields_and_ids": "PASS",
+      "updated": "2026-09-30"
+    }
+  },
+  "artifact_sha256": {
+    "_bmad-output/specs/spec-schoolquiz3.0/SPEC.md": "362eff5d3421a52c83ca58c014d959ea3c7165556e5189ea587fe5f350e80596",
+    "_bmad-output/specs/spec-schoolquiz3.0/contract-map.md": "98943d800f40d1b435994ed061e59e59b529379046edcbb993d33271053c217d",
+    "_bmad-output/specs/spec-schoolquiz3.0/ux-constraints.md": "a50805ef26a0d25e46a4bfed8cac98cad54ce02a351f5a7ff146f676cf26c925",
+    "_bmad-output/specs/spec-theme-exams/SPEC.md": "516cb50215eb7a95f52167b60428b0d5c415950c1672861c1a7475b3f3d703e8",
+    "_bmad-output/specs/spec-theme-exams/exam-protocol.md": "8e02f8b5a30b8035199f0b0b26c62cee7213d0166ac4a39e32d849077453dfbb"
+  },
+  "stories_present": [],
+  "git_diff_check_exit": 0,
+  "runtime": "NOT RUN"
+}

@@ -1,0 +1,1 @@
+22a81c8a068473da7a98fc84a7c534358b25fcac0f633a8ab9929b93f4220169  apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk

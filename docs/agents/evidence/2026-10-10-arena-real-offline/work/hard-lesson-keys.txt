@@ -1,0 +1,5 @@
+publicHalfRedacted true
+1_question_0 {"version":1,"questionId":"ac_b563a9845b1f4f279683d321ed54ca51_question_0","type":"SingleChoice","correctOptionId":"b"}
+1_question_1 {"version":1,"questionId":"ac_b563a9845b1f4f279683d321ed54ca51_question_1","type":"SingleChoice","correctOptionId":"b"}
+0 SingleChoiceRedacted [{"id":"a","text":"var"},{"id":"b","text":"val"},{"id":"c","text":"lateinit"}] order0
+1 SingleChoiceRedacted [{"id":"a","text":"var"},{"id":"b","text":"val"},{"id":"c","text":"lateinit"}] order1

@@ -1,0 +1,18 @@
+{
+ "added": [
+  "lesson_ratings/votes/d4d6b766901580cb364fbc3545f1184ed563b83b20db27ecc7580772d70aa1fe"
+ ],
+ "removed": [
+  "lesson_placements/aeu_7d433c732adf45a7b1c665260571b707_stale",
+  "lesson_placements/aeu_f2229bcc8ac745cc85934c7226193825_stale"
+ ],
+ "changed": [
+  "lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+  "lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+  "lesson_placements/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+  "lesson_placements/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+  "lesson_placements/aeu_7d433c732adf45a7b1c665260571b707_target",
+  "lesson_placements/aeu_f2229bcc8ac745cc85934c7226193825_target",
+  "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3"
+ ]
+}

@@ -1,0 +1,104 @@
+"lc_c7b287f648db4c7db3636dd44e1c7f32_mainEvent\",\"match\",2,0]","matches":3}
+{"stage":"one-run-lifecycle-FINISHED-with-conservation-and-repeat-safe-sweeps","runId":"lc_c7b287f648db4c7db3636dd44e1c7f32"}
+{"stage":"degenerate-0-cancels-with-full-refund","runId":"lc_c7b287f648db4c7db3636dd44e1c7f32"}
+{"stage":"degenerate-1-cancels-with-full-refund-fewer-than-two-qualifiers","runId":"lc_c7b287f648db4c7db3636dd44e1c7f32"}
+{"stage":"degenerate-2-plays-full-final-to-FINISHED-with-conservation","runId":"lc_c7b287f648db4c7db3636dd44e1c7f32"}
+{
+  "status": "FAIL",
+  "stage": "degenerate-2-plays-full-final-to-FINISHED-with-conservation",
+  "code": "FAILED_PRECONDITION",
+  "message": "Tournament operation could not be completed",
+  "checksCompleted": [
+    "fresh-accounts-and-namespaced-verified-course-created-create-only",
+    "real-HTTP-CREATE-reserves-12-boxes-once-with-identical-replay",
+    "real-HTTP-qualification-three-EASY-attempts-per-player-all-settled",
+    "repeated-sweeps-close-qualification-once-abort-probe-proved-atomicity",
+    "one-run-lifecycle-FINISHED-with-conservation-and-repeat-safe-sweeps",
+    "degenerate-0-cancels-with-full-refund",
+    "degenerate-1-cancels-with-full-refund-fewer-than-two-qualifiers",
+    "degenerate-2-plays-full-final-to-FINISHED-with-conservation"
+  ],
+  "bounds": {
+    "httpCalls": 306,
+    "transactions": 550,
+    "writes": 1843,
+    "queryReads": 59,
+    "sweeps": 12,
+    "injectedAborts": [
+      "ABORT_CLOSE",
+      "ABORT_ADVANCE"
+    ]
+  },
+  "evidence": {
+    "runId": "lc_c7b287f648db4c7db3636dd44e1c7f32",
+    "projectId": "demo-schoolquiz-mvp",
+    "fixtureNames": {
+      "catalog": "lc_c7b287f648db4c7db3636dd44e1c7f32_catalog",
+      "course": "lc_c7b287f648db4c7db3636dd44e1c7f32_course",
+      "section": "lc_c7b287f648db4c7db3636dd44e1c7f32_section",
+      "theme": "lc_c7b287f648db4c7db3636dd44e1c7f32_theme",
+      "lesson": "lc_c7b287f648db4c7db3636dd44e1c7f32_lesson",
+      "submission": "lc_c7b287f648db4c7db3636dd44e1c7f32_submission",
+      "mainEvent": "lc_c7b287f648db4c7db3636dd44e1c7f32_mainEvent",
+      "event0": "lc_c7b287f648db4c7db3636dd44e1c7f32_event0",
+      "event1": "lc_c7b287f648db4c7db3636dd44e1c7f32_event1",
+      "event2": "lc_c7b287f648db4c7db3636dd44e1c7f32_event2",
+      "event3": "lc_c7b287f648db4c7db3636dd44e1c7f32_event3"
+    },
+    "retainedSyntheticFixtures": true,
+    "mountedSourceShas": {
+      "index.js": "5bc8850a8b087ca704243e003a9d56bb87edc1aa73b1080e5d0525902dfaedb1",
+      "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
+      "tournament-service.js": "a69ddb4575ff28c6ff30d6dee43fae7e0a6cf18f56c020f49db4963877d2206b",
+      "tournament-source-bank.js": "e6c98dbbc4ce8238093d00b7ab5caca8ed96fa81e250edb16793dd8b49cfeb81"
+    },
+    "createdFixtureDocuments": 102,
+    "creation": {
+      "eventId": "lc_c7b287f648db4c7db3636dd44e1c7f32_mainEvent",
+      "status": "CREATED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 12,
+        "paidBoxes": 0,
+        "returnedBoxes": 0
+      }
+    },
+    "verifiedQualificationRuns": 12,
+    "awards": {
+      "status": "FINISHED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 0,
+        "paidBoxes": 10,
+        "returnedBoxes": 2
+      },
+      "placements": [
+        {
+          "uid": "epX888PDhNSFwa9Sqfg6lg1bquS6",
+          "rank": 1,
+          "slot": "champion",
+          "technicalForfeit": false
+        },
+        {
+          "uid": "IXyFrA8xahyfHoCDcwuiIeM906rG",
+          "rank": 2,
+          "slot": "runner-up",
+          "technicalForfeit": false
+        },
+        {
+          "uid": "hN9XNZGYE5GY897IXb57jist1vGN",
+          "rank": 3,
+          "slot": "third-upper",
+          "technicalForfeit": false
+        },
+        {
+          "uid": "ayHbNBO0ENBF9yvk9YLZHpqU7v1I",
+          "rank": 3,
+          "slot": "third-lower",
+          "technicalForfeit": false
+        }
+      ]
+    }
+  }
+}
+EXIT=1

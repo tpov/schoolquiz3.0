@@ -1,0 +1,268 @@
+# Arena matrix device flows
+
+These flows are deliberately separate from the retained-ticket E2B runner.  They never prepare,
+start, cancel, settle, rate, install, clear, or reset an application.  Each device phase takes a
+non-blocking per-serial lock shared with E2B, writes an isolated result directory, and records
+`PASS`, `FAIL`, or `NOT_RUN`.
+
+`run-system-back-catalog.sh` proves the physical Android Back dispatcher on a safe route only:
+
+```text
+verified Home -> navigation-only route to unloaded catalog -> Android KEYCODE_BACK
+  -> Arena root -> Android KEYCODE_BACK -> the same verified Home
+```
+
+Before it makes any navigation or sends either Back event, it captures the actual hierarchy and
+refuses `NOT_RUN` unless the retained application is at Home.  It then uses only app-shell navigation
+to reach an unloaded catalog — never `Load lessons` — and rechecks the hierarchy before each
+physical Back.  A prepared ticket, ticket action, runner, result, synchronization, or rating
+surface blocks the run.  The selector map is an explicit immutable input captured from the
+installed candidate; it is checked across visible, accessibility, and hint text, with no
+resource-id assumptions.
+
+Run it only inside the controlled Maestro container and pass the candidate APK's immutable SHA-256
+and certificate SHA-256.  Before the UI phase it also reads and compares the installed base APK;
+it refuses split packages because a single candidate artifact would not prove their full identity.
+The command has no installation or state-clearing option.
+
+## Controlled `submitMutation` response-loss proxy
+
+`submit-mutation-drop-proxy.js` is a deliberately narrow sidecar for a future Arena fault run. It
+is not a general proxy and it is not itself a device acceptance result. Its only fault is to close
+the client connection after one exact `submitMutation` request has received a complete successful
+upstream response.
+
+The private JSON configuration binds all of the following before the device route is changed:
+
+- loopback listener and Firebase upstream;
+- the complete callable path and `lesson_runner.SUBMIT_ATTEMPT` operation;
+- one mutation ID and one 64-hex attempt ID.
+
+It does not write those identifiers, request bodies, response bodies, or headers to its audit. The
+audit records SHA-256 bindings and event hashes only. Configuration, ready, and audit files must be
+new regular files in a private directory; `listenPort: 0` requests a fresh listener port, published
+only in the private ready artifact.
+
+Once the exact request reaches upstream, every further exact request is closed locally, including
+concurrent retries and retries after a non-success response. This is intentional: an inconclusive
+upstream outcome must not be turned into a second financial operation. Only an audit status of
+`UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED` proves the injected condition; an Android run must
+then stop the sidecar, restore the single `adb reverse` mapping in `finally`, manually deliver the
+retained outbox item, and use the receipt oracle. Any other status is `FAIL` or `INTERRUPTED`, not
+a pass.
+
+The proxy and its test use only Node's standard library. Run the test in the controlled Maestro
+container:
+
+```text
+node /repo/.maestro/mvp/arena-matrix/submit-mutation-drop-proxy.test.js
+```
+
+The test uses an artificial loopback HTTP server. It exercises exact matching, one upstream call
+under a concurrent retry, successful-response loss, pass-through traffic, non-success handling,
+private artifacts, and invalid configuration. It does not change Firebase or an Android device.
+
+### Server-half fault run (no device)
+
+`submit-drop-server-fault-run.js` proves the same injected condition against the demo backend
+without a device: a scripted callable client (fixture player from `scripts/demo-fixtures/`) sends
+one `lesson_runner.SUBMIT_ATTEMPT` through the proxy to a host functions emulator wired to the
+demo backend, and then requires, in order: the connection dropped after a complete successful
+upstream response, `mutation_keys` completed on the server with exactly one receipt, a direct
+retry with the same mutation ID answered as `{replayed: true}` with no second effect, a second
+proxied attempt closed locally, and a final audit status of
+`UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED`. It is a transport/idempotency proof: the
+arena-ticketed variant of this row (prepare → RESERVED → SETTLE with royalty) remains device
+work. Run it with the demo project and emulator hosts in the environment and one absolute
+private 0700 parent directory as the only argument.
+
+## Pending SETTLE Room reader
+
+`scripts/arena-e2e-pending-settlement-reader.js` is a read-only local proof helper for a future
+offline or response-loss run. It must receive one explicit run, owner, ticket, and derived attempt,
+plus a private **copy** of `schoolquiz.db` and any adjacent WAL/SHM sidecars made while the app is
+stopped. It never opens adb or Firebase and emits only hashes, states, counts, and file digests;
+it never emits the owner, ticket, attempt, payload, answers, or errors stored by Room.
+
+The helper accepts only explicitly paired Room v14 and v15 schemas and their exact identity hashes. It
+requires one intact frozen snapshot, one exact pending `SETTLE` command, the matching pending
+outbox row and first intent, no receipt for that mutation under any owner, and no locally scored
+attempt rows. It rejects an already delivered, ambiguous, malformed, mismatched, or unknown schema
+state rather than treating it as pending.
+
+Run it in the controlled Maestro container with Node v22's read-only `node:sqlite` runtime. There
+is currently no sqlite3-CLI fallback. A successful local result proves only the retained local
+state; an offline row still needs the independently recorded network cut and a later receipt
+oracle, while a response-loss row needs the proxy audit and server receipt proof.
+
+## Offline transport guard
+
+`offline-transport-guard.js` is the narrow transport boundary for a future real-offline Arena
+row. It exists because this demo application points Firebase at `127.0.0.1` and normally reaches
+the emulator through `adb reverse`; turning Wi-Fi/data off by itself would not prove an outage.
+It is a guard around one already-bounded child command, or a sealed two-leaf sequence plan, not
+an acceptance runner and not a substitute for the pending-SETTLE reader or receipt oracle.
+
+The guard requires an explicit `--control-channel adb-independent` acknowledgement. That flag is
+only valid when ADB control will survive disabling the device's Wi-Fi and mobile data, for example
+a wired or container control plane. It must never be used for Wi-Fi ADB. The guard checks that
+control channel after every reverse/toggle change, but the acknowledgement is still required
+because no portable ADB query can prove the physical route.
+
+Before it changes the device, it requires one ready target with binary Wi-Fi/data states and exactly
+these three normal mappings, with no extras: `9099`, `8080`, and `5001`. It records that complete
+baseline and restores it exactly: a radio that was already disabled is not silently enabled by a
+test. The mappings themselves prove that this demo app has a backend route even when a radio is
+already off. It accepts both current two-column and platform-tools-36 prefixed `adb reverse --list`
+rows. Any extra mapping (including the Firebase Database or Storage ports) is `FAIL` before an app
+stop, reverse removal, or network toggle, rather than leaving a possible backend bypass.
+
+It also acquires the same per-serial `flock` used by E2B at
+`/tools/arena-e2b-device-locks` (or an explicitly supplied private `--lock-root`) before the
+first device read and holds it through restore. A competing cooperating runner returns `NOT_RUN`
+before any device call. Loss of the lock, or a failed exact-offline check after the child, is a
+`FAIL`. The post-child check cannot protect against a hostile process that deliberately bypasses
+the shared lock and adds then removes a mapping between observations; therefore real use is only
+valid in the controlled device environment where all device phases use this lock.
+The helper normally notices that its guard parent is gone and releases the lock, but a hard host
+failure can still leave a stale lock. In that recovery case, first prove there is no live owner and
+restore the device transport manually; do not remove a lock merely to start another financial run.
+
+Every ADB read and mutation has a bounded deadline. The guard probes the lock again after each cut
+mutation and at the final point before it can launch an offline leaf. If that lock disappears after
+transport was touched, it deliberately **does not** restore the route: restoring without the
+exclusive owner could race another guarded operation. The result records the device as quarantined
+for a separately held manual recovery lock. This is a failed matrix row, never an offline pass.
+
+Its fixed sequence is:
+
+```text
+preflight -> force-stop app -> recheck exact baseline -> remove only 9099/8080/5001
+  -> disable every radio that was enabled -> verify zero Wi-Fi/data/mappings and live ADB control -> child
+  -> reverify no mappings and held lock
+  -> force-stop app -> restore only the three baseline mappings and the exact radio baseline
+  -> verify exact baseline
+```
+
+For a fresh ticket, `--sequence-plan <private-plan.json>` is the only supported way to hold the
+same shared lock across an online preparation leaf and the offline leaf. The private plan has
+exactly an artifact version plus bounded `preCut` and `whileCut` argv/timeout entries. The guard
+runs `preCut` while the exact online baseline is intact, rechecks that baseline, then follows the
+fixed cut sequence for `whileCut`. It records the plan SHA-256 and each child outcome but never
+the plan's argv. A failed or timed-out `preCut` leaves transport untouched; it never retries the
+preparation or deletes a mapping to recover it.
+
+It never calls `adb reverse --remove-all`. A concurrent or unexpected mapping is left untouched
+and makes the result `FAIL` for manual recovery rather than being deleted. The child is placed in
+its own POSIX process group; a timeout or any handled `SIGINT`/`SIGTERM` first terminates that
+group and then escalates to `SIGKILL` after a bounded grace interval. Repeated handled signals do
+not bypass cleanup. Sudden host loss, an unhandled `SIGKILL` to the guard, or a deliberately
+detached grandchild cannot be made recoverable by a process-local guard.
+
+For a sealed two-leaf plan, the guard gives each leaf one private, single-use capability bound to
+the serial, app ID and plan digest. A leaf refuses a missing, consumed, stale or differently bound
+capability. Child process groups are drained even after a normally exiting leader, before the next
+leaf or any restoration. `SIGHUP` and `SIGQUIT` follow the same cleanup path as `SIGINT` and
+`SIGTERM`.
+
+The guard never inherits the child's stdout/stderr. It saves at most 64 KiB of that output in a
+new adjacent `0600` private log and records only byte count/truncation status in the result JSON.
+The JSON itself contains only a serial hash, state/counts, child exit outcome, and generic error
+code — not the serial, child command, app data, output, or backend payloads. Both result paths
+are checked as new paths under a private, canonical non-symlink directory before the lock or a
+device command is acquired.
+
+Run it only with a new result path inside a non-symlink `0700` directory:
+
+```text
+node /repo/.maestro/mvp/arena-matrix/offline-transport-guard.js \
+  --serial <adb-serial> --adb <adb-binary> --app-id <application-id> \
+  --control-channel adb-independent --output <new-private-dir>/transport-result.json \
+  --timeout-ms <bounded-ms> -- <already-bounded-child-command> [arguments...]
+```
+
+The controlled environment supplies `flock`; `--lock-root` is only for an equivalent private
+shared lock root. `--flock` exists solely to inject the fake helper in the standalone test and is
+not an alternative locking protocol for real device runs.
+
+The standalone fake-ADB test proves the normal cut/restore order, three-and-only-three mapping
+removals, both mapping output shapes, shared-lock contention, revalidation after a concurrent
+mapping, private child-output containment, restoration after child failure, partial cut failure,
+timeout with a TERM-ignoring child and descendant, repeated handled signals, and refusal before
+mutation for unexpected mappings, a missing control-channel acknowledgement, or a symlinked
+output parent, plus a radio-disabled baseline, the two-leaf online/offline order, pre-cut failure
+and timeout without a cut, pre-cut baseline drift, and refusal of a symlinked sequence plan:
+
+```text
+node /repo/.maestro/mvp/arena-matrix/offline-transport-guard.test.js
+```
+
+No Device B, Firebase data, ticket, attempt, or financial flow is changed by that test. A future
+offline runner must additionally bind an isolated fixture/context, save stopped Room copies for
+the progress and pending-SETTLE readers, prove the server remains uncommitted while the guard is
+closed, and only then perform a separately controlled delivery and receipt-oracle phase.
+
+## Sealed offline SETTLE launcher
+
+`run-arena-offline-settlement.sh` is that narrow future runner. It creates a private result
+directory and asks the sequence-enabled transport guard to run two dedicated leaves under one
+shared device lock:
+
+```text
+online: validate the installed candidate -> identity preflight -> baseline owned tickets
+  -> selected/HARD preparation -> discover exactly one fresh ticket -> server RESERVED context
+
+offline: re-check zero mappings/Wi-Fi/data -> start/answer/relaunch -> stopped Room progress proof
+  -> resume/finish -> stopped Room pending-SETTLE proof -> server still RESERVED/no-event
+  -> re-check cut -> guard restores the exact baseline
+```
+
+Both leaves receive an immutable candidate/run context and confirmed selector map. The offline
+leaf cannot acquire a lock, alter reverse mappings or transport toggles, install/clear/uninstall
+the app, cancel, synchronize, rate, or invoke the legacy E2B runner. It copies Room only while the
+app is stopped, uses Node's read-only SQLite reader, and removes the raw database/WAL/SHM copy
+before it continues. Its sealed handoff retains only hashes in its public summary; the detailed
+contexts and Maestro logs stay in the private `0700` result directory.
+
+Before the online leaf can open the identity UI, the guard force-stops the retained app and the
+leaf makes ephemeral private copies of its Room database and one Firebase Auth Store preference.
+`scripts/arena-e2e-preparation-preflight-reader.js` accepts only exact Room v14/v15 version and
+identity pairs, proves that the persisted Firebase user and refreshable token bind the requested owner,
+and rejects any outbox row, unresolved Arena command, reserved ticket, or orphaned submit/rating
+intent. It writes only hashes and counts; raw Room and Auth copies are removed before the leaf
+continues. This prevents a silent anonymous account from turning a financial run into a different
+test. Firebase Auth Emulator's persisted unsigned `header.payload.` token form is accepted only
+for this local consistency check; the reader still requires its `sub` and `user_id` claims to
+match the persisted Firebase user and the requested owner.
+
+If the stopped app instead has a prior pending financial operation, the reader exits nonzero and
+emits a redacted `BLOCKED` record with only the five quiescence counts and owner/account hashes.
+The leaves reject it exactly as they reject any other failed preflight; the record is for selecting
+the existing recovery path, never permission to create another ticket.
+
+The launcher seals the APK, context, selector map, readers, guard, leaf and all five flows into an
+immutable input-lock file. The leaves rehash each input immediately before use and also require
+the guard-issued capability to bind the very same sequence plan. It creates one private recovery
+record per retained-owner hash before preparation. Its durable states are
+`PREPARE_GUARDED → PREPARE_STARTED → TICKET_DISCOVERED → PREPARED → OFFLINE_PENDING`; after the
+transition to `PREPARE_STARTED`, another launcher invocation for that owner returns `NOT_RUN`
+rather than preparing a second ticket. Recovery/delivery tooling for a retained record is a
+separate future step, not an automatic retry.
+
+The launcher intentionally stops at `overallStatus: NOT_RUN` after the offline matrix row passes.
+It must not automatically send the pending mutation after transport returns. An operator must
+first inspect the handoff, then use the exact saved context for a deliberate delivery, and only
+afterwards run `scripts/arena-e2e-settlement-oracle.js` to bind the SETTLED ticket, result event,
+and exact ledger effects. Rating and the existing two-receipt oracle remain separate later work.
+
+Run the composition test before any device use:
+
+```text
+node /repo/.maestro/mvp/arena-matrix/offline-settlement-contract.test.js
+```
+
+It uses fake ADB, Maestro, evidence readers, APK signing, and flock only. It does not contact
+Firebase or a device, and it asserts that the preparation leaf sees the normal topology while the
+offline leaf sees disabled Wi-Fi/data and zero reverse mappings. It also covers sealed-input
+mutation before PREPARE, a no-receipt result-event document, and a retained recovery record that
+blocks a second preparation.

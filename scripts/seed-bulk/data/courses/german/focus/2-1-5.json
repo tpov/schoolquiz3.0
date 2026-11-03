@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 1,
+    "l": 5
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+  "lessonTitle": "Урок 5. Вопросы: W-Fragen и Ja-Nein-Fragen",
+  "focus": "Научиться задавать два типа вопросов — с вопросительным словом и без него — и понимать разный порядок слов в утверждении и в вопросе.",
+  "grammar_points": [
+    "Ja-/Nein-Frage (общий вопрос): глагол на 1-м месте, подлежащее на 2-м. Wohnst du in Berlin? Ответ: Ja / Nein.",
+    "W-Frage (специальный вопрос): вопросительное слово на 1-м месте, глагол на 2-м, подлежащее на 3-м. Wo wohnst du?",
+    "Вопросительные слова: wer (кто), was (что), wo (где), wann (когда), wie (как), woher (откуда), warum (почему).",
+    "Сравнение порядка слов: утверждение Du kommst aus Polen → вопрос Kommst du aus Polen? → Woher kommst du?",
+    "Глагол в вопросе спрягается как обычно и согласуется с подлежащим: Wo wohnen Sie? Was machst du?"
+  ],
+  "vocab": [
+    "wer — кто",
+    "was — что",
+    "wo — где",
+    "wann — когда",
+    "wie — как",
+    "woher — откуда",
+    "warum — почему",
+    "die Antwort — ответ"
+  ],
+  "examples": [
+    "Woher kommst du? – Ich komme aus Italien. — Откуда ты родом? – Я из Италии.",
+    "Wo wohnen Sie? – Ich wohne in Köln. — Где Вы живёте? – Я живу в Кёльне.",
+    "Lernst du Deutsch? – Ja, ich lerne Deutsch. — Ты учишь немецкий? – Да, я учу немецкий.",
+    "Wie heißt er? – Er heißt Thomas. — Как его зовут? – Его зовут Томас.",
+    "Hast du eine Katze? – Nein, ich habe keine Katze. — У тебя есть кошка? – Нет, у меня нет кошки."
+  ]
+}

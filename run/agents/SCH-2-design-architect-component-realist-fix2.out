@@ -1,0 +1,24 @@
+Готово.
+
+Files changed:
+- [04-testing.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/04-testing.md)
+- [06-api-contract.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/06-api-contract.md)
+
+Fixes:
+- Added private `AppShellContent` canonical target signature to `06-api-contract.md`.
+- Updated target flow to `AppShellScreen → AppShellContent → LocalTabContent → DesignSettingsScreen`.
+- Added `AppShellContent` to stale-call-site/test coverage in `04-testing.md`.
+- Re-checked for banned markers and question marks.
+
+No blocker remains from my side.
+
+Applied the supervisor fix.
+
+Changed:
+- [06-api-contract.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/06-api-contract.md)
+
+Update:
+- Added the actual settings branch reference `AppShellScreen.kt:461-466` to the `LocalTabContent → DesignSettingsScreen` row.
+- Re-checked banned markers/question marks; none found.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "799c9576-f8c0-4ab7-90db-b633ccc7439d" "follow-up"`.

@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 2,
+    "l": 4
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+  "lessonTitle": "Парные формулы и пословицы: Zwillingsformeln und Sprichwörter",
+  "focus": "Освоить два пласта застывших выражений: парные формулы-биномы (Zwillingsformeln: Schritt für Schritt) с их незыблемым порядком слов и пословицы (Sprichwörter) как законченные предложения с моралью. Учиться уместно вплетать их в речь и аргументацию.",
+  "grammar_points": [
+    "Zwillingsformel — два слова, соединённых und/oder/предлогом, с НЕОБРАТИМЫМ порядком: говорят nach und nach, ab und zu, klipp und klar; обратный порядок (*und nach nach) звучит неграмотно.",
+    "В парных формулах артикль и склонение обычно отсутствуют (s-mit Haut und Haar, auf Schritt und Tritt) — это устойчивый блок, который вставляется в предложение целиком как наречие или дополнение.",
+    "Sprichwort — это законченное предложение-афоризм с обобщённой моралью; оно не встраивается как член предложения, а вводится отдельно или через знакомые зачины (Wie man so schön sagt, …; Es heißt ja: …).",
+    "Пословицы часто стоят в обобщённом настоящем (generelles Präsens) и нередко без артикля у обобщающего подлежащего: Übung macht den Meister; Reden ist Silber, Schweigen ist Gold.",
+    "Носители часто лишь намекают на пословицу первой половиной (Wer A sagt, … / Der Apfel fällt nicht weit …) — понимание этих «обрывов» и есть признак уровня C2."
+  ],
+  "vocab": [
+    "klipp und klar — чётко и ясно, без обиняков",
+    "ab und zu — время от времени, изредка",
+    "nach und nach — постепенно, мало-помалу",
+    "auf Schritt und Tritt — на каждом шагу, повсюду",
+    "das Sprichwort — пословица",
+    "Übung macht den Meister — повторение — мать учения (досл. упражнение делает мастера)",
+    "Der Apfel fällt nicht weit vom Stamm — яблоко от яблони недалеко падает"
+  ],
+  "examples": [
+    "Ich habe ihm klipp und klar gesagt, dass ich nicht mitmache. — Я ему чётко и без обиняков сказал, что не участвую.",
+    "Ab und zu gönne ich mir einen freien Tag zum Lesen. — Время от времени я позволяю себе выходной для чтения.",
+    "Nach und nach gewöhnte sie sich an das Leben in der Großstadt. — Мало-помалу она привыкла к жизни в большом городе.",
+    "Wie man so schön sagt: Übung macht den Meister — also üben wir weiter. — Как говорится, повторение — мать учения, так что продолжаем упражняться.",
+    "Sein Sohn ist genauso stur wie er — der Apfel fällt eben nicht weit vom Stamm. — Его сын такой же упрямый, как он, — яблоко от яблони недалеко падает."
+  ]
+}

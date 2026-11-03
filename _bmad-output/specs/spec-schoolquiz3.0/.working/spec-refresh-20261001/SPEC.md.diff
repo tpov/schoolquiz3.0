@@ -1,0 +1,188 @@
+--- baseline/SPEC.md
++++ current/SPEC.md
+@@ -1,7 +1,7 @@
+ ---
+ id: SPEC-schoolquiz3.0
+ created: '2026-09-29'
+-updated: '2026-09-30'
++updated: '2026-10-01'
+ companions:
+   - ../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/assessment-technical-contracts.md
+   - contract-map.md
+@@ -14,6 +14,9 @@
+   - ../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/ARCHITECTURE-SPINE.md
+   - ../../../AGENTS.md
+   - ../../../.claude/PROJECT-CONTEXT.md
++  - ../../planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md
++  - ../../planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md
++  - ../../planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md
+ sources: []
+ ---
+ 
+@@ -21,7 +24,7 @@
+ 
+ ## Why
+ 
+-Deliver one complete, reviewable Android MVP in which learners can study, test their knowledge and earn a course certificate; authors can publish independently checked material; and learning, Arena, tournaments and purchases form reliable end-to-end journeys. “Remaining” means missing implementation or missing current acceptance, not a request to recreate existing work.
++Deliver one complete, reviewable Android MVP in which learners study, demonstrate course knowledge and earn certificates; authors publish independently checked material; and ordinary learning, Arena, competitions, polls, private quizzes and commerce work together. “Remaining” means missing implementation or current acceptance, not a request to recreate existing work.
+ 
+ ## Capabilities
+ 
+@@ -31,15 +34,15 @@
+ 
+ - **CAP-2 — Author and revise lessons**
+   - **intent:** An author can create and correct their own learning material.
+-  - **success:** Authorship, submitted revisions and change history remain attributable; edits follow the permitted workflow and cannot silently overwrite another author's published material.
++  - **success:** Authorship, submitted revisions and change history remain attributable; permitted edits cannot silently overwrite another author's published material. Existing lesson titles stay immutable and lessons have no description. FillBlank and protected translation ranges retain the exact field, revision and text occurrence through editing and undo/redo, without exposing answer metadata to players.
+ 
+ - **CAP-3 — Review and publish approved questions**
+   - **intent:** Independent reviewers can assess submitted content, and authors can see each question's review outcome.
+-  - **success:** All required directions examine the concrete revision; successful questions can publish independently, affected dependencies are rechecked, unaffected valid evidence is retained, and online review pauses and resumes from confirmed progress.
++  - **success:** All required directions examine the concrete revision; successful questions can publish independently, affected dependencies are rechecked and unaffected valid evidence is retained. One independent TESTING review per question/revision is sufficient; its configurable pass threshold defaults to 2 on the 1–3 scale (1 fails, 2/3 pass). Review returns identify the failed stage without a mandatory reason field. Translation decisions are explicit per segment and complete before submission; missing text is never auto-approved. Saved review work resumes from confirmed progress, while an active timed question follows the common online timing rule.
+ 
+ - **CAP-4 — Pay for a review cycle and receive earned review rewards**
+   - **intent:** Authors can submit material at an agreed fee and reviewers can receive the defined reward for completed work.
+-  - **success:** The accepted tariff is shown and charged once; retry and retained prior evidence create no extra paid work. A completed cycle conserves fee = reward entitlements + burned remainder under the adopted exact-arithmetic contract; an unfinished cycle is not finally settled.
++  - **success:** The accepted tariff is shown and charged once; retry and retained prior evidence create no extra paid work. A normal completed cycle, including justified rejection, conserves fee = reward entitlements + burned remainder under the adopted exact-arithmetic contract; an unfinished cycle is not finally settled.
+ 
+ - **CAP-5 — Curate placement with visible reasons**
+   - **intent:** A curator can promote or remove a particular lesson while permitted users see its status and history.
+@@ -47,7 +50,7 @@
+ 
+ - **CAP-6 — Discuss lessons and report errors privately**
+   - **intent:** A learner can open comments or privately report a lesson error, and recipients can find relevant incoming items.
+-  - **success:** Both post-lesson actions exist; private free text concerns the whole lesson without re-revealing questions or answers, and the shared inbox preserves each item's original readers and lesson link.
++  - **success:** Both post-lesson actions exist; private free text concerns the whole lesson without re-revealing questions or answers and reaches its permitted author. The shared inbox preserves each item's original readers and lesson link; reviewer or curator roles alone grant no access to that private message.
+ 
+ - **CAP-7 — Choose and prepare Arena participation**
+   - **intent:** A signed-in player can browse Arena, understand available resources and reserves, and obtain the selected preparation.
+@@ -65,13 +68,13 @@
+   - **intent:** Eligible authors can receive placement awards and the Arena's quarterly winner can receive the season award.
+   - **success:** Each qualifying transition pays once; the UTC quarter uses the complete eligible input, adopted minimum/tie/no-winner rules and one resumable final award.
+ 
+-- **CAP-11 — Create funded tournaments and qualify participants**
+-  - **intent:** An organizer can create an event from eligible material and players can complete its qualification.
+-  - **success:** The course remains in the library, the event has sufficient frozen content and its full fund, retries reuse the event, and three distinct EASY attempts feed an immutable top16 calculated from the whole eligible cohort.
++- **CAP-11 — Create funded competitions and qualify participants in a tournament**
++  - **intent:** An organizer can create a funded competition from eligible material and players can complete its qualifying tournament.
++  - **success:** The course remains in the library, sufficient content and the full fund are frozen, and retries reuse the event. An ordered, extensible prize list counts every place once. Three distinct EASY attempts feed an immutable top16 calculated from the whole eligible cohort. A private course tournament admits users who downloaded the course or arrive by its link only during qualification; the link never bypasses selection for the championship.
+ 
+-- **CAP-12 — Play tournament matches and settle the event**
+-  - **intent:** Qualified players can agree a match time, play their match and see the final bracket and awards.
+-  - **success:** Both opponents receive the same HARD form and continuous server timing; reconnection, absences, ties, byes and technical outcomes follow the adopted matrix, and payouts plus returned remainder conserve the fund.
++- **CAP-12 — Play championship matches and settle the competition**
++  - **intent:** Qualified players can agree a championship match time, play their match and see the final bracket and awards.
++  - **success:** Proposals and confirmations remain distinct; the agreed slot and both players’ READY states survive re-entry. Opponents receive the same HARD form and authoritative timing under the common online transition rule. Absences, ties, byes and technical outcomes follow the adopted matrix; ranking, awards and returned remainder use the same frozen prize list and conserve the fund. The timing and prize-mapping integration prerequisites remain explicit before their dependent adapters.
+ 
+ - **CAP-13 — Compare offers and use premium benefits**
+   - **intent:** A player can inspect the current store offers, compare premium durations and use earned benefits for their valid term.
+@@ -79,7 +82,7 @@
+ 
+ - **CAP-14 — Receive and open boxes**
+   - **intent:** A player can collect boxes from entitled sources and open one for its reward.
+-  - **success:** Ordinary daily and premium daily remain distinct sources, other awards do not consume their limits, and an online opening survives loss/restart by returning the same stored reward.
++  - **success:** The ordinary reward after a ten-day daily streak is granted automatically on entry, independently of Premium. The separate Premium daily gift requires an explicit claim without watching an ad. Both sources retain their own limits and common stock; other awards do not consume those limits, and an online opening survives loss/restart by returning the same stored reward.
+ 
+ - **CAP-15 — Purchase, restore and refund the correct grant**
+   - **intent:** A buyer can receive verified goods, recover previously paid purchases and have refunds applied to the relevant purchase.
+@@ -89,9 +92,9 @@
+   - **intent:** Users can see the agreed product constants and recover a current consistent configuration.
+   - **success:** The permitted configuration updates coherently; failed refresh preserves known values without inventing zero, changed payable terms require fresh consent, and accepted operations keep their captured rules.
+ 
+-- **CAP-17 — Use the complete redesigned experience and experience-based guidance**
+-  - **intent:** Users can complete every MVP journey in the agreed design and receive guidance appropriate to their experience.
+-  - **success:** Existing and new screens, including exams and certificates, cover actionable loading, empty, failure, offline, insufficient funds, forbidden, pending and recovery states in RU/UK/EN; approved visual constraints and semantic actions are retained, while unresolved layouts and guidance thresholds remain explicit UX prerequisites.
++- **CAP-17 — Use the finalized redesigned experience**
++  - **intent:** Users can complete every current MVP journey in the agreed design.
++  - **success:** Existing and new screens, including exams and certificates, implement the final DESIGN and EXPERIENCE with actionable loading, empty, failure, offline, insufficient funds, forbidden, pending and recovery states in RU/UK/EN. Shared visual semantics, accessibility and confirmed interactions are preserved. This version contains neither the deferred experience-based guide nor guide placeholders; final UX approval does not replace runtime acceptance.
+ 
+ - **CAP-18 — Deliver saved actions to an authoritative outcome**
+   - **intent:** A user can recover uncertain actions after interruption without repeatedly recreating them.
+@@ -107,36 +110,52 @@
+ 
+ - **CAP-21 — Prove knowledge of a course theme**
+   - **intent:** A learner can take a theme test after completing its required ordinary learning and preserve earned theme progress.
+-  - **success:** Confirmed coverage of all required EASY questions admits a 20-scored-question test of 5 EASY plus 15 HARD; ordinary access purchase grants no pass. Bank, charge, timing, retry and cooldown follow EXAM. Passes carry for stable course/theme identities after edits, newly required themes must pass, and a first-pass reward cannot be duplicated. Theme stars follow the accepted linear 0..3 percent scale. First-pass nolics and XP use x3 for new progress, with the retained difficulty/time factors and one reward-accounted history. The next theme attempt waits 24 hours from terminal closure. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Required EASY coverage is confirmed by versioned question evidence across ordinary attempts. Reward worth retains ordinary EASY/HARD values independently of the assessment timer, under EXAM-TECH-1.
++  - **success:** Confirmed coverage of all required EASY questions admits a 20-scored-question test of 5 EASY plus 15 HARD; ordinary access purchase grants no pass. Bank, charge, timing, retry and cooldown follow EXAM. Passes carry for stable course/theme identities after edits, newly required themes must pass, and a first-pass reward cannot be duplicated. Theme stars follow the accepted linear 0..3 percent scale. First-pass nolics and XP use x3 for new progress, with the retained difficulty/time factors and one reward-accounted history. The next theme attempt waits 24 hours from terminal closure. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Required EASY coverage is confirmed by versioned question evidence across ordinary attempts. Reward worth retains ordinary EASY/HARD values independently of the assessment timer, under EXAM-TECH-1. Entry costs 100 STANDARD points (one full ordinary charge); PLASMA cannot pay admission.
+ 
+ - **CAP-22 — Earn and verify a course certificate**
+   - **intent:** A learner who passes the required themes can demonstrate current course knowledge in a final exam and receive a verifiable certificate.
+-  - **success:** A new final uses the latest approved course and 20 HARD questions. Every successful final earns a distinct one-year attestation, including renewal before expiry; the profile displays the latest earned certificate even if its passing score is lower, while prior certificates remain unchanged in history. Failed finals issue no certificate. Public verification works signed out; fulfilment retries preserve the same issuance and original claims and expiry survive content-fault correction. Every recorded final attempt is eligible for nolics/XP rewards regardless of passing, using x10 for new progress and x0.1 for the already-accounted part, then the retained difficulty/time factors. The next final waits seven days from terminal closure; retry never creates a second reward. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Reward worth retains ordinary HARD values; the exact formula, rounding and accounted-history fixtures follow EXAM-TECH-1.
++  - **success:** A new final uses the latest approved course and 20 HARD questions. Every successful final earns a distinct one-year attestation, including renewal before expiry; the profile displays the latest earned certificate even if its passing score is lower, while prior certificates remain unchanged in history. Failed finals issue no certificate. Public verification works signed out; fulfilment retries preserve the same issuance and original claims and expiry survive content-fault correction. Every recorded final attempt is eligible for nolics/XP rewards regardless of passing, using x10 for new progress and x0.1 for the already-accounted part, then the retained difficulty/time factors. The next final waits seven days from terminal closure; retry never creates a second reward. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Reward worth retains ordinary HARD values; the exact formula, rounding and accounted-history fixtures follow EXAM-TECH-1. Entry costs 200 STANDARD points (two full ordinary charges); PLASMA cannot pay admission.
+ 
+ - **CAP-23 — Correct confirmed question faults with accountable result history**
+   - **intent:** Authorized maintainers can remove a confirmed bad question revision from future use and apply justified result corrections.
+   - **success:** Signals request review rather than automatically proving error; original sitting evidence and frozen active banks remain, corrections append attributable versions and may correct admission, and issued certificates are preserved exactly on this ground. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Authorized exclusions recalculate the denominator with the shared scoring arithmetic; all-excluded and missing evidence have explicit nonnumeric states, never a fabricated fail or pass. Already settled rewards and accounted history stay unchanged. A correction-generation barrier prevents a delayed admission projection from authorizing a new final against invalid proof.
+ 
++- **CAP-24 — Create polls and view the distribution after voting**
++  - **intent:** An author can create a poll series and participants can submit their choices and inspect its results.
++  - **success:** Single- or multiple-choice questions have 2–8 options and no correctness or EASY/HARD classification. A nonempty choice set is submitted once; before the participant’s confirmed vote the distribution is hidden. Percentages use distinct respondents per question, so multiple-choice totals may exceed 100%; retry never adds another vote, and series progress and statistics retain their identity.
++
++- **CAP-25 — Create and take private quizzes**
++  - **intent:** An author can share a HARD-only private quiz with signed-in participants and inspect their attempts.
++  - **success:** The category is «Приватные квизы». Authors control attempt limits, result visibility and optional link expiry; defaults are one attempt, hidden result and no expiry. Counted attempts survive limit changes, and closing access does not interrupt a started attempt within its original deadlines. Participants use no charges and cannot defer continuation. Recovery timeout yields a whole-quiz result with remaining questions unanswered. Current visibility governs every own result, including past attempts, while author statistics are retained; all detailed rules in AD-29 remain binding.
++
++- **CAP-26 — Inspect personal and author-lesson operation history**
++  - **intent:** An account holder can inspect their income and spending, and an author can inspect earnings for their lesson.
++  - **success:** General history and lesson earnings show authorized records with consistent identity, date, reason, signed amount, resource and status. Filters, expansion and continued loading preserve context; pending is distinct from confirmed income, unlike resources are not summed, and changing accounts cannot reveal another owner’s records. Reading history creates no financial effect.
++
+ ## Constraints
+ 
+-- The scope is every PRD FR-1–56 and NFR-1–8 plus EXAM:CAP-1–21. The listed companions, including their detailed numbers, formulas, acceptance cases and failure matrices, are mandatory; a short capability summary does not narrow them. Qualified IDs and the scope/precedence rules are in contract-map.md.
+-- The finalized architecture fixes ownership and boundaries. Keep the existing KMP/Clean Architecture, Decompose/Compose/Koin conventions and separate ordinary, Arena, exam and tournament lifecycles; shared contracts do not introduce a common mode controller.
+-- Independent checks approve a concrete immutable content revision. Preserve valid unaffected evidence and frozen issued banks; review is online with confirmed saves and pauses on connection loss, while approved ordinary and Arena offline paths remain available. No mandatory pretest or statistical admission gate is added.
++- Scope covers PRD FR-1–55/NFR-1–8, EXAM:CAP-1–21 and the finalized October 1 UX additions. FR-56 remains a named future capability, deferred from this version. Mandatory companions retain detailed numbers, formulas, acceptance cases and failure matrices; short summaries do not narrow them. Qualified IDs and source precedence are in contract-map.md.
++- The finalized architecture fixes ownership and boundaries. Preserve KMP/Clean Architecture, Decompose/Compose/Koin and separate ordinary, Arena, exam and competition lifecycles. Shared AD-31 timing does not introduce a common mode controller; technical tournament/event identifiers remain stable.
++- Independent checks approve a concrete immutable revision; preserve valid unaffected evidence and frozen issued banks. TESTING is per question with one independent reviewer and a server threshold defaulting to 2 of 3; other directions and explicit translation completeness remain mandatory. Online evidence writes pause on connection loss, but an active timed question continues under AD-31. Approved ordinary/Arena offline paths remain; no pretest or statistical admission gate is added.
+ - Only confirmed server facts authorize authoritative results, grants and receipts. Preserve original operation/account identity and uncertain outcomes across retries; financial effects conserve funds, reserves and fractional entitlements. Read-only browsing and wallet inspection create no financial effect.
+ - Ordinary offline lesson unlock retains its provisional local debit, durable intent and visible rollback contract. It grants access, not completed EASY coverage; online exam admission and atomic start/charge require authoritative prerequisites.
+ - Apply server-enforced rights and mode-specific redaction to all projections. A shared inbox never widens readership; private forms, HARD/exam keys, tokens, original order IDs and private answer payloads do not leak through UI or shared logs. Existing ordinary EASY local scoring is preserved.
+-- Freeze accepted price, bank and rule terms. Server/UTC govern authoritative deadlines and seasons; local presentation respects time zones/DST. Ordinary pauses, prepared Arena clocks, exam acknowledgement/deadline/gap rules and continuous tournament time remain distinct.
++- Freeze accepted prices, banks and rule terms; server/UTC govern deadlines and seasons, with local timezone/DST presentation. Every online question keeps its original deadline through disconnect. A timely accepted answer or original expiry starts the captured default 60-second next-question connection/download window; retry never resets it or overwrites an accepted answer. Ready content appears immediately, no window follows the last question, and the separate bounded initial start remains. Offline ordinary/Arena behavior is retained. ONLINE-O1/O2 are explicit integration prerequisites.
+ - All applicable screens preserve RU/UK/EN, accessible semantic Continue/Info/Back and rotation/background/recovery. Render actual loading work and show a ready question immediately. The existing <100 ms input/answer criterion is not a new first-question loading SLA, throughput target or population cap.
+ - Preserve the passed stable course/theme identities, require new themes, and use the current approved course for each new final. Each successful final, including renewal before expiry, atomically records its own immutable certificate issuance. Display the latest earned certificate even with a lower passing score; retain earlier attestations unchanged. Failed finals issue no certificate. Signing pending/retry preserves earning order, identity and dates, so delayed older fulfilment cannot displace a newer issuance. A later correction from failure to pass creates no issuance; obtaining a certificate requires a new successful sitting, while previously earned pending issuance remains valid.
+ - Use the active candidate as brownfield reality. Historical PASS, stale plans, mock Billing and an adopted architecture are not new implementation or acceptance evidence. The full acceptance and explicit unfinished prerequisites remain binding.
+ - Keep project work, artifacts and later operational evidence on VPS; preserve the nonempty installation and original restore input. This spec-writing run performs no build, service/session start, financial run or deploy. KMP transfer and public release require later owner decisions.
+-- Screen content requires separate explicit confirmation for every screen against the overall product logic, including screens whose visual design is already approved. Visual approval alone does not approve all copy, displayed data, action behavior or states; existing explicit decisions remain constraints for that review.
++- Final DESIGN.md and EXPERIENCE.md dated 2026-10-01, their implementation handoff and later accepted owner decisions govern the current visuals, content, actions and states. They supersede obsolete discovery, blanket repeated screen-content approval and old HTML values. Current code, production data, permissions and accessibility still require implementation and acceptance; final UX is not runtime proof.
+ - Existing lesson titles cannot be changed, and lessons have no description field. Do not introduce title/description editing or a paid metadata-only submission from the earlier generic fee placeholder. Identify a real permitted non-question edit before proposing any separate scope or fee.
+ - Theme-test stars are 3 times aggregate percent / 100; the server uses existing tenths precision and half-up rounding (starsTenths = floor((30 * percent + 50) / 100), bounded 0..30), and the client renders the projection. Pass/fail still uses the captured percentage threshold; ordinary EASY/HARD stars and best-theme-result retention are unchanged.
+ - For nolics and XP, preserve the ordinary marginal-score tariff, difficulty and allocated-time factors. Replace only the new-progress coefficient: ordinary x2, theme x3, final x10; a final's already-accounted component stays x0.1. Do not additionally multiply the whole reward by the mode coefficient. Final reward eligibility includes every recorded terminal attempt under existing unanswered rules, including failure/timeout/abandonment, with no guaranteed positive minimum. Theme rewards remain first-pass-only. Track the maximum reward-accounted percentage per user/assessment separately from best displayed theme stars or the latest certificate; lower scores, renewal and zero-rounding cannot reset accounted progress. Persist that history with the one authoritative reward effect; unpaid failed theme attempts consume no first-pass reward progress. Ordinary EASY/HARD worth is independent of the all-HARD assessment timer; EXAM-TECH-1 C1 fixes mixed pool normalization, exact arithmetic, independent currency rounding and versioned fixtures. Confirmed-fault corrections preserve already settled nolics/XP and accounted history without top-ups or recoupment.
+ - Each theme test has a rolling 24-hour interval per user/theme; each course final has a rolling seven-day (168-hour) interval per user/course. Both start at terminal closure, including failure, timeout and abandonment. This supersedes the prior 23-hour intervals without calendar-day/week resets. Recovery resumes the same open sitting and creates no new attempt, charge or cooldown.
+-- Theme tests and final exams use ordinary HARD answer time for every question, including the five EASY theme questions, with no extra0.75 factor. Preserve the question's difficulty, assessment composition, first-acknowledgement deadline and frozen timer rules; ordinary and tournament timing do not change.
++- Theme tests and final exams use ordinary HARD answer time for every question, including the five EASY theme questions, without the extra 0.75 factor. Preserve difficulty, composition, first-acknowledgement deadline and frozen timer rules; subsequent online transitions obey AD-31. Theme/final entry costs 100/200 STANDARD points only; the old final 300 configuration is implementation drift, not a reopened tariff choice.
+ - EXAM-TECH-1 is the shared technical contract for correction exclusions/denominator, immutable required-EASY revision coverage, exact reward arithmetic and worker/signing recovery. Unknown evidence never becomes a guessed result, completed admission or zero financial fact. Concrete signing-provider/environment activation must be resolved at its stated gate. Corrected result publication atomically updates admission or establishes a versioned pending barrier that blocks new final starts before charge.
++- Product terms distinguish «турнир» (qualification) from «чемпионат» (the complete final bracket/match part); a competition contains both. Private course access is by downloaded course or link only within the qualification interval. Prize rows each count once; a shared rank/tie/technical-outcome mapping precedes CREATE/reserve, and confirmation/READY never follows merely from a local selection.
++- Private quiz rules in AD-29 are settled: signed-in HARD-only, no charge use, one continuous sitting, current result visibility for all own attempts, retained author statistics and started-attempt history. New starts require enabled, unexpired access and startedCount < currentLimit; neither link closure nor a limit change revokes an active attempt’s original completion rights. Defaults are one attempt, hidden result and no expiry. Recovery timeout scores the whole quiz with remaining questions unanswered; no new pass/fail gate or replacement fee is inferred.
++- Poll votes and private quiz results remain separate from scored lesson progress and its awards. Preserve the final category matrix, question schemas, per-occurrence editor annotations and player/exam redaction; adopted UX and shared serialization/admission contracts prevent feature-local alternatives.
++- Ordinary ten-day streak grants are automatic; Premium gifts require an independent explicit no-ad claim. Keep source-specific limits/receipts and shared stock. Personal operation history and author-lesson earnings are authorized read projections with distinct resources and pending states, never commands that create money.
+ 
+ ## Non-goals
+ 
+@@ -147,19 +166,24 @@
+ - Offline/queued exams, local exam scoring, a unified tournament/exam lifecycle, certificates for theme/section completion, or composite-course certificates.
+ - Proctoring, personal identity verification, accreditation, automatic invalidation or bans from one suspicious statistic, or direct gold purchase of exam admission/retakes/cooldown bypass.
+ - Invented fees, individual review-reward caps, certificate replacement without a newly passed final, quantitative product KPIs or new operational service-level promises.
++- The experience-based user guide or guide placeholders in this version; FR-56 can be enabled only as a separately specified future change.
++- Guest/password-based private quizzes, private deferred continuation, charge-funded private helper actions, inferred replacement fees, or unrequested link rotation/reactivation.
+ 
+ ## Success signal
+ 
+-- Demonstrate every mandatory PRD acceptance path and the exam protocol on one identified Android candidate: actual source/backend/APK/schema/config/flags, a populated installation, the required accounts/devices and genuine Play sandbox where specified. Author/review/publication, ordinary learning, Arena, the complete tournament event, commerce, configuration, feedback and exam-to-public-certificate journeys must work together with the agreed design.
++- Demonstrate every mandatory PRD acceptance path and the exam protocol on one identified Android candidate: actual source/backend/APK/schema/config/flags, a populated installation, the required accounts/devices and genuine Play sandbox where specified. Author/review/publication, ordinary learning, Arena, tournament-to-championship, polls, private quizzes, operation history, commerce, configuration, feedback and exam-to-public-certificate journeys must work together with the agreed design.
+ - Prove delivery after offline/restart/lost response, concurrent and account-switch behavior, non-destructive upgrade, financial conservation and exact authoritative receipts. Include the required 120-action queue, full cohort/season size cases, certificate correction/pending-signing cases, lower-passing-score renewal with retained history, certificate preservation after a failed retake, reward eligibility for every final outcome and no repeated new-progress bonus after a lower certificate and out-of-order fulfilment and device/Play matrix; a smoke path, historical pass or fake provider does not replace them.
+ - The owner receives the candidate, traceable PASS/FAIL/NOT RUN/SKIPPED/INTERRUPTED evidence, acceptance/manual-check instructions and known limits, then manually accepts it. No open money, data-loss or permission defect, mandatory unrun check or missing owner result can be called full MVP acceptance. This specification is not that acceptance.
+ - Correct an originally failed final to passing without issuing a certificate or replacing the current one; a new successful sitting is required. Preserve signing fulfilment for issuances already earned at original terminal success.
+ - Use EXAM-TECH-1 fixtures to prove reward worth stays independent of assessment answer time, currencies round independently and accounted progress survives lower scores/zero currency awards; prove required EASY coverage across capped attempts and safe nonnumeric correction states.
+ - Correct a settled assessment score upward and downward without changing its financial receipt or accounted maximum. During delayed correction/admission materialization, refuse a new final before charge; an obsolete materializer cannot restore an old passed projection.
++- Exercise the accepted question-timeout/next-download boundary without timer resets, extra answer time or a final-question wait. Prove one-reviewer TESTING and translation completeness; vote replay uniqueness; private link/limit changes with retained attempts, current visibility of old results and whole-quiz timeout outcomes; prize conservation, restored meeting confirmations, independent gift claims and scoped history.
+ 
+ ## Open questions
+ 
+ - **OQ-2:** If a permanently abandoned review cycle is added, how is its fee distributed for partial work? The owner decides before adding that outcome; an unfinished cycle currently has no final distribution or burn.
+-- **OQ-3:** Confirm the content of every screen separately against the overall product logic, then complete remaining visual design and experience-guidance copy, placement, thresholds and seen behavior before the affected UI is accepted. The settled UX subset is in ux-constraints.md; approved appearance or fixture content is not blanket screen-content approval.
+ - **OQ-4:** Resolve Q-EX-5 concrete signing/environment/operational prerequisites before activation; revisit Q-EX-7 optional placement/course-star scope only if selected. EXAM-TECH-1 fixes correction arithmetic/economic preservation, full-EASY evidence, reward basis/rounding and the correction/admission race. These target contracts are not runtime acceptance.
+ - **OQ-5:** Before the corresponding runtime or release stage, complete the environment/device/Play inventory, toolchain/security compatibility, known quiescence fix and operational cadence/budget/retention/recovery decisions. Their current availability or acceptance is not inferred by this document.
++- **OQ-6 — technical integration:** Resolve MAIN ONLINE-O1 (competition total/stage cutoff versus the full next-question window) before the affected competition adapter, and ONLINE-O2 (one delivery/ready-ACK receipt, replay and answer-start contract) before independent online transition adapters. The common timing policy is settled.
++- **OQ-7 — implementation contracts:** Complete the named UX handoff contracts before their dependent adapters: prize mapping before CREATE/reserve, meeting read/ACK, private settings/admission/results, annotation serialization/migration, poll votes/series/statistics, inbox/Play/exam operations, scoped projections/history continuation and separate gift receipts. Closed product choices UX-O1/O4/O5 are not new approval requests; use the owners and gates in MAIN Deferred.
++- **OQ-8 — future scope:** Only before separately enabling FR-56 define guide copy, experience triggers, placement, dismissal/repetition and persisted/migrated seen state. This version has no guide or placeholders; these future choices do not block its acceptance.

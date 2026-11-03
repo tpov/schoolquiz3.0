@@ -1,0 +1,40 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 1,
+    "l": 4
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+  "lessonTitle": "Предлоги с Akkusativ и предлоги с Dativ",
+  "focus": "Научить фиксированным предлогам, которые ВСЕГДА требуют одного падежа: группа Akkusativ и группа Dativ. Падежи из уроков 1–2 теперь работают после предлога.",
+  "grammar_points": [
+    "Предлоги ВСЕГДА с Akkusativ: durch, für, gegen, ohne, um (мнемоника DOGFU).",
+    "Предлоги ВСЕГДА с Dativ: aus, bei, mit, nach, seit, von, zu (мнемоника).",
+    "После предлога артикль/местоимение стоит в нужном падеже: für mich (Akk.), mit mir (Dat.).",
+    "Частые слияния (Dativ): zu+dem=zum, zu+der=zur, von+dem=vom, bei+dem=beim.",
+    "Слияния (Akkusativ): durch+das=durchs, für+das=fürs, um+das=ums.",
+    "nach + город/страна без артикля = «в» (nach Berlin); zu + лицо/учреждение = «к» (zum Arzt)."
+  ],
+  "vocab": [
+    "für — для, за (+ Akk.)",
+    "ohne — без (+ Akk.)",
+    "durch — сквозь, через (+ Akk.)",
+    "gegen — против (+ Akk.)",
+    "mit — с (+ Dat.)",
+    "nach — после, в (+ Dat.)",
+    "bei — у, при (+ Dat.)",
+    "von — от, из (+ Dat.)",
+    "zu — к (+ Dat.)",
+    "der Arzt — врач"
+  ],
+  "examples": [
+    "Das Geschenk ist für dich. — Этот подарок для тебя.",
+    "Ich gehe ohne meinen Bruder. — Я иду без своего брата.",
+    "Wir fahren mit dem Bus. — Мы едем на автобусе.",
+    "Nach der Arbeit gehe ich nach Hause. — После работы я иду домой.",
+    "Sie wohnt bei ihren Eltern. — Она живёт у своих родителей.",
+    "Ich gehe zum Arzt. — Я иду к врачу."
+  ]
+}

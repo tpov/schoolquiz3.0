@@ -1,0 +1,160 @@
+{"stage":"target-verified-private-demo","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"fresh-accounts-and-namespaced-verified-course-created-create-only","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"real-HTTP-CREATE-reserves-12-boxes-once-with-identical-replay","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"waiting-for-real-qualification-start","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","startsAtMs":1792317388396}
+{"stage":"player-finished-three-attempts","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","playerIndex":0}
+{"stage":"player-finished-three-attempts","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","playerIndex":1}
+{"stage":"player-finished-three-attempts","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","playerIndex":2}
+{"stage":"player-finished-three-attempts","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","playerIndex":3}
+{"stage":"real-HTTP-qualification-three-EASY-attempts-per-player-all-settled","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"own-controller-continuation","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","attempt":0,"status":"WAITING","transitions":1}
+{"stage":"repeated-sweeps-close-qualification-once-abort-probe-proved-atomicity","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"match-resolved","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","matchId":"[\"tournament\",\"lc_b7ddb58e556a49aa85eca64ac1141e89_mainEvent\",\"match\",1,0]","matches":1}
+{"stage":"match-resolved","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","matchId":"[\"tournament\",\"lc_b7ddb58e556a49aa85eca64ac1141e89_mainEvent\",\"match\",1,1]","matches":2}
+{"stage":"match-resolved","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89","matchId":"[\"tournament\",\"lc_b7ddb58e556a49aa85eca64ac1141e89_mainEvent\",\"match\",2,0]","matches":3}
+{"stage":"one-run-lifecycle-FINISHED-with-conservation-and-repeat-safe-sweeps","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"degenerate-0-cancels-with-full-refund","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"degenerate-1-cancels-with-full-refund-fewer-than-two-qualifiers","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"degenerate-2-plays-full-final-to-FINISHED-with-conservation","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{"stage":"terminal-remaining-zero-and-balances-conserved-across-the-whole-run","runId":"lc_b7ddb58e556a49aa85eca64ac1141e89"}
+{
+  "status": "PASS",
+  "checks": [
+    "fresh-accounts-and-namespaced-verified-course-created-create-only",
+    "real-HTTP-CREATE-reserves-12-boxes-once-with-identical-replay",
+    "real-HTTP-qualification-three-EASY-attempts-per-player-all-settled",
+    "repeated-sweeps-close-qualification-once-abort-probe-proved-atomicity",
+    "one-run-lifecycle-FINISHED-with-conservation-and-repeat-safe-sweeps",
+    "degenerate-0-cancels-with-full-refund",
+    "degenerate-1-cancels-with-full-refund-fewer-than-two-qualifiers",
+    "degenerate-2-plays-full-final-to-FINISHED-with-conservation",
+    "terminal-remaining-zero-and-balances-conserved-across-the-whole-run"
+  ],
+  "bounds": {
+    "httpCalls": 310,
+    "transactions": 548,
+    "writes": 1824,
+    "queryReads": 53,
+    "sweeps": 12,
+    "injectedAborts": [
+      "ABORT_CLOSE",
+      "ABORT_ADVANCE"
+    ],
+    "resource": {
+      "elapsedMs": 117103,
+      "heapUsedBytes": 46913776,
+      "rssBytes": 145846272,
+      "peakRssKiB": 142428
+    }
+  },
+  "evidence": {
+    "runId": "lc_b7ddb58e556a49aa85eca64ac1141e89",
+    "projectId": "demo-schoolquiz-mvp",
+    "fixtureNames": {
+      "catalog": "lc_b7ddb58e556a49aa85eca64ac1141e89_catalog",
+      "course": "lc_b7ddb58e556a49aa85eca64ac1141e89_course",
+      "section": "lc_b7ddb58e556a49aa85eca64ac1141e89_section",
+      "theme": "lc_b7ddb58e556a49aa85eca64ac1141e89_theme",
+      "lesson": "lc_b7ddb58e556a49aa85eca64ac1141e89_lesson",
+      "submission": "lc_b7ddb58e556a49aa85eca64ac1141e89_submission",
+      "mainEvent": "lc_b7ddb58e556a49aa85eca64ac1141e89_mainEvent",
+      "event0": "lc_b7ddb58e556a49aa85eca64ac1141e89_event0",
+      "event1": "lc_b7ddb58e556a49aa85eca64ac1141e89_event1",
+      "event2": "lc_b7ddb58e556a49aa85eca64ac1141e89_event2"
+    },
+    "retainedSyntheticFixtures": true,
+    "mountedSourceShas": {
+      "index.js": "d2194fdece0181dfebfce7ff02ad15f8e79b29d45ca5362cdef8b53537ffae3c",
+      "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
+      "tournament-service.js": "a69ddb4575ff28c6ff30d6dee43fae7e0a6cf18f56c020f49db4963877d2206b",
+      "tournament-source-bank.js": "e6c98dbbc4ce8238093d00b7ab5caca8ed96fa81e250edb16793dd8b49cfeb81"
+    },
+    "createdFixtureDocuments": 102,
+    "creation": {
+      "eventId": "lc_b7ddb58e556a49aa85eca64ac1141e89_mainEvent",
+      "status": "CREATED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 12,
+        "paidBoxes": 0,
+        "returnedBoxes": 0
+      }
+    },
+    "verifiedQualificationRuns": 12,
+    "awards": {
+      "status": "FINISHED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 0,
+        "paidBoxes": 10,
+        "returnedBoxes": 2
+      },
+      "placements": [
+        {
+          "uid": "TtigkdYNNakw9KDI7o4M0ucLvvDS",
+          "rank": 1,
+          "slot": "champion",
+          "technicalForfeit": false
+        },
+        {
+          "uid": "5riIeeVJCJCGjIWu8aWpb8hheDYl",
+          "rank": 2,
+          "slot": "runner-up",
+          "technicalForfeit": false
+        },
+        {
+          "uid": "6u7ddoVvUbYerYU5QyYbiMC6iee8",
+          "rank": 3,
+          "slot": "third-upper",
+          "technicalForfeit": false
+        },
+        {
+          "uid": "lkNMVtsEuuhWw5n2WXnVWo6aCWw0",
+          "rank": 3,
+          "slot": "third-lower",
+          "technicalForfeit": false
+        }
+      ]
+    },
+    "event0": {
+      "eventId": "lc_b7ddb58e556a49aa85eca64ac1141e89_mainEvent",
+      "status": "FINISHED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 0,
+        "paidBoxes": 10,
+        "returnedBoxes": 2
+      }
+    },
+    "event1": {
+      "eventId": "lc_b7ddb58e556a49aa85eca64ac1141e89_event0",
+      "status": "CANCELLED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 0,
+        "paidBoxes": 0,
+        "returnedBoxes": 12
+      }
+    },
+    "event2": {
+      "eventId": "lc_b7ddb58e556a49aa85eca64ac1141e89_event1",
+      "status": "CANCELLED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 0,
+        "paidBoxes": 0,
+        "returnedBoxes": 12
+      }
+    },
+    "event3": {
+      "eventId": "lc_b7ddb58e556a49aa85eca64ac1141e89_event2",
+      "status": "FINISHED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 0,
+        "paidBoxes": 8,
+        "returnedBoxes": 4
+      }
+    }
+  }
+}

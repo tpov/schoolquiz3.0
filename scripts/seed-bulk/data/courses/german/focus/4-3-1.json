@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 3,
+    "l": 1
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+  "lessonTitle": "Урок 1. Тело и недомогания: «Mir tut ... weh» и Schmerzen",
+  "focus": "Освоить базовую модель жалоб на здоровье: конструкцию tun + weh с дательным падежом «болящего» и существительное die Schmerzen. Это грамматическая основа всей темы.",
+  "grammar_points": [
+    "Конструкция wehtun: Mir/dir/ihm tut + Nominativ + weh (единственное число), tun ... weh (множественное число): Mir tut der Kopf weh / Mir tun die Füße weh.",
+    "Дательный падеж лица, испытывающего боль (Dativ der betroffenen Person): mir, dir, ihm/ihr, uns, euch, ihnen; альтернатива с притяжательным: Mein Kopf tut weh.",
+    "Существительное die Schmerzen (мн.ч.) и словосложение с частями тела: Kopfschmerzen, Halsschmerzen, Bauchschmerzen, Zahnschmerzen — Ich habe Kopfschmerzen.",
+    "Глагол haben для жалоб: Ich habe Husten/Fieber/Schnupfen (без артикля в обобщённом смысле).",
+    "Род и артикли частей тела как опора для всей темы: der Kopf, der Arm, das Bein, die Hand."
+  ],
+  "vocab": [
+    "der Körper — тело",
+    "der Kopf — голова",
+    "der Hals — горло, шея",
+    "der Bauch — живот",
+    "der Rücken — спина",
+    "die Hand — рука (кисть)",
+    "der Arm — рука (от плеча)",
+    "das Bein — нога",
+    "der Zahn — зуб",
+    "die Schmerzen (мн.ч.) — боли",
+    "wehtun — болеть (причинять боль)",
+    "der Husten — кашель",
+    "das Fieber — температура, жар",
+    "der Schnupfen — насморк"
+  ],
+  "examples": [
+    "Mir tut der Kopf weh. — У меня болит голова.",
+    "Mir tun die Füße weh, weil ich den ganzen Tag gelaufen bin. — У меня болят ноги, потому что я весь день ходил пешком.",
+    "Ich habe seit gestern starke Halsschmerzen. — У меня со вчерашнего дня сильно болит горло.",
+    "Hast du auch Fieber und Husten? — У тебя тоже температура и кашель?",
+    "Mein Rücken tut weh, wenn ich lange sitze. — У меня болит спина, когда я долго сижу."
+  ]
+}

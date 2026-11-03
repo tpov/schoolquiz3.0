@@ -1,0 +1,462 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Server-owned. This document is the balance sheet: currency, life points, qualifications.
+      //
+      // It used to be owner-writable with a denylist of privilege fields, which left lifePoints,
+      // gold, nolics, skillPoints and standardHearts open — a player could grant themselves any
+      // balance with a plain SDK call and bypass every server-side check, score verification
+      // included. A denylist also silently admits each new field somebody adds later.
+      //
+      // Offline play does not need this: results queue in the local outbox and are settled by
+      // submitLessonResultEvents, purchases by applyShopPurchase, boxes by openGiftBox. The client
+      // only ever reads here (FirebaseUserStatsDataSource), so nothing legitimate is lost.
+      allow write: if false;
+
+      // Токены устройств для push (AD-20).
+      //
+      // Единственное место под users/, куда клиент пишет: токен рождается на устройстве, узнать
+      // его больше неоткуда, а сервер обязан его прочитать, чтобы отправить уведомление. Владелец
+      // пишет и удаляет только свои — чужой токен иначе можно было бы подменить и увести чужие
+      // уведомления себе.
+      //
+      // Читает только сервер: у Admin SDK правил нет, а игроку список своих устройств пока
+      // нигде не показывается. Понадобится — открыть чтение владельцу отдельно.
+      match /devices/{token} {
+        allow read: if false;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Receipts: what the server credited and why — one document per settlement, written by
+      // verifyPurchase in the same transaction as the balance change. The owner reads them; that
+      // is how "you were credited 60 gold" reaches the device. Nobody writes: a client that could
+      // write a receipt could tell itself it had been paid.
+      match /receipts/{receiptId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    match /verification_requests/{userId} {
+      // Personal details somebody submitted so a human can check who they are. Reviewers need to
+      // read them, the owner needs to see what they sent, and nobody writes here directly: filing
+      // goes through submitVerificationRequest, which validates the details, and the outcome
+      // through decideVerification. Leaving create open would let the status be self-awarded.
+      allow read: if request.auth != null && (request.auth.uid == userId || isVerifier());
+      allow write: if false;
+    }
+
+    match /nickname_listings/{listingId} {
+      // The shop window: anybody signed in may browse it, and nobody writes to it. Listing,
+      // cancelling and buying all run through callables, because a sale has to move the title, the
+      // gold and the listing together — three writes a client could otherwise do one at a time.
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /nickname_claims/{claimId} {
+      // Server-owned unique nickname registry. Clients use updateUserNickname callable.
+      allow read, write: if false;
+    }
+
+    match /mutation_keys/{mutationId} {
+      // Ключи идемпотентности — серверная бухгалтерия. Клиенту незачем их читать, а запись
+      // отсюда позволила бы объявить чужую операцию выполненной и тем её отменить.
+      allow read, write: if false;
+    }
+
+    match /purchase_settlements/{settlementId} {
+      // One document per Play purchase token (keyed by its sha256), written by verifyPurchase in
+      // the same transaction as the gold. It is what makes a re-delivered token credit nothing the
+      // second time. Server bookkeeping: readable, it would expose another account's purchases;
+      // writable, it would let a token be marked settled — or unsettled — by hand.
+      allow read, write: if false;
+    }
+
+    // Permanent token-level refund fence: neither the buyer nor an app administrator may
+    // read, forge, clear or overwrite it. Only trusted purchase/refund transactions use it.
+    match /purchase_revocations/{document=**} { allow read, write: if false; }
+
+    // Per-purchase entitlement lots include permanent provenance and consumption history.
+    // All balance fields, including charge remainders and reservations, inherit users/write:false.
+    match /premium_accounts/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Placement roots also contain lastRejection; history includes private moderation details.
+    // Public cards/history must use a purpose-specific server projection, never these raw records.
+    match /lesson_placements/{document=**} { allow read, write: if false; }
+    match /lesson_ratings/{lessonId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+      match /votes/{voteId} { allow read, write: if false; }
+    }
+    match /arena_mutations/{document=**} { allow read, write: if false; }
+    // Pending long-running mutation reservations and the scheduler cursor are as private as the
+    // immutable receipts they protect. A direct client write could otherwise pre-claim a season
+    // finalization; a direct read would expose another curator's operational state.
+    match /arena_mutation_reservations/{document=**} { allow read, write: if false; }
+    match /arena_awards/{document=**} { allow read, write: if false; }
+    match /arena_seasons/{document=**} { allow read, write: if false; }
+    match /arena_season_votes/{document=**} { allow read, write: if false; }
+    match /arena_season_worker_state/{document=**} { allow read, write: if false; }
+    match /box_operations/{document=**} { allow read, write: if false; }
+    match /referral_awards/{document=**} {
+      // The once-per-lifetime "six qualifying invites" award (story 5.3), one document per
+      // referrer. Its existence IS the only-therefore guard: a client write could mint the 50
+      // boxes again, a client read would hand out who recruited whom — private graph data.
+      allow read, write: if false;
+    }
+    match /economy_seasons/{document=**} {
+      // One document per calendar quarter of the monetisation seasons (story 5.1): the frozen
+      // top-100 snapshot and its digest, plus the walk cursor and the per-player referral counter
+      // snapshots beneath it. Payouts (5.2/5.3) are computed from this picture, so a client write
+      // could mint a prize and a client read would hand out every referred player's counters.
+      // Players receive their own payouts and receipts, never this document.
+      allow read, write: if false;
+    }
+    match /ad_reward_confirmations/{document=**} {
+      // One document per confirmed ad-network transaction (keyed by its sha256), written by the SSV
+      // callback endpoint in the same transaction as the view progress. It is what makes a
+      // re-delivered confirmation count nothing the second time. Readable, it would expose another
+      // account's ad history; writable, a confirmation could be planted without the network's
+      // signature — the only thing the whole path trusts.
+      allow read, write: if false;
+    }
+    match /ad_reward_callbacks/{document=**} {
+      // One row per delivered SSV callback — confirmed, replayed, forged or unreadable. The fraud
+      // evidence side of the confirmations above; as unforgeable as the guard it accompanies.
+      allow read, write: if false;
+    }
+    match /offer_auctions/{document=**} {
+      // One document per monthly offers-auction, keyed by the target month. The open table of bids
+      // reaches players only through the fetchOfferAuction callable: a direct read would also hand
+      // out unreviewed ad creatives, and a direct write could plant or move a bid without gold.
+      allow read, write: if false;
+    }
+    match /offer_bids/{document=**} {
+      // One live bid per player per auction; the gold it debited moved server-side in the same
+      // transaction. Client-writable, a bid would exist without its debit.
+      allow read, write: if false;
+    }
+    match /offers/{document=**} {
+      // The monthly winner's placement (offers/current). Served to the future offers screen by a
+      // server view after ad review (story 4.3); a direct read would bypass that review, a direct
+      // write would put an unreviewed ad on a schoolchildren's screen.
+      allow read, write: if false;
+    }
+    match /arena_entry_tickets/{document=**} { allow read, write: if false; }
+    match /arena_ticket_quotas/{document=**} { allow read, write: if false; }
+    match /arena_ticket_cancellations/{document=**} { allow read, write: if false; }
+    match /arena_royalty_accounts/{document=**} { allow read, write: if false; }
+
+    // The event itself contains future forms and its seed. Even an organizer must use the
+    // allowlisted callable view; owning an event/session never grants access to its answer bank.
+    match /course_tournament_events/{document=**} { allow read, write: if false; }
+    match /course_tournament_operations/{document=**} { allow read, write: if false; }
+    match /course_tournament_sessions/{document=**} { allow read, write: if false; }
+    match /course_tournament_keys/{document=**} { allow read, write: if false; }
+    match /course_tournament_funding/{document=**} { allow read, write: if false; }
+    match /course_tournament_session_operations/{document=**} { allow read, write: if false; }
+    match /course_tournament_answer_ingress/{document=**} { allow read, write: if false; }
+    match /course_tournament_verified_runs/{document=**} { allow read, write: if false; }
+    match /course_tournament_rankings/{document=**} { allow read, write: if false; }
+    match /course_tournament_bank_preparations/{document=**} { allow read, write: if false; }
+    match /course_tournament_source_banks/{document=**} { allow read, write: if false; }
+    match /course_tournament_worker_state/{document=**} { allow read, write: if false; }
+    // Competition link digests (story 5.3, UX-O4/access): one document per event holding only
+    // the sha-256 of the organizer's link token. The token itself lives solely in the
+    // organizer's CREATE response; a client that could read the digest could brute-force
+    // tokens, one that could write it could mint admission links.
+    match /course_tournament_links/{document=**} { allow read, write: if false; }
+    // Server-attested download records per (account, course): the COURSE admission basis.
+    // A client write would self-grant admission without downloading; a client read would
+    // expose other accounts' download history. Admission is confirmed only inside the START
+    // transaction; there is no client read projection in this story.
+    match /course_tournament_downloads/{document=**} { allow read, write: if false; }
+
+    match /purchase_notifications/{messageId} {
+      // One document per Play notification message, written by playPurchaseNotifications. It is
+      // what makes a re-delivered message take nothing back a second time, and what tells a message
+      // that arrived and did nothing apart from a message that never arrived. Server bookkeeping in
+      // the same sense as the settlements beside it: readable, it would expose who was refunded
+      // what; writable, a message could be marked handled before it was.
+      allow read, write: if false;
+    }
+
+    match /purchase_audit/{auditId} {
+      // Who was credited what, for which token, under which version of configs/economy. Written
+      // once by the server per settlement; nothing in the app reads it.
+      allow read, write: if false;
+    }
+
+    match /configs/{configId} {
+      // Server-owned runtime configs, including configs/nickname_policy.
+      allow read, write: if false;
+    }
+
+    match /profiles/{userId} {
+      // Trusted profile mirror used by server-side review routing. Clients can read
+      // their own profile, but never write qualification fields here.
+      allow read: if request.auth != null && (request.auth.uid == userId || isReviewer());
+      allow write: if false;
+    }
+
+    match /private/{userId}/{document=**} {
+      // Private authored hierarchy: private/{uid}/catalogs/{catalogId}/quests/... .
+      // It is server-written from quest_review_requests; the owner can read it.
+      allow read: if request.auth != null && (request.auth.uid == userId || isReviewer());
+      allow write: if false;
+    }
+
+    match /admin/{document=**} {
+      // Admin review hierarchy: admin/review/lessons/{lessonId}/quests/{questId}/questions/{questionId}.
+      // Reviewers can read only if their trusted profile has the required qualification.
+      allow read: if isReviewer();
+      allow write: if false;
+    }
+
+    match /audit/{document=**} {
+      // Записи о перерасходе зарядов: audit/charge_overspend/records/{uid}_{вид}_{конец окна}.
+      //
+      // Закрыто и на чтение — в отличие от `admin/` выше, куда рецензент заглядывает по своей
+      // квалификации. Здесь лежит вывод античита: кому, когда и по какой арифметике не заплатили.
+      // Дать это читать с устройства значит показать подделывающему, что именно его выдало, а
+      // честному — обвинение, которого он не запрашивал. Читает оператор из консоли, пишет сервер.
+      allow read, write: if false;
+    }
+
+    match /quest_review_requests/{requestId} {
+      // Raw requests carry draft bodies, questions and reviewer-only operational data. Neither an
+      // author nor a reviewer needs a general Firestore read of that document: authors receive a
+      // narrow Auth-bound projection through listMyQuestReviewSubmissions, while review work uses
+      // its own server-shaped assignment calls. Writes remain server-only as well.
+      allow read, write: if false;
+    }
+
+    match /review_pipeline/{submissionId} {
+      // Model review pipeline state (AD-32, story 4.12): the VPS worker's private checkpoint.
+      // Admins read verdicts through the Decisions view (story 4.17), never through this raw
+      // document; no client has any business here.
+      allow read, write: if false;
+    }
+
+    match /review_verdicts/{verdictId} {
+      // Immutable verdict records (AD-32, story 4.12). Nothing may rewrite history from a
+      // device: the Decisions view (story 4.17) will expose its own narrow projection.
+      allow read, write: if false;
+    }
+
+    match /review_translations/{translationId} {
+      // Immutable auto-translation records (AD-32, story 4.15): the worker writes them
+      // create-only; publication (story 4.16) reads them server-side. No client path exists.
+      allow read, write: if false;
+    }
+
+    match /review_worker_state/{stateId} {
+      // Worker lease state (AD-32, modeled on the arena season sweep): lease and nonce live
+      // here; a client that could write it could double-claim quests.
+      allow read, write: if false;
+    }
+
+    match /catalogs/{catalogId} {
+      // Public read — catalogs are static categories shown to all users incl. guests.
+      allow read: if true;
+      allow write: if isAdmin();
+
+      // Tiny per-catalog change records used by offline-first sync.
+      // Real content is still read from the flat collections below by document ID.
+      // Admin/backfill tooling must only place public catalog content here.
+      match /sync_changes/{changeId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    match /quests/{questId} {
+      allow read: if resource.data.visibleOn.size() > 0
+        || (request.auth != null && resource.data.authorUid == request.auth.uid);
+
+      // Published quests are written by the publication pass alone. The app never writes here:
+      // authored content goes to private/{uid}/catalogs/{c}/quests/{q}, and the only client call
+      // that changes a published quest is the setPublicQuestShelf callable, which runs with
+      // admin credentials. The old allowlist admitted 'visibleOn' on create, so any signed-in
+      // user could post a card straight onto the home shelf without passing review.
+      allow create: if false;
+
+      // Placement, archived state and catalogId are server-owned — see setPublicQuestShelf
+      // (functions/index.js) for the only path that changes them. The author keeps the fields
+      // that are theirs to write.
+      allow update: if request.auth != null
+        && resource.data.authorUid == request.auth.uid
+        && request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['title', 'description', 'picturePath']);
+
+      // Delete is admin-only (quest CRUD MVP placeholder; full delete flow is future work).
+      allow delete: if isAdmin();
+    }
+
+    // Nested content — MVP security posture (Option C, see ADR in 03-decisions.md):
+    // Any client can read sections/themes/lessons/questions directly by document ID.
+    // Quest-level visibility enforcement (authorUid / visibleOn) is applied by the sync
+    // orchestrator client-side: only quests visible to the user are synced, and their
+    // descendants are fetched only as part of that quest's subtree cascade.
+    // Direct reads of nested content are not guarded at Firestore level to avoid
+    // expensive parent-lookup get() calls on every read. Accepted MVP trade-off;
+    // post-MVP: denormalize questAuthorUid + questIsPublic into nested documents (Option B).
+    match /sections/{sectionId}   { allow read: if true; allow write: if isAdmin(); }
+    match /themes/{themeId}       { allow read: if true; allow write: if isAdmin(); }
+    match /lessons/{lessonId}     { allow read: if true; allow write: if isAdmin(); }
+    match /questions/{questionId} { allow read: if true; allow write: if isAdmin(); }
+
+    match /question_keys/{lessonId} {
+      // The answer half of the questions above, one document per lesson, written by publication
+      // (functions/index.js, publicDocuments). Denied to every client, signed in or not, and the
+      // denial is deliberate rather than inherited: `questions` one line up is `allow read: if
+      // true`, and a rule that says nothing here would read as an oversight the next time somebody
+      // widens this file. Nothing legitimate needs it — scoring happens on the server.
+      allow read, write: if false;
+    }
+
+    match /lesson_content/{lessonId} {
+      match /sync_changes/{changeId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    match /reports/{reportId} {
+      // Filing, deciding and grading all go through callables: the verdict pays and charges
+      // reputation, and a client that could write here could pay itself.
+      allow read: if request.auth != null
+        && (resource.data.reporterUid == request.auth.uid || isModerator());
+      allow write: if false;
+    }
+
+    match /lessonComments/{commentId} {
+      // Public lesson discussion: any signed-in user may read and post. Posts are immutable and
+      // field-allowlisted. Every comment names its author by uid, pinned to the signed-in user —
+      // without that there is nobody to report and nobody to ban. Removal is server-only, through
+      // the moderator callable; direct update/delete stays closed to everyone.
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && !isBanned()
+        && request.resource.data.keys().hasOnly([
+             'lessonId', 'authorUid', 'authorNickname', 'authorAvatarUrl', 'text', 'createdAt'
+           ])
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.lessonId is string
+        && request.resource.data.lessonId.size() > 0
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000;
+      allow update, delete: if false;
+    }
+
+    match /poll_series/{seriesId} {
+      // Poll series (UX-O7, epic-social-features 8.2): authoring and voting run exclusively
+      // through the mutation receiver (`polls.PUBLISH_SERIES` / `polls.SUBMIT_VOTE`, AD-6/AD-7),
+      // and clients read the permitted projections through `listPollSeries` /
+      // `getPollQuestionState`, where distribution hiding (§5) is enforced. Direct client reads
+      // would leak pre-vote distributions; direct writes would forge authorship and votes.
+      allow read, write: if false;
+    }
+
+    match /poll_votes/{voteId} {
+      // Poll votes (UX-O7 §3): the respondent-question uniqueness lives in the deterministic
+      // document id the receiver writes inside a transaction. Client writes would bypass the
+      // uniqueness and the frozen choice set; client reads would expose distributions before
+      // the reader's own confirmed vote (§5). Everything goes through the receiver and the views.
+      allow read, write: if false;
+    }
+
+    match /lesson_error_reports/{reportId} {
+      // Private lesson-error reports (AD-20, CAP-6): the report is addressed to the permitted
+      // author of one lesson, and the only reader besides the reporter is that author. Both read
+      // through the server view (`listInboxItems`), where the permission check lives; opening
+      // client reads here would hand every signed-in account the private text, and client writes
+      // would let a caller forge the addressing (the server resolves the lesson author itself at
+      // submission). Reviewer/curator roles grant nothing here on purpose.
+      allow read, write: if false;
+    }
+
+    match /tournaments/{tournamentId} {
+      // Tournament tables are server-written from lesson result events.
+      // Authenticated clients may read public standings and participant lists.
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+
+      match /{document=**} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+      }
+    }
+
+    function isAdmin() {
+      return request.auth != null && (
+        (
+          exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+          && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.adminLevel >= 100
+        )
+        || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.qualifications.admin >= 100
+        )
+      );
+    }
+
+    // Verification is a judgement about a person, not about content, so it sits with admins —
+    // and with developers through their blanket access — rather than with every reviewer.
+    function isVerifier() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.adminLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.developerLevel > 100
+        );
+    }
+
+    /**
+     * A banned account cannot post. The ban is server-written on users/{uid}; a null or absent
+     * `bannedUntilMs` on a banned document means the ban does not expire, which is why the field's
+     * presence — not its value — is the first thing checked.
+     */
+    function isBanned() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && 'bannedAtMs' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        && (
+          !('bannedUntilMs' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.bannedUntilMs == null
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.bannedUntilMs > request.time.toMillis()
+        );
+    }
+
+    // Moderation is its own axis: deciding reports and banning people is not reviewing content.
+    // ADR-0006 always said so ("Доступ к модерации контента → требует MODERATOR ≥ 100"); until
+    // reports existed there was nothing for the level to gate, and no rule read it.
+    function isModerator() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.moderatorLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.developerLevel > 100
+        );
+    }
+
+    function isReviewer() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.developerLevel > 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.testerLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.adminLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.translatorLevel >= 100
+        );
+    }
+  }
+}

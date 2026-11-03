@@ -1,0 +1,119 @@
+# npm audit report
+
+@fastify/busboy  <=3.2.1
+Severity: high
+@fastify/busboy vulnerable to Denial of Service via oversized multipart boundary - https://github.com/advisories/GHSA-xjh9-v7x6-24jw
+@fastify/busboy vulnerable to Denial of Service via prototype-named multipart part header - https://github.com/advisories/GHSA-x8mw-p69m-v3mx
+@fastify/busboy vulnerable to CRLF injection via multipart Content-Disposition filename and name - https://github.com/advisories/GHSA-gxm5-99cw-xjw9
+fix available via `npm audit fix`
+node_modules/@fastify/busboy
+
+@grpc/grpc-js  1.14.0 - 1.14.4
+Severity: high
+@grpc/grpc-js: A malformed request can cause a server crash - https://github.com/advisories/GHSA-5375-pq7m-f5r2
+@grpc/grpc-js: An incoming malformed compressed message can cause a client or server crash - https://github.com/advisories/GHSA-99f4-grh7-6pcq
+@grpc/grpc-js: In certain configurations, getAuthContext can return unauthorized certificates as though they were authorized - https://github.com/advisories/GHSA-m9gg-hp2v-232j
+@grpc/grpc-js: The server transmits some error messages thrown by method handlers to the client in status messages - https://github.com/advisories/GHSA-f596-whhp-79r4
+fix available via `npm audit fix`
+node_modules/@grpc/grpc-js
+
+@tootallnate/once  <2.0.1
+@tootallnate/once vulnerable to Incorrect Control Flow Scoping - https://github.com/advisories/GHSA-vpq2-c234-7xj6
+fix available via `npm audit fix`
+node_modules/@tootallnate/once
+
+body-parser  <=1.20.6
+Severity: moderate
+body-parser vulnerable to denial of service when invalid limit value silently disables size enforcement - https://github.com/advisories/GHSA-v422-hmwv-36x6
+Depends on vulnerable versions of qs
+fix available via `npm audit fix`
+node_modules/body-parser
+
+fast-xml-builder  <=1.1.6
+Severity: high
+fast-xml-builder allows attribute values with unwanted quotes to bypass malicious or unwanted attributes - https://github.com/advisories/GHSA-5wm8-gmm8-39j9
+fast-xml-builder Comment Value regex can be bypassed - https://github.com/advisories/GHSA-45c6-75p6-83cc
+fix available via `npm audit fix`
+node_modules/fast-xml-builder
+
+form-data  <2.5.6
+Severity: high
+form-data: CRLF injection in form-data via unescaped multipart field names and filenames - https://github.com/advisories/GHSA-hmw2-7cc7-3qxx
+fix available via `npm audit fix`
+node_modules/form-data
+
+node-forge  *
+Severity: high
+node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements - https://github.com/advisories/GHSA-86w9-cpqp-85rv
+fix available via `npm audit fix`
+node_modules/node-forge
+  firebase-admin  5.0.0 - 13.10.0
+  Depends on vulnerable versions of @google-cloud/firestore
+  Depends on vulnerable versions of node-forge
+  node_modules/firebase-admin
+
+protobufjs  <=7.6.4
+Severity: high
+protobufjs: Denial of Service via unbounded recursive JSON descriptor expansion - https://github.com/advisories/GHSA-jggg-4jg4-v7c6
+protobufjs: Denial of service through unbounded Any expansion during JSON conversion - https://github.com/advisories/GHSA-wcpc-wj8m-hjx6
+protobufjs : Schema-derived names can shadow runtime-significant properties - https://github.com/advisories/GHSA-f38q-mgvj-vph7
+protobufjs: Denial of Service via infinite loop in .proto option parsing - https://github.com/advisories/GHSA-j3f2-48v5-ccww
+fix available via `npm audit fix`
+node_modules/protobufjs
+
+proxy-addr  1.1.0 - 2.0.7
+Severity: critical
+proxy-addr vulnerable to IP spoofing via IPv4-mapped IPv6 trust subnet - https://github.com/advisories/GHSA-jqcg-44mw-7w3h
+fix available via `npm audit fix`
+node_modules/proxy-addr
+
+qs  2.2.5 - 6.15.3
+Severity: moderate
+qs has a remotely triggerable DoS: qs.stringify crashes with TypeError on null/undefined entries in comma-format arrays when encodeValuesOnly is set - https://github.com/advisories/GHSA-q8mj-m7cp-5q26
+qs array-limit bypass via bracket-key comma parsing - https://github.com/advisories/GHSA-x5fp-wj9c-mxmx
+qs: Denial of Service via Attacker Controlled isBuffer - https://github.com/advisories/GHSA-4mjr-xmp4-gh2g
+fix available via `npm audit fix`
+node_modules/body-parser/node_modules/qs
+node_modules/qs
+
+uuid  <11.1.1
+Severity: moderate
+uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided - https://github.com/advisories/GHSA-w5hq-g745-h8pq
+fix available via `npm audit fix`
+node_modules/@google-cloud/storage/node_modules/uuid
+node_modules/gaxios/node_modules/uuid
+node_modules/google-gax/node_modules/uuid
+node_modules/teeny-request/node_modules/uuid
+  @google-cloud/storage  2.2.0 - 2.5.0 || 5.19.0 - 8.0.0
+  Depends on vulnerable versions of retry-request
+  Depends on vulnerable versions of teeny-request
+  Depends on vulnerable versions of uuid
+  node_modules/@google-cloud/storage
+  gaxios  6.4.0 - 6.7.1
+  Depends on vulnerable versions of uuid
+  node_modules/gaxios
+  google-gax  4.0.5-experimental - 4.6.1
+  Depends on vulnerable versions of retry-request
+  Depends on vulnerable versions of uuid
+  node_modules/google-gax
+    @google-cloud/firestore  7.5.0-pre.0 || 7.6.0 - 7.11.6
+    Depends on vulnerable versions of google-gax
+    node_modules/@google-cloud/firestore
+  teeny-request  3.9.1 - 9.0.0
+  Depends on vulnerable versions of uuid
+  node_modules/teeny-request
+    retry-request  7.0.0 - 7.0.2
+    Depends on vulnerable versions of teeny-request
+    node_modules/retry-request
+
+websocket-driver  <=0.7.4
+Severity: critical
+websocket-driver: Resource limit bypass via message compression - https://github.com/advisories/GHSA-mp7j-qc5w-4988
+websocket-driver: Message corruption via abuse of protocol length headers - https://github.com/advisories/GHSA-xv26-6w52-cph6
+fix available via `npm audit fix`
+node_modules/websocket-driver
+
+19 vulnerabilities (1 low, 9 moderate, 7 high, 2 critical)
+
+To address all issues, run:
+  npm audit fix

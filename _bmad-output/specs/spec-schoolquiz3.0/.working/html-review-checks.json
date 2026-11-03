@@ -1,0 +1,12 @@
+{
+  "file": "SPEC-REVIEW.html",
+  "bytes": 53769,
+  "capabilities": 23,
+  "source_sha256": "362eff5d3421a52c83ca58c014d959ea3c7165556e5189ea587fe5f350e80596",
+  "html_sha256": "14bf4e6da5f5585d9a96cb954acba0469ecaf07ef5094630d072aac6027a3281",
+  "external_resources": false,
+  "browser_check": "PASS: opened from VPS mount in Safari; desktop screenshot inspected; expand-all and collapse-all confirmed through accessibility state",
+  "static_links": "PASS",
+  "app_runtime": "NOT RUN",
+  "published": false
+}

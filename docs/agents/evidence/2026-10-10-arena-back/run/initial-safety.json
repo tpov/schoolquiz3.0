@@ -1,0 +1,9 @@
+{
+  "status": "CONTEXT",
+  "expectedState": "home",
+  "observedState": "home",
+  "unsafeScreenMarkers": [],
+  "observedKnownState": true,
+  "observedTextFieldCount": 24,
+  "artifactVersion": 2
+}

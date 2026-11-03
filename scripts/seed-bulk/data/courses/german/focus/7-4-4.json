@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 4,
+    "l": 4
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Нюанс, импликатура и сложные тексты",
+  "lessonTitle": "Сложные нон-фикшн тексты: аргументация и связность",
+  "focus": "Анализировать плотные публицистические и научно-популярные тексты: вычленять тезис, аргументы, уступки и скрытую позицию автора. Работать с длинными гипотаксическими периодами и средствами когезии на уровне всего текста.",
+  "grammar_points": [
+    "Конъюнктив I в косвенной речи как сигнал дистанции автора от чужого мнения: 'Die Studie behaupte, der Effekt sei marginal' — автор лишь передаёт, но не разделяет.",
+    "Уступительные конструкции (Konzessivität): 'zwar ... aber', 'gleichwohl', 'nichtsdestotrotz', 'einräumen, dass ...' — маркируют признание контраргумента перед его опровержением.",
+    "Номинализация и компрессия информации (Nominalstil): 'die Infragestellung der bisherigen Annahmen' вместо целого придаточного — типично для научного регистра.",
+    "Коннекторы аргументации: 'folglich', 'mithin', 'insofern', 'demzufolge', 'andererseits' — указывают логические шаги; их пропуск меняет смысл вывода.",
+    "Анафора и катафора как средства связности: 'dies', 'jener Umstand', 'das eingangs erwähnte Problem' — отсылки, удерживающие нить длинного текста."
+  ],
+  "vocab": [
+    "die These — тезис, основное утверждение",
+    "das Argument — аргумент, довод",
+    "der Einwand — возражение, контрдовод",
+    "das Zugeständnis — уступка (в споре)",
+    "die Schlussfolgerung — вывод",
+    "der rote Faden — связующая нить, главная линия",
+    "einräumen — признавать, допускать (контраргумент)",
+    "die Stoßrichtung — направленность, основной посыл (аргументации)"
+  ],
+  "examples": [
+    "Der Autor räumt zwar ein, dass die Datenlage dünn sei, hält gleichwohl an seiner These fest. — Автор хотя и признаёт, что данных мало, тем не менее остаётся при своём тезисе.",
+    "Mit dem Konjunktiv I („die Maßnahme sei wirkungslos“) distanziert sich der Verfasser von der zitierten Behauptung. — Конъюнктивом I («мера якобы бесполезна») автор дистанцируется от цитируемого утверждения.",
+    "Die Infragestellung der gängigen Annahmen zieht sich als roter Faden durch den gesamten Aufsatz. — Постановка под сомнение общепринятых допущений проходит красной нитью через всю статью.",
+    "Nichtsdestotrotz bleibt die zentrale Stoßrichtung der Argumentation klar erkennbar. — Тем не менее центральная направленность аргументации остаётся ясно различимой."
+  ]
+}

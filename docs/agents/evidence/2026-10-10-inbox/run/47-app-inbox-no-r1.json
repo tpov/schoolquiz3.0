@@ -1,0 +1,29 @@
+{
+ "uid": "34M7XwdduXxbpYcmiP7BPqyXjZy9",
+ "status": 200,
+ "reply": {
+  "result": {
+   "viewVersion": "inbox-views-v1",
+   "entries": [
+    {
+     "kind": "lesson_comment",
+     "id": "HWUT660DHww21T8xJGCe",
+     "lessonId": "ibx2_lesson",
+     "text": "Nice lesson, but the intro screen loads slowly",
+     "authorNickname": "RigPlayer48",
+     "createdAtMs": 1791684629707,
+     "readers": "public"
+    },
+    {
+     "kind": "private_error_report",
+     "id": "ibxr2curator01",
+     "lessonId": "ibx2_lesson",
+     "text": "Lesson two: the second question explanation contradicts the correct answer",
+     "createdAtMs": 1791684612740,
+     "readers": "author_only"
+    }
+   ],
+   "nextAnchor": null
+  }
+ }
+}

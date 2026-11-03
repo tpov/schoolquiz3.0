@@ -1,0 +1,41 @@
+{
+  "myOutboxRows": [
+    {
+      "n": 0
+    }
+  ],
+  "outboxAll": [
+    {
+      "id": 3,
+      "m": "lesson_runner-SUBMIT_ATTEMPT-b2ef06dd4d4",
+      "state": "WAITING",
+      "attempt_count": 10,
+      "o": "HDb3uVEO"
+    },
+    {
+      "id": 4,
+      "m": "lesson_runner-SUBMIT_ATTEMPT-86cbc0189b8",
+      "state": "WAITING",
+      "attempt_count": 10,
+      "o": "HDb3uVEO"
+    }
+  ],
+  "myReceipts": 1,
+  "myReceiptOps": [
+    "lesson_runner.SUBMIT_ATTEMPT"
+  ],
+  "journal": [
+    {
+      "command_kind": "SETTLE",
+      "state": "PENDING"
+    }
+  ],
+  "ticket": [
+    {
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "has_terminal": 0
+    }
+  ]
+}

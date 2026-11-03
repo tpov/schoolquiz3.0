@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 3,
+    "l": 4
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+  "lessonTitle": "Урок 4. Дни недели (Die Wochentage)",
+  "focus": "Запомнить семь дней недели, их род и употребление с предлогом am. Уметь сказать, какой сегодня день и когда что-то происходит.",
+  "grammar_points": [
+    "Все дни недели — мужского рода (der): der Montag, der Dienstag и т.д.",
+    "Названия дней пишутся с БОЛЬШОЙ буквы (как все существительные в немецком).",
+    "Предлог an + dem = am для дня: am Montag (в понедельник). На вопрос Wann? (Когда?) отвечаем «am + день».",
+    "Вопрос «Какой сегодня день?»: Welcher Tag ist heute? — ответ: Heute ist Montag (без артикля)."
+  ],
+  "vocab": [
+    "der Tag — день",
+    "die Woche — неделя",
+    "der Montag — понедельник",
+    "der Dienstag — вторник",
+    "der Mittwoch — среда",
+    "der Donnerstag — четверг",
+    "der Freitag — пятница",
+    "der Samstag — суббота",
+    "der Sonntag — воскресенье",
+    "heute — сегодня",
+    "morgen — завтра",
+    "wann — когда"
+  ],
+  "examples": [
+    "Welcher Tag ist heute? — Heute ist Mittwoch. — Какой сегодня день? — Сегодня среда.",
+    "Am Montag habe ich Deutsch. — В понедельник у меня немецкий.",
+    "Eine Woche hat sieben Tage. — В неделе семь дней.",
+    "Am Sonntag arbeite ich nicht. — В воскресенье я не работаю.",
+    "Morgen ist Freitag. — Завтра пятница."
+  ]
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <EditText
+        android:id="@+id/tv_question_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:maxLines="3"
+        android:textColor="@color/white" />
+
+    <com.tpov.schoolquiz.presentation.custom.CustomSpinner
+        android:id="@+id/sp_language_question"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:popupBackground="@color/spinner_dropdown_background" />
+
+</LinearLayout>

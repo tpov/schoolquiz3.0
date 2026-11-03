@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 3,
+    "l": 2
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+  "lessonTitle": "Высокий стиль (gehobene Sprache): нормы письменного и официального немецкого",
+  "focus": "Освоить средства возвышенного и официально-делового регистра: книжная лексика, номинальный стиль, пассив и заместители пассива, протяжённые атрибутивные конструкции, союзы и связки письменной речи. Цель — писать так, как пишут в эссе, отчётах, юридических и научных текстах.",
+  "grammar_points": [
+    "Номинальный стиль (Nominalstil): свёртывание глагольных придаточных в отглагольные существительные с генитивом — »nach Beendigung der Sitzung« вместо »nachdem die Sitzung beendet wurde«; типичен для официального письма.",
+    "Пассив и его заместители (Passiversatz) как обезличивающее средство высокого стиля: Vorgangspassiv (wird ... durchgeführt), »sein + zu + Infinitiv« (ist einzureichen), »sich lassen«, »man«.",
+    "Расширенное определение / причастная группа (erweitertes Partizipialattribut): »die vom Vorstand getroffene Entscheidung« — конденсация придаточного в атрибут перед существительным.",
+    "Книжные союзы и наречные связки письменной речи: »sofern«, »insofern«, »ungeachtet (+Gen)«, »zwecks (+Gen)«, »hinsichtlich (+Gen)«, »diesbezüglich«, »dessen ungeachtet«.",
+    "Konjunktiv I косвенной речи как обязательный маркер дистанции в официальных и журналистских текстах: »Der Sprecher erklärte, man werde die Lage prüfen«.",
+    "Предлоги с генитивом высокого регистра (»mittels«, »kraft«, »behufs«, »laut«) против разговорных вариантов с дательным."
+  ],
+  "vocab": [
+    "der Nominalstil — номинальный (именной) стиль",
+    "hinsichtlich (+Gen) — относительно, в отношении",
+    "ungeachtet (+Gen) — невзирая на, несмотря на",
+    "zwecks (+Gen) — в целях, с целью",
+    "diesbezüglich — относительно этого, по данному вопросу",
+    "die Erörterung — обстоятельное рассмотрение, разбор (вопроса)",
+    "darlegen — излагать, обстоятельно изложить",
+    "in Anbetracht (+Gen) — принимая во внимание, ввиду",
+    "obliegen (+Dat) — лежать на (об обязанности), вменяться",
+    "die Inanspruchnahme — обращение к (услуге), использование, привлечение"
+  ],
+  "examples": [
+    "Nach eingehender Erörterung der Sachlage wurde beschlossen, das Projekt ungeachtet der Bedenken fortzuführen. — После обстоятельного рассмотрения положения дел было решено продолжить проект, невзирая на возражения.",
+    "Der Antrag ist bis zum Monatsende schriftlich einzureichen. — Заявление надлежит подать в письменном виде до конца месяца.",
+    "Die vom Ausschuss hinsichtlich der Finanzierung getroffene Entscheidung ist allen Beteiligten mitzuteilen. — Принятое комитетом в отношении финансирования решение надлежит довести до сведения всех участников.",
+    "Die Pressestelle erklärte, man werde die Vorwürfe prüfen und sich diesbezüglich zeitnah äußern. — Пресс-служба заявила, что проверит обвинения и в ближайшее время выскажется по данному вопросу.",
+    "Die Inanspruchnahme der Beratung erfolgt mittels eines formlosen Schreibens an die Geschäftsstelle. — Обращение за консультацией осуществляется посредством письма в свободной форме в адрес секретариата."
+  ]
+}

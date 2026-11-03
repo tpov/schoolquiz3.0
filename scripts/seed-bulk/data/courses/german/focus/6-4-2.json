@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 4,
+    "l": 2
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Наука, культура, абстрактные темы",
+  "lessonTitle": "Урок 2. Лексика науки и техники: процессы, причинность, абстрактные понятия",
+  "focus": "Освоить точную лексику для описания научных процессов, причинно-следственных связей и абстрактных понятий; научиться выражать зависимость, влияние и обусловленность на уровне C1.",
+  "grammar_points": [
+    "Каузальные и консекутивные связки на C1: infolge + Genitiv, aufgrund + Genitiv, angesichts + Genitiv; folglich, somit, demzufolge.",
+    "Номинализация процессов: die Entwicklung, die Entstehung, die Auswirkung, die Wechselwirkung — глагол → существительное в научном стиле.",
+    "Безличный пассив и man для объективного изложения: Es wird angenommen, dass…; Man geht davon aus, dass…",
+    "Управление абстрактных глаголов и существительных: beruhen auf + Dativ, hindeuten auf + Akkusativ, abhängen von + Dativ, die Ursache für + Akkusativ.",
+    "Степени уверенности через модальные глаголы: könnte, dürfte, müsste (Diese Annahme dürfte zutreffen — Это предположение, скорее всего, верно)."
+  ],
+  "vocab": [
+    "die Auswirkung (-en) — воздействие, последствие",
+    "die Wechselwirkung (-en) — взаимодействие, взаимовлияние",
+    "die Ursache (-n) — причина",
+    "der Zusammenhang (-¨e) — связь, взаимосвязь",
+    "beruhen auf — основываться на, держаться на",
+    "der Fortschritt (-e) — прогресс, продвижение",
+    "die Voraussetzung (-en) — предпосылка, условие",
+    "das Phänomen (-e) — явление, феномен"
+  ],
+  "examples": [
+    "Der technische Fortschritt beruht auf einem engen Zusammenhang zwischen Grundlagenforschung und Anwendung. — Технический прогресс основан на тесной связи между фундаментальными исследованиями и их применением.",
+    "Aufgrund der komplexen Wechselwirkungen lässt sich die Ursache des Phänomens nur schwer bestimmen. — Из-за сложных взаимодействий причину этого явления определить трудно.",
+    "Man geht davon aus, dass die Erderwärmung weitreichende Auswirkungen auf die Ökosysteme hat. — Считается, что глобальное потепление имеет далеко идущие последствия для экосистем.",
+    "Eine wesentliche Voraussetzung für den Durchbruch dürfte die Verfügbarkeit präziser Daten gewesen sein. — Существенной предпосылкой для прорыва, по всей видимости, была доступность точных данных."
+  ]
+}

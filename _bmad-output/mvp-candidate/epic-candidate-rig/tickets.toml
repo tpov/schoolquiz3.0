@@ -1,0 +1,69 @@
+# tickets.toml — epic-candidate-rig: stories in build order.
+# Inception breakdown of the epic's Done-when (epic-candidate-rig.md, 2026-10-04).
+# Table order is the build order; `id` names a story for good and is not an order.
+# 1.1, 1.2 and 1.4 are mutually independent; 1.6 follows 1.2; 1.3 and 1.5 are
+# owner-side device work (hitl) and block nothing else in this epic.
+
+[[story]]
+id = "1.1"
+slug = "restore-demo-backend"
+title = "Restore the demo Firebase container from the verified export into a new directory; control save/restart retains account, wallet, lessons, history"
+covers = ["CAP-20"]
+after = []
+status = "done" # 2026-10-04 run: container schoolquiz-demo-firebase-20261004 (18090/19090); save/restart proof PASS (docs/agents/evidence/2026-10-04-demo-backend-restore/)
+
+[[story]]
+id = "1.2"
+slug = "identify-candidate"
+title = "Identify one candidate at HEAD 1e596126: assembleMvp on the VPS, APK SHA-256, signing certificate, Room schema, config, flags — recorded"
+covers = ["CAP-20"]
+after = []
+status = "done" # 2026-10-04 run: APK eeb8fc6e…, cert 00:33:E7:FA…, schema v15; identity + reproducibility re-run recorded (docs/agents/2026-10-04-mvp-apk-identity.json)
+
+[[story]]
+id = "1.3"
+slug = "install-over-populated-device"
+title = "Install the candidate over the populated Samsung installation; content, history, authentication, installation identity and pending operations retained (CAP-20)"
+covers = ["CAP-20"]
+after = [{ story = "1.1", needs = "restored demo backend" }, { story = "1.2", needs = "identified candidate APK" }]
+hitl = true # physical Samsung RF8W80MBR3Z, USB to the owner's Mac only; 2026-10-08/09 выполнено на redroid-риге по решению владельца 21:55 (физическое устройство недоступно): эмулятор заменяет устройство, demo backend only, ничего аккаунтного
+status = "done" # 2026-10-09: кандидат B (sha256 61acb693…, тот же debug-сертификат) поставлен install -r поверх населённого A; контент, история (попытки/ответы/повторения), аутентификация (тот же anonymous uid), identity установки (firstInstallTime) и незавершённые операции (outbox-оп 6856201c, payload побайтово идентичен) удержаны — построчное сравнение трёх снапшотов в evidence; evidence docs/agents/evidence/2026-10-08-redroid-hitl/ + docs/agents/evidence/2026-10-09-update-over-populated-journey/
+
+[[story]]
+id = "1.4"
+slug = "fix-quiescence-preflight"
+title = "Quiescence preflight regression GREEN: exactly five known counters, each numeric zero, gate the run; malformed preflight stops before Maestro and network changes"
+covers = ["CAP-20"]
+after = []
+status = "done" # 2026-10-04 run: leaf fixed; owner RED oracle green unmodified; revert-check reproduces the line-393 RED (docs/agents/evidence/2026-10-04-quiescence-preflight-fix/)
+
+[[story]]
+id = "1.5"
+slug = "device-inventory"
+title = "Device inventory (serial, Android, app, signature, DB schema, role, GMS/Play); missing settings recorded as external dependencies, not blocking"
+covers = ["CAP-20"]
+after = []
+hitl = true # requires the physical devices; 2026-10-08/09 снято на redroid-риге по решению владельца 21:55
+status = "done" # 2026-10-09: inventory-15.txt — redroid12_x86_64, Android 12 (SDK 31), com.tpov.schoolquiz.mvp 0.1.0-isolated vc1, debug-сертификат 00:33:E7:FA…, Room v15 (30 таблиц), роль = устройство C (обычный игрок), GMS/Play отсутствуют — Play-зависимые пути записаны как внешняя зависимость, не блокирует (по формулировке истории); evidence docs/agents/evidence/2026-10-08-redroid-hitl/; 2026-10-18: GMS/Play-колонки дополнены физическим Pixel 10 Pro (Android 17, GMS 26.39.33 + Play Store 53.5.48, тот же debug-сертификат кандидата 00:33:E7:FA…, APK 79859f5d… vc40000; Play-пути физически доступны, SKUs/цены остаются внешним входом владельца) — evidence docs/agents/evidence/2026-10-18-pixel-gms-inventory/
+
+[[story]]
+id = "1.6"
+slug = "root-cicheck"
+title = "Root ciCheck run on the candidate at least once with the result recorded"
+covers = ["CAP-20"]
+after = [{ story = "1.2", needs = "identified candidate source state" }]
+status = "done" # 2026-10-04 run: ciCheck executed and recorded — RED, exit 1, :apps:android-next:processDebugGoogleServices (debug google-services.json is an untracked owner-local file); breakdown in docs/agents/evidence/2026-10-04-root-cicheck/
+
+# 1.7 (2026-10-05 night track E) is a DRAFT without a status line: it cannot be
+# dispatched until the owner-local debug google-services.json is placed in
+# apps/android-next/ (untracked by policy). Baseline: docs/agents/evidence/2026-10-05-cicheck-baseline/
+
+[[story]]
+id = "1.7"
+slug = "rerun-cicheck-record"
+title = "Re-run root ciCheck once the owner-local debug google-services.json is placed in apps/android-next/ (canonical apps/android-next/src/debug/google-services.json, untracked by policy) and record the full result with exit code and, on failure, the failing-task breakdown — docs/agents/evidence/<date>-rerun-cicheck/"
+covers = ["CAP-20"]
+after = [] # no story dependency; the input is an owner-local untracked file, not another story
+hitl = false # a Gradle run, not device work; the owner supplies the file (Mac checkout) or runs the gate on the Mac
+# draft, no status on purpose: RED baseline confirmed 2026-10-05 without a new build in
+# docs/agents/evidence/2026-10-05-cicheck-baseline/ (condition to lift RED, what the record does NOT prove).

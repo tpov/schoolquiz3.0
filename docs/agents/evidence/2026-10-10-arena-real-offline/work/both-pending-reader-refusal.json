@@ -1,0 +1,51 @@
+{
+  "status": "CONTEXT",
+  "readerVersion": "arena-e2e-pending-settlement-reader-v1",
+  "documentWrites": 0,
+  "networkCalls": 0,
+  "deviceCalls": 0,
+  "storage": "Room",
+  "queryAdapter": "node:sqlite",
+  "runId": "arena35-both-pending",
+  "bindingSha256": "85cc1db48e3b081178e662dff8405a70bce3b93850a34faad81a599570de16d1",
+  "roomSchemaVersion": 15,
+  "roomSchemaIdentityHash": "e3a1b9e13aff4304afeba070b8895b6c",
+  "ticketState": {
+    "serverStatus": "RESERVED",
+    "localUse": "LAUNCHED",
+    "decision": "SETTLE",
+    "checkpointRevision": 4,
+    "snapshotSha256": "3c9add0319d95321bc30b2a54059ff436e624577c688cffeed8b485710e3a323"
+  },
+  "pendingSettlement": {
+    "commandState": "PENDING",
+    "commandBodySha256": "befca1529d570f1664e4d0933e767892a1a47b809eb71ed8a117e34e896e1825",
+    "commandLastFailurePresent": false,
+    "mutationIdSha256": "e0f369d2b6c1075c54fc5470e33a01251697e78c637a85f15f1918d6b99fb910",
+    "outboxState": "WAITING",
+    "outboxAttemptCount": 0,
+    "outboxNextRetryAtMs": 0,
+    "outboxLastErrorPresent": false,
+    "firstIntentPresent": true,
+    "localReceiptCount": 0,
+    "localScoredAttemptRows": 0,
+    "localScoredAnswerRows": 0
+  },
+  "snapshot": {
+    "database": {
+      "file": "schoolquiz.db",
+      "bytes": 540672,
+      "sha256": "a3536d1333568355e31205add1c221932fde2483137a6bb414d9e661c9fe21b6"
+    },
+    "wal": {
+      "file": "schoolquiz.db-wal",
+      "bytes": 469712,
+      "sha256": "7c23c8749164599c8dfc958718a19067d40a75a83494ba5fba6e347f56380616"
+    },
+    "shm": {
+      "file": "schoolquiz.db-shm",
+      "bytes": 32768,
+      "sha256": "bf914861dc0e8c4371cd6ea92903f1eef108b03494e5c886194841240b3a8750"
+    }
+  }
+}

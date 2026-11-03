@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 3,
+    "l": 5
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+  "lessonTitle": "Стилевая виртуозность: ирония, намеренный Stilbruch и эстетика текста",
+  "focus": "Вершина темы: использовать смешение регистров как осознанный риторический приём. Намеренный Stilbruch для иронии и сатиры, эвфемизм vs дисфемизм, канцелярит (Beamtendeutsch) и его пародия, благозвучие и ритм фразы. Цель — не просто попадать в регистр, а играть им.",
+  "grammar_points": [
+    "Намеренный Stilbruch как приём: вставка высокого слова в бытовой контекст (или наоборот) создаёт иронию — »Seine Majestät geruht zu frühstücken« о приятеле; контраст уровней несёт оценку.",
+    "Эвфемизм и дисфемизм как регистровые смягчители/огрубители: »freisetzen« vs »rauswerfen«, »Negativwachstum« vs »Pleite«; распознавание манипулятивного смягчения в публицистике.",
+    "Канцелярит (Beamtendeutsch/Behördensprache) и его признаки: цепочки генитивов, »Funktionsverbgefüge« (»zur Anwendung bringen« = anwenden, »in Abrede stellen« = bestreiten), отглагольные монстры; стилистическая критика и пародирование.",
+    "Litotes и понижающая ирония как средства сдержанной оценки: »nicht ganz unkompliziert«, »nicht eben billig« — высокий/иронический регистр недосказанности.",
+    "Эстетика звучания: Wohlklang (благозвучие), избегание скоплений согласных и нагромождения сложных слов, ритм и длина предложений, аллитерация в риторике.",
+    "Жанрово-стилевая компетенция распознавания: глосса, фельетон, сатира, пафосная речь — как регистр сигнализирует жанр и авторскую позицию."
+  ],
+  "vocab": [
+    "der Euphemismus — эвфемизм, смягчающий оборот",
+    "der Dysphemismus — дисфемизм, огрубляющее обозначение",
+    "das Beamtendeutsch — канцелярит, чиновничий язык",
+    "das Funktionsverbgefüge — функционально-глагольное сочетание",
+    "die Litotes — литота, утверждение через отрицание противоположного",
+    "der Wohlklang — благозвучие",
+    "geruhen (zu +Inf) — соизволить, изволить (высок./иронич.)",
+    "die Geschwollenheit — напыщенность, велеречивость",
+    "gestelzt — ходульный, манерный (о стиле)",
+    "die Glosse — глосса, сатирическая колонка"
+  ],
+  "examples": [
+    "»Seine Majestät geruht heute, das Bett vor zwölf Uhr zu verlassen« — sagte sie spöttisch über ihren verschlafenen Mitbewohner. — «Его величество соизволили нынче покинуть постель до полудня» — съязвила она о заспавшемся соседе.",
+    "Statt »Entlassungen« schreibt das Unternehmen beschönigend von »personellen Anpassungsmaßnahmen«. — Вместо «увольнений» компания приукрашивающе пишет о «кадровых корректирующих мероприятиях».",
+    "Im Behördendeutsch wird nichts geprüft, sondern alles »einer Überprüfung zugeführt«. — На канцелярите ничего не проверяют, а всё «подвергают процедуре проверки».",
+    "Die Reise war nicht ganz unkompliziert und am Ende auch nicht eben billig. — Поездка оказалась не вполне беспроблемной и в итоге, мягко говоря, не из дешёвых.",
+    "Der gestelzte, geschwollene Ton der Festrede wirkte angesichts des kleinen Anlasses unfreiwillig komisch. — Ходульный, напыщенный тон торжественной речи на фоне мелкого повода выглядел невольно комичным."
+  ]
+}

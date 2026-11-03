@@ -1,0 +1,3 @@
+event exists: true
+seeded fields untouched: true []
+receipt status: SETTLED settledAtMs: 1791666498617 reward: {"skillPoints":0,"nolics":0}

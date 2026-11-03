@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 4,
+    "l": 2
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+  "lessonTitle": "Урок 2. Медиа и цифровизация (Medien und Digitalisierung)",
+  "focus": "Лексика СМИ, интернета и социальных сетей; описание роли и влияния медиа. Учимся говорить о пользе и вреде цифровых технологий, опираясь на уже известные средства уровня.",
+  "grammar_points": [
+    "Глаголы с предлогами в медийной теме и закрепление предложного дополнения: sich informieren über + Akkusativ, berichten über + Akkusativ, sich verlassen auf + Akkusativ.",
+    "Местоименные наречия da(r)- для отсылки к предложному дополнению: Ich interessiere mich dafür; darüber wird viel berichtet.",
+    "Инфинитивная конструкция um … zu для выражения цели: Man nutzt soziale Netzwerke, um in Kontakt zu bleiben.",
+    "Соотносительные союзы для противопоставления пользы и вреда: einerseits … andererseits; zwar … aber (рамочный порядок слов сохраняется)."
+  ],
+  "vocab": [
+    "die Medien (Pl.) — СМИ, медиа",
+    "die Nachricht — новость",
+    "die Quelle — источник",
+    "die soziale Netzwerke (Pl.) — социальные сети",
+    "die Digitalisierung — цифровизация",
+    "die Werbung — реклама",
+    "der Einfluss — влияние",
+    "die Pressefreiheit — свобода прессы",
+    "die Falschmeldung — фейк, ложное сообщение",
+    "der Datenschutz — защита данных",
+    "verbreiten — распространять",
+    "veröffentlichen — публиковать"
+  ],
+  "examples": [
+    "Viele junge Menschen informieren sich über soziale Netzwerke statt über die klassische Zeitung. — Многие молодые люди узнают новости через соцсети, а не через классическую газету.",
+    "Man sollte immer prüfen, ob eine Quelle zuverlässig ist, bevor man eine Nachricht teilt. — Всегда стоит проверять, надёжен ли источник, прежде чем делиться новостью.",
+    "Einerseits erleichtert die Digitalisierung den Zugang zu Informationen, andererseits verbreiten sich Falschmeldungen schneller. — С одной стороны, цифровизация облегчает доступ к информации, с другой — фейки распространяются быстрее.",
+    "Soziale Netzwerke werden oft genutzt, um in Kontakt zu bleiben. — Соцсети часто используют, чтобы оставаться на связи."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+ "lessonId": "ibx2_lesson",
+ "submissionId": "ibx-none",
+ "placement": {
+  "lessonId": "ibx2_lesson",
+  "questType": "REGULAR",
+  "updatedAtMs": 1791684599424,
+  "shelf": "home",
+  "previousShelf": "review",
+  "authorUid": "UserYXJZY9",
+  "contentVersion": 1,
+  "placementVersion": 1
+ },
+ "lessonTitle": "Inbox journey lesson two",
+ "reports": [
+  {
+   "id": "ibxr2curator01",
+   "reportId": "ibxr2curator01",
+   "lessonId": "ibx2_lesson",
+   "lessonAuthorUid": "UserYXJZY9",
+   "reporterUid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx",
+   "text": "Lesson two: the second question explanation contradicts the correct answer",
+   "schemaVersion": 1,
+   "createdAtMs": 1791684612740
+  }
+ ],
+ "comments": [
+  {
+   "id": "HWUT660DHww21T8xJGCe",
+   "lessonId": "ibx2_lesson",
+   "authorUid": "cur48r3player0000000",
+   "authorNickname": "RigPlayer48",
+   "text": "Nice lesson, but the intro screen loads slowly",
+   "createdAt": 1791684629707
+  }
+ ],
+ "request": null
+}

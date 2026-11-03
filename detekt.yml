@@ -1,0 +1,22 @@
+build:
+  maxIssues: 10
+  weights:
+    complexity: 2
+    LongParameterList: 1
+    style: 1
+
+style:
+  MagicNumber:
+    active: false
+  WildcardImport:
+    active: true
+  MaxLineLength:
+    active: true
+    value: 120
+
+complexity:
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 15
+    thresholdInObjects: 15
+    thresholdInFiles: 20 

@@ -1,0 +1,207 @@
+{
+  "reviewRequest": {
+    "id": "arena-submission-12mj3wl0uy0j4",
+    "requestedAtMs": 1791616913789,
+    "draftId": "draft-a3dp5ho5seql",
+    "lastError": null,
+    "targetLessonIds": [
+      "draft-lesson-1ipfqlp4zwmwu"
+    ],
+    "localRevision": 0,
+    "questions": [
+      {
+        "id": "draft-question-2o0msyfjbcqs",
+        "draftId": "draft-a3dp5ho5seql",
+        "lessonId": "draft-lesson-1ipfqlp4zwmwu",
+        "type": "SINGLE_CHOICE",
+        "language": "ru",
+        "languageLevel": 1,
+        "difficulty": "EASY",
+        "order": 0,
+        "text": "TZ06C-easy-q1",
+        "imagePath": null,
+        "payload": "{\"type\":\"SingleChoice\",\"id\":\"draft-question-1\",\"difficulty\":\"EASY\",\"text\":\"TZ06C-easy-q1\",\"imageUrl\":null,\"options\":[{\"id\":\"opt-0\",\"text\":\"Alpha\"},{\"id\":\"opt-1\",\"text\":\"Beta\"}],\"correctOptionId\":\"opt-0\",\"info\":null}",
+        "updatedAtMs": 1791616691187
+      },
+      {
+        "id": "draft-question-59cza5zoetmt",
+        "draftId": "draft-a3dp5ho5seql",
+        "lessonId": "draft-lesson-1ipfqlp4zwmwu",
+        "type": "SINGLE_CHOICE",
+        "language": "ru",
+        "languageLevel": 1,
+        "difficulty": "HARD",
+        "order": 1,
+        "text": "TZ06C-hard-q1",
+        "imagePath": null,
+        "payload": "{\"type\":\"SingleChoice\",\"id\":\"draft-question-1\",\"difficulty\":\"HARD\",\"text\":\"TZ06C-hard-q1\",\"imageUrl\":null,\"options\":[{\"id\":\"opt-0\",\"text\":\"Gamma\"},{\"id\":\"opt-1\",\"text\":\"Delta\"}],\"correctOptionId\":\"opt-0\",\"info\":null}",
+        "updatedAtMs": 1791616764992
+      }
+    ],
+    "targetShelf": "arena",
+    "draftTree": {
+      "themes": [
+        "draft-theme-pb43ny3hlhde"
+      ],
+      "sections": [
+        "draft-section-84gfcxnkv547"
+      ],
+      "lessons": [
+        "draft-lesson-1ipfqlp4zwmwu"
+      ]
+    },
+    "processedAtMs": 1791617033360,
+    "sections": [
+      {
+        "id": "draft-section-84gfcxnkv547",
+        "draftId": "draft-a3dp5ho5seql",
+        "title": "TZ06CSection",
+        "order": 0
+      }
+    ],
+    "processed": true,
+    "themes": [
+      {
+        "id": "draft-theme-pb43ny3hlhde",
+        "draftId": "draft-a3dp5ho5seql",
+        "sectionId": "draft-section-84gfcxnkv547",
+        "title": "TZ06CTheme",
+        "order": 0
+      }
+    ],
+    "submissionId": "arena-submission-12mj3wl0uy0j4",
+    "review": {
+      "isLogicReviewed": false,
+      "translationScore": null,
+      "testingScore": null,
+      "isTranslationReviewed": false,
+      "logicScore": null,
+      "translatedLanguages": {
+        "ru": 1
+      },
+      "isTested": false
+    },
+    "draft": {
+      "publicQuestId": null,
+      "catalogId": "mvp-smoke-v1-catalog",
+      "defaultDifficulty": "EASY",
+      "defaultLanguage": "ru",
+      "createdAtMs": 1791616160529,
+      "updatedAtMs": 1791616764992,
+      "description": null,
+      "id": "draft-a3dp5ho5seql",
+      "title": "TZ06Cquest"
+    },
+    "ownerUid": "cbynDghgyOf5exjIrEH57oeOjPzf",
+    "lessons": [
+      {
+        "id": "draft-lesson-1ipfqlp4zwmwu",
+        "draftId": "draft-a3dp5ho5seql",
+        "themeId": "draft-theme-pb43ny3hlhde",
+        "title": "TZ06CLesson",
+        "order": 0
+      }
+    ],
+    "publishedAtMs": 1791618189774,
+    "publicQuestId": "draft-a3dp5ho5seql",
+    "updatedAtMs": 1791618189774,
+    "status": "PUBLISHED"
+  },
+  "reviewTask": {
+    "id": "draft-lesson-1ipfqlp4zwmwu",
+    "questionCount": 2,
+    "createdAtMs": 1791617033360,
+    "translationScore": null,
+    "rejectedAtMs": null,
+    "targetShelf": "arena",
+    "isTranslationReviewed": false,
+    "title": "TZ06CLesson",
+    "questId": "draft-a3dp5ho5seql",
+    "catalogId": "mvp-smoke-v1-catalog",
+    "submissionId": "arena-submission-12mj3wl0uy0j4",
+    "sourceLanguages": [
+      "ru"
+    ],
+    "draftId": "draft-a3dp5ho5seql",
+    "availableLanguages": [
+      "ru"
+    ],
+    "assignmentId": "arena-submission-12mj3wl0uy0j4_draft-lesson-1ipfqlp4zwmwu",
+    "rejectedByUid": null,
+    "ownerUid": "cbynDghgyOf5exjIrEH57oeOjPzf",
+    "rejectionReason": null,
+    "translatedLanguages": {},
+    "testingScore": 3,
+    "isTested": true,
+    "checks": {
+      "translationScore": null,
+      "isTranslationReviewed": false,
+      "translatedLanguages": {},
+      "testingScore": 3,
+      "isTested": true,
+      "isLogicReviewed": true,
+      "logicScore": 3
+    },
+    "isLogicReviewed": true,
+    "logicScore": 3,
+    "changedAtMs": 1791618189774,
+    "status": "PUBLISHED"
+  },
+  "placement": {
+    "id": "draft-lesson-1ipfqlp4zwmwu",
+    "lastRejection": {
+      "reason": "Exploratory retirement check on the published lesson",
+      "code": "UNSUPPORTED_PLACEMENT",
+      "atMs": 1791618202844,
+      "actorUid": "PIir6RqYaXhFuhHaGepsaVyYu7cq"
+    },
+    "lessonId": "draft-lesson-1ipfqlp4zwmwu",
+    "lastReason": "Curator admission: independent checks passed (TESTING 3, LOGIC 3)",
+    "authorUid": "cbynDghgyOf5exjIrEH57oeOjPzf",
+    "questType": "REGULAR",
+    "decidedByUid": "PIir6RqYaXhFuhHaGepsaVyYu7cq",
+    "contentVersion": 1,
+    "shelf": "arena",
+    "updatedAtMs": 1791618841477,
+    "placementVersion": 2,
+    "previousShelf": "arena"
+  },
+  "placementHistory": [
+    {
+      "actorUid": "PIir6RqYaXhFuhHaGepsaVyYu7cq",
+      "mutationId": "transition-tz06c-explore-01",
+      "fromShelf": "review",
+      "targetShelf": "RETIRED",
+      "reason": "Exploratory retirement check on the published lesson",
+      "status": "REJECTED",
+      "code": "UNSUPPORTED_PLACEMENT",
+      "decidedAtMs": 1791618202844
+    },
+    {
+      "actorUid": "PIir6RqYaXhFuhHaGepsaVyYu7cq",
+      "mutationId": "transition-1t063dh2ufhdt",
+      "fromShelf": "review",
+      "targetShelf": "arena",
+      "reason": "Curator admission: independent checks passed (TESTING 3, LOGIC 3)",
+      "status": "APPLIED",
+      "code": null,
+      "decidedAtMs": 1791618477648
+    },
+    {
+      "actorUid": "PIir6RqYaXhFuhHaGepsaVyYu7cq",
+      "mutationId": "transition-cbpzgkl0gs0z",
+      "fromShelf": "arena",
+      "targetShelf": "arena",
+      "reason": "Curator admission: independent checks passed (TESTING 3, LOGIC 3)",
+      "status": "APPLIED",
+      "code": null,
+      "decidedAtMs": 1791618841477
+    }
+  ],
+  "publishedLesson": {
+    "id": "draft-lesson-1ipfqlp4zwmwu",
+    "version": 1,
+    "publishedAtMs": 1791618189774,
+    "reviewApprovedAtMs": 1791618189774
+  }
+}

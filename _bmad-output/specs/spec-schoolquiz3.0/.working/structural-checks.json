@@ -1,0 +1,43 @@
+{
+  "files": [
+    {
+      "path": "_bmad-output/specs/spec-schoolquiz3.0/SPEC.md",
+      "lines": 156,
+      "capabilities": 23,
+      "stable_sequential_ids": true,
+      "intent_count": 23,
+      "success_count": 23,
+      "five_fields": true,
+      "kernel_has_diagram": false,
+      "companions": 10
+    },
+    {
+      "path": "_bmad-output/specs/spec-schoolquiz3.0/contract-map.md",
+      "lines": 89
+    },
+    {
+      "path": "_bmad-output/specs/spec-schoolquiz3.0/ux-constraints.md",
+      "lines": 59
+    },
+    {
+      "path": "_bmad-output/specs/spec-theme-exams/SPEC.md",
+      "lines": 145,
+      "capabilities": 21,
+      "stable_sequential_ids": true,
+      "intent_count": 21,
+      "success_count": 21,
+      "five_fields": true,
+      "kernel_has_diagram": false,
+      "companions": 5
+    },
+    {
+      "path": "_bmad-output/specs/spec-theme-exams/exam-protocol.md",
+      "lines": 128
+    }
+  ],
+  "broken_links": [],
+  "preexisting_files_changed": [],
+  "git_diff_check_exit": 0,
+  "git_diff_check_output": "",
+  "runtime": "NOT RUN; document checks only"
+}

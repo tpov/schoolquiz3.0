@@ -1,0 +1,20 @@
+{
+  "policy": "Renew before expiry; latest earned certificate shown even with lower passing score; prior history immutable",
+  "coherence": "PASS",
+  "preservation": "PASS",
+  "architecture_rubric_reality_adversarial": "PASS",
+  "reviewer": "/root/renewal_review",
+  "url": "https://penpot.204.44.66.27.sslip.io/review/spec.html",
+  "http_verified": true,
+  "source_hashes": {
+    "_bmad-output/specs/spec-schoolquiz3.0/SPEC.md": "6c3e9933e8fe1be4ed9a28dc93eae902118603e1f849968b026f1576cdd0fc6e",
+    "_bmad-output/specs/spec-schoolquiz3.0/contract-map.md": "15a99615ee91165b59d4a760561ff63d396d5f68957734e177a8952e7ec96bb4",
+    "_bmad-output/specs/spec-schoolquiz3.0/SPEC-REVIEW.html": "5ecc9011168fb7d11318523461741f55f53bb0bf48f962552b83a7f5a029c281",
+    "_bmad-output/specs/spec-theme-exams/SPEC.md": "09c3c4cc23358b43d597c7deefe9665c4ee7e3547b14ac937bf281c1d5dba4f9",
+    "_bmad-output/specs/spec-theme-exams/exam-protocol.md": "6f92bf7024afcce10b9a584ee93fe16cde31f9819c3928601d2cd5a7bdceb507",
+    "docs/architecture/0007-certificates.md": "b4a65d30adeb63e8b1c2500aefa47ef86df643aa4627a9154743acfc8df17925"
+  },
+  "no_app_code_or_runtime_changes": true,
+  "product_agreement": "in progress",
+  "pending_question": "mixed theme-test star mapping"
+}

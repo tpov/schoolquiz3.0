@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 2,
+    "l": 4
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+  "lessonTitle": "Урок 4. Отрицание и вопросы с модальными глаголами",
+  "focus": "Научить правильно отрицать (nicht / kein) и задавать вопросы с модальными глаголами. Закрепить смысловую разницу: nicht müssen («не обязательно») против nicht dürfen («нельзя»).",
+  "grammar_points": [
+    "Отрицание nicht ставится перед инфинитивом в конце или перед отрицаемым словом, сам модальный глагол остаётся на 2-й позиции: Ich kann heute nicht kommen.",
+    "kein используется, когда отрицаем существительное с неопределённым артиклем: Ich möchte keinen Kaffee. (kein склоняется по падежу — здесь Akkusativ: keinen).",
+    "Смысловая пара: Du musst nicht kommen = «тебе не обязательно приходить» (нет необходимости). Du darfst nicht kommen = «тебе нельзя приходить» (запрет). Это разные вещи!",
+    "Общий вопрос (да/нет): модальный глагол выходит на 1-ю позицию, Infinitiv в конце: Kannst du das machen? Musst du jetzt gehen?",
+    "Специальный вопрос: вопросительное слово (Was, Wann, Wo, Warum) — модальный глагол — подлежащее — … — Infinitiv: Wann musst du gehen?"
+  ],
+  "vocab": [
+    "nicht — не",
+    "kein — никакой, ни одного",
+    "kommen — приходить, приезжать",
+    "gehen — идти, уходить",
+    "warum — почему",
+    "wann — когда",
+    "machen — делать",
+    "jetzt — сейчас"
+  ],
+  "examples": [
+    "Ich kann heute nicht kommen. — Сегодня я не могу прийти.",
+    "Du musst nicht alles essen. — Тебе не обязательно всё съедать.",
+    "Du darfst das nicht machen. — Тебе нельзя этого делать.",
+    "Warum willst du nicht mitkommen? — Почему ты не хочешь пойти со мной?",
+    "Möchtest du keinen Tee? — Ты не хочешь чаю?"
+  ]
+}

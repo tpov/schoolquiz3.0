@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 4,
+    "l": 1
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Нюанс, импликатура и сложные тексты",
+  "lessonTitle": "Импликатура: что текст говорит между строк",
+  "focus": "Научиться различать буквальный смысл (das Gesagte) и подразумеваемое (das Gemeinte). Урок про конверсационную импликатуру — выводы, которые слушатель достраивает сам, опираясь на контекст и принцип кооперации.",
+  "grammar_points": [
+    "Импликатура vs пресуппозиция: 'Er hat aufgehört zu rauchen' пресуппонирует, что он раньше курил — это нельзя отрицать без противоречия.",
+    "Скалярная импликатура: 'einige' (некоторые) подразумевает 'nicht alle' (не все), хотя логически не исключает 'все'. Снимается через 'sogar alle'.",
+    "Импликатура через нарушение количества (Grice): недосказанность 'Er ist ... fleißig' с паузой намекает на противоположное.",
+    "Сослагательное наклонение Konjunktiv II как сигнал импликатуры дистанцирования: 'Das wäre ja schön gewesen' подразумевает, что этого не случилось и говорящий разочарован.",
+    "Отрицание импликатуры (Aufhebung) без противоречия: 'Einige, ja eigentlich alle, waren dafür' — допустимо, значит это импликатура, а не часть значения."
+  ],
+  "vocab": [
+    "die Implikatur — импликатура (подразумеваемое)",
+    "die Andeutung — намёк",
+    "der Hintersinn — скрытый, потаённый смысл",
+    "die Voraussetzung — пресуппозиция, предпосылка",
+    "zwischen den Zeilen lesen — читать между строк",
+    "nahelegen — наводить на мысль, подразумевать",
+    "die Schlussfolgerung — вывод, умозаключение",
+    "stillschweigend — молчаливо, по умолчанию (negласно)"
+  ],
+  "examples": [
+    "Auf die Frage nach seiner Arbeit sagte sie nur: „Er bemüht sich.“ — Damit war eigentlich klar, dass sie nicht zufrieden war. — На вопрос о его работе она лишь сказала: «Он старается». — Тем самым было ясно, что она недовольна.",
+    "„Einige Kollegen haben den Bericht gelesen“ legt nahe, dass nicht alle ihn gelesen haben. — «Некоторые коллеги прочитали отчёт» наводит на мысль, что прочитали не все.",
+    "Wenn jemand sagt: „Ich habe das Geld nicht gestohlen“, setzt er voraus, dass überhaupt Geld abhandengekommen ist. — Когда кто-то говорит: «Я не крал эти деньги», он предполагает, что деньги вообще пропали.",
+    "„Das hättest du mir ruhig früher sagen können“ — hinter dem höflichen Konjunktiv steckt ein deutlicher Vorwurf. — «Ты вполне мог бы сказать мне это раньше» — за вежливым конъюнктивом скрывается явный упрёк."
+  ]
+}

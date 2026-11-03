@@ -1,0 +1,16 @@
+appId: com.tpov.schoolquiz.mvp
+name: Ordinary Home cold sync on Ukrainian Android device
+---
+- launchApp:
+    clearState: false
+- assertVisible: "^ДОМАШНІ КВЕСТИ$"
+- runFlow:
+    when:
+      visible: "^Синхронізувати →$"
+    commands:
+      - tapOn: "^Синхронізувати →$"
+- extendedWaitUntil:
+    visible: "^MVP validated checks$"
+    timeout: 90000
+- assertNotVisible: "^Нічого не збережено на пристрої.*$"
+- takeScreenshot: "ordinary-home-after-cold-sync-uk"

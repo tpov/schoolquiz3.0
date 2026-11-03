@@ -1,0 +1,83 @@
+{
+  "status": "PASS",
+  "projectId": "demo-schoolquiz-mvp",
+  "runId": "ct_rules_ba8c637a1ba149858e6b58a9272f06bf",
+  "syntheticUid": "KrTmJMPgNLY3C8FXrGbL3slolikq",
+  "firestoreWrites": 0,
+  "probeDocumentsExist": false,
+  "checks": [
+    {
+      "pathKind": "course_tournament_events",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_operations",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_sessions",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_keys",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_funding",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_session_operations",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_answer_ingress",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_verified_runs",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_rankings",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_bank_preparations",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_source_banks",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_worker_state",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_links",
+      "status": 403
+    },
+    {
+      "pathKind": "course_tournament_downloads",
+      "status": 403
+    },
+    {
+      "pathKind": "qualification-calculation-checkpoint",
+      "status": 403
+    },
+    {
+      "pathKind": "qualification-calculation-player",
+      "status": 403
+    },
+    {
+      "pathKind": "qualification-calculation-session-deduplication",
+      "status": 403
+    },
+    {
+      "pathKind": "admission-receipt",
+      "status": 403
+    }
+  ],
+  "mountedRulesSha256": "d8cbdd82cb83497983cf452c77edc3d81ee23c8b9515546e48795a9cf337ed7a"
+}

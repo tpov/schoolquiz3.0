@@ -1,0 +1,27 @@
+OUTBOX_FINAL []
+[stdin]:6
+const jr = db.prepare("SELECT command, state FROM arena_command_journal WHERE ticket_id LIKE '8374ce0dae87dd00%'").all().map(r=>({...r}));
+              ^
+
+Error: no such column: command
+    at [stdin]:6:15
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+    at node:internal/main/eval_stdin:51:5
+    at Socket.<anonymous> (node:internal/process/execution:205:5)
+    at Socket.emit (node:events:520:35) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.14.0
+JOURNAL_COLS owner_uid,command_kind,command_id,ticket_id,attempt_id,body_json,body_sha256,state,last_failure,created_at_ms
+JOURNAL_ROW {"owner_uid":"ck3DaiqEd7WGcuVikiw22TyF9fS9","command_kind":"SETTLE","command_id":"151497c7ba30b07d15852747b64d3357eddd6068013d109d0115599e8c939990","ticket_id":"8374ce0dae87dd0036710778a7c2cfe8605730571c73c562450ad85c3e478180","attempt_id":"151497c7ba30b07d15852747b64d3357eddd6068013d109d0115599e8c939990","body_json":"{\"ownerUid\":\"ck3DaiqEd7WGcuVikiw22TyF9fS9\",\"userId\":\"ck3DaiqEd7WGcuVik…","body_sha256":"26854d2da4ff70100fe7e830e85a323ceff3e3b44b73279fe9c0adbd4c1a0373","state":"PENDING","last_failure":null,"created_at_ms":1791579883058}
+TICKET_ROW_FINAL [{"server_status":"RESERVED","local_use":"LAUNCHED","decision":"SETTLE","has_terminal":0}]
+ALL_OUTBOX [{"id":3,"owner_uid":"HDb3uVEO99PLIaceEvkAabcCxtZp","state":"WAITING"},{"id":4,"owner_uid":"HDb3uVEO99PLIaceEvkAabcCxtZp","state":"WAITING"}]
+(Use `node --trace-warnings ...` to show where the warning was created)

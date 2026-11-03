@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 2,
+    "l": 2
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+  "lessonTitle": "Поиск работы: вакансия, резюме, объявление",
+  "focus": "Научиться понимать объявления о вакансиях и отвечать на них, описывать требования и навыки. Работа с лексикой резюме и сопроводительного письма, употребление модальных глаголов müssen/können для требований.",
+  "grammar_points": [
+    "Модальные глаголы для требований и навыков: Sie müssen Deutsch sprechen (требование), Sie können am Computer arbeiten (умение). Рамочная конструкция: модальный глагол на 2-м месте, инфинитив в конце.",
+    "Конструкция es gibt + Akkusativ для наличия вакансии: Es gibt eine freie Stelle.",
+    "Прилагательные-требования с управлением: Erfahrung haben in + Dativ, sich bewerben um + Akkusativ (Ich bewerbe mich um die Stelle).",
+    "Перечисление требований через модальный глагол и однородные инфинитивы в конце: Sie sollten flexibel sein und im Team arbeiten können."
+  ],
+  "vocab": [
+    "die Stellenanzeige — объявление о вакансии",
+    "die Bewerbung — заявление о приёме, отклик",
+    "der Lebenslauf — резюме",
+    "das Anschreiben — сопроводительное письмо",
+    "die Voraussetzung — требование, предпосылка",
+    "die Kenntnisse — знания, навыки",
+    "die Vollzeit — полная занятость",
+    "die Teilzeit — частичная занятость",
+    "sich bewerben — подавать заявление, откликаться",
+    "die Probezeit — испытательный срок"
+  ],
+  "examples": [
+    "Wir suchen eine Mitarbeiterin in Teilzeit für unser Büro in Berlin. — Мы ищем сотрудницу на неполный рабочий день для нашего офиса в Берлине.",
+    "Sie müssen gute Englischkenntnisse haben und am Computer arbeiten können. — Вы должны иметь хорошее знание английского и уметь работать на компьютере.",
+    "Ich möchte mich um die Stelle als Projektmanager bewerben. — Я хотел бы подать заявление на должность проектного менеджера.",
+    "Bitte schicken Sie uns Ihren Lebenslauf und ein kurzes Anschreiben. — Пожалуйста, пришлите нам своё резюме и короткое сопроводительное письмо."
+  ]
+}

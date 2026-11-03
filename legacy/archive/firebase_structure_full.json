@@ -1,0 +1,1088 @@
+{
+  "structures": {
+    "structureData": {
+      "SchoolQuiz": {
+        "children": [
+          {
+            "nameItem": "Математика",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "math_category.jpg",
+            "ratingGlobal": 85,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Алгебра 8 класс",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "algebra_8.jpg",
+                "ratingGlobal": 92,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 2,
+                "children": [
+                  {
+                    "nameItem": "Уравнения",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "equations.jpg",
+                    "ratingGlobal": 88,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Неравенства",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "inequalities.jpg",
+                    "ratingGlobal": 85,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              },
+              {
+                "nameItem": "Геометрия 8 класс",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "geometry_8.jpg",
+                "ratingGlobal": 78,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Треугольники",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "triangles.jpg",
+                    "ratingGlobal": 82,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Четырехугольники",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "quadrilaterals.jpg",
+                    "ratingGlobal": 75,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nameItem": "Физика",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "physics_category.jpg",
+            "ratingGlobal": 88,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 11111,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Механика",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "mechanics.jpg",
+                "ratingGlobal": 95,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 11111,
+                "version": 3,
+                "children": [
+                  {
+                    "nameItem": "Кинематика",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "kinematics.jpg",
+                    "ratingGlobal": 90,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 11111,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Динамика",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "dynamics.jpg",
+                    "ratingGlobal": 87,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 11111,
+                    "version": 1
+                  }
+                ]
+              },
+              {
+                "nameItem": "Электричество",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "electricity.jpg",
+                "ratingGlobal": 82,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 11111,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Постоянный ток",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "dc_current.jpg",
+                    "ratingGlobal": 85,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 11111,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nameItem": "Химия",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "chemistry_category.jpg",
+            "ratingGlobal": 79,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Органическая химия",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "organic_chemistry.jpg",
+                "ratingGlobal": 83,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Углеводороды",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "hydrocarbons.jpg",
+                    "ratingGlobal": 80,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Pools": {
+        "children": [
+          {
+            "nameItem": "Спорт",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "sports_category.jpg",
+            "ratingGlobal": 91,
+            "starsAverageGlobal": 5,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Футбол",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "football.jpg",
+                "ratingGlobal": 95,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Чемпионат мира",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "world_cup.jpg",
+                    "ratingGlobal": 98,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Европейские клубы",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "european_clubs.jpg",
+                    "ratingGlobal": 92,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              },
+              {
+                "nameItem": "Баскетбол",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "basketball.jpg",
+                "ratingGlobal": 87,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "НБА",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "nba.jpg",
+                    "ratingGlobal": 89,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nameItem": "История",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "history_category.jpg",
+            "ratingGlobal": 84,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Древний мир",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "ancient_world.jpg",
+                "ratingGlobal": 86,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Египет",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "egypt.jpg",
+                    "ratingGlobal": 88,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Греция",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "greece.jpg",
+                    "ratingGlobal": 85,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Tests": {
+        "children": [
+          {
+            "nameItem": "Психология",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "psychology_category.jpg",
+            "ratingGlobal": 89,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Тесты личности",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "personality_tests.jpg",
+                "ratingGlobal": 92,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Тип темперамента",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "temperament.jpg",
+                    "ratingGlobal": 94,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Интроверт/Экстраверт",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "introvert_extrovert.jpg",
+                    "ratingGlobal": 90,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              },
+              {
+                "nameItem": "IQ тесты",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "iq_tests.jpg",
+                "ratingGlobal": 86,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Логика",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "logic.jpg",
+                    "ratingGlobal": 88,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nameItem": "Профориентация",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "career_guidance.jpg",
+            "ratingGlobal": 81,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "IT сфера",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "it_sphere.jpg",
+                "ratingGlobal": 85,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Программирование",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "programming.jpg",
+                    "ratingGlobal": 87,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "CourseQuiz": {
+        "children": [
+          {
+            "nameItem": "Программирование",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "programming_category.jpg",
+            "ratingGlobal": 93,
+            "starsAverageGlobal": 5,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Kotlin",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "kotlin.jpg",
+                "ratingGlobal": 95,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Основы синтаксиса",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "kotlin_basics.jpg",
+                    "ratingGlobal": 92,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Android разработка",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "android_kotlin.jpg",
+                    "ratingGlobal": 96,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              },
+              {
+                "nameItem": "JavaScript",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "javascript.jpg",
+                "ratingGlobal": 91,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "ES6+",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "es6.jpg",
+                    "ratingGlobal": 89,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nameItem": "Дизайн",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "design_category.jpg",
+            "ratingGlobal": 87,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "UI/UX",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "ui_ux.jpg",
+                "ratingGlobal": 90,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Принципы дизайна",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "design_principles.jpg",
+                    "ratingGlobal": 88,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "GameQuiz": {
+        "children": [
+          {
+            "nameItem": "Видеоигры",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "videogames_category.jpg",
+            "ratingGlobal": 94,
+            "starsAverageGlobal": 5,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Minecraft",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "minecraft.jpg",
+                "ratingGlobal": 96,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Блоки и предметы",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "minecraft_blocks.jpg",
+                    "ratingGlobal": 94,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "Мобы",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "minecraft_mobs.jpg",
+                    "ratingGlobal": 92,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              },
+              {
+                "nameItem": "League of Legends",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "lol.jpg",
+                "ratingGlobal": 89,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Чемпионы",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "lol_champions.jpg",
+                    "ratingGlobal": 91,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nameItem": "Настольные игры",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "board_games.jpg",
+            "ratingGlobal": 83,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Шахматы",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "chess.jpg",
+                "ratingGlobal": 87,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Дебюты",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "chess_openings.jpg",
+                    "ratingGlobal": 85,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "OtherQuiz": {
+        "children": [
+          {
+            "nameItem": "Развлечения",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "entertainment_category.jpg",
+            "ratingGlobal": 88,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Фильмы",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "movies.jpg",
+                "ratingGlobal": 91,
+                "starsAverageGlobal": 5,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Marvel",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "marvel.jpg",
+                    "ratingGlobal": 95,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  },
+                  {
+                    "nameItem": "DC Comics",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "dc.jpg",
+                    "ratingGlobal": 89,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              },
+              {
+                "nameItem": "Музыка",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "music.jpg",
+                "ratingGlobal": 85,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Рок музыка",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "rock_music.jpg",
+                    "ratingGlobal": 87,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nameItem": "Разное",
+            "dataCreate": "",
+            "dataUpdate": "",
+            "isShow": true,
+            "isShowArchive": true,
+            "languages": "ru",
+            "nameCreator": "TPOV",
+            "picture": "misc_category.jpg",
+            "ratingGlobal": 78,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 1,
+            "tpovIdMaxStarsGlobal": 67890,
+            "version": 1,
+            "children": [
+              {
+                "nameItem": "Интересные факты",
+                "dataCreate": "",
+                "dataUpdate": "",
+                "isShow": true,
+                "isShowArchive": true,
+                "languages": "ru",
+                "nameCreator": "TPOV",
+                "picture": "fun_facts.jpg",
+                "ratingGlobal": 82,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 1,
+                "tpovIdMaxStarsGlobal": 67890,
+                "version": 1,
+                "children": [
+                  {
+                    "nameItem": "Животные",
+                    "dataCreate": "",
+                    "dataUpdate": "",
+                    "isShow": true,
+                    "isShowArchive": true,
+                    "languages": "ru",
+                    "nameCreator": "TPOV",
+                    "picture": "animals.jpg",
+                    "ratingGlobal": 84,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 1,
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "version": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+} 

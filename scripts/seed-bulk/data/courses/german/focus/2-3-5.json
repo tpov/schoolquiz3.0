@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 3,
+    "l": 5
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+  "lessonTitle": "Урок 5. В кафе и ресторане: заказ еды",
+  "focus": "Заказать еду и напитки в кафе, попросить меню и счёт. Итоговая практика темы: соединяем Akkusativ, möchten/hätte gern, цены и вежливый диалог.",
+  "grammar_points": [
+    "Заказ через «Ich nehme ...» / «Ich möchte ...» / «Für mich bitte ...» + блюдо в Akkusativ.",
+    "Вопросы официанта и устойчивые ответы: «Was möchten Sie trinken?», «Möchten Sie bestellen?», «Schmeckt es Ihnen?».",
+    "Просьба о счёте: «Die Rechnung, bitte.» / «Wir möchten zahlen.»; чаевые — das Trinkgeld.",
+    "Глагол schmecken (быть вкусным) с дательным: «Das schmeckt mir gut.» (Мне это нравится / вкусно).",
+    "Связки и порядок слов с möchten: рамка — möchte на 2-м месте, инфинитив в конце: «Ich möchte einen Salat essen.»"
+  ],
+  "vocab": [
+    "das Café — кафе",
+    "das Restaurant — ресторан",
+    "die Speisekarte — меню",
+    "der Kellner — официант",
+    "bestellen — заказывать",
+    "die Suppe — суп",
+    "der Salat — салат",
+    "das Bier — пиво",
+    "die Rechnung — счёт",
+    "schmecken — быть вкусным / нравиться (о еде)"
+  ],
+  "examples": [
+    "Die Speisekarte, bitte. — Меню, пожалуйста.",
+    "Ich möchte eine Suppe und einen Salat bestellen. — Я хотел бы заказать суп и салат.",
+    "Was möchten Sie trinken? — Ein Bier, bitte. — Что вы будете пить? — Пиво, пожалуйста.",
+    "Schmeckt es Ihnen? — Ja, das schmeckt mir sehr gut. — Вам нравится? — Да, мне очень вкусно.",
+    "Die Rechnung, bitte. Wir möchten zahlen. — Счёт, пожалуйста. Мы хотим расплатиться."
+  ]
+}

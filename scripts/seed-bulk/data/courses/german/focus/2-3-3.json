@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 3,
+    "l": 3
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+  "lessonTitle": "Урок 3. Покупки: цены, количество и упаковка",
+  "focus": "Лексика магазина и рынка: числа, цены в евро, единицы измерения и упаковки. Учимся спрашивать «сколько стоит» и говорить количество товара.",
+  "grammar_points": [
+    "Вопрос о цене: «Was kostet ...?» (ед. ч.) и «Was kosten ...?» (мн. ч.). Также «Wie viel kostet das?».",
+    "Числа и цены: 1,50 € читается «ein Euro fünfzig»; единица валюты — der Euro, der Cent.",
+    "Меры и количества стоят перед продуктом БЕЗ предлога: ein Kilo Äpfel, ein Liter Milch, eine Flasche Wasser, ein Stück Kuchen.",
+    "Вопрос о количестве: «Wie viel ...?» (с неисчисляемым) и «Wie viele ...?» (с исчисляемым во мн. ч.).",
+    "Множественное число основных слов: der Apfel → die Äpfel, das Ei → die Eier, die Tomate → die Tomaten."
+  ],
+  "vocab": [
+    "der Euro — евро",
+    "der Cent — цент",
+    "das Kilo — килограмм",
+    "der Liter — литр",
+    "die Flasche — бутылка",
+    "das Stück — штука / кусок",
+    "die Packung — упаковка / пачка",
+    "kosten — стоить",
+    "billig — дешёвый",
+    "teuer — дорогой"
+  ],
+  "examples": [
+    "Was kostet ein Kilo Äpfel? — Сколько стоит килограмм яблок?",
+    "Ein Liter Milch kostet ein Euro zwanzig. — Литр молока стоит один евро двадцать.",
+    "Ich nehme eine Flasche Wasser und ein Stück Kuchen. — Я беру бутылку воды и кусок торта.",
+    "Wie viele Eier möchten Sie? — Сколько яиц вы хотите?",
+    "Das Brot ist billig, aber der Käse ist teuer. — Хлеб дешёвый, а сыр дорогой."
+  ]
+}

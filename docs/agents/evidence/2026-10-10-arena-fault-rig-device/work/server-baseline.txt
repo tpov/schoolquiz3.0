@@ -1,0 +1,6 @@
+TICKETS 0
+[]
+MUTATION_KEYS_COUNT 29
+PROFILE {"nickname":"UserYF9FS9","adminLevel":0}
+USER {"createdAtMs":1791571853911,"moderator":0,"standardHearts":5,"tester":0,"ratingTimeInChat":0,"ratingTimeInQuiz":0,"reservedPlasmaPoints":0,"qualifications":{"sponsor":0,"moderator":0,"tester":0,"admin":0,"translater":0,"developer":0},"premiumUntilMs":0,"nextBonusBoxAtMs":0,"trophies":[],"verifiedAtMs":0,"avatarUrl":null,"goldHearts":0,"boxCount":0,"translater":0,"status":"ANONYMOUS","birthday":null,"sponsor":0,"city":null,"ownedLogos":[],"admin":0,"knownLanguages":["ru"],"gold":0,"streakDays":0,"uid":"ck3DaiqEd7WGcuVikiw22TyF9fS9","nickname":"UserYF9FS9","plasmaRegenRemainderMs":0,"ratingSmsPoints":0,"telegram":null,"nextBoxAtMs":0,"stars":0,"realName":null,"hasPremium":false,"plasmaPoints":0,"boxStreakDays":0,"developer":0,"lifePoints":413,"reservedLifePoints":0,"pointsSkill":49,"skillPoints":49,"nolics":3,"ratingCountQuestions":6,"ratingQuiz":3,"ratingCountTrueQuestion":3,"pointsNolics":3,"lessonBest":{"mvp-smoke-v1-lesson:EASY":100,"ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1:HARD":50},"arenaSelectedHeldCount":0,"reservedNolics":0,"plasmaPointsUpdatedAtMs":1791574613863,"lifeRegenRemainderMs":25383,"lifePointsUpdatedAtMs":1791574613863,"updatedAtMs":1791574613863}
+RUNNER_RECORDS {"count":0}

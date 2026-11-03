@@ -1,0 +1,8 @@
+$ FIRESTORE_EMULATOR_HOST=127.0.0.1:18090 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:19090 GCLOUD_PROJECT=demo-schoolquiz-mvp node .maestro/mvp/arena-matrix/submit-drop-server-fault-run.js /tmp/wm/server-fault-33
+call1 through proxy: connection dropped as designed (UND_ERR_SOCKET)
+server after drop: mutation_keys state=completed, completedAtMs=1791522779832, receipts=1
+direct retry: replayed=true, result identical, completedAtMs unchanged, one receipt
+proxy audit: UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED, events: READY,EXACT_TARGET_SENT_UPSTREAM,EXACT_TARGET_UPSTREAM_HEADERS,UPSTREAM_RESPONSE_COMPLETE_AFTER_DROP,EXACT_TARGET_BLOCKED_AFTER_DROP,STOPPED
+private run dir: /tmp/wm/server-fault-33/run-2026-10-09T05-12-55-782Z
+ids (public hashes): mutationId=015cec8ee74afc6d attemptId=47e272452d6d6ba0
+SERVER FAULT RUN PASSED: drop after commit, replay without a second effect

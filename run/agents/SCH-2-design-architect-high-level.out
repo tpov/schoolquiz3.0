@@ -1,0 +1,32 @@
+Started a new session, `"/opt/homebrew/bin/kent" run steer dfd362a4-f528-407a-9aa3-b426b9645b07 "prompt"` to send messages while it runs
+Готово.
+
+- **Kent session id command:** не был напечатан в этой Kent-сессии.
+- **Written path:** [high-level.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/design-drafts/high-level.md)
+- **Production code:** не трогал (`*.kt`, `*.gradle.kts`, resources не редактировались).
+
+## Key decisions
+
+- C4 L1-L2: app metadata source stays in `apps/android-next`; flow is `BuildConfig -> MainActivity -> AppShellScreen -> LocalTabContent -> DesignSettingsScreen`.
+- `06-api-contract.md`: **N/A** — no external/domain/server API; internal Compose params only.
+- `07-events.md`: **N/A** — footer display-only, no events/taps.
+- `08-storage-model.md`: **N/A** — no storage/migrations/persistence.
+- Web prior-art / `web-researcher`: **not needed** for this feature.
+- Preserve existing `app-shell -> local/settings` dependency; do **not** add reverse coupling.
+
+## Objections to component-level position
+
+Main blockers to contest downstream:
+
+- Don’t render footer as last `LazyColumn` item if pinned bottom remains required.
+- Don’t reuse `DrawerFooter` — it is interactive and tied to About/dev-mode behavior.
+- Don’t read app `BuildConfig` from library modules.
+- Don’t add Component/ViewModel/use case/Koin/repository for this static UI text.
+- Don’t add settings footer tap/long-press behavior.
+- Don’t mutate existing drawer footer behavior.
+
+## Open Questions
+
+None blocking for design.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "dfd362a4-f528-407a-9aa3-b426b9645b07" "follow-up"`.

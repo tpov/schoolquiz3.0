@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 3,
+    "l": 5
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+  "lessonTitle": "Урок 5. Perfekt в речи: рассказ о прошлом и порядок слов",
+  "focus": "Свести всё воедино: строить связные высказывания о прошедшем дне/отпуске, правильно ставить отрицание и обстоятельства времени, задавать и отвечать на вопросы в Perfekt. Закрепление рамочной конструкции.",
+  "grammar_points": [
+    "Рамка Perfekt: haben/sein стоит на 2-м месте (или 1-м в общем вопросе), Partizip II — всегда в конце: Ich habe heute viel gemacht.",
+    "Отрицание nicht ставится перед Partizip II: Ich habe das nicht gesehen. Отрицание kein — перед существительным: Ich habe kein Brot gekauft.",
+    "Обстоятельства времени (gestern, am Montag, letzte Woche, vor zwei Tagen) обычно стоят в начале или после спрягаемого глагола; порядок T-K-M (время — причина — место) не нарушает рамку.",
+    "Вопросы: общий — Hast du gut geschlafen? (haben/sein на 1-м месте); специальный — Wann bist du angekommen? (вопросительное слово, затем haben/sein).",
+    "Для связного рассказа используются слова-связки: zuerst (сначала), dann (потом), danach (после этого), später (позже), am Ende (в конце)."
+  ],
+  "vocab": [
+    "das Wochenende — выходные",
+    "der Urlaub — отпуск",
+    "zuerst — сначала",
+    "dann — потом",
+    "danach — после этого",
+    "letzte Woche — на прошлой неделе",
+    "schlafen — спать",
+    "sehen — видеть, смотреть"
+  ],
+  "examples": [
+    "Letzte Woche habe ich Urlaub gemacht und bin ans Meer gefahren. — На прошлой неделе я был в отпуске и поехал на море.",
+    "Am Wochenende bin ich lange geblieben und habe gut geschlafen. — На выходных я долго оставался дома и хорошо выспался.",
+    "Zuerst habe ich gefrühstückt, dann bin ich in die Stadt gegangen. — Сначала я позавтракал, потом пошёл в город.",
+    "Ich habe den Film nicht gesehen. — Я не смотрел этот фильм.",
+    "Wann bist du gestern nach Hause gekommen? — Когда ты вчера пришёл домой?"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 4,
+    "l": 1
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+  "lessonTitle": "Урок 1. В городе: места и здания (In der Stadt: Orte und Gebäude)",
+  "focus": "Базовая лексика города и умение сказать, что и где находится. Грамматический фокус урока — вопрос Wo? и ответ с предлогами места + Dativ, артикль в Dativ (im, am, auf dem). Связь с темой Город даётся через лексику, а не через подробный разбор падежей (это отдельная тема уровня).",
+  "grammar_points": [
+    "Вопрос Wo? (где?) требует ответа в Dativ: Wo ist die Post? — Die Post ist in der Goethestraße.",
+    "Слияние предлога с артиклем: in + dem = im, an + dem = am (im Zentrum, am Markt).",
+    "Порядок слов в утверждении: на 2-м месте — глагол (Das Rathaus liegt im Zentrum).",
+    "Глагол liegen/sein/stehen для описания расположения зданий.",
+    "Указательные слова hier/dort (здесь/там) для уточнения места."
+  ],
+  "vocab": [
+    "die Stadt — город",
+    "das Zentrum — центр",
+    "die Straße — улица",
+    "der Platz — площадь",
+    "das Rathaus — ратуша",
+    "die Post — почта",
+    "die Bank — банк",
+    "der Bahnhof — вокзал",
+    "das Krankenhaus — больница",
+    "die Apotheke — аптека",
+    "der Supermarkt — супермаркет",
+    "die Kirche — церковь",
+    "das Museum — музей",
+    "der Park — парк"
+  ],
+  "examples": [
+    "Wo ist der Bahnhof? — Der Bahnhof ist im Zentrum. (Где вокзал? — Вокзал в центре.)",
+    "Die Apotheke liegt neben dem Supermarkt. (Аптека находится рядом с супермаркетом.)",
+    "Hier ist die Post, und dort ist die Bank. (Вот почта, а там банк.)",
+    "Das Museum steht am Marktplatz. (Музей стоит на рыночной площади.)",
+    "In unserer Stadt gibt es einen großen Park. (В нашем городе есть большой парк.)"
+  ]
+}

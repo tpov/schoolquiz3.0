@@ -1,0 +1,19 @@
+TICKET_FINAL {
+ "status": "SETTLED",
+ "terminal": {
+  "sinkNolics": 0,
+  "consumedLifePoints": 50,
+  "authorCreditNolics": 0,
+  "percentScore": 0,
+  "settledAtMs": 1791580002445,
+  "royaltyReserveDeltaNolics": 1,
+  "scoreDigest": "4b11a226cc6ad85fdb5b7b8973055ec4e85894587a37ce2bfcc2f663156f9b68",
+  "receiptId": "arena-settle:8374ce0dae87dd0036710778a7c2cfe8605730571c73c562450ad85c3e478180",
+  "consumedNolics": 1,
+  "attemptId": "151497c7ba30b07d15852747b64d3357eddd6068013d109d0115599e8c939990"
+ }
+}
+MUTATION_KEYS_FINAL 30
+MUTATION_DOC_EXISTS false
+RECORDS_FOR_ATTEMPT 0
+BALANCE_FINAL {"nolics":2,"skillPoints":49,"lifePoints":450,"reservedNolics":0}

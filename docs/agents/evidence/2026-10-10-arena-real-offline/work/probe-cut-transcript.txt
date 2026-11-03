@@ -1,0 +1,16 @@
+== BACKEND-UNAVAILABLE PROBE TRANSCRIPT (3.5) 23:08:15Z
+--- app force-stop (clean relaunch)
+STOPPED
+--- remove ONLY the functions route (5001); 8080/9099 stay
+--- routes now
+host-12 tcp:9099 tcp:19090
+host-12 tcp:8080 tcp:18090
+
+ADB_CONTROL_ALIVE
+--- restore 5001
+5001
+--- exact baseline
+host-12 tcp:9099 tcp:19090
+host-12 tcp:8080 tcp:18090
+host-12 tcp:5001 tcp:5001
+

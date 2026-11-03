@@ -1,0 +1,19 @@
+Готово.
+
+Changed:
+
+- [01-architecture.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/01-architecture.md)
+- [02-behavior.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/02-behavior.md)
+- [03-decisions.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/03-decisions.md)
+
+Fix summary:
+
+- Added real intermediate `AppShellContent` to architecture and behavior diagrams/prose.
+- Updated DFD/sequence path to: `BuildConfig -> MainActivity -> AppShellScreen -> AppShellContent -> LocalTabContent -> DesignSettingsScreen -> footer`.
+- Updated ADR consequences/propagation notes to include private shell content forwarding.
+- Kept `03-decisions.md` free of `AppShellState` and clean for the ADR type grep.
+- Confirmed no `TODO`, `TBD`, `UNRESOLVED`, `REQUIRES VERIFY`, `Open Questions`, or question marks remain in the edited final docs.
+
+No production code touched. No blocker remains from my side.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "dfd362a4-f528-407a-9aa3-b426b9645b07" "follow-up"`.

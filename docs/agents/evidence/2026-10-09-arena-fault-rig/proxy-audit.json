@@ -1,0 +1,48 @@
+{
+  "artifactVersion": 1,
+  "status": "UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED",
+  "configSha256": "4503092661a8fc053914d020681c6e24a5d80d1ffc7aa4d6a3f274e7da3f0e8d",
+  "target": {
+    "path": "/demo-schoolquiz-mvp/us-central1/submitMutation",
+    "operation": "lesson_runner.SUBMIT_ATTEMPT",
+    "mutationIdSha256": "015cec8ee74afc6dd711b469a654aa9b4da4d5b2f7032541030a69dc25b29314",
+    "attemptIdSha256": "47e272452d6d6ba0598929d2b0efb36c8667de10e7bc185e5a44fd1c6a3dcd4d"
+  },
+  "events": [
+    {
+      "atMs": 1791522779584,
+      "type": "READY"
+    },
+    {
+      "atMs": 1791522779631,
+      "type": "EXACT_TARGET_SENT_UPSTREAM",
+      "requestSha256": "526a2071d555a7f0b4d4c0e2efae5dd71af9cff84f351399491c5f19f5daf3f1"
+    },
+    {
+      "atMs": 1791522779840,
+      "type": "EXACT_TARGET_UPSTREAM_HEADERS",
+      "statusCode": 200,
+      "requestSha256": "526a2071d555a7f0b4d4c0e2efae5dd71af9cff84f351399491c5f19f5daf3f1"
+    },
+    {
+      "atMs": 1791522779842,
+      "type": "UPSTREAM_RESPONSE_COMPLETE_AFTER_DROP",
+      "statusCode": 200,
+      "responseBytes": 569,
+      "responseSha256": "4ef9180c3ed215c21744f88272172a5f8be113662ad8f97fea7ba62f37ace53f"
+    },
+    {
+      "atMs": 1791522779873,
+      "type": "EXACT_TARGET_BLOCKED_AFTER_DROP",
+      "requestSha256": "526a2071d555a7f0b4d4c0e2efae5dd71af9cff84f351399491c5f19f5daf3f1"
+    },
+    {
+      "atMs": 1791522779919,
+      "type": "STOPPED"
+    }
+  ],
+  "listen": {
+    "host": "127.0.0.1",
+    "port": 41269
+  }
+}

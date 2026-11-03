@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 3,
+    "l": 3
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+  "lessonTitle": "Урок 3. Partizip II сильных глаголов и глаголов на -ieren",
+  "focus": "Системно разобрать образование Partizip II у сильных (неправильных) глаголов с чередованием корня, а также особую группу глаголов на -ieren без приставки ge-. Это самая запоминаемая часть темы.",
+  "grammar_points": [
+    "Сильные глаголы: Partizip II заканчивается на -en и часто меняет корневую гласную: sprechen → gesprochen, essen → gegessen, trinken → getrunken, schreiben → geschrieben, lesen → gelesen.",
+    "Список сильных глаголов нужно учить наизусть — единого правила для гласной нет.",
+    "Глаголы на -ieren образуют Partizip II БЕЗ приставки ge-: studieren → studiert, telefonieren → telefoniert, fotografieren → fotografiert.",
+    "Большинство сильных глаголов берут haben; глаголы движения из этой группы (например, schwimmen, при изменении места) могут брать sein.",
+    "Полезно вести таблицу: Infinitiv — Partizip II — вспомогательный глагол."
+  ],
+  "vocab": [
+    "sprechen — говорить",
+    "essen — есть, кушать",
+    "trinken — пить",
+    "schreiben — писать",
+    "lesen — читать",
+    "studieren — учиться (в вузе)",
+    "telefonieren — звонить по телефону",
+    "das Buch — книга"
+  ],
+  "examples": [
+    "Ich habe einen Brief geschrieben. — Я написал письмо.",
+    "Wir haben Pizza gegessen und Wasser getrunken. — Мы поели пиццу и попили воды.",
+    "Hast du das Buch schon gelesen? — Ты уже прочитал книгу?",
+    "Er hat zwei Jahre in München studiert. — Он два года учился в Мюнхене.",
+    "Gestern habe ich mit Anna telefoniert. — Вчера я разговаривал по телефону с Анной."
+  ]
+}

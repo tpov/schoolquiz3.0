@@ -1,0 +1,15 @@
+{
+  "theme_cooldown_hours": 24,
+  "final_cooldown_hours": 168,
+  "anchor": "terminal closure, per-user per-assessment, rolling",
+  "final_reward_eligibility": "every recorded terminal attempt including failure",
+  "certificate": "successful finals only, latest earned",
+  "reward_formula": "reopened; coefficient application awaiting confirmation",
+  "coherence": "PASS",
+  "preservation": "PASS",
+  "architecture_review": "PASS",
+  "http_verified": true,
+  "spec_sha256": "8989c1c5e22128489878b79eb855e9749844c2b8e9ce55444a49080ad6e0b73e",
+  "html_sha256": "619a9336be45d6b2ef1bb161e512d4c22b7ede4e50dd2aed9f1bdc6a7355e720",
+  "runtime_changes": false
+}

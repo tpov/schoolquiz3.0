@@ -1,0 +1,13 @@
+Updated [docs/features/settings-app-version-footer/reviews/plan-review.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/reviews/plan-review.md).
+
+Final result:
+- **Sequencing:** PASS
+- **Plan-as-ТЗ:** PASS
+- **Overall:** PASS
+
+Re-check outcome:
+- the former shorthand `:139-145` in Pattern Invariants is now replaced by a full `file:line` citation
+- previously fixed items remain resolved
+- quick two-lens re-check found no remaining findings
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "85cfc7ad-3d19-4058-9634-9f7873abfa33" "follow-up"`.

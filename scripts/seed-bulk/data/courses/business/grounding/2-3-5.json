@@ -1,0 +1,33 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 3,
+    "l": 5
+  },
+  "subjectTitle": "Корпоративные финансы (Corporate Finance)",
+  "themeTitle": "Риск и доходность: диверсификация, CAPM, стоимость капитала (WACC)",
+  "lessonTitle": "Урок 5. Применение стоимости капитала: hurdle rate, риск проекта и unlevering/relevering беты",
+  "focus": "Перейти от учебной формулы к корректному применению. Менеджер учится не использовать корпоративную WACC для проектов другого риска и переносить β из компаний-аналогов через un/relever по Hamada.",
+  "teaching_points": [
+    "Ошибка «одна WACC на всё»: применять единую корпоративную WACC к проекту другого риск-профиля неверно — низкорисковый проект отвергнут, высокорисковый одобрен ошибочно. Нужна ставка под риск конкретного проекта (project-specific / divisional cost of capital).",
+    "Решение — pure-play подход: взять β публичных компаний-аналогов того же бизнес-риска и перенести её на свой проект/подразделение.",
+    "Levered (equity) beta включает и бизнес-риск, и финансовый риск от долга; unlevered (asset) beta очищена от эффекта левериджа и отражает только бизнес-риск, позволяя сравнивать компании like-for-like.",
+    "Hamada: βL = βU·[1 + (1 − Tc)·(D/E)]. Алгоритм: (1) взять βL аналога, (2) un-lever под его D/E → βU, (3) re-lever под целевой D/E своего проекта → новая βL, (4) подставить в CAPM → Re, (5) собрать WACC.",
+    "Релеверить надо под целевую (или оптимальную) структуру капитала проекта, а не под историческую: оценка отражает внутреннюю стоимость, а не прошлые решения о финансировании.",
+    "WACC как hurdle rate: принимаем проект, если NPV (дисконт по риск-адекватной WACC) > 0, либо IRR > WACC. Чувствительность велика — ошибка в β или ERP сильно двигает оценку, поэтому полезен анализ чувствительности ставки.",
+    "Зачем менеджеру: это связывает весь предмет — диверсификация → β → CAPM (Re) → WACC → ставка дисконтирования в NPV/DCF; корректный перенос риска через un/relever делает оценку проектов в новых отраслях обоснованной."
+  ],
+  "frameworks": [
+    "Hamada: βL = βU·[1 + (1 − Tc)·(D/E)]",
+    "βU = βL / [1 + (1 − Tc)·(D/E)] (un-lever)",
+    "Pure-play / comparable beta подход",
+    "Project-specific (divisional) WACC vs корпоративная WACC",
+    "Правило hurdle rate: IRR > WACC ⟺ NPV > 0"
+  ],
+  "example": "Аналог: βL = 1.4, D/E = 0.8, Tc = 25%. Un-lever: βU = 1.4 / [1 + 0.75·0.8] = 1.4 / 1.6 = 0.875. Наш проект имеет целевой D/E = 0.4. Re-lever: βL_new = 0.875·[1 + 0.75·0.4] = 0.875·1.3 = 1.1375. При rf = 3%, ERP = 6%: Re = 3% + 1.1375·6% ≈ 9.83%. Эту β, а не корпоративную, ставим в CAPM и далее в WACC проекта.",
+  "sources": [
+    "Brealey, Myers & Allen, «Principles of Corporate Finance», гл. 9 (Company and Project Costs of Capital)",
+    "Robert Hamada, «The Effect of the Firm's Capital Structure on the Systematic Risk of Common Stocks», Journal of Finance, 1972",
+    "https://ibinterviewquestions.com/guides/valuation-investment-banking/beta-raw-adjusted-unlevered-relevered"
+  ]
+}

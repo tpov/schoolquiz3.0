@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="RF8W80MBR3Z" tests="1" failures="1" time="116.0">
+    <testcase id="Full school course first question on Ukrainian Android device" name="Full school course first question on Ukrainian Android device" classname="Full school course first question on Ukrainian Android device" time="116.0" status="ERROR">
+      <failure>Assertion is false: "^Остання синхронізація:.*$" is visible</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

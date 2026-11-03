@@ -1,0 +1,14 @@
+== RESTORE TRANSCRIPT (3.5) 23:02:46Z
+--- return exactly the three mappings
+9099
+8080
+5001
+--- radio baseline back (wifi_on was 0, mobile_data was 1)
+--- verify exact baseline: reverses + radios + ADB CONTROL
+host-12 tcp:9099 tcp:19090
+host-12 tcp:8080 tcp:18090
+host-12 tcp:5001 tcp:5001
+
+0
+1
+ADB_CONTROL_ALIVE 23:02:46Z

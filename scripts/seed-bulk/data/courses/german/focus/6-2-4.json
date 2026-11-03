@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 2,
+    "l": 4
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+  "lessonTitle": "Урок 4. Регистр и уместность: где номинальный стиль работает, а где вредит",
+  "focus": "Развить стилистическое чутьё: распознавать «канцелярит» (Behördendeutsch, Nominalstil-Übertreibung), оценивать читабельность и осознанно выбирать между номинальным и вербальным стилем в зависимости от типа текста и адресата.",
+  "grammar_points": [
+    "Сильные стороны Nominalstil: компактность, безличность, точность — уместен в научных, юридических, технических текстах и резюме.",
+    "Слабые стороны: перегрузка отглагольными существительными, цепочки родительного падежа и «Streckverben» делают текст тяжёлым и нечитаемым (Behördensprache / Amtsdeutsch).",
+    "Распознавание избыточности: нагромождение -ung-существительных (die Durchführung der Überprüfung der Einhaltung der Bestimmungen) сигнализирует о необходимости вербализации.",
+    "Стилистический сдвиг по типу текста: устная речь, e-mail коллеге, художественный текст → вербальный стиль; научная статья, закон, отчёт → умеренный номинальный.",
+    "Принцип меры: один-два FVG/номинализации повышают точность, их чрезмерная плотность — снижают понятность; цель C1 — осознанное переключение регистров."
+  ],
+  "vocab": [
+    "der Stil — стиль",
+    "das Register — регистр (речи)",
+    "die Lesbarkeit — читабельность, удобочитаемость",
+    "schwerfällig — тяжеловесный, неуклюжий",
+    "die Amtssprache — официально-деловой язык, канцелярит",
+    "die Behördensprache — язык учреждений, чиновничий язык",
+    "angemessen — уместный, соответствующий",
+    "die Verständlichkeit — понятность",
+    "umständlich — громоздкий, витиеватый",
+    "treffend — точный, меткий"
+  ],
+  "examples": [
+    "In wissenschaftlichen Texten ist ein gemäßigter Nominalstil durchaus angemessen. — В научных текстах умеренный номинальный стиль вполне уместен.",
+    "Übermäßiger Nominalstil macht den Text schwerfällig und beeinträchtigt die Lesbarkeit. — Чрезмерный номинальный стиль делает текст тяжеловесным и ухудшает читабельность.",
+    "Der Satz „Die Durchführung der Überprüfung erfolgt durch die Behörde“ klingt umständlich. — Фраза «Проведение проверки осуществляется ведомством» звучит громоздко.",
+    "Besser verbal: „Die Behörde überprüft den Antrag.“ — Лучше вербально: «Ведомство проверяет заявление».",
+    "Ein guter Stilist wählt das Register je nach Leser und Textsorte treffend aus. — Хороший стилист метко выбирает регистр в зависимости от читателя и типа текста."
+  ]
+}

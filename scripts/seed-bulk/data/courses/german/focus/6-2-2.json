@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 2,
+    "l": 2
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+  "lessonTitle": "Урок 2. Глагольно-именные обороты (Funktionsverbgefüge): основные модели",
+  "focus": "Освоить ядро темы — устойчивые конструкции «функциональный глагол + существительное» (FVG), где смысл несёт существительное, а глагол грамматикализован. Научиться сопоставлять FVG с простым глаголом-эквивалентом.",
+  "grammar_points": [
+    "Структура FVG: Funktionsverb (десемантизированный глагол) + Nomen, где основное значение в существительном: eine Entscheidung treffen = entscheiden, zur Anwendung kommen = angewendet werden.",
+    "Самые частые функциональные глаголы: treffen, fassen, stellen, bringen, kommen, geraten, nehmen, setzen, üben, leisten.",
+    "Предложные модели FVG: in + Akkusativ (in Betracht ziehen, in Frage stellen), zur + Substantiv (zur Verfügung stehen, zur Sprache kommen), unter + Akkusativ (unter Druck setzen).",
+    "Различие активного и пассивного оттенка: zur Anwendung bringen (= anwenden, актив) vs. zur Anwendung kommen (= angewendet werden, пассив/инхоатив).",
+    "FVG устойчивы: артикль, предлог и падеж фиксированы, заменять компоненты нельзя (eine Entscheidung treffen, но не *eine Entscheidung machen)."
+  ],
+  "vocab": [
+    "das Funktionsverbgefüge — глагольно-именной оборот",
+    "das Funktionsverb — функциональный (вспомогательный по значению) глагол",
+    "die Entscheidung — решение",
+    "die Berücksichtigung — учёт, принятие во внимание",
+    "die Verfügung — распоряжение, наличие",
+    "der Druck — давление",
+    "die Anwendung — применение",
+    "die Frage — вопрос",
+    "in Betracht ziehen — принимать во внимание",
+    "zur Verfügung stehen — быть в распоряжении"
+  ],
+  "examples": [
+    "Wir müssen eine Entscheidung treffen. — Мы должны принять решение. (= entscheiden)",
+    "Diese Möglichkeit kommt nicht in Betracht. — Эта возможность не принимается во внимание.",
+    "Die neuen Regeln kommen ab Januar zur Anwendung. — Новые правила вступают в силу (применяются) с января.",
+    "Der Chef setzte seine Mitarbeiter unter Druck. — Начальник оказал давление на сотрудников.",
+    "Alle Unterlagen stehen Ihnen jederzeit zur Verfügung. — Все документы в любое время в вашем распоряжении."
+  ]
+}

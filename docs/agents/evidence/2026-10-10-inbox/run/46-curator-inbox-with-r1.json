@@ -1,0 +1,20 @@
+{
+ "uid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx",
+ "status": 200,
+ "reply": {
+  "result": {
+   "viewVersion": "inbox-views-v1",
+   "entries": [
+    {
+     "kind": "private_error_report",
+     "id": "lesson-error-rw1yvr9hq56e",
+     "lessonId": "ibx1_lesson",
+     "text": "Question two explanation two scores the wrong option after the timer end",
+     "createdAtMs": 1791685102784,
+     "readers": "author_only"
+    }
+   ],
+   "nextAnchor": null
+  }
+ }
+}

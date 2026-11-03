@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 2,
+    "l": 5
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+  "lessonTitle": "Условия труда и жизнь работника",
+  "focus": "Обсуждать условия труда, отпуск, договор и проблемы на работе, выражать своё мнение о работе. Степени сравнения прилагательных для сравнения условий труда и придаточные с dass для мнения.",
+  "grammar_points": [
+    "Степени сравнения прилагательных и наречий для условий труда: gut – besser – am besten, viel – mehr – am meisten; сравнение с als (mehr Urlaub als früher) и равенство с so … wie.",
+    "Превосходная степень в предложении: Diese Firma bietet das beste Gehalt; наречная форма am + -sten (Hier arbeitet man am flexibelsten).",
+    "Придаточное с dass для выражения мнения — глагол в конце: Ich finde, dass die Arbeitszeiten zu lang sind.",
+    "Безличный man для общих условий: Man bekommt 30 Tage Urlaub im Jahr."
+  ],
+  "vocab": [
+    "der Vertrag — договор, контракт",
+    "der Urlaub — отпуск",
+    "die Arbeitszeit — рабочее время",
+    "die Gleitzeit — гибкий график",
+    "das Homeoffice — работа из дома",
+    "die Bezahlung — оплата",
+    "der Stress — стресс",
+    "die Gewerkschaft — профсоюз",
+    "befristet — срочный (договор)",
+    "die Kündigungsfrist — срок уведомления об увольнении"
+  ],
+  "examples": [
+    "In meiner neuen Firma habe ich mehr Urlaub als im alten Job. — В новой фирме у меня больше отпуска, чем на старой работе.",
+    "Ich finde, dass die Bezahlung hier besser ist, aber der Stress ist auch größer. — Я считаю, что оплата здесь лучше, но и стресса больше.",
+    "Dank der Gleitzeit kann man am flexibelsten arbeiten. — Благодаря гибкому графику можно работать наиболее гибко.",
+    "Man bekommt einen unbefristeten Vertrag erst nach der Probezeit. — Бессрочный договор получают только после испытательного срока."
+  ]
+}

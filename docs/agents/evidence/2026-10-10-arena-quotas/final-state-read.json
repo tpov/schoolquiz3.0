@@ -1,0 +1,66 @@
+{
+ "story": "3.7 arena-quotas baseline (read-only)",
+ "utcNow": "2026-10-10T02:38:04.400Z",
+ "dayId": "2026-10-10",
+ "players": {
+  "rigPlayer": {
+   "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+   "economy": {
+    "pointsNolics": 5,
+    "lifePoints": 350,
+    "reservedNolics": 0,
+    "reservedLifePoints": 150,
+    "arenaSelectedHeldCount": 0,
+    "lifePointsUpdatedAtMs": 1791599858031
+   }
+  },
+  "playerA": {
+   "uid": "demoarena_player_a",
+   "economy": {
+    "pointsNolics": 200,
+    "lifePoints": 1000,
+    "reservedNolics": 0,
+    "reservedLifePoints": 0,
+    "arenaSelectedHeldCount": 0,
+    "lifePointsUpdatedAtMs": 1791599850815
+   }
+  }
+ },
+ "quotas": {
+  "rigPlayer": {
+   "dayId": "2026-10-10",
+   "randomIssued": 3
+  },
+  "playerA": {
+   "dayId": "2026-10-10",
+   "randomIssued": 20
+  }
+ },
+ "ratings": {
+  "bank-low": {
+   "ratingSum": 4,
+   "ratingCount": 2,
+   "ratingVersion": 2
+  },
+  "bank-high": {
+   "ratingSum": 3,
+   "ratingCount": 1,
+   "ratingVersion": 1
+  }
+ },
+ "tickets": {
+  "rigPlayer": {
+   "total": 22,
+   "reserved": [
+    "c229edf40857ef399583b31285a55ca481c653927dfa597e650188673ce26e23",
+    "d76e9bf259db4b257b3f1f2ca8a3ad34a566722b3a1ce0431ae29e5a2adec165",
+    "e9e6094e6a71590265038ad47ad4672e8eea565853cf58b5de6981e8fedecf6f"
+   ]
+  },
+  "playerA": {
+   "total": 45,
+   "reserved": []
+  }
+ },
+ "economyConstantsDoc": "absent"
+}

@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 3,
+    "l": 1
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+  "lessonTitle": "Стилевые уровни (Stilebenen): карта регистров немецкого",
+  "focus": "Урок-фундамент темы: научиться различать пять стилевых уровней (gehoben / normalsprachlich / umgangssprachlich / salopp / vulgär) и осознанно выбирать регистр под адресата, канал и ситуацию. Это грамматико-стилистический каркас, на котором строятся остальные уроки темы.",
+  "grammar_points": [
+    "Понятие Stilebene/Stilschicht: вертикальная ось от gehoben (возвышенный) через normalsprachlich (нейтральный) к umgangssprachlich, salopp и vulgär; в словарях это пометы 'geh.', 'ugs.', 'salopp', 'derb/vulg.'.",
+    "Регистр определяется тремя переменными: адресат (Distanz vs Nähe), канал (письменный vs устный) и ситуация (öffentlich vs privat); смена одной переменной сдвигает весь выбор средств.",
+    "Лексические дублеты как маркер уровня: одно понятие — разные слова по регистру (sterben/ableben/sterben/abkratzen; das Gesicht/das Antlitz/die Visage).",
+    "Стилистический разрыв (Stilbruch): немотивированное смешение уровней в одном тексте — ошибка; намеренный Stilbruch — приём иронии (об этом подробнее урок 5).",
+    "Нейтральный (normalsprachlich) уровень — базовая точка отсчёта: именно от него измеряется 'повышение' и 'понижение' тона, а не наоборот."
+  ],
+  "vocab": [
+    "die Stilebene — стилевой уровень, регистр",
+    "die Stilschicht — стилистический пласт",
+    "gehoben — возвышенный, высокий (о стиле)",
+    "die Umgangssprache — разговорный язык, обиходная речь",
+    "salopp — небрежный, фамильярный (стилистическая помета)",
+    "der Stilbruch — стилевой разрыв, смешение регистров",
+    "die Stilebene treffen — попасть в нужный регистр",
+    "angemessen — уместный, соответствующий ситуации",
+    "die Visage — рожа, морда (груб., вульг. о лице)",
+    "das Antlitz — лик (высок., поэт. о лице)"
+  ],
+  "examples": [
+    "Im Wörterbuch markiert das Kürzel »ugs.« die umgangssprachliche, »geh.« die gehobene Stilebene. — В словаре помета «ugs.» обозначает разговорный, а «geh.» — возвышенный стилевой уровень.",
+    "Ob du »Guten Tag«, »Hallo« oder »Na, was geht?« sagst, hängt von Adressat, Kanal und Situation ab. — Скажешь ли ты «Guten Tag», «Hallo» или «Na, was geht?», зависит от адресата, канала и ситуации.",
+    "Für »sterben« gibt es je nach Stilebene »ableben« (geh.), »sterben« (neutral) und »abkratzen« (salopp). — Для «умереть» есть в зависимости от регистра «ableben» (высок.), «sterben» (нейтр.) и «abkratzen» (фам.).",
+    "Ein Stilbruch entsteht, wenn ein feierlicher Text plötzlich in saloppe Wendungen abrutscht. — Стилевой разрыв возникает, когда торжественный текст вдруг скатывается в фамильярные обороты.",
+    "Wer die Stilebene des Gegenübers trifft, wirkt souverän; wer sie verfehlt, wirkt unbeholfen oder anbiedernd. — Кто попадает в регистр собеседника, выглядит уверенно; кто промахивается — неловко или заискивающе."
+  ]
+}

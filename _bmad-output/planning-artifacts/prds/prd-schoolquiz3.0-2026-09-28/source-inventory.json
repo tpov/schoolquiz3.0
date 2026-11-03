@@ -1,0 +1,134 @@
+[
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/HANDOFF.md",
+    "bytes": 13146,
+    "lines": 84,
+    "sha256": "366499aedb8efdf45703fd9ac5a183ecd65e92857aaf0a67a8b20c0d2aabbeca"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/00-BASELINE-AND-CATALOG.md",
+    "bytes": 8084,
+    "lines": 43,
+    "sha256": "599addc44183660287cfe7ff6bbe46e9f4e7630d7ecbfaaa64ec200d80877669"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/01-READY-DRAFTS.md",
+    "bytes": 7719,
+    "lines": 51,
+    "sha256": "6671045abc4b4c763f606ad14b7b4c53326075afc839af5040d69187fa7f67a8"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/02-ARENA-BALANCE-AND-RECOVERY.md",
+    "bytes": 8963,
+    "lines": 48,
+    "sha256": "683c6ecacb2a9fd43f843620f90d671d65d1221fba6d6659a81548c9d07cc58a"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/03-ARENA-ENTRY-UI.md",
+    "bytes": 7279,
+    "lines": 44,
+    "sha256": "550c2bcb0ff961eaf0af5b55c23f8bef7d24da3975ac8b5ac8e302f58821c6a0"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/04-ARENA-RUN-WRITES.md",
+    "bytes": 7614,
+    "lines": 60,
+    "sha256": "67c4c405a55681ba9d63bafbd38bebd80aec234bc51bd14deaff81d6a72160a6"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/05-ARENA-RUNNER-UI.md",
+    "bytes": 7463,
+    "lines": 51,
+    "sha256": "b87515a84883acca2e44611c008941320794ba49470990b4a981acc31340fc4c"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/06-LESSON-LIFECYCLE.md",
+    "bytes": 8232,
+    "lines": 42,
+    "sha256": "1a3e9812eb7ff1394f6c719d1da5d5f36e1429894b56e208f1e30fb05845efb8"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/07-TOURNAMENT-SERVER.md",
+    "bytes": 8536,
+    "lines": 44,
+    "sha256": "21c192e64fd3fe42047c61b2c7ebc9da682c6d5dd3896626012385ae581aa05e"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/08-TOURNAMENT-CLIENT.md",
+    "bytes": 6872,
+    "lines": 48,
+    "sha256": "aab971882a3c4b2894046c56749afa7ccee5fa84c14e332a84ff01d1e0b6f684"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/09-SHOP-AND-PREMIUM.md",
+    "bytes": 7373,
+    "lines": 42,
+    "sha256": "49861d74fb0f0995f7286f7921970179b293a3328ed2960415f6aefa318c2c93"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/10-PAYMENT-AND-DEPENDENCY-HARDENING.md",
+    "bytes": 7353,
+    "lines": 43,
+    "sha256": "6e45c9318a6eb1de6cd3217324ce8a5c6263ecad6b38f7cfff11ac7137ade680"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/10A-QUANTITY-REFUND-EVIDENCE.md",
+    "bytes": 12016,
+    "lines": 144,
+    "sha256": "e8fc147124fb29bbb7e2c6dd9890877e93c310887daeed19fa603aa2e00e7ba7"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/11-END-TO-END-ACCEPTANCE.md",
+    "bytes": 10387,
+    "lines": 72,
+    "sha256": "401522e2dd3af91e90e8768a5827df1f001a38e83476705f62f98b3aa345bd64"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/CHECKSUMS.sha256",
+    "bytes": 1513,
+    "lines": 17,
+    "sha256": "82c4dd19cf87fa17988152f2dbbecce52ce848de491b924dec87c53612271a55"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/CONTEXT-AND-STATE.md",
+    "bytes": 12536,
+    "lines": 72,
+    "sha256": "9d1eb166bbb3fbd2a6eac3acd4389ebdb8ae13b3c4effd6039e585189568c259"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/PRODUCT-CONTRACT.md",
+    "bytes": 10443,
+    "lines": 57,
+    "sha256": "ec00cf4635b0f7f1b3607e8bac6228ff4ff7e73617a287cac450b2bb698aae43"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/README.md",
+    "bytes": 10212,
+    "lines": 58,
+    "sha256": "1b36ca53a03b53233aa4ba04247143273f728ab37bffbab060604d8bd978be77"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/SOURCE-MAP.md",
+    "bytes": 26221,
+    "lines": 218,
+    "sha256": "31d270cbcb8cbc3476e729f5d9bd460444365253018e04644785ad840e48e540"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/STATE-MANIFEST.json",
+    "bytes": 61369,
+    "lines": 891,
+    "sha256": "a6ff0e83e6c4b240ec314704cb60c5b466ca01fd4cf21c460e50244caac01484"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/USER-CONTINUATION-PLAN.md",
+    "bytes": 16531,
+    "lines": 101,
+    "sha256": "5a21f4b2e3f990e96e0519cdffd5dfb74925b73e5804f70dab2c7ca077d1ada8"
+  },
+  {
+    "path": "_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/original-agent-report.txt",
+    "bytes": 12515,
+    "lines": 89,
+    "sha256": "bf0df5b5300a61d249b91c264b4fb1b99024197194730cc01b7db551b9825ee8"
+  }
+]

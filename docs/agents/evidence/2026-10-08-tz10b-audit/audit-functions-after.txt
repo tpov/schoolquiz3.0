@@ -1,0 +1,40 @@
+# npm audit report
+
+uuid  <11.1.1
+Severity: moderate
+uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided - https://github.com/advisories/GHSA-w5hq-g745-h8pq
+fix available via `npm audit fix --force`
+Will install firebase-admin@14.5.0, which is a breaking change
+node_modules/uuid
+  gaxios  6.4.0 - 6.7.1
+  Depends on vulnerable versions of uuid
+  node_modules/gaxios
+  google-gax  4.0.5-experimental - 4.6.1
+  Depends on vulnerable versions of retry-request
+  Depends on vulnerable versions of uuid
+  node_modules/google-gax
+    @google-cloud/firestore  7.5.0-pre.0 || 7.6.0 - 7.11.6
+    Depends on vulnerable versions of google-gax
+    node_modules/@google-cloud/firestore
+      firebase-admin  7.0.0 - 8.2.0 || 11.0.0 - 14.3.0
+      Depends on vulnerable versions of @google-cloud/firestore
+      Depends on vulnerable versions of @google-cloud/storage
+      node_modules/firebase-admin
+  teeny-request  3.9.1 - 9.0.0
+  Depends on vulnerable versions of uuid
+  node_modules/teeny-request
+    @google-cloud/storage  2.2.0 - 2.5.0 || 5.19.0 - 8.0.0
+    Depends on vulnerable versions of retry-request
+    Depends on vulnerable versions of teeny-request
+    node_modules/@google-cloud/storage
+    retry-request  7.0.0 - 7.0.2
+    Depends on vulnerable versions of teeny-request
+    node_modules/retry-request
+
+8 moderate severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force

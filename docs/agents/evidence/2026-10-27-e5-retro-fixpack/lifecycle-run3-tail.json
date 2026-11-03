@@ -1,0 +1,70 @@
+{"stage":"target-verified-private-demo","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1"}
+{"stage":"fresh-accounts-and-namespaced-verified-course-created-create-only","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1"}
+{"stage":"real-HTTP-CREATE-reserves-12-boxes-once-with-identical-replay","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1"}
+{"stage":"waiting-for-real-qualification-start","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1","startsAtMs":1793110313302}
+{"stage":"player-finished-three-attempts","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1","playerIndex":0}
+{"stage":"player-finished-three-attempts","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1","playerIndex":1}
+{"stage":"player-finished-three-attempts","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1","playerIndex":2}
+{"stage":"player-finished-three-attempts","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1","playerIndex":3}
+{"stage":"real-HTTP-qualification-three-EASY-attempts-per-player-all-settled","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1"}
+{"stage":"own-controller-continuation","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1","attempt":0,"status":"WAITING","transitions":1}
+{"stage":"repeated-sweeps-close-qualification-once-abort-probe-proved-atomicity","runId":"lc_aab503494ac949bbb1e400fcb0f86ad1"}
+{
+  "status": "FAIL",
+  "stage": "repeated-sweeps-close-qualification-once-abort-probe-proved-atomicity",
+  "code": 2,
+  "message": "2 UNKNOWN: ",
+  "checksCompleted": [
+    "fresh-accounts-and-namespaced-verified-course-created-create-only",
+    "real-HTTP-CREATE-reserves-12-boxes-once-with-identical-replay",
+    "real-HTTP-qualification-three-EASY-attempts-per-player-all-settled",
+    "repeated-sweeps-close-qualification-once-abort-probe-proved-atomicity"
+  ],
+  "bounds": {
+    "httpCalls": 300,
+    "transactions": 112,
+    "writes": 272,
+    "queryReads": 4,
+    "sweeps": 2,
+    "injectedAborts": [
+      "ABORT_CLOSE"
+    ]
+  },
+  "evidence": {
+    "runId": "lc_aab503494ac949bbb1e400fcb0f86ad1",
+    "projectId": "demo-schoolquiz-mvp",
+    "fixtureNames": {
+      "catalog": "lc_aab503494ac949bbb1e400fcb0f86ad1_catalog",
+      "course": "lc_aab503494ac949bbb1e400fcb0f86ad1_course",
+      "section": "lc_aab503494ac949bbb1e400fcb0f86ad1_section",
+      "theme": "lc_aab503494ac949bbb1e400fcb0f86ad1_theme",
+      "lesson": "lc_aab503494ac949bbb1e400fcb0f86ad1_lesson",
+      "submission": "lc_aab503494ac949bbb1e400fcb0f86ad1_submission",
+      "mainEvent": "lc_aab503494ac949bbb1e400fcb0f86ad1_mainEvent",
+      "event0": "lc_aab503494ac949bbb1e400fcb0f86ad1_event0",
+      "event1": "lc_aab503494ac949bbb1e400fcb0f86ad1_event1",
+      "event2": "lc_aab503494ac949bbb1e400fcb0f86ad1_event2",
+      "event3": "lc_aab503494ac949bbb1e400fcb0f86ad1_event3"
+    },
+    "retainedSyntheticFixtures": true,
+    "mountedSourceShas": {
+      "index.js": "5bc8850a8b087ca704243e003a9d56bb87edc1aa73b1080e5d0525902dfaedb1",
+      "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
+      "tournament-service.js": "a69ddb4575ff28c6ff30d6dee43fae7e0a6cf18f56c020f49db4963877d2206b",
+      "tournament-source-bank.js": "e6c98dbbc4ce8238093d00b7ab5caca8ed96fa81e250edb16793dd8b49cfeb81"
+    },
+    "createdFixtureDocuments": 102,
+    "creation": {
+      "eventId": "lc_aab503494ac949bbb1e400fcb0f86ad1_mainEvent",
+      "status": "CREATED",
+      "escrow": {
+        "reservedBoxes": 12,
+        "remainingBoxes": 12,
+        "paidBoxes": 0,
+        "returnedBoxes": 0
+      }
+    },
+    "verifiedQualificationRuns": 12
+  }
+}
+EXIT=1

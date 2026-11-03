@@ -1,0 +1,58 @@
+{
+ "operations": [
+  {
+   "schemaVersion": 1,
+   "uid": "VLqWYMHXqyI8pPWQdNXdkQg9FY6E",
+   "operationId": "d01544cb-63b8-40e1-8365-319385f209a1",
+   "kind": "OPEN",
+   "fingerprint": "ff4b58b9cd824a0ab24b68274028119fc3ed82078e6cdbdc6c633d93c219be40",
+   "createdAtMs": 1792349740903,
+   "response": {
+    "schemaVersion": 1,
+    "ownerUid": "VLqWYMHXqyI8pPWQdNXdkQg9FY6E",
+    "operationId": "d01544cb-63b8-40e1-8365-319385f209a1",
+    "kind": "OPEN",
+    "status": "OPENED",
+    "boxCount": 0,
+    "boxStreakDays": 1,
+    "nextBoxAtMs": 1792436140903,
+    "nextBonusBoxAtMs": 0,
+    "earnedBoxes": 0,
+    "openedBoxes": 1,
+    "premiumUntilMs": 0,
+    "reward": {
+     "type": "addNolics",
+     "amount": 1159
+    }
+   }
+  }
+ ],
+ "receipts": [
+  {
+   "id": "box_ee26bb59192e8b20f31aa51de040897c46826d044ebc947c146f2e4cf0d4bd73",
+   "data": {
+    "kind": "BOX_OPENED",
+    "messageKey": "receipt.box_opened",
+    "params": {
+     "status": "OPENED",
+     "earnedBoxes": 0,
+     "openedBoxes": 1,
+     "reward": {
+      "type": "addNolics",
+      "amount": 1159
+     }
+    },
+    "amount": -1,
+    "currency": "BOXES",
+    "operationId": "d01544cb-63b8-40e1-8365-319385f209a1",
+    "createdAtMs": 1792349740903
+   }
+  }
+ ],
+ "user": {
+  "boxCount": 0,
+  "nolics": 1159,
+  "boxStreakDays": 1,
+  "nextBoxAtMs": 1792436140903
+ }
+}

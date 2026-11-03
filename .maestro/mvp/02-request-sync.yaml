@@ -1,0 +1,14 @@
+appId: com.tpov.schoolquiz.mvp
+name: Isolated MVP manual synchronization
+---
+- launchApp:
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "Open menu"
+- assertVisible: "SYNC NOW"
+- tapOn: "SYNC NOW"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- assertNotVisible: "Not synced yet"
+- takeScreenshot: "sync-requested"

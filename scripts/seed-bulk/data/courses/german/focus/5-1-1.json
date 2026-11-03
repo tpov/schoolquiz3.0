@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 1,
+    "l": 1
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+  "lessonTitle": "Vorgangspassiv в Präsens — основа пассива (werden + Partizip II)",
+  "focus": "Научить строить пассив процесса (Vorgangspassiv) в настоящем времени и превращать активное предложение в пассивное, когда важно действие, а не деятель.",
+  "grammar_points": [
+    "Формула Vorgangspassiv: werden (спрягается по лицу/числу) + Partizip II смыслового глагола, который стоит в конце предложения (рамочная конструкция).",
+    "Спряжение werden в Präsens: ich werde, du wirst, er/sie/es wird, wir werden, ihr werdet, sie/Sie werden.",
+    "При трансформации Aktiv → Passiv прямое дополнение (Akkusativ) становится подлежащим в Nominativ: 'Der Mechaniker repariert das Auto' → 'Das Auto wird repariert'.",
+    "Деятель чаще опускается, потому что в пассиве он неважен; если нужен — вводится предлогом von + Dativ.",
+    "Партицип II: слабые глаголы ge-...-t (gemacht), сильные ge-...-en с возможной сменой корня (geschrieben); глаголы на -ieren и с неотделяемой приставкой без ge- (repariert, verkauft)."
+  ],
+  "vocab": [
+    "das Passiv — пассив (страдательный залог)",
+    "werden — становиться (вспомогательный глагол пассива)",
+    "das Partizip II — причастие II (третья форма глагола)",
+    "reparieren — ремонтировать",
+    "herstellen — производить, изготавливать",
+    "der Vorgang — процесс, ход действия",
+    "verkaufen — продавать",
+    "benutzen — использовать"
+  ],
+  "examples": [
+    "Das Auto wird in der Werkstatt repariert. — Машину ремонтируют в мастерской.",
+    "Hier werden moderne Maschinen hergestellt. — Здесь производят современные станки.",
+    "Die Rechnung wird sofort bezahlt. — Счёт оплачивается немедленно.",
+    "Diese Software wird von Millionen Menschen benutzt. — Этим программным обеспечением пользуются миллионы людей.",
+    "In Deutschland werden viele Autos exportiert. — В Германии экспортируется много автомобилей."
+  ]
+}

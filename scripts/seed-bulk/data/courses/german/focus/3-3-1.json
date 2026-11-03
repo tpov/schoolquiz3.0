@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 3,
+    "l": 1
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+  "lessonTitle": "Урок 1. Что такое Perfekt: haben + Partizip II",
+  "focus": "Познакомить с разговорным прошедшим временем Perfekt. Показать базовую формулу: вспомогательный глагол haben (спрягается) + Partizip II (в конце предложения). На этом уроке — только слабые (правильные) глаголы с haben.",
+  "grammar_points": [
+    "Perfekt — основное прошедшее время в устной речи и переписке; в русском ему соответствует прошедшее время (я делал / я сделал).",
+    "Структура: подлежащее + спрягаемая форма haben на 2-м месте + ... + Partizip II в самом конце (рамочная конструкция).",
+    "Спряжение haben в настоящем времени: ich habe, du hast, er/sie/es hat, wir haben, ihr habt, sie/Sie haben.",
+    "Partizip II слабых глаголов образуется по схеме ge- + основа + -t: machen → gemacht, lernen → gelernt, spielen → gespielt.",
+    "Если основа оканчивается на -t/-d (или сложную группу согласных), вставляется -e-: arbeiten → gearbeitet, warten → gewartet."
+  ],
+  "vocab": [
+    "machen — делать",
+    "lernen — учить, учиться",
+    "spielen — играть",
+    "arbeiten — работать",
+    "kaufen — покупать",
+    "wohnen — жить, проживать",
+    "der Tag — день",
+    "gestern — вчера"
+  ],
+  "examples": [
+    "Ich habe gestern Deutsch gelernt. — Я вчера учил немецкий.",
+    "Was hast du gemacht? — Что ты делал?",
+    "Die Kinder haben im Park gespielt. — Дети играли в парке.",
+    "Wir haben den ganzen Tag gearbeitet. — Мы работали целый день.",
+    "Sie hat ein neues Auto gekauft. — Она купила новую машину."
+  ]
+}

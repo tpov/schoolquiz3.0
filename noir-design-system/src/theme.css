@@ -1,0 +1,63 @@
+/* NOIR — CSS-змінні. Дзеркало src/tokens.ts, джерело правди — tokens/noir.tokens.json. */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=JetBrains+Mono:wght@400..700&display=swap");
+
+:root {
+  --noir-bg: #000000;
+  --noir-s1: #1E1E24;
+  --noir-s2: #26262E;
+  --noir-s3: #2E2E36;
+  --noir-s4: #383840;
+
+  --noir-outline: #44444E;
+  --noir-outline-strong: #5E5E6A;
+  --noir-hair: rgba(255, 255, 255, 0.065);
+  --noir-top-light: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+
+  --noir-t1: #FFFFFF;
+  --noir-t2: #B8B8B8;
+  --noir-t3: #9C9CA6;
+  --noir-t-off: #6E6E78;
+  --noir-ink: #05090F;
+
+  /* Скін за замовчуванням — azure. Перевизначається на корені застосунку. */
+  --noir-accent: #0599EF;
+
+  --noir-gold: #FFD700;
+  --noir-success: #5CC97A;
+  --noir-danger: #F0564B;
+  --noir-violet: #9680F2;
+
+  --noir-radius-sm: 8px;
+  --noir-radius-md: 12px;
+  --noir-radius-lg: 16px;
+  --noir-radius-xl: 20px;
+  --noir-radius-pill: 999px;
+
+  --noir-font-display: "Archivo", system-ui, sans-serif;
+  --noir-font-body: system-ui, "Roboto", sans-serif;
+  --noir-font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+[data-noir-skin="amethyst"] { --noir-accent: #9680F2; }
+[data-noir-skin="teal"] { --noir-accent: #00AFAF; }
+
+body {
+  margin: 0;
+  background: var(--noir-bg);
+  color: var(--noir-t2);
+  font-family: var(--noir-font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Archivo завжди SemiExpanded — це половина характеру системи. */
+.noir-display {
+  font-family: var(--noir-font-display);
+  font-variation-settings: "wdth" 112;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.noir-mono {
+  font-family: var(--noir-font-mono);
+  font-feature-settings: "tnum";
+}

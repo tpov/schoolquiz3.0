@@ -1,0 +1,124 @@
+--------- beginning of main
+10-09 08:16:02.444    77    77 D hwcomposer: VSYNC event status:1
+10-09 08:16:02.745   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:02.826    77    77 D hwcomposer: VSYNC event status:0
+10-09 08:16:03.296   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:03.838   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:04.379   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:04.914   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:05.455   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:05.990   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:06.532   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:06.541    77    77 D hwcomposer: VSYNC event status:1
+10-09 08:16:06.892    77    77 D hwcomposer: VSYNC event status:0
+10-09 08:16:07.073   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:07.534    77    77 D hwcomposer: VSYNC event status:1
+10-09 08:16:07.613   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:07.892    77    77 D hwcomposer: VSYNC event status:0
+10-09 08:16:08.154   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:08.670   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:09.211   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:09.712   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:10.242   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:10.752   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:11.262   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:11.786   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:12.327   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:12.850   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:13.391   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:13.932   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:14.433   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:14.974   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:15.515   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:16.056   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:16.576   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:17.092   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+--------- beginning of kernel
+10-09 08:16:15.401     0     0 I br-0f33fa01a21d: port 2(veth7bb2836) entered disabled state
+10-09 08:16:15.404     0     0 I veth4ab7079: renamed from eth0
+10-09 08:16:15.457     0     0 I br-0f33fa01a21d: port 2(veth7bb2836) entered disabled state
+10-09 08:16:15.459     0     0 I veth7bb2836 (unregistering): left allmulticast mode
+10-09 08:16:15.459     0     0 I veth7bb2836 (unregistering): left promiscuous mode
+10-09 08:16:15.459     0     0 I br-0f33fa01a21d: port 2(veth7bb2836) entered disabled state
+10-09 08:16:17.633   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:15.705     0     0 I br-0f33fa01a21d: port 2(vethc6eac97) entered blocking state
+10-09 08:16:15.705     0     0 I br-0f33fa01a21d: port 2(vethc6eac97) entered disabled state
+10-09 08:16:15.705     0     0 I vethc6eac97: entered allmulticast mode
+10-09 08:16:15.705     0     0 I vethc6eac97: entered promiscuous mode
+10-09 08:16:15.770     0     0 I eth0    : renamed from veth6d5d36e
+10-09 08:16:15.782     0     0 I br-0f33fa01a21d: port 2(vethc6eac97) entered blocking state
+10-09 08:16:15.782     0     0 I br-0f33fa01a21d: port 2(vethc6eac97) entered forwarding state
+10-09 08:16:18.162   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:18.693   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:19.234   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:19.766   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:20.293   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:20.826   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:21.367   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:21.893   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:22.426   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:22.962   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:23.502   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:24.042   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:24.583   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:25.121   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:25.660   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:26.199   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:26.706   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:27.242   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:27.746   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:28.286   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:28.825   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:29.366   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:29.907   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:30.422   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:30.962   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:31.502   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:32.032   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:32.562   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:33.103   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:33.632   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:34.173   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:34.714   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:34.739   128   589 I netd    : setProcSysNet(4, 2, eth0, retrans_time_ms, 750) <0.12ms>
+10-09 08:16:34.739   128  7751 I netd    : setProcSysNet(4, 2, eth0, ucast_solicit, 10) <0.06ms>
+10-09 08:16:34.739   128  7751 I netd    : setProcSysNet(6, 2, eth0, retrans_time_ms, 750) <0.05ms>
+10-09 08:16:34.740   128  7751 I netd    : setProcSysNet(6, 2, eth0, ucast_solicit, 10) <0.03ms>
+10-09 08:16:35.234   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:35.765   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:36.279   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:36.818   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:37.326   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:37.841   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:38.381   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:38.893   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:39.433   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:39.959   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:40.501   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:41.042   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:41.580   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:42.121   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:42.639   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:43.170   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:43.698   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:44.226   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:44.759   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:45.293   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:45.822   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:46.363   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:46.893   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:47.412   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:47.932   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:48.452   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:48.989   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:49.525   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:50.054   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:50.099   128  7751 I netd    : setProcSysNet(4, 2, eth0, retrans_time_ms, 750) <0.12ms>
+10-09 08:16:50.099   128  7751 I netd    : setProcSysNet(4, 2, eth0, ucast_solicit, 10) <0.03ms>
+10-09 08:16:50.099   128   589 I netd    : setProcSysNet(6, 2, eth0, retrans_time_ms, 750) <0.09ms>
+10-09 08:16:50.099   128   589 I netd    : setProcSysNet(6, 2, eth0, ucast_solicit, 10) <0.03ms>
+10-09 08:16:50.574   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:51.099   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:51.640   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:52.153   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:16:50.471     0     0 I logd    : logdr: UID=0 GID=0 PID=8683 n tail=0 logMask=99 pid=0 start=0ns deadline=0ns

@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 2,
+    "l": 3
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+  "lessonTitle": "Урок 3. Сильное склонение (без артикля)",
+  "focus": "Научиться ставить окончания прилагательных, когда перед ними нет артикля — в Nullartikel-конструкциях (вещественные/абстрактные существительные, множественное число без артикля, после количественных слов). Прилагательное берёт на себя роль артикля.",
+  "grammar_points": [
+    "Без артикля прилагательное получает «сильные» окончания, повторяющие окончания определённого артикля: -er, -e, -es, -em, -en.",
+    "Nominativ: -er (guter Wein), -e (frische Milch), -es (kaltes Wasser), мн. ч. -e (nette Leute).",
+    "Akkusativ: муж. -en (guten Wein), жен. -e, ср. -es, мн. -e.",
+    "Dativ: муж./ср. -em (mit gutem Wein, aus reinem Gold), жен. -er (mit frischer Milch), мн. -en (mit netten Leuten).",
+    "ВАЖНОЕ исключение в Genitiv муж./ср.: прилагательное берёт -en, а не -es (wegen schlechten Wetters), потому что само существительное уже получает -s.",
+    "Сильное склонение часто встречается после viele, einige, mehrere, wenige, а также после чисел: они НЕ считаются артиклем, и прилагательное после них во мн. ч. идёт по сильному образцу (viele gute Ideen)."
+  ],
+  "vocab": [
+    "der Nullartikel — нулевой артикль (отсутствие артикля)",
+    "stark — сильный (о склонении)",
+    "frisch — свежий",
+    "der Stoff — материал, вещество, ткань",
+    "die Eigenschaft — свойство, качество",
+    "wertvoll — ценный",
+    "echt — настоящий, подлинный",
+    "die Erfahrung — опыт"
+  ],
+  "examples": [
+    "Guter Kaffee macht den Morgen besser. — Хороший кофе делает утро лучше.",
+    "Ich trinke gern kaltes Wasser mit frischer Minze. — Я люблю пить холодную воду со свежей мятой.",
+    "Sie arbeitet mit großem Engagement. — Она работает с большой самоотдачей.",
+    "Der Ring ist aus echtem Gold. — Кольцо из настоящего золота.",
+    "Wir haben viele wertvolle Erfahrungen gesammelt. — Мы накопили много ценного опыта.",
+    "Wegen starken Regens fiel das Spiel aus. — Из-за сильного дождя матч отменили."
+  ]
+}

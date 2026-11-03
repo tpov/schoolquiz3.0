@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 4,
+    "l": 2
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+  "lessonTitle": "Урок 2. Мебель и предметы: винительный падеж с haben",
+  "focus": "Описать обстановку комнаты и сказать, что у тебя есть. Ввести аккузатив неопределённого артикля после глагола haben и отрицание kein.",
+  "grammar_points": [
+    "Винительный падеж (Akkusativ): меняется только мужской род — ein → einen, der → den. Женский и средний род не меняются: eine/die, ein/das.",
+    "Глагол haben управляет аккузативом: Ich habe einen Tisch / eine Lampe / ein Bett.",
+    "Отрицание kein/keine/keinen в аккузативе: Ich habe keinen Stuhl. Ich habe keine Lampe.",
+    "Прямой порядок слов: подлежащее + сказуемое + дополнение в Akkusativ (Ich + habe + einen Tisch).",
+    "Множественное число предметов мебели в Akkusativ совпадает с Nominativ: zwei Stühle, drei Betten."
+  ],
+  "vocab": [
+    "der Tisch — стол",
+    "der Stuhl — стул",
+    "das Bett — кровать",
+    "der Schrank — шкаф",
+    "das Sofa — диван",
+    "die Lampe — лампа",
+    "das Fenster — окно",
+    "die Tür — дверь",
+    "der Teppich — ковёр",
+    "das Regal — полка, стеллаж"
+  ],
+  "examples": [
+    "Ich habe einen Tisch und vier Stühle. — У меня есть стол и четыре стула.",
+    "Im Schlafzimmer steht ein Bett. — В спальне стоит кровать.",
+    "Wir haben ein Sofa, aber keinen Schrank. — У нас есть диван, но нет шкафа.",
+    "Die Lampe ist neu und der Teppich ist alt. — Лампа новая, а ковёр старый.",
+    "Hast du ein Regal im Zimmer? — У тебя есть полка в комнате?"
+  ]
+}

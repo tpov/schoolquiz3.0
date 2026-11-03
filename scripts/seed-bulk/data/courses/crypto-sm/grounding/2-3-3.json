@@ -1,0 +1,27 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 3,
+    "l": 3
+  },
+  "sectionTitle": "Структура рынка",
+  "themeTitle": "CHoCH — смена характера (change of character)",
+  "lessonTitle": "Свинговый CHoCH vs внутренний (internal) и MSS",
+  "tier": 3,
+  "teaching_points": [
+    "Структуру читают на двух уровнях: внешняя/свинговая (external/swing) — крупные значимые экстремумы; внутренняя (internal) — мелкие хай/лоу ВНУТРИ крупного движения.",
+    "Валидный «настоящий» CHoCH в доктрине — это слом ВНЕШНЕГО свинга, который создал предыдущий BOS. В источнике прямо: «A CHoCH is valid only when the price breaks the swing that produced the previous BoS».",
+    "Внутренние хай/лоу НЕ считаются за полноценный CHoCH: «Internal highs and lows do not count… they create confusion». Их слом — это internal CHoCH, более слабый и шумный сигнал.",
+    "MSS (market structure shift) в трактовке ICT — это «первичный сигнал смены направления», слом недавнего свинга; он МОЖЕТ не перерасти в полноценный разворот: «MSS can happen and resolve back into the prior trend without ever producing a CHoCH».",
+    "Иерархия силы: internal CHoCH / MSS — ранний и слабый сигнал (часто откат); swing CHoCH — более весомое подтверждение смены характера. Источники: MSS «can fail and revert», CHoCH — «higher probability of real trend change».",
+    "Зачем это «умным деньгам» по доктрине: считается, что мелкие internal-сломы — это «шум» и ловушки для ритейла, а смена характера на внешней структуре отражает реальное перепозиционирование крупного капитала. Это приписываемое намерение.",
+    "Частая ошибка: торговать каждый мелкий internal-слом как разворот. В боковике (range) внутренние сломы дают частые ложные сигналы."
+  ],
+  "example": "SOL в аптренде на 1H. Внутри последней импульсной волны цена ломает мелкий локальный минимум — это internal CHoCH (может быть просто откат). Но пока не пробит последний значимый swing higher low, на котором держался весь рост, свингового CHoCH (полноценной смены характера) нет.",
+  "caveats": "Это TIER 3: доктрина SMC/ICT, МОДЕЛЬ приписываемого намерения, не доказанный закон. Граница между «внутренним» и «свинговым» субъективна и зависит от таймфрейма; терминология MSS/CHoCH у разных авторов плавает (иногда их смешивают). Это не строгая математическая классификация — нет доказанного статистического edge.",
+  "sources": [
+    "https://innercircletrader.net/tutorials/mss-vs-choch/",
+    "https://dailypriceaction.com/blog/smc-market-structure/",
+    "https://tradingfinder.com/education/forex/ict-choch-in-trading/"
+  ]
+}

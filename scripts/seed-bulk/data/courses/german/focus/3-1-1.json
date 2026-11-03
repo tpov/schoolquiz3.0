@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 1,
+    "l": 1
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+  "lessonTitle": "Аккузатив: винительный падеж и его роль",
+  "focus": "Закрепить Akkusativ как падеж прямого дополнения (отвечает на вопрос «кого? что?») и научить менять артикли мужского рода. Это фундамент темы — без него предлоги дальше не освоить.",
+  "grammar_points": [
+    "Akkusativ — падеж прямого дополнения, отвечает на вопрос wen?/was? (кого?/что?).",
+    "Меняется ТОЛЬКО мужской род: der → den, ein → einen, kein → keinen, mein → meinen.",
+    "Женский (die/eine), средний (das/ein) и множественное (die) в Akkusativ совпадают с Nominativ.",
+    "Глаголы с прямым дополнением требуют Akkusativ: haben, kaufen, brauchen, sehen, essen, trinken, suchen, lesen.",
+    "Личные местоимения в Akkusativ: ich→mich, du→dich, er→ihn, sie→sie, es→es, wir→uns, ihr→euch, sie/Sie→sie/Sie."
+  ],
+  "vocab": [
+    "der Mantel — пальто",
+    "der Tisch — стол",
+    "der Apfel — яблоко",
+    "die Tasche — сумка",
+    "das Buch — книга",
+    "kaufen — покупать",
+    "brauchen — нуждаться, надо",
+    "suchen — искать",
+    "sehen — видеть",
+    "der Schlüssel — ключ"
+  ],
+  "examples": [
+    "Ich kaufe den Mantel. — Я покупаю пальто.",
+    "Er braucht einen Tisch. — Ему нужен стол.",
+    "Wir haben keinen Apfel mehr. — У нас больше нет яблока.",
+    "Ich suche meine Tasche. — Я ищу свою сумку.",
+    "Siehst du das Buch? — Ja, ich sehe es. — Ты видишь книгу? — Да, я её вижу.",
+    "Ich liebe dich. — Я люблю тебя."
+  ]
+}

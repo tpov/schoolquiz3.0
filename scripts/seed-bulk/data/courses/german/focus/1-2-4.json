@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 2,
+    "l": 4
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Приветствия и знакомство (Begrüßung, sich vorstellen)",
+  "lessonTitle": "Урок 4. «Как дела?» и вежливое обращение (Wie geht's? — formell/informell)",
+  "focus": "Спросить, как дела, и ответить; различать обращение на «ты» (du) и на «вы» (Sie). Базовые слова вежливости в знакомстве.",
+  "grammar_points": [
+    "Формула Wie geht es dir? (неформально) и Wie geht es Ihnen? (вежливо) — местоимения dir/Ihnen запоминаются как часть фразы.",
+    "Вежливое местоимение Sie (Вы) всегда пишется с большой буквы; глагол при нём имеет окончание -en: Wie heißen Sie? Woher kommen Sie?",
+    "Краткий ответ Mir geht es gut. / Es geht. / Nicht so gut. (как дела) — без подробного разбора, как формула.",
+    "Слова-усилители ответа: sehr gut, gut, danke — порядок: Danke, gut.",
+    "Сравнение трёх обращений: du (ты), ihr (вы — несколько друзей), Sie (Вы — вежливо)."
+  ],
+  "vocab": [
+    "Sie — Вы (вежливо)",
+    "gehen — идти (в формуле «как дела»)",
+    "gut — хорошо",
+    "sehr — очень",
+    "danke — спасибо",
+    "bitte — пожалуйста",
+    "der Herr — господин",
+    "die Frau — госпожа",
+    "und — и, а"
+  ],
+  "examples": [
+    "Wie geht es dir? — Danke, gut! — Как у тебя дела? — Спасибо, хорошо!",
+    "Wie geht es Ihnen, Frau Müller? — Как Ваши дела, госпожа Мюллер?",
+    "Mir geht es sehr gut, danke. Und dir? — У меня всё очень хорошо, спасибо. А у тебя?",
+    "Wie heißen Sie? — Ich heiße Thomas Becker. — Как Вас зовут? — Меня зовут Томас Беккер.",
+    "Danke! — Bitte! — Спасибо! — Пожалуйста!"
+  ]
+}

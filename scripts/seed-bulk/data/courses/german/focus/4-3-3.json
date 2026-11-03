@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 3,
+    "l": 3
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+  "lessonTitle": "Урок 3. Лекарства и советы: рекомендации с модальными глаголами",
+  "focus": "Давать и понимать рекомендации по лечению и образу жизни через модальные глаголы sollen, müssen, dürfen в рамочной конструкции. Лексика аптеки и лечения.",
+  "grammar_points": [
+    "Модальный глагол sollen для совета/предписания врача: Sie sollen viel trinken und im Bett bleiben.",
+    "müssen (необходимость) и nicht dürfen (запрет): Du musst die Tabletten nehmen; Du darfst keinen Alkohol trinken.",
+    "Рамочная конструкция (Satzklammer): спрягаемый модальный глагол на 2-й позиции, смысловой инфинитив — в конце.",
+    "Императив для коротких советов (повтор и опора на урок 4): Trinken Sie viel Tee! Bleiben Sie im Bett!",
+    "Дозировка и кратность: dreimal täglich, vor/nach dem Essen — обстоятельства времени в предложении."
+  ],
+  "vocab": [
+    "die Apotheke — аптека",
+    "das Medikament — лекарство, медикамент",
+    "die Tablette — таблетка",
+    "der Hustensaft — сироп от кашля",
+    "die Salbe — мазь",
+    "das Rezept — рецепт",
+    "die Nebenwirkung — побочное действие",
+    "einnehmen — принимать (лекарство)",
+    "sollen — следует, должен (по совету)",
+    "müssen — быть должным, обязанным",
+    "dürfen — мочь, иметь право",
+    "verschreiben — выписывать (рецепт)",
+    "die Dosis — доза",
+    "sich ausruhen — отдыхать, восстанавливаться"
+  ],
+  "examples": [
+    "Sie sollen dreimal täglich eine Tablette einnehmen. — Вам следует принимать по одной таблетке три раза в день.",
+    "Du musst dich jetzt ausruhen und darfst nicht rausgehen. — Тебе нужно сейчас отдохнуть, и нельзя выходить на улицу.",
+    "Der Arzt hat mir einen Hustensaft verschrieben. — Врач выписал мне сироп от кашля.",
+    "Nehmen Sie die Tabletten bitte nach dem Essen ein. — Принимайте таблетки, пожалуйста, после еды.",
+    "Diese Salbe hat fast keine Nebenwirkungen. — У этой мази почти нет побочных действий."
+  ]
+}

@@ -1,0 +1,289 @@
+{
+  "label": "final",
+  "at": "2026-10-10T03:37:21.607Z",
+  "roomVersion": 15,
+  "tickets": [
+    {
+      "owner": "HDb3uVEO",
+      "ticket": "e6136939d990",
+      "attempt": "b2ef06dd4d47",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 3
+    },
+    {
+      "owner": "HDb3uVEO",
+      "ticket": "8d501662d2ca",
+      "attempt": "86cbc0189b8f",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 3
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "aab909956f75",
+      "attempt": "3da6a7c31b4d",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 3
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "f143f023b9b6",
+      "attempt": "cf575a94463d",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 4
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "8374ce0dae87",
+      "attempt": "151497c7ba30",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 4
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "cf55e0ecec2c",
+      "attempt": "1e6b742f737f",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 4
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "8cec4267b9d3",
+      "attempt": "c9a8ee137848",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 5
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "c4848342091c",
+      "attempt": "4f8a93610393",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "runner_checkpoint_revision": 4
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "035501b240b8",
+      "attempt": "87f5f95ec061",
+      "server_status": "CANCELLED",
+      "local_use": "UNUSED",
+      "decision": "CANCEL",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "54ff8b2477ba",
+      "attempt": "f80b5bc655f4",
+      "server_status": "CANCELLED",
+      "local_use": "UNUSED",
+      "decision": "CANCEL",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "602f74cdd3f1",
+      "attempt": "ca0f3a51cfa8",
+      "server_status": "CANCELLED",
+      "local_use": "UNUSED",
+      "decision": "CANCEL",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "e8595bcdebb9",
+      "attempt": "f5147ba07422",
+      "server_status": "CANCELLED",
+      "local_use": "UNUSED",
+      "decision": "CANCEL",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "f533a6b74267",
+      "attempt": "42074d3715c2",
+      "server_status": "CANCELLED",
+      "local_use": "UNUSED",
+      "decision": "CANCEL",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "d76e9bf259db",
+      "attempt": "c7ec3a8f7089",
+      "server_status": "RESERVED",
+      "local_use": "UNUSED",
+      "decision": "NONE",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "e9e6094e6a71",
+      "attempt": "bbfec034fea4",
+      "server_status": "RESERVED",
+      "local_use": "UNUSED",
+      "decision": "NONE",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "c229edf40857",
+      "attempt": "f9af5c8cf667",
+      "server_status": "RESERVED",
+      "local_use": "UNUSED",
+      "decision": "NONE",
+      "runner_checkpoint_revision": 0
+    }
+  ],
+  "outbox": [
+    {
+      "id": 3,
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-b2ef06dd4d4",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "state": "WAITING",
+      "attempt_count": 10,
+      "owner": "HDb3uVEO",
+      "has_err": 1
+    },
+    {
+      "id": 4,
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-86cbc0189b8",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "state": "WAITING",
+      "attempt_count": 10,
+      "owner": "HDb3uVEO",
+      "has_err": 1
+    }
+  ],
+  "ratingIntents": [
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "aab909956f75",
+      "attempt": "3da6a7c31b4d",
+      "lesson": "ac_0ecb34aeec8b4557b13a390f10b3a",
+      "rating_id": "1cdc7ca62621647f61c2",
+      "mutation": "lesson_runner-SUBMIT_RATING-1cdc7ca62621647f",
+      "operation": "lesson_runner.SUBMIT_RATING",
+      "payload_head": "{\"ratingId\":\"1cdc7ca62621647f61c22cc8473c7f5301b20726b71d9d7793cf98634227835d\",\""
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "8cec4267b9d3",
+      "attempt": "c9a8ee137848",
+      "lesson": "demoarena_easy1_lesson_1",
+      "rating_id": "9eb0a9ba9ac54478344c",
+      "mutation": "lesson_runner-SUBMIT_RATING-9eb0a9ba9ac54478",
+      "operation": "lesson_runner.SUBMIT_RATING",
+      "payload_head": "{\"ratingId\":\"9eb0a9ba9ac54478344c2dbfb5eaeabbf0d0d6d620d086cc115d885e07186485\",\""
+    }
+  ],
+  "ratingMarkers": [
+    {
+      "owner": "ck3DaiqE",
+      "lesson": "ac_0ecb34aeec8b4557b13a390f10b3a"
+    },
+    {
+      "owner": "ck3DaiqE",
+      "lesson": "demoarena_easy1_lesson_1"
+    }
+  ],
+  "receipts": [
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_RATING",
+      "mutation": "lesson_runner-SUBMIT_RATING-9eb0a9ba9ac54478",
+      "entity_ref": "lesson_runner:rating:9eb0a9ba9ac54478344",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-4f8a9361039387b",
+      "entity_ref": "lesson_runner:attempt:4f8a9361039387b590",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-c9a8ee137848214",
+      "entity_ref": "lesson_runner:attempt:c9a8ee137848214ede",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-ed2071a1-e141-4",
+      "entity_ref": "lesson_runner:attempt:ed2071a1-e141-4107",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-1e6b742f737f5c6",
+      "entity_ref": "lesson_runner:attempt:1e6b742f737f5c6c4b",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-151497c7ba30b07",
+      "entity_ref": "lesson_runner:attempt:151497c7ba30b07d15",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-cf575a94463d638",
+      "entity_ref": "lesson_runner:attempt:cf575a94463d638eed",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_RATING",
+      "mutation": "lesson_runner-SUBMIT_RATING-1cdc7ca62621647f",
+      "entity_ref": "lesson_runner:rating:1cdc7ca62621647f61c",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-3da6a7c31b4dd99",
+      "entity_ref": "lesson_runner:attempt:3da6a7c31b4dd99d51",
+      "status": null
+    },
+    {
+      "owner": "ck3DaiqE",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-ce864e51-4259-4",
+      "entity_ref": "lesson_runner:attempt:ce864e51-4259-484c",
+      "status": null
+    },
+    {
+      "owner": "HDb3uVEO",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-bfd35496-92cb-4",
+      "entity_ref": "lesson_runner:attempt:bfd35496-92cb-4d61",
+      "status": null
+    },
+    {
+      "owner": "HDb3uVEO",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-6856201c-d504-4",
+      "entity_ref": "lesson_runner:attempt:6856201c-d504-47c0",
+      "status": null
+    }
+  ]
+}

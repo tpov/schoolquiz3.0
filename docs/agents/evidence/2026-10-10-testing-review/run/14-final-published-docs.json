@@ -1,0 +1,469 @@
+{
+ "request": {
+  "requestedAtMs": 1791641281215,
+  "draftId": "draft-r6oc6azq80h3",
+  "lastError": null,
+  "targetLessonIds": [
+   "draft-lesson-to3wvgtrw62p"
+  ],
+  "localRevision": 0,
+  "questions": [
+   {
+    "id": "draft-question-1btr5o9tsz0yy",
+    "draftId": "draft-r6oc6azq80h3",
+    "lessonId": "draft-lesson-to3wvgtrw62p",
+    "type": "FILL_BLANK",
+    "language": "ru",
+    "languageLevel": 1,
+    "difficulty": "EASY",
+    "order": 0,
+    "text": "Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq",
+    "imagePath": null,
+    "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"EASY\",\"text\":\"Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[],\"info\":null}",
+    "updatedAtMs": 1791640113014
+   },
+   {
+    "id": "draft-question-11fiq63acfk04",
+    "draftId": "draft-r6oc6azq80h3",
+    "lessonId": "draft-lesson-to3wvgtrw62p",
+    "type": "FILL_BLANK",
+    "language": "ru",
+    "languageLevel": 1,
+    "difficulty": "HARD",
+    "order": 1,
+    "text": "Kotlin compiles to JVM bytecode ___ text",
+    "imagePath": null,
+    "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"HARD\",\"text\":\"Kotlin compiles to JVM bytecode ___ text\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[\"text\"],\"info\":null}",
+    "updatedAtMs": 1791641237492
+   }
+  ],
+  "targetShelf": "arena",
+  "draftTree": {
+   "themes": [
+    "draft-theme-7nupluphaq5m"
+   ],
+   "sections": [
+    "draft-section-1x8wbxb3ihwgn"
+   ],
+   "lessons": [
+    "draft-lesson-to3wvgtrw62p"
+   ]
+  },
+  "processedAtMs": 1791641376659,
+  "sections": [
+   {
+    "id": "draft-section-1x8wbxb3ihwgn",
+    "draftId": "draft-r6oc6azq80h3",
+    "title": "TZ06ESection",
+    "order": 0
+   }
+  ],
+  "processed": true,
+  "themes": [
+   {
+    "id": "draft-theme-7nupluphaq5m",
+    "draftId": "draft-r6oc6azq80h3",
+    "sectionId": "draft-section-1x8wbxb3ihwgn",
+    "title": "TZ06ETheme",
+    "order": 0
+   }
+  ],
+  "submissionId": "arena-submission-zq8lz01icnm0",
+  "review": {
+   "isLogicReviewed": false,
+   "translationScore": null,
+   "testingScore": null,
+   "isTranslationReviewed": false,
+   "logicScore": null,
+   "translatedLanguages": {
+    "ru": 1
+   },
+   "isTested": false
+  },
+  "draft": {
+   "publicQuestId": null,
+   "catalogId": "mvp-smoke-v1-catalog",
+   "defaultDifficulty": "EASY",
+   "defaultLanguage": "ru",
+   "createdAtMs": 1791638383328,
+   "updatedAtMs": 1791641237492,
+   "description": null,
+   "id": "draft-r6oc6azq80h3",
+   "title": "TZ06Equest"
+  },
+  "ownerUid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+  "lessons": [
+   {
+    "id": "draft-lesson-to3wvgtrw62p",
+    "draftId": "draft-r6oc6azq80h3",
+    "themeId": "draft-theme-7nupluphaq5m",
+    "title": "TZ06ELesson",
+    "order": 0
+   }
+  ],
+  "failedStages": [
+   "TESTING",
+   "TRANSLATION"
+  ],
+  "questionOutcomes": [
+   {
+    "questionId": "draft-question-11fiq63acfk04",
+    "testingScore": 2.5,
+    "passed": true
+   },
+   {
+    "questionId": "draft-question-11fiq63acfk04__en",
+    "testingScore": null,
+    "passed": false
+   },
+   {
+    "questionId": "draft-question-1btr5o9tsz0yy",
+    "testingScore": 2.5,
+    "passed": true
+   },
+   {
+    "questionId": "draft-question-1btr5o9tsz0yy__en",
+    "testingScore": null,
+    "passed": false
+   }
+  ],
+  "publishedAtMs": 1791652697916,
+  "publicQuestId": "draft-r6oc6azq80h3",
+  "updatedAtMs": 1791652697916,
+  "status": "PUBLISHED"
+ },
+ "tasks": [
+  {
+   "id": "draft-lesson-to3wvgtrw62p",
+   "data": {
+    "createdAtMs": 1791641376659,
+    "rejectedAtMs": null,
+    "targetShelf": "arena",
+    "title": "TZ06ELesson",
+    "questId": "draft-r6oc6azq80h3",
+    "catalogId": "mvp-smoke-v1-catalog",
+    "submissionId": "arena-submission-zq8lz01icnm0",
+    "sourceLanguages": [
+     "ru"
+    ],
+    "id": "draft-lesson-to3wvgtrw62p",
+    "draftId": "draft-r6oc6azq80h3",
+    "assignmentId": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p",
+    "rejectedByUid": null,
+    "ownerUid": "GxeLc2TZJ9U4ZHTAPdS4YzKpWx87",
+    "rejectionReason": null,
+    "generation": 1,
+    "testingScore": 2.5,
+    "isLogicReviewed": true,
+    "logicScore": 2,
+    "availableLanguages": [
+     "en"
+    ],
+    "isTranslationReviewed": true,
+    "translatedLanguages": {
+     "en": 100
+    },
+    "isTested": true,
+    "questionCount": 4,
+    "checks": {
+     "assignmentGeneration": 1,
+     "appliedConfigRevision": 3,
+     "testingScore": 2.5,
+     "isLogicReviewed": true,
+     "logicScore": 2,
+     "isTranslationReviewed": true,
+     "translatedLanguages": {
+      "en": 100
+     },
+     "isTested": true,
+     "questionOutcomes": [
+      {
+       "questionId": "draft-question-11fiq63acfk04",
+       "testingScore": 2.5,
+       "passed": true
+      },
+      {
+       "questionId": "draft-question-1btr5o9tsz0yy",
+       "testingScore": 2.5,
+       "passed": true
+      }
+     ],
+     "translationScore": 50
+    },
+    "translationScore": 50,
+    "changedAtMs": 1791652757312,
+    "status": "READY_FOR_PUBLICATION"
+   },
+   "reviews": [
+    {
+     "score": 2,
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "createdAtMs": 1791652200343,
+     "kind": "LOGIC",
+     "reviewerLevelAtSubmit": 100,
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "AywWqYS6zz0dmspt6lOUcT28BUFJ",
+     "segmentResults": [],
+     "translatedQuestions": [],
+     "acceptedByServer": true,
+     "id": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_logic_1791652200343_AywWqYS6zz0dmspt6lOUcT28BUFJ",
+     "questionScores": []
+    },
+    {
+     "score": 3,
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "createdAtMs": 1791650982155,
+     "kind": "TESTING",
+     "reviewerLevelAtSubmit": 100,
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "Vl7vHHcQgZMVvPpLsMTdU9pQvMW2",
+     "segmentResults": [],
+     "translatedQuestions": [],
+     "acceptedByServer": true,
+     "id": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_testing_1791650982155_Vl7vHHcQgZMVvPpLsMTdU9pQvMW2",
+     "questionScores": [
+      {
+       "questionId": "draft-question-11fiq63acfk04",
+       "score": 3
+      },
+      {
+       "questionId": "draft-question-1btr5o9tsz0yy",
+       "score": 3
+      }
+     ]
+    },
+    {
+     "score": 3,
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "createdAtMs": 1791652164530,
+     "kind": "TESTING",
+     "reviewerLevelAtSubmit": 100,
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "AywWqYS6zz0dmspt6lOUcT28BUFJ",
+     "segmentResults": [],
+     "translatedQuestions": [],
+     "acceptedByServer": true,
+     "id": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_testing_1791652164530_AywWqYS6zz0dmspt6lOUcT28BUFJ",
+     "questionScores": [
+      {
+       "questionId": "draft-question-11fiq63acfk04",
+       "score": 3
+      },
+      {
+       "questionId": "draft-question-1btr5o9tsz0yy",
+       "score": 3
+      }
+     ]
+    },
+    {
+     "score": 3,
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "createdAtMs": 1791652181368,
+     "kind": "TESTING",
+     "reviewerLevelAtSubmit": 100,
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "Vl7vHHcQgZMVvPpLsMTdU9pQvMW2",
+     "segmentResults": [],
+     "translatedQuestions": [],
+     "acceptedByServer": true,
+     "id": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_testing_1791652181368_Vl7vHHcQgZMVvPpLsMTdU9pQvMW2",
+     "questionScores": [
+      {
+       "questionId": "draft-question-11fiq63acfk04",
+       "score": 3
+      },
+      {
+       "questionId": "draft-question-1btr5o9tsz0yy",
+       "score": 3
+      }
+     ]
+    },
+    {
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "createdAtMs": 1791652222107,
+     "kind": "TRANSLATION",
+     "reviewerLevelAtSubmit": 100,
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "Xl4tJ0urney46Translator00000a",
+     "segmentResults": [],
+     "language": "en",
+     "translatedQuestions": [
+      {
+       "id": "draft-question-11fiq63acfk04__en",
+       "draftId": "",
+       "lessonId": "draft-lesson-to3wvgtrw62p",
+       "type": "FILL_BLANK",
+       "language": "en",
+       "languageLevel": 100,
+       "difficulty": "",
+       "order": 0,
+       "text": "en:draft-question-11fiq63acfk04",
+       "imagePath": null,
+       "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"HARD\",\"text\":\"Kotlin compiles to JVM bytecode ___ text\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[\"text\"],\"info\":null}",
+       "updatedAtMs": 1791652221753
+      },
+      {
+       "id": "draft-question-1btr5o9tsz0yy__en",
+       "draftId": "",
+       "lessonId": "draft-lesson-to3wvgtrw62p",
+       "type": "FILL_BLANK",
+       "language": "en",
+       "languageLevel": 100,
+       "difficulty": "",
+       "order": 0,
+       "text": "",
+       "imagePath": null,
+       "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"EASY\",\"text\":\"Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[],\"info\":null}",
+       "updatedAtMs": 1791652221753
+      }
+     ],
+     "acceptedByServer": true,
+     "id": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_translation_1791652222107_Xl4tJ0urney46Translator00000a",
+     "questionScores": []
+    },
+    {
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "createdAtMs": 1791652697916,
+     "kind": "TRANSLATION",
+     "reviewerLevelAtSubmit": 100,
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "Xl4tJ0urney46Translator00000a",
+     "segmentResults": [],
+     "language": "en",
+     "translatedQuestions": [
+      {
+       "id": "draft-question-11fiq63acfk04__en",
+       "draftId": "",
+       "lessonId": "draft-lesson-to3wvgtrw62p",
+       "type": "FILL_BLANK",
+       "language": "en",
+       "languageLevel": 100,
+       "difficulty": "",
+       "order": 0,
+       "text": "en:draft-question-11fiq63acfk04",
+       "imagePath": null,
+       "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"HARD\",\"text\":\"Kotlin compiles to JVM bytecode ___ text\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[\"text\"],\"info\":null}",
+       "updatedAtMs": 1791652695082
+      },
+      {
+       "id": "draft-question-11fiq63acfk04__en",
+       "draftId": "",
+       "lessonId": "draft-lesson-to3wvgtrw62p",
+       "type": "FILL_BLANK",
+       "language": "en",
+       "languageLevel": 100,
+       "difficulty": "",
+       "order": 0,
+       "text": "en:draft-question-11fiq63acfk04__en",
+       "imagePath": null,
+       "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"HARD\",\"text\":\"Kotlin compiles to JVM bytecode ___ text\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[\"text\"],\"info\":null}",
+       "updatedAtMs": 1791652695082
+      },
+      {
+       "id": "draft-question-1btr5o9tsz0yy__en",
+       "draftId": "",
+       "lessonId": "draft-lesson-to3wvgtrw62p",
+       "type": "FILL_BLANK",
+       "language": "en",
+       "languageLevel": 100,
+       "difficulty": "",
+       "order": 0,
+       "text": "en:draft-question-1btr5o9tsz0yy",
+       "imagePath": null,
+       "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"EASY\",\"text\":\"Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[],\"info\":null}",
+       "updatedAtMs": 1791652695082
+      },
+      {
+       "id": "draft-question-1btr5o9tsz0yy__en",
+       "draftId": "",
+       "lessonId": "draft-lesson-to3wvgtrw62p",
+       "type": "FILL_BLANK",
+       "language": "en",
+       "languageLevel": 100,
+       "difficulty": "",
+       "order": 0,
+       "text": "en:draft-question-1btr5o9tsz0yy__en",
+       "imagePath": null,
+       "payload": "{\"type\":\"FillBlank\",\"id\":\"draft-question-1\",\"difficulty\":\"EASY\",\"text\":\"Kotlin runs on the JVM ___ZqZqZqZqZqZqZqZq\",\"imageUrl\":null,\"blanks\":[{\"id\":\"blank-0\",\"correctCandidateId\":\"cand-0\"}],\"candidates\":[{\"id\":\"cand-0\",\"text\":\"blank\"},{\"id\":\"cand-1\",\"text\":\"Groovy\"},{\"id\":\"cand-2\",\"text\":\"Scala\"},{\"id\":\"cand-3\",\"text\":\"Java\"},{\"id\":\"cand-4\",\"text\":\"KotlinScript\"}],\"protectedTextSegments\":[],\"info\":null}",
+       "updatedAtMs": 1791652695082
+      }
+     ],
+     "acceptedByServer": true,
+     "id": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_translation_1791652697916_Xl4tJ0urney46Translator00000a",
+     "questionScores": []
+    },
+    {
+     "createdAtMs": 1791652757312,
+     "kind": "TRANSLATION_REVIEW",
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "Xl4tJ0urney46SegReview000000b",
+     "language": "en",
+     "translatedQuestions": [],
+     "acceptedByServer": true,
+     "questionScores": [],
+     "targetReviewId": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_translation_1791652697916_Xl4tJ0urney46Translator00000a",
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "reviewerLevelAtSubmit": 200,
+     "segmentResults": [
+      {
+       "questionId": "draft-question-11fiq63acfk04",
+       "segmentKey": "text",
+       "decision": "error",
+       "accepted": false
+      },
+      {
+       "questionId": "draft-question-11fiq63acfk04__en",
+       "segmentKey": "text",
+       "decision": "error",
+       "accepted": false
+      },
+      {
+       "questionId": "draft-question-1btr5o9tsz0yy",
+       "segmentKey": "text",
+       "decision": "correct",
+       "accepted": true
+      },
+      {
+       "questionId": "draft-question-1btr5o9tsz0yy__en",
+       "segmentKey": "text",
+       "decision": "correct",
+       "accepted": true
+      }
+     ],
+     "id": "arena-submission-zq8lz01icnm0_draft-lesson-to3wvgtrw62p_translation_review_1791652757312_Xl4tJ0urney46SegReview000000b"
+    },
+    {
+     "score": 1,
+     "submissionId": "arena-submission-zq8lz01icnm0",
+     "createdAtMs": 1791650914553,
+     "kind": "TESTING",
+     "reviewerLevelAtSubmit": 100,
+     "lessonId": "draft-lesson-to3wvgtrw62p",
+     "reviewerUid": "AywWqYS6zz0dmspt6lOUcT28BUFJ",
+     "segmentResults": [],
+     "translatedQuestions": [],
+     "acceptedByServer": true,
+     "id": "m_quest_authoring-SUBMIT_REVIEW-review-action-if7ye4vg6i2c",
+     "questionScores": [
+      {
+       "questionId": "draft-question-1btr5o9tsz0yy",
+       "score": 1
+      },
+      {
+       "questionId": "draft-question-11fiq63acfk04",
+       "score": 1
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "arenaReviewConfig": {
+  "testingPassScore": 2,
+  "requiredLanguages": [
+   "en"
+  ],
+  "configRevision": 3,
+  "updatedAtMs": 1791652176724
+ }
+}

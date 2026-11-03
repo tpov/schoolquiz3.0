@@ -1,0 +1,13 @@
+{
+  "name": "firestore-data-upload",
+  "version": "1.0.0",
+  "description": "Upload test data to Firestore",
+  "main": "upload-data.js",
+  "scripts": {
+    "upload": "node upload-data.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase": "^10.0.0"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-01",
+  "scope": "Current private quiz result visibility applies to every own attempt, including past completed attempts",
+  "result": "PASS",
+  "AD_preservation": {
+    "retained_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "changed_ADs": [
+      29
+    ],
+    "all_other_AD_blocks_unchanged": true,
+    "baseline": "/tmp/schoolquiz-private-visibility-20261001/main/ARCHITECTURE-SPINE.md"
+  },
+  "lint_findings": 0,
+  "missing_links": [],
+  "whitespace": [],
+  "reviews": [
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-visibility-rubric-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-visibility-reality-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-visibility-adversarial-20261001.md"
+  ],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "1764dfbbe46d8fc2511300d49af04ae7beb5eb38a83a359c702ca93c452fd2f9",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "cc8a15eedde1051ec2cb910ddf4a62588ec6be6c6007f2b802869ffad0723360",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "203050b8fb26b86240b46c8827cf9d1985f62b03bc16861fd35f5ea4446d54d3",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "fb3427875544f354dfc1d78aee6fa476d949acc67c3dd5c38132c885f5b41624"
+  },
+  "runtime": "NOT RUN — documentation only",
+  "remaining": "Attempt-limit setting change semantics, timeout-result projection, final category name; technical adapter contracts"
+}

@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-01",
+  "scope": "documentation only",
+  "status": "PASS",
+  "checks": [
+    {
+      "check": "Stable unique capability IDs 1–26",
+      "status": "PASS"
+    },
+    {
+      "check": "Each capability has intent and success",
+      "status": "PASS"
+    },
+    {
+      "check": "Only accepted existing capabilities amended",
+      "status": "PASS",
+      "details": [
+        2,
+        3,
+        4,
+        6,
+        11,
+        12,
+        14,
+        17,
+        21,
+        22
+      ]
+    },
+    {
+      "check": "CAP-21 complete prior contract preserved",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-22 complete prior contract preserved",
+      "status": "PASS"
+    },
+    {
+      "check": "Five kernel fields and open questions",
+      "status": "PASS"
+    },
+    {
+      "check": "No diagrams in kernel",
+      "status": "PASS"
+    },
+    {
+      "check": "Current question IDs; retired IDs not reused",
+      "status": "PASS"
+    },
+    {
+      "check": "All 14 mandatory companions exist",
+      "status": "PASS",
+      "details": [
+        "../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/assessment-technical-contracts.md",
+        "contract-map.md",
+        "ux-constraints.md",
+        "../../planning-artifacts/prds/prd-schoolquiz3.0-2026-09-28/prd.md",
+        "../../planning-artifacts/prds/prd-schoolquiz3.0-2026-09-28/addendum.md",
+        "../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md",
+        "../spec-theme-exams/SPEC.md",
+        "../spec-theme-exams/exam-protocol.md",
+        "../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/ARCHITECTURE-SPINE.md",
+        "../../../AGENTS.md",
+        "../../../.claude/PROJECT-CONTEXT.md",
+        "../../planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md",
+        "../../planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md",
+        "../../planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md"
+      ]
+    },
+    {
+      "check": "Companion list excludes process/wrapper files",
+      "status": "PASS"
+    },
+    {
+      "check": "All capabilities mapped once",
+      "status": "PASS"
+    },
+    {
+      "check": "All eight NFRs retained",
+      "status": "PASS"
+    },
+    {
+      "check": "UX IDs 1–14 preserved, 15–21 added",
+      "status": "PASS"
+    },
+    {
+      "check": "Journal body is append-only; helper timestamp excluded",
+      "status": "PASS"
+    },
+    {
+      "check": "SPEC.md: no trailing whitespace",
+      "status": "PASS"
+    },
+    {
+      "check": "contract-map.md: no trailing whitespace",
+      "status": "PASS"
+    },
+    {
+      "check": "ux-constraints.md: no trailing whitespace",
+      "status": "PASS"
+    },
+    {
+      "check": "Local contract links resolve",
+      "status": "PASS",
+      "details": []
+    },
+    {
+      "check": "HTML unique anchors resolve",
+      "status": "PASS"
+    },
+    {
+      "check": "HTML has 26 capability cards",
+      "status": "PASS"
+    },
+    {
+      "check": "HTML embeds current canonical SPEC exactly",
+      "status": "PASS"
+    },
+    {
+      "check": "No unrequested story breakdown",
+      "status": "PASS"
+    }
+  ],
+  "sha256": {
+    "SPEC.md": "c356b0ce96a455f6d9a66f99292c22f7591139c3f2cfd39d3bc49d4462af2dc5",
+    "contract-map.md": "8a66e8c2b4e45915e22c6720e38066351cb7ec6a2d98fd3557b7e247adc821b6",
+    "ux-constraints.md": "ced2cd51ed00b168d87bcbfd02fd7ef08a022a3fbebe02643fc858d7254c777f",
+    "SPEC-REVIEW.html": "f0135be1804d59966ef3c78af437b5dad1468440b09e94505589ba5f3384ff9b"
+  },
+  "application_runtime_checks": "NOT RUN — no application code changed in this refresh"
+}

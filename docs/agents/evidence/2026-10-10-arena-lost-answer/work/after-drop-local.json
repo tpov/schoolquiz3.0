@@ -1,0 +1,19 @@
+{
+  "label": "after-drop (app stopped, post SYNC NOW drain)",
+  "outboxRow": {
+    "mutation_id": "lesson_runner-SUBMIT_ATTEMPT-1e6b742f737f5c6c4b957d1782048d1327536354621f7c3d3c872aafeaf43cf6",
+    "state": "WAITING",
+    "attempt_count": 3,
+    "last_error": "NoNetwork",
+    "note": "retained SETTLE survived two proxy-blocked cycles; drop classified retryable (NoNetwork), not quarantine"
+  },
+  "journalCommand": {"command_kind": "SETTLE", "state": "PENDING", "body_sha256": "ab5a283c75d9d054… (unchanged from pending proof)"},
+  "localReceiptsForMutation": 0,
+  "proxyAudit": {
+    "status": "UPSTREAM_CONFIRMED_AND_DOWNSTREAM_DROPPED",
+    "firstRequestSha256": "b7b1965e32c83ee854ea… (EXACT_TARGET_SENT_UPSTREAM)",
+    "upstreamStatus": 200,
+    "droppedResponseSha256": "6c8a2aa19c337aa3…",
+    "repeatRequestSha256": "b7b1965e32c83ee854ea… (EXACT_TARGET_BLOCKED_AFTER_DROP — byte-identical repeat, same operation ID)"
+  }
+}

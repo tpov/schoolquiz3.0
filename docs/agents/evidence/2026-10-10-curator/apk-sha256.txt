@@ -1,0 +1,5 @@
+67832d421f418b68a063953784b776e68be5f3e54c887a0d648a4ebf165201cf  apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk
+c5a5bec5d9ba009dc670df897fddd5eeb966cc858dccde2d81e7956b3064ce12  apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk
+c5a5bec5d9ba009dc670df897fddd5eeb966cc858dccde2d81e7956b3064ce12  apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk
+276bc5f3e677ef4c00472441ae6923d39fa5a4d2f2734f835db33c664308b963  apps/android-next/build/outputs/apk/mvp/android-next-mvp.apk
+0ac7f57e3ee3e27f89ef158569a65c649ff747862fd72f454731bd942b88e4d8  installed on rig 2026-10-10 20:32:34 (pulled and re-hashed after the journey; = build/outputs APK)

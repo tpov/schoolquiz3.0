@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 2,
+    "l": 3
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Приветствия и знакомство (Begrüßung, sich vorstellen)",
+  "lessonTitle": "Урок 3. Откуда ты и где живёшь (Woher kommst du? — kommen, wohnen)",
+  "focus": "Сказать, из какой ты страны/города и где живёшь, и задать тот же вопрос. Расширение спряжения регулярных глаголов на ich/du и знакомство с предлогами aus/in.",
+  "grammar_points": [
+    "Спряжение правильных глаголов kommen и wohnen: ich komme/wohne, du kommst/wohnst (окончания -e и -st).",
+    "Предлог aus (из) с названием страны/города: aus Russland, aus Moskau.",
+    "Предлог in (в) при указании места проживания: in Berlin, in Deutschland.",
+    "Названия большинства стран без артикля: Deutschland, Russland — поэтому aus Deutschland, in Russland.",
+    "Вопросительные слова woher (откуда) и wo (где) в начале вопроса, глагол на втором месте."
+  ],
+  "vocab": [
+    "kommen — приходить, быть родом",
+    "wohnen — жить, проживать",
+    "woher — откуда",
+    "wo — где",
+    "das Land — страна",
+    "die Stadt — город",
+    "Deutschland — Германия",
+    "Russland — Россия",
+    "aus — из"
+  ],
+  "examples": [
+    "Woher kommst du? — Откуда ты?",
+    "Ich komme aus Russland. — Я из России.",
+    "Wo wohnst du? — Где ты живёшь?",
+    "Ich wohne in Berlin. — Я живу в Берлине.",
+    "Kommst du aus Deutschland? — Nein, ich komme aus Österreich. — Ты из Германии? — Нет, я из Австрии."
+  ]
+}

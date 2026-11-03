@@ -1,0 +1,92 @@
+{"stage":"verified-private-demo-before-writes","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac","case":"small","plan":{"kind":"TRUSTED_FIRESTORE_SDK_NOT_HTTP","case":"small","playerCount":2,"rounds":3,"attempts":6,"createOnlySeedDocuments":91,"approximateAttemptDerivedDocuments":156,"maxWrittenPaths":450,"authAccounts":0,"cleanup":false,"privateProject":"demo-schoolquiz-mvp","privateHost":"schoolquiz-mvp-firebase:8080","note":"Run large only after small PASS. Scoped synthetic fixtures are retained. Requires --execute, QS_APPROVED_CASE and a reviewed source manifest."},"harnessSha256":"7afa6e121161e252557530ad26287ea6c4da331652622ec7d21b3636e176a081","mountedSourceSha256":{"course-tournament-controller.js":"ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b","tournament-qualification-scan.js":"683b1c007a3426f2e346ef839c77738dd53f40ef61dcced6095e47ed6ce89cb8","tournament-qualification-calculation.js":"20474430fb4d63272e9353349b74809f9f76a4dc83343095bc034eb89634bec2","tournament-qualification-compact.js":"3bb9e679634b60198872876ab1f23516a0f5f27d487f58df3d3ad1e1556a8bbf","tournament-qualification-version.js":"4605a5d2e55e90695b7159d3e40ad106c22d09be00f8fa8a8e6dbd3345bf381f","tournament-qualification-freeze.js":"a2de22a92fff4c6c6ae2bc495576a9997676178652c7830b3bdf173a5d522618","tournament-service.js":"a69ddb4575ff28c6ff30d6dee43fae7e0a6cf18f56c020f49db4963877d2206b"}}
+{"stage":"create-only-owned-seed","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac","documents":91}
+{"stage":"all-own-admissions-created-before-own-cutoff","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac","admissions":6}
+{"stage":"actual-sdk-chunk-abort-is-atomic","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{"stage":"actual-sdk-proof-abort-preserves-settled-session-and-pending-query-cursor","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{"stage":"actual-sdk-calculation-checkpoint-abort-REDUCE","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{"stage":"actual-sdk-calculation-checkpoint-abort-SOLVE","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{"stage":"actual-sdk-calculation-checkpoint-abort-PROJECT","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{"stage":"actual-sdk-calculation-checkpoint-abort-PUBLISH","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{"stage":"actual-sdk-publication-abort-leaves-no-partial-ranking-or-bracket","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{"stage":"own-controller-continuation","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac","call":4,"status":"WAITING","admitted":6,"verified":6,"rankingPublished":true,"bracket":true}
+{"stage":"full-versioned-cohort-published-with-independent-equal-score-tie-oracle","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac","verifiedRuns":6,"rankedPlayers":2}
+{"stage":"same-operations-and-controller-replay-preserve-ranking-and-all-financial-documents","runId":"qcalc_007237ae496344d5bf0301e96e4e38ac"}
+{
+  "status": "PASS",
+  "kind": "TRUSTED_FIRESTORE_SDK_NOT_HTTP",
+  "runId": "qcalc_007237ae496344d5bf0301e96e4e38ac",
+  "names": {
+    "catalog": "qcalc_007237ae496344d5bf0301e96e4e38ac_catalog",
+    "course": "qcalc_007237ae496344d5bf0301e96e4e38ac_course",
+    "section": "qcalc_007237ae496344d5bf0301e96e4e38ac_section",
+    "theme": "qcalc_007237ae496344d5bf0301e96e4e38ac_theme",
+    "lesson": "qcalc_007237ae496344d5bf0301e96e4e38ac_lesson",
+    "submission": "qcalc_007237ae496344d5bf0301e96e4e38ac_submission",
+    "event": "qcalc_007237ae496344d5bf0301e96e4e38ac_event",
+    "author": "qcalc_007237ae496344d5bf0301e96e4e38ac_author",
+    "prepare": "qcalc_007237ae496344d5bf0301e96e4e38ac_prepare",
+    "create": "qcalc_007237ae496344d5bf0301e96e4e38ac_create"
+  },
+  "case": "small",
+  "checks": [
+    "create-only-owned-seed",
+    "all-own-admissions-created-before-own-cutoff",
+    "actual-sdk-chunk-abort-is-atomic",
+    "actual-sdk-proof-abort-preserves-settled-session-and-pending-query-cursor",
+    "actual-sdk-calculation-checkpoint-abort-REDUCE",
+    "actual-sdk-calculation-checkpoint-abort-SOLVE",
+    "actual-sdk-calculation-checkpoint-abort-PROJECT",
+    "actual-sdk-calculation-checkpoint-abort-PUBLISH",
+    "actual-sdk-publication-abort-leaves-no-partial-ranking-or-bracket",
+    "full-versioned-cohort-published-with-independent-equal-score-tie-oracle",
+    "same-operations-and-controller-replay-preserve-ranking-and-all-financial-documents"
+  ],
+  "trace": {
+    "transactions": 92,
+    "transactionDocumentReads": 795,
+    "transactionDocumentWrites": 248,
+    "standaloneQueryDocuments": 10,
+    "queryReads": 23,
+    "pendingQueries": 7,
+    "pendingCursorQueries": 3,
+    "injectedAborts": [
+      "CHUNK",
+      "PROOF",
+      "CALC_REDUCE",
+      "CALC_SOLVE",
+      "CALC_PROJECT",
+      "CALC_PUBLISH",
+      "PUBLISH"
+    ],
+    "scanCalls": 4,
+    "metricsScope": "SDK wrapper counts callback reads including retries, final committed transaction writes and standalone production query documents. Excludes direct DocumentReference.get, harness seeding/preflight/assertion reads and billing overhead; not a total-service or billing benchmark."
+  },
+  "resource": {
+    "elapsedMs": 6878,
+    "heapUsedBytes": 48453360,
+    "rssBytes": 140083200,
+    "peakRssKiB": 137240
+  },
+  "createdSeedDocuments": 91,
+  "distinctCommittedPaths": 281,
+  "retainedFixture": true,
+  "financialDigest": "3541755ecf52724795a4be66bb7f53d62c04eaf6004732b971c61476326621db",
+  "rankingInputFingerprint": "f34be31f9776d81a26cbef456ca7323c2859402ddcccfcd1ea72822319c1d86a",
+  "rankingOutputFingerprint": "0c68700b16ac49296bf5593bc9f667c73b23502febd0762598c3696e8a20e65a",
+  "calculationVersions": {
+    "algorithmFamily": "pairwise-percent-least-squares-v1",
+    "calculationVersion": "qualification-three-form-rational-v2",
+    "executionVersion": "compact-mask-reduction-v1",
+    "roundingVersion": "exact-half-positive-infinity-canonical-zero-v1"
+  },
+  "harnessSha256": "7afa6e121161e252557530ad26287ea6c4da331652622ec7d21b3636e176a081",
+  "mountedSourceSha256": {
+    "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
+    "tournament-qualification-scan.js": "683b1c007a3426f2e346ef839c77738dd53f40ef61dcced6095e47ed6ce89cb8",
+    "tournament-qualification-calculation.js": "20474430fb4d63272e9353349b74809f9f76a4dc83343095bc034eb89634bec2",
+    "tournament-qualification-compact.js": "3bb9e679634b60198872876ab1f23516a0f5f27d487f58df3d3ad1e1556a8bbf",
+    "tournament-qualification-version.js": "4605a5d2e55e90695b7159d3e40ad106c22d09be00f8fa8a8e6dbd3345bf381f",
+    "tournament-qualification-freeze.js": "a2de22a92fff4c6c6ae2bc495576a9997676178652c7830b3bdf173a5d522618",
+    "tournament-service.js": "a69ddb4575ff28c6ff30d6dee43fae7e0a6cf18f56c020f49db4963877d2206b"
+  }
+}

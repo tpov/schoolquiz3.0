@@ -1,0 +1,40 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 1,
+    "l": 2
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+  "lessonTitle": "Датив: дательный падеж и косвенное дополнение",
+  "focus": "Ввести Dativ как падеж косвенного дополнения (вопрос «кому?») и научить менять артикли всех родов. Контрастирует с Akkusativ из урока 1, готовит к глаголам с двумя дополнениями.",
+  "grammar_points": [
+    "Dativ отвечает на вопрос wem? (кому?) — обозначает адресата действия.",
+    "Артикли в Dativ: der→dem, das→dem, die(ж.р.)→der, die(мн.ч.)→den.",
+    "Неопределённые: ein(м./ср.)→einem, eine→einer; mein→meinem/meiner; kein→keinem/keiner.",
+    "В Dativ множественного числа существительное получает окончание -n: den Kindern, den Freunden (если его ещё нет).",
+    "Глаголы только с Dativ: helfen, danken, gefallen, gehören, antworten, glauben.",
+    "Личные местоимения в Dativ: mir, dir, ihm, ihr, ihm, uns, euch, ihnen/Ihnen."
+  ],
+  "vocab": [
+    "der Freund — друг",
+    "die Frau — женщина, жена",
+    "das Kind — ребёнок",
+    "die Kinder — дети",
+    "helfen — помогать (+ Dativ)",
+    "danken — благодарить (+ Dativ)",
+    "gehören — принадлежать (+ Dativ)",
+    "gefallen — нравиться (+ Dativ)",
+    "die Mutter — мать",
+    "der Kollege — коллега"
+  ],
+  "examples": [
+    "Ich helfe dem Freund. — Я помогаю другу.",
+    "Das Buch gehört der Frau. — Эта книга принадлежит женщине.",
+    "Wir danken den Kindern. — Мы благодарим детей.",
+    "Die Stadt gefällt mir sehr. — Город мне очень нравится.",
+    "Er antwortet seiner Mutter. — Он отвечает своей матери.",
+    "Kannst du mir helfen? — Ты можешь мне помочь?"
+  ]
+}

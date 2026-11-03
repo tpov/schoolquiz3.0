@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 3,
+    "l": 4
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+  "lessonTitle": "Урок 4. Приставки в Partizip II: trennbar, untrennbar и ge-",
+  "focus": "Объяснить, как ведёт себя ge- у глаголов с приставками. Отделяемые приставки: ge- встаёт внутрь. Неотделяемые приставки (be-, ver-, er-, ent-, emp-, zer-, miss-): ge- НЕ добавляется.",
+  "grammar_points": [
+    "Отделяемые приставки (an-, auf-, ein-, mit-, zu-, aus-): ge- вставляется между приставкой и корнем: aufstehen → aufgestanden, einkaufen → eingekauft, mitkommen → mitgekommen, anrufen → angerufen.",
+    "Неотделяемые приставки (be-, ver-, er-, ent-, emp-, ge-, zer-, miss-): Partizip II образуется БЕЗ ge-: bezahlen → bezahlt, verstehen → verstanden, erzählen → erzählt, bekommen → bekommen.",
+    "Глаголы на -ieren тоже идут без ge- (повторение из урока 3).",
+    "Выбор haben/sein сохраняется по правилам уроков 1–2: aufstehen и mitkommen берут sein (движение/изменение состояния), bezahlen и verstehen — haben.",
+    "В конце предложения остаётся цельная форма Partizip II — приставка от корня уже не отделяется."
+  ],
+  "vocab": [
+    "aufstehen — вставать",
+    "einkaufen — делать покупки",
+    "anrufen — звонить (кому-то)",
+    "bezahlen — оплачивать",
+    "verstehen — понимать",
+    "erzählen — рассказывать",
+    "bekommen — получать",
+    "das Geschenk — подарок"
+  ],
+  "examples": [
+    "Heute bin ich um sieben Uhr aufgestanden. — Сегодня я встал в семь часов.",
+    "Ich habe im Supermarkt eingekauft. — Я сделал покупки в супермаркете.",
+    "Hast du den Arzt angerufen? — Ты позвонил врачу?",
+    "Wir haben die Rechnung schon bezahlt. — Мы уже оплатили счёт.",
+    "Sie hat zum Geburtstag ein schönes Geschenk bekommen. — Она получила на день рождения красивый подарок."
+  ]
+}

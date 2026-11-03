@@ -1,0 +1,17 @@
+eligible universe: 15 row(s), 150 trusted read(s)
+  ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1 price=1 author=D0h0rHZGJVoU22cADZV8yb2lz1KT v1
+  ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_2 price=1 author=D0h0rHZGJVoU22cADZV8yb2lz1KT v1
+  ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3 price=1 author=D0h0rHZGJVoU22cADZV8yb2lz1KT v1
+  ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1 price=100 author=1qWvMnl9qYWsJCD58wGzLWv3G6Ju v1
+  ac_6ba84b006f7d423f8630ac7802407eb0_lesson_2 price=1 author=1qWvMnl9qYWsJCD58wGzLWv3G6Ju v1
+  ac_6ba84b006f7d423f8630ac7802407eb0_lesson_3 price=1 author=1qWvMnl9qYWsJCD58wGzLWv3G6Ju v1
+  ac_7ad0e33fd17e4709b16f433d90304e94_lesson_1 price=1 author=QVt4A8gOubSRLWkzadS7VGsS2ASc v1
+  ac_7ad0e33fd17e4709b16f433d90304e94_lesson_2 price=1 author=QVt4A8gOubSRLWkzadS7VGsS2ASc v1
+  ac_7ad0e33fd17e4709b16f433d90304e94_lesson_3 price=1 author=QVt4A8gOubSRLWkzadS7VGsS2ASc v1
+  ac_b563a9845b1f4f279683d321ed54ca51_lesson_1 price=1 author=cPbebnDrF7To3GMmM7OXk5QApLsN v1
+  ac_b563a9845b1f4f279683d321ed54ca51_lesson_2 price=1 author=cPbebnDrF7To3GMmM7OXk5QApLsN v1
+  ac_b563a9845b1f4f279683d321ed54ca51_lesson_3 price=1 author=cPbebnDrF7To3GMmM7OXk5QApLsN v1
+  aeu_7d433c732adf45a7b1c665260571b707_target price=1 author=LDHhjcZvolmgdZvPBk98g2htZPqr v1
+  aeu_f2229bcc8ac745cc85934c7226193825_target price=1 author=Cf34oIUi8Hc3kQnRsQZv2EA338qJ v1
+  lesson-165e9e06e266461f82bc0522bf4d4cfb price=1 author=QAtOmoM2TvfrRokQLPgEewHbCzEo v1
+VERIFIED: arena banks hold prices 1 and 100 exactly as the manifest expects

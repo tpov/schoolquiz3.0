@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 4,
+    "l": 4
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+  "lessonTitle": "Урок 4. Распорядок дня: время суток и время по часам",
+  "focus": "Рассказать о распорядке дня и назвать время. Ввести предлоги времени um/am и обозначение часов в разговорном формате.",
+  "grammar_points": [
+    "Предлог um + точное время (когда?): um 7 Uhr, um halb acht.",
+    "Предлог am + часть суток и дни недели: am Morgen, am Abend, am Montag (исключение: in der Nacht, am — НЕ употребляется).",
+    "Разговорное обозначение времени: Es ist sieben Uhr. Es ist halb acht (7:30). Es ist Viertel nach acht (8:15). Es ist Viertel vor neun (8:45).",
+    "Вопрос о времени: Wie spät ist es? / Wann? (когда?) — ответ с um.",
+    "Простой порядок слов с обстоятельством времени в начале предложения (инверсия): Am Morgen trinke ich Kaffee — после обстоятельства глагол стоит на втором месте."
+  ],
+  "vocab": [
+    "der Morgen — утро",
+    "der Vormittag — первая половина дня",
+    "der Mittag — полдень",
+    "der Nachmittag — вторая половина дня",
+    "der Abend — вечер",
+    "die Nacht — ночь",
+    "die Uhr — час; часы",
+    "die Stunde — час (продолжительность)",
+    "früh — рано",
+    "spät — поздно"
+  ],
+  "examples": [
+    "Wie spät ist es? — Es ist halb neun. — Который час? — Половина девятого (8:30).",
+    "Am Morgen trinke ich Kaffee. — Утром я пью кофе.",
+    "Der Unterricht beginnt um Viertel nach acht. — Урок начинается в четверть девятого (8:15).",
+    "Am Abend bin ich zu Hause. — Вечером я дома.",
+    "In der Nacht schlafe ich. — Ночью я сплю."
+  ]
+}

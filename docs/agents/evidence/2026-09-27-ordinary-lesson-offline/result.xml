@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="RF8W80MBR3Z" tests="1" failures="0" time="41.0">
+    <testcase id="Open ordinary cached lesson on Ukrainian Android device" name="Open ordinary cached lesson on Ukrainian Android device" classname="Open ordinary cached lesson on Ukrainian Android device" time="41.0" status="SUCCESS"/>
+  </testsuite>
+</testsuites>

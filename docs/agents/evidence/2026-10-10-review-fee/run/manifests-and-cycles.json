@@ -1,0 +1,154 @@
+{
+  "fee-1791657251767-sub1": {
+    "cycle": {
+      "submissionId": "fee-1791657251767-sub1",
+      "ownerUid": "Fee4JourneyAuthor000000a1",
+      "questId": "fee-1791657251767-quest",
+      "catalogId": "fee-1791657251767-catalog",
+      "feeNolics": 1000,
+      "feeTenths": 10000,
+      "tariff": "initial",
+      "tariffRevision": 1,
+      "questionCount": 1,
+      "chargedAtMs": 1791657252747,
+      "burnTenths": 9745,
+      "sumEntitlementTenths": 255,
+      "settledAtMs": 1791657258363,
+      "manifestPath": "review_fee_manifests/fee-1791657251767-sub1",
+      "outcome": "REJECTED",
+      "status": "SETTLED"
+    },
+    "manifest": {
+      "submissionId": "fee-1791657251767-sub1",
+      "ownerUid": "Fee4JourneyAuthor000000a1",
+      "questId": "fee-1791657251767-quest",
+      "outcome": "REJECTED",
+      "settledAtMs": 1791657258363,
+      "feeNolics": 1000,
+      "feeTenths": 10000,
+      "calculationVersion": 1,
+      "tariff": "initial",
+      "tariffRevision": 1,
+      "units": [
+        {
+          "unitId": "fee-1791657251767-lesson/Fee4JourneyJudge0000000c3",
+          "lessonId": "fee-1791657251767-lesson",
+          "reviewerUid": "Fee4JourneyJudge0000000c3",
+          "levelTenths": 150,
+          "entitlementTenths": 150,
+          "evidenceRecordId": null
+        },
+        {
+          "unitId": "fee-1791657251767-lesson/Fee4JourneyTester000000b2",
+          "lessonId": "fee-1791657251767-lesson",
+          "reviewerUid": "Fee4JourneyTester000000b2",
+          "levelTenths": 105,
+          "entitlementTenths": 105,
+          "evidenceRecordId": "fee-1791657251767-sub1_fee-1791657251767-lesson_testing_1791657255531_Fee4JourneyTester000000b2"
+        }
+      ],
+      "wallets": [
+        {
+          "uid": "Fee4JourneyJudge0000000c3",
+          "entitlementTenths": 150,
+          "priorCarryTenths": 0,
+          "creditedNolics": 15,
+          "nextCarryTenths": 0
+        },
+        {
+          "uid": "Fee4JourneyTester000000b2",
+          "entitlementTenths": 105,
+          "priorCarryTenths": 0,
+          "creditedNolics": 10,
+          "nextCarryTenths": 5
+        }
+      ],
+      "sumEntitlementTenths": 255,
+      "burnTenths": 9745
+    }
+  },
+  "fee-1791657251767-sub2": {
+    "cycle": {
+      "submissionId": "fee-1791657251767-sub2",
+      "ownerUid": "Fee4JourneyAuthor000000a1",
+      "questId": "fee-1791657251767-quest",
+      "catalogId": "fee-1791657251767-catalog",
+      "feeNolics": 100,
+      "feeTenths": 1000,
+      "tariff": "recheck",
+      "tariffRevision": 1,
+      "questionCount": 1,
+      "chargedAtMs": 1791657259619,
+      "burnTenths": 745,
+      "sumEntitlementTenths": 255,
+      "settledAtMs": 1791657260194,
+      "manifestPath": "review_fee_manifests/fee-1791657251767-sub2",
+      "outcome": "REJECTED",
+      "status": "SETTLED"
+    },
+    "manifest": {
+      "submissionId": "fee-1791657251767-sub2",
+      "ownerUid": "Fee4JourneyAuthor000000a1",
+      "questId": "fee-1791657251767-quest",
+      "outcome": "REJECTED",
+      "settledAtMs": 1791657260194,
+      "feeNolics": 100,
+      "feeTenths": 1000,
+      "calculationVersion": 1,
+      "tariff": "recheck",
+      "tariffRevision": 1,
+      "units": [
+        {
+          "unitId": "fee-1791657251767-lesson/Fee4JourneyJudge0000000c3",
+          "lessonId": "fee-1791657251767-lesson",
+          "reviewerUid": "Fee4JourneyJudge0000000c3",
+          "levelTenths": 150,
+          "entitlementTenths": 150,
+          "evidenceRecordId": null
+        },
+        {
+          "unitId": "fee-1791657251767-lesson/Fee4JourneyTester000000b2",
+          "lessonId": "fee-1791657251767-lesson",
+          "reviewerUid": "Fee4JourneyTester000000b2",
+          "levelTenths": 105,
+          "entitlementTenths": 105,
+          "evidenceRecordId": "fee-1791657251767-sub2_fee-1791657251767-lesson_testing_1791657259872_Fee4JourneyTester000000b2"
+        }
+      ],
+      "wallets": [
+        {
+          "uid": "Fee4JourneyJudge0000000c3",
+          "entitlementTenths": 150,
+          "priorCarryTenths": 0,
+          "creditedNolics": 15,
+          "nextCarryTenths": 0
+        },
+        {
+          "uid": "Fee4JourneyTester000000b2",
+          "entitlementTenths": 105,
+          "priorCarryTenths": 5,
+          "creditedNolics": 11,
+          "nextCarryTenths": 0
+        }
+      ],
+      "sumEntitlementTenths": 255,
+      "burnTenths": 745
+    }
+  },
+  "fee-1791657251767-sub3": {
+    "cycle": {
+      "submissionId": "fee-1791657251767-sub3",
+      "ownerUid": "Fee4JourneyAuthor000000a1",
+      "questId": "fee-1791657251767-quest",
+      "catalogId": "fee-1791657251767-catalog",
+      "status": "PAID",
+      "feeNolics": 100,
+      "feeTenths": 1000,
+      "tariff": "recheck",
+      "tariffRevision": 1,
+      "questionCount": 1,
+      "chargedAtMs": 1791657260379
+    },
+    "manifest": null
+  }
+}

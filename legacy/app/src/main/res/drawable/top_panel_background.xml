@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    
+    <solid android:color="#1F1F1F" />
+    
+    <!-- Закругления только снизу -->
+    <corners
+        android:topLeftRadius="0dp"
+        android:topRightRadius="0dp"
+        android:bottomLeftRadius="16dp"
+        android:bottomRightRadius="16dp" />
+    
+    <!-- Тень/граница -->
+    <stroke
+        android:width="0dp"
+        android:color="@android:color/transparent" />
+        
+</shape> 

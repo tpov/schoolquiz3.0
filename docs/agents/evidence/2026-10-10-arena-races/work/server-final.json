@@ -1,0 +1,560 @@
+{
+  "atIso": "2026-10-10T04:37:57.503Z",
+  "documentWrites": 0,
+  "user": {
+    "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+    "nickname": "UserYF9FS9",
+    "nolics": 4,
+    "reservedNolics": 0,
+    "skillPoints": 168,
+    "lifePoints": 103,
+    "reservedLifePoints": 150
+  },
+  "TICKETS_COUNT": 42,
+  "tickets": [
+    {
+      "id": "035501b240b8168a83903567b1fc3b2547934b16ed6beff324fecdbc35ff86ba",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "03f62692c25ea8217119e40b22f30635adf9b6712407561462d69cc905ae3e11",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "16e7e93341531b1fcbffd4ca6202338092c1cf7d07610fc89bfa24f5c936a1c5",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "2b90e3556ce144e081555f4b59695014e13a8fa20df07e6aa4f1c9545237d848",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "1a26f9d5e98e302367b68cb1ab9696e2b5bab85c3dba815aff56867aa0c7a906",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "878b7ec2b197d91acc96f92ded569f8b378bbb8e0124a308bb10b486a7db4c53",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "2e12fb35162ffd4818a02af175571cfa75f66ddafcb938b2024a041bfb9c60a8",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "397ccac224e97b177e234e7e2315fc885f1fd8e1136776560d97455d00159ee7",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "27d4922910007c5292130da90ce294a1fb5a3627c8ca433fd11ad3be11738e4a",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "438d5fff0e6ddb4fa653841f45a9d2034a002e02e39db2553ad4ebc11f7abe0e",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "d021f5abd624929b1b20f0f958aed742c9554382e2665eafbff7ac75cb245243",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "54ff8b2477ba505555007f6132b66d32580ec134b96b48eec7ebfa2f3c3b0da8",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "5f8549f24e0d648e6340604cbcff6a7a01652601b132d841e3f03649c0961c8d",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "0740affea26b6348816c972c9e2a1bc614627be03b02492cbf17e27c3eaaf05a",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "602f74cdd3f180e6ff6ae95e45f86bc9548b26e0f2b09f5bafe372a1dfdcd115",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "61e3d7413e797a218eb23004ce8807ae6f29a422157f521eb73bc55c2c3231e4",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "64da9a52ef6d12198826407216dad7fbfc05714dfb32207297ce9e8190bbb936",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "71de380f49f2a919d23f142f7952bfe44968d49d785ec5de693c46d70f62968d",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "23ed4bbd7f00e05a9fe8aef75e45ef93921a684053ee304e4ae5f91aad304459",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "75c7edd13719d8192fa622250b7e5283df1b4eb8456f75ffce99f1b3ae6458d4",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "7b5e2d04f441311e739204279e19d461ffa3385508fe38e50f18d4b3748caf36",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "7d16b7872f5925abc82d766c3f49dec9ce19e04331d6519c630a31edfa8ddc08",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "257ad3fce246914781790c9d7c362a54eef46907cccca3351bccc109ad9d308d",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "8374ce0dae87dd0036710778a7c2cfe8605730571c73c562450ad85c3e478180",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "151497c7ba30b07d15852747b64d3357eddd6068013d109d0115599e8c939990",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "85ea314450e265fffe32972d00307bbef98f6af21fc1961cd78db65086b67488",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "8c1ba20e53035117f82ab04c00f10282a7493b5fac02d226a3ae2d22df099471",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "e08840df2bf9424ca38abd6977624b5266a6fb2b984b3c787f5c3685ecad4517",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "8cec4267b9d3fbc746ab77accc4bedb061dbc4f6289a9a6f395bd296ff68abc9",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "c9a8ee137848214ede938973582d5b2cffa79231a2477cac0419bd81164b647a",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "8ea6493c2845cbc3ae54d7468c2a5ac444277d257bfc842ed4e62eb041eb6d66",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "b03c7ac81553a7b5432ce18fc108cbe8138e5ecd0c776af052058fea2a273ffe",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "916fe3a7f2bf514c85b8e4632929d0473ae29ec05f7132649e5e4f9c6eb99b99",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "9362710a8175f4d609f3f48bc3f2bbd45cfc77c8746e8b61179508395279f129",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "2181fb83427a124ad48b73ae143a056774cc238e7d030d9bfb59e421fdf3fd61",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "9522eef2d84d2366d47e6ab575c19a52dc5c13ab42b6b7b0574a61b63df6185e",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "a2392da0cf5423ff0590573cd86dd35297a79bf79c003b485ac2783794a0ec89",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "58e17ce490df2d077d9609f5530b13abb8b3a9a4e88ecf18c00293d3b13374a5",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "a8eed83c85e3c836282c64adb9130cad2a89618b38c0ce41e659da7935a404a4",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "aab909956f75aeeb31397578683c7e14e0dc202053a8978c8a2aacec614ac751",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "3da6a7c31b4dd99d51846a5814ac117b72f3ebc1ba75b28c054574b5e1177c6b",
+        "percentScore": 0,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "b193511128b38993ff47f5538615428ed912479735bbd5ce7fd162dbec7a0c8f",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "08c7fd8f27c026bf5d205e21163eab5edcf564eec17fefff805aca38f906b3bb",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "c229edf40857ef399583b31285a55ca481c653927dfa597e650188673ce26e23",
+      "status": "RESERVED",
+      "terminal": null,
+      "mode": "RANDOM",
+      "difficulty": "HARD",
+      "priceNolics": 0,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "c4848342091c86edd53d0e57cf3d9faf97ff6ddfd410c346910d3098835d51ab",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "4f8a9361039387b5906586726b102e2240c1de6599510c7a8f64392df2f062f1",
+        "percentScore": 50,
+        "consumedNolics": 0,
+        "consumedLifePoints": 50
+      },
+      "mode": "RANDOM",
+      "difficulty": "HARD",
+      "priceNolics": 0,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "c80f065790bcd32deeaacb961342965246cb765d50431cb20325297ba3d2e608",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "cf55e0ecec2c44da0991f1ed7c574d40e02722fe582abb7b5d45ae26a0517708",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "1e6b742f737f5c6c4b957d1782048d1327536354621f7c3d3c872aafeaf43cf6",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "cf8f96ef6030fee75c224f42da2b88c168d9798b636fca0c2f411e2d71d96d62",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "50b218eaf135bdd02cca9e4502b0983a23d066361117982772e8d976c2aeaa92",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "d76e9bf259db4b257b3f1f2ca8a3ad34a566722b3a1ce0431ae29e5a2adec165",
+      "status": "RESERVED",
+      "terminal": null,
+      "mode": "RANDOM",
+      "difficulty": "HARD",
+      "priceNolics": 0,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "d7e8c68d89f96055648bd4eae1e18fcbe84258c925121fd19691f52a19dc80b0",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "e8595bcdebb942948ca825c27ef48a99a941c6f0a50def51405e3c98e8832fef",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "e9e6094e6a71590265038ad47ad4672e8eea565853cf58b5de6981e8fedecf6f",
+      "status": "RESERVED",
+      "terminal": null,
+      "mode": "RANDOM",
+      "difficulty": "HARD",
+      "priceNolics": 0,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "ea4f00f9df6e55b0cc8918c038ea604f41f0f7a1dad12a80519eb041b8792973",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "f143f023b9b6e12c227cf79e07f9b19759a7d6a2db70eb2ea99bbf6f96975d69",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "cf575a94463d638eedc742391001560ff21d7b9bf2b5e1b25647f529d3b29079",
+        "percentScore": 50,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-09"
+    },
+    {
+      "id": "f30199f6cfb3f191efff9487335401639bba97ce1450fbae2c0826b4acbcc31d",
+      "status": "SETTLED",
+      "terminal": {
+        "attemptId": "08680d3a2d6edb0949c598649bfd34b3e72ecbb3845089ff683d745ae1bdaec8",
+        "percentScore": 100,
+        "consumedNolics": 1,
+        "consumedLifePoints": 50
+      },
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "f330bb420696b0b1d33c98116c15bbedbae2b43396daa9fa60a0b9574fa59dde",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "HARD",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    },
+    {
+      "id": "f533a6b742673353451bad14095e9152628378162a9aecf0c3b138a223ef30a1",
+      "status": "CANCELLED",
+      "terminal": {},
+      "mode": "SELECTED",
+      "difficulty": "EASY",
+      "priceNolics": 1,
+      "dayId": "2026-10-10"
+    }
+  ],
+  "MUTATION_KEYS_COUNT": 49,
+  "RATE_LESSON_RECORDS": [
+    {
+      "docIdPrefix": "6d55d2d3da0e",
+      "mutationId": "lesson_runner-SUBMIT_RATING-1cdc7ca62621647f61c22cc8473c7f5301b20726b71d9d7793cf98634227835d",
+      "receiptOperation": "RATE_LESSON",
+      "status": "APPLIED",
+      "payloadHash": "d615622efe1244539ad1537a5f8cf9e0d8411e0a2999244240a5a1d72ef7bcd2",
+      "decidedAtMs": 1791573737962,
+      "innerResult": {
+        "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+        "ratingId": "arena-rating:a15faf09cb48755608270bf7105f8d3052a67ccdc05b5a39d892b20fe886d7da",
+        "acceptedAtMs": 1791573737962,
+        "replacesLatest": true,
+        "seasonId": "2026-Q4",
+        "aggregate": {
+          "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+          "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+          "ratingSum": 4,
+          "ratingCount": 2,
+          "weightedScore": {
+            "numerator": 44,
+            "denominator": 22
+          },
+          "averageRating": 2,
+          "ratingVersion": 2,
+          "ratingUpdatedAtMs": 1791573737962
+        }
+      },
+      "wrapperAccepted": 1,
+      "completedAtMs": 1791573738240,
+      "replayed": null
+    },
+    {
+      "docIdPrefix": "e0030bcee313",
+      "mutationId": "lesson_runner-SUBMIT_RATING-9eb0a9ba9ac54478344c2dbfb5eaeabbf0d0d6d620d086cc115d885e07186485",
+      "receiptOperation": "RATE_LESSON",
+      "status": "APPLIED",
+      "payloadHash": "27a0fe504a4c68c76eb1b43d60b7de094573b9f66f14c3af34fa05ebdb953b54",
+      "decidedAtMs": 1791589800587,
+      "innerResult": {
+        "lessonId": "demoarena_easy1_lesson_1",
+        "ratingId": "arena-rating:be4f7c1c3c018dffd5c36ddc6c0d39b97ce51b37620c685010d4dd9295af7dc4",
+        "acceptedAtMs": 1791589800587,
+        "replacesLatest": true,
+        "seasonId": "2026-Q4",
+        "aggregate": {
+          "lessonId": "demoarena_easy1_lesson_1",
+          "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+          "ratingSum": 4,
+          "ratingCount": 2,
+          "weightedScore": {
+            "numerator": 44,
+            "denominator": 22
+          },
+          "averageRating": 2,
+          "ratingVersion": 2,
+          "ratingUpdatedAtMs": 1791589800587
+        }
+      },
+      "wrapperAccepted": 1,
+      "completedAtMs": 1791589800769,
+      "replayed": null
+    }
+  ],
+  "RATE_LESSON_APPLIED_COUNT": 2
+}

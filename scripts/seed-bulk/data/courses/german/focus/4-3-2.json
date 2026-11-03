@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 3,
+    "l": 2
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+  "lessonTitle": "Урок 2. У врача: запись, симптомы и диалог в Praxis",
+  "focus": "Научиться записываться на приём и описывать симптомы врачу, используя рефлексивные глаголы самочувствия (sich fühlen) и вежливые вопросы. Лексика и коммуникация на основе грамматики урока 1.",
+  "grammar_points": [
+    "Рефлексивные глаголы с возвратным местоимением в Akkusativ: sich fühlen, sich erkälten — Ich fühle mich schlecht; Ich habe mich erkältet.",
+    "Спряжение sich fühlen: ich fühle mich, du fühlst dich, er/sie fühlt sich, wir fühlen uns, ihr fühlt euch, sie fühlen sich.",
+    "Перфект рефлексивных глаголов с haben: Ich habe mich erkältet; Er hat sich verletzt.",
+    "Вежливые вопросы и формулы у врача: Was fehlt Ihnen? / Seit wann haben Sie ...? — рамочный порядок слов сохраняется.",
+    "Предлог seit + Dativ для длительности симптома: seit drei Tagen, seit einer Woche."
+  ],
+  "vocab": [
+    "der Arzt / die Ärztin — врач (м./ж.)",
+    "die Praxis — врачебный кабинет, практика",
+    "der Termin — приём, назначенное время",
+    "die Sprechstunde — приёмные часы",
+    "die Krankenversicherung — медицинская страховка",
+    "die Versichertenkarte — карта застрахованного",
+    "das Symptom — симптом",
+    "sich fühlen — чувствовать себя",
+    "sich erkälten — простудиться",
+    "die Erkältung — простуда",
+    "die Untersuchung — обследование, осмотр",
+    "die Krankschreibung — больничный лист",
+    "krank — больной",
+    "gesund — здоровый"
+  ],
+  "examples": [
+    "Ich möchte gern einen Termin bei Dr. Berger machen. — Я хотел бы записаться на приём к доктору Бергеру.",
+    "Guten Tag, was fehlt Ihnen denn? — Здравствуйте, что вас беспокоит?",
+    "Ich fühle mich seit drei Tagen sehr schlecht und habe Fieber. — Я уже три дня очень плохо себя чувствую, и у меня температура.",
+    "Ich glaube, ich habe mich erkältet. — Кажется, я простудился.",
+    "Bitte bringen Sie Ihre Versichertenkarte zur Sprechstunde mit. — Пожалуйста, принесите карту застрахованного на приём."
+  ]
+}

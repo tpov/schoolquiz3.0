@@ -1,0 +1,43 @@
+{
+ "lessons": {
+  "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3": {
+   "placement": {
+    "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+    "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+    "questType": "REGULAR",
+    "shelf": "arena",
+    "previousShelf": "review",
+    "contentVersion": 1,
+    "placementVersion": 1,
+    "updatedAtMs": 1788750090392,
+    "decidedByUid": "ac_0ecb34aeec8b4557b13a390f10b3a548_PRIVATE",
+    "lastReason": "ac_0ecb34aeec8b4557b13a390f10b3a548_PRIVATE",
+    "lastRejection": {
+     "actorUid": "ac_0ecb34aeec8b4557b13a390f10b3a548_PRIVATE",
+     "reason": "ac_0ecb34aeec8b4557b13a390f10b3a548_PRIVATE"
+    },
+    "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548"
+   },
+   "lesson": {
+    "themeId": "ac_0ecb34aeec8b4557b13a390f10b3a548_theme",
+    "title": "Catalog fixture 3",
+    "version": 1,
+    "reviewSubmissionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_submission_2",
+    "reviewApprovedAtMs": 1788750089392,
+    "publishedAtMs": 1788750088392,
+    "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548"
+   },
+   "rating": {
+    "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+    "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+    "ratingSum": 4,
+    "ratingCount": 2,
+    "ratingVersion": 1,
+    "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548",
+    "averageRating": 2,
+    "ratingUpdatedAtMs": 0
+   },
+   "history": []
+  }
+ }
+}

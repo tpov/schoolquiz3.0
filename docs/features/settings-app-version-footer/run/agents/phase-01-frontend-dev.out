@@ -1,0 +1,72 @@
+ERROR — Phase 01 implementation is applied, but I cannot return final RESULT because Build Status never reached PASSED, so mandatory reviewers were not started.
+
+## Changed files
+
+- `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt`
+- `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt`
+- `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt`
+- `android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt`
+
+## Implemented
+
+- `MainActivity` now passes `BuildConfig.VERSION_CODE` next to existing `VERSION_NAME`.
+- `AppShellScreen`, `AppShellContent`, `LocalTabContent`, and `DesignSettingsScreen` now require/thread `appVersionCode: Int` with no defaults.
+- Library modules still do not read app `BuildConfig`.
+- Settings footer renders as `v<versionName> (<versionCode>)`.
+- Footer is a non-scroll bottom-centered sibling in the settings viewport, with reserved list bottom padding.
+- Drawer footer/About/repeated-tap developer-mode path remains drawer-owned and name-only.
+- Test-dev default subagent updated `AppShellScreenTest.kt` with footer label/display-only/pinned-bounds/drawer guard coverage.
+
+## Validation status
+
+Passed non-Gradle guards:
+
+- `git diff --check` — passed.
+- Test Deletion Gate: `git diff --name-status HEAD -- '*/test/**'` — no deleted tests.
+- Grep guards for:
+  - `DesignSettingsScreen(`
+  - `AppShellScreen(`
+  - `AppShellContent(`
+  - `LocalTabContent(`
+  - library `BuildConfig`
+  - debug/design-catalog gating
+  - `onVersionTap`
+  - settings interaction primitives
+  - Koin access
+
+Gradle/build gate: **FAILED / BLOCKED by environment-repo hygiene**, not SCH-2 code per diagnostics.
+
+Observed blockers:
+
+1. `local.properties` has invalid SDK path:
+   - `sdk.dir=/home/tpov/Android/Sdk`
+   - actual SDK: `/Users/tpov/Library/Android/sdk`
+2. `apps/android-next/google-services.json` is missing, blocking app-level gates.
+3. External-volume AppleDouble `._*` files repeatedly corrupt Android/Kotlin intermediates:
+   - `parseDebugLocalResources`: `._drawable-nodpi-v4 is not a directory`
+   - Kotlin `ClasspathEntrySnapshotTransform ... IllegalArgumentException`
+   - buildSrc cleanup fails on regenerated `._*.class` sidecars
+
+I ran `dot_clean`, deleted ignored `._*` sidecars, stopped daemons, and ran `clean` with Java 17 + Android SDK env. `clean` passed once, but subsequent Gradle tasks regenerated AppleDouble files and failed again.
+
+## Reviewers
+
+Not started, by rule: reviewers require `Build Status: PASSED`.
+
+Reviewer session ids: none.
+
+Subagent session ids:
+
+- test-dev: `db15e7d3-b9c5-4f00-8422-312da1bf80c6`
+- diagnostics/code-analyst: `d643d7fb-6f35-48e8-b6b7-e0387ccfb4a3`
+
+## Open gaps
+
+To unblock phase review:
+
+1. Fix local SDK config or export env for every Gradle run.
+2. Restore/provide `apps/android-next/google-services.json`.
+3. Remove/prevent AppleDouble files on this external workspace; likely move to APFS/local disk or disable metadata sidecars at filesystem level.
+4. Re-run full phase gate, then start mandatory reviewers.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "d7e686ba-2560-4243-9c43-3e1c3cc26968" "follow-up"`.

@@ -1,0 +1,33 @@
+== node private-quiz-settings.test.js
+# tests 8
+# pass 8
+# fail 0
+
+== node private-quiz-run.test.js
+# tests 8
+# pass 8
+# fail 0
+
+== node private-quiz-negative.test.js
+# tests 5
+# pass 5
+# fail 0
+
+== node own-history-views.test.js
+# tests 5
+# pass 5
+# fail 0
+
+== node private-quiz-gate.test.js
+# tests 8
+# pass 8
+# fail 0
+
+== node arena-lifecycle-views-handler.test.js
+# tests 6
+# pass 6
+# fail 0
+
+== node sync-change-clock.test.js
+sync-change-clock.test.js OK
+

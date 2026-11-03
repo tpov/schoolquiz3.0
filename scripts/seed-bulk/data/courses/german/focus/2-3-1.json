@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 3,
+    "l": 1
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+  "lessonTitle": "Урок 1. Грамматика темы: винительный падеж (Akkusativ) и неопределённый артикль",
+  "focus": "Главная грамматика темы: что мы покупаем и едим — это прямое дополнение в Akkusativ. Учимся менять артикль der/ein на den/einen в мужском роде, а также строить «Ich esse...», «Ich kaufe...», «Ich möchte...».",
+  "grammar_points": [
+    "Akkusativ — падеж прямого дополнения (объекта действия): отвечает на вопрос «wen/was?» (кого/что?).",
+    "Меняется ТОЛЬКО мужской род: der → den, ein → einen, kein → keinen. Женский (die/eine), средний (das/ein) и множественное (die) в Akkusativ не меняются.",
+    "Типичные глаголы с Akkusativ в этой теме: essen (есть), trinken (пить), kaufen (покупать), nehmen (брать), möchten (хотел бы).",
+    "Глагол möchten (вежливое «хотел бы»): ich möchte, du möchtest, er/sie möchte, wir möchten, ihr möchtet, sie möchten.",
+    "Порядок слов: подлежащее + глагол на 2-м месте + дополнение в Akkusativ (Ich kaufe einen Apfel)."
+  ],
+  "vocab": [
+    "essen — есть, кушать",
+    "trinken — пить",
+    "kaufen — покупать",
+    "nehmen — брать",
+    "möchten — хотел бы",
+    "der Apfel — яблоко",
+    "das Brot — хлеб",
+    "die Milch — молоко",
+    "das Wasser — вода",
+    "der Kaffee — кофе"
+  ],
+  "examples": [
+    "Ich esse einen Apfel. — Я ем яблоко.",
+    "Ich trinke Milch und Wasser. — Я пью молоко и воду.",
+    "Wir kaufen ein Brot. — Мы покупаем хлеб.",
+    "Ich möchte einen Kaffee, bitte. — Я хотел бы кофе, пожалуйста.",
+    "Er nimmt den Apfel. — Он берёт (это) яблоко."
+  ]
+}

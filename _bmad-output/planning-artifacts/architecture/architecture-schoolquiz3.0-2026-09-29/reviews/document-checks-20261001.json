@@ -1,0 +1,135 @@
+{
+  "checked": "2026-10-01",
+  "scope": "documentation only",
+  "main_existing_ids_preserved": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "main_changed_ids": [
+    1,
+    2,
+    4,
+    14,
+    17,
+    19,
+    20,
+    21,
+    24
+  ],
+  "main_new_ids": [
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "exam_existing_ids_preserved": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37
+  ],
+  "exam_changed_ids": [
+    18
+  ],
+  "all_other_prior_AD_blocks": "byte-identical to task baseline after trimming block separators",
+  "local_links_checked": 18,
+  "broken_local_links": [],
+  "hashes": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "4b72e86addc3221a95e0bbce829ca7ecdc0c27db4300aee9b15e5891a8575fc7",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/ARCHITECTURE-SPINE.md": "fa547f6b1e50b8357f9ad051d1346143d27763e3b1fbdf93b28b20a8bda437af",
+    "docs/architecture/0011-noir-designsystem.md": "2470128e35ef5dfef99caac9d372dc1c451176752cb0e70a81774059fd543acb",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "fe4aace2f3e7223d9bef14f5da307c144b1b4b31f5a6f29872a0283bd6510c0f",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "2c58b2bcd3e0715144939a1bea6f544c22885d55cef3c9a689e43bc53bb9314a",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "5f6c3f2d28a19d41840413d0ed18db8f0cc60b95a9d223345c6976ac69bd1c1d"
+  },
+  "lint": {
+    "initiative": {
+      "ok": true,
+      "spine": "ARCHITECTURE-SPINE.md",
+      "total_findings": 0,
+      "by_severity": {},
+      "findings": []
+    },
+    "exam": {
+      "ok": false,
+      "spine": "ARCHITECTURE-SPINE.md",
+      "total_findings": 1,
+      "by_severity": {
+        "low": 1
+      },
+      "findings": [
+        {
+          "category": "placeholder",
+          "severity": "low",
+          "detail": "possible unfilled template token (verify): '{uid}'",
+          "location": "ARCHITECTURE-SPINE.md (line 95)"
+        }
+      ]
+    }
+  },
+  "runtime_and_gradle": "NOT RUN — documentation-only change",
+  "status": "PASS",
+  "reviewers": {
+    "rubric": "PASS",
+    "reality": "PASS",
+    "adversarial": "PASS"
+  },
+  "triage": "R-ADV-UX-1 fixed and rechecked; existing exam users/{uid} is a literal path, not an unfilled template."
+}

@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 2,
+    "l": 3
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+  "lessonTitle": "Урок 3. Совет, поручение и желание: sollen и mögen / möchten",
+  "focus": "Освоить sollen (поручение, чужая воля, совет) и пару mögen / möchten (любить что-то и вежливо хотеть). Разграничить wollen и möchten по вежливости.",
+  "grammar_points": [
+    "sollen — быть должным по чьему-то указанию/совету, выполнять чужую волю. Спряжение: ich soll, du sollst, er soll, wir sollen, ihr sollt, sie/Sie sollen. Часто переводится «должен», «велят», «следует».",
+    "mögen — любить, нравиться. Спряжение: ich mag, du magst, er mag, wir mögen, ihr mögt, sie/Sie mögen. Часто употребляется БЕЗ второго глагола, с существительным: Ich mag Kaffee.",
+    "möchten — вежливая форма «хотел бы» (форма от mögen). Спряжение: ich möchte, du möchtest, er möchte, wir möchten, ihr möchtet, sie/Sie möchten. Обратите внимание: ich и er — möchte (одинаково).",
+    "Различие wollen и möchten: wollen — твёрдое «хочу», möchten — вежливое «хотел(а) бы». В кафе и магазине почти всегда möchten.",
+    "Различие müssen и sollen: müssen — внутренняя/объективная необходимость, sollen — необходимость по указанию извне (Der Arzt sagt, ich soll mehr schlafen)."
+  ],
+  "vocab": [
+    "sollen — быть должным (по чьему-то указанию)",
+    "mögen — любить, нравиться",
+    "möchten — хотел бы (вежливо)",
+    "der Kaffee — кофе",
+    "der Arzt — врач",
+    "schlafen — спать",
+    "die Suppe — суп",
+    "bestellen — заказывать"
+  ],
+  "examples": [
+    "Ich möchte einen Kaffee, bitte. — Я хотел бы кофе, пожалуйста.",
+    "Magst du Schokolade? — Ты любишь шоколад?",
+    "Der Arzt sagt, ich soll mehr schlafen. — Врач говорит, что мне следует больше спать.",
+    "Du sollst deiner Mutter helfen. — Ты должен помочь своей маме.",
+    "Wir möchten die Suppe bestellen. — Мы хотели бы заказать суп."
+  ]
+}

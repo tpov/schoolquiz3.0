@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-01",
+  "scope": "Final private quiz owner answers: preserve used/active attempts on limit changes; category Приватные квизы",
+  "result": "PASS",
+  "AD_preservation": {
+    "retained_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "changed_ADs": [
+      29
+    ],
+    "all_other_AD_blocks_unchanged": true,
+    "baseline": "/tmp/schoolquiz-private-closure-20261001/main/ARCHITECTURE-SPINE.md"
+  },
+  "lint_findings": 0,
+  "missing_links": [],
+  "whitespace": [],
+  "stale_product_open_wording": [],
+  "reviews": [
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-closure-rubric-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-closure-reality-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-private-closure-adversarial-20261001.md"
+  ],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "450f24138a005671eb2b50c4bc31daf64a20b67e695b5218a0f47dbf643db5b2",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "15b19862cb88ed21cfa4a80574c79bf25c4c6d61d1c3e4dd9590db72a738b1ae",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "dc75f4bc90a8619e8620d45279d1071abccbbdabccdfb5c71a073df0adf7291a",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "ebfeb99d0ab273e11b68f89b4346ee63139aedb0ad54cc2155e416194ada0578"
+  },
+  "runtime": "NOT RUN — documentation only",
+  "UX-O4": "Product choices closed; named technical contracts remain",
+  "remaining": "ONLINE-O1/O2, private adapters and other technical contracts in Deferred; future conditional UX-O11/FR-56/EXAM-Q7 product scope unchanged"
+}

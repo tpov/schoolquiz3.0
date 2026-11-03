@@ -1,0 +1,34 @@
+{
+ "status": 200,
+ "json": {
+  "result": {
+   "schemaVersion": 1,
+   "mutationId": "cur48-rate-l3-live",
+   "uid": "cur48r3player0000000",
+   "operation": "RATE_LESSON",
+   "payloadHash": "c060a1c08fe0aab633af677454cef11b83ac2b67eeec29abba9527de0aa9bc43",
+   "decidedAtMs": 1791666502651,
+   "status": "APPLIED",
+   "result": {
+    "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+    "ratingId": "arena-rating:1800b0fd0745936139f85174fe2ade17daee49c254351deead4633e7e5152971",
+    "acceptedAtMs": 1791666502651,
+    "replacesLatest": true,
+    "seasonId": null,
+    "aggregate": {
+     "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+     "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+     "ratingSum": 7,
+     "ratingCount": 3,
+     "weightedScore": {
+      "numerator": 47,
+      "denominator": 23
+     },
+     "averageRating": 2.3,
+     "ratingVersion": 2,
+     "ratingUpdatedAtMs": 1791666502651
+    }
+   }
+  }
+ }
+}

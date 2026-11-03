@@ -1,0 +1,17 @@
+{
+ "status": 200,
+ "json": {
+  "result": {
+   "schemaVersion": 1,
+   "mutationId": "cur48-forge-readmit",
+   "uid": "cur48r3player0000000",
+   "operation": "TRANSITION_LESSON",
+   "payloadHash": "e25f53ce7d2e4500c1356747cb19726030ac34aa622700cee03d0ff3438474e2",
+   "decidedAtMs": 1791666533585,
+   "status": "REJECTED",
+   "result": {
+    "code": "CURATOR_REQUIRED"
+   }
+  }
+ }
+}

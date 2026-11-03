@@ -1,0 +1,34 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 4,
+    "l": 2
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+  "lessonTitle": "Основные цвета (Die Grundfarben)",
+  "focus": "Учим называть базовые цвета и говорить, какого цвета предмет, через простую конструкцию с sein без склонения прилагательного.",
+  "grammar_points": [
+    "Цвет как сказуемое (предикатив) НЕ склоняется: Das Buch ist rot. — окончания не нужны.",
+    "Вопрос Welche Farbe ist das? — «Какой это цвет?» и Welche Farbe hat ...? — «Какого цвета ...?».",
+    "Конструкция Der/Die/Das ... ist + цвет (определённый артикль с уже известным предметом).",
+    "Согласование артикля по роду уже знакомого существительного (der Stuhl, die Tür, das Buch)."
+  ],
+  "vocab": [
+    "die Farbe — цвет",
+    "rot — красный",
+    "blau — синий, голубой",
+    "grün — зелёный",
+    "gelb — жёлтый",
+    "schwarz — чёрный",
+    "weiß — белый"
+  ],
+  "examples": [
+    "Welche Farbe ist das? — Das ist blau. — Какой это цвет? — Это синий.",
+    "Das Buch ist rot. — Книга красная.",
+    "Die Lampe ist gelb. — Лампа жёлтая.",
+    "Der Tisch ist schwarz. — Стол чёрный.",
+    "Das Bett ist weiß. — Кровать белая."
+  ]
+}

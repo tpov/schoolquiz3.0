@@ -1,0 +1,19 @@
+# Skeptic RE-REVIEW — home-and-my-quests cross-fix verification
+
+## Fix verification
+- B1 [PARTIAL]: `firestore.rules:22` adds `quests`, and `firestore.rules:33`-`firestore.rules:36` adds `sections/themes/lessons/questions`; however nested content is `any-auth read`, not parent visibility/ownership gated, so private quest descendants can be read by any signed-in user.
+- B2 [NOT FIXED]: non-catalog levels advance after child success (`CascadingSyncOrchestrator.kt:123`, `CascadingSyncOrchestrator.kt:145`, `CascadingSyncOrchestrator.kt:166`, `CascadingSyncOrchestrator.kt:187`), but catalog cursor still advances inside `CatalogRepositoryImpl` before quest subtree succeeds (`CatalogRepositoryImpl.kt:49`, `CatalogRepositoryImpl.kt:51`; then subtree starts at `CascadingSyncOrchestrator.kt:101`). A quest failure loses `changedCatalogIds` on retry.
+- B3 [PARTIAL]: runtime uses `Clock.System.now()` for quest/section/theme/lesson/question (`CascadingSyncOrchestrator.kt:68`, `CascadingSyncOrchestrator.kt:120`, `CascadingSyncOrchestrator.kt:200`) and spec mentions it (`0-spec.md:86`), but catalog still uses `max(dto.lastModifiedAt)` (`CatalogRepositoryImpl.kt:50`) and spec still says quests cursor advances to `max(lastModifiedAt)` (`0-spec.md:1171`).
+- B4 [VERIFIED FIXED]: changed-id return is cv-filtered: quest uses `localEntity == null || dto.contentsVersion > localEntity.contentsVersion` (`QuestRepositoryImpl.kt:57`, `QuestRepositoryImpl.kt:71`); same pattern exists for section/theme/lesson (`SectionRepositoryImpl.kt:33`, `SectionRepositoryImpl.kt:39`; `ThemeRepositoryImpl.kt:33`, `ThemeRepositoryImpl.kt:39`; `LessonRepositoryImpl.kt:33`, `LessonRepositoryImpl.kt:39`).
+- B5 [VERIFIED FIXED]: `AppDatabase` is v3 and includes all six hierarchy entities (`AppDatabase.kt:7`, `AppDatabase.kt:17`); FK cascade exists Catalog→Quest (`QuestEntity.kt:10`, `QuestEntity.kt:15`), Quest→Section (`SectionEntity.kt:10`, `SectionEntity.kt:15`), Section→Theme (`ThemeEntity.kt:10`, `ThemeEntity.kt:15`), Theme→Lesson (`LessonEntity.kt:10`, `LessonEntity.kt:15`), Lesson→Question (`QuestionEntity.kt:10`, `QuestionEntity.kt:15`).
+- H2 [VERIFIED FIXED]: `uid == null` emits `flowOf(UserStats.guest())`, not `emptyFlow()` (`UserStatsRepositoryImpl.kt:25`, `UserStatsRepositoryImpl.kt:27`).
+- H7 [VERIFIED FIXED]: archived delete is guarded by `dto.version > localVersion` for section/theme/lesson/question (`SectionRepositoryImpl.kt:34`, `SectionRepositoryImpl.kt:36`; `ThemeRepositoryImpl.kt:34`, `ThemeRepositoryImpl.kt:36`; `LessonRepositoryImpl.kt:34`, `LessonRepositoryImpl.kt:36`; `QuestionRepositoryImpl.kt:29`, `QuestionRepositoryImpl.kt:31`).
+- H8 [PARTIAL]: Box/clip structure exists (`StarRating.kt:56`, `StarRating.kt:63`), but the filled `Icon` uses `Modifier.size(size)` inside the clipped narrow parent (`StarRating.kt:64`, `StarRating.kt:68`), so Compose can measure/squeeze it to the partial width instead of clipping a full-size star. Needs full-size child via `requiredSize(size)` or equivalent.
+
+## New regressions introduced by cross-fix
+- `firestore.rules:33`-`firestore.rules:36` — nested content collections allow any authenticated read, while `quests` itself is owner/public gated (`firestore.rules:22`-`firestore.rules:29`); this leaks private quest structure/content if descendants are queried directly.
+- `CatalogRepositoryImpl.kt:49`-`CatalogRepositoryImpl.kt:51` — catalog cursor is advanced before child subtree success, so a failed quest sync can make later retries skip the parent delta and never re-enter the failed subtree.
+- `docs/features/home-and-my-quests/0-spec.md:1171` — acceptance criteria still require `questsCursor` to advance to `max(lastModifiedAt)`, contradicting the claimed canonical `Clock.System.now()` strategy and the orchestrator implementation.
+
+## Overall verdict
+REJECT

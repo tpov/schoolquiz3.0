@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 3,
+    "l": 4
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+  "lessonTitle": "Переключение регистров (Register wechseln): одно и то же — на трёх уровнях",
+  "focus": "Научиться целенаправленно переписывать одно сообщение в трёх регистрах — официальном, нейтральном и разговорном — и адаптировать текст под адресата и жанр (e-mail начальнику vs сообщение другу, заявление vs пост). Это прикладной синтез уроков 2 и 3.",
+  "grammar_points": [
+    "Параллельные регистровые ряды одного речевого акта: просьба — »Ich wäre Ihnen sehr verbunden, wenn Sie...« / »Könnten Sie bitte...« / »Machst du mal...?«; отказ, благодарность, извинение строятся так же.",
+    "Грамматические корреляты регистра: Konjunktiv II вежливости и пассив вверху ↔ императив и активный залог внизу; полное предложение ↔ эллипсис; генитив ↔ »von«+датив.",
+    "Лексическая субституция по оси регистра: »erhalten/bekommen/kriegen«, »benötigen/brauchen«, »sich erkundigen/fragen/nachhaken«, »Mitteilung/Nachricht/Info«.",
+    "Жанровые формулы рамки: обращение и прощание (»Sehr geehrte Damen und Herren … Mit freundlichen Grüßen« ↔ »Hallo … Liebe Grüße« ↔ »Hi … LG/Tschüss«).",
+    "Адаптация под канал: дистанция письма требует эксплицитности и полноты, близость чата допускает эллипсис, эмодзи-замену интонации и стяжения.",
+    "Опасность гиперкоррекции и анбидерунга (Anbiederung): чрезмерно высокий тон с близким адресатом звучит холодно, чрезмерно низкий с далёким — неуважительно."
+  ],
+  "vocab": [
+    "der Registerwechsel — смена регистра",
+    "verbindlich — обязательный; учтиво-официальный (о тоне)",
+    "die Anrede — обращение (в письме)",
+    "die Grußformel — формула приветствия/прощания",
+    "umformulieren — переформулировать",
+    "sich erkundigen (nach +Dat) — осведомляться, наводить справки",
+    "die Anbiederung — заискивание, навязчивое сближение",
+    "der Adressat — адресат, получатель",
+    "verbleiben — оставаться (формула концовки письма)",
+    "die Verbindlichkeit — учтивость, обязательность тона"
+  ],
+  "examples": [
+    "Förmlich: »Ich wäre Ihnen sehr verbunden, wenn Sie mir den Termin bestätigen könnten.« — Официально: «Я был бы Вам весьма признателен, если бы Вы могли подтвердить встречу».",
+    "Neutral: »Könnten Sie mir bitte den Termin bestätigen?« — Нейтрально: «Не могли бы Вы, пожалуйста, подтвердить встречу?»",
+    "Salopp: »Sag mal kurz Bescheid, ob der Termin klappt, ja?« — Фамильярно: «Черкни коротко, прокатит ли встреча, ок?»",
+    "Förmlich: »Für Ihre Bemühungen danke ich Ihnen im Voraus und verbleibe mit freundlichen Grüßen.« — Официально: «Заранее благодарю Вас за хлопоты и остаюсь с уважением».",
+    "Salopp: »Danke schon mal, du bist echt Gold wert — LG!« — Неформально: «Спасибо заранее, ты реально на вес золота — обнимаю!»"
+  ]
+}

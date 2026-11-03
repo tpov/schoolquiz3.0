@@ -1,0 +1,24 @@
+{
+  "catalogs": {
+    "school": {
+      "name": "Школа",
+      "picturePath": "catalog-pictures/school.jpg"
+    },
+    "courses": {
+      "name": "Курсы",
+      "picturePath": "catalog-pictures/courses.jpg"
+    },
+    "surveys": {
+      "name": "Опросы",
+      "picturePath": "catalog-pictures/surveys.jpg"
+    },
+    "games": {
+      "name": "Игры",
+      "picturePath": "catalog-pictures/games.jpg"
+    },
+    "quests": {
+      "name": "Квесты",
+      "picturePath": "catalog-pictures/quests.jpg"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 4,
+    "l": 2
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+  "lessonTitle": "Урок 2. hätte и wäre: Konjunktiv II от haben и sein",
+  "focus": "Дать собственные (синтетические) формы hätte и wäre, которыми по-немецки заменяют менее естественное würde haben / würde sein. Нужны для гипотез о состоянии, наличии и желаний.",
+  "grammar_points": [
+    "sein и haben в Konjunktiv II образуют не würde-форму, а собственную: hätte (от haben), wäre (от sein).",
+    "Спряжение hätte: ich hätte, du hättest, er/sie/es hätte, wir hätten, ihr hättet, sie/Sie hätten.",
+    "Спряжение wäre: ich wäre, du wärst, er/sie/es wäre, wir wären, ihr wärt, sie/Sie wären.",
+    "hätte/wäre — спрягаемая часть и стоит на 2-м месте в утверждении; дополнения и т.д. идут после.",
+    "Типичные значения: гипотетическое состояние (Ich wäre froh) и наличие/нужда (Ich hätte gern …, Ich hätte Zeit)."
+  ],
+  "vocab": [
+    "hätte — имел(а) бы",
+    "wäre — был(а) бы",
+    "froh — радостный, рад",
+    "müde — усталый",
+    "das Glück — счастье, удача",
+    "die Zeit — время",
+    "die Lust — желание, охота (что-то сделать)",
+    "bereit — готовый (что-то сделать)"
+  ],
+  "examples": [
+    "Ich hätte gern einen Kaffee, bitte. — Я бы хотел кофе, пожалуйста.",
+    "Mit dir wäre alles einfacher. — С тобой всё было бы проще.",
+    "Hättest du morgen Zeit für mich? — Нашлось бы у тебя завтра время для меня?",
+    "Ohne dich wäre ich jetzt allein. — Без тебя я был бы сейчас один.",
+    "Wir hätten große Lust auf einen Ausflug. — Нам бы очень хотелось съездить на прогулку."
+  ]
+}

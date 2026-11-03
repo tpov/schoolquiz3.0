@@ -1,0 +1,149 @@
+# tickets-draft.toml — DRAFT, epic-authoring-review: stories in build order.
+# Ночной черновик (2026-10-05, ветка night/e3-e8-drafts) для инсепшена эпика.
+# НЕ является финальным tickets.toml эпика: финальный breakdown создаётся на инсепшене.
+# Источники: epic-authoring-review.md Done-when 1–6; USER-CONTINUATION-PLAN §3
+# (TZ06A–D; особое указание прогона — серверные views TZ06B/C: ограниченные серверные
+# представления статуса урока и выплат; TZ06B = безопасное чтение, TZ06C = автор/куратор),
+# §4 (контракты/проверки). TZ06D (цена/рейтинг/сезон) следует за эпиком 3 (его Done-when 3–4);
+# эпик 4 держит только экономику review-fee (AD-10). OQ-2 (прекращение незавершённого цикла)
+# в этом эпике НЕ добавляется — условный будущий scope (epic notes).
+# Каждая история: refined = false, явный `waits` (epic-1 / epic-2 / ONLINE-O2 / hitl / OQ).
+
+[[story]]
+id = "4.1"
+slug = "tz06a-admission-draft-verification"
+title = "TZ06A admission/price: re-establish verification status of the eight-file local draft; catalog/selected/random use one current admitted-lesson universe; read limits, no writes on error, issued tickets immutable; land as a separate commit with full Node/Firebase checks; evidence docs/agents/evidence/<date>-tz06a/"
+covers = ["CAP-2", "CAP-3"]
+after = [{ epic = 1, needs = "identified candidate source state and restored backend" }]
+waits = [
+  "epic-1: candidate identity/build base (epic after-list)",
+  "epic-2: durable delivery/config foundations (epic after-list)",
+]
+refined = false
+status = "draft" # план §1: TZ06A — восьмифайловый draft с ограниченной проверкой; статус пересоздаётся на инсепшене
+
+[[story]]
+id = "4.2"
+slug = "tz06b-safe-read-views"
+title = "TZ06B safe reading: restricted server-side views of lesson status, history, permitted rejection reasons and author payouts; author/curator permissions checked on the server; private collections closed (rules/concurrency tests green in the runner registry); evidence docs/agents/evidence/<date>-tz06b-views/"
+covers = ["CAP-3", "CAP-4", "CAP-5", "CAP-6"]
+after = [{ epic = 1, needs = "restored demo backend and demo accounts with author/reviewer/curator roles" }]
+waits = [
+  "epic-1: restored backend with role fixtures (server-side checks need real accounts/rules runs)",
+]
+refined = false
+status = "draft" # серверная/node-часть, физическое устройство не требуется; UI-подключение — 4.3
+# note: эти views — контракт для эпика 8 (CAP-26 авторские «Начисления», AD-30)
+
+[[story]]
+id = "4.3"
+slug = "tz06c-wire-views-to-authoring"
+title = "TZ06C author/curator journey: connect TZ06B views to authoring/review — creation → independent checks → curator promotes the concrete lesson through the UI; a new version requires new admission while previously issued content is preserved; permitted edit cannot silently overwrite another author's published material; evidence docs/agents/evidence/<date>-tz06c-journey/"
+covers = ["CAP-2", "CAP-3", "CAP-5"]
+after = [{ story = "4.2", needs = "TZ06B server views" }, { epic = 2, needs = "durable delivery and config foundations" }]
+waits = [
+  "epic-2: delivery/config foundations (epic after-list)",
+  "4.2: TZ06B views exist and are permission-checked",
+  "hitl: physical device run of the create→review→publish journey",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "4.4"
+slug = "ux-o6-annotation-serialization"
+title = "UX-O6 shared contract (OQ-7): protected-range/FillBlank schema, units, annotation identity (field/revision/exact occurrence), edits/undo/redo consistency, translation/redaction serialization and migration fixed before editor adapters; player/exam redaction still removes protected answer metadata; evidence docs/agents/evidence/<date>-ux-o6-contract/"
+covers = ["CAP-2"]
+after = []
+waits = [
+  "OQ-7/UX-O6: named UX handoff contract must be completed before dependent editor adapters (contract-map Remaining gates)",
+  "epic-2: delivery foundations for shared serialization (epic after-list)",
+]
+refined = false
+status = "draft"
+
+[[story]]
+id = "4.5"
+slug = "author-create-revise-attributable"
+title = "Author creates a lesson and submits revisions with attributable history and protected ranges per the UX-O6 contract; existing titles immutable, no description field, no metadata-only fee (SPEC Constraints); evidence docs/agents/evidence/<date>-author-revise/"
+covers = ["CAP-2"]
+after = [{ story = "4.4", needs = "UX-O6 serialization contract" }, { story = "4.3", needs = "wired authoring journey" }]
+waits = [
+  "OQ-7/UX-O6: editor adapters wait on the serialization contract",
+  "epic-2: delivery foundations",
+  "hitl: device proof of edit/undo/redo round-trip",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "4.6"
+slug = "independent-testing-review-threshold"
+title = "One independent TESTING review per question/revision admits at the configurable server threshold (default 2 of 1–3: 1 fails, 2/3 pass); result binds applied config revision and assignment generation; failed stage identified without mandatory reason; translation decisions explicit per segment (unchecked/correct/error), missing text never auto-approved, author sees per-question outcomes; evidence docs/agents/evidence/<date>-testing-review/"
+covers = ["CAP-3"]
+after = [{ story = "4.2", needs = "TZ06B views for review outcomes/rejection reasons" }, { story = "4.3", needs = "wired review journey" }]
+waits = [
+  "epic-2: delivery foundations and ONLINE-O2/AD-31 for the timed review question (see 4.10)",
+  "hitl: device proof of the reviewer flow",
+]
+refined = false
+hitl = true
+status = "draft" # UX-O1/O4/O5 решения закрыты; доказательство кода/прав/конкурентности — требуется (contract-map)
+
+[[story]]
+id = "4.7"
+slug = "paid-review-cycle-conservation"
+title = "Paid review cycle conserves fee = rewards + burned remainder under AD-10 (immutable settlement manifest after the full cycle, tenth-of-nolic entitlement/burn/carry, no floating point), including justified rejection; retry and retained prior evidence create no extra paid work; unfinished cycle has no final distribution/burn (OQ-2 not added); conservation tests green; evidence docs/agents/evidence/<date>-review-fee/"
+covers = ["CAP-4"]
+after = [{ story = "4.6", needs = "review cycle with rejections possible" }, { epic = 2, needs = "wallet/receipt foundations" }]
+waits = [
+  "epic-2: wallet/receipt foundations (epic after-list)",
+  "OQ-2: parked — abandonment outcome NOT added; owner decides only before adding it (spec Open questions)",
+]
+refined = false
+status = "draft" # server/node-консервация проверяема без устройства
+
+[[story]]
+id = "4.8"
+slug = "curator-transitions"
+title = "Curator transitions carry an authorized decision and visible reason (long-press menu per AD-21); ratings never replace curator approval; a failed replacement keeps the valid prior revision; confirmed faults prevent new use without rewriting frozen attempts; evidence docs/agents/evidence/<date>-curator/"
+covers = ["CAP-5"]
+after = [{ story = "4.3", needs = "TZ06C wiring" }, { story = "4.2", needs = "TZ06B status views" }]
+waits = [
+  "epic-2: delivery foundations",
+  "hitl: device proof of promote/remove with reasons",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "4.9"
+slug = "inbox-private-error-reports"
+title = "Lesson comments and private lesson-error reports through the shared inbox (AD-20): private free text concerns the whole lesson, never re-reveals questions/answers, reaches its permitted author; inbox preserves each item's original readers/lesson link; reviewer/curator roles alone grant no access; public discussion stays separate; rules tests + device proof; evidence docs/agents/evidence/<date>-inbox/"
+covers = ["CAP-6"]
+after = [{ epic = 2, needs = "shared inbox rides the delivery foundations (epic notes)" }]
+waits = [
+  "epic-2: delivery/projection foundations for the shared inbox",
+  "hitl: device proof of the private-report path",
+]
+refined = false
+hitl = true
+status = "draft"
+
+[[story]]
+id = "4.10"
+slug = "review-resume-and-timed-question"
+title = "Saved review work resumes from confirmed progress (evidence writes pause on connection loss, no invented facts per AD-8); an active timed TESTING question follows AD-31 via the shared ONLINE-O2 contract — original deadline continues, shared next-question window, retry resets neither; evidence docs/agents/evidence/<date>-review-resume/"
+covers = ["CAP-3"]
+after = [{ story = "4.6", needs = "review flow" }, { epic = 2, needs = "ONLINE-O2 contract proven" }]
+waits = [
+  "epic-2/ONLINE-O2: shared delivery/ready-ACK contract for the timed question transition (AD-31)",
+  "epic-1: restored backend and candidate",
+  "hitl: device proof of disconnect/resume",
+]
+refined = false
+hitl = true
+status = "draft"

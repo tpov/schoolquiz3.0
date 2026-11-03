@@ -1,0 +1,41 @@
+{"stage":"target-verified-private-demo","runId":"lc_fe58ea839b5f46cc890d848a5d910026"}
+{
+  "status": "FAIL",
+  "stage": "target-verified-private-demo",
+  "code": 4,
+  "message": "4 DEADLINE_EXCEEDED: Deadline exceeded after 60.008s,name resolution: 0.032s,metadata filters: 0.003s,time to current attempt start: 0.001s,LB pick: 7.413s,remote_addr=172.17.0.3:8080",
+  "checksCompleted": [],
+  "bounds": {
+    "httpCalls": 6,
+    "transactions": 0,
+    "writes": 0,
+    "queryReads": 0,
+    "sweeps": 0,
+    "injectedAborts": []
+  },
+  "evidence": {
+    "runId": "lc_fe58ea839b5f46cc890d848a5d910026",
+    "projectId": "demo-schoolquiz-mvp",
+    "fixtureNames": {
+      "catalog": "lc_fe58ea839b5f46cc890d848a5d910026_catalog",
+      "course": "lc_fe58ea839b5f46cc890d848a5d910026_course",
+      "section": "lc_fe58ea839b5f46cc890d848a5d910026_section",
+      "theme": "lc_fe58ea839b5f46cc890d848a5d910026_theme",
+      "lesson": "lc_fe58ea839b5f46cc890d848a5d910026_lesson",
+      "submission": "lc_fe58ea839b5f46cc890d848a5d910026_submission",
+      "mainEvent": "lc_fe58ea839b5f46cc890d848a5d910026_mainEvent",
+      "event0": "lc_fe58ea839b5f46cc890d848a5d910026_event0",
+      "event1": "lc_fe58ea839b5f46cc890d848a5d910026_event1",
+      "event2": "lc_fe58ea839b5f46cc890d848a5d910026_event2",
+      "event3": "lc_fe58ea839b5f46cc890d848a5d910026_event3"
+    },
+    "retainedSyntheticFixtures": true,
+    "mountedSourceShas": {
+      "index.js": "b09ea05756049154596d7a9d188f911e2052e60d98ca9659b43c23acebcec602",
+      "course-tournament-controller.js": "ed9692fc908f5fae507e050d1b08595ef40221f43ffc242a0e2d2b2f5ca0992b",
+      "tournament-service.js": "a69ddb4575ff28c6ff30d6dee43fae7e0a6cf18f56c020f49db4963877d2206b",
+      "tournament-source-bank.js": "e6c98dbbc4ce8238093d00b7ab5caca8ed96fa81e250edb16793dd8b49cfeb81"
+    }
+  }
+}
+EXIT=1

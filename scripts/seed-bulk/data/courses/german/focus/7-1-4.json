@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 1,
+    "l": 4
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Модальные частицы (doch, ja, mal, eben) и тонкости порядка слов (грамматика)",
+  "lessonTitle": "Порядок слов в среднем поле: тема-рема, ударение, перестановки",
+  "focus": "Овладеть тонким управлением среднего поля (Mittelfeld): дефолтная последовательность дополнений (Subjekt — Dativ — Akkusativ, но местоимения вперёд), принцип 'известное перед новым' (Thema-Rhema), вынос элемента в начало (Vorfeld) и его коммуникативный эффект. Это управление информационной структурой, а не свобода.",
+  "grammar_points": [
+    "Дефолтный порядок в среднем поле: спрягаемый глагол — местоимения (Nom→Akk→Dat) — существительные-актанты — обстоятельства (temporal–kausal–modal–lokal, 'TeKaMoLo') — рематический элемент перед рамкой.",
+    "Местоимения всегда стоят раньше полных именных групп: 'Ich habe es ihm gestern gegeben', но 'Ich habe gestern dem Mann das Buch gegeben'.",
+    "Принцип Thema-Rhema: данная/известная информация ближе к началу, новая/рематическая — ближе к концу, непосредственно перед закрывающей частью рамки, куда падает фразовое ударение.",
+    "Vorfeld (поле перед спрягаемым глаголом) занимает ровно один член; вынос обстоятельства или дополнения туда тематизирует его: 'Gestern habe ich ihn gesehen' акцентирует время.",
+    "Перестановка ради эмфазы (Ausklammerung — вынос за рамку) в C2: 'Ich habe lange nicht mehr gesprochen mit ihm' — стилистически маркированный вынос предложной группы за вторую часть рамки."
+  ],
+  "vocab": [
+    "die Wortstellung — порядок слов",
+    "das Thema — тема (данное, известное)",
+    "das Rhema — рема (новое, главное)",
+    "die Satzklammer — рамочная конструкция",
+    "die Topikalisierung — тематизация (вынос в начало)",
+    "die Ausklammerung — вынос за рамку",
+    "die Informationsstruktur — информационная структура"
+  ],
+  "examples": [
+    "Ich habe es ihm gestern erklärt. — Я объяснил ему это вчера. (местоимения es→ihm перед обстоятельством)",
+    "Gestern habe ich dem Kollegen den Bericht geschickt. — Вчера я отправил коллеге отчёт. (тематизация времени в Vorfeld)",
+    "Den Film habe ich schon gesehen, das Buch noch nicht. — Фильм я уже видел, а книгу ещё нет. (вынос объекта-темы для контраста)",
+    "Sie hat lange nicht gesprochen mit ihren Eltern. — Она давно не разговаривала с родителями. (стилистический вынос предложной группы за рамку)",
+    "Dem Patienten muss der Arzt sofort helfen. — Пациенту врач должен немедленно помочь. (Dativ в Vorfeld тематизирует получателя)"
+  ]
+}

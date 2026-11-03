@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 1,
+    "l": 4
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+  "lessonTitle": "Урок 4. Глагол haben (иметь) и винительный падеж в отрицании kein",
+  "focus": "Освоить неправильный глагол haben, выражать обладание и возраст, а также познакомиться с отрицанием существительного через kein.",
+  "grammar_points": [
+    "Спряжение haben (иметь): ich habe, du hast, er/sie/es hat, wir haben, ihr habt, sie/Sie haben.",
+    "Особенность: формы du hast и er hat без буквы -b- (не «habst/habt» для ед. ч.).",
+    "haben выражает возраст: Ich bin 20 Jahre alt — но «иметь» в значении обладания: Ich habe ein Auto.",
+    "Отрицание существительного словом kein: kein (m/n), keine (f и мн. ч.): Ich habe kein Auto. Ich habe keine Zeit.",
+    "Прямое дополнение после haben стоит в винительном падеже (Akkusativ): ein → einen для мужского рода: Ich habe einen Hund."
+  ],
+  "vocab": [
+    "haben — иметь",
+    "die Zeit — время",
+    "das Auto — машина, автомобиль",
+    "der Hund — собака",
+    "die Katze — кошка",
+    "die Frage — вопрос",
+    "das Geld — деньги",
+    "der Bruder — брат"
+  ],
+  "examples": [
+    "Ich habe einen Bruder und eine Schwester. — У меня есть брат и сестра.",
+    "Hast du Zeit? – Nein, ich habe keine Zeit. — У тебя есть время? – Нет, у меня нет времени.",
+    "Er hat einen Hund, aber keine Katze. — У него есть собака, но нет кошки.",
+    "Wir haben eine Frage. — У нас есть вопрос.",
+    "Sie hat kein Auto. — У неё нет машины."
+  ]
+}

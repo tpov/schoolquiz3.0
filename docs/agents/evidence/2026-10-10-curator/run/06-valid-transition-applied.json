@@ -1,0 +1,89 @@
+{
+ "lessons": {
+  "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1": {
+   "placement": {
+    "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+    "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+    "questType": "REGULAR",
+    "contentVersion": 1,
+    "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548",
+    "lastRejection": {
+     "reason": "curator-jcurator-journey-invalid-rung\nourney-invalid-rung",
+     "code": "INVALID_TRANSITION",
+     "atMs": 1791665156293,
+     "actorUid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx"
+    },
+    "lastReason": "curator journey promotion tournament",
+    "updatedAtMs": 1791666636943,
+    "placementVersion": 2,
+    "decidedByUid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx",
+    "previousShelf": "arena",
+    "shelf": "tournament"
+   },
+   "lesson": {
+    "themeId": "ac_0ecb34aeec8b4557b13a390f10b3a548_theme",
+    "version": 1,
+    "reviewSubmissionId": "ac_0ecb34aeec8b4557b13a390f10b3a548_submission_0",
+    "reviewApprovedAtMs": 1788750089392,
+    "publishedAtMs": 1788750088392,
+    "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548",
+    "title": "Catalog fixture title changed",
+    "averageRating": 2,
+    "ratingUpdatedAtMs": 1789231293155,
+    "ratingCount": 1,
+    "ratingVersion": 1,
+    "lastModifiedAt": {
+     "_seconds": 1791666636,
+     "_nanoseconds": 943000000
+    },
+    "placementVersion": 2,
+    "placementUpdatedAtMs": 1791666636943,
+    "arenaShelf": "tournament"
+   },
+   "rating": {
+    "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+    "authorUid": "D0h0rHZGJVoU22cADZV8yb2lz1KT",
+    "ratingSum": 2,
+    "ratingCount": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "averageRating": 2,
+    "ratingVersion": 1,
+    "ratingUpdatedAtMs": 1789231293155
+   },
+   "history": [
+    {
+     "id": "0cd527acff7a5af6a44dd9961504bb9470d2f51617326c2c429fa763218d5345",
+     "actorUid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx",
+     "mutationId": "transition-1oot6bb9cna0u",
+     "fromShelf": "arena",
+     "targetShelf": "home",
+     "reason": "curator-jcurator-journey-invalid-rung\nourney-invalid-rung",
+     "status": "REJECTED",
+     "code": "INVALID_TRANSITION",
+     "decidedAtMs": 1791665156293
+    },
+    {
+     "id": "2cf6dc87c2c9050ad30c3086dbc3a6b3d0e273e084ffa3ea01f5268848565e5e",
+     "actorUid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx",
+     "mutationId": "transition-yeal77y9o9wc",
+     "fromShelf": "arena",
+     "targetShelf": "tournament",
+     "reason": "curator journey promotion tournament",
+     "status": "APPLIED",
+     "code": null,
+     "decidedAtMs": 1791666636943
+    },
+    {
+     "id": "ac_0ecb34aeec8b4557b13a390f10b3a548_private",
+     "actorUid": "ac_0ecb34aeec8b4557b13a390f10b3a548_PRIVATE",
+     "reason": "ac_0ecb34aeec8b4557b13a390f10b3a548_PRIVATE",
+     "status": "REJECTED",
+     "syntheticCatalogRun": "ac_0ecb34aeec8b4557b13a390f10b3a548"
+    }
+   ]
+  }
+ }
+}

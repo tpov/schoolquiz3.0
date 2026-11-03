@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 4,
+    "l": 1
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Наука, культура, абстрактные темы",
+  "lessonTitle": "Урок 1. Грамматика темы: Konjunktiv I и косвенная речь в научном/публицистическом тексте",
+  "focus": "Передавать чужие мнения, гипотезы и результаты исследований через Konjunktiv I (косвенная речь) — ключевой регистр научных статей, рефератов и докладов. Учимся ставить дистанцию между автором и источником.",
+  "grammar_points": [
+    "Konjunktiv I настоящего: основа инфинитива + окончания -e, -est, -e, -en, -et, -en (er sage, sie habe, es werde). Для sein особые формы: ich sei, du seist, er sei, wir seien.",
+    "Косвенная речь (indirekte Rede) без союза dass: Der Forscher betont, das Ergebnis sei eindeutig. Глагол стоит в Konjunktiv I.",
+    "Если форма Konjunktiv I совпадает с индикативом (мн. ч., 1 л.), используется Konjunktiv II как замена: Sie sagen, sie hätten (не *haben) keine Beweise.",
+    "Konjunktiv I прошедшего образуется через habe/sei + Partizip II: Er erklärte, die Studie habe das belegt / die Theorie sei widerlegt worden.",
+    "Konjunktiv I будущего и предположения: Man werde die Daten prüfen. Вводящие глаголы: behaupten, betonen, vermuten, einräumen, bestreiten."
+  ],
+  "vocab": [
+    "die Forschung (-en) — исследование, научная работа",
+    "die These (-n) — тезис, утверждение",
+    "die Hypothese (-n) — гипотеза",
+    "der Beleg (-e) — доказательство, подтверждение",
+    "widerlegen — опровергать",
+    "einräumen — признавать (нехотя), допускать",
+    "die Erkenntnis (-se) — (научное) знание, вывод, прозрение",
+    "der Wissenschaftler / die Wissenschaftlerin — учёный / учёная"
+  ],
+  "examples": [
+    "Der Autor behauptet, die bisherige Theorie sei längst überholt. — Автор утверждает, что прежняя теория давно устарела.",
+    "In dem Bericht heißt es, man habe die Hypothese in mehreren Studien bestätigt. — В докладе говорится, что гипотезу подтвердили в нескольких исследованиях.",
+    "Die Forscherin räumte ein, ihre Daten reichten für einen endgültigen Beweis noch nicht aus. — Исследовательница признала, что её данных пока недостаточно для окончательного доказательства.",
+    "Kritiker bestreiten, dass die Erkenntnisse auf andere Bereiche übertragbar seien. — Критики оспаривают, что эти выводы можно перенести на другие области."
+  ]
+}

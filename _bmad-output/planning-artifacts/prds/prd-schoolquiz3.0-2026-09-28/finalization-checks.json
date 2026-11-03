@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "scope": "Document finalization only; no runtime verification",
+  "completed_at": "2026-09-28T13:31:16.568998+00:00",
+  "functional_requirements": 56,
+  "nonfunctional_requirements": 8,
+  "user_journeys": 8,
+  "all_FR_have_acceptance": true,
+  "reconciled_original_inputs": 22,
+  "original_input_hashes_unchanged": true,
+  "checked_document_links": 54,
+  "broken_links": [],
+  "candidate_HEAD_unchanged": true,
+  "preexisting_dirty_files_unchanged": 4,
+  "unresolved_material_review_findings": 0,
+  "editorial_passes": [
+    "structure",
+    "prose"
+  ],
+  "final_artifact_sha256": {
+    "prd.md": "f90868c3355f75c8b70350477a7f0363b46779c483bc1a06230cdd4f76432480",
+    "addendum.md": "a33ea4680d347a24cfae47457682b6c8948d3ef283c8f6249a1b37f58100d747",
+    "finalization.md": "d7e26c91562f69039419faf29eee87cd054acbe691c40e1d8e22082f171fcb14"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-01",
+  "scope": "Course admission lifetime and tournament/championship names",
+  "result": "PASS",
+  "AD_preservation": {
+    "main": {
+      "stable_AD_ids": true,
+      "changed_ADs": [
+        2,
+        17,
+        31
+      ],
+      "other_AD_blocks_unchanged": true
+    },
+    "exam": {
+      "stable_AD_ids": true,
+      "changed_ADs": [],
+      "other_AD_blocks_unchanged": true
+    }
+  },
+  "missing_local_links": [],
+  "trailing_whitespace": [],
+  "reviews": [
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-phase-names-rubric-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-phase-names-reality-20261001.md",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/reviews/review-phase-names-adversarial-20261001.md"
+  ],
+  "sha256": {
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md": "690cd0679ea356263fef05dc10d138c925974f6698ac1df88efb27d29cd3d184",
+    "_bmad-output/planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/ARCHITECTURE-SPINE.md": "dc9f952013deec7d926b5345d0e01c0a0cacfeb86ca389fdb6f8ee5e41e25e6d",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/DESIGN.md": "64ba4fc7e2b36e71b3070199a7903b26d4764461b5712182eeb1336860808c6f",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/EXPERIENCE.md": "7a0e602290adfb90fce875eb3e2e3dff6e3a1a8daf86e90a3a2db22fc710a069",
+    "_bmad-output/planning-artifacts/ux-designs/ux-schoolquiz3.0-2026-09-28/.working/implementation-handoff.md": "8110c2e0a26caa6ba4333dc897d8404228b881517ee71584dd663b47e662f0d8",
+    "_bmad-output/specs/spec-theme-exams/exam-protocol.md": "f6bb012084a5f5524502c54fef918c61cc2c060d96c6bc2bb89658685051b87f"
+  },
+  "runtime_checks": "NOT RUN — documentation only",
+  "remaining": "Individual private quiz link lifetime remains unspecified; course access proof and ONLINE-O1/O2 technical contracts stay explicit",
+  "final_copy_cleanup": "UX O4: shared fund called фонд соревнования; no contract change."
+}

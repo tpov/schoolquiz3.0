@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 2,
+    "l": 5
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+  "lessonTitle": "Урок 5. Цепочки прилагательных и интеграция всех типов склонения",
+  "focus": "Свести воедино все три типа склонения: несколько прилагательных подряд, прилагательные в распространённых именных группах и в связном тексте. Цель — выбирать верное окончание автоматически в любом контексте.",
+  "grammar_points": [
+    "Несколько прилагательных перед одним существительным склоняются ПАРАЛЛЕЛЬНО — каждое получает одно и то же окончание: ein großer, heller Raum; die jungen, motivierten Mitarbeiter.",
+    "Алгоритм выбора: 1) есть ли слово-определитель (артикль/притяжательное)? 2) показывает ли оно ясно род/падеж? 3) если да — слабое/-en; если нет или его нет вовсе — сильное окончание на прилагательном.",
+    "Числительные (zwei, drei) НЕ влияют на склонение: zwei kleine Kinder, mit zwei kleinen Kindern (сильное склонение мн. ч.).",
+    "После beide и sämtliche прилагательное обычно идёт по слабому образцу (-en): beide neuen Mitarbeiter, sämtliche wichtigen Dokumente.",
+    "В Dativ Plural без артикля и существительное, и прилагательное часто оканчиваются на -en: mit guten alten Freunden.",
+    "В распространённых атрибутивных группах (с причастиями) причастие склоняется как прилагательное: die gestern gelieferte Ware, ein klar formulierter Satz."
+  ],
+  "vocab": [
+    "die Wortgruppe — словосочетание, группа слов",
+    "das Partizip — причастие",
+    "kombinieren — комбинировать, сочетать",
+    "anspruchsvoll — требовательный, взыскательный",
+    "umfangreich — обширный, объёмный",
+    "sorgfältig — тщательный, аккуратный",
+    "die Voraussetzung — предпосылка, условие",
+    "gründlich — основательный"
+  ],
+  "examples": [
+    "In dem großen, hellen Büro arbeiten viele junge Leute. — В большом светлом офисе работает много молодых людей.",
+    "Wir suchen einen erfahrenen, zuverlässigen Mitarbeiter. — Мы ищем опытного, надёжного сотрудника.",
+    "Mit zwei kleinen Kindern ist das Leben anstrengend. — С двумя маленькими детьми жизнь утомительна.",
+    "Beide neuen Kollegen haben sich schnell eingearbeitet. — Оба новых коллеги быстро вошли в курс дела.",
+    "Sie traf sich mit alten guten Freunden aus der Schulzeit. — Она встретилась со старыми хорошими друзьями со школьных времён.",
+    "Die gestern gelieferte Ware war von hoher Qualität. — Доставленный вчера товар был высокого качества."
+  ]
+}

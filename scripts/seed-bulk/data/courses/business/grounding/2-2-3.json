@@ -1,0 +1,33 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 3
+  },
+  "subjectTitle": "Корпоративные финансы (Corporate Finance)",
+  "themeTitle": "Оценка проектов и компаний: DCF и мультипликаторы",
+  "lessonTitle": "Полный DCF: терминальная стоимость, дисконтирование по WACC и переход к стоимости акций",
+  "focus": "Собрать DCF целиком — прогнозный период + терминальная стоимость, дисконтирование по WACC до enterprise value и мост к equity value.",
+  "teaching_points": [
+    "DCF строится из двух частей: PV явного прогноза FCFF (обычно 5–10 лет) + PV терминальной стоимости (всё, что после прогноза). Enterprise Value = PV(FCFF прогноза) + PV(Terminal Value).",
+    "Дисконтная ставка для unlevered FCF — это WACC (средневзвешенная стоимость капитала), отражающая требуемую доходность и держателей долга, и акционеров. (Детальный вывод WACC/CAPM — отдельная тема.)",
+    "Метод Gordon (perpetuity growth): TV = FCFn·(1+g)/(WACC−g), где g — вечный темп роста, обязательно g < WACC и g ≤ долгосрочному росту экономики (обычно 1,5–3,5%).",
+    "Метод exit multiple: TV = метрика последнего года · рыночный мультипликатор (напр. EBITDAn · EV/EBITDA peers). Удобно сверять с perpetuity-методом.",
+    "Терминальную стоимость нужно дисконтировать обратно к сегодня: PV(TV) = TV/(1+WACC)^n. Частая ошибка — забыть это и завысить оценку.",
+    "Переход к стоимости акций: Equity Value = Enterprise Value − Net Debt (вычесть долг, прибавить деньги). Цена за акцию = Equity Value / число акций.",
+    "Зачем менеджеру: единая модель связывает операционные прогнозы, риск (через WACC) и долгосрочные ожидания (через g) в одно число — стоимость, которой можно обосновать сделку или инвестицию."
+  ],
+  "frameworks": [
+    "Enterprise Value = Σ FCFt/(1+WACC)^t + TV/(1+WACC)^n",
+    "Terminal Value (Gordon): TV = FCFn·(1+g)/(WACC−g)",
+    "Terminal Value (exit multiple)",
+    "Equity Value = EV − Net Debt",
+    "WACC (как ставка дисконтирования)"
+  ],
+  "example": "FCFF года 5 = 115, g = 2,5%, WACC = 9%. TV = 115·1,025/(0,09−0,025) = 117,9/0,065 ≈ 1814. PV(TV) = 1814/1,09^5 ≈ 1179. Если PV прогнозных FCFF = 450, то EV ≈ 1629. При Net Debt = 250 equity value ≈ 1379.",
+  "sources": [
+    "Brealey, Myers, Allen, «Principles of Corporate Finance»",
+    "Street of Walls, «Discounted Cash Flow Analysis» (streetofwalls.com)",
+    "HBS Online, «Discounted Cash Flow (DCF) Model» (online.hbs.edu/blog/post/discounted-cash-flow)"
+  ]
+}

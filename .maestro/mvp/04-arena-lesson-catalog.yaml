@@ -1,0 +1,67 @@
+appId: com.tpov.schoolquiz.mvp
+name: Existing-owner read-only Arena lesson catalog
+---
+# DRAFT: English locale, existing synthetic owner, reviewed APK and retained R1 catalog only.
+# Root verifies the actual hierarchy first. No resource-id assumptions, signup, clear or seed.
+- launchApp:
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "^INTERNET$"
+# Arena is the normal Internet default. A retained Profile destination uses its real drawer.
+- runFlow:
+    when:
+      notVisible: "^Arena lessons$"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^ARENA$"
+- assertVisible: "^Arena lessons$"
+- assertVisible: "Catalog preview only\\. Entry preparation and play are not connected yet\\."
+- assertVisible: "Press Load lessons to request the catalog\\."
+- assertVisible: "^Load lessons$"
+- assertNotVisible: "Loaded [0-9]+ of [0-9]+ lessons"
+- assertNotVisible: "(?i)^start( lesson)?$"
+- assertNotVisible: "(?i)^prepare( entry)?$"
+- takeScreenshot: "arena-before-manual-load"
+- tapOn: "^Load lessons$"
+- extendedWaitUntil:
+    visible: "^Loaded 4 of 4 lessons$"
+    timeout: 60000
+- assertNotVisible: "Could not load the catalog.*"
+- assertNotVisible: "The server response could not be confirmed.*"
+- scrollUntilVisible:
+    element:
+      text: "^Catalog fixture title changed$"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "^Catalog fixture title changed$"
+- assertVisible: "^Author ID: D0h0rHZGJVoU22cADZV8yb2lz1KT$"
+- assertVisible: "^No player ratings yet$"
+- scrollUntilVisible:
+    element:
+      text: "^Current selected-entry price: 1 nolics$"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "^Current selected-entry price: 1 nolics$"
+- takeScreenshot: "arena-existing-unrated-lesson"
+- scrollUntilVisible:
+    element:
+      text: "^Back$"
+    direction: UP
+    timeout: 10000
+# Exact English catalog text, not the separate toolbar's Russian back content description.
+- tapOn: "^Back$"
+- assertVisible: "^Open lesson catalog$"
+- assertNotVisible: "^Load lessons$"
+- assertNotVisible: "Loaded [0-9]+ of [0-9]+ lessons"
+- takeScreenshot: "arena-after-catalog-back"
+- tapOn: "^Open lesson catalog$"
+- assertVisible: "Press Load lessons to request the catalog\\."
+- assertVisible: "^Load lessons$"
+- assertNotVisible: "Loaded [0-9]+ of [0-9]+ lessons"
+- tapOn: "^Load lessons$"
+- extendedWaitUntil:
+    visible: "^Loaded 4 of 4 lessons$"
+    timeout: 60000
+- assertNotVisible: "(?i)^start( lesson)?$"
+- assertNotVisible: "(?i)^prepare( entry)?$"
+- takeScreenshot: "arena-second-explicit-load"

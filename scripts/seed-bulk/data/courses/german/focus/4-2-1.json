@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 2,
+    "l": 1
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+  "lessonTitle": "Профессии и место работы: рассказываем о себе",
+  "focus": "Научиться называть профессию, место работы и сферу деятельности, описывать свой рабочий день. Закрепить употребление профессий БЕЗ артикля после sein/werden (Ich bin Lehrer) и предлоги места работы.",
+  "grammar_points": [
+    "Профессия после глаголов sein/werden употребляется БЕЗ артикля: Ich bin Ingenieur. Sie wird Ärztin (но: Ich bin ein guter Lehrer — артикль появляется с прилагательным).",
+    "Женский род профессий через суффикс -in: der Lehrer → die Lehrerin, der Arzt → die Ärztin (с умлаутом), der Koch → die Köchin.",
+    "Предлоги места работы: bei + Dativ (фирма/работодатель — bei Siemens, bei einer Bank), in + Dativ (учреждение — in einem Büro, in einer Schule), als + профессия без артикля (Ich arbeite als Verkäufer).",
+    "Вопросы о профессии: Was sind Sie von Beruf? Als was arbeiten Sie? Wo arbeiten Sie?"
+  ],
+  "vocab": [
+    "der Beruf — профессия",
+    "der Arbeitsplatz — рабочее место",
+    "die Stelle — должность, место работы",
+    "der Arbeitgeber — работодатель",
+    "die Firma — фирма, компания",
+    "das Büro — офис",
+    "der Angestellte — служащий",
+    "verdienen — зарабатывать",
+    "die Branche — отрасль, сфера",
+    "die Erfahrung — опыт"
+  ],
+  "examples": [
+    "Ich bin Ingenieur und arbeite bei einer großen Firma in München. — Я инженер и работаю в большой фирме в Мюнхене.",
+    "Meine Schwester wird nächstes Jahr Ärztin. — Моя сестра в следующем году станет врачом.",
+    "Als Verkäuferin in einem Supermarkt verdiene ich nicht besonders viel. — Как продавщица в супермаркете я зарабатываю не особо много.",
+    "Was sind Sie von Beruf? — Ich arbeite als Lehrer an einer Grundschule. — Кто вы по профессии? — Я работаю учителем в начальной школе."
+  ]
+}

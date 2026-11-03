@@ -1,0 +1,34 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 4,
+    "l": 5
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+  "lessonTitle": "Это не лампа: отрицание kein и описание комнаты",
+  "focus": "Учим отрицать существительные через kein/keine и собирать всё вместе: называть предмет, его цвет и количество в простой бытовой речи о комнате.",
+  "grammar_points": [
+    "Отрицание существительного с артиклем ein/eine — через kein/keine: Das ist kein Tisch. Das ist keine Lampe.",
+    "Во множественном числе — keine: Das sind keine Bücher.",
+    "Различие nein (нет — ответ) и kein (не/никакой — отрицание существительного).",
+    "Сборка фразы: Das ist eine + цвет(окончание) + предмет; Das ist kein + предмет."
+  ],
+  "vocab": [
+    "kein — никакой (m/n)",
+    "keine — никакая, никакие (f/мн.ч.)",
+    "das Zimmer — комната",
+    "hier — здесь",
+    "und — и",
+    "auch — тоже",
+    "klein — маленький"
+  ],
+  "examples": [
+    "Das ist keine Lampe, das ist ein Fenster. — Это не лампа, это окно.",
+    "Das ist kein Stuhl. — Это не стул.",
+    "Im Zimmer sind ein Bett und ein kleiner Tisch. — В комнате кровать и маленький стол.",
+    "Das sind keine Bücher, das sind Lampen. — Это не книги, это лампы.",
+    "Die Tür ist grün und das Fenster ist auch grün. — Дверь зелёная, и окно тоже зелёное."
+  ]
+}

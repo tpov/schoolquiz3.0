@@ -1,0 +1,290 @@
+{
+ "count": 15,
+ "lessons": [
+  {
+   "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1788750090392
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_2",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1788750090392
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1788750090392
+   },
+   "rating": {
+    "sum": 4,
+    "count": 2,
+    "weightedScore": {
+     "numerator": 44,
+     "denominator": 22
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789240762584
+   },
+   "rating": {
+    "sum": 0,
+    "count": 0,
+    "weightedScore": {
+     "numerator": 40,
+     "denominator": 20
+    },
+    "ratingVersion": 0
+   }
+  },
+  {
+   "lessonId": "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_2",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789240762584
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_6ba84b006f7d423f8630ac7802407eb0_lesson_3",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789240762584
+   },
+   "rating": {
+    "sum": 4,
+    "count": 2,
+    "weightedScore": {
+     "numerator": 44,
+     "denominator": 22
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_7ad0e33fd17e4709b16f433d90304e94_lesson_1",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789235031646
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_7ad0e33fd17e4709b16f433d90304e94_lesson_2",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789235031646
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_7ad0e33fd17e4709b16f433d90304e94_lesson_3",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789235031646
+   },
+   "rating": {
+    "sum": 4,
+    "count": 2,
+    "weightedScore": {
+     "numerator": 44,
+     "denominator": 22
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_b563a9845b1f4f279683d321ed54ca51_lesson_1",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789237950354
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_b563a9845b1f4f279683d321ed54ca51_lesson_2",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789237950354
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "ac_b563a9845b1f4f279683d321ed54ca51_lesson_3",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789237950354
+   },
+   "rating": {
+    "sum": 4,
+    "count": 2,
+    "weightedScore": {
+     "numerator": 44,
+     "denominator": 22
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "aeu_7d433c732adf45a7b1c665260571b707_target",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789265259929
+   },
+   "rating": {
+    "sum": 2,
+    "count": 1,
+    "weightedScore": {
+     "numerator": 42,
+     "denominator": 21
+    },
+    "ratingVersion": 1
+   }
+  },
+  {
+   "lessonId": "aeu_f2229bcc8ac745cc85934c7226193825_target",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1789242170022
+   },
+   "rating": {
+    "sum": 4,
+    "count": 2,
+    "weightedScore": {
+     "numerator": 44,
+     "denominator": 22
+    },
+    "ratingVersion": 2
+   }
+  },
+  {
+   "lessonId": "lesson-165e9e06e266461f82bc0522bf4d4cfb",
+   "contentVersion": 1,
+   "placement": {
+    "shelf": "arena",
+    "previousShelf": "review",
+    "placementVersion": 1,
+    "updatedAtMs": 1788734785647
+   },
+   "rating": {
+    "sum": 0,
+    "count": 0,
+    "weightedScore": {
+     "numerator": 40,
+     "denominator": 20
+    },
+    "ratingVersion": 0
+   }
+  }
+ ]
+}

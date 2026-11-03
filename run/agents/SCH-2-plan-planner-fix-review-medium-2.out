@@ -1,0 +1,16 @@
+STATUS: DONE
+
+Changed only the plan overview content requested:
+
+- [phase-01/overview.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/plan/phase-01/overview.md):51
+  - Replaced shorthand `:139-145` with full citation:
+    `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:139-145`
+
+Validation run for all plan markdown files:
+
+- `.claude/hooks/check-plan-no-code.sh` — PASS
+- `.claude/hooks/check-plan-paths.sh` — PASS
+
+Also confirmed no hidden `._*` plan files remain after editing.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "fe760949-79f1-4eaa-a732-dfff5199ecee" "follow-up"`.

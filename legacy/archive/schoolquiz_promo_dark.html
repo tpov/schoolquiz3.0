@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchoolQuiz — Интерактивное обучение</title>
+  <style>
+    body {
+      background: #181a20;
+      color: #fff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .slide {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      max-width: 90vw;
+      text-align: center;
+      font-size: 2.2rem;
+      padding: 2rem 1rem;
+      border-radius: 24px;
+      box-shadow: 0 4px 32px #0008;
+      background: #23262f;
+      margin: 2rem 0 1rem 0;
+      transition: box-shadow 0.2s;
+    }
+    .slide.active {
+      display: flex;
+    }
+    .controls {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+    button {
+      background: #353945;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.8rem 2.2rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:disabled {
+      background: #23262f;
+      color: #888;
+      cursor: not-allowed;
+    }
+    @media (max-width: 600px) {
+      .slide {
+        font-size: 1.1rem;
+        padding: 1rem 0.2rem;
+      }
+      button {
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="slides-container">
+    <div class="slide active">С вами TPOV!</div>
+    <div class="slide">🎓 В быстро меняющемся мире обучение — необходимость</div>
+    <div class="slide">Зубрёжка, скука, забытые имена преподавателей...</div>
+    <div class="slide">📌 Мы создали платформу интерактивного обучения!</div>
+    <div class="slide" data-list>
+      <div style="font-size:1.3em; margin-bottom:1em;">В нашей платформе:</div>
+      <ul style="text-align:left; font-size:1em; max-width:400px; margin:0 auto;">
+        <li style="opacity:0;">📚 Квесты вместо скучных уроков</li>
+        <li style="opacity:0;">🧠 Визуальный прогресс</li>
+        <li style="opacity:0;">🏆 Таблицы лидеров</li>
+        <li style="opacity:0;">🧾 Сертификаты</li>
+        <li style="opacity:0;">🔁 Повторение материала</li>
+      </ul>
+    </div>
+    <div class="slide">
+      <div style="font-size:1.3em; margin-bottom:1em;">Для авторов:</div>
+      Бесплатное продвижение курсов для авторов!
+    </div>
+    <div class="slide" data-list>
+      <div style="font-size:1.3em; margin-bottom:1em;">Дополнительные возможности:</div>
+      <ul style="text-align:left; font-size:1em; max-width:400px; margin:0 auto;">
+        <li style="opacity:0;">🎯 Квиз для найма сотрудников</li>
+        <li style="opacity:0;">🤪 Смешные и угарные квесты</li>
+        <li style="opacity:0;">🎉 Развлечения в перерывах</li>
+      </ul>
+    </div>
+    <div class="slide">А вдруг именно твой квест станет вирусным?</div>
+    <div class="slide">Присоединяйся к нам — учись, создавай, побеждай!</div>
+    <div class="slide">[Логотип и контакты]<br><span style="font-size:1rem; color:#888;">(Добавить позже)</span></div>
+  </div>
+  <div class="controls">
+    <button id="prevBtn">Назад</button>
+    <button id="nextBtn">Вперёд</button>
+  </div>
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let current = 0;
+    // Для слайдов со списками — сколько пунктов показано
+    let listProgress = Array.from(slides).map(slide => 0);
+
+    function showSlide(idx, direction = 1) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === idx);
+        // Скрываем все пункты списка, кроме показанных
+        if (slide.hasAttribute('data-list')) {
+          const items = slide.querySelectorAll('li');
+          items.forEach((li, j) => {
+            li.style.opacity = (j < listProgress[i]) ? '1' : '0';
+            li.style.transition = 'opacity 0.5s';
+          });
+        }
+      });
+      document.getElementById('prevBtn').disabled = idx === 0 && listProgress[0] === 0;
+      // Кнопка 'Вперёд' неактивна только на последнем слайде и все пункты показаны
+      const lastList = slides[slides.length-1].hasAttribute('data-list');
+      const lastListDone = lastList ? (listProgress[slides.length-1] === slides[slides.length-1].querySelectorAll('li').length) : true;
+      document.getElementById('nextBtn').disabled = (idx === slides.length - 1) && lastListDone;
+    }
+
+    document.getElementById('prevBtn').onclick = () => {
+      // Если на слайде со списком и есть что скрыть — скрываем последний пункт
+      if (slides[current].hasAttribute('data-list') && listProgress[current] > 0) {
+        listProgress[current]--;
+        showSlide(current, -1);
+      } else if (current > 0) {
+        current--;
+        showSlide(current, -1);
+      }
+    };
+    document.getElementById('nextBtn').onclick = () => {
+      // Если на слайде со списком и не все пункты показаны — показываем следующий
+      if (slides[current].hasAttribute('data-list')) {
+        const items = slides[current].querySelectorAll('li');
+        if (listProgress[current] < items.length) {
+          listProgress[current]++;
+          showSlide(current, 1);
+          return;
+        }
+      }
+      if (current < slides.length - 1) {
+        current++;
+        showSlide(current, 1);
+      }
+    };
+    // При первом показе — показываем только первый пункт, если это список
+    slides.forEach((slide, i) => {
+      if (slide.hasAttribute('data-list')) {
+        listProgress[i] = 0;
+      }
+    });
+    showSlide(current);
+  </script>
+</body>
+</html> 

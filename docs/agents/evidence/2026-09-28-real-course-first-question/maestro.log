@@ -1,0 +1,158 @@
+01:02:04.380 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /tmp/sq-course-final-20260928.gbWCs6/debug/.maestro/tests/2026-09-28_010204
+01:02:04.383 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+01:02:04.384 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.0.10
+01:02:04.385 [ INFO] MAESTRO.logSystemInfo: CI: Undefined
+01:02:04.385 [ INFO] MAESTRO.logSystemInfo: OS Name: Mac OS X
+01:02:04.385 [ INFO] MAESTRO.logSystemInfo: OS Version: 26.5.2
+01:02:04.385 [ INFO] MAESTRO.logSystemInfo: Architecture: aarch64
+01:02:04.386 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+01:02:04.392 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+01:02:04.399 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+01:02:04.406 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+01:02:04.406 [ INFO] MAESTRO.logSystemInfo: ---------------------
+01:02:04.896 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+01:02:07.405 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device RF8W80MBR3Z using port 7001 with execution plan ExecutionPlan(flowsToRun=[/Users/tpov/Servers/vps/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/.maestro/mvp/07-real-course-first-question-uk.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, local=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+01:02:13.903 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow Full school course first question on Ukrainian Android device
+01:02:13.916 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+01:02:14.248 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2408, widthGrid=1080, heightGrid=2408)
+01:02:14.306 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Define variables RUNNING
+01:02:14.309 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Define variables COMPLETED
+01:02:14.309 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Apply configuration RUNNING
+01:02:14.309 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Apply configuration COMPLETED
+01:02:14.309 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Launch app "com.tpov.schoolquiz.mvp" RUNNING
+01:02:14.675 [ INFO] maestro.Maestro.launchApp: Launching app com.tpov.schoolquiz.mvp
+01:02:14.675 [ INFO] maestro.Maestro.launchApp: Stopping com.tpov.schoolquiz.mvp app during launch
+01:02:15.040 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Launch app "com.tpov.schoolquiz.mvp" COMPLETED
+01:02:15.041 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Run flow when "^ДОМАШНІ КВЕСТИ$" is not visible RUNNING
+01:02:16.150 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Відкрити меню" RUNNING
+01:02:22.653 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=, accessibilityText=Відкрити меню, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=true, bounds=[18,83][153,218], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.Button}, children=[], clickable=true, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=18, y=83, width=135, height=135))
+01:02:24.784 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:24.789 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (85, 150) using hierarchy based logic for wait
+01:02:24.789 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:24.790 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:02:27.465 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:02:27.466 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Відкрити меню" COMPLETED
+01:02:27.466 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Домашні квести" RUNNING
+01:02:27.810 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Домашні квести, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[45,634][816,681], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=45, y=634, width=771, height=47))
+01:02:29.298 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:29.299 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (430, 657) using hierarchy based logic for wait
+01:02:29.300 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:29.300 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:02:31.363 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:02:31.363 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Домашні квести" COMPLETED
+01:02:31.364 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Run flow when "^ДОМАШНІ КВЕСТИ$" is not visible COMPLETED
+01:02:31.365 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Відкрити меню" RUNNING
+01:02:31.743 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=, accessibilityText=Відкрити меню, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=true, bounds=[18,83][153,218], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.Button}, children=[], clickable=true, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=18, y=83, width=135, height=135))
+01:02:33.171 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:33.171 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (85, 150) using hierarchy based logic for wait
+01:02:33.171 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:33.171 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:02:35.362 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:02:35.363 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Відкрити меню" COMPLETED
+01:02:35.364 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Налаштування" RUNNING
+01:02:35.643 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Налаштування, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[45,1218][816,1265], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=45, y=1218, width=771, height=47))
+01:02:37.069 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:37.070 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (430, 1241) using hierarchy based logic for wait
+01:02:37.070 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:37.070 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:02:39.797 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:02:39.798 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Налаштування" COMPLETED
+01:02:39.801 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Scrolling DOWN until "Перечитати все заново" is visible with speed 40, visibility percentage 100%, timeout 30000 ms, with centering disabled RUNNING
+01:02:40.881 [ WARN] maestro.orchestra.Orchestra.scrollUntilVisible: Error: maestro.MaestroException$ElementNotFound: Element not found: Text matching regex: Перечитати все заново
+01:02:40.904 [ INFO] maestro.Maestro.swipeFromCenter: Swiping UP from center
+01:02:43.402 [ WARN] maestro.orchestra.Orchestra.scrollUntilVisible: Error: maestro.MaestroException$ElementNotFound: Element not found: Text matching regex: Перечитати все заново
+01:02:43.425 [ INFO] maestro.Maestro.swipeFromCenter: Swiping UP from center
+01:02:46.132 [ INFO] maestro.orchestra.Orchestra.scrollUntilVisible: Scrolling try count: 0, DeviceWidth: 1080, DeviceWidth: 2408
+01:02:46.133 [ INFO] maestro.orchestra.Orchestra.scrollUntilVisible: Element bounds: Bounds(x=90, y=1492, width=431, height=47)
+01:02:46.134 [ INFO] maestro.orchestra.Orchestra.scrollUntilVisible: Visibility Percent: 0
+01:02:46.146 [ INFO] maestro.orchestra.Orchestra.scrollUntilVisible: Command centerElement: ScrollUntilVisibleCommand(selector=ElementSelector(textRegex=Перечитати все заново, idRegex=null, size=null, below=null, above=null, leftOf=null, rightOf=null, containsChild=null, containsDescendants=null, traits=null, index=null, enabled=null, optional=false, selected=null, checked=null, focused=null, childOf=null, css=null), direction=DOWN, scrollDuration=601, visibilityPercentage=100, timeout=30000, waitToSettleTimeoutMs=null, centerElement=false, originalSpeedValue=40, label=null, optional=false).centerElement
+01:02:46.147 [ INFO] maestro.orchestra.Orchestra.scrollUntilVisible: visibilityPercentageNormalized: 1.0
+01:02:46.147 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Scrolling DOWN until "Перечитати все заново" is visible with speed 40, visibility percentage 100%, timeout 30000 ms, with centering disabled COMPLETED
+01:02:46.147 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Перечитати все заново" RUNNING
+01:02:46.506 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Перечитати все заново, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[90,1492][521,1539], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=90, y=1492, width=431, height=47))
+01:02:47.993 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:47.994 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (305, 1515) using hierarchy based logic for wait
+01:02:47.994 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:47.994 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:02:50.248 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:02:50.249 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Перечитати все заново" COMPLETED
+01:02:50.250 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Assert that "Увесь вміст буде завантажено із сервера заново. Дій, що чекають на надсилання, це не торкнеться." is visible RUNNING
+01:02:50.421 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Assert that "Увесь вміст буде завантажено із сервера заново. Дій, що чекають на надсилання, це не торкнеться." is visible COMPLETED
+01:02:50.421 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Перечитати" RUNNING
+01:02:50.566 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Перечитати, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[669,1327][888,1384], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=669, y=1327, width=219, height=57))
+01:02:51.817 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:51.818 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (778, 1355) using hierarchy based logic for wait
+01:02:51.818 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:51.818 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:02:53.836 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:02:53.837 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Перечитати" COMPLETED
+01:02:53.837 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Відкрити меню" RUNNING
+01:02:54.172 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=, accessibilityText=Відкрити меню, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=true, bounds=[18,83][153,218], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.Button}, children=[], clickable=true, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=18, y=83, width=135, height=135))
+01:02:55.550 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:55.550 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (85, 150) using hierarchy based logic for wait
+01:02:55.550 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:55.550 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:02:57.620 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:02:57.621 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Відкрити меню" COMPLETED
+01:02:57.621 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Assert that "Архів" is visible RUNNING
+01:02:57.918 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Assert that "Архів" is visible COMPLETED
+01:02:57.919 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Архів" RUNNING
+01:02:58.189 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Архів, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[45,780][816,827], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=45, y=780, width=771, height=47))
+01:02:59.577 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:02:59.578 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (430, 803) using hierarchy based logic for wait
+01:02:59.578 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:02:59.578 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:03:02.513 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:03:02.514 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Архів" COMPLETED
+01:03:02.514 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Assert that "Математика: полный школьный курс" is visible RUNNING
+01:03:02.732 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Assert that "Математика: полный школьный курс" is visible COMPLETED
+01:03:02.732 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Математика: полный школьный курс" RUNNING
+01:03:02.938 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Математика: полный школьный курс, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[142,449][737,496], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=142, y=449, width=595, height=47))
+01:03:04.212 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:03:04.213 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (439, 472) using hierarchy based logic for wait
+01:03:04.213 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:03:04.213 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:03:05.998 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:03:05.999 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Математика: полный школьный курс" COMPLETED
+01:03:05.999 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Assert that "Числа и вычисления" is visible RUNNING
+01:03:06.353 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Assert that "Числа и вычисления" is visible COMPLETED
+01:03:06.353 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Числа и вычисления" RUNNING
+01:03:06.627 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Числа и вычисления, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[142,449][861,496], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=142, y=449, width=719, height=47))
+01:03:08.064 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:03:08.064 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (501, 472) using hierarchy based logic for wait
+01:03:08.064 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:03:08.065 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:03:09.850 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:03:09.851 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Числа и вычисления" COMPLETED
+01:03:09.851 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Assert that "Натуральные и целые числа, делимость, НОД и НОК" is visible RUNNING
+01:03:10.118 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Assert that "Натуральные и целые числа, делимость, НОД и НОК" is visible COMPLETED
+01:03:10.119 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Натуральные и целые числа, делимость, НОД и НОК" RUNNING
+01:03:10.384 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Натуральные и целые числа, делимость, НОД и НОК, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[142,449][861,496], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=142, y=449, width=719, height=47))
+01:03:11.803 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:03:11.804 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (501, 472) using hierarchy based logic for wait
+01:03:11.804 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:03:11.805 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:03:13.793 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:03:13.794 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Натуральные и целые числа, делимость, НОД и НОК" COMPLETED
+01:03:13.794 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Assert that "Натуральные и целые числа: координатная прямая, модуль, сравнение" is visible RUNNING
+01:03:14.023 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Assert that "Натуральные и целые числа: координатная прямая, модуль, сравнение" is visible COMPLETED
+01:03:14.025 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Run ${output.lessonOpenStartedAt = Date.now()} RUNNING
+01:03:14.739 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Run ${output.lessonOpenStartedAt = Date.now()} COMPLETED
+01:03:14.739 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Tap on "Натуральные и целые числа: координатная прямая, модуль, сравнение" RUNNING
+01:03:14.993 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Натуральные и целые числа: координатная прямая, модуль, сравнение, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[158,449][842,496], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=158, y=449, width=684, height=47))
+01:03:16.374 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+01:03:16.376 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Tapping at (500, 472) using hierarchy based logic for wait
+01:03:16.377 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+01:03:16.377 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:03:19.835 [ INFO] maestro.Maestro.hierarchyBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+01:03:19.835 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Tap on "Натуральные и целые числа: координатная прямая, модуль, сравнение" COMPLETED
+01:03:19.836 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Assert that "Перервати" is visible RUNNING
+01:03:20.194 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Assert that "Перервати" is visible COMPLETED
+01:03:20.194 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Run ${console.log('COURSE_FIRST_QUESTION_MS=' + (Date.now() - output.lessonOpenStartedAt))} RUNNING
+01:03:20.223 [ INFO] maestro.orchestra.Orchestra.executeCommands$lambda$16$lambda$14: JsConsole: COURSE_FIRST_QUESTION_MS=5487
+01:03:20.224 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Run ${console.log('COURSE_FIRST_QUESTION_MS=' + (Date.now() - output.lessonOpenStartedAt))} COMPLETED
+01:03:20.224 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$6: Take screenshot real-course-first-question-uk RUNNING
+01:03:20.224 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot to a file: /tmp/sq-course-final-20260928.gbWCs6/artifacts/screenshots/real-course-first-question-uk.png
+01:03:20.225 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+01:03:20.751 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$18$lambda$8: Take screenshot real-course-first-question-uk COMPLETED
+01:03:21.273 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /tmp/sq-course-final-20260928.gbWCs6/artifacts

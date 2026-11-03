@@ -1,0 +1,29 @@
+--- .working/capability-contract.json.before
++++ .working/capability-contract.json
+@@ -163,7 +163,7 @@
+     "n": 21,
+     "title": "Prove knowledge of a course theme",
+     "intent": "A learner can take a theme test after completing its required ordinary learning and preserve earned theme progress.",
+-    "success": "Confirmed coverage of all required EASY questions admits a 20-scored-question test of 5 EASY plus 15 HARD; ordinary access purchase grants no pass. Bank, charge, timing, retry and cooldown follow EXAM. Passes carry for stable course/theme identities after edits, newly required themes must pass, and a first-pass reward cannot be duplicated. Theme stars follow the accepted linear 0..3 percent scale. First-pass nolics and XP use x3 for new progress, with the retained difficulty/time factors and one reward-accounted history. The next theme attempt waits 24 hours from terminal closure. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged.",
++    "success": "Confirmed coverage of all required EASY questions admits a 20-scored-question test of 5 EASY plus 15 HARD; ordinary access purchase grants no pass. Bank, charge, timing, retry and cooldown follow EXAM. Passes carry for stable course/theme identities after edits, newly required themes must pass, and a first-pass reward cannot be duplicated. Theme stars follow the accepted linear 0..3 percent scale. First-pass nolics and XP use x3 for new progress, with the retained difficulty/time factors and one reward-accounted history. The next theme attempt waits 24 hours from terminal closure. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Required EASY coverage is confirmed by versioned question evidence across ordinary attempts. Reward worth retains ordinary EASY/HARD values independently of the assessment timer, under EXAM-TECH-1.",
+     "fr": "EXAM:CAP-1–7/9–15/17/19–21",
+     "ad": "AD-2/3/5/6/9/14/15/23/24"
+   },
+@@ -171,7 +171,7 @@
+     "n": 22,
+     "title": "Earn and verify a course certificate",
+     "intent": "A learner who passes the required themes can demonstrate current course knowledge in a final exam and receive a verifiable certificate.",
+-    "success": "A new final uses the latest approved course and 20 HARD questions. Every successful final earns a distinct one-year attestation, including renewal before expiry; the profile displays the latest earned certificate even if its passing score is lower, while prior certificates remain unchanged in history. Failed finals issue no certificate. Public verification works signed out; fulfilment retries preserve the same issuance and original claims and expiry survive content-fault correction. Every recorded final attempt is eligible for nolics/XP rewards regardless of passing, using x10 for new progress and x0.1 for the already-accounted part, then the retained difficulty/time factors. The next final waits seven days from terminal closure; retry never creates a second reward. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged.",
++    "success": "A new final uses the latest approved course and 20 HARD questions. Every successful final earns a distinct one-year attestation, including renewal before expiry; the profile displays the latest earned certificate even if its passing score is lower, while prior certificates remain unchanged in history. Failed finals issue no certificate. Public verification works signed out; fulfilment retries preserve the same issuance and original claims and expiry survive content-fault correction. Every recorded final attempt is eligible for nolics/XP rewards regardless of passing, using x10 for new progress and x0.1 for the already-accounted part, then the retained difficulty/time factors. The next final waits seven days from terminal closure; retry never creates a second reward. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Reward worth retains ordinary HARD values; the exact formula, rounding and accounted-history fixtures follow EXAM-TECH-1.",
+     "fr": "EXAM:CAP-8/9/15/16/18/21",
+     "ad": "AD-9/14–16/20/23/24"
+   },
+@@ -179,7 +179,7 @@
+     "n": 23,
+     "title": "Correct confirmed question faults with accountable result history",
+     "intent": "Authorized maintainers can remove a confirmed bad question revision from future use and apply justified result corrections.",
+-    "success": "Signals request review rather than automatically proving error; original sitting evidence and frozen active banks remain, corrections append attributable versions and may correct admission, and issued certificates are preserved exactly on this ground. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required.",
++    "success": "Signals request review rather than automatically proving error; original sitting evidence and frozen active banks remain, corrections append attributable versions and may correct admission, and issued certificates are preserved exactly on this ground. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Authorized exclusions recalculate the denominator with the shared scoring arithmetic; all-excluded and missing evidence have explicit nonnumeric states, never a fabricated fail or pass.",
+     "fr": "FR-6–7; EXAM:CAP-7/14/18/19/21",
+     "ad": "AD-3/14–16/20"
+   }

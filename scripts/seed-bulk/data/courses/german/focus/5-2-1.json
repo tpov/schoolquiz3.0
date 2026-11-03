@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 2,
+    "l": 1
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+  "lessonTitle": "Урок 1. Слабое склонение прилагательных (после определённого артикля)",
+  "focus": "Систематизировать окончания прилагательных после der/die/das и других слов-указателей (dieser, jener, jeder, welcher) во всех четырёх падежах. Это база всей темы: слабое склонение — самый частотный и регулярный паттерн.",
+  "grammar_points": [
+    "После определённого артикля прилагательное получает только два окончания: -e или -en.",
+    "Окончание -e стоит в Nominativ всех родов в ед. числе (der gute, die gute, das gute) и в Akkusativ женского и среднего рода (die gute Frau, das gute Kind).",
+    "Во всех остальных позициях — окончание -en: весь Dativ и Genitiv, Akkusativ мужского рода (den guten Mann) и ВСЁ множественное число (die guten ...).",
+    "Слова dieser, jener, jeder, mancher, solcher, welcher, alle ведут себя как определённый артикль и требуют слабого склонения.",
+    "Логика: артикль уже несёт информацию о роде, числе и падеже, поэтому прилагательному «работать» почти не нужно — отсюда минимум окончаний."
+  ],
+  "vocab": [
+    "das Adjektiv — прилагательное",
+    "die Endung — окончание",
+    "die Deklination — склонение",
+    "der Fall (die Fälle) — падеж (падежи)",
+    "bestimmt — определённый",
+    "freundlich — приветливый, дружелюбный",
+    "teuer — дорогой",
+    "neugierig — любопытный"
+  ],
+  "examples": [
+    "Der neue Kollege spricht sehr gut Deutsch. — Новый коллега очень хорошо говорит по-немецки.",
+    "Ich kenne den neuen Kollegen noch nicht. — Я ещё не знаю нового коллегу.",
+    "Wir helfen der freundlichen Nachbarin. — Мы помогаем приветливой соседке.",
+    "Das ist das teuerste Hotel der Stadt. — Это самый дорогой отель в городе.",
+    "Diese neugierigen Kinder stellen viele Fragen. — Эти любопытные дети задают много вопросов.",
+    "Trotz des schlechten Wetters gingen wir spazieren. — Несмотря на плохую погоду, мы пошли гулять."
+  ]
+}

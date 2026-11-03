@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 3,
+    "l": 3
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+  "lessonTitle": "Урок 3. Аргументируем: причина, следствие, примеры",
+  "focus": "Научиться строить связную аргументацию: вводить аргумент, обосновывать его причиной, показывать следствие и подкреплять примером с помощью союзов и коннекторов B2.",
+  "grammar_points": [
+    "Причинные связи: weil/da + придаточное (глагол в конец) против denn + главное предложение (прямой порядок слов) и nämlich (на 2-м/3-м месте, не в начале).",
+    "Следствие: deshalb/deswegen/daher/folglich — после них инверсия (глагол на 2-м месте): Es regnet, deshalb bleiben wir zu Hause.",
+    "Двойной союз zwar …, aber … и не только …, но и …: nicht nur …, sondern auch ….",
+    "Структурирование речи: erstens / zweitens / außerdem / schließlich для перечисления аргументов.",
+    "Ввод примера и обобщения: zum Beispiel, beispielsweise, das heißt (d. h.), und zwar для уточнения."
+  ],
+  "vocab": [
+    "das Argument — аргумент",
+    "der Grund — причина",
+    "begründen — обосновывать",
+    "die Folge — следствие, последствие",
+    "der Vorteil — преимущество",
+    "der Nachteil — недостаток",
+    "deshalb — поэтому",
+    "außerdem — кроме того",
+    "beispielsweise — например"
+  ],
+  "examples": [
+    "Ich bin für das Homeoffice, weil man dadurch viel Zeit spart. — Я за работу из дома, потому что так экономишь много времени.",
+    "Das Projekt ist gut geplant, deshalb bin ich optimistisch. — Проект хорошо спланирован, поэтому я настроен оптимистично.",
+    "Das Auto ist nicht nur teuer, sondern auch unzuverlässig. — Машина не только дорогая, но и ненадёжная.",
+    "Erstens fehlt das Geld, zweitens fehlt die Zeit. — Во-первых, не хватает денег, во-вторых, не хватает времени.",
+    "Viele Menschen sind dagegen, denn sie haben Angst vor Veränderungen. — Многие против, ведь они боятся перемен."
+  ]
+}

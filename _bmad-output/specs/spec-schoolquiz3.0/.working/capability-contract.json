@@ -1,0 +1,186 @@
+[
+  {
+    "n": 1,
+    "title": "Learn through ordinary courses",
+    "intent": "A learner can navigate a course and complete an ordinary lesson using available content.",
+    "success": "A ready saved question appears without an added network gate; supported offline progress, timers, Continue, Back and restart retain the ordinary lesson outcome.",
+    "fr": "FR-1–4",
+    "ad": "AD-1/2/8/21"
+  },
+  {
+    "n": 2,
+    "title": "Author and revise lessons",
+    "intent": "An author can create and correct their own learning material.",
+    "success": "Authorship, submitted revisions and change history remain attributable; edits follow the permitted workflow and cannot silently overwrite another author's published material.",
+    "fr": "FR-5",
+    "ad": "AD-1/3/20"
+  },
+  {
+    "n": 3,
+    "title": "Review and publish approved questions",
+    "intent": "Independent reviewers can assess submitted content, and authors can see each question's review outcome.",
+    "success": "All required directions examine the concrete revision; successful questions can publish independently, affected dependencies are rechecked, unaffected valid evidence is retained, and online review pauses and resumes from confirmed progress.",
+    "fr": "FR-6–8",
+    "ad": "AD-3/4/20"
+  },
+  {
+    "n": 4,
+    "title": "Pay for a review cycle and receive earned review rewards",
+    "intent": "Authors can submit material at an agreed fee and reviewers can receive the defined reward for completed work.",
+    "success": "The accepted tariff is shown and charged once; retry and retained prior evidence create no extra paid work. A completed cycle conserves fee = reward entitlements + burned remainder under the adopted exact-arithmetic contract; an unfinished cycle is not finally settled.",
+    "fr": "FR-9–10",
+    "ad": "AD-4/5/6/9/10"
+  },
+  {
+    "n": 5,
+    "title": "Curate placement with visible reasons",
+    "intent": "A curator can promote or remove a particular lesson while permitted users see its status and history.",
+    "success": "Each transition has an authorized decision and reason; ratings do not replace curator approval, a failed replacement keeps the valid prior revision, and confirmed faults prevent new use without rewriting frozen attempts.",
+    "fr": "FR-11–12",
+    "ad": "AD-1/3/13/20"
+  },
+  {
+    "n": 6,
+    "title": "Discuss lessons and report errors privately",
+    "intent": "A learner can open comments or privately report a lesson error, and recipients can find relevant incoming items.",
+    "success": "Both post-lesson actions exist; private free text concerns the whole lesson without re-revealing questions or answers, and the shared inbox preserves each item's original readers and lesson link.",
+    "fr": "FR-13–15",
+    "ad": "AD-20/21"
+  },
+  {
+    "n": 7,
+    "title": "Choose and prepare Arena participation",
+    "intent": "A signed-in player can browse Arena, understand available resources and reserves, and obtain the selected preparation.",
+    "success": "RANDOM/SELECTED, difficulty, price consent, quotas and frozen ticket terms follow the adopted contract; the global wallet distinguishes available, reserved and freshness, and browsing has no financial effect. Response loss resumes the same preparation and unresolved or damaged state still exposes recovery.",
+    "fr": "FR-16–22",
+    "ad": "AD-5–9/11/12/21"
+  },
+  {
+    "n": 8,
+    "title": "Complete or cancel an Arena attempt durably",
+    "intent": "A player can play an authorized Arena attempt, resume it after interruption and obtain its final outcome.",
+    "success": "The prepared offline path, saved answer and restart continue the same attempt; cancel/settle races have one final effect and retain unresolved intent, unknown HARD scores are not zero, and strict proof for that exact attempt confirms the result, never a local flag or vanished queue entry.",
+    "fr": "FR-23–27",
+    "ad": "AD-6–8/11/12/21"
+  },
+  {
+    "n": 9,
+    "title": "Rate completed lessons and receive the correct author share",
+    "intent": "A player can replace a lesson rating from a prior confirmed result, while prices and author earnings reflect eligible activity.",
+    "success": "One current rating per entitled player participates in the full eligible price/rating calculation; new issued terms respect the current quote, frozen terms remain unchanged, and author shares retain fractional value.",
+    "fr": "FR-28–30",
+    "ad": "AD-5/9/12/13"
+  },
+  {
+    "n": 10,
+    "title": "Award promotions and the Arena season",
+    "intent": "Eligible authors can receive placement awards and the Arena's quarterly winner can receive the season award.",
+    "success": "Each qualifying transition pays once; the UTC quarter uses the complete eligible input, adopted minimum/tie/no-winner rules and one resumable final award.",
+    "fr": "FR-31–32",
+    "ad": "AD-9/13/23"
+  },
+  {
+    "n": 11,
+    "title": "Create funded tournaments and qualify participants",
+    "intent": "An organizer can create an event from eligible material and players can complete its qualification.",
+    "success": "The course remains in the library, the event has sufficient frozen content and its full fund, retries reuse the event, and three distinct EASY attempts feed an immutable top16 calculated from the whole eligible cohort.",
+    "fr": "FR-33–36",
+    "ad": "AD-2/3/6/9/17/20/23"
+  },
+  {
+    "n": 12,
+    "title": "Play tournament matches and settle the event",
+    "intent": "Qualified players can agree a match time, play their match and see the final bracket and awards.",
+    "success": "Both opponents receive the same HARD form and continuous server timing; reconnection, absences, ties, byes and technical outcomes follow the adopted matrix, and payouts plus returned remainder conserve the fund.",
+    "fr": "FR-37–40",
+    "ad": "AD-2/9/17/20/23"
+  },
+  {
+    "n": 13,
+    "title": "Compare offers and use premium benefits",
+    "intent": "A player can inspect the current store offers, compare premium durations and use earned benefits for their valid term.",
+    "success": "The gold premium surface shows full prices alongside normalized comparison; active grants determine expiry and both doubled regeneration effects, including holds, overlaps and independent remaining time.",
+    "fr": "FR-41–43",
+    "ad": "AD-5/9/18/19/21"
+  },
+  {
+    "n": 14,
+    "title": "Receive and open boxes",
+    "intent": "A player can collect boxes from entitled sources and open one for its reward.",
+    "success": "Ordinary daily and premium daily remain distinct sources, other awards do not consume their limits, and an online opening survives loss/restart by returning the same stored reward.",
+    "fr": "FR-44–45",
+    "ad": "AD-5/6/9/19"
+  },
+  {
+    "n": 15,
+    "title": "Purchase, restore and refund the correct grant",
+    "intent": "A buyer can receive verified goods, recover previously paid purchases and have refunds applied to the relevant purchase.",
+    "success": "Pending or unverified purchases grant nothing; account/product/quantity provenance prevents duplicate or foreign grants, partial refunds affect only the original grant, and restore/refund recovery remains available when new sales are disabled.",
+    "fr": "FR-46–49",
+    "ad": "AD-6/9/18/19/22"
+  },
+  {
+    "n": 16,
+    "title": "Use consistent current product terms",
+    "intent": "Users can see the agreed product constants and recover a current consistent configuration.",
+    "success": "The permitted configuration updates coherently; failed refresh preserves known values without inventing zero, changed payable terms require fresh consent, and accepted operations keep their captured rules.",
+    "fr": "FR-50–51",
+    "ad": "AD-5/8"
+  },
+  {
+    "n": 17,
+    "title": "Use the complete redesigned experience and experience-based guidance",
+    "intent": "Users can complete every MVP journey in the agreed design and receive guidance appropriate to their experience.",
+    "success": "Existing and new screens, including exams and certificates, cover actionable loading, empty, failure, offline, insufficient funds, forbidden, pending and recovery states in RU/UK/EN; approved visual constraints and semantic actions are retained, while unresolved layouts and guidance thresholds remain explicit UX prerequisites.",
+    "fr": "FR-52/56",
+    "ad": "AD-20/21"
+  },
+  {
+    "n": 18,
+    "title": "Deliver saved actions to an authoritative outcome",
+    "intent": "A user can recover uncertain actions after interruption without repeatedly recreating them.",
+    "success": "The required 120-action case drains without repeated manual sync; stable original operations reach the authoritative result and neither cancellation nor malformed responses fabricate success, erase pending evidence or duplicate effects.",
+    "fr": "FR-53",
+    "ad": "AD-6–8/9/24"
+  },
+  {
+    "n": 19,
+    "title": "Keep accounts, sessions and devices isolated",
+    "intent": "Users can switch accounts or devices without adopting another session's actions or private data.",
+    "success": "A→B→A, a new session for the same UID, late responses and stale pages preserve ownership; one shared ticket yields at most one settlement while distinct tickets retain their own legal outcomes.",
+    "fr": "FR-54",
+    "ad": "AD-6/8/20/24"
+  },
+  {
+    "n": 20,
+    "title": "Update an existing installation without losing user state",
+    "intent": "A user can install the new candidate over a populated installation and retain their data and unfinished work.",
+    "success": "Content, history, authentication, installation identity and pending operations survive; restore does not substitute an empty environment for missing input or destroy the original export, and rollback preserves confirmed financial history.",
+    "fr": "FR-55",
+    "ad": "AD-22/24"
+  },
+  {
+    "n": 21,
+    "title": "Prove knowledge of a course theme",
+    "intent": "A learner can take a theme test after completing its required ordinary learning and preserve earned theme progress.",
+    "success": "Confirmed coverage of all required EASY questions admits a 20-scored-question test of 5 EASY plus 15 HARD; ordinary access purchase grants no pass. Bank, charge, timing, retry and cooldown follow EXAM. Passes carry for stable course/theme identities after edits, newly required themes must pass, and a first-pass reward cannot be duplicated. Theme stars follow the accepted linear 0..3 percent scale. First-pass nolics and XP use x3 for new progress, with the retained difficulty/time factors and one reward-accounted history. The next theme attempt waits 24 hours from terminal closure. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Required EASY coverage is confirmed by versioned question evidence across ordinary attempts. Reward worth retains ordinary EASY/HARD values independently of the assessment timer, under EXAM-TECH-1.",
+    "fr": "EXAM:CAP-1–7/9–15/17/19–21",
+    "ad": "AD-2/3/5/6/9/14/15/23/24"
+  },
+  {
+    "n": 22,
+    "title": "Earn and verify a course certificate",
+    "intent": "A learner who passes the required themes can demonstrate current course knowledge in a final exam and receive a verifiable certificate.",
+    "success": "A new final uses the latest approved course and 20 HARD questions. Every successful final earns a distinct one-year attestation, including renewal before expiry; the profile displays the latest earned certificate even if its passing score is lower, while prior certificates remain unchanged in history. Failed finals issue no certificate. Public verification works signed out; fulfilment retries preserve the same issuance and original claims and expiry survive content-fault correction. Every recorded final attempt is eligible for nolics/XP rewards regardless of passing, using x10 for new progress and x0.1 for the already-accounted part, then the retained difficulty/time factors. The next final waits seven days from terminal closure; retry never creates a second reward. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Every question uses ordinary HARD answer time without extra exam shortening; question difficulty is unchanged. Reward worth retains ordinary HARD values; the exact formula, rounding and accounted-history fixtures follow EXAM-TECH-1.",
+    "fr": "EXAM:CAP-8/9/15/16/18/21",
+    "ad": "AD-9/14–16/20/23/24"
+  },
+  {
+    "n": 23,
+    "title": "Correct confirmed question faults with accountable result history",
+    "intent": "Authorized maintainers can remove a confirmed bad question revision from future use and apply justified result corrections.",
+    "success": "Signals request review rather than automatically proving error; original sitting evidence and frozen active banks remain, corrections append attributable versions and may correct admission, and issued certificates are preserved exactly on this ground. A correction from a previously failed final to passing issues no certificate; a new successful sitting is required. Authorized exclusions recalculate the denominator with the shared scoring arithmetic; all-excluded and missing evidence have explicit nonnumeric states, never a fabricated fail or pass. Already settled rewards and accounted history stay unchanged. A correction-generation barrier prevents a delayed admission projection from authorizing a new final against invalid proof.",
+    "fr": "FR-6–7; EXAM:CAP-7/14/18/19/21",
+    "ad": "AD-3/14–16/20"
+  }
+]

@@ -1,0 +1,18 @@
+Готово.
+
+Wrote final design docs:
+
+- [01-architecture.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/01-architecture.md)
+- [02-behavior.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/02-behavior.md)
+- [03-decisions.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/03-decisions.md)
+
+Caveat: production code не трогал; `04-testing.md` и `06-api-contract.md` не редактировал. Blocker не найден.
+
+Applied the Mermaid escaping fix in:
+
+- [01-architecture.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/01-architecture.md)
+- [02-behavior.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/02-behavior.md)
+
+Only diagram/sequence Mermaid text was changed; prose keeps the canonical `v<versionName> (<versionCode>)` format.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "dfd362a4-f528-407a-9aa3-b426b9645b07" "follow-up"`.

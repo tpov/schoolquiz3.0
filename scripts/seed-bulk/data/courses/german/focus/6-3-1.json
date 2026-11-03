@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 3,
+    "l": 1
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+  "lessonTitle": "Урок 1. Структура формального письма и e-mail: обращение, концовка, конвенции",
+  "focus": "Освоить каркас официального немецкого письма/e-mail: правильное обращение (Anrede), вступительная и заключительная формулы (Schlussformel), нормы написания заглавных Sie/Ihnen, оформление темы (Betreff). База, на которой строятся все остальные уроки темы.",
+  "grammar_points": [
+    "Вежливая форма Sie и притяжательное Ihr/Ihre всегда с заглавной буквы в письмах; глагол в форме 3-го л. мн. ч.: 'Können Sie mir bitte mitteilen…'",
+    "Обращение с запятой и строчной буквой следующей строки: 'Sehr geehrte Damen und Herren,' → далее 'wir …' с маленькой буквы",
+    "Различение неизвестного и известного адресата: 'Sehr geehrte Damen und Herren' vs. 'Sehr geehrter Herr Dr. Klein' (титул в обращении сохраняется, имя — нет)",
+    "Заключительные формулы по регистру: 'Mit freundlichen Grüßen' (нейтрально-офиц.), 'Mit freundlichen Grüßen' без запятой перед именем; неформальнее — 'Beste Grüße', 'Freundliche Grüße'",
+    "Конъюнктив II как маркер вежливости уже во вступлении: 'Ich würde mich freuen, wenn …', 'Könnten Sie …'",
+    "Рамочная конструкция в формальном предложении: модальный/вспомогательный глагол на 2-й позиции, смысловой глагол в конце"
+  ],
+  "vocab": [
+    "der Betreff — тема (письма)",
+    "die Anrede — обращение",
+    "die Schlussformel — заключительная формула",
+    "der Absender — отправитель",
+    "der Empfänger — получатель",
+    "der Anhang — вложение",
+    "das Anliegen — просьба, дело, нужда",
+    "hochachtungsvoll — с глубоким почтением (очень формально, устаревающее)",
+    "sich beziehen auf (+Akk.) — ссылаться на",
+    "die Geschäftskorrespondenz — деловая переписка"
+  ],
+  "examples": [
+    "Sehr geehrte Damen und Herren, hiermit wende ich mich an Sie mit einem dringenden Anliegen. — Уважаемые дамы и господа, настоящим я обращаюсь к вам со срочным делом.",
+    "Mit freundlichen Grüßen, Anna Berger — С уважением, Анна Бергер.",
+    "Ich beziehe mich auf Ihre E-Mail vom 12. März und möchte Ihnen Folgendes mitteilen. — Ссылаюсь на ваше письмо от 12 марта и хотел бы сообщить вам следующее.",
+    "Über eine baldige Rückmeldung würde ich mich sehr freuen. — Я был бы очень рад скорому ответу.",
+    "Im Anhang finden Sie die angeforderten Unterlagen. — Во вложении вы найдёте запрошенные документы."
+  ]
+}

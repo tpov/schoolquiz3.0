@@ -1,0 +1,617 @@
+{
+  "contractVersion": "EXAM-TECH-1",
+  "status": "documentation oracle; implementation parity tests required",
+  "source": "assessment-technical-contracts.md C1/C2",
+  "weightedTariff": [
+    {
+      "percent": 0,
+      "weighted": 0
+    },
+    {
+      "percent": 25,
+      "weighted": 25
+    },
+    {
+      "percent": 50,
+      "weighted": 75
+    },
+    {
+      "percent": 60,
+      "weighted": 105
+    },
+    {
+      "percent": 70,
+      "weighted": 135
+    },
+    {
+      "percent": 90,
+      "weighted": 215
+    },
+    {
+      "percent": 95,
+      "weighted": 240
+    },
+    {
+      "percent": 100,
+      "weighted": 265
+    }
+  ],
+  "rewardCases": [
+    {
+      "id": "theme-first-perfect",
+      "mode": "ThemeTest",
+      "p": 100,
+      "b": 0,
+      "TE": 180,
+      "TH": 360,
+      "expected": {
+        "nolics": 139,
+        "skillPoints": 1391,
+        "bNext": 100
+      }
+    },
+    {
+      "id": "theme-first-pass-after-unpaid-failures",
+      "mode": "ThemeTest",
+      "p": 60,
+      "b": 0,
+      "TE": 180,
+      "TH": 360,
+      "expected": {
+        "nolics": 55,
+        "skillPoints": 551,
+        "bNext": 60
+      }
+    },
+    {
+      "id": "final-first-perfect",
+      "mode": "FinalExam",
+      "p": 100,
+      "b": 0,
+      "TE": 0,
+      "TH": 480,
+      "expected": {
+        "nolics": 530,
+        "skillPoints": 5300,
+        "bNext": 100
+      }
+    },
+    {
+      "id": "final-first-failure",
+      "mode": "FinalExam",
+      "p": 50,
+      "b": 0,
+      "TE": 0,
+      "TH": 480,
+      "expected": {
+        "nolics": 150,
+        "skillPoints": 1500,
+        "bNext": 50
+      }
+    },
+    {
+      "id": "final-first-90",
+      "mode": "FinalExam",
+      "p": 90,
+      "b": 0,
+      "TE": 0,
+      "TH": 480,
+      "expected": {
+        "nolics": 430,
+        "skillPoints": 4300,
+        "bNext": 90
+      }
+    },
+    {
+      "id": "final-lower-70-after-90",
+      "mode": "FinalExam",
+      "p": 70,
+      "b": 90,
+      "TE": 0,
+      "TH": 480,
+      "expected": {
+        "nolics": 3,
+        "skillPoints": 27,
+        "bNext": 90
+      }
+    },
+    {
+      "id": "final-recover-90",
+      "mode": "FinalExam",
+      "p": 90,
+      "b": 90,
+      "TE": 0,
+      "TH": 480,
+      "expected": {
+        "nolics": 4,
+        "skillPoints": 43,
+        "bNext": 90
+      }
+    },
+    {
+      "id": "final-new-95",
+      "mode": "FinalExam",
+      "p": 95,
+      "b": 90,
+      "TE": 0,
+      "TH": 480,
+      "expected": {
+        "nolics": 54,
+        "skillPoints": 543,
+        "bNext": 95
+      }
+    },
+    {
+      "id": "final-zero",
+      "mode": "FinalExam",
+      "p": 0,
+      "b": 90,
+      "TE": 0,
+      "TH": 480,
+      "expected": {
+        "nolics": 0,
+        "skillPoints": 0,
+        "bNext": 90
+      }
+    },
+    {
+      "id": "independent-currency-rounding",
+      "mode": "FinalExam",
+      "p": 25,
+      "b": 25,
+      "TE": 0,
+      "TH": 475,
+      "expected": {
+        "nolics": 0,
+        "skillPoints": 5,
+        "bNext": 25
+      }
+    },
+    {
+      "id": "reachable-zero-nolics-advances-reference",
+      "mode": "FinalExam",
+      "p": 1,
+      "b": 0,
+      "TE": 0,
+      "TH": 100,
+      "expected": {
+        "nolics": 0,
+        "skillPoints": 4,
+        "bNext": 1
+      }
+    },
+    {
+      "id": "final-half-nolic-rounds-up",
+      "mode": "FinalExam",
+      "p": 100,
+      "b": 0,
+      "TE": 0,
+      "TH": 360,
+      "expected": {
+        "nolics": 398,
+        "skillPoints": 3975,
+        "bNext": 100
+      }
+    },
+    {
+      "id": "theme-half-xp-rounds-up",
+      "mode": "ThemeTest",
+      "p": 60,
+      "b": 0,
+      "TE": 30,
+      "TH": 78,
+      "expected": {
+        "nolics": 12,
+        "skillPoints": 116,
+        "bNext": 60
+      }
+    }
+  ],
+  "worthCases": [
+    {
+      "id": "theme-ordinary-worth-not-answer-time",
+      "easySeconds": [
+        36,
+        36,
+        36,
+        36,
+        36
+      ],
+      "hardSeconds": [
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "drawEasy": 5,
+      "drawHard": 15,
+      "expected": {
+        "TE": 180,
+        "TH": 360,
+        "Q": 1260
+      }
+    },
+    {
+      "id": "difficulty-means-round-before-weight",
+      "easySeconds": [
+        5,
+        6,
+        6,
+        6,
+        6,
+        6
+      ],
+      "hardSeconds": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        6
+      ],
+      "drawEasy": 5,
+      "drawHard": 15,
+      "expected": {
+        "TE": 29,
+        "TH": 76,
+        "Q": 257
+      }
+    }
+  ],
+  "correctionCases": [
+    {
+      "id": "original-60",
+      "digits": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "exclude": [],
+      "expected": {
+        "denominator": 20,
+        "percent": 60,
+        "passed": true,
+        "starsTenths": 18
+      },
+      "capturedPassMark": 60
+    },
+    {
+      "id": "exclude-correct-lowers",
+      "digits": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "exclude": [
+        0
+      ],
+      "expected": {
+        "denominator": 19,
+        "percent": 57,
+        "passed": false,
+        "starsTenths": 17
+      },
+      "capturedPassMark": 60
+    },
+    {
+      "id": "exclude-two-wrong-raises-no-certificate",
+      "digits": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "exclude": [
+        11,
+        12
+      ],
+      "expected": {
+        "denominator": 18,
+        "percent": 61,
+        "passed": true,
+        "starsTenths": 18
+      },
+      "certificate": "none from corrected originally failed final",
+      "capturedPassMark": 60
+    },
+    {
+      "id": "unanswered-remains-denominator",
+      "digits": [
+        9,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "exclude": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected": {
+        "denominator": 2,
+        "percent": 50,
+        "passed": false,
+        "starsTenths": 15
+      },
+      "capturedPassMark": 60
+    },
+    {
+      "id": "nested-truncation",
+      "digits": [
+        2,
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "exclude": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected": {
+        "denominator": 2,
+        "percent": 18,
+        "passed": false,
+        "starsTenths": 5
+      },
+      "capturedPassMark": 60
+    },
+    {
+      "id": "all-excluded",
+      "digits": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "exclude": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected": {
+        "state": "UNSCORABLE_ALL_EXCLUDED",
+        "denominator": 0,
+        "percent": null,
+        "passed": null,
+        "starsTenths": null
+      },
+      "capturedPassMark": 60
+    },
+    {
+      "id": "captured-threshold-not-default",
+      "digits": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "exclude": [
+        0
+      ],
+      "capturedPassMark": 55,
+      "expected": {
+        "denominator": 19,
+        "percent": 57,
+        "passed": true,
+        "starsTenths": 17
+      }
+    }
+  ],
+  "arithmeticOnlyCases": [
+    {
+      "id": "zero-rounding-still-accounts-progress",
+      "mode": "FinalExam",
+      "p": 100,
+      "b": 99,
+      "TE": 0,
+      "TH": 1,
+      "expected": {
+        "nolics": 0,
+        "skillPoints": 0,
+        "bNext": 100
+      },
+      "arithmeticOnly": true,
+      "note": "Synthetic tiny basis tests rounding/accounting seam, not a reachable20-question minimum pool."
+    }
+  ],
+  "invalidBasisCases": [
+    {
+      "id": "final-below20question-minimum",
+      "mode": "FinalExam",
+      "TE": 0,
+      "TH": 1,
+      "expected": "INVALID_REWARD_BASIS; no payout/reference update"
+    },
+    {
+      "id": "theme-missing-easy-worth",
+      "mode": "ThemeTest",
+      "TE": 0,
+      "TH": 75,
+      "expected": "INVALID_REWARD_BASIS; no payout/reference update"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "status": "CONTEXT",
+  "expectedState": "catalog",
+  "observedState": "catalog",
+  "unsafeScreenMarkers": [],
+  "observedKnownState": true,
+  "observedTextFieldCount": 22,
+  "artifactVersion": 2
+}

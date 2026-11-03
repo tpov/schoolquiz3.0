@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SchoolQuiz — обзор спецификации MVP</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:#f5f5f8;color:#20212c;font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}a{color:#5b3cba;text-underline-offset:3px}a:focus-visible,summary:focus-visible,button:focus-visible{outline:3px solid #8764de;outline-offset:4px}.bar{background:#08080a;color:#fff;padding:17px max(24px,calc((100vw - 1120px)/2));display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.brand{font-weight:750;font-size:19px}.bar small{color:#c7c7d2}.nav{background:#fff;border-bottom:1px solid #e2e2eb;position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px 16px}.nav a{color:#424353;text-decoration:none;padding:6px 12px;border-radius:8px}.nav a:hover{background:#f0edf8}main{max-width:1120px;margin:auto;padding:44px 24px 60px}.eyebrow{color:#655095;font-size:13px;font-weight:750;text-transform:uppercase;letter-spacing:.12em}h1{font-size:clamp(32px,5vw,52px);line-height:1.1;letter-spacing:-1.6px;margin:12px 0 20px;max-width:820px}h2{font-size:28px;line-height:1.25;letter-spacing:-.5px;margin:0 0 12px}h3{font-size:19px;margin:27px 0 12px}p{margin:0 0 14px}.lead{font-size:19px;color:#515267;max-width:840px}.facts{display:flex;flex-wrap:wrap;gap:10px;margin:25px 0}.fact{background:#fff;border:1px solid #e2dfea;border-radius:10px;padding:9px 15px;color:#4e4563}.fact b{font-size:20px;color:#33234f;margin-right:6px}.rule{background:#fff8e8;border-left:5px solid #c78b26;padding:22px 24px;border-radius:0 13px 13px 0;margin:28px 0}.rule h2{font-size:23px}.rule p{margin:10px 0 0;color:#675129}.muted{color:#626375}.status{font-size:14px;color:#626375}section{margin-top:48px}.section-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{background:#fff;border:1px solid #e1e0e9;border-radius:14px;padding:20px}.card p:last-child{margin-bottom:0}.card strong{display:block;margin-bottom:8px}.cap{border:1px solid #e1e0e9;background:#fff;border-radius:12px;margin:9px 0;overflow:hidden}summary{cursor:pointer;padding:16px 18px;font-weight:650}summary::marker{color:#7e63b3}.cap-id{display:inline-block;font:12px/1.5 ui-monospace,monospace;color:#68548a;min-width:67px;vertical-align:middle}.cap-body{padding:0 20px 18px 86px}.label{font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.07em;color:#777386;display:block;margin:8px 0 3px}.cap-body p{margin:0 0 7px}.toggle{border:1px solid #b5abc9;background:#fff;color:#4b386c;font:inherit;padding:9px 14px;border-radius:9px;cursor:pointer}.flow{list-style:none;margin:24px 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.flow li{background:#eee8fa;border-radius:12px;padding:17px 13px;line-height:1.4}.flow span{font-size:12px;color:#6b578f;display:block;margin-bottom:9px}.flow small{display:block;color:#645673;margin-top:8px}.callout{background:#ede9f6;border-radius:12px;padding:20px 23px;color:#4b3b64;margin-top:20px}.checklist{margin:12px 0;padding-left:23px}.checklist li{margin:9px 0}.pill{font-size:12px;font-weight:650;color:#675087;background:#f0ebf8;border-radius:6px;padding:4px 8px;display:inline-block;margin-bottom:10px}.q h3{margin:0 0 10px;font-size:18px}.q p{font-size:15px;color:#59576b}.limits{padding:19px 23px;background:#fff;border:1px solid #dedce7;border-radius:12px;margin-top:20px}.footer{border-top:1px solid #dddce5;margin-top:45px;padding-top:20px;color:#69697c;font-size:13px}.sources{display:flex;gap:12px 24px;flex-wrap:wrap}.source-box{margin-top:20px;padding:14px 17px;background:#fff;border:1px solid #dddce5;border-radius:10px}.source-box pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6;color:#565468}.source-box summary{padding:4px 0}@media(max-width:760px){main{padding:28px 18px 40px}.bar{padding:15px 18px}.nav{justify-content:flex-start;gap:2px;padding:8px}.nav a{font-size:14px;padding:5px 8px}.grid,.flow{grid-template-columns:1fr}.flow span{display:inline;margin-right:10px}.cap-body{padding-left:20px}.cap-id{min-width:60px}.rule{padding:18px}.rule h2{font-size:21px}h2{font-size:25px}section{margin-top:36px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{.nav,.toggle{display:none}.bar{background:#fff;color:#111}body{background:#fff}main{max-width:none;padding:20px}.card,.cap{break-inside:avoid}.grid{display:block}.card{margin:10px 0}.source-box{display:none}}</style></head><body>
+
+<header class="bar"><div class="brand">SchoolQuiz / MVP</div><small>Обзор спецификации · 30 сентября 2026</small></header>
+<nav class="nav" aria-label="Разделы обзора"><a href="#scope">Состав MVP</a><a href="#exams">Экзамены</a><a href="#screens">Экраны</a><a href="#questions">Открытые вопросы</a><a href="#acceptance">Приёмка</a></nav>
+<main><div class="eyebrow">Документ для обсуждения</div><h1>Что строим — и что ещё нужно согласовать</h1><p class="lead">Обычное обучение, проверенное авторское содержание, соревнования и экономика объединены в полный путь — до итогового экзамена и сертификата за знания.</p>
+<div class="facts"><span class="fact"><b>23</b> возможности MVP</span><span class="fact"><b>21</b> требование экзаменов</span><span class="fact"><b>56 + 8</b> требований PRD</span></div>
+<p class="status">Спецификация и архитектура проверены на согласованность. Реализация и приёмка приложения этим не подтверждены.</p>
+<aside class="rule"><h2>Наполнение каждого экрана подтверждается отдельно</h2><p>Даже если внешний вид уже принят. Тексты, показанные данные, действия и состояния сверяются с общей логикой продукта и отдельно согласуются с владельцем.</p></aside>
+<section id="scope"><div class="section-top"><h2>Полный объём MVP</h2><button type="button" class="toggle" id="expand" aria-expanded="false">Раскрыть все возможности</button></div><p class="muted">Откройте строку, чтобы увидеть цель и проверяемый результат. «Остаток» включает недостающую реализацию и непроверенную приёмку существующего кода.</p>
+
+<h3>Обучение и содержание</h3>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-1</span>Обучение по курсам</summary><div class="cap-body"><span class="label">Зачем</span><p>Открыть курс и пройти обычный урок.</p><span class="label">Готово, когда</span><p>Готовый сохранённый вопрос показывается сразу. Предусмотренные офлайн-прохождение, паузы, Continue, Back и восстановление сохраняют результат.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-2</span>Создание и правки уроков</summary><div class="cap-body"><span class="label">Зачем</span><p>Автор создаёт и исправляет свой материал.</p><span class="label">Готово, когда</span><p>Сохраняются авторство, отправленные редакции и история. Изменения не подменяют чужое опубликованное содержание.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-3</span>Независимая проверка и публикация</summary><div class="cap-body"><span class="label">Зачем</span><p>Проверяющие оценивают конкретную редакцию, автор видит исход каждого вопроса.</p><span class="label">Готово, когда</span><p>Успешные вопросы публикуются независимо. Затронутые зависимости перепроверяются; действующие незатронутые проверки сохраняются. При потере сети проверка приостанавливается.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-4</span>Оплата проверки и награды</summary><div class="cap-body"><span class="label">Зачем</span><p>Автор оплачивает согласованную подачу, проверяющий получает положенное за работу.</p><span class="label">Готово, когда</span><p>Повтор запроса не создаёт новую оплату. Завершённый цикл сохраняет равенство платы, начисленных вознаграждений и сгоревшего остатка; незавершённый не считается рассчитанным.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-5</span>Куратор и история размещения</summary><div class="cap-body"><span class="label">Зачем</span><p>Куратор продвигает или снимает конкретный урок с объяснением.</p><span class="label">Готово, когда</span><p>Рейтинг не заменяет решение куратора. Неудачная новая редакция оставляет действующую старую; подтверждённая ошибка исключает новые выдачи без изменения начатых.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-6</span>Комментарии, ошибки и входящие</summary><div class="cap-body"><span class="label">Зачем</span><p>Игрок открывает обсуждение или приватно сообщает автору об ошибке урока.</p><span class="label">Готово, когда</span><p>После урока доступны две прямые кнопки. Ошибка относится ко всему уроку без повторного показа ответов. Общие входящие сохраняют прежние права доступа.</p></div></details>
+<h3>Арена</h3>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-7</span>Выбор и подготовка Арены</summary><div class="cap-body"><span class="label">Зачем</span><p>Игрок видит каталог, доступные средства, резерв и согласованную цену.</p><span class="label">Готово, когда</span><p>RANDOM/SELECTED, сложность, квоты и условия разрешения сохраняются. Просмотр ничего не списывает. Потеря ответа восстанавливает исходную подготовку.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-8</span>Прохождение и восстановление Арены</summary><div class="cap-body"><span class="label">Зачем</span><p>Игрок проходит разрешённую попытку, возобновляет или отменяет её.</p><span class="label">Готово, когда</span><p>Подготовленный офлайн-запуск и restart продолжают ту же попытку. Cancel/settle дают один окончательный эффект. Неизвестная HARD-оценка не превращается в ноль.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-9</span>Оценка урока, цена и доход автора</summary><div class="cap-body"><span class="label">Зачем</span><p>Игрок меняет оценку из прежнего подтверждённого результата; автор получает долю.</p><span class="label">Готово, когда</span><p>Учитывается одна текущая оценка от имеющего право игрока и весь допущенный состав. Выданная цена фиксирована, дробная доля автора не теряется.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-10</span>Награды за продвижение и сезон</summary><div class="cap-body"><span class="label">Зачем</span><p>Автор получает положенные награды за размещение и победу в сезоне.</p><span class="label">Готово, когда</span><p>Переход оплачивается один раз. Квартал UTC использует полный подходящий состав, принятые правила равенства и один итоговый приз.</p></div></details>
+<h3>Турниры</h3>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-11</span>Создание турнира и отбор</summary><div class="cap-body"><span class="label">Зачем</span><p>Организатор создаёт обеспеченное событие, участники проходят отбор.</p><span class="label">Готово, когда</span><p>Курс остаётся в библиотеке. Банк и фонд достаточны; повтор восстанавливает то же событие. Три EASY-попытки участвуют в расчёте неизменяемого top16 по полному составу.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-12</span>Матчи и расчёт турнира</summary><div class="cap-body"><span class="label">Зачем</span><p>Участники договариваются о времени, играют и получают итог и призы.</p><span class="label">Готово, когда</span><p>У соперников одинаковая HARD-форма и непрерывные серверные часы. Неявки, ничьи и технические исходы следуют правилам; выплаты и возврат остатка сохраняют фонд.</p></div></details>
+<h3>Экономика и покупки</h3>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-13</span>Магазин и premium</summary><div class="cap-body"><span class="label">Зачем</span><p>Игрок сравнивает предложения и пользуется преимуществами оплаченного срока.</p><span class="label">Готово, когда</span><p>Золотой экран показывает полную цену и сравнение за 30 дней. Начисления определяют срок, обе регенерации ×2 и самостоятельный остаток каждого начисления.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-14</span>Получение и открытие коробок</summary><div class="cap-body"><span class="label">Зачем</span><p>Игрок получает коробки из положенных источников и открывает их.</p><span class="label">Готово, когда</span><p>Обычная ежедневная и premium-ежедневная — отдельные источники; прочие награды не расходуют их лимиты. Открытие онлайн повторно возвращает тот же результат.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-15</span>Покупки, восстановление и возвраты</summary><div class="cap-body"><span class="label">Зачем</span><p>Покупатель получает проверенный товар и восстанавливает ранее оплаченное.</p><span class="label">Готово, когда</span><p>Pending ничего не выдаёт. Проверяется связь с аккаунтом и покупкой. Частичный возврат затрагивает нужное начисление; восстановление работает и при отключённых новых продажах.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-16</span>Согласованные настройки продукта</summary><div class="cap-body"><span class="label">Зачем</span><p>Игрок видит действующие цены и правила.</p><span class="label">Готово, когда</span><p>Конфигурация обновляется согласованно. Ошибка сохраняет известные значения без выдуманного нуля. Новая платная цена требует согласия; принятые условия не меняются.</p></div></details>
+<h3>Общие гарантии</h3>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-17</span>Все экраны и обучение по опыту</summary><div class="cap-body"><span class="label">Зачем</span><p>Все пути MVP получают согласованный дизайн и понятные подсказки.</p><span class="label">Готово, когда</span><p>RU/UK/EN, доступность и состояния ожидания, ошибки, offline, прав, средств и восстановления сохраняются. Наполнение каждого экрана подтверждается отдельно.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-18</span>Доставка сохранённых действий</summary><div class="cap-body"><span class="label">Зачем</span><p>Неопределённое действие доводится до подтверждённого результата.</p><span class="label">Готово, когда</span><p>Обязательный случай со 120 действиями проходит без многократной ручной синхронизации. Исходные операция и тело сохраняются; отмена или плохой ответ не создают ложный успех.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-19</span>Разделение аккаунтов и устройств</summary><div class="cap-body"><span class="label">Зачем</span><p>Смена аккаунта или устройства не переносит чужие действия и данные.</p><span class="label">Готово, когда</span><p>Проверяются A→B→A, новый сеанс того же пользователя, поздние ответы и старые страницы. Один ticket даёт максимум один расчёт; разные сохраняют свои законные исходы.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-20</span>Обновление без потери данных</summary><div class="cap-body"><span class="label">Зачем</span><p>Новая версия устанавливается поверх заполненной установки.</p><span class="label">Готово, когда</span><p>Сохраняются содержимое, история, вход и незавершённые действия. Отсутствующие данные не подменяются пустым стендом; исходный export и финансовая история сохраняются.</p></div></details>
+<h3>Экзамены и сертификат</h3>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-21</span>Контрольная по теме</summary><div class="cap-body"><span class="label">Зачем</span><p>Ученик подтверждает знания темы после необходимого обучения.</p><span class="label">Готово, когда</span><p>Нужно подтверждённое прохождение всех требуемых EASY. Контрольная: 5 EASY + 15 HARD, все зачётные. Сданные темы сохраняются при обычных правках; новые темы нужно сдать.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-22</span>Итоговый экзамен и сертификат</summary><div class="cap-body"><span class="label">Зачем</span><p>После требуемых тем ученик сдаёт актуальный курс и получает проверяемый сертификат.</p><span class="label">Готово, когда</span><p>Финал: 20 HARD по актуальному курсу. Каждая успешная сдача выдаёт новый годовой сертификат, в том числе до истечения прежнего. Отображается последний выданный, даже с более низким проходным баллом; прежние сохраняются в истории. Проверка доступна без входа.</p></div></details>
+<details class="cap" data-cap="true"><summary><span class="cap-id">CAP-23</span>Исправление ошибок вопросов</summary><div class="cap-body"><span class="label">Зачем</span><p>Уполномоченные участники исправляют подтверждённые ошибки с историей результата.</p><span class="label">Готово, когда</span><p>Статистика и жалобы запускают проверку. Исходная попытка сохраняется; пересчёт может исправить допуск, но уже выданный сертификат из-за нашей ошибки не меняется.</p></div></details>
+</section><section id="exams"><h2>Путь к сертификату</h2><p class="muted">Отдельное управление экзаменом и турниром; общие проверка ответов, защита данных и правила повторных запросов.</p><ol class="flow">
+<li><span>01 · Обучение</span><strong>Все требуемые EASY</strong><small>Подтверждённый прогресс для допуска</small></li>
+<li><span>02 · Контрольная</span><strong>5 EASY + 15 HARD</strong><small>Все 20 вопросов зачётные</small></li>
+<li><span>03 · Темы</span><strong>Все требуемые темы</strong><small>Новые темы нужно досдать</small></li>
+<li><span>04 · Финал</span><strong>20 HARD</strong><small>Актуальная версия курса</small></li>
+<li><span>05 · Сертификат</span><strong>Годовое свидетельство</strong><small>Публичная проверка без входа</small></li>
+</ol><div class="grid">
+<div class="card"><strong>Проверяется конкретная редакция</strong><p>После предусмотренных независимых проверок и утверждения вопрос допускается в банк. Обязательного этапа скрытых незачётных пробных заданий нет.</p></div>
+<div class="card"><strong>Сданные темы сохраняются</strong><p>Обычная замена вопросов не требует пересдачи темы. Новый финал проверяет текущий курс, а начатая попытка сохраняет свой банк.</p></div>
+<div class="card"><strong>Показываем последний сертификат</strong><p>Обновлять можно и до истечения срока. После 90% и затем проходных 70% в профиле будет 70%. Старый сертификат остаётся в истории без изменений. Провал новой попытки не выдаёт сертификат и не заменяет прежний.</p></div>
+<div class="card"><strong>Сертификат остаётся как выдан</strong><p>Ошибка нашего задания может привести к отдельному пересчёту результата. Она не меняет уже выданный сертификат: оценку, данные, даты и исходный срок.</p></div>
+<div class="card"><strong>Поздняя подпись не отбирает результат</strong><p>Каждый успешный итог и новый факт выдачи фиксируются вместе. Подпись показывает ожидание и повторяется с теми же данными. Поздняя подпись старого сертификата не заменяет более новый; пересчёт из-за ошибки вопроса не переоценивает уже заработанное право.</p></div>
+</div><div class="limits"><strong>Режимы не смешиваются.</strong> Обычное обучение и подготовленная Арена сохраняют предусмотренный офлайн-путь. Экзамены идут онлайн; их ACK, дедлайны и интервалы ожидания отделены от непрерывных турнирных часов.</div></section>
+<section id="screens"><h2>Как согласуем экраны</h2><p class="lead">Принятый внешний вид — основа для проверки содержания каждого экрана, а не общее одобрение всего, что нарисовано в макете.</p>
+<div class="grid"><div class="card"><strong>Для каждого экрана проверяем</strong><ul class="checklist"><li>Какие данные и тексты он показывает.</li><li>Откуда берутся значения и кому они доступны.</li><li>Что делает каждая кнопка и куда ведёт переход.</li><li>Ожидание, ошибки, offline, нехватку средств и отсутствие прав.</li><li>Сохранение и восстановление незавершённого действия.</li></ul></div><div class="card"><strong>Что не означает автоматического согласия</strong><ul class="checklist"><li>Примерные цифры, имена и результаты из макета.</li><li>Отсутствие в макете обязательного состояния.</li><li>Принятие цвета или композиции вместо принятия логики.</li><li>Одобрение кнопки вместо одобрения всего экрана.</li></ul></div></div>
+<div class="callout">Например, «Top32» в визуальном примере не отменяет принятое правило top16. Согласование зелёной кнопки World не означает принятия всего экрана World.</div></section>
+<section id="questions"><h2>Что ещё нужно решить</h2><p class="muted">Вопросы сохраняются явно. Каждый решается до реализации или приёмки соответствующей части; остальные принятые правила остаются в силе.</p><div class="grid">
+
+<p class="muted">Уточнение: название существующего урока менять нельзя; поля «описание» у урока нет. Вопрос об оплате этих правок снят. Другие изменения данных без вопросов сначала требуют конкретного согласованного сценария.</p>
+<article class="card q"><span class="pill">Продукт</span><h3>Окончательно прекращённая проверка</h3><p>Если такой исход добавляется: как распределять плату за частично выполненную работу? Пока цикл не завершён, финального расчёта нет.</p></article>
+<article class="card q"><span class="pill">Экраны</span><h3>Наполнение и оставшийся UX</h3><p>Каждый экран отдельно: тексты, данные, действия и состояния. Также нужны оставшиеся макеты и условия показа обучающих подсказок.</p></article>
+<article class="card q"><span class="pill">Экзамены</span><h3>Звёзды контрольной</h3><p>Как отображать звёзды смешанного результата 5 EASY + 15 HARD? Сдача уже определяется процентом, а не звёздами.</p></article>
+<article class="card q"><span class="pill">Экзамены</span><h3>Пересчёт ошибочных заданий</h3><p>Нужны единые правила исключения заданий, знаменателя, округления и версий результата.</p></article>
+
+<article class="card q"><span class="pill">Экзамены</span><h3>Подтверждение EASY-прогресса</h3><p>Какие общие версионные данные доказывают прохождение всех требуемых EASY для допуска к контрольной?</p></article>
+<article class="card q"><span class="pill">Экзамены</span><h3>Первая награда за тему</h3><p>Нужно определить сумму или формулу. Единственность выплаты и запрет повторного начисления уже закреплены.</p></article>
+<article class="card q"><span class="pill">Опционально</span><h3>Места по темам и звёзды курса</h3><p>Нужны ли эти отдельные поверхности и по каким правилам? Из текущей спецификации они автоматически не следуют.</p></article>
+<article class="card q"><span class="pill">Эксплуатация</span><h3>Серверные задачи и будущая приёмка</h3><p>До запуска нужны допустимое выполнение и восстановление задач, работа с ключами, параметры эксплуатации, среда, устройства, Play и свежая проверка совместимости.</p></article>
+</div></section><section id="acceptance"><h2>Когда MVP можно считать принятым</h2><div class="grid">
+<article class="card"><strong>Один проверенный кандидат Android</strong><p>Зафиксированы код, backend, APK, схема, конфигурация и флаги. Полные пути проверены совместно, включая реальный Play sandbox там, где он нужен.</p></article>
+<article class="card"><strong>Доказаны восстановление и расчёты</strong><p>Потеря ответа, offline, restart, конкуренция, смена аккаунта и обновление непустой установки сохраняют данные. Деньги, резервы, награды и квитанции согласованы.</p></article>
+<article class="card"><strong>Отдельно принят контент экранов</strong><p>Рассмотрены существующие и новые экраны, RU/UK/EN, доступность, состояния и реальные действия. Принятый рисунок не закрывает эту проверку.</p></article>
+<article class="card"><strong>Есть ручной результат владельца</strong><p>Переданы сценарий проверки, кандидат и честные результаты PASS, FAIL, NOT RUN, SKIPPED или INTERRUPTED. Исторический PASS не заменяет свежую приёмку.</p></article>
+</div><div class="limits">Публичный выпуск и перенос в основной KMP-проект — отдельные следующие решения. Обзор не запускает реализацию, службы, финансовые операции или публикацию приложения.</div></section>
+<section id="sources"><h2>Основание обзора</h2><p class="muted">Это русскоязычное представление согласованного контракта. Подробные формулы, числа и обязательные случаи приёмки остаются в SPEC и его документах.</p>
+<div class="sources"><a href="SPEC.md">Основная спецификация</a><a href="ux-constraints.md">Ограничения экранов</a><a href="contract-map.md">Карта требований</a><a href="../spec-theme-exams/SPEC.md">Экзаменационная спецификация</a></div><details class="source-box"><summary>Показать точный текст основного SPEC</summary><pre>
+---
+id: SPEC-schoolquiz3.0
+created: &#x27;2026-09-29&#x27;
+updated: &#x27;2026-09-30&#x27;
+companions:
+  - contract-map.md
+  - ux-constraints.md
+  - ../../planning-artifacts/prds/prd-schoolquiz3.0-2026-09-28/prd.md
+  - ../../planning-artifacts/prds/prd-schoolquiz3.0-2026-09-28/addendum.md
+  - ../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-09-29/ARCHITECTURE-SPINE.md
+  - ../spec-theme-exams/SPEC.md
+  - ../spec-theme-exams/exam-protocol.md
+  - ../../planning-artifacts/architecture/architecture-schoolquiz3.0-2026-08-29/ARCHITECTURE-SPINE.md
+  - ../../../AGENTS.md
+  - ../../../.claude/PROJECT-CONTEXT.md
+sources: []
+---
+
+# SchoolQuiz — full Android MVP
+
+## Why
+
+Deliver one complete, reviewable Android MVP in which learners can study, test their knowledge and earn a course certificate; authors can publish independently checked material; and learning, Arena, tournaments and purchases form reliable end-to-end journeys. “Remaining” means missing implementation or missing current acceptance, not a request to recreate existing work.
+
+## Capabilities
+
+- **CAP-1 — Learn through ordinary courses**
+  - **intent:** A learner can navigate a course and complete an ordinary lesson using available content.
+  - **success:** A ready saved question appears without an added network gate; supported offline progress, timers, Continue, Back and restart retain the ordinary lesson outcome.
+
+- **CAP-2 — Author and revise lessons**
+  - **intent:** An author can create and correct their own learning material.
+  - **success:** Authorship, submitted revisions and change history remain attributable; edits follow the permitted workflow and cannot silently overwrite another author&#x27;s published material.
+
+- **CAP-3 — Review and publish approved questions**
+  - **intent:** Independent reviewers can assess submitted content, and authors can see each question&#x27;s review outcome.
+  - **success:** All required directions examine the concrete revision; successful questions can publish independently, affected dependencies are rechecked, unaffected valid evidence is retained, and online review pauses and resumes from confirmed progress.
+
+- **CAP-4 — Pay for a review cycle and receive earned review rewards**
+  - **intent:** Authors can submit material at an agreed fee and reviewers can receive the defined reward for completed work.
+  - **success:** The accepted tariff is shown and charged once; retry and retained prior evidence create no extra paid work. A completed cycle conserves fee = reward entitlements + burned remainder under the adopted exact-arithmetic contract; an unfinished cycle is not finally settled.
+
+- **CAP-5 — Curate placement with visible reasons**
+  - **intent:** A curator can promote or remove a particular lesson while permitted users see its status and history.
+  - **success:** Each transition has an authorized decision and reason; ratings do not replace curator approval, a failed replacement keeps the valid prior revision, and confirmed faults prevent new use without rewriting frozen attempts.
+
+- **CAP-6 — Discuss lessons and report errors privately**
+  - **intent:** A learner can open comments or privately report a lesson error, and recipients can find relevant incoming items.
+  - **success:** Both post-lesson actions exist; private free text concerns the whole lesson without re-revealing questions or answers, and the shared inbox preserves each item&#x27;s original readers and lesson link.
+
+- **CAP-7 — Choose and prepare Arena participation**
+  - **intent:** A signed-in player can browse Arena, understand available resources and reserves, and obtain the selected preparation.
+  - **success:** RANDOM/SELECTED, difficulty, price consent, quotas and frozen ticket terms follow the adopted contract; the global wallet distinguishes available, reserved and freshness, and browsing has no financial effect. Response loss resumes the same preparation and unresolved or damaged state still exposes recovery.
+
+- **CAP-8 — Complete or cancel an Arena attempt durably**
+  - **intent:** A player can play an authorized Arena attempt, resume it after interruption and obtain its final outcome.
+  - **success:** The prepared offline path, saved answer and restart continue the same attempt; cancel/settle races have one final effect and retain unresolved intent, unknown HARD scores are not zero, and strict proof for that exact attempt confirms the result, never a local flag or vanished queue entry.
+
+- **CAP-9 — Rate completed lessons and receive the correct author share**
+  - **intent:** A player can replace a lesson rating from a prior confirmed result, while prices and author earnings reflect eligible activity.
+  - **success:** One current rating per entitled player participates in the full eligible price/rating calculation; new issued terms respect the current quote, frozen terms remain unchanged, and author shares retain fractional value.
+
+- **CAP-10 — Award promotions and the Arena season**
+  - **intent:** Eligible authors can receive placement awards and the Arena&#x27;s quarterly winner can receive the season award.
+  - **success:** Each qualifying transition pays once; the UTC quarter uses the complete eligible input, adopted minimum/tie/no-winner rules and one resumable final award.
+
+- **CAP-11 — Create funded tournaments and qualify participants**
+  - **intent:** An organizer can create an event from eligible material and players can complete its qualification.
+  - **success:** The course remains in the library, the event has sufficient frozen content and its full fund, retries reuse the event, and three distinct EASY attempts feed an immutable top16 calculated from the whole eligible cohort.
+
+- **CAP-12 — Play tournament matches and settle the event**
+  - **intent:** Qualified players can agree a match time, play their match and see the final bracket and awards.
+  - **success:** Both opponents receive the same HARD form and continuous server timing; reconnection, absences, ties, byes and technical outcomes follow the adopted matrix, and payouts plus returned remainder conserve the fund.
+
+- **CAP-13 — Compare offers and use premium benefits**
+  - **intent:** A player can inspect the current store offers, compare premium durations and use earned benefits for their valid term.
+  - **success:** The gold premium surface shows full prices alongside normalized comparison; active grants determine expiry and both doubled regeneration effects, including holds, overlaps and independent remaining time.
+
+- **CAP-14 — Receive and open boxes**
+  - **intent:** A player can collect boxes from entitled sources and open one for its reward.
+  - **success:** Ordinary daily and premium daily remain distinct sources, other awards do not consume their limits, and an online opening survives loss/restart by returning the same stored reward.
+
+- **CAP-15 — Purchase, restore and refund the correct grant**
+  - **intent:** A buyer can receive verified goods, recover previously paid purchases and have refunds applied to the relevant purchase.
+  - **success:** Pending or unverified purchases grant nothing; account/product/quantity provenance prevents duplicate or foreign grants, partial refunds affect only the original grant, and restore/refund recovery remains available when new sales are disabled.
+
+- **CAP-16 — Use consistent current product terms**
+  - **intent:** Users can see the agreed product constants and recover a current consistent configuration.
+  - **success:** The permitted configuration updates coherently; failed refresh preserves known values without inventing zero, changed payable terms require fresh consent, and accepted operations keep their captured rules.
+
+- **CAP-17 — Use the complete redesigned experience and experience-based guidance**
+  - **intent:** Users can complete every MVP journey in the agreed design and receive guidance appropriate to their experience.
+  - **success:** Existing and new screens, including exams and certificates, cover actionable loading, empty, failure, offline, insufficient funds, forbidden, pending and recovery states in RU/UK/EN; approved visual constraints and semantic actions are retained, while unresolved layouts and guidance thresholds remain explicit UX prerequisites.
+
+- **CAP-18 — Deliver saved actions to an authoritative outcome**
+  - **intent:** A user can recover uncertain actions after interruption without repeatedly recreating them.
+  - **success:** The required 120-action case drains without repeated manual sync; stable original operations reach the authoritative result and neither cancellation nor malformed responses fabricate success, erase pending evidence or duplicate effects.
+
+- **CAP-19 — Keep accounts, sessions and devices isolated**
+  - **intent:** Users can switch accounts or devices without adopting another session&#x27;s actions or private data.
+  - **success:** A→B→A, a new session for the same UID, late responses and stale pages preserve ownership; one shared ticket yields at most one settlement while distinct tickets retain their own legal outcomes.
+
+- **CAP-20 — Update an existing installation without losing user state**
+  - **intent:** A user can install the new candidate over a populated installation and retain their data and unfinished work.
+  - **success:** Content, history, authentication, installation identity and pending operations survive; restore does not substitute an empty environment for missing input or destroy the original export, and rollback preserves confirmed financial history.
+
+- **CAP-21 — Prove knowledge of a course theme**
+  - **intent:** A learner can take a theme test after completing its required ordinary learning and preserve earned theme progress.
+  - **success:** Confirmed coverage of all required EASY questions admits a 20-scored-question test of 5 EASY plus 15 HARD; ordinary access purchase grants no pass. Bank, charge, timing, retry and cooldown follow EXAM. Passes carry for stable course/theme identities after edits, newly required themes must pass, and a first-pass reward cannot be duplicated.
+
+- **CAP-22 — Earn and verify a course certificate**
+  - **intent:** A learner who passes the required themes can demonstrate current course knowledge in a final exam and receive a verifiable certificate.
+  - **success:** A new final uses the latest approved course and 20 HARD questions. Every successful final earns a distinct one-year attestation, including renewal before expiry; the profile displays the latest earned certificate even if its passing score is lower, while prior certificates remain unchanged in history. Failed finals issue nothing. Public verification works signed out; fulfilment retries preserve the same issuance and original claims and expiry survive content-fault correction.
+
+- **CAP-23 — Correct confirmed question faults with accountable result history**
+  - **intent:** Authorized maintainers can remove a confirmed bad question revision from future use and apply justified result corrections.
+  - **success:** Signals request review rather than automatically proving error; original sitting evidence and frozen active banks remain, corrections append attributable versions and may correct admission, and issued certificates are preserved exactly on this ground.
+
+## Constraints
+
+- The scope is every PRD FR-1–56 and NFR-1–8 plus EXAM:CAP-1–21. The listed companions, including their detailed numbers, formulas, acceptance cases and failure matrices, are mandatory; a short capability summary does not narrow them. Qualified IDs and the scope/precedence rules are in contract-map.md.
+- The finalized architecture fixes ownership and boundaries. Keep the existing KMP/Clean Architecture, Decompose/Compose/Koin conventions and separate ordinary, Arena, exam and tournament lifecycles; shared contracts do not introduce a common mode controller.
+- Independent checks approve a concrete immutable content revision. Preserve valid unaffected evidence and frozen issued banks; review is online with confirmed saves and pauses on connection loss, while approved ordinary and Arena offline paths remain available. No mandatory pretest or statistical admission gate is added.
+- Only confirmed server facts authorize authoritative results, grants and receipts. Preserve original operation/account identity and uncertain outcomes across retries; financial effects conserve funds, reserves and fractional entitlements. Read-only browsing and wallet inspection create no financial effect.
+- Ordinary offline lesson unlock retains its provisional local debit, durable intent and visible rollback contract. It grants access, not completed EASY coverage; online exam admission and atomic start/charge require authoritative prerequisites.
+- Apply server-enforced rights and mode-specific redaction to all projections. A shared inbox never widens readership; private forms, HARD/exam keys, tokens, original order IDs and private answer payloads do not leak through UI or shared logs. Existing ordinary EASY local scoring is preserved.
+- Freeze accepted price, bank and rule terms. Server/UTC govern authoritative deadlines and seasons; local presentation respects time zones/DST. Ordinary pauses, prepared Arena clocks, exam acknowledgement/deadline/gap rules and continuous tournament time remain distinct.
+- All applicable screens preserve RU/UK/EN, accessible semantic Continue/Info/Back and rotation/background/recovery. Render actual loading work and show a ready question immediately. The existing &lt;100 ms input/answer criterion is not a new first-question loading SLA, throughput target or population cap.
+- Preserve the passed stable course/theme identities, require new themes, and use the current approved course for each new final. Each successful final, including renewal before expiry, atomically records its own immutable certificate issuance. Display the latest earned certificate even with a lower passing score; retain earlier attestations unchanged. Failed finals issue nothing. Signing pending/retry preserves earning order, identity and dates, so delayed older fulfilment cannot displace a newer issuance.
+- Use the active candidate as brownfield reality. Historical PASS, stale plans, mock Billing and an adopted architecture are not new implementation or acceptance evidence. The full acceptance and explicit unfinished prerequisites remain binding.
+- Keep project work, artifacts and later operational evidence on VPS; preserve the nonempty installation and original restore input. This spec-writing run performs no build, service/session start, financial run or deploy. KMP transfer and public release require later owner decisions.
+- Screen content requires separate explicit confirmation for every screen against the overall product logic, including screens whose visual design is already approved. Visual approval alone does not approve all copy, displayed data, action behavior or states; existing explicit decisions remain constraints for that review.
+- Existing lesson titles cannot be changed, and lessons have no description field. Do not introduce title/description editing or a paid metadata-only submission from the earlier generic fee placeholder. Identify a real permitted non-question edit before proposing any separate scope or fee.
+
+## Non-goals
+
+- Mandatory iOS/web delivery, public release or transfer into the main KMP project as part of accepting this Android candidate.
+- Telegram/group delivery, arbitrary participant DMs, general editing of someone else&#x27;s published text, or a public proposed-edit workflow.
+- Manual selection of tournament questions, a box for five ads, a new box type, or the superseded global two-box limit.
+- Unapproved message auto-translation, developer broadcast announcements or an AI-only reviewer model; existing content translation remains part of review.
+- Offline/queued exams, local exam scoring, a unified tournament/exam lifecycle, certificates for theme/section completion, or composite-course certificates.
+- Proctoring, personal identity verification, accreditation, automatic invalidation or bans from one suspicious statistic, or direct gold purchase of exam admission/retakes/cooldown bypass.
+- Invented fees, individual review-reward caps, certificate replacement without a newly passed final, quantitative product KPIs or new operational service-level promises.
+
+## Success signal
+
+- Demonstrate every mandatory PRD acceptance path and the exam protocol on one identified Android candidate: actual source/backend/APK/schema/config/flags, a populated installation, the required accounts/devices and genuine Play sandbox where specified. Author/review/publication, ordinary learning, Arena, the complete tournament event, commerce, configuration, feedback and exam-to-public-certificate journeys must work together with the agreed design.
+- Prove delivery after offline/restart/lost response, concurrent and account-switch behavior, non-destructive upgrade, financial conservation and exact authoritative receipts. Include the required 120-action queue, full cohort/season size cases, certificate correction/pending-signing cases, lower-passing-score renewal with retained history, failed-retake preservation and out-of-order fulfilment and device/Play matrix; a smoke path, historical pass or fake provider does not replace them.
+- The owner receives the candidate, traceable PASS/FAIL/NOT RUN/SKIPPED/INTERRUPTED evidence, acceptance/manual-check instructions and known limits, then manually accepts it. No open money, data-loss or permission defect, mandatory unrun check or missing owner result can be called full MVP acceptance. This specification is not that acceptance.
+
+## Open questions
+
+- **OQ-2:** If a permanently abandoned review cycle is added, how is its fee distributed for partial work? The owner decides before adding that outcome; an unfinished cycle currently has no final distribution or burn.
+- **OQ-3:** Confirm the content of every screen separately against the overall product logic, then complete remaining visual design and experience-guidance copy, placement, thresholds and seen behavior before the affected UI is accepted. The settled UX subset is in ux-constraints.md; approved appearance or fixture content is not blanket screen-content approval.
+- **OQ-4:** Resolve the exam&#x27;s remaining Q-EX-1/2/4/5/6/7 at their stated gates: mixed stars, correction arithmetic, full-EASY evidence, permitted execution/recovery, first-pass reward formula, and optional theme-placement/course-star scope. Q-EX-3 is resolved by the latest-issued renewal policy; keep one shared feature contract.
+- **OQ-5:** Before the corresponding runtime or release stage, complete the environment/device/Play inventory, toolchain/security compatibility, known quiescence fix and operational cadence/budget/retention/recovery decisions. Their current availability or acceptance is not inferred by this document.
+
+</pre></details></section><footer class="footer">SchoolQuiz · Документы на VPS · Дата спецификации: 30.09.2026 · Действия на странице не утверждают решения автоматически.</footer></main>
+<script>(function(){var b=document.getElementById('expand');var items=Array.from(document.querySelectorAll('details[data-cap]'));function sync(){var all=items.every(function(x){return x.open;});b.textContent=all?'Свернуть все возможности':'Раскрыть все возможности';b.setAttribute('aria-expanded',String(all));}b.addEventListener('click',function(){var all=items.every(function(x){return x.open;});items.forEach(function(x){x.open=!all;});sync();});items.forEach(function(x){x.addEventListener('toggle',sync);});})();</script></body></html>

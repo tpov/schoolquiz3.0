@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Upload Structure & Questions to Firestore</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        button {
+            background: linear-gradient(45deg, #4285f4, #34a853);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            background: #f8f9fa;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        .log {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            border: 1px solid #4a5568;
+        }
+        .success { color: #68d391; }
+        .error { color: #fc8181; }
+        .info { color: #63b3ed; }
+        .warning { color: #f6e05e; }
+        .progress {
+            background: #e2e8f0;
+            border-radius: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+            height: 24px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            text-align: center;
+            color: white;
+            line-height: 24px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 20px;
+        }
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .category-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .category-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .category-item.uploaded {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .category-item.selected {
+            background: #cce5ff;
+            border-color: #4285f4;
+            color: #1565c0;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(66, 133, 244, 0.3);
+        }
+        .file-input {
+            margin: 20px 0;
+            padding: 20px;
+            border: 3px dashed #4285f4;
+            border-radius: 12px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+        }
+        .file-input:hover {
+            background: #f0f4ff;
+            border-color: #1565c0;
+        }
+        .file-input input[type="file"] {
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        input[type="number"] {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        #fileStatus {
+            margin-top: 10px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Загрузка структуры и вопросов</h1>
+        
+        <!-- Firebase Initialization Section -->
+        <div class="section">
+            <h2>🔧 Инициализация Firebase</h2>
+            <div class="file-input">
+                <label for="jsonFile">📁 Выберите JSON файл со структурой:</label>
+                <input type="file" id="jsonFile" accept=".json" onchange="loadJsonFile(event)">
+                <div id="fileStatus">Файл не выбран</div>
+            </div>
+            
+            <div>
+                <button onclick="initFirebase()" id="initBtn">🔥 Инициализировать Firebase</button>
+                <button onclick="clearLogs()" id="clearBtn">🧹 Очистить логи</button>
+            </div>
+        </div>
+
+        <!-- Structure Upload Section -->
+        <div class="section">
+            <h2>📋 Загрузка структуры</h2>
+            
+            <div>
+                <h3>Выберите событие:</h3>
+                <div class="categories">
+                    <div class="category-item event-item" data-event="QUIZ_HOME">🏠 QUIZ_HOME</div>
+                    <div class="category-item event-item" data-event="QUIZ_TOURNAMENT_LEADER">👑 TOURNAMENT_LEADER</div>
+                    <div class="category-item event-item" data-event="QUIZ_TOURNAMENT">🏆 TOURNAMENT</div>
+                    <div class="category-item event-item" data-event="QUIZ_ARENA">⚔️ ARENA</div>
+                    <div class="category-item event-item" data-event="QUIZ_FOR_ADMIN">🔧 FOR_ADMIN</div>
+                    <div class="category-item event-item" data-event="QUIZ_FOR_TRANSLATOR">🌐 FOR_TRANSLATOR</div>
+                    <div class="category-item event-item" data-event="QUIZ_FOR_TESTER">🧪 FOR_TESTER</div>
+                    <div class="category-item event-item" data-event="QUIZ_BY_USER">👤 BY_USER</div>
+                </div>
+            </div>
+
+            <div>
+                <button onclick="uploadStructureForSelectedEvent()" id="uploadStructureBtn" disabled>📤 Загрузить структуру</button>
+                <button onclick="uploadStructureForAllEvents()" id="uploadAllStructureBtn" disabled">📤📤 Загрузить для всех событий</button>
+            </div>
+        </div>
+
+        <!-- Questions Upload Section -->
+        <div class="section">
+            <h2>❓ Генерация и загрузка вопросов</h2>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="questionsPerQuiz">10</div>
+                    <div class="stat-label">Вопросов на квиз</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="selectedLanguages">3</div>
+                    <div class="stat-label" id="languagesLabel">Выбрано языков</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalQuizzes">0</div>
+                    <div class="stat-label">Всего квизов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalQuestions">0</div>
+                    <div class="stat-label">Всего вопросов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="uploadedQuestions">0</div>
+                    <div class="stat-label">Загружено</div>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <label for="questionsCount"><strong>Количество вопросов на квиз:</strong></label>
+                <input type="number" id="questionsCount" value="10" min="1" max="50" onchange="updateQuestionsStats()">
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3>🌐 Выберите языки для генерации:</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin: 10px 0;">
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="lang_ru" checked onchange="updateQuestionsStats()">
+                        <span>🇷🇺 Русский (ru)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="lang_en" checked onchange="updateQuestionsStats()">
+                        <span>🇺🇸 Английский (en)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="lang_uk" checked onchange="updateQuestionsStats()">
+                        <span>🇺🇦 Украинский (uk)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3>📸 Генерация изображений:</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin: 10px 0;">
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="generateStructureImages" checked>
+                        <span>🏗️ Генерировать фото для структуры</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="generateQuestionImages" checked>
+                        <span>❓ Генерировать фото для вопросов</span>
+                    </label>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 8px; font-size: 14px;">
+                    <strong>API для генерации:</strong> Unsplash API (бесплатные изображения по ключевым словам)
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3>🌍 Функции перевода:</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin: 10px 0;">
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="usePaidTranslation">
+                        <span>💰 Использовать платный перевод</span>
+                    </label>
+                </div>
+                <div style="margin: 10px 0;">
+                    <label for="translateToLanguage"><strong>Переводить на язык:</strong></label>
+                    <select id="translateToLanguage" style="margin-left: 10px; padding: 5px;">
+                        <option value="ru">🇷🇺 Русский</option>
+                        <option value="en">🇺🇸 Английский</option>
+                        <option value="uk">🇺🇦 Украинский</option>
+                        <option value="de">🇩🇪 Немецкий</option>
+                        <option value="fr">🇫🇷 Французский</option>
+                        <option value="es">🇪🇸 Испанский</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <button onclick="generateAndUploadQuestions()" id="uploadQuestionsBtn" disabled>🎯 Генерировать вопросы</button>
+                <button onclick="checkExistingQuestions()" id="checkQuestionsBtn" disabled>🔍 Проверить вопросы</button>
+                <button onclick="testQuestionGeneration()" id="testBtn" disabled>🧪 Тест генерации</button>
+                <button onclick="testTranslationAPI()" id="testApiBtn" disabled>🌐 Тест API перевода</button>
+                <button onclick="translateQuestions()" id="translateBtn" disabled>🌍 Перевести вопросы (API)</button>
+                <button onclick="generateDirectTranslations()" id="directTranslateBtn" disabled>🚀 Создать переводы напрямую</button>
+                <button onclick="analyzeStructure()" id="analyzeBtn" disabled>🔍 Анализ структуры</button>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <!-- Logs Section -->
+        <div id="logs" class="log">
+            <div class="info">📝 Логи загрузки будут отображаться здесь...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, setDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC10iksA0DO5OBc98KY_M1ECeNVHUIU2QQ",
+            authDomain: "school-quiz-89336951.firebaseapp.com",
+            projectId: "school-quiz-89336951",
+            storageBucket: "school-quiz-89336951.appspot.com",
+            messagingSenderId: "762375057396",
+            appId: "1:762375057396:android:104a8bd0846a921a2893a1"
+        };
+
+        let app;
+        let db;
+        let structureData = null;
+        let selectedEvent = 'QUIZ_HOME';
+
+        // Генерация структурированного ID для вопроса
+        function createStructuredQuestionId(hardQuestion, language, sequenceNumber) {
+            const paddedNumber = sequenceNumber.toString().padStart(3, '0');
+            const difficulty = hardQuestion ? 'hard' : 'easy';
+            return `${difficulty}_${language}_question_${paddedNumber}`;
+        }
+
+        // Генерация пути коллекции для вопросов
+        function createQuestionCollectionPath(event, nameCategory, nameSubCategory, nameSubsubCategory) {
+            return `questions/${event}/items`;
+        }
+
+                    // Генерация случайного вопроса
+        function generateRandomQuestion(questionNumber, hardQuestion, language, pathStructure) {
+            // Отладочная информация
+            console.log('🔍 Path Structure:', pathStructure);
+            
+            // Также выводим в логи для видимости
+            if (questionNumber === 1) {
+                log(`🔍 DEBUG: nameCategory = "${pathStructure.nameCategory}"`, 'info');
+                log(`🔍 DEBUG: nameSubCategory = "${pathStructure.nameSubCategory}"`, 'info');
+                log(`🔍 DEBUG: nameSubsubCategory = "${pathStructure.nameSubsubCategory}"`, 'info');
+                log(`🔍 DEBUG: nameQuiz = "${pathStructure.nameQuiz}"`, 'info');
+            }
+            const difficulties = {
+                'easy': ['простой', 'базовый', 'элементарный'],
+                'medium': ['средний', 'умеренный', 'стандартный'], 
+                'hard': ['сложный', 'трудный', 'продвинутый']
+            };
+
+            const subjects = {
+                'SchoolQuiz': {
+                    'Математика': {
+                        'Алгебра': {
+                            'ru': ['уравнение', 'функция', 'график', 'система уравнений'],
+                            'en': ['equation', 'function', 'graph', 'system of equations'],
+                            'uk': ['рівняння', 'функція', 'графік', 'система рівнянь']
+                        },
+                        'Геометрия': {
+                            'ru': ['треугольник', 'окружность', 'площадь', 'теорема Пифагора'],
+                            'en': ['triangle', 'circle', 'area', 'Pythagorean theorem'],
+                            'uk': ['трикутник', 'коло', 'площа', 'теорема Піфагора']
+                        },
+                        'Арифметика': {
+                            'ru': ['дробь', 'процент', 'пропорция', 'натуральное число'],
+                            'en': ['fraction', 'percent', 'proportion', 'natural number'],
+                            'uk': ['дріб', 'відсоток', 'пропорція', 'натуральне число']
+                        }
+                    },
+                    'Физика': {
+                        'Механика': {
+                            'ru': ['скорость', 'ускорение', 'сила', 'закон Ньютона'],
+                            'en': ['velocity', 'acceleration', 'force', 'Newton\'s law'],
+                            'uk': ['швидкість', 'прискорення', 'сила', 'закон Ньютона']
+                        },
+                        'Термодинамика': {
+                            'ru': ['температура', 'теплота', 'энергия', 'идеальный газ'],
+                            'en': ['temperature', 'heat', 'energy', 'ideal gas'],
+                            'uk': ['температура', 'теплота', 'енергія', 'ідеальний газ']
+                        },
+                        'Электричество': {
+                            'ru': ['ток', 'напряжение', 'сопротивление', 'закон Ома'],
+                            'en': ['current', 'voltage', 'resistance', 'Ohm\'s law'],
+                            'uk': ['струм', 'напруга', 'опір', 'закон Ома']
+                        }
+                    },
+                    'Химия': {
+                        'Органическая': {
+                            'ru': ['углерод', 'алкан', 'реакция', 'бензол'],
+                            'en': ['carbon', 'alkane', 'reaction', 'benzene'],
+                            'uk': ['вуглець', 'алкан', 'реакція', 'бензол']
+                        },
+                        'Неорганическая': {
+                            'ru': ['элемент', 'кислота', 'основание', 'соль'],
+                            'en': ['element', 'acid', 'base', 'salt'],
+                            'uk': ['елемент', 'кислота', 'основа', 'сіль']
+                        },
+                        'Физическая': {
+                            'ru': ['раствор', 'концентрация', 'скорость реакции', 'катализатор'],
+                            'en': ['solution', 'concentration', 'reaction rate', 'catalyst'],
+                            'uk': ['розчин', 'концентрація', 'швидкість реакції', 'каталізатор']
+                        },
+                        'Углеводороды': {
+                            'ru': ['метан', 'этан', 'бензол', 'алкены', 'алкины', 'циклоалканы'],
+                            'en': ['methane', 'ethane', 'benzene', 'alkenes', 'alkynes', 'cycloalkanes'],
+                            'uk': ['метан', 'етан', 'бензол', 'алкени', 'алкіни', 'циклоалкани']
+                        }
+                    }
+                },
+                // Добавляем универсальные данные для любых неизвестных категорий
+                'DEFAULT': {
+                    'ru': ['понятие', 'термин', 'определение', 'принцип', 'правило', 'закон'],
+                    'en': ['concept', 'term', 'definition', 'principle', 'rule', 'law'],
+                    'uk': ['поняття', 'термін', 'визначення', 'принцип', 'правило', 'закон']
+                }
+            };
+
+            // Переводы для разных языков
+            const translations = {
+                'ru': {
+                    questionPrefix: 'Что означает понятие',
+                    contextWord: 'в контексте',
+                    levelWord: 'уровень',
+                    correctPrefix: 'Правильное определение:',
+                    correctSuffix: '- это основное понятие в',
+                    wrongAnswers: [
+                        'Неверно: {topic} относится к другой области',
+                        'Ошибочно: {topic} не имеет отношения к {subject}',
+                        'Неправильно: {topic} используется только в практических задачах'
+                    ]
+                },
+                'en': {
+                    questionPrefix: 'What does the concept',
+                    contextWord: 'mean in the context of',
+                    levelWord: 'level',
+                    correctPrefix: 'Correct definition:',
+                    correctSuffix: '- is a fundamental concept in',
+                    wrongAnswers: [
+                        'Incorrect: {topic} belongs to another field',
+                        'Wrong: {topic} has no relation to {subject}',
+                        'False: {topic} is used only in practical tasks'
+                    ]
+                },
+                'uk': {
+                    questionPrefix: 'Що означає поняття',
+                    contextWord: 'в контексті',
+                    levelWord: 'рівень',
+                    correctPrefix: 'Правильне визначення:',
+                    correctSuffix: '- це основне поняття в',
+                    wrongAnswers: [
+                        'Невірно: {topic} належить до іншої галузі',
+                        'Помилково: {topic} не має відношення до {subject}',
+                        'Неправильно: {topic} використовується тільки в практичних завданнях'
+                    ]
+                }
+            };
+
+            // Получаем тему на основе структуры пути с улучшенной обработкой ошибок
+            const difficultyType = hardQuestion ? 'hard' : 'easy';
+            const difficultyLevel = difficulties[difficultyType][Math.floor(Math.random() * difficulties[difficultyType].length)];
+            
+            // Безопасное получение данных с fallback
+            const categoryData = subjects[pathStructure.nameCategory] || subjects['SchoolQuiz'];
+            const subcategoryData = categoryData[pathStructure.nameSubCategory] || categoryData['Математика'] || categoryData;
+            
+            let subsubcategoryData;
+            if (subcategoryData && subcategoryData[pathStructure.nameSubsubCategory]) {
+                subsubcategoryData = subcategoryData[pathStructure.nameSubsubCategory];
+            } else if (subcategoryData && subcategoryData['Алгебра']) {
+                subsubcategoryData = subcategoryData['Алгебра'];
+            } else {
+                // Используем универсальные данные
+                subsubcategoryData = subjects['DEFAULT'];
+            }
+            
+            // Выбираем термин на нужном языке с дополнительными fallback
+            let topicsForLanguage = [];
+            if (subsubcategoryData && subsubcategoryData[language]) {
+                topicsForLanguage = subsubcategoryData[language];
+            } else if (subsubcategoryData && subsubcategoryData['ru']) {
+                topicsForLanguage = subsubcategoryData['ru'];
+            } else if (subjects['DEFAULT'][language]) {
+                topicsForLanguage = subjects['DEFAULT'][language];
+            } else {
+                topicsForLanguage = subjects['DEFAULT']['ru'];
+            }
+            
+            const topic = topicsForLanguage[Math.floor(Math.random() * topicsForLanguage.length)] || 'concept';
+
+            // Получаем переводы для текущего языка
+            const t = translations[language] || translations['ru'];
+
+            // Переводим названия категорий на выбранный язык
+            const categoryTranslations = {
+                'ru': {
+                    'Алгебра': 'Алгебра',
+                    'Геометрия': 'Геометрия', 
+                    'Арифметика': 'Арифметика',
+                    'Органическая': 'Органическая химия',
+                    'Неорганическая': 'Неорганическая химия',
+                    'Физическая': 'Физическая химия',
+                    'Углеводороды': 'Углеводороды',
+                    'Механика': 'Механика',
+                    'Термодинамика': 'Термодинамика',
+                    'Электричество': 'Электричество'
+                },
+                'en': {
+                    'Алгебра': 'Algebra',
+                    'Геометрия': 'Geometry',
+                    'Арифметика': 'Arithmetic',
+                    'Органическая': 'Organic Chemistry',
+                    'Неорганическая': 'Inorganic Chemistry',
+                    'Физическая': 'Physical Chemistry',
+                    'Углеводороды': 'Hydrocarbons',
+                    'Механика': 'Mechanics',
+                    'Термодинамика': 'Thermodynamics',
+                    'Электричество': 'Electricity'
+                },
+                'uk': {
+                    'Алгебра': 'Алгебра',
+                    'Геометрия': 'Геометрія',
+                    'Арифметика': 'Арифметика',
+                    'Органическая': 'Органічна хімія',
+                    'Неорганическая': 'Неорганічна хімія',
+                    'Физическая': 'Фізична хімія',
+                    'Углеводороды': 'Вуглеводні',
+                    'Механика': 'Механіка',
+                    'Термодинамика': 'Термодинаміка',
+                    'Электричество': 'Електрика'
+                }
+            };
+
+            const translatedSubject = categoryTranslations[language]?.[pathStructure.nameSubsubCategory] || pathStructure.nameSubsubCategory;
+            
+            // Отладка для первого вопроса
+            if (questionNumber === 1) {
+                log(`🔍 DEBUG: topic = "${topic}"`, 'info');
+                log(`🔍 DEBUG: translatedSubject = "${translatedSubject}"`, 'info');
+                log(`🔍 DEBUG: language = "${language}"`, 'info');
+            }
+            const translatedDifficulty = language === 'ru' ? difficultyLevel : 
+                                       language === 'en' ? (difficultyType === 'hard' ? 'advanced' : 'basic') :
+                                       language === 'uk' ? (difficultyType === 'hard' ? 'складний' : 'базовий') : difficultyLevel;
+
+            // Генерируем вопрос на выбранном языке
+            const questionText = `${t.questionPrefix} "${topic}" ${t.contextWord} ${translatedSubject}? (${translatedDifficulty} ${t.levelWord})`;
+            
+            const correctAnswer = `${t.correctPrefix} ${topic} ${t.correctSuffix} ${translatedSubject}`;
+            const wrongAnswers = t.wrongAnswers.map(template => 
+                template.replace('{topic}', topic).replace('{subject}', translatedSubject)
+            );
+
+            const allAnswers = [correctAnswer, ...wrongAnswers];
+            // Перемешиваем ответы
+            for (let i = allAnswers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allAnswers[i], allAnswers[j]] = [allAnswers[j], allAnswers[i]];
+            }
+
+            const correctAnswerIndex = allAnswers.indexOf(correctAnswer);
+
+            // hardQuestion уже передан как параметр
+
+            return {
+                nameQuestion: questionText,
+                nameAnswers: allAnswers.join('|'),
+                correctAnswer: correctAnswerIndex,
+                language: language,
+                hardQuestion: hardQuestion,
+                category: pathStructure.nameCategory,
+                subcategory: pathStructure.nameSubCategory,
+                subsubcategory: pathStructure.nameSubsubCategory,
+                quiz: pathStructure.nameQuiz,
+                timeCreate: Math.floor(Date.now() / 1000),
+                timeUpdate: Math.floor(Date.now() / 1000),
+                tpovIdCreator: 1,
+                nameCreator: "TPOV",
+                isActive: true,
+                version: 1,
+                pictureQuestion: generateQuestionImageName(pathStructure, questionNumber),
+                soundQuestion: "",
+                videoQuestion: "",
+                lvlTranslate: 200,
+                ratingGlobal: Math.floor(Math.random() * 100),
+                starsAverageGlobal: Math.floor(Math.random() * 5) + 1
+            };
+        }
+
+        // Загрузка JSON файла
+        window.loadJsonFile = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        structureData = JSON.parse(e.target.result);
+                        document.getElementById('fileStatus').innerHTML = `✅ Файл загружен: ${file.name}`;
+                        log(`📁 JSON файл загружен: ${file.name}`, 'success');
+                        
+                        if (structureData.structures && structureData.structures.structureData) {
+                            const categories = Object.keys(structureData.structures.structureData);
+                            log(`📋 Найдено категорий: ${categories.join(', ')}`, 'info');
+                            
+                            // Детальная отладка структуры для первой категории
+                            const firstCategory = categories[0];
+                            if (firstCategory && structureData.structures.structureData[firstCategory]) {
+                                const categoryData = structureData.structures.structureData[firstCategory];
+                                log(`🔍 СТРУКТУРА ПЕРВОЙ КАТЕГОРИИ "${firstCategory}":`, 'info');
+                                
+                                if (categoryData.children && categoryData.children.length > 0) {
+                                    const firstSubcat = categoryData.children[0];
+                                    log(`   📂 Подкатегория: "${firstSubcat.nameItem}"`, 'info');
+                                    
+                                    if (firstSubcat.children && firstSubcat.children.length > 0) {
+                                        const firstSubsubcat = firstSubcat.children[0];
+                                        log(`      📂 Под-подкатегория: "${firstSubsubcat.nameItem}"`, 'info');
+                                        
+                                        if (firstSubsubcat.children && firstSubsubcat.children.length > 0) {
+                                            const firstQuiz = firstSubsubcat.children[0];
+                                            log(`         📝 Квиз: "${firstQuiz.nameItem}"`, 'info');
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            updateQuestionsStats();
+                        }
+                    } catch (error) {
+                        document.getElementById('fileStatus').innerHTML = `❌ Ошибка в файле: ${error.message}`;
+                        log(`❌ Ошибка парсинга JSON: ${error.message}`, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+
+        // Инициализация Firebase
+        window.initFirebase = function() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                log('✅ Firebase инициализирован успешно!', 'success');
+                
+                if (structureData) {
+                    document.getElementById('uploadStructureBtn').disabled = false;
+                    document.getElementById('uploadAllStructureBtn').disabled = false;
+                    document.getElementById('uploadQuestionsBtn').disabled = false;
+                    document.getElementById('checkQuestionsBtn').disabled = false;
+                    document.getElementById('testBtn').disabled = false;
+                    document.getElementById('testApiBtn').disabled = false;
+                    document.getElementById('translateBtn').disabled = false;
+                    document.getElementById('directTranslateBtn').disabled = false;
+                    document.getElementById('analyzeBtn').disabled = false;
+                }
+                document.getElementById('initBtn').disabled = true;
+            } catch (error) {
+                log('❌ Ошибка инициализации Firebase: ' + error.message, 'error');
+            }
+        };
+
+        // Выбор события
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.event-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.event-item').forEach(el => el.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedEvent = this.dataset.event;
+                    log(`📌 Выбрано событие: ${selectedEvent}`, 'info');
+                    updateQuestionsStats();
+                });
+            });
+            
+            document.querySelector('[data-event="QUIZ_HOME"]').classList.add('selected');
+        });
+
+        // Подсчет квизов (только образовательные категории)
+        function countQuizzes(categories) {
+            let totalQuizzes = 0;
+            const educationalCategories = ['SchoolQuiz']; // Только образовательные категории
+            
+            for (const categoryName in categories) {
+                // Пропускаем неподходящие категории
+                if (!educationalCategories.includes(categoryName)) {
+                    continue;
+                }
+                
+                const category = categories[categoryName];
+                if (category.children) {
+                    for (const subcategory of category.children) {
+                        if (subcategory.children) {
+                            for (const subsubcategory of subcategory.children) {
+                                if (subsubcategory.children) {
+                                    totalQuizzes += subsubcategory.children.length;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return totalQuizzes;
+        }
+
+        // Получение выбранных языков
+        function getSelectedLanguages() {
+            const languages = [];
+            if (document.getElementById('lang_ru').checked) languages.push('ru');
+            if (document.getElementById('lang_en').checked) languages.push('en');
+            if (document.getElementById('lang_uk').checked) languages.push('uk');
+            return languages;
+        }
+
+        // Генерация изображения через Unsplash API
+        async function generateImage(keywords, category = 'education') {
+            try {
+                // Используем прямые ссылки без проверки доступности (быстрее)
+                const query = encodeURIComponent(`${keywords} ${category}`);
+                const imageUrl = `https://source.unsplash.com/800x600/?${query}`;
+                
+                return imageUrl;
+            } catch (error) {
+                log(`⚠️ Ошибка генерации изображения для "${keywords}": ${error.message}`, 'warning');
+                return `https://source.unsplash.com/800x600/?education,learning`;
+            }
+        }
+
+        // Генерация изображения для структуры
+        async function generateStructureImage(itemName, categoryType = 'category') {
+            const keywords = itemName.toLowerCase()
+                .replace(/[^\w\s]/g, '')
+                .split(' ')
+                .slice(0, 3)
+                .join(' ');
+            
+            const categoryMap = {
+                'category': 'education,learning',
+                'subcategory': 'books,study',
+                'quiz': 'quiz,test,exam'
+            };
+            
+            return await generateImage(keywords, categoryMap[categoryType] || 'education');
+        }
+
+        // Генерация названия изображения
+        function generateQuestionImageName(pathStructure, questionNumber) {
+            return `question_${questionNumber.toString().padStart(3, '0')}.jpg`;
+        }
+
+        // Генерация изображения для вопроса
+        async function generateQuestionImage(question, subject) {
+            if (!subject || subject.trim() === '') {
+                return await generateImage('education', 'science');
+            }
+            
+            const keywords = subject.toLowerCase()
+                .replace(/[^\w\s]/g, '')
+                .split(' ')
+                .filter(word => word.length > 0)
+                .slice(0, 2)
+                .join(' ');
+            
+            if (keywords.trim() === '') {
+                return await generateImage('education', 'science');
+            }
+            
+            return await generateImage(keywords, 'education,science');
+        }
+
+        // Обновление статистики
+        window.updateQuestionsStats = function() {
+            if (!structureData) return;
+            
+            const questionsPerQuiz = parseInt(document.getElementById('questionsCount').value) || 10;
+            const categories = structureData.structures.structureData;
+            const totalQuizzes = countQuizzes(categories);
+            const selectedLanguages = getSelectedLanguages();
+            const totalQuestions = totalQuizzes * questionsPerQuiz * selectedLanguages.length;
+            
+            document.getElementById('questionsPerQuiz').textContent = questionsPerQuiz;
+            document.getElementById('totalQuizzes').textContent = totalQuizzes;
+            document.getElementById('totalQuestions').textContent = totalQuestions;
+            document.getElementById('selectedLanguages').textContent = selectedLanguages.length;
+            
+            const languageNames = {
+                'ru': '🇷🇺 ru',
+                'en': '🇺🇸 en', 
+                'uk': '🇺🇦 uk'
+            };
+            const languagesList = selectedLanguages.map(lang => languageNames[lang]).join(', ');
+            document.getElementById('languagesLabel').textContent = `Языки: ${languagesList}`;
+        };
+
+        // Загрузка структуры для выбранного события
+        window.uploadStructureForSelectedEvent = async function() {
+            if (!db || !structureData) {
+                log('❌ Firebase не инициализирован или JSON файл не загружен!', 'error');
+                return;
+            }
+
+            log(`🚀 Начинаю загрузку структуры для события ${selectedEvent}...`, 'info');
+            
+            const categories = Object.keys(structureData.structures.structureData);
+            log(`📊 Всего категорий для загрузки: ${categories.length}`, 'info');
+            updateProgress(0, categories.length);
+
+            let uploaded = 0;
+
+            for (const categoryName of categories) {
+                try {
+                    const categoryData = structureData.structures.structureData[categoryName];
+                    
+                    if (categoryData) {
+                        // Генерируем изображение для структуры, если включена опция
+                        let pictureUrl = categoryData.picture || "";
+                        if (document.getElementById('generateStructureImages').checked) {
+                            try {
+                                pictureUrl = await generateStructureImage(categoryName, 'category');
+                                log(`📸 Сгенерировано изображение для ${categoryName}: ${pictureUrl}`, 'info');
+                            } catch (error) {
+                                log(`⚠️ Не удалось сгенерировать изображение для ${categoryName}`, 'warning');
+                            }
+                        }
+
+                        const structureDataRemote = {
+                            nameItem: categoryName,
+                            dataUpdate: Math.floor(Date.now() / 1000),
+                            dataCreate: Math.floor(Date.now() / 1000),
+                            version: categoryData.version || 1,
+                            ratingGlobal: categoryData.ratingGlobal || 0,
+                            starsAverageGlobal: categoryData.starsAverageGlobal || 0,
+                            starsMaxGlobal: categoryData.starsMaxGlobal || 0,
+                            tpovIdCreator: 1,
+                            nameCreator: "TPOV",
+                            tpovIdMaxStarsGlobal: categoryData.tpovIdMaxStarsGlobal || 0,
+                            picture: pictureUrl,
+                            languages: categoryData.languages || "ru",
+                            isShowArchive: categoryData.isShowArchive !== undefined ? categoryData.isShowArchive : true,
+                            isShow: categoryData.isShow !== undefined ? categoryData.isShow : true,
+                            children: categoryData.children || []
+                        };
+                        
+                        const docRef = doc(db, 'structures', 'structureData', selectedEvent, categoryName);
+                        await setDoc(docRef, structureDataRemote);
+                        log(`✅ Загружено: ${categoryName} (${structureDataRemote.children.length} children)`, 'success');
+                        
+                        uploaded++;
+                        updateProgress(uploaded, categories.length);
+                    }
+                } catch (error) {
+                    log(`❌ Ошибка при загрузке категории ${categoryName}: ${error.message}`, 'error');
+                }
+            }
+
+            log(`🎉 Загрузка структуры завершена! Загружено ${uploaded}/${categories.length} категорий`, 'success');
+        };
+
+        // Загрузка структуры для всех событий
+        window.uploadStructureForAllEvents = async function() {
+            if (!db || !structureData) {
+                log('❌ Firebase не инициализирован или JSON файл не загружен!', 'error');
+                return;
+            }
+
+            const events = [
+                'QUIZ_HOME', 'QUIZ_TOURNAMENT_LEADER', 'QUIZ_TOURNAMENT', 'QUIZ_ARENA',
+                'QUIZ_FOR_ADMIN', 'QUIZ_FOR_TRANSLATOR', 'QUIZ_FOR_TESTER'
+            ];
+            
+            const categories = Object.keys(structureData.structures.structureData);
+            const totalOperations = events.length * categories.length;
+            
+            log(`🚀 Начинаю загрузку структуры для всех событий...`, 'info');
+            log(`📊 Всего операций: ${totalOperations}`, 'info');
+            updateProgress(0, totalOperations);
+
+            let totalUploaded = 0;
+
+            for (const eventName of events) {
+                log(`📋 Загружаю событие: ${eventName}`, 'warning');
+                
+                for (const categoryName of categories) {
+                    try {
+                        const categoryData = structureData.structures.structureData[categoryName];
+                        
+                        if (categoryData) {
+                            const structureDataRemote = {
+                                nameItem: categoryName,
+                                dataUpdate: Math.floor(Date.now() / 1000),
+                                dataCreate: Math.floor(Date.now() / 1000),
+                                version: categoryData.version || 1,
+                                ratingGlobal: categoryData.ratingGlobal || 0,
+                                starsAverageGlobal: categoryData.starsAverageGlobal || 0,
+                                starsMaxGlobal: categoryData.starsMaxGlobal || 0,
+                                tpovIdCreator: 1,
+                                nameCreator: "TPOV",
+                                tpovIdMaxStarsGlobal: categoryData.tpovIdMaxStarsGlobal || 0,
+                                picture: categoryData.picture || "",
+                                languages: categoryData.languages || "ru",
+                                isShowArchive: categoryData.isShowArchive !== undefined ? categoryData.isShowArchive : true,
+                                isShow: categoryData.isShow !== undefined ? categoryData.isShow : true,
+                                children: categoryData.children || []
+                            };
+                            
+                            const docRef = doc(db, 'structures', 'structureData', eventName, categoryName);
+                            await setDoc(docRef, structureDataRemote);
+                            
+                            totalUploaded++;
+                            updateProgress(totalUploaded, totalOperations);
+                        }
+                    } catch (error) {
+                        log(`❌ Ошибка загрузки ${eventName}/${categoryName}: ${error.message}`, 'error');
+                    }
+                }
+            }
+            
+            log(`🎉 Загрузка структуры завершена! Загружено ${totalUploaded}/${totalOperations} категорий`, 'success');
+        };
+
+        // Тест генерации вопросов
+        window.testQuestionGeneration = async function() {
+            if (!structureData) {
+                log('❌ JSON файл не загружен!', 'error');
+                return;
+            }
+
+            log('🧪 Тестирую генерацию вопросов...', 'info');
+
+            const testPath = {
+                nameCategory: 'SchoolQuiz',
+                nameSubCategory: 'Математика', 
+                nameSubsubCategory: 'Алгебра',
+                nameQuiz: 'Тест квиз'
+            };
+
+            const testLanguages = getSelectedLanguages();
+            
+            if (testLanguages.length === 0) {
+                log('❌ Выберите хотя бы один язык для тестирования!', 'error');
+                return;
+            }
+            
+            for (let i = 0; i < Math.min(3, testLanguages.length); i++) {
+                const hardQuestion = Math.random() < 0.5;
+                const language = testLanguages[i % testLanguages.length];
+                const question = generateRandomQuestion(i + 1, hardQuestion, language, testPath);
+                const questionId = createStructuredQuestionId(hardQuestion, language, i + 1);
+                
+                log(`✅ Сгенерирован тестовый вопрос ID: ${questionId}`, 'success');
+                log(`   Язык: ${language}`, 'info');
+                log(`   HardQuestion: ${question.hardQuestion}`, 'info');
+                log(`   Вопрос: ${question.nameQuestion}`, 'info');
+                log(`   Ответы: ${question.nameAnswers.split('|').join(' | ')}`, 'info');
+                log(`   Правильный ответ: ${question.correctAnswer}`, 'info');
+                
+                // Тестируем генерацию изображений
+                if (document.getElementById('generateQuestionImages').checked) {
+                    try {
+                        const imageUrl = await generateQuestionImage(question.nameQuestion, testPath.nameSubsubCategory);
+                        log(`   📸 Тестовое изображение: ${imageUrl}`, 'info');
+                    } catch (error) {
+                        log(`   ⚠️ Ошибка генерации изображения: ${error.message}`, 'warning');
+                    }
+                }
+                
+                log(``, 'info');
+            }
+
+            const collectionPath = createQuestionCollectionPath(selectedEvent, testPath.nameCategory, testPath.nameSubCategory, testPath.nameSubsubCategory);
+            log(`📍 Путь коллекции: ${collectionPath}`, 'info');
+        };
+
+        // Генерация и загрузка вопросов
+        window.generateAndUploadQuestions = async function() {
+            if (!db || !structureData) {
+                log('❌ Firebase не инициализирован или JSON файл не загружен!', 'error');
+                return;
+            }
+
+            const questionsPerQuiz = parseInt(document.getElementById('questionsCount').value) || 10;
+            const categories = structureData.structures.structureData;
+            const languages = getSelectedLanguages();
+            
+            log(`🚀 Начинаю генерацию и загрузку вопросов...`, 'info');
+            log(`📊 Количество вопросов на квиз: ${questionsPerQuiz}`, 'info');
+            log(`📌 Событие: ${selectedEvent}`, 'info');
+            
+            if (languages.length === 0) {
+                log('❌ Выберите хотя бы один язык для генерации!', 'error');
+                return;
+            }
+
+            let totalQuestions = 0;
+            let uploadedQuestions = 0;
+
+            // Определяем образовательные категории
+            const educationalCategories = ['SchoolQuiz']; // Только образовательные категории
+            
+            // Подсчитываем общее количество вопросов только для образовательных категорий
+            for (const categoryName in categories) {
+                // Пропускаем неподходящие категории при подсчете
+                if (!educationalCategories.includes(categoryName)) {
+                    continue;
+                }
+                
+                const category = categories[categoryName];
+                if (category.children) {
+                    for (const subcategory of category.children) {
+                        if (subcategory.children) {
+                            for (const subsubcategory of subcategory.children) {
+                                if (subsubcategory.children) {
+                                    totalQuestions += subsubcategory.children.length * questionsPerQuiz * languages.length;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            log(`📊 Всего будет создано вопросов: ${totalQuestions}`, 'info');
+            log(`🌐 Выбранные языки: ${languages.join(', ')}`, 'info');
+            log(`🎯 Обрабатываются только образовательные категории: ${educationalCategories.join(', ')}`, 'info');
+            updateProgress(0, totalQuestions);
+
+            // Проходим только по образовательным категориям
+            
+            for (const categoryName in categories) {
+                // Пропускаем неподходящие категории
+                if (!educationalCategories.includes(categoryName)) {
+                    log(`⏭️ Пропускаю категорию "${categoryName}" (не образовательная)`, 'warning');
+                    continue;
+                }
+                
+                const category = categories[categoryName];
+                
+                if (!category.children) continue;
+
+                for (const subcategory of category.children) {
+                    if (!subcategory.children) continue;
+
+                    for (const subsubcategory of subcategory.children) {
+                        if (!subsubcategory.children) continue;
+
+                        for (const quiz of subsubcategory.children) {
+                            const pathStructure = {
+                                nameEvent: selectedEvent,
+                                nameCategory: categoryName,
+                                nameSubCategory: subcategory.nameItem,
+                                nameSubsubCategory: subsubcategory.nameItem,
+                                nameQuiz: quiz.nameItem
+                            };
+
+                            // Создаем плоскую структуру пути
+                            const collectionPath = createQuestionCollectionPath(
+                                selectedEvent,
+                                pathStructure.nameCategory,
+                                pathStructure.nameSubCategory,
+                                pathStructure.nameSubsubCategory
+                            );
+
+                            log(`📝 Генерирую вопросы для квиза: ${pathStructure.nameQuiz}`, 'info');
+                            log(`📍 Путь: ${collectionPath}`, 'info');
+
+                            // Генерируем вопросы для каждого квиза на разных языках
+                            for (let i = 1; i <= questionsPerQuiz; i++) {
+                                for (const language of languages) {
+                                    try {
+                                        const hardQuestion = Math.random() < 0.5;
+
+                                        const question = generateRandomQuestion(i, hardQuestion, language, pathStructure);
+                                        
+                                        // pictureQuestion уже установлен в generateRandomQuestion как путь Storage
+                                        
+                                        const questionId = createStructuredQuestionId(hardQuestion, language, i);
+
+                                        // Сохраняем в Firestore с плоской структурой
+                                        const docRef = doc(db, collectionPath, questionId);
+                                        await setDoc(docRef, question);
+
+                                        uploadedQuestions++;
+                                        document.getElementById('uploadedQuestions').textContent = uploadedQuestions;
+                                        updateProgress(uploadedQuestions, totalQuestions);
+
+                                        if (uploadedQuestions % 25 === 0) {
+                                            log(`✅ Загружено ${uploadedQuestions}/${totalQuestions} вопросов`, 'success');
+                                        }
+
+                                    } catch (error) {
+                                        log(`❌ Ошибка загрузки вопроса ${i} (${language}) для квиза ${quiz.nameItem}: ${error.message}`, 'error');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            log(`🎉 Генерация вопросов завершена! Создано ${uploadedQuestions}/${totalQuestions} вопросов`, 'success');
+            log(`📍 Структура в Firestore:`, 'info');
+            log(`   questions/${selectedEvent}/items/{hardQuestion ? 'hard' : 'easy'}_{language}_question_{number}`, 'info');
+            log(`📝 Пример ID: hard_ru_question_001, easy_en_question_005, hard_uk_question_010`, 'info');
+            
+            const languageNames = { 'ru': 'русский', 'en': 'английский', 'uk': 'украинский' };
+            const selectedLanguageNames = languages.map(lang => `${languageNames[lang]} (${lang})`).join(', ');
+            log(`🌐 Выбранные языки: ${selectedLanguageNames}`, 'info');
+            log(`💪 HardQuestion: случайно true/false для каждого вопроса`, 'info');
+            
+            if (document.getElementById('generateStructureImages').checked) {
+                log(`📸 Изображения структуры: сгенерированы через Unsplash API`, 'info');
+            }
+            if (document.getElementById('generateQuestionImages').checked) {
+                log(`📸 Изображения вопросов: сгенерированы через Unsplash API`, 'info');
+            }
+        };
+
+        // Вспомогательные функции
+        function updateProgress(current, total) {
+            const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = `${current}/${total} (${percentage}%)`;
+        }
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        // Функция проверки существующих вопросов
+        window.checkExistingQuestions = async function() {
+            if (!db) {
+                log('❌ Firebase не инициализирован!', 'error');
+                return;
+            }
+
+            try {
+                log(`🔍 Проверяю существующие вопросы для события: ${selectedEvent}`, 'info');
+                
+                // Получаем все вопросы из выбранного события  
+                const questionsRef = collection(db, 'questions', selectedEvent, 'items');
+                const snapshot = await getDocs(questionsRef);
+                
+                const totalQuestions = snapshot.size;
+                log(`📊 Всего найдено вопросов: ${totalQuestions}`, 'info');
+                
+                if (totalQuestions === 0) {
+                    log(`❌ Вопросы не найдены для события ${selectedEvent}`, 'warning');
+                    log(`💡 Сначала сгенерируйте вопросы, нажав "Генерировать вопросы"`, 'info');
+                    return;
+                }
+                
+                // Подсчитываем вопросы по языкам
+                const languageCounts = {};
+                const hardQuestionCounts = { true: 0, false: 0 };
+                
+                for (const docSnapshot of snapshot.docs) {
+                    const questionData = docSnapshot.data();
+                    const lang = questionData.language || 'unknown';
+                    const isHard = questionData.hardQuestion || false;
+                    
+                    languageCounts[lang] = (languageCounts[lang] || 0) + 1;
+                    hardQuestionCounts[isHard]++;
+                }
+                
+                log(`📈 Статистика по языкам:`, 'info');
+                for (const [lang, count] of Object.entries(languageCounts)) {
+                    const flag = lang === 'ru' ? '🇷🇺' : lang === 'en' ? '🇺🇸' : lang === 'uk' ? '🇺🇦' : '❓';
+                    log(`   ${flag} ${lang}: ${count} вопросов`, 'info');
+                }
+                
+                log(`📊 Статистика по сложности:`, 'info');
+                log(`   💪 Сложные (hardQuestion: true): ${hardQuestionCounts[true]}`, 'info');
+                log(`   🟢 Легкие (hardQuestion: false): ${hardQuestionCounts[false]}`, 'info');
+                
+                // Показываем примеры ID вопросов
+                log(`🆔 Примеры ID вопросов:`, 'info');
+                let count = 0;
+                for (const docSnapshot of snapshot.docs) {
+                    if (count < 5) {
+                        log(`   ${docSnapshot.id}`, 'info');
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                if (totalQuestions > 5) {
+                    log(`   ... и еще ${totalQuestions - 5} вопросов`, 'info');
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка проверки вопросов: ${error.message}`, 'error');
+            }
+        };
+
+        // Функция перевода вопросов
+        window.translateQuestions = async function() {
+            if (!db) {
+                log('❌ Firebase не инициализирован!', 'error');
+                return;
+            }
+
+            const usePaidTranslation = document.getElementById('usePaidTranslation').checked;
+            const toLang = document.getElementById('translateToLanguage').value;
+            
+            log(`🌍 Начинаю перевод вопросов на ${toLang}...`, 'info');
+            log(`💰 Платный перевод: ${usePaidTranslation ? 'Да' : 'Нет'}`, 'info');
+            log(`⚠️ ВНИМАНИЕ: API перевода может быть недоступен. Проверьте сетевое соединение.`, 'warning');
+
+            try {
+                // Получаем все вопросы из выбранного события  
+                // Структура: questions/{EVENT}/items/{questionId}
+                const questionsRef = collection(db, 'questions', selectedEvent, 'items');
+                const snapshot = await getDocs(questionsRef);
+                
+                let translatedCount = 0;
+                const totalQuestions = snapshot.size;
+                
+                log(`📊 Найдено вопросов для перевода: ${totalQuestions}`, 'info');
+                
+                if (totalQuestions === 0) {
+                    log(`⚠️ Вопросы не найдены! Возможно, нужно сначала сгенерировать вопросы.`, 'warning');
+                    log(`💡 Нажмите "Генерировать и загрузить вопросы" перед переводом`, 'info');
+                    return;
+                }
+                
+                updateProgress(0, totalQuestions);
+
+                // Фильтруем только вопросы на русском языке (чтобы не переводить уже переведенные)
+                const russianQuestions = [];
+                for (const docSnapshot of snapshot.docs) {
+                    const questionData = docSnapshot.data();
+                    if (questionData.language === 'ru') {
+                        russianQuestions.push({ id: docSnapshot.id, data: questionData });
+                    }
+                }
+                
+                const russianQuestionsCount = russianQuestions.length;
+                log(`📊 Найдено русских вопросов для перевода: ${russianQuestionsCount}`, 'info');
+                
+                if (russianQuestionsCount === 0) {
+                    log(`⚠️ Русские вопросы не найдены! Проверьте, что вопросы сгенерированы с русским языком.`, 'warning');
+                    return;
+                }
+
+                for (const questionDoc of russianQuestions) {
+                    try {
+                        await pushQuestionForTranslate(questionDoc.data, usePaidTranslation, toLang);
+                        translatedCount++;
+                        updateProgress(translatedCount, russianQuestionsCount);
+                        
+                        if (translatedCount % 10 === 0) {
+                            log(`✅ Переведено ${translatedCount}/${russianQuestionsCount} вопросов`, 'success');
+                        }
+                        
+                        // Небольшая задержка между запросами
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                    } catch (error) {
+                        log(`❌ Ошибка перевода вопроса ${questionDoc.id}: ${error.message}`, 'error');
+                    }
+                }
+                
+                log(`🎉 Перевод завершен! Переведено ${translatedCount}/${russianQuestionsCount} вопросов`, 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка получения вопросов: ${error.message}`, 'error');
+            }
+        };
+
+        // Функция отправки вопроса на перевод (аналог Android функции)
+        async function pushQuestionForTranslate(questionLocal, usePaidTranslation, toLang) {
+            const request = {
+                question: questionLocal,
+                usePaidTranslation: usePaidTranslation,
+                toLang: toLang
+            };
+
+            log(`🔄 Отправляю на перевод: ${questionLocal.nameQuestion?.substring(0, 50)}...`, 'info');
+
+            // Попытка с повторами
+            let lastError;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const response = await fetch('https://question-translate-762375057396.us-central1.run.app/translate-question', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(request),
+                        signal: AbortSignal.timeout(10000) // 10 секунд таймаут
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${errorText}`);
+                    }
+
+                    const responseData = await response.text();
+                    log(`✅ Перевод успешен (попытка ${attempt}): ${responseData}`, 'success');
+                    
+                    return responseData;
+                } catch (error) {
+                    lastError = error;
+                    log(`⚠️ Попытка ${attempt}/3 не удалась: ${error.message}`, 'warning');
+                    
+                    if (attempt < 3) {
+                        // Ждем перед следующей попыткой (экспоненциальная задержка)
+                        const delay = Math.pow(2, attempt) * 1000;
+                        log(`⏳ Ожидание ${delay/1000}с перед следующей попыткой...`, 'info');
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+            
+            // Если все попытки не удались
+            throw new Error(`Все попытки перевода не удались. Последняя ошибка: ${lastError.message}`);
+        }
+
+        // Функция создания переводов напрямую (без API)
+        window.generateDirectTranslations = async function() {
+            if (!db) {
+                log('❌ Firebase не инициализирован!', 'error');
+                return;
+            }
+
+            const targetLang = document.getElementById('translateToLanguage').value;
+            
+            log(`🚀 Создаю переводы напрямую на ${targetLang}...`, 'info');
+            log(`💡 Это создаст новые вопросы на ${targetLang} используя встроенные переводы`, 'info');
+
+            try {
+                // Получаем русские вопросы
+                const questionsRef = collection(db, 'questions', selectedEvent, 'items');
+                const snapshot = await getDocs(questionsRef);
+                
+                const russianQuestions = [];
+                for (const docSnapshot of snapshot.docs) {
+                    const questionData = docSnapshot.data();
+                    if (questionData.language === 'ru') {
+                        russianQuestions.push({ id: docSnapshot.id, data: questionData });
+                    }
+                }
+                
+                log(`📊 Найдено русских вопросов: ${russianQuestions.length}`, 'info');
+                
+                if (russianQuestions.length === 0) {
+                    log(`❌ Русские вопросы не найдены!`, 'error');
+                    return;
+                }
+
+                let translatedCount = 0;
+                updateProgress(0, russianQuestions.length);
+
+                for (const questionDoc of russianQuestions) {
+                    try {
+                        const originalQuestion = questionDoc.data;
+                        
+                        // Создаем новый вопрос на целевом языке
+                        const pathStructure = {
+                            nameCategory: originalQuestion.category,
+                            nameSubCategory: originalQuestion.subcategory,
+                            nameSubsubCategory: originalQuestion.subsubcategory,
+                            nameQuiz: originalQuestion.quiz
+                        };
+
+                        // Извлекаем номер вопроса из ID
+                        const questionNumber = parseInt(questionDoc.id.split('_').pop()) || 1;
+                        
+                        const translatedQuestion = generateRandomQuestion(
+                            questionNumber, 
+                            originalQuestion.hardQuestion, 
+                            targetLang, 
+                            pathStructure
+                        );
+                        
+                        // Сохраняем с новым ID для целевого языка
+                        const newQuestionId = questionDoc.id.replace('_ru_', `_${targetLang}_`);
+                        const docRef = doc(db, 'questions', selectedEvent, 'items', newQuestionId);
+                        await setDoc(docRef, translatedQuestion);
+
+                        translatedCount++;
+                        updateProgress(translatedCount, russianQuestions.length);
+                        
+                        if (translatedCount % 10 === 0) {
+                            log(`✅ Создано переводов: ${translatedCount}/${russianQuestions.length}`, 'success');
+                        }
+                        
+                    } catch (error) {
+                        log(`❌ Ошибка создания перевода для ${questionDoc.id}: ${error.message}`, 'error');
+                    }
+                }
+                
+                log(`🎉 Создание переводов завершено! Создано ${translatedCount}/${russianQuestions.length} вопросов на ${targetLang}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка создания переводов: ${error.message}`, 'error');
+            }
+        };
+
+        // Функция тестирования API перевода
+        window.testTranslationAPI = async function() {
+            log('🌐 Тестирую доступность API перевода...', 'info');
+            
+            const testQuestion = {
+                nameQuestion: "Тестовый вопрос",
+                nameAnswers: "Ответ 1|Ответ 2|Ответ 3|Ответ 4",
+                correctAnswer: 0,
+                language: "ru"
+            };
+            
+            try {
+                const response = await fetch('https://question-translate-762375057396.us-central1.run.app/translate-question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: testQuestion,
+                        usePaidTranslation: false,
+                        toLang: 'en'
+                    }),
+                    signal: AbortSignal.timeout(10000)
+                });
+
+                if (response.ok) {
+                    log('✅ API перевода доступен и работает!', 'success');
+                    const result = await response.text();
+                    log(`📄 Ответ сервера: ${result.substring(0, 100)}...`, 'info');
+                } else {
+                    log(`❌ API вернул ошибку: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ API перевода недоступен: ${error.message}`, 'error');
+                log('💡 Возможные причины:', 'info');
+                log('   • Нет интернет-соединения', 'info');
+                log('   • Сервер перевода временно недоступен', 'info');
+                log('   • CORS блокировка в браузере', 'info');
+                log('   • Превышен таймаут (10 секунд)', 'info');
+            }
+        };
+
+        // Функция анализа структуры
+        window.analyzeStructure = function() {
+            if (!structureData) {
+                log('❌ JSON файл не загружен!', 'error');
+                return;
+            }
+
+            log('🔍 ДЕТАЛЬНЫЙ АНАЛИЗ СТРУКТУРЫ:', 'info');
+            
+            if (structureData.structures && structureData.structures.structureData) {
+                const categories = Object.keys(structureData.structures.structureData);
+                log(`📋 Всего категорий: ${categories.length}`, 'info');
+                
+                categories.forEach((categoryName, index) => {
+                    if (index < 3) { // Показываем первые 3 категории
+                        const categoryData = structureData.structures.structureData[categoryName];
+                        log(`\n📁 КАТЕГОРИЯ ${index + 1}: "${categoryName}"`, 'info');
+                        
+                        if (categoryData.children && categoryData.children.length > 0) {
+                            log(`   📂 Подкатегорий: ${categoryData.children.length}`, 'info');
+                            
+                            categoryData.children.forEach((subcat, subIndex) => {
+                                if (subIndex < 2) { // Показываем первые 2 подкатегории
+                                    log(`   📂 Подкатегория ${subIndex + 1}: "${subcat.nameItem}"`, 'info');
+                                    
+                                    if (subcat.children && subcat.children.length > 0) {
+                                        log(`      📂 Под-подкатегорий: ${subcat.children.length}`, 'info');
+                                        
+                                        subcat.children.forEach((subsubcat, subsubIndex) => {
+                                            if (subsubIndex < 2) { // Показываем первые 2 под-подкатегории
+                                                log(`      📂 Под-подкатегория ${subsubIndex + 1}: "${subsubcat.nameItem}"`, 'info');
+                                                
+                                                if (subsubcat.children && subsubcat.children.length > 0) {
+                                                    log(`         📝 Квизов: ${subsubcat.children.length}`, 'info');
+                                                    
+                                                    subsubcat.children.forEach((quiz, quizIndex) => {
+                                                        if (quizIndex < 3) { // Показываем первые 3 квиза
+                                                            log(`         📝 Квиз ${quizIndex + 1}: "${quiz.nameItem}"`, 'info');
+                                                        }
+                                                    });
+                                                    
+                                                    if (subsubcat.children.length > 3) {
+                                                        log(`         ... и еще ${subsubcat.children.length - 3} квизов`, 'info');
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        
+                                        if (subcat.children.length > 2) {
+                                            log(`      ... и еще ${subcat.children.length - 2} под-подкатегорий`, 'info');
+                                        }
+                                    }
+                                }
+                            });
+                            
+                            if (categoryData.children.length > 2) {
+                                log(`   ... и еще ${categoryData.children.length - 2} подкатегорий`, 'info');
+                            }
+                        }
+                    }
+                });
+                
+                if (categories.length > 3) {
+                    log(`\n... и еще ${categories.length - 3} категорий`, 'info');
+                }
+            }
+        };
+
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = '<div class="info">📝 Логи очищены...</div>';
+            updateProgress(0, 1);
+            document.getElementById('uploadedQuestions').textContent = '0';
+        };
+    </script>
+</body>
+</html> 

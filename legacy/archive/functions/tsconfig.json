@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "outDir": "lib",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/main.ts", "src/giftReward.ts"],
+  "exclude": ["src/index.ts", "src/editStructure.ts", "src/index.v1.ts"]
+} 

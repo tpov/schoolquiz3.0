@@ -1,0 +1,31 @@
+{
+  "oracle": "10-tree-oracle.json (00-before-tree 19:49:58Z → 09-after-tree 21:00:21Z)",
+  "verdict": "every diff line accounted; zero unexplained touches",
+  "lines": {
+    "this-shift-journey": {
+      "changed": [
+        "lesson_placements/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1 — valid transition → tournament v2 (run/06)",
+        "lesson_placements/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3 — fault retire → retired v2 (run/08)",
+        "lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_1 — arenaShelf/placement fields by the transition",
+        "lessons/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3 — arenaShelf/placement fields + rating fields",
+        "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3 — live rating aggregate 4/2 → 7/3 (run/05)"
+      ],
+      "added": [
+        "lesson_ratings/votes/d4d6b766… — the live rating vote (player cur48r3player0000000)"
+      ]
+    },
+    "interrupted-shift-pre-journey": {
+      "removed": [
+        "lesson_placements/aeu_7d433c732adf45a7b1c665260571b707_stale",
+        "lesson_placements/aeu_f2229bcc8ac745cc85934c7226193825_stale"
+      ],
+      "changed": [
+        "lesson_placements/aeu_7d433c732adf45a7b1c665260571b707_target — +questType REGULAR",
+        "lesson_placements/aeu_f2229bcc8ac745cc85934c7226193825_target — +questType REGULAR"
+      ],
+      "note": "September-era synthetic eligible-universe fixtures. Between 00 (19:49:58Z) and the evidence snapshot 02-synthetic-stale-before.json (≈20:34Z) the interrupted shift's setup added questType REGULAR to all four aeu placement docs (02 shows it on stale AND target) and then deleted the two stale rows (01/02 'placement-repair' naming); the deletion is unattributable to a surviving script — full before-state of all four docs is preserved in run/01 and run/02. None of this shift's journey commands touched aeu docs; the eligible-universe behaviour on stale rows is covered by arena-eligible-universe.test.js and 4.2-era live evidence."
+    }
+  },
+  "frozen-attempt": "result_events_public/cb/events/cb0a8b535ed0_cur48_r3_attempt_… — seeded fixture, byte-intact through the fault retire (08-frozen-attempt-intact.txt)",
+  "not-in-snapshot": "lesson_placements/*/history subcollections are outside the snapshot label set (same as 00); transition history evidence lives in run/03, 06, 08 captures + history views"
+}

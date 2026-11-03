@@ -1,0 +1,29 @@
+{
+ "lessonId": "ibx1_lesson",
+ "submissionId": "ibx-none",
+ "placement": {
+  "lessonId": "ibx1_lesson",
+  "questType": "REGULAR",
+  "updatedAtMs": 1791684598005,
+  "shelf": "home",
+  "previousShelf": "review",
+  "authorUid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx",
+  "contentVersion": 1,
+  "placementVersion": 1
+ },
+ "lessonTitle": "Inbox journey lesson one",
+ "reports": [
+  {
+   "id": "lesson-error-rw1yvr9hq56e",
+   "reportId": "lesson-error-rw1yvr9hq56e",
+   "lessonId": "ibx1_lesson",
+   "lessonAuthorUid": "uwNZMpyUKJoOKJEOcpH7KO44E1Dx",
+   "reporterUid": "34M7XwdduXxbpYcmiP7BPqyXjZy9",
+   "text": "Question two explanation two scores the wrong option after the timer end",
+   "schemaVersion": 1,
+   "createdAtMs": 1791685102784
+  }
+ ],
+ "comments": [],
+ "request": null
+}

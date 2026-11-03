@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 4
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Семья и описание людей (Familie, Personen)",
+  "lessonTitle": "Урок 4. Внешность: прилагательные после sein",
+  "focus": "Описывать внешний вид и рост человека прилагательными в предикативной позиции (после sein), где прилагательное не склоняется. Это самый простой и безопасный для A1 способ описания.",
+  "grammar_points": [
+    "Предикативное прилагательное после sein НЕ имеет окончания: Er ist groß. Sie ist klein. (в отличие от позиции перед существительным).",
+    "Конструкция haben + Akkusativ для частей тела/черт: Sie hat blaue Augen, lange Haare (здесь окончание -e во мн.ч.).",
+    "Антонимы для описания: groß ↔ klein, jung ↔ alt, dünn ↔ dick.",
+    "Усилитель sehr (очень) перед прилагательным: Er ist sehr groß."
+  ],
+  "vocab": [
+    "groß — высокий / большой",
+    "klein — маленький / низкий",
+    "schön — красивый",
+    "dünn — худой",
+    "dick — полный / толстый",
+    "das Haar / die Haare — волос / волосы",
+    "das Auge / die Augen — глаз / глаза",
+    "blond — светловолосый / блондин",
+    "kurz — короткий",
+    "lang — длинный"
+  ],
+  "examples": [
+    "Mein Bruder ist groß und schlank. — Мой брат высокий и стройный.",
+    "Meine Schwester hat lange Haare. — У моей сестры длинные волосы.",
+    "Sie hat blaue Augen. — У неё голубые глаза.",
+    "Mein Opa ist klein und alt. — Мой дедушка низкий и старый.",
+    "Das Kind ist sehr schön. — Ребёнок очень красивый."
+  ]
+}

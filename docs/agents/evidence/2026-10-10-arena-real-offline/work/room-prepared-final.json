@@ -1,0 +1,165 @@
+{
+  "label": "prepared2",
+  "at": "2026-10-09T22:50:00.751Z",
+  "roomVersion": 15,
+  "tickets": [
+    {
+      "owner": "HDb3uVEO",
+      "ticket": "e6136939d990",
+      "attempt": "b2ef06dd4d47",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "has_terminal": 0,
+      "snapshot_sha256": "54bec0e60fe5a0da79e4d61803583bddc0dcce31d6e0b693d3097a4febc023e5",
+      "runner_checkpoint_revision": 3
+    },
+    {
+      "owner": "HDb3uVEO",
+      "ticket": "8d501662d2ca",
+      "attempt": "86cbc0189b8f",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "has_terminal": 0,
+      "snapshot_sha256": "0e8abf4e70139f933db188dc1668c74413ea05468a95b027b3955d002da6994e",
+      "runner_checkpoint_revision": 3
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "aab909956f75",
+      "attempt": "3da6a7c31b4d",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "has_terminal": 0,
+      "snapshot_sha256": "0e8abf4e70139f933db188dc1668c74413ea05468a95b027b3955d002da6994e",
+      "runner_checkpoint_revision": 3
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "f143f023b9b6",
+      "attempt": "cf575a94463d",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "has_terminal": 0,
+      "snapshot_sha256": "a14a317680e2945fbe78ee94972f944e74be2ab7a2603d078a575de8771779ed",
+      "runner_checkpoint_revision": 4
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "8374ce0dae87",
+      "attempt": "151497c7ba30",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "has_terminal": 0,
+      "snapshot_sha256": "a14a317680e2945fbe78ee94972f944e74be2ab7a2603d078a575de8771779ed",
+      "runner_checkpoint_revision": 4
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "cf55e0ecec2c",
+      "attempt": "1e6b742f737f",
+      "server_status": "RESERVED",
+      "local_use": "LAUNCHED",
+      "decision": "SETTLE",
+      "has_terminal": 0,
+      "snapshot_sha256": "a14a317680e2945fbe78ee94972f944e74be2ab7a2603d078a575de8771779ed",
+      "runner_checkpoint_revision": 4
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "8cec4267b9d3",
+      "attempt": "c9a8ee137848",
+      "server_status": "RESERVED",
+      "local_use": "UNUSED",
+      "decision": "NONE",
+      "has_terminal": 0,
+      "snapshot_sha256": "9fe071dfb6b11704547d0fa783fec7d523a8f559d4a2b29ed3a00c0da2a95f18",
+      "runner_checkpoint_revision": 0
+    },
+    {
+      "owner": "ck3DaiqE",
+      "ticket": "c4848342091c",
+      "attempt": "4f8a93610393",
+      "server_status": "RESERVED",
+      "local_use": "UNUSED",
+      "decision": "NONE",
+      "has_terminal": 0,
+      "snapshot_sha256": "3c9add0319d95321bc30b2a54059ff436e624577c688cffeed8b485710e3a323",
+      "runner_checkpoint_revision": 0
+    }
+  ],
+  "outbox": [
+    {
+      "id": 3,
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-b2ef06dd4d47be7",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "state": "WAITING",
+      "attempt_count": 10,
+      "owner": "HDb3uVEO",
+      "has_err": 1
+    },
+    {
+      "id": 4,
+      "mutation": "lesson_runner-SUBMIT_ATTEMPT-86cbc0189b8fdc9",
+      "operation": "lesson_runner.SUBMIT_ATTEMPT",
+      "state": "WAITING",
+      "attempt_count": 10,
+      "owner": "HDb3uVEO",
+      "has_err": 1
+    }
+  ],
+  "journal": [
+    {
+      "command_kind": "PREPARE",
+      "state": "ACKNOWLEDGED",
+      "ticket": null,
+      "attempt": null,
+      "body_sha": "d4e1cf85cfe446a7",
+      "has_fail": 0
+    },
+    {
+      "command_kind": "SETTLE",
+      "state": "PENDING",
+      "ticket": "8374ce0dae87",
+      "attempt": "151497c7ba30",
+      "body_sha": "26854d2da4ff7010",
+      "has_fail": 0
+    },
+    {
+      "command_kind": "PREPARE",
+      "state": "ACKNOWLEDGED",
+      "ticket": null,
+      "attempt": null,
+      "body_sha": "800e01571a3a16db",
+      "has_fail": 0
+    },
+    {
+      "command_kind": "SETTLE",
+      "state": "PENDING",
+      "ticket": "cf55e0ecec2c",
+      "attempt": "1e6b742f737f",
+      "body_sha": "ab5a283c75d9d054",
+      "has_fail": 0
+    },
+    {
+      "command_kind": "PREPARE",
+      "state": "ACKNOWLEDGED",
+      "ticket": null,
+      "attempt": null,
+      "body_sha": "adb4902910c7f4d5",
+      "has_fail": 0
+    },
+    {
+      "command_kind": "PREPARE",
+      "state": "ACKNOWLEDGED",
+      "ticket": null,
+      "attempt": null,
+      "body_sha": "545ececeabcc84c9",
+      "has_fail": 0
+    }
+  ]
+}

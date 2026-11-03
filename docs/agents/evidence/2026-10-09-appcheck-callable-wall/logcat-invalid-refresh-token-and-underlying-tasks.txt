@@ -1,0 +1,464 @@
+--------- beginning of main
+10-09 08:04:58.299    77    77 D hwcomposer: VSYNC event status:1
+10-09 08:04:58.359    77    98 D hwcomposer: hw_composer sent 24 syncs in 115s
+10-09 08:04:58.437   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:04:58.692    77    77 D hwcomposer: VSYNC event status:0
+10-09 08:04:58.958   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:04:59.460   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:04:59.962   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:00.466   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:01.007   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:01.548   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:02.064   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:02.406    77    77 D hwcomposer: VSYNC event status:1
+10-09 08:05:02.598   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:02.759    77    77 D hwcomposer: VSYNC event status:0
+10-09 08:05:03.123   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:03.660   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:04.200   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:04.741   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:05.253   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:05.794   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:06.335   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:06.876   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:07.400   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:07.931   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:08.472   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:09.013   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:09.554   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:10.070   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:10.598   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:11.126   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:11.648   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:12.170   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:12.711   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:13.218   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:13.759   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:14.142   128  8209 W resolv  : SSL_connect write error 0, mark 0xf0064: Try again
+10-09 08:05:14.142   128  8209 W resolv  : TLS Handshake failed
+10-09 08:05:14.142   128  8209 D resolv  : Initialization failed.
+10-09 08:05:14.142   128  8209 D resolv  : Destructor
+10-09 08:05:14.142   128  8209 D resolv  : Destructor completed
+10-09 08:05:14.143   128  8209 D resolv  : Failing all pending queries.
+10-09 08:05:14.143   128  8209 D resolv  : Awaiting response
+10-09 08:05:14.143   128  8209 D resolv  : Query failed: 1
+10-09 08:05:14.143   128  8209 I resolv  : res_tls_send: TLS query result: 1
+10-09 08:05:14.143   128  8209 I resolv  : res_stats_usable_server: NS stats: S 3 + E 0 + T 2 + I 0 = 5, rtt = 20, min_samples = 8
+10-09 08:05:14.143   128  8209 D resolv  : res_nsend: Querying server (# 1) address = 8.8.8.8:53
+10-09 08:05:14.143   128  8209 D resolv  : send_dg: new DG socket
+10-09 08:05:14.144   128  8209 I resolv  : get_timeout: using timeout of 5000 msec
+10-09 08:05:14.144   128  8209 I resolv  : retrying_poll: 30 retrying_poll
+10-09 08:05:14.290   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:14.831   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:15.372   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:15.913   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:16.454   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:16.995   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:17.536   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:18.077   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:18.581   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:19.122   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:19.149   128  8209 I resolv  : retrying_poll: 30 retrying_poll timeout
+10-09 08:05:19.149   128  8209 D resolv  : send_dg: 1
+10-09 08:05:19.149   128  8209 I resolv  : res_nsend: used send_dg 0 terrno: 110
+10-09 08:05:19.149   128  8209 I resolv  : res_stats_set_sample: rcode = 255, sec = 0
+10-09 08:05:19.149   128  8209 I resolv  : res_cache_add_stats_sample_locked: adding sample to stats, next = 5, count = 5
+10-09 08:05:19.149   128  8209 D resolv  : res_nsend: Querying server (# 1) address = 8.8.8.8:53
+10-09 08:05:19.149   128  8209 I resolv  : get_timeout: using timeout of 5000 msec
+10-09 08:05:19.149   128  8209 I resolv  : retrying_poll: 30 retrying_poll
+10-09 08:05:19.663   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:20.204   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:20.745   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:21.273   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:21.814   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:22.354   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:22.895   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:23.436   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:23.954   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:24.152   128  8209 I resolv  : retrying_poll: 30 retrying_poll timeout
+10-09 08:05:24.152   128  8209 D resolv  : send_dg: 1
+10-09 08:05:24.152   128  8209 I resolv  : res_nsend: used send_dg 0 terrno: 110
+10-09 08:05:24.152   128  8209 D resolv  : doQuery: rcode=0, ancount=0
+10-09 08:05:24.152   128  8208 I resolv  : resolv_populate_res_for_net: netid=100
+10-09 08:05:24.157  8122  8206 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.157  8122  8165 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.157  8122  8166 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.158  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.196  8122  8165 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: Syncable failed: com.tpov.schoolquiz.shared.feature.internet.profile.data.sync.ProfileBootstrapSync
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: com.tpov.schoolquiz.shared.core.network.SyncFailure: Unknown(throwable=java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt.withNamedFailure(NamedReadFailures.kt:60)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt$withNamedFailure$1.invokeSuspend(Unknown Source:13)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:98)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:829)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: Caused by: java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.zza(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.onFailure(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzk.run(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzt.execute(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzl.zzd(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzr.zzb(com.google.android.gms:play-services-tasks@@18.1.0:5)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzw.zza(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzc.run(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: Caused by: com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:24.199  8122  8169 W SchoolQuizSync: 	... 5 more
+10-09 08:05:24.209  8122  8166 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.209  8122  8165 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.232  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.240  8122  8210 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.240  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.262  8122  8165 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.273  8122  8202 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.274  8122  8165 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.296    77    77 D hwcomposer: VSYNC event status:1
+10-09 08:05:24.301  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.309  8122  8166 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.309  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: Syncable failed: com.tpov.schoolquiz.shared.core.sync.OutboxSyncable
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: com.tpov.schoolquiz.shared.core.network.SyncFailure: Unknown(throwable=java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at com.tpov.schoolquiz.shared.core.sync.OutboxSyncable.sync-IoAF18A(OutboxSyncable.kt:42)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at com.tpov.schoolquiz.shared.core.sync.OutboxSyncable$sync$1.invokeSuspend(Unknown Source:14)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:829)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+10-09 08:05:24.339  8122  8169 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+10-09 08:05:24.346  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.359  8122  8210 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.359  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: Syncable failed: com.tpov.schoolquiz.shared.feature.internet.profile.data.sync.ProfileBootstrapSync
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: com.tpov.schoolquiz.shared.core.network.SyncFailure: Unknown(throwable=java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt.withNamedFailure(NamedReadFailures.kt:60)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt$withNamedFailure$1.invokeSuspend(Unknown Source:13)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:98)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:829)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: Caused by: java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.zza(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.onFailure(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzk.run(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzt.execute(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzl.zzd(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzr.zzb(com.google.android.gms:play-services-tasks@@18.1.0:5)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzw.zza(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzc.run(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: Caused by: com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:24.386  8122  8207 W SchoolQuizSync: 	... 5 more
+10-09 08:05:24.452  8122  8200 W GooglePlayServicesUtil: com.tpov.schoolquiz.mvp requires the Google Play Store, but it is missing.
+10-09 08:05:24.452  8122  8200 E GooglePlayServicesUtil: GooglePlayServices not available due to error 9
+10-09 08:05:24.453   398  7338 D ConnectivityService: requestNetwork for uid/pid:10070/8122 activeRequest: null callbackRequest: 102 [NetworkRequest [ REQUEST id=103, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]] callback flags: 0 priority: 2147483647
+10-09 08:05:24.453  8122  8200 W Firestore: (25.1.0) [GrpcCallProvider]: Failed to update ssl context: com.google.android.gms.common.GooglePlayServicesNotAvailableException
+10-09 08:05:24.454   398   492 D ConnectivityService: NetReassign [103 : null → 100]
+10-09 08:05:24.458   398   485 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=103, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.458   398   485 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=103, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.458   398   523 D Ethernet: got request NetworkRequest [ REQUEST id=103, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.458   398   523 D EthernetNetworkFactory: acceptRequest, request: NetworkRequest [ REQUEST id=103, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.459   398   523 I EthernetNetworkFactory: networkForRequest, request: NetworkRequest [ REQUEST id=103, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ], network: NetworkInterfaceState{ refCount: 11, iface: eth0, up: true, hwAddress: a2:1b:ef:62:d1:00, networkCapabilities: [ Transports: ETHERNET Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_ROAMING&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=100000Kbps LinkDnBandwidth>=100000Kbps], networkAgent: com.android.server.ethernet.EthernetNetworkFactory$NetworkInterfaceState$1@2446a24, score: 70, ipClient: android.net.ip.IIpClient$Stub$Proxy@f91387e,linkProperties: {InterfaceName: eth0 LinkAddresses: [ 172.17.0.5/16,fe80::9905:25d4:6b32:570e/64 ] DnsAddresses: [ /8.8.8.8 ] Domains: null MTU: 0 TcpBufferSizes: 524288,1048576,3145728,524288,1048576,2097152 Routes: [ fe80::/64 -> :: eth0 mtu 0,172.17.0.0/16 -> 0.0.0.0 eth0 mtu 0,0.0.0.0/0 -> 172.17.0.1 eth0 mtu 0 ]}}
+10-09 08:05:24.459   398   523 I EthernetNetworkFactory: networkForRequest, request: NetworkRequest [ REQUEST id=103, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ], network: NetworkInterfaceState{ refCount: 11, iface: eth0, up: true, hwAddress: a2:1b:ef:62:d1:00, networkCapabilities: [ Transports: ETHERNET Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_ROAMING&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=100000Kbps LinkDnBandwidth>=100000Kbps], networkAgent: com.android.server.ethernet.EthernetNetworkFactory$NetworkInterfaceState$1@2446a24, score: 70, ipClient: android.net.ip.IIpClient$Stub$Proxy@f91387e,linkProperties: {InterfaceName: eth0 LinkAddresses: [ 172.17.0.5/16,fe80::9905:25d4:6b32:570e/64 ] DnsAddresses: [ /8.8.8.8 ] Domains: null MTU: 0 TcpBufferSizes: 524288,1048576,3145728,524288,1048576,2097152 Routes: [ fe80::/64 -> :: eth0 mtu 0,172.17.0.0/16 -> 0.0.0.0 eth0 mtu 0,0.0.0.0/0 -> 172.17.0.1 eth0 mtu 0 ]}}
+10-09 08:05:24.494   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:24.532   398  7338 D ConnectivityService: requestNetwork for uid/pid:10070/8122 activeRequest: null callbackRequest: 104 [NetworkRequest [ REQUEST id=105, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]] callback flags: 0 priority: 2147483647
+10-09 08:05:24.533   398   492 D ConnectivityService: NetReassign [105 : null → 100]
+10-09 08:05:24.536   398   485 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=105, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.536   398   523 D Ethernet: got request NetworkRequest [ REQUEST id=105, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.536   398   523 D EthernetNetworkFactory: acceptRequest, request: NetworkRequest [ REQUEST id=105, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.536   398   523 I EthernetNetworkFactory: networkForRequest, request: NetworkRequest [ REQUEST id=105, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ], network: NetworkInterfaceState{ refCount: 12, iface: eth0, up: true, hwAddress: a2:1b:ef:62:d1:00, networkCapabilities: [ Transports: ETHERNET Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_ROAMING&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=100000Kbps LinkDnBandwidth>=100000Kbps], networkAgent: com.android.server.ethernet.EthernetNetworkFactory$NetworkInterfaceState$1@2446a24, score: 70, ipClient: android.net.ip.IIpClient$Stub$Proxy@f91387e,linkProperties: {InterfaceName: eth0 LinkAddresses: [ 172.17.0.5/16,fe80::9905:25d4:6b32:570e/64 ] DnsAddresses: [ /8.8.8.8 ] Domains: null MTU: 0 TcpBufferSizes: 524288,1048576,3145728,524288,1048576,2097152 Routes: [ fe80::/64 -> :: eth0 mtu 0,172.17.0.0/16 -> 0.0.0.0 eth0 mtu 0,0.0.0.0/0 -> 172.17.0.1 eth0 mtu 0 ]}}
+10-09 08:05:24.537   398   523 I EthernetNetworkFactory: networkForRequest, request: NetworkRequest [ REQUEST id=105, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ], network: NetworkInterfaceState{ refCount: 12, iface: eth0, up: true, hwAddress: a2:1b:ef:62:d1:00, networkCapabilities: [ Transports: ETHERNET Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_ROAMING&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=100000Kbps LinkDnBandwidth>=100000Kbps], networkAgent: com.android.server.ethernet.EthernetNetworkFactory$NetworkInterfaceState$1@2446a24, score: 70, ipClient: android.net.ip.IIpClient$Stub$Proxy@f91387e,linkProperties: {InterfaceName: eth0 LinkAddresses: [ 172.17.0.5/16,fe80::9905:25d4:6b32:570e/64 ] DnsAddresses: [ /8.8.8.8 ] Domains: null MTU: 0 TcpBufferSizes: 524288,1048576,3145728,524288,1048576,2097152 Routes: [ fe80::/64 -> :: eth0 mtu 0,172.17.0.0/16 -> 0.0.0.0 eth0 mtu 0,0.0.0.0/0 -> 172.17.0.1 eth0 mtu 0 ]}}
+10-09 08:05:24.537   398   485 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=105, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10070 RequestorUid: 10070 RequestorPkg: com.tpov.schoolquiz.mvp] ]
+10-09 08:05:24.634  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.646  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.662  8122  8211 W Firestore: (25.1.0) [FirestoreCallCredentials]: Failed to get auth token: com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ].
+10-09 08:05:24.665  8122  8252 W Firestore: (25.1.0) [WatchStream]: (675ee90) Stream closed with status: Status{code=UNAUTHENTICATED, description=null, cause=com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:24.665  8122  8252 W Firestore: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:24.665  8122  8252 W Firestore: }.
+10-09 08:05:24.666  8122  8252 W Firestore: (25.1.0) [OnlineStateTracker]: Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: Status{code=UNAUTHENTICATED, description=null, cause=com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:24.666  8122  8252 W Firestore: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:24.666  8122  8252 W Firestore: }
+10-09 08:05:24.666  8122  8252 W Firestore: This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
+10-09 08:05:24.679  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.692  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.692    77    77 D hwcomposer: VSYNC event status:0
+10-09 08:05:24.748  8122  8211 W Firestore: (25.1.0) [FirestoreCallCredentials]: Failed to get auth token: com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ].
+10-09 08:05:24.751  8122  8252 W Firestore: (25.1.0) [WatchStream]: (675ee90) Stream closed with status: Status{code=UNAUTHENTICATED, description=null, cause=com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:24.751  8122  8252 W Firestore: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:24.751  8122  8252 W Firestore: }.
+10-09 08:05:24.760  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.768  8122  8166 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.768  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: Syncable failed: com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.ReviewAssignmentSync
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: com.tpov.schoolquiz.shared.core.network.SyncFailure: Unknown(throwable=java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt.withNamedFailure(NamedReadFailures.kt:60)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt$withNamedFailure$1.invokeSuspend(Unknown Source:13)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:98)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:829)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: Caused by: java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.zza(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.onFailure(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzk.run(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzt.execute(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzl.zzd(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzr.zzb(com.google.android.gms:play-services-tasks@@18.1.0:5)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzw.zza(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzc.run(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: Caused by: com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:24.796  8122  8185 W SchoolQuizSync: 	... 5 more
+10-09 08:05:24.797  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:24.806  8122  8203 W FirebaseContextProvider: Error getting App Check token. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.806  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: Syncable failed: com.tpov.schoolquiz.apps.android_next.di.SyncModuleKt$syncModule$1$31$1
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: com.tpov.schoolquiz.shared.core.network.SyncFailure: Unknown(throwable=java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt.withNamedFailure(NamedReadFailures.kt:60)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.tpov.schoolquiz.platform.firebase.network.NamedReadFailuresKt$withNamedFailure$1.invokeSuspend(Unknown Source:13)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:98)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:829)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: Caused by: java.util.concurrent.ExecutionException: 1 out of 2 underlying tasks failed
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.zza(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzaf.onFailure(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzk.run(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzt.execute(com.google.android.gms:play-services-tasks@@18.1.0:1)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzl.zzd(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzr.zzb(com.google.android.gms:play-services-tasks@@18.1.0:5)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzw.zza(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.tasks.zzc.run(com.google.android.gms:play-services-tasks@@18.1.0:4)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: Caused by: com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:24.838  8122  8185 W SchoolQuizSync: 	... 5 more
+10-09 08:05:25.035   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:25.576   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:25.919  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:25.926  8122  8211 W LocalRequestInterceptor: Error getting App Check token; using placeholder token instead. Error: com.google.firebase.FirebaseException: Unable to resolve host "firebaseappcheck.googleapis.com": No address associated with hostname
+10-09 08:05:25.971  8122  8211 W Firestore: (25.1.0) [FirestoreCallCredentials]: Failed to get auth token: com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ].
+10-09 08:05:25.972  8122  8252 W Firestore: (25.1.0) [WatchStream]: (675ee90) Stream closed with status: Status{code=UNAUTHENTICATED, description=null, cause=com.google.firebase.FirebaseException: An internal error has occurred. [ INVALID_REFRESH_TOKEN ]
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzach.zza(com.google.firebase:firebase-auth@@23.0.0:18)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadg.zza(com.google.firebase:firebase-auth@@23.0.0:21)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacz.zza(com.google.firebase:firebase-auth@@23.0.0:35)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadb.zza(com.google.firebase:firebase-auth@@23.0.0:75)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacf.zza(com.google.firebase:firebase-auth@@23.0.0:46)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyo.zza(com.google.firebase:firebase-auth@@23.0.0:3)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:15)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadp.zza(com.google.firebase:firebase-auth@@23.0.0:64)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzacw.zza(com.google.firebase:firebase-auth@@23.0.0:48)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzyl.zzb(com.google.firebase:firebase-auth@@23.0.0:110)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaci.zzb(com.google.firebase:firebase-auth@@23.0.0:91)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzaar.zza(com.google.firebase:firebase-auth@@23.0.0:13)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.android.gms.internal.firebase-auth-api.zzadi.run(com.google.firebase:firebase-auth@@23.0.0:2)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0$com-google-firebase-concurrent-CustomThreadFactory(CustomThreadFactory.java:47)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at com.google.firebase.concurrent.CustomThreadFactory$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-09 08:05:25.972  8122  8252 W Firestore: 	at java.lang.Thread.run(Thread.java:920)
+10-09 08:05:25.972  8122  8252 W Firestore: }.
+10-09 08:05:26.117   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:26.658   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:27.199   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:27.373  8122  8211 W System  : Ignoring header X-Firebase-Locale because its value was null.
+10-09 08:05:27.382   128  8259 D resolv  : GetAddrInfoHandler::run: {100 100 100 983140 10070 0}
+10-09 08:05:27.382   128  8259 D resolv  : resolv_getaddrinfo: explore_fqdn(): ai_family=0 ai_socktype=1 ai_protocol=6
+10-09 08:05:27.382   128  8260 D resolv  : doQuery: (1, 1)
+10-09 08:05:27.382   128  8260 D resolv  : res_nmkquery: (QUERY, IN, A)
+10-09 08:05:27.382   128  8260 D resolv  : res_nopt
+10-09 08:05:27.382   128  8260 D resolv  : res_nopt: ENDS0 DNSSEC
+10-09 08:05:27.382   128  8260 D resolv  : res_nsend
+10-09 08:05:27.382   128  8260 I resolv  : resolv_cache_lookup: lookup
+10-09 08:05:27.383   128  8260 I resolv  : resolv_cache_lookup: NOT IN CACHE
+10-09 08:05:27.383   128  8260 I resolv  : resolv_populate_res_for_net: netid=100
+10-09 08:05:27.383   128  8260 I resolv  : res_tls_send: performing query over TLS
+10-09 08:05:27.383   128  8260 D resolv  : Sending query of length 128
+10-09 08:05:27.383   128  8260 D resolv  : No socket for query.  Opening socket and sending.
+10-09 08:05:27.383   128  8260 D resolv  : Constructing new socket
+10-09 08:05:27.383   128  8260 D resolv  : DnsTlsSocket is initialized with { mConnectTimeoutMs: 127000, mAsyncHandshake: 0 }
+10-09 08:05:27.383   128  8260 D resolv  : 983140 connecting TCP socket
+10-09 08:05:27.383   128  8260 D resolv  : No known sessions
+10-09 08:05:27.383   128  8260 D resolv  : No session available
+10-09 08:05:27.383   128  8260 D resolv  :  Calling SSL_connect with mark 0xf0064
+10-09 08:05:27.383   128  8260 D resolv  :  SSL_connect returned -1 with mark 0xf0064
+10-09 08:05:27.735   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:28.242   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:28.754   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:29.262   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:29.768   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:30.290   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:30.830   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:31.332  1630  1630 W adbd    : timeout expired while flushing socket, closing
+10-09 08:05:31.370   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:31.884   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:32.392   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:32.914   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:32.971  1630  1630 W adbd    : timeout expired while flushing socket, closing
+10-09 08:05:33.455   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:33.966   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:34.507   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:35.026   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:35.567   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:36.108   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:36.649   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:37.190   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:37.731   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:38.272   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:38.782   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:39.323   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:39.863   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:40.403   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:40.912   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:41.442   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:41.972   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:42.502   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:43.032   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:43.573   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:44.106   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:44.641   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:45.173   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:45.692   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:46.232   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:46.776   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:47.318   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:47.859   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:48.400   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:48.931   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:49.457   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:49.996   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:50.536   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:51.074   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:51.617   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:52.138   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:52.670   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 08:05:53.178   764   764 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+--------- beginning of kernel
+10-09 08:05:51.335     0     0 I logd    : logdr: UID=0 GID=0 PID=8261 n tail=0 logMask=99 pid=0 start=0ns deadline=0ns

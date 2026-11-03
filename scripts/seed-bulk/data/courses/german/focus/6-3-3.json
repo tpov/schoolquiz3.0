@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 3,
+    "l": 3
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+  "lessonTitle": "Урок 3. Рекламация и жалоба: проблему назвать, требование выдвинуть, тон удержать",
+  "focus": "Составлять корректную официальную рекламацию (Reklamation/Beschwerde): чётко изложить факт и проблему, обосновать претензию, сформулировать требование и срок — сохраняя сдержанно-настойчивый, но не агрессивный регистр.",
+  "grammar_points": [
+    "Хронологическое изложение фактов в Perfekt/Präteritum: 'Am 3. Mai habe ich … bestellt; die Ware ist jedoch beschädigt angekommen'",
+    "Противительные коннекторы для контраста ожидание/реальность: 'jedoch', 'allerdings', 'leider', 'entgegen Ihrer Zusage'",
+    "Требование через модальность долженствования и конъюнктив: 'Ich erwarte, dass …', 'Ich muss Sie bitten, …', 'Ich fordere Sie auf, … zu …'",
+    "Постановка срока: 'bis spätestens (zum) …', 'innerhalb von 14 Tagen', 'andernfalls …' (с угрозой последствий, выраженной нейтрально)",
+    "Пассив для объективации претензии: 'Die zugesagte Leistung wurde nicht erbracht', 'Mir wurde ein falsches Produkt geliefert'",
+    "Предложные группы с генитивом канцелярского регистра: 'aufgrund', 'infolge', 'trotz', 'mangels'"
+  ],
+  "vocab": [
+    "die Reklamation — рекламация",
+    "die Beschwerde — жалоба",
+    "der Mangel — недостаток, дефект",
+    "beschädigt — повреждённый",
+    "die Lieferung — поставка, доставка",
+    "die Erstattung — возмещение, возврат (денег)",
+    "fehlerhaft — дефектный, ошибочный",
+    "die Frist setzen — устанавливать срок",
+    "beanstanden — предъявлять претензию, оспаривать",
+    "der Anspruch — претензия, право требования"
+  ],
+  "examples": [
+    "Leider muss ich die am 3. Mai gelieferte Ware beanstanden, da sie erhebliche Mängel aufweist. — К сожалению, я вынужден предъявить претензию к поставленному 3 мая товару, так как он имеет существенные дефекты.",
+    "Entgegen Ihrer Zusage wurde die Lieferung nicht fristgerecht ausgeführt. — Вопреки вашему обещанию поставка не была выполнена в срок.",
+    "Ich fordere Sie daher auf, das fehlerhafte Gerät bis spätestens zum 20. Mai zu ersetzen. — Поэтому я требую заменить дефектный прибор не позднее 20 мая.",
+    "Sollte ich bis zu diesem Termin keine Rückmeldung erhalten, behalte ich mir weitere rechtliche Schritte vor. — Если я не получу ответа до этого срока, я оставляю за собой право на дальнейшие правовые шаги.",
+    "Ich erwarte eine vollständige Erstattung des Kaufpreises. — Я ожидаю полного возмещения покупной цены."
+  ]
+}

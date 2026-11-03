@@ -1,0 +1,85 @@
+### Findings
+
+- `DesignSettingsScreen` is a standalone Compose view with parameters `selectedStyle`, `onStyleSelected`, and `modifier`; the only production render path found is `AppShellScreen -> LocalTabContent -> DesignSettingsScreen` for `LocalConfig.SettingsRoot`: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:48`, `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:461`.
+- Current app version data flow only passes `BuildConfig.VERSION_NAME` from app layer into app-shell/drawer; `VERSION_CODE` exists in app Gradle config but is not currently passed to `AppShellScreen`: `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:43`, `apps/android-next/build.gradle.kts:16`.
+- Preview/test surface relevant to stale call sites: `DesignSettingsScreenPreview` calls `DesignSettingsScreen`, and `AppShellScreenTest` calls `AppShellScreen` with `appVersionName = "test"`: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:298`, `android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt:254`.
+
+### Components
+
+- **DesignSettingsScreen** — `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:48`  
+  Description: renders design settings in `SchoolQuizDesignBackground` with a full-size `LazyColumn`: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:53`, `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:58`.  
+  Uses: `SchoolQuizTheme` in preview, design-system components/cards/background, and `SchoolQuizDesignStyle.entries`: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:37`, `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:66`.  
+  Used by: `AppShellScreen.LocalTabContent` and `DesignSettingsScreenPreview`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:462`, `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:302`.
+
+- **AppShellScreen / LocalTabContent** — `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:121`  
+  Description: app-shell root accepts `appVersionName`, `isDebugBuild`, selected design style, and design callback: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:123`.  
+  Uses: imports `DesignSettingsScreen`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:63`.  
+  Used by: `MainActivity` root content: `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:41`.
+
+- **MainActivity** — `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:24`  
+  Description: creates `DefaultRootComponent`, applies `SchoolQuizTheme`, and passes app build metadata currently limited to `BuildConfig.VERSION_NAME`: `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:30`, `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:40`, `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:43`.  
+  Uses: generated `BuildConfig.DEBUG` for debug flag: `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:44`.
+
+- **DrawerFooter existing version logic** — `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:40`  
+  Description: existing drawer footer renders `v$versionName` as clickable text and routes tap to `onVersionTap`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:73`, `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:79`.  
+  Uses: `visibleFooterActions`, `DrawerFooterAction`, `Navigator`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:24`, `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:27`, `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:29`.
+
+### Data flow
+
+- Current app version name: `apps/android-next/build.gradle.kts:17` -> generated app `BuildConfig.VERSION_NAME` -> `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:43` -> `AppShellScreen.appVersionName`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:123` -> `DrawerContent.versionName`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:220` -> `DrawerFooter.text = "v$versionName"`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:74`.
+- Current versionCode source exists in app Gradle config: `apps/android-next/build.gradle.kts:16`; app module has `buildConfig = true`: `apps/android-next/build.gradle.kts:33`.
+- Settings route: drawer renders visible local sections including Settings: `shared/feature/app-shell/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/app_shell/domain/logic/Visibility.kt:75`, `shared/feature/app-shell/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/app_shell/domain/logic/Visibility.kt:80` -> drawer item calls `navigator.goTo(Destination.SelectSection(section))`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerSectionList.kt:37` -> Settings maps to `LocalConfig.SettingsRoot`: `shared/feature/app-shell/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/app_shell/domain/logic/AppShellTransitions.kt:34` -> AppShell renders `DesignSettingsScreen`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:461`.
+
+### Entry Points
+
+| Entry Point | Caller | Expected State | file:line |
+|---|---|---|---|
+| `MainActivity.onCreate` root composition | Android activity lifecycle | Creates `DefaultRootComponent` and renders `AppShellScreen` inside `SchoolQuizTheme` | `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:27` |
+| `DrawerSectionList` Settings click | Drawer item `onClick` | Calls `navigator.goTo(Destination.SelectSection(section))` | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerSectionList.kt:37` |
+| `Destination.SelectSection(Settings)` | `navigate` dispatcher | Selects section and replaces tab stack with section root | `shared/feature/app-shell/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/app_shell/domain/logic/AppShellTransitions.kt:77` |
+| `LocalConfig.SettingsRoot` render branch | `LocalTabContent` | Active local child is settings root; passes current design style and style callback | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:461` |
+| `DesignSettingsScreenPreview` | Android Studio Compose preview | Calls `DesignSettingsScreen(selectedStyle = Clean, onStyleSelected = {})` | `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:300` |
+
+### Impact Scan
+
+| Consumer | Assumption | Impact | Severity |
+|---|---|---|---|
+| `DesignSettingsScreenPreview` | Calls `DesignSettingsScreen` with only `selectedStyle` and `onStyleSelected` | Signature changes need preview update | Medium — compile stale call site |
+| `AppShellScreen.LocalTabContent` | Calls `DesignSettingsScreen` with only design state/callback and modifier | Settings footer data must reach this call site | Medium — compile stale call site |
+| `AppShellScreenTest` | Calls `AppShellScreen(rootComponent, appVersionName = "test")` | `AppShellScreen` signature changes need androidTest update | Medium — compile stale call site |
+| `DrawerFooter` | Existing version text is clickable and tied to `onVersionTap` | Settings footer display-only must not reuse drawer tap behavior | Medium — behavior regression risk |
+
+### Duplicate Logic Scan
+
+| Existing | Location | Similarity | Question |
+|---|---|---|---|
+| Drawer version label `v$versionName` | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:74` | Existing version display, but only `versionName`, clickable | Reuse formatting idea, extend formatting, or create display-only settings-specific footer? |
+| Drawer About dialog text `Версия $versionName` | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:89` | Existing version copy but lacks `versionCode` | Keep separate because settings spec requires display-only footer? |
+| `RootComponent.onVersionTap` dev-mode path | `shared/feature/app-shell/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/app_shell/domain/navigation/RootComponent.kt:28` | Existing version tap action | Do not attach settings footer to this unless product changes display-only requirement? |
+
+### Preview / Test Surface
+
+- `DesignSettingsScreenPreview` is the settings preview call site that would need new required parameters if `DesignSettingsScreen` signature changes: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:298`.
+- Related app-shell preview found in scoped app-shell UI is `UnderConstructionScreenPreview`, not settings-specific: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/UnderConstructionScreen.kt:81`.
+- App-shell Compose UI test pattern uses `createComposeRule`, `setContent`, and text/content-description assertions: `android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt:79`, `android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt:85`, `android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt:90`.
+- Settings presentation module dependencies currently include Compose/designsystem/tooling dependencies and no test dependencies in its build file: `android/feature/local/settings/presentation/build.gradle.kts:9`, `android/feature/local/settings/presentation/build.gradle.kts:15`.
+- App-shell presentation module has androidTest Compose UI test dependencies: `android/feature/app-shell/presentation/build.gradle.kts:49`, `android/feature/app-shell/presentation/build.gradle.kts:51`.
+- Screenshot infra is documented as not currently present for at least one designsystem visual assertion: `android/core/designsystem/src/test/kotlin/com/tpov/schoolquiz/android/core/designsystem/StarRatingTest.kt:17`.
+
+### Relevant Verification Commands
+
+- Minimal compile coverage for app + stale production call sites: `./gradlew :apps:android-next:assembleDebug --no-configuration-cache`, canonical app build command: `AGENTS.md:7`.
+- JVM unit tests for app/presentation/domain wiring affected by app-shell: `./gradlew test --no-configuration-cache`, Android/app JVM test command: `AGENTS.md:8`.
+- Compile instrumented Compose tests that include `AppShellScreenTest`: `./gradlew assembleDebugAndroidTest --no-configuration-cache`, instrumented APK build command: `.claude/PROJECT-CONTEXT.md:19`.
+- Run instrumented Compose tests when device is available: `./gradlew connectedAndroidTest`, connected-device requirement: `.claude/PROJECT-CONTEXT.md:20`.
+- Full canonical local gate: `./gradlew ciCheck --no-configuration-cache`, root task depends on app assemble, `test`, `allTests`, detekt, and ktlint: `build.gradle.kts:27`, `build.gradle.kts:30`.
+
+### Constraints / Risks / Open Questions
+
+- Compose screens should render state/props and not resolve Koin/repositories directly: `AGENTS.md:16`.
+- App-shell comment states library modules cannot access app `BuildConfig.VERSION_NAME` directly: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:107`.
+- Existing drawer version label is clickable and triggers dev-mode tap handling, while spec requires settings footer display-only; existing tap handler lives at `DefaultRootComponent.onVersionTap`: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/component/DefaultRootComponent.kt:318`.
+- GLM sidecar was attempted per researcher role requirement, but the local script could not run because API key env was missing; role instructions say to continue if the command fails: `.claude/agents/codebase-researcher.md:93`, `.claude/agents/codebase-researcher.md:108`.
+- No files were edited.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "b85cbfdf-f54b-419a-a9cc-9ddbf37b748b" "follow-up"`.

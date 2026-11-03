@@ -1,0 +1,58 @@
+--------- beginning of system
+10-09 01:08:11.256   401   524 D JobScheduler: executeRunCommand(): com.tpov.schoolquiz.mvp/0 72 s=false f=true
+--------- beginning of main
+10-09 01:08:11.509   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:12.019   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:12.529   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:13.067   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:13.592   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:14.130   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:14.671   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:15.179   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:15.712   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:16.220   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:16.761   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:17.266   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:17.306   401   524 D JobScheduler: executeRunCommand(): com.tpov.schoolquiz.mvp/0 73 s=false f=true
+10-09 01:08:17.781   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:18.290   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:18.831   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:19.356   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:19.896   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:20.397   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:20.922   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:21.451   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:21.959   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:22.500   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:23.041   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:23.359   401   524 D JobScheduler: executeRunCommand(): com.tpov.schoolquiz.mvp/0 74 s=false f=true
+10-09 01:08:23.579   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:24.120   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:24.661   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:25.190   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:25.731   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:26.261   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:26.796   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:27.314   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:27.849   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:28.389   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:28.924   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:29.447   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:29.981   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:30.521   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:31.048   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:31.581   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:32.114   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:32.655   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:33.196   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:33.723   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:34.261   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:34.798   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:35.325   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:35.866   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:36.405   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:36.921   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:37.458   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:38.000   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:38.539   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?
+10-09 01:08:39.049   784   784 D FallbackHome: User unlocked but no home; let's hope someone enables one soon?

@@ -1,0 +1,238 @@
+{
+  "advances": [
+    {
+      "name": "первый визит",
+      "stored": {},
+      "nowMs": 1700000000000,
+      "expected": {
+        "boxCount": 0,
+        "boxStreakDays": 1,
+        "nextBoxAtMs": 1700086400000,
+        "grantedBoxes": 0
+      }
+    },
+    {
+      "name": "повтор в те же сутки",
+      "stored": {
+        "boxCount": 0,
+        "boxStreakDays": 1,
+        "nextBoxAtMs": 1700086400000
+      },
+      "nowMs": 1700018000000,
+      "expected": {
+        "boxCount": 0,
+        "boxStreakDays": 1,
+        "nextBoxAtMs": 1700086400000,
+        "grantedBoxes": 0
+      }
+    },
+    {
+      "name": "десятый день подряд",
+      "stored": {
+        "boxCount": 0,
+        "boxStreakDays": 9,
+        "nextBoxAtMs": 1700777600000
+      },
+      "nowMs": 1700777600000,
+      "expected": {
+        "boxCount": 1,
+        "boxStreakDays": 10,
+        "nextBoxAtMs": 1700864000000,
+        "grantedBoxes": 1
+      }
+    },
+    {
+      "name": "одиннадцатый день",
+      "stored": {
+        "boxCount": 1,
+        "boxStreakDays": 10,
+        "nextBoxAtMs": 1700864000000
+      },
+      "nowMs": 1700864000000,
+      "expected": {
+        "boxCount": 2,
+        "boxStreakDays": 11,
+        "nextBoxAtMs": 1700950400000,
+        "grantedBoxes": 1
+      }
+    },
+    {
+      "name": "пропущенный день рвёт серию",
+      "stored": {
+        "boxCount": 3,
+        "boxStreakDays": 12,
+        "nextBoxAtMs": 1701036800000
+      },
+      "nowMs": 1701126800000,
+      "expected": {
+        "boxCount": 3,
+        "boxStreakDays": 1,
+        "nextBoxAtMs": 1701213200000,
+        "grantedBoxes": 0
+      }
+    },
+    {
+      "name": "пять дней отсутствия — один день, не пять",
+      "stored": {
+        "boxCount": 3,
+        "boxStreakDays": 12,
+        "nextBoxAtMs": 1701036800000
+      },
+      "nowMs": 1701468800000,
+      "expected": {
+        "boxCount": 3,
+        "boxStreakDays": 1,
+        "nextBoxAtMs": 1701555200000,
+        "grantedBoxes": 0
+      }
+    },
+    {
+      "name": "старые имена полей",
+      "stored": {
+        "countBox": 2,
+        "countDayBox": 4,
+        "timeLastOpenBox": 1700000000000
+      },
+      "nowMs": 1700003600000,
+      "expected": {
+        "boxCount": 2,
+        "boxStreakDays": 5,
+        "nextBoxAtMs": 1700090000000,
+        "grantedBoxes": 0
+      }
+    }
+  ],
+  "claims": [
+    {
+      "name": "честная неделя офлайн",
+      "stored": {
+        "boxCount": 1,
+        "boxStreakDays": 10,
+        "nextBoxAtMs": 1700864000000
+      },
+      "claimed": {
+        "boxStreakDays": 17,
+        "boxesEarned": 7
+      },
+      "nowMs": 1701386000000,
+      "expected": {
+        "elapsedDays": 7,
+        "streakCeiling": 17,
+        "allowedStreak": 17,
+        "boxCeiling": 7,
+        "allowedBoxes": 7,
+        "surplusStreak": 0,
+        "surplusBoxes": 0,
+        "next": {
+          "boxCount": 8,
+          "boxStreakDays": 17,
+          "nextBoxAtMs": 1701468800000
+        }
+      }
+    },
+    {
+      "name": "сорок коробок за три дня",
+      "stored": {
+        "boxCount": 1,
+        "boxStreakDays": 10,
+        "nextBoxAtMs": 1700864000000
+      },
+      "claimed": {
+        "boxStreakDays": 50,
+        "boxesEarned": 40
+      },
+      "nowMs": 1701040400000,
+      "expected": {
+        "elapsedDays": 3,
+        "streakCeiling": 13,
+        "allowedStreak": 13,
+        "boxCeiling": 3,
+        "allowedBoxes": 3,
+        "surplusStreak": 37,
+        "surplusBoxes": 37,
+        "next": {
+          "boxCount": 4,
+          "boxStreakDays": 13,
+          "nextBoxAtMs": 1701123200000
+        }
+      }
+    },
+    {
+      "name": "серии ещё нет десяти",
+      "stored": {
+        "boxCount": 0,
+        "boxStreakDays": 5,
+        "nextBoxAtMs": 1700432000000
+      },
+      "claimed": {
+        "boxStreakDays": 8,
+        "boxesEarned": 3
+      },
+      "nowMs": 1700608400000,
+      "expected": {
+        "elapsedDays": 3,
+        "streakCeiling": 8,
+        "allowedStreak": 8,
+        "boxCeiling": 0,
+        "allowedBoxes": 0,
+        "surplusStreak": 0,
+        "surplusBoxes": 3,
+        "next": {
+          "boxCount": 0,
+          "boxStreakDays": 8,
+          "nextBoxAtMs": 1700691200000
+        }
+      }
+    },
+    {
+      "name": "скромная заявка не досчитывается",
+      "stored": {
+        "boxCount": 1,
+        "boxStreakDays": 10,
+        "nextBoxAtMs": 1700864000000
+      },
+      "claimed": {
+        "boxStreakDays": 11,
+        "boxesEarned": 1
+      },
+      "nowMs": 1701209600000,
+      "expected": {
+        "elapsedDays": 5,
+        "streakCeiling": 15,
+        "allowedStreak": 11,
+        "boxCeiling": 1,
+        "allowedBoxes": 1,
+        "surplusStreak": 0,
+        "surplusBoxes": 0,
+        "next": {
+          "boxCount": 2,
+          "boxStreakDays": 11,
+          "nextBoxAtMs": 1700950400000
+        }
+      }
+    },
+    {
+      "name": "без слова сервера — один день",
+      "stored": {},
+      "claimed": {
+        "boxStreakDays": 30,
+        "boxesEarned": 20
+      },
+      "nowMs": 1700000000000,
+      "expected": {
+        "elapsedDays": 1,
+        "streakCeiling": 1,
+        "allowedStreak": 1,
+        "boxCeiling": 0,
+        "allowedBoxes": 0,
+        "surplusStreak": 29,
+        "surplusBoxes": 20,
+        "next": {
+          "boxCount": 0,
+          "boxStreakDays": 1,
+          "nextBoxAtMs": 172800000
+        }
+      }
+    }
+  ]
+}

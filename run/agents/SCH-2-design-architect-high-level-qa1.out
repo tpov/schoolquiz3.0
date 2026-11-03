@@ -1,0 +1,16 @@
+Готово.
+
+Changed only:
+
+- [01-architecture.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/01-architecture.md)
+- [02-behavior.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/02-behavior.md)
+- [03-decisions.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/03-decisions.md)
+
+Fixes applied:
+
+- Removed `DefaultRootComponent` mention from `03-decisions.md`.
+- Expanded shorthand file refs like `AppShellScreen.kt:...`, `DesignSettingsScreen.kt:...`, `DrawerFooter.kt:...` to full repo paths where practical.
+
+Confirmed grep result: the requested command prints nothing.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "dfd362a4-f528-407a-9aa3-b426b9645b07" "follow-up"`.

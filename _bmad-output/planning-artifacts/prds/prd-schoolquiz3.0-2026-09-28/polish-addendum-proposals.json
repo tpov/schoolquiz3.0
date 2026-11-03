@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "target": "/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/_bmad-output/planning-artifacts/prds/prd-schoolquiz3.0-2026-09-28/addendum.md",
+  "source_sha256": "f3e44d5d60542e6dae4b7192055df765d0f30d76a66c25301be4bdea80d6bbbc",
+  "proposal_only": true,
+  "apply_in_order": true,
+  "guard": "Apply each old exactly once against the source hash. Structural pairs S1a/S1b and S2a/S2b are atomic groups: accept or reject each pair together. Canonical file is not modified by this proposal.",
+  "content_constraints": "Preserve all requirements, sources, identifiers, financial rules, evidence limits and deferred UX/architecture decisions.",
+  "lenses": [
+    "structure",
+    "prose"
+  ],
+  "edits": [
+    {
+      "id": "S1a",
+      "pass": "structure",
+      "finding": "S1",
+      "disposition": "MERGE",
+      "location": "addendum.md:9–19",
+      "old": "## Архитектурные ограничения\n\nИз применимых `AGENTS.md` и `.claude/PROJECT-CONTEXT.md`:\n\n- KMP, Decompose, Compose и Koin — действующая основа.\n- Domain/data находятся под `shared/{core,feature}`, Android presentation — под `android/feature/*/presentation`.\n- Новые держатели состояния — Decompose Components, если применимое ADR не говорит иначе. Общие шаблоны Hilt/ViewModel не заменяют эту договорённость.\n- Compose-экраны отображают состояние и передают callbacks; не получают зависимости Koin и не вызывают repositories/use cases напрямую.\n- Принятая стратегия синхронизации после успешного применения использует максимум `changedAtMs`; старый каскад в документах — исторический контекст.\n\nКанонический gate репозитория — `./gradlew ciCheck --no-configuration-cache`; KMP `allTests` и Android/app JVM `test` по отдельности не заменяют gate. Команды сохранены как ограничения будущей проверки и здесь не запускались.\n\n",
+      "new": "## Архитектурные ограничения и базовые проверки\n\nИз применимых `AGENTS.md` и `.claude/PROJECT-CONTEXT.md`:\n\n- KMP, Decompose, Compose и Koin — действующая основа.\n- Domain/data находятся под `shared/{core,feature}`, Android presentation — под `android/feature/*/presentation`.\n- Новые держатели состояния — Decompose Components, если применимое ADR не говорит иначе.\n- Compose-экраны отображают состояние и передают callbacks; не получают зависимости Koin и не вызывают repositories/use cases напрямую.\n- Root/factory передаёт зависимости. Lazy DI не выполняет I/O. Не вводить Hilt/ViewModel/второй sender/второй mutex по общей Android-заготовке.\n- После успешного применения sync использует `setCursor(max(changedAtMs))`. Старый CascadingSyncOrchestrator/contentsVersion остаётся историческим контекстом и не восстанавливается.\n- Миграции добавочные, текущая схема базы определяется по фактическому устройству, не по исторической schema13. Сохранить непустые tables/data/auth/pending и совместимость старых receipts; destructive fallback запрещён.\n\nКанонический gate репозитория — `./gradlew ciCheck --no-configuration-cache`; KMP `allTests` и Android/app JVM `test` по отдельности не заменяют gate. Выбор source sets и свежесть результатов подтверждаются фактическим выполнением. Fakes и поведенческие проверки предпочтительны; source-string совпадение не доказывает поведение. Команды сохранены как ограничения будущей проверки и здесь не запускались.\n\n"
+    },
+    {
+      "id": "S1b",
+      "pass": "structure",
+      "finding": "S1",
+      "disposition": "MERGE",
+      "location": "addendum.md:84–90",
+      "old": "## Архитектура и базовые проверки\n\n- KMP + Decompose + Compose + Koin. Domain/data — `shared/{core,feature}`, Android presentation — `android/feature/*/presentation`; новые state holders — Components по ADR. Compose получает state/callbacks, не разрешает Koin и не вызывает repositories/use cases непосредственно.\n- Root/factory передаёт зависимости. Lazy DI не выполняет I/O. Не вводить Hilt/ViewModel/второй sender/второй mutex по общей Android-заготовке.\n- Канонический gate `./gradlew ciCheck --no-configuration-cache`; `allTests` и `test` отдельно не полный gate. Выбор source sets и freshness результатов подтверждается реально. Fakes и поведенческие проверки предпочтительны; source-string совпадение не доказывает поведение.\n- Действующий sync использует `setCursor(max(changedAtMs))` после успешного применения. Старый CascadingSyncOrchestrator/contentsVersion не восстанавливаются из прежних заметок.\n- Миграции добавочные, текущая схема базы определяется по фактическому устройству, не по исторической schema13. Сохранить непустые tables/data/auth/pending и совместимость старых receipts; destructive fallback запрещён.\n\n",
+      "new": ""
+    },
+    {
+      "id": "S2a",
+      "pass": "structure",
+      "finding": "S2",
+      "disposition": "MOVE",
+      "location": "addendum.md:7,192",
+      "old": "Авторитетный checkout расположен на VPS: `/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate`, ветка `continuation/mvp-candidate-20260926`, HEAD `1e5961263a4c1ac85ad03eb7894a51bf44228a4a`. Mac служит интерфейсом. Изменять исходники, запускать сборки, стенды, устройства и финансовые сценарии в этой PRD-задаче нельзя по поручению владельца. Существующие незавершённые изменения сохранены. Диск и кэши не входят в объём.",
+      "new": "Авторитетный checkout расположен на VPS: `/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate`, ветка `continuation/mvp-candidate-20260926`, HEAD `1e5961263a4c1ac85ad03eb7894a51bf44228a4a`. Mac служит интерфейсом. Изменять исходники, запускать сборки, стенды, устройства и финансовые сценарии в этой PRD-задаче нельзя по поручению владельца. Существующие незавершённые изменения сохранены. Диск и кэши не входят в объём.\n\nБудущие запуски выполняются только в согласованном demo-окружении. Production Google Application Credentials, публичный ADB и публичное открытие портов ради тестирования не допускаются. Правило сохраняется из исходного CONTEXT:54,60; действительные адреса, имена и сеть берутся из реестра среды перед будущим запуском. Доступы и окружение не меняются этой PRD-задачей."
+    },
+    {
+      "id": "S2b",
+      "pass": "structure",
+      "finding": "S2",
+      "disposition": "MOVE",
+      "location": "addendum.md:190–194",
+      "old": "## Дополнительные границы исходного CONTEXT\n\nБудущие запуски выполняются только в согласованном demo-окружении. Production Google Application Credentials, публичный ADB и публичное открытие портов ради тестирования не допускаются. Правило сохраняется из исходного CONTEXT:54,60; действительные адреса, имена и сеть берутся из реестра среды перед будущим запуском. Доступы и окружение не меняются этой PRD-задачей.\n\nИзменения моделей проверяются по всем полям mapper с ненулевыми значениями, особенно по резервам; новые имена wire-полей проверяются клиентскими и серверными контрактными тестами. Новые серверные тесты регистрируются в действующем Node runner, чтобы обязательный запуск действительно включал их. Наличие тестового файла само по себе не является выполненной проверкой. Источник: CONTEXT-AND-STATE.md:58.\n",
+      "new": "## Проверка моделей и полнота запуска тестов\n\nИзменения моделей проверяются по всем полям mapper с ненулевыми значениями, особенно по резервам; новые имена wire-полей проверяются клиентскими и серверными контрактными тестами. Новые серверные тесты регистрируются в действующем Node runner, чтобы обязательный запуск действительно включал их. Наличие тестового файла само по себе не является выполненной проверкой. Источник: CONTEXT-AND-STATE.md:58.\n"
+    },
+    {
+      "id": "S3",
+      "pass": "structure",
+      "finding": "S3",
+      "disposition": "CONDENSE",
+      "location": "addendum.md:147",
+      "old": "- **Каталог — незакрытый финансовый oracle.** Исторический R2 остановился на users-документе, before/after не получены; предположение о null не доказано. Отдельное актуальное завершение этой проверки не установлено, поэтому её нельзя считать закрытой по UI или общему gate. В будущей приёмке сохранить оригинальную regression `AppShellScreenTest#arenaCanReopenAfterBackWithoutLoadingOrStartingALesson` и путь через настоящую оболочку; не обходить его тестовым Activity. Финансовая проверка: ограниченный read-only before → только просмотр/ручные страницы/Back → after по одной и той же области/снимку и владельцу. Сопоставить резервы, tickets, очереди серверных операций, выплаты, покупки и призы; изменение профиля из-за иной активности/регенерации объяснить отдельно. Сохранить строгую область чтения, owner-checks, SHA-самопроверку и редактирование вывода; не публиковать значения профиля, токены или transaction handle. Новые логи не затирают R1/R2. Изменение parser допускается по подтверждённому wire-формату с отрицательными проверками, не по старой гипотезе. Исторические APK, четыре карточки и fixture-title сверяются с актуальным состоянием; assertions не ослабляются ради прохождения. Источник: [ТЗ-00:19–40](/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/00-BASELINE-AND-CATALOG.md:19).",
+      "new": "- **Каталог — незакрытый финансовый oracle.** Исторический R2 остановился на users-документе, before/after не получены; предположение о null не доказано. Отдельное актуальное завершение этой проверки не установлено, поэтому её нельзя считать закрытой по UI или общему gate.\n\n  В будущей приёмке сохранить оригинальную regression `AppShellScreenTest#arenaCanReopenAfterBackWithoutLoadingOrStartingALesson` и путь через настоящую оболочку; не обходить его тестовым Activity.\n\n  Финансовая проверка: ограниченный read-only before → только просмотр/ручные страницы/Back → after по одной и той же области/снимку и владельцу. Сопоставить резервы, tickets, очереди серверных операций, выплаты, покупки и призы; изменение профиля из-за иной активности/регенерации объяснить отдельно.\n\n  Сохранить строгую область чтения, owner-checks, SHA-самопроверку и редактирование вывода; не публиковать значения профиля, токены или transaction handle. Новые логи не затирают R1/R2.\n\n  Изменение parser допускается по подтверждённому wire-формату с отрицательными проверками, не по старой гипотезе. Исторические APK, четыре карточки и fixture-title сверяются с актуальным состоянием; assertions не ослабляются ради прохождения. Источник: [ТЗ-00:19–40](/workspace/projects/schoolquiz3.0/.local/worktrees/mvp-candidate/_bmad-output/planning-artifacts/mvp-remaining-inputs-2026-09-28/SCHOOL-QUIZ-AGENT-HANDOFF/00-BASELINE-AND-CATALOG.md:19)."
+    },
+    {
+      "id": "P1",
+      "pass": "prose",
+      "finding": "P1",
+      "location": "addendum.md:72",
+      "old": "Владелец согласовал серверное сохранение прогресса, паузу при потере связи и продолжение с последнего подтверждённого состояния после восстановления.",
+      "new": "Владелец согласовал серверное сохранение прогресса, паузу при потере связи и продолжение с последнего подтверждённого сервером состояния после восстановления связи."
+    },
+    {
+      "id": "P2",
+      "pass": "prose",
+      "finding": "P2",
+      "location": "addendum.md:151",
+      "old": "Ленивая регистрация DI и создание графа не вызывают сеть, базу или clock и не выдаёт разрешение запуска.",
+      "new": "Ленивая регистрация DI и создание графа не обращаются к сети, базе или часам и не дают разрешения на запуск."
+    },
+    {
+      "id": "P3",
+      "pass": "prose",
+      "finding": "P3",
+      "location": "addendum.md:177",
+      "old": "Перед изменением purchase-revocations, purchase-verification, purchase-notifications, purchase-settlement, purchase-clawback, premium-grants, Play adapter и ledger составляется таблица состояний/переходов с фактическим authoritative evidence каждого перехода.",
+      "new": "Перед изменением purchase-revocations, purchase-verification, purchase-notifications, purchase-settlement, purchase-clawback, premium-grants, Play adapter и ledger составляется таблица состояний и переходов с фактическим подтверждением каждого перехода из авторитетного источника."
+    }
+  ],
+  "metrics": {
+    "before_words": 3618,
+    "after_words": 3556,
+    "delta": -62,
+    "method": "Installed bmad-review/scripts/word_metrics.py word_count and section_metrics, exact",
+    "edits": [
+      {
+        "id": "S1a",
+        "old_words": 109,
+        "new_words": 163,
+        "delta": 54
+      },
+      {
+        "id": "S1b",
+        "old_words": 126,
+        "new_words": 0,
+        "delta": -126
+      },
+      {
+        "id": "S2a",
+        "old_words": 40,
+        "new_words": 85,
+        "delta": 45
+      },
+      {
+        "id": "S2b",
+        "old_words": 98,
+        "new_words": 55,
+        "delta": -43
+      },
+      {
+        "id": "S3",
+        "old_words": 141,
+        "new_words": 141,
+        "delta": 0
+      },
+      {
+        "id": "P1",
+        "old_words": 17,
+        "new_words": 19,
+        "delta": 2
+      },
+      {
+        "id": "P2",
+        "old_words": 17,
+        "new_words": 19,
+        "delta": 2
+      },
+      {
+        "id": "P3",
+        "old_words": 21,
+        "new_words": 25,
+        "delta": 4
+      }
+    ],
+    "group_delta": {
+      "S1": -72,
+      "S2": 2,
+      "S3": 0,
+      "P1": 2,
+      "P2": 2,
+      "P3": 4
+    }
+  },
+  "source_links_preserved": true
+}

@@ -1,0 +1,39 @@
+build:
+  # Ноль, а не десять: порог в десять означал «десять замечаний можно и не чинить», и какие
+  # именно — решала случайность порядка файлов. Существующий долг зафиксирован отпечатками
+  # (detekt-baseline.xml в каждом модуле), поэтому ноль здесь про НОВЫЙ код, а не про весь.
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+comments:
+  excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']
+
+complexity:
+  LongMethod:
+    threshold: 100
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 8
+    excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']
+  TooManyFunctions:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']
+    thresholdInClasses: 25
+    thresholdInObjects: 25
+    thresholdInFiles: 30
+  CyclomaticComplexMethod:
+    threshold: 20
+
+naming:
+  PackageNaming:
+    active: false
+
+style:
+  MaxLineLength:
+    maxLineLength: 120
+  MagicNumber:
+    excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']

@@ -1,0 +1,56 @@
+STATUS: DONE
+
+Создал и довёл phase plan для `settings-app-version-footer` / SCH-2. Production code не трогал; `backend.md` не создавал, потому что backend role input = `none`.
+
+## Created files
+
+- [plan/README.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/plan/README.md)
+- [phase-01/overview.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/plan/phase-01/overview.md)
+- [phase-01/frontend.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/plan/phase-01/frontend.md)
+- [phase-01/tests.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/plan/phase-01/tests.md)
+
+Plan validation:
+
+- `check-plan-no-code.sh` passed
+- `check-plan-paths.sh` passed
+- Planned Modified Files paths verified as existing
+- No Kotlin/Java/Groovy fenced code
+- No `backend.md`
+- Test ownership clarified: `AppShellScreenTest.kt` updates are test-dev-owned in `tests.md`; `frontend.md` stays focused on production UI/app composition surfaces
+
+## Phase table
+
+| Phase | Goal | Layer | Depends on | Role Inputs | Validation |
+|---|---|---|---|---|---|
+| phase-01 | Thread app version name/code into settings and render pinned display-only footer | ui | none | backend: none; frontend: `frontend.md`; tests: `tests.md` | `./gradlew ciCheck --no-configuration-cache`; grep call-sites; `:apps:android-next:assembleDebug`; `:apps:android-next:assembleRelease`; `test`; `assembleDebugAndroidTest` |
+
+## РАЗБИЕНИЕ ПО ВЕРТИКАЛЯМ
+
+| Вертикаль | Рекомендуемый scope | Фазы/файлы | Входные документы | Зависит от |
+|---|---|---|---|---|
+| UI metadata propagation | Required `appVersionCode` from app BuildConfig into app-shell/private local renderer/settings screen, no library BuildConfig reads | phase-01 `overview.md`, `frontend.md` | `2-grounding.md`, `01-architecture.md`, `02-behavior.md`, `03-decisions.md`, `06-api-contract.md` | none |
+| Settings footer rendering | Pinned non-scroll footer inside `DesignSettingsScreen`, exact label, small/grey/centered, display-only | phase-01 `overview.md`, `frontend.md` | `0-spec.md`, `01-architecture.md`, `02-behavior.md`, `06-api-contract.md` | UI metadata propagation in same atomic phase |
+| Regression tests and guards | Existing app-shell androidTest and grep/build validation for label, semantics, bounds, stale call-sites, drawer unchanged | phase-01 `overview.md`, `tests.md` | `04-testing.md`, `2-grounding.md` | UI metadata propagation and footer rendering in same atomic phase |
+
+## New / Modified / Deleted summary
+
+Actual workspace changes:
+
+- New: 4 plan docs above
+- Modified production files: none
+- Deleted files: none
+
+Planned implementation scope:
+
+- Modify `MainActivity.kt`
+- Modify `AppShellScreen.kt`
+- Modify `DesignSettingsScreen.kt`
+- Modify `AppShellScreenTest.kt` via test-dev-owned `tests.md`
+- New implementation files: none
+- Deleted implementation files: none
+
+## Open questions
+
+None. Feature Domain Contract is N/A, and grounding/design do not require domain skeleton changes.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "fe760949-79f1-4eaa-a732-dfff5199ecee" "follow-up"`.

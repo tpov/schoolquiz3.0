@@ -1,0 +1,81 @@
+{
+ "story": "3.7 arena-quotas-concurrency",
+ "startedAt": "2026-10-10T02:37:19.218Z",
+ "utcDay": "2026-10-10",
+ "requestTag": "aq37g",
+ "players": {
+  "playerA": {
+   "uid": "demoarena_player_a",
+   "economy": {
+    "pointsNolics": 200,
+    "lifePoints": 1000,
+    "reservedNolics": 0,
+    "reservedLifePoints": 0,
+    "arenaSelectedHeldCount": 0
+   }
+  },
+  "rigPlayer": {
+   "uid": "ck3DaiqEd7WGcuVikiw22TyF9fS9",
+   "economy": {
+    "pointsNolics": 5,
+    "lifePoints": 350,
+    "reservedNolics": 0,
+    "reservedLifePoints": 150,
+    "arenaSelectedHeldCount": 0
+   }
+  }
+ },
+ "notes": [
+  "A1 loop skipped for tag aq37g: quota pre-exhausted by attempt 1 (its backend state: quota doc randomIssued=20, twenty CANCELLED aq37-r-* tickets); A1's own facts are in attempt 1's log"
+ ],
+ "randomQuota": {
+  "issued": 20,
+  "ticketIds": [],
+  "preExhausted": "this UTC day's quota doc already holds randomIssued=20 from a previous attempt of this story (attempt 1); the refusal below is still proven live",
+  "refusal": {
+   "status": 400,
+   "reason": "RANDOM_DAILY_LIMIT"
+  }
+ },
+ "selectedCap": {
+  "raceWinner": "cac0b610b19a6812088231e38ec8ccb869ac83c2a653546c908204eec20cd227",
+  "raceLoserReason": "SELECTED_LIMIT",
+  "sixthRefusal": "SELECTED_LIMIT",
+  "concurrentReplayOneTicket": true,
+  "cleanup": {
+   "heldAfter": 0,
+   "cancelled": 5
+  }
+ },
+ "rigFrozen": {
+  "nolicsBefore": 5,
+  "easy": {
+   "ticketId": "2e12fb35162ffd4818a02af175571cfa75f66ddafcb938b2024a041bfb9c60a8",
+   "bundleDigest": "d2f498d73404e26ba5993ff0b95de05eda785da1594933e13fd96169042825a8"
+  },
+  "hard": {
+   "ticketId": "9522eef2d84d2366d47e6ab575c19a52dc5c13ab42b6b7b0574a61b63df6185e",
+   "bundleDigest": "0a3dcc6c35188297d207cdd69e062ce84298c51d4a629eb4334882a12814608c"
+  },
+  "replayIdentical": true,
+  "duringMutation": {
+   "ticketPrice": 1,
+   "ceilingRefusal": "PRICE_CHANGED",
+   "replayIdentical": true,
+   "summary": "ticket frozen, PRICE_CHANGED on stale ceiling, replay unchanged"
+  },
+  "cancelRestored": {
+   "hard": 1,
+   "easy": 1,
+   "nolicsAfter": 5
+  }
+ },
+ "ratingMutation": {
+  "before": {
+   "ratingSum": 4,
+   "ratingCount": 2,
+   "ratingVersion": 2
+  },
+  "restored": true
+ }
+}

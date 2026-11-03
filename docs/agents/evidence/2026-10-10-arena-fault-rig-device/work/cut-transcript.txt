@@ -1,0 +1,17 @@
+== CUT TRANSCRIPT 20:59:59Z
+--- baseline reverses
+host-13 tcp:9099 tcp:19090
+host-13 tcp:8080 tcp:18090
+host-13 tcp:5001 tcp:5001
+
+--- baseline radio states
+0
+1
+--- app already force-stopped (DB copy step)
+--- remove exactly the three mappings
+--- radio toggles (svc; data has no radio on redroid)
+--- verify cut: reverses + radios + LIVE ADB CONTROL
+
+0
+0
+ADB_CONTROL_ALIVE 21:00:00Z

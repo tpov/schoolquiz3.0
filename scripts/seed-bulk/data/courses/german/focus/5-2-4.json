@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 2,
+    "l": 4
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+  "lessonTitle": "Урок 4. Особые случаи: основа прилагательного, субстантивация и сравнительные формы",
+  "focus": "Разобрать прилагательные, которые меняют основу при склонении (hoch, teuer, dunkel), несклоняемые на -a, субстантивированные прилагательные (der Deutsche, etwas Neues) и склонение прилагательных в сравнительной/превосходной степени.",
+  "grammar_points": [
+    "hoch теряет -c- перед окончанием: ein hohes Haus; teuer и dunkel теряют -e- основы: ein teures Auto, ein dunkler Raum.",
+    "Прилагательные на -a (rosa, lila, prima, super) НЕ склоняются: ein rosa Kleid, mit lila Schuhen.",
+    "Субстантивированные прилагательные пишутся с большой буквы, но склоняются как обычные прилагательные: der Deutsche / ein Deutscher, die Angestellte, der Bekannte.",
+    "После etwas, nichts, viel, wenig субстантивированное прилагательное в Nom./Akk. ср. рода берёт сильное окончание -es и пишется с большой буквы: etwas Neues, nichts Wichtiges; но после alles — слабое: alles Gute.",
+    "Сравнительная и превосходная степени склоняются как обычные прилагательные: der bessere Vorschlag, ein interessanteres Buch, die schönste Stadt.",
+    "В превосходной степени перед существительным всегда стоит артикль, поэтому действует слабое склонение: das wichtigste Argument."
+  ],
+  "vocab": [
+    "substantiviert — субстантивированный (превращённый в существительное)",
+    "der Angestellte / die Angestellte — служащий / служащая",
+    "der Bekannte — знакомый",
+    "der Vergleich — сравнение",
+    "der Vorteil — преимущество",
+    "der Nachteil — недостаток",
+    "wichtig — важный",
+    "ungewöhnlich — необычный"
+  ],
+  "examples": [
+    "Sie wohnt in einem hohen Gebäude im Zentrum. — Она живёт в высоком здании в центре.",
+    "Ich habe mir ein teures, aber dunkles Sofa gekauft. — Я купил себе дорогой, но тёмный диван.",
+    "Der Angestellte erklärte dem neuen Kunden alles genau. — Служащий всё подробно объяснил новому клиенту.",
+    "Hast du etwas Interessantes über die Stelle gehört? — Ты слышал что-нибудь интересное про эту вакансию?",
+    "Das ist der bessere Vorschlag mit den größeren Vorteilen. — Это лучшее предложение с бóльшими преимуществами.",
+    "Ich wünsche dir alles Gute zum Geburtstag! — Желаю тебе всего хорошего на день рождения!"
+  ]
+}

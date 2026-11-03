@@ -1,0 +1,6 @@
+ticket:  cf55e0ecec2c44da0991f1ed7c574d40e02722fe582abb7b5d45ae26a0517708 (RESERVED 2026-10-09, SELECTED/HARD, price 1, lifeCost 50)
+attempt: 1e6b742f737f5c6c4b957d1782048d1327536354621f7c3d3c872aafeaf43cf6
+request: 8d399a3e-02e6-4160-9f18-f42874fb19bc
+mutationId (client key, AD-2-derived): lesson_runner-SUBMIT_ATTEMPT-1e6b742f737f5c6c4b957d1782048d1327536354621f7c3d3c872aafeaf43cf6
+server mutation doc: 39b0c8a4db25_lesson_runner-SUBMIT_ATTEMPT-1e6b… (= pending reader's mutationIdSha256 prefix 39b0c8a4db25…)
+proxy config sha256 (private config file): see proxy-ready.json auditSha256 chain; config itself stays in the private run dir per owner contract

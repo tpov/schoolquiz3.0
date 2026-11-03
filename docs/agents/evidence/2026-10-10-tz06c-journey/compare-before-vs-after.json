@@ -1,0 +1,46 @@
+{
+  "added": [
+    "quests/draft-a3dp5ho5seql",
+    "sections/draft-section-84gfcxnkv547",
+    "themes/draft-theme-pb43ny3hlhde",
+    "lessons/draft-lesson-1ipfqlp4zwmwu",
+    "lesson_placements/draft-lesson-1ipfqlp4zwmwu",
+    "quest_review_requests/arena-submission-12mj3wl0uy0j4",
+    "admin/review/lessons/draft-lesson-1ipfqlp4zwmwu",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog/quests/draft-a3dp5ho5seql",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog/quests/draft-a3dp5ho5seql/sections/draft-section-84gfcxnkv547",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog/quests/draft-a3dp5ho5seql/sections/draft-section-84gfcxnkv547/themes/draft-theme-pb43ny3hlhde",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog/quests/draft-a3dp5ho5seql/sections/draft-section-84gfcxnkv547/themes/draft-theme-pb43ny3hlhde/lessons/draft-lesson-1ipfqlp4zwmwu",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog/quests/draft-a3dp5ho5seql/sections/draft-section-84gfcxnkv547/themes/draft-theme-pb43ny3hlhde/lessons/draft-lesson-1ipfqlp4zwmwu/questions/draft-question-2o0msyfjbcqs",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/catalogs/mvp-smoke-v1-catalog/quests/draft-a3dp5ho5seql/sections/draft-section-84gfcxnkv547/themes/draft-theme-pb43ny3hlhde/lessons/draft-lesson-1ipfqlp4zwmwu/questions/draft-question-59cza5zoetmt",
+    "private/cbynDghgyOf5exjIrEH57oeOjPzf/sync_changes/mvp-smoke-v1-catalog_draft-a3dp5ho5seql"
+  ],
+  "removed": [
+    "lesson_placements/aeu_7d433c732adf45a7b1c665260571b707_stale",
+    "lesson_placements/aeu_7d433c732adf45a7b1c665260571b707_target",
+    "lesson_placements/aeu_f2229bcc8ac745cc85934c7226193825_stale",
+    "lesson_placements/aeu_f2229bcc8ac745cc85934c7226193825_target",
+    "lesson_placements/ap_rules_0326b15be9b848ed9e8b8b8f8097bf84",
+    "lesson_placements/ap_rules_2134396ec6c14c9499f768721d0ec1f7",
+    "lesson_placements/ap_rules_3769243d8e0e4637b453a627c9c86b65",
+    "lesson_placements/ap_rules_776b1a117f714cc39c7e613bed5bc76b",
+    "lesson_placements/ap_rules_92e9762f6e464aaa9bb55729e19a48ef",
+    "lesson_placements/ap_rules_9b69761a423f49a3b752156fb2e71bcb"
+  ],
+  "changed": [
+    "lesson_placements/demoarena_easy1_lesson_1",
+    "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_2",
+    "lesson_ratings/ac_0ecb34aeec8b4557b13a390f10b3a548_lesson_3",
+    "lesson_ratings/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_1",
+    "lesson_ratings/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_2",
+    "lesson_ratings/ac_6ba84b006f7d423f8630ac7802407eb0_lesson_3",
+    "lesson_ratings/ac_7ad0e33fd17e4709b16f433d90304e94_lesson_2",
+    "lesson_ratings/ac_7ad0e33fd17e4709b16f433d90304e94_lesson_3",
+    "lesson_ratings/ac_b563a9845b1f4f279683d321ed54ca51_lesson_2",
+    "lesson_ratings/ac_b563a9845b1f4f279683d321ed54ca51_lesson_3",
+    "lesson_ratings/aeu_7d433c732adf45a7b1c665260571b707_stale",
+    "lesson_ratings/aeu_7d433c732adf45a7b1c665260571b707_target",
+    "lesson_ratings/aeu_f2229bcc8ac745cc85934c7226193825_stale"
+  ]
+}

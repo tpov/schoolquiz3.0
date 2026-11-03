@@ -1,0 +1,699 @@
+[ {
+  "command" : {
+    "defineVariablesCommand" : {
+      "env" : {
+        "MATRIX_RUN_ID" : "arena38-sb-001",
+        "MATRIX_SELECTOR_HOME" : "^HOME QUESTS$",
+        "MATRIX_SELECTOR_INTERNET" : "^INTERNET$",
+        "MATRIX_SELECTOR_OPEN_MENU" : "^Open menu$",
+        "MATRIX_SELECTOR_ARENA_NAV" : "^ARENA$",
+        "MATRIX_SELECTOR_ARENA_TITLE" : "^Arena lessons$",
+        "MATRIX_SELECTOR_OPEN_CATALOG" : "^Open lesson catalog$",
+        "MATRIX_SELECTOR_CATALOG_PROMPT" : "^Press Load lessons to request the catalog\\.$",
+        "MATRIX_SELECTOR_LOAD_LESSONS" : "^Load lessons$",
+        "MATRIX_SELECTOR_LOADED_CATALOG" : "^Loaded [0-9]+ of [0-9]+ lessons$",
+        "MATRIX_SELECTOR_ARENA_ROOT_PREVIEW" : "^Catalog preview only\\. Entry preparation and play are not connected yet\\.$",
+        "MATRIX_SELECTOR_ARENA_RESERVATIONS" : "^Arena reservations$",
+        "MATRIX_SELECTOR_PREPARE" : "^Prepare selected lesson$",
+        "MATRIX_SELECTOR_CONFIRM_PREPARATION" : "^Confirm preparation$",
+        "MATRIX_SELECTOR_CONFIRM_CANCELLATION" : "^Confirm cancellation$",
+        "MATRIX_SELECTOR_TICKET_LABEL" : "^Ticket: .+$",
+        "MATRIX_SELECTOR_TICKET_STATE" : "^(?:Prepared locally\\. Starting requires a separate validated run\\.|Existing run: resume or reconcile; do not restart from zero\\.|Cancellation pending\\. Funds are not confirmed released\\.|Result is waiting for server settlement\\.|A terminal server state is saved\\. Pending local work may still need reconciliation\\.|This record needs server recovery\\. Do not create a replacement to resolve it\\.)$",
+        "MATRIX_SELECTOR_START" : "^Start this prepared attempt$",
+        "MATRIX_SELECTOR_OPEN_SAVED" : "^Open saved attempt or result$",
+        "MATRIX_SELECTOR_SYNCHRONIZE" : "^Synchronize$",
+        "MATRIX_SELECTOR_RATING_PROMPT" : "^Rate this lesson$",
+        "MATRIX_SELECTOR_RUNNER_ACTIVE" : "^(?:Exit lesson|Resume this lesson\\?|Continue lesson|Are you sure\\? Attempt progress will be lost|Reading the saved attempt…|Saving the final submission…|Submission saved on this device\\. Waiting for the server result and accounting receipt\\.|Cancellation saved on this device\\. The server has not confirmed the release of reserved resources\\.|The ticket is settled, but a verified result receipt is still required\\.)$",
+        "MATRIX_SELECTOR_RECEIPT" : "^(?:Arena result receipt|Waiting for server confirmation\\. Score and rewards are not confirmed yet\\.|Completion confirmed by the server|Score and charges confirmed; completion is not confirmed\\.|The server saved this attempt without a score\\. It is not a zero\\.|The server did not accept this attempt\\.|Legacy record: no server scoring proof is available\\.|Server confirmation could not be verified\\. Result is unknown\\.)$",
+        "MATRIX_SELECTOR_RATING" : "^(?:Rate this lesson|Rate [123]|Your rating \\([123]\\) is queued to send\\.|Your rating \\([123]\\) was accepted\\.|A rating exists, but server acceptance cannot be verified\\.|Rating is unavailable for this receipt\\.|Rating was not saved\\. Try again\\.|Send queued rating)$",
+        "MAESTRO_FILENAME" : "02-assert-arena-root",
+        "MAESTRO_DEVICE_UDID" : "localhost:5555",
+        "MAESTRO_SHARD_ID" : "1",
+        "MAESTRO_SHARD_INDEX" : "0"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607740784,
+    "duration" : 11,
+    "sequenceNumber" : 0,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "defineVariablesCommand" : {
+        "env" : {
+          "MATRIX_RUN_ID" : "arena38-sb-001",
+          "MATRIX_SELECTOR_HOME" : "^HOME QUESTS$",
+          "MATRIX_SELECTOR_INTERNET" : "^INTERNET$",
+          "MATRIX_SELECTOR_OPEN_MENU" : "^Open menu$",
+          "MATRIX_SELECTOR_ARENA_NAV" : "^ARENA$",
+          "MATRIX_SELECTOR_ARENA_TITLE" : "^Arena lessons$",
+          "MATRIX_SELECTOR_OPEN_CATALOG" : "^Open lesson catalog$",
+          "MATRIX_SELECTOR_CATALOG_PROMPT" : "^Press Load lessons to request the catalog\\.$",
+          "MATRIX_SELECTOR_LOAD_LESSONS" : "^Load lessons$",
+          "MATRIX_SELECTOR_LOADED_CATALOG" : "^Loaded [0-9]+ of [0-9]+ lessons$",
+          "MATRIX_SELECTOR_ARENA_ROOT_PREVIEW" : "^Catalog preview only\\. Entry preparation and play are not connected yet\\.$",
+          "MATRIX_SELECTOR_ARENA_RESERVATIONS" : "^Arena reservations$",
+          "MATRIX_SELECTOR_PREPARE" : "^Prepare selected lesson$",
+          "MATRIX_SELECTOR_CONFIRM_PREPARATION" : "^Confirm preparation$",
+          "MATRIX_SELECTOR_CONFIRM_CANCELLATION" : "^Confirm cancellation$",
+          "MATRIX_SELECTOR_TICKET_LABEL" : "^Ticket: .+$",
+          "MATRIX_SELECTOR_TICKET_STATE" : "^(?:Prepared locally\\. Starting requires a separate validated run\\.|Existing run: resume or reconcile; do not restart from zero\\.|Cancellation pending\\. Funds are not confirmed released\\.|Result is waiting for server settlement\\.|A terminal server state is saved\\. Pending local work may still need reconciliation\\.|This record needs server recovery\\. Do not create a replacement to resolve it\\.)$",
+          "MATRIX_SELECTOR_START" : "^Start this prepared attempt$",
+          "MATRIX_SELECTOR_OPEN_SAVED" : "^Open saved attempt or result$",
+          "MATRIX_SELECTOR_SYNCHRONIZE" : "^Synchronize$",
+          "MATRIX_SELECTOR_RATING_PROMPT" : "^Rate this lesson$",
+          "MATRIX_SELECTOR_RUNNER_ACTIVE" : "^(?:Exit lesson|Resume this lesson\\?|Continue lesson|Are you sure\\? Attempt progress will be lost|Reading the saved attempt…|Saving the final submission…|Submission saved on this device\\. Waiting for the server result and accounting receipt\\.|Cancellation saved on this device\\. The server has not confirmed the release of reserved resources\\.|The ticket is settled, but a verified result receipt is still required\\.)$",
+          "MATRIX_SELECTOR_RECEIPT" : "^(?:Arena result receipt|Waiting for server confirmation\\. Score and rewards are not confirmed yet\\.|Completion confirmed by the server|Score and charges confirmed; completion is not confirmed\\.|The server saved this attempt without a score\\. It is not a zero\\.|The server did not accept this attempt\\.|Legacy record: no server scoring proof is available\\.|Server confirmation could not be verified\\. Result is unknown\\.)$",
+          "MATRIX_SELECTOR_RATING" : "^(?:Rate this lesson|Rate [123]|Your rating \\([123]\\) is queued to send\\.|Your rating \\([123]\\) was accepted\\.|A rating exists, but server acceptance cannot be verified\\.|Rating is unavailable for this receipt\\.|Rating was not saved\\. Try again\\.|Send queued rating)$",
+          "MAESTRO_FILENAME" : "02-assert-arena-root",
+          "MAESTRO_DEVICE_UDID" : "localhost:5555",
+          "MAESTRO_SHARD_ID" : "1",
+          "MAESTRO_SHARD_INDEX" : "0"
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "applyConfigurationCommand" : {
+      "config" : {
+        "appId" : "com.tpov.schoolquiz.mvp",
+        "name" : "Arena matrix assert system Back returned Arena root"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607740798,
+    "duration" : 3,
+    "sequenceNumber" : 1,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "applyConfigurationCommand" : {
+        "config" : {
+          "appId" : "com.tpov.schoolquiz.mvp",
+          "name" : "Arena matrix assert system Back returned Arena root"
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "${MATRIX_SELECTOR_ARENA_TITLE}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607740802,
+    "duration" : 2055,
+    "sequenceNumber" : 2,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "visible" : {
+            "textRegex" : "^Arena lessons$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "${MATRIX_SELECTOR_ARENA_ROOT_PREVIEW}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607742862,
+    "duration" : 113,
+    "sequenceNumber" : 3,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "visible" : {
+            "textRegex" : "^Catalog preview only\\. Entry preparation and play are not connected yet\\.$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "${MATRIX_SELECTOR_OPEN_CATALOG}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607742977,
+    "duration" : 131,
+    "sequenceNumber" : 4,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "visible" : {
+            "textRegex" : "^Open lesson catalog$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_CATALOG_PROMPT}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607743111,
+    "duration" : 655,
+    "sequenceNumber" : 5,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Press Load lessons to request the catalog\\.$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_LOAD_LESSONS}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607743771,
+    "duration" : 666,
+    "sequenceNumber" : 6,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Load lessons$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_LOADED_CATALOG}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607744447,
+    "duration" : 713,
+    "sequenceNumber" : 7,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Loaded [0-9]+ of [0-9]+ lessons$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_ARENA_RESERVATIONS}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607745166,
+    "duration" : 712,
+    "sequenceNumber" : 8,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Arena reservations$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_PREPARE}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607745888,
+    "duration" : 702,
+    "sequenceNumber" : 9,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Prepare selected lesson$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_CONFIRM_PREPARATION}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607746591,
+    "duration" : 705,
+    "sequenceNumber" : 10,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Confirm preparation$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_CONFIRM_CANCELLATION}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607747300,
+    "duration" : 642,
+    "sequenceNumber" : 11,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Confirm cancellation$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_TICKET_LABEL}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607747944,
+    "duration" : 725,
+    "sequenceNumber" : 12,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Ticket: .+$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_TICKET_STATE}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607748671,
+    "duration" : 619,
+    "sequenceNumber" : 13,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^(?:Prepared locally\\. Starting requires a separate validated run\\.|Existing run: resume or reconcile; do not restart from zero\\.|Cancellation pending\\. Funds are not confirmed released\\.|Result is waiting for server settlement\\.|A terminal server state is saved\\. Pending local work may still need reconciliation\\.|This record needs server recovery\\. Do not create a replacement to resolve it\\.)$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_START}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607749292,
+    "duration" : 639,
+    "sequenceNumber" : 14,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Start this prepared attempt$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_OPEN_SAVED}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607749933,
+    "duration" : 647,
+    "sequenceNumber" : 15,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Open saved attempt or result$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_SYNCHRONIZE}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607750582,
+    "duration" : 627,
+    "sequenceNumber" : 16,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Synchronize$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_RATING_PROMPT}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607751212,
+    "duration" : 697,
+    "sequenceNumber" : 17,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^Rate this lesson$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_RUNNER_ACTIVE}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607751913,
+    "duration" : 708,
+    "sequenceNumber" : 18,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^(?:Exit lesson|Resume this lesson\\?|Continue lesson|Are you sure\\? Attempt progress will be lost|Reading the saved attempt…|Saving the final submission…|Submission saved on this device\\. Waiting for the server result and accounting receipt\\.|Cancellation saved on this device\\. The server has not confirmed the release of reserved resources\\.|The ticket is settled, but a verified result receipt is still required\\.)$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_RECEIPT}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607752624,
+    "duration" : 645,
+    "sequenceNumber" : 19,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^(?:Arena result receipt|Waiting for server confirmation\\. Score and rewards are not confirmed yet\\.|Completion confirmed by the server|Score and charges confirmed; completion is not confirmed\\.|The server saved this attempt without a score\\. It is not a zero\\.|The server did not accept this attempt\\.|Legacy record: no server scoring proof is available\\.|Server confirmation could not be verified\\. Result is unknown\\.)$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "notVisible" : {
+          "textRegex" : "${MATRIX_SELECTOR_RATING}",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607753271,
+    "duration" : 670,
+    "sequenceNumber" : 20,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "assertConditionCommand" : {
+        "condition" : {
+          "notVisible" : {
+            "textRegex" : "^(?:Rate this lesson|Rate [123]|Your rating \\([123]\\) is queued to send\\.|Your rating \\([123]\\) was accepted\\.|A rating exists, but server acceptance cannot be verified\\.|Rating is unavailable for this receipt\\.|Rating was not saved\\. Try again\\.|Send queued rating)$",
+            "optional" : false
+          }
+        },
+        "optional" : false
+      }
+    }
+  }
+}, {
+  "command" : {
+    "takeScreenshotCommand" : {
+      "path" : "02-arena-root-after-system-back",
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1791607753943,
+    "duration" : 477,
+    "sequenceNumber" : 21,
+    "depth" : 0,
+    "evaluatedCommand" : {
+      "takeScreenshotCommand" : {
+        "path" : "02-arena-root-after-system-back",
+        "optional" : false
+      }
+    },
+    "artifacts" : [ {
+      "type" : "TAKE_SCREENSHOT",
+      "path" : "takeScreenshot/02-arena-root-after-system-back.png"
+    } ]
+  }
+} ]

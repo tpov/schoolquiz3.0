@@ -1,0 +1,35 @@
+  JOB #u0a70/75: 62a18df com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+    u0a70 tag=*job*/com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+    Source: uid=u0a70 user=0 pkg=com.tpov.schoolquiz.mvp
+    JobInfo:
+      Service: com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+      Requires: charging=false batteryNotLow=false deviceIdle=false
+      Extras: mParcelledData.dataSize=248
+      Network type: NetworkRequest [ NONE id=0, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&VALIDATED&NOT_VCN_MANAGED Uid: 10070] ]
+      Minimum latency: +59m42s392ms
+      Backoff: policy=1 initial=+30s0ms
+      Has early constraint
+--
+  JOB #u0a70/76: 9d5b7e2 com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+    u0a70 tag=*job*/com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+    Source: uid=u0a70 user=0 pkg=com.tpov.schoolquiz.mvp
+    JobInfo:
+      Service: com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+      Requires: charging=false batteryNotLow=false deviceIdle=false
+      Extras: mParcelledData.dataSize=248
+      Network type: NetworkRequest [ NONE id=0, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&VALIDATED&NOT_VCN_MANAGED Uid: 10070] ]
+      Minimum latency: +59m35s817ms
+      Backoff: policy=1 initial=+30s0ms
+      Has early constraint
+--
+  JOB #u0a70/77: 31b7de1 com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+    u0a70 tag=*job*/com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+    Source: uid=u0a70 user=0 pkg=com.tpov.schoolquiz.mvp
+    JobInfo:
+      Service: com.tpov.schoolquiz.mvp/androidx.work.impl.background.systemjob.SystemJobService
+      Requires: charging=false batteryNotLow=false deviceIdle=false
+      Extras: mParcelledData.dataSize=248
+      Network type: NetworkRequest [ NONE id=0, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&VALIDATED&NOT_VCN_MANAGED Uid: 10070] ]
+      Minimum latency: +1h2m42s90ms
+      Backoff: policy=1 initial=+30s0ms
+      Has early constraint

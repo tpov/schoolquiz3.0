@@ -1,0 +1,227 @@
+[
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 1,
+      "idSubCategory": 1,
+      "idSubsubCategory": 2,
+      "idQuiz": 2
+    },
+    "dateUpdate": "1736163571912",
+    "tpovIdUser": 0,
+    "rating": 70,
+    "starsMax": 77,
+    "starsAverage": 49,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 3,
+      "idSubCategory": 3,
+      "idSubsubCategory": 2,
+      "idQuiz": -1
+    },
+    "dateUpdate": "1734003571912",
+    "tpovIdUser": 0,
+    "rating": 62,
+    "starsMax": 44,
+    "starsAverage": 79,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 3,
+      "idSubCategory": 3,
+      "idSubsubCategory": 2,
+      "idQuiz": 1
+    },
+    "dateUpdate": "1735472371912",
+    "tpovIdUser": 0,
+    "rating": 50,
+    "starsMax": 41,
+    "starsAverage": 54,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 3,
+      "idSubCategory": 3,
+      "idSubsubCategory": 2,
+      "idQuiz": 2
+    },
+    "dateUpdate": "1735558771912",
+    "tpovIdUser": 0,
+    "rating": 83,
+    "starsMax": 19,
+    "starsAverage": 20,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": -1,
+      "idQuiz": -1
+    },
+    "dateUpdate": "1735126771912",
+    "tpovIdUser": 0,
+    "rating": 56,
+    "starsMax": 65,
+    "starsAverage": 39,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 1,
+      "idQuiz": -1
+    },
+    "dateUpdate": "1734262771912",
+    "tpovIdUser": 0,
+    "rating": 97,
+    "starsMax": 81,
+    "starsAverage": 62,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 1,
+      "idQuiz": 1
+    },
+    "dateUpdate": "1735213171912",
+    "tpovIdUser": 0,
+    "rating": 76,
+    "starsMax": 92,
+    "starsAverage": 11,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 1,
+      "idQuiz": 2
+    },
+    "dateUpdate": "1734176371912",
+    "tpovIdUser": 0,
+    "rating": 32,
+    "starsMax": 41,
+    "starsAverage": 49,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 1,
+      "idQuiz": 3
+    },
+    "dateUpdate": "1736163571912",
+    "tpovIdUser": 0,
+    "rating": 60,
+    "starsMax": 8,
+    "starsAverage": 68,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 1,
+      "idQuiz": 4
+    },
+    "dateUpdate": "1733917171912",
+    "tpovIdUser": 0,
+    "rating": 60,
+    "starsMax": 37,
+    "starsAverage": 31,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 2,
+      "idQuiz": -1
+    },
+    "dateUpdate": "1734694771912",
+    "tpovIdUser": 0,
+    "rating": 67,
+    "starsMax": 67,
+    "starsAverage": 55,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 2,
+      "idQuiz": 1
+    },
+    "dateUpdate": "1736077171912",
+    "tpovIdUser": 0,
+    "rating": 63,
+    "starsMax": 86,
+    "starsAverage": 90,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 2,
+      "idQuiz": 2
+    },
+    "dateUpdate": "1734435571912",
+    "tpovIdUser": 0,
+    "rating": 78,
+    "starsMax": 17,
+    "starsAverage": 60,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 2,
+      "idQuiz": 3
+    },
+    "dateUpdate": "1734349171912",
+    "tpovIdUser": 0,
+    "rating": 20,
+    "starsMax": 71,
+    "starsAverage": 23,
+    "countGame": 0
+  },
+  {
+    "pathStructure": {
+      "idEvent": 1,
+      "idCategory": 4,
+      "idSubCategory": 1,
+      "idSubsubCategory": 2,
+      "idQuiz": 4
+    },
+    "dateUpdate": "1735990771912",
+    "tpovIdUser": 0,
+    "rating": 67,
+    "starsMax": 5,
+    "starsAverage": 52,
+    "countGame": 0
+  }
+]
