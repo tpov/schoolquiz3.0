@@ -174,54 +174,418 @@ name: Author submits a draft for review and observes the delayed check (4.20 par
     visible: "Checking: “Words” · “Facts”"
     timeout: 300000
 - takeScreenshot: "420-under-review"
-# Воркер с VPS доводит конвейер (без ключа модели — DELAYED); клиент сворачивает
-# исход при следующем чтении своих заявок (синк).
-- tapOn: "Open menu"
-- tapOn: "^SYNC NOW$"
+# Воркер с VPS доводит конвейер живой моделью до ТЕРМИНАЛА (QUEST_REVIEWED с
+# вердиктами WORDS/FACTS/TRANSLATE — glm-4.7 настроен на риге; DELAYED при живой
+# модели не наступает, ждать его не нужно). Исходы автора (4.16 UX-6) читаются
+# ТОЛЬКО по синку: карточка черновика показывает «Returned: <причина>», «Failed:
+# N question(s)», построчные причины и кнопку «Fix the questions» (рендерится
+# только у rejected). Терпеливые условные циклы «синк → My quests» (каждый
+# ~20-30 с): конвейеру нужно несколько минут (WORDS/FACTS минутные вызовы +
+# TRANSLATE-фаза до ~5-7 мин); когда исход появится, оставшиеся циклы — skip.
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- runFlow:
+    when:
+      notVisible: "Fix the questions"
+    commands:
+      - tapOn: "Open menu"
+      - tapOn: "^SYNC NOW$"
+      - extendedWaitUntil:
+          visible: "Last sync: .*"
+          timeout: 90000
+      - scrollUntilVisible:
+          element:
+            text: "My quests"
+          direction: DOWN
+          timeout: 15000
+      - tapOn: "My quests"
+- takeScreenshot: "420-line-before-outcome-wait"
+# Исходы автора на карточке (искомое состояние, локальная кампания 03.11):
+# «Returned: …» + «Failed: N question(s)» + построчные причины + «Fix the questions».
 - extendedWaitUntil:
-    visible: "Last sync: .*"
-    timeout: 90000
+    visible: "Fix the questions"
+    timeout: 120000
+- takeScreenshot: "420-author-outcomes"
 - scrollUntilVisible:
     element:
-      text: "My quests"
+      text: "Fix the questions"
     direction: DOWN
     timeout: 15000
-- tapOn: "My quests"
-- runFlow:
-    when:
-      notVisible: "Check is taking longer than expected"
-    commands:
-      - tapOn: "Open menu"
-      - tapOn: "^SYNC NOW$"
-      - extendedWaitUntil:
-          visible: "Last sync: .*"
-          timeout: 90000
-      - scrollUntilVisible:
-          element:
-            text: "My quests"
-          direction: DOWN
-          timeout: 15000
-      - tapOn: "My quests"
-- runFlow:
-    when:
-      notVisible: "Check is taking longer than expected"
-    commands:
-      - tapOn: "Open menu"
-      - tapOn: "^SYNC NOW$"
-      - extendedWaitUntil:
-          visible: "Last sync: .*"
-          timeout: 90000
-      - scrollUntilVisible:
-          element:
-            text: "My quests"
-          direction: DOWN
-          timeout: 15000
-      - tapOn: "My quests"
-- takeScreenshot: "420-line-before-delayed-wait"
-# v7: терпеливый свип доводит конвейер до терминала при живой модели — DELAYED
-# не наступает, ждать no-model-исход 7 минут не нужно (бюджет устройства);
-# состояние строки квеста (Checking/Returned) фиксирует скрин выше.
-- extendedWaitUntil:
-    visible: "Check is taking longer than expected"
-    timeout: 90000
-- takeScreenshot: "420-review-delayed"
+- takeScreenshot: "420-author-outcomes-full"
+# Действие исхода: «Fix the questions» ведёт в редактор с заваленными вопросами —
+# замыкает авторский цикл подачи.
+- tapOn: "Fix the questions"
+- takeScreenshot: "420-fix-editor"

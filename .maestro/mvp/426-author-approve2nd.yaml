@@ -1,0 +1,37 @@
+appId: com.tpov.schoolquiz.mvpb
+name: Journey 4.26 author approve second (local campaign)
+---
+# Шторка уже открыта после синка: Decisions → вкладка Proposals → For my lessons → Approve.
+- tapOn: "Decisions"
+- takeScreenshot: "426m-author-decisions"
+- runFlow:
+    when:
+      visible: "Proposals"
+    commands:
+      - tapOn: "Proposals"
+- runFlow:
+    when:
+      notVisible: "For my lessons"
+    commands:
+      - tapOn:
+          point: "40%,15%"
+- extendedWaitUntil:
+    visible: "For my lessons"
+    timeout: 60000
+- tapOn: "For my lessons"
+- extendedWaitUntil:
+    visible: "Awaiting your decision"
+    timeout: 120000
+- takeScreenshot: "426m-author-proposals"
+- tapOn: "^Approve$"
+- runFlow:
+    when:
+      visible: "^Cancel$"
+    commands:
+      - tapOn: "^Cancel$"
+- runFlow:
+    when:
+      visible: "^Reject$"
+    commands:
+      - tapOn: "^Cancel$"
+- takeScreenshot: "426m-author-approved"

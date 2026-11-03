@@ -1,0 +1,25 @@
+appId: com.tpov.schoolquiz.mvp
+name: Journey 9.9 tail — arena catalog via INTERNET tab and shop (local campaign)
+---
+# Хвост 9.9 на этой сборке: вкладки полосы — LOCAL/INTERNET/EVENTS/SHOP (вкладки
+# ARENA нет — evidence v6/v7 предполагали её зря). Арена-каталог живёт за INTERNET.
+- tapOn: "INTERNET"
+- takeScreenshot: "99-internet-shelf"
+- extendedWaitUntil:
+    visible: "Open lesson catalog"
+    timeout: 30000
+- tapOn: "Open lesson catalog"
+- extendedWaitUntil:
+    visible: "^Load lessons$"
+    timeout: 30000
+- takeScreenshot: "99-arena-before-load"
+- tapOn: "^Load lessons$"
+- extendedWaitUntil:
+    visible: "Loaded [0-9]+ of [0-9]+ lessons"
+    timeout: 90000
+- takeScreenshot: "99-arena-catalog"
+- tapOn: "^SHOP$"
+- extendedWaitUntil:
+    visible: "Premium"
+    timeout: 30000
+- takeScreenshot: "99-shop"

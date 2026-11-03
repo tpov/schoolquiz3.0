@@ -1,0 +1,15 @@
+appId: com.tpov.schoolquiz.mvp
+name: Journey 9.9 tail 2 — load arena catalog and shop (local campaign)
+---
+# INTERNET-вкладка и есть ARENA (заголовок экрана «ARENA», LOAD LESSONS напрямую —
+# шага «Open lesson catalog» в этой сборке нет).
+- tapOn: "^LOAD LESSONS$"
+- extendedWaitUntil:
+    visible: "Loaded [0-9]+ of [0-9]+ lessons"
+    timeout: 90000
+- takeScreenshot: "99-arena-catalog"
+- tapOn: "^SHOP$"
+- extendedWaitUntil:
+    visible: "Premium"
+    timeout: 30000
+- takeScreenshot: "99-shop"

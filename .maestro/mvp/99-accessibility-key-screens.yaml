@@ -90,12 +90,12 @@ name: Accessibility key screens sweep at elevated font scale (9.9)
 # шторку тапом по скриму — паттерн 513-флоу (evidence 2026-10-31-devicefarm-513-tournament).
 - tapOn:
     point: "94%,50%"
-# ── Арена-каталог
-- tapOn: "^ARENA$"
-- extendedWaitUntil:
-    visible: "Open lesson catalog"
-    timeout: 30000
-- tapOn: "Open lesson catalog"
+# ── Арена-каталог. Вкладки «ARENA» в полосе этой сборки НЕТ (локальная кампания A14
+# 03.11: полоса = LOCAL/INTERNET/EVENTS/SHOP; скрин после скрим-тапа: фолл v6 «Tap
+# ARENA — Element not found» был не только про перекрытую шторку). Арена = вкладка
+# INTERNET: её экран называется «ARENA», шага «Open lesson catalog» нет — LOAD
+# LESSONS напрямую (доказано live: Loaded N of N lessons с сервера демо-рига).
+- tapOn: "^INTERNET$"
 - extendedWaitUntil:
     visible: "^Load lessons$"
     timeout: 30000

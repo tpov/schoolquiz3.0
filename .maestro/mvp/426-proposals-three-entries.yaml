@@ -113,7 +113,7 @@ name: Three proposal entries up to the author side (4.26)
 # v7-доказательство (426-proposals-v7-p8a, кадр f-sheet): плейсхолдер поля отчёта
 # виден на экране, но НЕ в семантике Compose — «Element not found». Тап по координате.
 - tapOn:
-    point: "50%,47.5%"
+    point: "50%,47%"
 - inputText: "DF426 device report: the wording of the question can be clearer"
 - hideKeyboard
 - extendedWaitUntil:

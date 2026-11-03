@@ -1,0 +1,16 @@
+appId: com.tpov.schoolquiz.mvp
+name: Journey 4.26 continue 15 — submit entry 3 (local campaign)
+---
+# Цели выбраны, кнопка активна (Fee-лейбл остался «—» — квота не успела; подача
+# уходит на сервер, плату сверяет сервер).
+- tapOn:
+    point: "69%,68%"
+- runFlow:
+    when:
+      visible: "Accept and send"
+    commands:
+      - tapOn: "Accept and send"
+- extendedWaitUntil:
+    visible: "Proposal queued"
+    timeout: 120000
+- takeScreenshot: "426i-new-lesson-proposed"

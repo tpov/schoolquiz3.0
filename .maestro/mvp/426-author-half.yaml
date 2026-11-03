@@ -1,0 +1,51 @@
+appId: com.tpov.schoolquiz.mvpb
+name: Journey 4.26 author half on mvpb — decisions for my lessons approve (local campaign)
+---
+- launchApp:
+    appId: com.tpov.schoolquiz.mvpb
+    clearState: false
+- assertVisible: "HOME QUESTS"
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- tapOn: "Open menu"
+- tapOn: "^SYNC NOW$"
+- extendedWaitUntil:
+    visible: "Last sync: .*"
+    timeout: 90000
+- tapOn: "Open menu"
+- tapOn: "^DECISIONS$"
+- takeScreenshot: "426l-author-decisions"
+- runFlow:
+    when:
+      visible: "Proposals"
+    commands:
+      - tapOn: "Proposals"
+- runFlow:
+    when:
+      notVisible: "For my lessons"
+    commands:
+      - tapOn:
+          point: "40%,15%"
+- extendedWaitUntil:
+    visible: "For my lessons"
+    timeout: 60000
+- tapOn: "For my lessons"
+- extendedWaitUntil:
+    visible: "Awaiting your decision"
+    timeout: 120000
+- takeScreenshot: "426l-author-proposals"
+- tapOn: "^Approve$"
+- runFlow:
+    when:
+      visible: "^Cancel$"
+    commands:
+      - tapOn: "^Cancel$"
+- runFlow:
+    when:
+      visible: "^Reject$"
+    commands:
+      - tapOn: "^Cancel$"
+- takeScreenshot: "426l-author-approved"

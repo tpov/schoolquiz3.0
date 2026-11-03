@@ -1,0 +1,15 @@
+appId: com.tpov.schoolquiz.mvp
+name: Journey 4.20 finalize — author outcomes card and Fix-the-questions editor (local campaign)
+---
+# Финал 4.20: карточка уже несёт исходы (сеттл отказа случился в последних циклах
+# resume-флоу, после его ассерта). Фиксируем исходы и действие автора.
+- assertVisible: "Failed: .*"
+- takeScreenshot: "420f-outcomes"
+- scrollUntilVisible:
+    element:
+      text: "Fix the questions"
+    direction: DOWN
+    timeout: 15000
+- takeScreenshot: "420f-outcomes-full"
+- tapOn: "Fix the questions"
+- takeScreenshot: "420f-fix-editor"
