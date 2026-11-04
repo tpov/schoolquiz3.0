@@ -8,7 +8,10 @@ import com.tpov.schoolquiz.android.feature.internet.social.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.uistate.PollsUiMessage
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.uistate.PollsUiState
 import com.tpov.schoolquiz.shared.core.network.syncErrorOrNull
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
+import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.internet.social.data.outbox.PollOutboxRepository
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollMode
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollQuestionDraft
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollSeriesDraft
@@ -37,6 +40,11 @@ import kotlinx.coroutines.launch
  * подтверждения» и перечитывает вью, пока сервер не ответит собственным принятым голосом —
  * подтверждение живёт на сервере, локальных догадок о квитанции экран не рисует (AD-8/AD-21).
  * То же с публикацией серии: список перечитывается, пока серия не появится из вью.
+ *
+ * Замок «отправлено» и отказ наблюдаются из очереди ([PollOutboxRepository], ретро эпика 8,
+ * находка 7), а не только из памяти: ждущий ряд держит честную пометку «не отправлено»
+ * (UX-O7 §4) и переживает смерть процесса, терминальный — снимает замок и называет отказ.
+ * Карточка открывает первый неотвеченный вопрос (находка 8): надпись и навигация говорят одно.
  */
 class DefaultPollsComponent(
     componentContext: ComponentContext,
@@ -45,6 +53,7 @@ class DefaultPollsComponent(
     private val questionState: GetPollQuestionStateUseCase,
     private val submitVote: SubmitPollVoteUseCase,
     private val publishSeries: PublishPollSeriesUseCase,
+    private val outboxSync: PollOutboxRepository,
     private val idProvider: PollsIdProvider,
     mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : PollsComponent, ComponentContext by componentContext {
@@ -55,11 +64,16 @@ class DefaultPollsComponent(
 
     private var currentUid: String? = null
     private var confirmationPoll: Job? = null
+    private var syncObserver: Job? = null
+    private var observedUid: String? = null
+    private var observedIds: List<String> = emptyList()
+    private var lastSyncSnapshot: List<OutboxEntitySync> = emptyList()
 
     init {
         lifecycle.doOnDestroy {
             componentJob.cancel()
             confirmationPoll?.cancel()
+            syncObserver?.cancel()
         }
         observeAuth()
     }
@@ -76,17 +90,24 @@ class DefaultPollsComponent(
 
     override fun onOpenSeriesClick(seriesId: String) {
         confirmationPoll?.cancel()
+        // Находка 8: карточка обещает продолжение с первого неотвеченного — навигация открывает
+        // ровно его (answeredCount вопросов уже отвечено), а не вопрос 1. Пустая сводка (0 вопросов)
+        // открывает вопрос 1 — верхняя граница не становится отрицательной.
+        val entry = _state.value.series.firstOrNull { it.seriesId == seriesId }
+        val maxIndex = (entry?.questionCount ?: 1).coerceAtLeast(1) - 1
+        val resumeIndex = (entry?.answeredCount ?: 0).coerceIn(0, maxIndex)
         _state.update {
             it.copy(
                 openSeriesId = seriesId,
-                questionIndex = 0,
+                questionIndex = resumeIndex,
                 questionState = null,
                 questionError = null,
                 selectedOptionIds = emptySet(),
                 voteQueued = false,
             )
         }
-        openQuestion(seriesId, 0)
+        openQuestion(seriesId, resumeIndex)
+        restartOutboxObservation()
     }
 
     override fun onToggleOptionClick(optionId: String) {
@@ -164,6 +185,7 @@ class DefaultPollsComponent(
                 questionError = null,
             )
         }
+        restartOutboxObservation()
         reloadSeries()
     }
 
@@ -393,6 +415,98 @@ class DefaultPollsComponent(
                     },
                 )
             }
+            restartOutboxObservation()
+        }
+    }
+
+    /**
+     * Наблюдение очереди открытой серии и списка (находка 7, UX-O7 §4): ждущий ряд держит
+     * честную пометку «не отправлено», терминальный (карантин/конфликт) снимает замок и называет
+     * отказ, отсутствие ряда снимает замок без ошибки — квитанцию приносит вью. Перезапуск — по
+     * смене владельца или набора серий (ряды очереди owner-скоупны): по каждой ссылке живёт свой
+     * поток, ссылки собирает фича (AD-7). Если набор не сменился, но открылась другая серия,
+     * известный срез очереди пере-применяется сразу — замок встаёт из факта, не ждёт эмита.
+     */
+    private fun restartOutboxObservation() {
+        val uid = currentUid
+        if (uid == null) {
+            // Нет владельца (вышли из аккаунта) — наблюдение прекращается и не оставляет
+            // чужих пометок: ряды очереди owner-скоупны.
+            syncObserver?.cancel()
+            syncObserver = null
+            observedIds = emptyList()
+            lastSyncSnapshot = emptyList()
+            _state.update { it.copy(seriesSync = emptyMap()) }
+            return
+        }
+        val ids =
+            (_state.value.series.map { it.seriesId } + listOfNotNull(_state.value.openSeriesId))
+                .distinct()
+                .sorted()
+        if (uid == observedUid && ids == observedIds) {
+            // Перезапуск не нужен, но открытая серия сменилась: срез очереди уже известен —
+            // пере-применяем его, чтобы замок открытой серии встал из факта очереди, а не ждал
+            // следующего эмита потока.
+            applyOutboxSync(ids.zip(lastSyncSnapshot).toMap())
+            return
+        }
+        observedUid = uid
+        observedIds = ids
+        syncObserver?.cancel()
+        if (ids.isEmpty()) {
+            lastSyncSnapshot = emptyList()
+            _state.update { it.copy(seriesSync = emptyMap()) }
+            return
+        }
+        syncObserver =
+            scope.launch {
+                outboxSync.observe(uid, ids).collect { syncs ->
+                    lastSyncSnapshot = syncs
+                    applyOutboxSync(ids.zip(syncs).toMap())
+                }
+            }
+    }
+
+    private fun applyOutboxSync(byId: Map<String, OutboxEntitySync>) {
+        _state.update { state ->
+            var updated = state.copy(seriesSync = byId)
+            when (val sync = state.openSeriesId?.let(byId::get)) {
+                is OutboxEntitySync.Queued ->
+                    when {
+                        sync.state == OutboxState.QUARANTINED -> {
+                            updated =
+                                updated.copy(
+                                    voteQueued = false,
+                                    publishQueued = false,
+                                    questionError = PollsUiMessage.Res(R.string.polls_send_quarantined),
+                                )
+                        }
+
+                        sync.state == OutboxState.CONFLICT -> {
+                            updated =
+                                updated.copy(
+                                    voteQueued = false,
+                                    publishQueued = false,
+                                    questionError = PollsUiMessage.Res(R.string.polls_send_conflict),
+                                )
+                        }
+
+                        // Ряд в очереди — «не отправлено» честно, даже если процесс
+                        // перезапускался: пометка из факта очереди, не из памяти (находка 7).
+                        // Своё принятое голосо (§5) сильнее: подтверждённое не изображается
+                        // ждущим.
+                        sync.state.isPending && updated.questionState?.ownVote == null ->
+                            updated = updated.copy(voteQueued = true)
+
+                        else -> Unit
+                    }
+
+                OutboxEntitySync.None ->
+                    if (updated.voteQueued) updated = updated.copy(voteQueued = false)
+
+                else -> Unit
+            }
+            updated
         }
     }
 
@@ -464,6 +578,7 @@ class DefaultPollsComponent(
                         _state.update {
                             it.copy(series = entries, isLoading = false, publishQueued = false, authoring = null)
                         }
+                        restartOutboxObservation()
                         return@launch
                     }
                 }

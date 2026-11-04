@@ -5,7 +5,10 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
+import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.internet.social.data.outbox.PollOutboxRepository
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollMode
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollOption
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollPublishCommand
@@ -80,6 +83,71 @@ class DefaultPollsComponentTest {
         assertEquals("poll-1", component.state.value.openSeriesId)
         assertEquals("Favorite color?", component.state.value.questionState?.question?.text)
         assertNull(component.state.value.questionState?.distribution, "до голоса распределение скрыто")
+        collected.cancel()
+    }
+
+    @Test
+    fun `opening a series resumes at the first unanswered question`() = runTest(testScheduler) {
+        // Находка 8: карточка обещает «Вопрос answeredCount+1 из N» — навигация открывает ровно
+        // этот вопрос, а не первый.
+        val fakes = FakeRepository()
+        val component = buildComponent(fakes)
+        val collected = launchCollector(component)
+
+        fakes.addSeries(PollSeriesSummary("poll-2", "Half done", 1, 2, 1, own = false))
+        component.onRefreshClick()
+        component.onOpenSeriesClick("poll-2")
+
+        assertEquals(1, component.state.value.questionIndex, "answeredCount=1 → открыт второй вопрос")
+        assertEquals(1, component.state.value.questionState?.questionIndex)
+        collected.cancel()
+    }
+
+    @Test
+    fun `a queued row keeps the honest not-sent mark and a quarantined one names the refusal`() = runTest(testScheduler) {
+        // Находка 7: замок и отказ — из факта очереди, не из памяти компонента. Переживает
+        // «смерть процесса» (открытие серии при уже ждущем ряде) и снимается терминалом
+        // с поимённым отказом.
+        val fakes = FakeRepository()
+        val outbox = FakePollOutboxRepository()
+        outbox.emit("poll-1", OutboxEntitySync.Queued(recordId = 9, state = OutboxState.WAITING))
+        val component = buildComponent(fakes, outbox)
+        val collected = launchCollector(component)
+
+        component.onOpenSeriesClick("poll-1")
+        assertEquals(true, component.state.value.voteQueued, "ждущий ряд — «не отправлено» честно")
+        assertEquals(
+            OutboxEntitySync.Queued(recordId = 9, state = OutboxState.WAITING),
+            component.state.value.seriesSync["poll-1"],
+        )
+
+        outbox.emit("poll-1", OutboxEntitySync.Queued(recordId = 9, state = OutboxState.QUARANTINED))
+        assertEquals(false, component.state.value.voteQueued, "карантин терминален — замок снят")
+        assertTrue(component.state.value.questionError != null, "отказ назван, а не промолчан")
+        collected.cancel()
+    }
+
+    @Test
+    fun `conflict names the refusal and a vanished row clears the lock silently`() = runTest(testScheduler) {
+        // Находка 7, остальные ветви наблюдения: конфликт — терминален и поименован; исчезновение
+        // ряда (уехал/удалён) снимает замок без ошибки — квитанцию приносит вью.
+        val fakes = FakeRepository()
+        val outbox = FakePollOutboxRepository()
+        outbox.emit("poll-1", OutboxEntitySync.Queued(recordId = 9, state = OutboxState.CONFLICT))
+        val component = buildComponent(fakes, outbox)
+        val collected = launchCollector(component)
+
+        component.onOpenSeriesClick("poll-1")
+        assertEquals(false, component.state.value.voteQueued, "конфликт терминален — замок снят")
+        assertTrue(component.state.value.questionError != null, "конфликт назван")
+
+        outbox.emit("poll-1", OutboxEntitySync.None)
+        assertEquals(false, component.state.value.voteQueued, "ряд исчез — замка нет")
+        assertEquals(
+            OutboxEntitySync.None,
+            component.state.value.seriesSync["poll-1"],
+            "наблюдение доводит отсутствие ряда до карточки списка",
+        )
         collected.cancel()
     }
 
@@ -175,6 +243,26 @@ class DefaultPollsComponentTest {
         override fun nowMs(): Long = 1_760_000_000_000
     }
 
+    /** Очередь в памяти: по ссылке на серию — один поток состояния (None, пока не сказано иное). */
+    private class FakePollOutboxRepository : PollOutboxRepository {
+        private val entities = mutableMapOf<String, MutableStateFlow<OutboxEntitySync>>()
+
+        fun emit(
+            seriesId: String,
+            sync: OutboxEntitySync,
+        ) {
+            entities.getOrPut(seriesId) { MutableStateFlow(OutboxEntitySync.None) }.value = sync
+        }
+
+        override fun observe(
+            ownerUid: String,
+            seriesIds: List<String>,
+        ): Flow<List<OutboxEntitySync>> =
+            kotlinx.coroutines.flow.combine(
+                seriesIds.map { seriesId -> entities.getOrPut(seriesId) { MutableStateFlow(OutboxEntitySync.None) } },
+            ) { syncs -> syncs.toList() }
+    }
+
     private class FakeRepository : PollsRepository {
         val votes = mutableListOf<PollVoteSubmission>()
         val publishes = mutableListOf<PollPublishSubmission>()
@@ -243,7 +331,10 @@ class DefaultPollsComponentTest {
         }
     }
 
-    private fun buildComponent(fakes: FakeRepository): DefaultPollsComponent =
+    private fun buildComponent(
+        fakes: FakeRepository,
+        outbox: FakePollOutboxRepository = FakePollOutboxRepository(),
+    ): DefaultPollsComponent =
         DefaultPollsComponent(
             componentContext = DefaultComponentContext(LifecycleRegistry().also {
                 it.resume()
@@ -253,6 +344,7 @@ class DefaultPollsComponentTest {
             questionState = GetPollQuestionStateUseCase(fakes),
             submitVote = SubmitPollVoteUseCase(fakes, FakePollsIdProvider(), FakePollsTimestampProvider()),
             publishSeries = PublishPollSeriesUseCase(fakes, FakePollsIdProvider(), FakePollsTimestampProvider()),
+            outboxSync = outbox,
             idProvider = FakePollsIdProvider(),
             mainContext = testDispatcher,
         )

@@ -33,6 +33,8 @@ import com.tpov.schoolquiz.android.feature.internet.social.presentation.componen
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.uistate.PollAuthorDraft
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.uistate.PollsUiMessage
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.uistate.PollsUiState
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
+import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollDistribution
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollMode
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollQuestionState
@@ -110,6 +112,22 @@ private fun SeriesList(
                                 style = NoirType.rowSub,
                                 color = NoirT3,
                             )
+                            // Наблюдение очереди (ретро эпика 8, находка 7, UX-O7 §4): по серии есть
+                            // неотправленное — карточка говорит об этом, терминальный ряд — цветом
+                            // отказа, а не молчанием.
+                            when (val sync = state.seriesSync[series.seriesId]) {
+                                is OutboxEntitySync.Queued -> {
+                                    val failed =
+                                        sync.state == OutboxState.QUARANTINED || sync.state == OutboxState.CONFLICT
+                                    Text(
+                                        stringResource(R.string.polls_not_sent),
+                                        style = NoirType.rowSub,
+                                        color = if (failed) MaterialTheme.colorScheme.error else NoirT3,
+                                    )
+                                }
+
+                                else -> Unit
+                            }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,

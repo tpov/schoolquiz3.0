@@ -14,19 +14,19 @@ import kotlin.test.assertTrue
  *
  * Голос — мутация с теми же правилами identity, что и остальные (контракт §4, AD-6/AD-7),
  * поэтому его инварианты закрепляются здесь, на общем транспорте, до любых записей голосов:
- * ключ рождается из тройки идентичности серия/revision/вопрос и не меняется (§2), retry
- * пересылает замороженный набор под тем же ключом — retry не второй голос (§6.1), повтор
- * известного ключа возвращает сохранённую квитанцию без сетевого вызова (§6.1, AD-6).
- * Имя операции `polls.SUBMIT_VOTE` и членство в `permanentReceiptOperations` — истории 8.2
- * вместе с серверной половиной и гейтом `OutboxOperationsRegistryTest`; здесь операция
- * фигурирует литералом ровно в том виде, который контракт фиксирует.
+ * ключ рождается из четверки идентичности серия/revision/вопрос/участник и не меняется (§2,
+ * поправка 2026-10-18), retry пересылает замороженный набор под тем же ключом — retry не второй
+ * голос (§6.1), повтор известного ключа возвращает сохранённую квитанцию без сетевого вызова
+ * (§6.1, AD-6). Имя операции `polls.SUBMIT_VOTE` и членство в `permanentReceiptOperations` —
+ * истории 8.2 вместе с серверной половиной и гейтом `OutboxOperationsRegistryTest`; здесь
+ * операция фигурирует литералом ровно в том виде, который контракт фиксирует.
  */
 class UxO7PollVoteIdentityContractTest {
     private val uid = "participant-1"
     private var now = 40L * 24 * 60 * 60 * 1000
     private var session = OutboxSession(uid, 1)
 
-    /** Идентичность голоса §2: тройка серия/revision/вопрос в sourceId, серия в entity_ref. */
+    /** Идентичность голоса §2: четверка серия/revision/вопрос/участник в sourceId, серия в entity_ref. */
     private val voteOperation = "polls.SUBMIT_VOTE"
     private val voteSourceId = "series-poll-77-r2-q1-u-participant-1"
     private val voteEntityRef = "polls.SERIES:poll-77"
@@ -71,10 +71,10 @@ class UxO7PollVoteIdentityContractTest {
         sessions = { session },
     )
 
-    // ── §2: ключ рождается из тройки идентичности и не меняется ─────────────────────────────
+    // ── §2: ключ рождается из четверки идентичности и не меняется ────────────────────────────
 
     @Test
-    fun `vote key is derived from the series-revision-question triple and never varies`() {
+    fun `vote key is derived from the series-revision-question-participant identity and never varies`() {
         val first = OutboxOperations.mutationKey(voteOperation, voteSourceId)
         // Тот же вызов позже — тот же ключ: retry, рестарт и повторный вход не разводят intent
         // на два ключа (§6.1: retry — не второй голос).
@@ -82,14 +82,17 @@ class UxO7PollVoteIdentityContractTest {
         assertEquals("polls-SUBMIT_VOTE-$voteSourceId", first)
         assertTrue(first.matches(Regex("[A-Za-z0-9_-]+")), "серверный charset ключа: $first")
 
-        // Другая ось идентичности — другой ключ: чужой вопрос, чужая revision и чужая серия
-        // не дедуплицируются в один голос, и наоборот — одна тройка не разъезжается на два.
-        val otherQuestion = OutboxOperations.mutationKey(voteOperation, "series-poll-77-r2-q2")
-        val otherRevision = OutboxOperations.mutationKey(voteOperation, "series-poll-77-r3-q1")
-        val otherSeries = OutboxOperations.mutationKey(voteOperation, "series-poll-78-r2-q1")
+        // Другая ось идентичности — другой ключ: чужой вопрос, чужая revision, чужая серия и
+        // чужой участник не дедуплицируются в один голос, и наоборот — одно намерение не
+        // разъезжается на два. Ось участника — часть формулы §2 (поправка 2026-10-18): без неё
+        // ключ был общим между аккаунтами.
+        val otherQuestion = OutboxOperations.mutationKey(voteOperation, "series-poll-77-r2-q2-u-participant-1")
+        val otherRevision = OutboxOperations.mutationKey(voteOperation, "series-poll-77-r3-q1-u-participant-1")
+        val otherSeries = OutboxOperations.mutationKey(voteOperation, "series-poll-78-r2-q1-u-participant-1")
+        val otherParticipant = OutboxOperations.mutationKey(voteOperation, "series-poll-77-r2-q1-u-participant-2")
         assertTrue(
-            setOf(first, otherQuestion, otherRevision, otherSeries).size == 4,
-            "каждая тройка — свой ключ",
+            setOf(first, otherQuestion, otherRevision, otherSeries, otherParticipant).size == 5,
+            "каждая ось идентичности — свой ключ",
         )
 
         // Пустое намерение отвергается: у голоса без идентичности вопроса честного ключа нет.

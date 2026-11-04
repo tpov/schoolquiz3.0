@@ -287,6 +287,38 @@ interface OutboxDao {
     @Query("SELECT COUNT(*) FROM mutation_receipts WHERE mutation_id = :mutationId")
     suspend fun receiptCountForMutation(mutationId: String): Int
 
+    /**
+     * Ключи ожидающих записей одной операции — материал для переписывания ключей ([OutboxKeyRepair]).
+     *
+     * Тела здесь нет: правило вывода ключа знает фича, ядру достаточно трёх полей. Состояния —
+     * ровно два ожидающих: подтверждённых в очереди нет (AD-4), а карантин и конфликт
+     * переписыванием не вскрываются.
+     */
+    @Query(
+        """
+        SELECT id, mutation_id AS mutationId, owner_uid AS ownerUid FROM outbox
+        WHERE operation = :operation AND state IN ('WAITING', 'WAITING_PRECONDITION')
+        """,
+    )
+    suspend fun pendingKeys(operation: String): List<OutboxKeyRow>
+
+    /**
+     * Переписывание ключа — защищённое: условие по прежнему ключу делает повтор прохода
+     * безвредным — второй апдейт по уже переписанной строке ничего не находит. Занятый целевой
+     * ключ сюда не доходит: хранилище проверяет `findByMutationId` до вызова, чтобы уникальный
+     * индекс пропускал одну строку, а не ронял проход целиком. Вставка того же ключа параллельным
+     * писателем между проверкой и апдейтом уронит проход громко на индексе (AD-2) и заживёт
+     * следующим проходом: строка тогда уже занята, и хранилище её пропустит.
+     */
+    @Query(
+        "UPDATE outbox SET mutation_id = :to WHERE id = :id AND mutation_id = :from",
+    )
+    suspend fun rewriteMutationKey(
+        id: Long,
+        from: String,
+        to: String,
+    ): Int
+
     /** UI acknowledgement removes only the matching owner's marker, never receipt/history. */
     @Transaction
     suspend fun acknowledgeSynchronousIntent(
@@ -336,4 +368,11 @@ data class OutboxCountsRow(
     val waitingPrecondition: Int?,
     val conflicted: Int?,
     val quarantined: Int?,
+)
+
+/** Ключ ожидающей записи — три поля, которых переписыванию достаточно; тело не вынимается (AD-7). */
+data class OutboxKeyRow(
+    val id: Long,
+    val mutationId: String,
+    val ownerUid: String,
 )

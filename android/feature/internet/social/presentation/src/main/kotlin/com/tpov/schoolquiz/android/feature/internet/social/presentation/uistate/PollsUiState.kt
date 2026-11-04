@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.internet.social.presentation.uistate
 
 import androidx.annotation.StringRes
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollMode
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollQuestionState
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.model.PollSeriesSummary
@@ -35,6 +36,8 @@ data class PollsUiState(
     val isLoading: Boolean = false,
     val errorMessage: PollsUiMessage? = null,
     val series: List<PollSeriesSummary> = emptyList(),
+    /** Наблюдение очереди по сериям (находка 7): ждущая или застрявшая строка — по seriesId. */
+    val seriesSync: Map<String, OutboxEntitySync> = emptyMap(),
     val openSeriesId: String? = null,
     val questionIndex: Int = 0,
     val questionState: PollQuestionState? = null,

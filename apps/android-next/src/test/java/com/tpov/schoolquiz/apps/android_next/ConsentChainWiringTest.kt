@@ -69,9 +69,11 @@ class ConsentChainWiringTest {
         )
     }
 
-    private fun read(path: String): File {
+    /** Текст файла, а не File: вызовы ждут String API (contains/lineSequence/substringAfter);
+     * первый настоящий прогон градлом поймал это — пин писался и проверялся глазами, не компилятором. */
+    private fun read(path: String): String {
         val file = File(path)
         assertTrue("не нашёл ${file.absolutePath}", file.isFile)
-        return file
+        return file.readText()
     }
 }

@@ -31,4 +31,7 @@
     <string name="polls_progress">Ответлено: %1$d из %2$d</string>
     <string name="polls_error_unknown">Не удалось загрузить опросы</string>
     <string name="polls_error_auth_not_ready">Войдите, чтобы видеть опросы</string>
+    <string name="polls_not_sent">Не отправлено</string>
+    <string name="polls_send_quarantined">Не отправлено: отправка окончательно отклонена очередью</string>
+    <string name="polls_send_conflict">Не отправлено: на сервере более новая версия, нужно решение</string>
 </resources>

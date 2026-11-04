@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.internet.social.presentation.di
 import com.arkivanov.decompose.ComponentContext
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.DefaultPollsComponent
 import com.tpov.schoolquiz.android.feature.internet.social.presentation.component.PollsComponent
+import com.tpov.schoolquiz.shared.feature.internet.social.data.outbox.PollOutboxRepository
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.provider.PollsIdProvider
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.use_case.GetPollQuestionStateUseCase
 import com.tpov.schoolquiz.shared.feature.internet.social.domain.use_case.ListPollSeriesUseCase
@@ -20,6 +21,7 @@ val socialPresentationModule =
                 questionState = get<GetPollQuestionStateUseCase>(),
                 submitVote = get<SubmitPollVoteUseCase>(),
                 publishSeries = get<PublishPollSeriesUseCase>(),
+                outboxSync = get<PollOutboxRepository>(),
                 idProvider = get<PollsIdProvider>(),
             )
         }

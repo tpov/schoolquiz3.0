@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.shared.core.outbox.MutationReceiptStore
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.OutboxConsentRequeue
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
+import com.tpov.schoolquiz.shared.core.outbox.OutboxKeyRepair
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxQuarantineRouter
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRemainderSource
@@ -56,6 +57,7 @@ import com.tpov.schoolquiz.shared.feature.economy.data.EconomyTermsConsentStore
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.outbox.ListingCancelQuarantine
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.sync.ProfileBootstrapSync
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
+import com.tpov.schoolquiz.shared.feature.internet.social.data.outbox.PollVoteKeyRepair
 import com.tpov.schoolquiz.shared.feature.lesson.data.outbox.LessonUnlockOutbox
 import com.tpov.schoolquiz.shared.feature.lesson.data.outbox.LessonUnlockQuarantineRollback
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
@@ -70,6 +72,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.privateQuest
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
+import kotlin.coroutines.cancellation.CancellationException
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -133,6 +136,9 @@ val syncModule =
         // Та же таблица, другой смысл: гейт согласия знает момент решения, очередь — только
         // состояние записей.
         single<OutboxConsentRequeue> { get<RoomOutboxStore>() }
+        // Механика переписывания ключей недоехавших записей (ретро эпика 8, находка 4): та же
+        // таблица, другой смысл — правило вывода знает владеющая фича, хранилище даёт строки.
+        single<OutboxKeyRepair> { get<RoomOutboxStore>() }
         single<QuarantineListener> {
             OutboxQuarantineRouter(
                 handlers =
@@ -324,6 +330,18 @@ val syncModule =
             val profileSync = get<ProfileBootstrapSync>()
             listOf(
                 profileSync,
+                // Ремонт ключей queued-рядов голосов до прохода очереди (ретро эпика 8, находка 4):
+                // ряды, записанные до поправки §2, отказали бы по чужому ключу и карантинились бы
+                // молча. Идемпотентно: после первого прохода правило не находит старых форм.
+                object : Syncable {
+                    private val repairVotes = get<PollVoteKeyRepair>()
+
+                    override suspend fun sync(): Result<Unit> =
+                        runCatching { repairVotes.repairQueuedVotes() }
+                            // Отмена пробивает наружу: глотать её — ломать структурную конкурентность.
+                            .onFailure { if (it is CancellationException) throw it }
+                            .map { }
+                },
                 // Прохождения, оценки и заявки на арену уезжают общей очередью, своих
                 // отправителей у них больше нет.
                 get<OutboxSyncable>(),

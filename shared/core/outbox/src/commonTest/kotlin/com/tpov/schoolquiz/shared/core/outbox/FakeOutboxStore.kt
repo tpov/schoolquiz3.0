@@ -7,7 +7,9 @@ import kotlinx.coroutines.flow.map
 /** Очередь в памяти. Ведёт себя как настоящая ровно в том, что проверяют тесты движка. */
 open class FakeOutboxStore(
     private val policy: OutboxPolicy = OutboxPolicy(),
-) : OutboxStore, OutboxRemainderSource {
+) : OutboxStore,
+    OutboxRemainderSource,
+    OutboxKeyRepair {
 
     private val records = MutableStateFlow<List<OutboxRecord>>(emptyList())
     private var nextId = 1L
@@ -19,6 +21,30 @@ open class FakeOutboxStore(
 
     fun seed(vararg record: OutboxRecord) {
         records.value = records.value + record
+    }
+
+    /** Та же механика, что у Room-хранилища: только pending, `null` — как есть, занято — пропуск. */
+    override suspend fun rewritePendingKeys(
+        operation: String,
+        repair: (ownerUid: String, mutationId: String) -> String?,
+    ): Int {
+        var rewritten = 0
+        val snapshot = records.value
+        val occupied = snapshot.mapTo(mutableSetOf()) { it.mutationId }
+        records.value = snapshot.map { record ->
+            if (record.operation != operation || !record.state.isPending) {
+                return@map record
+            }
+            when (val next = repair(record.ownerUid, record.mutationId)) {
+                null, record.mutationId, in occupied -> record
+                else -> {
+                    rewritten += 1
+                    occupied += next
+                    record.copy(mutationId = next)
+                }
+            }
+        }
+        return rewritten
     }
 
     override suspend fun enqueue(record: OutboxRecord): OutboxRecord {

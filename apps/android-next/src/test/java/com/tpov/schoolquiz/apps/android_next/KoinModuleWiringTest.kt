@@ -1063,6 +1063,7 @@ class KoinModuleWiringTest : KoinTest {
                     observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
                     retapUseCase = OnTabRetapUseCase(),
                     userStatsRepository = fakeRepo,
+                    authRepository = fakeAuthRepository(),
                     syncScheduler =
                         object : SyncScheduler {
                             override fun enqueueManualSync() = Unit
@@ -1138,6 +1139,8 @@ class KoinModuleWiringTest : KoinTest {
                                 )
 
                             override fun openLessonRunner(lessonId: String) = Unit
+
+                            override fun openLessonEarnings(lessonId: String, title: String) = Unit
 
                             override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
                             override val currentCatalogIcons:
@@ -1221,6 +1224,7 @@ class KoinModuleWiringTest : KoinTest {
                 observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
                 retapUseCase = OnTabRetapUseCase(),
                 userStatsRepository = fakeRepo,
+                authRepository = fakeAuthRepository(),
                 syncScheduler =
                     object : SyncScheduler {
                         override fun enqueueManualSync() = Unit
@@ -1296,6 +1300,8 @@ class KoinModuleWiringTest : KoinTest {
                             )
 
                         override fun openLessonRunner(lessonId: String) = Unit
+
+                        override fun openLessonEarnings(lessonId: String, title: String) = Unit
 
                         override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
                         override val currentCatalogIcons:
@@ -1620,4 +1626,12 @@ class KoinModuleWiringTest : KoinTest {
         // Реакция на карантин объявлена той же фичей: без неё откатанной покупки не бывает (AD-28).
         assertNotNull(getKoin().get<LessonUnlockQuarantineRollback>())
     }
+
+    /** Гость без сессии: графу сборки важен сам биндинг, а не живой Firebase. */
+    private fun fakeAuthRepository(): AuthRepository =
+        object : AuthRepository {
+            override suspend fun currentUid(): String? = null
+
+            override fun observeUid(): Flow<String?> = flowOf(null)
+        }
 }

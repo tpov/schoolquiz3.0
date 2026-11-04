@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxConsentRequeue
 import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
+import com.tpov.schoolquiz.shared.core.outbox.OutboxKeyRepair
 import com.tpov.schoolquiz.shared.core.outbox.OutboxLimits
 import com.tpov.schoolquiz.shared.core.outbox.OutboxOperations
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
@@ -26,7 +27,8 @@ class RoomOutboxStore(
     private val limits: OutboxLimits = OutboxLimits(),
 ) : OutboxStore,
     OutboxRemainderSource,
-    OutboxConsentRequeue {
+    OutboxConsentRequeue,
+    OutboxKeyRepair {
     /**
      * Согласие, на которое игрок согласился, возвращает ждущие записи в отправку (CAP-16).
      *
@@ -36,6 +38,28 @@ class RoomOutboxStore(
      * версий этот путь не трогает — его решает новая мутация (AD-24), а не повтор старой.
      */
     override suspend fun requeueConflictedTerms(): Int = dao.requeueConflictedTerms()
+
+    /**
+     * Переписывание ключей недоехавших записей одной операции по правилу владеющей фичи.
+     *
+     * Правило зовётся на каждый ожидающий ряд; `null` и «тот же ключ» строку не трогают. Целевой
+     * ключ проверяется на занятость до апдейта: уникальный индекс `mutation_id` — страж AD-2, и
+     * попадание на него должно пропустить строку, а не уронить проход целиком. Апдейт защищён
+     * прежним ключом в условии: повторный проход по уже переписанной строке ничего не находит.
+     */
+    override suspend fun rewritePendingKeys(
+        operation: String,
+        repair: (ownerUid: String, mutationId: String) -> String?,
+    ): Int {
+        var rewritten = 0
+        for (row in dao.pendingKeys(operation)) {
+            val next = repair(row.ownerUid, row.mutationId)
+            if (next == null || next == row.mutationId) continue
+            if (dao.findByMutationId(next) != null) continue
+            rewritten += dao.rewriteMutationKey(row.id, row.mutationId, next)
+        }
+        return rewritten
+    }
 
     /**
      * Кладёт запись — отвергая ту, чья ссылка живёт не в том пространстве имён, что её операция
